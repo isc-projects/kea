@@ -319,15 +319,14 @@ ZoneUpdaterPtr
 DatabaseClient::startUpdateZone(const isc::dns::Name& name,
                                 bool replace) const
 {
-    // TODO: create a dedicated accessor
-
-    const std::pair<bool, int> zone(accessor_->startUpdateZone(name.toText(),
-                                                               replace));
+    shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
+    const std::pair<bool, int> zone(update_accessor->startUpdateZone(
+                                        name.toText(), replace));
     if (!zone.first) {
         return (ZoneUpdaterPtr());
     }
 
-     return (ZoneUpdaterPtr(new Updater(accessor_, zone.second,
+     return (ZoneUpdaterPtr(new Updater(update_accessor, zone.second,
                                         name.toText(), rrclass_)));
 }
 

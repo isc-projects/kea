@@ -137,7 +137,19 @@ public:
     MockAccessor() : search_running_(false), rollbacked_(false),
                      database_name_("mock_database")
     {
+        readonly_records = &readonly_records_master;
+        update_records = &update_records_master;
+        empty_records = &empty_records_master;
         fillData();
+    }
+
+    virtual shared_ptr<DatabaseAccessor> clone() {
+        shared_ptr<MockAccessor> cloned_accessor(new MockAccessor());
+        cloned_accessor->readonly_records = &readonly_records_master;
+        cloned_accessor->update_records = &update_records_master;
+        cloned_accessor->empty_records = &empty_records_master;
+        latest_clone_ = cloned_accessor;
+        return (cloned_accessor);
     }
 
     virtual pair<bool, int> getZone(const Name& name) const {
@@ -217,15 +229,15 @@ public:
         // we use an empty set; otherwise we use a writable copy of the
         // original.
         if (replace) {
-            update_records.clear();
+            update_records->clear();
         } else {
-            update_records = readonly_records;
+            *update_records = *readonly_records;
         }
 
         return (pair<bool, int>(true, WRITABLE_ZONE_ID));
     }
     virtual void commitUpdateZone() {
-        readonly_records = update_records;
+        *readonly_records = *update_records;
     }
     virtual void rollbackUpdateZone() {
         rollbacked_ = true;
@@ -233,13 +245,13 @@ public:
     virtual void addRecordToZone(const vector<string>& columns) {
         // Copy the current value to cur_name.  If it doesn't exist,
         // operator[] will create a new one.
-        cur_name = update_records[columns[DatabaseAccessor::ADD_NAME]];
+        cur_name = (*update_records)[columns[DatabaseAccessor::ADD_NAME]];
         addRecord(columns[DatabaseAccessor::ADD_TYPE],
                   columns[DatabaseAccessor::ADD_TTL],
                   columns[DatabaseAccessor::ADD_SIGTYPE],
                   columns[DatabaseAccessor::ADD_RDATA]);
         // copy back the added entry.
-        update_records[columns[DatabaseAccessor::ADD_NAME]] = cur_name;
+        (*update_records)[columns[DatabaseAccessor::ADD_NAME]] = cur_name;
 
         // remember this one so that test cases can check it.
         columns_lastadded = columns;
@@ -259,16 +271,16 @@ public:
 
     virtual void deleteRecordInZone(const vector<string>& params) {
         vector<vector<string> > records =
-            update_records[params[DatabaseAccessor::DEL_NAME]];
+            (*update_records)[params[DatabaseAccessor::DEL_NAME]];
         records.erase(remove_if(records.begin(), records.end(),
                                 deleteMatch(
                                     params[DatabaseAccessor::DEL_TYPE],
                                     params[DatabaseAccessor::DEL_RDATA])),
                       records.end());
         if (records.empty()) {
-            update_records.erase(params[DatabaseAccessor::DEL_NAME]);
+            (*update_records).erase(params[DatabaseAccessor::DEL_NAME]);
         } else {
-            update_records[params[DatabaseAccessor::DEL_NAME]] = records;
+            (*update_records)[params[DatabaseAccessor::DEL_NAME]] = records;
         }
     }
 
@@ -287,10 +299,18 @@ public:
     const vector<string>& getLastAdded() const {
         return (columns_lastadded);
     }
+
+    // This allows the test code to get the accessor used in an update context
+    shared_ptr<const DatabaseAccessor> getLatestClone() const {
+        return (latest_clone_);
+    }
 private:
-    RECORDS readonly_records;
-    RECORDS update_records;
-    RECORDS empty_records;
+    RECORDS readonly_records_master;
+    RECORDS* readonly_records;
+    RECORDS update_records_master;
+    RECORDS* update_records;
+    RECORDS empty_records_master;
+    RECORDS* empty_records;
 
     // used as internal index for getNextRecord()
     size_t cur_record;
@@ -316,13 +336,15 @@ private:
 
     const std::string database_name_;
 
+    boost::shared_ptr<MockAccessor> latest_clone_;
+
     const RECORDS& getRecords(int zone_id) const {
         if (zone_id == READONLY_ZONE_ID) {
-            return (readonly_records);
+            return (*readonly_records);
         } else if (zone_id == WRITABLE_ZONE_ID) {
-            return (update_records);
+            return (*update_records);
         }
-        return (empty_records);
+        return (*empty_records);
     }
 
     // Adds one record to the current name in the database
@@ -344,8 +366,8 @@ private:
     // to the actual fake database. This will clear cur_name,
     // so we can immediately start adding new records.
     void addCurName(const std::string& name) {
-        ASSERT_EQ(0, readonly_records.count(name));
-        readonly_records[name] = cur_name;
+        ASSERT_EQ(0, readonly_records->count(name));
+        (*readonly_records)[name] = cur_name;
         cur_name.clear();
     }
 
@@ -451,9 +473,9 @@ protected:
 
     bool isRollbacked(bool expected = false) const {
         if (is_mock_) {
-            const MockAccessor* mock_accessor =
-                dynamic_cast<const MockAccessor*>(current_accessor_);
-            return (mock_accessor->isRollbacked());
+            const MockAccessor& mock_accessor =
+                dynamic_cast<const MockAccessor&>(*update_accessor_);
+            return (mock_accessor.isRollbacked());
         } else {
             return (expected);
         }
@@ -468,6 +490,14 @@ protected:
                           mock_accessor->getLastAdded()) {
                 EXPECT_EQ(expected[i++], column);
             }
+        }
+    }
+
+    void setUpdateAccessor() {
+        if (is_mock_) {
+            const MockAccessor* mock_accessor =
+                dynamic_cast<const MockAccessor*>(current_accessor_);
+            update_accessor_ = mock_accessor->getLatestClone();
         }
     }
 
@@ -492,6 +522,7 @@ protected:
     RRsetPtr rrsigset;          // for adding/deleting an RRset
 
     ZoneUpdaterPtr updater;
+    shared_ptr<const DatabaseAccessor> update_accessor_;
     const std::vector<std::string> empty_rdatas; // for NXRRSET/NXDOMAIN
     std::vector<std::string> expected_rdatas;
     std::vector<std::string> expected_sig_rdatas;
@@ -921,6 +952,7 @@ TYPED_TEST(DatabaseClientTest, flushZone) {
     // start update in the replace mode.  the normal finder should still
     // be able to see the record, but the updater's finder shouldn't.
     this->updater = this->client_->startUpdateZone(this->zname, true);
+    this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::SUCCESS,
               this->finder->find(this->qname, this->qtype).code);
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
@@ -944,6 +976,7 @@ TYPED_TEST(DatabaseClientTest, updateCancel) {
                                                       this->qtype).code);
 
     this->updater = this->client_->startUpdateZone(this->zname, true);
+    this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               this->updater->getFinder().find(this->qname, this->qtype).code);
     // DB should not have been rolled back yet.

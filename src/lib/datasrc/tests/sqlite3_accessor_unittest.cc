@@ -248,6 +248,33 @@ TEST_F(SQLite3AccessorTest, getRecords) {
                    "33495 example.com. FAKEFAKEFAKEFAKE");
 }
 
+TEST_F(SQLite3AccessorTest, clone) {
+    shared_ptr<DatabaseAccessor> cloned = accessor->clone();
+    EXPECT_EQ(accessor->getDBName(), cloned->getDBName());
+
+    // The cloned accessor should have a separate connection and search
+    // context, so it should be able to perform search in concurrent with
+    // the original accessor.
+    string columns1[DatabaseAccessor::COLUMN_COUNT];
+    string columns2[DatabaseAccessor::COLUMN_COUNT];
+
+    const std::pair<bool, int> zone_info1(
+        accessor->getZone(Name("example.com")));
+    const std::pair<bool, int> zone_info2(
+        accessor->getZone(Name("example.com")));
+
+    accessor->searchForRecords(zone_info1.second, "foo.example.com.");
+    ASSERT_TRUE(accessor->getNextRecord(columns1,
+                                        DatabaseAccessor::COLUMN_COUNT));
+    checkRecordRow(columns1, "CNAME", "3600", "", "cnametest.example.org.");
+
+
+    cloned->searchForRecords(zone_info2.second, "foo.example.com.");
+    ASSERT_TRUE(cloned->getNextRecord(columns2,
+                                      DatabaseAccessor::COLUMN_COUNT));
+    checkRecordRow(columns2, "CNAME", "3600", "", "cnametest.example.org.");
+}
+
 //
 // Commonly used data for update tests
 //
@@ -274,9 +301,8 @@ protected:
                             TEST_DATA_BUILDDIR "/test.sqlite3.copied"));
         initAccessor(TEST_DATA_BUILDDIR "/test.sqlite3.copied", RRClass::IN());
         zone_id = accessor->getZone(Name("example.com")).second;
-        another_accessor.reset(new SQLite3Accessor(
-                                   TEST_DATA_BUILDDIR "/test.sqlite3.copied",
-                                   RRClass::IN()));
+        another_accessor = boost::dynamic_pointer_cast<SQLite3Accessor>(
+            accessor->clone());
         expected_stored.push_back(common_expected_data);
     }
 
@@ -287,7 +313,8 @@ protected:
     vector<const char* const*> expected_stored; // placeholder for checkRecords
     vector<const char* const*> empty_stored; // indicate no corresponding data
 
-    // Another accessor, emulating one running on a different process/thread
+    // Another accessor, emulating one running on a different process/thread.
+    // It will also confirm clone() works as expected in terms of update.
     shared_ptr<SQLite3Accessor> another_accessor;
 };
 
