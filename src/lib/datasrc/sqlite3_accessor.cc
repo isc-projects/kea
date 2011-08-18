@@ -368,7 +368,10 @@ convertToPlainChar(const unsigned char* ucp,
 // it is, just provide data from it.
 class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
 public:
+    // Construct an iterator for all records. When constructed this
+    // way, the getNext() call will copy all fields
     Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
+        iterator_type_(ITT_ALL),
         database_(database),
         statement(NULL)
     {
@@ -379,6 +382,30 @@ public:
                       " to SQL statement (iterate)");
         }
     }
+
+    // Construct an iterator for records with a specific name. When constructed
+    // this way, the getNext() call will copy all fields except name
+    Context(const boost::shared_ptr<const SQLite3Database>& database, int id,
+            const isc::dns::Name& name) :
+        iterator_type_(ITT_NAME),
+        database_(database),
+        statement(NULL)
+    {
+        // We create the statement now and then just keep getting data from it
+        // TODO move to private and clean up error
+        statement = prepare(database->dbparameters_->db_, q_any_str);
+        if (sqlite3_bind_int(statement, 1, id) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind " << id <<
+                      " to SQL statement");
+        }
+        if (sqlite3_bind_text(statement, 2, name.toText().c_str(), -1,
+                              SQLITE_TRANSIENT) != SQLITE_OK) {
+            sqlite3_finalize(statement);
+            isc_throw(SQLite3Error, "Could not bind " << id <<
+                      " to SQL statement");
+        }
+    }
+
     bool getNext(std::string data[], size_t size) {
         if (size != COLUMN_COUNT) {
             isc_throw(DataSourceError, "getNext received size of " << size <<
@@ -387,9 +414,14 @@ public:
         // If there's another row, get it
         int rc(sqlite3_step(statement));
         if (rc == SQLITE_ROW) {
-            for (size_t i(0); i < size; ++ i) {
-                data[i] = convertToPlainChar(sqlite3_column_text(statement, i),
-                                             database_->dbparameters_);
+            // For both types, we copy the first four columns
+            copyColumn(data, TYPE_COLUMN);
+            copyColumn(data, TTL_COLUMN);
+            copyColumn(data, SIGTYPE_COLUMN);
+            copyColumn(data, RDATA_COLUMN);
+            // Only copy Name if we are iterating over every record
+            if (iterator_type_ == ITT_ALL) {
+                copyColumn(data, NAME_COLUMN);
             }
             return (true);
         } else if (rc != SQLITE_DONE) {
@@ -399,6 +431,7 @@ public:
         }
         return (false);
     }
+
     virtual ~Context() {
         if (statement) {
             sqlite3_finalize(statement);
@@ -406,9 +439,29 @@ public:
     }
 
 private:
+    // Depending on which constructor is called, behaviour is slightly
+    // different. We keep track of what to do with the iterator type
+    // See description of getNext() and the constructors
+    enum IteratorType {
+        ITT_ALL,
+        ITT_NAME
+    };
+
+    void copyColumn(std::string data[], int column) {
+        data[column] = convertToPlainChar(sqlite3_column_text(statement,
+                                                              column),
+                                          database_->dbparameters_);
+    }
+
+    IteratorType iterator_type_;
     boost::shared_ptr<const SQLite3Database> database_;
     sqlite3_stmt *statement;
 };
+
+DatabaseAccessor::IteratorContextPtr
+SQLite3Database::getRecords(const isc::dns::Name& name, int id) const {
+    return (IteratorContextPtr(new Context(shared_from_this(), id, name)));
+}
 
 DatabaseAccessor::IteratorContextPtr
 SQLite3Database::getAllRecords(const isc::dns::Name&, int id) const {

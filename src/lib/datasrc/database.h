@@ -125,6 +125,38 @@ public:
     typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
 
     /**
+     * \brief Creates an iterator context for a specific name.
+     *
+     * This should create a new iterator context to be used by
+     * DatabaseConnection's ZoneIterator. It can be created based on the name
+     * or the ID (returned from getZone()), what is more comfortable for the
+     * database implementation. Both are provided (and are guaranteed to match,
+     * the DatabaseClient first looks up the zone ID and then calls this).
+     *
+     * The default implementation throws isc::NotImplemented, to allow
+     * "minimal" implementations of the connection not supporting optional
+     * functionality.
+     *
+     * \param name The name to search for.
+     * \param id The ID of the zone, returned from getZone().
+     * \return Newly created iterator context. Must not be NULL.
+     */
+    virtual IteratorContextPtr getRecords(const isc::dns::Name& name,
+                                          int id) const
+    {
+        /*
+         * This is a compromise. We need to document the parameters in doxygen,
+         * so they need a name, but then it complains about unused parameter.
+         * This is a NOP that "uses" the parameters.
+         */
+        static_cast<void>(name);
+        static_cast<void>(id);
+
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't be iterated");
+    }
+
+    /**
      * \brief Creates an iterator context for the whole zone.
      *
      * This should create a new iterator context to be used by
