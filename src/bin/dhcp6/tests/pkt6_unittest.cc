@@ -38,16 +38,7 @@ TEST_F(Pkt6Test, constructor) {
     
     ASSERT_EQ(pkt1->data_len_, 17);
 
-    char * buf = new char[23];
-    // can't use char buf[23], as Pkt6 takes ownership of the data
-
-    Pkt6 * pkt2 = new Pkt6(buf, 23);
-
-    ASSERT_EQ(pkt2->data_len_, 23);
-    ASSERT_EQ(pkt2->data_, buf);
-
     delete pkt1;
-    delete pkt2;
 }
 
 }
