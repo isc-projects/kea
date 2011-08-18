@@ -178,12 +178,20 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                                  bool want_ns)
 {
     RRsigStore sig_store;
-    database_->searchForRecords(zone_id_, name.toText());
     bool records_found = false;
     isc::dns::RRsetPtr result_rrset;
 
+    // Request the context
+    DatabaseAccessor::IteratorContextPtr
+        context(database_->getRecords(name, zone_id_));
+    // It must not return NULL, that's a bug of the implementation
+    if (context == DatabaseAccessor::IteratorContextPtr()) {
+        isc_throw(isc::Unexpected, "Iterator context null at " +
+                  name.toText());
+    }
+
     std::string columns[DatabaseAccessor::COLUMN_COUNT];
-    while (database_->getNextRecord(columns, DatabaseAccessor::COLUMN_COUNT)) {
+    while (context->getNext(columns, DatabaseAccessor::COLUMN_COUNT)) {
         if (!records_found) {
             records_found = true;
         }
