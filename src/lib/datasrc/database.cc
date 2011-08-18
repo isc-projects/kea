@@ -309,71 +309,57 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(database_->getDBName()).arg(name).arg(type);
 
-    try {
-        // First, do we have any kind of delegation (NS/DNAME) here?
-        Name origin(getOrigin());
-        size_t origin_label_count(origin.getLabelCount());
-        size_t current_label_count(name.getLabelCount());
-        // This is how many labels we remove to get origin
-        size_t remove_labels(current_label_count - origin_label_count);
+    // First, do we have any kind of delegation (NS/DNAME) here?
+    Name origin(getOrigin());
+    size_t origin_label_count(origin.getLabelCount());
+    size_t current_label_count(name.getLabelCount());
+    // This is how many labels we remove to get origin
+    size_t remove_labels(current_label_count - origin_label_count);
 
-        // Now go trough all superdomains from origin down
-        for (int i(remove_labels); i > 0; --i) {
-            Name superdomain(name.split(i));
-            // Look if there's NS or DNAME (but ignore the NS in origin)
-            found = getRRset(superdomain, NULL, false, true,
-                             i != remove_labels && !glue_ok);
-            if (found.second) {
-                // We found something redirecting somewhere else
-                // (it can be only NS or DNAME here)
-                result_rrset = found.second;
-                if (result_rrset->getType() == isc::dns::RRType::NS()) {
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_FOUND_DELEGATION).
-                        arg(database_->getDBName()).arg(superdomain);
-                    result_status = DELEGATION;
-                } else {
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_FOUND_DNAME).
-                        arg(database_->getDBName()).arg(superdomain);
-                    result_status = DNAME;
-                }
-                // Don't search more
-                break;
-            }
-        }
-
-        if (!result_rrset) { // Only if we didn't find a redirect already
-            // Try getting the final result and extract it
-            // It is special if there's a CNAME or NS, DNAME is ignored here
-            // And we don't consider the NS in origin
-            found = getRRset(name, &type, true, false,
-                             name != origin && !glue_ok);
-            records_found = found.first;
+    // Now go trough all superdomains from origin down
+    for (int i(remove_labels); i > 0; --i) {
+        Name superdomain(name.split(i));
+        // Look if there's NS or DNAME (but ignore the NS in origin)
+        found = getRRset(superdomain, NULL, false, true,
+                            i != remove_labels && !glue_ok);
+        if (found.second) {
+            // We found something redirecting somewhere else
+            // (it can be only NS or DNAME here)
             result_rrset = found.second;
-            if (result_rrset && name != origin && !glue_ok &&
-                result_rrset->getType() == isc::dns::RRType::NS()) {
+            if (result_rrset->getType() == isc::dns::RRType::NS()) {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                          DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
-                    arg(database_->getDBName()).arg(name);
+                            DATASRC_DATABASE_FOUND_DELEGATION).
+                    arg(database_->getDBName()).arg(superdomain);
                 result_status = DELEGATION;
-            } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
-                       result_rrset->getType() == isc::dns::RRType::CNAME()) {
-                result_status = CNAME;
+            } else {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                            DATASRC_DATABASE_FOUND_DNAME).
+                    arg(database_->getDBName()).arg(superdomain);
+                result_status = DNAME;
             }
+            // Don't search more
+            break;
         }
-    } catch (const DataSourceError& dse) {
-        logger.error(DATASRC_DATABASE_FIND_ERROR)
-            .arg(database_->getDBName()).arg(dse.what());
-        throw;
-    } catch (const isc::Exception& isce) {
-        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR)
-            .arg(database_->getDBName()).arg(isce.what());
-        isc_throw(DataSourceError, isce.what());
-    } catch (const std::exception& ex) {
-        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR)
-            .arg(database_->getDBName()).arg(ex.what());
-        throw;
+    }
+
+    if (!result_rrset) { // Only if we didn't find a redirect already
+        // Try getting the final result and extract it
+        // It is special if there's a CNAME or NS, DNAME is ignored here
+        // And we don't consider the NS in origin
+        found = getRRset(name, &type, true, false,
+                            name != origin && !glue_ok);
+        records_found = found.first;
+        result_rrset = found.second;
+        if (result_rrset && name != origin && !glue_ok &&
+            result_rrset->getType() == isc::dns::RRType::NS()) {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                        DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
+                arg(database_->getDBName()).arg(name);
+            result_status = DELEGATION;
+        } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
+                    result_rrset->getType() == isc::dns::RRType::CNAME()) {
+            result_status = CNAME;
+        }
     }
 
     if (!result_rrset) {
