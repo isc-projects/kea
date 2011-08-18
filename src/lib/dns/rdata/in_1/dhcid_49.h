@@ -26,19 +26,28 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+/// \brief \c rdata::DHCID class represents the DHCID RDATA as defined %in
+/// RFC4701.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class, and provides trivial accessors specific to the
+/// DHCID RDATA.
 class DHCID : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
-    // subject to change
-    // DHCID& operator=(const DHCID& source);
-    // ~DHCID();
-
+    /// \brief Return the digest.
+    ///
+    /// This method never throws an exception.
     const std::vector<uint8_t>& getDigest() const;
 
 private:
-    std::vector<uint8_t> digest_;       // opaque data at least 3 octets long
+    /// \brief Private data representation
+    ///
+    /// Opaque data at least 3 octets long as per RFC4701.
+    ///
+    std::vector<uint8_t> digest_;
 };
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
