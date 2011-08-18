@@ -189,60 +189,6 @@ public:
     }
 
     /**
-     * \brief Starts a new search for records of the given name in the given zone
-     *
-     * The data searched by this call can be retrieved with subsequent calls to
-     * getNextRecord().
-     *
-     * \exception DataSourceError if there is a problem connecting to the
-     *                            backend database
-     *
-     * \param zone_id The zone to search in, as returned by getZone()
-     * \param name The name of the records to find
-     */
-    virtual void searchForRecords(int zone_id, const std::string& name) = 0;
-
-    /**
-     * \brief Retrieves the next record from the search started with searchForRecords()
-     *
-     * Returns a boolean specifying whether or not there was more data to read.
-     * In the case of a database error, a DatasourceError is thrown.
-     *
-     * The columns passed is an array of std::strings consisting of
-     * DatabaseConnection::COLUMN_COUNT elements, the elements of which
-     * are defined in DatabaseConnection::RecordColumns, in their basic
-     * string representation.
-     *
-     * If you are implementing a derived database connection class, you
-     * should have this method check the column_count value, and fill the
-     * array with strings conforming to their description in RecordColumn.
-     *
-     * \exception DatasourceError if there was an error reading from the database
-     *
-     * \param columns The elements of this array will be filled with the data
-     *                for one record as defined by RecordColumns
-     *                If there was no data, the array is untouched.
-     * \return true if there was a next record, false if there was not
-     */
-    virtual bool getNextRecord(std::string columns[], size_t column_count) = 0;
-
-    /**
-     * \brief Resets the current search initiated with searchForRecords()
-     *
-     * This method will be called when the called of searchForRecords() and
-     * getNextRecord() finds bad data, and aborts the current search.
-     * It should clean up whatever handlers searchForRecords() created, and
-     * any other state modified or needed by getNextRecord()
-     *
-     * Of course, the implementation of getNextRecord may also use it when
-     * it is done with a search. If it does, the implementation of this
-     * method should make sure it can handle being called multiple times.
-     *
-     * The implementation for this method should make sure it never throws.
-     */
-    virtual void resetSearch() = 0;
-
-    /**
      * Definitions of the fields as they are required to be filled in
      * by getNextRecord()
      *

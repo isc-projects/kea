@@ -362,10 +362,6 @@ convertToPlainChar(const unsigned char* ucp,
 }
 }
 
-// TODO: Once we want to have iterator returned from searchForRecords, this
-// class can be reused. It should be modified to take the sqlite3 statement
-// instead of creating it in constructor, it doesn't have to care which one
-// it is, just provide data from it.
 class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
 public:
     // Construct an iterator for all records. When constructed this
@@ -466,63 +462,6 @@ SQLite3Database::getRecords(const isc::dns::Name& name, int id) const {
 DatabaseAccessor::IteratorContextPtr
 SQLite3Database::getAllRecords(const isc::dns::Name&, int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
-}
-
-void
-SQLite3Database::searchForRecords(int zone_id, const std::string& name) {
-    resetSearch();
-    if (sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id) != SQLITE_OK) {
-        isc_throw(DataSourceError,
-                  "Error in sqlite3_bind_int() for zone_id " <<
-                  zone_id << ": " << sqlite3_errmsg(dbparameters_->db_));
-    }
-    // use transient since name is a ref and may disappear
-    if (sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
-                               SQLITE_TRANSIENT) != SQLITE_OK) {
-        isc_throw(DataSourceError,
-                  "Error in sqlite3_bind_text() for name " <<
-                  name << ": " << sqlite3_errmsg(dbparameters_->db_));
-    }
-}
-
-bool
-SQLite3Database::getNextRecord(std::string columns[], size_t column_count) {
-    if (column_count != COLUMN_COUNT) {
-            isc_throw(DataSourceError,
-                    "Datasource backend caller did not pass a column array "
-                    "of size " << COLUMN_COUNT << " to getNextRecord()");
-    }
-
-    sqlite3_stmt* current_stmt = dbparameters_->q_any_;
-    const int rc = sqlite3_step(current_stmt);
-
-    if (rc == SQLITE_ROW) {
-        for (int column = 0; column < column_count; ++column) {
-            try {
-                columns[column] = convertToPlainChar(sqlite3_column_text(
-                                                     current_stmt, column),
-                                                     dbparameters_);
-            } catch (const std::bad_alloc&) {
-                isc_throw(DataSourceError,
-                        "bad_alloc in Sqlite3Connection::getNextRecord");
-            }
-        }
-        return (true);
-    } else if (rc == SQLITE_DONE) {
-        // reached the end of matching rows
-        resetSearch();
-        return (false);
-    }
-    isc_throw(DataSourceError, "Unexpected failure in sqlite3_step: " <<
-                               sqlite3_errmsg(dbparameters_->db_));
-    // Compilers might not realize isc_throw always throws
-    return (false);
-}
-
-void
-SQLite3Database::resetSearch() {
-    sqlite3_reset(dbparameters_->q_any_);
-    sqlite3_clear_bindings(dbparameters_->q_any_);
 }
 
 }
