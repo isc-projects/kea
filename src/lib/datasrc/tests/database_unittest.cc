@@ -245,7 +245,7 @@ public:
 
 private:
     std::map<std::string, std::vector< std::vector<std::string> > > records;
-    // used as temporary storageduring the building of the fake data
+    // used as temporary storage during the building of the fake data
     std::vector< std::vector<std::string> > cur_name;
 
     // Adds one record to the current name in the database
