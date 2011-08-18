@@ -138,9 +138,13 @@ const char* const SCHEMA_LIST[] = {
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
-const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata, name "
+// note that the order of the SELECT values is specifically chosen to match
+// the enum values in RecordColumns
+const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2";
 
+// note that the order of the SELECT values is specifically chosen to match
+// the enum values in RecordColumns
 const char* const q_iterate_str = "SELECT rdtype, ttl, sigtype, rdata, name FROM records "
                                   "WHERE zone_id = ?1 "
                                   "ORDER BY name, rdtype";
@@ -369,14 +373,11 @@ public:
     Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
         iterator_type_(ITT_ALL),
         database_(database),
-        statement(NULL)
+        statement_(NULL)
     {
         // We create the statement now and then just keep getting data from it
-        statement = prepare(database->dbparameters_->db_, q_iterate_str);
-        if (sqlite3_bind_int(statement, 1, id) != SQLITE_OK) {
-            isc_throw(SQLite3Error, "Could not bind " << id <<
-                      " to SQL statement (iterate)");
-        }
+        statement_ = prepare(database->dbparameters_->db_, q_iterate_str);
+        bindZoneId(id);
     }
 
     // Construct an iterator for records with a specific name. When constructed
@@ -385,21 +386,12 @@ public:
             const isc::dns::Name& name) :
         iterator_type_(ITT_NAME),
         database_(database),
-        statement(NULL)
+        statement_(NULL)
     {
         // We create the statement now and then just keep getting data from it
-        // TODO move to private and clean up error
-        statement = prepare(database->dbparameters_->db_, q_any_str);
-        if (sqlite3_bind_int(statement, 1, id) != SQLITE_OK) {
-            isc_throw(SQLite3Error, "Could not bind " << id <<
-                      " to SQL statement");
-        }
-        if (sqlite3_bind_text(statement, 2, name.toText().c_str(), -1,
-                              SQLITE_TRANSIENT) != SQLITE_OK) {
-            sqlite3_finalize(statement);
-            isc_throw(SQLite3Error, "Could not bind " << id <<
-                      " to SQL statement");
-        }
+        statement_ = prepare(database->dbparameters_->db_, q_any_str);
+        bindZoneId(id);
+        bindName(name);
     }
 
     bool getNext(std::string data[], size_t size) {
@@ -408,7 +400,7 @@ public:
                       ", not " << COLUMN_COUNT);
         }
         // If there's another row, get it
-        int rc(sqlite3_step(statement));
+        int rc(sqlite3_step(statement_));
         if (rc == SQLITE_ROW) {
             // For both types, we copy the first four columns
             copyColumn(data, TYPE_COLUMN);
@@ -429,9 +421,7 @@ public:
     }
 
     virtual ~Context() {
-        if (statement) {
-            sqlite3_finalize(statement);
-        }
+        sqlite3_finalize(statement_);
     }
 
 private:
@@ -444,14 +434,32 @@ private:
     };
 
     void copyColumn(std::string data[], int column) {
-        data[column] = convertToPlainChar(sqlite3_column_text(statement,
+        data[column] = convertToPlainChar(sqlite3_column_text(statement_,
                                                               column),
                                           database_->dbparameters_);
     }
 
+    void bindZoneId(const int zone_id) {
+        if (sqlite3_bind_int(statement_, 1, zone_id) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind int " << zone_id <<
+                      " to SQL statement: " <<
+                      sqlite3_errmsg(database_->dbparameters_->db_));
+        }
+    }
+
+    void bindName(const isc::dns::Name& name) {
+        if (sqlite3_bind_text(statement_, 2, name.toText().c_str(), -1,
+                              SQLITE_TRANSIENT) != SQLITE_OK) {
+            const char* errmsg = sqlite3_errmsg(database_->dbparameters_->db_);
+            sqlite3_finalize(statement_);
+            isc_throw(SQLite3Error, "Could not bind text '" << name <<
+                      "' to SQL statement: " << errmsg);
+        }
+    }
+
     IteratorType iterator_type_;
     boost::shared_ptr<const SQLite3Database> database_;
-    sqlite3_stmt *statement;
+    sqlite3_stmt *statement_;
 };
 
 DatabaseAccessor::IteratorContextPtr
