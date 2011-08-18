@@ -172,6 +172,9 @@ public:
     };
 
     /// TBD
+    virtual boost::shared_ptr<DatabaseAccessor> clone() = 0;
+
+    /// TBD
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
                                                  bool replace) = 0;
 
