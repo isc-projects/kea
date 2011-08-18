@@ -329,7 +329,10 @@ class BoB:
                     'set', self._get_stats_data())
                 seq = self.cc_session.group_sendmsg(cmd, 'Stats')
                 # Consume the answer, in case it becomes a orphan message.
-                self.cc_session.group_recvmsg(False, seq) 
+                try:
+                    self.cc_session.group_recvmsg(False, seq)
+                except isc.cc.session.SessionTimeout:
+                    pass
                 answer = isc.config.ccsession.create_answer(0)
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
