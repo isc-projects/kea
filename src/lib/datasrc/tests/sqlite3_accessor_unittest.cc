@@ -178,22 +178,12 @@ TEST_F(SQLite3Access, getRecords) {
     const size_t column_count = DatabaseAccessor::COLUMN_COUNT;
     std::string columns[column_count];
 
-    // TODO: can't do this anymore
-    // without search, getNext() should return false
-    //EXPECT_FALSE(context->getNext(columns));
-    //checkRecordRow(columns, "", "", "", "", "");
-
     DatabaseAccessor::IteratorContextPtr
         context(db->getRecords(Name("foo.bar"), 1));
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
     EXPECT_FALSE(context->getNext(columns));
     checkRecordRow(columns, "", "", "", "", "");
-
-    // TODO can't pass incomplete name anymore
-    //context = db->getRecords(Name(""), zone_id);
-    //EXPECT_FALSE(context->getNext(columns));
-    //checkRecordRow(columns, "", "", "", "", "");
 
     // now try some real searches
     context = db->getRecords(Name("foo.example.com."), zone_id);

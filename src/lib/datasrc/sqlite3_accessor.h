@@ -76,6 +76,7 @@ public:
      * Closes the database.
      */
     ~SQLite3Database();
+
     /**
      * \brief Look up a zone
      *
@@ -91,11 +92,30 @@ public:
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
 
-    /// \brief Implementation of DatabaseAbstraction::getRecords
+    /** \brief Look up all resource records for a name
+     *
+     * This implements the getRecords() method from DatabaseAccessor
+     *
+     * \exception SQLite3Error if there is an sqlite3 error when performing
+     *                         the query
+     *
+     * \param name the name to look up
+     * \param id the zone id, as returned by getZone()
+     * \return Iterator that contains all records with the given name
+     */
     virtual IteratorContextPtr getRecords(const isc::dns::Name& name,
                                           int id) const;
 
-    /// \brief Implementation of DatabaseAbstraction::getAllRecords
+    /** \brief Look up all resource records for a zone
+     *
+     * This implements the getRecords() method from DatabaseAccessor
+     *
+     * \exception SQLite3Error if there is an sqlite3 error when performing
+     *                         the query
+     *
+     * \param id the zone id, as returned by getZone()
+     * \return Iterator that contains all records in the given zone
+     */
     virtual IteratorContextPtr getAllRecords(int id) const;
 
     /// The SQLite3 implementation of this method returns a string starting
