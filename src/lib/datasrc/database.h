@@ -111,11 +111,11 @@ public:
          * Depending on how the iterator was constructed, there is a difference
          * in behaviour; for a 'full zone iterator', created with
          * getAllRecords(), all 5 elements of the array are overwritten.
-         * for a 'name iterator', created with getRecords(), the fifth column
+         * For a 'name iterator', created with getRecords(), the fifth column
          * (NAME_COLUMN) is untouched, since what would be added here is by
          * definition already known to the caller (it already passes it as
          * an argument to getRecords()).
-         * 
+         *
          * \note The order of RRs is not strictly set, but the RRs for single
          * RRset must not be interleaved with any other RRs (eg. RRsets must be
          * "together").
@@ -138,7 +138,7 @@ public:
      * \brief Creates an iterator context for a specific name.
      *
      * This should create a new iterator context to be used by
-     * DatabaseConnection's ZoneIterator. It can be created based on the name
+     * DatabaseAccessor's ZoneIterator. It can be created based on the name
      * or the ID (returned from getZone()), what is more comfortable for the
      * database implementation. Both are provided (and are guaranteed to match,
      * the DatabaseClient first looks up the zone ID and then calls this).
@@ -174,7 +174,7 @@ public:
      * \brief Creates an iterator context for the whole zone.
      *
      * This should create a new iterator context to be used by
-     * DatabaseConnection's ZoneIterator. It can be created based on the name
+     * DatabaseAccessor's ZoneIterator. It can be created based on the name
      * or the ID (returned from getZone()), what is more comfortable for the
      * database implementation. Both are provided (and are guaranteed to match,
      * the DatabaseClient first looks up the zone ID and then calls this).
@@ -201,7 +201,7 @@ public:
 
     /**
      * Definitions of the fields as they are required to be filled in
-     * by getNextRecord()
+     * by IteratorContext::getNext()
      *
      * When implementing getNext(), the columns array should
      * be filled with the values as described in this enumeration,
