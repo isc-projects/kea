@@ -111,7 +111,7 @@ private:
             }
         }
 
-        virtual bool getNext(std::string columns[], size_t column_count) {
+        virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) {
             if (searched_name_ == "dsexception.in.getnext.") {
                 isc_throw(DataSourceError, "datasource exception on getnextrecord");
             } else if (searched_name_ == "iscexception.in.getnext.") {
@@ -120,11 +120,8 @@ private:
                 throw std::exception();
             }
 
-            if (column_count != DatabaseAccessor::COLUMN_COUNT) {
-                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-            }
             if (cur_record_ < cur_name.size()) {
-                for (size_t i = 0; i < column_count; ++i) {
+                for (size_t i = 0; i < COLUMN_COUNT; ++i) {
                     columns[i] = cur_name[cur_record_][i];
                 }
                 cur_record_++;
@@ -147,10 +144,7 @@ private:
         MockIteratorContext() :
             step(0)
         { }
-        virtual bool getNext(string data[], size_t size) {
-            if (size != DatabaseAccessor::COLUMN_COUNT) {
-                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-            }
+        virtual bool getNext(string (&data)[COLUMN_COUNT]) {
             switch (step ++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "example.org";
@@ -193,10 +187,7 @@ private:
     };
     class EmptyIteratorContext : public IteratorContext {
     public:
-        virtual bool getNext(string[], size_t size) {
-            if (size != DatabaseAccessor::COLUMN_COUNT) {
-                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-            }
+        virtual bool getNext(string(&)[COLUMN_COUNT]) {
             return (false);
         }
     };
@@ -207,10 +198,7 @@ private:
         BadIteratorContext() :
             step(0)
         { }
-        virtual bool getNext(string data[], size_t size) {
-            if (size != DatabaseAccessor::COLUMN_COUNT) {
-                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-            }
+        virtual bool getNext(string (&data)[COLUMN_COUNT]) {
             switch (step ++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";

@@ -48,6 +48,9 @@ namespace datasrc {
  */
 class DatabaseAccessor : boost::noncopyable {
 public:
+    /// The number of fields the columns array passed to getNext should have
+    static const size_t COLUMN_COUNT = 5;
+
     /**
      * \brief Destructor
      *
@@ -119,7 +122,7 @@ public:
          *     exception (or any other in case of derived class) is thrown,
          *     the iterator can't be safely used any more.
          */
-        virtual bool getNext(std::string columns[], size_t column_data) = 0;
+        virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) = 0;
     };
 
     typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
@@ -205,9 +208,6 @@ public:
         RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
         NAME_COLUMN = 4     ///< The domain name of this RR
     };
-
-    /// The number of fields the columns array passed to getNextRecord should have
-    static const size_t COLUMN_COUNT = 5;
 
     /**
      * \brief Returns a string identifying this dabase backend
