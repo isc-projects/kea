@@ -394,11 +394,7 @@ public:
         bindName(name);
     }
 
-    bool getNext(std::string data[], size_t size) {
-        if (size != COLUMN_COUNT) {
-            isc_throw(DataSourceError, "getNext received size of " << size <<
-                      ", not " << COLUMN_COUNT);
-        }
+    bool getNext(std::string (&data)[COLUMN_COUNT]) {
         // If there's another row, get it
         int rc(sqlite3_step(statement_));
         if (rc == SQLITE_ROW) {

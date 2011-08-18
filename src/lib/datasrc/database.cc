@@ -191,7 +191,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     }
 
     std::string columns[DatabaseAccessor::COLUMN_COUNT];
-    while (context->getNext(columns, DatabaseAccessor::COLUMN_COUNT)) {
+    while (context->getNext(columns)) {
         if (!records_found) {
             records_found = true;
         }
@@ -466,7 +466,7 @@ private:
     // Load next row of data
     void getData() {
         string data[DatabaseAccessor::COLUMN_COUNT];
-        data_ready_ = context_->getNext(data, DatabaseAccessor::COLUMN_COUNT);
+        data_ready_ = context_->getNext(data);
         name_ = data[DatabaseAccessor::NAME_COLUMN];
         rtype_ = data[DatabaseAccessor::TYPE_COLUMN];
         ttl_ = data[DatabaseAccessor::TTL_COLUMN];
