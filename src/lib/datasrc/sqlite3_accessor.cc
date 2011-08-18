@@ -395,7 +395,7 @@ public:
 
     bool getNext(std::string (&data)[COLUMN_COUNT]) {
         // If there's another row, get it
-        int rc(sqlite3_step(statement_));
+        const int rc(sqlite3_step(statement_));
         if (rc == SQLITE_ROW) {
             // For both types, we copy the first four columns
             copyColumn(data, TYPE_COLUMN);
@@ -452,7 +452,7 @@ private:
         }
     }
 
-    IteratorType iterator_type_;
+    const IteratorType iterator_type_;
     boost::shared_ptr<const SQLite3Database> database_;
     sqlite3_stmt *statement_;
 };

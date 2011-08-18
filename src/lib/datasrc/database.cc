@@ -185,7 +185,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     DatabaseAccessor::IteratorContextPtr
         context(database_->getRecords(name, zone_id_));
     // It must not return NULL, that's a bug of the implementation
-    if (context == DatabaseAccessor::IteratorContextPtr()) {
+    if (!context) {
         isc_throw(isc::Unexpected, "Iterator context null at " +
                   name.toText());
     }
@@ -292,7 +292,6 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     return (std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset));
 }
 
-
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
@@ -310,30 +309,30 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         .arg(database_->getDBName()).arg(name).arg(type);
 
     // First, do we have any kind of delegation (NS/DNAME) here?
-    Name origin(getOrigin());
-    size_t origin_label_count(origin.getLabelCount());
-    size_t current_label_count(name.getLabelCount());
+    const Name origin(getOrigin());
+    const size_t origin_label_count(origin.getLabelCount());
+    const size_t current_label_count(name.getLabelCount());
     // This is how many labels we remove to get origin
-    size_t remove_labels(current_label_count - origin_label_count);
+    const size_t remove_labels(current_label_count - origin_label_count);
 
     // Now go trough all superdomains from origin down
     for (int i(remove_labels); i > 0; --i) {
-        Name superdomain(name.split(i));
+        const Name superdomain(name.split(i));
         // Look if there's NS or DNAME (but ignore the NS in origin)
         found = getRRset(superdomain, NULL, false, true,
-                            i != remove_labels && !glue_ok);
+                         i != remove_labels && !glue_ok);
         if (found.second) {
             // We found something redirecting somewhere else
             // (it can be only NS or DNAME here)
             result_rrset = found.second;
             if (result_rrset->getType() == isc::dns::RRType::NS()) {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                            DATASRC_DATABASE_FOUND_DELEGATION).
+                          DATASRC_DATABASE_FOUND_DELEGATION).
                     arg(database_->getDBName()).arg(superdomain);
                 result_status = DELEGATION;
             } else {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                            DATASRC_DATABASE_FOUND_DNAME).
+                          DATASRC_DATABASE_FOUND_DNAME).
                     arg(database_->getDBName()).arg(superdomain);
                 result_status = DNAME;
             }
@@ -346,18 +345,17 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         // Try getting the final result and extract it
         // It is special if there's a CNAME or NS, DNAME is ignored here
         // And we don't consider the NS in origin
-        found = getRRset(name, &type, true, false,
-                            name != origin && !glue_ok);
+        found = getRRset(name, &type, true, false, name != origin && !glue_ok);
         records_found = found.first;
         result_rrset = found.second;
         if (result_rrset && name != origin && !glue_ok &&
             result_rrset->getType() == isc::dns::RRType::NS()) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                        DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
+                      DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
                 arg(database_->getDBName()).arg(name);
             result_status = DELEGATION;
         } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
-                    result_rrset->getType() == isc::dns::RRType::CNAME()) {
+                   result_rrset->getType() == isc::dns::RRType::CNAME()) {
             result_status = CNAME;
         }
     }
