@@ -497,7 +497,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     }
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(database_->getAllRecords(name, zone.second));
+        context(database_->getAllRecords(zone.second));
     // It must not return NULL, that's a bug of the implementation
     if (context == DatabaseAccessor::IteratorContextPtr()) {
         isc_throw(isc::Unexpected, "Iterator context null at " +
