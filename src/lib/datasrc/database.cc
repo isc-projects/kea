@@ -362,16 +362,13 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 result_status = CNAME;
             }
         }
-    // TODO: some of these can be removed
     } catch (const DataSourceError& dse) {
         logger.error(DATASRC_DATABASE_FIND_ERROR)
             .arg(database_->getDBName()).arg(dse.what());
-        // call cleanup and rethrow
         throw;
     } catch (const isc::Exception& isce) {
         logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR)
             .arg(database_->getDBName()).arg(isce.what());
-        // cleanup, change it to a DataSourceError and rethrow
         isc_throw(DataSourceError, isce.what());
     } catch (const std::exception& ex) {
         logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR)
