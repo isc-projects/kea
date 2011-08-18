@@ -142,7 +142,10 @@ class ZonemgrRefresh:
         """Set zone next refresh time after zone refresh fail.
            now + retry - retry_jitter <= next_refresh_time <= now + retry
            """
-        zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[RETRY_OFFSET])
+        if (self._get_zone_soa_rdata(zone_name_class) is not None):
+            zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[RETRY_OFFSET])
+        else:
+            zone_retry_time = 0.0
         zone_retry_time = max(self._lowerbound_retry, zone_retry_time)
         self._set_zone_timer(zone_name_class, zone_retry_time, self._refresh_jitter * zone_retry_time)
 
@@ -174,7 +177,8 @@ class ZonemgrRefresh:
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
         # Is zone expired?
-        if (self._zone_is_expired(zone_name_class)):
+        if ((self._get_zone_soa_rdata(zone_name_class) is not None) and
+            self._zone_is_expired(zone_name_class)):
             self._set_zone_state(zone_name_class, ZONE_EXPIRED)
         else:
             self._set_zone_state(zone_name_class, ZONE_OK)
@@ -200,15 +204,17 @@ class ZonemgrRefresh:
         logger.debug(DBG_ZONEMGR_BASIC, ZONEMGR_LOAD_ZONE, zone_name_class[0], zone_name_class[1])
         zone_info = {}
         zone_soa = sqlite3_ds.get_zone_soa(str(zone_name_class[0]), self._db_file)
-        if not zone_soa:
-            logger.error(ZONEMGR_NO_SOA, zone_name_class[0], zone_name_class[1])
-            return
-        zone_info["zone_soa_rdata"] = zone_soa[7]
+        if zone_soa is None:
+            logger.warn(ZONEMGR_NO_SOA, zone_name_class[0], zone_name_class[1])
+            zone_info["zone_soa_rdata"] = None
+            zone_reload_jitter = 0
+        else:
+            zone_info["zone_soa_rdata"] = zone_soa[7]
+            zone_reload_jitter = float(zone_soa[7].split(" ")[RETRY_OFFSET])
         zone_info["zone_state"] = ZONE_OK
         zone_info["last_refresh_time"] = self._get_current_time()
         self._zonemgr_refresh_info[zone_name_class] = zone_info
         # Imposes some random jitters to avoid many zones need to do refresh at the same time.
-        zone_reload_jitter = float(zone_soa[7].split(" ")[RETRY_OFFSET])
         zone_reload_jitter = max(self._lowerbound_retry, zone_reload_jitter)
         self._set_zone_timer(zone_name_class, zone_reload_jitter, self._reload_jitter * zone_reload_jitter)
 
@@ -457,8 +463,7 @@ class ZonemgrRefresh:
                 required[name_class] = True
                 # Add it only if it isn't there already
                 if not name_class in self._zonemgr_refresh_info:
-                    # If we are not able to find it in database, simply skip
-                    # it and log an error
+                    # If we are not able to find it in database, log an warning
                     self.zonemgr_add_zone(name_class)
             # Drop the zones that are no longer there
             # Do it in two phases, python doesn't like deleting while iterating
