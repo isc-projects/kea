@@ -162,7 +162,7 @@ IfaceMgr::openSockets() {
              ++addr) {
 
             sock = openSocket(iface->name_, *addr,
-                              DHCP6_SERVER_PORT, false);
+                              DHCP6_SERVER_PORT);
             if (sock<0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);
@@ -171,7 +171,7 @@ IfaceMgr::openSockets() {
 
             sock = openSocket(iface->name_,
                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                              DHCP6_SERVER_PORT, true);
+                              DHCP6_SERVER_PORT);
             if (sock<0) {
                 cout << "Failed to open multicast socket." << endl;
                 close(sendsock_);
@@ -239,8 +239,7 @@ IfaceMgr::getIface(const std::string& ifname) {
 int
 IfaceMgr::openSocket(const std::string& ifname,
                      const IOAddress& addr,
-                     int port,
-                     bool mcast) {
+                     int port) {
     struct sockaddr_storage name;
     int name_len;
     struct sockaddr_in6 *addr6;
@@ -309,10 +308,10 @@ IfaceMgr::openSocket(const std::string& ifname,
 
     // multicast stuff
 
-    if (mcast /*addr.multicast()*/) {
+    if (addr.getAddress().to_v6().is_multicast()) {
         // both mcast (ALL_DHCP_RELAY_AGENTS_AND_SERVERS and ALL_DHCP_SERVERS)
-        // are link and site-scoped, so there is no sense to join those them
-        // with global addressed.
+        // are link and site-scoped, so there is no sense to join those groups
+        // with global addresses.
 
         if ( !joinMcast( sock, ifname,
                          string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {

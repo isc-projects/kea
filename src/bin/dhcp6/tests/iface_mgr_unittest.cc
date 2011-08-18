@@ -39,8 +39,8 @@ public:
 
     int openSocket(const std::string& ifname,
                    const isc::asiolink::IOAddress& addr,
-                   int port, bool multicast) {
-        return IfaceMgr::openSocket(ifname, addr, port, multicast);
+                   int port) {
+        return IfaceMgr::openSocket(ifname, addr, port);
     }
 
 };
@@ -69,6 +69,8 @@ TEST_F(IfaceMgrTest, ifaceClass) {
     delete iface;
 
 }
+
+// TODO: Implement getPlainMac() test as soon as interface detection is implemented.
 
 TEST_F(IfaceMgrTest, getIface) {
 
@@ -146,14 +148,49 @@ TEST_F(IfaceMgrTest, sockets) {
     IOAddress loAddr("::1");
 
     // bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547, true);
+    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547);
     EXPECT_GT(socket1, 0); // socket > 0
 
     // bind unicast socket to port 10548
-    int socket2 = ifacemgr->openSocket("lo", loAddr, 10548, false);
+    int socket2 = ifacemgr->openSocket("lo", loAddr, 10548);
     EXPECT_GT(socket2, 0);
 
-    // good to check that both sockets can be opened at once
+    // expect success. This address/port is already bound, but
+    // we are using SO_REUSEADDR, so we can bind it twice
+    int socket3 = ifacemgr->openSocket("lo", loAddr, 10547);
+    EXPECT_GT(socket3, 0); // socket > 0
+
+    // we now have 3 sockets open at the same time. Looks good.
+
+    close(socket1);
+    close(socket2);
+    close(socket3);
+
+    delete ifacemgr;
+}
+
+TEST_F(IfaceMgrTest, socketsMcast) {
+    // testing socket operation in a portable way is tricky
+    // without interface detection implemented
+
+    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+
+    IOAddress loAddr("::1");
+    IOAddress mcastAddr("ff02::1:2");
+
+    // bind multicast socket to port 10547
+    int socket1 = ifacemgr->openSocket("lo", mcastAddr, 10547);
+    EXPECT_GT(socket1, 0); // socket > 0
+
+    // expect success. This address/port is already bound, but
+    // we are using SO_REUSEADDR, so we can bind it twice
+    int socket2 = ifacemgr->openSocket("lo", mcastAddr, 10547);
+    EXPECT_GT(socket2, 0);
+
+    // there's no good way to test negative case here.
+    // we would need non-multicast interface. We will be able
+    // to iterate thru available interfaces and check if there
+    // are interfaces without multicast-capable flag.
 
     close(socket1);
     close(socket2);
@@ -173,8 +210,8 @@ TEST_F(IfaceMgrTest, sendReceive) {
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("::1");
-    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547, true);
-    int socket2 = ifacemgr->openSocket("lo", loAddr, 10546, false);
+    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547);
+    int socket2 = ifacemgr->openSocket("lo", loAddr, 10546);
 
     ifacemgr->setSendSock(socket2);
     ifacemgr->setRecvSock(socket1);

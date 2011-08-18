@@ -72,7 +72,7 @@ namespace isc {
 
         int openSocket(const std::string& ifname,
                        const isc::asiolink::IOAddress& addr,
-                       int port, bool multicast);
+                       int port);
 
         // TODO: having 2 maps (ifindex->iface and ifname->iface would)
         //      probably be better for performance reasons
