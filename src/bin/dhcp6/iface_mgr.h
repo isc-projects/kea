@@ -16,7 +16,7 @@
 #define IFACE_MGR_H
 
 #include <list>
-#include "dhcp6/addr6.h"
+#include "io_address.h"
 #include "dhcp6/pkt6.h"
 
 namespace isc {
@@ -29,6 +29,7 @@ namespace isc {
      */
     class IfaceMgr {
     public:
+        typedef std::list<isc::asiolink::IOAddress> Addr6Lst;
         struct Iface { // XXX: could be a class as well
             std::string name_;
             int ifindex_;
@@ -58,7 +59,7 @@ namespace isc {
         void printIfaces();
 
         int openSocket(const std::string& ifname,
-                       const Addr6& addr,
+                       const isc::asiolink::IOAddress& addr,
                        int port, bool multicast);
         bool joinMcast(int sock, const std::string& ifname,
                        const std::string& mcast);

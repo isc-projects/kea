@@ -16,7 +16,7 @@
 #define PKT6_H
 
 #include <iostream>
-#include "dhcp6/addr6.h"
+#include "io_address.h"
 
 namespace isc {
 
@@ -31,8 +31,8 @@ namespace isc {
         char * data_;
         int data_len_;
 
-        Addr6 local_addr_;
-        Addr6 remote_addr_;
+        isc::asiolink::IOAddress local_addr_;
+        isc::asiolink::IOAddress remote_addr_;
 
         std::string iface_;
         int ifindex_;

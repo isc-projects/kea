@@ -19,13 +19,13 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 
-#include "addr6.h"
 #include "dhcp6/iface_mgr.h"
 #include "dhcp6/dhcp6.h"
 #include "exceptions/exceptions.h"
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 
 namespace isc {
 
@@ -135,7 +135,7 @@ IfaceMgr::detectIfaces() {
         cout << "Detected interface " << ifaceName << "/" << linkLocal << endl;
 
         Iface iface(ifaceName, if_nametoindex( ifaceName.c_str() ) );
-        Addr6 addr(linkLocal.c_str(), true);
+        IOAddress addr(linkLocal);
         iface.addrs_.push_back(addr);
         ifaces_.push_back(iface);
         interfaces.close();
@@ -167,7 +167,7 @@ IfaceMgr::openSockets() {
             sendsock_ = sock;
 
             sock = openSocket(iface->name_,
-                              Addr6(ALL_DHCP_RELAY_AGENTS_AND_SERVERS, true),
+                              IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                               DHCP6_SERVER_PORT, true);
             if (sock<0) {
                 cout << "Failed to open multicast socket." << endl;
@@ -190,7 +190,7 @@ IfaceMgr::printIfaces() {
         for (Addr6Lst::const_iterator addr=iface->addrs_.begin();
              addr != iface->addrs_.end();
              ++addr) {
-            cout << "  " << *addr << endl;
+            cout << "  " << addr->toText() << endl;
         }
         cout << "  mac: " << iface->getPlainMac() << endl;
     }
@@ -209,7 +209,7 @@ IfaceMgr::getIface(int ifindex) {
 }
 
 IfaceMgr::Iface*
-IfaceMgr::getIface(const std::string &ifname) {
+IfaceMgr::getIface(const std::string& ifname) {
     for (IfaceLst::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
@@ -221,25 +221,27 @@ IfaceMgr::getIface(const std::string &ifname) {
 }
 
 int
-IfaceMgr::openSocket(const std::string &ifname,
-                         const Addr6 &addr,
-                         int port,
-                         bool mcast) {
+IfaceMgr::openSocket(const std::string& ifname,
+                     const IOAddress & addr,
+                     int port,
+                     bool mcast) {
     struct sockaddr_storage name;
     int name_len;
     struct sockaddr_in6 *addr6;
 
-    cout << "Creating socket on " << ifname << "/" << addr << "/port="
-         << port << endl;
+    cout << "Creating socket on " << ifname << "/" << addr.toText()
+         << "/port=" << port << endl;
 
     memset(&name, 0, sizeof(name));
     addr6 = (struct sockaddr_in6 *)&name;
     addr6->sin6_family = AF_INET6;
     addr6->sin6_port = htons(port);
     addr6->sin6_scope_id = if_nametoindex(ifname.c_str());
+
     memcpy(&addr6->sin6_addr,
-           addr.get(),
+           addr.getAddress().to_v6().to_bytes().data(),
            sizeof(addr6->sin6_addr));
+
 #ifdef HAVE_SA_LEN
     addr6->sin6_len = sizeof(*addr6);
 #endif
@@ -264,7 +266,7 @@ IfaceMgr::openSocket(const std::string &ifname,
     }
 
     if (bind(sock, (struct sockaddr *)&name, name_len) < 0) {
-        cout << "Failed to bind socket " << sock << " to " << addr.getPlain()
+        cout << "Failed to bind socket " << sock << " to " << addr.toText()
              << "/port=" << port << endl;
         return (-1);
     }
@@ -299,8 +301,8 @@ IfaceMgr::openSocket(const std::string &ifname,
         }
     }
 
-    cout << "Created socket " << sock << " on " << ifname << "/" << addr
-         << "/port=" << port << endl;
+    cout << "Created socket " << sock << " on " << ifname << "/" <<
+        addr.toText() << "/port=" << port << endl;
 
     return (sock);
 }
@@ -351,7 +353,9 @@ IfaceMgr::send(Pkt6 &pkt) {
     memset(&to, 0, sizeof(to));
     to.sin6_family = AF_INET6;
     to.sin6_port = htons(pkt.remote_port_);
-    memcpy(&to.sin6_addr, pkt.remote_addr_.get(), 16);
+    memcpy(&to.sin6_addr,
+           pkt.remote_addr_.getAddress().to_v6().to_bytes().data(),
+           16);
     to.sin6_scope_id = pkt.ifindex_;
 
     m.msg_name = &to;
@@ -394,7 +398,8 @@ IfaceMgr::send(Pkt6 &pkt) {
 
     cout << "Sent " << pkt.data_len_ << " bytes over "
          << pkt.iface_ << "/" << pkt.ifindex_ << " interface: "
-         << " dst=" << pkt.remote_addr_ << ", src=" << pkt.local_addr_
+         << " dst=" << pkt.remote_addr_.toText()
+         << ", src=" << pkt.local_addr_.toText()
          << endl;
 
     return (result);
@@ -410,6 +415,7 @@ IfaceMgr::receive() {
     struct sockaddr_in6 from;
     struct in6_addr to_addr;
     Pkt6* pkt;
+    char addr_str[INET6_ADDRSTRLEN];
 
     try {
         pkt = new Pkt6(1500);
@@ -489,8 +495,15 @@ IfaceMgr::receive() {
         return (0);
     }
 
-    pkt->local_addr_ = Addr6(&to_addr);
-    pkt->remote_addr_ = Addr6(&from);
+
+    // That's ugly.
+    // TODO add IOAddress constructor that will take struct in6_addr* parameter
+    inet_ntop(AF_INET6, &to_addr, addr_str,INET6_ADDRSTRLEN);
+    pkt->local_addr_ = IOAddress(string(addr_str));
+
+    inet_ntop(AF_INET6, &from.sin6_addr, addr_str, INET6_ADDRSTRLEN);
+    pkt->remote_addr_ = IOAddress(string(addr_str));
+
     pkt->remote_port_ = ntohs(from.sin6_port);
 
     Iface* received = getIface(pkt->ifindex_);
@@ -507,7 +520,8 @@ IfaceMgr::receive() {
     // TODO Move this to LOG_DEBUG
     cout << "Received " << pkt->data_len_ << " bytes over "
          << pkt->iface_ << "/" << pkt->ifindex_ << " interface: "
-         << " src=" << pkt->remote_addr_ << ", dst=" << pkt->local_addr_
+         << " src=" << pkt->remote_addr_.toText()
+         << ", dst=" << pkt->local_addr_.toText()
          << endl;
 
     return (pkt);
