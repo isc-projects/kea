@@ -215,7 +215,9 @@ class CCSessionListener(Listener):
 
     def _update_stats_data(self, args):
         # 'args' must be dictionary type
-        self.stats_data.update(args['stats_data'])
+        if isinstance(args, dict) and isinstance(args.get('stats_data'), dict):
+            self.stats_data.update(args['stats_data'])
+
         # overwrite "stats.LastUpdateTime"
         self.stats_data['stats.last_update_time'] = get_datetime()
 
