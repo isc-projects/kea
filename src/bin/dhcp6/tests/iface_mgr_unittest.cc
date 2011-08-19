@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 
 #include "io_address.h"
-#include "dhcp6/pkt6.h"
+#include "dhcp/pkt6.h"
 #include "dhcp6/iface_mgr.h"
 
 using namespace std;
