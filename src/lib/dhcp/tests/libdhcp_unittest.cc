@@ -12,35 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
-#include "dhcp6/dhcp6.h"
-#include "dhcp6/pkt6.h"
+#include <config.h>
 #include <iostream>
+#include <sstream>
 
-namespace isc {
+#include <arpa/inet.h>
+#include <gtest/gtest.h>
 
-///
-/// constructor
-///
-/// \param dataLen - length of the data to be allocated
-///
-Pkt6::Pkt6(int dataLen)
-    :local_addr_("::"),
-     remote_addr_("::") {
-    try {
-	data_ = boost::shared_array<char>(new char[dataLen]);
-	data_len_ = dataLen;
-    } catch (const std::exception& ex) {
-	// TODO move to LOG_FATAL()
-	// let's continue with empty pkt for now
-        std::cout << "Failed to allocate " << dataLen << " bytes."
-                  << std::endl;
-        data_len_ = 0;
+#include "dhcp/libdhcp.h"
+
+using namespace std;
+using namespace isc;
+using namespace isc::dhcp;
+
+namespace {
+class LibDhcpTest : public ::testing::Test {
+public:
+    LibDhcpTest() {
     }
-}
-
-Pkt6::~Pkt6() {
-    // no need to delete anything shared_ptr will take care of data_
-}
-
 };
+
+TEST_F(LibDhcpTest, basic) {
+    // dummy test
+
+    // an attempt to bind this socket will fail.
+    EXPECT_EQ(LibDHCP::version(), "0");
+}
+
+}
