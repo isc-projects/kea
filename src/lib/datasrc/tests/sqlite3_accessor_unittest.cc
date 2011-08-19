@@ -423,6 +423,12 @@ TEST_F(SQLite3Update, updateConflict) {
     EXPECT_THROW(accessor->startUpdateZone("example.com.", true),
                  DataSourceError);
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+
+    // Once we rollback the other attempt of change, we should be able to
+    // start and commit the transaction using the main accessor.
+    another_accessor->rollbackUpdateZone();
+    accessor->startUpdateZone("example.com.", true);
+    accessor->commitUpdateZone();
 }
 
 TEST_F(SQLite3Update, duplicateUpdate) {
