@@ -20,6 +20,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/encode/hex.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -51,7 +52,7 @@ DHCID::DHCID(const string& dhcid_str) {
     stringbuf digestbuf;
 
     iss >> &digestbuf;
-    decodeHex(digestbuf.str(), digest_);
+    isc::util::encode::decodeHex(digestbuf.str(), digest_);
 
     // RFC4701 states DNS software should consider the RDATA section to
     // be opaque, but there must be at least three bytes in the data:
@@ -111,7 +112,7 @@ DHCID::toWire(AbstractMessageRenderer& renderer) const {
 /// \return A string representation of \c DHCID.
 string
 DHCID::toText() const {
-    return (encodeHex(digest_));
+    return (isc::util::encode::encodeHex(digest_));
 }
 
 /// \brief Compare two instances of \c DHCID RDATA.
