@@ -48,8 +48,27 @@ namespace datasrc {
  */
 class DatabaseAccessor : boost::noncopyable {
 public:
-    /// The number of fields the columns array passed to getNext should have
-    static const size_t COLUMN_COUNT = 5;
+    /**
+     * Definitions of the fields as they are required to be filled in
+     * by IteratorContext::getNext()
+     *
+     * When implementing getNext(), the columns array should
+     * be filled with the values as described in this enumeration,
+     * in this order, i.e. TYPE_COLUMN should be the first element
+     * (index 0) of the array, TTL_COLUMN should be the second element
+     * (index 1), etc.
+     */
+    enum RecordColumns {
+        TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)
+        TTL_COLUMN = 1,     ///< The TTL of the record (a
+        SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
+                            ///< the RRSIG covers. In the current implementation,
+                            ///< this field is ignored.
+        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
+        NAME_COLUMN = 4,    ///< The domain name of this RR
+        COLUMN_COUNT = 5    ///< The total number of columns, MUST be value of
+                            ///< the largest other element in this enum plus 1.
+    };
 
     /**
      * \brief Destructor
@@ -110,9 +129,10 @@ public:
          *
          * Depending on how the iterator was constructed, there is a difference
          * in behaviour; for a 'full zone iterator', created with
-         * getAllRecords(), all 5 elements of the array are overwritten.
-         * For a 'name iterator', created with getRecords(), the fifth column
-         * (NAME_COLUMN) is untouched, since what would be added here is by
+         * getAllRecords(), all COLUMN_COUNT elements of the array are
+         * overwritten.
+         * For a 'name iterator', created with getRecords(), the column
+         * NAME_COLUMN is untouched, since what would be added here is by
          * definition already known to the caller (it already passes it as
          * an argument to getRecords()).
          *
@@ -137,87 +157,40 @@ public:
     /**
      * \brief Creates an iterator context for a specific name.
      *
-     * This should create a new iterator context to be used by
-     * DatabaseAccessor's ZoneIterator. It can be created based on the name
-     * or the ID (returned from getZone()), what is more comfortable for the
-     * database implementation. Both are provided (and are guaranteed to match,
-     * the DatabaseClient first looks up the zone ID and then calls this).
-     *
-     * The default implementation throws isc::NotImplemented, to allow
-     * "minimal" implementations of the connection not supporting optional
-     * functionality.
+     * Returns an IteratorContextPtr that contains all records of the
+     * given name from the given zone.
      *
      * The implementation of the iterator that is returned may leave the
-     * fifth column of the array passed to getNext() untouched, as that
+     * NAME_COLUMN column of the array passed to getNext() untouched, as that
      * data is already known (it is the same as the name argument here)
      *
-     * \param name The name to search for.
+     * \exception any Since any implementation can be used, the caller should
+     *            expect any exception to be thrown.
+     *
+     * \param name The name to search for. This should be a FQDN.
      * \param id The ID of the zone, returned from getZone().
      * \return Newly created iterator context. Must not be NULL.
      */
     virtual IteratorContextPtr getRecords(const std::string& name,
-                                          int id) const
-    {
-        /*
-         * This is a compromise. We need to document the parameters in doxygen,
-         * so they need a name, but then it complains about unused parameter.
-         * This is a NOP that "uses" the parameters.
-         */
-        static_cast<void>(name);
-        static_cast<void>(id);
-
-        isc_throw(isc::NotImplemented,
-                  "This database datasource can't be iterated");
-    }
+                                          int id) const = 0;
 
     /**
      * \brief Creates an iterator context for the whole zone.
      *
-     * This should create a new iterator context to be used by
-     * DatabaseAccessor's ZoneIterator. It can be created based on the name
-     * or the ID (returned from getZone()), what is more comfortable for the
-     * database implementation. Both are provided (and are guaranteed to match,
-     * the DatabaseClient first looks up the zone ID and then calls this).
+     * Returns an IteratorContextPtr that contains all records of the
+     * zone with the given zone id.
      *
-     * The default implementation throws isc::NotImplemented, to allow
-     * "minimal" implementations of the connection not supporting optional
-     * functionality.
+     * Each call to getNext() on the returned iterator should copy all
+     * column fields of the array that is passed, as defined in the
+     * RecordColumns enum.
+     *
+     * \exception any Since any implementation can be used, the caller should
+     *            expect any exception to be thrown.
      *
      * \param id The ID of the zone, returned from getZone().
      * \return Newly created iterator context. Must not be NULL.
      */
-    virtual IteratorContextPtr getAllRecords(int id) const
-    {
-        /*
-         * This is a compromise. We need to document the parameters in doxygen,
-         * so they need a name, but then it complains about unused parameter.
-         * This is a NOP that "uses" the parameters.
-         */
-        static_cast<void>(id);
-
-        isc_throw(isc::NotImplemented,
-                  "This database datasource can't be iterated");
-    }
-
-    /**
-     * Definitions of the fields as they are required to be filled in
-     * by IteratorContext::getNext()
-     *
-     * When implementing getNext(), the columns array should
-     * be filled with the values as described in this enumeration,
-     * in this order, i.e. TYPE_COLUMN should be the first element
-     * (index 0) of the array, TTL_COLUMN should be the second element
-     * (index 1), etc.
-     */
-    enum RecordColumns {
-        TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)
-        TTL_COLUMN = 1,     ///< The TTL of the record (a
-        SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
-                            ///< the RRSIG covers. In the current implementation,
-                            ///< this field is ignored.
-        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
-        NAME_COLUMN = 4     ///< The domain name of this RR
-    };
+    virtual IteratorContextPtr getAllRecords(int id) const = 0;
 
     /**
      * \brief Returns a string identifying this dabase backend
