@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>August 16, 2011</date>
+    <date>August 17, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -178,8 +178,10 @@ once that is merged you can for instance do 'config add Resolver/forward_address
       root servers to start resolving.
       The list items are the <varname>address</varname> string
       and <varname>port</varname> number.
-      If empty, a hardcoded address for F-root (192.5.5.241) is used.
+      By default, a hardcoded address for l.root-servers.net
+      (199.7.83.42 or 2001:500:3::42) is used.
     </para>
+<!-- TODO: this is broken, see ticket #1184 -->
 
     <para>
       <varname>timeout_client</varname> is the number of milliseconds
