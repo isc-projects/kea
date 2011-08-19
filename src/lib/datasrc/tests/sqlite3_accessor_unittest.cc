@@ -35,6 +35,7 @@ std::string SQLITE_DBFILE_EXAMPLE_ROOT = TEST_DATA_DIR "/test-root.sqlite3";
 std::string SQLITE_DBNAME_EXAMPLE_ROOT = "sqlite3_test-root.sqlite3";
 std::string SQLITE_DBFILE_BROKENDB = TEST_DATA_DIR "/brokendb.sqlite3";
 std::string SQLITE_DBFILE_MEMORY = ":memory:";
+std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
 
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
@@ -106,39 +107,89 @@ TEST_F(SQLite3Access, noClass) {
 // This tests the iterator context
 TEST_F(SQLite3Access, iterator) {
     // Our test zone is conveniently small, but not empty
-    initAccessor(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
+    initAccessor(SQLITE_DBFILE_EXAMPLE_ORG, RRClass::IN());
+
+    const std::pair<bool, int> zone_info(db->getZone(Name("example.org")));
+    ASSERT_TRUE(zone_info.first);
 
     // Get the iterator context
     DatabaseAccessor::IteratorContextPtr
-        context(db->getAllRecords(1));
-    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
-              context);
-
-    const size_t size(5);
-    std::string data[size];
-    // Get and check the first and only record
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("example2.com.", data[4]);
-    EXPECT_EQ("SOA", data[0]);
-    EXPECT_EQ("master.example2.com. admin.example2.com. "
-              "1234 3600 1800 2419200 7200", data[3]);
-    EXPECT_EQ("3600", data[1]);
-    // Check there's no other
-    EXPECT_FALSE(context->getNext(data));
-}
-
-TEST_F(SQLite3Access, iteratorColumnCount) {
-    // Our test zone is conveniently small, but not empty
-    initAccessor(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
-
-    // Get the iterator context
-    DatabaseAccessor::IteratorContextPtr
-        context(db->getAllRecords(1));
+        context(db->getAllRecords(zone_info.second));
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
 
     std::string data[DatabaseAccessor::COLUMN_COUNT];
-    EXPECT_NO_THROW(context->getNext(data));
+    // Get and check the first and only record
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("dname.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("dname.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("dname2.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("dname2.foo.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("MX", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("10 mail.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("ns1.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("ns2.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("ns3.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("SOA", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("ns1.example.org. admin.example.org. "
+              "1234 3600 1800 2419200 7200",
+              data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("192.0.2.10", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("mail.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("192.0.2.101", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("192.0.2.1", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("www.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    // Check there's no other
+    EXPECT_FALSE(context->getNext(data));
 }
 
 TEST(SQLite3Open, getDBNameExample2) {
@@ -161,11 +212,11 @@ checkRecordRow(const std::string columns[],
                const std::string& field3,
                const std::string& field4)
 {
-    EXPECT_EQ(field0, columns[0]);
-    EXPECT_EQ(field1, columns[1]);
-    EXPECT_EQ(field2, columns[2]);
-    EXPECT_EQ(field3, columns[3]);
-    EXPECT_EQ(field4, columns[4]);
+    EXPECT_EQ(field0, columns[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ(field1, columns[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ(field2, columns[DatabaseAccessor::SIGTYPE_COLUMN]);
+    EXPECT_EQ(field3, columns[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ(field4, columns[DatabaseAccessor::NAME_COLUMN]);
 }
 
 TEST_F(SQLite3Access, getRecords) {
@@ -175,8 +226,7 @@ TEST_F(SQLite3Access, getRecords) {
     const int zone_id = zone_info.second;
     ASSERT_EQ(1, zone_id);
 
-    const size_t column_count = DatabaseAccessor::COLUMN_COUNT;
-    std::string columns[column_count];
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
 
     DatabaseAccessor::IteratorContextPtr
         context(db->getRecords("foo.bar", 1));
