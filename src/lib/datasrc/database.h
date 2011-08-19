@@ -361,18 +361,19 @@ public:
          * applications shouldn't need it.
          */
         int zone_id() const { return (zone_id_); }
+
         /**
-         * \brief The database.
+         * \brief The database accessor.
          *
-         * This function provides the database stored inside as
+         * This function provides the database accessor stored inside as
          * passed to the constructor. This is meant for testing purposes and
          * normal applications shouldn't need it.
          */
-        const DatabaseAccessor& database() const {
-            return (*database_);
+        const DatabaseAccessor& getAccessor() const {
+            return (*accessor_);
         }
     private:
-        boost::shared_ptr<DatabaseAccessor> database_;
+        boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
         /**
@@ -417,6 +418,7 @@ public:
                                                      bool want_dname,
                                                      bool want_ns);
     };
+
     /**
      * \brief Find a zone in the database
      *
@@ -453,8 +455,8 @@ public:
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
 private:
-    /// \brief Our database.
-    const boost::shared_ptr<DatabaseAccessor> database_;
+    /// \brief The accessor to our database.
+    const boost::shared_ptr<DatabaseAccessor> accessor_;
 };
 
 }

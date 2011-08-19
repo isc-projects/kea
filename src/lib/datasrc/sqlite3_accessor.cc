@@ -119,7 +119,7 @@ private:
     const char* const desc_;
 };
 
-SQLite3Database::SQLite3Database(const std::string& filename,
+SQLite3Accessor::SQLite3Accessor(const std::string& filename,
                                  const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText()),
@@ -224,7 +224,7 @@ checkAndSetupSchema(Initializer* initializer) {
 }
 
 void
-SQLite3Database::open(const std::string& name) {
+SQLite3Accessor::open(const std::string& name) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNOPEN).arg(name);
     if (dbparameters_->db_ != NULL) {
         // There shouldn't be a way to trigger this anyway
@@ -241,7 +241,7 @@ SQLite3Database::open(const std::string& name) {
     initializer.move(dbparameters_.get());
 }
 
-SQLite3Database::~SQLite3Database() {
+SQLite3Accessor::~SQLite3Accessor() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN);
     if (dbparameters_->db_ != NULL) {
         close();
@@ -249,7 +249,7 @@ SQLite3Database::~SQLite3Database() {
 }
 
 void
-SQLite3Database::close(void) {
+SQLite3Accessor::close(void) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNCLOSE);
     if (dbparameters_->db_ == NULL) {
         isc_throw(DataSourceError,
@@ -267,12 +267,12 @@ SQLite3Database::close(void) {
 }
 
 std::pair<bool, int>
-SQLite3Database::getZone(const isc::dns::Name& name) const {
+SQLite3Accessor::getZone(const isc::dns::Name& name) const {
     return (getZone(name.toText()));
 }
 
 std::pair<bool, int>
-SQLite3Database::getZone(const string& name) const {
+SQLite3Accessor::getZone(const string& name) const {
     int rc;
     sqlite3_stmt* const stmt = dbparameters_->statements_[ZONE];
 
@@ -338,31 +338,31 @@ convertToPlainChar(const unsigned char* ucp,
 }
 }
 
-class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
+class SQLite3Accessor::Context : public DatabaseAccessor::IteratorContext {
 public:
     // Construct an iterator for all records. When constructed this
     // way, the getNext() call will copy all fields
-    Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
+    Context(const boost::shared_ptr<const SQLite3Accessor>& accessor, int id) :
         iterator_type_(ITT_ALL),
-        database_(database),
+        accessor_(accessor),
         statement_(NULL)
     {
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(database->dbparameters_->db_,
+        statement_ = prepare(accessor->dbparameters_->db_,
                              text_statements[ITERATE]);
         bindZoneId(id);
     }
 
     // Construct an iterator for records with a specific name. When constructed
     // this way, the getNext() call will copy all fields except name
-    Context(const boost::shared_ptr<const SQLite3Database>& database, int id,
+    Context(const boost::shared_ptr<const SQLite3Accessor>& accessor, int id,
             const isc::dns::Name& name) :
         iterator_type_(ITT_NAME),
-        database_(database),
+        accessor_(accessor),
         statement_(NULL)
     {
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(database->dbparameters_->db_,
+        statement_ = prepare(accessor->dbparameters_->db_,
                              text_statements[ANY]);
         bindZoneId(id);
         bindName(name);
@@ -385,7 +385,7 @@ public:
         } else if (rc != SQLITE_DONE) {
             isc_throw(DataSourceError,
                       "Unexpected failure in sqlite3_step: " <<
-                      sqlite3_errmsg(database_->dbparameters_->db_));
+                      sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
         return (false);
     }
@@ -406,21 +406,21 @@ private:
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
         data[column] = convertToPlainChar(sqlite3_column_text(statement_,
                                                               column),
-                                          database_->dbparameters_.get());
+                                          accessor_->dbparameters_.get());
     }
 
     void bindZoneId(const int zone_id) {
         if (sqlite3_bind_int(statement_, 1, zone_id) != SQLITE_OK) {
             isc_throw(SQLite3Error, "Could not bind int " << zone_id <<
                       " to SQL statement: " <<
-                      sqlite3_errmsg(database_->dbparameters_->db_));
+                      sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
     }
 
     void bindName(const isc::dns::Name& name) {
         if (sqlite3_bind_text(statement_, 2, name.toText().c_str(), -1,
                               SQLITE_TRANSIENT) != SQLITE_OK) {
-            const char* errmsg = sqlite3_errmsg(database_->dbparameters_->db_);
+            const char* errmsg = sqlite3_errmsg(accessor_->dbparameters_->db_);
             sqlite3_finalize(statement_);
             isc_throw(SQLite3Error, "Could not bind text '" << name <<
                       "' to SQL statement: " << errmsg);
@@ -428,22 +428,22 @@ private:
     }
 
     const IteratorType iterator_type_;
-    boost::shared_ptr<const SQLite3Database> database_;
+    boost::shared_ptr<const SQLite3Accessor> accessor_;
     sqlite3_stmt *statement_;
 };
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Database::getRecords(const isc::dns::Name& name, int id) const {
+SQLite3Accessor::getRecords(const isc::dns::Name& name, int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id, name)));
 }
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Database::getAllRecords(int id) const {
+SQLite3Accessor::getAllRecords(int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }
 
 pair<bool, int>
-SQLite3Database::startUpdateZone(const string& zone_name, const bool replace) {
+SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     if (dbparameters_->updating_zone) {
         isc_throw(DataSourceError,
                   "duplicate zone update on SQLite3 data source");
@@ -479,7 +479,7 @@ SQLite3Database::startUpdateZone(const string& zone_name, const bool replace) {
 }
 
 void
-SQLite3Database::commitUpdateZone() {
+SQLite3Accessor::commitUpdateZone() {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "committing zone update on SQLite3 "
                   "data source without transaction");
@@ -492,7 +492,7 @@ SQLite3Database::commitUpdateZone() {
 }
 
 void
-SQLite3Database::rollbackUpdateZone() {
+SQLite3Accessor::rollbackUpdateZone() {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "rolling back zone update on SQLite3 "
                   "data source without transaction");
@@ -531,7 +531,7 @@ doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
 }
 
 void
-SQLite3Database::addRecordToZone(const vector<string>& columns) {
+SQLite3Accessor::addRecordToZone(const vector<string>& columns) {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "adding record to SQLite3 "
                   "data source without transaction");
@@ -545,7 +545,7 @@ SQLite3Database::addRecordToZone(const vector<string>& columns) {
 }
 
 void
-SQLite3Database::deleteRecordInZone(const vector<string>& params) {
+SQLite3Accessor::deleteRecordInZone(const vector<string>& params) {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");

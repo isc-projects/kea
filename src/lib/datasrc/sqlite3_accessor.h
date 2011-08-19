@@ -53,8 +53,8 @@ struct SQLite3Parameters;
  * According to the design, it doesn't interpret the data in any way, it just
  * provides unified access to the DB.
  */
-class SQLite3Database : public DatabaseAccessor,
-    public boost::enable_shared_from_this<SQLite3Database> {
+class SQLite3Accessor : public DatabaseAccessor,
+    public boost::enable_shared_from_this<SQLite3Accessor> {
 public:
     /**
      * \brief Constructor
@@ -69,14 +69,14 @@ public:
      *     file can contain multiple classes of data, single database can
      *     provide only one class).
      */
-    SQLite3Database(const std::string& filename,
+    SQLite3Accessor(const std::string& filename,
                     const isc::dns::RRClass& rrclass);
     /**
      * \brief Destructor
      *
      * Closes the database.
      */
-    ~SQLite3Database();
+    ~SQLite3Accessor();
 
     /**
      * \brief Look up a zone

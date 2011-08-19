@@ -38,10 +38,10 @@ namespace isc {
 namespace datasrc {
 
 DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
-                               database) :
-    database_(database)
+                               accessor) :
+    accessor_(accessor)
 {
-    if (database_.get() == NULL) {
+    if (!accessor_) {
         isc_throw(isc::InvalidParameter,
                   "No database provided to DatabaseClient");
     }
@@ -49,21 +49,21 @@ DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
 
 DataSourceClient::FindResult
 DatabaseClient::findZone(const Name& name) const {
-    std::pair<bool, int> zone(database_->getZone(name));
+    std::pair<bool, int> zone(accessor_->getZone(name));
     // Try exact first
     if (zone.first) {
         return (FindResult(result::SUCCESS,
-                           ZoneFinderPtr(new Finder(database_,
+                           ZoneFinderPtr(new Finder(accessor_,
                                                     zone.second, name))));
     }
     // Then super domains
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
         isc::dns::Name superdomain(name.split(i));
-        zone = database_->getZone(superdomain);
+        zone = accessor_->getZone(superdomain);
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
-                               ZoneFinderPtr(new Finder(database_,
+                               ZoneFinderPtr(new Finder(accessor_,
                                                         zone.second,
                                                         superdomain))));
         }
@@ -72,10 +72,9 @@ DatabaseClient::findZone(const Name& name) const {
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
 }
 
-DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor>
-                               database, int zone_id,
-                               const isc::dns::Name& origin) :
-    database_(database),
+DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor> accessor,
+                               int zone_id, const isc::dns::Name& origin) :
+    accessor_(accessor),
     zone_id_(zone_id),
     origin_(origin)
 { }
@@ -183,7 +182,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
 
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(database_->getRecords(name, zone_id_));
+        context(accessor_->getRecords(name, zone_id_));
     // It must not return NULL, that's a bug of the implementation
     if (!context) {
         isc_throw(isc::Unexpected, "Iterator context null at " +
@@ -227,7 +226,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
-                            *database_);
+                            *accessor_);
             } else if (type != NULL && cur_type == *type) {
                 if (result_rrset &&
                     result_rrset->getType() == isc::dns::RRType::CNAME()) {
@@ -240,7 +239,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
-                            *database_);
+                            *accessor_);
             } else if (want_cname && cur_type == isc::dns::RRType::CNAME()) {
                 // There should be no other data, so result_rrset should
                 // be empty.
@@ -250,7 +249,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
-                            *database_);
+                            *accessor_);
             } else if (want_dname && cur_type == isc::dns::RRType::DNAME()) {
                 // There should be max one RR of DNAME present
                 if (result_rrset &&
@@ -260,7 +259,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
-                            *database_);
+                            *accessor_);
             } else if (cur_type == isc::dns::RRType::RRSIG()) {
                 // If we get signatures before we get the actual data, we
                 // can't know which ones to keep and which to drop...
@@ -306,7 +305,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     ZoneFinder::Result result_status = SUCCESS;
     std::pair<bool, isc::dns::RRsetPtr> found;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
-        .arg(database_->getDBName()).arg(name).arg(type);
+        .arg(accessor_->getDBName()).arg(name).arg(type);
 
     // First, do we have any kind of delegation (NS/DNAME) here?
     const Name origin(getOrigin());
@@ -328,12 +327,12 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             if (result_rrset->getType() == isc::dns::RRType::NS()) {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_DELEGATION).
-                    arg(database_->getDBName()).arg(superdomain);
+                    arg(accessor_->getDBName()).arg(superdomain);
                 result_status = DELEGATION;
             } else {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_DNAME).
-                    arg(database_->getDBName()).arg(superdomain);
+                    arg(accessor_->getDBName()).arg(superdomain);
                 result_status = DNAME;
             }
             // Don't search more
@@ -352,7 +351,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             result_rrset->getType() == isc::dns::RRType::NS()) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
-                arg(database_->getDBName()).arg(name);
+                arg(accessor_->getDBName()).arg(name);
             result_status = DELEGATION;
         } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
                    result_rrset->getType() == isc::dns::RRType::CNAME()) {
@@ -364,20 +363,20 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         if (records_found) {
             logger.debug(DBG_TRACE_DETAILED,
                          DATASRC_DATABASE_FOUND_NXRRSET)
-                        .arg(database_->getDBName()).arg(name)
+                        .arg(accessor_->getDBName()).arg(name)
                         .arg(getClass()).arg(type);
             result_status = NXRRSET;
         } else {
             logger.debug(DBG_TRACE_DETAILED,
                          DATASRC_DATABASE_FOUND_NXDOMAIN)
-                        .arg(database_->getDBName()).arg(name)
+                        .arg(accessor_->getDBName()).arg(name)
                         .arg(getClass()).arg(type);
             result_status = NXDOMAIN;
         }
     } else {
         logger.debug(DBG_TRACE_DETAILED,
                      DATASRC_DATABASE_FOUND_RRSET)
-                    .arg(database_->getDBName()).arg(*result_rrset);
+                    .arg(accessor_->getDBName()).arg(*result_rrset);
     }
     return (FindResult(result_status, result_rrset));
 }
@@ -472,7 +471,7 @@ private:
 ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name) const {
     // Get the zone
-    std::pair<bool, int> zone(database_->getZone(name));
+    std::pair<bool, int> zone(accessor_->getZone(name));
     if (!zone.first) {
         // No such zone, can't continue
         isc_throw(DataSourceError, "Zone " + name.toText() +
@@ -481,7 +480,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     }
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(database_->getAllRecords(zone.second));
+        context(accessor_->getAllRecords(zone.second));
     // It must not return NULL, that's a bug of the implementation
     if (context == DatabaseAccessor::IteratorContextPtr()) {
         isc_throw(isc::Unexpected, "Iterator context null at " +

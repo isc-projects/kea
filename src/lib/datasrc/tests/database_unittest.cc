@@ -445,12 +445,12 @@ public:
      * times per test.
      */
     void createClient() {
-        current_database_ = new MockAccessor();
+        current_accessor_ = new MockAccessor();
         client_.reset(new DatabaseClient(shared_ptr<DatabaseAccessor>(
-             current_database_)));
+             current_accessor_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
-    MockAccessor* current_database_;
+    MockAccessor* current_accessor_;
     shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
@@ -465,7 +465,7 @@ public:
         ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
         EXPECT_EQ(42, finder->zone_id());
-        EXPECT_EQ(current_database_, &finder->database());
+        EXPECT_EQ(current_accessor_, &finder->getAccessor());
     }
 
     shared_ptr<DatabaseClient::Finder> getFinder() {
@@ -795,7 +795,6 @@ TEST_F(DatabaseClientTest, find) {
                ZoneFinder::CNAME,
                expected_rdatas_, expected_sig_rdatas_);
 
-
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
     expected_rdatas_.push_back("192.0.2.1");
@@ -846,7 +845,6 @@ TEST_F(DatabaseClientTest, find) {
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
 
-
     EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
@@ -889,7 +887,6 @@ TEST_F(DatabaseClientTest, find) {
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  std::exception);
-
     EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
