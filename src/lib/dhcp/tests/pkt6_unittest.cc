@@ -12,44 +12,33 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
+#include <gtest/gtest.h>
+
+
 #include "dhcp/pkt6.h"
-#include "dhcp6/iface_mgr.h"
-#include "dhcp6/dhcp6_srv.h"
 
 using namespace std;
 using namespace isc;
 
-Dhcpv6Srv::Dhcpv6Srv() {
-    cout << "Initialization" << endl;
-
-    // first call to instance() will create IfaceMgr (it's a singleton)
-    // it may throw something if things go wrong
-    IfaceMgr::instance();
-}
-
-Dhcpv6Srv::~Dhcpv6Srv() {
-    cout << "DHCPv6 Srv shutdown." << endl;
-}
-
-bool
-Dhcpv6Srv::run() {
-    while (true) {
-        Pkt6* pkt;
-
-        pkt = IfaceMgr::instance().receive();
-
-        if (pkt) {
-            cout << "Received " << pkt->data_len_ << " bytes, echoing back."
-                 << endl;
-            IfaceMgr::instance().send(*pkt);
-            delete pkt;
-        }
-
-	// TODO add support for config session (see src/bin/auth/main.cc)
-	//      so this daemon can be controlled from bob
-        sleep(1);
-
+namespace {
+// empty class for now, but may be extended once Addr6 becomes bigger
+class Pkt6Test : public ::testing::Test {
+public:
+    Pkt6Test() {
     }
+};
 
-    return (true);
+TEST_F(Pkt6Test, constructor) {
+    Pkt6 * pkt1 = new Pkt6(17);
+    
+    ASSERT_EQ(pkt1->data_len_, 17);
+
+    delete pkt1;
+}
+
 }

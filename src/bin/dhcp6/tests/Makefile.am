@@ -45,11 +45,9 @@ if HAVE_GTEST
 
 TESTS += dhcp6_unittests
 
-dhcp6_unittests_SOURCES = ../pkt6.h ../pkt6.cc
-dhcp6_unittests_SOURCES += ../iface_mgr.h ../iface_mgr.cc
+dhcp6_unittests_SOURCES = ../iface_mgr.h ../iface_mgr.cc
 dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += dhcp6_unittests.cc
-dhcp6_unittests_SOURCES += pkt6_unittest.cc
 dhcp6_unittests_SOURCES += iface_mgr_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 
@@ -58,6 +56,7 @@ dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)
 dhcp6_unittests_LDADD += $(SQLITE_LIBS)
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

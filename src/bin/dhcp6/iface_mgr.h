@@ -17,7 +17,7 @@
 
 #include <list>
 #include "io_address.h"
-#include "dhcp6/pkt6.h"
+#include "dhcp/pkt6.h"
 
 namespace isc {
 

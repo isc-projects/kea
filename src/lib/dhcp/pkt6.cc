@@ -12,33 +12,35 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
+
+#include "dhcp/dhcp6.h"
+#include "dhcp/pkt6.h"
 #include <iostream>
-#include <sstream>
 
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
+namespace isc {
 
-
-#include "dhcp6/pkt6.h"
-
-using namespace std;
-using namespace isc;
-
-namespace {
-// empty class for now, but may be extended once Addr6 becomes bigger
-class Pkt6Test : public ::testing::Test {
-public:
-    Pkt6Test() {
+///
+/// constructor
+///
+/// \param dataLen - length of the data to be allocated
+///
+Pkt6::Pkt6(int dataLen)
+    :local_addr_("::"),
+     remote_addr_("::") {
+    try {
+	data_ = boost::shared_array<char>(new char[dataLen]);
+	data_len_ = dataLen;
+    } catch (const std::exception& ex) {
+	// TODO move to LOG_FATAL()
+	// let's continue with empty pkt for now
+        std::cout << "Failed to allocate " << dataLen << " bytes."
+                  << std::endl;
+        data_len_ = 0;
     }
+}
+
+Pkt6::~Pkt6() {
+    // no need to delete anything shared_ptr will take care of data_
+}
+
 };
-
-TEST_F(Pkt6Test, constructor) {
-    Pkt6 * pkt1 = new Pkt6(17);
-    
-    ASSERT_EQ(pkt1->data_len_, 17);
-
-    delete pkt1;
-}
-
-}
