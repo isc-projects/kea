@@ -207,16 +207,16 @@ class ZonemgrRefresh:
         if zone_soa is None:
             logger.warn(ZONEMGR_NO_SOA, zone_name_class[0], zone_name_class[1])
             zone_info["zone_soa_rdata"] = None
-            zone_reload_jitter = 0
+            zone_reload_time = 0.0
         else:
             zone_info["zone_soa_rdata"] = zone_soa[7]
-            zone_reload_jitter = float(zone_soa[7].split(" ")[RETRY_OFFSET])
+            zone_reload_time = float(zone_soa[7].split(" ")[RETRY_OFFSET])
         zone_info["zone_state"] = ZONE_OK
         zone_info["last_refresh_time"] = self._get_current_time()
         self._zonemgr_refresh_info[zone_name_class] = zone_info
         # Imposes some random jitters to avoid many zones need to do refresh at the same time.
-        zone_reload_jitter = max(self._lowerbound_retry, zone_reload_jitter)
-        self._set_zone_timer(zone_name_class, zone_reload_jitter, self._reload_jitter * zone_reload_jitter)
+        zone_reload_time = max(self._lowerbound_retry, zone_reload_time)
+        self._set_zone_timer(zone_name_class, zone_reload_time, self._reload_jitter * zone_reload_time)
 
     def _zone_is_expired(self, zone_name_class):
         """Judge whether a zone is expired or not."""
