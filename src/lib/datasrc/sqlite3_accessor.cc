@@ -454,26 +454,36 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
         return (zone_info);
     }
 
-    dbparameters_->updating_zone = true;
-    dbparameters_->updated_zone_id = zone_info.second;
-
     StatementExecuter(*dbparameters_, BEGIN,
                       "start an SQLite3 transaction").exec();
 
     if (replace) {
-        StatementExecuter delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
-                                       "delete zone records");
+        try {
+            StatementExecuter delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
+                                           "delete zone records");
 
-        sqlite3_clear_bindings(dbparameters_->statements_[DEL_ZONE_RECORDS]);
-        if (sqlite3_bind_int(dbparameters_->statements_[DEL_ZONE_RECORDS],
-                             1, zone_info.second) != SQLITE_OK) {
-            isc_throw(DataSourceError,
-                      "failed to bind SQLite3 parameter: " <<
-                      sqlite3_errmsg(dbparameters_->db_));
+            sqlite3_clear_bindings(
+                dbparameters_->statements_[DEL_ZONE_RECORDS]);
+            if (sqlite3_bind_int(dbparameters_->statements_[DEL_ZONE_RECORDS],
+                                 1, zone_info.second) != SQLITE_OK) {
+                isc_throw(DataSourceError,
+                          "failed to bind SQLite3 parameter: " <<
+                          sqlite3_errmsg(dbparameters_->db_));
+            }
+
+            delzone_exec.exec();
+        } catch (const DataSourceError&) {
+            // Once we start a transaction, if something unexpected happens
+            // we need to rollback the transaction so that a subsequent update
+            // is still possible with this accessor.
+            StatementExecuter(*dbparameters_, ROLLBACK,
+                      "rollback an SQLite3 transaction").exec();
+            throw;
         }
-
-        delzone_exec.exec();
     }
+
+    dbparameters_->updating_zone = true;
+    dbparameters_->updated_zone_id = zone_info.second;
 
     return (zone_info);
 }
