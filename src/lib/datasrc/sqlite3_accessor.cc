@@ -19,6 +19,8 @@
 #include <datasrc/data_source.h>
 #include <util/filename.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace isc {
 namespace datasrc {
 
@@ -136,8 +138,12 @@ const char* const SCHEMA_LIST[] = {
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
-const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
+const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata, name "
     "FROM records WHERE zone_id=?1 AND name=?2";
+
+const char* const q_iterate_str = "SELECT rdtype, ttl, sigtype, rdata, name FROM records "
+                                  "WHERE zone_id = ?1 "
+                                  "ORDER BY name, rdtype";
 
 /* TODO: Prune the statements, not everything will be needed maybe?
 const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
@@ -313,30 +319,18 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
         result = std::pair<bool, int>(true,
                                       sqlite3_column_int(dbparameters_->
                                                          q_zone_, 0));
-    } else {
+        return (result);
+    } else if (rc == SQLITE_DONE) {
         result = std::pair<bool, int>(false, 0);
+        // Free resources
+        sqlite3_reset(dbparameters_->q_zone_);
+        return (result);
     }
-    // Free resources
-    sqlite3_reset(dbparameters_->q_zone_);
 
-    return (result);
-}
-
-void
-SQLite3Database::searchForRecords(int zone_id, const std::string& name) {
-    resetSearch();
-    if (sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id) != SQLITE_OK) {
-        isc_throw(DataSourceError,
-                  "Error in sqlite3_bind_int() for zone_id " <<
-                  zone_id << ": " << sqlite3_errmsg(dbparameters_->db_));
-    }
-    // use transient since name is a ref and may disappear
-    if (sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
-                               SQLITE_TRANSIENT) != SQLITE_OK) {
-        isc_throw(DataSourceError,
-                  "Error in sqlite3_bind_text() for name " <<
-                  name << ": " << sqlite3_errmsg(dbparameters_->db_));
-    }
+    isc_throw(DataSourceError, "Unexpected failure in sqlite3_step: " <<
+                               sqlite3_errmsg(dbparameters_->db_));
+    // Compilers might not realize isc_throw always throws
+    return (std::pair<bool, int>(false, 0));
 }
 
 namespace {
@@ -366,6 +360,76 @@ convertToPlainChar(const unsigned char* ucp,
     const void* p = ucp;
     return (static_cast<const char*>(p));
 }
+}
+
+// TODO: Once we want to have iterator returned from searchForRecords, this
+// class can be reused. It should be modified to take the sqlite3 statement
+// instead of creating it in constructor, it doesn't have to care which one
+// it is, just provide data from it.
+class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
+public:
+    Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
+        database_(database),
+        statement(NULL)
+    {
+        // We create the statement now and then just keep getting data from it
+        statement = prepare(database->dbparameters_->db_, q_iterate_str);
+        if (sqlite3_bind_int(statement, 1, id) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind " << id <<
+                      " to SQL statement (iterate)");
+        }
+    }
+    bool getNext(std::string data[], size_t size) {
+        if (size != COLUMN_COUNT) {
+            isc_throw(DataSourceError, "getNext received size of " << size <<
+                      ", not " << COLUMN_COUNT);
+        }
+        // If there's another row, get it
+        int rc(sqlite3_step(statement));
+        if (rc == SQLITE_ROW) {
+            for (size_t i(0); i < size; ++ i) {
+                data[i] = convertToPlainChar(sqlite3_column_text(statement, i),
+                                             database_->dbparameters_);
+            }
+            return (true);
+        } else if (rc != SQLITE_DONE) {
+            isc_throw(DataSourceError,
+                      "Unexpected failure in sqlite3_step: " <<
+                      sqlite3_errmsg(database_->dbparameters_->db_));
+        }
+        return (false);
+    }
+    virtual ~Context() {
+        if (statement) {
+            sqlite3_finalize(statement);
+        }
+    }
+
+private:
+    boost::shared_ptr<const SQLite3Database> database_;
+    sqlite3_stmt *statement;
+};
+
+DatabaseAccessor::IteratorContextPtr
+SQLite3Database::getAllRecords(const isc::dns::Name&, int id) const {
+    return (IteratorContextPtr(new Context(shared_from_this(), id)));
+}
+
+void
+SQLite3Database::searchForRecords(int zone_id, const std::string& name) {
+    resetSearch();
+    if (sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id) != SQLITE_OK) {
+        isc_throw(DataSourceError,
+                  "Error in sqlite3_bind_int() for zone_id " <<
+                  zone_id << ": " << sqlite3_errmsg(dbparameters_->db_));
+    }
+    // use transient since name is a ref and may disappear
+    if (sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
+                               SQLITE_TRANSIENT) != SQLITE_OK) {
+        isc_throw(DataSourceError,
+                  "Error in sqlite3_bind_text() for name " <<
+                  name << ": " << sqlite3_errmsg(dbparameters_->db_));
+    }
 }
 
 bool

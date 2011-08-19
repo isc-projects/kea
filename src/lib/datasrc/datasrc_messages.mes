@@ -75,8 +75,9 @@ name and type in the database.
 
 % DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ in %1 for elements of %2/%3/%4, setting to %5
 The datasource backend provided resource records for the given RRset with
-different TTL values. The TTL of the RRSET is set to the lowest value, which
-is printed in the log message.
+different TTL values. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
 
 % DATASRC_DATABASE_FIND_UNCAUGHT_ERROR uncaught general error retrieving data from datasource %1: %2
 There was an uncaught general exception while reading data from a datasource.
@@ -116,6 +117,23 @@ name and class, but not for the given type.
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
+
+% DATASRC_DATABASE_ITERATE iterating zone %1
+The program is reading the whole zone, eg. not searching for data, but going
+through each of the RRsets there.
+
+% DATASRC_DATABASE_ITERATE_END iterating zone finished
+While iterating through the zone, the program reached end of the data.
+
+% DATASRC_DATABASE_ITERATE_NEXT next RRset in zone is %1/%2
+While iterating through the zone, the program extracted next RRset from it.
+The name and RRtype of the RRset is indicated in the message.
+
+% DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4
+While iterating through the zone, the time to live for RRs of the given RRset
+were found to be different. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
 
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
