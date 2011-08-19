@@ -23,8 +23,9 @@ TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
 TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep
 
 READ_ZONE_DB_FILE = TESTDATA_PATH + "example.com.sqlite3"
-WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "example.com.out.sqlite3"
 BROKEN_DB_FILE = TESTDATA_PATH + "brokendb.sqlite3"
+WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "example.com.out.sqlite3"
+NEW_DB_FILE = TESTDATA_WRITE_PATH + "new_db.sqlite3"
 
 def example_reader():
     my_zone = [
@@ -90,6 +91,42 @@ class TestSqlite3_ds(unittest.TestCase):
 
         # and make sure lock does not stay
         sqlite3_ds.load(WRITE_ZONE_DB_FILE, ".", example_reader)
+
+class NewDBFile(unittest.TestCase):
+    def tearDown(self):
+        # remove the created database after every test
+        if (os.path.exists(NEW_DB_FILE)):
+            os.remove(NEW_DB_FILE)
+
+    def setUp(self):
+        # remove the created database before every test too, just
+        # in case a test got aborted half-way, and cleanup didn't occur
+        if (os.path.exists(NEW_DB_FILE)):
+            os.remove(NEW_DB_FILE)
+
+    def test_new_db(self):
+        self.assertFalse(os.path.exists(NEW_DB_FILE))
+        sqlite3_ds.load(NEW_DB_FILE, ".", example_reader)
+        self.assertTrue(os.path.exists(NEW_DB_FILE))
+
+    def test_new_db_locked(self):
+        self.assertFalse(os.path.exists(NEW_DB_FILE))
+        con = sqlite3.connect(NEW_DB_FILE);
+        cur = con.cursor()
+        con.isolation_level = None
+        cur.execute("BEGIN EXCLUSIVE TRANSACTION")
+
+        # load should now fail, since the database is locked
+        self.assertRaises(sqlite3.OperationalError,
+                          sqlite3_ds.load, NEW_DB_FILE, ".", example_reader)
+
+        con.rollback()
+        cur.close()
+        con.close()
+        self.assertTrue(os.path.exists(NEW_DB_FILE))
+
+        # now that we closed our connection, load should work again
+        sqlite3_ds.load(NEW_DB_FILE, ".", example_reader)
 
 if __name__ == '__main__':
     unittest.main()
