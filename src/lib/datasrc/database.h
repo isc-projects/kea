@@ -51,6 +51,15 @@ public:
     /// The number of fields the columns array passed to getNext should have
     static const size_t COLUMN_COUNT = 5;
 
+    /// TBD
+    /// Compliant database should support the following columns:
+    /// name, rname, ttl, rdtype, sigtype, rdata
+    /// (even though their internal representation may be different).
+    static const size_t ADD_COLUMN_COUNT = 6;
+
+    /// TBD
+    static const size_t DEL_PARAM_COUNT = 3;
+
     /**
      * \brief Destructor
      *
