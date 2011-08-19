@@ -11,6 +11,9 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <vector>
+
 #include <datasrc/sqlite3_accessor.h>
 
 #include <datasrc/data_source.h>
@@ -20,7 +23,9 @@
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
 
+using namespace std;
 using namespace isc::datasrc;
+using boost::shared_ptr;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
 using isc::dns::RRClass;
@@ -273,4 +278,299 @@ TEST_F(SQLite3Access, getRecords) {
                    "33495 example.com. FAKEFAKEFAKEFAKE", "");
 }
 
+//
+// Commonly used data for update tests
+//
+const char* const common_expected_data[] = {
+    // Test record already stored in the tested sqlite3 DB file.
+    "foo.bar.example.com.", "com.example.bar.foo.", "3600", "A", "",
+    "192.0.2.1"
+};
+const char* const new_data[] = {
+    // Newly added data commonly used by some of the tests below
+    "newdata.example.com.", "com.example.newdata.", "3600", "A", "",
+    "192.0.2.1"
+};
+const char* const deleted_data[] = {
+    // Existing data to be removed commonly used by some of the tests below
+    "foo.bar.example.com.", "A", "192.0.2.1"
+};
+
+class SQLite3Update : public SQLite3Access {
+protected:
+    SQLite3Update() {
+        ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
+                            "/test.sqlite3 "
+                            TEST_DATA_BUILDDIR "/test.sqlite3.copied"));
+        initAccessor(TEST_DATA_BUILDDIR "/test.sqlite3.copied", RRClass::IN());
+        zone_id = db->getZone(Name("example.com")).second;
+        another_db.reset(new SQLite3Database(
+                             TEST_DATA_BUILDDIR "/test.sqlite3.copied",
+                             RRClass::IN()));
+        expected_stored.push_back(common_expected_data);
+    }
+
+    int zone_id;
+    std::string get_columns[DatabaseAccessor::COLUMN_COUNT];
+    std::vector<std::string> update_columns;
+
+    vector<const char* const*> expected_stored; // placeholder for checkRecords
+    vector<const char* const*> empty_stored; // indicate no corresponding data
+
+    // Another accessor, emulating one running on a different process/thread
+    shared_ptr<SQLite3Database> another_db;
+    DatabaseAccessor::IteratorContextPtr iterator;
+};
+
+void
+checkRecords(SQLite3Database& db, int zone_id, const std::string& name,
+             vector<const char* const*> expected_rows)
+{
+    DatabaseAccessor::IteratorContextPtr iterator =
+        db.getRecords(Name(name), zone_id);
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    vector<const char* const*>::const_iterator it = expected_rows.begin();
+    while (iterator->getNext(columns)) {
+        ASSERT_TRUE(it != expected_rows.end());
+        checkRecordRow(columns, (*it)[3], (*it)[2], (*it)[4], (*it)[5], "");
+        ++it;
+    }
+    EXPECT_TRUE(it == expected_rows.end());
+}
+
+TEST_F(SQLite3Update, emptyUpdate) {
+    // If we do nothing between start and commit, the zone content
+    // should be intact.
+
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+    zone_id = db->startUpdateZone("example.com.", false).second;
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+    db->commitUpdateZone();
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, flushZone) {
+    // With 'replace' being true startUpdateZone() will flush the existing
+    // zone content.
+
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+    zone_id = db->startUpdateZone("example.com.", true).second;
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+    db->commitUpdateZone();
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, readWhileUpdate) {
+    zone_id = db->startUpdateZone("example.com.", true).second;
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+
+    // Until commit is done, the other accessor should see the old data
+    checkRecords(*another_db, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+
+    // Once the changes are committed, the other accessor will see the new
+    // data.
+    db->commitUpdateZone();
+    checkRecords(*another_db, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, rollback) {
+    zone_id = db->startUpdateZone("example.com.", true).second;
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+
+    // Rollback will revert the change made by startUpdateZone(, true).
+    db->rollbackUpdateZone();
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, rollbackFailure) {
+    // This test emulates a rare scenario of making rollback attempt fail.
+    // The iterator is paused in the middle of getting records, which prevents
+    // the rollback operation at the end of the test.
+
+    string columns[DatabaseAccessor::COLUMN_COUNT];
+    iterator = db->getRecords(Name("example.com"), zone_id);
+    EXPECT_TRUE(iterator->getNext(columns));
+
+    db->startUpdateZone("example.com.", true);
+    EXPECT_THROW(db->rollbackUpdateZone(), DataSourceError);
+}
+
+TEST_F(SQLite3Update, commitConflict) {
+    // Start reading the DB by another accessor.  We should stop at a single
+    // call to getNextRecord() to keep holding the lock.
+    iterator = another_db->getRecords(Name("foo.example.com"), zone_id);
+    EXPECT_TRUE(iterator->getNext(get_columns));
+
+    // Due to getNextRecord() above, the other accessor holds a DB lock,
+    // which will prevent commit.
+    zone_id = db->startUpdateZone("example.com.", true).second;
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+    EXPECT_THROW(db->commitUpdateZone(), DataSourceError);
+    db->rollbackUpdateZone();   // rollback should still succeed
+
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, updateConflict) {
+    // Similar to the previous case, but this is a conflict with another
+    // update attempt.  Note that these two accessors modify disjoint sets
+    // of data; sqlite3 only has a coarse-grained lock so we cannot allow
+    // these updates to run concurrently.
+    EXPECT_TRUE(another_db->startUpdateZone("sql1.example.com.", true).first);
+    EXPECT_THROW(db->startUpdateZone("example.com.", true), DataSourceError);
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, duplicateUpdate) {
+    db->startUpdateZone("example.com.", false);
+    EXPECT_THROW(db->startUpdateZone("example.com.", false), DataSourceError);
+}
+
+TEST_F(SQLite3Update, commitWithoutTransaction) {
+    EXPECT_THROW(db->commitUpdateZone(), DataSourceError);
+}
+
+TEST_F(SQLite3Update, rollbackWithoutTransaction) {
+    EXPECT_THROW(db->rollbackUpdateZone(), DataSourceError);
+}
+
+TEST_F(SQLite3Update, addRecord) {
+    // Before update, there should be no record for this name
+    checkRecords(*db, zone_id, "newdata.example.com.", empty_stored);
+
+    zone_id = db->startUpdateZone("example.com.", false).second;
+    update_columns.assign(new_data,
+                          new_data + DatabaseAccessor::ADD_COLUMN_COUNT);
+    db->addRecordToZone(update_columns);
+
+    expected_stored.clear();
+    expected_stored.push_back(new_data);
+    checkRecords(*db, zone_id, "newdata.example.com.", expected_stored);
+
+    // Commit the change, and confirm the new data is still there.
+    db->commitUpdateZone();
+    checkRecords(*db, zone_id, "newdata.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, addThenRollback) {
+    zone_id = db->startUpdateZone("example.com.", false).second;
+    update_columns.assign(new_data,
+                          new_data + DatabaseAccessor::ADD_COLUMN_COUNT);
+    db->addRecordToZone(update_columns);
+
+    expected_stored.clear();
+    expected_stored.push_back(new_data);
+    checkRecords(*db, zone_id, "newdata.example.com.", expected_stored);
+
+    db->rollbackUpdateZone();
+    checkRecords(*db, zone_id, "newdata.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, duplicateAdd) {
+    const char* const dup_data[] = {
+        "foo.bar.example.com.", "com.example.bar.foo.", "3600", "A", "",
+        "192.0.2.1"
+    };
+    expected_stored.clear();
+    expected_stored.push_back(dup_data);
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+
+    // Adding exactly the same data.  As this backend is "dumb", another
+    // row of the same content will be inserted.
+    update_columns.assign(dup_data,
+                          dup_data + DatabaseAccessor::ADD_COLUMN_COUNT);
+    zone_id = db->startUpdateZone("example.com.", false).second;
+    db->addRecordToZone(update_columns);
+    expected_stored.push_back(dup_data);
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, invalidAdd) {
+    // An attempt of add before an explicit start of transaction
+    EXPECT_THROW(db->addRecordToZone(update_columns), DataSourceError);
+
+    // Short column vector
+    update_columns.clear();
+    zone_id = db->startUpdateZone("example.com.", false).second;
+    EXPECT_THROW(db->addRecordToZone(update_columns), DataSourceError);
+
+    // Too many columns
+    for (int i = 0; i < DatabaseAccessor::ADD_COLUMN_COUNT + 1; ++i) {
+        update_columns.push_back("");
+    }
+    EXPECT_THROW(db->addRecordToZone(update_columns), DataSourceError);
+}
+
+TEST_F(SQLite3Update, deleteRecord) {
+    zone_id = db->startUpdateZone("example.com.", false).second;
+
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+
+    update_columns.assign(deleted_data, deleted_data +
+                          DatabaseAccessor::DEL_PARAM_COUNT);
+    db->deleteRecordInZone(update_columns);
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+
+    // Commit the change, and confirm the deleted data still isn't there.
+    db->commitUpdateZone();
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, deleteThenRollback) {
+    zone_id = db->startUpdateZone("example.com.", false).second;
+
+    update_columns.assign(deleted_data, deleted_data +
+                          DatabaseAccessor::DEL_PARAM_COUNT);
+    db->deleteRecordInZone(update_columns);
+    checkRecords(*db, zone_id, "foo.bar.example.com.", empty_stored);
+
+    // Rollback the change, and confirm the data still exists.
+    db->rollbackUpdateZone();
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, deleteNonexistent) {
+    zone_id = db->startUpdateZone("example.com.", false).second;
+    update_columns.assign(deleted_data, deleted_data +
+                          DatabaseAccessor::DEL_PARAM_COUNT);
+
+    // Replace the name with a non existent one, then try to delete it.
+    // nothing should happen.
+    update_columns[0] = "no-such-name.example.com.";
+    checkRecords(*db, zone_id, "no-such-name.example.com.", empty_stored);
+    db->deleteRecordInZone(update_columns);
+    checkRecords(*db, zone_id, "no-such-name.example.com.", empty_stored);
+
+    // Name exists but the RR type is different.  Delete attempt shouldn't
+    // delete only by name.
+    update_columns.assign(deleted_data, deleted_data +
+                          DatabaseAccessor::DEL_PARAM_COUNT);
+    update_columns[1] = "AAAA";
+    db->deleteRecordInZone(update_columns);
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+
+    // Similar to the previous case, but RDATA is different.
+    update_columns.assign(deleted_data, deleted_data +
+                          DatabaseAccessor::DEL_PARAM_COUNT);
+    update_columns[2] = "192.0.2.2";
+    db->deleteRecordInZone(update_columns);
+    checkRecords(*db, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, invalidDelete) {
+    // An attempt of delete before an explicit start of transaction
+    EXPECT_THROW(db->deleteRecordInZone(update_columns), DataSourceError);
+
+    // Short column vector
+    update_columns.clear();
+    zone_id = db->startUpdateZone("example.com.", false).second;
+    EXPECT_THROW(db->deleteRecordInZone(update_columns), DataSourceError);
+
+    // Too many parameters
+    for (int i = 0; i < DatabaseAccessor::DEL_PARAM_COUNT + 1; ++i) {
+        update_columns.push_back("");
+    }
+    EXPECT_THROW(db->deleteRecordInZone(update_columns), DataSourceError);
+}
 } // end anonymous namespace
