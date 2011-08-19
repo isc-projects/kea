@@ -35,7 +35,9 @@ IfaceMgr* IfaceMgr::instance_ = 0;
 void
 IfaceMgr::instanceCreate() {
     if (instance_) {
-        // TODO throw exception here
+        // no need to do anything. Instance is already created.
+        // Who called it again anyway? Uh oh. Had to be us, as 
+        // this is private method.
         return;
     }
     instance_ = new IfaceMgr();
