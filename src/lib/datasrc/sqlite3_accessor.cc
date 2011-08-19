@@ -382,7 +382,7 @@ public:
     // Construct an iterator for records with a specific name. When constructed
     // this way, the getNext() call will copy all fields except name
     Context(const boost::shared_ptr<const SQLite3Database>& database, int id,
-            const isc::dns::Name& name) :
+            const std::string& name) :
         iterator_type_(ITT_NAME),
         database_(database),
         statement_(NULL)
@@ -442,8 +442,8 @@ private:
         }
     }
 
-    void bindName(const isc::dns::Name& name) {
-        if (sqlite3_bind_text(statement_, 2, name.toText().c_str(), -1,
+    void bindName(const std::string& name) {
+        if (sqlite3_bind_text(statement_, 2, name.c_str(), -1,
                               SQLITE_TRANSIENT) != SQLITE_OK) {
             const char* errmsg = sqlite3_errmsg(database_->dbparameters_->db_);
             sqlite3_finalize(statement_);
@@ -458,7 +458,7 @@ private:
 };
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Database::getRecords(const isc::dns::Name& name, int id) const {
+SQLite3Database::getRecords(const std::string& name, int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id, name)));
 }
 

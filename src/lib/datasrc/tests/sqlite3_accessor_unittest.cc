@@ -179,14 +179,14 @@ TEST_F(SQLite3Access, getRecords) {
     std::string columns[column_count];
 
     DatabaseAccessor::IteratorContextPtr
-        context(db->getRecords(Name("foo.bar"), 1));
+        context(db->getRecords("foo.bar", 1));
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
     EXPECT_FALSE(context->getNext(columns));
     checkRecordRow(columns, "", "", "", "", "");
 
     // now try some real searches
-    context = db->getRecords(Name("foo.example.com."), zone_id);
+    context = db->getRecords("foo.example.com.", zone_id);
     ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "CNAME", "3600", "",
                    "cnametest.example.org.", "");
@@ -207,7 +207,7 @@ TEST_F(SQLite3Access, getRecords) {
                    "NSEC 5 3 7200 20100322084538 20100220084538 33495 "
                    "example.com. FAKEFAKEFAKEFAKE", "");
 
-    context = db->getRecords(Name("example.com."), zone_id);
+    context = db->getRecords("example.com.", zone_id);
     ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "SOA", "3600", "",
                    "master.example.com. admin.example.com. "

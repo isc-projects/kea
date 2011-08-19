@@ -104,7 +104,7 @@ public:
      * \param id the zone id, as returned by getZone()
      * \return Iterator that contains all records with the given name
      */
-    virtual IteratorContextPtr getRecords(const isc::dns::Name& name,
+    virtual IteratorContextPtr getRecords(const std::string& name,
                                           int id) const;
 
     /** \brief Look up all resource records for a zone

@@ -183,7 +183,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
 
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(database_->getRecords(name, zone_id_));
+        context(database_->getRecords(name.toText(), zone_id_));
     // It must not return NULL, that's a bug of the implementation
     if (!context) {
         isc_throw(isc::Unexpected, "Iterator context null at " +
