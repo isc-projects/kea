@@ -106,19 +106,20 @@ class NewDBFile(unittest.TestCase):
 
     def test_new_db(self):
         self.assertFalse(os.path.exists(NEW_DB_FILE))
-        sqlite3_ds.load(NEW_DB_FILE, ".", example_reader)
+        sqlite3_ds.open(NEW_DB_FILE)
         self.assertTrue(os.path.exists(NEW_DB_FILE))
 
     def test_new_db_locked(self):
         self.assertFalse(os.path.exists(NEW_DB_FILE))
         con = sqlite3.connect(NEW_DB_FILE);
-        cur = con.cursor()
         con.isolation_level = None
-        cur.execute("BEGIN EXCLUSIVE TRANSACTION")
+        cur = con.cursor()
+        cur.execute("BEGIN IMMEDIATE TRANSACTION")
 
-        # load should now fail, since the database is locked
+        # load should now fail, since the database is locked,
+        # and the open() call needs an exclusive lock
         self.assertRaises(sqlite3.OperationalError,
-                          sqlite3_ds.load, NEW_DB_FILE, ".", example_reader)
+                          sqlite3_ds.open, NEW_DB_FILE, 0.1)
 
         con.rollback()
         cur.close()
@@ -126,7 +127,17 @@ class NewDBFile(unittest.TestCase):
         self.assertTrue(os.path.exists(NEW_DB_FILE))
 
         # now that we closed our connection, load should work again
-        sqlite3_ds.load(NEW_DB_FILE, ".", example_reader)
+        sqlite3_ds.open(NEW_DB_FILE)
+
+        # the database should now have been created, and a new load should
+        # not require an exclusive lock anymore, so we lock it again
+        con = sqlite3.connect(NEW_DB_FILE);
+        cur = con.cursor()
+        cur.execute("BEGIN IMMEDIATE TRANSACTION")
+        sqlite3_ds.open(NEW_DB_FILE, 0.1)
+        con.rollback()
+        cur.close()
+        con.close()
 
 if __name__ == '__main__':
     unittest.main()
