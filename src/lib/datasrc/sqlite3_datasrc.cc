@@ -668,13 +668,26 @@ checkAndSetupSchema(Sqlite3Initializer* initializer) {
         if (prepared != NULL) {
             sqlite3_finalize(prepared);
         }
-        for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
-            if (sqlite3_exec(db, SCHEMA_LIST[i], NULL, NULL, NULL) !=
-                SQLITE_OK) {
-                isc_throw(Sqlite3Error,
-                          "Failed to set up schema " << SCHEMA_LIST[i]);
+        // We need to create the database. However, there is a potential
+        // race condition with another process that wants to do the same
+        // So we acquire an exclusive lock, and then check whether the
+        // tables have been created again. If not, we create them.
+        sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION", NULL, NULL, NULL);
+        if (sqlite3_prepare_v2(db, "SELECT version FROM schema_version", -1,
+                            &prepared, NULL) == SQLITE_OK &&
+            sqlite3_step(prepared) == SQLITE_ROW) {
+            initializer->params_.version_ = sqlite3_column_int(prepared, 0);
+            sqlite3_finalize(prepared);
+        } else {
+            for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
+                if (sqlite3_exec(db, SCHEMA_LIST[i], NULL, NULL, NULL) !=
+                    SQLITE_OK) {
+                    isc_throw(Sqlite3Error,
+                            "Failed to set up schema " << SCHEMA_LIST[i]);
+                }
             }
         }
+        sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, NULL);
     }
 
     initializer->params_.q_zone_ = prepare(db, q_zone_str);
