@@ -1,3 +1,8 @@
+282.    [func]          ocean
+        libdns++: Implement the NAPTR rrtype according to RFC2915,
+                RFC2168 and RFC3403.
+        (Trac #1130, git 01d8d0f13289ecdf9996d6d5d26ac0d43e30549c)
+
 bind10-devel-20110819 released on August 19, 2011
 
 281.	[func]		jelte
