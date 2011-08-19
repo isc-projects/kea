@@ -336,34 +336,6 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
     return (std::pair<bool, int>(false, 0));
 }
 
-namespace {
-// This helper function converts from the unsigned char* type (used by
-// sqlite3) to char* (wanted by std::string). Technically these types
-// might not be directly convertable
-// In case sqlite3_column_text() returns NULL, we just make it an
-// empty string.
-// The sqlite3parameters value is only used to check the error code if
-// ucp == NULL
-const char*
-convertToPlainChar(const unsigned char* ucp,
-                   SQLite3Parameters* dbparameters) {
-    if (ucp == NULL) {
-        // The field can really be NULL, in which case we return an
-        // empty string, or sqlite may have run out of memory, in
-        // which case we raise an error
-        if (dbparameters != NULL &&
-            sqlite3_errcode(dbparameters->db_) == SQLITE_NOMEM) {
-            isc_throw(DataSourceError,
-                      "Sqlite3 backend encountered a memory allocation "
-                      "error in sqlite3_column_text()");
-        } else {
-            return ("");
-        }
-    }
-    const void* p = ucp;
-    return (static_cast<const char*>(p));
-}
-}
 
 class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
 public:
@@ -372,7 +344,8 @@ public:
     Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
         iterator_type_(ITT_ALL),
         database_(database),
-        statement_(NULL)
+        statement_(NULL),
+        name_("")
     {
         // We create the statement now and then just keep getting data from it
         statement_ = prepare(database->dbparameters_->db_, q_iterate_str);
@@ -385,12 +358,13 @@ public:
             const std::string& name) :
         iterator_type_(ITT_NAME),
         database_(database),
-        statement_(NULL)
+        statement_(NULL),
+        name_(name)
     {
         // We create the statement now and then just keep getting data from it
         statement_ = prepare(database->dbparameters_->db_, q_any_str);
         bindZoneId(id);
-        bindName(name);
+        bindName(name_);
     }
 
     bool getNext(std::string (&data)[COLUMN_COUNT]) {
@@ -412,11 +386,12 @@ public:
                       "Unexpected failure in sqlite3_step: " <<
                       sqlite3_errmsg(database_->dbparameters_->db_));
         }
+        finalize();
         return (false);
     }
 
     virtual ~Context() {
-        sqlite3_finalize(statement_);
+        finalize();
     }
 
 private:
@@ -430,12 +405,12 @@ private:
 
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
         data[column] = convertToPlainChar(sqlite3_column_text(statement_,
-                                                              column),
-                                          database_->dbparameters_.get());
+                                                              column));
     }
 
     void bindZoneId(const int zone_id) {
         if (sqlite3_bind_int(statement_, 1, zone_id) != SQLITE_OK) {
+            finalize();
             isc_throw(SQLite3Error, "Could not bind int " << zone_id <<
                       " to SQL statement: " <<
                       sqlite3_errmsg(database_->dbparameters_->db_));
@@ -444,17 +419,46 @@ private:
 
     void bindName(const std::string& name) {
         if (sqlite3_bind_text(statement_, 2, name.c_str(), -1,
-                              SQLITE_TRANSIENT) != SQLITE_OK) {
+                              SQLITE_STATIC) != SQLITE_OK) {
             const char* errmsg = sqlite3_errmsg(database_->dbparameters_->db_);
-            sqlite3_finalize(statement_);
+            finalize();
             isc_throw(SQLite3Error, "Could not bind text '" << name <<
                       "' to SQL statement: " << errmsg);
         }
     }
 
+    void finalize() {
+        sqlite3_finalize(statement_);
+        statement_ = NULL;
+    }
+
+    // This helper method converts from the unsigned char* type (used by
+    // sqlite3) to char* (wanted by std::string). Technically these types
+    // might not be directly convertable
+    // In case sqlite3_column_text() returns NULL, we just make it an
+    // empty string, unless it was caused by a memory error
+    const char* convertToPlainChar(const unsigned char* ucp) {
+        if (ucp == NULL) {
+            // The field can really be NULL, in which case we return an
+            // empty string, or sqlite may have run out of memory, in
+            // which case we raise an error
+            if (sqlite3_errcode(database_->dbparameters_->db_)
+                                == SQLITE_NOMEM) {
+                isc_throw(DataSourceError,
+                        "Sqlite3 backend encountered a memory allocation "
+                        "error in sqlite3_column_text()");
+            } else {
+                return ("");
+            }
+        }
+        const void* p = ucp;
+        return (static_cast<const char*>(p));
+    }
+
     const IteratorType iterator_type_;
     boost::shared_ptr<const SQLite3Database> database_;
     sqlite3_stmt *statement_;
+    const std::string name_;
 };
 
 DatabaseAccessor::IteratorContextPtr

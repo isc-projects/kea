@@ -62,6 +62,15 @@ public:
         return (database_name_);
     }
 
+    virtual IteratorContextPtr getRecords(const std::string&, int) const {
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't be iterated");
+    };
+
+    virtual IteratorContextPtr getAllRecords(int) const {
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't be iterated");
+    };
 private:
     const std::string database_name_;
 
