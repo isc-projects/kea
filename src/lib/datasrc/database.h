@@ -155,7 +155,7 @@ public:
      * \param id The ID of the zone, returned from getZone().
      * \return Newly created iterator context. Must not be NULL.
      */
-    virtual IteratorContextPtr getRecords(const isc::dns::Name& name,
+    virtual IteratorContextPtr getRecords(const std::string& name,
                                           int id) const
     {
         /*

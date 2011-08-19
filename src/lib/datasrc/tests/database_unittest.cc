@@ -84,8 +84,8 @@ private:
     class MockNameIteratorContext : public IteratorContext {
     public:
         MockNameIteratorContext(const MockAccessor& mock_accessor, int zone_id,
-                                const isc::dns::Name& name) :
-            searched_name_(name.toText()), cur_record_(0)
+                                const std::string& name) :
+            searched_name_(name), cur_record_(0)
         {
             // 'hardcoded' name to trigger exceptions (for testing
             // the error handling of find() (the other on is below in
@@ -235,7 +235,7 @@ public:
         }
     }
 
-    virtual IteratorContextPtr getRecords(const Name& name, int id) const {
+    virtual IteratorContextPtr getRecords(const std::string& name, int id) const {
         if (id == 42) {
             return (IteratorContextPtr(new MockNameIteratorContext(*this, id, name)));
         } else {
@@ -424,7 +424,7 @@ private:
 
 // This tests the default getRecords behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getRecords) {
-    EXPECT_THROW(NopAccessor().getRecords(Name("."), 1),
+    EXPECT_THROW(NopAccessor().getRecords(".", 1),
                  isc::NotImplemented);
 }
 
