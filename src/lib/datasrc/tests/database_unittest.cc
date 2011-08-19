@@ -96,9 +96,9 @@ private:
                                 const std::string& name) :
             searched_name_(name), cur_record_(0)
         {
-            // 'hardcoded' name to trigger exceptions (for testing
-            // the error handling of find() (the other on is below in
-            // if the name is "exceptiononsearch" it'll raise an exception here
+            // 'hardcoded' names to trigger exceptions
+            // On these names some exceptions are throws, to test the robustness
+            // of the find() method.
             if (searched_name_ == "dsexception.in.search.") {
                 isc_throw(DataSourceError, "datasource exception on search");
             } else if (searched_name_ == "iscexception.in.search.") {
