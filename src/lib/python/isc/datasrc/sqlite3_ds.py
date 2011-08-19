@@ -76,18 +76,20 @@ def create(cur):
     cur.execute("COMMIT TRANSACTION")
     return row
 
-def open(dbfile):
+def open(dbfile, connect_timeout=5.0):
     """ Open a database, if the database is not yet set up, call create
     to do so. It may raise Sqlite3DSError if failed to open sqlite3
     database file or find bad database schema version in the database.
 
     Arguments:
         dbfile - the filename for the sqlite3 database.
+        connect_timeout - timeout for opening the database or acquiring locks
+                          defaults to sqlite3 module's default of 5.0 seconds
 
     Return sqlite3 connection, sqlite3 cursor.
     """
     try:
-        conn = sqlite3.connect(dbfile)
+        conn = sqlite3.connect(dbfile, timeout=connect_timeout)
         cur = conn.cursor()
     except Exception as e:
         fail = "Failed to open " + dbfile + ": " + e.args[0]
