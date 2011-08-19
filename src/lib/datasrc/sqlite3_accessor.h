@@ -119,35 +119,29 @@ public:
      */
     virtual IteratorContextPtr getAllRecords(int id) const;
 
-    /// TBD
-    /// This cannot be nested.
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
                                                  bool replace);
 
-    /// TBD
-    /// Note: we are quite impatient here: it's quite possible that the COMMIT
+    /// \note we are quite impatient here: it's quite possible that the COMMIT
     /// fails due to other process performing SELECT on the same database
     /// (consider the case where COMMIT is done by xfrin or dynamic update
     /// server while an authoritative server is busy reading the DB).
     /// In a future version we should probably need to introduce some retry
     /// attempt and/or increase timeout before giving up the COMMIT, even
-    /// if it still doesn't guarantee 100% success.
+    /// if it still doesn't guarantee 100% success.  Right now this
+    /// implementation throws a \c DataSourceError exception in such a case.
     virtual void commitUpdateZone();
 
-    /// TBD
-    ///
-    /// In SQLite3 rollback can fail if there's another unfinished statement
-    /// is performed for the same database structure.  Although it's not
-    /// expected to happen in our expected usage, it's not guaranteed to be
-    /// prevented at the API level.  If it ever happens, this method throws
-    /// an \c DataSourceError exception.  It should be considered a bug of
-    /// the higher level application program.
+    /// \note In SQLite3 rollback can fail if there's another unfinished
+    /// statement is performed for the same database structure.
+    /// Although it's not expected to happen in our expected usage, it's not
+    /// guaranteed to be prevented at the API level.  If it ever happens, this
+    /// method throws a \c DataSourceError exception.  It should be
+    /// considered a bug of the higher level application program.
     virtual void rollbackUpdateZone();
 
-    /// TBD
     virtual void addRecordToZone(const std::vector<std::string>& columns);
 
-    /// TBD
     virtual void deleteRecordInZone(const std::vector<std::string>& params);
 
     /// The SQLite3 implementation of this method returns a string starting
