@@ -51,14 +51,57 @@ public:
     /// The number of fields the columns array passed to getNext should have
     static const size_t COLUMN_COUNT = 5;
 
-    /// TBD
-    /// Compliant database should support the following columns:
-    /// name, rname, ttl, rdtype, sigtype, rdata
-    /// (even though their internal representation may be different).
-    static const size_t ADD_COLUMN_COUNT = 6;
+    /**
+     * Definitions of the fields as they are required to be filled in
+     * by IteratorContext::getNext()
+     *
+     * When implementing getNext(), the columns array should
+     * be filled with the values as described in this enumeration,
+     * in this order, i.e. TYPE_COLUMN should be the first element
+     * (index 0) of the array, TTL_COLUMN should be the second element
+     * (index 1), etc.
+     */
+    enum RecordColumns {
+        TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)
+        TTL_COLUMN = 1,     ///< The TTL of the record (a
+        SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
+                            ///< the RRSIG covers. In the current implementation,
+                            ///< this field is ignored.
+        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
+        NAME_COLUMN = 4     ///< The domain name of this RR
+    };
 
-    /// TBD
-    static const size_t DEL_PARAM_COUNT = 3;
+    /**
+     * Definitions of the fields to be passed to addRecordToZone().
+     *
+     * Each derived implementation of addRecordToZone() should expect
+     * the "columns" vector to be filled with the values as described in this
+     * enumeration, in this order.
+     */
+    enum AddRecordColumns {
+        ADD_NAME = 0, ///< The owner name of the record (a domain name)
+        ADD_REV_NAME = 1, ///< Reversed name of NAME (used for DNSSEC)
+        ADD_TTL = 2,     ///< The TTL of the record (an integer)
+        ADD_TYPE = 3,    ///< The RRType of the record (A/NS/TXT etc.)
+        ADD_SIGTYPE = 4, ///< For RRSIG records, this contains the RRTYPE
+                            ///< the RRSIG covers.
+        ADD_RDATA = 5,    ///< Full text representation of the record's RDATA
+        ADD_COLUMN_COUNT = 6 ///< Number of columns
+    };
+
+    /**
+     * Definitions of the fields to be passed to deleteRecordInZone().
+     *
+     * Each derived implementation of deleteRecordInZone() should expect
+     * the "params" vector to be filled with the values as described in this
+     * enumeration, in this order.
+     */
+    enum DeleteRecordParams {
+        DEL_NAME = 0, ///< The owner name of the record (a domain name)
+        DEL_TYPE = 1, ///< The RRType of the record (A/NS/TXT etc.)
+        DEL_RDATA = 2, ///< Full text representation of the record's RDATA
+        DEL_PARAM_COUNT = 3 ///< Number of parameters
+    };
 
     /**
      * \brief Destructor
@@ -208,25 +251,190 @@ public:
                   "This database datasource can't be iterated");
     }
 
-    /**
-     * Definitions of the fields as they are required to be filled in
-     * by IteratorContext::getNext()
-     *
-     * When implementing getNext(), the columns array should
-     * be filled with the values as described in this enumeration,
-     * in this order, i.e. TYPE_COLUMN should be the first element
-     * (index 0) of the array, TTL_COLUMN should be the second element
-     * (index 1), etc.
-     */
-    enum RecordColumns {
-        TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)
-        TTL_COLUMN = 1,     ///< The TTL of the record (a
-        SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
-                            ///< the RRSIG covers. In the current implementation,
-                            ///< this field is ignored.
-        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
-        NAME_COLUMN = 4     ///< The domain name of this RR
-    };
+    /// Start a transaction for updating a zone.
+    ///
+    /// Each derived class version of this method starts a database
+    /// transaction to make updates to the given name of zone (whose class was
+    /// specified at the construction of the class).
+    ///
+    /// If \c replace is true, any existing records of the zone will be
+    /// deleted on successful completion of updates (after
+    /// \c commitUpdateZone()); if it's false, the existing records will be
+    /// intact unless explicitly deleted by \c deleteRecordInZone().
+    ///
+    /// A single \c DatabaseAccessor instance can perform at most one update
+    /// transaction; a duplicate call to this method before
+    /// \c commitUpdateZone() or \c rollbackUpdateZone() will result in
+    /// a \c DataSourceError exception.  If multiple update attempts need
+    /// to be performed concurrently (and if the underlying database allows
+    /// such operation), separate \c DatabaseAccessor instance must be
+    /// created.
+    ///
+    /// \note The underlying database may not allow concurrent updates to
+    /// the same database instance even if different "connections" (or
+    /// something similar specific to the database implementation) are used
+    /// for different sets of updates.  For example, it doesn't seem to be
+    /// possible for SQLite3 unless different databases are used.  MySQL
+    /// allows concurrent updates to different tables of the same database,
+    /// but a specific operation may block others.  As such, this interface
+    /// doesn't require derived classes to allow concurrent updates with
+    /// multiple \c DatabaseAccessor instances; however, the implementation
+    /// is encouraged to do the best for making it more likely to succeed
+    /// as long as the underlying database system allows concurrent updates.
+    ///
+    /// This method returns a pair of \c bool and \c int.  Its first element
+    /// indicates whether the given name of zone is found.  If it's false,
+    /// the transaction isn't considered to be started; a subsequent call to
+    /// this method with an existing zone name should succeed.  Likewise,
+    /// if a call to this method results in an exception, the transaction
+    /// isn't considered to be started.  Note also that if the zone is not
+    /// found this method doesn't try to create a new one in the database.
+    /// It must have been created by some other means beforehand.
+    ///
+    /// The second element is the internal zone ID used for subsequent
+    /// updates.  Depending on implementation details of the actual derived
+    /// class method, it may be different from the one returned by
+    /// \c getZone(); for example, a specific implementation may use a
+    /// completely new zone ID when \c replace is true.
+    ///
+    /// \exception DataSourceError Duplicate call to this method, or some
+    /// internal database related error.
+    ///
+    /// \param zone_name A string representation of the zone name to be updated
+    /// \param replace Whether to replace the entire zone (see above)
+    ///
+    /// \return A pair of bool and int, indicating whether the specified zone
+    /// exists and (if so) the zone ID to be used for the update, respectively.
+    virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
+                                                 bool replace) = 0;
+
+    /// Add a single record to the zone to be updated.
+    ///
+    /// This method provides a simple interface to insert a new record
+    /// (a database "row") to the zone in the update context started by
+    /// \c startUpdateZone().  The zone to which the record to be added
+    /// is the one specified at the time of the \c startUpdateZone() call.
+    ///
+    /// A successful call to \c startUpdateZone() must have preceded to
+    /// this call; otherwise a \c DataSourceError exception will be thrown.
+    ///
+    /// The row is defined as a vector of strings that has exactly
+    /// ADD_COLUMN_COUNT number of elements.  See AddRecordColumns for
+    /// the semantics of each element.
+    ///
+    /// Derived class methods are not required to check whether the given
+    /// values in \c columns are valid in terms of the expected semantics;
+    /// in general, it's the caller's responsibility.
+    /// For example, TTLs would normally be expected to be a textual
+    /// representation of decimal numbers, but this interface doesn't require
+    /// the implementation to perform this level of validation.  It may check
+    /// the values, however, and in that case if it detects an error it
+    /// should throw a \c DataSourceError exception.
+    ///
+    /// Likewise, derived class methods are not required to detect any
+    /// duplicate record that is already in the zone.
+    ///
+    /// \note The underlying database schema may not have a trivial mapping
+    /// from this style of definition of rows to actual database records.
+    /// It's the implementation's responsibility to implement the mapping
+    /// in the actual derived method.
+    ///
+    /// \exception DataSourceError Invalid call without starting a transaction,
+    /// the columns parameter has an invalid number of elements, or other
+    /// internal database error.
+    ///
+    /// \param columns A vector of strings that defines a record to be added
+    /// to the zone.
+    virtual void addRecordToZone(const std::vector<std::string>& columns) = 0;
+
+    /// Delete a single record from the zone to be updated.
+    ///
+    /// This method provides a simple interface to delete a record
+    /// (a database "row") from the zone in the update context started by
+    /// \c startUpdateZone().  The zone from which the record to be deleted
+    /// is the one specified at the time of the \c startUpdateZone() call.
+    ///
+    /// A successful call to \c startUpdateZone() must have preceded to
+    /// this call; otherwise a \c DataSourceError exception will be thrown.
+    ///
+    /// The record to be deleted is specified by a vector of strings that has
+    /// exactly DEL_PARAM_COUNT number of elements.  See DeleteRecordParams
+    /// for the semantics of each element.
+    ///
+    /// \note In IXFR, TTL may also be specified, but we intentionally
+    /// ignore that in this interface, because it's not guaranteed
+    /// that all records have the same TTL (unlike the RRset
+    /// assumption) and there can even be multiple records for the
+    /// same name, type and rdata with different TTLs.  If we only
+    /// delete one of them, subsequent lookup will still return a
+    /// positive answer, which would be confusing.  It's a higher
+    /// layer's responsibility to check if there is at least one
+    /// record in the database that has the given TTL.
+    ///
+    /// Like \c addRecordToZone, derived class methods are not required to
+    /// validate the semantics of the given parameters or to check if there
+    /// is a record that matches the specified parameter; if there isn't
+    /// it simply ignores the result.
+    ///
+    /// \exception DataSourceError Invalid call without starting a transaction,
+    /// the columns parameter has an invalid number of elements, or other
+    /// internal database error.
+    ///
+    /// \param params A vector of strings that defines a record to be deleted
+    /// from the zone.
+    virtual void deleteRecordInZone(
+        const std::vector<std::string>& params) = 0;
+
+    /// Commit updates to the zone.
+    ///
+    /// This method completes a transaction of making updates to the zone
+    /// in the context started by startUpdateZone.
+    ///
+    /// A successful call to \c startUpdateZone() must have preceded to
+    /// this call; otherwise a \c DataSourceError exception will be thrown.
+    /// Once this method successfully completes, the transaction isn't
+    /// considered to exist any more.  So a new transaction can now be
+    /// started.  On the other hand, a duplicate call to this method after
+    /// a successful completion of it is invalid and should result in
+    /// a \c DataSourceError exception.
+    ///
+    /// If some internal database error happens, a \c DataSourceError
+    /// exception must be thrown.  In that case the transaction is still
+    /// considered to be valid; the caller must explicitly rollback it
+    /// or (if it's confident that the error is temporary) try to commit it
+    /// again.
+    ///
+    /// \exception DataSourceError Call without a transaction, duplicate call
+    /// to the method or internal database error.
+    virtual void commitUpdateZone() = 0;
+
+    /// Rollback updates to the zone made so far.
+    ///
+    /// This method rollbacks a transaction of making updates to the zone
+    /// in the context started by startUpdateZone.  When it succeeds
+    /// (it normally should, but see below), the underlying database should
+    /// be reverted to the point before performing the corresponding
+    /// \c startUpdateZone().
+    ///
+    /// A successful call to \c startUpdateZone() must have preceded to
+    /// this call; otherwise a \c DataSourceError exception will be thrown.
+    /// Once this method successfully completes, the transaction isn't
+    /// considered to exist any more.  So a new transaction can now be
+    /// started.  On the other hand, a duplicate call to this method after
+    /// a successful completion of it is invalid and should result in
+    /// a \c DataSourceError exception.
+    ///
+    /// Normally this method should not fail.  But it may not always be
+    /// possible to guarantee it depending on the characteristics of the
+    /// underlying database system.  So this interface doesn't require the
+    /// actual implementation for the error free property.  But if a specific
+    /// implementation of this method can fail, it is encouraged to document
+    /// when that can happen with its implication.
+    ///
+    /// \exception DataSourceError Call without a transaction, duplicate call
+    /// to the method or internal database error.
+    virtual void rollbackUpdateZone() = 0;
+
 
     /**
      * \brief Returns a string identifying this dabase backend

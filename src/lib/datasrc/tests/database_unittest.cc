@@ -58,6 +58,15 @@ public:
         }
     }
 
+    virtual std::pair<bool, int> startUpdateZone(const std::string&, bool) {
+        // return dummy value.  unused anyway.
+        return (pair<bool, int>(true, 0));
+    }
+    virtual void commitUpdateZone() {}
+    virtual void rollbackUpdateZone() {}
+    virtual void addRecordToZone(const std::vector<std::string>&) {}
+    virtual void deleteRecordInZone(const std::vector<std::string>&) {}
+
     virtual const std::string& getDBName() const {
         return (database_name_);
     }
