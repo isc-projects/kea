@@ -177,7 +177,7 @@ class ZonemgrRefresh:
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
         # Is zone expired?
-        if ((self._get_zone_soa_rdata(zone_name_class) is not None) and
+        if ((self._get_zone_soa_rdata(zone_name_class) is None) or
             self._zone_is_expired(zone_name_class)):
             self._set_zone_state(zone_name_class, ZONE_EXPIRED)
         else:
@@ -450,29 +450,32 @@ class ZonemgrRefresh:
         self._reload_jitter = val_or_default(
             new_config.get('reload_jitter'), self._reload_jitter)
 
-        required = {}
-        secondary_zones = new_config.get('secondary_zones')
-        if secondary_zones is not None:
-            # Add new zones
-            for secondary_zone in new_config.get('secondary_zones'):
-                name = secondary_zone['name']
-                # Be tolerant to sclerotic users who forget the final dot
-                if name[-1] != '.':
-                    name = name + '.'
-                name_class = (name, secondary_zone['class'])
-                required[name_class] = True
-                # Add it only if it isn't there already
-                if not name_class in self._zonemgr_refresh_info:
-                    # If we are not able to find it in database, log an warning
-                    self.zonemgr_add_zone(name_class)
-            # Drop the zones that are no longer there
-            # Do it in two phases, python doesn't like deleting while iterating
-            to_drop = []
-            for old_zone in self._zonemgr_refresh_info:
-                if not old_zone in required:
-                    to_drop.append(old_zone)
-            for drop in to_drop:
-                del self._zonemgr_refresh_info[drop]
+        try:
+            required = {}
+            secondary_zones = new_config.get('secondary_zones')
+            if secondary_zones is not None:
+                # Add new zones
+                for secondary_zone in new_config.get('secondary_zones'):
+                    name = secondary_zone['name']
+                    # Be tolerant to sclerotic users who forget the final dot
+                    if name[-1] != '.':
+                        name = name + '.'
+                    name_class = (name, secondary_zone['class'])
+                    required[name_class] = True
+                    # Add it only if it isn't there already
+                    if not name_class in self._zonemgr_refresh_info:
+                        # If we are not able to find it in database, log an warning
+                        self.zonemgr_add_zone(name_class)
+                # Drop the zones that are no longer there
+                # Do it in two phases, python doesn't like deleting while iterating
+                to_drop = []
+                for old_zone in self._zonemgr_refresh_info:
+                    if not old_zone in required:
+                        to_drop.append(old_zone)
+                for drop in to_drop:
+                    del self._zonemgr_refresh_info[drop]
+        except:
+            raise
 
 class Zonemgr:
     """Zone manager class."""
