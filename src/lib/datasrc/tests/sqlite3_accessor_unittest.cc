@@ -190,6 +190,9 @@ TEST_F(SQLite3Access, iterator) {
 
     // Check there's no other
     EXPECT_FALSE(context->getNext(data));
+
+    // And make sure calling it again won't cause problems.
+    EXPECT_FALSE(context->getNext(data));
 }
 
 TEST(SQLite3Open, getDBNameExample2) {
@@ -321,6 +324,9 @@ TEST_F(SQLite3Access, getRecords) {
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE", "");
+
+    // check that another getNext does not cause problems
+    EXPECT_FALSE(context->getNext(columns));
 }
 
 } // end anonymous namespace
