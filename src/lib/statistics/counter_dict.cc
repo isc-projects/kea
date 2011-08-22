@@ -41,8 +41,10 @@ class CounterDictionaryImpl : boost::noncopyable {
 CounterDictionaryImpl::CounterDictionaryImpl(const size_t items) :
     items_(items)
 {
-    // The number of the items must not be 0.
-    assert(items != 0);
+    // The number of items must not be 0
+    if (items == 0) {
+        isc_throw(isc::InvalidParameter, "Items must not be 0");
+    }
 }
 
 // Destructor
@@ -55,6 +57,7 @@ CounterDictionaryImpl::addElement(const std::string& name) {
         isc_throw(isc::InvalidParameter,
                   "Element " << name << " already exists");
     }
+    assert(items_ != 0);
     // Create a new Counter and add to the map
     dictionary_.insert(
         DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
