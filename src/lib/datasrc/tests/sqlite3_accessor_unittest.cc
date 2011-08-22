@@ -19,6 +19,8 @@
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
+#include <fstream>
+#include <sqlite3.h>
 
 using namespace isc::datasrc;
 using isc::data::ConstElementPtr;
@@ -41,6 +43,10 @@ std::string SQLITE_DBFILE_MEMORY = ":memory:";
 // so to test a failure case the create operation should also fail.
 // The "nodir", a non existent directory, is inserted for this purpose.
 std::string SQLITE_DBFILE_NOTEXIST = TEST_DATA_DIR "/nodir/notexist";
+
+// new db file, we don't need this to be a std::string, and given the
+// raw calls we use it in a const char* is more convenient
+const char* SQLITE_NEW_DBFILE = TEST_DATA_BUILD_DIR "/newdb.sqlite3";
 
 // Opening works (the content is tested in different tests)
 TEST(SQLite3Open, common) {
@@ -289,6 +295,65 @@ TEST_F(SQLite3Access, getRecords) {
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE", "example.com.");
+}
+
+// Test fixture for creating a db that automatically deletes it before start,
+// and when done
+class SQLite3Create : public ::testing::Test {
+public:
+    SQLite3Create() {
+        remove(SQLITE_NEW_DBFILE);
+    }
+
+    ~SQLite3Create() {
+        remove(SQLITE_NEW_DBFILE);
+    }
+};
+
+bool exists(const char* filename) {
+    std::ifstream f(filename);
+    return (f != NULL);
+}
+
+TEST_F(SQLite3Create, creationtest) {
+    ASSERT_FALSE(exists(SQLITE_NEW_DBFILE));
+    // Should simply be created
+    SQLite3Database db(SQLITE_NEW_DBFILE, RRClass::IN());
+    ASSERT_TRUE(exists(SQLITE_NEW_DBFILE));
+}
+
+TEST_F(SQLite3Create, emptytest) {
+    ASSERT_FALSE(exists(SQLITE_NEW_DBFILE));
+
+    // open one manualle
+    sqlite3* db;
+    ASSERT_EQ(SQLITE_OK, sqlite3_open(SQLITE_NEW_DBFILE, &db));
+
+    // empty, but not locked, so creating it now should work
+    SQLite3Database db2(SQLITE_NEW_DBFILE, RRClass::IN());
+
+    sqlite3_close(db);
+
+    // should work now that we closed it
+    SQLite3Database db3(SQLITE_NEW_DBFILE, RRClass::IN());
+}
+
+TEST_F(SQLite3Create, lockedtest) {
+    ASSERT_FALSE(exists(SQLITE_NEW_DBFILE));
+
+    // open one manually
+    sqlite3* db;
+    ASSERT_EQ(SQLITE_OK, sqlite3_open(SQLITE_NEW_DBFILE, &db));
+    sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION", NULL, NULL, NULL);
+
+    // should not be able to open it
+    EXPECT_THROW(SQLite3Database db2(SQLITE_NEW_DBFILE, RRClass::IN()),
+                 SQLite3Error);
+
+    sqlite3_exec(db, "ROLLBACK TRANSACTION", NULL, NULL, NULL);
+
+    // should work now that we closed it
+    SQLite3Database db3(SQLITE_NEW_DBFILE, RRClass::IN());
 }
 
 } // end anonymous namespace
