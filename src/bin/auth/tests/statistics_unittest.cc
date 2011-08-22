@@ -156,8 +156,9 @@ TEST_F(AuthCountersTest, incrementTCPCounter) {
 }
 
 TEST_F(AuthCountersTest, incrementInvalidCounter) {
-    // Expect to die.
-    EXPECT_DEATH(counters.inc(AuthCounters::SERVER_COUNTER_TYPES), "Assertion.+failed");
+    // Expect to throw an isc::OutOfRange
+    EXPECT_THROW(counters.inc(AuthCounters::SERVER_COUNTER_TYPES),
+                 isc::OutOfRange);
 }
 
 TEST_F(AuthCountersTest, submitStatisticsWithoutSession) {
