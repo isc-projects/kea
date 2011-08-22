@@ -495,7 +495,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         name_class = ("doesnotexist.", "IN")
         self.assertTrue(self.zone_refresh._zonemgr_refresh_info[name_class]["zone_soa_rdata"]
                         is None)
-        # The other configs should be updated successful
+        # The other configs should be updated successfully
         self.assertEqual(61, self.zone_refresh._lowerbound_refresh)
         self.assertEqual(31, self.zone_refresh._lowerbound_retry)
         self.assertEqual(19801, self.zone_refresh._max_transfer_timeout)
@@ -617,8 +617,8 @@ class TestZonemgr(unittest.TestCase):
         config_data1["secondary_zones"] = [{"name": "nonexistent.example",
                                             "class": "IN"}]
         self.assertEqual(self.zonemgr.config_handler(config_data1),
-                            {"result": [0]})
-        # other configs should be updated successful
+                         {"result": [0]})
+        # other configs should be updated successfully
         name_class = ("nonexistent.example.", "IN")
         self.assertTrue(self.zonemgr._zone_refresh._zonemgr_refresh_info[name_class]["zone_soa_rdata"]
                         is None)
