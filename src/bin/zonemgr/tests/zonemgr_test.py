@@ -372,6 +372,15 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_CH)
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_IN)
 
+        old_get_zone_soa = sqlite3_ds.get_zone_soa
+        def get_zone_soa(zone_name, db_file):
+            return None
+        sqlite3_ds.get_zone_soa = get_zone_soa
+        self.zone_refresh.zone_refresh_fail(ZONE_NAME_CLASS1_IN)
+        self.assertEqual(self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"],
+                         ZONE_EXPIRED)
+        sqlite3_ds.get_zone_soa = old_get_zone_soa
+
     def test_find_need_do_refresh_zone(self):
         time1 = time.time()
         self.zone_refresh._zonemgr_refresh_info = {
