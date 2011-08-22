@@ -97,7 +97,7 @@ private:
             searched_name_(name), cur_record_(0)
         {
             // 'hardcoded' names to trigger exceptions
-            // On these names some exceptions are throws, to test the robustness
+            // On these names some exceptions are thrown, to test the robustness
             // of the find() method.
             if (searched_name_ == "dsexception.in.search.") {
                 isc_throw(DataSourceError, "datasource exception on search");
