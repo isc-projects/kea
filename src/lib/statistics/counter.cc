@@ -1,5 +1,4 @@
 #include <vector>
-#include <cassert>
 
 #include <boost/noncopyable.hpp>
 
@@ -25,21 +24,27 @@ class CounterImpl : boost::noncopyable {
 CounterImpl::CounterImpl(const size_t items) :
     counters_(items, InitialValue)
 {
-    assert(items != 0);
+    if (items == 0) {
+        isc_throw(isc::InvalidParameter, "Items must not be 0");
+    }
 }
 
 CounterImpl::~CounterImpl() {}
 
 void
 CounterImpl::inc(const Counter::Type& type) {
-    assert(type < counters_.size());
+    if(type >= counters_.size()) {
+        isc_throw(isc::OutOfRange, "Counter type is out of range");
+    }
     ++counters_.at(type);
     return;
 }
 
 const Counter::Value&
 CounterImpl::get(const Counter::Type& type) const {
-    assert(type < counters_.size());
+    if(type >= counters_.size()) {
+        isc_throw(isc::OutOfRange, "Counter type is out of range");
+    }
     return (counters_.at(type));
 }
 

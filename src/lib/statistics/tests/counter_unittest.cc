@@ -61,13 +61,18 @@ TEST_F(CounterTest, incrementCounterItem) {
 }
 
 TEST_F(CounterTest, invalidCounterSize) {
-    // Creating counter with 0 elements will cause assertion failure
-    EXPECT_DEATH(Counter counter(0), "Assertion.+failed");
+    // Creating counter with 0 elements will cause an isc::InvalidParameter
+    // exception
+    EXPECT_THROW(Counter counter(0), isc::InvalidParameter);
 }
 
 TEST_F(CounterTest, invalidCounterItem) {
     // Create counter
     Counter counter(NUMBER_OF_ITEMS);
-    // Incrementing out-of-bound counter will cause assertion failure
-    EXPECT_DEATH(counter.inc(NUMBER_OF_ITEMS), "Assertion.+failed");
+    // Incrementing out-of-bound counter will cause an isc::OutOfRange
+    // exception
+    EXPECT_THROW(counter.inc(NUMBER_OF_ITEMS), isc::OutOfRange);
+    // Trying to get out-of-bound counter will cause an isc::OutOfRange
+    // exception
+    EXPECT_THROW(counter.get(NUMBER_OF_ITEMS), isc::OutOfRange);
 }
