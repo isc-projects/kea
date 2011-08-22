@@ -30,8 +30,17 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class. The semantics of the class is provided by
+/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
+
 #include <dns/rdata/generic/detail/txt_like.h>
 
+/// \brief The assignment operator
+///
+/// It internally allocates a resource, and if it fails a corresponding
+/// standard exception will be thrown.
+/// This method never throws an exception otherwise.
 SPF&
 SPF::operator=(const SPF& source) {
     if (impl_ == source.impl_) {
@@ -45,37 +54,72 @@ SPF::operator=(const SPF& source) {
     return (*this);
 }
 
+/// \brief The destructor
 SPF::~SPF() {
     delete impl_;
 }
 
+/// \brief Constructor from wire-format data.
+///
+/// It internally allocates a resource, and if it fails a corresponding
+/// standard exception will be thrown.
 SPF::SPF(InputBuffer& buffer, size_t rdata_len) :
     impl_(new SPFImpl(buffer, rdata_len))
 {}
 
+/// \brief Constructor from string.
+///
+/// It internally allocates a resource, and if it fails a corresponding
+/// standard exception will be thrown.
 SPF::SPF(const std::string& txtstr) :
     impl_(new SPFImpl(txtstr))
 {}
 
+/// \brief Copy constructor
+///
+/// It internally allocates a resource, and if it fails a corresponding
+/// standard exception will be thrown.
 SPF::SPF(const SPF& other) :
     Rdata(), impl_(new SPFImpl(*other.impl_))
 {}
 
+/// \brief Render the \c SPF in the wire format to a OutputBuffer object
+///
+/// \return is the return of the corresponding implementation method.
 void
 SPF::toWire(OutputBuffer& buffer) const {
     impl_->toWire(buffer);
 }
 
+/// \brief Render the \c SPF in the wire format to an AbstractMessageRenderer
+/// object
+///
+/// \return is the return of the corresponding implementation method.
 void
 SPF::toWire(AbstractMessageRenderer& renderer) const {
     impl_->toWire(renderer);
 }
 
+/// \brief Convert the \c SPF to a string.
+///
+/// \return is the return of the corresponding implementation method.
 string
 SPF::toText() const {
     return (impl_->toText());
 }
 
+/// \brief Compare two instances of \c SPF RDATA.
+///
+/// This method compares \c this and the \c other \c SPF objects.
+///
+/// This method is expected to be used in a polymorphic way, and the
+/// parameter to compare against is therefore of the abstract \c Rdata class.
+/// However, comparing two \c Rdata objects of different RR types
+/// is meaningless, and \c other must point to a \c SPF object;
+/// otherwise, the standard \c bad_cast exception will be thrown.
+///
+/// \param other the right-hand operand to compare against.
+/// \return is the return of the corresponding implementation method.
 int
 SPF::compare(const Rdata& other) const {
     const SPF& other_txt = dynamic_cast<const SPF&>(other);
