@@ -131,7 +131,7 @@ class is being created.
 % CACHE_RRSET_LOOKUP looking up %1/%2/%3 in RRset cache
 Debug message. The resolver is trying to look up data in the RRset cache.
 
-% CACHE_RRSET_NOT_FOUND no RRset found for %1/%2/%3
+% CACHE_RRSET_NOT_FOUND no RRset found for %1/%2/%3 in cache
 Debug message which can follow CACHE_RRSET_LOOKUP. This means the data is not
 in the cache.
 
