@@ -68,7 +68,6 @@ XSD_URL_PATH = '/bind10/statistics/xsd'
 XSL_URL_PATH = '/bind10/statistics/xsl'
 # TODO: This should be considered later.
 XSD_NAMESPACE = 'http://bind10.isc.org' + XSD_URL_PATH
-DEFAULT_CONFIG = dict(version=0, listen_on=[('127.0.0.1', 8000)])
 
 # Assign this process name
 isc.util.process.rename()
@@ -159,7 +158,11 @@ class StatsHttpd:
         self.mccs = None
         self.httpd = []
         self.open_mccs()
+        self.config = {}
         self.load_config()
+        self.http_addrs = []
+        self.mccs.start()
+        self.open_httpd()
 
     def open_mccs(self):
         """Opens a ModuleCCSession object"""
@@ -182,18 +185,19 @@ class StatsHttpd:
         """Loads configuration from spec file or new configuration
         from the config manager"""
         # load config
-        if len(new_config) > 0:
-            self.config.update(new_config)
-        else:
-            self.config = DEFAULT_CONFIG
-            self.config.update(
-                dict([
-                        (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
-                        for itm in self.mccs.get_module_spec().get_config_spec()
-                        ])
-                )
+        if len(self.config) == 0:
+            self.config = dict([
+                (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
+                for itm in self.mccs.get_module_spec().get_config_spec()
+                ])
+        self.config.update(new_config)
         # set addresses and ports for HTTP
-        self.http_addrs = [ (cf['address'], cf['port']) for cf in self.config['listen_on'] ]
+        addrs = []
+        if 'listen_on' in self.config:
+            for cf in self.config['listen_on']:
+                if 'address' in cf and 'port' in cf:
+                    addrs.append((cf['address'], cf['port']))
+        self.http_addrs = addrs
 
     def open_httpd(self):
         """Opens sockets for HTTP. Iterating each HTTP address to be
@@ -235,8 +239,6 @@ class StatsHttpd:
     def start(self):
         """Starts StatsHttpd objects to run. Waiting for client
         requests by using select.select functions"""
-        self.open_httpd()
-        self.mccs.start()
         self.running = True
         while self.running:
             try:
@@ -269,6 +271,7 @@ class StatsHttpd:
         logger.info(STATHTTPD_SHUTDOWN)
         self.close_httpd()
         self.close_mccs()
+        self.running = False
 
     def get_sockets(self):
         """Returns sockets to select.select"""
@@ -285,15 +288,19 @@ class StatsHttpd:
         addresses and ports to listen HTTP requests on."""
         logger.debug(DBG_STATHTTPD_MESSAGING, STATHTTPD_HANDLE_CONFIG,
                    new_config)
-        for key in new_config.keys():
-            if key not in DEFAULT_CONFIG and key != "version":
-                logger.error(STATHTTPD_UNKNOWN_CONFIG_ITEM, key)
+        errors = []
+        if not self.mccs.get_module_spec().\
+                validate_config(False, new_config, errors):
                 return isc.config.ccsession.create_answer(
-                    1, "Unknown known config: %s" % key)
+                    1, ", ".join(errors))
         # backup old config
         old_config = self.config.copy()
-        self.close_httpd()
         self.load_config(new_config)
+        # If the http sockets aren't opened or
+        # if new_config doesn't have'listen_on', it returns
+        if len(self.httpd) == 0 or 'listen_on' not in new_config:
+            return isc.config.ccsession.create_answer(0)
+        self.close_httpd()
         try:
             self.open_httpd()
         except HttpServerError as err:
