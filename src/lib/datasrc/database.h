@@ -148,6 +148,9 @@ public:
          * \throw DataSourceError if there's database-related error. If the
          *     exception (or any other in case of derived class) is thrown,
          *     the iterator can't be safely used any more.
+         * \return true if a record was found, and the columns array was
+         *         updated. false if there was no more data, in which case
+         *         the columns array is untouched.
          */
         virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) = 0;
     };

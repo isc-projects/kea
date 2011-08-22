@@ -369,6 +369,11 @@ public:
 
     bool getNext(std::string (&data)[COLUMN_COUNT]) {
         // If there's another row, get it
+        // If finalize has been called (e.g. when previous getNext() got
+        // SQLITE_DONE), directly return false
+        if (statement_ == NULL) {
+            return false;
+        }
         const int rc(sqlite3_step(statement_));
         if (rc == SQLITE_ROW) {
             // For both types, we copy the first four columns
