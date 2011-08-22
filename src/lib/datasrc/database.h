@@ -49,6 +49,28 @@ namespace datasrc {
 class DatabaseAccessor : boost::noncopyable {
 public:
     /**
+     * Definitions of the fields as they are required to be filled in
+     * by IteratorContext::getNext()
+     *
+     * When implementing getNext(), the columns array should
+     * be filled with the values as described in this enumeration,
+     * in this order, i.e. TYPE_COLUMN should be the first element
+     * (index 0) of the array, TTL_COLUMN should be the second element
+     * (index 1), etc.
+     */
+    enum RecordColumns {
+        TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)
+        TTL_COLUMN = 1,     ///< The TTL of the record (a
+        SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
+                            ///< the RRSIG covers. In the current implementation,
+                            ///< this field is ignored.
+        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
+        NAME_COLUMN = 4,    ///< The domain name of this RR
+        COLUMN_COUNT = 5    ///< The total number of columns, MUST be value of
+                            ///< the largest other element in this enum plus 1.
+    };
+
+    /**
      * \brief Destructor
      *
      * It is empty, but needs a virtual one, since we will use the derived
@@ -103,135 +125,75 @@ public:
          * \brief Function to provide next resource record
          *
          * This function should provide data about the next resource record
-         * from the iterated zone. The data are not converted yet.
+         * from the data that is searched. The data is not converted yet.
+         *
+         * Depending on how the iterator was constructed, there is a difference
+         * in behaviour; for a 'full zone iterator', created with
+         * getAllRecords(), all COLUMN_COUNT elements of the array are
+         * overwritten.
+         * For a 'name iterator', created with getRecords(), the column
+         * NAME_COLUMN is untouched, since what would be added here is by
+         * definition already known to the caller (it already passes it as
+         * an argument to getRecords()).
          *
          * \note The order of RRs is not strictly set, but the RRs for single
          * RRset must not be interleaved with any other RRs (eg. RRsets must be
          * "together").
          *
          * \param columns The data will be returned through here. The order
-         *     is specified by the RecordColumns enum.
-         * \param Size of the columns array. Must be equal to COLUMN_COUNT,
-         *     otherwise DataSourceError is thrown.
+         *     is specified by the RecordColumns enum, and the size must be
+         *     COLUMN_COUNT
          * \todo Do we consider databases where it is stored in binary blob
          *     format?
          * \throw DataSourceError if there's database-related error. If the
          *     exception (or any other in case of derived class) is thrown,
          *     the iterator can't be safely used any more.
+         * \return true if a record was found, and the columns array was
+         *         updated. false if there was no more data, in which case
+         *         the columns array is untouched.
          */
-        virtual bool getNext(std::string columns[], size_t column_data) = 0;
+        virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) = 0;
     };
 
     typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
 
     /**
-     * \brief Creates an iterator context for the whole zone.
+     * \brief Creates an iterator context for a specific name.
      *
-     * This should create a new iterator context to be used by
-     * DatabaseConnection's ZoneIterator. It can be created based on the name
-     * or the ID (returned from getZone()), what is more comfortable for the
-     * database implementation. Both are provided (and are guaranteed to match,
-     * the DatabaseClient first looks up the zone ID and then calls this).
+     * Returns an IteratorContextPtr that contains all records of the
+     * given name from the given zone.
      *
-     * The default implementation throws isc::NotImplemented, to allow
-     * "minimal" implementations of the connection not supporting optional
-     * functionality.
+     * The implementation of the iterator that is returned may leave the
+     * NAME_COLUMN column of the array passed to getNext() untouched, as that
+     * data is already known (it is the same as the name argument here)
      *
-     * \param name The name of the zone.
+     * \exception any Since any implementation can be used, the caller should
+     *            expect any exception to be thrown.
+     *
+     * \param name The name to search for. This should be a FQDN.
      * \param id The ID of the zone, returned from getZone().
      * \return Newly created iterator context. Must not be NULL.
      */
-    virtual IteratorContextPtr getAllRecords(const isc::dns::Name& name,
-                                             int id) const
-    {
-        /*
-         * This is a compromise. We need to document the parameters in doxygen,
-         * so they need a name, but then it complains about unused parameter.
-         * This is a NOP that "uses" the parameters.
-         */
-        static_cast<void>(name);
-        static_cast<void>(id);
-
-        isc_throw(isc::NotImplemented,
-                  "This database datasource can't be iterated");
-    }
+    virtual IteratorContextPtr getRecords(const std::string& name,
+                                          int id) const = 0;
 
     /**
-     * \brief Starts a new search for records of the given name in the given zone
+     * \brief Creates an iterator context for the whole zone.
      *
-     * The data searched by this call can be retrieved with subsequent calls to
-     * getNextRecord().
+     * Returns an IteratorContextPtr that contains all records of the
+     * zone with the given zone id.
      *
-     * \exception DataSourceError if there is a problem connecting to the
-     *                            backend database
+     * Each call to getNext() on the returned iterator should copy all
+     * column fields of the array that is passed, as defined in the
+     * RecordColumns enum.
      *
-     * \param zone_id The zone to search in, as returned by getZone()
-     * \param name The name of the records to find
+     * \exception any Since any implementation can be used, the caller should
+     *            expect any exception to be thrown.
+     *
+     * \param id The ID of the zone, returned from getZone().
+     * \return Newly created iterator context. Must not be NULL.
      */
-    virtual void searchForRecords(int zone_id, const std::string& name) = 0;
-
-    /**
-     * \brief Retrieves the next record from the search started with searchForRecords()
-     *
-     * Returns a boolean specifying whether or not there was more data to read.
-     * In the case of a database error, a DatasourceError is thrown.
-     *
-     * The columns passed is an array of std::strings consisting of
-     * DatabaseConnection::COLUMN_COUNT elements, the elements of which
-     * are defined in DatabaseConnection::RecordColumns, in their basic
-     * string representation.
-     *
-     * If you are implementing a derived database connection class, you
-     * should have this method check the column_count value, and fill the
-     * array with strings conforming to their description in RecordColumn.
-     *
-     * \exception DatasourceError if there was an error reading from the database
-     *
-     * \param columns The elements of this array will be filled with the data
-     *                for one record as defined by RecordColumns
-     *                If there was no data, the array is untouched.
-     * \return true if there was a next record, false if there was not
-     */
-    virtual bool getNextRecord(std::string columns[], size_t column_count) = 0;
-
-    /**
-     * \brief Resets the current search initiated with searchForRecords()
-     *
-     * This method will be called when the called of searchForRecords() and
-     * getNextRecord() finds bad data, and aborts the current search.
-     * It should clean up whatever handlers searchForRecords() created, and
-     * any other state modified or needed by getNextRecord()
-     *
-     * Of course, the implementation of getNextRecord may also use it when
-     * it is done with a search. If it does, the implementation of this
-     * method should make sure it can handle being called multiple times.
-     *
-     * The implementation for this method should make sure it never throws.
-     */
-    virtual void resetSearch() = 0;
-
-    /**
-     * Definitions of the fields as they are required to be filled in
-     * by getNextRecord()
-     *
-     * When implementing getNextRecord(), the columns array should
-     * be filled with the values as described in this enumeration,
-     * in this order, i.e. TYPE_COLUMN should be the first element
-     * (index 0) of the array, TTL_COLUMN should be the second element
-     * (index 1), etc.
-     */
-    enum RecordColumns {
-        TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)
-        TTL_COLUMN = 1,     ///< The TTL of the record (a
-        SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
-                            ///< the RRSIG covers. In the current implementation,
-                            ///< this field is ignored.
-        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
-        NAME_COLUMN = 4     ///< The domain name of this RR
-    };
-
-    /// The number of fields the columns array passed to getNextRecord should have
-    static const size_t COLUMN_COUNT = 5;
+    virtual IteratorContextPtr getAllRecords(int id) const = 0;
 
     /**
      * \brief Returns a string identifying this dabase backend
