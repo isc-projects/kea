@@ -100,8 +100,9 @@ TEST_F(CounterDictionaryTest, deleteElement) {
 }
 
 TEST_F(CounterDictionaryTest, invalidCounterSize) {
-    // Creating counter with 0 elements will cause assertion failure
-    EXPECT_DEATH(CounterDictionary counters(0), "Assertion.+failed");
+    // Creating counter with 0 elements will cause an isc::InvalidParameter
+    // exception
+    EXPECT_THROW(CounterDictionary counters(0), isc::InvalidParameter);
 }
 
 TEST_F(CounterDictionaryTest, invalidCounterItem) {
@@ -109,8 +110,9 @@ TEST_F(CounterDictionaryTest, invalidCounterItem) {
     CounterDictionary counters(NUMBER_OF_ITEMS);
     // Add an element for this test
     counters.addElement("test");
-    // Incrementing out-of-bound counter will cause assertion failure
-    EXPECT_DEATH(counters["test"].inc(NUMBER_OF_ITEMS), "Assertion.+failed");
+    // Incrementing out-of-bound counter will cause an isc::OutOfRange
+    // exception
+    EXPECT_THROW(counters["test"].inc(NUMBER_OF_ITEMS), isc::OutOfRange);
 }
 
 TEST_F(CounterDictionaryTest, uniqueCheck) {

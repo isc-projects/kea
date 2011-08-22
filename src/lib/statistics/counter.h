@@ -4,6 +4,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <exceptions/exceptions.h>
+
 namespace isc {
 namespace statistics {
 
@@ -21,11 +23,10 @@ class Counter : boost::noncopyable {
         ///
         /// This constructor is mostly exception free. But it may still throw
         /// a standard exception if memory allocation fails inside the method.
-        ///
-        /// Note: \a items must be greater than 0. Otherwise this constructor
-        /// causes an assertion failure.
         /// 
         /// \param items A number of counter items to hold (greater than 0)
+        ///
+        /// \throw isc::InvalidParameter \a items is 0
         Counter(const size_t items);
 
         /// The destructor.
@@ -34,16 +35,17 @@ class Counter : boost::noncopyable {
         ~Counter();
 
         /// \brief Increment a counter item specified with \a type.
-        ///
-        /// Note: \a type must be valid counter type. Otherwise this method
-        /// causes an assertion failure.
         /// 
         /// \param type %Counter item to increment
+        ///
+        /// \throw isc::OutOfRange \a type is invalid
         void inc(const Type& type);
 
         /// \brief Get the value of a counter item specified with \a type.
         /// 
         /// \param type %Counter item to get the value of
+        ///
+        /// \throw isc::OutOfRange \a type is invalid
         const Value& get(const Type& type) const;
 };
 

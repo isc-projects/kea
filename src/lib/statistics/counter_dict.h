@@ -27,11 +27,10 @@ class CounterDictionary : boost::noncopyable {
         /// The constructor.
         /// This constructor is mostly exception free. But it may still throw
         /// a standard exception if memory allocation fails inside the method.
-        ///
-        /// Note: \a items must be greater than 0; otherwise this constructor
-        /// causes assertion failure.
         /// 
         /// \param items A number of counter items to hold (greater than 0)
+        ///
+        /// \throw isc::InvalidParameter \a items is 0
         CounterDictionary(const size_t items);
 
         /// The destructor.
