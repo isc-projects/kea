@@ -178,12 +178,20 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                                  bool want_ns)
 {
     RRsigStore sig_store;
-    database_->searchForRecords(zone_id_, name.toText());
     bool records_found = false;
     isc::dns::RRsetPtr result_rrset;
 
+    // Request the context
+    DatabaseAccessor::IteratorContextPtr
+        context(database_->getRecords(name.toText(), zone_id_));
+    // It must not return NULL, that's a bug of the implementation
+    if (!context) {
+        isc_throw(isc::Unexpected, "Iterator context null at " +
+                  name.toText());
+    }
+
     std::string columns[DatabaseAccessor::COLUMN_COUNT];
-    while (database_->getNextRecord(columns, DatabaseAccessor::COLUMN_COUNT)) {
+    while (context->getNext(columns)) {
         if (!records_found) {
             records_found = true;
         }
@@ -284,7 +292,6 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     return (std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset));
 }
 
-
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
@@ -301,76 +308,56 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(database_->getDBName()).arg(name).arg(type);
 
-    try {
-        // First, do we have any kind of delegation (NS/DNAME) here?
-        Name origin(getOrigin());
-        size_t origin_label_count(origin.getLabelCount());
-        size_t current_label_count(name.getLabelCount());
-        // This is how many labels we remove to get origin
-        size_t remove_labels(current_label_count - origin_label_count);
+    // First, do we have any kind of delegation (NS/DNAME) here?
+    const Name origin(getOrigin());
+    const size_t origin_label_count(origin.getLabelCount());
+    const size_t current_label_count(name.getLabelCount());
+    // This is how many labels we remove to get origin
+    const size_t remove_labels(current_label_count - origin_label_count);
 
-        // Now go trough all superdomains from origin down
-        for (int i(remove_labels); i > 0; --i) {
-            Name superdomain(name.split(i));
-            // Look if there's NS or DNAME (but ignore the NS in origin)
-            found = getRRset(superdomain, NULL, false, true,
-                             i != remove_labels && !glue_ok);
-            if (found.second) {
-                // We found something redirecting somewhere else
-                // (it can be only NS or DNAME here)
-                result_rrset = found.second;
-                if (result_rrset->getType() == isc::dns::RRType::NS()) {
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_FOUND_DELEGATION).
-                        arg(database_->getDBName()).arg(superdomain);
-                    result_status = DELEGATION;
-                } else {
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_FOUND_DNAME).
-                        arg(database_->getDBName()).arg(superdomain);
-                    result_status = DNAME;
-                }
-                // Don't search more
-                break;
-            }
-        }
-
-        if (!result_rrset) { // Only if we didn't find a redirect already
-            // Try getting the final result and extract it
-            // It is special if there's a CNAME or NS, DNAME is ignored here
-            // And we don't consider the NS in origin
-            found = getRRset(name, &type, true, false,
-                             name != origin && !glue_ok);
-            records_found = found.first;
+    // Now go trough all superdomains from origin down
+    for (int i(remove_labels); i > 0; --i) {
+        const Name superdomain(name.split(i));
+        // Look if there's NS or DNAME (but ignore the NS in origin)
+        found = getRRset(superdomain, NULL, false, true,
+                         i != remove_labels && !glue_ok);
+        if (found.second) {
+            // We found something redirecting somewhere else
+            // (it can be only NS or DNAME here)
             result_rrset = found.second;
-            if (result_rrset && name != origin && !glue_ok &&
-                result_rrset->getType() == isc::dns::RRType::NS()) {
+            if (result_rrset->getType() == isc::dns::RRType::NS()) {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                          DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
-                    arg(database_->getDBName()).arg(name);
+                          DATASRC_DATABASE_FOUND_DELEGATION).
+                    arg(database_->getDBName()).arg(superdomain);
                 result_status = DELEGATION;
-            } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
-                       result_rrset->getType() == isc::dns::RRType::CNAME()) {
-                result_status = CNAME;
+            } else {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_DNAME).
+                    arg(database_->getDBName()).arg(superdomain);
+                result_status = DNAME;
             }
+            // Don't search more
+            break;
         }
-    } catch (const DataSourceError& dse) {
-        logger.error(DATASRC_DATABASE_FIND_ERROR)
-            .arg(database_->getDBName()).arg(dse.what());
-        // call cleanup and rethrow
-        database_->resetSearch();
-        throw;
-    } catch (const isc::Exception& isce) {
-        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR)
-            .arg(database_->getDBName()).arg(isce.what());
-        // cleanup, change it to a DataSourceError and rethrow
-        database_->resetSearch();
-        isc_throw(DataSourceError, isce.what());
-    } catch (const std::exception& ex) {
-        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR)
-            .arg(database_->getDBName()).arg(ex.what());
-        database_->resetSearch();
-        throw;
+    }
+
+    if (!result_rrset) { // Only if we didn't find a redirect already
+        // Try getting the final result and extract it
+        // It is special if there's a CNAME or NS, DNAME is ignored here
+        // And we don't consider the NS in origin
+        found = getRRset(name, &type, true, false, name != origin && !glue_ok);
+        records_found = found.first;
+        result_rrset = found.second;
+        if (result_rrset && name != origin && !glue_ok &&
+            result_rrset->getType() == isc::dns::RRType::NS()) {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                      DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
+                arg(database_->getDBName()).arg(name);
+            result_status = DELEGATION;
+        } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
+                   result_rrset->getType() == isc::dns::RRType::CNAME()) {
+            result_status = CNAME;
+        }
     }
 
     if (!result_rrset) {
@@ -463,7 +450,7 @@ private:
     // Load next row of data
     void getData() {
         string data[DatabaseAccessor::COLUMN_COUNT];
-        data_ready_ = context_->getNext(data, DatabaseAccessor::COLUMN_COUNT);
+        data_ready_ = context_->getNext(data);
         name_ = data[DatabaseAccessor::NAME_COLUMN];
         rtype_ = data[DatabaseAccessor::TYPE_COLUMN];
         ttl_ = data[DatabaseAccessor::TTL_COLUMN];
@@ -494,7 +481,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     }
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(database_->getAllRecords(name, zone.second));
+        context(database_->getAllRecords(zone.second));
     // It must not return NULL, that's a bug of the implementation
     if (context == DatabaseAccessor::IteratorContextPtr()) {
         isc_throw(isc::Unexpected, "Iterator context null at " +

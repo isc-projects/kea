@@ -62,12 +62,15 @@ public:
         return (database_name_);
     }
 
-    // These are just to compile, they won't be called
-    virtual void searchForRecords(int, const std::string&) { }
-    virtual bool getNextRecord(string*, size_t) {
-        return (false);
-    }
-    virtual void resetSearch() { }
+    virtual IteratorContextPtr getRecords(const std::string&, int) const {
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't be iterated");
+    };
+
+    virtual IteratorContextPtr getAllRecords(int) const {
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't be iterated");
+    };
 private:
     const std::string database_name_;
 
@@ -82,11 +85,67 @@ private:
  */
 class MockAccessor : public NopAccessor {
 public:
-    MockAccessor() : cur_record(0), search_running_(false)
+    MockAccessor()
     {
         fillData();
     }
 private:
+    class MockNameIteratorContext : public IteratorContext {
+    public:
+        MockNameIteratorContext(const MockAccessor& mock_accessor, int zone_id,
+                                const std::string& name) :
+            searched_name_(name), cur_record_(0)
+        {
+            // 'hardcoded' names to trigger exceptions
+            // On these names some exceptions are thrown, to test the robustness
+            // of the find() method.
+            if (searched_name_ == "dsexception.in.search.") {
+                isc_throw(DataSourceError, "datasource exception on search");
+            } else if (searched_name_ == "iscexception.in.search.") {
+                isc_throw(isc::Exception, "isc exception on search");
+            } else if (searched_name_ == "basicexception.in.search.") {
+                throw std::exception();
+            }
+
+            // we're not aiming for efficiency in this test, simply
+            // copy the relevant vector from records
+            if (zone_id == 42) {
+                if (mock_accessor.records.count(searched_name_) > 0) {
+                    cur_name = mock_accessor.records.find(searched_name_)->second;
+                } else {
+                    cur_name.clear();
+                }
+            } else {
+                cur_name.clear();
+            }
+        }
+
+        virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) {
+            if (searched_name_ == "dsexception.in.getnext.") {
+                isc_throw(DataSourceError, "datasource exception on getnextrecord");
+            } else if (searched_name_ == "iscexception.in.getnext.") {
+                isc_throw(isc::Exception, "isc exception on getnextrecord");
+            } else if (searched_name_ == "basicexception.in.getnext.") {
+                throw std::exception();
+            }
+
+            if (cur_record_ < cur_name.size()) {
+                for (size_t i = 0; i < COLUMN_COUNT; ++i) {
+                    columns[i] = cur_name[cur_record_][i];
+                }
+                cur_record_++;
+                return (true);
+            } else {
+                return (false);
+            }
+        }
+
+    private:
+        const std::string searched_name_;
+        int cur_record_;
+        std::vector< std::vector<std::string> > cur_name;
+    };
+
     class MockIteratorContext : public IteratorContext {
     private:
         int step;
@@ -94,10 +153,7 @@ private:
         MockIteratorContext() :
             step(0)
         { }
-        virtual bool getNext(string data[], size_t size) {
-            if (size != DatabaseAccessor::COLUMN_COUNT) {
-                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-            }
+        virtual bool getNext(string (&data)[COLUMN_COUNT]) {
             switch (step ++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "example.org";
@@ -140,10 +196,7 @@ private:
     };
     class EmptyIteratorContext : public IteratorContext {
     public:
-        virtual bool getNext(string[], size_t size) {
-            if (size != DatabaseAccessor::COLUMN_COUNT) {
-                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-            }
+        virtual bool getNext(string(&)[COLUMN_COUNT]) {
             return (false);
         }
     };
@@ -154,10 +207,7 @@ private:
         BadIteratorContext() :
             step(0)
         { }
-        virtual bool getNext(string data[], size_t size) {
-            if (size != DatabaseAccessor::COLUMN_COUNT) {
-                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-            }
+        virtual bool getNext(string (&data)[COLUMN_COUNT]) {
             switch (step ++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
@@ -180,7 +230,7 @@ private:
         }
     };
 public:
-    virtual IteratorContextPtr getAllRecords(const Name&, int id) const {
+    virtual IteratorContextPtr getAllRecords(int id) const {
         if (id == 42) {
             return (IteratorContextPtr(new MockIteratorContext()));
         } else if (id == 13) {
@@ -194,82 +244,18 @@ public:
         }
     }
 
-    virtual void searchForRecords(int zone_id, const std::string& name) {
-        search_running_ = true;
-
-        // 'hardcoded' name to trigger exceptions (for testing
-        // the error handling of find() (the other on is below in
-        // if the name is "exceptiononsearch" it'll raise an exception here
-        if (name == "dsexception.in.search.") {
-            isc_throw(DataSourceError, "datasource exception on search");
-        } else if (name == "iscexception.in.search.") {
-            isc_throw(isc::Exception, "isc exception on search");
-        } else if (name == "basicexception.in.search.") {
-            throw std::exception();
-        }
-        searched_name_ = name;
-
-        // we're not aiming for efficiency in this test, simply
-        // copy the relevant vector from records
-        cur_record = 0;
-        if (zone_id == 42) {
-            if (records.count(name) > 0) {
-                cur_name = records.find(name)->second;
-            } else {
-                cur_name.clear();
-            }
+    virtual IteratorContextPtr getRecords(const std::string& name, int id) const {
+        if (id == 42) {
+            return (IteratorContextPtr(new MockNameIteratorContext(*this, id, name)));
         } else {
-            cur_name.clear();
+            isc_throw(isc::Unexpected, "Unknown zone ID");
         }
-    };
-
-    virtual bool getNextRecord(std::string columns[], size_t column_count) {
-        if (searched_name_ == "dsexception.in.getnext.") {
-            isc_throw(DataSourceError, "datasource exception on getnextrecord");
-        } else if (searched_name_ == "iscexception.in.getnext.") {
-            isc_throw(isc::Exception, "isc exception on getnextrecord");
-        } else if (searched_name_ == "basicexception.in.getnext.") {
-            throw std::exception();
-        }
-
-        if (column_count != DatabaseAccessor::COLUMN_COUNT) {
-            isc_throw(DataSourceError, "Wrong column count in getNextRecord");
-        }
-        if (cur_record < cur_name.size()) {
-            for (size_t i = 0; i < column_count; ++i) {
-                columns[i] = cur_name[cur_record][i];
-            }
-            cur_record++;
-            return (true);
-        } else {
-            resetSearch();
-            return (false);
-        }
-    };
-
-    virtual void resetSearch() {
-        search_running_ = false;
-    };
-
-    bool searchRunning() const {
-        return (search_running_);
     }
+
 private:
     std::map<std::string, std::vector< std::vector<std::string> > > records;
-    // used as internal index for getNextRecord()
-    size_t cur_record;
-    // used as temporary storage after searchForRecord() and during
-    // getNextRecord() calls, as well as during the building of the
-    // fake data
+    // used as temporary storage during the building of the fake data
     std::vector< std::vector<std::string> > cur_name;
-
-    // This boolean is used to make sure find() calls resetSearch
-    // when it encounters an error
-    bool search_running_;
-
-    // We store the name passed to searchForRecords, so we can
-    // hardcode some exceptions into getNextRecord
-    std::string searched_name_;
 
     // Adds one record to the current name in the database
     // The actual data will not be added to 'records' until
@@ -445,10 +431,16 @@ private:
     }
 };
 
+// This tests the default getRecords behaviour, throwing NotImplemented
+TEST(DatabaseConnectionTest, getRecords) {
+    EXPECT_THROW(NopAccessor().getRecords(".", 1),
+                 isc::NotImplemented);
+}
+
 // This tests the default getAllRecords behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getAllRecords) {
     // The parameters don't matter
-    EXPECT_THROW(NopAccessor().getAllRecords(Name("."), 1),
+    EXPECT_THROW(NopAccessor().getAllRecords(1),
                  isc::NotImplemented);
 }
 
@@ -492,7 +484,6 @@ public:
         shared_ptr<DatabaseClient::Finder> finder(
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
         EXPECT_EQ(42, finder->zone_id());
-        EXPECT_FALSE(current_database_->searchRunning());
 
         return (finder);
     }
@@ -678,7 +669,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -689,7 +679,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -700,7 +689,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -709,7 +697,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -719,7 +706,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -729,7 +715,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -738,7 +723,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXDOMAIN,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -750,7 +734,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -762,7 +745,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -771,7 +753,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -782,7 +763,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -794,7 +774,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -806,7 +785,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -815,7 +793,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -826,7 +803,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
 
     expected_rdatas_.clear();
@@ -838,7 +814,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -849,7 +824,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -860,7 +834,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -871,7 +844,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
@@ -882,77 +854,63 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
 
     EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badcname2.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badcname3.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badrdata.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badtype.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badttl.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badsig.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // Trigger the hardcoded exceptions and see if find() has cleaned up
     EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
+                 isc::Exception);
     EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  std::exception);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
+                 isc::Exception);
     EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  std::exception);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // This RRSIG has the wrong sigtype field, which should be
     // an error if we decide to keep using that field
@@ -966,7 +924,6 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas_, expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 }
 
 TEST_F(DatabaseClientTest, findDelegation) {
@@ -981,7 +938,6 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
                expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas_.clear();
     expected_rdatas_.push_back("ns.example.com.");
@@ -991,7 +947,6 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRType::NS(), isc::dns::RRType::NS(),
                isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
                expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // Check when we ask for something below delegation point, we get the NS
     // (Both when the RRset there exists and doesn't)
@@ -1006,7 +961,6 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
                expected_sig_rdatas_,
                isc::dns::Name("delegation.example.org."));
-    EXPECT_FALSE(current_database_->searchRunning());
     doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
@@ -1017,7 +971,6 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
                expected_sig_rdatas_,
                isc::dns::Name("delegation.example.org."));
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // Even when we check directly at the delegation point, we should get
     // the NS
@@ -1025,14 +978,12 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
                expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // And when we ask direcly for the NS, we should still get delegation
     doFindTest(finder, isc::dns::Name("delegation.example.org."),
                isc::dns::RRType::NS(), isc::dns::RRType::NS(),
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
                expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // Now test delegation. If it is below the delegation point, we should get
     // the DNAME (the one with data under DNAME is invalid zone, but we test
@@ -1047,17 +998,14 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
-    EXPECT_FALSE(current_database_->searchRunning());
     doFindTest(finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
-    EXPECT_FALSE(current_database_->searchRunning());
     doFindTest(finder, isc::dns::Name("really.deep.below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // Asking direcly for DNAME should give SUCCESS
     doFindTest(finder, isc::dns::Name("dname.example.org."),
@@ -1073,33 +1021,27 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
                expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
     expected_rdatas_.clear();
     doFindTest(finder, isc::dns::Name("dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
                expected_sig_rdatas_);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // This is broken dname, it contains two targets
     EXPECT_THROW(finder->find(isc::dns::Name("below.baddname.example.org."),
                               isc::dns::RRType::A(), NULL,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
 
     // Broken NS - it lives together with something else
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns1.example.org."),
                               isc::dns::RRType::A(), NULL,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns2.example.org."),
                               isc::dns::RRType::A(), NULL,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_database_->searchRunning());
 }
 
 // Glue-OK mode. Just go trough NS delegations down (but not trough
@@ -1154,13 +1096,11 @@ TEST_F(DatabaseClientTest, glueOK) {
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
                ZoneFinder::FIND_GLUE_OK);
-    EXPECT_FALSE(current_database_->searchRunning());
     doFindTest(finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
                ZoneFinder::FIND_GLUE_OK);
-    EXPECT_FALSE(current_database_->searchRunning());
 }
 
 TEST_F(DatabaseClientTest, getOrigin) {
