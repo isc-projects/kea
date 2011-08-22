@@ -1,3 +1,10 @@
+291.    [func]          naokikambe
+	Statistics items are specified by each module's spec file.
+	Stats module can read these through the config manager. Stats
+	module and stats httpd report statistics data and statistics
+	schema by each module via both bindctl and HTTP/XML.
+	(Trac #928,#929,#930,#1175, git TBD)
+
 290.	[func]		jinmei
 	libdns++/pydnspp: added an option parameter to the "from wire"
 	methods of the Message class.  One option is defined,
