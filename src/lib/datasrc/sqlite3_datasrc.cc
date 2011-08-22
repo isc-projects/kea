@@ -679,7 +679,7 @@ int check_schema_version(sqlite3* db) {
         if (rc == SQLITE_ERROR) {
             // this is the error that is returned when the table does not
             // exist
-            return -1;
+            return (-1);
         } else if (rc == SQLITE_OK) {
             break;
         } else if (rc != SQLITE_BUSY || i == 50) {
@@ -694,7 +694,7 @@ int check_schema_version(sqlite3* db) {
     }
     int version = sqlite3_column_int(prepared, 0);
     sqlite3_finalize(prepared);
-    return version;
+    return (version);
 }
 
 // return db version
@@ -726,9 +726,9 @@ int create_database(sqlite3* db) {
             }
         }
         sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, NULL);
-        return SQLITE_SCHEMA_VERSION;
+        return (SQLITE_SCHEMA_VERSION);
     } else {
-        return schema_version;
+        return (schema_version);
     }
 }
 
