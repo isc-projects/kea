@@ -30,7 +30,7 @@ import imp
 
 import stats
 import isc.cc.session
-from test_utils import BaseModules, ThreadingServerManager, MyStats, send_command, TIMEOUT_SEC
+from test_utils import BaseModules, ThreadingServerManager, MyStats, send_command, send_shutdown
 
 # set test name for logger
 isc.log.init("b10-stats_test")
@@ -189,27 +189,31 @@ class TestStats(unittest.TestCase):
 
     def test_start(self):
         # start without err
-        statsserver = ThreadingServerManager(MyStats)
-        statsd = statsserver.server
-        self.assertFalse(statsd.running)
-        statsserver.run()
-        self.assertTrue(statsd.running)
-        statsserver.shutdown()
-        self.assertFalse(statsd.running)
+        self.stats_server = ThreadingServerManager(MyStats)
+        self.stats = self.stats_server.server
+        self.assertFalse(self.stats.running)
+        self.stats_server.run()
+        self.assertTrue(self.stats.running)
+        send_shutdown("Stats")
+        self.assertFalse(self.stats.running)
+        self.stats_server.shutdown()
 
         # start with err
-        statsd = stats.Stats()
-        statsd.update_statistics_data = lambda x,**y: ['an error']
-        self.assertRaises(stats.StatsError, statsd.start)
+        self.stats = stats.Stats()
+        self.stats.update_statistics_data = lambda x,**y: ['an error']
+        self.assertRaises(stats.StatsError, self.stats.start)
 
     def test_handlers(self):
+        self.stats_server = ThreadingServerManager(MyStats)
+        self.stats = self.stats_server.server
+        self.stats_server.run()
         # config_handler
         self.assertEqual(self.stats.config_handler({'foo':'bar'}),
                          isc.config.create_answer(0))
 
         # command_handler
-        statsserver = ThreadingServerManager(MyStats)
-        statsserver.run()
+        self.base.boss.server._started.wait()
+        self.base.boss.server._started.clear()
         self.assertEqual(
             send_command(
                 'show', 'Stats',
@@ -279,7 +283,7 @@ class TestStats(unittest.TestCase):
             send_command('__UNKNOWN__', 'Stats'),
             (1, "Unknown command: '__UNKNOWN__'"))
 
-        statsserver.shutdown()
+        self.stats_server.shutdown()
 
     def test_update_modules(self):
         self.assertEqual(len(self.stats.modules), 0)
