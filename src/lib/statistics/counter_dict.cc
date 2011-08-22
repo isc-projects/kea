@@ -29,9 +29,9 @@ class CounterDictionaryImpl : boost::noncopyable {
     public:
         CounterDictionaryImpl(const size_t items);
         ~CounterDictionaryImpl();
-        void addElement(const std::string& element);
-        void deleteElement(const std::string& elemet);
-        Counter& getElement(const std::string& element);
+        void addElement(const std::string& name);
+        void deleteElement(const std::string& name);
+        Counter& getElement(const std::string& name);
     public:
         CounterDictionaryConstIteratorImpl begin() const;
         CounterDictionaryConstIteratorImpl end() const;
@@ -49,35 +49,35 @@ CounterDictionaryImpl::CounterDictionaryImpl(const size_t items) :
 CounterDictionaryImpl::~CounterDictionaryImpl() {}
 
 void
-CounterDictionaryImpl::addElement(const std::string& element) {
+CounterDictionaryImpl::addElement(const std::string& name) {
     // throw if the element already exists
-    if (dictionary_.count(element) != 0) {
+    if (dictionary_.count(name) != 0) {
         isc_throw(isc::InvalidParameter,
-                  "Element " << element << " already exists");
+                  "Element " << name << " already exists");
     }
     // Create a new Counter and add to the map
     dictionary_.insert(
-        DictionaryMap::value_type(element, CounterPtr(new Counter(items_))));
+        DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
 }
 
 void
-CounterDictionaryImpl::deleteElement(const std::string& element) {
-    size_t result = dictionary_.erase(element);
+CounterDictionaryImpl::deleteElement(const std::string& name) {
+    size_t result = dictionary_.erase(name);
     if (result != 1) {
         // If an element with specified name does not exist, throw
         // isc::OutOfRange.
-        isc_throw(isc::OutOfRange, "Element " << element << " does not exist");
+        isc_throw(isc::OutOfRange, "Element " << name << " does not exist");
     }
 }
 
 Counter&
-CounterDictionaryImpl::getElement(const std::string& element) {
+CounterDictionaryImpl::getElement(const std::string& name) {
     try {
-        return (*(dictionary_.at(element)));
+        return (*(dictionary_.at(name)));
     } catch (const std::out_of_range &e) {
         // If an element with specified name does not exist, throw
         // isc::OutOfRange.
-        isc_throw(isc::OutOfRange, "Element " << element << " does not exist");
+        isc_throw(isc::OutOfRange, "Element " << name << " does not exist");
     }
 }
 
@@ -92,23 +92,23 @@ CounterDictionary::CounterDictionary(const size_t items) :
 CounterDictionary::~CounterDictionary() {}
 
 void
-CounterDictionary::addElement(const std::string& element) {
-    impl_->addElement(element);
+CounterDictionary::addElement(const std::string& name) {
+    impl_->addElement(name);
 }
 
 void
-CounterDictionary::deleteElement(const std::string& element) {
-    impl_->deleteElement(element);
+CounterDictionary::deleteElement(const std::string& name) {
+    impl_->deleteElement(name);
 }
 
 Counter&
-CounterDictionary::getElement(const std::string& element) const {
-    return (impl_->getElement(element));
+CounterDictionary::getElement(const std::string& name) const {
+    return (impl_->getElement(name));
 }
 
 Counter&
-CounterDictionary::operator[](const std::string& element) const {
-    return (impl_->getElement(element));
+CounterDictionary::operator[](const std::string& name) const {
+    return (impl_->getElement(name));
 }
 
 // Implementation detail class for CounterDictionary::ConstIterator

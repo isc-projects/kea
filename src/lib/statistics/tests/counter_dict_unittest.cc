@@ -144,17 +144,17 @@ TEST_F(CounterDictionaryTest, iteratorTest) {
     BOOST_FOREACH(CounterDictionary::ValueType i,
                   static_cast<const CounterDictionary &>(counters))
     {
-        if (i.first == "test" && element_test_visited == false) {
+        if (i.name == "test" && element_test_visited == false) {
             element_test_visited = true;
             // Check if the counters have expected value
-            EXPECT_EQ(i.second.get(ITEM1), 1);
-            EXPECT_EQ(i.second.get(ITEM2), 0);
-        } else if (i.first == "sub.test" &&
+            EXPECT_EQ(i.element.get(ITEM1), 1);
+            EXPECT_EQ(i.element.get(ITEM2), 0);
+        } else if (i.name == "sub.test" &&
                    element_sub_test_visited == false) {
             element_sub_test_visited = true;
             // Check if the counters have expected value
-            EXPECT_EQ(i.second.get(ITEM1), 0);
-            EXPECT_EQ(i.second.get(ITEM2), 2);
+            EXPECT_EQ(i.element.get(ITEM1), 0);
+            EXPECT_EQ(i.element.get(ITEM2), 2);
         } else {
             // Test fails when reaches here: the element is not expected or
             //  the element appeared twice
