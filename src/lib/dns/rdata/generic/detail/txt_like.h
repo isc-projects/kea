@@ -23,8 +23,24 @@
 using namespace std;
 using namespace isc::util;
 
+/// \brief \c rdata::TXTLikeImpl class represents the TXT-like RDATA for TXT
+/// and SPF types.
+///
+/// This class implements the basic interfaces inherited by the TXT and SPF
+/// classes from the abstract \c rdata::Rdata class, and provides trivial
+/// accessors to TXT-like RDATA.
 template<class Type, uint16_t typeCode>class TXTLikeImpl {
 public:
+    /// \brief Constructor from wire-format data.
+    ///
+    /// \param buffer A buffer storing the wire format data.
+    /// \param rdata_len The length of the RDATA in bytes, normally expected
+    /// to be the value of the RDLENGTH field of the corresponding RR.
+    ///
+    /// <b>Exceptions</b>
+    ///
+    /// \c InvalidRdataLength is thrown if rdata_len exceeds the maximum.
+    /// \c DNSMessageFORMERR is thrown if the RR is misformed.
     TXTLikeImpl(InputBuffer& buffer, size_t rdata_len) {
         if (rdata_len > MAX_RDLENGTH) {
             isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);
@@ -52,6 +68,14 @@ public:
         } while (rdata_len > 0);
     }
 
+    /// \brief Constructor from string.
+    ///
+    /// <b>Exceptions</b>
+    ///
+    /// \c CharStringTooLong is thrown if the parameter string length exceeds
+    /// maximum.
+    /// \c InvalidRdataText is thriwn if the method cannot process the
+    /// parameter data.
     explicit TXTLikeImpl(const std::string& txtstr) {
         // TBD: this is a simple, incomplete implementation that only supports
         // a single character-string.
@@ -86,10 +110,17 @@ public:
         string_list_.push_back(data);
     }
 
+    /// \brief The copy constructor.
+    ///
+    /// Trivial for now, we could've used the default one.
     TXTLikeImpl(const TXTLikeImpl& other) :
         string_list_(other.string_list_)
     {}
 
+    /// \brief Render the TXT-like data in the wire format to an OutputBuffer
+    /// object.
+    ///
+    /// \param buffer An output buffer to store the wire data.
     void
     toWire(OutputBuffer& buffer) const {
         for (vector<vector<uint8_t> >::const_iterator it =
@@ -101,6 +132,11 @@ public:
         }
     }
 
+    /// \brief Render the TXT-like data in the wire format to an
+    /// AbstractMessageRenderer object.
+    ///
+    /// \param buffer An output AbstractMessageRenderer to send the wire data
+    /// to.
     void
     toWire(AbstractMessageRenderer& renderer) const {
         for (vector<vector<uint8_t> >::const_iterator it =
@@ -112,6 +148,9 @@ public:
         }
     }
 
+    /// \brief Convert the TXT-like data to a string.
+    ///
+    /// \return A \c string object that represents the TXT-like data.
     string
     toText() const {
         string s;
@@ -134,6 +173,16 @@ public:
         return (s);
     }
 
+    /// \brief Compare two instances of \c TSIG RDATA.
+    ///
+    /// It is up to the caller to make sure that \c other is an object of the
+    /// same \c TXTLikeImpl class.
+    ///
+    /// \param other the right-hand operand to compare against.
+    /// \return < 0 if \c this would be sorted before \c other.
+    /// \return 0 if \c this is identical to \c other in terms of sorting
+    /// order.
+    /// \return > 0 if \c this would be sorted after \c other.
     int
     compare(const TXTLikeImpl& other) const {
         // This implementation is not efficient.  Revisit this (TBD).
