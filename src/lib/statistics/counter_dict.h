@@ -28,7 +28,7 @@ class CounterDictionary : boost::noncopyable {
         /// This constructor is mostly exception free. But it may still throw
         /// a standard exception if memory allocation fails inside the method.
         ///
-        /// Note: \a items must be greater than 0; otherwise thist constructor
+        /// Note: \a items must be greater than 0; otherwise this constructor
         /// causes assertion failure.
         /// 
         /// \param items A number of counter items to hold (greater than 0)
@@ -41,31 +41,38 @@ class CounterDictionary : boost::noncopyable {
 
         /// \brief Add an element
         ///
-        /// \throw isc::InvalidParameter \a element alerady exists.
+        /// \throw isc::InvalidParameter \a element already exists.
         ///
-        /// \param element A name of the element to append
-        void addElement(const std::string& element);
+        /// \param name A name of the element to append
+        void addElement(const std::string& name);
 
         /// \brief Delete
         ///
         /// \throw isc::OutOfRange \a element does not exist.
         ///
-        /// \param element A name of the element to delete
-        void deleteElement(const std::string& element);
+        /// \param name A name of the element to delete
+        void deleteElement(const std::string& name);
 
         /// \brief Lookup
         ///
         /// \throw isc::OutOfRange \a element does not exist.
         ///
-        /// \param element A name of the element to get the counters
-        Counter& getElement(const std::string &element) const;
+        /// \param name A name of the element to get the counters
+        Counter& getElement(const std::string &name) const;
 
         /// Same as getElement()
-        Counter& operator[](const std::string &element) const;
+        Counter& operator[](const std::string &name) const;
 
-        /// Typedef for the pair which represents an element of
+        /// \brief A helper structure to represent an element of
         /// CounterDictionary. This type is used for the iterator.
-        typedef std::pair<const std::string&, const Counter&> ValueType;
+        struct ValueType {
+            public:
+            const std::string& name;
+            const Counter& element;
+            ValueType(const std::string& name_, const Counter& element_) :
+                name(name_), element(element_)
+            {}
+        };
 
         /// \brief \c ConstIterator is a constant iterator that provides an
         /// interface for accessing elements stored in CounterDictionary.
@@ -84,13 +91,13 @@ class CounterDictionary : boost::noncopyable {
             private:
                 boost::scoped_ptr<CounterDictionaryConstIteratorImpl> impl_;
             public:
-                /// The constrcutor.
+                /// The constructor.
                 ///
                 /// This constructor is mostly exception free. But it may still
                 /// throw a standard exception if memory allocation fails
                 /// inside the method.
                 ConstIterator();
-                /// The destrcutor.
+                /// The destructor.
                 /// 
                 /// This method never throws an exception.
                 ~ConstIterator();
