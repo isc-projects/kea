@@ -27,7 +27,7 @@ namespace datasrc {
 struct SQLite3Parameters {
     SQLite3Parameters() :
         db_(NULL), version_(-1),
-        q_zone_(NULL), q_any_(NULL)
+        q_zone_(NULL)
         /*q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
         q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
         q_prevnsec3_(NULL) */
@@ -35,7 +35,6 @@ struct SQLite3Parameters {
     sqlite3* db_;
     int version_;
     sqlite3_stmt* q_zone_;
-    sqlite3_stmt* q_any_;
     /*
     TODO: Yet unneeded statements
     sqlite3_stmt* q_record_;
@@ -74,9 +73,6 @@ public:
     ~Initializer() {
         if (params_.q_zone_ != NULL) {
             sqlite3_finalize(params_.q_zone_);
-        }
-        if (params_.q_any_ != NULL) {
-            sqlite3_finalize(params_.q_any_);
         }
         /*
         if (params_.q_record_ != NULL) {
@@ -214,7 +210,6 @@ checkAndSetupSchema(Initializer* initializer) {
     }
 
     initializer->params_.q_zone_ = prepare(db, q_zone_str);
-    initializer->params_.q_any_ = prepare(db, q_any_str);
     /* TODO: Yet unneeded statements
     initializer->params_.q_record_ = prepare(db, q_record_str);
     initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
@@ -264,9 +259,6 @@ SQLite3Database::close(void) {
     // XXX: sqlite3_finalize() could fail.  What should we do in that case?
     sqlite3_finalize(dbparameters_->q_zone_);
     dbparameters_->q_zone_ = NULL;
-
-    sqlite3_finalize(dbparameters_->q_any_);
-    dbparameters_->q_any_ = NULL;
 
     /* TODO: Once they are needed or not, uncomment or drop
     sqlite3_finalize(dbparameters->q_record_);
