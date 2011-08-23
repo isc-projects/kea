@@ -327,6 +327,16 @@ TEST_F(SQLite3Access, getRecords) {
 
     // check that another getNext does not cause problems
     EXPECT_FALSE(context->getNext(columns));
+
+    // Try searching for subdomain
+    // There's foo.bar.example.com in the data
+    context = db->getRecords("bar.example.com.", zone_id, true);
+    ASSERT_TRUE(context->getNext(columns));
+    checkRecordRow(columns, "A", "3600", "", "192.0.2.1", "");
+    EXPECT_FALSE(context->getNext(columns));
+    // But we shouldn't match mix.example.com here
+    context = db->getRecords("ix.example.com.", zone_id, true);
+    EXPECT_FALSE(context->getNext(columns));
 }
 
 } // end anonymous namespace

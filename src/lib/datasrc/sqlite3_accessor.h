@@ -102,10 +102,12 @@ public:
      *
      * \param name the name to look up
      * \param id the zone id, as returned by getZone()
+     * \param subdomains Match subdomains instead of the name.
      * \return Iterator that contains all records with the given name
      */
     virtual IteratorContextPtr getRecords(const std::string& name,
-                                          int id) const;
+                                          int id,
+                                          bool subdomains = false) const;
 
     /** \brief Look up all resource records for a zone
      *

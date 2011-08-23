@@ -358,6 +358,22 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                    result_rrset->getType() == isc::dns::RRType::CNAME()) {
             result_status = CNAME;
         }
+
+        if (!result_rrset && !records_found) {
+            // Request the context
+            DatabaseAccessor::IteratorContextPtr
+                context(database_->getRecords(name.toText(), zone_id_, true));
+            // It must not return NULL, that's a bug of the implementation
+            if (!context) {
+                isc_throw(isc::Unexpected, "Iterator context null at " +
+                          name.toText());
+            }
+
+            std::string columns[DatabaseAccessor::COLUMN_COUNT];
+            if (context->getNext(columns)) {
+                records_found = true;
+            }
+        }
     }
 
     if (!result_rrset) {
