@@ -173,7 +173,7 @@ public:
         return (s);
     }
 
-    /// \brief Compare two instances of \c TSIG RDATA.
+    /// \brief Compare two instances of TXT-like RDATA.
     ///
     /// It is up to the caller to make sure that \c other is an object of the
     /// same \c TXTLikeImpl class.
