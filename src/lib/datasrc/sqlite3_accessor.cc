@@ -28,23 +28,10 @@ struct SQLite3Parameters {
     SQLite3Parameters() :
         db_(NULL), version_(-1),
         q_zone_(NULL)
-        /*q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
-        q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
-        q_prevnsec3_(NULL) */
     {}
     sqlite3* db_;
     int version_;
     sqlite3_stmt* q_zone_;
-    /*
-    TODO: Yet unneeded statements
-    sqlite3_stmt* q_record_;
-    sqlite3_stmt* q_addrs_;
-    sqlite3_stmt* q_referral_;
-    sqlite3_stmt* q_count_;
-    sqlite3_stmt* q_previous_;
-    sqlite3_stmt* q_nsec3_;
-    sqlite3_stmt* q_prevnsec3_;
-    */
 };
 
 SQLite3Database::SQLite3Database(const std::string& filename,
@@ -74,6 +61,8 @@ public:
         if (params_.q_zone_ != NULL) {
             sqlite3_finalize(params_.q_zone_);
         }
+        // we do NOT finalize q_current_ - that is just a pointer to one of
+        // the other statements, not a separate one.
         /*
         if (params_.q_record_ != NULL) {
             sqlite3_finalize(params_.q_record_);
@@ -138,6 +127,9 @@ const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass =
 // the enum values in RecordColumns
 const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2";
+
+const char* const q_any_sub_str = "SELECT rdtype, ttl, sigtype, rdata "
+    "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)";
 
 // note that the order of the SELECT values is specifically chosen to match
 // the enum values in RecordColumns
@@ -328,7 +320,6 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
     return (std::pair<bool, int>(false, 0));
 }
 
-
 class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
 public:
     // Construct an iterator for all records. When constructed this
@@ -347,14 +338,15 @@ public:
     // Construct an iterator for records with a specific name. When constructed
     // this way, the getNext() call will copy all fields except name
     Context(const boost::shared_ptr<const SQLite3Database>& database, int id,
-            const std::string& name) :
+            const std::string& name, bool subdomains) :
         iterator_type_(ITT_NAME),
         database_(database),
         statement_(NULL),
         name_(name)
     {
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(database->dbparameters_->db_, q_any_str);
+        statement_ = prepare(database->dbparameters_->db_,
+                             subdomains ? q_any_sub_str : q_any_str);
         bindZoneId(id);
         bindName(name_);
     }
@@ -459,8 +451,11 @@ private:
 };
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Database::getRecords(const std::string& name, int id) const {
-    return (IteratorContextPtr(new Context(shared_from_this(), id, name)));
+SQLite3Database::getRecords(const std::string& name, int id,
+                            bool subdomains) const
+{
+    return (IteratorContextPtr(new Context(shared_from_this(), id, name,
+                                           subdomains)));
 }
 
 DatabaseAccessor::IteratorContextPtr

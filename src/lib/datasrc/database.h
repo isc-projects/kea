@@ -172,10 +172,14 @@ public:
      *
      * \param name The name to search for. This should be a FQDN.
      * \param id The ID of the zone, returned from getZone().
+     * \param subdomains If set to true, match subdomains of name instead
+     *     of name itself. It is used to find empty domains and match
+     *     wildcards.
      * \return Newly created iterator context. Must not be NULL.
      */
     virtual IteratorContextPtr getRecords(const std::string& name,
-                                          int id) const = 0;
+                                          int id,
+                                          bool subdomains = false) const = 0;
 
     /**
      * \brief Creates an iterator context for the whole zone.
