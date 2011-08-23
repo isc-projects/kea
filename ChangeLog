@@ -1,7 +1,14 @@
-282.    [func]          ocean
-        libdns++: Implement the NAPTR rrtype according to RFC2915,
-                RFC2168 and RFC3403.
-        (Trac #1130, git 01d8d0f13289ecdf9996d6d5d26ac0d43e30549c)
+283.    [bug]		zhanglikun
+	Make stats and boss processes wait for answer messages from each
+	other in block mode to avoid orphan answer messages, add an internal
+	command "getstats" to boss process for getting statistics data from
+	boss.
+	(Trac #519, git 67d8e93028e014f644868fede3570abb28e5fb43)
+
+282.    [func]		ocean
+	libdns++: Implement the NAPTR rrtype according to RFC2915,
+	RFC2168 and RFC3403.
+	(Trac #1130, git 01d8d0f13289ecdf9996d6d5d26ac0d43e30549c)
 
 bind10-devel-20110819 released on August 19, 2011
 
