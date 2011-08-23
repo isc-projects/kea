@@ -62,7 +62,9 @@ public:
         return (database_name_);
     }
 
-    virtual IteratorContextPtr getRecords(const std::string&, int) const {
+    virtual IteratorContextPtr getRecords(const std::string&, int, bool)
+        const
+        {
         isc_throw(isc::NotImplemented,
                   "This database datasource can't be iterated");
     };
@@ -93,7 +95,7 @@ private:
     class MockNameIteratorContext : public IteratorContext {
     public:
         MockNameIteratorContext(const MockAccessor& mock_accessor, int zone_id,
-                                const std::string& name) :
+                                const std::string& name, bool subdomains) :
             searched_name_(name), cur_record_(0)
         {
             // 'hardcoded' names to trigger exceptions
@@ -107,16 +109,32 @@ private:
                 throw std::exception();
             }
 
-            // we're not aiming for efficiency in this test, simply
-            // copy the relevant vector from records
             if (zone_id == 42) {
-                if (mock_accessor.records.count(searched_name_) > 0) {
-                    cur_name = mock_accessor.records.find(searched_name_)->second;
-                } else {
+                if (subdomains) {
                     cur_name.clear();
+                    // Just walk everything and check if it is a subdomain.
+                    // If it is, just copy all data from there.
+                    for (Domains::const_iterator
+                         i(mock_accessor.records.begin());
+                         i != mock_accessor.records.end(); ++ i) {
+                        Name local(i->first);
+                        if (local.compare(isc::dns::Name(name)).
+                            getRelation() ==
+                            isc::dns::NameComparisonResult::SUBDOMAIN) {
+                            cur_name.insert(cur_name.end(), i->second.begin(),
+                                            i->second.end());
+                        }
+                    }
+                } else {
+                    // we're not aiming for efficiency in this test, simply
+                    // copy the relevant vector from records
+                    if (mock_accessor.records.count(searched_name_) > 0) {
+                        cur_name = mock_accessor.records.find(searched_name_)->
+                            second;
+                    } else {
+                        cur_name.clear();
+                    }
                 }
-            } else {
-                cur_name.clear();
             }
         }
 
@@ -244,17 +262,27 @@ public:
         }
     }
 
-    virtual IteratorContextPtr getRecords(const std::string& name, int id) const {
+    virtual IteratorContextPtr getRecords(const std::string& name, int id,
+                                          bool subdomains) const
+    {
         if (id == 42) {
-            return (IteratorContextPtr(new MockNameIteratorContext(*this, id, name)));
+            return (IteratorContextPtr(new MockNameIteratorContext(*this, id,
+                name, subdomains)));
         } else {
             isc_throw(isc::Unexpected, "Unknown zone ID");
         }
     }
 
 private:
-    std::map<std::string, std::vector< std::vector<std::string> > > records;
+    typedef std::map<std::string, std::vector< std::vector<std::string> > >
+        Domains;
+    // used as internal index for getNextRecord()
+    size_t cur_record;
     // used as temporary storage during the building of the fake data
+    Domains records;
+    // used as temporary storage after searchForRecord() and during
+    // getNextRecord() calls, as well as during the building of the
+    // fake data
     std::vector< std::vector<std::string> > cur_name;
 
     // Adds one record to the current name in the database
@@ -428,12 +456,16 @@ private:
         addRecord("RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
                   "20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("example.org.");
+
+        // This is because of empty domain test
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("a.b.example.org.");
     }
 };
 
 // This tests the default getRecords behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getRecords) {
-    EXPECT_THROW(NopAccessor().getRecords(".", 1),
+    EXPECT_THROW(NopAccessor().getRecords(".", 1, false),
                  isc::NotImplemented);
 }
 
@@ -1101,6 +1133,17 @@ TEST_F(DatabaseClientTest, glueOK) {
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
                ZoneFinder::FIND_GLUE_OK);
+}
+
+TEST_F(DatabaseClientTest, empty) {
+    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+
+    // Check empty domain
+    // This domain doesn't exist, but a subdomain of it does.
+    // Therefore we should pretend the domain is there, but contains no RRsets
+    doFindTest(finder, isc::dns::Name("b.example.org."), isc::dns::RRType::A(),
+               isc::dns::RRType::A(), isc::dns::RRTTL(3600),
+               ZoneFinder::NXRRSET, expected_rdatas_, expected_sig_rdatas_);
 }
 
 TEST_F(DatabaseClientTest, getOrigin) {
