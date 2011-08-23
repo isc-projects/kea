@@ -35,7 +35,6 @@ public:
 TEST_F(LibDhcpTest, basic) {
     // dummy test
 
-    // an attempt to bind this socket will fail.
     EXPECT_EQ(LibDHCP::version(), "0");
 }
 
