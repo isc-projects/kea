@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 31, 2011</date>
+    <date>August 11, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -217,6 +217,30 @@ The default is the basename of ARG 0.
 <!--
 TODO: configuration section
 -->
+
+  <refsect1>
+    <title>STATISTICS DATA</title>
+
+    <para>
+      The statistics data collected by the <command>b10-stats</command>
+      daemon include:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>bind10.boot_time</term>
+        <listitem><para>
+          The date and time that the <command>bind10</command>
+          process started.
+          This is represented in ISO 8601 format.
+        </para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
 <!--
   <refsect1>
     <title>FILES</title>

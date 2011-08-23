@@ -58,10 +58,10 @@ public:
     //@}
 
     /// \brief Returns the origin of the zone.
-    virtual const isc::dns::Name& getOrigin() const;
+    virtual isc::dns::Name getOrigin() const;
 
     /// \brief Returns the class of the zone.
-    virtual const isc::dns::RRClass& getClass() const;
+    virtual isc::dns::RRClass getClass() const;
 
     /// \brief Looks up an RRset in the zone.
     ///
@@ -73,7 +73,7 @@ public:
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
                             isc::dns::RRsetList* target = NULL,
-                            const FindOptions options = FIND_DEFAULT) const;
+                            const FindOptions options = FIND_DEFAULT);
 
     /// \brief Inserts an rrset into the zone.
     ///
@@ -182,6 +182,11 @@ private:
     struct InMemoryZoneFinderImpl;
     InMemoryZoneFinderImpl* impl_;
     //@}
+    // The friend here is for InMemoryClient::getIterator. The iterator
+    // needs to access the data inside the zone, so the InMemoryClient
+    // extracts the pointer to data and puts it into the iterator.
+    // The access is read only.
+    friend class InMemoryClient;
 };
 
 /// \brief A data source client that holds all necessary data in memory.
@@ -257,6 +262,9 @@ public:
     /// This derived version of the method never throws an exception.
     /// For other details see \c DataSourceClient::findZone().
     virtual FindResult findZone(const isc::dns::Name& name) const;
+
+    /// \brief Implementation of the getIterator method
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class

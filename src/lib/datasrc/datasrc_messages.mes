@@ -63,6 +63,60 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
+% DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3
+Debug information. The database data source is looking up records with the given
+name and type in the database.
+
+% DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ in %1 for elements of %2/%3/%4, setting to %5
+The datasource backend provided resource records for the given RRset with
+different TTL values. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_FOUND_DELEGATION Found delegation at %2 in %1
+When searching for a domain, the program met a delegation to a different zone
+at the given domain name. It will return that one instead.
+
+% DATASRC_DATABASE_FOUND_DELEGATION_EXACT Found delegation at %2 (exact match) in %1
+The program found the domain requested, but it is a delegation point to a
+different zone, therefore it is not authoritative for this domain name.
+It will return the NS record instead.
+
+% DATASRC_DATABASE_FOUND_DNAME Found DNAME at %2 in %1
+When searching for a domain, the program met a DNAME redirection to a different
+place in the domain space at the given domain name. It will return that one
+instead.
+
+% DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
+The data returned by the database backend did not contain any data for the given
+domain name, class and type.
+
+% DATASRC_DATABASE_FOUND_NXRRSET search in datasource %1 resulted in NXRRSET for %2/%3/%4
+The data returned by the database backend contained data for the given domain
+name and class, but not for the given type.
+
+% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2
+The data returned by the database backend contained data for the given domain
+name, and it either matches the type or has a relevant type. The RRset that is
+returned is printed.
+
+% DATASRC_DATABASE_ITERATE iterating zone %1
+The program is reading the whole zone, eg. not searching for data, but going
+through each of the RRsets there.
+
+% DATASRC_DATABASE_ITERATE_END iterating zone finished
+While iterating through the zone, the program reached end of the data.
+
+% DATASRC_DATABASE_ITERATE_NEXT next RRset in zone is %1/%2
+While iterating through the zone, the program extracted next RRset from it.
+The name and RRtype of the RRset is indicated in the message.
+
+% DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4
+While iterating through the zone, the time to live for RRs of the given RRset
+were found to be different. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
+
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
 processed.
@@ -400,11 +454,21 @@ enough information for it.  The code is 1 for error, 2 for not implemented.
 
 % DATASRC_SQLITE_CLOSE closing SQLite database
 Debug information. The SQLite data source is closing the database file.
+
+% DATASRC_SQLITE_CONNOPEN Opening sqlite database file '%1'
+The database file is being opened so it can start providing data.
+
+% DATASRC_SQLITE_CONNCLOSE Closing sqlite database
+The database file is no longer needed and is being closed.
+
 % DATASRC_SQLITE_CREATE SQLite data source created
 Debug information. An instance of SQLite data source is being created.
 
 % DATASRC_SQLITE_DESTROY SQLite data source destroyed
 Debug information. An instance of SQLite data source is being destroyed.
+
+% DATASRC_SQLITE_DROPCONN SQLite3Database is being deinitialized
+The object around a database connection is being destroyed.
 
 % DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'
 Debug information. The SQLite data source is trying to identify which zone
@@ -458,6 +522,9 @@ source.
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
 
+% DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
+A wrapper object to hold database connection is being initialized.
+
 % DATASRC_SQLITE_OPEN opening SQLite database '%1'
 Debug information. The SQLite data source is loading an SQLite database in
 the provided file.
@@ -496,4 +563,3 @@ data source.
 % DATASRC_UNEXPECTED_QUERY_STATE unexpected query state
 This indicates a programming error. An internal task of unknown type was
 generated.
-

@@ -124,14 +124,14 @@ the message will not be cached.
 Debug message. The requested data was found in the RRset cache. However, it is
 expired, so the cache removed it and is going to pretend nothing was found.
 
-% CACHE_RRSET_INIT initializing RRset cache for %2 RRsets of class %1
+% CACHE_RRSET_INIT initializing RRset cache for %1 RRsets of class %2
 Debug message. The RRset cache to hold at most this many RRsets for the given
 class is being created.
 
 % CACHE_RRSET_LOOKUP looking up %1/%2/%3 in RRset cache
 Debug message. The resolver is trying to look up data in the RRset cache.
 
-% CACHE_RRSET_NOT_FOUND no RRset found for %1/%2/%3
+% CACHE_RRSET_NOT_FOUND no RRset found for %1/%2/%3 in cache
 Debug message which can follow CACHE_RRSET_LOOKUP. This means the data is not
 in the cache.
 
