@@ -74,7 +74,7 @@ public:
     ///
     /// \c CharStringTooLong is thrown if the parameter string length exceeds
     /// maximum.
-    /// \c InvalidRdataText is thriwn if the method cannot process the
+    /// \c InvalidRdataText is thrown if the method cannot process the
     /// parameter data.
     explicit TXTLikeImpl(const std::string& txtstr) {
         // TBD: this is a simple, incomplete implementation that only supports
