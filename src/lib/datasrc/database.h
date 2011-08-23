@@ -88,7 +88,8 @@ public:
      * It is not specified if and what implementation of this method may throw,
      * so code should expect anything.
      *
-     * \param name The name of the zone's apex to be looked up.
+     * \param name The (fully qualified) domain name of the zone's apex to be
+     *             looked up.
      * \return The first part of the result indicates if a matching zone
      *     was found. In case it was, the second part is internal zone ID.
      *     This one will be passed to methods finding data in the zone.
@@ -96,7 +97,7 @@ public:
      *     be returned - the ID is only passed back to the database as
      *     an opaque handle.
      */
-    virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const = 0;
+    virtual std::pair<bool, int> getZone(const std::string& name) const = 0;
 
     /**
      * \brief This holds the internal context of ZoneIterator for databases

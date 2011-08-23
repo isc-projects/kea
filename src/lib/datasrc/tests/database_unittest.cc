@@ -44,14 +44,14 @@ public:
     NopAccessor() : database_name_("mock_database")
     { }
 
-    virtual std::pair<bool, int> getZone(const Name& name) const {
-        if (name == Name("example.org")) {
+    virtual std::pair<bool, int> getZone(const std::string& name) const {
+        if (name == "example.org.") {
             return (std::pair<bool, int>(true, 42));
-        } else if (name == Name("null.example.org")) {
+        } else if (name == "null.example.org.") {
             return (std::pair<bool, int>(true, 13));
-        } else if (name == Name("empty.example.org")) {
+        } else if (name == "empty.example.org.") {
             return (std::pair<bool, int>(true, 0));
-        } else if (name == Name("bad.example.org")) {
+        } else if (name == "bad.example.org.") {
             return (std::pair<bool, int>(true, -1));
         } else {
             return (std::pair<bool, int>(false, 0));
