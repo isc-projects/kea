@@ -58,10 +58,11 @@ DUMMY_DATA = {
         }
     }
 
-def get_availaddr(address='127.0.0.1'):
-    """returns tuple of address and port available on the
-    platform. default range of port is from 65535 to 50000"""
-    for port in range(65535, 50000, -1):
+def get_availaddr(address='127.0.0.1', port=8001):
+    """returns tuple of address and port available to listen on the
+    platform. Default port range is between 8001 and 65535. If port is
+    over flow(greater than 65535), OverflowError is thrown"""
+    while True:
         try:
             if is_ipv6_enabled(address):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -71,7 +72,9 @@ def get_availaddr(address='127.0.0.1'):
             sock.close()
             return (address, port)
         except socket.error:
-            pass
+            # This address and port number are already in use.
+            # next port number is added
+            port = port + 1
 
 def is_ipv6_enabled(address='::1', port=8000):
     """checks IPv6 enabled on the platform"""
@@ -403,14 +406,9 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertTrue(isinstance(ht.socket, socket.socket))
             self.stats_httpd.stop()
 
-        # hostname
-        server_addresses = get_availaddr(address='localhost')
-        self.stats_httpd = MyStatsHttpd(server_addresses)
-        for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
-            self.assertTrue(ht.address_family in set([socket.AF_INET, socket.AF_INET6]))
-            self.assertTrue(isinstance(ht.socket, socket.socket))
-        self.stats_httpd.stop()
+        # existent hostname
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+                          get_availaddr(address='localhost'))
 
         # nonexistent hostname
         self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('my.host.domain', 8000))

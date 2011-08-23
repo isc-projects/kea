@@ -209,8 +209,12 @@ class StatsHttpd:
         httpd = None
         try:
             # get address family for the server_address before
-            # creating HttpServer object
-            address_family = socket.getaddrinfo(*server_address)[0][0]
+            # creating HttpServer object. If a specified address is
+            # not numerical, gaierror may be thrown.
+            address_family = socket.getaddrinfo(
+                server_address[0], server_address[1], 0,
+                socket.SOCK_STREAM, socket.IPPROTO_TCP, socket.AI_NUMERICHOST
+                )[0][0]
             HttpServer.address_family = address_family
             httpd = HttpServer(
                 server_address, HttpHandler,
