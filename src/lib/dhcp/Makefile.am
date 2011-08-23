@@ -10,6 +10,7 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = libdhcp.la
 libdhcp_la_SOURCES  =
 libdhcp_la_SOURCES += libdhcp.cc libdhcp.h
+libdhcp_la_SOURCES += option.cc option.h
 libdhcp_la_SOURCES += dhcp6.h
 libdhcp_la_SOURCES += pkt6.cc pkt6.h
 

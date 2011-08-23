@@ -54,6 +54,61 @@ public:
     }
 };
 
+// uncomment this test to create packet writer. It will
+// write incoming DHCPv6 packets as C arrays. That is useful
+// for generating test sequences based on actual traffic
+//
+// TODO: this potentially should be moved to a separate tool
+//
+
+#if 0
+TEST_F(IfaceMgrTest, dhcp6Sniffer) {
+    // testing socket operation in a portable way is tricky
+    // without interface detection implemented
+
+    unlink("interfaces.txt");
+
+    ofstream interfaces("interfaces.txt", ios::ate);
+    interfaces << "eth0 fe80::21e:8cff:fe9b:7349";
+    interfaces.close();
+
+    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+
+    Pkt6 * pkt = 0;
+    int cnt = 0;
+    cout << "---8X-----------------------------------------" << endl;
+    while (true) {
+        pkt = ifacemgr->receive();
+        
+        cout << "// Received " << pkt->data_len_ << " bytes packet:" << endl;
+        cout << "Pkt6 *capture" << cnt++ << "() {" << endl;
+        cout << "    Pkt6* pkt;" << endl;
+        cout << "    pkt = new Pkt6(" << pkt->data_len_ << ");" << endl;
+        cout << "    pkt->remote_port_ = " << pkt-> remote_port_ << ";" << endl;
+        cout << "    pkt->remote_addr_ = IOAddress(\"" << pkt->remote_addr_.toText() << "\");" << endl;
+        cout << "    pkt->local_port_ = " << pkt-> local_port_ << ";" << endl;
+        cout << "    pkt->local_addr_ = IOAddress(\"" << pkt->local_addr_.toText() << "\");" << endl;
+        cout << "    pkt->ifindex_ = " << pkt->ifindex_ << ";" << endl;
+        cout << "    pkt->iface_ = \"" << pkt->iface_ << "\";" << endl;
+        for (int i=0; i< pkt->data_len_; i++) {
+            cout << "    pkt->data_[" << i << "]=" << (int)(unsigned char)pkt->data_[i] << "; ";
+            if (!(i%4))
+                cout << endl;
+        }
+        cout << endl;
+        cout << "    return (pkt);" << endl;
+        cout << "}" << endl << endl;
+
+        delete pkt;
+    }
+    cout << "---8X-----------------------------------------" << endl;
+        
+    // never happens. Infinite loop is infinite
+    delete pkt;
+    delete ifacemgr;
+}
+#endif
+
 TEST_F(IfaceMgrTest, basic) {
     // checks that IfaceManager can be instantiated
 
