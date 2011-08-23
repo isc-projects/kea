@@ -1,3 +1,9 @@
+TBD.	[func]		y-aharen
+	src/lib/statistics: Added statistics counter library for entire server
+	items and per zone items. Also, modified b10-auth to use it. It is
+	also intended to use in the other modules such as b10-resolver.
+	(Trac #510, git TBD)
+
 274.	[bug]		naokikambe
 	add unittests for functions xml_handler, xsd_handler and xsl_handler
 	respectively to make sure their behaviors are correct, regardless of
