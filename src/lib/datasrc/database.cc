@@ -340,7 +340,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // It contains some RRs, so it exists.
                 last_known = superdomain.getLabelCount();
                 // In case we are in GLUE_OK, we want to store the highest
-                // encounderet RRset.
+                // encountered RRset.
                 if (glue_ok && !first_ns && i != remove_labels) {
                     first_ns = getRRset(superdomain, NULL, false, false,
                                         true).second;

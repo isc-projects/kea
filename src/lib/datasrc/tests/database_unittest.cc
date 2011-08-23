@@ -1037,6 +1037,14 @@ TEST_F(DatabaseClientTest, wildcard) {
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
                expected_sig_rdatas_);
+    // Also make sure that the wildcard doesn't hurt the original data
+    // below the wildcard
+    expected_rdatas_.push_back("2001:db8::5");
+    doFindTest(finder, isc::dns::Name("cancel.here.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS,
+               expected_rdatas_, expected_sig_rdatas_);
+    expected_rdatas_.clear();
 
     // How wildcard go together with delegation
     expected_rdatas_.push_back("ns.example.com.");
