@@ -12,38 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef LIBDHCP_H_
-#define LIBDHCP_H_
+#include <gtest/gtest.h>
+#include <util/unittests/run_all.h>
 
-#include <iostream>
-#include "dhcp/pkt6.h"
+#include <log/logger_support.h>
 
-namespace isc {
-namespace dhcp {
-
-class LibDHCP {
-
-public:
-    LibDHCP();
-    static std::string version();
-
-    bool parsePkt6(Pkt6& pkt); 
-    bool builtPkt6(Pkt6& pkt);
-
-    
-    static unsigned int
-    packOptions6(boost::shared_array<char>& buf,
-                 int buf_len,
-                 unsigned short offset,
-                 isc::dhcp::Option::Option6Lst& options_);
-    static unsigned int
-    unpackOptions6(boost::shared_array<char>& buf,
-                   int buf_len,
-                   unsigned short offset,
-                   isc::dhcp::Option::Option6Lst& options_);
-};
-
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    isc::log::initLogger();
+    return (isc::util::unittests::run_all());
 }
-}
-
-#endif
