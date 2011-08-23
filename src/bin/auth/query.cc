@@ -31,7 +31,7 @@ namespace isc {
 namespace auth {
 
 void
-Query::getAdditional(const ZoneFinder& zone, const RRset& rrset) const {
+Query::getAdditional(ZoneFinder& zone, const RRset& rrset) const {
     RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         const Rdata& rdata(rdata_iterator->getCurrent());
@@ -47,7 +47,7 @@ Query::getAdditional(const ZoneFinder& zone, const RRset& rrset) const {
 }
 
 void
-Query::findAddrs(const ZoneFinder& zone, const Name& qname,
+Query::findAddrs(ZoneFinder& zone, const Name& qname,
                  const ZoneFinder::FindOptions options) const
 {
     // Out of zone name
@@ -86,7 +86,7 @@ Query::findAddrs(const ZoneFinder& zone, const Name& qname,
 }
 
 void
-Query::putSOA(const ZoneFinder& zone) const {
+Query::putSOA(ZoneFinder& zone) const {
     ZoneFinder::FindResult soa_result(zone.find(zone.getOrigin(),
         RRType::SOA()));
     if (soa_result.code != ZoneFinder::SUCCESS) {
@@ -104,7 +104,7 @@ Query::putSOA(const ZoneFinder& zone) const {
 }
 
 void
-Query::getAuthAdditional(const ZoneFinder& zone) const {
+Query::getAuthAdditional(ZoneFinder& zone) const {
     // Fill in authority and addtional sections.
     ZoneFinder::FindResult ns_result = zone.find(zone.getOrigin(),
                                                  RRType::NS());
