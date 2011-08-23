@@ -60,7 +60,7 @@ class ThreadingServerManager:
 class MockMsgq:
     def __init__(self):
         self._started = threading.Event()
-        self.msgq = msgq.MsgQ(verbose=True)
+        self.msgq = msgq.MsgQ(verbose=False)
         result = self.msgq.setup()
         if result:
             sys.exit("Error on Msgq startup: %s" % result)
