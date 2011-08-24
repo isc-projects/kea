@@ -29,6 +29,8 @@
 #include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
+#include <datasrc/data_source.h>
+#include <datasrc/iterator.h>
 
 #include <gtest/gtest.h>
 
@@ -136,6 +138,43 @@ TEST_F(InMemoryClientTest, add_find_Zone) {
     EXPECT_EQ(Name("i.g.h"),
               memory_client.findZone(Name("z.i.g.h")).zone_finder->
                   getOrigin());
+}
+
+TEST_F(InMemoryClientTest, iterator) {
+    // Just some preparations of data
+    boost::shared_ptr<InMemoryZoneFinder>
+        zone(new InMemoryZoneFinder(RRClass::IN(), Name("a")));
+    RRsetPtr aRRsetA(new RRset(Name("a"), RRClass::IN(), RRType::A(),
+                                  RRTTL(300)));
+    aRRsetA->addRdata(rdata::in::A("192.0.2.1"));
+    RRsetPtr aRRsetAAAA(new RRset(Name("a"), RRClass::IN(), RRType::AAAA(),
+                                  RRTTL(300)));
+    aRRsetAAAA->addRdata(rdata::in::AAAA("2001:db8::1"));
+    aRRsetAAAA->addRdata(rdata::in::AAAA("2001:db8::2"));
+    RRsetPtr subRRsetA(new RRset(Name("sub.x.a"), RRClass::IN(), RRType::A(),
+                                  RRTTL(300)));
+    subRRsetA->addRdata(rdata::in::A("192.0.2.2"));
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(zone));
+    // First, the zone is not there, so it should throw
+    EXPECT_THROW(memory_client.getIterator(Name("b")), DataSourceError);
+    // This zone is not there either, even when there's a zone containing this
+    EXPECT_THROW(memory_client.getIterator(Name("x.a")), DataSourceError);
+    // Now, an empty zone
+    ZoneIteratorPtr iterator(memory_client.getIterator(Name("a")));
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+    // It throws Unexpected when we are past the end
+    EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
+    EXPECT_EQ(result::SUCCESS, zone->add(aRRsetA));
+    EXPECT_EQ(result::SUCCESS, zone->add(aRRsetAAAA));
+    EXPECT_EQ(result::SUCCESS, zone->add(subRRsetA));
+    // Check it with full zone, one by one.
+    // It should be in ascending order in case of InMemory data source
+    // (isn't guaranteed in general)
+    iterator = memory_client.getIterator(Name("a"));
+    EXPECT_EQ(aRRsetA, iterator->getNextRRset());
+    EXPECT_EQ(aRRsetAAAA, iterator->getNextRRset());
+    EXPECT_EQ(subRRsetA, iterator->getNextRRset());
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
 TEST_F(InMemoryClientTest, getZoneCount) {
