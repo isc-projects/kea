@@ -367,7 +367,7 @@ const std::string & mcast) {
  * @return True, if transmission was successful. False otherwise.
  */
 bool
-IfaceMgr::send(Pkt6 &pkt) {
+IfaceMgr::send(boost::shared_ptr<Pkt6> pkt) {
     struct msghdr m;
     struct iovec v;
     int result;
@@ -386,11 +386,11 @@ IfaceMgr::send(Pkt6 &pkt) {
     sockaddr_in6 to;
     memset(&to, 0, sizeof(to));
     to.sin6_family = AF_INET6;
-    to.sin6_port = htons(pkt.remote_port_);
+    to.sin6_port = htons(pkt->remote_port_);
     memcpy(&to.sin6_addr,
-           pkt.remote_addr_.getAddress().to_v6().to_bytes().data(),
+           pkt->remote_addr_.getAddress().to_v6().to_bytes().data(),
            16);
-    to.sin6_scope_id = pkt.ifindex_;
+    to.sin6_scope_id = pkt->ifindex_;
 
     m.msg_name = &to;
     m.msg_namelen = sizeof(to);
@@ -400,8 +400,8 @@ IfaceMgr::send(Pkt6 &pkt) {
      * "scatter-gather" stuff... we only have a single chunk
      * of data to send, so we declare a single vector entry.)
      */
-    v.iov_base = (char *) &pkt.data_[0];
-    v.iov_len = pkt.data_len_;
+    v.iov_base = (char *) &pkt->data_[0];
+    v.iov_len = pkt->data_len_;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
@@ -421,7 +421,7 @@ IfaceMgr::send(Pkt6 &pkt) {
     cmsg->cmsg_len = CMSG_LEN(sizeof(*pktinfo));
     pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(*pktinfo));
-    pktinfo->ipi6_ifindex = pkt.ifindex_;
+    pktinfo->ipi6_ifindex = pkt->ifindex_;
     m.msg_controllen = cmsg->cmsg_len;
 
     result = sendmsg(sendsock_, &m, 0);
@@ -430,10 +430,10 @@ IfaceMgr::send(Pkt6 &pkt) {
     }
     cout << "Sent " << result << " bytes." << endl;
 
-    cout << "Sent " << pkt.data_len_ << " bytes over "
-         << pkt.iface_ << "/" << pkt.ifindex_ << " interface: "
-         << " dst=" << pkt.remote_addr_.toText()
-         << ", src=" << pkt.local_addr_.toText()
+    cout << "Sent " << pkt->data_len_ << " bytes over "
+         << pkt->iface_ << "/" << pkt->ifindex_ << " interface: "
+         << " dst=" << pkt->remote_addr_.toText()
+         << ", src=" << pkt->local_addr_.toText()
          << endl;
 
     return (result);
@@ -449,7 +449,7 @@ IfaceMgr::send(Pkt6 &pkt) {
  *
  * @return Object prepresenting received packet.
  */
-Pkt6*
+boost::shared_ptr<Pkt6>
 IfaceMgr::receive() {
     struct msghdr m;
     struct iovec v;
@@ -458,7 +458,7 @@ IfaceMgr::receive() {
     struct in6_pktinfo* pktinfo;
     struct sockaddr_in6 from;
     struct in6_addr to_addr;
-    Pkt6* pkt;
+    boost::shared_ptr<Pkt6> pkt;
     char addr_str[INET6_ADDRSTRLEN];
 
     try {
@@ -469,10 +469,10 @@ IfaceMgr::receive() {
         // we use larger buffer. This buffer limit is checked
         // during reception (see iov_len below), so we are
         // safe
-        pkt = new Pkt6(65536);
+        pkt = boost::shared_ptr<Pkt6>(new Pkt6(65536));
     } catch (const std::exception& ex) {
         cout << "Failed to create new packet." << endl;
-        return (0);
+        return (boost::shared_ptr<Pkt6>()); // NULL
     }
 
     memset(control_buf_, 0, control_buf_len_);
@@ -537,13 +537,11 @@ IfaceMgr::receive() {
         }
         if (!found_pktinfo) {
             cout << "Unable to find pktinfo" << endl;
-            delete pkt;
-            return (0);
+            return (boost::shared_ptr<Pkt6>()); // NULL
         }
     } else {
         cout << "Failed to receive data." << endl;
-        delete pkt;
-        return (0);
+        return (boost::shared_ptr<Pkt6>()); // NULL
     }
 
     // That's ugly.
@@ -562,8 +560,7 @@ IfaceMgr::receive() {
     } else {
         cout << "Received packet over unknown interface (ifindex="
              << pkt->ifindex_ << ")." << endl;
-        delete pkt;
-        return (0);
+        return (boost::shared_ptr<Pkt6>()); // NULL
     }
 
     pkt->data_len_ = result;

@@ -15,6 +15,8 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
+#include <boost/shared_ptr.hpp>
+#include "dhcp/pkt6.h"
 #include <iostream>
 
 namespace isc {
@@ -33,6 +35,27 @@ namespace isc {
         bool run();
 
     protected:
+        boost::shared_ptr<Pkt6>
+        processSolicit(boost::shared_ptr<Pkt6> solicit);
+
+        boost::shared_ptr<Pkt6>
+        processRequest(boost::shared_ptr<Pkt6> solicit);
+
+        boost::shared_ptr<Pkt6>
+        processRenew(boost::shared_ptr<Pkt6> solicit);
+
+        boost::shared_ptr<Pkt6>
+        processRebind(boost::shared_ptr<Pkt6> solicit);
+
+        boost::shared_ptr<Pkt6>
+        processConfirm(boost::shared_ptr<Pkt6> solicit);
+
+        boost::shared_ptr<Pkt6>
+        processRelease(boost::shared_ptr<Pkt6> solicit);
+
+        boost::shared_ptr<Pkt6>
+        processDecline(boost::shared_ptr<Pkt6> solicit);
+
         bool shutdown;
     };
 };
