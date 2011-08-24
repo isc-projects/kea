@@ -27,6 +27,7 @@ import threading
 import io
 import time
 import imp
+import signal
 
 import stats
 import isc.cc.session
@@ -145,6 +146,9 @@ class TestCallback(unittest.TestCase):
 
 class TestStats(unittest.TestCase):
     def setUp(self):
+        # deadlock will be killed afer 20 secs
+        signal.signal(signal.SIGALRM, self.my_signal_handler)
+        signal.alarm(20)
         self.base = BaseModules()
         self.stats = stats.Stats()
         self.const_timestamp = 1308730448.965706
@@ -153,6 +157,9 @@ class TestStats(unittest.TestCase):
 
     def tearDown(self):
         self.base.shutdown()
+
+    def my_signal_handler(self, signal, frame):
+        self.fail("A deadlock might be detected")
 
     def test_init(self):
         self.assertEqual(self.stats.module_name, 'Stats')
