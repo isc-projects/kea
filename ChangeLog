@@ -1,7 +1,7 @@
 284.	[bug]		jerry
 	b10-zonemgr: zonemgr will not terminate on empty zones, it will
 	log a warning and try to do zone transfer for them.
-	(Trac #1153, git TBD)
+	(Trac #1153, git 0a39659638fc68f60b95b102968d7d0ad75443ea)
 
 283.    [bug]		zhanglikun
 	Make stats and boss processes wait for answer messages from each
