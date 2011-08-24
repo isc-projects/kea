@@ -1370,7 +1370,7 @@ what is XfroutClient xfr_client??
 
     <para>
       The main <command>bind10</command> process can be configured
-      to select to run either the authoritative or resolver.
+      to select to run either the authoritative or resolver or both.
       By default, it starts the authoritative service.
 <!-- TODO: later both -->
 
@@ -1390,22 +1390,28 @@ what is XfroutClient xfr_client??
     </para>
 
     <para>
-      The resolver also needs to be configured to listen on an address
-      and port:
+      By default, the resolver listens on port 53 for 127.0.0.1 and ::1.
+      The following example shows how it can be configured to
+      listen on an additional address (and port):
 
       <screen>
-&gt; <userinput>config set Resolver/listen_on [{ "address": "127.0.0.1", "port": 53 }]</userinput>
+&gt; <userinput>config add Resolver/listen_on</userinput>
+&gt; <userinput>config set Resolver/listen_on[<replaceable>2</replaceable>]/address "192.168.1.1"</userinput>
+&gt; <userinput>config set Resolver/listen_on[<replaceable>2</replaceable>]/port 53</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
     </para>
 
-<!-- TODO: later the above will have some defaults -->
+     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
+       as needed; run <quote><userinput>config show
+       Resolver/listen_on</userinput></quote> if needed.)</simpara>
+<!-- TODO: this example should not include the port, ticket #1185 -->
 
     <section>
       <title>Access Control</title>
 
       <para>
-        The <command>b10-resolver</command> daemon only accepts
+        By default, the <command>b10-resolver</command> daemon only accepts
         DNS queries from the localhost (127.0.0.1 and ::1).
         The <option>Resolver/query_acl</option> configuration may
 	be used to reject, drop, or allow specific IPs or networks.
@@ -1437,6 +1443,8 @@ url="bind10-messages.html#RESOLVER_QUERY_DROPPED">RESOLVER_QUERY_DROPPED</ulink>
 <!-- TODO:
 /0 is for any address in that address family
 does that need any address too?
+
+TODO: tsig
 -->
 
       <para>
