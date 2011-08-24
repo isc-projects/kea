@@ -32,16 +32,34 @@
 
 template<class Type, uint16_t typeCode> class DSLikeImpl;
 
+/// \brief \c rdata::DLV class represents the DLV RDATA as defined %in
+/// RFC4431.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class, and provides trivial accessors specific to the
+/// DLV RDATA.
 class DLV : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
+
+    /// \brief Assignment operator.
+    ///
+    /// It internally allocates a resource, and if it fails a corresponding
+    /// standard exception will be thrown.
+    /// This operator never throws an exception otherwise.
+    ///
+    /// This operator provides the strong exception guarantee: When an
+    /// exception is thrown the content of the assignment target will be
+    /// intact.
     DLV& operator=(const DLV& source);
+
+    /// \brief The destructor.
     ~DLV();
 
+    /// \brief Return the value of the Tag field.
     ///
-    /// Specialized methods
-    ///
+    /// This method never throws an exception.
     uint16_t getTag() const;
 private:
     typedef DSLikeImpl<DLV, 32769> DLVImpl;
