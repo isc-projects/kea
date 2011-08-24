@@ -19,38 +19,23 @@
 #include <datasrc/data_source.h>
 #include <util/filename.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace isc {
 namespace datasrc {
 
 struct SQLite3Parameters {
     SQLite3Parameters() :
         db_(NULL), version_(-1),
-        q_zone_(NULL), q_any_(NULL),
-        q_any_sub_(NULL), q_current_(NULL)
-        /*q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
-        q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
-        q_prevnsec3_(NULL) */
+        q_zone_(NULL)
     {}
     sqlite3* db_;
     int version_;
     sqlite3_stmt* q_zone_;
-    sqlite3_stmt* q_any_;
-    sqlite3_stmt* q_any_sub_;
-    sqlite3_stmt* q_current_;
-    /*
-    TODO: Yet unneeded statements
-    sqlite3_stmt* q_record_;
-    sqlite3_stmt* q_addrs_;
-    sqlite3_stmt* q_referral_;
-    sqlite3_stmt* q_count_;
-    sqlite3_stmt* q_previous_;
-    sqlite3_stmt* q_nsec3_;
-    sqlite3_stmt* q_prevnsec3_;
-    */
 };
 
 SQLite3Database::SQLite3Database(const std::string& filename,
-                                     const isc::dns::RRClass& rrclass) :
+                                 const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText()),
     database_name_("sqlite3_" +
@@ -75,12 +60,6 @@ public:
     ~Initializer() {
         if (params_.q_zone_ != NULL) {
             sqlite3_finalize(params_.q_zone_);
-        }
-        if (params_.q_any_ != NULL) {
-            sqlite3_finalize(params_.q_any_);
-        }
-        if (params_.q_any_sub_ != NULL) {
-            sqlite3_finalize(params_.q_any_sub_);
         }
         // we do NOT finalize q_current_ - that is just a pointer to one of
         // the other statements, not a separate one.
@@ -144,11 +123,19 @@ const char* const SCHEMA_LIST[] = {
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
+// note that the order of the SELECT values is specifically chosen to match
+// the enum values in RecordColumns
 const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2";
 
 const char* const q_any_sub_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)";
+
+// note that the order of the SELECT values is specifically chosen to match
+// the enum values in RecordColumns
+const char* const q_iterate_str = "SELECT rdtype, ttl, sigtype, rdata, name FROM records "
+                                  "WHERE zone_id = ?1 "
+                                  "ORDER BY name, rdtype";
 
 /* TODO: Prune the statements, not everything will be needed maybe?
 const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
@@ -215,10 +202,6 @@ checkAndSetupSchema(Initializer* initializer) {
     }
 
     initializer->params_.q_zone_ = prepare(db, q_zone_str);
-    // Make sure the current is initialized to one of the statements, not NULL
-    initializer->params_.q_current_ = initializer->params_.q_any_ =
-        prepare(db, q_any_str);
-    initializer->params_.q_any_sub_ = prepare(db, q_any_sub_str);
     /* TODO: Yet unneeded statements
     initializer->params_.q_record_ = prepare(db, q_record_str);
     initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
@@ -247,7 +230,7 @@ SQLite3Database::open(const std::string& name) {
     }
 
     checkAndSetupSchema(&initializer);
-    initializer.move(dbparameters_);
+    initializer.move(dbparameters_.get());
 }
 
 SQLite3Database::~SQLite3Database() {
@@ -255,7 +238,6 @@ SQLite3Database::~SQLite3Database() {
     if (dbparameters_->db_ != NULL) {
         close();
     }
-    delete dbparameters_;
 }
 
 void
@@ -269,9 +251,6 @@ SQLite3Database::close(void) {
     // XXX: sqlite3_finalize() could fail.  What should we do in that case?
     sqlite3_finalize(dbparameters_->q_zone_);
     dbparameters_->q_zone_ = NULL;
-
-    sqlite3_finalize(dbparameters_->q_any_);
-    dbparameters_->q_any_ = NULL;
 
     /* TODO: Once they are needed or not, uncomment or drop
     sqlite3_finalize(dbparameters->q_record_);
@@ -327,103 +306,161 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
         result = std::pair<bool, int>(true,
                                       sqlite3_column_int(dbparameters_->
                                                          q_zone_, 0));
-    } else {
-        result = std::pair<bool, int>(false, 0);
-    }
-    // Free resources
-    sqlite3_reset(dbparameters_->q_zone_);
-
-    return (result);
-}
-
-void
-SQLite3Database::searchForRecords(int zone_id, const std::string& name,
-                                  bool subdomains)
-{
-    dbparameters_->q_current_ = subdomains ? dbparameters_->q_any_sub_ :
-        dbparameters_->q_any_;
-    resetSearch();
-    if (sqlite3_bind_int(dbparameters_->q_current_, 1, zone_id) != SQLITE_OK) {
-        isc_throw(DataSourceError,
-                  "Error in sqlite3_bind_int() for zone_id " <<
-                  zone_id << ": " << sqlite3_errmsg(dbparameters_->db_));
-    }
-    // use transient since name is a ref and may disappear
-    if (sqlite3_bind_text(dbparameters_->q_current_, 2, name.c_str(), -1,
-                               SQLITE_TRANSIENT) != SQLITE_OK) {
-        isc_throw(DataSourceError,
-                  "Error in sqlite3_bind_text() for name " <<
-                  name << ": " << sqlite3_errmsg(dbparameters_->db_));
-    }
-}
-
-namespace {
-// This helper function converts from the unsigned char* type (used by
-// sqlite3) to char* (wanted by std::string). Technically these types
-// might not be directly convertable
-// In case sqlite3_column_text() returns NULL, we just make it an
-// empty string.
-// The sqlite3parameters value is only used to check the error code if
-// ucp == NULL
-const char*
-convertToPlainChar(const unsigned char* ucp,
-                   SQLite3Parameters* dbparameters) {
-    if (ucp == NULL) {
-        // The field can really be NULL, in which case we return an
-        // empty string, or sqlite may have run out of memory, in
-        // which case we raise an error
-        if (dbparameters != NULL &&
-            sqlite3_errcode(dbparameters->db_) == SQLITE_NOMEM) {
-            isc_throw(DataSourceError,
-                      "Sqlite3 backend encountered a memory allocation "
-                      "error in sqlite3_column_text()");
-        } else {
-            return ("");
-        }
-    }
-    const void* p = ucp;
-    return (static_cast<const char*>(p));
-}
-}
-
-bool
-SQLite3Database::getNextRecord(std::string columns[], size_t column_count) {
-    if (column_count != COLUMN_COUNT) {
-            isc_throw(DataSourceError,
-                    "Datasource backend caller did not pass a column array "
-                    "of size " << COLUMN_COUNT << " to getNextRecord()");
-    }
-
-    sqlite3_stmt* current_stmt = dbparameters_->q_current_;
-    const int rc = sqlite3_step(current_stmt);
-
-    if (rc == SQLITE_ROW) {
-        for (int column = 0; column < column_count; ++column) {
-            try {
-                columns[column] = convertToPlainChar(sqlite3_column_text(
-                                                     current_stmt, column),
-                                                     dbparameters_);
-            } catch (const std::bad_alloc&) {
-                isc_throw(DataSourceError,
-                        "bad_alloc in Sqlite3Connection::getNextRecord");
-            }
-        }
-        return (true);
+        return (result);
     } else if (rc == SQLITE_DONE) {
-        // reached the end of matching rows
-        resetSearch();
-        return (false);
+        result = std::pair<bool, int>(false, 0);
+        // Free resources
+        sqlite3_reset(dbparameters_->q_zone_);
+        return (result);
     }
+
     isc_throw(DataSourceError, "Unexpected failure in sqlite3_step: " <<
                                sqlite3_errmsg(dbparameters_->db_));
     // Compilers might not realize isc_throw always throws
-    return (false);
+    return (std::pair<bool, int>(false, 0));
 }
 
-void
-SQLite3Database::resetSearch() {
-    sqlite3_reset(dbparameters_->q_current_);
-    sqlite3_clear_bindings(dbparameters_->q_current_);
+class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
+public:
+    // Construct an iterator for all records. When constructed this
+    // way, the getNext() call will copy all fields
+    Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
+        iterator_type_(ITT_ALL),
+        database_(database),
+        statement_(NULL),
+        name_("")
+    {
+        // We create the statement now and then just keep getting data from it
+        statement_ = prepare(database->dbparameters_->db_, q_iterate_str);
+        bindZoneId(id);
+    }
+
+    // Construct an iterator for records with a specific name. When constructed
+    // this way, the getNext() call will copy all fields except name
+    Context(const boost::shared_ptr<const SQLite3Database>& database, int id,
+            const std::string& name, bool subdomains) :
+        iterator_type_(ITT_NAME),
+        database_(database),
+        statement_(NULL),
+        name_(name)
+    {
+        // We create the statement now and then just keep getting data from it
+        statement_ = prepare(database->dbparameters_->db_,
+                             subdomains ? q_any_sub_str : q_any_str);
+        bindZoneId(id);
+        bindName(name_);
+    }
+
+    bool getNext(std::string (&data)[COLUMN_COUNT]) {
+        // If there's another row, get it
+        // If finalize has been called (e.g. when previous getNext() got
+        // SQLITE_DONE), directly return false
+        if (statement_ == NULL) {
+            return false;
+        }
+        const int rc(sqlite3_step(statement_));
+        if (rc == SQLITE_ROW) {
+            // For both types, we copy the first four columns
+            copyColumn(data, TYPE_COLUMN);
+            copyColumn(data, TTL_COLUMN);
+            copyColumn(data, SIGTYPE_COLUMN);
+            copyColumn(data, RDATA_COLUMN);
+            // Only copy Name if we are iterating over every record
+            if (iterator_type_ == ITT_ALL) {
+                copyColumn(data, NAME_COLUMN);
+            }
+            return (true);
+        } else if (rc != SQLITE_DONE) {
+            isc_throw(DataSourceError,
+                      "Unexpected failure in sqlite3_step: " <<
+                      sqlite3_errmsg(database_->dbparameters_->db_));
+        }
+        finalize();
+        return (false);
+    }
+
+    virtual ~Context() {
+        finalize();
+    }
+
+private:
+    // Depending on which constructor is called, behaviour is slightly
+    // different. We keep track of what to do with the iterator type
+    // See description of getNext() and the constructors
+    enum IteratorType {
+        ITT_ALL,
+        ITT_NAME
+    };
+
+    void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
+        data[column] = convertToPlainChar(sqlite3_column_text(statement_,
+                                                              column));
+    }
+
+    void bindZoneId(const int zone_id) {
+        if (sqlite3_bind_int(statement_, 1, zone_id) != SQLITE_OK) {
+            finalize();
+            isc_throw(SQLite3Error, "Could not bind int " << zone_id <<
+                      " to SQL statement: " <<
+                      sqlite3_errmsg(database_->dbparameters_->db_));
+        }
+    }
+
+    void bindName(const std::string& name) {
+        if (sqlite3_bind_text(statement_, 2, name.c_str(), -1,
+                              SQLITE_STATIC) != SQLITE_OK) {
+            const char* errmsg = sqlite3_errmsg(database_->dbparameters_->db_);
+            finalize();
+            isc_throw(SQLite3Error, "Could not bind text '" << name <<
+                      "' to SQL statement: " << errmsg);
+        }
+    }
+
+    void finalize() {
+        sqlite3_finalize(statement_);
+        statement_ = NULL;
+    }
+
+    // This helper method converts from the unsigned char* type (used by
+    // sqlite3) to char* (wanted by std::string). Technically these types
+    // might not be directly convertable
+    // In case sqlite3_column_text() returns NULL, we just make it an
+    // empty string, unless it was caused by a memory error
+    const char* convertToPlainChar(const unsigned char* ucp) {
+        if (ucp == NULL) {
+            // The field can really be NULL, in which case we return an
+            // empty string, or sqlite may have run out of memory, in
+            // which case we raise an error
+            if (sqlite3_errcode(database_->dbparameters_->db_)
+                                == SQLITE_NOMEM) {
+                isc_throw(DataSourceError,
+                        "Sqlite3 backend encountered a memory allocation "
+                        "error in sqlite3_column_text()");
+            } else {
+                return ("");
+            }
+        }
+        const void* p = ucp;
+        return (static_cast<const char*>(p));
+    }
+
+    const IteratorType iterator_type_;
+    boost::shared_ptr<const SQLite3Database> database_;
+    sqlite3_stmt *statement_;
+    const std::string name_;
+};
+
+DatabaseAccessor::IteratorContextPtr
+SQLite3Database::getRecords(const std::string& name, int id,
+                            bool subdomains) const
+{
+    return (IteratorContextPtr(new Context(shared_from_this(), id, name,
+                                           subdomains)));
+}
+
+DatabaseAccessor::IteratorContextPtr
+SQLite3Database::getAllRecords(int id) const {
+    return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }
 
 }
