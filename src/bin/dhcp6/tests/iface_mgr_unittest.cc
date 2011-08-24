@@ -282,19 +282,19 @@ TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
     ifacemgr->setSendSock(socket2);
     ifacemgr->setRecvSock(socket1);
 
-    Pkt6 sendPkt(128);
+    boost::shared_ptr<Pkt6> sendPkt(new Pkt6(128) );
 
     // prepare dummy payload
     for (int i=0;i<128; i++) {
-        sendPkt.data_[i] = i;
+        sendPkt->data_[i] = i;
     }
 
-    sendPkt.remote_port_ = 10547;
-    sendPkt.remote_addr_ = IOAddress("::1");
-    sendPkt.ifindex_ = 1;
-    sendPkt.iface_ = "lo";
+    sendPkt->remote_port_ = 10547;
+    sendPkt->remote_addr_ = IOAddress("::1");
+    sendPkt->ifindex_ = 1;
+    sendPkt->iface_ = "lo";
 
-    Pkt6 * rcvPkt;
+    boost::shared_ptr<Pkt6> rcvPkt;
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
@@ -303,14 +303,12 @@ TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
     ASSERT_TRUE( rcvPkt != NULL ); // received our own packet
 
     // let's check that we received what was sent
-    EXPECT_EQ(sendPkt.data_len_, rcvPkt->data_len_);
-    EXPECT_EQ(0, memcmp(&sendPkt.data_[0], &rcvPkt->data_[0],
+    EXPECT_EQ(sendPkt->data_len_, rcvPkt->data_len_);
+    EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
                         rcvPkt->data_len_) );
 
-    EXPECT_EQ(sendPkt.remote_addr_.toText(), rcvPkt->remote_addr_.toText());
+    EXPECT_EQ(sendPkt->remote_addr_.toText(), rcvPkt->remote_addr_.toText());
     EXPECT_EQ(rcvPkt->remote_port_, 10546);
-
-    delete rcvPkt;
 
     delete ifacemgr;
 }
