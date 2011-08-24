@@ -153,13 +153,16 @@ class MockBoss:
     def command_handler(self, command, *args, **kwargs):
         self._started.set()
         self.got_command_name = command
+        params = { "owner": "Boss",
+                   "data": {
+                'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
+                }
+                   }
         if command == 'sendstats':
-            params = { "owner": "Boss",
-                       "data": {
-                    'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
-                    }
-                       }
-            return send_command("set", "Stats", params=params, session=self.cc_session)
+            send_command("set", "Stats", params=params, session=self.cc_session)
+            return isc.config.create_answer(0)
+        elif command == 'getstats':
+            return isc.config.create_answer(0, params)
         return isc.config.create_answer(1, "Unknown Command")
 
 class MockAuth:
