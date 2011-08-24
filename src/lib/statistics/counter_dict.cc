@@ -19,22 +19,22 @@ namespace statistics {
 class CounterDictionaryConstIteratorImpl;
 
 class CounterDictionaryImpl : boost::noncopyable {
-    private:
-        DictionaryMap dictionary_;
-        std::vector<std::string> elements_;
-        const size_t items_;
-        // Default constructor is forbidden; number of counter items must be
-        // specified at the construction of this class.
-        CounterDictionaryImpl();
-    public:
-        CounterDictionaryImpl(const size_t items);
-        ~CounterDictionaryImpl();
-        void addElement(const std::string& name);
-        void deleteElement(const std::string& name);
-        Counter& getElement(const std::string& name);
-    public:
-        CounterDictionaryConstIteratorImpl begin() const;
-        CounterDictionaryConstIteratorImpl end() const;
+private:
+    DictionaryMap dictionary_;
+    std::vector<std::string> elements_;
+    const size_t items_;
+    // Default constructor is forbidden; number of counter items must be
+    // specified at the construction of this class.
+    CounterDictionaryImpl();
+public:
+    CounterDictionaryImpl(const size_t items);
+    ~CounterDictionaryImpl();
+    void addElement(const std::string& name);
+    void deleteElement(const std::string& name);
+    Counter& getElement(const std::string& name);
+public:
+    CounterDictionaryConstIteratorImpl begin() const;
+    CounterDictionaryConstIteratorImpl end() const;
 };
 
 // Constructor with number of items
