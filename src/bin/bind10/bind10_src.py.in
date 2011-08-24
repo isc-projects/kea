@@ -308,9 +308,11 @@ class BoB:
         return process_list
 
     def _get_stats_data(self):
-        return { "stats_data": {
-                    'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-               }}
+        return { "owner": "Boss",
+                 "data": { 'boot_time':
+                               time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                           }
+                 }
 
     def command_handler(self, command, args):
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_COMMAND, command)
@@ -325,17 +327,18 @@ class BoB:
                 answer = isc.config.ccsession.create_answer(0, self._get_stats_data())
             elif command == "sendstats":
                 # send statistics data to the stats daemon immediately
-                statistics_data = {
-                    'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-                    }
+                stats_data = self._get_stats_data()
                 valid = self.ccs.get_module_spec().validate_statistics(
-                    True, statistics_data)
+                    True, stats_data["data"])
                 if valid:
                     cmd = isc.config.ccsession.create_command(
-                    'set', { "owner": "Boss",
-                             "data": statistics_data })
+                    'set', stats_data })
                     seq = self.cc_session.group_sendmsg(cmd, 'Stats')
-                    self.cc_session.group_recvmsg(True, seq)
+                    # Consume the answer, in case it becomes a orphan message.
+                    try:
+                        self.cc_session.group_recvmsg(False, seq)
+                    except isc.cc.session.SessionTimeout:
+                        pass
                     answer = isc.config.ccsession.create_answer(0)
                 else:
                     logger.fatal(BIND10_INVALID_STATISTICS_DATA);
