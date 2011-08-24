@@ -20,8 +20,31 @@
 #include <string>
 #include <vector>
 
+/// \brief \c rdata::DSLikeImpl class represents the DS-like RDATA for DS
+/// and DLV types.
+///
+/// This class implements the basic interfaces inherited by the DS and DLV
+/// classes from the abstract \c rdata::Rdata class, and provides trivial
+/// accessors to DS-like RDATA.
 template<class Type, uint16_t typeCode>class DSLikeImpl {
+    // Common sequence of toWire() operations used for the two versions of
+    // toWire().
+    template<typename Output>
+    void
+    toWireCommon(Output& output) const {
+        output.writeUint16(tag_);
+        output.writeUint8(algorithm_);
+        output.writeUint8(digest_type_);
+        output.writeData(&digest_[0], digest_.size());
+    }
+
 public:
+    /// \brief Constructor from string.
+    ///
+    /// <b>Exceptions</b>
+    ///
+    /// \c InvalidRdataText is thrown if the method cannot process the
+    /// parameter data for any of the number of reasons.
     DSLikeImpl(const string& ds_str)
     {
         istringstream iss(ds_str);
@@ -52,6 +75,16 @@ public:
         decodeHex(digestbuf.str(), digest_);
     }
 
+    /// \brief Constructor from wire-format data.
+    ///
+    /// \param buffer A buffer storing the wire format data.
+    /// \param rdata_len The length of the RDATA in bytes, normally expected
+    /// to be the value of the RDLENGTH field of the corresponding RR.
+    ///
+    /// <b>Exceptions</b>
+    ///
+    /// \c InvalidRdataLength is thrown if the input data is too short for the
+    /// type.
     DSLikeImpl(InputBuffer& buffer, size_t rdata_len) {
         if (rdata_len < 4) {
             isc_throw(InvalidRdataLength, RRType(typeCode) << " too short");
@@ -70,6 +103,9 @@ public:
         digest_type_ = digest_type;
     }
 
+    /// \brief The copy constructor.
+    ///
+    /// Trivial for now, we could've used the default one.
     DSLikeImpl(const DSLikeImpl& source)
     {
         digest_ = source.digest_;
@@ -78,6 +114,9 @@ public:
         digest_type_ = source.digest_type_;
     }
 
+    /// \brief Convert the DS-like data to a string.
+    ///
+    /// \return A \c string object that represents the DS-like data.
     string
     toText() const {
         using namespace boost;
@@ -87,22 +126,34 @@ public:
             " " + encodeHex(digest_));
     }
 
+    /// \brief Render the DS-like data in the wire format to an OutputBuffer
+    /// object.
+    ///
+    /// \param buffer An output buffer to store the wire data.
     void
     toWire(OutputBuffer& buffer) const {
-        buffer.writeUint16(tag_);
-        buffer.writeUint8(algorithm_);
-        buffer.writeUint8(digest_type_);
-        buffer.writeData(&digest_[0], digest_.size());
+        toWireCommon(buffer);
     }
 
+    /// \brief Render the DS-like data in the wire format to an
+    /// AbstractMessageRenderer object.
+    ///
+    /// \param renderer A renderer object to send the wire data to.
     void
     toWire(AbstractMessageRenderer& renderer) const {
-        renderer.writeUint16(tag_);
-        renderer.writeUint8(algorithm_);
-        renderer.writeUint8(digest_type_);
-        renderer.writeData(&digest_[0], digest_.size());
+        toWireCommon(renderer);
     }
 
+    /// \brief Compare two instances of DS-like RDATA.
+    ///
+    /// It is up to the caller to make sure that \c other is an object of the
+    /// same \c DSLikeImpl class.
+    ///
+    /// \param other the right-hand operand to compare against.
+    /// \return < 0 if \c this would be sorted before \c other.
+    /// \return 0 if \c this is identical to \c other in terms of sorting
+    /// order.
+    /// \return > 0 if \c this would be sorted after \c other.
     int
     compare(const DSLikeImpl& other_ds) const {
         if (tag_ != other_ds.tag_) {
@@ -127,6 +178,7 @@ public:
         }
     }
 
+    /// \brief Accessors
     uint16_t
     getTag() const {
         return (tag_);

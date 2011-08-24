@@ -39,18 +39,30 @@ using namespace isc::util::encode;
 
 #include <dns/rdata/generic/detail/ds_like.h>
 
+/// \brief Constructor from string.
+///
+/// A copy of the implementation object is allocated and constructed.
 DLV::DLV(const string& ds_str) :
     impl_(new DLVImpl(ds_str))
 {}
 
+/// \brief Constructor from wire-format data.
+///
+/// A copy of the implementation object is allocated and constructed.
 DLV::DLV(InputBuffer& buffer, size_t rdata_len) :
     impl_(new DLVImpl(buffer, rdata_len))
 {}
 
+/// \brief Copy constructor
+///
+/// A copy of the implementation object is allocated and constructed.
 DLV::DLV(const DLV& source) :
     Rdata(), impl_(new DLVImpl(*source.impl_))
 {}
 
+/// \brief Assignment operator
+///
+/// PIMPL-induced logic
 DLV&
 DLV::operator=(const DLV& source) {
     if (impl_ == source.impl_) {
@@ -64,25 +76,42 @@ DLV::operator=(const DLV& source) {
     return (*this);
 }
 
+/// \brief Destructor
+///
+/// Deallocates an internal resource.
 DLV::~DLV() {
     delete impl_;
 }
 
+/// \brief Convert the \c DLV to a string.
+///
+/// A pass-thru to the corresponding implementation method.
 string
 DLV::toText() const {
     return (impl_->toText());
 }
 
+/// \brief Render the \c DLV in the wire format to a OutputBuffer object
+///
+/// A pass-thru to the corresponding implementation method.
 void
 DLV::toWire(OutputBuffer& buffer) const {
     impl_->toWire(buffer);
 }
 
+/// \brief Render the \c DLV in the wire format to a AbstractMessageRenderer
+/// object
+///
+/// A pass-thru to the corresponding implementation method.
 void
 DLV::toWire(AbstractMessageRenderer& renderer) const {
     impl_->toWire(renderer);
 }
 
+/// \brief Compare two instances of \c DLV RDATA.
+///
+/// The type check is performed here. Otherwise, a pass-thru to the
+/// corresponding implementation method.
 int
 DLV::compare(const Rdata& other) const {
     const DLV& other_ds = dynamic_cast<const DLV&>(other);
@@ -90,6 +119,7 @@ DLV::compare(const Rdata& other) const {
     return (impl_->compare(*other_ds.impl_));
 }
 
+/// \brief Tag accessor
 uint16_t
 DLV::getTag() const {
     return (impl_->getTag());
