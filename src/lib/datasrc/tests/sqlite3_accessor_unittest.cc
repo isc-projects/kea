@@ -299,9 +299,10 @@ const char* const deleted_data[] = {
 class SQLite3Update : public SQLite3AccessorTest {
 protected:
     SQLite3Update() {
-        ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
-                            "/test.sqlite3 "
-                            TEST_DATA_BUILDDIR "/test.sqlite3.copied"));
+        // Note: if "installing" the test file fails some of the subsequent
+        // tests will fail and we should be able to notice that.
+        system(INSTALL_PROG " " TEST_DATA_DIR
+               "/test.sqlite3 " TEST_DATA_BUILDDIR "/test.sqlite3.copied");
         initAccessor(TEST_DATA_BUILDDIR "/test.sqlite3.copied", RRClass::IN());
         zone_id = accessor->getZone(Name("example.com")).second;
         another_accessor.reset(new SQLite3Accessor(
