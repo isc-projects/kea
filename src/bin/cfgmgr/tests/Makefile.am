@@ -1,7 +1,8 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = b10-cfgmgr_test.py
 
-EXTRA_DIST = $(PYTESTS) testdata/plugins/testplugin.py
+noinst_SCRIPTS = $(PYTESTS)
+EXTRA_DIST = testdata/plugins/testplugin.py
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
