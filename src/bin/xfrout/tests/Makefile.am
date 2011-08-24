@@ -1,6 +1,6 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = xfrout_test.py
-EXTRA_DIST = $(PYTESTS)
+noinst_SCRIPTS = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.

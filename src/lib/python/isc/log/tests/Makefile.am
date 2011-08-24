@@ -1,6 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = log_test.py
-EXTRA_DIST = $(PYTESTS) log_console.py.in console.out check_output.sh
+PYTESTS_GEN = log_test.py
+noinst_SCRIPTS = $(PYTESTS) log_console.py
+EXTRA_DIST = console.out check_output.sh
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
