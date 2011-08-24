@@ -81,7 +81,7 @@ public:
     enum AddRecordColumns {
         ADD_NAME = 0, ///< The owner name of the record (a domain name)
         ADD_REV_NAME = 1, ///< Reversed name of NAME (used for DNSSEC)
-        ADD_TTL = 2,     ///< The TTL of the record (an integer)
+        ADD_TTL = 2,     ///< The TTL of the record (in numeric form)
         ADD_TYPE = 3,    ///< The RRType of the record (A/NS/TXT etc.)
         ADD_SIGTYPE = 4, ///< For RRSIG records, this contains the RRTYPE
                             ///< the RRSIG covers.
