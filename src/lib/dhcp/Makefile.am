@@ -11,6 +11,8 @@ lib_LTLIBRARIES = libdhcp.la
 libdhcp_la_SOURCES  =
 libdhcp_la_SOURCES += libdhcp.cc libdhcp.h
 libdhcp_la_SOURCES += option.cc option.h
+libdhcp_la_SOURCES += option6_ia.cc option6_ia.h
+libdhcp_la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libdhcp_la_SOURCES += dhcp6.h
 libdhcp_la_SOURCES += pkt6.cc pkt6.h
 

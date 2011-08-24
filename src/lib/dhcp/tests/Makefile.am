@@ -17,6 +17,8 @@ if HAVE_GTEST
 TESTS += libdhcp_unittests
 libdhcp_unittests_SOURCES  = run_unittests.cc
 libdhcp_unittests_SOURCES += ../libdhcp.h ../libdhcp.cc libdhcp_unittest.cc
+libdhcp_unittests_SOURCES += ../option6_iaaddr.h ../option6_iaaddr.cc option6_iaaddr_unittest.cc
+libdhcp_unittests_SOURCES += ../option6_ia.h ../option6_ia.cc option6_ia_unittest.cc
 libdhcp_unittests_SOURCES += ../option.h ../option.cc option_unittest.cc
 libdhcp_unittests_SOURCES += ../pkt6.h ../pkt6.cc pkt6_unittest.cc
 
