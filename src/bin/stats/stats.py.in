@@ -145,14 +145,6 @@ class Stats:
                 raise StatsError(STATS_UNKNOWN_COMMAND_IN_SPEC, cmd["command_name"])
         self.mccs.start()
 
-    def _update_stats_data(self, args):
-        # 'args' must be dictionary type
-        if isinstance(args, dict) and isinstance(args.get('stats_data'), dict):
-            self.stats_data.update(args['stats_data'])
-
-        # overwrite "stats.LastUpdateTime"
-        self.stats_data['stats.last_update_time'] = get_datetime()
-
     def start(self):
         """
         Start stats module
@@ -162,9 +154,26 @@ class Stats:
 
         # request Bob to send statistics data
         logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
-        cmd = isc.config.ccsession.create_command("sendstats", None)
+        cmd = isc.config.ccsession.create_command("getstats", None)
         seq = self.cc_session.group_sendmsg(cmd, 'Boss')
-        self.cc_session.group_recvmsg(True, seq)
+        try:
+            answer, env = self.cc_session.group_recvmsg(False, seq)
+            if answer:
+                rcode, args = isc.config.ccsession.parse_answer(answer)
+                if rcode == 0:
+                    errors = self.update_statistics_data(
+                        args["owner"], **args["data"])
+                    if errors:
+                        raise StatsError("boss spec file is incorrect: "
+                                         + ", ".join(errors))
+                    errors = self.update_statistics_data(
+                                self.module_name,
+                                last_update_time=get_datetime())
+                    if errors:
+                        raise StatsError("stats spec file is incorrect: "
+                                         + ", ".join(errors))
+        except isc.cc.session.SessionTimeout:
+            pass
 
         # initialized Statistics data
         errors = self.update_statistics_data(
