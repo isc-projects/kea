@@ -21,59 +21,74 @@
 
 #include "dhcp/dhcp6.h"
 #include "dhcp/option.h"
+#include "dhcp/option6_iaaddr.h"
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 
 namespace {
-class OptionTest : public ::testing::Test {
+class Option6IAAddrTest : public ::testing::Test {
 public:
-    OptionTest() {
+    Option6IAAddrTest() {
     }
 };
 
-TEST_F(OptionTest, basic) {
+TEST_F(Option6IAAddrTest, basic) {
 
     boost::shared_array<char> simple_buf(new char[128]);
     for (int i=0; i<128; i++)
         simple_buf[i] = 0;
-    simple_buf[0]=0xa1;
-    simple_buf[1]=0xa2;
-    simple_buf[2]=0xa3;
-    simple_buf[3]=0xa4;
+    simple_buf[0]=0x20;
+    simple_buf[1]=0x01;
+    simple_buf[2]=0x0d;
+    simple_buf[3]=0xb8;
+    simple_buf[4]=0x00;
+    simple_buf[5]=0x01;
+    simple_buf[12]=0xde;
+    simple_buf[13]=0xad;
+    simple_buf[14]=0xbe;
+    simple_buf[15]=0xef; // 2001:db8:1::dead:beef
+
+    simple_buf[16]=0x00;
+    simple_buf[17]=0x00;
+    simple_buf[18]=0x03;
+    simple_buf[19]=0xe8; // 1000
+
+    simple_buf[20]=0xb2;
+    simple_buf[21]=0xd0;
+    simple_buf[22]=0x5e;
+    simple_buf[23]=0x00; // 3.000.000.000 
 
     // create an option (unpack content)
-    Option* opt = new Option(Option::V6, 
-                             D6O_CLIENTID,
-                             simple_buf,
-                             0, 
-                             4);
+    Option6IAAddr* opt = new Option6IAAddr(D6O_IAADDR,
+                                           simple_buf,
+                                           128,
+                                           0, 
+                                           24);
     
     // pack this option again in the same buffer, but in
     // different place
-    int offset18 = opt->pack(simple_buf, 128, 10);
+    int offset = opt->pack(simple_buf, 128, 50);
+
+    EXPECT_EQ(78, offset);
 
     // 4 bytes header + 4 bytes content
-    EXPECT_EQ(8, opt->len());
-    EXPECT_EQ(D6O_CLIENTID, opt->getType());
+    EXPECT_EQ("2001:db8:1::dead:beef", opt->getAddress().toText());
+    EXPECT_EQ(1000, opt->getPreferred());
+    EXPECT_EQ(3000000000, opt->getValid());
 
-    EXPECT_EQ(offset18, 18);
+    EXPECT_EQ(D6O_IAADDR, opt->getType());
 
     // check if pack worked properly:
     // if option type is correct
-    EXPECT_EQ(D6O_CLIENTID, simple_buf[10]*256 + simple_buf[11]);
+    EXPECT_EQ(D6O_IAADDR, simple_buf[50]*256 + simple_buf[51]);
 
     // if option length is correct
-    EXPECT_EQ(4, simple_buf[12]*256 + simple_buf[13]);
+    EXPECT_EQ(24, simple_buf[52]*256 + simple_buf[53]);
     
     // if option content is correct
-    EXPECT_EQ(0, memcmp(&simple_buf[0], &simple_buf[14],4));
-
-    for (int i=0; i<20; i++) {
-        std::cout << i << ":" << (unsigned short) (unsigned char)simple_buf[i] << " ";
-    }
-    std::cout << std::endl;
+    EXPECT_EQ(0, memcmp(&simple_buf[0], &simple_buf[54],24));
 
     delete opt;
 }

@@ -56,7 +56,7 @@ Pkt6 *capture1() {
     pkt->ifindex_ = 2;
     pkt->iface_ = "eth0";
     pkt->data_[0]=1;
-    pkt->data_[1]=192;     pkt->data_[2]=129;     pkt->data_[3]=6;     pkt->data_[4]=0;
+    pkt->data_[1]=01;     pkt->data_[2]=02;     pkt->data_[3]=03;     pkt->data_[4]=0;
     pkt->data_[5]=1;     pkt->data_[6]=0;     pkt->data_[7]=14;     pkt->data_[8]=0;
     pkt->data_[9]=1;     pkt->data_[10]=0;     pkt->data_[11]=1;     pkt->data_[12]=21;
     pkt->data_[13]=158;     pkt->data_[14]=60;     pkt->data_[15]=22;     pkt->data_[16]=0;

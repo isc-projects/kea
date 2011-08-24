@@ -27,20 +27,24 @@ public:
     LibDHCP();
     static std::string version();
 
-    bool parsePkt6(Pkt6& pkt); 
+    bool parsePkt6(Pkt6& pkt);
     bool builtPkt6(Pkt6& pkt);
 
-    
     static unsigned int
-    packOptions6(boost::shared_array<char>& buf,
-                 int buf_len,
-                 unsigned short offset,
+    packOptions6(boost::shared_array<char> buf, unsigned int buf_len,
+                 unsigned int offset,
                  isc::dhcp::Option::Option6Lst& options_);
     static unsigned int
-    unpackOptions6(boost::shared_array<char>& buf,
-                   int buf_len,
-                   unsigned short offset,
+    unpackOptions6(boost::shared_array<char> buf, unsigned int buf_len,
+                   unsigned int offset, unsigned int parse_len,
                    isc::dhcp::Option::Option6Lst& options_);
+
+    bool OptionFactorRegister(Option::Universe u,
+                              unsigned short type,
+                              Option::Factory * factory);
+protected:
+    // pointers to factories that produce DHCPv6 options
+    static std::map<unsigned short, Option::Factory*> v6factories_;
 };
 
 }
