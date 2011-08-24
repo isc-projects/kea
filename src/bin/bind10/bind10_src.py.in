@@ -331,8 +331,7 @@ class BoB:
                 valid = self.ccs.get_module_spec().validate_statistics(
                     True, stats_data["data"])
                 if valid:
-                    cmd = isc.config.ccsession.create_command(
-                    'set', stats_data })
+                    cmd = isc.config.ccsession.create_command('set', stats_data)
                     seq = self.cc_session.group_sendmsg(cmd, 'Stats')
                     # Consume the answer, in case it becomes a orphan message.
                     try:
