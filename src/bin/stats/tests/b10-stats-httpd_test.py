@@ -32,6 +32,7 @@ import time
 import threading
 import http.client
 import xml.etree.ElementTree
+import signal
 
 import isc
 import stats_httpd
@@ -89,6 +90,9 @@ def is_ipv6_enabled(address='::1', port=8000):
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
     def setUp(self):
+        # deadlock will be killed afer 20 secs
+        signal.signal(signal.SIGALRM, self.my_signal_handler)
+        signal.alarm(20)
         self.base = BaseModules()
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats = self.stats_server.server
@@ -106,6 +110,9 @@ class TestHttpHandler(unittest.TestCase):
         self.stats_httpd_server.shutdown()
         self.stats_server.shutdown()
         self.base.shutdown()
+
+    def my_signal_handler(self, signal, frame):
+        self.fail("A deadlock might be detected")
 
     def test_do_GET(self):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
@@ -265,10 +272,16 @@ class TestHttpServerError(unittest.TestCase):
 class TestHttpServer(unittest.TestCase):
     """Tests for HttpServer class"""
     def setUp(self):
+        # deadlock will be killed afer 20 secs
+        signal.signal(signal.SIGALRM, self.my_signal_handler)
+        signal.alarm(20)
         self.base = BaseModules()
 
     def tearDown(self):
         self.base.shutdown()
+
+    def my_signal_handler(self, signal, frame):
+        self.fail("A deadlock might be detected")
 
     def test_httpserver(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
@@ -291,6 +304,9 @@ class TestStatsHttpd(unittest.TestCase):
     """Tests for StatsHttpd class"""
 
     def setUp(self):
+        # deadlock will be killed afer 20 secs
+        signal.signal(signal.SIGALRM, self.my_signal_handler)
+        signal.alarm(20)
         self.base = BaseModules()
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats_server.run()
@@ -300,6 +316,9 @@ class TestStatsHttpd(unittest.TestCase):
     def tearDown(self):
         self.stats_server.shutdown()
         self.base.shutdown()
+
+    def my_signal_handler(self, signal, frame):
+        self.fail("A deadlock might be detected")
 
     def test_init(self):
         server_address = get_availaddr()
