@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include "dhcp/libdhcp.h"
+#include "config.h"
 
 using namespace std;
 using namespace isc;
@@ -35,7 +36,7 @@ public:
 TEST_F(LibDhcpTest, basic) {
     // dummy test
 
-    EXPECT_EQ(LibDHCP::version(), "0");
+    EXPECT_EQ(LibDHCP::version(), PACKAGE_VERSION);
 }
 
 }

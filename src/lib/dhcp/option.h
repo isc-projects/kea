@@ -24,39 +24,46 @@ namespace dhcp {
 
 class Option {
 public:
+    enum Universe { V4, V6 };
     typedef std::map<unsigned int, boost::shared_ptr<Option> > Option4Lst;
     typedef std::multimap<unsigned int, boost::shared_ptr<Option> > Option6Lst;
-
-    enum Universe { V4, V6 };
+    typedef boost::shared_ptr<Option> Factory(Option::Universe u,
+                                              unsigned short type,
+                                              boost::shared_array<char> buf,
+                                              unsigned int offset,
+                                              unsigned int len);
 
     // ctor, used for options constructed, usually during transmission
-    Option(Universe u, unsigned short type); 
+    Option(Universe u, unsigned short type);
 
     // ctor, used for received options
-    // boost::shared_array allows sharing a buffer, but it requires that 
+    // boost::shared_array allows sharing a buffer, but it requires that
     // different instances share pointer to the whole array, not point
     // to different elements in shared array. Therefore we need to share
     // pointer to the whole array and remember offset where data for
     // this option begins
-    Option(Universe u, unsigned short type, boost::shared_array<char> buf, 
-           unsigned int offset, 
+    Option(Universe u, unsigned short type, boost::shared_array<char> buf,
+           unsigned int offset,
            unsigned int len);
 
-    // writes option in wire-format to buf, returns pointer to first unused 
+    // writes option in wire-format to buf, returns pointer to first unused
     // byte after stored option
-    virtual char* pack(char* buf, unsigned int len);
+    virtual unsigned int
+    pack(boost::shared_array<char> buf,
+         unsigned int buf_len,
+         unsigned int offset);
 
-    // parses received buffer, returns pointer to first unused byte 
+    // parses received buffer, returns pointer to first unused byte
     // after parsed option
     // TODO: Do we need this overload? Commented out for now
     // virtual const char* unpack(const char* buf, unsigned int len);
 
     // parses received buffer, returns offset to the first unused byte after
     // parsed option
-    virtual unsigned int 
-        unpack(boost::shared_array<char> buf, 
+    virtual unsigned int
+        unpack(boost::shared_array<char> buf,
                unsigned int buf_len,
-               unsigned int offset, 
+               unsigned int offset,
                unsigned int parse_len);
 
     virtual std::string toText();
@@ -65,23 +72,29 @@ public:
 
     // returns data length (data length + DHCPv4/DHCPv6 option header)
     virtual unsigned short len();
-    
+
     // returns if option is valid (e.g. option may be truncated)
-    virtual bool valid(); 
+    virtual bool valid();
 
     // just to force that every option has virtual dtor
-    virtual ~Option(); 
+    virtual ~Option();
 
 protected:
-    virtual char* pack4(char* buf, unsigned short len);
-    virtual char* pack6(char* buf, unsigned short len);
-    virtual unsigned int unpack4(boost::shared_array<char> buf, 
+    virtual unsigned int
+    pack4(boost::shared_array<char> buf,
+          unsigned int buf_len,
+          unsigned int offset);
+    virtual unsigned int
+    pack6(boost::shared_array<char> buf,
+          unsigned int buf_len,
+          unsigned int offset);
+    virtual unsigned int unpack4(boost::shared_array<char> buf,
                                  unsigned int buf_len,
-                                 unsigned int offset, 
+                                 unsigned int offset,
                                  unsigned int parse_len);
-    virtual unsigned int unpack6(boost::shared_array<char> buf, 
+    virtual unsigned int unpack6(boost::shared_array<char> buf,
                                  unsigned int buf_len,
-                                 unsigned int offset, 
+                                 unsigned int offset,
                                  unsigned int parse_len);
 
     Universe universe_;
@@ -92,7 +105,7 @@ protected:
     unsigned int offset_; // data is a shared_pointer that points out to the
                           // whole packet. offset_ specifies where data for
                           // this option begins.
-    unsigned int len_; // length of data only. Use len() if you want to know 
+    unsigned int len_; // length of data only. Use len() if you want to know
                        // proper length with option header overhead
     char * value_;
 

@@ -66,7 +66,7 @@ unsigned short Pkt6::len() {
         length += (*it).second->len();
     }
 
-    return length;
+    return (length);
 }
 
 
@@ -87,7 +87,7 @@ Pkt6::pack() {
     default:
         isc_throw(BadValue, "Invalid protocol specified (non-TCP, non-UDP)");
     }
-    return false; // never happens
+    return (false); // never happens
 }
 
 
@@ -123,10 +123,10 @@ Pkt6::packUDP() {
     }
     catch (Exception e) {
         cout << "Packet build failed." << endl;
-        return false;
+        return (false);
     }
     cout << "Packet built, len=" << len() << endl;
-    return true;
+    return (true);
 }
 
 
@@ -160,7 +160,7 @@ Pkt6::unpack() {
     default:
         isc_throw(BadValue, "Invalid protocol specified (non-TCP, non-UDP)");
     }
-    return false; // never happens
+    return (false); // never happens
 }
 
 /**
@@ -173,7 +173,7 @@ Pkt6::unpackUDP() {
     if (data_len_ < 4) {
         std::cout << "DHCPv6 packet truncated. Only " << data_len_
                   << " bytes. Need at least 4." << std::endl;
-        return false;
+        return (false);
     }
     msg_type_ = data_[0];
     transid_ = (data_[1] << 16) + (data_[2] << 8) + data_[3];
@@ -181,6 +181,7 @@ Pkt6::unpackUDP() {
     unsigned int offset = LibDHCP::unpackOptions6(data_,
                                                   data_len_,
                                                   4, //offset
+                                                  data_len_ - 4,
                                                   options_);
     if (offset != data_len_) {
         cout << "DHCPv6 packet contains trailing garbage. Parsed "
@@ -188,7 +189,7 @@ Pkt6::unpackUDP() {
              << endl;
         // just a warning. Ignore trailing garbage and continue
     }
-    return true;
+    return (true);
 }
 
 /**
@@ -249,7 +250,7 @@ Pkt6::getOption(unsigned short opt_type) {
  */
 unsigned char
 Pkt6::getType() {
-    return msg_type_;
+    return (msg_type_);
 }
 
 Pkt6::~Pkt6() {
