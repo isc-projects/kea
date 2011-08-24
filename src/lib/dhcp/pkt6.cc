@@ -49,6 +49,18 @@ Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto_ proto /* = UDP */)
 }
 
 
+Pkt6::Pkt6(unsigned char msg_type,
+           unsigned int transid,
+           DHCPv6Proto_ proto /*= UDP*/)
+    :local_addr_("::"),
+     remote_addr_("::"),
+     proto_(proto),
+     msg_type_(msg_type),
+     transid_(transid) {
+
+
+}
+
 /**
  * Returns calculated length of the packet.
  *

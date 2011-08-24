@@ -49,7 +49,7 @@ namespace isc {
         unsigned short len();
 
         unsigned char getType();
-        unsigned int getTransid();
+        unsigned int getTransid() { return transid_; };
 
         boost::shared_ptr<isc::dhcp::Option> getOption(unsigned short opt_type);
 
