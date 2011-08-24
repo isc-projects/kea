@@ -28,14 +28,19 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+template<class Type, uint16_t typeCode> class TXTLikeImpl;
+
 class TXT : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
+
+    TXT& operator=(const TXT& source);
+    ~TXT();
+
 private:
-    /// Note: this is a prototype version; we may reconsider
-    /// this representation later.
-    std::vector<std::vector<uint8_t> > string_list_;
+    typedef TXTLikeImpl<TXT, 16> TXTImpl;
+    TXTImpl* impl_;
 };
 
 // END_RDATA_NAMESPACE

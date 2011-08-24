@@ -64,7 +64,7 @@
       send stats data to stats module independently from
       implementation of stats module, so the frequency of sending data
       may not be constant. Stats module collects data and aggregates
-      it. <command>b10-stats</command> invokes "sendstats" command
+      it. <command>b10-stats</command> invokes an internal command
       for <command>bind10</command> after its initial starting because it's
       sure to collect statistics data from <command>bind10</command>.
 <!-- TODO: reword that last sentence? -->

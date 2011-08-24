@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>February 17, 2011</date>
+    <date>August 17, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -99,11 +99,14 @@
         </listitem>
       </varlistentry>
 
+<!-- TODO: this needs to be fixed as -v on command line
+should imply stdout or stderr output also -->
+<!-- TODO: can this -v be overidden by configuration or bindctl? -->
       <varlistentry>
         <term><option>-v</option></term>
         <listitem><para>
-          Enabled verbose mode. This enables diagnostic messages to
-          STDERR.
+          Enable verbose mode.
+          This sets logging to the maximum debugging level.
         </para></listitem>
       </varlistentry>
 
@@ -147,6 +150,22 @@ once that is merged you can for instance do 'config add Resolver/forward_address
     </para>
 
     <para>
+<!-- TODO: need more explanation or point to guide. -->
+<!-- TODO: what about a netmask or cidr? -->
+<!-- TODO: document "key" -->
+<!-- TODO: where are the TSIG keys defined? -->
+<!-- TODO: key and from are mutually exclusive? what if both defined? -->
+      <varname>query_acl</varname> is a list of query access control
+      rules. The list items are the <varname>action</varname> string
+      and the <varname>from</varname> or <varname>key</varname> strings.
+      The possible actions are ACCEPT, REJECT and DROP.
+      The <varname>from</varname> is a remote (source) IPv4 or IPv6
+      address or special keyword.
+      The <varname>key</varname> is a TSIG key name.
+      The default configuration accepts queries from 127.0.0.1 and ::1.
+    </para>
+
+    <para>
       <varname>retries</varname> is the number of times to retry
       (resend query) after a query timeout
       (<varname>timeout_query</varname>).
@@ -159,8 +178,10 @@ once that is merged you can for instance do 'config add Resolver/forward_address
       root servers to start resolving.
       The list items are the <varname>address</varname> string
       and <varname>port</varname> number.
-      If empty, a hardcoded address for F-root (192.5.5.241) is used.
+      By default, a hardcoded address for l.root-servers.net
+      (199.7.83.42 or 2001:500:3::42) is used.
     </para>
+<!-- TODO: this is broken, see ticket #1184 -->
 
     <para>
       <varname>timeout_client</varname> is the number of milliseconds
@@ -234,7 +255,8 @@ once that is merged you can for instance do 'config add Resolver/forward_address
       The <command>b10-resolver</command> daemon was first coded in
       September 2010. The initial implementation only provided
       forwarding. Iteration was introduced in January 2011.
-<!-- TODO: document when caching was added -->
+      Caching was implemented in February 2011.
+      Access control was introduced in June 2011.
 <!-- TODO: document when validation was added -->
     </para>
   </refsect1>
