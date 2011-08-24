@@ -1,9 +1,39 @@
+283.    [bug]		zhanglikun
+	Make stats and boss processes wait for answer messages from each
+	other in block mode to avoid orphan answer messages, add an internal
+	command "getstats" to boss process for getting statistics data from
+	boss.
+	(Trac #519, git 67d8e93028e014f644868fede3570abb28e5fb43)
+
+282.    [func]		ocean
+	libdns++: Implement the NAPTR rrtype according to RFC2915,
+	RFC2168 and RFC3403.
+	(Trac #1130, git 01d8d0f13289ecdf9996d6d5d26ac0d43e30549c)
+
+bind10-devel-20110819 released on August 19, 2011
+
+281.	[func]		jelte
+	Added a new type for configuration data: "named set". This allows for
+	similar configuration as the current "list" type, but with strings
+	instead of indices as identifiers. The intended use is for instance
+	/foo/zones/example.org/bar instead of /foo/zones[2]/bar. Currently
+	this new type is not in use yet.
+	(Trac #926, git 06aeefc4787c82db7f5443651f099c5af47bd4d6)
+
+280.	[func]		jerry
+	libdns++: Implement the MINFO rrtype according to RFC1035.
+	(Trac #1113, git 7a9a19d6431df02d48a7bc9de44f08d9450d3a37)
+
+279.	[func]		jerry
+	libdns++: Implement the AFSDB rrtype according to RFC1183.
+	(Trac #1114, git ce052cd92cd128ea3db5a8f154bd151956c2920c)
+
 278.	[doc]		jelte
 	Add logging configuration documentation to the guide.
 	(Trac #1011, git 2cc500af0929c1f268aeb6f8480bc428af70f4c4)
 
 277.	[func]		jerry
-	Implement the SRV rrtype according to RFC2782.
+	libdns++: Implement the SRV rrtype according to RFC2782.
 	(Trac #1128, git 5fd94aa027828c50e63ae1073d9d6708e0a9c223)
 
 276.	[func]		stephen
@@ -29,7 +59,7 @@
 	returns is str or byte.
 	(Trac #1021, git 486bf91e0ecc5fbecfe637e1e75ebe373d42509b)
 
-273.    [func]		vorner
+273.	[func]		vorner
 	It is possible to specify ACL for the xfrout module. It is in the ACL
 	configuration key and has the usual ACL syntax. It currently supports
 	only the source address. Default ACL accepts everything.

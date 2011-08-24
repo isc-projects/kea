@@ -307,6 +307,11 @@ class BoB:
             process_list.append([pid, self.processes[pid].name])
         return process_list
 
+    def _get_stats_data(self):
+        return { "stats_data": {
+                    'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+               }}
+
     def command_handler(self, command, args):
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_COMMAND, command)
         answer = isc.config.ccsession.create_answer(1, "command not implemented")
@@ -316,14 +321,18 @@ class BoB:
             if command == "shutdown":
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
+            elif command == "getstats":
+                answer = isc.config.ccsession.create_answer(0, self._get_stats_data())
             elif command == "sendstats":
                 # send statistics data to the stats daemon immediately
                 cmd = isc.config.ccsession.create_command(
-                    'set', { "stats_data": {
-                            'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-                            }})
+                    'set', self._get_stats_data())
                 seq = self.cc_session.group_sendmsg(cmd, 'Stats')
-                self.cc_session.group_recvmsg(True, seq)
+                # Consume the answer, in case it becomes a orphan message.
+                try:
+                    self.cc_session.group_recvmsg(False, seq)
+                except isc.cc.session.SessionTimeout:
+                    pass
                 answer = isc.config.ccsession.create_answer(0)
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
