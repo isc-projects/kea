@@ -276,8 +276,6 @@ public:
 private:
     typedef std::map<std::string, std::vector< std::vector<std::string> > >
         Domains;
-    // used as internal index for getNextRecord()
-    size_t cur_record;
     // used as temporary storage during the building of the fake data
     Domains records;
     // used as temporary storage after searchForRecord() and during
