@@ -241,7 +241,7 @@
 
     <section id="managing_once_running">
       <title>Managing BIND 10</title>
-      
+
       <para>
 	Once BIND 10 is running, a few commands are used to interact
 	directly with the system:
@@ -280,7 +280,7 @@
 <!-- TODO point to these -->
       In addition, manual pages are also provided in the default installation.
     </para>
-      
+
 <!--
 bin/
   bindctl*
@@ -387,7 +387,7 @@ Debian and Ubuntu:
       </para>
 
       <orderedlist>
-    
+
         <listitem>
           <simpara>
             Install required build dependencies.
@@ -471,7 +471,7 @@ Debian and Ubuntu:
           Downloading a release tar file is the recommended method to
           obtain the source code.
         </para>
-        
+
         <para>
           The BIND 10 releases are available as tar file downloads from
           <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
@@ -550,34 +550,34 @@ Debian and Ubuntu:
               <simpara>Define the installation location (the
                 default is <filename>/usr/local/</filename>).
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           <varlistentry>
             <term>--with-boost-include</term>
-            <listitem> 
+            <listitem>
               <simpara>Define the path to find the Boost headers.
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           <varlistentry>
             <term>--with-pythonpath</term>
-            <listitem> 
+            <listitem>
               <simpara>Define the path to Python 3.1 if it is not in the
                 standard execution path.
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           <varlistentry>
             <term>--with-gtest</term>
-            <listitem> 
+            <listitem>
               <simpara>Enable building the C++ Unit Tests using the
                 Google Tests framework. Optionally this can define the
                 path to the gtest header files and library.
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           </variablelist>
@@ -696,13 +696,13 @@ Debian and Ubuntu:
         </para>
       </section>
   -->
-  
+
   </chapter>
 
   <chapter id="bind10">
     <title>Starting BIND10 with <command>bind10</command></title>
     <para>
-      BIND 10 provides the <command>bind10</command> command which 
+      BIND 10 provides the <command>bind10</command> command which
       starts up the required processes.
       <command>bind10</command>
       will also restart processes that exit unexpectedly.
@@ -711,7 +711,7 @@ Debian and Ubuntu:
 
     <para>
       After starting the <command>b10-msgq</command> communications channel,
-      <command>bind10</command> connects to it, 
+      <command>bind10</command> connects to it,
       runs the configuration manager, and reads its own configuration.
       Then it starts the other modules.
     </para>
@@ -779,7 +779,7 @@ Debian and Ubuntu:
         <command>b10-msgq</command> service.
         It listens on 127.0.0.1.
       </para>
-      
+
 <!-- TODO: this is broken, see Trac #111
       <para>
         To select an alternate port for the <command>b10-msgq</command> to
@@ -1105,10 +1105,10 @@ since we used bind10 -->
         The configuration data item is:
 
         <variablelist>
-    
+
           <varlistentry>
             <term>database_file</term>
-            <listitem> 
+            <listitem>
               <simpara>This is an optional string to define the path to find
                  the SQLite3 database file.
 <!-- TODO: -->
@@ -1130,7 +1130,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>shutdown</term>
-            <listitem> 
+            <listitem>
               <simpara>Stop the authoritative DNS server.
               </simpara>
 <!-- TODO: what happens when this is sent, will bind10 restart? -->
@@ -1186,7 +1186,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>$INCLUDE</term>
-            <listitem> 
+            <listitem>
               <simpara>Loads an additional zone file. This may be recursive.
               </simpara>
             </listitem>
@@ -1194,7 +1194,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>$ORIGIN</term>
-            <listitem> 
+            <listitem>
               <simpara>Defines the relative domain name.
               </simpara>
             </listitem>
@@ -1202,7 +1202,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>$TTL</term>
-            <listitem> 
+            <listitem>
               <simpara>Defines the time-to-live value used for following
                 records that don't include a TTL.
               </simpara>
@@ -1267,7 +1267,7 @@ TODO
 
     <note><simpara>
      The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.) 
+     AXFR. (IXFR is not supported.)
 
 <!-- TODO: sqlite3 data source only? -->
 
@@ -1314,7 +1314,7 @@ what if a NOTIFY is sent?
 
     <note><simpara>
      The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.) 
+     AXFR. (IXFR is not supported.)
      Access control is not yet provided.
     </simpara></note>
 
@@ -1370,7 +1370,7 @@ what is XfroutClient xfr_client??
 
     <para>
       The main <command>bind10</command> process can be configured
-      to select to run either the authoritative or resolver.
+      to select to run either the authoritative or resolver or both.
       By default, it starts the authoritative service.
 <!-- TODO: later both -->
 
@@ -1390,16 +1390,85 @@ what is XfroutClient xfr_client??
     </para>
 
     <para>
-      The resolver also needs to be configured to listen on an address
-      and port:
+      By default, the resolver listens on port 53 for 127.0.0.1 and ::1.
+      The following example shows how it can be configured to
+      listen on an additional address (and port):
 
       <screen>
-&gt; <userinput>config set Resolver/listen_on [{ "address": "127.0.0.1", "port": 53 }]</userinput>
+&gt; <userinput>config add Resolver/listen_on</userinput>
+&gt; <userinput>config set Resolver/listen_on[<replaceable>2</replaceable>]/address "192.168.1.1"</userinput>
+&gt; <userinput>config set Resolver/listen_on[<replaceable>2</replaceable>]/port 53</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
     </para>
 
-<!-- TODO: later the above will have some defaults -->
+     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
+       as needed; run <quote><userinput>config show
+       Resolver/listen_on</userinput></quote> if needed.)</simpara>
+<!-- TODO: this example should not include the port, ticket #1185 -->
+
+    <section>
+      <title>Access Control</title>
+
+      <para>
+        By default, the <command>b10-resolver</command> daemon only accepts
+        DNS queries from the localhost (127.0.0.1 and ::1).
+        The <option>Resolver/query_acl</option> configuration may
+	be used to reject, drop, or allow specific IPs or networks.
+        This configuration list is first match.
+      </para>
+
+      <para>
+	The configuration's <option>action</option> item may be
+	set to <quote>ACCEPT</quote> to allow the incoming query,
+	<quote>REJECT</quote> to respond with a DNS REFUSED return
+	code, or <quote>DROP</quote> to ignore the query without
+	any response (such as a blackhole).  For more information,
+	see the respective debugging messages:  <ulink
+	url="bind10-messages.html#RESOLVER_QUERY_ACCEPTED">RESOLVER_QUERY_ACCEPTED</ulink>,
+	<ulink
+	url="bind10-messages.html#RESOLVER_QUERY_REJECTED">RESOLVER_QUERY_REJECTED</ulink>,
+	and <ulink
+url="bind10-messages.html#RESOLVER_QUERY_DROPPED">RESOLVER_QUERY_DROPPED</ulink>.
+      </para>
+
+      <para>
+	The required configuration's <option>from</option> item is set
+        to an IPv4 or IPv6 address, addresses with an network mask, or to
+	the special lowercase keywords <quote>any6</quote> (for
+	any IPv6 address) or <quote>any4</quote> (for any IPv4
+	address).
+      </para>
+
+<!-- TODO:
+/0 is for any address in that address family
+does that need any address too?
+
+TODO: tsig
+-->
+
+      <para>
+	For example to allow the <replaceable>192.168.1.0/24</replaceable>
+	network to use your recursive name server, at the
+	<command>bindctl</command> prompt run:
+      </para>
+
+      <screen>
+&gt; <userinput>config add Resolver/query_acl</userinput>
+&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/action "ACCEPT"</userinput>
+&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/from "<replaceable>192.168.1.0/24</replaceable>"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
+       as needed; run <quote><userinput>config show
+       Resolver/query_acl</userinput></quote> if needed.)</simpara>
+
+<!-- TODO: check this -->
+      <note><simpara>This prototype access control configuration
+      syntax may be changed.</simpara></note>
+
+    </section>
 
     <section>
       <title>Forwarding</title>
