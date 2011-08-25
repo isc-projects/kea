@@ -89,18 +89,18 @@ struct SQLite3Parameters {
 // statement, which is completed with a single "step" (normally within a
 // single call to an SQLite3Database method).  In particular, it cannot be
 // used for "SELECT" variants, which generally expect multiple matching rows.
-class StatementExecuter {
+class StatementProcessor {
 public:
     // desc will be used on failure in the what() message of the resulting
     // DataSourceError exception.
-    StatementExecuter(SQLite3Parameters& dbparameters, StatementID stmt_id,
-                      const char* desc) :
+    StatementProcessor(SQLite3Parameters& dbparameters, StatementID stmt_id,
+                       const char* desc) :
         dbparameters_(dbparameters), stmt_id_(stmt_id), desc_(desc)
     {
         sqlite3_clear_bindings(dbparameters_.statements_[stmt_id_]);
     }
 
-    ~StatementExecuter() {
+    ~StatementProcessor() {
         sqlite3_reset(dbparameters_.statements_[stmt_id_]);
     }
 
@@ -454,13 +454,13 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
         return (zone_info);
     }
 
-    StatementExecuter(*dbparameters_, BEGIN,
-                      "start an SQLite3 transaction").exec();
+    StatementProcessor(*dbparameters_, BEGIN,
+                       "start an SQLite3 transaction").exec();
 
     if (replace) {
         try {
-            StatementExecuter delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
-                                           "delete zone records");
+            StatementProcessor delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
+                                            "delete zone records");
 
             sqlite3_clear_bindings(
                 dbparameters_->statements_[DEL_ZONE_RECORDS]);
@@ -476,8 +476,8 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
             // Once we start a transaction, if something unexpected happens
             // we need to rollback the transaction so that a subsequent update
             // is still possible with this accessor.
-            StatementExecuter(*dbparameters_, ROLLBACK,
-                      "rollback an SQLite3 transaction").exec();
+            StatementProcessor(*dbparameters_, ROLLBACK,
+                               "rollback an SQLite3 transaction").exec();
             throw;
         }
     }
@@ -495,8 +495,8 @@ SQLite3Accessor::commitUpdateZone() {
                   "data source without transaction");
     }
 
-    StatementExecuter(*dbparameters_, COMMIT,
-                      "commit an SQLite3 transaction").exec();
+    StatementProcessor(*dbparameters_, COMMIT,
+                       "commit an SQLite3 transaction").exec();
     dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
 }
@@ -508,8 +508,8 @@ SQLite3Accessor::rollbackUpdateZone() {
                   "data source without transaction");
     }
 
-    StatementExecuter(*dbparameters_, ROLLBACK,
-                      "rollback an SQLite3 transaction").exec();
+    StatementProcessor(*dbparameters_, ROLLBACK,
+                       "rollback an SQLite3 transaction").exec();
     dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
 }
@@ -522,7 +522,7 @@ doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
          COLUMNS_TYPE update_params, const char* exec_desc)
 {
     sqlite3_stmt* const stmt = dbparams.statements_[stmt_id];
-    StatementExecuter executer(dbparams, stmt_id, exec_desc);
+    StatementProcessor executer(dbparams, stmt_id, exec_desc);
 
     int param_id = 0;
     if (sqlite3_bind_int(stmt, ++param_id, dbparams.updated_zone_id)
