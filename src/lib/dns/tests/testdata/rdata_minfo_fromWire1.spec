@@ -1,0 +1,3 @@
+[custom]
+sections: minfo
+[minfo]

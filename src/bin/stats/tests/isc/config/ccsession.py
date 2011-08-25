@@ -23,6 +23,7 @@ external module.
 
 import json
 import os
+import time
 from isc.cc.session import Session
 
 COMMAND_CONFIG_UPDATE = "config_update"
@@ -72,6 +73,9 @@ class ModuleSpecError(Exception):
 
 class ModuleSpec:
     def __init__(self, module_spec, check = True):
+        # check only confi_data for testing
+        if check and "config_data" in module_spec:
+            _check_config_spec(module_spec["config_data"])
         self._module_spec = module_spec
 
     def get_config_spec(self):
@@ -82,6 +86,91 @@ class ModuleSpec:
 
     def get_module_name(self):
         return self._module_spec['module_name']
+
+def _check_config_spec(config_data):
+    # config data is a list of items represented by dicts that contain
+    # things like "item_name", depending on the type they can have
+    # specific subitems
+    """Checks a list that contains the configuration part of the
+       specification. Raises a ModuleSpecError if there is a
+       problem."""
+    if type(config_data) != list:
+        raise ModuleSpecError("config_data is of type " + str(type(config_data)) + ", not a list of items")
+    for config_item in config_data:
+        _check_item_spec(config_item)
+
+def _check_item_spec(config_item):
+    """Checks the dict that defines one config item
+       (i.e. containing "item_name", "item_type", etc.
+       Raises a ModuleSpecError if there is an error"""
+    if type(config_item) != dict:
+        raise ModuleSpecError("item spec not a dict")
+    if "item_name" not in config_item:
+        raise ModuleSpecError("no item_name in config item")
+    if type(config_item["item_name"]) != str:
+        raise ModuleSpecError("item_name is not a string: " + str(config_item["item_name"]))
+    item_name = config_item["item_name"]
+    if "item_type" not in config_item:
+        raise ModuleSpecError("no item_type in config item")
+    item_type = config_item["item_type"]
+    if type(item_type) != str:
+        raise ModuleSpecError("item_type in " + item_name + " is not a string: " + str(type(item_type)))
+    if item_type not in ["integer", "real", "boolean", "string", "list", "map", "any"]:
+        raise ModuleSpecError("unknown item_type in " + item_name + ": " + item_type)
+    if "item_optional" in config_item:
+        if type(config_item["item_optional"]) != bool:
+            raise ModuleSpecError("item_default in " + item_name + " is not a boolean")
+        if not config_item["item_optional"] and "item_default" not in config_item:
+            raise ModuleSpecError("no default value for non-optional item " + item_name)
+    else:
+        raise ModuleSpecError("item_optional not in item " + item_name)
+    if "item_default" in config_item:
+        item_default = config_item["item_default"]
+        if (item_type == "integer" and type(item_default) != int) or \
+           (item_type == "real" and type(item_default) != float) or \
+           (item_type == "boolean" and type(item_default) != bool) or \
+           (item_type == "string" and type(item_default) != str) or \
+           (item_type == "list" and type(item_default) != list) or \
+           (item_type == "map" and type(item_default) != dict):
+            raise ModuleSpecError("Wrong type for item_default in " + item_name)
+    # TODO: once we have check_type, run the item default through that with the list|map_item_spec
+    if item_type == "list":
+        if "list_item_spec" not in config_item:
+            raise ModuleSpecError("no list_item_spec in list item " + item_name)
+        if type(config_item["list_item_spec"]) != dict:
+            raise ModuleSpecError("list_item_spec in " + item_name + " is not a dict")
+        _check_item_spec(config_item["list_item_spec"])
+    if item_type == "map":
+        if "map_item_spec" not in config_item:
+            raise ModuleSpecError("no map_item_sepc in map item " + item_name)
+        if type(config_item["map_item_spec"]) != list:
+            raise ModuleSpecError("map_item_spec in " + item_name + " is not a list")
+        for map_item in config_item["map_item_spec"]:
+            if type(map_item) != dict:
+                raise ModuleSpecError("map_item_spec element is not a dict")
+            _check_item_spec(map_item)
+    if 'item_format' in config_item and 'item_default' in config_item:
+        item_format = config_item["item_format"]
+        item_default = config_item["item_default"]
+        if not _check_format(item_default, item_format):
+            raise ModuleSpecError(
+                "Wrong format for " + str(item_default) + " in " + str(item_name))
+
+def _check_format(value, format_name):
+    """Check if specified value and format are correct. Return True if
+       is is correct."""
+    # TODO: should be added other format types if necessary
+    time_formats = { 'date-time' : "%Y-%m-%dT%H:%M:%SZ",
+                     'date'      : "%Y-%m-%d",
+                     'time'      : "%H:%M:%S" }
+    for fmt in time_formats:
+        if format_name == fmt:
+            try:
+                time.strptime(value, time_formats[fmt])
+                return True
+            except (ValueError, TypeError):
+                break
+    return False
 
 class ModuleCCSessionError(Exception):
     pass

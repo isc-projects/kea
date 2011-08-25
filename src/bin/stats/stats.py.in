@@ -213,6 +213,14 @@ class CCSessionListener(Listener):
             except AttributeError as ae:
                 logger.error(STATS_UNKNOWN_COMMAND_IN_SPEC, cmd["command_name"])
 
+    def _update_stats_data(self, args):
+        # 'args' must be dictionary type
+        if isinstance(args, dict) and isinstance(args.get('stats_data'), dict):
+            self.stats_data.update(args['stats_data'])
+
+        # overwrite "stats.LastUpdateTime"
+        self.stats_data['stats.last_update_time'] = get_datetime()
+
     def start(self):
         """
         start the cc chanel
@@ -225,9 +233,16 @@ class CCSessionListener(Listener):
         self.cc_session.start()
         # request Bob to send statistics data
         logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
-        cmd = isc.config.ccsession.create_command("sendstats", None)
+        cmd = isc.config.ccsession.create_command("getstats", None)
         seq = self.session.group_sendmsg(cmd, 'Boss')
-        self.session.group_recvmsg(True, seq)
+        try:
+            answer, env = self.session.group_recvmsg(False, seq)
+            if answer:
+                rcode, arg = isc.config.ccsession.parse_answer(answer)
+                if rcode == 0:
+                    self._update_stats_data(arg)
+        except isc.cc.session.SessionTimeout:
+            pass
 
     def stop(self):
         """
@@ -276,12 +291,7 @@ class CCSessionListener(Listener):
         """
         handle set command
         """
-        # 'args' must be dictionary type
-        self.stats_data.update(args['stats_data'])
-
-        # overwrite "stats.LastUpdateTime"
-        self.stats_data['stats.last_update_time'] = get_datetime()
-
+        self._update_stats_data(args)
         return create_answer(0)
 
     def command_remove(self, args, stats_item_name=''):

@@ -20,6 +20,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <string>
 
 namespace isc {
@@ -51,7 +53,8 @@ struct SQLite3Parameters;
  * According to the design, it doesn't interpret the data in any way, it just
  * provides unified access to the DB.
  */
-class SQLite3Database : public DatabaseAccessor {
+class SQLite3Accessor : public DatabaseAccessor,
+    public boost::enable_shared_from_this<SQLite3Accessor> {
 public:
     /**
      * \brief Constructor
@@ -66,14 +69,15 @@ public:
      *     file can contain multiple classes of data, single database can
      *     provide only one class).
      */
-    SQLite3Database(const std::string& filename,
+    SQLite3Accessor(const std::string& filename,
                     const isc::dns::RRClass& rrclass);
     /**
      * \brief Destructor
      *
      * Closes the database.
      */
-    ~SQLite3Database();
+    ~SQLite3Accessor();
+
     /**
      * \brief Look up a zone
      *
@@ -83,57 +87,66 @@ public:
      *
      * \exception SQLite3Error if something about the database is broken.
      *
-     * \param name The name of zone to look up
+     * \param name The (fully qualified) domain name of zone to look up
      * \return The pair contains if the lookup was successful in the first
      *     element and the zone id in the second if it was.
      */
-    virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+    virtual std::pair<bool, int> getZone(const std::string& name) const;
 
-    /**
-     * \brief Start a new search for the given name in the given zone.
+    /** \brief Look up all resource records for a name
      *
-     * This implements the searchForRecords from DatabaseConnection.
-     * This particular implementation does not raise DataSourceError.
+     * This implements the getRecords() method from DatabaseAccessor
      *
-     * \exception DataSourceError when sqlite3_bind_int() or
-     *                            sqlite3_bind_text() fails
+     * \exception SQLite3Error if there is an sqlite3 error when performing
+     *                         the query
      *
-     * \param zone_id The zone to seach in, as returned by getZone()
-     * \param name The name to find records for
+     * \param name the name to look up
+     * \param id the zone id, as returned by getZone()
+     * \param subdomains Match subdomains instead of the name.
+     * \return Iterator that contains all records with the given name
      */
-    virtual void searchForRecords(int zone_id, const std::string& name);
+    virtual IteratorContextPtr getRecords(const std::string& name,
+                                          int id,
+                                          bool subdomains = false) const;
 
-    /**
-     * \brief Retrieve the next record from the search started with
-     *        searchForRecords
+    /** \brief Look up all resource records for a zone
      *
-     * This implements the getNextRecord from DatabaseConnection.
-     * See the documentation there for more information.
+     * This implements the getRecords() method from DatabaseAccessor
      *
-     * If this method raises an exception, the contents of columns are undefined.
+     * \exception SQLite3Error if there is an sqlite3 error when performing
+     *                         the query
      *
-     * \exception DataSourceError if there is an error returned by sqlite_step()
-     *                            When this exception is raised, the current
-     *                            search as initialized by searchForRecords() is
-     *                            NOT reset, and the caller is expected to take
-     *                            care of that.
-     * \param columns This vector will be cleared, and the fields of the record will
-     *                be appended here as strings (in the order rdtype, ttl, sigtype,
-     *                and rdata). If there was no data (i.e. if this call returns
-     *                false), the vector is untouched.
-     * \return true if there was a next record, false if there was not
+     * \param id the zone id, as returned by getZone()
+     * \return Iterator that contains all records in the given zone
      */
-    virtual bool getNextRecord(std::string columns[], size_t column_count);
+    virtual IteratorContextPtr getAllRecords(int id) const;
 
-    /**
-     * \brief Resets any state created by searchForRecords
-     *
-     * This implements the resetSearch from DatabaseConnection.
-     * See the documentation there for more information.
-     *
-     * This function never throws.
-     */
-    virtual void resetSearch();
+    virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
+                                                 bool replace);
+
+    /// \note we are quite impatient here: it's quite possible that the COMMIT
+    /// fails due to other process performing SELECT on the same database
+    /// (consider the case where COMMIT is done by xfrin or dynamic update
+    /// server while an authoritative server is busy reading the DB).
+    /// In a future version we should probably need to introduce some retry
+    /// attempt and/or increase timeout before giving up the COMMIT, even
+    /// if it still doesn't guarantee 100% success.  Right now this
+    /// implementation throws a \c DataSourceError exception in such a case.
+    virtual void commitUpdateZone();
+
+    /// \note In SQLite3 rollback can fail if there's another unfinished
+    /// statement is performed for the same database structure.
+    /// Although it's not expected to happen in our expected usage, it's not
+    /// guaranteed to be prevented at the API level.  If it ever happens, this
+    /// method throws a \c DataSourceError exception.  It should be
+    /// considered a bug of the higher level application program.
+    virtual void rollbackUpdateZone();
+
+    virtual void addRecordToZone(
+        const std::string (&columns)[ADD_COLUMN_COUNT]);
+
+    virtual void deleteRecordInZone(
+        const std::string (&params)[DEL_PARAM_COUNT]);
 
     /// The SQLite3 implementation of this method returns a string starting
     /// with a fixed prefix of "sqlite3_" followed by the DB file name
@@ -144,17 +157,24 @@ public:
 
 private:
     /// \brief Private database data
-    SQLite3Parameters* dbparameters_;
+    boost::scoped_ptr<SQLite3Parameters> dbparameters_;
     /// \brief The class for which the queries are done
     const std::string class_;
     /// \brief Opens the database
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
+    /// \brief SQLite3 implementation of IteratorContext
+    class Context;
+    friend class Context;
     const std::string database_name_;
 };
 
 }
 }
 
-#endif
+#endif  // __DATASRC_SQLITE3_CONNECTION_H
+
+// Local Variables:
+// mode: c++
+// End:

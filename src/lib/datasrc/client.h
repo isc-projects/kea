@@ -16,11 +16,18 @@
 #define __DATA_SOURCE_CLIENT_H 1
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <exceptions/exceptions.h>
 
 #include <datasrc/zone.h>
 
 namespace isc {
 namespace datasrc {
+
+// The iterator.h is not included on purpose, most application won't need it
+class ZoneIterator;
+typedef boost::shared_ptr<ZoneIterator> ZoneIteratorPtr;
 
 /// \brief The base class of data source clients.
 ///
@@ -143,6 +150,36 @@ public:
     /// \param name A domain name for which the search is performed.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult findZone(const isc::dns::Name& name) const = 0;
+
+    /// \brief Returns an iterator to the given zone
+    ///
+    /// This allows for traversing the whole zone. The returned object can
+    /// provide the RRsets one by one.
+    ///
+    /// This throws DataSourceError when the zone does not exist in the
+    /// datasource.
+    ///
+    /// The default implementation throws isc::NotImplemented. This allows
+    /// for easy and fast deployment of minimal custom data sources, where
+    /// the user/implementator doesn't have to care about anything else but
+    /// the actual queries. Also, in some cases, it isn't possible to traverse
+    /// the zone from logic point of view (eg. dynamically generated zone
+    /// data).
+    ///
+    /// It is not fixed if a concrete implementation of this method can throw
+    /// anything else.
+    ///
+    /// \param name The name of zone apex to be traversed. It doesn't do
+    ///     nearest match as findZone.
+    /// \return Pointer to the iterator.
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const {
+        // This is here to both document the parameter in doxygen (therefore it
+        // needs a name) and avoid unused parameter warning.
+        static_cast<void>(name);
+
+        isc_throw(isc::NotImplemented,
+                  "Data source doesn't support iteration");
+    }
 };
 }
 }
