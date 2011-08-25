@@ -14,29 +14,118 @@
 
 #include <sqlite3.h>
 
+#include <string>
+#include <vector>
+
+#include <boost/foreach.hpp>
+
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 #include <util/filename.h>
 
-#include <boost/lexical_cast.hpp>
+using namespace std;
 
 #define SQLITE_SCHEMA_VERSION 1
 
 namespace isc {
 namespace datasrc {
 
-struct SQLite3Parameters {
-    SQLite3Parameters() :
-        db_(NULL), version_(-1),
-        q_zone_(NULL)
-    {}
-    sqlite3* db_;
-    int version_;
-    sqlite3_stmt* q_zone_;
+// The following enum and char* array define the SQL statements commonly
+// used in this implementation.  Corresponding prepared statements (of
+// type sqlite3_stmt*) are maintained in the statements_ array of the
+// SQLite3Parameters structure.
+
+enum StatementID {
+    ZONE = 0,
+    ANY = 1,
+    ANY_SUB = 2,
+    BEGIN = 3,
+    COMMIT = 4,
+    ROLLBACK = 5,
+    DEL_ZONE_RECORDS = 6,
+    ADD_RECORD = 7,
+    DEL_RECORD = 8,
+    ITERATE = 9,
+    NUM_STATEMENTS = 10
 };
 
-SQLite3Database::SQLite3Database(const std::string& filename,
+const char* const text_statements[NUM_STATEMENTS] = {
+    // note for ANY and ITERATE: the order of the SELECT values is
+    // specifically chosen to match the enum values in RecordColumns
+    "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2", // ZONE
+    "SELECT rdtype, ttl, sigtype, rdata FROM records "     // ANY
+    "WHERE zone_id=?1 AND name=?2",
+    "SELECT rdtype, ttl, sigtype, rdata " // ANY_SUB
+    "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)",
+    "BEGIN",                    // BEGIN
+    "COMMIT",                   // COMMIT
+    "ROLLBACK",                 // ROLLBACK
+    "DELETE FROM records WHERE zone_id=?1", // DEL_ZONE_RECORDS
+    "INSERT INTO records "      // ADD_RECORD
+    "(zone_id, name, rname, ttl, rdtype, sigtype, rdata) "
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+    "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
+    "AND rdtype=?3 AND rdata=?4",
+    "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
+    "WHERE zone_id = ?1 ORDER BY name, rdtype"
+};
+
+struct SQLite3Parameters {
+    SQLite3Parameters() :
+        db_(NULL), version_(-1), updating_zone(false), updated_zone_id(-1)
+    {
+        for (int i = 0; i < NUM_STATEMENTS; ++i) {
+            statements_[i] = NULL;
+        }
+    }
+
+    sqlite3* db_;
+    int version_;
+    sqlite3_stmt* statements_[NUM_STATEMENTS];
+    bool updating_zone;         // whether or not updating the zone
+    int updated_zone_id;        // valid only when updating_zone is true
+};
+
+// This is a helper class to encapsulate the code logic of executing
+// a specific SQLite3 statement, ensuring the corresponding prepared
+// statement is always reset whether the execution is completed successfully
+// or it results in an exception.
+// Note that an object of this class is intended to be used for "ephemeral"
+// statement, which is completed with a single "step" (normally within a
+// single call to an SQLite3Database method).  In particular, it cannot be
+// used for "SELECT" variants, which generally expect multiple matching rows.
+class StatementProcessor {
+public:
+    // desc will be used on failure in the what() message of the resulting
+    // DataSourceError exception.
+    StatementProcessor(SQLite3Parameters& dbparameters, StatementID stmt_id,
+                       const char* desc) :
+        dbparameters_(dbparameters), stmt_id_(stmt_id), desc_(desc)
+    {
+        sqlite3_clear_bindings(dbparameters_.statements_[stmt_id_]);
+    }
+
+    ~StatementProcessor() {
+        sqlite3_reset(dbparameters_.statements_[stmt_id_]);
+    }
+
+    void exec() {
+        if (sqlite3_step(dbparameters_.statements_[stmt_id_]) !=
+            SQLITE_DONE) {
+            sqlite3_reset(dbparameters_.statements_[stmt_id_]);
+            isc_throw(DataSourceError, "failed to " << desc_ << ": " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
+    }
+
+private:
+    SQLite3Parameters& dbparameters_;
+    const StatementID stmt_id_;
+    const char* const desc_;
+};
+
+SQLite3Accessor::SQLite3Accessor(const std::string& filename,
                                  const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText()),
@@ -60,34 +149,10 @@ namespace {
 class Initializer {
 public:
     ~Initializer() {
-        if (params_.q_zone_ != NULL) {
-            sqlite3_finalize(params_.q_zone_);
+        for (int i = 0; i < NUM_STATEMENTS; ++i) {
+            sqlite3_finalize(params_.statements_[i]);
         }
-        // we do NOT finalize q_current_ - that is just a pointer to one of
-        // the other statements, not a separate one.
-        /*
-        if (params_.q_record_ != NULL) {
-            sqlite3_finalize(params_.q_record_);
-        }
-        if (params_.q_addrs_ != NULL) {
-            sqlite3_finalize(params_.q_addrs_);
-        }
-        if (params_.q_referral_ != NULL) {
-            sqlite3_finalize(params_.q_referral_);
-        }
-        if (params_.q_count_ != NULL) {
-            sqlite3_finalize(params_.q_count_);
-        }
-        if (params_.q_previous_ != NULL) {
-            sqlite3_finalize(params_.q_previous_);
-        }
-        if (params_.q_nsec3_ != NULL) {
-            sqlite3_finalize(params_.q_nsec3_);
-        }
-        if (params_.q_prevnsec3_ != NULL) {
-            sqlite3_finalize(params_.q_prevnsec3_);
-        }
-        */
+
         if (params_.db_ != NULL) {
             sqlite3_close(params_.db_);
         }
@@ -123,54 +188,6 @@ const char* const SCHEMA_LIST[] = {
     NULL
 };
 
-const char* const q_version_str = "SELECT version FROM schema_version";
-
-const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
-
-// note that the order of the SELECT values is specifically chosen to match
-// the enum values in RecordColumns
-const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
-    "FROM records WHERE zone_id=?1 AND name=?2";
-
-const char* const q_any_sub_str = "SELECT rdtype, ttl, sigtype, rdata "
-    "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)";
-
-// note that the order of the SELECT values is specifically chosen to match
-// the enum values in RecordColumns
-const char* const q_iterate_str = "SELECT rdtype, ttl, sigtype, rdata, name FROM records "
-                                  "WHERE zone_id = ?1 "
-                                  "ORDER BY name, rdtype";
-
-/* TODO: Prune the statements, not everything will be needed maybe?
-const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
-    "FROM records WHERE zone_id=?1 AND name=?2 AND "
-    "((rdtype=?3 OR sigtype=?3) OR "
-    "(rdtype='CNAME' OR sigtype='CNAME') OR "
-    "(rdtype='NS' OR sigtype='NS'))";
-
-const char* const q_addrs_str = "SELECT rdtype, ttl, sigtype, rdata "
-    "FROM records WHERE zone_id=?1 AND name=?2 AND "
-    "(rdtype='A' OR sigtype='A' OR rdtype='AAAA' OR sigtype='AAAA')";
-
-const char* const q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
-    "records WHERE zone_id=?1 AND name=?2 AND"
-    "(rdtype='NS' OR sigtype='NS' OR rdtype='DS' OR sigtype='DS' OR "
-    "rdtype='DNAME' OR sigtype='DNAME')";
-
-const char* const q_count_str = "SELECT COUNT(*) FROM records "
-    "WHERE zone_id=?1 AND rname LIKE (?2 || '%');";
-
-const char* const q_previous_str = "SELECT name FROM records "
-    "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-    "rname < $2 ORDER BY rname DESC LIMIT 1";
-
-const char* const q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
-    "WHERE zone_id = ?1 AND hash = $2";
-
-const char* const q_prevnsec3_str = "SELECT hash FROM nsec3 "
-    "WHERE zone_id = ?1 AND hash <= $2 ORDER BY hash DESC LIMIT 1";
-    */
-
 sqlite3_stmt*
 prepare(sqlite3* const db, const char* const statement) {
     sqlite3_stmt* prepared = NULL;
@@ -184,7 +201,7 @@ prepare(sqlite3* const db, const char* const statement) {
 // small function to sleep for 0.1 seconds, needed when waiting for
 // exclusive database locks (which should only occur on startup, and only
 // when the database has not been created yet)
-void do_sleep() {
+void doSleep() {
     struct timespec req;
     req.tv_sec = 0;
     req.tv_nsec = 100000000;
@@ -193,13 +210,14 @@ void do_sleep() {
 
 // returns the schema version if the schema version table exists
 // returns -1 if it does not
-int check_schema_version(sqlite3* db) {
+int checkSchemaVersion(sqlite3* db) {
     sqlite3_stmt* prepared = NULL;
     // At this point in time, the database might be exclusively locked, in
     // which case even prepare() will return BUSY, so we may need to try a
     // few times
     for (size_t i = 0; i < 50; ++i) {
-        int rc = sqlite3_prepare_v2(db, q_version_str, -1, &prepared, NULL);
+        int rc = sqlite3_prepare_v2(db, "SELECT version FROM schema_version",
+                                    -1, &prepared, NULL);
         if (rc == SQLITE_ERROR) {
             // this is the error that is returned when the table does not
             // exist
@@ -210,7 +228,7 @@ int check_schema_version(sqlite3* db) {
             isc_throw(SQLite3Error, "Unable to prepare version query: "
                         << rc << " " << sqlite3_errmsg(db));
         }
-        do_sleep();
+        doSleep();
     }
     if (sqlite3_step(prepared) != SQLITE_ROW) {
         isc_throw(SQLite3Error,
@@ -238,9 +256,9 @@ int create_database(sqlite3* db) {
             isc_throw(SQLite3Error, "Unable to acquire exclusive lock "
                         "for database creation: " << sqlite3_errmsg(db));
         }
-        do_sleep();
+        doSleep();
     }
-    int schema_version = check_schema_version(db);
+    int schema_version = checkSchemaVersion(db);
     if (schema_version == -1) {
         for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
             if (sqlite3_exec(db, SCHEMA_LIST[i], NULL, NULL, NULL) !=
@@ -260,28 +278,21 @@ void
 checkAndSetupSchema(Initializer* initializer) {
     sqlite3* const db = initializer->params_.db_;
 
-    int schema_version = check_schema_version(db);
+    int schema_version = checkSchemaVersion(db);
     if (schema_version != SQLITE_SCHEMA_VERSION) {
         schema_version = create_database(db);
     }
     initializer->params_.version_ = schema_version;
 
-    initializer->params_.q_zone_ = prepare(db, q_zone_str);
-    /* TODO: Yet unneeded statements
-    initializer->params_.q_record_ = prepare(db, q_record_str);
-    initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
-    initializer->params_.q_referral_ = prepare(db, q_referral_str);
-    initializer->params_.q_count_ = prepare(db, q_count_str);
-    initializer->params_.q_previous_ = prepare(db, q_previous_str);
-    initializer->params_.q_nsec3_ = prepare(db, q_nsec3_str);
-    initializer->params_.q_prevnsec3_ = prepare(db, q_prevnsec3_str);
-    */
+    for (int i = 0; i < NUM_STATEMENTS; ++i) {
+        initializer->params_.statements_[i] = prepare(db, text_statements[i]);
+    }
 }
 
 }
 
 void
-SQLite3Database::open(const std::string& name) {
+SQLite3Accessor::open(const std::string& name) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNOPEN).arg(name);
     if (dbparameters_->db_ != NULL) {
         // There shouldn't be a way to trigger this anyway
@@ -298,7 +309,7 @@ SQLite3Database::open(const std::string& name) {
     initializer.move(dbparameters_.get());
 }
 
-SQLite3Database::~SQLite3Database() {
+SQLite3Accessor::~SQLite3Accessor() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN);
     if (dbparameters_->db_ != NULL) {
         close();
@@ -306,7 +317,7 @@ SQLite3Database::~SQLite3Database() {
 }
 
 void
-SQLite3Database::close(void) {
+SQLite3Accessor::close(void) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNCLOSE);
     if (dbparameters_->db_ == NULL) {
         isc_throw(DataSourceError,
@@ -314,104 +325,83 @@ SQLite3Database::close(void) {
     }
 
     // XXX: sqlite3_finalize() could fail.  What should we do in that case?
-    sqlite3_finalize(dbparameters_->q_zone_);
-    dbparameters_->q_zone_ = NULL;
-
-    /* TODO: Once they are needed or not, uncomment or drop
-    sqlite3_finalize(dbparameters->q_record_);
-    dbparameters->q_record_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_addrs_);
-    dbparameters->q_addrs_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_referral_);
-    dbparameters->q_referral_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_count_);
-    dbparameters->q_count_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_previous_);
-    dbparameters->q_previous_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_prevnsec3_);
-    dbparameters->q_prevnsec3_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_nsec3_);
-    dbparameters->q_nsec3_ = NULL;
-    */
+    for (int i = 0; i < NUM_STATEMENTS; ++i) {
+        sqlite3_finalize(dbparameters_->statements_[i]);
+        dbparameters_->statements_[i] = NULL;
+    }
 
     sqlite3_close(dbparameters_->db_);
     dbparameters_->db_ = NULL;
 }
 
 std::pair<bool, int>
-SQLite3Database::getZone(const std::string& name) const {
+SQLite3Accessor::getZone(const std::string& name) const {
     int rc;
+    sqlite3_stmt* const stmt = dbparameters_->statements_[ZONE];
 
     // Take the statement (simple SELECT id FROM zones WHERE...)
     // and prepare it (bind the parameters to it)
-    sqlite3_reset(dbparameters_->q_zone_);
-    rc = sqlite3_bind_text(dbparameters_->q_zone_, 1, name.c_str(),
-                           -1, SQLITE_STATIC);
+    sqlite3_reset(stmt);
+    rc = sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind " << name <<
                   " to SQL statement (zone)");
     }
-    rc = sqlite3_bind_text(dbparameters_->q_zone_, 2, class_.c_str(), -1,
-                           SQLITE_STATIC);
+    rc = sqlite3_bind_text(stmt, 2, class_.c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind " << class_ <<
                   " to SQL statement (zone)");
     }
 
     // Get the data there and see if it found anything
-    rc = sqlite3_step(dbparameters_->q_zone_);
-    std::pair<bool, int> result;
+    rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
-        result = std::pair<bool, int>(true,
-                                      sqlite3_column_int(dbparameters_->
-                                                         q_zone_, 0));
-        return (result);
+        const int zone_id = sqlite3_column_int(stmt, 0);
+        sqlite3_reset(stmt);
+        return (pair<bool, int>(true, zone_id));
     } else if (rc == SQLITE_DONE) {
-        result = std::pair<bool, int>(false, 0);
         // Free resources
-        sqlite3_reset(dbparameters_->q_zone_);
-        return (result);
+        sqlite3_reset(stmt);
+        return (pair<bool, int>(false, 0));
     }
 
+    sqlite3_reset(stmt);
     isc_throw(DataSourceError, "Unexpected failure in sqlite3_step: " <<
-                               sqlite3_errmsg(dbparameters_->db_));
+              sqlite3_errmsg(dbparameters_->db_));
     // Compilers might not realize isc_throw always throws
     return (std::pair<bool, int>(false, 0));
 }
 
-class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
+class SQLite3Accessor::Context : public DatabaseAccessor::IteratorContext {
 public:
     // Construct an iterator for all records. When constructed this
     // way, the getNext() call will copy all fields
-    Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
+    Context(const boost::shared_ptr<const SQLite3Accessor>& accessor, int id) :
         iterator_type_(ITT_ALL),
-        database_(database),
+        accessor_(accessor),
         statement_(NULL),
         name_("")
     {
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(database->dbparameters_->db_, q_iterate_str);
+        statement_ = prepare(accessor->dbparameters_->db_,
+                             text_statements[ITERATE]);
         bindZoneId(id);
     }
 
     // Construct an iterator for records with a specific name. When constructed
     // this way, the getNext() call will copy all fields except name
-    Context(const boost::shared_ptr<const SQLite3Database>& database, int id,
+    Context(const boost::shared_ptr<const SQLite3Accessor>& accessor, int id,
             const std::string& name, bool subdomains) :
         iterator_type_(ITT_NAME),
-        database_(database),
+        accessor_(accessor),
         statement_(NULL),
         name_(name)
+
     {
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(database->dbparameters_->db_,
-                             subdomains ? q_any_sub_str : q_any_str);
+        statement_ = prepare(accessor->dbparameters_->db_,
+                             subdomains ? text_statements[ANY_SUB] :
+                             text_statements[ANY]);
         bindZoneId(id);
         bindName(name_);
     }
@@ -438,7 +428,7 @@ public:
         } else if (rc != SQLITE_DONE) {
             isc_throw(DataSourceError,
                       "Unexpected failure in sqlite3_step: " <<
-                      sqlite3_errmsg(database_->dbparameters_->db_));
+                      sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
         finalize();
         return (false);
@@ -467,14 +457,14 @@ private:
             finalize();
             isc_throw(SQLite3Error, "Could not bind int " << zone_id <<
                       " to SQL statement: " <<
-                      sqlite3_errmsg(database_->dbparameters_->db_));
+                      sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
     }
 
     void bindName(const std::string& name) {
         if (sqlite3_bind_text(statement_, 2, name.c_str(), -1,
-                              SQLITE_STATIC) != SQLITE_OK) {
-            const char* errmsg = sqlite3_errmsg(database_->dbparameters_->db_);
+                              SQLITE_TRANSIENT) != SQLITE_OK) {
+            const char* errmsg = sqlite3_errmsg(accessor_->dbparameters_->db_);
             finalize();
             isc_throw(SQLite3Error, "Could not bind text '" << name <<
                       "' to SQL statement: " << errmsg);
@@ -496,7 +486,7 @@ private:
             // The field can really be NULL, in which case we return an
             // empty string, or sqlite may have run out of memory, in
             // which case we raise an error
-            if (sqlite3_errcode(database_->dbparameters_->db_)
+            if (sqlite3_errcode(accessor_->dbparameters_->db_)
                                 == SQLITE_NOMEM) {
                 isc_throw(DataSourceError,
                         "Sqlite3 backend encountered a memory allocation "
@@ -510,13 +500,13 @@ private:
     }
 
     const IteratorType iterator_type_;
-    boost::shared_ptr<const SQLite3Database> database_;
+    boost::shared_ptr<const SQLite3Accessor> accessor_;
     sqlite3_stmt *statement_;
     const std::string name_;
 };
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Database::getRecords(const std::string& name, int id,
+SQLite3Accessor::getRecords(const std::string& name, int id,
                             bool subdomains) const
 {
     return (IteratorContextPtr(new Context(shared_from_this(), id, name,
@@ -524,8 +514,129 @@ SQLite3Database::getRecords(const std::string& name, int id,
 }
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Database::getAllRecords(int id) const {
+SQLite3Accessor::getAllRecords(int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
+}
+
+pair<bool, int>
+SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
+    if (dbparameters_->updating_zone) {
+        isc_throw(DataSourceError,
+                  "duplicate zone update on SQLite3 data source");
+    }
+
+    const pair<bool, int> zone_info(getZone(zone_name));
+    if (!zone_info.first) {
+        return (zone_info);
+    }
+
+    StatementProcessor(*dbparameters_, BEGIN,
+                       "start an SQLite3 transaction").exec();
+
+    if (replace) {
+        try {
+            StatementProcessor delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
+                                            "delete zone records");
+
+            sqlite3_clear_bindings(
+                dbparameters_->statements_[DEL_ZONE_RECORDS]);
+            if (sqlite3_bind_int(dbparameters_->statements_[DEL_ZONE_RECORDS],
+                                 1, zone_info.second) != SQLITE_OK) {
+                isc_throw(DataSourceError,
+                          "failed to bind SQLite3 parameter: " <<
+                          sqlite3_errmsg(dbparameters_->db_));
+            }
+
+            delzone_exec.exec();
+        } catch (const DataSourceError&) {
+            // Once we start a transaction, if something unexpected happens
+            // we need to rollback the transaction so that a subsequent update
+            // is still possible with this accessor.
+            StatementProcessor(*dbparameters_, ROLLBACK,
+                               "rollback an SQLite3 transaction").exec();
+            throw;
+        }
+    }
+
+    dbparameters_->updating_zone = true;
+    dbparameters_->updated_zone_id = zone_info.second;
+
+    return (zone_info);
+}
+
+void
+SQLite3Accessor::commitUpdateZone() {
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "committing zone update on SQLite3 "
+                  "data source without transaction");
+    }
+
+    StatementProcessor(*dbparameters_, COMMIT,
+                       "commit an SQLite3 transaction").exec();
+    dbparameters_->updating_zone = false;
+    dbparameters_->updated_zone_id = -1;
+}
+
+void
+SQLite3Accessor::rollbackUpdateZone() {
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "rolling back zone update on SQLite3 "
+                  "data source without transaction");
+    }
+
+    StatementProcessor(*dbparameters_, ROLLBACK,
+                       "rollback an SQLite3 transaction").exec();
+    dbparameters_->updating_zone = false;
+    dbparameters_->updated_zone_id = -1;
+}
+
+namespace {
+// Commonly used code sequence for adding/deleting record
+template <typename COLUMNS_TYPE>
+void
+doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
+         COLUMNS_TYPE update_params, const char* exec_desc)
+{
+    sqlite3_stmt* const stmt = dbparams.statements_[stmt_id];
+    StatementProcessor executer(dbparams, stmt_id, exec_desc);
+
+    int param_id = 0;
+    if (sqlite3_bind_int(stmt, ++param_id, dbparams.updated_zone_id)
+        != SQLITE_OK) {
+        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                  sqlite3_errmsg(dbparams.db_));
+    }
+    const size_t column_count =
+        sizeof(update_params) / sizeof(update_params[0]);
+    for (int i = 0; i < column_count; ++i) {
+        if (sqlite3_bind_text(stmt, ++param_id, update_params[i].c_str(), -1,
+                              SQLITE_TRANSIENT) != SQLITE_OK) {
+            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparams.db_));
+        }
+    }
+    executer.exec();
+}
+}
+
+void
+SQLite3Accessor::addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "adding record to SQLite3 "
+                  "data source without transaction");
+    }
+    doUpdate<const string (&)[DatabaseAccessor::ADD_COLUMN_COUNT]>(
+        *dbparameters_, ADD_RECORD, columns, "add record to zone");
+}
+
+void
+SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "deleting record in SQLite3 "
+                  "data source without transaction");
+    }
+    doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_RECORD, params, "delete record from zone");
 }
 
 }
