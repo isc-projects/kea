@@ -55,7 +55,8 @@ Option6IAAddr::pack(boost::shared_array<char> buf,
     
     *(uint16_t*)&buf[offset] = htons(type_);
     offset += 2;
-    *(uint16_t*)&buf[offset] = htons(len());
+    *(uint16_t*)&buf[offset] = htons(len()-4); // len() returns complete option
+    // length. len field contains length without 4-byte option header
     offset += 2;
 
     memcpy(&buf[offset], addr_.getAddress().to_v6().to_bytes().data(), 16);
@@ -113,7 +114,7 @@ std::string Option6IAAddr::toText() {
 
 unsigned short Option6IAAddr::len() {
     
-    unsigned short length = 24; // header
+    unsigned short length = 4/*header*/ + 24 /* content */; // header
 
     // length of all suboptions
     // TODO implement:

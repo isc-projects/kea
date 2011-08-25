@@ -172,6 +172,13 @@ bool Option::valid() {
     return (true);
 }
 
+void
+isc::dhcp::Option::addOption(boost::shared_ptr<isc::dhcp::Option> opt) {
+    optionLst_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+
+}
+
+
 /**
  * Converts generic option to string.
  *
