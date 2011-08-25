@@ -103,12 +103,11 @@ protected:
     unsigned short type_;
 
     boost::shared_array<char> data_;
-    unsigned int data_len_;
+    unsigned int data_len_; // length of data only. Use len() if you want to know
+                            // proper length with option header overhead
     unsigned int offset_; // data is a shared_pointer that points out to the
                           // whole packet. offset_ specifies where data for
                           // this option begins.
-    unsigned int len_; // length of data only. Use len() if you want to know
-                       // proper length with option header overhead
     char * value_;
 
     // 2 different containers are used, because v4 options are unique
