@@ -58,7 +58,13 @@ Pkt6::Pkt6(unsigned char msg_type,
      msg_type_(msg_type),
      transid_(transid) {
 
-
+    try {
+        data_ = boost::shared_array<char>(new char[4]);
+        data_len_ = 4;
+    } catch (Exception e) {
+        cout << "Packet creation failed:" << e.what() << endl;
+    }
+    data_len_ = 0;
 }
 
 /**
@@ -112,29 +118,39 @@ bool
 Pkt6::packUDP() {
     unsigned short length = len();
     if (data_len_ < length) {
-        // we have too small buffer, let's allocate bigger one
-        data_ = boost::shared_array<char>(new char[length]);
-        data_len_ = length;
+        cout << "Previous len=" << data_len_ << ", allocating new buffer: len="
+             << length << endl;
+
+        try {
+            data_ = boost::shared_array<char>(new char[length]);
+            data_len_ = length;
+        } catch (Exception e) {
+            cout << "Failed to allocate " << length << "-byte buffer:"
+                 << e.what() << endl;
+            return (false);
+        }
     }
 
-    // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
-    data_[0] = msg_type_;
-    data_[1] = (transid_ >> 16) & 0xff;
-    data_[2] = (transid_ >> 8) & 0xff;
-    data_[3] = (transid_) & 0xff;
-
     try {
+        // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
+        data_[0] = msg_type_;
+        data_[1] = (transid_ >> 16) & 0xff;
+        data_[2] = (transid_ >> 8) & 0xff;
+        data_[3] = (transid_) & 0xff;
+
         // the rest are options
-        unsigned short offset = LibDHCP::packOptions6(data_, length, 4/*offset*/, options_);
+        unsigned short offset = LibDHCP::packOptions6(data_, length,
+                                                      4/*offset*/,
+                                                      options_);
 
         // sanity check
         if (offset != length) {
-            isc_throw(OutOfRange, "Packet build failed: expected size=" << length
-                      << ", actual len=" << offset);
+            isc_throw(OutOfRange, "Packet build failed: expected size="
+                      << length << ", actual len=" << offset);
         }
     }
     catch (Exception e) {
-        cout << "Packet build failed." << endl;
+        cout << "Packet build failed:" << e.what() << endl;
         return (false);
     }
     cout << "Packet built, len=" << len() << endl;
@@ -152,7 +168,8 @@ Pkt6::packUDP() {
 bool
 Pkt6::packTCP() {
     /// TODO Implement this function.
-    isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover) not implemented yet.");
+    isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover)"
+              "not implemented yet.");
 }
 
 /**
@@ -211,7 +228,8 @@ Pkt6::unpackUDP() {
  */
 bool
 Pkt6::unpackTCP() {
-    isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover) not implemented yet.");
+    isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover) "
+              "not implemented yet.");
 }
 
 
@@ -225,6 +243,9 @@ Pkt6::unpackTCP() {
 std::string
 Pkt6::toText() {
     stringstream tmp;
+    tmp << "localAddr=[" << local_addr_.toText() << "]:" << local_port_
+        << " remoteAddr=[" << remote_addr_.toText()
+        << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << msg_type_ << ", transid=0x" << hex << transid_
         << dec << endl;
     for (isc::dhcp::Option::Option6Lst::iterator opt=options_.begin();
@@ -263,6 +284,17 @@ Pkt6::getOption(unsigned short opt_type) {
 unsigned char
 Pkt6::getType() {
     return (msg_type_);
+}
+
+void
+Pkt6::addOption(boost::shared_ptr<Option> opt) {
+    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+}
+
+bool
+Pkt6::delOption(unsigned short type) {
+    isc_throw(Unexpected, "Not implemented yet. Not added option " << type);
+    return (false);
 }
 
 Pkt6::~Pkt6() {

@@ -44,7 +44,7 @@ unsigned int
 Option6IA::pack(boost::shared_array<char> buf,
                 unsigned int buf_len,
                 unsigned int offset) {
-    if (len() > buf_len) {
+    if (offset + len() > buf_len) {
         isc_throw(OutOfRange, "Failed to pack IA option: len=" << len() 
                   << ", buffer=" << buf_len << ": too small buffer.");
     }
@@ -52,22 +52,18 @@ Option6IA::pack(boost::shared_array<char> buf,
     char* ptr = &buf[offset];
     *(uint16_t*)ptr = htons(type_);
     ptr += 2;
-    buf_len -= 2;
-    *(uint16_t*)ptr = htons(len());
+    *(uint16_t*)ptr = htons(len() - 4); // len() returns complete option length
+    // len field contains length without 4-byte option header
     ptr += 2;
-    buf_len -= 2;
     
     *(uint32_t*)ptr = htonl(iaid_);
     ptr += 4;
-    buf_len -= 4;
 
     *(uint32_t*)ptr = htonl(t1_);
     ptr += 4;
-    buf_len -= 4;
 
     *(uint32_t*)ptr = htonl(t2_);
     ptr += 4;
-    buf_len -= 4;
 
     offset = LibDHCP::packOptions6(buf, buf_len, offset+16, optionLst_);
     return offset;
@@ -116,7 +112,7 @@ std::string Option6IA::toText() {
 
 unsigned short Option6IA::len() {
     
-    unsigned short length = 12; // header
+    unsigned short length = 4/*header*/ + 12 /* option content */; // header
 
     // length of all suboptions
     for (Option::Option6Lst::iterator it = optionLst_.begin();

@@ -70,11 +70,13 @@ public:
 
     unsigned short getType();
 
-    // returns data length (data length + DHCPv4/DHCPv6 option header)
+    // returns length of the complete option (data length + DHCPv4/DHCPv6 option header)
     virtual unsigned short len();
 
     // returns if option is valid (e.g. option may be truncated)
     virtual bool valid();
+
+    void addOption(boost::shared_ptr<Option> opt);
 
     // just to force that every option has virtual dtor
     virtual ~Option();
