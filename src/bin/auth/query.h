@@ -139,11 +139,13 @@ public:
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
+    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
+    ///     possible.
     Query(const isc::datasrc::DataSourceClient& datasrc_client,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-          isc::dns::Message& response) :
+          isc::dns::Message& response, bool dnssec = false) :
         datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
-        response_(response)
+        response_(response), dnssec_(dnssec)
     {}
 
     /// Process the query.
@@ -211,6 +213,7 @@ private:
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
+    const bool dnssec_;
 };
 
 }
