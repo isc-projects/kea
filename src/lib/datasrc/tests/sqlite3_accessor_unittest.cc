@@ -364,20 +364,19 @@ public:
     }
 };
 
-bool exists(const char* filename) {
-    std::ifstream f(filename);
-    return (f != NULL);
+bool isReadable(const char* filename) {
+    return (std::ifstream(filename).is_open());
 }
 
 TEST_F(SQLite3Create, creationtest) {
-    ASSERT_FALSE(exists(SQLITE_NEW_DBFILE));
+    ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
     // Should simply be created
     SQLite3Accessor accessor(SQLITE_NEW_DBFILE, RRClass::IN());
-    ASSERT_TRUE(exists(SQLITE_NEW_DBFILE));
+    ASSERT_TRUE(isReadable(SQLITE_NEW_DBFILE));
 }
 
 TEST_F(SQLite3Create, emptytest) {
-    ASSERT_FALSE(exists(SQLITE_NEW_DBFILE));
+    ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
 
     // open one manualle
     sqlite3* db;
@@ -393,7 +392,7 @@ TEST_F(SQLite3Create, emptytest) {
 }
 
 TEST_F(SQLite3Create, lockedtest) {
-    ASSERT_FALSE(exists(SQLITE_NEW_DBFILE));
+    ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
 
     // open one manually
     sqlite3* db;
