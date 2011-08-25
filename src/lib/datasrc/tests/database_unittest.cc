@@ -458,6 +458,20 @@ private:
         // This is because of empty domain test
         addRecord("A", "3600", "", "192.0.2.1");
         addCurName("a.b.example.org.");
+
+        // Something for wildcards
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("*.wild.example.org.");
+        addRecord("AAAA", "3600", "", "2001:db8::5");
+        addCurName("cancel.here.wild.example.org.");
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addCurName("delegatedwild.example.org.");
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("*.delegatedwild.example.org.");
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("wild.*.foo.example.org.");
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("wild.*.foo.*.bar.example.org.");
     }
 };
 
@@ -670,12 +684,12 @@ doFindTest(shared_ptr<DatabaseClient::Finder> finder,
     ZoneFinder::FindResult result =
         finder->find(name, type, NULL, options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
-    if (expected_rdatas.size() > 0) {
+    if (!expected_rdatas.empty()) {
         checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
                    name, finder->getClass(), expected_type, expected_ttl,
                    expected_rdatas);
 
-        if (expected_sig_rdatas.size() > 0) {
+        if (!expected_sig_rdatas.empty()) {
             checkRRset(result.rrset->getRRsig(), expected_name != Name(".") ?
                        expected_name : name, finder->getClass(),
                        isc::dns::RRType::RRSIG(), expected_ttl,
@@ -1074,6 +1088,16 @@ TEST_F(DatabaseClientTest, findDelegation) {
                  DataSourceError);
 }
 
+TEST_F(DatabaseClientTest, emptyDomain) {
+    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+
+    // This domain doesn't exist, but a subdomain of it does.
+    // Therefore we should pretend the domain is there, but contains no RRsets
+    doFindTest(finder, isc::dns::Name("b.example.org."), isc::dns::RRType::A(),
+               isc::dns::RRType::A(), isc::dns::RRTTL(3600),
+               ZoneFinder::NXRRSET, expected_rdatas_, expected_sig_rdatas_);
+}
+
 // Glue-OK mode. Just go trough NS delegations down (but not trough
 // DNAME) and pretend it is not there.
 TEST_F(DatabaseClientTest, glueOK) {
@@ -1133,15 +1157,127 @@ TEST_F(DatabaseClientTest, glueOK) {
                ZoneFinder::FIND_GLUE_OK);
 }
 
-TEST_F(DatabaseClientTest, empty) {
+TEST_F(DatabaseClientTest, wildcard) {
     shared_ptr<DatabaseClient::Finder> finder(getFinder());
 
-    // Check empty domain
-    // This domain doesn't exist, but a subdomain of it does.
-    // Therefore we should pretend the domain is there, but contains no RRsets
-    doFindTest(finder, isc::dns::Name("b.example.org."), isc::dns::RRType::A(),
-               isc::dns::RRType::A(), isc::dns::RRTTL(3600),
-               ZoneFinder::NXRRSET, expected_rdatas_, expected_sig_rdatas_);
+    // First, simple wildcard match
+    expected_rdatas_.push_back("192.0.2.5");
+    doFindTest(finder, isc::dns::Name("a.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    doFindTest(finder, isc::dns::Name("b.a.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    expected_rdatas_.clear();
+    doFindTest(finder, isc::dns::Name("a.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+    doFindTest(finder, isc::dns::Name("b.a.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+
+    // Direct request for thi wildcard
+    expected_rdatas_.push_back("192.0.2.5");
+    doFindTest(finder, isc::dns::Name("*.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    expected_rdatas_.clear();
+    doFindTest(finder, isc::dns::Name("*.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+    // This is nonsense, but check it doesn't match by some stupid accident
+    doFindTest(finder, isc::dns::Name("a.*.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+               expected_rdatas_, expected_sig_rdatas_);
+    // These should be canceled, since it is below a domain which exitsts
+    doFindTest(finder, isc::dns::Name("nothing.here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+               expected_rdatas_, expected_sig_rdatas_);
+    doFindTest(finder, isc::dns::Name("cancel.here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas_, expected_sig_rdatas_);
+    doFindTest(finder,
+               isc::dns::Name("below.cancel.here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+               expected_rdatas_, expected_sig_rdatas_);
+    // And this should be just plain empty non-terminal domain, check
+    // the wildcard doesn't hurt it
+    doFindTest(finder, isc::dns::Name("here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+    // Also make sure that the wildcard doesn't hurt the original data
+    // below the wildcard
+    expected_rdatas_.push_back("2001:db8::5");
+    doFindTest(finder, isc::dns::Name("cancel.here.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS,
+               expected_rdatas_, expected_sig_rdatas_);
+    expected_rdatas_.clear();
+
+    // How wildcard go together with delegation
+    expected_rdatas_.push_back("ns.example.com.");
+    doFindTest(finder, isc::dns::Name("below.delegatedwild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegatedwild.example.org"));
+    // FIXME: This doesn't look logically OK, GLUE_OK should make it transparent,
+    // so the match should either work or be canceled, but return NXDOMAIN
+    doFindTest(finder, isc::dns::Name("below.delegatedwild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegatedwild.example.org"),
+               ZoneFinder::FIND_GLUE_OK);
+
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.5");
+    // These are direct matches
+    const char* positive_names[] = {
+        "wild.*.foo.example.org.",
+        "wild.*.foo.*.bar.example.org.",
+        NULL
+    };
+    for (const char** name(positive_names); *name != NULL; ++ name) {
+        doFindTest(finder, isc::dns::Name(*name), isc::dns::RRType::A(),
+                   isc::dns::RRType::A(), isc::dns::RRTTL(3600),
+                   ZoneFinder::SUCCESS, expected_rdatas_,
+                   expected_sig_rdatas_);
+    }
+
+    // These are wildcard matches against empty nonterminal asterisk
+    expected_rdatas_.clear();
+    const char* negative_names[] = {
+        "a.foo.example.org.",
+        "*.foo.example.org.",
+        "foo.example.org.",
+        "wild.bar.foo.example.org.",
+        "baz.foo.*.bar.example.org",
+        "baz.foo.baz.bar.example.org",
+        "*.foo.baz.bar.example.org",
+        "*.foo.*.bar.example.org",
+        "foo.*.bar.example.org",
+        "*.bar.example.org",
+        "bar.example.org",
+        NULL
+    };
+    for (const char** name(negative_names); *name != NULL; ++ name) {
+        doFindTest(finder, isc::dns::Name(*name), isc::dns::RRType::A(),
+                   isc::dns::RRType::A(), isc::dns::RRTTL(3600),
+                   ZoneFinder::NXRRSET, expected_rdatas_,
+                   expected_sig_rdatas_);
+    }
 }
 
 TEST_F(DatabaseClientTest, getOrigin) {
