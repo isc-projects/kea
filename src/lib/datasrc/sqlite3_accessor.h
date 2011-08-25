@@ -87,11 +87,11 @@ public:
      *
      * \exception SQLite3Error if something about the database is broken.
      *
-     * \param name The name of zone to look up
+     * \param name The (fully qualified) domain name of zone to look up
      * \return The pair contains if the lookup was successful in the first
      *     element and the zone id in the second if it was.
      */
-    virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+    virtual std::pair<bool, int> getZone(const std::string& name) const;
 
     /** \brief Look up all resource records for a name
      *

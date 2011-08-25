@@ -83,25 +83,25 @@ public:
 
 // This zone exists in the data, so it should be found
 TEST_F(SQLite3Access, getZone) {
-    std::pair<bool, int> result(db->getZone(Name("example.com")));
+    std::pair<bool, int> result(db->getZone("example.com."));
     EXPECT_TRUE(result.first);
     EXPECT_EQ(1, result.second);
 }
 
 // But it should find only the zone, nothing below it
 TEST_F(SQLite3Access, subZone) {
-    EXPECT_FALSE(db->getZone(Name("sub.example.com")).first);
+    EXPECT_FALSE(db->getZone("sub.example.com.").first);
 }
 
 // This zone is not there at all
 TEST_F(SQLite3Access, noZone) {
-    EXPECT_FALSE(db->getZone(Name("example.org")).first);
+    EXPECT_FALSE(db->getZone("example.org.").first);
 }
 
 // This zone is there, but in different class
 TEST_F(SQLite3Access, noClass) {
     initAccessor(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
-    EXPECT_FALSE(db->getZone(Name("example.com")).first);
+    EXPECT_FALSE(db->getZone("example.com.").first);
 }
 
 // This tests the iterator context
@@ -109,7 +109,7 @@ TEST_F(SQLite3Access, iterator) {
     // Our test zone is conveniently small, but not empty
     initAccessor(SQLITE_DBFILE_EXAMPLE_ORG, RRClass::IN());
 
-    const std::pair<bool, int> zone_info(db->getZone(Name("example.org")));
+    const std::pair<bool, int> zone_info(db->getZone("example.org."));
     ASSERT_TRUE(zone_info.first);
 
     // Get the iterator context
@@ -223,7 +223,7 @@ checkRecordRow(const std::string columns[],
 }
 
 TEST_F(SQLite3Access, getRecords) {
-    const std::pair<bool, int> zone_info(db->getZone(Name("example.com")));
+    const std::pair<bool, int> zone_info(db->getZone("example.com."));
     ASSERT_TRUE(zone_info.first);
 
     const int zone_id = zone_info.second;
