@@ -140,9 +140,11 @@ public:
     /// considered a bug of the higher level application program.
     virtual void rollbackUpdateZone();
 
-    virtual void addRecordToZone(const std::vector<std::string>& columns);
+    virtual void addRecordToZone(
+        const std::string (&columns)[ADD_COLUMN_COUNT]);
 
-    virtual void deleteRecordInZone(const std::vector<std::string>& params);
+    virtual void deleteRecordInZone(
+        const std::string (&params)[DEL_PARAM_COUNT]);
 
     /// The SQLite3 implementation of this method returns a string starting
     /// with a fixed prefix of "sqlite3_" followed by the DB file name

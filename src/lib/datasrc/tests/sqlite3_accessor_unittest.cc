@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <algorithm>
 #include <vector>
 
 #include <datasrc/sqlite3_accessor.h>
@@ -313,7 +314,8 @@ protected:
 
     int zone_id;
     std::string get_columns[DatabaseAccessor::COLUMN_COUNT];
-    std::vector<std::string> update_columns;
+    std::string add_columns[DatabaseAccessor::ADD_COLUMN_COUNT];
+    std::string del_params[DatabaseAccessor::DEL_PARAM_COUNT];
 
     vector<const char* const*> expected_stored; // placeholder for checkRecords
     vector<const char* const*> empty_stored; // indicate no corresponding data
@@ -451,9 +453,9 @@ TEST_F(SQLite3Update, addRecord) {
     checkRecords(*accessor, zone_id, "newdata.example.com.", empty_stored);
 
     zone_id = accessor->startUpdateZone("example.com.", false).second;
-    update_columns.assign(new_data,
-                          new_data + DatabaseAccessor::ADD_COLUMN_COUNT);
-    accessor->addRecordToZone(update_columns);
+    copy(new_data, new_data + DatabaseAccessor::ADD_COLUMN_COUNT,
+         add_columns);
+    accessor->addRecordToZone(add_columns);
 
     expected_stored.clear();
     expected_stored.push_back(new_data);
@@ -466,9 +468,9 @@ TEST_F(SQLite3Update, addRecord) {
 
 TEST_F(SQLite3Update, addThenRollback) {
     zone_id = accessor->startUpdateZone("example.com.", false).second;
-    update_columns.assign(new_data,
-                          new_data + DatabaseAccessor::ADD_COLUMN_COUNT);
-    accessor->addRecordToZone(update_columns);
+    copy(new_data, new_data + DatabaseAccessor::ADD_COLUMN_COUNT,
+         add_columns);
+    accessor->addRecordToZone(add_columns);
 
     expected_stored.clear();
     expected_stored.push_back(new_data);
@@ -489,28 +491,17 @@ TEST_F(SQLite3Update, duplicateAdd) {
 
     // Adding exactly the same data.  As this backend is "dumb", another
     // row of the same content will be inserted.
-    update_columns.assign(dup_data,
-                          dup_data + DatabaseAccessor::ADD_COLUMN_COUNT);
+    copy(dup_data, dup_data + DatabaseAccessor::ADD_COLUMN_COUNT,
+         add_columns);
     zone_id = accessor->startUpdateZone("example.com.", false).second;
-    accessor->addRecordToZone(update_columns);
+    accessor->addRecordToZone(add_columns);
     expected_stored.push_back(dup_data);
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
 TEST_F(SQLite3Update, invalidAdd) {
     // An attempt of add before an explicit start of transaction
-    EXPECT_THROW(accessor->addRecordToZone(update_columns), DataSourceError);
-
-    // Short column vector
-    update_columns.clear();
-    zone_id = accessor->startUpdateZone("example.com.", false).second;
-    EXPECT_THROW(accessor->addRecordToZone(update_columns), DataSourceError);
-
-    // Too many columns
-    for (int i = 0; i < DatabaseAccessor::ADD_COLUMN_COUNT + 1; ++i) {
-        update_columns.push_back("");
-    }
-    EXPECT_THROW(accessor->addRecordToZone(update_columns), DataSourceError);
+    EXPECT_THROW(accessor->addRecordToZone(add_columns), DataSourceError);
 }
 
 TEST_F(SQLite3Update, deleteRecord) {
@@ -518,9 +509,9 @@ TEST_F(SQLite3Update, deleteRecord) {
 
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 
-    update_columns.assign(deleted_data, deleted_data +
-                          DatabaseAccessor::DEL_PARAM_COUNT);
-    accessor->deleteRecordInZone(update_columns);
+    copy(deleted_data, deleted_data + DatabaseAccessor::DEL_PARAM_COUNT,
+         del_params);
+    accessor->deleteRecordInZone(del_params);
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Commit the change, and confirm the deleted data still isn't there.
@@ -531,9 +522,9 @@ TEST_F(SQLite3Update, deleteRecord) {
 TEST_F(SQLite3Update, deleteThenRollback) {
     zone_id = accessor->startUpdateZone("example.com.", false).second;
 
-    update_columns.assign(deleted_data, deleted_data +
-                          DatabaseAccessor::DEL_PARAM_COUNT);
-    accessor->deleteRecordInZone(update_columns);
+    copy(deleted_data, deleted_data + DatabaseAccessor::DEL_PARAM_COUNT,
+         del_params);
+    accessor->deleteRecordInZone(del_params);
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Rollback the change, and confirm the data still exists.
@@ -543,47 +534,36 @@ TEST_F(SQLite3Update, deleteThenRollback) {
 
 TEST_F(SQLite3Update, deleteNonexistent) {
     zone_id = accessor->startUpdateZone("example.com.", false).second;
-    update_columns.assign(deleted_data, deleted_data +
-                          DatabaseAccessor::DEL_PARAM_COUNT);
+    copy(deleted_data, deleted_data + DatabaseAccessor::DEL_PARAM_COUNT,
+         del_params);
 
     // Replace the name with a non existent one, then try to delete it.
     // nothing should happen.
-    update_columns[0] = "no-such-name.example.com.";
+    del_params[DatabaseAccessor::DEL_NAME] = "no-such-name.example.com.";
     checkRecords(*accessor, zone_id, "no-such-name.example.com.",
                  empty_stored);
-    accessor->deleteRecordInZone(update_columns);
+    accessor->deleteRecordInZone(del_params);
     checkRecords(*accessor, zone_id, "no-such-name.example.com.",
                  empty_stored);
 
     // Name exists but the RR type is different.  Delete attempt shouldn't
     // delete only by name.
-    update_columns.assign(deleted_data, deleted_data +
-                          DatabaseAccessor::DEL_PARAM_COUNT);
-    update_columns[1] = "AAAA";
-    accessor->deleteRecordInZone(update_columns);
+    copy(deleted_data, deleted_data + DatabaseAccessor::DEL_PARAM_COUNT,
+         del_params);
+    del_params[DatabaseAccessor::DEL_TYPE] = "AAAA";
+    accessor->deleteRecordInZone(del_params);
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 
     // Similar to the previous case, but RDATA is different.
-    update_columns.assign(deleted_data, deleted_data +
-                          DatabaseAccessor::DEL_PARAM_COUNT);
-    update_columns[2] = "192.0.2.2";
-    accessor->deleteRecordInZone(update_columns);
+    copy(deleted_data, deleted_data + DatabaseAccessor::DEL_PARAM_COUNT,
+         del_params);
+    del_params[DatabaseAccessor::DEL_RDATA] = "192.0.2.2";
+    accessor->deleteRecordInZone(del_params);
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
 TEST_F(SQLite3Update, invalidDelete) {
     // An attempt of delete before an explicit start of transaction
-    EXPECT_THROW(accessor->deleteRecordInZone(update_columns), DataSourceError);
-
-    // Short column vector
-    update_columns.clear();
-    zone_id = accessor->startUpdateZone("example.com.", false).second;
-    EXPECT_THROW(accessor->deleteRecordInZone(update_columns), DataSourceError);
-
-    // Too many parameters
-    for (int i = 0; i < DatabaseAccessor::DEL_PARAM_COUNT + 1; ++i) {
-        update_columns.push_back("");
-    }
-    EXPECT_THROW(accessor->deleteRecordInZone(update_columns), DataSourceError);
+    EXPECT_THROW(accessor->deleteRecordInZone(del_params), DataSourceError);
 }
 } // end anonymous namespace

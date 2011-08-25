@@ -64,8 +64,8 @@ public:
     }
     virtual void commitUpdateZone() {}
     virtual void rollbackUpdateZone() {}
-    virtual void addRecordToZone(const std::vector<std::string>&) {}
-    virtual void deleteRecordInZone(const std::vector<std::string>&) {}
+    virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
+    virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
 
     virtual const std::string& getDBName() const {
         return (database_name_);
