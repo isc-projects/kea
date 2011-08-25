@@ -51,10 +51,6 @@ namespace isc {
         unsigned char getType();
         unsigned int getTransid() { return transid_; };
 
-        boost::shared_ptr<isc::dhcp::Option> getOption(unsigned short opt_type);
-
-        /// TODO Need to implement getOptions() as well
-
         /// TODO need getter/setter wrappers
         ///      and hide following fields as protected
         /// buffer that holds memory. It is shared_array as options may
@@ -84,6 +80,11 @@ namespace isc {
 
         // remote TCP or UDP port
         int remote_port_;
+
+        void addOption(boost::shared_ptr<isc::dhcp::Option> opt);
+        boost::shared_ptr<isc::dhcp::Option> getOption(unsigned short type);
+        bool delOption(unsigned short type);
+        /// TODO Need to implement getOptions() as well
 
         // XXX: add *a lot* here
         isc::dhcp::Option::Option6Lst options_;

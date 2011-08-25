@@ -17,6 +17,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include "dhcp/pkt6.h"
+#include "dhcp/option.h"
 #include <iostream>
 
 namespace isc {
@@ -26,6 +27,14 @@ namespace isc {
         // one copy
         Dhcpv6Srv(const Dhcpv6Srv& src);
         Dhcpv6Srv& operator=(const Dhcpv6Srv& src);
+
+        boost::shared_ptr<isc::dhcp::Option> getServerID();
+
+        // this method sets server-identifier. it loads it from a file or
+        // generates using interface link-layer addresses (EUI-64)
+        bool setServerID();
+
+        boost::shared_ptr<isc::dhcp::Option> serverid_;
 
     public:
         // default constructor

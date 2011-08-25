@@ -16,9 +16,14 @@
 #include "dhcp/pkt6.h"
 #include "dhcp6/iface_mgr.h"
 #include "dhcp6/dhcp6_srv.h"
+#include "dhcp/option6_ia.h"
+#include "dhcp/option6_iaaddr.h"
+#include "io_address.h"
 
 using namespace std;
 using namespace isc;
+using namespace isc::dhcp;
+using namespace isc::asiolink;
 
 Dhcpv6Srv::Dhcpv6Srv() {
     cout << "Initialization" << endl;
@@ -26,6 +31,10 @@ Dhcpv6Srv::Dhcpv6Srv() {
     // first call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
     IfaceMgr::instance();
+
+    if (!setServerID()) {
+        isc_throw(Unexpected, "Failed to set up server-id.");
+    }
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
@@ -74,8 +83,20 @@ Dhcpv6Srv::run() {
 
             cout << "Received " << query->data_len_ << " bytes packet type="
                  << query->getType() << endl;
+            cout << query->toText();
             if (rsp != boost::shared_ptr<Pkt6>()) {
-                cout << "Replying with " << rsp->getType() << endl;
+                rsp->remote_addr_ = query->remote_addr_;
+                rsp->local_addr_ = query->local_addr_;
+                rsp->remote_port_ = DHCP6_CLIENT_PORT;
+                rsp->local_port_ = DHCP6_SERVER_PORT;
+                rsp->ifindex_ = query->ifindex_;
+                rsp->iface_ = query->iface_; 
+                cout << "Replying with:" << rsp->getType() << endl;
+                cout << rsp->toText();
+                cout << "----" << endl;
+                if (rsp->pack()) {
+                    cout << "#### pack successful." << endl;
+                }
                 IfaceMgr::instance().send(rsp);
             }
         }
@@ -89,6 +110,32 @@ Dhcpv6Srv::run() {
     return (true);
 }
 
+boost::shared_ptr<Option>
+Dhcpv6Srv::getServerID() {
+    return serverid_;
+}
+
+bool
+Dhcpv6Srv::setServerID() {
+    /// TODO implement this for real once interface detection is done.
+    /// Use hardcoded server-id for now
+
+    boost::shared_array<char> srvid(new char[14]);
+    srvid[0] = 0;
+    srvid[1] = 1; // DUID type 1 = DUID-LLT (see section 9.2 of RFC3315)
+    srvid[2] = 0;
+    srvid[3] = 6; // HW type = ethernet (I think. I'm typing this from my head
+                  // in hotel, without Internet connection)
+    for (int i=4; i<14; i++) {
+        srvid[i]=i-4;
+    }
+    serverid_ = boost::shared_ptr<Option>(new Option(Option::V6,
+                                                     D6O_SERVERID,
+                                                     srvid,
+                                                     0, 14));
+    return (true);
+}
+
 boost::shared_ptr<Pkt6>
 Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6> solicit) {
 
@@ -96,6 +143,29 @@ Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6> solicit) {
                                            solicit->getTransid(),
                                            Pkt6::UDP));
 
+    // answer client's IA (this is mostly a dummy, 
+    // so let's answer only first IA and hope there is only one)
+    boost::shared_ptr<Option> ia_opt = solicit->getOption(D6O_IA_NA);
+    if (ia_opt) {
+        // found IA
+        Option * tmp = ia_opt.get();
+        Option6IA * ia_req = dynamic_cast<Option6IA*> (tmp); 
+        if (ia_req) {
+            boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(Option::V6, D6O_IA_NA, ia_req->getIAID()));
+            ia_rsp->setT1(1500);
+            ia_rsp->setT2(2600);
+            boost::shared_ptr<Option6IAAddr> addr(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8:1234:5678::abcd"), 5000, 7000));
+            ia_rsp->addOption(addr);
+            reply->addOption(ia_rsp);
+        }
+    }
+
+    // add client-id
+    boost::shared_ptr<Option> clientid = solicit->getOption(D6O_CLIENTID);
+    reply->addOption(clientid);
+
+    // add server-id
+    // reply->addOption(getServerID());
     return reply;
 }
 
@@ -104,7 +174,6 @@ Dhcpv6Srv::processRequest(boost::shared_ptr<Pkt6> request) {
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
                                            request->getTransid(),
                                            Pkt6::UDP));
-
     return reply;
 }
 
@@ -147,3 +216,4 @@ Dhcpv6Srv::processDecline(boost::shared_ptr<Pkt6> decline) {
                                            Pkt6::UDP));
     return reply;
 }
+
