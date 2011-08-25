@@ -63,32 +63,34 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
-% DATASRC_DATABASE_FIND_ERROR error retrieving data from datasource %1: %2
-This was an internal error while reading data from a datasource. This can either
-mean the specific data source implementation is not behaving correctly, or the
-data it provides is invalid. The current search is aborted.
-The error message contains specific information about the error.
-
 % DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3
 Debug information. The database data source is looking up records with the given
 name and type in the database.
 
 % DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ in %1 for elements of %2/%3/%4, setting to %5
 The datasource backend provided resource records for the given RRset with
-different TTL values. The TTL of the RRSET is set to the lowest value, which
-is printed in the log message.
+different TTL values. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
 
-% DATASRC_DATABASE_FIND_UNCAUGHT_ERROR uncaught general error retrieving data from datasource %1: %2
-There was an uncaught general exception while reading data from a datasource.
-This most likely points to a logic error in the code, and can be considered a
-bug. The current search is aborted. Specific information about the exception is
-printed in this error message.
+% DATASRC_DATABASE_FOUND_DELEGATION Found delegation at %2 in %1
+When searching for a domain, the program met a delegation to a different zone
+at the given domain name. It will return that one instead.
 
-% DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR uncaught error retrieving data from datasource %1: %2
-There was an uncaught ISC exception while reading data from a datasource. This
-most likely points to a logic error in the code, and can be considered a bug.
-The current search is aborted. Specific information about the exception is
-printed in this error message.
+% DATASRC_DATABASE_FOUND_DELEGATION_EXACT Found delegation at %2 (exact match) in %1
+The program found the domain requested, but it is a delegation point to a
+different zone, therefore it is not authoritative for this domain name.
+It will return the NS record instead.
+
+% DATASRC_DATABASE_FOUND_DNAME Found DNAME at %2 in %1
+When searching for a domain, the program met a DNAME redirection to a different
+place in the domain space at the given domain name. It will return that one
+instead.
+
+% DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL empty non-terminal %2 in %1
+The domain name doesn't have any RRs, so it doesn't exist in the database.
+However, it has a subdomain, so it exists in the DNS address space. So we
+return NXRRSET instead of NXDOMAIN.
 
 % DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
 The data returned by the database backend did not contain any data for the given
@@ -102,6 +104,45 @@ name and class, but not for the given type.
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
+
+% DATASRC_DATABASE_ITERATE iterating zone %1
+The program is reading the whole zone, eg. not searching for data, but going
+through each of the RRsets there.
+
+% DATASRC_DATABASE_ITERATE_END iterating zone finished
+While iterating through the zone, the program reached end of the data.
+
+% DATASRC_DATABASE_ITERATE_NEXT next RRset in zone is %1/%2
+While iterating through the zone, the program extracted next RRset from it.
+The name and RRtype of the RRset is indicated in the message.
+
+% DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4
+While iterating through the zone, the time to live for RRs of the given RRset
+were found to be different. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_WILDCARD constructing RRset %3 from wildcard %2 in %1
+The database doesn't contain directly matching domain, but it does contain a
+wildcard one which is being used to synthesize the answer.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %2 because %3 contains NS in %1
+The database was queried to provide glue data and it didn't find direct match.
+It could create it from given wildcard, but matching wildcards is forbidden
+under a zone cut, which was found. Therefore the delegation will be returned
+instead.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_SUB wildcard %2 can't be used to construct %3 because %4 exists in %1
+The answer could be constructed using the wildcard, but the given subdomain
+exists, therefore this name is something like empty non-terminal (actually,
+from the protocol point of view, it is empty non-terminal, but the code
+discovers it differently).
+
+% DATASRC_DATABASE_WILDCARD_EMPTY implicit wildcard %2 used to construct %3 in %1
+The given wildcard exists implicitly in the domainspace, as empty nonterminal
+(eg. there's something like subdomain.*.example.org, so *.example.org exists
+implicitly, but is empty). This will produce NXRRSET, because the constructed
+domain is empty as well as the wildcard.
 
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
