@@ -49,7 +49,7 @@ DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
 
 DataSourceClient::FindResult
 DatabaseClient::findZone(const Name& name) const {
-    std::pair<bool, int> zone(database_->getZone(name));
+    std::pair<bool, int> zone(database_->getZone(name.toText()));
     // Try exact first
     if (zone.first) {
         return (FindResult(result::SUCCESS,
@@ -60,7 +60,7 @@ DatabaseClient::findZone(const Name& name) const {
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
         isc::dns::Name superdomain(name.split(i));
-        zone = database_->getZone(superdomain);
+        zone = database_->getZone(superdomain.toText());
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
                                ZoneFinderPtr(new Finder(database_,
@@ -488,7 +488,7 @@ private:
 ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name) const {
     // Get the zone
-    std::pair<bool, int> zone(database_->getZone(name));
+    std::pair<bool, int> zone(database_->getZone(name.toText()));
     if (!zone.first) {
         // No such zone, can't continue
         isc_throw(DataSourceError, "Zone " + name.toText() +
