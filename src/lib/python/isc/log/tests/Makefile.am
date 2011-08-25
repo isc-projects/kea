@@ -14,6 +14,7 @@ endif
 # test using command-line arguments, so use check-local target instead of TESTS
 # We need to run the cycle twice, because once the files are in builddir, once in srcdir
 check-local:
+	chmod +x $(abs_builddir)/log_console.py
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/python/isc/log \
 	$(abs_srcdir)/check_output.sh $(abs_builddir)/log_console.py $(abs_srcdir)/console.out
@@ -31,6 +32,7 @@ endif
 	done ; \
 	for pytest in $(PYTESTS_GEN) ; do \
 	echo Running test: $$pytest ; \
+	chmod +x $(abs_builddir)/$$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/python/isc/log:$(abs_top_builddir)/src/lib/log/python/.libs \
 	B10_TEST_PLUGIN_DIR=$(abs_top_srcdir)/src/bin/cfgmgr/plugins \

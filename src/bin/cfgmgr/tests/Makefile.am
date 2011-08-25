@@ -20,6 +20,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
+	chmod +x $(abs_builddir)/$$pytest ; \
 	env TESTDATA_PATH=$(abs_srcdir)/testdata \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr:$(abs_top_builddir)/src/lib/python/isc/config \
