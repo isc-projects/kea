@@ -375,6 +375,9 @@ public:
          *     DataSourceError.
          * \param want_ns This allows redirection by NS to be returned. If
          *     any other data is met as well, DataSourceError is thrown.
+         * \param construct_name If set to non-NULL, the resulting RRset will
+         *     be constructed for this name instead of the queried one. This
+         *     is useful for wildcards.
          * \note It may happen that some of the above error conditions are not
          *     detected in some circumstances. The goal here is not to validate
          *     the domain in DB, but to avoid bad behaviour resulting from
@@ -392,7 +395,18 @@ public:
                                                      type,
                                                      bool want_cname,
                                                      bool want_dname,
-                                                     bool want_ns);
+                                                     bool want_ns, const
+                                                     isc::dns::Name*
+                                                     construct_name = NULL);
+        /**
+         * \brief Checks if something lives below this domain.
+         *
+         * This looks if there's any subdomain of the given name. It can be
+         * used to test if domain is empty non-terminal.
+         *
+         * \param name The domain to check.
+         */
+        bool hasSubdomains(const std::string& name);
     };
     /**
      * \brief Find a zone in the database

@@ -87,6 +87,11 @@ When searching for a domain, the program met a DNAME redirection to a different
 place in the domain space at the given domain name. It will return that one
 instead.
 
+% DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL empty non-terminal %2 in %1
+The domain name doesn't have any RRs, so it doesn't exist in the database.
+However, it has a subdomain, so it exists in the DNS address space. So we
+return NXRRSET instead of NXDOMAIN.
+
 % DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
 The data returned by the database backend did not contain any data for the given
 domain name, class and type.
@@ -116,6 +121,28 @@ While iterating through the zone, the time to live for RRs of the given RRset
 were found to be different. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_WILDCARD constructing RRset %3 from wildcard %2 in %1
+The database doesn't contain directly matching domain, but it does contain a
+wildcard one which is being used to synthesize the answer.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %2 because %3 contains NS in %1
+The database was queried to provide glue data and it didn't find direct match.
+It could create it from given wildcard, but matching wildcards is forbidden
+under a zone cut, which was found. Therefore the delegation will be returned
+instead.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_SUB wildcard %2 can't be used to construct %3 because %4 exists in %1
+The answer could be constructed using the wildcard, but the given subdomain
+exists, therefore this name is something like empty non-terminal (actually,
+from the protocol point of view, it is empty non-terminal, but the code
+discovers it differently).
+
+% DATASRC_DATABASE_WILDCARD_EMPTY implicit wildcard %2 used to construct %3 in %1
+The given wildcard exists implicitly in the domainspace, as empty nonterminal
+(eg. there's something like subdomain.*.example.org, so *.example.org exists
+implicitly, but is empty). This will produce NXRRSET, because the constructed
+domain is empty as well as the wildcard.
 
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
