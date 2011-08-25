@@ -141,7 +141,7 @@ private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
     typedef map<Name, RRsetStore> Domains;
     Domains domains_;
-    void loadRRset(ConstRRsetPtr rrset) {
+    void loadRRset(RRsetPtr rrset) {
         domains_[rrset->getName()][rrset->getType()] = rrset;
         if (rrset->getName() == delegation_name_ &&
             rrset->getType() == RRType::NS()) {
@@ -149,6 +149,26 @@ private:
         } else if (rrset->getName() == dname_name_ &&
             rrset->getType() == RRType::DNAME()) {
             dname_rrset_ = rrset;
+        // Add some signatures
+        } else if (rrset->getName() == Name("example.com.") &&
+                   rrset->getType() == RRType::NS()) {
+            rrset->addRRsig(RdataPtr(new generic::RRSIG("NS 5 3 3600 "
+                                                        "20000101000000 "
+                                                        "20000201000000 "
+                                                        "12345 example.com. "
+                                                        "FAKEFAKEFAKE")));
+        } else if (rrset->getType() == RRType::A()) {
+            rrset->addRRsig(RdataPtr(new generic::RRSIG("A 5 3 3600 "
+                                                        "20000101000000 "
+                                                        "20000201000000 "
+                                                        "12345 example.com. "
+                                                        "FAKEFAKEFAKE")));
+        } else if (rrset->getType() == RRType::AAAA()) {
+            rrset->addRRsig(RdataPtr(new generic::RRSIG("AAAA 5 3 3600 "
+                                                        "20000101000000 "
+                                                        "20000201000000 "
+                                                        "12345 example.com. "
+                                                        "FAKEFAKEFAKE")));
         }
     }
 
@@ -302,6 +322,38 @@ TEST_F(QueryTest, exactMatch) {
     // find match rrset
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
                   www_a_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, dnssecPositive) {
+    // Just like exactMatch, but the signatures should be included as well
+    Query query(memory_client, qname, qtype, response, true);
+    EXPECT_NO_THROW(query.process());
+    // find match rrset
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+                  (www_a_txt + std::string("www.example.com. 3600 IN RRSIG "
+                                           "AAAA 5 3 3600 20000101000000 "
+                                           "20000201000000 12345 example.com. "
+                                           "FAKEFAKEFAKE\n")).c_str(),
+                  (zone_ns_txt + std::string("example.com. 3600 IN RRSIG NS 5 "
+                                             "3 3600 20000101000000 "
+                                             "20000201000000 12345 "
+                                             "example.com. FAKEFAKEFAKE\n")).
+                  c_str(),
+                  (ns_addrs_txt + std::string("glue.delegation.example.com. "
+                                              "3600 IN RRSIG A 5 3 3600 "
+                                              "20000101000000 20000201000000 "
+                                              "12345 example.com. "
+                                              "FAKEFAKEFAKE\n"
+                                              "glue.delegation.example.com. "
+                                              "3600 IN RRSIG AAAA 5 3 3600 "
+                                              "20000101000000 20000201000000 "
+                                              "12345 example.com. "
+                                              "FAKEFAKEFAKE\n"
+                                              "noglue.example.com. 3600 IN "
+                                              "RRSIG A 5 3 3600 "
+                                              "20000101000000 20000201000000 "
+                                              "12345 example.com. "
+                                              "FAKEFAKEFAKE\n")).c_str());
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
