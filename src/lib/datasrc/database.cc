@@ -175,7 +175,8 @@ std::pair<bool, isc::dns::RRsetPtr>
 DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                                  const isc::dns::RRType* type,
                                  bool want_cname, bool want_dname,
-                                 bool want_ns)
+                                 bool want_ns,
+                                 const isc::dns::Name* construct_name)
 {
     RRsigStore sig_store;
     bool records_found = false;
@@ -191,6 +192,9 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     }
 
     std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    if (construct_name == NULL) {
+        construct_name = &name;
+    }
     while (context->getNext(columns)) {
         if (!records_found) {
             records_found = true;
@@ -225,7 +229,8 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                     isc_throw(DataSourceError, "NS found together with data"
                               " in non-apex domain " + name.toText());
                 }
-                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                addOrCreate(result_rrset, *construct_name, getClass(),
+                            cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
                             *database_);
             } else if (type != NULL && cur_type == *type) {
@@ -238,7 +243,8 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                     isc_throw(DataSourceError, "NS found together with data"
                               " in non-apex domain " + name.toText());
                 }
-                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                addOrCreate(result_rrset, *construct_name, getClass(),
+                            cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
                             *database_);
             } else if (want_cname && cur_type == isc::dns::RRType::CNAME()) {
@@ -248,7 +254,8 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                     isc_throw(DataSourceError, "CNAME found but it is not "
                               "the only record for " + name.toText());
                 }
-                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                addOrCreate(result_rrset, *construct_name, getClass(),
+                            cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
                             *database_);
             } else if (want_dname && cur_type == isc::dns::RRType::DNAME()) {
@@ -258,7 +265,8 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                     isc_throw(DataSourceError, "DNAME with multiple RRs in " +
                               name.toText());
                 }
-                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                addOrCreate(result_rrset, *construct_name, getClass(),
+                            cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
                             *database_);
             } else if (cur_type == isc::dns::RRType::RRSIG()) {
@@ -292,6 +300,20 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     return (std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset));
 }
 
+bool
+DatabaseClient::Finder::hasSubdomains(const std::string& name) {
+    // Request the context
+    DatabaseAccessor::IteratorContextPtr
+        context(database_->getRecords(name, zone_id_, true));
+    // It must not return NULL, that's a bug of the implementation
+    if (!context) {
+        isc_throw(isc::Unexpected, "Iterator context null at " + name);
+    }
+
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    return (context->getNext(columns));
+}
+
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
@@ -307,20 +329,35 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     std::pair<bool, isc::dns::RRsetPtr> found;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(database_->getDBName()).arg(name).arg(type);
+    // In case we are in GLUE_OK mode and start matching wildcards,
+    // we can't do it under NS, so we store it here to check
+    isc::dns::RRsetPtr first_ns;
 
     // First, do we have any kind of delegation (NS/DNAME) here?
-    const Name origin(getOrigin());
-    const size_t origin_label_count(origin.getLabelCount());
-    const size_t current_label_count(name.getLabelCount());
+    Name origin(getOrigin());
+    size_t origin_label_count(origin.getLabelCount());
+    // Number of labels in the last known non-empty domain
+    size_t last_known(origin_label_count);
+    size_t current_label_count(name.getLabelCount());
     // This is how many labels we remove to get origin
-    const size_t remove_labels(current_label_count - origin_label_count);
+    size_t remove_labels(current_label_count - origin_label_count);
 
     // Now go trough all superdomains from origin down
     for (int i(remove_labels); i > 0; --i) {
-        const Name superdomain(name.split(i));
+        Name superdomain(name.split(i));
         // Look if there's NS or DNAME (but ignore the NS in origin)
         found = getRRset(superdomain, NULL, false, true,
                          i != remove_labels && !glue_ok);
+        if (found.first) {
+            // It contains some RRs, so it exists.
+            last_known = superdomain.getLabelCount();
+            // In case we are in GLUE_OK, we want to store the highest
+            // encountered RRset.
+            if (glue_ok && !first_ns && i != remove_labels) {
+                first_ns = getRRset(superdomain, NULL, false, false,
+                                    true).second;
+            }
+        }
         if (found.second) {
             // We found something redirecting somewhere else
             // (it can be only NS or DNAME here)
@@ -360,18 +397,73 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         }
 
         if (!result_rrset && !records_found) {
-            // Request the context
-            DatabaseAccessor::IteratorContextPtr
-                context(database_->getRecords(name.toText(), zone_id_, true));
-            // It must not return NULL, that's a bug of the implementation
-            if (!context) {
-                isc_throw(isc::Unexpected, "Iterator context null at " +
-                          name.toText());
-            }
-
-            std::string columns[DatabaseAccessor::COLUMN_COUNT];
-            if (context->getNext(columns)) {
+            // Nothing lives here.
+            // But check if something lives below this
+            // domain and if so, pretend something is here as well.
+            if (hasSubdomains(name.toText())) {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
+                    arg(database_->getDBName()).arg(name);
                 records_found = true;
+            } else {
+                // It's not empty non-terminal. So check for wildcards.
+                // We remove labels one by one and look for the wildcard there.
+                // Go up to first non-empty domain.
+
+                remove_labels = current_label_count - last_known;
+                Name star("*");
+                for (size_t i(1); i <= remove_labels; ++ i) {
+                    // Construct the name with *
+                    // TODO: Once the underlying DatabaseAccessor takes
+                    // string, do the concatenation on strings, not
+                    // Names
+                    Name superdomain(name.split(i));
+                    Name wildcard(star.concatenate(superdomain));
+                    // TODO What do we do about DNAME here?
+                    found = getRRset(wildcard, &type, true, false, true,
+                                     &name);
+                    if (found.first) {
+                        if (first_ns) {
+                            // In case we are under NS, we don't
+                            // wildcard-match, but return delegation
+                            result_rrset = first_ns;
+                            result_status = DELEGATION;
+                            records_found = true;
+                            // We pretend to switch to non-glue_ok mode
+                            glue_ok = false;
+                            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                      DATASRC_DATABASE_WILDCARD_CANCEL_NS).
+                                arg(database_->getDBName()).arg(wildcard).
+                                arg(first_ns->getName());
+                        } else if (!hasSubdomains(name.split(i - 1).toText()))
+                        {
+                            // Nothing we added as part of the * can exist
+                            // directly, as we go up only to first existing
+                            // domain, but it could be empty non-terminal. In
+                            // that case, we need to cancel the match.
+                            records_found = true;
+                            result_rrset = found.second;
+                            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                      DATASRC_DATABASE_WILDCARD).
+                                arg(database_->getDBName()).arg(wildcard).
+                                arg(name);
+                        } else {
+                            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                      DATASRC_DATABASE_WILDCARD_CANCEL_SUB).
+                                arg(database_->getDBName()).arg(wildcard).
+                                arg(name).arg(superdomain);
+                        }
+                        break;
+                    } else if (hasSubdomains(wildcard.toText())) {
+                        // Empty non-terminal asterisk
+                        records_found = true;
+                        LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                  DATASRC_DATABASE_WILDCARD_EMPTY).
+                            arg(database_->getDBName()).arg(wildcard).
+                            arg(name);
+                        break;
+                    }
+                }
             }
         }
     }
