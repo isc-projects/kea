@@ -137,6 +137,11 @@ public:
          * definition already known to the caller (it already passes it as
          * an argument to getRecords()).
          *
+         * Once this function returns false, any subsequent call to it should
+         * result in false.  The implementation of a derived class must ensure
+         * it doesn't cause any disruption due to that such as a crash or
+         * exception.
+         *
          * \note The order of RRs is not strictly set, but the RRs for single
          * RRset must not be interleaved with any other RRs (eg. RRsets must be
          * "together").
