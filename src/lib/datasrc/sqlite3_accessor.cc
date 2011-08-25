@@ -516,9 +516,10 @@ SQLite3Accessor::rollbackUpdateZone() {
 
 namespace {
 // Commonly used code sequence for adding/deleting record
+template <typename COLUMNS_TYPE>
 void
 doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
-         const vector<string>& update_params, const char* exec_desc)
+         COLUMNS_TYPE update_params, const char* exec_desc)
 {
     sqlite3_stmt* const stmt = dbparams.statements_[stmt_id];
     StatementExecuter executer(dbparams, stmt_id, exec_desc);
@@ -529,8 +530,10 @@ doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
         isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
                   sqlite3_errmsg(dbparams.db_));
     }
-    BOOST_FOREACH(const string& column, update_params) {
-        if (sqlite3_bind_text(stmt, ++param_id, column.c_str(), -1,
+    const size_t column_count =
+        sizeof(update_params) / sizeof(update_params[0]);
+    for (int i = 0; i < column_count; ++i) {
+        if (sqlite3_bind_text(stmt, ++param_id, update_params[i].c_str(), -1,
                               SQLITE_TRANSIENT) != SQLITE_OK) {
             isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
                       sqlite3_errmsg(dbparams.db_));
@@ -541,31 +544,23 @@ doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
 }
 
 void
-SQLite3Accessor::addRecordToZone(const vector<string>& columns) {
+SQLite3Accessor::addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "adding record to SQLite3 "
                   "data source without transaction");
     }
-    if (columns.size() != ADD_COLUMN_COUNT) {
-        isc_throw(DataSourceError, "adding incompatible number of columns "
-                  "to SQLite3 data source: " << columns.size());
-    }
-
-    doUpdate(*dbparameters_, ADD_RECORD, columns, "add record to zone");
+    doUpdate<const string (&)[DatabaseAccessor::ADD_COLUMN_COUNT]>(
+        *dbparameters_, ADD_RECORD, columns, "add record to zone");
 }
 
 void
-SQLite3Accessor::deleteRecordInZone(const vector<string>& params) {
+SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
     }
-    if (params.size() != DEL_PARAM_COUNT) {
-        isc_throw(DataSourceError, "incompatible # of parameters for "
-                  "deleting in SQLite3 data source: " << params.size());
-    }
-
-    doUpdate(*dbparameters_, DEL_RECORD, params, "delete record from zone");
+    doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_RECORD, params, "delete record from zone");
 }
 
 }

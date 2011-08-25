@@ -340,12 +340,12 @@ public:
     /// in the actual derived method.
     ///
     /// \exception DataSourceError Invalid call without starting a transaction,
-    /// the columns parameter has an invalid number of elements, or other
-    /// internal database error.
+    /// or other internal database error.
     ///
-    /// \param columns A vector of strings that defines a record to be added
+    /// \param columns An array of strings that defines a record to be added
     /// to the zone.
-    virtual void addRecordToZone(const std::vector<std::string>& columns) = 0;
+    virtual void addRecordToZone(
+        const std::string (&columns)[ADD_COLUMN_COUNT]) = 0;
 
     /// Delete a single record from the zone to be updated.
     ///
@@ -377,13 +377,12 @@ public:
     /// it simply ignores the result.
     ///
     /// \exception DataSourceError Invalid call without starting a transaction,
-    /// the columns parameter has an invalid number of elements, or other
-    /// internal database error.
+    /// or other internal database error.
     ///
-    /// \param params A vector of strings that defines a record to be deleted
+    /// \param params An array of strings that defines a record to be deleted
     /// from the zone.
     virtual void deleteRecordInZone(
-        const std::vector<std::string>& params) = 0;
+        const std::string (&params)[DEL_PARAM_COUNT]) = 0;
 
     /// Commit updates to the zone.
     ///
