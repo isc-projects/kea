@@ -107,7 +107,11 @@ public:
     /// performed on these values to express compound options.
     enum FindOptions {
         FIND_DEFAULT = 0,       ///< The default options
-        FIND_GLUE_OK = 1        ///< Allow search under a zone cut
+        FIND_GLUE_OK = 1,       ///< Allow search under a zone cut
+        FIND_DNSSEC = 2         ///< Require DNSSEC data in the answer
+                                ///< (RRSIG, NSEC, etc.). The implementation
+                                ///< is allowed to include it even if it is
+                                ///< not set.
     };
 
     ///
