@@ -3,6 +3,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/lib/dns
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += $(SQLITE_CFLAGS)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILD_DIR=\"$(builddir)/testdata\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
