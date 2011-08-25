@@ -72,7 +72,7 @@ TEST_F(Option6IATest, basic) {
     int offset = opt->pack(simple_buf, 128, 60);
 
     // 4 bytes header + 4 bytes content
-    EXPECT_EQ(12, opt->len());
+    EXPECT_EQ(12, opt->len() - 4);
     EXPECT_EQ(D6O_IA_NA, opt->getType());
 
     EXPECT_EQ(offset, 76); // 60 + lenght(IA_NA) = 76

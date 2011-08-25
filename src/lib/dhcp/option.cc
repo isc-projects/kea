@@ -35,8 +35,8 @@ Option::Option(Universe u, unsigned short type)
 Option::Option(Universe u, unsigned short type, boost::shared_array<char> buf,
                unsigned int offset, unsigned int len)
     :universe_(u), type_(type), data_(buf),
-     offset_(offset),
-     len_(len) {
+     data_len_(len), offset_(offset)
+      {
 
     // sanity checks
     // TODO: universe must be in V4 and V6
@@ -63,13 +63,13 @@ Option::pack4(boost::shared_array<char> buf,
              unsigned int offset) {
     if ( offset+len() > buf_len ) {
         isc_throw(OutOfRange, "Failed to pack v4 option=" <<
-                  type_ << ",len=" << len_ << ": too small buffer.");
+                  type_ << ",len=" << data_len_ << ": too small buffer.");
     }
     char *ptr = &buf[offset];
     ptr[0] = type_;
-    ptr[1] = len_;
+    ptr[1] = data_len_;
     ptr += 2;
-    memcpy(ptr, &data_[0], len_);
+    memcpy(ptr, &data_[0], data_len_+4);
 
     return offset + len();
 }
@@ -80,14 +80,14 @@ Option::pack6(boost::shared_array<char> buf,
              unsigned int offset) {
     if ( offset+len() > buf_len ) {
         isc_throw(OutOfRange, "Failed to pack v6 option=" <<
-                  type_ << ",len=" << len_ << ": too small buffer.");
+                  type_ << ",len=" << len() << ": too small buffer.");
     }
     char * ptr = &buf[offset];
     *(uint16_t*)ptr = htons(type_);
     ptr += 2;
-    *(uint16_t*)ptr = htons(len_);
+    *(uint16_t*)ptr = htons(data_len_);
     ptr += 2;
-    memcpy(ptr, &data_[0], len_);
+    memcpy(ptr, &data_[0], data_len_);
 
     return offset + len();
 }
@@ -141,7 +141,7 @@ Option::unpack6(boost::shared_array<char> buf,
 
     data_ = buf;
     offset_ = offset;
-    len_ = buf_len;
+    data_len_ = buf_len;
 
     return LibDHCP::unpackOptions6(buf, buf_len, offset, parse_len,
                                    optionLst_);
@@ -150,9 +150,9 @@ Option::unpack6(boost::shared_array<char> buf,
 unsigned short Option::len() {
     switch (universe_) {
     case V4:
-        return len_ + 2; // DHCPv4 option header length: 2 bytes
+        return data_len_ + 2; // DHCPv4 option header length: 2 bytes
     case V6:
-        return len_ + 4; // DHCPv6 option header length: 4 bytes
+        return data_len_ + 4; // DHCPv6 option header length: 4 bytes
     default:
         isc_throw(BadValue, "Unknown universe defined for Option " << type_);
     }
@@ -186,9 +186,9 @@ isc::dhcp::Option::addOption(boost::shared_ptr<isc::dhcp::Option> opt) {
  */
 std::string Option::toText() {
     std::stringstream tmp;
-    tmp << type_ << "(len=" << len_ << "):";
+    tmp << type_ << "(len=" << data_len_ << "):";
 
-    for (unsigned int i=0; i<len_; i++) {
+    for (unsigned int i=0; i<data_len_; i++) {
         if (i) {
             tmp << ":";
         }
