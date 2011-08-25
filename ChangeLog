@@ -1,3 +1,9 @@
+285.	[bug]		jelte
+	sqlite3 data source: fixed a race condition on initial startup,
+	when the database has not been initialized yet, and multiple
+	processes are trying to do so, resulting in one of them failing.
+	(Trac #326, git 5de6f9658f745e05361242042afd518b444d7466)
+
 284.	[bug]		jerry
 	b10-zonemgr: zonemgr will not terminate on empty zones, it will
 	log a warning and try to do zone transfer for them.
