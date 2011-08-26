@@ -268,8 +268,8 @@ public:
 
     /// In-memory data source is read-only, so this derived method will
     /// result in a NotImplemented (once merged) exception.
-    virtual ZoneUpdaterPtr startUpdateZone(const isc::dns::Name& name,
-                                           bool replace) const;
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
+                                      bool replace) const;
 
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class

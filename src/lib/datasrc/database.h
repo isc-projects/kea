@@ -701,8 +701,8 @@ public:
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
     /// TBD
-    virtual ZoneUpdaterPtr startUpdateZone(const isc::dns::Name& name,
-                                           bool replace) const;
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
+                                      bool replace) const;
 
 private:
     /// \brief The RR class that this client handles.
