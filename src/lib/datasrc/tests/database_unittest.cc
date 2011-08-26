@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <boost/foreach.hpp>
+
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
@@ -35,6 +37,10 @@ using namespace isc::dns;
 
 namespace {
 
+// Imaginary zone IDs used in the mock accessor below.
+const int READONLY_ZONE_ID = 42;
+const int WRITABLE_ZONE_ID = 4200;
+
 /*
  * An accessor with minimum implementation, keeping the original
  * "NotImplemented" methods.
@@ -46,7 +52,7 @@ public:
 
     virtual std::pair<bool, int> getZone(const std::string& name) const {
         if (name == "example.org.") {
-            return (std::pair<bool, int>(true, 42));
+            return (std::pair<bool, int>(true, READONLY_ZONE_ID));
         } else if (name == "null.example.org.") {
             return (std::pair<bool, int>(true, 13));
         } else if (name == "empty.example.org.") {
@@ -99,9 +105,15 @@ private:
  * implementation of the optional functionality.
  */
 class MockAccessor : public NopAccessor {
+    // Type of mock database "row"s
+    typedef std::map<std::string, std::vector< std::vector<std::string> > >
+        Domains;
+
 public:
-    MockAccessor()
-    {
+    MockAccessor() {
+        readonly_records_ = &readonly_records_master_;
+        update_records_ = &update_records_master_;
+        empty_records_ = &empty_records_master_;
         fillData();
     }
 private:
@@ -122,32 +134,27 @@ private:
                 throw std::exception();
             }
 
-            if (zone_id == 42) {
-                if (subdomains) {
-                    cur_name.clear();
-                    // Just walk everything and check if it is a subdomain.
-                    // If it is, just copy all data from there.
-                    for (Domains::const_iterator
-                         i(mock_accessor.records.begin());
-                         i != mock_accessor.records.end(); ++ i) {
-                        Name local(i->first);
-                        if (local.compare(isc::dns::Name(name)).
-                            getRelation() ==
-                            isc::dns::NameComparisonResult::SUBDOMAIN) {
-                            cur_name.insert(cur_name.end(), i->second.begin(),
-                                            i->second.end());
-                        }
-                    }
-                } else {
+            cur_record_ = 0;
+            const Domains& cur_records = mock_accessor.getMockRecords(zone_id);
+            if (cur_records.count(name) > 0) {
                     // we're not aiming for efficiency in this test, simply
                     // copy the relevant vector from records
-                    if (mock_accessor.records.count(searched_name_) > 0) {
-                        cur_name = mock_accessor.records.find(searched_name_)->
-                            second;
-                    } else {
-                        cur_name.clear();
+                    cur_name = cur_records.find(name)->second;
+            } else if (subdomains) {
+                cur_name.clear();
+                // Just walk everything and check if it is a subdomain.
+                // If it is, just copy all data from there.
+                for (Domains::const_iterator i(cur_records.begin());
+                     i != cur_records.end(); ++i) {
+                    const Name local(i->first);
+                    if (local.compare(Name(name)).getRelation() ==
+                        isc::dns::NameComparisonResult::SUBDOMAIN) {
+                        cur_name.insert(cur_name.end(), i->second.begin(),
+                                        i->second.end());
                     }
                 }
+            } else {
+                cur_name.clear();
             }
         }
 
@@ -262,7 +269,7 @@ private:
     };
 public:
     virtual IteratorContextPtr getAllRecords(int id) const {
-        if (id == 42) {
+        if (id == READONLY_ZONE_ID) {
             return (IteratorContextPtr(new MockIteratorContext()));
         } else if (id == 13) {
             return (IteratorContextPtr());
@@ -278,7 +285,7 @@ public:
     virtual IteratorContextPtr getRecords(const std::string& name, int id,
                                           bool subdomains) const
     {
-        if (id == 42) {
+        if (id == READONLY_ZONE_ID) {
             return (IteratorContextPtr(new MockNameIteratorContext(*this, id,
                 name, subdomains)));
         } else {
@@ -286,15 +293,64 @@ public:
         }
     }
 
+    //
+    // Helper methods to keep track of some update related activities
+    //
+    bool isRollbacked() const {
+        return (rollbacked_);
+    }
+
+    const vector<string>& getLastAdded() const {
+        return (columns_lastadded_);
+    }
+
+    // This allows the test code to get the accessor used in an update context
+    shared_ptr<const MockAccessor> getLatestClone() const {
+        return (latest_clone_);
+    }
+
 private:
-    typedef std::map<std::string, std::vector< std::vector<std::string> > >
-        Domains;
+    // The following member variables are storage and/or update work space
+    // of the test zone.  The "master"s are the real objects that contain
+    // the data, and they are shared among by all accessors cloned from
+    // an initially created one.  The pointer members allow the sharing.
+    // "readonly" is for normal lookups.  "update" is the workspace for
+    // updates.  When update starts it will be initialized either as an
+    // empty set (when replacing the entire zone) or as a copy of the
+    // "readonly" one.  "empty" is a sentinel to produce negative results.
+    Domains readonly_records_master_;
+    Domains* readonly_records_;
+    Domains update_records_master_;
+    Domains* update_records_;
+    const Domains empty_records_master_;
+    const Domains* empty_records_;
+
     // used as temporary storage during the building of the fake data
-    Domains records;
+    //Domains records;
+
     // used as temporary storage after searchForRecord() and during
     // getNextRecord() calls, as well as during the building of the
     // fake data
-    std::vector< std::vector<std::string> > cur_name;
+    std::vector< std::vector<std::string> > cur_name_;
+
+    // The columns that were most recently added via addRecordToZone()
+    vector<string> columns_lastadded_;
+
+    // Whether rollback operation has been performed for the database.
+    // Not useful except for purely testing purpose.
+    bool rollbacked_;
+
+    // Remember the mock accessor that was last cloned
+    boost::shared_ptr<MockAccessor> latest_clone_;
+
+    const Domains& getMockRecords(int zone_id) const {
+        if (zone_id == READONLY_ZONE_ID) {
+            return (*readonly_records_);
+        } else if (zone_id == WRITABLE_ZONE_ID) {
+            return (*update_records_);
+        }
+        return (*empty_records_);
+    }
 
     // Adds one record to the current name in the database
     // The actual data will not be added to 'records' until
@@ -308,21 +364,21 @@ private:
         columns.push_back(type);
         columns.push_back(sigtype);
         columns.push_back(rdata);
-        cur_name.push_back(columns);
+        cur_name_.push_back(columns);
     }
 
     // Adds all records we just built with calls to addRecords
-    // to the actual fake database. This will clear cur_name,
+    // to the actual fake database. This will clear cur_name_,
     // so we can immediately start adding new records.
     void addCurName(const std::string& name) {
-        ASSERT_EQ(0, records.count(name));
+        ASSERT_EQ(0, readonly_records_->count(name));
         // Append the name to all of them
         for (std::vector<std::vector<std::string> >::iterator
-             i(cur_name.begin()); i != cur_name.end(); ++ i) {
+             i(cur_name_.begin()); i != cur_name_.end(); ++ i) {
             i->push_back(name);
         }
-        records[name] = cur_name;
-        cur_name.clear();
+        (*readonly_records_)[name] = cur_name_;
+        cur_name_.clear();
     }
 
     // Fills the database with zone data.
@@ -503,23 +559,44 @@ TEST(DatabaseConnectionTest, getAllRecords) {
 
 class DatabaseClientTest : public ::testing::Test {
 public:
-    DatabaseClientTest() {
+    DatabaseClientTest() : zname_("example.org"), qname_("www.example.org"),
+                           qclass_(RRClass::IN()), qtype_(RRType::A()),
+                           rrttl_(3600)
+    {
         createClient();
+
+        // set up the commonly used finder.
+        DataSourceClient::FindResult zone(client_->findZone(zname_));
+        assert(zone.code == result::SUCCESS);
+        finder_ = dynamic_pointer_cast<DatabaseClient::Finder>(
+            zone.zone_finder);
+
+        // Test IN/A RDATA to be added in update tests.  Intentionally using
+        // different data than the initial data configured in the MockAccessor.
+        rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
+        rrset_->addRdata(rdata::createRdata(rrset_->getType(),
+                                            rrset_->getClass(), "192.0.2.2"));
+
+        // And its RRSIG.  Also different from the configured one.
+        rrsigset_.reset(new RRset(qname_, qclass_, RRType::RRSIG(),
+                                  rrttl_));
+        rrsigset_->addRdata(rdata::createRdata(rrsigset_->getType(),
+                                               rrsigset_->getClass(),
+                                               "A 5 3 0 20000101000000 "
+                                               "20000201000000 0 example.org. "
+                                               "FAKEFAKEFAKE"));
     }
+
     /*
      * We initialize the client from a function, so we can call it multiple
      * times per test.
      */
     void createClient() {
         current_accessor_ = new MockAccessor();
-        client_.reset(new DatabaseClient(RRClass::IN(),
+        client_.reset(new DatabaseClient(qclass_,
                                          shared_ptr<DatabaseAccessor>(
                                              current_accessor_)));
     }
-    // Will be deleted by client_, just keep the current value for comparison.
-    MockAccessor* current_accessor_;
-    shared_ptr<DatabaseClient> client_;
-    const std::string database_name_;
 
     /**
      * Check the zone finder is a valid one and references the zone ID and
@@ -531,21 +608,61 @@ public:
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
         ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
-        EXPECT_EQ(42, finder->zone_id());
+        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
         EXPECT_EQ(current_accessor_, &finder->getAccessor());
     }
 
     shared_ptr<DatabaseClient::Finder> getFinder() {
-        DataSourceClient::FindResult zone(
-            client_->findZone(Name("example.org")));
+        DataSourceClient::FindResult zone(client_->findZone(zname_));
         EXPECT_EQ(result::SUCCESS, zone.code);
         shared_ptr<DatabaseClient::Finder> finder(
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-        EXPECT_EQ(42, finder->zone_id());
+        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
 
         return (finder);
     }
 
+    // Helper methods for update tests
+    //bool isRollbacked(bool expected = false) const {
+    bool isRollbacked() const {
+        return (update_accessor_->isRollbacked());
+    }
+
+    void checkLastAdded(const char* const expected[]) const {
+        int i = 0;
+        BOOST_FOREACH(const string& column,
+                      current_accessor_->getLastAdded()) {
+            EXPECT_EQ(expected[i++], column);
+        }
+    }
+
+    void setUpdateAccessor() {
+        update_accessor_ = current_accessor_->getLatestClone();
+    }
+
+    // Will be deleted by client_, just keep the current value for comparison.
+    MockAccessor* current_accessor_;
+    shared_ptr<DatabaseClient> client_;
+    const std::string database_name_;
+
+    // The zone finder of the test zone commonly used in various tests.
+    shared_ptr<DatabaseClient::Finder> finder_;
+
+    // Some shortcut variables for commonly used test parameters
+    const Name zname_; // the zone name stored in the test data source
+    const Name qname_; // commonly used name to be found
+    const RRClass qclass_;      // commonly used RR class used with qname
+    const RRType qtype_;        // commonly used RR type used with qname
+    const RRTTL rrttl_;         // commonly used RR TTL
+    RRsetPtr rrset_;            // for adding/deleting an RRset
+    RRsetPtr rrsigset_;         // for adding/deleting an RRset
+
+    // update related objects to be tested
+    ZoneUpdaterPtr updater_;
+    shared_ptr<const MockAccessor> update_accessor_;
+
+    // placeholders
+    const std::vector<std::string> empty_rdatas_; // for NXRRSET/NXDOMAIN
     std::vector<std::string> expected_rdatas_;
     std::vector<std::string> expected_sig_rdatas_;
 };
@@ -1299,8 +1416,7 @@ TEST_F(DatabaseClientTest, getOrigin) {
     ASSERT_EQ(result::SUCCESS, zone.code);
     shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-    EXPECT_EQ(42, finder->zone_id());
+    EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
     EXPECT_EQ(isc::dns::Name("example.org"), finder->getOrigin());
 }
-
 }
