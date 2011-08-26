@@ -198,7 +198,7 @@ TEST_F(InMemoryClientTest, getZoneCount) {
 }
 
 TEST_F(InMemoryClientTest, startUpdateZone) {
-    EXPECT_THROW(memory_client.startUpdateZone(Name("example.org"), false),
+    EXPECT_THROW(memory_client.getUpdater(Name("example.org"), false),
                  isc::NotImplemented);
 }
 

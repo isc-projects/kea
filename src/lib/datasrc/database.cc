@@ -609,9 +609,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
 }
 
 ZoneUpdaterPtr
-DatabaseClient::startUpdateZone(const isc::dns::Name& name,
-                                bool replace) const
-{
+DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
     shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
     const std::pair<bool, int> zone(update_accessor->startUpdateZone(
                                         name.toText(), replace));

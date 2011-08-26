@@ -1503,7 +1503,7 @@ TEST_F(DatabaseClientTest, getOrigin) {
 }
 
 TEST_F(DatabaseClientTest, updaterFinder) {
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     ASSERT_TRUE(updater_);
 
     // If this update isn't replacing the zone, the finder should work
@@ -1519,7 +1519,7 @@ TEST_F(DatabaseClientTest, updaterFinder) {
     // When replacing the zone, the updater's finder shouldn't see anything
     // in the zone until something is added.
     updater_.reset();
-    updater_ = client_->startUpdateZone(zname_, true);
+    updater_ = client_->getUpdater(zname_, true);
     ASSERT_TRUE(updater_);
     EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
                   updater_->getFinder()).zone_id());
@@ -1536,7 +1536,7 @@ TEST_F(DatabaseClientTest, flushZone) {
 
     // start update in the replace mode.  the normal finder should still
     // be able to see the record, but the updater's finder shouldn't.
-    updater_ = client_->startUpdateZone(zname_, true);
+    updater_ = client_->getUpdater(zname_, true);
     setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::SUCCESS,
               finder->find(qname_, qtype_).code);
@@ -1557,7 +1557,7 @@ TEST_F(DatabaseClientTest, updateCancel) {
     ZoneFinderPtr finder = client_->findZone(zname_).zone_finder;
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_).code);
 
-    updater_ = client_->startUpdateZone(zname_, true);
+    updater_ = client_->getUpdater(zname_, true);
     setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               updater_->getFinder().find(qname_, qtype_).code);
@@ -1574,14 +1574,14 @@ TEST_F(DatabaseClientTest, updateCancel) {
 
 TEST_F(DatabaseClientTest, duplicateCommit) {
     // duplicate commit.  should result in exception.
-    updater_ = client_->startUpdateZone(zname_, true);
+    updater_ = client_->getUpdater(zname_, true);
     updater_->commit();
     EXPECT_THROW(updater_->commit(), DataSourceError);
 }
 
 TEST_F(DatabaseClientTest, addRRsetToNewZone) {
     // Add a single RRset to a fresh empty zone
-    updater_ = client_->startUpdateZone(zname_, true);
+    updater_ = client_->getUpdater(zname_, true);
     updater_->addRRset(*rrset_);
 
     expected_rdatas_.clear();
@@ -1595,7 +1595,7 @@ TEST_F(DatabaseClientTest, addRRsetToNewZone) {
 
     // Similar to the previous case, but with RRSIG
     updater_.reset();
-    updater_ = client_->startUpdateZone(zname_, true);
+    updater_ = client_->getUpdater(zname_, true);
     updater_->addRRset(*rrset_);
     updater_->addRRset(*rrsigset_);
 
@@ -1620,7 +1620,7 @@ TEST_F(DatabaseClientTest, addRRsetToCurrentZone) {
     // Similar to the previous test, but not replacing the existing data.
     shared_ptr<DatabaseClient::Finder> finder(getFinder());
 
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     updater_->addRRset(*rrset_);
 
     // We should see both old and new data.
@@ -1645,7 +1645,7 @@ TEST_F(DatabaseClientTest, addRRsetToCurrentZone) {
 TEST_F(DatabaseClientTest, addMultipleRRs) {
     // Similar to the previous case, but the added RRset contains multiple
     // RRs.
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
                                         "192.0.2.3"));
     updater_->addRRset(*rrset_);
@@ -1665,7 +1665,7 @@ TEST_F(DatabaseClientTest, addRRsetOfLargerTTL) {
     // Similar to the previous one, but the TTL of the added RRset is larger
     // than that of the existing record.  The finder should use the smaller
     // one.
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     rrset_->setTTL(RRTTL(7200));
     updater_->addRRset(*rrset_);
 
@@ -1683,7 +1683,7 @@ TEST_F(DatabaseClientTest, addRRsetOfLargerTTL) {
 TEST_F(DatabaseClientTest, addRRsetOfSmallerTTL) {
     // Similar to the previous one, but the added RRset has a smaller TTL.
     // The added TTL should be used by the finder.
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     rrset_->setTTL(RRTTL(1800));
     updater_->addRRset(*rrset_);
 
@@ -1703,7 +1703,7 @@ TEST_F(DatabaseClientTest, addSameRR) {
     // Currently the add interface doesn't try to suppress the duplicate,
     // neither does the finder.  We may want to revisit it in future versions.
 
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
     rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
                                         "192.0.2.1"));
@@ -1720,7 +1720,7 @@ TEST_F(DatabaseClientTest, addSameRR) {
 }
 
 TEST_F(DatabaseClientTest, addDeviantRR) {
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
 
     // RR class mismatch.  This should be detected and rejected.
     rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(), rrttl_));
@@ -1748,13 +1748,13 @@ TEST_F(DatabaseClientTest, addDeviantRR) {
 }
 
 TEST_F(DatabaseClientTest, addEmptyRRset) {
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
     EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
 }
 
 TEST_F(DatabaseClientTest, addAfterCommit) {
-   updater_ = client_->startUpdateZone(zname_, false);
+   updater_ = client_->getUpdater(zname_, false);
    updater_->commit();
    EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
 }
@@ -1767,7 +1767,7 @@ TEST_F(DatabaseClientTest, deleteRRset) {
                                         "192.0.2.1"));
 
     // Delete one RR from an RRset
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
 
     // Delete the only RR of a name
@@ -1826,7 +1826,7 @@ TEST_F(DatabaseClientTest, deleteRRsetToNXDOMAIN) {
     rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
                                         "www.example.org"));
 
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
     {
         SCOPED_TRACE("delete RRset to NXDOMAIN");
@@ -1843,7 +1843,7 @@ TEST_F(DatabaseClientTest, deleteMultipleRRs) {
     rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
                                         "2001:db8::2"));
 
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
 
     {
@@ -1864,7 +1864,7 @@ TEST_F(DatabaseClientTest, partialDelete) {
 
     // deleteRRset should succeed "silently", and subsequent find() should
     // find the remaining RR.
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
     {
         SCOPED_TRACE("partial delete");
@@ -1878,7 +1878,7 @@ TEST_F(DatabaseClientTest, partialDelete) {
 TEST_F(DatabaseClientTest, deleteNoMatch) {
     // similar to the previous test, but there's not even a match in the
     // specified RRset.  Essentially there's no difference in the result.
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
     {
         SCOPED_TRACE("delete no match");
@@ -1894,7 +1894,7 @@ TEST_F(DatabaseClientTest, deleteWithDifferentTTL) {
     rrset_.reset(new RRset(qname_, qclass_, qtype_, RRTTL(1800)));
     rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
                                         "192.0.2.1"));
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
     {
         SCOPED_TRACE("delete RRset with a different TTL");
@@ -1905,7 +1905,7 @@ TEST_F(DatabaseClientTest, deleteWithDifferentTTL) {
 }
 
 TEST_F(DatabaseClientTest, deleteDeviantRR) {
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
 
     // RR class mismatch.  This should be detected and rejected.
     rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(), rrttl_));
@@ -1922,13 +1922,13 @@ TEST_F(DatabaseClientTest, deleteDeviantRR) {
 }
 
 TEST_F(DatabaseClientTest, deleteAfterCommit) {
-   updater_ = client_->startUpdateZone(zname_, false);
+   updater_ = client_->getUpdater(zname_, false);
    updater_->commit();
    EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
 }
 
 TEST_F(DatabaseClientTest, deleteEmptyRRset) {
-    updater_ = client_->startUpdateZone(zname_, false);
+    updater_ = client_->getUpdater(zname_, false);
     rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
     EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
 }

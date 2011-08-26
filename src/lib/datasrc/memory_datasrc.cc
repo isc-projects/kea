@@ -796,7 +796,7 @@ InMemoryClient::getIterator(const Name& name) const {
 }
 
 ZoneUpdaterPtr
-InMemoryClient::startUpdateZone(const isc::dns::Name&, bool) const {
+InMemoryClient::getUpdater(const isc::dns::Name&, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
 } // end of namespace datasrc
