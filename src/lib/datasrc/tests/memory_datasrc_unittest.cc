@@ -197,6 +197,11 @@ TEST_F(InMemoryClientTest, getZoneCount) {
     EXPECT_EQ(2, memory_client.getZoneCount());
 }
 
+TEST_F(InMemoryClientTest, startUpdateZone) {
+    EXPECT_THROW(memory_client.startUpdateZone(Name("example.org"), false),
+                 isc::NotImplemented);
+}
+
 // A helper callback of masterLoad() used in InMemoryZoneFinderTest.
 void
 setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
@@ -1097,5 +1102,4 @@ TEST_F(InMemoryZoneFinderTest, getFileName) {
     EXPECT_EQ(TEST_DATA_DIR "/root.zone", zone_finder_.getFileName());
     EXPECT_TRUE(rootzone.getFileName().empty());
 }
-
 }

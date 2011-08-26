@@ -15,8 +15,10 @@
 #ifndef __ZONE_H
 #define __ZONE_H 1
 
-#include <datasrc/result.h>
+#include <dns/rrset.h>
 #include <dns/rrsetlist.h>
+
+#include <datasrc/result.h>
 
 namespace isc {
 namespace datasrc {
@@ -207,8 +209,51 @@ typedef boost::shared_ptr<ZoneFinder> ZoneFinderPtr;
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
 typedef boost::shared_ptr<const ZoneFinder> ConstZoneFinderPtr;
 
-}
-}
+/// The base class to make updates to a single zone.
+class ZoneUpdater {
+protected:
+    ZoneUpdater() {}
+
+public:
+    virtual ~ZoneUpdater() {}
+
+    /// TBD
+    ///
+    /// The finder is not expected to provide meaningful data once commit()
+    /// was performed.
+    virtual ZoneFinder& getFinder() = 0;
+
+    /// TBD
+    ///
+    /// Notes about unexpected input: class mismatch will be rejected.
+    /// The owner name isn't checked; it's the caller's responsibility.
+    ///
+    /// Open issues: we may eventually want to return result values such as
+    /// there's a duplicate, etc.
+    ///
+    /// The added RRset must not be empty (i.e., it must have at least one
+    /// RDATA).
+    ///
+    /// This method must not be called once commit() is performed.
+    virtual void addRRset(const isc::dns::RRset& rrset) = 0;
+
+    /// TBD
+    ///
+    /// how to handle TTL?
+    virtual void deleteRRset(const isc::dns::RRset& rrset) = 0;
+
+    /// TBD
+    ///
+    /// This operation can only be performed at most once.  A duplicate call
+    /// must result in a DatasourceError exception.
+    virtual void commit() = 0;
+};
+
+/// \brief A pointer-like type pointing to a \c ZoneUpdater object.
+typedef boost::shared_ptr<ZoneUpdater> ZoneUpdaterPtr;
+
+} // end of datasrc
+} // end of isc
 
 #endif  // __ZONE_H
 
