@@ -88,7 +88,7 @@ def get_spec_defaults(spec):
         elif item_type == "list":
             return spec.get(
                     "item_default",
-                    [ _get_spec_defaults(s) for s in spec["list_item_spec"] ])
+                    [ _get_spec_defaults(spec["list_item_spec"]) ])
         elif item_type == "map":
             return spec.get(
                     "item_default",
