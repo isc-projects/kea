@@ -215,6 +215,7 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         RRsetStore::const_iterator found_rrset =
             found_domain->second.find(type);
         if (found_rrset != found_domain->second.end()) {
+            // TODO: Drop whatever rrsig is there if options doesn't have the dnssec
             return (FindResult(SUCCESS, found_rrset->second));
         }
 
@@ -329,31 +330,40 @@ TEST_F(QueryTest, dnssecPositive) {
     Query query(memory_client, qname, qtype, response, true);
     EXPECT_NO_THROW(query.process());
     // find match rrset
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+    // We can't let responseCheck to check the additional section as well,
+    // it gets confused by the two RRs for glue.delegation.../RRSIG due
+    // to it's design and fixing it would be hard. Therefore we simply
+    // check manually this one time.
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
                   (www_a_txt + std::string("www.example.com. 3600 IN RRSIG "
-                                           "AAAA 5 3 3600 20000101000000 "
+                                           "A 5 3 3600 20000101000000 "
                                            "20000201000000 12345 example.com. "
                                            "FAKEFAKEFAKE\n")).c_str(),
                   (zone_ns_txt + std::string("example.com. 3600 IN RRSIG NS 5 "
                                              "3 3600 20000101000000 "
                                              "20000201000000 12345 "
                                              "example.com. FAKEFAKEFAKE\n")).
-                  c_str(),
-                  (ns_addrs_txt + std::string("glue.delegation.example.com. "
-                                              "3600 IN RRSIG A 5 3 3600 "
-                                              "20000101000000 20000201000000 "
-                                              "12345 example.com. "
-                                              "FAKEFAKEFAKE\n"
-                                              "glue.delegation.example.com. "
-                                              "3600 IN RRSIG AAAA 5 3 3600 "
-                                              "20000101000000 20000201000000 "
-                                              "12345 example.com. "
-                                              "FAKEFAKEFAKE\n"
-                                              "noglue.example.com. 3600 IN "
-                                              "RRSIG A 5 3 3600 "
-                                              "20000101000000 20000201000000 "
-                                              "12345 example.com. "
-                                              "FAKEFAKEFAKE\n")).c_str());
+                  c_str(), NULL);
+    RRsetIterator iterator(response.beginSection(Message::SECTION_ADDITIONAL));
+    const char* additional[] = {
+        "glue.delegation.example.com. 3600 IN A 192.0.2.153\n",
+        "glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
+            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
+        "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
+        "glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 "
+            "20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE\n",
+        "noglue.example.com. 3600 IN A 192.0.2.53\n",
+        "noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
+            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
+        NULL
+    };
+    for (const char** rr(additional); *rr != NULL; ++ rr) {
+        ASSERT_FALSE(iterator ==
+                     response.endSection(Message::SECTION_ADDITIONAL));
+        EXPECT_EQ(*rr, (*iterator)->toText());
+        iterator ++;
+    }
+    EXPECT_TRUE(iterator == response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
