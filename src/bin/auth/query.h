@@ -145,7 +145,9 @@ public:
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
           isc::dns::Message& response, bool dnssec = false) :
         datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
-        response_(response), dnssec_(dnssec)
+        response_(response), dnssec_(dnssec),
+        dnssec_opt_(dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
+                    isc::datasrc::ZoneFinder::FIND_DEFAULT)
     {}
 
     /// Process the query.
@@ -214,6 +216,7 @@ private:
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
     const bool dnssec_;
+    const isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
 };
 
 }
