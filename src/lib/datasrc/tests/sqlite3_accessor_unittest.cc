@@ -431,9 +431,16 @@ class SQLite3Update : public SQLite3AccessorTest {
 protected:
     SQLite3Update() {
         // Note: if "installing" the test file fails some of the subsequent
-        // tests will fail and we should be able to notice that.
-        system(INSTALL_PROG " " TEST_DATA_DIR
-               "/test.sqlite3 " TEST_DATA_BUILDDIR "/test.sqlite3.copied");
+        // tests would fail.
+        const char *install_cmd = INSTALL_PROG " " TEST_DATA_DIR
+                                  "/test.sqlite3 " TEST_DATA_BUILDDIR
+                                  "/test.sqlite3.copied";
+        if (system(install_cmd) != 0) {
+            // any exception will do, this is failure in test setup, but nice
+            // to show the command that fails, and shouldn't be caught
+            isc_throw(isc::Exception,
+                      "Error setting up; command failed: " << install_cmd);
+        };
         initAccessor(TEST_DATA_BUILDDIR "/test.sqlite3.copied", RRClass::IN());
         zone_id = accessor->getZone("example.com.").second;
         another_accessor.reset(new SQLite3Accessor(
