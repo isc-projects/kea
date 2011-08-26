@@ -71,12 +71,26 @@ public:
      */
     SQLite3Accessor(const std::string& filename,
                     const isc::dns::RRClass& rrclass);
+
+    /**
+     * \brief Constructor
+     *
+     * Same as the other version, but takes rrclass as a bare string.
+     * we should obsolete the other version and unify the constructor to
+     * this version; the SQLite3Accessor is expected to be "dumb" and
+     * shouldn't care about DNS specific information such as RRClass.
+     */
+    SQLite3Accessor(const std::string& filename, const std::string& rrclass);
+
     /**
      * \brief Destructor
      *
      * Closes the database.
      */
     ~SQLite3Accessor();
+
+    /// TBD
+    virtual boost::shared_ptr<DatabaseAccessor> clone();
 
     /**
      * \brief Look up a zone
@@ -158,6 +172,8 @@ public:
 private:
     /// \brief Private database data
     boost::scoped_ptr<SQLite3Parameters> dbparameters_;
+    /// \brief The filename of the DB (necessary for clone())
+    const std::string filename_;
     /// \brief The class for which the queries are done
     const std::string class_;
     /// \brief Opens the database

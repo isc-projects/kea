@@ -17,6 +17,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrsetlist.h>
@@ -793,5 +795,9 @@ InMemoryClient::getIterator(const Name& name) const {
     return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name)));
 }
 
+ZoneUpdaterPtr
+InMemoryClient::startUpdateZone(const isc::dns::Name&, bool) const {
+    isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
+}
 } // end of namespace datasrc
 } // end of namespace dns
