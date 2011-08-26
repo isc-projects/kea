@@ -43,9 +43,7 @@ class TestUtilties(unittest.TestCase):
         { 'item_name': 'test_bool1', 'item_type': 'boolean', 'item_default': True       },
         { 'item_name': 'test_str1',  'item_type': 'string',  'item_default': 'ABCD'     },
         { 'item_name': 'test_list1', 'item_type': 'list',    'item_default': [1,2,3],
-          'list_item_spec' : [ { 'item_name': 'one',   'item_type': 'integer' },
-                               { 'item_name': 'two',   'item_type': 'integer' },
-                               { 'item_name': 'three', 'item_type': 'integer' } ] },
+          'list_item_spec' : { 'item_name': 'number',   'item_type': 'integer' } },
         { 'item_name': 'test_map1',  'item_type': 'map',     'item_default': {'a':1,'b':2,'c':3},
           'map_item_spec'  : [ { 'item_name': 'a',   'item_type': 'integer'},
                                { 'item_name': 'b',   'item_type': 'integer'},
@@ -55,14 +53,18 @@ class TestUtilties(unittest.TestCase):
         { 'item_name': 'test_bool2', 'item_type': 'boolean' },
         { 'item_name': 'test_str2',  'item_type': 'string'  },
         { 'item_name': 'test_list2', 'item_type': 'list',
-          'list_item_spec' : [ { 'item_name': 'one',   'item_type': 'integer' },
-                               { 'item_name': 'two',   'item_type': 'integer' },
-                               { 'item_name': 'three', 'item_type': 'integer' } ] },
+          'list_item_spec' : { 'item_name': 'number',   'item_type': 'integer' } },
         { 'item_name': 'test_map2',  'item_type': 'map',
           'map_item_spec'  : [ { 'item_name': 'A', 'item_type': 'integer'},
                                { 'item_name': 'B', 'item_type': 'integer'},
                                { 'item_name': 'C', 'item_type': 'integer'} ] },
-        { 'item_name': 'test_none',  'item_type': 'none'    }
+        { 'item_name': 'test_none',  'item_type': 'none'    },
+        { 'item_name': 'test_list3', 'item_type': 'list',    'item_default': ["one","two","three"],
+          'list_item_spec' : { 'item_name': 'number', 'item_type': 'string' } },
+        { 'item_name': 'test_map3',  'item_type': 'map',     'item_default': {'a':'one','b':'two','c':'three'},
+          'map_item_spec'  : [ { 'item_name': 'a', 'item_type': 'string'},
+                               { 'item_name': 'b', 'item_type': 'string'},
+                               { 'item_name': 'c', 'item_type': 'string'} ] }
         ]
 
     def setUp(self):
@@ -85,9 +87,11 @@ class TestUtilties(unittest.TestCase):
                 'test_real2' : 0.0,
                 'test_bool2' : False,
                 'test_str2'  : "",
-                'test_list2' : [0,0,0],
+                'test_list2' : [0],
                 'test_map2'  : { 'A' : 0, 'B' : 0, 'C' : 0 },
-                'test_none'  : None })
+                'test_none'  : None,
+                'test_list3' : [ "one", "two", "three" ],
+                'test_map3'  : { 'a' : 'one', 'b' : 'two', 'c' : 'three' } })
         self.assertEqual(stats.get_spec_defaults(None), {})
         self.assertRaises(KeyError, stats.get_spec_defaults, [{'item_name':'Foo'}])
 
