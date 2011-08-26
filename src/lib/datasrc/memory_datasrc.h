@@ -266,6 +266,11 @@ public:
     /// \brief Implementation of the getIterator method
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
+    /// In-memory data source is read-only, so this derived method will
+    /// result in a NotImplemented (once merged) exception.
+    virtual ZoneUpdaterPtr startUpdateZone(const isc::dns::Name& name,
+                                           bool replace) const;
+
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class
     // directly any more (it should be handled through DataSourceClient)?

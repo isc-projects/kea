@@ -15,6 +15,14 @@
 #ifndef __DATABASE_DATASRC_H
 #define __DATABASE_DATASRC_H
 
+#include <string>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <dns/rrclass.h>
+#include <dns/rrclass.h>
+#include <dns/rrset.h>
+
 #include <datasrc/client.h>
 
 #include <dns/name.h>
@@ -109,6 +117,7 @@ public:
      * classes in polymorphic way.
      */
     virtual ~DatabaseAccessor() { }
+
     /**
      * \brief Retrieve a zone identifier
      *
@@ -420,6 +429,9 @@ public:
     /// to the method or internal database error.
     virtual void rollbackUpdateZone() = 0;
 
+    /// TBD
+    virtual boost::shared_ptr<DatabaseAccessor> clone() = 0;
+
     /**
      * \brief Returns a string identifying this dabase backend
      *
@@ -459,11 +471,14 @@ public:
      * \exception isc::InvalidParameter if database is NULL. It might throw
      * standard allocation exception as well, but doesn't throw anything else.
      *
+     * \param rrclass The RR class of the zones that this client will handle.
      * \param database The database to use to get data. As the parameter
      *     suggests, the client takes ownership of the database and will
      *     delete it when itself deleted.
      */
-    DatabaseClient(boost::shared_ptr<DatabaseAccessor> database);
+    DatabaseClient(isc::dns::RRClass rrclass,
+                   boost::shared_ptr<DatabaseAccessor> database);
+
     /**
      * \brief Corresponding ZoneFinder implementation
      *
@@ -568,6 +583,7 @@ public:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
+
         /**
          * \brief Searches database for an RRset
          *
@@ -614,6 +630,7 @@ public:
                                                      bool want_ns, const
                                                      isc::dns::Name*
                                                      construct_name = NULL);
+
         /**
          * \brief Checks if something lives below this domain.
          *
@@ -623,6 +640,29 @@ public:
          * \param name The domain to check.
          */
         bool hasSubdomains(const std::string& name);
+    };
+
+    class Updater : public ZoneUpdater {
+    public:
+        Updater(boost::shared_ptr<DatabaseAccessor> database, int zone_id,
+                const isc::dns::Name& zone_name,
+                const isc::dns::RRClass& zone_class);
+        ~Updater();
+        virtual ZoneFinder& getFinder();
+        virtual void addRRset(const isc::dns::RRset& rrset);
+        virtual void deleteRRset(const isc::dns::RRset& rrset);
+        virtual void commit();
+
+    private:
+        bool committed_;
+        boost::shared_ptr<DatabaseAccessor> accessor_;
+        const int zone_id_;
+        std::string db_name_;
+        const std::string zone_name_;
+        const isc::dns::RRClass zone_class_;
+        boost::scoped_ptr<Finder::Finder> finder_;
+        std::string add_columns_[DatabaseAccessor::ADD_COLUMN_COUNT];
+        std::string del_params_[DatabaseAccessor::DEL_PARAM_COUNT];
     };
 
     /**
@@ -660,7 +700,14 @@ public:
      */
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
+    /// TBD
+    virtual ZoneUpdaterPtr startUpdateZone(const isc::dns::Name& name,
+                                           bool replace) const;
+
 private:
+    /// \brief The RR class that this client handles.
+    const isc::dns::RRClass rrclass_;
+
     /// \brief The accessor to our database.
     const boost::shared_ptr<DatabaseAccessor> accessor_;
 };
@@ -668,4 +715,8 @@ private:
 }
 }
 
-#endif
+#endif  // __DATABASE_DATASRC_H
+
+// Local Variables:
+// mode: c++
+// End:

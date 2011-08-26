@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
 #include <vector>
 
 #include <datasrc/database.h>
@@ -21,6 +22,8 @@
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrttl.h>
+#include <dns/rrset.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
@@ -29,17 +32,18 @@
 
 #include <boost/foreach.hpp>
 
-#include <string>
-
 using namespace isc::dns;
-using std::string;
+using namespace std;
+using boost::shared_ptr;
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
+DatabaseClient::DatabaseClient(RRClass rrclass,
+                               boost::shared_ptr<DatabaseAccessor>
                                accessor) :
-    accessor_(accessor)
+    rrclass_(rrclass), accessor_(accessor)
 {
     if (!accessor_) {
         isc_throw(isc::InvalidParameter,
@@ -604,5 +608,135 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
 }
 
+ZoneUpdaterPtr
+DatabaseClient::startUpdateZone(const isc::dns::Name& name,
+                                bool replace) const
+{
+    shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
+    const std::pair<bool, int> zone(update_accessor->startUpdateZone(
+                                        name.toText(), replace));
+    if (!zone.first) {
+        return (ZoneUpdaterPtr());
+    }
+
+     return (ZoneUpdaterPtr(new Updater(update_accessor, zone.second,
+                                        name, rrclass_)));
+}
+
+DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> accessor,
+                                 int zone_id, const Name& zone_name,
+                                 const RRClass& zone_class) :
+    committed_(false), accessor_(accessor), zone_id_(zone_id),
+    db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
+    zone_class_(zone_class),
+    finder_(new Finder(accessor_, zone_id_, zone_name))
+{
+    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
+        .arg(zone_name_).arg(zone_class_).arg(db_name_);
+}
+
+DatabaseClient::Updater::~Updater() {
+    if (!committed_) {
+        accessor_->rollbackUpdateZone();
+        logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
+            .arg(zone_name_).arg(zone_class_).arg(db_name_);
+    }
+
+    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_DESTROYED)
+        .arg(zone_name_).arg(zone_class_).arg(db_name_);
+}
+
+ZoneFinder&
+DatabaseClient::Updater::getFinder() {
+    return (*finder_);
+}
+
+void
+DatabaseClient::Updater::addRRset(const RRset& rrset) {
+    if (committed_) {
+        isc_throw(DataSourceError, "Add attempt after commit to zone: "
+                  << zone_name_ << "/" << zone_class_);
+    }
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, "An RRset of a different class is being "
+                  << "added to " << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+
+    RdataIteratorPtr it = rrset.getRdataIterator();
+    if (it->isLast()) {
+        isc_throw(DataSourceError, "An empty RRset is being added for "
+                  << rrset.getName() << "/" << zone_class_ << "/"
+                  << rrset.getType());
+    }
+
+    add_columns_[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
+    add_columns_[DatabaseAccessor::ADD_REV_NAME] =
+        rrset.getName().reverse().toText();
+    add_columns_[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
+    add_columns_[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
+    for (; !it->isLast(); it->next()) {
+        if (rrset.getType() == RRType::RRSIG()) {
+            // XXX: the current interface (based on the current sqlite3
+            // data source schema) requires a separate "sigtype" column,
+            // even though it won't be used in a newer implementation.
+            // We should eventually clean up the schema design and simplify
+            // the interface, but until then we have to conform to the schema.
+            const generic::RRSIG& rrsig_rdata =
+                dynamic_cast<const generic::RRSIG&>(it->getCurrent());
+            add_columns_[DatabaseAccessor::ADD_SIGTYPE] =
+                rrsig_rdata.typeCovered().toText();
+        }
+        add_columns_[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        accessor_->addRecordToZone(add_columns_);
+    }
+}
+
+void
+DatabaseClient::Updater::deleteRRset(const RRset& rrset) {
+    if (committed_) {
+        isc_throw(DataSourceError, "Delete attempt after commit on zone: "
+                  << zone_name_ << "/" << zone_class_);
+    }
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, "An RRset of a different class is being "
+                  << "deleted from " << zone_name_ << "/" << zone_class_
+                  << ": " << rrset.toText());
+    }
+
+    RdataIteratorPtr it = rrset.getRdataIterator();
+    if (it->isLast()) {
+        isc_throw(DataSourceError, "An empty RRset is being deleted for "
+                  << rrset.getName() << "/" << zone_class_ << "/"
+                  << rrset.getType());
+    }
+
+    del_params_[DatabaseAccessor::DEL_NAME] = rrset.getName().toText();
+    del_params_[DatabaseAccessor::DEL_TYPE] = rrset.getType().toText();
+    for (; !it->isLast(); it->next()) {
+        del_params_[DatabaseAccessor::DEL_RDATA] =
+            it->getCurrent().toText();
+        accessor_->deleteRecordInZone(del_params_);
+    }
+}
+
+void
+DatabaseClient::Updater::commit() {
+    if (committed_) {
+        isc_throw(DataSourceError, "Duplicate commit attempt for "
+                  << zone_name_ << "/" << zone_class_ << " on "
+                  << db_name_);
+    }
+    accessor_->commitUpdateZone();
+
+    // We release the accessor immediately after commit is completed so that
+    // we don't hold the possible internal resource any longer.
+    accessor_.reset();
+
+    committed_ = true;
+
+    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_COMMIT)
+        .arg(zone_name_).arg(zone_class_).arg(db_name_);
+}
 }
 }

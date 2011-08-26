@@ -58,6 +58,10 @@ public:
         }
     }
 
+    virtual shared_ptr<DatabaseAccessor> clone() {
+        return (shared_ptr<DatabaseAccessor>()); // bogus data, but unused
+    }
+
     virtual std::pair<bool, int> startUpdateZone(const std::string&, bool) {
         // return dummy value.  unused anyway.
         return (pair<bool, int>(true, 0));
@@ -508,8 +512,9 @@ public:
      */
     void createClient() {
         current_accessor_ = new MockAccessor();
-        client_.reset(new DatabaseClient(shared_ptr<DatabaseAccessor>(
-             current_accessor_)));
+        client_.reset(new DatabaseClient(RRClass::IN(),
+                                         shared_ptr<DatabaseAccessor>(
+                                             current_accessor_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
     MockAccessor* current_accessor_;
@@ -566,7 +571,8 @@ TEST_F(DatabaseClientTest, superZone) {
 TEST_F(DatabaseClientTest, noAccessorException) {
     // We need a dummy variable here; some compiler would regard it a mere
     // declaration instead of an instantiation and make the test fail.
-    EXPECT_THROW(DatabaseClient dummy((shared_ptr<DatabaseAccessor>())),
+    EXPECT_THROW(DatabaseClient dummy(RRClass::IN(),
+                                      shared_ptr<DatabaseAccessor>()),
                  isc::InvalidParameter);
 }
 
@@ -578,13 +584,15 @@ TEST_F(DatabaseClientTest, noZoneIterator) {
 // If the zone doesn't exist and iteration is not implemented, it still throws
 // the exception it doesn't exist
 TEST_F(DatabaseClientTest, noZoneNotImplementedIterator) {
-    EXPECT_THROW(DatabaseClient(boost::shared_ptr<DatabaseAccessor>(
-        new NopAccessor())).getIterator(Name("example.com")),
+    EXPECT_THROW(DatabaseClient(RRClass::IN(),
+                                boost::shared_ptr<DatabaseAccessor>(
+                                    new NopAccessor())).getIterator(
+                                        Name("example.com")),
                  DataSourceError);
 }
 
 TEST_F(DatabaseClientTest, notImplementedIterator) {
-    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAccessor>(
+    EXPECT_THROW(DatabaseClient(RRClass::IN(), shared_ptr<DatabaseAccessor>(
         new NopAccessor())).getIterator(Name("example.org")),
                  isc::NotImplemented);
 }

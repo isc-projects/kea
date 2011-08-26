@@ -128,6 +128,7 @@ private:
 SQLite3Accessor::SQLite3Accessor(const std::string& filename,
                                  const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
+    filename_(filename),
     class_(rrclass.toText()),
     database_name_("sqlite3_" +
                    isc::util::Filename(filename).nameAndExtension())
@@ -135,6 +136,25 @@ SQLite3Accessor::SQLite3Accessor(const std::string& filename,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
 
     open(filename);
+}
+
+SQLite3Accessor::SQLite3Accessor(const std::string& filename,
+                                 const string& rrclass) :
+    dbparameters_(new SQLite3Parameters),
+    filename_(filename),
+    class_(rrclass),
+    database_name_("sqlite3_" +
+                   isc::util::Filename(filename).nameAndExtension())
+{
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
+
+    open(filename);
+}
+
+boost::shared_ptr<DatabaseAccessor>
+SQLite3Accessor::clone() {
+    return (boost::shared_ptr<DatabaseAccessor>(new SQLite3Accessor(filename_,
+                                                                    class_)));
 }
 
 namespace {
