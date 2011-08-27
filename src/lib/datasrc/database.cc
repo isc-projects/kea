@@ -608,49 +608,54 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
 }
 
-ZoneUpdaterPtr
-DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
-    shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
-    const std::pair<bool, int> zone(update_accessor->startUpdateZone(
-                                        name.toText(), replace));
-    if (!zone.first) {
-        return (ZoneUpdaterPtr());
-    }
-
-     return (ZoneUpdaterPtr(new Updater(update_accessor, zone.second,
-                                        name, rrclass_)));
-}
-
-DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> accessor,
-                                 int zone_id, const Name& zone_name,
-                                 const RRClass& zone_class) :
-    committed_(false), accessor_(accessor), zone_id_(zone_id),
-    db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
-    zone_class_(zone_class),
-    finder_(new Finder(accessor_, zone_id_, zone_name))
-{
-    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
-        .arg(zone_name_).arg(zone_class_).arg(db_name_);
-}
-
-DatabaseClient::Updater::~Updater() {
-    if (!committed_) {
-        accessor_->rollbackUpdateZone();
-        logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
+//
+// Zone updater using some database system as the underlying data source.
+//
+class DatabaseUpdater : public ZoneUpdater {
+public:
+    DatabaseUpdater(shared_ptr<DatabaseAccessor> accessor, int zone_id,
+            const Name& zone_name, const RRClass& zone_class) :
+        committed_(false), accessor_(accessor), zone_id_(zone_id),
+        db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
+        zone_class_(zone_class),
+        finder_(new DatabaseClient::Finder::Finder(accessor_, zone_id_,
+                                                   zone_name))
+    {
+        logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
             .arg(zone_name_).arg(zone_class_).arg(db_name_);
     }
 
-    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_DESTROYED)
-        .arg(zone_name_).arg(zone_class_).arg(db_name_);
-}
+    virtual ~DatabaseUpdater() {
+        if (!committed_) {
+            accessor_->rollbackUpdateZone();
+            logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
+                .arg(zone_name_).arg(zone_class_).arg(db_name_);
+        }
 
-ZoneFinder&
-DatabaseClient::Updater::getFinder() {
-    return (*finder_);
-}
+        logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_DESTROYED)
+            .arg(zone_name_).arg(zone_class_).arg(db_name_);
+    }
+
+    virtual ZoneFinder& getFinder() { return (*finder_); }
+
+    virtual void addRRset(const RRset& rrset);
+    virtual void deleteRRset(const RRset& rrset);
+    virtual void commit();
+
+private:
+    bool committed_;
+    shared_ptr<DatabaseAccessor> accessor_;
+    const int zone_id_;
+    const string db_name_;
+    const string zone_name_;
+    const RRClass zone_class_;
+    boost::scoped_ptr<DatabaseClient::Finder::Finder> finder_;
+    string add_columns_[DatabaseAccessor::ADD_COLUMN_COUNT];
+    string del_params_[DatabaseAccessor::DEL_PARAM_COUNT];
+};
 
 void
-DatabaseClient::Updater::addRRset(const RRset& rrset) {
+DatabaseUpdater::addRRset(const RRset& rrset) {
     if (committed_) {
         isc_throw(DataSourceError, "Add attempt after commit to zone: "
                   << zone_name_ << "/" << zone_class_);
@@ -691,7 +696,7 @@ DatabaseClient::Updater::addRRset(const RRset& rrset) {
 }
 
 void
-DatabaseClient::Updater::deleteRRset(const RRset& rrset) {
+DatabaseUpdater::deleteRRset(const RRset& rrset) {
     if (committed_) {
         isc_throw(DataSourceError, "Delete attempt after commit on zone: "
                   << zone_name_ << "/" << zone_class_);
@@ -719,7 +724,7 @@ DatabaseClient::Updater::deleteRRset(const RRset& rrset) {
 }
 
 void
-DatabaseClient::Updater::commit() {
+DatabaseUpdater::commit() {
     if (committed_) {
         isc_throw(DataSourceError, "Duplicate commit attempt for "
                   << zone_name_ << "/" << zone_class_ << " on "
@@ -735,6 +740,20 @@ DatabaseClient::Updater::commit() {
 
     logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_COMMIT)
         .arg(zone_name_).arg(zone_class_).arg(db_name_);
+}
+
+// The updater factory
+ZoneUpdaterPtr
+DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
+    shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
+    const std::pair<bool, int> zone(update_accessor->startUpdateZone(
+                                        name.toText(), replace));
+    if (!zone.first) {
+        return (ZoneUpdaterPtr());
+    }
+
+     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
+                                                name, rrclass_)));
 }
 }
 }
