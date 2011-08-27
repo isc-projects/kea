@@ -49,6 +49,7 @@ namespace isc {
         unsigned short len();
 
         unsigned char getType();
+        void setType(unsigned char type) { msg_type_=type; };
         unsigned int getTransid() { return transid_; };
 
         /// TODO need getter/setter wrappers
@@ -97,7 +98,7 @@ namespace isc {
 
         DHCPv6Proto_ proto_; // UDP (most) or TCP (bulk leasequery or failover)
         int msg_type_; // DHCPv6 message type
-        int transid_;  // DHCPv6 transaction-id
+        unsigned int transid_;  // DHCPv6 transaction-id
 
     };
 }

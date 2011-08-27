@@ -87,7 +87,7 @@ Option::pack6(boost::shared_array<char> buf,
     ptr += 2;
     *(uint16_t*)ptr = htons(data_len_);
     ptr += 2;
-    memcpy(ptr, &data_[0], data_len_);
+    memcpy(ptr, &data_[offset_], data_len_);
 
     return offset + len();
 }
