@@ -135,16 +135,10 @@ Pkt6::packUDP() {
         // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
         data_[0] = msg_type_;
 
-        // that's elegant, but it doesn't work
+        // store 3-octet transaction-id
         data_[1] = (transid_ >> 16) & 0xff;
         data_[2] = (transid_ >> 8) & 0xff;
         data_[3] = (transid_) & 0xff;
-
-        // that's ugly, but it does work
-        int tmp = transid_;
-        data_[3] = tmp%256; tmp /=256;
-        data_[2] = tmp%256; tmp /=256;
-        data_[1] = tmp%256; tmp /=256;
 
         // the rest are options
         unsigned short offset = LibDHCP::packOptions6(data_, length,
@@ -214,7 +208,8 @@ Pkt6::unpackUDP() {
         return (false);
     }
     msg_type_ = data_[0];
-    transid_ = ((unsigned int)data_[1] << 16) + ((unsigned int)data_[2] << 8) + (unsigned int)data_[3];
+    transid_ = ( ((unsigned char)data_[1]) << 16 ) + 
+        (((unsigned char)data_[2]) << 8) + ((unsigned char)data_[3]);
     transid_ = transid_ & 0xffffff;
 
     unsigned int offset = LibDHCP::unpackOptions6(data_,
