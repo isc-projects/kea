@@ -89,7 +89,8 @@ public:
      */
     ~SQLite3Accessor();
 
-    /// TBD
+    /// This implementation internally opens a new sqlite3 database for the
+    /// same file name specified in the constructor of the original accessor.
     virtual boost::shared_ptr<DatabaseAccessor> clone();
 
     /**
