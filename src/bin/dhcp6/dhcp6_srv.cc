@@ -103,8 +103,6 @@ Dhcpv6Srv::run() {
 
         // TODO add support for config session (see src/bin/auth/main.cc)
         //      so this daemon can be controlled from bob
-        sleep(1);
-
     }
 
     return (true);
@@ -165,15 +163,15 @@ Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6> solicit) {
     reply->addOption(clientid);
 
     // add server-id
-    // reply->addOption(getServerID());
+    reply->addOption(getServerID());
     return reply;
 }
 
 boost::shared_ptr<Pkt6>
 Dhcpv6Srv::processRequest(boost::shared_ptr<Pkt6> request) {
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
-                                           request->getTransid(),
-                                           Pkt6::UDP));
+    /// TODO: Implement processRequest() for real
+    boost::shared_ptr<Pkt6> reply = processSolicit(request);
+    reply->setType(DHCPV6_REPLY);
     return reply;
 }
 
