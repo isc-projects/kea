@@ -41,6 +41,134 @@ namespace {
 const int READONLY_ZONE_ID = 42;
 const int WRITABLE_ZONE_ID = 4200;
 
+// Commonly used test data
+const char* const TEST_RECORDS[][5] = {
+    // some plain data
+    {"www.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"www.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+    {"www.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+
+    {"www2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"www2.example.org.","AAAA", "3600", "", "2001:db8::1"},
+    {"www2.example.org.", "A", "3600", "", "192.0.2.2"},
+
+    {"cname.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    // some DNSSEC-'signed' data
+    {"signed1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
+    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"signed1.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"signedcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"signedcname1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // special case might fail; sig is for cname, which isn't there (should be ignored)
+    // (ignoring of 'normal' other type is done above by www.)
+    {"acnamesig1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"acnamesig1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // let's pretend we have a database that is not careful
+    // about the order in which it returns data
+    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"signed2.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+
+    {"signedcname2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signedcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    {"acnamesig2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"acnamesig2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"acnamesig3.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig3.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig3.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"ttldiff1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"ttldiff1.example.org.", "A", "360", "", "192.0.2.2"},
+
+    {"ttldiff2.example.org.", "A", "360", "", "192.0.2.1"},
+    {"ttldiff2.example.org.", "A", "3600", "", "192.0.2.2"},
+
+    // also add some intentionally bad data
+    {"badcname1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"badcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    {"badcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"badcname2.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"badcname3.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"badcname3.example.org.", "CNAME", "3600", "", "www.example2.org."},
+
+    {"badrdata.example.org.", "A", "3600", "", "bad"},
+
+    {"badtype.example.org.", "BAD_TYPE", "3600", "", "192.0.2.1"},
+
+    {"badttl.example.org.", "A", "badttl", "", "192.0.2.1"},
+
+    {"badsig.example.org.", "A", "badttl", "", "192.0.2.1"},
+    {"badsig.example.org.", "RRSIG", "3600", "", "A 5 3 3600 somebaddata 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"badsigtype.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"badsigtype.example.org.", "RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // Data for testing delegation (with NS and DNAME)
+    {"delegation.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"delegation.example.org.", "NS", "3600", "",
+     "ns.delegation.example.org."},
+    {"delegation.example.org.", "RRSIG", "3600", "", "NS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"ns.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"deep.below.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"dname.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"dname.example.org.", "DNAME", "3600", "", "dname.example.com."},
+    {"dname.example.org.", "RRSIG", "3600", "",
+     "DNAME 5 3 3600 20000101000000 20000201000000 12345 "
+     "example.org. FAKEFAKEFAKE"},
+
+    {"below.dname.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    // Broken NS
+    {"brokenns1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"brokenns1.example.org.", "NS", "3600", "", "ns.example.com."},
+
+    {"brokenns2.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"brokenns2.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    // Now double DNAME, to test failure mode
+    {"baddname.example.org.", "DNAME", "3600", "", "dname1.example.com."},
+    {"baddname.example.org.", "DNAME", "3600", "", "dname2.example.com."},
+
+    // Put some data into apex (including NS) so we can check our NS
+    // doesn't break anything
+    {"example.org.", "NS", "3600", "", "ns.example.com."},
+    {"example.org.", "A", "3600", "", "192.0.2.1"},
+    {"example.org.", "RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
+              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // This is because of empty domain test
+    {"a.b.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    // Something for wildcards
+    {"*.wild.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"cancel.here.wild.example.org.", "AAAA", "3600", "", "2001:db8::5"},
+    {"delegatedwild.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
+
+    {NULL, NULL, NULL, NULL, NULL},
+};
+
 /*
  * An accessor with minimum implementation, keeping the original
  * "NotImplemented" methods.
@@ -111,7 +239,7 @@ class MockAccessor : public NopAccessor {
         Domains;
 
 public:
-    MockAccessor() {
+    MockAccessor() : rollbacked_(false) {
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
         empty_records_ = &empty_records_master_;
