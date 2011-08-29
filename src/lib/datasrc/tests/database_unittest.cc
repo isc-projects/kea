@@ -713,7 +713,6 @@ public:
     }
 
     // Helper methods for update tests
-    //bool isRollbacked(bool expected = false) const {
     bool isRollbacked() const {
         return (update_accessor_->isRollbacked());
     }
