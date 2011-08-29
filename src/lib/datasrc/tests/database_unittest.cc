@@ -111,7 +111,7 @@ class MockAccessor : public NopAccessor {
         Domains;
 
 public:
-    MockAccessor() {
+    MockAccessor() : rollbacked_(false) {
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
         empty_records_ = &empty_records_master_;
