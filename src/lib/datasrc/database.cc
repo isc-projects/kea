@@ -627,9 +627,20 @@ public:
 
     virtual ~DatabaseUpdater() {
         if (!committed_) {
-            accessor_->rollbackUpdateZone();
-            logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
-                .arg(zone_name_).arg(zone_class_).arg(db_name_);
+            try {
+                accessor_->rollbackUpdateZone();
+                logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
+                    .arg(zone_name_).arg(zone_class_).arg(db_name_);
+            } catch (const DataSourceError& e) {
+                // We generally expect that rollback always succeeds, and
+                // it should in fact succeed in a way we execute it.  But
+                // as the public API allows rollbackUpdateZone() to fail and
+                // throw, we should expect it.  Obviously we cannot re-throw
+                // it.  The best we can do is to log it as a critical error.
+                logger.error(DATASRC_DATABASE_UPDATER_ROLLBACKFAIL)
+                    .arg(zone_name_).arg(zone_class_).arg(db_name_)
+                    .arg(e.what());
+            }
         }
 
         logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_DESTROYED)
