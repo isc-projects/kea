@@ -608,6 +608,19 @@ the changes.  The intermediate changes made through the updater won't
 be applied to the underlying database.  The zone name, its class, and
 the underlying database name are shown in the log message.
 
+%DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4
+A zone updater is being destroyed without committing the changes to
+the database, and attempts to rollback incomplete updates, but it
+unexpectedly fails.  The higher level implementation does not expect
+it to fail, so this means either a serious operational error in the
+underlying data source (such as a system failure of a database) or
+software bug in the underlying data source implementation.  In either
+case if this message is logged the administrator should carefully
+examine the underlying data source to see what exactly happens and
+whether the data is still valid.  The zone name, its class, and the
+underlying database name as well as the error message thrown from the
+database module are shown in the log message.
+
 % DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
 Debug information.  A set of updates to a zone has been successfully
 committed to the corresponding database backend.  The zone name,

@@ -328,6 +328,13 @@ public:
         *readonly_records_ = *update_records_;
     }
     virtual void rollbackUpdateZone() {
+        // Special hook: if something with a name of "throw.example.org"
+        // has been added, trigger an imaginary unexpected event with an
+        // exception.
+        if (update_records_->count("throw.example.org.") > 0) {
+            isc_throw(DataSourceError, "unexpected failure in rollback");
+        }
+
         rollbacked_ = true;
     }
     virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
@@ -1570,6 +1577,19 @@ TEST_F(DatabaseClientTest, updateCancel) {
     // isRollbacked())
     EXPECT_TRUE(isRollbacked());
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_).code);
+}
+
+TEST_F(DatabaseClientTest, exceptionFromRollback) {
+    updater_ = client_->getUpdater(zname_, true);
+
+    rrset_.reset(new RRset(Name("throw.example.org"), qclass_, qtype_,
+                           rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
+                                        rrset_->getClass(), "192.0.2.1"));
+    updater_->addRRset(*rrset_);
+    // destruct without commit.  The added name will result in an exception
+    // in the MockAccessor's rollback method.  It shouldn't be propagated.
+    EXPECT_NO_THROW(updater_.reset());
 }
 
 TEST_F(DatabaseClientTest, duplicateCommit) {

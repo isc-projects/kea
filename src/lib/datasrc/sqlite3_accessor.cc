@@ -111,8 +111,7 @@ public:
     }
 
     void exec() {
-        if (sqlite3_step(dbparameters_.statements_[stmt_id_]) !=
-            SQLITE_DONE) {
+        if (sqlite3_step(dbparameters_.statements_[stmt_id_]) != SQLITE_DONE) {
             sqlite3_reset(dbparameters_.statements_[stmt_id_]);
             isc_throw(DataSourceError, "failed to " << desc_ << ": " <<
                       sqlite3_errmsg(dbparameters_.db_));
