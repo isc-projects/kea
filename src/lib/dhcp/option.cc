@@ -117,16 +117,7 @@ Option::unpack4(boost::shared_array<char>,
     isc_throw(Unexpected, "IPv4 support not implemented yet.");
     return 0;
 }
-/**
- * Parses buffer and creates collection of Option objects.
- *
- * @param buf pointer to buffer
- * @param buf_len length of buf
- * @param offset offset, where start parsing option
- * @param parse_len how many bytes should be parsed
- *
- * @return offset after last parsed option
- */
+
 unsigned int
 Option::unpack6(boost::shared_array<char> buf,
                 unsigned int buf_len,
@@ -178,12 +169,6 @@ isc::dhcp::Option::addOption(boost::shared_ptr<isc::dhcp::Option> opt) {
 
 }
 
-
-/**
- * Converts generic option to string.
- *
- * @return string that represents option.
- */
 std::string Option::toText() {
     std::stringstream tmp;
     tmp << type_ << "(len=" << data_len_ << "):";

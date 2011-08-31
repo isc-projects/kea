@@ -28,6 +28,8 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 
+#define LOOPBACK "lo0"
+
 namespace {
 const char* const INTERFACE_FILE = TEST_DATA_BUILDDIR "/interfaces.txt";
 
@@ -79,19 +81,22 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
     cout << "---8X-----------------------------------------" << endl;
     while (true) {
         pkt = ifacemgr->receive();
-        
+
         cout << "// Received " << pkt->data_len_ << " bytes packet:" << endl;
         cout << "Pkt6 *capture" << cnt++ << "() {" << endl;
         cout << "    Pkt6* pkt;" << endl;
         cout << "    pkt = new Pkt6(" << pkt->data_len_ << ");" << endl;
         cout << "    pkt->remote_port_ = " << pkt-> remote_port_ << ";" << endl;
-        cout << "    pkt->remote_addr_ = IOAddress(\"" << pkt->remote_addr_.toText() << "\");" << endl;
+        cout << "    pkt->remote_addr_ = IOAddress(\""
+             << pkt->remote_addr_.toText() << "\");" << endl;
         cout << "    pkt->local_port_ = " << pkt-> local_port_ << ";" << endl;
-        cout << "    pkt->local_addr_ = IOAddress(\"" << pkt->local_addr_.toText() << "\");" << endl;
+        cout << "    pkt->local_addr_ = IOAddress(\""
+             << pkt->local_addr_.toText() << "\");" << endl;
         cout << "    pkt->ifindex_ = " << pkt->ifindex_ << ";" << endl;
         cout << "    pkt->iface_ = \"" << pkt->iface_ << "\";" << endl;
         for (int i=0; i< pkt->data_len_; i++) {
-            cout << "    pkt->data_[" << i << "]=" << (int)(unsigned char)pkt->data_[i] << "; ";
+            cout << "    pkt->data_[" << i << "]="
+                 << (int)(unsigned char)pkt->data_[i] << "; ";
             if (!(i%4))
                 cout << endl;
         }
@@ -102,7 +107,7 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
         delete pkt;
     }
     cout << "---8X-----------------------------------------" << endl;
-        
+
     // never happens. Infinite loop is infinite
     delete pkt;
     delete ifacemgr;
@@ -127,22 +132,33 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 
 }
 
-// TODO: Implement getPlainMac() test as soon as interface detection is implemented.
+// TODO: Implement getPlainMac() test as soon as interface detection
+// is implemented.
 TEST_F(IfaceMgrTest, getIface) {
 
     cout << "Interface checks. Please ignore socket binding errors." << endl;
     NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
 
     // interface name, ifindex
-    IfaceMgr::Iface iface1("lo", 1);
+    IfaceMgr::Iface iface1("lo1", 1);
     IfaceMgr::Iface iface2("eth5", 2);
     IfaceMgr::Iface iface3("en3", 5);
     IfaceMgr::Iface iface4("e1000g0", 3);
 
+    // note: real interfaces may be detected as well
     ifacemgr->getIfacesLst().push_back(iface1);
     ifacemgr->getIfacesLst().push_back(iface2);
     ifacemgr->getIfacesLst().push_back(iface3);
     ifacemgr->getIfacesLst().push_back(iface4);
+
+    cout << "There are " << ifacemgr->getIfacesLst().size()
+         << " interfaces." << endl;
+    for (IfaceMgr::IfaceLst::iterator iface=ifacemgr->getIfacesLst().begin();
+         iface != ifacemgr->getIfacesLst().end();
+         ++iface) {
+        cout << "  " << iface->name_ << "/" << iface->ifindex_ << endl;
+    }
+
 
     // check that interface can be retrieved by ifindex
     IfaceMgr::Iface * tmp = ifacemgr->getIface(5);
@@ -153,10 +169,10 @@ TEST_F(IfaceMgrTest, getIface) {
     EXPECT_EQ(5, tmp->ifindex_);
 
     // check that interface can be retrieved by name
-    tmp = ifacemgr->getIface("lo");
+    tmp = ifacemgr->getIface("lo1");
     ASSERT_TRUE( tmp != NULL );
 
-    EXPECT_STREQ( "lo", tmp->name_.c_str() );
+    EXPECT_STREQ( "lo1", tmp->name_.c_str() );
     EXPECT_EQ(1, tmp->ifindex_);
 
     // check that non-existing interfaces are not returned
@@ -208,17 +224,22 @@ TEST_F(IfaceMgrTest, DISABLED_sockets) {
     IOAddress loAddr("::1");
 
     // bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
     EXPECT_GT(socket1, 0); // socket > 0
 
     // bind unicast socket to port 10548
-    int socket2 = ifacemgr->openSocket("lo", loAddr, 10548);
+    int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10548);
     EXPECT_GT(socket2, 0);
 
     // expect success. This address/port is already bound, but
     // we are using SO_REUSEADDR, so we can bind it twice
-    int socket3 = ifacemgr->openSocket("lo", loAddr, 10547);
-    EXPECT_GT(socket3, 0); // socket > 0
+    int socket3 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
+
+    // rebinding succeeds on Linux, fails on BSD
+    // TODO: add OS-specific defines here (or modify code to
+    // behave the same way on all OSes, but that may not be
+    // possible
+    // EXPECT_GT(socket3, 0); // socket > 0
 
     // we now have 3 sockets open at the same time. Looks good.
 
@@ -241,12 +262,12 @@ TEST_F(IfaceMgrTest, DISABLED_socketsMcast) {
     IOAddress mcastAddr("ff02::1:2");
 
     // bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket("lo", mcastAddr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK, mcastAddr, 10547);
     EXPECT_GT(socket1, 0); // socket > 0
 
     // expect success. This address/port is already bound, but
     // we are using SO_REUSEADDR, so we can bind it twice
-    int socket2 = ifacemgr->openSocket("lo", mcastAddr, 10547);
+    int socket2 = ifacemgr->openSocket(LOOPBACK, mcastAddr, 10547);
     EXPECT_GT(socket2, 0);
 
     // there's no good way to test negative case here.
@@ -269,15 +290,15 @@ TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
     // without interface detection implemented
 
     fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
-    fakeifaces << "lo ::1";
+    fakeifaces << LOOPBACK << " ::1";
     fakeifaces.close();
 
     NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("::1");
-    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547);
-    int socket2 = ifacemgr->openSocket("lo", loAddr, 10546);
+    int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
+    int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
 
     ifacemgr->setSendSock(socket2);
     ifacemgr->setRecvSock(socket1);
@@ -292,7 +313,7 @@ TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
     sendPkt->remote_port_ = 10547;
     sendPkt->remote_addr_ = IOAddress("::1");
     sendPkt->ifindex_ = 1;
-    sendPkt->iface_ = "lo";
+    sendPkt->iface_ = LOOPBACK;
 
     boost::shared_ptr<Pkt6> rcvPkt;
 
