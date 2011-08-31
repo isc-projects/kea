@@ -160,7 +160,9 @@ Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6> solicit) {
 
     // add client-id
     boost::shared_ptr<Option> clientid = solicit->getOption(D6O_CLIENTID);
-    reply->addOption(clientid);
+    if (clientid) {
+        reply->addOption(clientid);
+    }
 
     // add server-id
     reply->addOption(getServerID());

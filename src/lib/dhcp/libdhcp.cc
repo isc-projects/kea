@@ -33,19 +33,6 @@ LibDHCP::version() {
     return PACKAGE_VERSION;
 }
 
-/**
- * Parses provided buffer and creates Option objects.
- *
- * Parses provided buf array and stores created Option objects
- * in options container.
- *
- * @param buf Buffer to be parsed.
- * @param offset Specifies offset for the first option.
- * @param options Reference to option container. Options will be
- *        put here.
- *
- * @return offset to first byte after last parsed option
- */
 unsigned int
 LibDHCP::unpackOptions6(boost::shared_array<char> buf, unsigned int buf_len,
                         unsigned int offset, unsigned int parse_len,
@@ -126,9 +113,9 @@ LibDHCP::packOptions6(boost::shared_array<char> data,
 }
 
 bool
-LibDHCP::OptionFactorRegister(Option::Universe u,
-                              unsigned short opt_type,
-                              Option::Factory * factory) {
+LibDHCP::OptionFactoryRegister(Option::Universe u,
+                               unsigned short opt_type,
+                               Option::Factory * factory) {
     switch (u) {
     case Option::V6: {
         if (v6factories_.find(opt_type)!=v6factories_.end()) {

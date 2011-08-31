@@ -19,21 +19,26 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-
+#include "dhcp/dhcp6.h"
 #include "dhcp6/dhcp6_srv.h"
+#include "dhcp/option6_ia.h"
 
 using namespace std;
 using namespace isc;
+using namespace isc::dhcp;
 
-namespace {
+// namespace has to be named, because friends are defined in Dhcpv6Srv class
+// Maybe it should be isc::test?
+namespace test {
+
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
     Dhcpv6SrvTest() {
     }
 };
 
-TEST_F(Dhcpv6SrvTest, basic) {
-    // there's almost no code now. What's there provides echo capability 
+Test_F(Dhcpv6SrvTest, basic) {
+    // there's almost no code now. What's there provides echo capability
     // that is just a proof of concept and will be removed soon
     // No need to thoroughly test it
 
@@ -45,9 +50,47 @@ TEST_F(Dhcpv6SrvTest, basic) {
     EXPECT_NO_THROW( {
         Dhcpv6Srv * srv = new Dhcpv6Srv();
 
-	delete srv;
-	});
-    
+        delete srv;
+        });
+
+}
+
+TEST_F(Dhcpv6SrvTest,Solicit_basic) {
+    Dhcpv6Srv * srv = 0;
+    EXPECT_NO_THROW( srv = new Dhcpv6Srv(); );
+
+    boost::shared_ptr<Pkt6> sol =
+        boost::shared_ptr<Pkt6>(new Pkt6(DHCPV6_SOLICIT,
+                                         1234, Pkt6::UDP));
+
+    boost::shared_ptr<Option6IA> ia(new Option6IA(Option::V6, D6O_IA_NA, 2345));
+    ia->setT1(1501);
+    ia->setT2(2601);
+    sol->addOption(ia);
+
+    // Let's not send address in solicit yet
+    // boost::shared_ptr<Option6IAAddr> addr(new Option6IAAddr(D6O_IAADDR,
+    //    IOAddress("2001:db8:1234:ffff::ffff"), 5001, 7001));
+    // ia->addOption(addr);
+    // sol->addOption(ia);
+
+    boost::shared_ptr<Pkt6> reply = srv->processSolicit(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE( reply != boost::shared_ptr<Pkt6>() );
+
+    EXPECT_EQ( DHCPV6_ADVERTISE, reply->getType() );
+    EXPECT_EQ( 1234, reply->getTransid() );
+
+    boost::shared_ptr<Option> tmp = reply->getOption(D6O_IA_NA);
+    ASSERT_TRUE( tmp != boost::shared_ptr<Option>() );
+
+    Option6IA * reply_ia = dynamic_cast<Option6IA*> ( tmp.get() );
+    EXPECT_EQ( 2345, reply_ia->getIAID() );
+
+    // more checks to be implemented
+    delete srv;
+
 }
 
 }
