@@ -20,6 +20,10 @@
 #include "dhcp/option.h"
 #include <iostream>
 
+namespace test {
+class Dhcpv6SrvTest_Solicit_basic_Test;
+}
+
 namespace isc {
     class Dhcpv6Srv {
     private:
@@ -66,6 +70,8 @@ namespace isc {
         processDecline(boost::shared_ptr<Pkt6> solicit);
 
         bool shutdown;
+
+        friend class test::Dhcpv6SrvTest_Solicit_basic_Test;
     };
 };
 

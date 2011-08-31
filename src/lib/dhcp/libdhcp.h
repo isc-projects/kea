@@ -24,24 +24,60 @@ namespace dhcp {
 class LibDHCP {
 
 public:
-    LibDHCP();
-    static std::string version();
+    /// Returns version of the library.
+    ///
+    /// @return string that contains libdhcp version.
+    ///
+    static std::string
+    version();
 
-    bool parsePkt6(Pkt6& pkt);
-    bool builtPkt6(Pkt6& pkt);
-
+    /// Builds collection of options.
+    ///
+    /// Builds raw (on-wire) data for provided collection of options.
+    ///
+    /// @param buf shared pointer to buffer. Data will be stored there.
+    /// @param buf_len buffer length. Used for buffer overflow protection.
+    /// @param offset Offset from beginning of the buffer, where store options
+    /// @param options collection of options to store to
+    ///
+    /// @return offset to the first unused byte in buffer (next one after last
+    ///         used byte)
+    ///
     static unsigned int
     packOptions6(boost::shared_array<char> buf, unsigned int buf_len,
                  unsigned int offset,
-                 isc::dhcp::Option::Option6Lst& options_);
+                 isc::dhcp::Option::Option6Lst& options);
+
+    ///
+    /// Parses provided buffer and creates Option objects.
+    ///
+    /// Parses provided buf array and stores created Option objects
+    /// in options container.
+    ///
+    /// @param buf Buffer to be parsed.
+    /// @param offset Specifies offset for the first option.
+    /// @param options Reference to option container. Options will be
+    ///        put here.
+    ///
+    /// @return offset to first byte after last parsed option
+    ///
     static unsigned int
     unpackOptions6(boost::shared_array<char> buf, unsigned int buf_len,
                    unsigned int offset, unsigned int parse_len,
                    isc::dhcp::Option::Option6Lst& options_);
 
-    bool OptionFactorRegister(Option::Universe u,
-                              unsigned short type,
-                              Option::Factory * factory);
+    ///
+    /// Registers factory method that produces options of specific option types.
+    ///
+    /// @param u universe of the option (V4 or V6)
+    /// @param opt_type option-type
+    /// @param factory function pointer
+    ///
+    /// @return true, if registration was successful, false otherwise
+    ///
+    bool OptionFactoryRegister(Option::Universe u,
+                               unsigned short type,
+                               Option::Factory * factory);
 protected:
     // pointers to factories that produce DHCPv6 options
     static std::map<unsigned short, Option::Factory*> v6factories_;
