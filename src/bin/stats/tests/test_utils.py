@@ -60,7 +60,7 @@ class ThreadingServerManager:
 class MockMsgq:
     def __init__(self):
         self._started = threading.Event()
-        self.msgq = msgq.MsgQ(verbose=False)
+        self.msgq = msgq.MsgQ(verbose=True)
         result = self.msgq.setup()
         if result:
             sys.exit("Error on Msgq startup: %s" % result)
@@ -68,10 +68,7 @@ class MockMsgq:
     def run(self):
         self._started.set()
         try:
-            # any message is written to /dev/null
-            sys.stderr = open(os.devnull, "w")
             self.msgq.run()
-            sys.stderr.close()
         except Exception:
             pass
         finally:
@@ -254,24 +251,30 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
     def __init__(self, *server_address):
         self._started = threading.Event()
         if server_address:
-            stats_httpd.SPECFILE_LOCATION = self.get_specfile(*server_address)
+            stats_httpd.SPECFILE_LOCATION = self.create_specfile(*server_address)
             try:
                 stats_httpd.StatsHttpd.__init__(self)
             finally:
-                stats_httpd.SPECFILE_LOCATION.close()
+                if hasattr(stats_httpd.SPECFILE_LOCATION, "close"):
+                    stats_httpd.SPECFILE_LOCATION.close()
                 stats_httpd.SPECFILE_LOCATION = self.ORIG_SPECFILE_LOCATION
         else:
             stats_httpd.StatsHttpd.__init__(self)
 
-    def get_specfile(self, *server_address):
-        spec = json.load(open(self.ORIG_SPECFILE_LOCATION))
-        config = spec['module_spec']['config_data']
-        for i in range(len(config)):
-            if config[i]['item_name'] == 'listen_on':
-                config[i]['item_default'] = \
-                    [ dict(address=a[0], port=a[1]) for a in server_address ]
-                break
-        return io.StringIO(json.dumps(spec))
+    def create_specfile(self, *server_address):
+        spec_io = open(self.ORIG_SPECFILE_LOCATION)
+        try:
+            spec = json.load(spec_io)
+            spec_io.close()
+            config = spec['module_spec']['config_data']
+            for i in range(len(config)):
+                if config[i]['item_name'] == 'listen_on':
+                    config[i]['item_default'] = \
+                        [ dict(address=a[0], port=a[1]) for a in server_address ]
+                    break
+            return io.StringIO(json.dumps(spec))
+        finally:
+            spec_io.close()
 
     def run(self):
         self._started.set()
