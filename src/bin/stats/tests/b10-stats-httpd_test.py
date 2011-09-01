@@ -63,29 +63,34 @@ def get_availaddr(address='127.0.0.1', port=8001):
     """returns tuple of address and port available to listen on the
     platform. Default port range is between 8001 and 65535. If port is
     over flow(greater than 65535), OverflowError is thrown"""
-    while True:
-        try:
-            if is_ipv6_enabled(address):
-                sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-            else :
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind((address, port))
-            sock.close()
-            return (address, port)
-        except socket.error:
-            # This address and port number are already in use.
-            # next port number is added
-            port = port + 1
+    sock = None
+    if is_ipv6_enabled(address):
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    else:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        while True:
+            try:
+                sock.bind((address, port))
+                return (address, port)
+            except socket.error:
+                # This address and port number are already in use.
+                # next port number is added
+                port = port + 1
+    finally:
+        if sock: sock.close()
 
 def is_ipv6_enabled(address='::1', port=8000):
     """checks IPv6 enabled on the platform"""
+    sock = None
     try:
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         sock.bind((address, port))
-        sock.close()
         return True
     except socket.error:
         return False
+    finally:
+        if sock: sock.close()
 
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
@@ -698,4 +703,4 @@ class TestStatsHttpd(unittest.TestCase):
             imp.reload(stats_httpd)
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)
