@@ -19,6 +19,7 @@
 
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <util/buffer.h>
 
 // BEGIN_ISC_NAMESPACE
 
@@ -32,11 +33,37 @@ public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
-    ///
-    /// Specialized methods
-    ///
+    // HINFO specific methods
+    const std::string& getCPU() const;
+    const std::string& getOS() const;
 
 private:
+    /// Skip the left whitespaces of the input string
+    ///
+    /// \param input_str The input string
+    /// \param input_iterator From which the skipping started
+    void skipLeftSpaces(const std::string& input_str,
+                        std::string::const_iterator& input_iterator);
+
+    /// Get a <character-string> from a string
+    ///
+    /// \param input_str The input string
+    /// \param input_iterator The iterator from which to start extracting,
+    ///        the iterator will be updated to new position after the function
+    ///        is returned
+    /// \return A std::string that contains the extracted <character-string>
+    std::string getNextCharacterString(const std::string& input_str,
+                                       std::string::const_iterator& input_iterator);
+
+    /// Get a <character-string> from a input buffer
+    ///
+    /// \param buffer The input buffer
+    /// \param len The input buffer total length
+    /// \return A std::string that contains the extracted <character-string>
+    std::string getNextCharacterString(util::InputBuffer& buffer, size_t len);
+
+    std::string cpu_;
+    std::string os_;
 };
 
 
