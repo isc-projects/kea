@@ -36,9 +36,61 @@ namespace {
 class Rdata_HINFO_Test : public RdataTest {
 };
 
+static uint8_t hinfo_rdata[] = {0x07,0x50,0x65,0x6e,0x74,0x69,0x75,0x6d,0x05,
+    0x4c,0x69,0x6e,0x75,0x78};
 static const char *hinfo_str = "\"Pentium\" \"Linux\"";
+
+static const char *hinfo_str_small1 = "\"Lentium\" \"Linux\"";
+static const char *hinfo_str_small2 = "\"Pentium\" \"Kinux\"";
+static const char *hinfo_str_large1 = "\"Qentium\" \"Linux\"";
+static const char *hinfo_str_large2 = "\"Pentium\" \"UNIX\"";
 
 TEST_F(Rdata_HINFO_Test, createFromText) {
     HINFO hinfo(hinfo_str);
+    EXPECT_EQ(string("Pentium"), hinfo.getCPU());
+    EXPECT_EQ(string("Linux"), hinfo.getOS());
 }
+
+TEST_F(Rdata_HINFO_Test, createFromWire) {
+    InputBuffer input_buffer(hinfo_rdata, sizeof(hinfo_rdata));
+    HINFO hinfo(input_buffer, sizeof(hinfo_rdata));
+    EXPECT_EQ(string("Pentium"), hinfo.getCPU());
+    EXPECT_EQ(string("Linux"), hinfo.getOS());
+}
+
+TEST_F(Rdata_HINFO_Test, toText) {
+    HINFO hinfo(hinfo_str);
+    EXPECT_EQ(hinfo_str, hinfo.toText());
+}
+
+TEST_F(Rdata_HINFO_Test, toWire) {
+    HINFO hinfo(hinfo_str);
+    hinfo.toWire(obuffer);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
+                        obuffer.getLength(), hinfo_rdata, sizeof(hinfo_rdata));
+}
+
+TEST_F(Rdata_HINFO_Test, toWireRenderer) {
+    HINFO hinfo(hinfo_str);
+
+    hinfo.toWire(renderer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
+                        obuffer.getLength(), hinfo_rdata, sizeof(hinfo_rdata));
+}
+
+TEST_F(Rdata_HINFO_Test, compare) {
+    HINFO hinfo(hinfo_str);
+    HINFO hinfo_small1(hinfo_str_small1);
+    HINFO hinfo_small2(hinfo_str_small2);
+    HINFO hinfo_large1(hinfo_str_large1);
+    HINFO hinfo_large2(hinfo_str_large2);
+
+    EXPECT_EQ(0, hinfo.compare(HINFO(hinfo_str)));
+    EXPECT_EQ(1, hinfo.compare(HINFO(hinfo_str_small1)));
+    EXPECT_EQ(1, hinfo.compare(HINFO(hinfo_str_small2)));
+    EXPECT_EQ(-1, hinfo.compare(HINFO(hinfo_str_large1)));
+    EXPECT_EQ(-1, hinfo.compare(HINFO(hinfo_str_large2)));
+}
+
 }
