@@ -603,7 +603,7 @@ class TestOSEnv(unittest.TestCase):
         imp.reload(stats)
 
 def test_main():
-    unittest.main(verbosity=2)
+    unittest.main()
 
 if __name__ == "__main__":
     test_main()
