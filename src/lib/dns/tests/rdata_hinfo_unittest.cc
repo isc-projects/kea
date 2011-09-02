@@ -51,6 +51,20 @@ TEST_F(Rdata_HINFO_Test, createFromText) {
     EXPECT_EQ(string("Linux"), hinfo.getOS());
 }
 
+TEST_F(Rdata_HINFO_Test, badText) {
+    // Fields must be seperated by spaces
+    EXPECT_THROW(const HINFO hinfo("\"Pentium\"\"Linux\""), InvalidRdataText);
+    // Field cannot be missing
+    EXPECT_THROW(const HINFO hinfo("Pentium"), InvalidRdataText);
+    // The <character-string> cannot exceed 255 characters
+    string hinfo_str;
+    for (int i = 0; i < 257; ++i) {
+        hinfo_str += 'A';
+    }
+    hinfo_str += " Linux";
+    EXPECT_THROW(const HINFO hinfo(hinfo_str), CharStringTooLong);
+}
+
 TEST_F(Rdata_HINFO_Test, createFromWire) {
     InputBuffer input_buffer(hinfo_rdata, sizeof(hinfo_rdata));
     HINFO hinfo(input_buffer, sizeof(hinfo_rdata));
