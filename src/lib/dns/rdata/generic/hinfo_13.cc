@@ -60,7 +60,7 @@ HINFO::toText() const {
     result += "\" \"";
     result += os_;
     result += "\"";
-    return result;
+    return (result);
 }
 
 void
@@ -102,12 +102,12 @@ HINFO::compare(const Rdata& other) const {
 
 const std::string&
 HINFO::getCPU() const {
-    return cpu_;
+    return (cpu_);
 }
 
 const std::string&
 HINFO::getOS() const {
-    return os_;
+    return (os_);
 }
 
 void

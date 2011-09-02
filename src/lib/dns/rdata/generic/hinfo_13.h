@@ -28,6 +28,12 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+/// \brief \c HINFO class represents the HINFO rdata defined in
+/// RFC1034, RFC1035
+///
+/// This class implements the basic interfaces inherited from the
+/// \c rdata::Rdata class, and provides accessors specific to the
+/// HINFO rdata.
 class HINFO : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
