@@ -37,7 +37,7 @@ import signal
 import isc
 import stats_httpd
 import stats
-from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, send_shutdown
+from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, send_command, send_shutdown
 
 DUMMY_DATA = {
     'Boss' : {
@@ -449,8 +449,10 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd = self.stats_httpd_server.server
         self.assertFalse(self.stats_httpd.running)
         self.stats_httpd_server.run()
+        self.assertEqual(send_command("status", "StatsHttpd"),
+                         (0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
         self.assertTrue(self.stats_httpd.running)
-        send_shutdown("StatsHttpd")
+        self.assertEqual(send_shutdown("StatsHttpd"), (0, None))
         self.assertFalse(self.stats_httpd.running)
         self.stats_httpd_server.shutdown()
 
@@ -519,8 +521,7 @@ class TestStatsHttpd(unittest.TestCase):
                 0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
         self.stats_httpd.running = True
         self.assertEqual(self.stats_httpd.command_handler("shutdown", None),
-                         isc.config.ccsession.create_answer(
-                0, "Stats Httpd is shutting down."))
+                         isc.config.ccsession.create_answer(0))
         self.assertFalse(self.stats_httpd.running)
         self.assertEqual(
             self.stats_httpd.command_handler("__UNKNOWN_COMMAND__", None),

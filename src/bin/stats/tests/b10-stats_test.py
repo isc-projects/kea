@@ -201,8 +201,10 @@ class TestStats(unittest.TestCase):
         self.stats = self.stats_server.server
         self.assertFalse(self.stats.running)
         self.stats_server.run()
+        self.assertEqual(send_command("status", "Stats"),
+                (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
         self.assertTrue(self.stats.running)
-        send_shutdown("Stats")
+        self.assertEqual(send_shutdown("Stats"), (0, None))
         self.assertFalse(self.stats.running)
         self.stats_server.shutdown()
 
