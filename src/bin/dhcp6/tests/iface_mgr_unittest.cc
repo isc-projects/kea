@@ -71,9 +71,11 @@ TEST_F(IfaceMgrTest, loDetect) {
 
     NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
     IOAddress loAddr("::1");
+    IOAddress mcastAddr("ff02::1:2");
 
     // bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547);
+    int socket1 = ifacemgr->openSocket("lo", mcastAddr, 10547);
+    // this fails on BSD (there's no lo interface there)
 
     // poor man's interface dection
     // it will go away as soon as proper interface detection
@@ -82,7 +84,8 @@ TEST_F(IfaceMgrTest, loDetect) {
         cout << "This is Linux, using lo as loopback." << endl;
         close(socket1);
     } else {
-        socket1 = ifacemgr->openSocket("lo0", loAddr, 10547);
+        // this fails on Linux and succeeds on BSD
+        socket1 = ifacemgr->openSocket("lo0", mcastAddr, 10547);
         if (socket1>0) {
             sprintf(LOOPBACK, "lo0");
             cout << "This is BSD, using lo0 as loopback." << endl;
