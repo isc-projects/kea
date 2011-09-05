@@ -105,6 +105,10 @@ public:
     virtual bool
     valid();
 
+    // returns pointer to actual data
+    virtual char*
+    getData();
+
     /// Adds a sub-option.
     ///
     /// @param opt shared pointer to a suboption that is going to be added.
