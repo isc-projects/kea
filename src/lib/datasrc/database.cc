@@ -762,8 +762,8 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
         return (ZoneUpdaterPtr());
     }
 
-     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
-                                                name, rrclass_)));
+    return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
+                                               name, rrclass_)));
 }
 }
 }
