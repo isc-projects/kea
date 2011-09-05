@@ -37,7 +37,7 @@ public:
     }
 };
 
-Test_F(Dhcpv6SrvTest, basic) {
+TEST_F(Dhcpv6SrvTest, basic) {
     // there's almost no code now. What's there provides echo capability
     // that is just a proof of concept and will be removed soon
     // No need to thoroughly test it
