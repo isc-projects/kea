@@ -25,7 +25,7 @@
 using namespace std;
 using namespace isc::dhcp;
 
-// static array with factory
+// static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
 
 std::string
