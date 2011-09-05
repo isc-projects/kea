@@ -328,8 +328,7 @@ class StatsHttpd:
             logger.debug(DBG_STATHTTPD_MESSAGING,
                          STATHTTPD_RECEIVED_SHUTDOWN_COMMAND)
             self.running = False
-            return isc.config.ccsession.create_answer(
-                0, "Stats Httpd is shutting down.")
+            return isc.config.ccsession.create_answer(0)
         else:
             logger.debug(DBG_STATHTTPD_MESSAGING,
                          STATHTTPD_RECEIVED_UNKNOWN_COMMAND, command)
