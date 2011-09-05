@@ -75,9 +75,10 @@ public:
     ///
     /// @return true, if registration was successful, false otherwise
     ///
-    bool OptionFactoryRegister(Option::Universe u,
-                               unsigned short type,
-                               Option::Factory * factory);
+    static bool
+    OptionFactoryRegister(Option::Universe u,
+                          unsigned short type,
+                          Option::Factory * factory);
 protected:
     // pointers to factories that produce DHCPv6 options
     static std::map<unsigned short, Option::Factory*> v6factories_;
