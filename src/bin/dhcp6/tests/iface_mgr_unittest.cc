@@ -28,7 +28,8 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 
-#define LOOPBACK "lo0"
+// name of loopback interface detection
+char LOOPBACK[32] = "lo";
 
 namespace {
 const char* const INTERFACE_FILE = TEST_DATA_BUILDDIR "/interfaces.txt";
@@ -55,6 +56,46 @@ public:
     IfaceMgrTest() {
     }
 };
+
+// We need some known interface to work reliably. Loopback interface
+// is named lo on Linux and lo0 on BSD boxes. We need to find out
+// which is available. This is not a real test, but rather a workaround
+// that will go away when interface detection is implemented.
+TEST_F(IfaceMgrTest, loDetect) {
+
+    unlink("interfaces.txt");
+
+    ofstream interfaces("interfaces.txt", ios::ate);
+    interfaces << "lo ::1";
+    interfaces.close();
+
+    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    IOAddress loAddr("::1");
+
+    // bind multicast socket to port 10547
+    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547);
+
+    // poor man's interface dection
+    // it will go away as soon as proper interface detection
+    // is implemented
+    if (socket1>0) {
+        cout << "This is Linux, using lo as loopback." << endl;
+        close(socket1);
+    } else {
+        socket1 = ifacemgr->openSocket("lo0", loAddr, 10547);
+        if (socket1>0) {
+            sprintf(LOOPBACK, "lo0");
+            cout << "This is BSD, using lo0 as loopback." << endl;
+            close(socket1);
+        } else {
+            cout << "Failed to detect loopback interface. Neither "
+                 << "lo or lo0 worked. I give up." << endl;
+            ASSERT_TRUE(false);
+        }
+    }
+
+    delete ifacemgr;
+}
 
 // uncomment this test to create packet writer. It will
 // write incoming DHCPv6 packets as C arrays. That is useful
