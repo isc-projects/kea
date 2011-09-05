@@ -23,7 +23,7 @@ endif
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/stats:$(abs_top_builddir)/src/bin/stats/tests:$(abs_top_builddir)/src/bin/msgq:$(abs_top_builddir)/src/lib/python/isc/config \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
 	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/tests/testdata \
-	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest -v || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 
 CLEANDIRS = __pycache__
