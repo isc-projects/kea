@@ -187,6 +187,16 @@ Option::getType() {
     return type_;
 }
 
+char*
+Option::getData() {
+    if (data_len_) {
+        return (&data_[offset_]);
+    } else {
+        return (NULL);
+    }
+}
+
+
 Option::~Option() {
 
 }
