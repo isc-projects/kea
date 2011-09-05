@@ -618,8 +618,7 @@ public:
         committed_(false), accessor_(accessor), zone_id_(zone_id),
         db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
         zone_class_(zone_class),
-        finder_(new DatabaseClient::Finder::Finder(accessor_, zone_id_,
-                                                   zone_name))
+        finder_(new DatabaseClient::Finder(accessor_, zone_id_, zone_name))
     {
         logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
             .arg(zone_name_).arg(zone_class_).arg(db_name_);
@@ -660,7 +659,7 @@ private:
     const string db_name_;
     const string zone_name_;
     const RRClass zone_class_;
-    boost::scoped_ptr<DatabaseClient::Finder::Finder> finder_;
+    boost::scoped_ptr<DatabaseClient::Finder> finder_;
     string add_columns_[DatabaseAccessor::ADD_COLUMN_COUNT];
     string del_params_[DatabaseAccessor::DEL_PARAM_COUNT];
 };
