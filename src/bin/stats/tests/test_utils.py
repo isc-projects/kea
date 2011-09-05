@@ -42,7 +42,19 @@ def send_shutdown(module_name, **kwargs):
 
 class ThreadingServerManager:
     def __init__(self, server, *args, **kwargs):
-        self.server = server(*args, **kwargs)
+        self.server = None
+        n = 0
+        while True:
+            try:
+                self.server = server(*args, **kwargs)
+            except isc.cc.session.SessionTimeout:
+                if self.server is not None:
+                    self.server.shutdown()
+                # retrying until 3 times
+                if n >2: raise
+                n = n + 1
+                continue
+            else: break
         self.server_name = server.__name__
         self.server._thread = threading.Thread(
             name=self.server_name, target=self.server.run)
@@ -57,10 +69,21 @@ class ThreadingServerManager:
         self.server.shutdown()
         self.server._thread.join(0) # timeout is 0
 
+def do_nothing(*args, **kwargs): pass
+
+class dummy_sys:
+    """Dummy for sys"""
+    class dummy_io:
+        write = do_nothing
+    stdout = stderr = dummy_io()
+
 class MockMsgq:
     def __init__(self):
         self._started = threading.Event()
-        self.msgq = msgq.MsgQ(verbose=True)
+        # suppress output to stdout and stderr
+        msgq.sys = dummy_sys()
+        msgq.print = do_nothing
+        self.msgq = msgq.MsgQ(verbose=False)
         result = self.msgq.setup()
         if result:
             sys.exit("Error on Msgq startup: %s" % result)
@@ -86,7 +109,10 @@ class MockCfgmgr:
 
     def run(self):
         self._started.set()
-        self.cfgmgr.run()
+        try:
+            self.cfgmgr.run()
+        except Exception:
+            pass
 
     def shutdown(self):
         self.cfgmgr.running = False
@@ -138,8 +164,11 @@ class MockBoss:
         self.mccs.start()
         self.running = True
         self._started.set()
-        while self.running:
-            self.mccs.check_command(False)
+        try:
+            while self.running:
+                self.mccs.check_command(False)
+        except Exception:
+            pass
 
     def shutdown(self):
         self.running = False
@@ -216,8 +245,11 @@ class MockAuth:
         self.mccs.start()
         self.running = True
         self._started.set()
-        while self.running:
-            self.mccs.check_command(False)
+        try:
+            while self.running:
+                self.mccs.check_command(False)
+        except Exception:
+            pass
 
     def shutdown(self):
         self.running = False
@@ -241,7 +273,10 @@ class MyStats(stats.Stats):
 
     def run(self):
         self._started.set()
-        self.start()
+        try:
+            self.start()
+        except Exception:
+            pass
 
     def shutdown(self):
         self.command_shutdown()
@@ -278,7 +313,10 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
 
     def run(self):
         self._started.set()
-        self.start()
+        try:
+            self.start()
+        except Exception:
+            pass
 
     def shutdown(self):
         self.stop()
