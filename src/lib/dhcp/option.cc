@@ -27,7 +27,7 @@ using namespace std;
 using namespace isc::dhcp;
 
 Option::Option(Universe u, unsigned short type)
-    :universe_(u), type_(type) {
+    :universe_(u), type_(type), data_len_(0) {
 
 
 }
@@ -82,14 +82,20 @@ Option::pack6(boost::shared_array<char> buf,
         isc_throw(OutOfRange, "Failed to pack v6 option=" <<
                   type_ << ",len=" << len() << ": too small buffer.");
     }
+
+    int length = len() - getHeaderLen();
+
     char * ptr = &buf[offset];
     *(uint16_t*)ptr = htons(type_);
     ptr += 2;
-    *(uint16_t*)ptr = htons(data_len_);
+    *(uint16_t*)ptr = htons(length);
     ptr += 2;
-    memcpy(ptr, &data_[offset_], data_len_);
+    if (data_len_)
+        memcpy(ptr, &data_[offset_], data_len_);
 
-    return offset + len();
+    offset += 4 + data_len_; // end of this option
+
+    return LibDHCP::packOptions6(buf, buf_len, offset, optionLst_);
 }
 
 unsigned int
@@ -126,8 +132,9 @@ Option::unpack6(boost::shared_array<char> buf,
 
     if (buf_len < offset+parse_len) {
         isc_throw(OutOfRange, "Failed to unpack DHCPv6 option len="
-                  << parse_len << " offset=" << offset << " from buffer (length="
-                  << buf_len << "): too small buffer.");
+                  << parse_len << " offset=" << offset
+                  << " from buffer (length=" << buf_len
+                  << "): too small buffer.");
     }
 
     data_ = buf;
@@ -139,16 +146,15 @@ Option::unpack6(boost::shared_array<char> buf,
 }
 
 unsigned short Option::len() {
-    switch (universe_) {
-    case V4:
-        return data_len_ + 2; // DHCPv4 option header length: 2 bytes
-    case V6:
-        return data_len_ + 4; // DHCPv6 option header length: 4 bytes
-    default:
-        isc_throw(BadValue, "Unknown universe defined for Option " << type_);
+    int length = getHeaderLen() + data_len_;
+
+    for (Option::Option6Lst::iterator it = optionLst_.begin();
+         it != optionLst_.end();
+         ++it) {
+        length += (*it).second->len();
     }
 
-    return 0; // should not happen
+    return (length);
 }
 
 bool Option::valid() {
@@ -165,19 +171,25 @@ bool Option::valid() {
 
 void
 isc::dhcp::Option::addOption(boost::shared_ptr<isc::dhcp::Option> opt) {
-    optionLst_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+    optionLst_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(),
+                                                            opt));
 
 }
 
-std::string Option::toText() {
+std::string Option::toText(int indent /* =0 */ ) {
     std::stringstream tmp;
-    tmp << type_ << "(len=" << data_len_ << "):";
+
+    for (int i=0; i<indent; i++)
+        tmp << " ";
+
+    tmp << "type=" << type_ << ", len=" << data_len_ << ":";
 
     for (unsigned int i=0; i<data_len_; i++) {
         if (i) {
             tmp << ":";
         }
-        tmp << setfill('0') << setw(2) << hex << (unsigned short)(unsigned char)data_[offset_+i];
+        tmp << setfill('0') << setw(2) << hex
+            << (unsigned short)(unsigned char)data_[offset_+i];
     }
     return tmp.str();
 }
@@ -194,6 +206,17 @@ Option::getData() {
     } else {
         return (NULL);
     }
+}
+
+unsigned short
+Option::getHeaderLen() {
+    switch (universe_) {
+    case V4:
+        return 2; // header length for v4
+    case V6:
+        return 4; // header length for v6
+    }
+    return 0; // should not happen
 }
 
 

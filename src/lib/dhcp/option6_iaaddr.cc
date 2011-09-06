@@ -99,8 +99,11 @@ Option6IAAddr::unpack(boost::shared_array<char> buf,
     return offset;
 }
 
-std::string Option6IAAddr::toText() {
+std::string Option6IAAddr::toText(int indent /* =0 */) {
     stringstream tmp;
+    for (int i=0; i<indent; i++)
+        tmp << " ";
+
     tmp << "addr: " << addr_.toText() << ", preferred-lft=" << preferred_ 
         << ", valid-lft=" << valid_ << endl;
 

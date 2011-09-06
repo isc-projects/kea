@@ -80,10 +80,12 @@ public:
     ///
     /// Returns string representation of the option.
     ///
+    /// @param indent number of spaces before printing text
+    ///
     /// @return string with text representation.
     ///
     virtual std::string
-    toText();
+    toText(int indent = 0);
 
     ///
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
@@ -101,11 +103,21 @@ public:
     virtual unsigned short
     len();
 
-    // returns if option is valid (e.g. option may be truncated)
+    /// @brief Returns length of header (2 for v4, 4 for v6)
+    ///
+    /// @return length of option header
+    ///
+    virtual unsigned short
+    getHeaderLen();
+
+    /// returns if option is valid (e.g. option may be truncated)
     virtual bool
     valid();
 
-    // returns pointer to actual data
+    /// Returns pointer to actual data.
+    ///
+    /// @return pointer to actual data (or NULL if there is no data)
+    ///
     virtual char*
     getData();
 
