@@ -1633,6 +1633,15 @@ TEST_F(DatabaseClientTest, addRRsetToNewZone) {
                    qtype_, rrttl_, ZoneFinder::SUCCESS,
                    expected_rdatas_, expected_sig_rdatas_);
     }
+
+    // Add the non RRSIG RRset again, to see the attempt of adding RRSIG
+    // causes any unexpected effect, in particular, whether the SIGTYPE
+    // field might remain.
+    updater_->addRRset(*rrset_);
+    const char* const rrset_added[] = {
+        "www.example.org.", "org.example.www.", "3600", "A", "", "192.0.2.2"
+    };
+    checkLastAdded(rrset_added);
 }
 
 TEST_F(DatabaseClientTest, addRRsetToCurrentZone) {
