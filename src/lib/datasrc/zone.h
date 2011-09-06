@@ -205,6 +205,18 @@ public:
     //@}
 };
 
+/// \brief Operator to combine FindOptions
+///
+/// We would need to manually static-cast the options if we put or
+/// between them, which is undesired with bit-flag options. Therefore
+/// we hide the cast here, which is the simplest solution and it still
+/// provides reasonable level of type safety.
+inline ZoneFinder::FindOptions operator |(ZoneFinder::FindOptions a,
+                                          ZoneFinder::FindOptions b)
+{
+    return (static_cast<ZoneFinder::FindOptions>(a | b));
+}
+
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
 typedef boost::shared_ptr<ZoneFinder> ZoneFinderPtr;
 
