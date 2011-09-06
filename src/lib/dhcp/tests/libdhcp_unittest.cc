@@ -87,8 +87,8 @@ TEST_F(LibDhcpTest, unpackOptions6) {
         1,  1, 0, 1, 114 // opt5 (5 bytes)
     };
     // Option is used as a simple option implementation
-    // More advanced classes are used in tests dedicated for
-    // specific options.
+    // More advanced uses are validated in tests dedicated for
+    // specific derived classes.
 
     isc::dhcp::Option::Option6Lst options; // list of options
 
@@ -109,36 +109,36 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     ASSERT_NE(x, options.end()); // option 1 should exist
     EXPECT_EQ(12, x->second->getType());  // this should be option 12
     ASSERT_EQ(9, x->second->len()); // it should be of length 9
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+4, 5)); // data len = 5
+    EXPECT_EQ(0, memcmp(x->second->getData(), packed+4, 5)); // data len=5
 
     x = options.find(13);
     ASSERT_NE(x, options.end()); // option 13 should exist
     EXPECT_EQ(13, x->second->getType());  // this should be option 13
     ASSERT_EQ(7, x->second->len()); // it should be of length 7
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+13, 3)); // data length = 3
+    EXPECT_EQ(0, memcmp(x->second->getData(), packed+13, 3)); // data len=3
 
     x = options.find(14);
     ASSERT_NE(x, options.end()); // option 3 should exist
     EXPECT_EQ(14, x->second->getType());  // this should be option 14
     ASSERT_EQ(6, x->second->len()); // it should be of length 6
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+20, 2)); // data length = 2
+    EXPECT_EQ(0, memcmp(x->second->getData(), packed+20, 2)); // data len=2
 
     x = options.find(256);
     ASSERT_NE(x, options.end()); // option 256 should exist
     EXPECT_EQ(256, x->second->getType());  // this should be option 256
     ASSERT_EQ(8, x->second->len()); // it should be of length 7
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+26, 4)); // data length = 4
+    EXPECT_EQ(0, memcmp(x->second->getData(), packed+26, 4)); // data len=4
 
     x = options.find(257);
     ASSERT_NE(x, options.end()); // option 257 should exist
     EXPECT_EQ(257, x->second->getType());  // this should be option 257
     ASSERT_EQ(5, x->second->len()); // it should be of length 5
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+34, 1)); // data length = 2
+    EXPECT_EQ(0, memcmp(x->second->getData(), packed+34, 1)); // data len=1
 
     x = options.find(0);
     EXPECT_EQ(x, options.end()); // option 0 not found
 
-    x = options.find(1); // 1 is htons(256). Worth checking
+    x = options.find(1); // 1 is htons(256) on little endians. Worth checking
     EXPECT_EQ(x, options.end()); // option 1 not found
 
     x = options.find(2);

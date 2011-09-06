@@ -51,7 +51,7 @@ public:
            unsigned int offset, 
            unsigned int parse_len);
 
-    virtual std::string toText();
+    virtual std::string toText(int indent = 0);
 
     void setT1(unsigned int t1) { t1_=t1; }
     void setT2(unsigned int t2) { t2_=t2; }
