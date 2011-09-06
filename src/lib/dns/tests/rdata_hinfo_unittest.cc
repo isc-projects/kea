@@ -39,6 +39,7 @@ class Rdata_HINFO_Test : public RdataTest {
 static uint8_t hinfo_rdata[] = {0x07,0x50,0x65,0x6e,0x74,0x69,0x75,0x6d,0x05,
     0x4c,0x69,0x6e,0x75,0x78};
 static const char *hinfo_str = "\"Pentium\" \"Linux\"";
+static const char *hinfo_str1 = "\"Pen\\\"tium\" \"Linux\"";
 
 static const char *hinfo_str_small1 = "\"Lentium\" \"Linux\"";
 static const char *hinfo_str_small2 = "\"Pentium\" \"Kinux\"";
@@ -49,6 +50,10 @@ TEST_F(Rdata_HINFO_Test, createFromText) {
     HINFO hinfo(hinfo_str);
     EXPECT_EQ(string("Pentium"), hinfo.getCPU());
     EXPECT_EQ(string("Linux"), hinfo.getOS());
+
+    // Test the text with double quotes in the middle of string
+    HINFO hinfo1(hinfo_str1);
+    EXPECT_EQ(string("Pen\"tium"), hinfo1.getCPU());
 }
 
 TEST_F(Rdata_HINFO_Test, badText) {
