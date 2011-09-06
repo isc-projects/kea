@@ -1772,6 +1772,12 @@ TEST_F(DatabaseClientTest, addEmptyRRset) {
     EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
 }
 
+TEST_F(DatabaseClientTest, addRRsetWithRRSIG) {
+    updater_ = client_->getUpdater(zname_, false);
+    rrset_->addRRsig(*rrsigset_);
+    EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
+}
+
 TEST_F(DatabaseClientTest, addAfterCommit) {
    updater_ = client_->getUpdater(zname_, false);
    updater_->commit();
@@ -1949,6 +1955,12 @@ TEST_F(DatabaseClientTest, deleteAfterCommit) {
 TEST_F(DatabaseClientTest, deleteEmptyRRset) {
     updater_ = client_->getUpdater(zname_, false);
     rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
+    EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
+}
+
+TEST_F(DatabaseClientTest, deleteRRsetWithRRSIG) {
+    updater_ = client_->getUpdater(zname_, false);
+    rrset_->addRRsig(*rrsigset_);
     EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
 }
 }

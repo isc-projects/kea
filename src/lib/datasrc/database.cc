@@ -675,6 +675,11 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
                   << "added to " << zone_name_ << "/" << zone_class_ << ": "
                   << rrset.toText());
     }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, "An RRset with RRSIG is being added to "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
 
     RdataIteratorPtr it = rrset.getRdataIterator();
     if (it->isLast()) {
@@ -715,6 +720,11 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
         isc_throw(DataSourceError, "An RRset of a different class is being "
                   << "deleted from " << zone_name_ << "/" << zone_class_
                   << ": " << rrset.toText());
+    }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, "An RRset with RRSIG is being deleted from "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
     }
 
     RdataIteratorPtr it = rrset.getRdataIterator();
