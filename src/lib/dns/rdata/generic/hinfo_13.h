@@ -51,22 +51,17 @@ private:
     void skipLeftSpaces(const std::string& input_str,
                         std::string::const_iterator& input_iterator);
 
-    /// Get a <character-string> from a string
+    /// Helper template function for toWire()
     ///
-    /// \param input_str The input string
-    /// \param input_iterator The iterator from which to start extracting,
-    ///        the iterator will be updated to new position after the function
-    ///        is returned
-    /// \return A std::string that contains the extracted <character-string>
-    std::string getNextCharacterString(const std::string& input_str,
-                                       std::string::const_iterator& input_iterator);
+    /// \param outputer Where to write data in
+    template <typename T>
+    void toWireHelper(T& outputer) const {
+        outputer.writeUint8(cpu_.size());
+        outputer.writeData(cpu_.c_str(), cpu_.size());
 
-    /// Get a <character-string> from a input buffer
-    ///
-    /// \param buffer The input buffer
-    /// \param len The input buffer total length
-    /// \return A std::string that contains the extracted <character-string>
-    std::string getNextCharacterString(util::InputBuffer& buffer, size_t len);
+        outputer.writeUint8(os_.size());
+        outputer.writeData(os_.c_str(), os_.size());
+    }
 
     std::string cpu_;
     std::string os_;

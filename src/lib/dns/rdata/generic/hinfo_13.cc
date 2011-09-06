@@ -24,10 +24,14 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/character_string.h>
+#include <util/strutil.h>
 
 using namespace std;
 using namespace boost;
 using namespace isc::util;
+using namespace isc::dns;
+using namespace isc::dns::characterstr;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -65,20 +69,12 @@ HINFO::toText() const {
 
 void
 HINFO::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(cpu_.size());
-    buffer.writeData(cpu_.c_str(), cpu_.size());
-
-    buffer.writeUint8(os_.size());
-    buffer.writeData(os_.c_str(), os_.size());
+    toWireHelper(buffer);
 }
 
 void
 HINFO::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(cpu_.size());
-    renderer.writeData(cpu_.c_str(), cpu_.size());
-
-    renderer.writeUint8(os_.size());
-    renderer.writeData(os_.c_str(), os_.size());
+    toWireHelper(renderer);
 }
 
 int
@@ -127,67 +123,6 @@ HINFO::skipLeftSpaces(const std::string& input_str,
     while (input_iterator < input_str.end() && isspace(*input_iterator)) {
         ++input_iterator;
     }
-}
-
-std::string
-HINFO::getNextCharacterString(const std::string& input_str,
-                              std::string::const_iterator& input_iterator)
-{
-    string result;
-
-    // If the input string only contains white-spaces, it is an invalid
-    // <character-string>
-    if (input_iterator >= input_str.end()) {
-        isc_throw(InvalidRdataText, "Invalid HINFO text format, \
-                  <character-string> field is missing.");
-    }
-
-    // Whether the <character-string> is separated with double quotes (")
-    bool quotes_separated = (*input_iterator == '"');
-
-    if (quotes_separated) {
-        ++input_iterator;
-    }
-
-    while(input_iterator < input_str.end()){
-        if (quotes_separated) {
-            // If the <character-string> is seperated with quotes symbol and
-            // another quotes symbol is encountered, it is the end of the
-            // <character-string>
-            if (*input_iterator == '"') {
-                ++input_iterator;
-                break;
-            }
-        } else if (*input_iterator == ' ') {
-            // If the <character-string> is not seperated with quotes symbol,
-            // it is seperated with <space> char
-            break;
-        }
-
-        result.push_back(*input_iterator);
-
-        ++input_iterator;
-    }
-
-    if (result.size() > MAX_CHARSTRING_LEN) {
-        isc_throw(CharStringTooLong, "HINFO <character-string> is too long");
-    }
-
-    return (result);
-}
-
-std::string
-HINFO::getNextCharacterString(InputBuffer& buffer, size_t len) {
-    uint8_t str_len = buffer.readUint8();
-
-    size_t pos = buffer.getPosition();
-    if (len - pos < str_len) {
-        isc_throw(InvalidRdataLength, "Invalid HINFO string length");
-    }
-
-    uint8_t buf[MAX_CHARSTRING_LEN];
-    buffer.readData(buf, str_len);
-    return (string(buf, buf + str_len));
 }
 
 // END_RDATA_NAMESPACE
