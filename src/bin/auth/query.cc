@@ -67,7 +67,7 @@ Query::findAddrs(ZoneFinder& zone, const Name& qname,
     // Find A rrset
     if (qname_ != qname || qtype_ != RRType::A()) {
         ZoneFinder::FindResult a_result = zone.find(qname, RRType::A(), NULL,
-                                                    options);
+                                                    options | dnssec_opt_);
         if (a_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(a_result.rrset), dnssec_);
