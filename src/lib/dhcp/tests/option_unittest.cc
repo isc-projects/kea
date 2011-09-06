@@ -18,6 +18,7 @@
 
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
+#include <boost/shared_ptr.hpp>
 
 #include "dhcp/dhcp6.h"
 #include "dhcp/option.h"
@@ -33,7 +34,63 @@ public:
     }
 };
 
-TEST_F(OptionTest, basic) {
+// v4 is not really implemented yet. A simple test will do for now
+TEST_F(OptionTest, basic4) {
+
+    Option* opt = new Option(Option::V4, 17);
+
+    EXPECT_EQ(17, opt->getType());
+    EXPECT_EQ(NULL, opt->getData());
+    EXPECT_EQ(2, opt->len()); // just v4 header
+
+    delete opt;
+}
+
+// tests simple constructor
+TEST_F(OptionTest, basic6) {
+
+    Option* opt = new Option(Option::V6, 1);
+
+    EXPECT_EQ(1, opt->getType());
+    EXPECT_EQ(NULL, opt->getData());
+    EXPECT_EQ(4, opt->len()); // just v6 header
+
+    delete opt;
+}
+
+// tests contructor used in pkt reception
+// option contains actual data
+TEST_F(OptionTest, data1) {
+    boost::shared_array<char> buf(new char[32]);
+    for (int i=0; i<32; i++)
+        buf[i] = 100+i;
+    Option* opt = new Option(Option::V6, 333, //type
+                             buf,
+                             3, // offset
+                             7); // 7 bytes of data
+    EXPECT_EQ(333, opt->getType());
+    ASSERT_EQ(&buf[3], opt->getData());
+    ASSERT_EQ(11, opt->len());
+    EXPECT_EQ(0, memcmp(&buf[3], opt->getData(), 7) );
+
+    int offset = opt->pack(buf, 32, 20);
+    EXPECT_EQ(31, offset);
+
+    EXPECT_EQ(buf[20], 333/256); // type
+    EXPECT_EQ(buf[21], 333%256);
+
+    EXPECT_EQ(buf[22], 0); // len
+    EXPECT_EQ(buf[23], 7);
+
+    // payload
+    EXPECT_EQ(0, memcmp(&buf[3], &buf[24], 7) );
+
+    delete opt;
+}
+
+// another text that tests the same thing, just
+// with different input parameters
+TEST_F(OptionTest, data2) {
 
     boost::shared_array<char> simple_buf(new char[128]);
     for (int i=0; i<128; i++)
@@ -70,12 +127,91 @@ TEST_F(OptionTest, basic) {
     // if option content is correct
     EXPECT_EQ(0, memcmp(&simple_buf[0], &simple_buf[14],4));
 
-    for (int i=0; i<20; i++) {
-        std::cout << i << ":" << (unsigned short) (unsigned char)simple_buf[i] << " ";
-    }
-    std::cout << std::endl;
-
     delete opt;
+}
+
+// check that an option can contain 2 suboptions:
+// opt1
+//  +----opt2
+//  |
+//  +----opt3
+//
+TEST_F(OptionTest, suboptions1) {
+    boost::shared_array<char> buf(new char[128]);
+    for (int i=0; i<128; i++)
+        buf[i] = 100+i;
+    Option* opt1 = new Option(Option::V6, 65535, //type
+                              buf,
+                              0, // offset
+                              3); // 3 bytes of data
+    boost::shared_ptr<Option> opt2(new Option(Option::V6, 13));
+    boost::shared_ptr<Option> opt3(new Option(Option::V6, 7,
+                                              buf,
+                                              3, // offset
+                                              5)); // 5 bytes of data
+    opt1->addOption(opt2);
+    opt1->addOption(opt3);
+    // opt2 len = 4 (just header)
+    // opt3 len = 9 4(header)+5(data)
+    // opt1 len = 7 + suboptions() = 7 + 4 + 9 = 20
+
+    EXPECT_EQ(4, opt2->len());
+    EXPECT_EQ(9, opt3->len());
+    EXPECT_EQ(20, opt1->len());
+
+    char expected[] = {
+        0xff, 0xff, 0, 16, 100, 101, 102,
+        0, 7, 0, 5, 103, 104, 105, 106, 107,
+        0, 13, 0, 0 // no data at all
+    };
+
+    int offset = opt1->pack(buf, 128, 20);
+    EXPECT_EQ(40, offset);
+
+    // payload
+    EXPECT_EQ(0, memcmp(&buf[20], expected, 20) );
+
+    delete opt1;
+}
+
+// check that an option can contain 2 suboptions:
+// opt1
+//  +----opt2
+//        |
+//        +----opt3
+//
+TEST_F(OptionTest, suboptions2) {
+    boost::shared_array<char> buf(new char[128]);
+    for (int i=0; i<128; i++)
+        buf[i] = 100+i;
+    Option* opt1 = new Option(Option::V6, 65535, //type
+                              buf,
+                              0, // offset
+                              3); // 3 bytes of data
+    boost::shared_ptr<Option> opt2(new Option(Option::V6, 13));
+    boost::shared_ptr<Option> opt3(new Option(Option::V6, 7,
+                                              buf,
+                                              3, // offset
+                                              5)); // 5 bytes of data
+    opt1->addOption(opt2);
+    opt2->addOption(opt3);
+    // opt3 len = 9 4(header)+5(data)
+    // opt2 len = 4 (just header) + len(opt3)
+    // opt1 len = 7 + len(opt2)
+
+    char expected[] = {
+        0xff, 0xff, 0, 16, 100, 101, 102,
+        0, 13, 0, 9,
+        0, 7, 0, 5, 103, 104, 105, 106, 107,
+    };
+
+    int offset = opt1->pack(buf, 128, 20);
+    EXPECT_EQ(40, offset);
+
+    // payload
+    EXPECT_EQ(0, memcmp(&buf[20], expected, 20) );
+
+    delete opt1;
 }
 
 }

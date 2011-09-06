@@ -55,7 +55,7 @@ public:
            unsigned int offset, 
            unsigned int parse_len);
 
-    virtual std::string toText();
+    virtual std::string toText(int indent = 0);
 
     void setAddress(isc::asiolink::IOAddress addr) { addr_ = addr; }
     void setPreferred(unsigned int pref) { preferred_=pref; }

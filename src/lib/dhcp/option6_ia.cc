@@ -89,8 +89,12 @@ Option6IA::unpack(boost::shared_array<char> buf,
     return (offset);
 }
 
-std::string Option6IA::toText() {
+std::string Option6IA::toText(int indent /* = 0*/) {
     stringstream tmp;
+
+    for (int i=0; i<indent; i++)
+        tmp << " ";
+
     switch (type_) {
     case D6O_IA_NA:
         tmp << "IA_NA";
