@@ -214,7 +214,8 @@ public:
 inline ZoneFinder::FindOptions operator |(ZoneFinder::FindOptions a,
                                           ZoneFinder::FindOptions b)
 {
-    return (static_cast<ZoneFinder::FindOptions>(a | b));
+    return (static_cast<ZoneFinder::FindOptions>(static_cast<unsigned>(a) |
+                                                 static_cast<unsigned>(b)));
 }
 
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
