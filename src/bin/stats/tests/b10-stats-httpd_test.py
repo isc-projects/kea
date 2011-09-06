@@ -33,6 +33,7 @@ import threading
 import http.client
 import xml.etree.ElementTree
 import signal
+import random
 
 import isc
 import stats_httpd
@@ -60,34 +61,36 @@ def get_availaddr(address='127.0.0.1', port=8001):
     """returns tuple of address and port available to listen on the
     platform. Default port range is between 8001 and 65535. If port is
     over flow(greater than 65535), OverflowError is thrown"""
-    sock = None
-    if is_ipv6_enabled(address):
-        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    else:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        while True:
+    while True:
+        for addr in socket.getaddrinfo(
+            address, port, 0,
+            socket.SOCK_STREAM, socket.IPPROTO_TCP):
+            sock = socket.socket(addr[0], socket.SOCK_STREAM)
             try:
                 sock.bind((address, port))
                 return (address, port)
             except socket.error:
-                # This address and port number are already in use.
-                # next port number is added
-                port = port + 1
-    finally:
-        if sock: sock.close()
+                continue
+            finally:
+                if sock: sock.close()
+        # This address and port number are already in use.
+        # next port number is added
+        port = port + 1
 
-def is_ipv6_enabled(address='::1', port=8000):
-    """checks IPv6 enabled on the platform"""
-    sock = None
-    try:
-        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        sock.bind((address, port))
-        return True
-    except socket.error:
-        return False
-    finally:
-        if sock: sock.close()
+def is_ipv6_enabled(address='::1', port=8001):
+    """checks IPv6 enabled on the platform. address for check is '::1'
+    and port for check is random number between 8001 and
+    65535. Retrying is 3 times even if it fails."""
+    for p in random.sample(range(port, 65535), 3):
+        try:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            sock.bind((address, p))
+            return True
+        except socket.error:
+            continue
+        finally:
+            if sock: sock.close()
+    raise Exception('hoge')
 
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
