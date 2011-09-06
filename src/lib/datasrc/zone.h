@@ -214,7 +214,7 @@ typedef boost::shared_ptr<const ZoneFinder> ConstZoneFinderPtr;
 /// On construction, each derived class object will start a "transaction"
 /// for making updates to a specific zone (this means a constructor of
 /// a derived class would normally take parameters to identify the zone
-/// to be updated).  The underlying realization of a "transaction" will defer
+/// to be updated).  The underlying realization of a "transaction" will differ
 /// for different derived classes; if it uses a general purpose database
 /// as a backend, it will involve performing some form of "begin transaction"
 /// statement for the database.
