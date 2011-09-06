@@ -21,6 +21,17 @@
 
 namespace isc {
 namespace dns {
+
+// \brief Some utility functions to extract <character-string> from string
+// or InputBuffer
+//
+// <character-string> is expressed in one or two ways: as a contiguous set
+// of characters without interior spaces, or as a string beginning with a "
+// and ending with a ".  Inside a " delimited string any character can
+// occur, except for a " itself, which must be quoted using \ (back slash).
+// Ref. RFC1035
+
+
 namespace characterstr {
     /// Get a <character-string> from a string
     ///
