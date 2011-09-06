@@ -203,9 +203,12 @@ class TestHttpHandler(unittest.TestCase):
 
 
     def test_do_GET_failed1(self):
+        # checks status
+        self.assertEqual(send_command("status", "Stats"),
+                         (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
         # failure case(Stats is down)
         self.assertTrue(self.stats.running)
-        send_shutdown("Stats") # Stats is down
+        self.assertEqual(send_shutdown("Stats"), (0, None)) # Stats is down
         self.assertFalse(self.stats.running)
         self.stats_httpd.cc_session.set_timeout(milliseconds=100)
 
