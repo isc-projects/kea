@@ -750,12 +750,11 @@ DatabaseUpdater::commit() {
                   << db_name_);
     }
     accessor_->commitUpdateZone();
+    committed_ = true; // make sure the destructor won't trigger rollback
 
     // We release the accessor immediately after commit is completed so that
     // we don't hold the possible internal resource any longer.
     accessor_.reset();
-
-    committed_ = true;
 
     logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_COMMIT)
         .arg(zone_name_).arg(zone_class_).arg(db_name_);
