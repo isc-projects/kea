@@ -90,7 +90,7 @@ def is_ipv6_enabled(address='::1', port=8001):
             continue
         finally:
             if sock: sock.close()
-    raise Exception('hoge')
+    return False
 
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
