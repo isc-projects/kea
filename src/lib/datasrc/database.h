@@ -15,6 +15,14 @@
 #ifndef __DATABASE_DATASRC_H
 #define __DATABASE_DATASRC_H
 
+#include <string>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <dns/rrclass.h>
+#include <dns/rrclass.h>
+#include <dns/rrset.h>
+
 #include <datasrc/client.h>
 
 #include <dns/name.h>
@@ -109,6 +117,7 @@ public:
      * classes in polymorphic way.
      */
     virtual ~DatabaseAccessor() { }
+
     /**
      * \brief Retrieve a zone identifier
      *
@@ -420,6 +429,35 @@ public:
     /// to the method or internal database error.
     virtual void rollbackUpdateZone() = 0;
 
+    /// Clone the accessor with the same configuration.
+    ///
+    /// Each derived class implementation of this method will create a new
+    /// accessor of the same derived class with the same configuration
+    /// (such as the database server address) as that of the caller object
+    /// and return it.
+    ///
+    /// Note that other internal states won't be copied to the new accessor
+    /// even though the name of "clone" may indicate so.  For example, even
+    /// if the calling accessor is in the middle of a update transaction,
+    /// the new accessor will not start a transaction to trace the same
+    /// updates.
+    ///
+    /// The intended use case of cloning is to create a separate context
+    /// where a specific set of database operations can be performed
+    /// independently from the original accessor.  The updater will use it
+    /// so that multiple updaters can be created concurrently even if the
+    /// underlying database system doesn't allow running multiple transactions
+    /// in a single database connection.
+    ///
+    /// The underlying database system may not support the functionality
+    /// that would be needed to implement this method.  For example, it
+    /// may not allow a single thread (or process) to have more than one
+    /// database connections.  In such a case the derived class implementation
+    /// should throw a \c DataSourceError exception.
+    ///
+    /// \return A shared pointer to the cloned accessor.
+    virtual boost::shared_ptr<DatabaseAccessor> clone() = 0;
+
     /**
      * \brief Returns a string identifying this dabase backend
      *
@@ -454,16 +492,19 @@ public:
     /**
      * \brief Constructor
      *
-     * It initializes the client with a database.
+     * It initializes the client with a database via the given accessor.
      *
-     * \exception isc::InvalidParameter if database is NULL. It might throw
+     * \exception isc::InvalidParameter if accessor is NULL. It might throw
      * standard allocation exception as well, but doesn't throw anything else.
      *
-     * \param database The database to use to get data. As the parameter
-     *     suggests, the client takes ownership of the database and will
-     *     delete it when itself deleted.
+     * \param rrclass The RR class of the zones that this client will handle.
+     * \param accessor The accessor to the database to use to get data.
+     *  As the parameter suggests, the client takes ownership of the accessor
+     *  and will delete it when itself deleted.
      */
-    DatabaseClient(boost::shared_ptr<DatabaseAccessor> database);
+    DatabaseClient(isc::dns::RRClass rrclass,
+                   boost::shared_ptr<DatabaseAccessor> accessor);
+
     /**
      * \brief Corresponding ZoneFinder implementation
      *
@@ -568,6 +609,7 @@ public:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
+
         /**
          * \brief Searches database for an RRset
          *
@@ -614,6 +656,7 @@ public:
                                                      bool want_ns, const
                                                      isc::dns::Name*
                                                      construct_name = NULL);
+
         /**
          * \brief Checks if something lives below this domain.
          *
@@ -660,7 +703,17 @@ public:
      */
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
+    /// This implementation internally clones the accessor from the one
+    /// used in the client and starts a separate transaction using the cloned
+    /// accessor.  The returned updater will be able to work separately from
+    /// the original client.
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
+                                      bool replace) const;
+
 private:
+    /// \brief The RR class that this client handles.
+    const isc::dns::RRClass rrclass_;
+
     /// \brief The accessor to our database.
     const boost::shared_ptr<DatabaseAccessor> accessor_;
 };
@@ -668,4 +721,8 @@ private:
 }
 }
 
-#endif
+#endif  // __DATABASE_DATASRC_H
+
+// Local Variables:
+// mode: c++
+// End:

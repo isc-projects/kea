@@ -409,6 +409,34 @@ TEST_F(SQLite3Create, lockedtest) {
     SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, RRClass::IN());
 }
 
+TEST_F(SQLite3AccessorTest, clone) {
+    shared_ptr<DatabaseAccessor> cloned = accessor->clone();
+    EXPECT_EQ(accessor->getDBName(), cloned->getDBName());
+
+    // The cloned accessor should have a separate connection and search
+    // context, so it should be able to perform search in concurrent with
+    // the original accessor.
+    string columns1[DatabaseAccessor::COLUMN_COUNT];
+    string columns2[DatabaseAccessor::COLUMN_COUNT];
+
+    const std::pair<bool, int> zone_info1(
+        accessor->getZone("example.com."));
+    DatabaseAccessor::IteratorContextPtr iterator1 =
+        accessor->getRecords("foo.example.com.", zone_info1.second);
+    const std::pair<bool, int> zone_info2(
+        accessor->getZone("example.com."));
+    DatabaseAccessor::IteratorContextPtr iterator2 =
+        cloned->getRecords("foo.example.com.", zone_info2.second);
+
+    ASSERT_TRUE(iterator1->getNext(columns1));
+    checkRecordRow(columns1, "CNAME", "3600", "", "cnametest.example.org.",
+                   "");
+
+    ASSERT_TRUE(iterator2->getNext(columns2));
+    checkRecordRow(columns2, "CNAME", "3600", "", "cnametest.example.org.",
+                   "");
+}
+
 //
 // Commonly used data for update tests
 //

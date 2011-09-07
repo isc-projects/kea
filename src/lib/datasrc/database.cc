@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
 #include <vector>
 
 #include <datasrc/database.h>
@@ -21,6 +22,8 @@
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrttl.h>
+#include <dns/rrset.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
@@ -29,17 +32,18 @@
 
 #include <boost/foreach.hpp>
 
-#include <string>
-
 using namespace isc::dns;
-using std::string;
+using namespace std;
+using boost::shared_ptr;
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
+DatabaseClient::DatabaseClient(RRClass rrclass,
+                               boost::shared_ptr<DatabaseAccessor>
                                accessor) :
-    accessor_(accessor)
+    rrclass_(rrclass), accessor_(accessor)
 {
     if (!accessor_) {
         isc_throw(isc::InvalidParameter,
@@ -604,5 +608,170 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
 }
 
+//
+// Zone updater using some database system as the underlying data source.
+//
+class DatabaseUpdater : public ZoneUpdater {
+public:
+    DatabaseUpdater(shared_ptr<DatabaseAccessor> accessor, int zone_id,
+            const Name& zone_name, const RRClass& zone_class) :
+        committed_(false), accessor_(accessor), zone_id_(zone_id),
+        db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
+        zone_class_(zone_class),
+        finder_(new DatabaseClient::Finder(accessor_, zone_id_, zone_name))
+    {
+        logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
+            .arg(zone_name_).arg(zone_class_).arg(db_name_);
+    }
+
+    virtual ~DatabaseUpdater() {
+        if (!committed_) {
+            try {
+                accessor_->rollbackUpdateZone();
+                logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
+                    .arg(zone_name_).arg(zone_class_).arg(db_name_);
+            } catch (const DataSourceError& e) {
+                // We generally expect that rollback always succeeds, and
+                // it should in fact succeed in a way we execute it.  But
+                // as the public API allows rollbackUpdateZone() to fail and
+                // throw, we should expect it.  Obviously we cannot re-throw
+                // it.  The best we can do is to log it as a critical error.
+                logger.error(DATASRC_DATABASE_UPDATER_ROLLBACKFAIL)
+                    .arg(zone_name_).arg(zone_class_).arg(db_name_)
+                    .arg(e.what());
+            }
+        }
+
+        logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_DESTROYED)
+            .arg(zone_name_).arg(zone_class_).arg(db_name_);
+    }
+
+    virtual ZoneFinder& getFinder() { return (*finder_); }
+
+    virtual void addRRset(const RRset& rrset);
+    virtual void deleteRRset(const RRset& rrset);
+    virtual void commit();
+
+private:
+    bool committed_;
+    shared_ptr<DatabaseAccessor> accessor_;
+    const int zone_id_;
+    const string db_name_;
+    const string zone_name_;
+    const RRClass zone_class_;
+    boost::scoped_ptr<DatabaseClient::Finder> finder_;
+};
+
+void
+DatabaseUpdater::addRRset(const RRset& rrset) {
+    if (committed_) {
+        isc_throw(DataSourceError, "Add attempt after commit to zone: "
+                  << zone_name_ << "/" << zone_class_);
+    }
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, "An RRset of a different class is being "
+                  << "added to " << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, "An RRset with RRSIG is being added to "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+
+    RdataIteratorPtr it = rrset.getRdataIterator();
+    if (it->isLast()) {
+        isc_throw(DataSourceError, "An empty RRset is being added for "
+                  << rrset.getName() << "/" << zone_class_ << "/"
+                  << rrset.getType());
+    }
+
+    string columns[DatabaseAccessor::ADD_COLUMN_COUNT]; // initialized with ""
+    columns[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
+    columns[DatabaseAccessor::ADD_REV_NAME] =
+        rrset.getName().reverse().toText();
+    columns[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
+    columns[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
+    for (; !it->isLast(); it->next()) {
+        if (rrset.getType() == RRType::RRSIG()) {
+            // XXX: the current interface (based on the current sqlite3
+            // data source schema) requires a separate "sigtype" column,
+            // even though it won't be used in a newer implementation.
+            // We should eventually clean up the schema design and simplify
+            // the interface, but until then we have to conform to the schema.
+            const generic::RRSIG& rrsig_rdata =
+                dynamic_cast<const generic::RRSIG&>(it->getCurrent());
+            columns[DatabaseAccessor::ADD_SIGTYPE] =
+                rrsig_rdata.typeCovered().toText();
+        }
+        columns[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        accessor_->addRecordToZone(columns);
+    }
+}
+
+void
+DatabaseUpdater::deleteRRset(const RRset& rrset) {
+    if (committed_) {
+        isc_throw(DataSourceError, "Delete attempt after commit on zone: "
+                  << zone_name_ << "/" << zone_class_);
+    }
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, "An RRset of a different class is being "
+                  << "deleted from " << zone_name_ << "/" << zone_class_
+                  << ": " << rrset.toText());
+    }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, "An RRset with RRSIG is being deleted from "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+
+    RdataIteratorPtr it = rrset.getRdataIterator();
+    if (it->isLast()) {
+        isc_throw(DataSourceError, "An empty RRset is being deleted for "
+                  << rrset.getName() << "/" << zone_class_ << "/"
+                  << rrset.getType());
+    }
+
+    string params[DatabaseAccessor::DEL_PARAM_COUNT]; // initialized with ""
+    params[DatabaseAccessor::DEL_NAME] = rrset.getName().toText();
+    params[DatabaseAccessor::DEL_TYPE] = rrset.getType().toText();
+    for (; !it->isLast(); it->next()) {
+        params[DatabaseAccessor::DEL_RDATA] = it->getCurrent().toText();
+        accessor_->deleteRecordInZone(params);
+    }
+}
+
+void
+DatabaseUpdater::commit() {
+    if (committed_) {
+        isc_throw(DataSourceError, "Duplicate commit attempt for "
+                  << zone_name_ << "/" << zone_class_ << " on "
+                  << db_name_);
+    }
+    accessor_->commitUpdateZone();
+    committed_ = true; // make sure the destructor won't trigger rollback
+
+    // We release the accessor immediately after commit is completed so that
+    // we don't hold the possible internal resource any longer.
+    accessor_.reset();
+
+    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_COMMIT)
+        .arg(zone_name_).arg(zone_class_).arg(db_name_);
+}
+
+// The updater factory
+ZoneUpdaterPtr
+DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
+    shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
+    const std::pair<bool, int> zone(update_accessor->startUpdateZone(
+                                        name.toText(), replace));
+    if (!zone.first) {
+        return (ZoneUpdaterPtr());
+    }
+
+    return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
+                                               name, rrclass_)));
+}
 }
 }

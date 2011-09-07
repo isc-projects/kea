@@ -32,6 +32,9 @@ public:
     virtual FindResult findZone(const isc::dns::Name&) const {
         return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
     }
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name&, bool) const {
+        return (ZoneUpdaterPtr());
+    }
 };
 
 class ClientTest : public ::testing::Test {
