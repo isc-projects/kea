@@ -1971,4 +1971,78 @@ TEST_F(DatabaseClientTest, deleteRRsetWithRRSIG) {
     rrset_->addRRsig(*rrsigset_);
     EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
 }
+
+TEST_F(DatabaseClientTest, compoundUpdate) {
+    // This test case performs an arbitrary chosen add/delete operations
+    // in a single update transaction.  Essentially there is nothing new to
+    // test here, but there may be some bugs that was overlooked and can
+    // only happen in the compound update scenario, so we test it.
+
+    updater_ = client_->getUpdater(zname_, false);
+
+    // add a new RR to an existing RRset
+    updater_->addRRset(*rrset_);
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_rdatas_.push_back("192.0.2.2");
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
+
+    // delete an existing RR
+    rrset_.reset(new RRset(Name("www.example.org"), qclass_, qtype_, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
+                                        rrset_->getClass(), "192.0.2.1"));
+    updater_->deleteRRset(*rrset_);
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.2");
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
+
+    // re-add it
+    updater_->addRRset(*rrset_);
+    expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
+
+    // add a new RR with a new name
+    const Name newname("newname.example.org");
+    const RRType newtype(RRType::AAAA());
+    doFindTest(updater_->getFinder(), newname, newtype, newtype, rrttl_,
+               ZoneFinder::NXDOMAIN, empty_rdatas_, empty_rdatas_);
+    rrset_.reset(new RRset(newname, qclass_, newtype, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
+                                        rrset_->getClass(), "2001:db8::10"));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
+                                        rrset_->getClass(), "2001:db8::11"));
+    updater_->addRRset(*rrset_);
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("2001:db8::10");
+    expected_rdatas_.push_back("2001:db8::11");
+    doFindTest(updater_->getFinder(), newname, newtype, newtype, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
+
+    // delete one RR from the previous set
+    rrset_.reset(new RRset(newname, qclass_, newtype, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
+                                        rrset_->getClass(), "2001:db8::11"));
+    updater_->deleteRRset(*rrset_);
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("2001:db8::10");
+    doFindTest(updater_->getFinder(), newname, newtype, newtype, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
+
+    // Commit the changes, confirm the entire changes applied.
+    updater_->commit();
+    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.2");
+    expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(*finder, qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
+
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("2001:db8::10");
+    doFindTest(*finder, newname, newtype, newtype, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
+}
 }
