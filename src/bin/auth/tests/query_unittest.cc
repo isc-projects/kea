@@ -111,7 +111,8 @@ public:
         dname_name_("dname.example.com"),
         has_SOA_(true),
         has_apex_NS_(true),
-        rrclass_(RRClass::IN())
+        rrclass_(RRClass::IN()),
+        include_rrsig_anyway_(false)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
@@ -136,6 +137,9 @@ public:
     // If false is passed, it makes the zone broken as if it didn't have
     // the apex NS.
     void setApexNSFlag(bool on) { has_apex_NS_ = on; }
+
+    // Turn this on if you want it to return RRSIGs regardless of FIND_GLUE_OK
+    void setIncludeRRSIGAnyway(bool on) { include_rrsig_anyway_ = on; }
 
 private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
@@ -181,6 +185,7 @@ private:
     ConstRRsetPtr delegation_rrset_;
     ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
+    bool include_rrsig_anyway_;
 };
 
 ZoneFinder::FindResult
@@ -219,6 +224,7 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             // Strip whatever signature there is in case DNSSEC is not required
             // Just to make sure the Query asks for it when it is needed
             if (options & ZoneFinder::FIND_DNSSEC ||
+                include_rrsig_anyway_ ||
                 !found_rrset->second->getRRsig()) {
                 rrset = found_rrset->second;
             } else {
@@ -335,6 +341,17 @@ TEST_F(QueryTest, noZone) {
 }
 
 TEST_F(QueryTest, exactMatch) {
+    Query query(memory_client, qname, qtype, response);
+    EXPECT_NO_THROW(query.process());
+    // find match rrset
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+                  www_a_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, exactMatchIgnoreSIG) {
+    // Check that we do not include the RRSIG when not requested even when
+    // we receive it from the data source.
+    mock_finder->setIncludeRRSIGAnyway(true);
     Query query(memory_client, qname, qtype, response);
     EXPECT_NO_THROW(query.process());
     // find match rrset
