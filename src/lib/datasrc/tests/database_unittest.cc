@@ -402,7 +402,7 @@ public:
 private:
     // The following member variables are storage and/or update work space
     // of the test zone.  The "master"s are the real objects that contain
-    // the data, and they are shared among by all accessors cloned from
+    // the data, and they are shared among all accessors cloned from
     // an initially created one.  The pointer members allow the sharing.
     // "readonly" is for normal lookups.  "update" is the workspace for
     // updates.  When update starts it will be initialized either as an
@@ -416,7 +416,6 @@ private:
     const Domains* empty_records_;
 
     // used as temporary storage during the building of the fake data
-    //Domains records;
 
     // used as temporary storage after searchForRecord() and during
     // getNextRecord() calls, as well as during the building of the
