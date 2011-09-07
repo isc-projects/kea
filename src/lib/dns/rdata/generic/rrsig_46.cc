@@ -244,7 +244,7 @@ RRSIG::compare(const Rdata& other) const {
 }
 
 const RRType&
-RRSIG::typeCovered() {
+RRSIG::typeCovered() const {
     return (impl_->covered_);
 }
 

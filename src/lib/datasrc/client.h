@@ -80,8 +80,8 @@ typedef boost::shared_ptr<ZoneIterator> ZoneIteratorPtr;
 /// disruption with a naive copy it's prohibited explicitly.  For the expected
 /// usage of the client classes the restriction should be acceptable.
 ///
-/// \todo This class is not complete. It needs more factory methods, for
-///     accessing the whole zone, updating it, loading it, etc.
+/// \todo This class is still not complete. It will need more factory methods,
+/// e.g. for (re)loading a zone.
 class DataSourceClient : boost::noncopyable {
 public:
     /// \brief A helper structure to represent the search result of
@@ -180,6 +180,65 @@ public:
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support iteration");
     }
+
+    /// Return an updater to make updates to a specific zone.
+    ///
+    /// The RR class of the zone is the one that the client is expected to
+    /// handle (see the detailed description of this class).
+    ///
+    /// If the specified zone is not found via the client, a NULL pointer
+    /// will be returned; in other words a completely new zone cannot be
+    /// created using an updater.  It must be created beforehand (even if
+    /// it's an empty placeholder) in a way specific to the underlying data
+    /// source.
+    ///
+    /// Conceptually, the updater will trigger a separate transaction for
+    /// subsequent updates to the zone within the context of the updater
+    /// (the actual implementation of the "transaction" may vary for the
+    /// specific underlying data source).  Until \c commit() is performed
+    /// on the updater, the intermediate updates won't affect the results
+    /// of other methods (and the result of the object's methods created
+    /// by other factory methods).  Likewise, if the updater is destructed
+    /// without performing \c commit(), the intermediate updates will be
+    /// effectively canceled and will never affect other methods.
+    ///
+    /// If the underlying data source allows concurrent updates, this method
+    /// can be called multiple times while the previously returned updater(s)
+    /// are still active.  In this case each updater triggers a different
+    /// "transaction".  Normally it would be for different zones for such a
+    /// case as handling multiple incoming AXFR streams concurrently, but
+    /// this interface does not even prohibit an attempt of getting more than
+    /// one updater for the same zone, as long as the underlying data source
+    /// allows such an operation (and any conflict resolution is left to the
+    /// specific derived class implementation).
+    ///
+    /// If \c replace is true, any existing RRs of the zone will be
+    /// deleted on successful completion of updates (after \c commit() on
+    /// the updater); if it's false, the existing RRs will be
+    /// intact unless explicitly deleted by \c deleteRRset() on the updater.
+    ///
+    /// A data source can be "read only" or can prohibit partial updates.
+    /// In such cases this method will result in an \c isc::NotImplemented
+    /// exception unconditionally or when \c replace is false).
+    ///
+    /// \note To avoid throwing the exception accidentally with a lazy
+    /// implementation, we still keep this method pure virtual without
+    /// an implementation.  All derived classes must explicitly define this
+    /// method, even if it simply throws the NotImplemented exception.
+    ///
+    /// \exception NotImplemented The underlying data source does not support
+    /// updates.
+    /// \exception DataSourceError Internal error in the underlying data
+    /// source.
+    /// \exception std::bad_alloc Resource allocation failure.
+    ///
+    /// \param name The zone name to be updated
+    /// \param replace Whether to delete existing RRs before making updates
+    ///
+    /// \return A pointer to the updater; it will be NULL if the specified
+    /// zone isn't found.
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
+                                      bool replace) const = 0;
 };
 }
 }
