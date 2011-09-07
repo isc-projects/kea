@@ -107,7 +107,11 @@ public:
     /// performed on these values to express compound options.
     enum FindOptions {
         FIND_DEFAULT = 0,       ///< The default options
-        FIND_GLUE_OK = 1        ///< Allow search under a zone cut
+        FIND_GLUE_OK = 1,       ///< Allow search under a zone cut
+        FIND_DNSSEC = 2         ///< Require DNSSEC data in the answer
+                                ///< (RRSIG, NSEC, etc.). The implementation
+                                ///< is allowed to include it even if it is
+                                ///< not set.
     };
 
     ///
@@ -200,6 +204,19 @@ public:
                             = FIND_DEFAULT) = 0;
     //@}
 };
+
+/// \brief Operator to combine FindOptions
+///
+/// We would need to manually static-cast the options if we put or
+/// between them, which is undesired with bit-flag options. Therefore
+/// we hide the cast here, which is the simplest solution and it still
+/// provides reasonable level of type safety.
+inline ZoneFinder::FindOptions operator |(ZoneFinder::FindOptions a,
+                                          ZoneFinder::FindOptions b)
+{
+    return (static_cast<ZoneFinder::FindOptions>(static_cast<unsigned>(a) |
+                                                 static_cast<unsigned>(b)));
+}
 
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
 typedef boost::shared_ptr<ZoneFinder> ZoneFinderPtr;
