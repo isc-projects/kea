@@ -1553,8 +1553,9 @@ TYPED_TEST(DatabaseClientTest, updaterFinder) {
     // If this update isn't replacing the zone, the finder should work
     // just like the normal find() case.
     if (this->is_mock_) {
-        EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
-                      this->updater_->getFinder()).zone_id());
+        DatabaseClient::Finder& finder = dynamic_cast<DatabaseClient::Finder&>(
+            this->updater_->getFinder());
+        EXPECT_EQ(WRITABLE_ZONE_ID, finder.zone_id());
     }
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("192.0.2.1");
@@ -1568,8 +1569,9 @@ TYPED_TEST(DatabaseClientTest, updaterFinder) {
     this->updater_ = this->client_->getUpdater(this->zname_, true);
     ASSERT_TRUE(this->updater_);
     if (this->is_mock_) {
-        EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
-                      this->updater_->getFinder()).zone_id());
+        DatabaseClient::Finder& finder = dynamic_cast<DatabaseClient::Finder&>(
+            this->updater_->getFinder());
+        EXPECT_EQ(WRITABLE_ZONE_ID, finder.zone_id());
     }
     doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
                this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
