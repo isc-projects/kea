@@ -25,6 +25,7 @@
 #include <datasrc/zone.h>
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
+#include <datasrc/sqlite3_accessor.h>
 
 #include <testutils/dnsmessage_test.h>
 
@@ -610,155 +611,17 @@ private:
     // might not come in 'normal' order)
     // It shall immediately fail if you try to add the same name twice.
     void fillData() {
-        // some plain data
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addRecord("AAAA", "3600", "", "2001:db8::2");
-        addCurName("www.example.org.");
-
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addRecord("A", "3600", "", "192.0.2.2");
-        addCurName("www2.example.org.");
-
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addCurName("cname.example.org.");
-
-        // some DNSSEC-'signed' data
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addRecord("AAAA", "3600", "", "2001:db8::2");
-        addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("signed1.example.org.");
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("signedcname1.example.org.");
-        // special case might fail; sig is for cname, which isn't there (should be ignored)
-        // (ignoring of 'normal' other type is done above by www.)
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("acnamesig1.example.org.");
-
-        // let's pretend we have a database that is not careful
-        // about the order in which it returns data
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("AAAA", "3600", "", "2001:db8::2");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addCurName("signed2.example.org.");
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addCurName("signedcname2.example.org.");
-
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("acnamesig2.example.org.");
-
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("acnamesig3.example.org.");
-
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("A", "360", "", "192.0.2.2");
-        addCurName("ttldiff1.example.org.");
-        addRecord("A", "360", "", "192.0.2.1");
-        addRecord("A", "3600", "", "192.0.2.2");
-        addCurName("ttldiff2.example.org.");
-
-        // also add some intentionally bad data
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addCurName("badcname1.example.org.");
-
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("badcname2.example.org.");
-
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addRecord("CNAME", "3600", "", "www.example2.org.");
-        addCurName("badcname3.example.org.");
-
-        addRecord("A", "3600", "", "bad");
-        addCurName("badrdata.example.org.");
-
-        addRecord("BAD_TYPE", "3600", "", "192.0.2.1");
-        addCurName("badtype.example.org.");
-
-        addRecord("A", "badttl", "", "192.0.2.1");
-        addCurName("badttl.example.org.");
-
-        addRecord("A", "badttl", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 somebaddata 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("badsig.example.org.");
-
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("badsigtype.example.org.");
-
-        // Data for testing delegation (with NS and DNAME)
-        addRecord("NS", "3600", "", "ns.example.com.");
-        addRecord("NS", "3600", "", "ns.delegation.example.org.");
-        addRecord("RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
-                  "20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("delegation.example.org.");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("ns.delegation.example.org.");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("deep.below.delegation.example.org.");
-
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("DNAME", "3600", "", "dname.example.com.");
-        addRecord("RRSIG", "3600", "", "DNAME 5 3 3600 20000101000000 "
-                  "20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("dname.example.org.");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("below.dname.example.org.");
-
-        // Broken NS
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("NS", "3600", "", "ns.example.com.");
-        addCurName("brokenns1.example.org.");
-        addRecord("NS", "3600", "", "ns.example.com.");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("brokenns2.example.org.");
-
-        // Now double DNAME, to test failure mode
-        addRecord("DNAME", "3600", "", "dname1.example.com.");
-        addRecord("DNAME", "3600", "", "dname2.example.com.");
-        addCurName("baddname.example.org.");
-
-        // Put some data into apex (including NS) so we can check our NS
-        // doesn't break anything
-        addRecord("NS", "3600", "", "ns.example.com.");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
-                  "20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("example.org.");
-
-        // This is because of empty domain test
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("a.b.example.org.");
-
-        // Something for wildcards
-        addRecord("A", "3600", "", "192.0.2.5");
-        addCurName("*.wild.example.org.");
-        addRecord("AAAA", "3600", "", "2001:db8::5");
-        addCurName("cancel.here.wild.example.org.");
-        addRecord("NS", "3600", "", "ns.example.com.");
-        addCurName("delegatedwild.example.org.");
-        addRecord("A", "3600", "", "192.0.2.5");
-        addCurName("*.delegatedwild.example.org.");
-        addRecord("A", "3600", "", "192.0.2.5");
-        addCurName("wild.*.foo.example.org.");
-        addRecord("A", "3600", "", "192.0.2.5");
-        addCurName("wild.*.foo.*.bar.example.org.");
+        const char* prev_name = NULL;
+        for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
+            if (prev_name != NULL &&
+                strcmp(prev_name, TEST_RECORDS[i][0]) != 0) {
+                addCurName(prev_name);
+            }
+            prev_name = TEST_RECORDS[i][0];
+            addRecord(TEST_RECORDS[i][1], TEST_RECORDS[i][2],
+                      TEST_RECORDS[i][3], TEST_RECORDS[i][4]);
+        }
+        addCurName(prev_name);
     }
 };
 
@@ -775,6 +638,10 @@ TEST(DatabaseConnectionTest, getAllRecords) {
                  isc::NotImplemented);
 }
 
+// This test fixture is templated so that we can share (most of) the test
+// cases with different types of data sources.  Note that in test cases
+// we need to use 'this' to refer to member variables of the test class.
+template <typename ACCESSOR_TYPE>
 class DatabaseClientTest : public ::testing::Test {
 public:
     DatabaseClientTest() : zname_("example.org"), qname_("www.example.org"),
@@ -810,9 +677,10 @@ public:
      * times per test.
      */
     void createClient() {
-        current_accessor_ = new MockAccessor();
+        current_accessor_ = new ACCESSOR_TYPE();
+        is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_) != NULL);
         client_.reset(new DatabaseClient(qclass_,
-                                         shared_ptr<DatabaseAccessor>(
+                                         shared_ptr<ACCESSOR_TYPE>(
                                              current_accessor_)));
     }
 
@@ -826,7 +694,9 @@ public:
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
         ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
-        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+        if (is_mock_) {
+            EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+        }
         EXPECT_EQ(current_accessor_, &finder->getAccessor());
     }
 
@@ -835,30 +705,49 @@ public:
         EXPECT_EQ(result::SUCCESS, zone.code);
         shared_ptr<DatabaseClient::Finder> finder(
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+        if (is_mock_) {
+            EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+        }
 
         return (finder);
     }
 
     // Helper methods for update tests
-    //bool isRollbacked(bool expected = false) const {
-    bool isRollbacked() const {
-        return (update_accessor_->isRollbacked());
+    bool isRollbacked(bool expected = false) const {
+        if (is_mock_) {
+            const MockAccessor& mock_accessor =
+                dynamic_cast<const MockAccessor&>(*update_accessor_);
+            return (mock_accessor.isRollbacked());
+        } else {
+            return (expected);
+        }
     }
 
     void checkLastAdded(const char* const expected[]) const {
-        for (int i = 0; i < DatabaseAccessor::ADD_COLUMN_COUNT; ++i) {
-            EXPECT_EQ(expected[i],
-                      current_accessor_->getLatestClone()->getLastAdded()[i]);
+        if (is_mock_) {
+            const MockAccessor* mock_accessor =
+                dynamic_cast<const MockAccessor*>(current_accessor_);
+            for (int i = 0; i < DatabaseAccessor::ADD_COLUMN_COUNT; ++i) {
+                EXPECT_EQ(expected[i],
+                          mock_accessor->getLatestClone()->getLastAdded()[i]);
+            }
         }
     }
 
     void setUpdateAccessor() {
-        update_accessor_ = current_accessor_->getLatestClone();
+        if (is_mock_) {
+            const MockAccessor* mock_accessor =
+                dynamic_cast<const MockAccessor*>(current_accessor_);
+            update_accessor_ = mock_accessor->getLatestClone();
+        }
     }
 
+    // Some tests only work for MockAccessor.  We remember whether our accessor
+    // is of that type.
+    bool is_mock_;
+
     // Will be deleted by client_, just keep the current value for comparison.
-    MockAccessor* current_accessor_;
+    ACCESSOR_TYPE* current_accessor_;
     shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
@@ -876,7 +765,7 @@ public:
 
     // update related objects to be tested
     ZoneUpdaterPtr updater_;
-    shared_ptr<const MockAccessor> update_accessor_;
+    shared_ptr<const DatabaseAccessor> update_accessor_;
 
     // placeholders
     const std::vector<std::string> empty_rdatas_; // for NXRRSET/NXDOMAIN
@@ -884,25 +773,55 @@ public:
     std::vector<std::string> expected_sig_rdatas_;
 };
 
-TEST_F(DatabaseClientTest, zoneNotFound) {
-    DataSourceClient::FindResult zone(client_->findZone(Name("example.com")));
+class TestSQLite3Accessor : public SQLite3Accessor {
+public:
+    TestSQLite3Accessor() : SQLite3Accessor(
+        TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied",
+        RRClass::IN())
+    {
+        startUpdateZone("example.org.", true);
+        string columns[ADD_COLUMN_COUNT];
+        for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
+            columns[ADD_NAME] = TEST_RECORDS[i][0];
+            columns[ADD_REV_NAME] = Name(columns[ADD_NAME]).reverse().toText();
+            columns[ADD_TYPE] = TEST_RECORDS[i][1];
+            columns[ADD_TTL] = TEST_RECORDS[i][2];
+            columns[ADD_SIGTYPE] = TEST_RECORDS[i][3];
+            columns[ADD_RDATA] = TEST_RECORDS[i][4];
+
+            addRecordToZone(columns);
+        }
+        commitUpdateZone();
+    }
+};
+
+// The following two lines instantiate test cases with concrete accessor
+// classes to be tested.
+typedef ::testing::Types<MockAccessor, TestSQLite3Accessor> TestAccessorTypes;
+TYPED_TEST_CASE(DatabaseClientTest, TestAccessorTypes);
+
+TYPED_TEST(DatabaseClientTest, zoneNotFound) {
+    DataSourceClient::FindResult zone(
+        this->client_->findZone(Name("example.com")));
     EXPECT_EQ(result::NOTFOUND, zone.code);
 }
 
-TEST_F(DatabaseClientTest, exactZone) {
-    DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
+TYPED_TEST(DatabaseClientTest, exactZone) {
+    DataSourceClient::FindResult zone(
+        this->client_->findZone(Name("example.org")));
     EXPECT_EQ(result::SUCCESS, zone.code);
-    checkZoneFinder(zone);
+    this->checkZoneFinder(zone);
 }
 
-TEST_F(DatabaseClientTest, superZone) {
-    DataSourceClient::FindResult zone(client_->findZone(Name(
+TYPED_TEST(DatabaseClientTest, superZone) {
+    DataSourceClient::FindResult zone(this->client_->findZone(Name(
         "sub.example.org")));
     EXPECT_EQ(result::PARTIALMATCH, zone.code);
-    checkZoneFinder(zone);
+    this->checkZoneFinder(zone);
 }
 
-TEST_F(DatabaseClientTest, noAccessorException) {
+// This test doesn't depend on derived accessor class, so we use TEST().
+TEST(GenericDatabaseClientTest, noAccessorException) {
     // We need a dummy variable here; some compiler would regard it a mere
     // declaration instead of an instantiation and make the test fail.
     EXPECT_THROW(DatabaseClient dummy(RRClass::IN(),
@@ -911,13 +830,14 @@ TEST_F(DatabaseClientTest, noAccessorException) {
 }
 
 // If the zone doesn't exist, exception is thrown
-TEST_F(DatabaseClientTest, noZoneIterator) {
-    EXPECT_THROW(client_->getIterator(Name("example.com")), DataSourceError);
+TYPED_TEST(DatabaseClientTest, noZoneIterator) {
+    EXPECT_THROW(this->client_->getIterator(Name("example.com")),
+                 DataSourceError);
 }
 
 // If the zone doesn't exist and iteration is not implemented, it still throws
 // the exception it doesn't exist
-TEST_F(DatabaseClientTest, noZoneNotImplementedIterator) {
+TEST(GenericDatabaseClientTest, noZoneNotImplementedIterator) {
     EXPECT_THROW(DatabaseClient(RRClass::IN(),
                                 boost::shared_ptr<DatabaseAccessor>(
                                     new NopAccessor())).getIterator(
@@ -925,32 +845,44 @@ TEST_F(DatabaseClientTest, noZoneNotImplementedIterator) {
                  DataSourceError);
 }
 
-TEST_F(DatabaseClientTest, notImplementedIterator) {
+TEST(GenericDatabaseClientTest, notImplementedIterator) {
     EXPECT_THROW(DatabaseClient(RRClass::IN(), shared_ptr<DatabaseAccessor>(
         new NopAccessor())).getIterator(Name("example.org")),
                  isc::NotImplemented);
 }
 
 // Pretend a bug in the connection and pass NULL as the context
-// Should not crash, but gracefully throw
-TEST_F(DatabaseClientTest, nullIteratorContext) {
-    EXPECT_THROW(client_->getIterator(Name("null.example.org")),
-                 isc::Unexpected);
+// Should not crash, but gracefully throw.  Works for the mock accessor only.
+TYPED_TEST(DatabaseClientTest, nullIteratorContext) {
+    if (this->is_mock_) {
+        EXPECT_THROW(this->client_->getIterator(Name("null.example.org")),
+                     isc::Unexpected);
+    }
 }
 
-// It doesn't crash or anything if the zone is completely empty
-TEST_F(DatabaseClientTest, emptyIterator) {
-    ZoneIteratorPtr it(client_->getIterator(Name("empty.example.org")));
+// It doesn't crash or anything if the zone is completely empty.
+// Works for the mock accessor only.
+TYPED_TEST(DatabaseClientTest, emptyIterator) {
+    if (!this->is_mock_) {
+        return;
+    }
+    ZoneIteratorPtr it(this->client_->getIterator(Name("empty.example.org")));
     EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
     // This is past the end, it should throw
     EXPECT_THROW(it->getNextRRset(), isc::Unexpected);
 }
 
-// Iterate trough a zone
-TEST_F(DatabaseClientTest, iterator) {
-    ZoneIteratorPtr it(client_->getIterator(Name("example.org")));
+// Iterate through a zone
+TYPED_TEST(DatabaseClientTest, iterator) {
+    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
     ConstRRsetPtr rrset(it->getNextRRset());
     ASSERT_NE(ConstRRsetPtr(), rrset);
+
+    // The rest of the checks work only for the mock accessor.
+    if (!this->is_mock_) {
+        return;
+    }
+
     EXPECT_EQ(Name("example.org"), rrset->getName());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
     EXPECT_EQ(RRType::SOA(), rrset->getType());
@@ -993,10 +925,14 @@ TEST_F(DatabaseClientTest, iterator) {
 }
 
 // This has inconsistent TTL in the set (the rest, like nonsense in
-// the data is handled in rdata itself).
-TEST_F(DatabaseClientTest, badIterator) {
+// the data is handled in rdata itself).  Work for mock iterator only.
+TYPED_TEST(DatabaseClientTest, badIterator) {
+    if (!this->is_mock_) {
+        return;
+    }
+
     // It should not throw, but get the lowest one of them
-    ZoneIteratorPtr it(client_->getIterator(Name("bad.example.org")));
+    ZoneIteratorPtr it(this->client_->getIterator(Name("bad.example.org")));
     EXPECT_EQ(it->getNextRRset()->getTTL(), isc::dns::RRTTL(300));
 }
 
@@ -1053,544 +989,511 @@ doFindTest(ZoneFinder& finder,
     }
 }
 
-TEST_F(DatabaseClientTest, find) {
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+TYPED_TEST(DatabaseClientTest, find) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
     doFindTest(*finder, isc::dns::Name("www.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
     doFindTest(*finder, isc::dns::Name("www2.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("2001:db8::1");
-    expected_rdatas_.push_back("2001:db8::2");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::1");
+    this->expected_rdatas_.push_back("2001:db8::2");
     doFindTest(*finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600),
+               this->rrttl_,
                ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
-               isc::dns::RRTTL(3600),
+               this->rrttl_,
                ZoneFinder::NXRRSET,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("www.example.org.");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("www.example.org.");
     doFindTest(*finder, isc::dns::Name("cname.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::CNAME,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, isc::dns::RRType::CNAME(), this->rrttl_,
+               ZoneFinder::CNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("www.example.org.");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("www.example.org.");
     doFindTest(*finder, isc::dns::Name("cname.example.org."),
                isc::dns::RRType::CNAME(), isc::dns::RRType::CNAME(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("doesnotexist.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::NXDOMAIN,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("signed1.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("2001:db8::1");
-    expected_rdatas_.push_back("2001:db8::2");
-    expected_sig_rdatas_.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::1");
+    this->expected_rdatas_.push_back("2001:db8::2");
+    this->expected_sig_rdatas_.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("signed1.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::NXRRSET,
-               expected_rdatas_, expected_sig_rdatas_);
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("www.example.org.");
-    expected_sig_rdatas_.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("www.example.org.");
+    this->expected_sig_rdatas_.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("signedcname1.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::CNAME,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, isc::dns::RRType::CNAME(), this->rrttl_,
+               ZoneFinder::CNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("signed2.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("2001:db8::2");
-    expected_rdatas_.push_back("2001:db8::1");
-    expected_sig_rdatas_.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::2");
+    this->expected_rdatas_.push_back("2001:db8::1");
+    this->expected_sig_rdatas_.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("signed2.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::NXRRSET,
-               expected_rdatas_, expected_sig_rdatas_);
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("www.example.org.");
-    expected_sig_rdatas_.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("www.example.org.");
+    this->expected_sig_rdatas_.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("signedcname2.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::CNAME,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, isc::dns::RRType::CNAME(), this->rrttl_,
+               ZoneFinder::CNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("acnamesig1.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("acnamesig2.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("acnamesig3.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
     doFindTest(*finder, isc::dns::Name("ttldiff1.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(360),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, isc::dns::RRTTL(360),
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
     doFindTest(*finder, isc::dns::Name("ttldiff2.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(360),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, isc::dns::RRTTL(360),
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
     EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
-                                              isc::dns::RRType::A(),
+                                              this->qtype_,
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badcname2.example.org."),
-                                              isc::dns::RRType::A(),
+                                              this->qtype_,
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badcname3.example.org."),
-                                              isc::dns::RRType::A(),
+                                              this->qtype_,
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badrdata.example.org."),
-                                              isc::dns::RRType::A(),
+                                              this->qtype_,
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badtype.example.org."),
-                                              isc::dns::RRType::A(),
+                                              this->qtype_,
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badttl.example.org."),
-                                              isc::dns::RRType::A(),
+                                              this->qtype_,
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badsig.example.org."),
-                                              isc::dns::RRType::A(),
+                                              this->qtype_,
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 
     // Trigger the hardcoded exceptions and see if find() has cleaned up
-    EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
-                                              isc::dns::RRType::A(),
-                                              NULL, ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
-                                              isc::dns::RRType::A(),
-                                              NULL, ZoneFinder::FIND_DEFAULT),
-                 isc::Exception);
-    EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
-                                              isc::dns::RRType::A(),
-                                              NULL, ZoneFinder::FIND_DEFAULT),
-                 std::exception);
-    EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
-                                              isc::dns::RRType::A(),
-                                              NULL, ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
-                                              isc::dns::RRType::A(),
-                                              NULL, ZoneFinder::FIND_DEFAULT),
-                 isc::Exception);
-    EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
-                                              isc::dns::RRType::A(),
-                                              NULL, ZoneFinder::FIND_DEFAULT),
-                 std::exception);
+    if (this->is_mock_) {
+        EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
+                                  this->qtype_,
+                                  NULL, ZoneFinder::FIND_DEFAULT),
+                     DataSourceError);
+        EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
+                                  this->qtype_,
+                                  NULL, ZoneFinder::FIND_DEFAULT),
+                     isc::Exception);
+        EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
+                                  this->qtype_,
+                                  NULL, ZoneFinder::FIND_DEFAULT),
+                     std::exception);
+        EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
+                                  this->qtype_,
+                                  NULL, ZoneFinder::FIND_DEFAULT),
+                     DataSourceError);
+        EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
+                                  this->qtype_,
+                                  NULL, ZoneFinder::FIND_DEFAULT),
+                     isc::Exception);
+        EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
+                                  this->qtype_,
+                                  NULL, ZoneFinder::FIND_DEFAULT),
+                     std::exception);
+    }
 
     // This RRSIG has the wrong sigtype field, which should be
     // an error if we decide to keep using that field
     // Right now the field is ignored, so it does not error
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("badsigtype.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 }
 
-TEST_F(DatabaseClientTest, findDelegation) {
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+TYPED_TEST(DatabaseClientTest, findDelegation) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // The apex should not be considered delegation point and we can access
     // data
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
     doFindTest(*finder, isc::dns::Name("example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("ns.example.com.");
-    expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 20000201000000 "
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com.");
+    this->expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 20000201000000 "
                                   "12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("example.org."),
                isc::dns::RRType::NS(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
     // Check when we ask for something below delegation point, we get the NS
     // (Both when the RRset there exists and doesn't)
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
-    expected_rdatas_.push_back("ns.example.com.");
-    expected_rdatas_.push_back("ns.delegation.example.org.");
-    expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 20000201000000 "
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com.");
+    this->expected_rdatas_.push_back("ns.delegation.example.org.");
+    this->expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 20000201000000 "
                                   "12345 example.org. FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("ns.delegation.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
-               expected_sig_rdatas_,
+               this->qtype_, isc::dns::RRType::NS(),
+               this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
                isc::dns::Name("delegation.example.org."));
     doFindTest(*finder, isc::dns::Name("ns.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
-               expected_sig_rdatas_,
+               this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
                isc::dns::Name("delegation.example.org."));
     doFindTest(*finder, isc::dns::Name("deep.below.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
-               expected_sig_rdatas_,
+               this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
                isc::dns::Name("delegation.example.org."));
 
     // Even when we check directly at the delegation point, we should get
     // the NS
     doFindTest(*finder, isc::dns::Name("delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
     // And when we ask direcly for the NS, we should still get delegation
     doFindTest(*finder, isc::dns::Name("delegation.example.org."),
                isc::dns::RRType::NS(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
     // Now test delegation. If it is below the delegation point, we should get
     // the DNAME (the one with data under DNAME is invalid zone, but we test
     // the behaviour anyway just to make sure)
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("dname.example.com.");
-    expected_sig_rdatas_.clear();
-    expected_sig_rdatas_.push_back("DNAME 5 3 3600 20000101000000 "
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("dname.example.com.");
+    this->expected_sig_rdatas_.clear();
+    this->expected_sig_rdatas_.push_back("DNAME 5 3 3600 20000101000000 "
                                   "20000201000000 12345 example.org. "
                                   "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
-               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
-               expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+               this->qtype_, isc::dns::RRType::DNAME(),
+               this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
-               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
-               expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+               this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
     doFindTest(*finder, isc::dns::Name("really.deep.below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
-               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
-               expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+               this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
 
     // Asking direcly for DNAME should give SUCCESS
     doFindTest(*finder, isc::dns::Name("dname.example.org."),
                isc::dns::RRType::DNAME(), isc::dns::RRType::DNAME(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
     // But we don't delegate at DNAME point
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_sig_rdatas_.clear();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("dname.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
-               expected_sig_rdatas_);
-    expected_rdatas_.clear();
+               this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
+    this->expected_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
     // This is broken dname, it contains two targets
     EXPECT_THROW(finder->find(isc::dns::Name("below.baddname.example.org."),
-                              isc::dns::RRType::A(), NULL,
+                              this->qtype_, NULL,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 
     // Broken NS - it lives together with something else
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns1.example.org."),
-                              isc::dns::RRType::A(), NULL,
+                              this->qtype_, NULL,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns2.example.org."),
-                              isc::dns::RRType::A(), NULL,
+                              this->qtype_, NULL,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 }
 
-TEST_F(DatabaseClientTest, emptyDomain) {
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+TYPED_TEST(DatabaseClientTest, emptyDomain) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // This domain doesn't exist, but a subdomain of it does.
     // Therefore we should pretend the domain is there, but contains no RRsets
-    doFindTest(*finder, isc::dns::Name("b.example.org."), isc::dns::RRType::A(),
-               isc::dns::RRType::A(), isc::dns::RRTTL(3600),
-               ZoneFinder::NXRRSET, expected_rdatas_, expected_sig_rdatas_);
+    doFindTest(*finder, isc::dns::Name("b.example.org."), this->qtype_,
+               this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 }
 
-// Glue-OK mode. Just go trough NS delegations down (but not trough
+// Glue-OK mode. Just go through NS delegations down (but not through
 // DNAME) and pretend it is not there.
-TEST_F(DatabaseClientTest, glueOK) {
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+TYPED_TEST(DatabaseClientTest, glueOK) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
-    expected_rdatas_.clear();
-    expected_sig_rdatas_.clear();
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("ns.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET,
-               expected_rdatas_, expected_sig_rdatas_,
+               this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
                isc::dns::Name("ns.delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
     doFindTest(*finder, isc::dns::Name("nothere.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
-               expected_rdatas_, expected_sig_rdatas_,
+               this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
                isc::dns::Name("nothere.delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
-    expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.1");
     doFindTest(*finder, isc::dns::Name("ns.delegation.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_,
+               this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
                isc::dns::Name("ns.delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("ns.example.com.");
-    expected_rdatas_.push_back("ns.delegation.example.org.");
-    expected_sig_rdatas_.clear();
-    expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 "
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com.");
+    this->expected_rdatas_.push_back("ns.delegation.example.org.");
+    this->expected_sig_rdatas_.clear();
+    this->expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 "
                                    "20000201000000 12345 example.org. "
                                    "FAKEFAKEFAKE");
     // When we request the NS, it should be SUCCESS, not DELEGATION
     // (different in GLUE_OK)
     doFindTest(*finder, isc::dns::Name("delegation.example.org."),
                isc::dns::RRType::NS(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_,
+               this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
                isc::dns::Name("delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("dname.example.com.");
-    expected_sig_rdatas_.clear();
-    expected_sig_rdatas_.push_back("DNAME 5 3 3600 20000101000000 "
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("dname.example.com.");
+    this->expected_sig_rdatas_.clear();
+    this->expected_sig_rdatas_.push_back("DNAME 5 3 3600 20000101000000 "
                                    "20000201000000 12345 example.org. "
                                    "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
-               isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
-               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
-               expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
-               ZoneFinder::FIND_GLUE_OK);
+               this->qtype_, isc::dns::RRType::DNAME(),
+               this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
+               isc::dns::Name("dname.example.org."), ZoneFinder::FIND_GLUE_OK);
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
-               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
-               expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
-               ZoneFinder::FIND_GLUE_OK);
+               this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
+               isc::dns::Name("dname.example.org."), ZoneFinder::FIND_GLUE_OK);
 }
 
-TEST_F(DatabaseClientTest, wildcard) {
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+TYPED_TEST(DatabaseClientTest, wildcard) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // First, simple wildcard match
-    expected_rdatas_.push_back("192.0.2.5");
+    this->expected_rdatas_.push_back("192.0.2.5");
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_,
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
-               expected_sig_rdatas_);
-    expected_rdatas_.clear();
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
+    this->expected_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
 
     // Direct request for thi wildcard
-    expected_rdatas_.push_back("192.0.2.5");
+    this->expected_rdatas_.push_back("192.0.2.5");
     doFindTest(*finder, isc::dns::Name("*.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
-               expected_sig_rdatas_);
-    expected_rdatas_.clear();
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
+    this->expected_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("*.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
     // This is nonsense, but check it doesn't match by some stupid accident
     doFindTest(*finder, isc::dns::Name("a.*.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
     // These should be canceled, since it is below a domain which exitsts
     doFindTest(*finder, isc::dns::Name("nothing.here.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
     doFindTest(*finder, isc::dns::Name("cancel.here.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
     doFindTest(*finder,
                isc::dns::Name("below.cancel.here.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
-               expected_rdatas_, expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
     // And this should be just plain empty non-terminal domain, check
     // the wildcard doesn't hurt it
     doFindTest(*finder, isc::dns::Name("here.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
-               expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
     // Also make sure that the wildcard doesn't hurt the original data
     // below the wildcard
-    expected_rdatas_.push_back("2001:db8::5");
+    this->expected_rdatas_.push_back("2001:db8::5");
     doFindTest(*finder, isc::dns::Name("cancel.here.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS,
-               expected_rdatas_, expected_sig_rdatas_);
-    expected_rdatas_.clear();
+               this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
+    this->expected_rdatas_.clear();
 
     // How wildcard go together with delegation
-    expected_rdatas_.push_back("ns.example.com.");
+    this->expected_rdatas_.push_back("ns.example.com.");
     doFindTest(*finder, isc::dns::Name("below.delegatedwild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
-               expected_sig_rdatas_,
+               this->qtype_, isc::dns::RRType::NS(), this->rrttl_,
+               ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
                isc::dns::Name("delegatedwild.example.org"));
     // FIXME: This doesn't look logically OK, GLUE_OK should make it transparent,
     // so the match should either work or be canceled, but return NXDOMAIN
     doFindTest(*finder, isc::dns::Name("below.delegatedwild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::NS(),
-               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
-               expected_sig_rdatas_,
+               this->qtype_, isc::dns::RRType::NS(), this->rrttl_,
+               ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
                isc::dns::Name("delegatedwild.example.org"),
                ZoneFinder::FIND_GLUE_OK);
 
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.5");
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.5");
     // These are direct matches
     const char* positive_names[] = {
         "wild.*.foo.example.org.",
@@ -1598,14 +1501,14 @@ TEST_F(DatabaseClientTest, wildcard) {
         NULL
     };
     for (const char** name(positive_names); *name != NULL; ++ name) {
-        doFindTest(*finder, isc::dns::Name(*name), isc::dns::RRType::A(),
-                   isc::dns::RRType::A(), isc::dns::RRTTL(3600),
-                   ZoneFinder::SUCCESS, expected_rdatas_,
-                   expected_sig_rdatas_);
+        doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_,
+                   this->expected_sig_rdatas_);
     }
 
     // These are wildcard matches against empty nonterminal asterisk
-    expected_rdatas_.clear();
+    this->expected_rdatas_.clear();
     const char* negative_names[] = {
         "a.foo.example.org.",
         "*.foo.example.org.",
@@ -1621,463 +1524,505 @@ TEST_F(DatabaseClientTest, wildcard) {
         NULL
     };
     for (const char** name(negative_names); *name != NULL; ++ name) {
-        doFindTest(*finder, isc::dns::Name(*name), isc::dns::RRType::A(),
-                   isc::dns::RRType::A(), isc::dns::RRTTL(3600),
-                   ZoneFinder::NXRRSET, expected_rdatas_,
-                   expected_sig_rdatas_);
+        doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
+                   this->expected_rdatas_, this->expected_sig_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, getOrigin) {
-    DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
+TYPED_TEST(DatabaseClientTest, getOrigin) {
+    DataSourceClient::FindResult zone(this->client_->findZone(this->zname_));
     ASSERT_EQ(result::SUCCESS, zone.code);
     shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-    EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
-    EXPECT_EQ(isc::dns::Name("example.org"), finder->getOrigin());
+    if (this->is_mock_) {
+        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+    }
+    EXPECT_EQ(this->zname_, finder->getOrigin());
 }
 
-TEST_F(DatabaseClientTest, updaterFinder) {
-    updater_ = client_->getUpdater(zname_, false);
-    ASSERT_TRUE(updater_);
+TYPED_TEST(DatabaseClientTest, updaterFinder) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    ASSERT_TRUE(this->updater_);
 
     // If this update isn't replacing the zone, the finder should work
     // just like the normal find() case.
-    EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
-                  updater_->getFinder()).zone_id());
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    doFindTest(updater_->getFinder(), qname_,
-               qtype_, qtype_, rrttl_, ZoneFinder::SUCCESS,
-               expected_rdatas_, empty_rdatas_);
+    if (this->is_mock_) {
+        EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
+                      this->updater_->getFinder()).zone_id());
+    }
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(this->updater_->getFinder(), this->qname_,
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->empty_rdatas_);
 
     // When replacing the zone, the updater's finder shouldn't see anything
     // in the zone until something is added.
-    updater_.reset();
-    updater_ = client_->getUpdater(zname_, true);
-    ASSERT_TRUE(updater_);
-    EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
-                  updater_->getFinder()).zone_id());
-    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
-               ZoneFinder::NXDOMAIN, empty_rdatas_, empty_rdatas_);
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    ASSERT_TRUE(this->updater_);
+    if (this->is_mock_) {
+        EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
+                      this->updater_->getFinder()).zone_id());
+    }
+    doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+               this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->empty_rdatas_, this->empty_rdatas_);
 }
 
-TEST_F(DatabaseClientTest, flushZone) {
+TYPED_TEST(DatabaseClientTest, flushZone) {
     // A simple update case: flush the entire zone
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // Before update, the name exists.
-    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_).code);
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
+                                                this->qtype_).code);
 
     // start update in the replace mode.  the normal finder should still
     // be able to see the record, but the updater's finder shouldn't.
-    updater_ = client_->getUpdater(zname_, true);
-    setUpdateAccessor();
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              finder->find(qname_, qtype_).code);
+              finder->find(this->qname_, this->qtype_).code);
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              updater_->getFinder().find(qname_, qtype_).code);
+              this->updater_->getFinder().find(this->qname_,
+                                               this->qtype_).code);
 
     // commit the update.  now the normal finder shouldn't see it.
-    updater_->commit();
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->find(qname_, qtype_).code);
+    this->updater_->commit();
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->find(this->qname_,
+                                                 this->qtype_).code);
 
     // Check rollback wasn't accidentally performed.
-    EXPECT_FALSE(isRollbacked());
+    EXPECT_FALSE(this->isRollbacked());
 }
 
-TEST_F(DatabaseClientTest, updateCancel) {
+TYPED_TEST(DatabaseClientTest, updateCancel) {
     // similar to the previous test, but destruct the updater before commit.
 
-    ZoneFinderPtr finder = client_->findZone(zname_).zone_finder;
-    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_).code);
+    ZoneFinderPtr finder = this->client_->findZone(this->zname_).zone_finder;
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
+                                                this->qtype_).code);
 
-    updater_ = client_->getUpdater(zname_, true);
-    setUpdateAccessor();
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              updater_->getFinder().find(qname_, qtype_).code);
+              this->updater_->getFinder().find(this->qname_,
+                                               this->qtype_).code);
     // DB should not have been rolled back yet.
-    EXPECT_FALSE(isRollbacked());
-    updater_.reset();            // destruct without commit
+    EXPECT_FALSE(this->isRollbacked());
+    this->updater_.reset();            // destruct without commit
 
     // reset() should have triggered rollback (although it doesn't affect
     // anything to the mock accessor implementation except for the result of
     // isRollbacked())
-    EXPECT_TRUE(isRollbacked());
-    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_).code);
+    EXPECT_TRUE(this->isRollbacked(true));
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
+                                                this->qtype_).code);
 }
 
-TEST_F(DatabaseClientTest, exceptionFromRollback) {
-    updater_ = client_->getUpdater(zname_, true);
+TYPED_TEST(DatabaseClientTest, exceptionFromRollback) {
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
 
-    rrset_.reset(new RRset(Name("throw.example.org"), qclass_, qtype_,
-                           rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                        rrset_->getClass(), "192.0.2.1"));
-    updater_->addRRset(*rrset_);
+    this->rrset_.reset(new RRset(Name("throw.example.org"), this->qclass_,
+                                 this->qtype_, this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.1"));
+    this->updater_->addRRset(*this->rrset_);
     // destruct without commit.  The added name will result in an exception
     // in the MockAccessor's rollback method.  It shouldn't be propagated.
-    EXPECT_NO_THROW(updater_.reset());
+    EXPECT_NO_THROW(this->updater_.reset());
 }
 
-TEST_F(DatabaseClientTest, duplicateCommit) {
+TYPED_TEST(DatabaseClientTest, duplicateCommit) {
     // duplicate commit.  should result in exception.
-    updater_ = client_->getUpdater(zname_, true);
-    updater_->commit();
-    EXPECT_THROW(updater_->commit(), DataSourceError);
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
+    EXPECT_THROW(this->updater_->commit(), DataSourceError);
 }
 
-TEST_F(DatabaseClientTest, addRRsetToNewZone) {
+TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
     // Add a single RRset to a fresh empty zone
-    updater_ = client_->getUpdater(zname_, true);
-    updater_->addRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->addRRset(*this->rrset_);
 
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 
     // Similar to the previous case, but with RRSIG
-    updater_.reset();
-    updater_ = client_->getUpdater(zname_, true);
-    updater_->addRRset(*rrset_);
-    updater_->addRRset(*rrsigset_);
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->addRRset(*this->rrset_);
+    this->updater_->addRRset(*this->rrsigset_);
 
     // confirm the expected columns were passed to the accessor (if checkable).
     const char* const rrsig_added[] = {
         "www.example.org.", "org.example.www.", "3600", "RRSIG", "A",
         "A 5 3 0 20000101000000 20000201000000 0 example.org. FAKEFAKEFAKE"
     };
-    checkLastAdded(rrsig_added);
+    this->checkLastAdded(rrsig_added);
 
-    expected_sig_rdatas_.clear();
-    expected_sig_rdatas_.push_back(rrsig_added[DatabaseAccessor::ADD_RDATA]);
+    this->expected_sig_rdatas_.clear();
+    this->expected_sig_rdatas_.push_back(
+        rrsig_added[DatabaseAccessor::ADD_RDATA]);
     {
         SCOPED_TRACE("add RRset with RRSIG");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, expected_sig_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->expected_sig_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, addRRsetToCurrentZone) {
+TYPED_TEST(DatabaseClientTest, addRRsetToCurrentZone) {
     // Similar to the previous test, but not replacing the existing data.
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->addRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->addRRset(*this->rrset_);
 
     // We should see both old and new data.
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
-    updater_->commit();
+    this->updater_->commit();
     {
         SCOPED_TRACE("add RRset after commit");
-        doFindTest(*finder, qname_, qtype_, qtype_,
-                   rrttl_, ZoneFinder::SUCCESS, expected_rdatas_,
-                   empty_rdatas_);
+        doFindTest(*finder, this->qname_, this->qtype_, this->qtype_,
+                   this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+                   this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, addMultipleRRs) {
+TYPED_TEST(DatabaseClientTest, addMultipleRRs) {
     // Similar to the previous case, but the added RRset contains multiple
     // RRs.
-    updater_ = client_->getUpdater(zname_, false);
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "192.0.2.3"));
-    updater_->addRRset(*rrset_);
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.2");
-    expected_rdatas_.push_back("192.0.2.3");
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.3"));
+    this->updater_->addRRset(*this->rrset_);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.push_back("192.0.2.3");
     {
         SCOPED_TRACE("add multiple RRs");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, addRRsetOfLargerTTL) {
+TYPED_TEST(DatabaseClientTest, addRRsetOfLargerTTL) {
     // Similar to the previous one, but the TTL of the added RRset is larger
     // than that of the existing record.  The finder should use the smaller
     // one.
-    updater_ = client_->getUpdater(zname_, false);
-    rrset_->setTTL(RRTTL(7200));
-    updater_->addRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_->setTTL(RRTTL(7200));
+    this->updater_->addRRset(*this->rrset_);
 
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset of larger TTL");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, addRRsetOfSmallerTTL) {
+TYPED_TEST(DatabaseClientTest, addRRsetOfSmallerTTL) {
     // Similar to the previous one, but the added RRset has a smaller TTL.
     // The added TTL should be used by the finder.
-    updater_ = client_->getUpdater(zname_, false);
-    rrset_->setTTL(RRTTL(1800));
-    updater_->addRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_->setTTL(RRTTL(1800));
+    this->updater_->addRRset(*this->rrset_);
 
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset of smaller TTL");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, RRTTL(1800), ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, RRTTL(1800), ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, addSameRR) {
+TYPED_TEST(DatabaseClientTest, addSameRR) {
     // Add the same RR as that is already in the data source.
     // Currently the add interface doesn't try to suppress the duplicate,
     // neither does the finder.  We may want to revisit it in future versions.
 
-    updater_ = client_->getUpdater(zname_, false);
-    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "192.0.2.1"));
-    updater_->addRRset(*rrset_);
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.1");
-    expected_rdatas_.push_back("192.0.2.1");
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_.reset(new RRset(this->qname_, this->qclass_, this->qtype_,
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.1"));
+    this->updater_->addRRset(*this->rrset_);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.1");
     {
         SCOPED_TRACE("add same RR");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, addDeviantRR) {
-    updater_ = client_->getUpdater(zname_, false);
+TYPED_TEST(DatabaseClientTest, addDeviantRR) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
 
     // RR class mismatch.  This should be detected and rejected.
-    rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "test text"));
-    EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
+    this->rrset_.reset(new RRset(this->qname_, RRClass::CH(), RRType::TXT(),
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "test text"));
+    EXPECT_THROW(this->updater_->addRRset(*this->rrset_), DataSourceError);
 
     // Out-of-zone owner name.  At a higher level this should be rejected,
     // but it doesn't happen in this interface.
-    rrset_.reset(new RRset(Name("example.com"), qclass_, qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "192.0.2.100"));
-    updater_->addRRset(*rrset_);
+    this->rrset_.reset(new RRset(Name("example.com"), this->qclass_,
+                                 this->qtype_, this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.100"));
+    this->updater_->addRRset(*this->rrset_);
 
-    expected_rdatas_.clear();
-    expected_rdatas_.push_back("192.0.2.100");
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.100");
     {
         // Note: with the find() implementation being more strict about
         // zone cuts, this test may fail.  Then the test should be updated.
         SCOPED_TRACE("add out-of-zone RR");
-        doFindTest(updater_->getFinder(), Name("example.com"),
-                   qtype_, qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), Name("example.com"),
+                   this->qtype_, this->qtype_, this->rrttl_,
+                   ZoneFinder::SUCCESS, this->expected_rdatas_,
+                   this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, addEmptyRRset) {
-    updater_ = client_->getUpdater(zname_, false);
-    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
-    EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
+TYPED_TEST(DatabaseClientTest, addEmptyRRset) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_.reset(new RRset(this->qname_, this->qclass_, this->qtype_,
+                                 this->rrttl_));
+    EXPECT_THROW(this->updater_->addRRset(*this->rrset_), DataSourceError);
 }
 
-TEST_F(DatabaseClientTest, addAfterCommit) {
-   updater_ = client_->getUpdater(zname_, false);
-   updater_->commit();
-   EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
+TYPED_TEST(DatabaseClientTest, addAfterCommit) {
+   this->updater_ = this->client_->getUpdater(this->zname_, false);
+   this->updater_->commit();
+   EXPECT_THROW(this->updater_->addRRset(*this->rrset_), DataSourceError);
 }
 
-TEST_F(DatabaseClientTest, deleteRRset) {
-    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+TYPED_TEST(DatabaseClientTest, deleteRRset) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
-    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "192.0.2.1"));
+    this->rrset_.reset(new RRset(this->qname_, this->qclass_, this->qtype_,
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.1"));
 
     // Delete one RR from an RRset
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->deleteRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*this->rrset_);
 
     // Delete the only RR of a name
-    rrset_.reset(new RRset(Name("cname.example.org"), qclass_,
-                          RRType::CNAME(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "www.example.org"));
-    updater_->deleteRRset(*rrset_);
+    this->rrset_.reset(new RRset(Name("cname.example.org"), this->qclass_,
+                          RRType::CNAME(), this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "www.example.org"));
+    this->updater_->deleteRRset(*this->rrset_);
 
-    // The updater_ finder should immediately see the deleted results.
+    // The this->updater_ finder should immediately see the deleted results.
     {
         SCOPED_TRACE("delete RRset");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::NXRRSET,
-                   empty_rdatas_, empty_rdatas_);
-        doFindTest(updater_->getFinder(), Name("cname.example.org"),
-                   qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
+                   this->empty_rdatas_, this->empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), Name("cname.example.org"),
+                   this->qtype_, this->qtype_, this->rrttl_,
+                   ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+                   this->empty_rdatas_);
     }
 
     // before committing the change, the original finder should see the
     // original record.
     {
         SCOPED_TRACE("delete RRset before commit");
-        expected_rdatas_.push_back("192.0.2.1");
-        doFindTest(*finder, qname_, qtype_, qtype_,
-                   rrttl_, ZoneFinder::SUCCESS, expected_rdatas_,
-                   empty_rdatas_);
+        this->expected_rdatas_.push_back("192.0.2.1");
+        doFindTest(*finder, this->qname_, this->qtype_, this->qtype_,
+                   this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+                   this->empty_rdatas_);
 
-        expected_rdatas_.clear();
-        expected_rdatas_.push_back("www.example.org.");
-        doFindTest(*finder, Name("cname.example.org"), qtype_,
-                   RRType::CNAME(), rrttl_, ZoneFinder::CNAME,
-                   expected_rdatas_, empty_rdatas_);
+        this->expected_rdatas_.clear();
+        this->expected_rdatas_.push_back("www.example.org.");
+        doFindTest(*finder, Name("cname.example.org"), this->qtype_,
+                   RRType::CNAME(), this->rrttl_, ZoneFinder::CNAME,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 
     // once committed, the record should be removed from the original finder's
     // view, too.
-    updater_->commit();
+    this->updater_->commit();
     {
         SCOPED_TRACE("delete RRset after commit");
-        doFindTest(*finder, qname_, qtype_, qtype_,
-                   rrttl_, ZoneFinder::NXRRSET, empty_rdatas_,
-                   empty_rdatas_);
-        doFindTest(*finder, Name("cname.example.org"),
-                   qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(*finder, this->qname_, this->qtype_, this->qtype_,
+                   this->rrttl_, ZoneFinder::NXRRSET, this->empty_rdatas_,
+                   this->empty_rdatas_);
+        doFindTest(*finder, Name("cname.example.org"), this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+                   this->empty_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, deleteRRsetToNXDOMAIN) {
+TYPED_TEST(DatabaseClientTest, deleteRRsetToNXDOMAIN) {
     // similar to the previous case, but it removes the only record of the
     // given name.  a subsequent find() should result in NXDOMAIN.
-    rrset_.reset(new RRset(Name("cname.example.org"), qclass_,
-                           RRType::CNAME(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "www.example.org"));
+    this->rrset_.reset(new RRset(Name("cname.example.org"), this->qclass_,
+                           RRType::CNAME(), this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "www.example.org"));
 
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->deleteRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*this->rrset_);
     {
         SCOPED_TRACE("delete RRset to NXDOMAIN");
-        doFindTest(updater_->getFinder(), Name("cname.example.org"),
-                   qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), Name("cname.example.org"),
+                   this->qtype_, this->qtype_, this->rrttl_,
+                   ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+                   this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, deleteMultipleRRs) {
-    rrset_.reset(new RRset(qname_, qclass_, RRType::AAAA(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "2001:db8::1"));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "2001:db8::2"));
+TYPED_TEST(DatabaseClientTest, deleteMultipleRRs) {
+    this->rrset_.reset(new RRset(this->qname_, this->qclass_, RRType::AAAA(),
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "2001:db8::1"));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "2001:db8::2"));
 
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->deleteRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*this->rrset_);
 
     {
         SCOPED_TRACE("delete multiple RRs");
-        doFindTest(updater_->getFinder(), qname_, RRType::AAAA(),
-                   qtype_, rrttl_, ZoneFinder::NXRRSET,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, RRType::AAAA(),
+                   this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
+                   this->empty_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, partialDelete) {
-    rrset_.reset(new RRset(qname_, qclass_, RRType::AAAA(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "2001:db8::1"));
+TYPED_TEST(DatabaseClientTest, partialDelete) {
+    this->rrset_.reset(new RRset(this->qname_, this->qclass_, RRType::AAAA(),
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "2001:db8::1"));
     // This does not exist in the test data source:
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "2001:db8::3"));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "2001:db8::3"));
 
     // deleteRRset should succeed "silently", and subsequent find() should
     // find the remaining RR.
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->deleteRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*this->rrset_);
     {
         SCOPED_TRACE("partial delete");
-        expected_rdatas_.push_back("2001:db8::2");
-        doFindTest(updater_->getFinder(), qname_, RRType::AAAA(),
-                   RRType::AAAA(), rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        this->expected_rdatas_.push_back("2001:db8::2");
+        doFindTest(this->updater_->getFinder(), this->qname_, RRType::AAAA(),
+                   RRType::AAAA(), this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, deleteNoMatch) {
+TYPED_TEST(DatabaseClientTest, deleteNoMatch) {
     // similar to the previous test, but there's not even a match in the
     // specified RRset.  Essentially there's no difference in the result.
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->deleteRRset(*rrset_);
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*this->rrset_);
     {
         SCOPED_TRACE("delete no match");
-        expected_rdatas_.push_back("192.0.2.1");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        this->expected_rdatas_.push_back("192.0.2.1");
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+                   this->expected_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, deleteWithDifferentTTL) {
+TYPED_TEST(DatabaseClientTest, deleteWithDifferentTTL) {
     // Our delete interface simply ignores TTL (may change in a future version)
-    rrset_.reset(new RRset(qname_, qclass_, qtype_, RRTTL(1800)));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "192.0.2.1"));
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->deleteRRset(*rrset_);
+    this->rrset_.reset(new RRset(this->qname_, this->qclass_, this->qtype_,
+                                 RRTTL(1800)));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.1"));
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*this->rrset_);
     {
         SCOPED_TRACE("delete RRset with a different TTL");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::NXRRSET,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+                   this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
+                   this->empty_rdatas_, this->empty_rdatas_);
     }
 }
 
-TEST_F(DatabaseClientTest, deleteDeviantRR) {
-    updater_ = client_->getUpdater(zname_, false);
+TYPED_TEST(DatabaseClientTest, deleteDeviantRR) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
 
     // RR class mismatch.  This should be detected and rejected.
-    rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "test text"));
-    EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
+    this->rrset_.reset(new RRset(this->qname_, RRClass::CH(), RRType::TXT(),
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "test text"));
+    EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_), DataSourceError);
 
     // Out-of-zone owner name.  At a higher level this should be rejected,
     // but it doesn't happen in this interface.
-    rrset_.reset(new RRset(Name("example.com"), qclass_, qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
-                                        "192.0.2.100"));
-    EXPECT_NO_THROW(updater_->deleteRRset(*rrset_));
+    this->rrset_.reset(new RRset(Name("example.com"), this->qclass_,
+                                 this->qtype_, this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.100"));
+    EXPECT_NO_THROW(this->updater_->deleteRRset(*this->rrset_));
 }
 
-TEST_F(DatabaseClientTest, deleteAfterCommit) {
-   updater_ = client_->getUpdater(zname_, false);
-   updater_->commit();
-   EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
+TYPED_TEST(DatabaseClientTest, deleteAfterCommit) {
+   this->updater_ = this->client_->getUpdater(this->zname_, false);
+   this->updater_->commit();
+   EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_), DataSourceError);
 }
 
-TEST_F(DatabaseClientTest, deleteEmptyRRset) {
-    updater_ = client_->getUpdater(zname_, false);
-    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
-    EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
+TYPED_TEST(DatabaseClientTest, deleteEmptyRRset) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_.reset(new RRset(this->qname_, this->qclass_, this->qtype_,
+                                 this->rrttl_));
+    EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_), DataSourceError);
 }
 }
