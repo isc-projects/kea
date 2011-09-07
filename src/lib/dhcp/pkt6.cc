@@ -298,8 +298,12 @@ Pkt6::addOption(boost::shared_ptr<Option> opt) {
 
 bool
 Pkt6::delOption(unsigned short type) {
-    isc_throw(Unexpected, "Not implemented yet. Not added option " << type);
-    return (false);
+    isc::dhcp::Option::Option6Lst::iterator x = options_.find(type);
+    if (x!=options_.end()) {
+        options_.erase(x);
+        return (true); // delete successful
+    }
+    return (false); // can't find option to be deleted
 }
 
 Pkt6::~Pkt6() {
