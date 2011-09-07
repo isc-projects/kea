@@ -48,9 +48,11 @@ const char* const TEST_RECORDS[][5] = {
     {"www.example.org.", "A", "3600", "", "192.0.2.1"},
     {"www.example.org.", "AAAA", "3600", "", "2001:db8::1"},
     {"www.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"www.example.org.", "NSEC", "3600", "", "www2.example.org. A AAAA NSEC RRSIG"},
+    {"www.example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
 
     {"www2.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"www2.example.org.","AAAA", "3600", "", "2001:db8::1"},
+    {"www2.example.org.", "AAAA", "3600", "", "2001:db8::1"},
     {"www2.example.org.", "A", "3600", "", "192.0.2.2"},
 
     {"cname.example.org.", "CNAME", "3600", "", "www.example.org."},
@@ -162,6 +164,8 @@ const char* const TEST_RECORDS[][5] = {
     // Something for wildcards
     {"*.wild.example.org.", "A", "3600", "", "192.0.2.5"},
     {"*.wild.example.org.", "RRSIG", "3600", "A", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"*.wild.example.org.", "NSEC", "3600", "", "cancel.here.wild.example.org. A NSEC RRSIG"},
+    {"*.wild.example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"cancel.here.wild.example.org.", "AAAA", "3600", "", "2001:db8::5"},
     {"delegatedwild.example.org.", "NS", "3600", "", "ns.example.com."},
     {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
@@ -967,21 +971,25 @@ doFindTest(ZoneFinder& finder,
     ZoneFinder::FindResult result =
         finder.find(name, type, NULL, options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
-    if (!expected_rdatas.empty()) {
+    if (!expected_rdatas.empty() && result.rrset) {
         checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
                    name, finder.getClass(), expected_type, expected_ttl,
                    expected_rdatas);
 
-        if (!expected_sig_rdatas.empty()) {
+        if (!expected_sig_rdatas.empty() && result.rrset->getRRsig()) {
             checkRRset(result.rrset->getRRsig(), expected_name != Name(".") ?
                        expected_name : name, finder.getClass(),
                        isc::dns::RRType::RRSIG(), expected_ttl,
                        expected_sig_rdatas);
-        } else {
+        } else if (expected_sig_rdatas.empty()) {
             EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
+        } else {
+            ADD_FAILURE() << "Missing RRSIG";
         }
-    } else {
+    } else if (expected_rdatas.empty()) {
         EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset);
+    } else {
+        ADD_FAILURE() << "Missing result";
     }
 }
 
@@ -1535,8 +1543,49 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     }
 }
 
+TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
+    // The domain exists, but doesn't have this RRType
+    // So we should get it's NSEC
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
+    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, isc::dns::Name("www.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               isc::dns::RRTTL(3600),
+               ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
+}
+
+TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
+    // The domain exists, but doesn't have this RRType
+    // So we should get it's NSEC
+    //
+    // The user will have to query us again to get the correct
+    // answer (eg. prove there's not an exact match)
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    this->expected_rdatas_.push_back("cancel.here.wild.example.org. A NSEC "
+                                     "RRSIG");
+    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    // Note that the NSEC name should NOT be synthesized.
+    doFindTest(*finder, isc::dns::Name("a.wild.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               isc::dns::RRTTL(3600),
+               ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+}
+
+
 TYPED_TEST(DatabaseClientTest, getOrigin) {
-    DataSourceClient::FindResult zone(this->client_->findZone(this->zname_));
+    DataSourceClient::FindResult
+        zone(this->client_->findZone(Name("example.org")));
     ASSERT_EQ(result::SUCCESS, zone.code);
     shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));

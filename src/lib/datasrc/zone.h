@@ -61,6 +61,8 @@ public:
         NXRRSET,  ///< There is a matching name but no RRset of the search type
         CNAME,    ///< The search encounters and returns a CNAME RR
         DNAME     ///< The search encounters and returns a DNAME RR
+        // TODO: Add WILDCARD here so we can request covering NSEC
+        // TODO: Add WILDCARD_NXRRSET for the same reason
     };
 
     /// A helper structure to represent the search result of \c find().
