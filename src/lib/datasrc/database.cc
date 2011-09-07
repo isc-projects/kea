@@ -618,8 +618,7 @@ public:
         committed_(false), accessor_(accessor), zone_id_(zone_id),
         db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
         zone_class_(zone_class),
-        finder_(new DatabaseClient::Finder::Finder(accessor_, zone_id_,
-                                                   zone_name))
+        finder_(new DatabaseClient::Finder(accessor_, zone_id_, zone_name))
     {
         logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
             .arg(zone_name_).arg(zone_class_).arg(db_name_);
@@ -660,9 +659,7 @@ private:
     const string db_name_;
     const string zone_name_;
     const RRClass zone_class_;
-    boost::scoped_ptr<DatabaseClient::Finder::Finder> finder_;
-    string add_columns_[DatabaseAccessor::ADD_COLUMN_COUNT];
-    string del_params_[DatabaseAccessor::DEL_PARAM_COUNT];
+    boost::scoped_ptr<DatabaseClient::Finder> finder_;
 };
 
 void
@@ -676,6 +673,11 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
                   << "added to " << zone_name_ << "/" << zone_class_ << ": "
                   << rrset.toText());
     }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, "An RRset with RRSIG is being added to "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
 
     RdataIteratorPtr it = rrset.getRdataIterator();
     if (it->isLast()) {
@@ -684,11 +686,12 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
                   << rrset.getType());
     }
 
-    add_columns_[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
-    add_columns_[DatabaseAccessor::ADD_REV_NAME] =
+    string columns[DatabaseAccessor::ADD_COLUMN_COUNT]; // initialized with ""
+    columns[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
+    columns[DatabaseAccessor::ADD_REV_NAME] =
         rrset.getName().reverse().toText();
-    add_columns_[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
-    add_columns_[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
+    columns[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
+    columns[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
     for (; !it->isLast(); it->next()) {
         if (rrset.getType() == RRType::RRSIG()) {
             // XXX: the current interface (based on the current sqlite3
@@ -698,11 +701,11 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
             // the interface, but until then we have to conform to the schema.
             const generic::RRSIG& rrsig_rdata =
                 dynamic_cast<const generic::RRSIG&>(it->getCurrent());
-            add_columns_[DatabaseAccessor::ADD_SIGTYPE] =
+            columns[DatabaseAccessor::ADD_SIGTYPE] =
                 rrsig_rdata.typeCovered().toText();
         }
-        add_columns_[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
-        accessor_->addRecordToZone(add_columns_);
+        columns[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        accessor_->addRecordToZone(columns);
     }
 }
 
@@ -717,6 +720,11 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
                   << "deleted from " << zone_name_ << "/" << zone_class_
                   << ": " << rrset.toText());
     }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, "An RRset with RRSIG is being deleted from "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
 
     RdataIteratorPtr it = rrset.getRdataIterator();
     if (it->isLast()) {
@@ -725,12 +733,12 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
                   << rrset.getType());
     }
 
-    del_params_[DatabaseAccessor::DEL_NAME] = rrset.getName().toText();
-    del_params_[DatabaseAccessor::DEL_TYPE] = rrset.getType().toText();
+    string params[DatabaseAccessor::DEL_PARAM_COUNT]; // initialized with ""
+    params[DatabaseAccessor::DEL_NAME] = rrset.getName().toText();
+    params[DatabaseAccessor::DEL_TYPE] = rrset.getType().toText();
     for (; !it->isLast(); it->next()) {
-        del_params_[DatabaseAccessor::DEL_RDATA] =
-            it->getCurrent().toText();
-        accessor_->deleteRecordInZone(del_params_);
+        params[DatabaseAccessor::DEL_RDATA] = it->getCurrent().toText();
+        accessor_->deleteRecordInZone(params);
     }
 }
 
@@ -742,12 +750,11 @@ DatabaseUpdater::commit() {
                   << db_name_);
     }
     accessor_->commitUpdateZone();
+    committed_ = true; // make sure the destructor won't trigger rollback
 
     // We release the accessor immediately after commit is completed so that
     // we don't hold the possible internal resource any longer.
     accessor_.reset();
-
-    committed_ = true;
 
     logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_COMMIT)
         .arg(zone_name_).arg(zone_class_).arg(db_name_);
@@ -763,8 +770,8 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
         return (ZoneUpdaterPtr());
     }
 
-     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
-                                                name, rrclass_)));
+    return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
+                                               name, rrclass_)));
 }
 }
 }
