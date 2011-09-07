@@ -470,6 +470,7 @@ private:
 
         // Something for wildcards
         addRecord("A", "3600", "", "192.0.2.5");
+        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("*.wild.example.org.");
         addRecord("AAAA", "3600", "", "2001:db8::5");
         addCurName("cancel.here.wild.example.org.");
@@ -1167,7 +1168,10 @@ TEST_F(DatabaseClientTest, wildcard) {
     shared_ptr<DatabaseClient::Finder> finder(getFinder());
 
     // First, simple wildcard match
+    // Check also that the RRSIG is added from the wildcard (not modified)
     expected_rdatas_.push_back("192.0.2.5");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 "
+                                   "12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("a.wild.example.org"),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
@@ -1177,6 +1181,7 @@ TEST_F(DatabaseClientTest, wildcard) {
                isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
                expected_sig_rdatas_);
     expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
     doFindTest(finder, isc::dns::Name("a.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
@@ -1188,11 +1193,14 @@ TEST_F(DatabaseClientTest, wildcard) {
 
     // Direct request for thi wildcard
     expected_rdatas_.push_back("192.0.2.5");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 "
+                                   "12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("*.wild.example.org"),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
                expected_sig_rdatas_);
     expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
     doFindTest(finder, isc::dns::Name("*.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
