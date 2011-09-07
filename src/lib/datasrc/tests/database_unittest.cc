@@ -799,6 +799,11 @@ public:
 typedef ::testing::Types<MockAccessor, TestSQLite3Accessor> TestAccessorTypes;
 TYPED_TEST_CASE(DatabaseClientTest, TestAccessorTypes);
 
+// In some cases the entire test fixture is for the mock accessor only.
+// We use the usual TEST_F for them with the corresponding specialized class
+// to make the code simpler.
+typedef DatabaseClientTest<MockAccessor> MockDatabaseClientTest;
+
 TYPED_TEST(DatabaseClientTest, zoneNotFound) {
     DataSourceClient::FindResult zone(
         this->client_->findZone(Name("example.com")));
@@ -852,19 +857,14 @@ TEST(GenericDatabaseClientTest, notImplementedIterator) {
 
 // Pretend a bug in the connection and pass NULL as the context
 // Should not crash, but gracefully throw.  Works for the mock accessor only.
-TYPED_TEST(DatabaseClientTest, nullIteratorContext) {
-    if (this->is_mock_) {
-        EXPECT_THROW(this->client_->getIterator(Name("null.example.org")),
-                     isc::Unexpected);
-    }
+TEST_F(MockDatabaseClientTest, nullIteratorContext) {
+    EXPECT_THROW(this->client_->getIterator(Name("null.example.org")),
+                 isc::Unexpected);
 }
 
 // It doesn't crash or anything if the zone is completely empty.
 // Works for the mock accessor only.
-TYPED_TEST(DatabaseClientTest, emptyIterator) {
-    if (!this->is_mock_) {
-        return;
-    }
+TEST_F(MockDatabaseClientTest, emptyIterator) {
     ZoneIteratorPtr it(this->client_->getIterator(Name("empty.example.org")));
     EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
     // This is past the end, it should throw
@@ -924,12 +924,8 @@ TYPED_TEST(DatabaseClientTest, iterator) {
 }
 
 // This has inconsistent TTL in the set (the rest, like nonsense in
-// the data is handled in rdata itself).  Work for mock iterator only.
-TYPED_TEST(DatabaseClientTest, badIterator) {
-    if (!this->is_mock_) {
-        return;
-    }
-
+// the data is handled in rdata itself).  Works for the mock accessor only.
+TEST_F(MockDatabaseClientTest, badIterator) {
     // It should not throw, but get the lowest one of them
     ZoneIteratorPtr it(this->client_->getIterator(Name("bad.example.org")));
     EXPECT_EQ(it->getNextRRset()->getTTL(), isc::dns::RRTTL(300));
