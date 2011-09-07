@@ -214,7 +214,7 @@ typedef boost::shared_ptr<const ZoneFinder> ConstZoneFinderPtr;
 /// On construction, each derived class object will start a "transaction"
 /// for making updates to a specific zone (this means a constructor of
 /// a derived class would normally take parameters to identify the zone
-/// to be updated).  The underlying realization of a "transaction" will defer
+/// to be updated).  The underlying realization of a "transaction" will differ
 /// for different derived classes; if it uses a general purpose database
 /// as a backend, it will involve performing some form of "begin transaction"
 /// statement for the database.
@@ -279,6 +279,8 @@ public:
     /// It performs minimum level of validation on the specified RRset:
     /// - Whether the RR class is identical to that for the zone to be updated
     /// - Whether the RRset is not empty, i.e., it has at least one RDATA
+    /// - Whether the RRset is not associated with an RRSIG, i.e.,
+    ///   whether \c getRRsig() on the RRset returns a NULL pointer.
     ///
     /// and otherwise does not check any oddity.  For example, it doesn't
     /// check whether the owner name of the specified RRset is a subdomain
@@ -288,6 +290,12 @@ public:
     /// ones.  If these conditions matter the calling application must examine
     /// the existing data beforehand using the \c ZoneFinder returned by
     /// \c getFinder().
+    ///
+    /// The validation requirement on the associated RRSIG is temporary.
+    /// If we find it more reasonable and useful to allow adding a pair of
+    /// RRset and its RRSIG RRset as we gain experiences with the interface,
+    /// we may remove this restriction.  Until then we explicitly check it
+    /// to prevent accidental misuse.
     ///
     /// Conceptually, on successful call to this method, the zone will have
     /// the specified RRset, and if there is already an RRset of the same
@@ -368,6 +376,8 @@ public:
     /// RRset:
     /// - Whether the RR class is identical to that for the zone to be updated
     /// - Whether the RRset is not empty, i.e., it has at least one RDATA
+    /// - Whether the RRset is not associated with an RRSIG, i.e.,
+    ///   whether \c getRRsig() on the RRset returns a NULL pointer.
     ///
     /// This method must not be called once commit() is performed.  If it
     /// calls after \c commit() the implementation must throw a
