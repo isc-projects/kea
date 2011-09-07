@@ -45,9 +45,11 @@ LibDHCP::unpackOptions6(boost::shared_array<char> buf, unsigned int buf_len,
     unsigned int end = offset + parse_len;
 
     while (offset<end) {
-        unsigned int opt_type = buf[offset]*256 + buf[offset+1];
+        unsigned int opt_type = static_cast<unsigned char>(buf[offset])*256
+            + static_cast<unsigned char>(buf[offset+1]);
         offset += 2;
-        unsigned int opt_len = buf[offset]*256 + buf[offset+1];
+        unsigned int opt_len = static_cast<unsigned char>(buf[offset]*256)
+            + static_cast<unsigned char>(buf[offset+1]);
         offset += 2;
 
         if (offset + opt_len > end ) {

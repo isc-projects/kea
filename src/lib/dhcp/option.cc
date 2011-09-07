@@ -176,6 +176,26 @@ isc::dhcp::Option::addOption(boost::shared_ptr<isc::dhcp::Option> opt) {
 
 }
 
+boost::shared_ptr<isc::dhcp::Option>
+Option::getOption(unsigned short opt_type) {
+    isc::dhcp::Option::Option6Lst::const_iterator x = optionLst_.find(opt_type);
+    if (x!=optionLst_.end()) {
+        return (*x).second;
+    }
+    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
+}
+
+bool
+Option::delOption(unsigned short opt_type) {
+    isc::dhcp::Option::Option6Lst::iterator x = optionLst_.find(opt_type);
+    if (x!=optionLst_.end()) {
+        optionLst_.erase(x);
+        return true; // delete successful
+    }
+    return (false); // option not found, can't delete
+}
+
+
 std::string Option::toText(int indent /* =0 */ ) {
     std::stringstream tmp;
 
@@ -190,6 +210,13 @@ std::string Option::toText(int indent /* =0 */ ) {
         }
         tmp << setfill('0') << setw(2) << hex
             << (unsigned short)(unsigned char)data_[offset_+i];
+    }
+
+    // print suboptions
+    for (Option6Lst::const_iterator opt=optionLst_.begin();
+         opt!=optionLst_.end();
+         ++opt) {
+        tmp << (*opt).second->toText(indent+2);
     }
     return tmp.str();
 }

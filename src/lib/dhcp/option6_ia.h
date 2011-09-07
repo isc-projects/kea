@@ -21,37 +21,44 @@ namespace isc {
 namespace dhcp {
 
 class Option6IA: public Option {
-        
+
 public:
     // ctor, used for options constructed, usually during transmission
-    Option6IA(Universe u, unsigned short type, unsigned int iaid); 
+    Option6IA(Universe u, unsigned short type, unsigned int iaid);
 
     // ctor, used for received options
-    // boost::shared_array allows sharing a buffer, but it requires that 
+    // boost::shared_array allows sharing a buffer, but it requires that
     // different instances share pointer to the whole array, not point
     // to different elements in shared array. Therefore we need to share
     // pointer to the whole array and remember offset where data for
     // this option begins
-    Option6IA(Universe u, unsigned short type, boost::shared_array<char> buf, 
+    Option6IA(Universe u, unsigned short type, boost::shared_array<char> buf,
               unsigned int buf_len,
-              unsigned int offset, 
+              unsigned int offset,
               unsigned int len);
-    
-    // writes option in wire-format to buf, returns pointer to first unused 
+
+    // writes option in wire-format to buf, returns pointer to first unused
     // byte after stored option
     unsigned int
-    pack(boost::shared_array<char> buf, unsigned int buf_len, 
+    pack(boost::shared_array<char> buf, unsigned int buf_len,
          unsigned int offset);
 
     // parses received buffer, returns offset to the first unused byte after
     // parsed option
-    virtual unsigned int 
-    unpack(boost::shared_array<char> buf, 
+    virtual unsigned int
+    unpack(boost::shared_array<char> buf,
            unsigned int buf_len,
-           unsigned int offset, 
+           unsigned int offset,
            unsigned int parse_len);
 
-    virtual std::string toText(int indent = 0);
+    /// Provides human readable text representation
+    ///
+    /// @param indent number of leading space characterss
+    ///
+    /// @return string with text represenation
+    ///
+    virtual std::string
+    toText(int indent = 0);
 
     void setT1(unsigned int t1) { t1_=t1; }
     void setT2(unsigned int t2) { t2_=t2; }
@@ -60,8 +67,13 @@ public:
     unsigned int getT1()   { return t1_; }
     unsigned int getT2()   { return t2_; }
 
-    // returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual unsigned short len();
+    /// @brief returns complete length of option
+    ///
+    /// Returns length of this option, including option header and suboptions
+    ///
+    /// @return length
+    virtual unsigned short
+    len();
 
 protected:
     unsigned int iaid_;
@@ -71,5 +83,5 @@ protected:
 
 } // isc::dhcp namespace
 } // isc namespace
-    
+
 #endif /* OPTION_IA_H_ */

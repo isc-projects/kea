@@ -27,7 +27,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
-Option6IAAddr::Option6IAAddr(unsigned short type, 
+Option6IAAddr::Option6IAAddr(unsigned short type,
                              isc::asiolink::IOAddress addr,
                              unsigned int pref,
                              unsigned int valid)
@@ -35,10 +35,10 @@ Option6IAAddr::Option6IAAddr(unsigned short type,
      valid_(valid) {
 }
 
-Option6IAAddr::Option6IAAddr(unsigned short type, 
-                             boost::shared_array<char> buf, 
+Option6IAAddr::Option6IAAddr(unsigned short type,
+                             boost::shared_array<char> buf,
                              unsigned int buf_len,
-                             unsigned int offset, 
+                             unsigned int offset,
                              unsigned int option_len)
     :Option(V6, type), addr_(IOAddress("::")) {
     unpack(buf, buf_len, offset, option_len);
@@ -49,10 +49,10 @@ Option6IAAddr::pack(boost::shared_array<char> buf,
                     unsigned int buf_len,
                     unsigned int offset) {
     if (len() > buf_len) {
-        isc_throw(OutOfRange, "Failed to pack IA option: len=" << len() 
+        isc_throw(OutOfRange, "Failed to pack IA option: len=" << len()
                   << ", buffer=" << buf_len << ": too small buffer.");
     }
-    
+
     *(uint16_t*)&buf[offset] = htons(type_);
     offset += 2;
     *(uint16_t*)&buf[offset] = htons(len()-4); // len() returns complete option
@@ -72,15 +72,15 @@ Option6IAAddr::pack(boost::shared_array<char> buf,
     return offset;
 }
 
-unsigned int 
+unsigned int
 Option6IAAddr::unpack(boost::shared_array<char> buf,
                   unsigned int buf_len,
-                  unsigned int offset, 
+                  unsigned int offset,
                   unsigned int parse_len) {
     if (parse_len<24 || offset+24>buf_len) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
-    
+
     // 16 bytes: IPv6 address
     /// TODO Implement fromBytes() method in IOAddress
     char addr_str[INET6_ADDRSTRLEN];
@@ -93,7 +93,7 @@ Option6IAAddr::unpack(boost::shared_array<char> buf,
 
     valid_ = ntohl(*(uint32_t*)&buf[offset]);
     offset +=4;
-    offset = LibDHCP::unpackOptions6(buf, buf_len, offset, 
+    offset = LibDHCP::unpackOptions6(buf, buf_len, offset,
                                      parse_len - 24, optionLst_);
 
     return offset;
@@ -104,25 +104,26 @@ std::string Option6IAAddr::toText(int indent /* =0 */) {
     for (int i=0; i<indent; i++)
         tmp << " ";
 
-    tmp << "addr: " << addr_.toText() << ", preferred-lft=" << preferred_ 
-        << ", valid-lft=" << valid_ << endl;
+    tmp << "type=" << type_ << "(IAADDR) addr=" << addr_.toText()
+        << ", preferred-lft=" << preferred_  << ", valid-lft="
+        << valid_ << endl;
 
     for (Option6Lst::const_iterator opt=optionLst_.begin();
          opt!=optionLst_.end();
          ++opt) {
-        tmp << "    " << (*opt).second->toText() << endl;
+        tmp << (*opt).second->toText(indent+2);
     }
     return tmp.str();
 }
 
 unsigned short Option6IAAddr::len() {
-    
+
     unsigned short length = 4/*header*/ + 24 /* content */; // header
 
     // length of all suboptions
     // TODO implement:
     // protected: unsigned short Option::lenHelper(int header_size);
-   
+
     for (Option::Option6Lst::iterator it = optionLst_.begin();
          it != optionLst_.end();
          ++it) {
@@ -130,4 +131,3 @@ unsigned short Option6IAAddr::len() {
     }
     return (length);
 }
-

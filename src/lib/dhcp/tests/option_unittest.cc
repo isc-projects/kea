@@ -214,4 +214,42 @@ TEST_F(OptionTest, suboptions2) {
     delete opt1;
 }
 
+TEST_F(OptionTest, addgetdel) {
+    boost::shared_array<char> buf(new char[128]);
+    for (int i=0; i<128; i++)
+        buf[i] = 100+i;
+    Option* parent = new Option(Option::V6, 65535); //type
+    boost::shared_ptr<Option> opt1(new Option(Option::V6, 1));
+    boost::shared_ptr<Option> opt2(new Option(Option::V6, 2));
+    boost::shared_ptr<Option> opt3(new Option(Option::V6, 2));
+
+    parent->addOption(opt1);
+    parent->addOption(opt2);
+
+    // getOption() test
+    EXPECT_EQ(opt1, parent->getOption(1));
+    EXPECT_EQ(opt2, parent->getOption(2));
+
+    // expect NULL
+    EXPECT_EQ(boost::shared_ptr<Option>(), parent->getOption(4));
+
+    // now there are 2 options of type 2
+    parent->addOption(opt3);
+
+    // let's delete one of them
+    EXPECT_EQ(true, parent->delOption(2));
+
+    // there still should be the other option 2
+    EXPECT_NE(boost::shared_ptr<Option>(), parent->getOption(2));
+
+    // let's delete the other option 2
+    EXPECT_EQ(true, parent->delOption(2));
+
+    // no more options with type=2
+    EXPECT_EQ(boost::shared_ptr<Option>(), parent->getOption(2));
+
+    // let's try to delete - should fail
+    EXPECT_TRUE(false ==  parent->delOption(2));
+}
+
 }
