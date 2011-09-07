@@ -531,7 +531,7 @@ public:
 private:
     // The following member variables are storage and/or update work space
     // of the test zone.  The "master"s are the real objects that contain
-    // the data, and they are shared among by all accessors cloned from
+    // the data, and they are shared among all accessors cloned from
     // an initially created one.  The pointer members allow the sharing.
     // "readonly" is for normal lookups.  "update" is the workspace for
     // updates.  When update starts it will be initialized either as an
@@ -545,7 +545,6 @@ private:
     const Domains* empty_records_;
 
     // used as temporary storage during the building of the fake data
-    //Domains records;
 
     // used as temporary storage after searchForRecord() and during
     // getNextRecord() calls, as well as during the building of the
@@ -1679,6 +1678,15 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
                    this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
                    this->expected_rdatas_, this->expected_sig_rdatas_);
     }
+
+    // Add the non RRSIG RRset again, to see the attempt of adding RRSIG
+    // causes any unexpected effect, in particular, whether the SIGTYPE
+    // field might remain.
+    this->updater_->addRRset(*this->rrset_);
+    const char* const rrset_added[] = {
+        "www.example.org.", "org.example.www.", "3600", "A", "", "192.0.2.2"
+    };
+    this->checkLastAdded(rrset_added);
 }
 
 TYPED_TEST(DatabaseClientTest, addRRsetToCurrentZone) {
@@ -1831,6 +1839,12 @@ TYPED_TEST(DatabaseClientTest, addAfterCommit) {
    this->updater_ = this->client_->getUpdater(this->zname_, false);
    this->updater_->commit();
    EXPECT_THROW(this->updater_->addRRset(*this->rrset_), DataSourceError);
+}
+
+TYPED_TEST(DatabaseClientTest, addRRsetWithRRSIG) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_->addRRsig(*this->rrsigset_);
+    EXPECT_THROW(this->updater_->addRRset(*this->rrset_), DataSourceError);
 }
 
 TYPED_TEST(DatabaseClientTest, deleteRRset) {
@@ -2024,5 +2038,100 @@ TYPED_TEST(DatabaseClientTest, deleteEmptyRRset) {
     this->rrset_.reset(new RRset(this->qname_, this->qclass_, this->qtype_,
                                  this->rrttl_));
     EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_), DataSourceError);
+}
+
+TYPED_TEST(DatabaseClientTest, deleteRRsetWithRRSIG) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_->addRRsig(*this->rrsigset_);
+    EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_), DataSourceError);
+}
+
+TYPED_TEST(DatabaseClientTest, compoundUpdate) {
+    // This test case performs an arbitrary chosen add/delete operations
+    // in a single update transaction.  Essentially there is nothing new to
+    // test here, but there may be some bugs that was overlooked and can
+    // only happen in the compound update scenario, so we test it.
+
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+
+    // add a new RR to an existing RRset
+    this->updater_->addRRset(*this->rrset_);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
+    doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+               this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->empty_rdatas_);
+
+    // delete an existing RR
+    this->rrset_.reset(new RRset(Name("www.example.org"), this->qclass_,
+                                 this->qtype_, this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "192.0.2.1"));
+    this->updater_->deleteRRset(*this->rrset_);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.2");
+    doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+               this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->empty_rdatas_);
+
+    // re-add it
+    this->updater_->addRRset(*this->rrset_);
+    this->expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(this->updater_->getFinder(), this->qname_, this->qtype_,
+               this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->empty_rdatas_);
+
+    // add a new RR with a new name
+    const Name newname("newname.example.org");
+    const RRType newtype(RRType::AAAA());
+    doFindTest(this->updater_->getFinder(), newname, newtype, newtype,
+               this->rrttl_, ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+               this->empty_rdatas_);
+    this->rrset_.reset(new RRset(newname, this->qclass_, newtype,
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "2001:db8::10"));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "2001:db8::11"));
+    this->updater_->addRRset(*this->rrset_);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::10");
+    this->expected_rdatas_.push_back("2001:db8::11");
+    doFindTest(this->updater_->getFinder(), newname, newtype, newtype,
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->empty_rdatas_);
+
+    // delete one RR from the previous set
+    this->rrset_.reset(new RRset(newname, this->qclass_, newtype,
+                                 this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "2001:db8::11"));
+    this->updater_->deleteRRset(*this->rrset_);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::10");
+    doFindTest(this->updater_->getFinder(), newname, newtype, newtype,
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->empty_rdatas_);
+
+    // Commit the changes, confirm the entire changes applied.
+    this->updater_->commit();
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.2");
+    this->expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(*finder, this->qname_, this->qtype_, this->qtype_, this->rrttl_,
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->empty_rdatas_);
+
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::10");
+    doFindTest(*finder, newname, newtype, newtype, this->rrttl_,
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->empty_rdatas_);
 }
 }
