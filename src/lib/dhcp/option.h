@@ -53,16 +53,11 @@ public:
          unsigned int buf_len,
          unsigned int offset);
 
-    // parses received buffer, returns pointer to first unused byte
-    // after parsed option
-    // TODO: Do we need this overload? Commented out for now
-    // virtual const char* unpack(const char* buf, unsigned int len);
-
-    // parses received buffer, returns offset to the first unused byte after
-    // parsed option
-
     ///
-    /// Parses buffer and creates collection of Option objects.
+    /// @brief Parses buffer.
+    ///
+    /// Parses received buffer, returns offset to the first unused byte after
+    /// parsed option.
     ///
     /// @param buf pointer to buffer
     /// @param buf_len length of buf
@@ -128,6 +123,26 @@ public:
     void
     addOption(boost::shared_ptr<Option> opt);
 
+    /// Returns shared_ptr to suboption of specific type
+    ///
+    /// @param type type of requested suboption
+    ///
+    /// @return shared_ptr to requested suoption
+    ///
+    boost::shared_ptr<isc::dhcp::Option>
+    getOption(unsigned short type);
+
+    /// Attempts to delete first suboption of requested type
+    ///
+    /// @param type Type of option to be deleted.
+    ///
+    /// @return true if option was deleted, false if no such option existed
+    ///
+    bool
+    delOption(unsigned short type);
+
+    /// TODO Need to implement getOptions() as well
+
     // just to force that every option has virtual dtor
     virtual
     ~Option();
@@ -163,7 +178,6 @@ protected:
     pack6(boost::shared_array<char> buf,
           unsigned int buf_len,
           unsigned int offset);
-
 
     ///
     /// Parses provided buffer and creates DHCPv4 options.

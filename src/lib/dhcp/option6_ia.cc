@@ -94,22 +94,25 @@ std::string Option6IA::toText(int indent /* = 0*/) {
 
     for (int i=0; i<indent; i++)
         tmp << " ";
+    tmp << "type=" << type_;
 
     switch (type_) {
     case D6O_IA_NA:
-        tmp << "IA_NA";
+        tmp << "(IA_NA)";
         break;
     case D6O_IA_PD:
-        tmp << "IA_PD";
+        tmp << "(IA_PD)";
         break;
+    default:
+        tmp << "(unknown)";
     }
-    tmp << " iaid=" << iaid_ << " t1=" << t1_ << " t2=" << t2_
+    tmp << " iaid=" << iaid_ << ", t1=" << t1_ << ", t2=" << t2_
         << " " << optionLst_.size() << " sub-options:" << endl;
 
     for (Option6Lst::const_iterator opt=optionLst_.begin();
          opt!=optionLst_.end();
          ++opt) {
-        tmp << "  " << (*opt).second->toText();
+        tmp << (*opt).second->toText(indent+2);
     }
     return tmp.str();
 }

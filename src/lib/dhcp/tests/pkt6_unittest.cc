@@ -15,17 +15,18 @@
 #include <config.h>
 #include <iostream>
 #include <sstream>
-
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
-#include "io_address.h"
 
+#include "io_address.h"
+#include "dhcp/option.h"
 #include "dhcp/pkt6.h"
 #include "dhcp/dhcp6.h"
 
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::dhcp;
 
 namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger
@@ -107,5 +108,44 @@ TEST_F(Pkt6Test, parse_solicit1) {
 
     delete sol;
 }
+
+TEST_F(Pkt6Test, addGetDelOptions) {
+    Pkt6 * parent = new Pkt6(100);
+
+    boost::shared_ptr<Option> opt1(new Option(Option::V6, 1));
+    boost::shared_ptr<Option> opt2(new Option(Option::V6, 2));
+    boost::shared_ptr<Option> opt3(new Option(Option::V6, 2));
+
+    parent->addOption(opt1);
+    parent->addOption(opt2);
+
+    // getOption() test
+    EXPECT_EQ(opt1, parent->getOption(1));
+    EXPECT_EQ(opt2, parent->getOption(2));
+
+    // expect NULL
+    EXPECT_EQ(boost::shared_ptr<Option>(), parent->getOption(4));
+
+    // now there are 2 options of type 2
+    parent->addOption(opt3);
+
+    // let's delete one of them
+    EXPECT_EQ(true, parent->delOption(2));
+
+    // there still should be the other option 2
+    EXPECT_NE(boost::shared_ptr<Option>(), parent->getOption(2));
+
+    // let's delete the other option 2
+    EXPECT_EQ(true, parent->delOption(2));
+
+    // no more options with type=2
+    EXPECT_EQ(boost::shared_ptr<Option>(), parent->getOption(2));
+
+    // let's try to delete - should fail
+    EXPECT_TRUE(false ==  parent->delOption(2));
+
+    delete parent;
+}
+
 
 }
