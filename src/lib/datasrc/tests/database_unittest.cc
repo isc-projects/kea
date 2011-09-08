@@ -171,6 +171,8 @@ const char* const TEST_RECORDS[][5] = {
     {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
+    // For finding previous, this one is the last one in the zone
+    {"zzz.example.org.", "NSEC", "3600", "", "example.org NSEC"},
 
     {NULL, NULL, NULL, NULL, NULL},
 };
@@ -2193,4 +2195,15 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
                ZoneFinder::SUCCESS, this->expected_rdatas_,
                this->empty_rdatas_);
 }
+
+TYPED_TEST(DatabaseClientTest, previous) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    EXPECT_EQ(Name("www.example.org."),
+              finder->findPreviousName(Name("www2.example.org.")));
+    // Check wrap around
+    EXPECT_EQ(Name("zzz.example.org."),
+              finder->findPreviousName(Name("example.org.")));
+}
+
 }
