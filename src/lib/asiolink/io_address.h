@@ -87,6 +87,16 @@ public:
     /// \return AF_INET for IPv4 or AF_INET6 for IPv6.
     short getFamily() const;
 
+
+    /// \brief Creates an address from over wire data.
+    ///
+    /// \param family AF_NET for IPv4 or AF_NET6 for IPv6.
+    /// \param data pointer to first char of data
+    ///
+    /// \return Created IOAddress object
+    static IOAddress
+    from_bytes(short family, const char* data);
+
     /// \brief Compare addresses for equality
     ///
     /// \param other Address to compare against.
