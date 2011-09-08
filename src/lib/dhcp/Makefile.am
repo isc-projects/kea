@@ -18,8 +18,7 @@ libdhcp_la_SOURCES += dhcp6.h
 libdhcp_la_SOURCES += pkt6.cc pkt6.h
 
 EXTRA_DIST  = README
-EXTRA_DIST += logimpl_messages.mes
-EXTRA_DIST += log_messages.mes
+#EXTRA_DIST += log_messages.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
