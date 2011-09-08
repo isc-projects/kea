@@ -485,19 +485,24 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                 result_status = DELEGATION;
                             } else if (wti != found.second.end()) {
                                 result_rrset = wti->second;
-                            } else if (dnssec_data &&
-                                       nci != found.second.end()) {
-                                // NXRRSET case in the wildcard, user wants
-                                // a proof it's not there, include the NSEC
-                                //
-                                // However, we need to get the RRset in the
-                                // name of the wildcard, not the constructed
-                                // one, so we walk it again
-                                found = getRRsets(wildcard, empty_types +
-                                                  RRType::NSEC(), true);
-                                result_rrset =
-                                    found.second.find(RRType::NSEC())->second;
-                                result_status = NXRRSET;
+                                result_status = WILDCARD;
+                            } else {
+                                // NXRRSET case in the wildcard
+                                result_status = WILDCARD_NXRRSET;
+                                if (dnssec_data &&
+                                    nci != found.second.end()) {
+                                    // User wants a proof the wildcard doesn't
+                                    // contain it
+                                    //
+                                    // However, we need to get the RRset in the
+                                    // name of the wildcard, not the constructed
+                                    // one, so we walk it again
+                                    found = getRRsets(wildcard, empty_types +
+                                                      RRType::NSEC(), true);
+                                    result_rrset =
+                                        found.second.find(RRType::NSEC())->
+                                        second;
+                                }
                             }
 
                             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
@@ -535,18 +540,21 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     }
 
     if (!result_rrset) {
-        if (records_found) {
-            logger.debug(DBG_TRACE_DETAILED,
-                         DATASRC_DATABASE_FOUND_NXRRSET)
-                        .arg(accessor_->getDBName()).arg(name)
-                        .arg(getClass()).arg(type);
-            result_status = NXRRSET;
-        } else {
-            logger.debug(DBG_TRACE_DETAILED,
-                         DATASRC_DATABASE_FOUND_NXDOMAIN)
-                        .arg(accessor_->getDBName()).arg(name)
-                        .arg(getClass()).arg(type);
-            result_status = NXDOMAIN;
+        if (result_status == SUCCESS) {
+            // Something is not here and we didn't decide yet what
+            if (records_found) {
+                logger.debug(DBG_TRACE_DETAILED,
+                             DATASRC_DATABASE_FOUND_NXRRSET)
+                    .arg(accessor_->getDBName()).arg(name)
+                    .arg(getClass()).arg(type);
+                result_status = NXRRSET;
+            } else {
+                logger.debug(DBG_TRACE_DETAILED,
+                             DATASRC_DATABASE_FOUND_NXDOMAIN)
+                    .arg(accessor_->getDBName()).arg(name)
+                    .arg(getClass()).arg(type);
+                result_status = NXDOMAIN;
+            }
         }
     } else {
         logger.debug(DBG_TRACE_DETAILED,
