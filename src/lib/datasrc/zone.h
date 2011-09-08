@@ -211,8 +211,8 @@ public:
 
     /// \brief Get previous name in the zone
     ///
-    /// Gets the previous name in the DNSSEC order. This can be used
-    /// to find the correct NSEC or NSEC3 records for proving nonexistenc
+    /// Gets the previous name in the DNSSEC/NSEC order. This can be used
+    /// to find the correct NSEC records for proving nonexistenc
     /// of domains.
     ///
     /// The concrete implementation might throw anything it thinks appropriate,

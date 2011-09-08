@@ -474,6 +474,22 @@ public:
      * \return the name of the database
      */
     virtual const std::string& getDBName() const = 0;
+
+    /**
+     * \brief It returns the previous name in DNSSEC/NSEC order.
+     *
+     * This is used in DatabaseClient::findPreviousName and does more
+     * or less the real work, except for working on strings.
+     *
+     * \param name The name to ask for previous of.
+     * \param zone_id The zone to look through.
+     * \return The previous name.
+     *
+     * \throw DataSourceError if there's a problem with the database.
+     * \throw NotImplemented if this database doesn't support DNSSEC.
+     */
+    virtual std::string findPreviousName(int zone_id,
+                                         const std::string& name) const = 0;
 };
 
 /**

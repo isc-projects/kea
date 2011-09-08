@@ -658,5 +658,10 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
         *dbparameters_, DEL_RECORD, params, "delete record from zone");
 }
 
+std::string
+SQLite3Accessor::findPreviousName(int , const std::string&) const {
+    return ("."); // TODO Test and implement
+}
+
 }
 }
