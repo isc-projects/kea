@@ -145,7 +145,7 @@ public:
     //@}
 
     ///
-    /// \name Search Method
+    /// \name Search Methods
     ///
     //@{
     /// Search the zone for a given pair of domain name and RR type.
@@ -208,6 +208,28 @@ public:
                             isc::dns::RRsetList* target = NULL,
                             const FindOptions options
                             = FIND_DEFAULT) = 0;
+
+    /// \brief Get previous name in the zone
+    ///
+    /// Gets the previous name in the DNSSEC order. This can be used
+    /// to find the correct NSEC or NSEC3 records for proving nonexistenc
+    /// of domains.
+    ///
+    /// The concrete implementation might throw anything it thinks appropriate,
+    /// however it is recommended to stick to the ones listed here. The user
+    /// of this method should be able to handle any exceptions.
+    ///
+    /// \param query The name for which one we look for a previous one. The
+    ///     queried name doesn't have to exist in the zone.
+    /// \return The preceding name
+    ///
+    /// \throw NotImplemented in case the data source backend doesn't support
+    ///     DNSSEC.
+    /// \throw DataSourceError for low-level or internal datasource errors
+    ///     (like broken connection to database, wrong data living there).
+    /// \throw std::bad_alloc For allocation errors.
+    virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
+        const = 0;
     //@}
 };
 
