@@ -445,7 +445,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // TODO What do we do about DNAME here?
                     static WantedTypes wildcard_types(empty_types +
                                                       RRType::CNAME() +
-                                                      RRType::NS());
+                                                      RRType::NS() +
+                                                      RRType::NSEC());
                     found = getRRsets(wildcard, wildcard_types + type, true,
                                       &name);
                     if (found.first) {
@@ -472,6 +473,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                 cni(found.second.find(RRType::CNAME()));
                             const FoundIterator
                                 nsi(found.second.find(RRType::NS()));
+                            const FoundIterator
+                                nci(found.second.find(RRType::NSEC()));
                             const FoundIterator wti(found.second.find(type));
                             if (cni != found.second.end() &&
                                 type != RRType::CNAME()) {
@@ -482,6 +485,19 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                 result_status = DELEGATION;
                             } else if (wti != found.second.end()) {
                                 result_rrset = wti->second;
+                            } else if (dnssec_data &&
+                                       nci != found.second.end()) {
+                                // NXRRSET case in the wildcard, user wants
+                                // a proof it's not there, include the NSEC
+                                //
+                                // However, we need to get the RRset in the
+                                // name of the wildcard, not the constructed
+                                // one, so we walk it again
+                                found = getRRsets(wildcard, empty_types +
+                                                  RRType::NSEC(), true);
+                                result_rrset =
+                                    found.second.find(RRType::NSEC())->second;
+                                result_status = NXRRSET;
                             }
 
                             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
