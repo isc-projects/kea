@@ -590,6 +590,12 @@ public:
                                 const FindOptions options = FIND_DEFAULT);
 
         /**
+         * \brief Implementation of ZoneFinder::findPreviousName method.
+         */
+        virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
+            const;
+
+        /**
          * \brief The zone ID
          *
          * This function provides the stored zone ID as passed to the
