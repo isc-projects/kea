@@ -15,6 +15,10 @@ import isc.config.cfgmgr
 import stats
 import stats_httpd
 
+# Change value of BIND10_MSGQ_SOCKET_FILE in environment variables
+if 'BIND10_MSGQ_SOCKET_FILE' not in os.environ:
+    os.environ['BIND10_MSGQ_SOCKET_FILE'] = tempfile.mktemp(prefix='msgq_socket_')
+
 def send_command(command_name, module_name, params=None, session=None, nonblock=False, timeout=None):
     if session is not None:
         cc_session = session
@@ -323,12 +327,11 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
 
 class BaseModules:
     def __init__(self):
-        # Change value of BIND10_MSGQ_SOCKET_FILE in environment variables
-        if 'BIND10_MSGQ_SOCKET_FILE' not in os.environ:
-            os.environ['BIND10_MSGQ_SOCKET_FILE'] = tempfile.mktemp(prefix='msgq_socket_')
         # MockMsgq
         self.msgq = ThreadingServerManager(MockMsgq)
         self.msgq.run()
+        # Check whether msgq is ready. A SessionTimeout is raised here if not.
+        isc.cc.session.Session().close()
         # MockCfgmgr
         self.cfgmgr = ThreadingServerManager(MockCfgmgr)
         self.cfgmgr.run()
