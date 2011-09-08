@@ -546,9 +546,11 @@ IfaceMgr::receive() {
 
     // That's ugly.
     // TODO add IOAddress constructor that will take struct in6_addr*
+    // TODO: there's from_bytes() method added in IOAddress. Use it!
     inet_ntop(AF_INET6, &to_addr, addr_str,INET6_ADDRSTRLEN);
     pkt->local_addr_ = IOAddress(string(addr_str));
 
+    // TODO: there's from_bytes() method added in IOAddress. Use it!
     inet_ntop(AF_INET6, &from.sin6_addr, addr_str, INET6_ADDRSTRLEN);
     pkt->remote_addr_ = IOAddress(string(addr_str));
 
