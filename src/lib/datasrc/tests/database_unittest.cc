@@ -229,6 +229,10 @@ public:
                   "This database datasource can't be iterated");
     }
 
+    virtual std::string findPreviousName(int, const std::string&) const {
+        isc_throw(isc::NotImplemented,
+                  "This data source doesn't support DNSSEC");
+    }
 private:
     const std::string database_name_;
 
@@ -533,6 +537,26 @@ public:
     // This allows the test code to get the accessor used in an update context
     shared_ptr<const MockAccessor> getLatestClone() const {
         return (latest_clone_);
+    }
+
+    virtual std::string findPreviousName(int id, const std::string& name)
+        const
+    {
+        // Hardcoded for now, but we could compute it from the data
+        // Maybe do it when it is needed some time in future?
+        if (id == -1) {
+            isc_throw(isc::NotImplemented, "Test not implemented behaviour");
+        } else if (id == 42) {
+            if (name == "example.org.") {
+                return ("zzz.example.org.");
+            } else if (name == "www2.example.org.") {
+                return ("www.example.org.");
+            } else {
+                isc_throw(isc::Unexpected, "Unexpected name");
+            }
+        } else {
+            isc_throw(isc::Unexpected, "Unknown zone ID");
+        }
     }
 
 private:
@@ -2204,6 +2228,13 @@ TYPED_TEST(DatabaseClientTest, previous) {
     // Check wrap around
     EXPECT_EQ(Name("zzz.example.org."),
               finder->findPreviousName(Name("example.org.")));
+    // Check it doesn't crash or anything if the underlying DB throws
+    DataSourceClient::FindResult
+        zone(this->client_->findZone(Name("bad.example.org")));
+    finder = dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder);
+
+    EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
+                 isc::NotImplemented);
 }
 
 }
