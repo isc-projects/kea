@@ -1430,21 +1430,21 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                                          "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
                this->qtype_, this->qtype_, this->rrttl_,
-               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               ZoneFinder::WILDCARD, this->expected_rdatas_,
                this->expected_sig_rdatas_);
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
-               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::WILDCARD,
                this->expected_rdatas_, this->expected_sig_rdatas_);
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 
     // Direct request for this wildcard
     this->expected_rdatas_.push_back("192.0.2.5");
@@ -1540,6 +1540,8 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_);
+        // FIXME: What should be returned in this case? How does the
+        // DNSSEC logic handle it?
     }
 }
 
@@ -1577,7 +1579,7 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
     doFindTest(*finder, isc::dns::Name("a.wild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
                isc::dns::RRTTL(3600),
-               ZoneFinder::NXRRSET,
+               ZoneFinder::WILDCARD_NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
