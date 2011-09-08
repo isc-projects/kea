@@ -23,40 +23,31 @@
 namespace isc {
 namespace datasrc {
 
-/// \brief The base class for a single authoritative zone
+/// \brief The base class to search a zone for RRsets
 ///
-/// The \c Zone class is an abstract base class for representing
-/// a DNS zone as part of data source.
+/// The \c ZoneFinder class is an abstract base class for representing
+/// an object that performs DNS lookups in a specific zone accessible via
+/// a data source.  In general, different types of data sources (in-memory,
+/// database-based, etc) define their own derived classes of \c ZoneFinder,
+/// implementing ways to retrieve the required data through the common
+/// interfaces declared in the base class.  Each concrete \c ZoneFinder
+/// object is therefore (conceptually) associated with a specific zone
+/// of one specific data source instance.
 ///
-/// At the moment this is provided mainly for making the \c ZoneTable class
-/// and the authoritative query logic testable, and only provides a minimal
-/// set of features.
-/// This is why this class is defined in the same header file, but it may
-/// have to move to a separate header file when we understand what is
-/// necessary for this class for actual operation.
+/// The origin name and the RR class of the associated zone are available
+/// via the \c getOrigin() and \c getClass() methods, respectively.
 ///
-/// The idea is to provide a specific derived zone class for each data
-/// source, beginning with in memory one.  At that point the derived classes
-/// will have more specific features.  For example, they will maintain
-/// information about the location of a zone file, whether it's loaded in
-/// memory, etc.
+/// The most important method of this class is \c find(), which performs
+/// the lookup for a given domain and type.  See the description of the
+/// method for details.
 ///
-/// It's not yet clear how the derived zone classes work with various other
-/// data sources when we integrate these components, but one possibility is
-/// something like this:
-/// - If the underlying database such as some variant of SQL doesn't have an
-///   explicit representation of zones (as part of public interface), we can
-///   probably use a "default" zone class that simply encapsulates the
-///   corresponding data source and calls a common "find" like method.
-/// - Some data source may want to specialize it by inheritance as an
-///   optimization.  For example, in the current schema design of the sqlite3
-///   data source, its (derived) zone class would contain the information of
-///   the "zone ID".
-///
-/// <b>Note:</b> Unlike some other abstract base classes we don't name the
-/// class beginning with "Abstract".  This is because we want to have
-/// commonly used definitions such as \c Result and \c ZoneFinderPtr, and we
-/// want to make them look more intuitive.
+/// \note It's not clear whether we should request that a zone finder form a
+/// "transaction", that is, whether to ensure the finder is not susceptible
+/// to changes made by someone else than the creator of the finder.  If we
+/// don't request that, for example, two different lookup results for the
+/// same name and type can be different if other threads or programs make
+/// updates to the zone between the lookups.  We should revisit this point
+/// as we gain more experiences.
 class ZoneFinder {
 public:
     /// Result codes of the \c find() method.
