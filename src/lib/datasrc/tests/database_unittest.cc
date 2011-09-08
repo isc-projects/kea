@@ -1553,7 +1553,7 @@ TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
                                          "20000201000000 12345 example.org. "
                                          "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("www.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
@@ -1575,7 +1575,7 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                                          "FAKEFAKEFAKE");
     // Note that the NSEC name should NOT be synthesized.
     doFindTest(*finder, isc::dns::Name("a.wild.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,

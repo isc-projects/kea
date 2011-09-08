@@ -317,6 +317,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // NXDOMAIN and NXRRSET
     bool records_found = false;
     bool glue_ok(options & FIND_GLUE_OK);
+    bool dnssec_data(options & FIND_DNSSEC);
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
     FoundRRsets found;
@@ -390,7 +391,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         // And we don't consider the NS in origin
 
         static WantedTypes final_types(empty_types + RRType::CNAME() +
-                                       RRType::NS());
+                                       RRType::NS() + RRType::NSEC());
         found = getRRsets(name, final_types + type, name != origin);
         records_found = found.first;
 
@@ -504,6 +505,15 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                         break;
                     }
                 }
+            }
+        } else if (dnssec_data) {
+            // This is the "usual" NXRRSET case
+            // So in case they want DNSSEC, provide the NSEC
+            // (which should be available already here)
+            result_status = NXRRSET;
+            const FoundIterator nci(found.second.find(RRType::NSEC()));
+            if (nci != found.second.end()) {
+                result_rrset = nci->second;
             }
         }
     }
