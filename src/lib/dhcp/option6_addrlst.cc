@@ -1,0 +1,132 @@
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#include <stdint.h>
+#include <arpa/inet.h>
+#include <sstream>
+#include "exceptions/exceptions.h"
+
+#include "libdhcp.h"
+#include "option6_addrlst.h"
+#include "dhcp6.h"
+#include "io_address.h"
+
+using namespace std;
+using namespace isc;
+using namespace isc::dhcp;
+using namespace isc::asiolink;
+
+
+Option6AddrLst::Option6AddrLst(unsigned short type,
+                               std::vector<isc::asiolink::IOAddress>& addrs)
+    :Option(V6, type) {
+    addrs_ = addrs;
+}
+
+Option6AddrLst::Option6AddrLst(unsigned short type,
+                               isc::asiolink::IOAddress addr)
+    :Option(V6, type) {
+    addrs_.push_back(addr);
+}
+
+Option6AddrLst::Option6AddrLst(unsigned short type,
+                               boost::shared_array<char> buf,
+                               unsigned int buf_len,
+                               unsigned int offset,
+                               unsigned int option_len)
+    :Option(V6, type) {
+    unpack(buf, buf_len, offset, option_len);
+}
+
+void
+Option6AddrLst::setAddress(isc::asiolink::IOAddress addr) {
+    addrs_.clear();
+    addrs_.push_back(addr);
+}
+
+void
+Option6AddrLst::setAddresses(std::vector<isc::asiolink::IOAddress>& addrs) {
+    addrs_ = addrs;
+}
+
+unsigned int
+Option6AddrLst::pack(boost::shared_array<char> buf,
+                    unsigned int buf_len,
+                    unsigned int offset) {
+    if (len() > buf_len) {
+        isc_throw(OutOfRange, "Failed to pack IA option: len=" << len()
+                  << ", buffer=" << buf_len << ": too small buffer.");
+    }
+
+    *(uint16_t*)&buf[offset] = htons(type_);
+    offset += 2;
+    *(uint16_t*)&buf[offset] = htons(len()-4); // len() returns complete option
+    // length. len field contains length without 4-byte option header
+    offset += 2;
+
+    for (std::vector<IOAddress>::const_iterator addr=addrs_.begin();
+         addr!=addrs_.end();
+         ++addr) {
+        memcpy(&buf[offset],
+               addr->getAddress().to_v6().to_bytes().data(),
+               16);
+        offset += 16;
+    }
+
+    return offset;
+}
+
+unsigned int
+Option6AddrLst::unpack(boost::shared_array<char> buf,
+                  unsigned int buf_len,
+                  unsigned int offset,
+                  unsigned int option_len) {
+    if (offset+option_len > buf_len) {
+        isc_throw(OutOfRange, "Option " << type_
+                  << " truncated.");
+    }
+
+    if (option_len%16) {
+        isc_throw(OutOfRange, "Option " << type_
+                  << " malformed: len=" << option_len
+                  << " is not divisible by 16.");
+    }
+    while (option_len > 0) {
+        addrs_.push_back(IOAddress::from_bytes(AF_INET6, &buf[offset]));
+        offset += 16;
+        option_len -= 16;
+    }
+
+    return offset;
+}
+
+std::string Option6AddrLst::toText(int indent /* =0 */) {
+    stringstream tmp;
+    for (int i=0; i<indent; i++)
+        tmp << " ";
+
+    tmp << "type=" << type_ << " " << addrs_.size() << "addr(s): ";
+
+    for (AddrsContainer::const_iterator addr=addrs_.begin();
+         addr!=addrs_.end();
+         ++addr) {
+        tmp << addr->toText() << " ";
+    }
+    return tmp.str();
+}
+
+unsigned short Option6AddrLst::len() {
+
+    return (4 /* DHCPv6 option header len */ + addrs_.size()*16);
+}
