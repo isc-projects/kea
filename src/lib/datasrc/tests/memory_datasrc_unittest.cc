@@ -395,6 +395,14 @@ public:
 };
 
 /**
+ * \brief Check that findPreviousName throws as it should now.
+ */
+TEST_F(InMemoryZoneFinderTest, findPreviousName) {
+    EXPECT_THROW(zone_finder_.findPreviousName(Name("www.example.org")),
+                 isc::NotImplemented);
+}
+
+/**
  * \brief Test InMemoryZoneFinder::InMemoryZoneFinder constructor.
  *
  * Takes the created zone finder and checks its properties they are the same
