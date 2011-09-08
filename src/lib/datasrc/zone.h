@@ -54,15 +54,23 @@ public:
     ///
     /// Note: the codes are tentative.  We may need more, or we may find
     /// some of them unnecessary as we implement more details.
+    ///
+    /// Some are synonyms of others in terms of RCODE returned to user.
+    /// But they help the logic to decide if it should ask for a NSEC
+    /// that covers something or not (for example, in case of NXRRSET,
+    /// the directly returned NSEC is sufficient, but with wildcard one,
+    /// we need to add one proving there's no exact match and this is
+    /// actually the best wildcard we have). Data sources that don't
+    /// support DNSSEC don't need to distinguish them.
     enum Result {
         SUCCESS,                ///< An exact match is found.
         DELEGATION,             ///< The search encounters a zone cut.
         NXDOMAIN, ///< There is no domain name that matches the search name
         NXRRSET,  ///< There is a matching name but no RRset of the search type
         CNAME,    ///< The search encounters and returns a CNAME RR
-        DNAME     ///< The search encounters and returns a DNAME RR
-        // TODO: Add WILDCARD here so we can request covering NSEC
-        // TODO: Add WILDCARD_NXRRSET for the same reason
+        DNAME,    ///< The search encounters and returns a DNAME RR
+        WILDCARD, ///< Succes by wildcard match, for DNSSEC
+        WILDCARD_NXRRSET ///< NXRRSET on wildcard, for DNSSEC
     };
 
     /// A helper structure to represent the search result of \c find().
@@ -169,8 +177,8 @@ public:
     ///   We should revisit the interface before we heavily rely on it.
     ///
     /// The \c options parameter specifies customized behavior of the search.
-    /// Their semantics is as follows:
-    /// - \c GLUE_OK Allow search under a zone cut.  By default the search
+    /// Their semantics is as follows (they are or bit-field):
+    /// - \c FIND_GLUE_OK Allow search under a zone cut.  By default the search
     ///   will stop once it encounters a zone cut.  If this option is specified
     ///   it remembers information about the highest zone cut and continues
     ///   the search until it finds an exact match for the given name or it
@@ -178,6 +186,9 @@ public:
     ///   RRsets for that name are searched just like the normal case;
     ///   otherwise, if the search has encountered a zone cut, \c DELEGATION
     ///   with the information of the highest zone cut will be returned.
+    /// - \c FIND_DNSSEC Request that DNSSEC data (like NSEC, RRSIGs) are
+    ///   returned with the answer. It is allowed for the data source to
+    ///   include them even when not requested.
     ///
     /// A derived version of this method may involve internal resource
     /// allocation, especially for constructing the resulting RRset, and may
