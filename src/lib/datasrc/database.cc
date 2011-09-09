@@ -566,7 +566,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
 Name
 DatabaseClient::Finder::findPreviousName(const Name& name) const {
-    return (Name(accessor_->findPreviousName(zone_id_, name.toText())));
+    return (Name(accessor_->findPreviousName(zone_id_,
+                                             name.reverse().toText())));
 }
 
 Name
