@@ -17,7 +17,7 @@ import socket
 import struct
 import os
 import subprocess
-from bind10_messages import *
+from isc.log_messages.bind10_messages import *
 from libutil_io_python import recv_fd
 
 logger = isc.log.Logger("boss")

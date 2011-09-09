@@ -26,7 +26,7 @@ from isc.config.ccsession import ModuleCCSession, create_answer
 from isc.cc import Session, SessionError
 
 import isc.log
-from stats_messages import *
+from isc.log_messages.stats_messages import *
 
 isc.log.init("b10-stats")
 logger = isc.log.Logger("stats")

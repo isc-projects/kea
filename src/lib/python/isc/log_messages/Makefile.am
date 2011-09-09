@@ -1,4 +1,5 @@
-SUBDIRS = cc config util log log_messages
+SUBDIRS = work
+
 EXTRA_DIST = __init__.py
 CLEANFILES = __init__.pyc
 
