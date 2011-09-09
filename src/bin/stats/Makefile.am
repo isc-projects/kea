@@ -30,7 +30,7 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_messages.pyc
 EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/stats_messages.py
 
-BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.py
+BUILT_SOURCES += $(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.pyc
 EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/stats_httpd_messages.py
