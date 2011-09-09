@@ -171,7 +171,7 @@ public:
     virtual const std::string& getDBName() const { return (database_name_); }
 
     /// \brief Concrete implementation of the pure virtual method
-    virtual std::string findPreviousName(int zone_id, const std::string& name)
+    virtual std::string findPreviousName(int zone_id, const std::string& rname)
         const;
 
 private:

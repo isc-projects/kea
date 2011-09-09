@@ -539,7 +539,7 @@ public:
         return (latest_clone_);
     }
 
-    virtual std::string findPreviousName(int id, const std::string& name)
+    virtual std::string findPreviousName(int id, const std::string& rname)
         const
     {
         // Hardcoded for now, but we could compute it from the data
@@ -547,9 +547,9 @@ public:
         if (id == -1) {
             isc_throw(isc::NotImplemented, "Test not implemented behaviour");
         } else if (id == 42) {
-            if (name == "example.org.") {
+            if (rname == "org.example.") {
                 return ("zzz.example.org.");
-            } else if (name == "www2.example.org.") {
+            } else if (rname == "org.example.www2.") {
                 return ("www.example.org.");
             } else {
                 isc_throw(isc::Unexpected, "Unexpected name");
