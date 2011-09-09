@@ -351,6 +351,22 @@ TEST_F(SQLite3AccessorTest, getRecords) {
     EXPECT_FALSE(context->getNext(columns));
 }
 
+TEST_F(SQLite3AccessorTest, findPrevious) {
+    EXPECT_EQ("dns01.example.com.",
+              accessor->findPreviousName(1, "com.example.dns02."));
+    // Wrap around
+    EXPECT_EQ("www.example.com.",
+              accessor->findPreviousName(1, "com.example."));
+}
+
+TEST_F(SQLite3AccessorTest, findPreviousNoData) {
+    // This one doesn't hold any NSEC records, so it shouldn't work
+    // The underlying DB/data don't support DNSSEC, so it's not implemented
+    // (does it make sense? Or different exception here?)
+    EXPECT_THROW(accessor->findPreviousName(3, "com.example."),
+                 isc::NotImplemented);
+}
+
 // Test fixture for creating a db that automatically deletes it before start,
 // and when done
 class SQLite3Create : public ::testing::Test {

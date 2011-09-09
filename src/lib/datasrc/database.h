@@ -481,7 +481,7 @@ public:
      * This is used in DatabaseClient::findPreviousName and does more
      * or less the real work, except for working on strings.
      *
-     * \param name The name to ask for previous of.
+     * \param rname The name to ask for previous of, in reversed form.
      * \param zone_id The zone to look through.
      * \return The previous name.
      *
@@ -489,7 +489,7 @@ public:
      * \throw NotImplemented if this database doesn't support DNSSEC.
      */
     virtual std::string findPreviousName(int zone_id,
-                                         const std::string& name) const = 0;
+                                         const std::string& rname) const = 0;
 };
 
 /**
