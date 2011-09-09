@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#define TXT_LIKE                TXT
-#define txt_LIKE                txt
+#define TXT_LIKE                SPF
+#define txt_LIKE                spf
 
 #include "rdata_txt_like_unittest.inc"
