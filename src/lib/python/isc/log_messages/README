@@ -71,4 +71,7 @@ Notes:
   to this directory by the configure script.
 - The four lines starting from BUILT_SOURCES and the second make rule
   are for preparing the dummy python file under the source tree.
-  Alternatively, you could directly add the file in this directory.
+  Note that EXTRA_DIST is specified so that the python script is
+  placed in the source tree (not only in the build tree when these
+  two are different).  If you don't like this trick, you could
+  directly add the file in this directory alternatively.
