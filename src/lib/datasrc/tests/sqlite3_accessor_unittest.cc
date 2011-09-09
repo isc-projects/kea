@@ -354,6 +354,9 @@ TEST_F(SQLite3AccessorTest, getRecords) {
 TEST_F(SQLite3AccessorTest, findPrevious) {
     EXPECT_EQ("dns01.example.com.",
               accessor->findPreviousName(1, "com.example.dns02."));
+    // A name that doesn't exist
+    EXPECT_EQ("dns01.example.com.",
+              accessor->findPreviousName(1, "com.example.dns01x."));
     // Wrap around
     EXPECT_EQ("www.example.com.",
               accessor->findPreviousName(1, "com.example."));

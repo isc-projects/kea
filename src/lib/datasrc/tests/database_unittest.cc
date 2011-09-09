@@ -549,7 +549,8 @@ public:
         } else if (id == 42) {
             if (rname == "org.example.") {
                 return ("zzz.example.org.");
-            } else if (rname == "org.example.www2.") {
+            } else if (rname == "org.example.www2." ||
+                       rname == "org.example.www1.") {
                 return ("www.example.org.");
             } else {
                 isc_throw(isc::Unexpected, "Unexpected name");
@@ -2228,13 +2229,19 @@ TYPED_TEST(DatabaseClientTest, previous) {
     // Check wrap around
     EXPECT_EQ(Name("zzz.example.org."),
               finder->findPreviousName(Name("example.org.")));
-    // Check it doesn't crash or anything if the underlying DB throws
-    DataSourceClient::FindResult
-        zone(this->client_->findZone(Name("bad.example.org")));
-    finder = dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder);
+    // Check a name that doesn't exist there
+    EXPECT_EQ(Name("www.example.org."),
+              finder->findPreviousName(Name("www1.example.org.")));
+    if (this->is_mock_) { // We can't really force the DB to throw
+        // Check it doesn't crash or anything if the underlying DB throws
+        DataSourceClient::FindResult
+            zone(this->client_->findZone(Name("bad.example.org")));
+        finder =
+            dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder);
 
-    EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
-                 isc::NotImplemented);
+        EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
+                     isc::NotImplemented);
+    }
 }
 
 }
