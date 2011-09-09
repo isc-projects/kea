@@ -47,7 +47,7 @@ import isc.net.parse
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 from isc.util import socketserver_mixin
-from cmdctl_messages import *
+from isc.log_messages.cmdctl_messages import *
 
 # TODO: these debug-levels are hard-coded here; we are planning on
 # creating a general set of debug levels, see ticket #1074. When done,

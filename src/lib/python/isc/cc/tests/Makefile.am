@@ -23,7 +23,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
+	PYTHONPATH=$(COMMON_PYTHON_PATH) \
 	BIND10_TEST_SOCKET_FILE=$(builddir)/test_socket.sock \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

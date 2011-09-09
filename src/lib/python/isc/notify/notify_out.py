@@ -23,7 +23,7 @@ import errno
 from isc.datasrc import sqlite3_ds
 from isc.net import addr
 import isc
-from notify_out_messages import *
+from isc.log_messages.notify_out_messages import *
 
 logger = isc.log.Logger("notify_out")
 

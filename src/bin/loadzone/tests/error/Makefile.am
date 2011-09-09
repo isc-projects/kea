@@ -12,6 +12,8 @@ EXTRA_DIST += keyerror3.db
 EXTRA_DIST += originerr1.db
 EXTRA_DIST += originerr2.db
 
+noinst_SCRIPTS = error_test.sh
+
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
 LIBRARY_PATH_PLACEHOLDER =
