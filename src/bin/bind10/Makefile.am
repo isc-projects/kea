@@ -1,10 +1,16 @@
 SUBDIRS = . tests
 
 sbin_SCRIPTS = bind10
-CLEANFILES = bind10 bind10_src.pyc bind10_messages.py bind10_messages.pyc
+CLEANFILES = bind10 bind10_src.pyc
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.pyc
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
-pyexec_DATA = bind10_messages.py
+
+nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py
+pylogmessagedir = $(pyexecdir)/isc/log_messages/
+
+noinst_SCRIPTS = run_bind10.sh
 
 bind10dir = $(pkgdatadir)
 bind10_DATA = bob.spec
@@ -13,6 +19,11 @@ EXTRA_DIST = bob.spec
 man_MANS = bind10.8
 EXTRA_DIST += $(man_MANS) bind10.xml bind10_messages.mes
 
+BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/bind10_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/bind10_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/bind10_messages.pyc
+EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/bind10_messages.py
+
 if ENABLE_MAN
 
 bind10.8: bind10.xml
@@ -20,11 +31,15 @@ bind10.8: bind10.xml
 
 endif
 
-bind10_messages.py: bind10_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/bind10/bind10_messages.mes
+$(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py : bind10_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message \
+	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/bind10_messages.mes
+
+$(PYTHON_LOGMSGPKG_DIR)/bind10_messages.py: Makefile
+	echo "from work.bind10_messages import *" > $@
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-bind10: bind10_src.py
+bind10: bind10_src.py $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bind10_src.py >$@
 	chmod a+x $@

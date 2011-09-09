@@ -35,7 +35,7 @@ import isc.config
 import isc.util.process
 
 import isc.log
-from stats_httpd_messages import *
+from isc.log_messages.stats_httpd_messages import *
 
 isc.log.init("b10-stats-httpd")
 logger = isc.log.Logger("stats-httpd")

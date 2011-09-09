@@ -43,7 +43,7 @@ from isc.util.file import path_search
 import bind10_config
 from isc.log import log_config_update
 import json
-from config_messages import *
+from isc.log_messages.config_messages import *
 
 logger = isc.log.Logger("config")
 

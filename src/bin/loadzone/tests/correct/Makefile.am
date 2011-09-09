@@ -13,6 +13,8 @@ EXTRA_DIST += ttl2.db
 EXTRA_DIST += ttlext.db
 EXTRA_DIST += example.db
 
+noinst_SCRIPTS = correct_test.sh
+
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
 LIBRARY_PATH_PLACEHOLDER =
