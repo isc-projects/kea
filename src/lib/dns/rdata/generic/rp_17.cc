@@ -24,6 +24,7 @@
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
