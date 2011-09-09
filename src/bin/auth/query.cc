@@ -253,6 +253,13 @@ Query::process() const {
                 // Just empty answer with SOA in authority section
                 putSOA(*result.zone_finder);
                 break;
+            default:
+                // These are new result codes (WILDCARD and WILDCARD_NXRRSET)
+                // They should not happen from the in-memory and the database
+                // backend isn't used yet.
+                // TODO: Implement before letting the database backends in
+                isc_throw(isc::NotImplemented, "Unknown result code");
+                break;
         }
     }
 }
