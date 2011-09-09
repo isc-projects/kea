@@ -173,6 +173,9 @@ const char* const TEST_RECORDS[][5] = {
     {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
     // For finding previous, this one is the last one in the zone
     {"zzz.example.org.", "NSEC", "3600", "", "example.org NSEC"},
+    // For NSEC empty non-terminal
+    {"l.example.org.", "NSEC", "3600", "", "empty.nonterminal.example.org. NSEC"},
+    {"empty.nonterminal.example.org.", "A", "3600", "", "192.0.2.1"},
 
     {NULL, NULL, NULL, NULL, NULL},
 };
@@ -549,10 +552,13 @@ public:
         } else if (id == 42) {
             if (rname == "org.example.") {
                 return ("zzz.example.org.");
+            } else if (rname == "org.example.nonterminal.") {
+                return ("l.example.org.");
             } else if (rname == "org.example.www2." ||
                        rname == "org.example.www1.") {
                 return ("www.example.org.");
-            } else if (rname == "org.example.notimplnsec.") {
+            } else if (rname == "org.example.notimplnsec." ||
+                       rname == "org.example.wild.here.") {
                 isc_throw(isc::NotImplemented, "Not implemented in this test");
             } else {
                 isc_throw(isc::Unexpected, "Unexpected name");
@@ -1640,6 +1646,38 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
                                isc::dns::RRType::TXT(),
                                isc::dns::RRType::NSEC(),
                                isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+                               this->expected_rdatas_,
+                               this->expected_sig_rdatas_,
+                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+}
+
+TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
+    // Same as NXDOMAIN_NSEC, but with empty non-terminal
+    //
+    // FIXME: Is the nonexistence of this node really the correct proof
+    // we need?
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    this->expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
+    doFindTest(*finder, isc::dns::Name("nonterminal.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
+               isc::dns::RRTTL(3600),
+               ZoneFinder::NXRRSET, // FIXME: Do we want to have specific code?
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               Name("l.example.org."), ZoneFinder::FIND_DNSSEC);
+
+    // Check that if the DB doesn't support it, the exception from there
+    // is not propagated and it only does not include the NSEC
+    if (!this->is_mock_) {
+        return; // We don't make the real DB to throw
+    }
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    EXPECT_NO_THROW(doFindTest(*finder,
+                               isc::dns::Name("here.wild.example.org."),
+                               isc::dns::RRType::TXT(),
+                               isc::dns::RRType::NSEC(),
+                               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET,
                                this->expected_rdatas_,
                                this->expected_sig_rdatas_,
                                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));

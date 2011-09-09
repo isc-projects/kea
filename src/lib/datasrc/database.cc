@@ -318,6 +318,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     bool records_found = false;
     bool glue_ok(options & FIND_GLUE_OK);
     bool dnssec_data(options & FIND_DNSSEC);
+    bool get_cover(false);
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
     FoundRRsets found;
@@ -430,6 +431,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                           DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
                     arg(accessor_->getDBName()).arg(name);
                 records_found = true;
+                get_cover = dnssec_data;
             } else {
                 // It's not empty non-terminal. So check for wildcards.
                 // We remove labels one by one and look for the wildcard there.
@@ -521,6 +523,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     } else if (hasSubdomains(wildcard.toText())) {
                         // Empty non-terminal asterisk
                         records_found = true;
+                        get_cover = dnssec_data;
                         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                                   DATASRC_DATABASE_WILDCARD_EMPTY).
                             arg(accessor_->getDBName()).arg(wildcard).
@@ -531,28 +534,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // This is the NXDOMAIN case (nothing found anywhere). If
                 // they wand DNSSEC data, try getting the NSEC record
                 if (dnssec_data && !records_found) {
-                    try {
-                        // Which one should contain the NSEC record?
-                        const Name coverName(findPreviousName(name));
-                        // Get the record and copy it out
-                        found = getRRsets(coverName, nsec_types, true);
-                        const FoundIterator
-                            nci(found.second.find(RRType::NSEC()));
-                        if (nci != found.second.end()) {
-                            result_status = NXDOMAIN;
-                            result_rrset = nci->second;
-                        } else {
-                            // The previous doesn't contain NSEC, bug?
-                            isc_throw(DataSourceError, "No NSEC in " +
-                                      coverName.toText() + ", but it was "
-                                      "returned as previous - "
-                                      "accessor error?");
-                        }
-                    }
-                    catch (const isc::NotImplemented&) {
-                        // Well, they want DNSSEC, but there is no available.
-                        // So we don't provide anything.
-                    }
+                    get_cover = true;
                 }
             }
         } else if (dnssec_data) {
@@ -569,6 +551,31 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
     if (!result_rrset) {
         if (result_status == SUCCESS) {
+            // Should we look for NSEC covering the name?
+            if (get_cover) {
+                try {
+                    // Which one should contain the NSEC record?
+                    const Name coverName(findPreviousName(name));
+                    // Get the record and copy it out
+                    found = getRRsets(coverName, nsec_types, true);
+                    const FoundIterator
+                        nci(found.second.find(RRType::NSEC()));
+                    if (nci != found.second.end()) {
+                        result_status = NXDOMAIN;
+                        result_rrset = nci->second;
+                    } else {
+                        // The previous doesn't contain NSEC, bug?
+                        isc_throw(DataSourceError, "No NSEC in " +
+                                  coverName.toText() + ", but it was "
+                                  "returned as previous - "
+                                  "accessor error?");
+                    }
+                }
+                catch (const isc::NotImplemented&) {
+                    // Well, they want DNSSEC, but there is no available.
+                    // So we don't provide anything.
+                }
+            }
             // Something is not here and we didn't decide yet what
             if (records_found) {
                 logger.debug(DBG_TRACE_DETAILED,
