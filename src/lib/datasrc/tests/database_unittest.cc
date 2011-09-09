@@ -552,6 +552,8 @@ public:
             } else if (rname == "org.example.www2." ||
                        rname == "org.example.www1.") {
                 return ("www.example.org.");
+            } else if (rname == "org.example.notimplnsec.") {
+                isc_throw(isc::NotImplemented, "Not implemented in this test");
             } else {
                 isc_throw(isc::Unexpected, "Unexpected name");
             }
@@ -1611,6 +1613,37 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
+TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
+    // The domain doesn't exist, so we must get the right NSEC
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
+    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, isc::dns::Name("www1.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
+               isc::dns::RRTTL(3600),
+               ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               Name("www.example.org."), ZoneFinder::FIND_DNSSEC);
+
+    // Check that if the DB doesn't support it, the exception from there
+    // is not propagated and it only does not include the NSEC
+    if (!this->is_mock_) {
+        return; // We don't make the real DB to throw
+    }
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    EXPECT_NO_THROW(doFindTest(*finder,
+                               isc::dns::Name("notimplnsec.example.org."),
+                               isc::dns::RRType::TXT(),
+                               isc::dns::RRType::NSEC(),
+                               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+                               this->expected_rdatas_,
+                               this->expected_sig_rdatas_,
+                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+}
 
 TYPED_TEST(DatabaseClientTest, getOrigin) {
     DataSourceClient::FindResult
