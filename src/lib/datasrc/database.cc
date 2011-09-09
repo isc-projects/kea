@@ -326,6 +326,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // In case we are in GLUE_OK mode and start matching wildcards,
     // we can't do it under NS, so we store it here to check
     isc::dns::RRsetPtr first_ns;
+    // This is used at multiple places
+    static WantedTypes nsec_types(empty_types + RRType::NSEC());
 
     // First, do we have any kind of delegation (NS/DNAME) here?
     Name origin(getOrigin());
@@ -497,8 +499,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                     // However, we need to get the RRset in the
                                     // name of the wildcard, not the constructed
                                     // one, so we walk it again
-                                    found = getRRsets(wildcard, empty_types +
-                                                      RRType::NSEC(), true);
+                                    found = getRRsets(wildcard, nsec_types,
+                                                      true);
                                     result_rrset =
                                         found.second.find(RRType::NSEC())->
                                         second;
@@ -524,6 +526,32 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                             arg(accessor_->getDBName()).arg(wildcard).
                             arg(name);
                         break;
+                    }
+                }
+                // This is the NXDOMAIN case (nothing found anywhere). If
+                // they wand DNSSEC data, try getting the NSEC record
+                if (dnssec_data && !records_found) {
+                    try {
+                        // Which one should contain the NSEC record?
+                        const Name coverName(findPreviousName(name));
+                        // Get the record and copy it out
+                        found = getRRsets(coverName, nsec_types, true);
+                        const FoundIterator
+                            nci(found.second.find(RRType::NSEC()));
+                        if (nci != found.second.end()) {
+                            result_status = NXDOMAIN;
+                            result_rrset = nci->second;
+                        } else {
+                            // The previous doesn't contain NSEC, bug?
+                            isc_throw(DataSourceError, "No NSEC in " +
+                                      coverName.toText() + ", but it was "
+                                      "returned as previous - "
+                                      "accessor error?");
+                        }
+                    }
+                    catch (const isc::NotImplemented&) {
+                        // Well, they want DNSSEC, but there is no available.
+                        // So we don't provide anything.
                     }
                 }
             }
