@@ -74,6 +74,11 @@ public:
     /// \return A string representation of the address.
     std::string toText() const;
 
+    /// \brief Convert the address to a C-style null-terminated string.
+    ///
+    /// \return A string representation of the address.
+    operator const char*() const { return toText().c_str(); }
+
     /// \brief Returns const reference to the underlying address object.
     ///
     /// This is useful, when access to interface offerted by
