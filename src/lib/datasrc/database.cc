@@ -295,7 +295,7 @@ DatabaseClient::Finder::hasSubdomains(const std::string& name) {
 // Some manipulation with RRType sets
 namespace {
 
-std::set<RRType> empty_types;
+const std::set<RRType> empty_types;
 
 // To conveniently put the RRTypes into the sets. This is not really clean
 // design, but it is hidden inside this file and makes the calls much more
@@ -328,14 +328,14 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // we can't do it under NS, so we store it here to check
     isc::dns::RRsetPtr first_ns;
     // This is used at multiple places
-    static WantedTypes nsec_types(empty_types + RRType::NSEC());
+    static const WantedTypes nsec_types(empty_types + RRType::NSEC());
 
     // First, do we have any kind of delegation (NS/DNAME) here?
-    Name origin(getOrigin());
-    size_t origin_label_count(origin.getLabelCount());
+    const Name origin(getOrigin());
+    const size_t origin_label_count(origin.getLabelCount());
     // Number of labels in the last known non-empty domain
     size_t last_known(origin_label_count);
-    size_t current_label_count(name.getLabelCount());
+    const size_t current_label_count(name.getLabelCount());
     // This is how many labels we remove to get origin
     size_t remove_labels(current_label_count - origin_label_count);
 
@@ -346,8 +346,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     for (int i(remove_labels); i > 0; --i) {
         Name superdomain(name.split(i));
         // Look if there's NS or DNAME (but ignore the NS in origin)
-        static WantedTypes delegation_types(empty_types + RRType::DNAME() +
-                                            RRType::NS());
+        static const WantedTypes delegation_types(empty_types +
+                                                  RRType::DNAME() +
+                                                  RRType::NS());
         found = getRRsets(superdomain, delegation_types, i != remove_labels);
         if (found.first) {
             // It contains some RRs, so it exists.
@@ -393,8 +394,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         // It is special if there's a CNAME or NS, DNAME is ignored here
         // And we don't consider the NS in origin
 
-        static WantedTypes final_types(empty_types + RRType::CNAME() +
-                                       RRType::NS() + RRType::NSEC());
+        static const WantedTypes final_types(empty_types + RRType::CNAME() +
+                                             RRType::NS() + RRType::NSEC());
         found = getRRsets(name, final_types + type, name != origin);
         records_found = found.first;
 
@@ -438,19 +439,19 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // Go up to first non-empty domain.
 
                 remove_labels = current_label_count - last_known;
-                Name star("*");
+                const Name star("*");
                 for (size_t i(1); i <= remove_labels; ++ i) {
                     // Construct the name with *
                     // TODO: Once the underlying DatabaseAccessor takes
                     // string, do the concatenation on strings, not
                     // Names
-                    Name superdomain(name.split(i));
-                    Name wildcard(star.concatenate(superdomain));
+                    const Name superdomain(name.split(i));
+                    const Name wildcard(star.concatenate(superdomain));
                     // TODO What do we do about DNAME here?
-                    static WantedTypes wildcard_types(empty_types +
-                                                      RRType::CNAME() +
-                                                      RRType::NS() +
-                                                      RRType::NSEC());
+                    static const WantedTypes wildcard_types(empty_types +
+                                                            RRType::CNAME() +
+                                                            RRType::NS() +
+                                                            RRType::NSEC());
                     found = getRRsets(wildcard, wildcard_types + type, true,
                                       &name);
                     if (found.first) {
