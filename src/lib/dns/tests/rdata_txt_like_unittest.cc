@@ -14,42 +14,6 @@
 
 // This is the common code for TXT and SPF tests.
 
-#if !defined(TXT_LIKE)
-#error Please define TXT_LIKE
-#endif
-
-#if !defined(txt_LIKE)
-#error Please define txt_LIKE
-#endif
-
-#define xstr_(a)        #a
-#define str_(a)         xstr_(a)
-
-#define strTXT_LIKE     str_(TXT_LIKE)
-#define strtxt_LIKE     str_(txt_LIKE)
-
-#define xcat2_(a,b)     a##b
-#define cat2_(a,b)      xcat2_(a, b)
-
-#define xcat3_(a,b,c)   a##b##c
-#define cat3_(a,b,c)    xcat3_(a, b, c)
-
-#define rdata_txt_like                  cat2_(rdata_, txt_LIKE)
-#define rdata_txt_like_empty            cat3_(rdata_, txt_LIKE, _empty)
-#define rdata_txt_like_quoted           cat3_(rdata_, txt_LIKE, _quoted)
-#define Rdata_TXT_LIKE_Test             cat3_(Rdata_, TXT_LIKE, _Test)
-#define wiredata_longesttxt_like        cat2_(wiredata_longest, txt_LIKE)
-#define wiredata_nulltxt_like           cat2_(wiredata_null, txt_LIKE)
-#define wiredata_txt_like               cat2_(wiredata_, txt_LIKE)
-#define largest_txt_like                cat2_(largest_, txt_LIKE)
-#define largest_txt_like_data           cat3_(largest_, txt_LIKE, _data)
-
-#define rdata_txt_like_fromWire1        cat3_(rdata_, txt_LIKE, _fromWire1)
-#define rdata_txt_like_fromWire2        cat3_(rdata_, txt_LIKE, _fromWire2)
-#define rdata_txt_like_fromWire3        cat3_(rdata_, txt_LIKE, _fromWire3)
-#define rdata_txt_like_fromWire4        cat3_(rdata_, txt_LIKE, _fromWire4)
-#define rdata_txt_like_fromWire5        cat3_(rdata_, txt_LIKE, _fromWire5)
-
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
@@ -69,54 +33,86 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
+
+template<class T>
+class RRTYPE : public RRType {
+public:
+    RRTYPE();
+};
+
+template<> RRTYPE<generic::TXT>::RRTYPE() : RRType(RRType::TXT()) {}
+template<> RRTYPE<generic::SPF>::RRTYPE() : RRType(RRType::SPF()) {}
+
 namespace {
-const generic::TXT_LIKE rdata_txt_like("Test String");
-const generic::TXT_LIKE rdata_txt_like_empty("");
-const generic::TXT_LIKE rdata_txt_like_quoted("\"Test String\"");
 const uint8_t wiredata_txt_like[] = {
     sizeof("Test String") - 1,
     'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'
 };
+
 const uint8_t wiredata_nulltxt[] = { 0 };
 vector<uint8_t> wiredata_longesttxt(256, 'a');
 
+template<class TXT_LIKE>
 class Rdata_TXT_LIKE_Test : public RdataTest {
 protected:
     Rdata_TXT_LIKE_Test() {
         wiredata_longesttxt[0] = 255; // adjust length
     }
+
+    static const TXT_LIKE rdata_txt_like;
+    static const TXT_LIKE rdata_txt_like_empty;
+    static const TXT_LIKE rdata_txt_like_quoted;
 };
 
-TEST_F(Rdata_TXT_LIKE_Test, createFromText) {
+template<class TXT_LIKE>
+const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like("Test String");
+
+template<class TXT_LIKE>
+const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_empty("");
+
+template<class TXT_LIKE>
+const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_quoted
+							  ("\"Test String\"");
+
+// The list of types we want to test.
+typedef testing::Types<generic::TXT, generic::SPF> Implementations;
+
+TYPED_TEST_CASE(Rdata_TXT_LIKE_Test, Implementations);
+
+TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     // normal case is covered in toWireBuffer.
 
     // surrounding double-quotes shouldn't change the result.
-    EXPECT_EQ(0, rdata_txt_like.compare(rdata_txt_like_quoted));
+    EXPECT_EQ(0, Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.compare
+                      (Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like_quoted));
 
     // Null character-string.
-    obuffer.clear();
-    generic::TXT_LIKE(string("")).toWire(obuffer);
+    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
+    TypeParam(string("")).toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_nulltxt, sizeof(wiredata_nulltxt));
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
+			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        wiredata_nulltxt, sizeof (wiredata_nulltxt));
 
     // Longest possible character-string.
-    obuffer.clear();
-    generic::TXT_LIKE(string(255, 'a')).toWire(obuffer);
+    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
+    TypeParam(string(255, 'a')).
+			       toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
+			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         &wiredata_longesttxt[0], wiredata_longesttxt.size());
 
     // Too long text for a valid character-string.
-    EXPECT_THROW(generic::TXT_LIKE(string(256, 'a')), CharStringTooLong);
+    EXPECT_THROW(TypeParam(string(256, 'a')), CharStringTooLong);
 
     // The escape character makes the double quote a part of character-string,
     // so this is invalid input and should be rejected.
-    EXPECT_THROW(generic::TXT_LIKE("\"Test String\\\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam("\"Test String\\\""), InvalidRdataText);
 
     // Terminating double-quote is provided, so this is valid, but in this
     // version of implementation we reject escaped characters.
-    EXPECT_THROW(generic::TXT_LIKE("\"Test String\\\"\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam("\"Test String\\\"\""), InvalidRdataText);
 }
 
 void
@@ -138,27 +134,29 @@ makeLargest(vector<uint8_t>& data) {
     assert(data.size() == 65535);
 }
 
-TEST_F(Rdata_TXT_LIKE_Test, createFromWire) {
-    EXPECT_EQ(0, rdata_txt_like.compare(
-                  *rdataFactoryFromFile(RRType(strTXT_LIKE), RRClass("IN"),
+TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
+    EXPECT_EQ(0, Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.compare(
+                  *rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                         "rdata_txt_fromWire1")));
 
     // Empty character string
-    EXPECT_EQ(0, rdata_txt_like_empty.compare(
-                  *rdataFactoryFromFile(RRType(strTXT_LIKE), RRClass("IN"),
+    EXPECT_EQ(0, Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like_empty.compare(
+                  *rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                         "rdata_txt_fromWire2.wire")));
 
     // Multiple character strings
-    obuffer.clear();
-    rdataFactoryFromFile(RRType(strTXT_LIKE), RRClass("IN"),
-                         "rdata_txt_fromWire3.wire")->toWire(obuffer);
+    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
+    rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
+			 "rdata_txt_fromWire3.wire")->
+			       toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     // the result should be 'wiredata_txt' repeated twice
     vector<uint8_t> expected_data(wiredata_txt_like, wiredata_txt_like +
                                   sizeof(wiredata_txt_like));
     expected_data.insert(expected_data.end(), wiredata_txt_like,
                          wiredata_txt_like + sizeof(wiredata_txt_like));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
+			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         &expected_data[0], expected_data.size());
 
     // Largest length of data.  There's nothing special, but should be
@@ -168,11 +166,12 @@ TEST_F(Rdata_TXT_LIKE_Test, createFromWire) {
     makeLargest(largest_txt_like_data);
     InputBuffer ibuffer(&largest_txt_like_data[0],
                         largest_txt_like_data.size());
-    generic::TXT_LIKE largest_txt_like(ibuffer, largest_txt_like_data.size());
-    obuffer.clear();
-    largest_txt_like.toWire(obuffer);
+    TypeParam largest_txt_like(ibuffer, largest_txt_like_data.size());
+    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
+    largest_txt_like.toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
+			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         &largest_txt_like_data[0],
                         largest_txt_like_data.size());
 
@@ -181,27 +180,30 @@ TEST_F(Rdata_TXT_LIKE_Test, createFromWire) {
     // length is validated.  But this should be checked explicitly.
     InputBuffer ibuffer2(&largest_txt_like_data[0],
                          largest_txt_like_data.size());
-    EXPECT_THROW(generic::TXT_LIKE(ibuffer2, 65536), InvalidRdataLength);
+    EXPECT_THROW(TypeParam(ibuffer2, 65536), InvalidRdataLength);
 
     // RDATA is empty, which is invalid for TXT_LIKE.
-    EXPECT_THROW(rdataFactoryFromFile(RRType(strTXT_LIKE), RRClass("IN"),
+    EXPECT_THROW(rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                       "rdata_txt_fromWire4.wire"),
                  DNSMessageFORMERR);
 
     // character-string length is too large, which could cause overrun.
-    EXPECT_THROW(rdataFactoryFromFile(RRType(strTXT_LIKE), RRClass("IN"),
+    EXPECT_THROW(rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                       "rdata_txt_fromWire5.wire"),
                  DNSMessageFORMERR);
 }
 
-TEST_F(Rdata_TXT_LIKE_Test, toWireBuffer) {
-    rdata_txt_like.toWire(obuffer);
+TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
+    Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.toWire
+				     (Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
+			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         wiredata_txt_like, sizeof(wiredata_txt_like));
 }
 
-TEST_F(Rdata_TXT_LIKE_Test, toText) {
-    EXPECT_EQ("\"Test String\"", rdata_txt_like.toText());
+TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
+    EXPECT_EQ("\"Test String\"",
+	      Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.toText());
 }
 }
