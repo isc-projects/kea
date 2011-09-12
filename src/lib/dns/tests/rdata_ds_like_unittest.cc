@@ -87,8 +87,8 @@ TYPED_TEST(Rdata_DS_LIKE_Test, DISABLED_badText_DS_LIKE) {
 
 TYPED_TEST(Rdata_DS_LIKE_Test, createFromWire_DS_LIKE) {
     EXPECT_EQ(0, Rdata_DS_LIKE_Test<TypeParam>::rdata_ds_like.compare(
-              *rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass::IN(),
-                                    "rdata_ds_fromWire")));
+              *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass::IN(),
+                                          "rdata_ds_fromWire")));
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, getTag_DS_LIKE) {
