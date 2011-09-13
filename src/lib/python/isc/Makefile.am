@@ -1,4 +1,4 @@
-SUBDIRS = datasrc cc config log net notify util testutils acl bind10
+SUBDIRS = datasrc cc config dns log net notify util testutils acl bind10
 
 python_PYTHON = __init__.py
 
