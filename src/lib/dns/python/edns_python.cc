@@ -12,13 +12,27 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
+
 #include <cassert>
 
 #include <dns/edns.h>
+#include <dns/exceptions.h>
+#include <dns/messagerenderer.h>
+
+#include "edns_python.h"
+#include "name_python.h"
+#include "rrclass_python.h"
+#include "rrtype_python.h"
+#include "rrttl_python.h"
+#include "rdata_python.h"
+#include "messagerenderer_python.h"
+#include "pydnspp_common.h"
 
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using namespace isc::dns::python;
 
 //
 // Definition of the classes
@@ -32,13 +46,6 @@ namespace {
 //
 // EDNS
 //
-
-// The s_* Class simply covers one instantiation of the object
-
-class s_EDNS : public PyObject {
-public:
-    EDNS* edns;
-};
 
 //
 // We declare the functions here, the definitions are below
@@ -103,60 +110,6 @@ PyMethodDef EDNS_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-// This defines the complete type for reflection in python and
-// parsing of PyObject* to s_EDNS
-// Most of the functions are not actually implemented and NULL here.
-PyTypeObject edns_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.EDNS",
-    sizeof(s_EDNS),                     // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)EDNS_destroy,           // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    EDNS_str,                           // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The EDNS class encapsulates DNS extensions "
-    "provided by the EDNSx protocol.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    NULL,                               // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    EDNS_methods,                       // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)EDNS_init,                // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
-};
-
 EDNS*
 createFromRR(const Name& name, const RRClass& rrclass, const RRType& rrtype,
              const RRTTL& rrttl, const Rdata& rdata, uint8_t& extended_rcode)
@@ -203,8 +156,8 @@ EDNS_init(s_EDNS* self, PyObject* args) {
         // in this context so that we can share the try-catch logic with
         // EDNS_createFromRR() (see below).
         uint8_t extended_rcode;
-        self->edns = createFromRR(*name->cppobj, *rrclass->rrclass,
-                                  *rrtype->rrtype, *rrttl->rrttl,
+        self->edns = createFromRR(*name->cppobj, *rrclass->cppobj,
+                                  *rrtype->cppobj, *rrttl->rrttl,
                                   *rdata->rdata, extended_rcode);
         return (self->edns != NULL ? 0 : -1);
     }
@@ -245,7 +198,7 @@ EDNS_toWire(const s_EDNS* const self, PyObject* args) {
     if (PyArg_ParseTuple(args, "Ob", &bytes, &extended_rcode) &&
         PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
-        
+
         OutputBuffer buffer(0);
         self->edns->toWire(buffer, extended_rcode);
         PyObject* rd_bytes = PyBytes_FromStringAndSize(
@@ -334,14 +287,14 @@ EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
             return (NULL);
         }
 
-        edns_obj->edns = createFromRR(*name->cppobj, *rrclass->rrclass,
-                                      *rrtype->rrtype, *rrttl->rrttl,
+        edns_obj->edns = createFromRR(*name->cppobj, *rrclass->cppobj,
+                                      *rrtype->cppobj, *rrttl->rrttl,
                                       *rdata->rdata, extended_rcode);
         if (edns_obj->edns != NULL) {
             PyObject* extrcode_obj = Py_BuildValue("B", extended_rcode);
             return (Py_BuildValue("OO", edns_obj, extrcode_obj));
         }
-        
+
         Py_DECREF(edns_obj);
         return (NULL);
     }
@@ -354,6 +307,64 @@ EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
 
 } // end of anonymous namespace
 // end of EDNS
+
+namespace isc {
+namespace dns {
+namespace python {
+
+// This defines the complete type for reflection in python and
+// parsing of PyObject* to s_EDNS
+// Most of the functions are not actually implemented and NULL here.
+PyTypeObject edns_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.EDNS",
+    sizeof(s_EDNS),                     // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)EDNS_destroy,           // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    EDNS_str,                           // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The EDNS class encapsulates DNS extensions "
+    "provided by the EDNSx protocol.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    NULL,                               // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    EDNS_methods,                       // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)EDNS_init,                // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
 
 // Module Initialization, all statics are initialized here
 bool
@@ -373,3 +384,7 @@ initModulePart_EDNS(PyObject* mod) {
 
     return (true);
 }
+
+} // end namespace python
+} // end namespace dns
+} // end namespace isc

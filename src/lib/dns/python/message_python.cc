@@ -12,24 +12,33 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
+
 #include <exceptions/exceptions.h>
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/tsig.h>
+#include <dns/exceptions.h>
+#include <dns/messagerenderer.h>
 
+#include "name_python.h"
+#include "question_python.h"
+#include "edns_python.h"
+#include "rcode_python.h"
+#include "opcode_python.h"
+#include "rrset_python.h"
+#include "message_python.h"
+#include "messagerenderer_python.h"
+#include "tsig_python.h"
+#include "tsigrecord_python.h"
+#include "pydnspp_common.h"
+
+using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
 
 namespace {
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-PyObject* po_MessageTooShort;
-PyObject* po_InvalidMessageSection;
-PyObject* po_InvalidMessageOperation;
-PyObject* po_InvalidMessageUDPSize;
 
 //
 // Definition of the classes
@@ -42,12 +51,6 @@ PyObject* po_InvalidMessageUDPSize;
 //
 // Message
 //
-
-// The s_* Class simply coverst one instantiation of the object
-class s_Message : public PyObject {
-public:
-    Message* message;
-};
 
 //
 // We declare the functions here, the definitions are below
@@ -176,59 +179,6 @@ PyMethodDef Message_methods[] = {
       "Raises MessageTooShort, DNSMessageFORMERR or DNSMessageBADVERS "
       " if there is a problem parsing the message." },
     { NULL, NULL, 0, NULL }
-};
-
-// This defines the complete type for reflection in python and
-// parsing of PyObject* to s_Message
-// Most of the functions are not actually implemented and NULL here.
-PyTypeObject message_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.Message",
-    sizeof(s_Message),                  // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)Message_destroy,        // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    Message_str,                        // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Message class encapsulates a standard DNS message.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    NULL,                               // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    Message_methods,                    // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)Message_init,             // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
 };
 
 int
@@ -597,7 +547,7 @@ Message_addQuestion(s_Message* self, PyObject* args) {
     }
 
     self->message->addQuestion(question->question);
-    
+
     Py_RETURN_NONE;
 }
 
@@ -682,7 +632,7 @@ PyObject*
 Message_toWire(s_Message* self, PyObject* args) {
     s_MessageRenderer* mr;
     s_TSIGContext* tsig_ctx = NULL;
-    
+
     if (PyArg_ParseTuple(args, "O!|O!", &messagerenderer_type, &mr,
                          &tsigcontext_type, &tsig_ctx)) {
         try {
@@ -727,7 +677,7 @@ Message_fromWire(s_Message* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "y#", &b, &len)) {
         return (NULL);
     }
-    
+
     InputBuffer inbuf(b, len);
     try {
         self->message->fromWire(inbuf);
@@ -747,6 +697,75 @@ Message_fromWire(s_Message* self, PyObject* args) {
     }
 }
 
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the initModulePart
+// function at the end of this file
+//
+PyObject* po_MessageTooShort;
+PyObject* po_InvalidMessageSection;
+PyObject* po_InvalidMessageOperation;
+PyObject* po_InvalidMessageUDPSize;
+
+// This defines the complete type for reflection in python and
+// parsing of PyObject* to s_Message
+// Most of the functions are not actually implemented and NULL here.
+PyTypeObject message_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.Message",
+    sizeof(s_Message),                  // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Message_destroy,        // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    Message_str,                        // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The Message class encapsulates a standard DNS message.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    NULL,                               // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Message_methods,                    // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Message_init,             // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
+
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_Message(PyObject* mod) {
@@ -754,7 +773,7 @@ initModulePart_Message(PyObject* mod) {
         return (false);
     }
     Py_INCREF(&message_type);
-    
+
     // Class variables
     // These are added to the tp_dict of the type object
     //
@@ -814,4 +833,7 @@ initModulePart_Message(PyObject* mod) {
 
     return (true);
 }
-} // end of unnamed namespace
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace

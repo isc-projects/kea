@@ -12,18 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_NAME_H
-#define __PYTHON_NAME_H 1
+#ifndef __PYTHON_RRSET_H
+#define __PYTHON_RRSET_H 1
 
 #include <Python.h>
+
+#include <dns/rrset.h>
 
 #include <util/python/pycppwrapper_util.h>
 
 namespace isc {
 namespace dns {
-class NameComparisonResult;
-class Name;
-
 namespace python {
 
 //
@@ -31,72 +30,56 @@ namespace python {
 // Initialization and addition of these go in the module init at the
 // end
 //
-extern PyObject* po_EmptyLabel;
-extern PyObject* po_TooLongName;
-extern PyObject* po_TooLongLabel;
-extern PyObject* po_BadLabelType;
-extern PyObject* po_BadEscape;
-extern PyObject* po_IncompleteName;
-extern PyObject* po_InvalidBufferPosition;
-extern PyObject* po_DNSMessageFORMERR;
+extern PyObject* po_EmptyRRset;
 
-//
-// Declaration of enums
-// Initialization and addition of these go in the module init at the
-// end
-//
-extern PyObject* po_NameRelation;
+// The s_* Class simply coverst one instantiation of the object
 
-// The s_* Class simply covers one instantiation of the object.
-class s_NameComparisonResult : public PyObject {
+// Using a shared_ptr here should not really be necessary (PyObject
+// is already reference-counted), however internally on the cpp side,
+// not doing so might result in problems, since we can't copy construct
+// rdata field, adding them to rrsets results in a problem when the
+// rrset is destroyed later
+class s_RRset : public PyObject {
 public:
-    s_NameComparisonResult() : cppobj(NULL) {}
-    NameComparisonResult* cppobj;
+    isc::dns::RRsetPtr rrset;
 };
 
-class s_Name : public PyObject {
-public:
-    s_Name() : cppobj(NULL), position(0) {}
-    Name* cppobj;
-    size_t position;
-};
+extern PyTypeObject rrset_type;
 
-extern PyTypeObject name_comparison_result_type;
-extern PyTypeObject name_type;
+bool initModulePart_RRset(PyObject* mod);
 
-bool initModulePart_Name(PyObject* mod);
-
-/// This is A simple shortcut to create a python Name object (in the
+/// This is A simple shortcut to create a python RRset object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
 /// On success, it returns a valid pointer to PyObject with a reference
 /// counter of 1; if something goes wrong it throws an exception (it never
 /// returns a NULL pointer).
 /// This function is expected to be called with in a try block
 /// followed by necessary setup for python exception.
-PyObject* createNameObject(const Name& source);
+PyObject* createRRsetObject(const RRset& source);
 
-/// \brief Checks if the given python object is a Name object
+/// \brief Checks if the given python object is a RRset object
 ///
 /// \param obj The object to check the type of
-/// \return true if the object is of type Name, false otherwise
-bool PyName_Check(PyObject* obj);
+/// \return true if the object is of type RRset, false otherwise
+bool PyRRset_Check(PyObject* obj);
 
-/// \brief Returns a reference to the Name object contained within the given
+/// \brief Returns a reference to the RRset object contained within the given
 ///        Python object.
 ///
-/// \note The given object MUST be of type Name; this can be checked with
-///       either the right call to ParseTuple("O!"), or with PyName_Check()
+/// \note The given object MUST be of type RRset; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyRRset_Check()
 ///
-/// \note This is not a copy; if the Name is needed when the PyObject
+/// \note This is not a copy; if the RRset is needed when the PyObject
 /// may be destroyed, the caller must copy it itself.
 ///
-/// \param name_obj The name object to convert
-Name& PyName_ToName(PyObject* name_obj);
+/// \param rrset_obj The rrset object to convert
+RRset& PyRRset_ToRRset(PyObject* rrset_obj);
+
 
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_NAME_H
+#endif // __PYTHON_RRSET_H
 
 // Local Variables:
 // mode: c++
