@@ -12,21 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
 #include <vector>
 
 #include <dns/rrtype.h>
+#include <dns/messagerenderer.h>
+#include <util/python/pycppwrapper_util.h>
+
+#include "rrtype_python.h"
+#include "messagerenderer_python.h"
+#include "pydnspp_common.h"
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-static PyObject* po_InvalidRRType;
-static PyObject* po_IncompleteRRType;
 
 //
 // Definition of the classes
@@ -35,16 +37,11 @@ static PyObject* po_IncompleteRRType;
 // For each class, we need a struct, a helper functions (init, destroy,
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
+namespace {
 
 //
 // RRType
 //
-
-// The s_* Class simply covers one instantiation of the object
-class s_RRType : public PyObject {
-public:
-    const RRType* rrtype;
-};
 
 //
 // We declare the functions here, the definitions are below
@@ -83,6 +80,8 @@ static PyObject* RRType_NSEC3(s_RRType *self);
 static PyObject* RRType_IXFR(s_RRType *self);
 static PyObject* RRType_AXFR(s_RRType *self);
 static PyObject* RRType_ANY(s_RRType *self);
+
+typedef CPPPyObjectContainer<s_RRType, RRType> RRTypeContainer;
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -124,62 +123,6 @@ static PyMethodDef RRType_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-// This defines the complete type for reflection in python and
-// parsing of PyObject* to s_RRType
-// Most of the functions are not actually implemented and NULL here.
-static PyTypeObject rrtype_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.RRType",
-    sizeof(s_RRType),                   // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)RRType_destroy,         // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    RRType_str,                         // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The RRType class encapsulates DNS resource record types.\n\n"
-    "This class manages the 16-bit integer type codes in quite a straightforward "
-    "way. The only non trivial task is to handle textual representations of "
-    "RR types, such as \"A\", \"AAAA\", or \"TYPE65534\".",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    (richcmpfunc)RRType_richcmp,        // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    RRType_methods,                     // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)RRType_init,              // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
-};
-
 static int
 RRType_init(s_RRType* self, PyObject* args) {
     const char* s;
@@ -194,7 +137,7 @@ RRType_init(s_RRType* self, PyObject* args) {
     // (the way to do exceptions is to set PyErr and return -1)
     try {
         if (PyArg_ParseTuple(args, "s", &s)) {
-            self->rrtype = new RRType(s);
+            self->cppobj = new RRType(s);
             return (0);
         } else if (PyArg_ParseTuple(args, "l", &i)) {
             PyErr_Clear();
@@ -202,7 +145,7 @@ RRType_init(s_RRType* self, PyObject* args) {
                 PyErr_SetString(PyExc_ValueError, "RR Type number out of range");
                 return (-1);
             }
-            self->rrtype = new RRType(i);
+            self->cppobj = new RRType(i);
             return (0);
         } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             Py_ssize_t size = PySequence_Size(bytes);
@@ -212,7 +155,7 @@ RRType_init(s_RRType* self, PyObject* args) {
                 return (result);
             }
             InputBuffer ib(&data[0], size);
-            self->rrtype = new RRType(ib);
+            self->cppobj = new RRType(ib);
             PyErr_Clear();
             return (0);
         }
@@ -238,15 +181,15 @@ RRType_init(s_RRType* self, PyObject* args) {
 
 static void
 RRType_destroy(s_RRType* self) {
-    delete self->rrtype;
-    self->rrtype = NULL;
+    delete self->cppobj;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject*
 RRType_toText(s_RRType* self) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->rrtype->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 static PyObject*
@@ -265,7 +208,7 @@ RRType_toWire(s_RRType* self, PyObject* args) {
         PyObject* bytes_o = bytes;
 
         OutputBuffer buffer(2);
-        self->rrtype->toWire(buffer);
+        self->cppobj->toWire(buffer);
         PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
         // We need to release the object we temporarily created here
@@ -273,7 +216,7 @@ RRType_toWire(s_RRType* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->rrtype->toWire(*mr->messagerenderer);
+        self->cppobj->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -286,10 +229,10 @@ RRType_toWire(s_RRType* self, PyObject* args) {
 
 static PyObject*
 RRType_getCode(s_RRType* self) {
-    return (Py_BuildValue("I", self->rrtype->getCode()));
+    return (Py_BuildValue("I", self->cppobj->getCode()));
 }
 
-static PyObject* 
+static PyObject*
 RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
     bool c;
 
@@ -301,24 +244,24 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
 
     switch (op) {
     case Py_LT:
-        c = *self->rrtype < *other->rrtype;
+        c = *self->cppobj < *other->cppobj;
         break;
     case Py_LE:
-        c = *self->rrtype < *other->rrtype ||
-            *self->rrtype == *other->rrtype;
+        c = *self->cppobj < *other->cppobj ||
+            *self->cppobj == *other->cppobj;
         break;
     case Py_EQ:
-        c = *self->rrtype == *other->rrtype;
+        c = *self->cppobj == *other->cppobj;
         break;
     case Py_NE:
-        c = *self->rrtype != *other->rrtype;
+        c = *self->cppobj != *other->cppobj;
         break;
     case Py_GT:
-        c = *other->rrtype < *self->rrtype;
+        c = *other->cppobj < *self->cppobj;
         break;
     case Py_GE:
-        c = *other->rrtype < *self->rrtype ||
-            *self->rrtype == *other->rrtype;
+        c = *other->cppobj < *self->cppobj ||
+            *self->cppobj == *other->cppobj;
         break;
     default:
         PyErr_SetString(PyExc_IndexError,
@@ -337,7 +280,7 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
 static PyObject* RRType_createStatic(RRType stc) {
     s_RRType* ret = PyObject_New(s_RRType, &rrtype_type);
     if (ret != NULL) {
-        ret->rrtype = new RRType(stc);
+        ret->cppobj = new RRType(stc);
     }
     return (ret);
 }
@@ -437,9 +380,70 @@ RRType_ANY(s_RRType*) {
     return (RRType_createStatic(RRType::ANY()));
 }
 
+} // end anonymous namespace
 
-// end of RRType
+namespace isc {
+namespace dns {
+namespace python {
 
+PyObject* po_InvalidRRType;
+PyObject* po_IncompleteRRType;
+
+// This defines the complete type for reflection in python and
+// parsing of PyObject* to s_RRType
+// Most of the functions are not actually implemented and NULL here.
+PyTypeObject rrtype_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.RRType",
+    sizeof(s_RRType),                   // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)RRType_destroy,         // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    RRType_str,                         // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The RRType class encapsulates DNS resource record types.\n\n"
+    "This class manages the 16-bit integer type codes in quite a straightforward "
+    "way. The only non trivial task is to handle textual representations of "
+    "RR types, such as \"A\", \"AAAA\", or \"TYPE65534\".",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)RRType_richcmp,        // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    RRType_methods,                     // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)RRType_init,              // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
 
 // Module Initialization, all statics are initialized here
 bool
@@ -459,6 +463,30 @@ initModulePart_RRType(PyObject* mod) {
     Py_INCREF(&rrtype_type);
     PyModule_AddObject(mod, "RRType",
                        reinterpret_cast<PyObject*>(&rrtype_type));
-    
+
     return (true);
 }
+
+PyObject*
+createRRTypeObject(const RRType& source) {
+    RRTypeContainer container = PyObject_New(s_RRType, &rrtype_type);
+    container.set(new RRType(source));
+    return (container.release());
+}
+
+
+bool
+PyRRType_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &rrtype_type));
+}
+
+const RRType&
+PyRRType_ToRRType(PyObject* rrtype_obj) {
+    s_RRType* rrtype = static_cast<s_RRType*>(rrtype_obj);
+    return (*rrtype->cppobj);
+}
+
+
+} // end namespace python
+} // end namespace dns
+} // end namespace isc
