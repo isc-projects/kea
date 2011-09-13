@@ -17,13 +17,11 @@
 
 #include <Python.h>
 
-namespace isc {
-namespace util {
-class OutputBuffer;
-}
-namespace dns {
-class MessageRenderer;
+#include <dns/messagerenderer.h>
+#include <util/buffer.h>
 
+namespace isc {
+namespace dns {
 namespace python {
 
 // The s_* Class simply covers one instantiation of the object.

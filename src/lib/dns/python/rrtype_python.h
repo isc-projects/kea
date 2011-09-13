@@ -17,14 +17,10 @@
 
 #include <Python.h>
 
-#include <util/python/pycppwrapper_util.h>
-
 #include <dns/rrtype.h>
 
 namespace isc {
 namespace dns {
-class RRType;
-
 namespace python {
 
 //

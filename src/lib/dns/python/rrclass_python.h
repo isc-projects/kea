@@ -17,14 +17,10 @@
 
 #include <Python.h>
 
-#include <util/python/pycppwrapper_util.h>
-
 #include <dns/rrclass.h>
 
 namespace isc {
 namespace dns {
-class RRClass;
-
 namespace python {
 
 extern PyObject* po_InvalidRRClass;

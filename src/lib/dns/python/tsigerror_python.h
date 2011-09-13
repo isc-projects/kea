@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
+#include <dns/tsigerror.h>
+
 namespace isc {
 namespace dns {
-class TSIGError;
-
 namespace python {
 
 // The s_* Class simply covers one instantiation of the object
