@@ -19,8 +19,6 @@
 
 #include <dns/rrttl.h>
 
-#include <util/python/pycppwrapper_util.h>
-
 namespace isc {
 namespace dns {
 namespace python {

@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
+#include <dns/rcode.h>
+
 namespace isc {
 namespace dns {
-class Rcode;
-
 namespace python {
 
 // The s_* Class simply covers one instantiation of the object.

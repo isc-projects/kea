@@ -19,11 +19,8 @@
 
 #include <dns/rdata.h>
 
-#include <util/python/pycppwrapper_util.h>
-
 namespace isc {
 namespace dns {
-
 namespace python {
 
 //

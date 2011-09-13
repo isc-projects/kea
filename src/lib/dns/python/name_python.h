@@ -17,13 +17,10 @@
 
 #include <Python.h>
 
-#include <util/python/pycppwrapper_util.h>
+#include <dns/name.h>
 
 namespace isc {
 namespace dns {
-class NameComparisonResult;
-class Name;
-
 namespace python {
 
 //

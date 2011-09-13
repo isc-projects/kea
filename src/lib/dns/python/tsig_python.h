@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
+#include <dns/tsig.h>
+
 namespace isc {
 namespace dns {
-class TSIGContext;
-
 namespace python {
 
 // The s_* Class simply covers one instantiation of the object
