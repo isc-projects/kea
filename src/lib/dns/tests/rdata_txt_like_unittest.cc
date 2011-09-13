@@ -72,7 +72,7 @@ const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_empty("");
 
 template<class TXT_LIKE>
 const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_quoted
-							  ("\"Test String\"");
+                                                          ("\"Test String\"");
 
 // The list of types we want to test.
 typedef testing::Types<generic::TXT, generic::SPF> Implementations;
@@ -91,16 +91,16 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     TypeParam(string("")).toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         wiredata_nulltxt, sizeof (wiredata_nulltxt));
 
     // Longest possible character-string.
     Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
     TypeParam(string(255, 'a')).
-			       toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+                               toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         &wiredata_longesttxt[0], wiredata_longesttxt.size());
 
     // Too long text for a valid character-string.
@@ -147,8 +147,8 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     // Multiple character strings
     Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
     rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-			 "rdata_txt_fromWire3.wire")->
-			       toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+                         "rdata_txt_fromWire3.wire")->
+                               toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     // the result should be 'wiredata_txt' repeated twice
     vector<uint8_t> expected_data(wiredata_txt_like, wiredata_txt_like +
                                   sizeof(wiredata_txt_like));
@@ -156,7 +156,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
                          wiredata_txt_like + sizeof(wiredata_txt_like));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         &expected_data[0], expected_data.size());
 
     // Largest length of data.  There's nothing special, but should be
@@ -171,7 +171,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     largest_txt_like.toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         &largest_txt_like_data[0],
                         largest_txt_like_data.size());
 
@@ -195,15 +195,15 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
     Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.toWire
-				     (Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+                                     (Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-			Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
                         wiredata_txt_like, sizeof(wiredata_txt_like));
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
     EXPECT_EQ("\"Test String\"",
-	      Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.toText());
+              Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.toText());
 }
 }
