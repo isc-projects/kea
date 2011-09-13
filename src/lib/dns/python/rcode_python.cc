@@ -24,21 +24,6 @@
 using namespace isc::dns;
 using namespace isc::dns::python;
 
-//
-// Declaration of the custom exceptions (None for this class)
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Rcode
-//
-
 // Trivial constructor.
 s_Rcode::s_Rcode() : cppobj(NULL), static_code(false) {}
 
@@ -282,7 +267,7 @@ Rcode_BADVERS(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::BADVERS()));
 }
 
-PyObject* 
+PyObject*
 Rcode_richcmp(const s_Rcode* const self, const s_Rcode* const other,
               const int op)
 {
@@ -376,7 +361,6 @@ PyTypeObject rcode_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
 bool
 initModulePart_Rcode(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
@@ -429,6 +413,7 @@ initModulePart_Rcode(PyObject* mod) {
 
     return (true);
 }
+
 } // namespace python
 } // namespace dns
 } // namespace isc

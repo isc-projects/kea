@@ -29,24 +29,7 @@ using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc::util::python;
 
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
 namespace {
-
-//
-// RRType
-//
-
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
 
 // General creation and destruction
 static int RRType_init(s_RRType* self, PyObject* args);
@@ -445,7 +428,6 @@ PyTypeObject rrtype_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
 bool
 initModulePart_RRType(PyObject* mod) {
     // Add the exceptions to the module

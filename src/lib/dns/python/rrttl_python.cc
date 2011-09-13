@@ -29,28 +29,10 @@ using namespace isc::dns::python;
 using namespace isc::util;
 
 namespace {
-//
-// Definition of the classes
-//
 
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// RRTTL
-//
-
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// General creation and destruction
 static int RRTTL_init(s_RRTTL* self, PyObject* args);
 static void RRTTL_destroy(s_RRTTL* self);
 
-// These are the functions we export
 static PyObject* RRTTL_toText(s_RRTTL* self);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
@@ -229,9 +211,8 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
     else
         Py_RETURN_FALSE;
 }
-// end of RRTTL
-} // end anonymous namespace
 
+} // end anonymous namespace
 
 namespace isc {
 namespace dns {

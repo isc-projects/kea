@@ -28,18 +28,6 @@ using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Rdata
-//
-
 namespace {
 
 //
@@ -196,7 +184,6 @@ RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
     else
         Py_RETURN_FALSE;
 }
-// end of Rdata
 
 } // end of unnamed namespace
 
