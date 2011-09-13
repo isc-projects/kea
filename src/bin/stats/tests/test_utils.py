@@ -99,10 +99,14 @@ class MockMsgq:
         except Exception:
             pass
         finally:
+            # explicitly shut down the socket of the msgq before
+            # shutting down the msgq
+            self.msgq.listen_socket.shutdown(msgq.socket.SHUT_RDWR)
             self.msgq.shutdown()
 
     def shutdown(self):
-        self.msgq.shutdown()
+        # do nothing for avoiding shutting down the msgq twice
+        pass
 
 class MockCfgmgr:
     def __init__(self):
@@ -323,7 +327,7 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
             pass
 
     def shutdown(self):
-        self.stop()
+        self.command_handler('shutdown', None)
 
 class BaseModules:
     def __init__(self):
