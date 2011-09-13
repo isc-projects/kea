@@ -513,7 +513,7 @@ if __name__ == "__main__":
         logger.fatal(STATHTTPD_CC_SESSION_ERROR, se)
         sys.exit(1)
     except HttpServerError as hse:
-        logger.fatal(STATHTTPD_START_SERVER_ERROR, hse)
+        logger.fatal(STATHTTPD_START_SERVER_INIT_ERROR, hse)
         sys.exit(1)
     except KeyboardInterrupt as kie:
         logger.info(STATHTTPD_STOPPED_BY_KEYBOARD)
