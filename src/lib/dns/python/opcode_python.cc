@@ -24,21 +24,7 @@ using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
 
-//
-// Declaration of the custom exceptions (None for this class)
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
 namespace {
-//
-// Opcode
-//
 
 int Opcode_init(s_Opcode* const self, PyObject* args);
 void Opcode_destroy(s_Opcode* const self);
@@ -344,7 +330,6 @@ PyTypeObject opcode_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
 bool
 initModulePart_Opcode(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),

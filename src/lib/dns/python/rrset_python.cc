@@ -29,21 +29,12 @@
 #include "rdata_python.h"
 #include "messagerenderer_python.h"
 
-namespace {
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc::util::python;
 
-// RRset
+namespace {
 
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_RRset, RRset> RRsetContainer;
@@ -320,10 +311,6 @@ RRset_removeRRsig(s_RRset* self) {
     self->rrset->removeRRsig();
     Py_RETURN_NONE;
 }
-
-
-// end of RRset
-
 
 } // end of unnamed namespace
 
