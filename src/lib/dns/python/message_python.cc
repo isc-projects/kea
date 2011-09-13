@@ -40,24 +40,6 @@ using namespace isc::util;
 
 namespace {
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Message
-//
-
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// General creation and destruction
 int Message_init(s_Message* self, PyObject* args);
 void Message_destroy(s_Message* self);
 

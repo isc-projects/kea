@@ -30,17 +30,8 @@ using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc;
 
-//
-// Question
-//
 namespace {
 
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// General creation and destruction
 static int Question_init(s_Question* self, PyObject* args);
 static void Question_destroy(s_Question* self);
 
@@ -221,8 +212,6 @@ Question_toWire(s_Question* self, PyObject* args) {
     return (NULL);
 }
 
-// end of Question
-
 } // end of unnamed namespace
 
 namespace isc {
@@ -283,9 +272,6 @@ PyTypeObject question_type = {
     0                                   // tp_version_tag
 };
 
-
-
-// Module Initialization, all statics are initialized here
 bool
 initModulePart_Question(PyObject* mod) {
     // Add the exceptions to the module

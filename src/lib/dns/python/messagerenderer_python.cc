@@ -25,13 +25,6 @@ using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
 
-// MessageRenderer
-
-s_MessageRenderer::s_MessageRenderer() : outputbuffer(NULL),
-                                         messagerenderer(NULL)
-{
-}
-
 namespace {
 int MessageRenderer_init(s_MessageRenderer* self);
 void MessageRenderer_destroy(s_MessageRenderer* self);
@@ -174,7 +167,6 @@ MessageRenderer_clear(s_MessageRenderer* self) {
 }
 } // end of unnamed namespace
 
-// end of MessageRenderer
 namespace isc {
 namespace dns {
 namespace python {
@@ -233,27 +225,12 @@ PyTypeObject messagerenderer_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_MessageRenderer(PyObject* mod) {
-    // Add the exceptions to the module
-
-    // Add the enums to the module
-
-    // Add the constants to the module
-
-    // Add the classes to the module
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module
-
-    // NameComparisonResult
+bool initModulePart_MessageRenderer(PyObject* mod) {
     if (PyType_Ready(&messagerenderer_type) < 0) {
         return (false);
     }
     Py_INCREF(&messagerenderer_type);
 
-    // Class variables
-    // These are added to the tp_dict of the type object
     addClassVariable(messagerenderer_type, "CASE_INSENSITIVE",
                      Py_BuildValue("I", MessageRenderer::CASE_INSENSITIVE));
     addClassVariable(messagerenderer_type, "CASE_SENSITIVE",
@@ -261,7 +238,7 @@ initModulePart_MessageRenderer(PyObject* mod) {
 
     PyModule_AddObject(mod, "MessageRenderer",
                        reinterpret_cast<PyObject*>(&messagerenderer_type));
-    
+
     return (true);
 }
 } // namespace python

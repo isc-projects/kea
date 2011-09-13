@@ -25,20 +25,12 @@
 #include "messagerenderer_python.h"
 #include "name_python.h"
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc::util::python;
 
 namespace {
-// NameComparisonResult
 
 int NameComparisonResult_init(s_NameComparisonResult*, PyObject*);
 void NameComparisonResult_destroy(s_NameComparisonResult* self);
@@ -84,9 +76,7 @@ PyObject*
 NameComparisonResult_getRelation(s_NameComparisonResult* self) {
     return (Py_BuildValue("I", self->cppobj->getRelation()));
 }
-// end of NameComparisonResult
 
-// Name
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_Name, Name> NameContainer;
 
@@ -495,7 +485,7 @@ Name_isWildCard(s_Name* self) {
         Py_RETURN_FALSE;
     }
 }
-// end of Name
+
 } // end of unnamed namespace
 
 namespace isc {
@@ -634,7 +624,6 @@ PyTypeObject name_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
 bool
 initModulePart_Name(PyObject* mod) {
     // Add the classes to the module
