@@ -405,7 +405,7 @@ if __name__ == "__main__":
     except OptionValueError as ove:
         logger.fatal(STATS_BAD_OPTION_VALUE, ove)
         sys.exit(1)
-    except SessionError as se:
+    except isc.cc.session.SessionError as se:
         logger.fatal(STATS_CC_SESSION_ERROR, se)
         sys.exit(1)
     except StatsError as se:
