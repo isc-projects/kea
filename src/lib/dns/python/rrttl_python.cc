@@ -12,22 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
 #include <vector>
 
 #include <dns/rrttl.h>
+#include <dns/messagerenderer.h>
+#include <util/buffer.h>
+
+#include "rrttl_python.h"
+#include "pydnspp_common.h"
+#include "messagerenderer_python.h"
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-static PyObject* po_InvalidRRTTL;
-static PyObject* po_IncompleteRRTTL;
-
+namespace {
 //
 // Definition of the classes
 //
@@ -39,12 +40,6 @@ static PyObject* po_IncompleteRRTTL;
 //
 // RRTTL
 //
-
-// The s_* Class simply covers one instantiation of the object
-class s_RRTTL : public PyObject {
-public:
-    RRTTL* rrttl;
-};
 
 //
 // We declare the functions here, the definitions are below
@@ -83,64 +78,6 @@ static PyMethodDef RRTTL_methods[] = {
     { "get_value", reinterpret_cast<PyCFunction>(RRTTL_getValue), METH_NOARGS,
       "Returns the TTL as an integer" },
     { NULL, NULL, 0, NULL }
-};
-
-// This defines the complete type for reflection in python and
-// parsing of PyObject* to s_RRTTL
-// Most of the functions are not actually implemented and NULL here.
-static PyTypeObject rrttl_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.RRTTL",
-    sizeof(s_RRTTL),                    // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)RRTTL_destroy,          // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    RRTTL_str,                          // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The RRTTL class encapsulates TTLs used in DNS resource records.\n\n"
-    "This is a straightforward class; an RRTTL object simply maintains a "
-    "32-bit unsigned integer corresponding to the TTL value.  The main purpose "
-    "of this class is to provide convenient interfaces to convert a textual "
-    "representation into the integer TTL value and vice versa, and to handle "
-    "wire-format representations.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    (richcmpfunc)RRTTL_richcmp,         // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    RRTTL_methods,                      // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)RRTTL_init,               // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
 };
 
 static int
@@ -225,10 +162,10 @@ static PyObject*
 RRTTL_toWire(s_RRTTL* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
-    
+
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
-        
+
         OutputBuffer buffer(4);
         self->rrttl->toWire(buffer);
         PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
@@ -255,7 +192,7 @@ RRTTL_getValue(s_RRTTL* self) {
     return (Py_BuildValue("I", self->rrttl->getValue()));
 }
 
-static PyObject* 
+static PyObject*
 RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
     bool c = false;
 
@@ -293,7 +230,78 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
         Py_RETURN_FALSE;
 }
 // end of RRTTL
+} // end anonymous namespace
 
+
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the initModulePart
+// function at the end of this file
+//
+PyObject* po_InvalidRRTTL;
+PyObject* po_IncompleteRRTTL;
+
+// This defines the complete type for reflection in python and
+// parsing of PyObject* to s_RRTTL
+// Most of the functions are not actually implemented and NULL here.
+PyTypeObject rrttl_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.RRTTL",
+    sizeof(s_RRTTL),                    // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)RRTTL_destroy,          // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    RRTTL_str,                          // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The RRTTL class encapsulates TTLs used in DNS resource records.\n\n"
+    "This is a straightforward class; an RRTTL object simply maintains a "
+    "32-bit unsigned integer corresponding to the TTL value.  The main purpose "
+    "of this class is to provide convenient interfaces to convert a textual "
+    "representation into the integer TTL value and vice versa, and to handle "
+    "wire-format representations.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)RRTTL_richcmp,         // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    RRTTL_methods,                      // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)RRTTL_init,               // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
 
 // Module Initialization, all statics are initialized here
 bool
@@ -313,6 +321,10 @@ initModulePart_RRTTL(PyObject* mod) {
     Py_INCREF(&rrttl_type);
     PyModule_AddObject(mod, "RRTTL",
                        reinterpret_cast<PyObject*>(&rrttl_type));
-    
+
     return (true);
 }
+
+} // namespace python
+} // namespace dns
+} // namespace isc

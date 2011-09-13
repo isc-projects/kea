@@ -12,9 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
+
 #include <dns/opcode.h>
 
+#include "pydnspp_common.h"
+#include "opcode_python.h"
+#include "edns_python.h"
+
 using namespace isc::dns;
+using namespace isc::dns::python;
+using namespace isc::util;
 
 //
 // Declaration of the custom exceptions (None for this class)
@@ -31,12 +39,6 @@ namespace {
 //
 // Opcode
 //
-class s_Opcode : public PyObject {
-public:
-    s_Opcode() : opcode(NULL), static_code(false) {}
-    const Opcode* opcode;
-    bool static_code;
-};
 
 int Opcode_init(s_Opcode* const self, PyObject* args);
 void Opcode_destroy(s_Opcode* const self);
@@ -101,57 +103,6 @@ PyMethodDef Opcode_methods[] = {
     { "RESERVED15", reinterpret_cast<PyCFunction>(Opcode_RESERVED15),
       METH_NOARGS | METH_STATIC, "Creates a RESERVED15 Opcode" },
     { NULL, NULL, 0, NULL }
-};
-
-PyTypeObject opcode_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.Opcode",
-    sizeof(s_Opcode),                   // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)Opcode_destroy,         // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    Opcode_str,                         // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Opcode class objects represent standard OPCODEs "
-    "of the header section of DNS messages.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    (richcmpfunc)Opcode_richcmp,        // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    Opcode_methods,                     // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)Opcode_init,              // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
 };
 
 
@@ -297,7 +248,7 @@ Opcode_RESERVED15(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED15()));
 }
 
-PyObject* 
+PyObject*
 Opcode_richcmp(const s_Opcode* const self, const s_Opcode* const other,
                const int op)
 {
@@ -335,6 +286,63 @@ Opcode_richcmp(const s_Opcode* const self, const s_Opcode* const other,
     else
         Py_RETURN_FALSE;
 }
+
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+PyTypeObject opcode_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.Opcode",
+    sizeof(s_Opcode),                   // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Opcode_destroy,         // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    Opcode_str,                         // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The Opcode class objects represent standard OPCODEs "
+    "of the header section of DNS messages.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)Opcode_richcmp,        // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Opcode_methods,                     // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Opcode_init,              // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
 
 // Module Initialization, all statics are initialized here
 bool
@@ -387,4 +395,7 @@ initModulePart_Opcode(PyObject* mod) {
 
     return (true);
 }
-} // end of unnamed namespace
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace

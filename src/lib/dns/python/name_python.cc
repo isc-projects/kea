@@ -663,7 +663,7 @@ initModulePart_Name(PyObject* mod) {
     //
     // Name
     //
-    
+
     if (PyType_Ready(&name_type) < 0) {
         return (false);
     }
@@ -684,7 +684,7 @@ initModulePart_Name(PyObject* mod) {
 
     PyModule_AddObject(mod, "Name",
                        reinterpret_cast<PyObject*>(&name_type));
-    
+
 
     // Add the exceptions to the module
     po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
@@ -722,6 +722,19 @@ createNameObject(const Name& source) {
     container.set(new Name(source));
     return (container.release());
 }
+
+bool
+PyName_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &name_type));
+}
+
+Name&
+PyName_ToName(PyObject* name_obj) {
+    s_Name* name = static_cast<s_Name*>(name_obj);
+    return (*name->cppobj);
+}
+
+
 } // namespace python
 } // namespace dns
 } // namespace isc

@@ -12,14 +12,24 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dns/rrset.h>
+#include <Python.h>
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
-static PyObject* po_EmptyRRset;
+#include <util/python/pycppwrapper_util.h>
+
+#include <dns/rrset.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
+
+#include "name_python.h"
+#include "pydnspp_common.h"
+#include "rrset_python.h"
+#include "rrclass_python.h"
+#include "rrtype_python.h"
+#include "rrttl_python.h"
+#include "rdata_python.h"
+#include "messagerenderer_python.h"
+
+namespace {
 
 //
 // Definition of the classes
@@ -29,19 +39,14 @@ static PyObject* po_EmptyRRset;
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
 // RRset
 
-// Using a shared_ptr here should not really be necessary (PyObject
-// is already reference-counted), however internally on the cpp side,
-// not doing so might result in problems, since we can't copy construct
-// rrsets, adding them to messages results in a problem when the
-// message is destroyed or cleared later
-class s_RRset : public PyObject {
-public:
-    RRsetPtr rrset;
-};
+// Shortcut type which would be convenient for adding class variables safely.
+typedef CPPPyObjectContainer<s_RRset, RRset> RRsetContainer;
 
 static int RRset_init(s_RRset* self, PyObject* args);
 static void RRset_destroy(s_RRset* self);
@@ -58,6 +63,8 @@ static PyObject* RRset_str(PyObject* self);
 static PyObject* RRset_toWire(s_RRset* self, PyObject* args);
 static PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
 static PyObject* RRset_getRdata(s_RRset* self);
+static PyObject* RRset_removeRRsig(s_RRset* self);
+
 // TODO: iterator?
 
 static PyMethodDef RRset_methods[] = {
@@ -88,72 +95,9 @@ static PyMethodDef RRset_methods[] = {
       "Adds the rdata for one RR to the RRset.\nTakes an Rdata object as an argument" },
     { "get_rdata", reinterpret_cast<PyCFunction>(RRset_getRdata), METH_NOARGS,
       "Returns a List containing all Rdata elements" },
+    { "remove_rrsig", reinterpret_cast<PyCFunction>(RRset_removeRRsig), METH_NOARGS,
+      "Clears the list of RRsigs for this RRset" },
     { NULL, NULL, 0, NULL }
-};
-
-static PyTypeObject rrset_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.RRset",
-    sizeof(s_RRset),                    // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)RRset_destroy,          // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    RRset_str,                          // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The AbstractRRset class is an abstract base class that "
-    "models a DNS RRset.\n\n"
-    "An object of (a specific derived class of) AbstractRRset "
-    "models an RRset as described in the DNS standard:\n"
-    "A set of DNS resource records (RRs) of the same type and class. "
-    "The standard requires the TTL of all RRs in an RRset be the same; "
-    "this class follows that requirement.\n\n"
-    "Note about duplicate RDATA: RFC2181 states that it's meaningless that an "
-    "RRset contains two identical RRs and that name servers should suppress "
-    "such duplicates.\n"
-    "This class is not responsible for ensuring this requirement: For example, "
-    "addRdata() method doesn't check if there's already RDATA identical "
-    "to the one being added.\n"
-    "This is because such checks can be expensive, and it's often easy to "
-    "ensure the uniqueness requirement at the %data preparation phase "
-    "(e.g. when loading a zone).",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    NULL,                               // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    RRset_methods,                      // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)RRset_init,               // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
 };
 
 static int
@@ -168,8 +112,8 @@ RRset_init(s_RRset* self, PyObject* args) {
                                            &rrtype_type, &rrtype,
                                            &rrttl_type, &rrttl
        )) {
-        self->rrset = RRsetPtr(new RRset(*name->cppobj, *rrclass->rrclass,
-                                *rrtype->rrtype, *rrttl->rrttl));
+        self->rrset = RRsetPtr(new RRset(*name->cppobj, *rrclass->cppobj,
+                                *rrtype->cppobj, *rrttl->rrttl));
         return (0);
     }
 
@@ -214,8 +158,8 @@ RRset_getClass(s_RRset* self) {
 
     rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
     if (rrclass != NULL) {
-        rrclass->rrclass = new RRClass(self->rrset->getClass());
-        if (rrclass->rrclass == NULL)
+        rrclass->cppobj = new RRClass(self->rrset->getClass());
+        if (rrclass->cppobj == NULL)
           {
             Py_DECREF(rrclass);
             return (NULL);
@@ -231,8 +175,8 @@ RRset_getType(s_RRset* self) {
 
     rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
     if (rrtype != NULL) {
-        rrtype->rrtype = new RRType(self->rrset->getType());
-        if (rrtype->rrtype == NULL)
+        rrtype->cppobj = new RRType(self->rrset->getType());
+        if (rrtype->cppobj == NULL)
           {
             Py_DECREF(rrtype);
             return (NULL);
@@ -305,7 +249,7 @@ RRset_toWire(s_RRset* self, PyObject* args) {
     try {
         if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             PyObject* bytes_o = bytes;
-            
+
             OutputBuffer buffer(4096);
             self->rrset->toWire(buffer);
             PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
@@ -360,18 +304,105 @@ RRset_getRdata(s_RRset* self) {
             // hmz them iterators/shared_ptrs and private constructors
             // make this a bit weird, so we create a new one with
             // the data available
-            const Rdata *rd = &it->getCurrent();
+            const rdata::Rdata *rd = &it->getCurrent();
             rds->rdata = createRdata(self->rrset->getType(), self->rrset->getClass(), *rd);
             PyList_Append(list, rds);
         } else {
             return (NULL);
         }
     }
-    
+
     return (list);
 }
 
+static PyObject*
+RRset_removeRRsig(s_RRset* self) {
+    self->rrset->removeRRsig();
+    Py_RETURN_NONE;
+}
+
+
 // end of RRset
+
+
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the module init at the
+// end
+//
+PyObject* po_EmptyRRset;
+
+PyTypeObject rrset_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.RRset",
+    sizeof(s_RRset),                    // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)RRset_destroy,          // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    RRset_str,                          // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The AbstractRRset class is an abstract base class that "
+    "models a DNS RRset.\n\n"
+    "An object of (a specific derived class of) AbstractRRset "
+    "models an RRset as described in the DNS standard:\n"
+    "A set of DNS resource records (RRs) of the same type and class. "
+    "The standard requires the TTL of all RRs in an RRset be the same; "
+    "this class follows that requirement.\n\n"
+    "Note about duplicate RDATA: RFC2181 states that it's meaningless that an "
+    "RRset contains two identical RRs and that name servers should suppress "
+    "such duplicates.\n"
+    "This class is not responsible for ensuring this requirement: For example, "
+    "addRdata() method doesn't check if there's already RDATA identical "
+    "to the one being added.\n"
+    "This is because such checks can be expensive, and it's often easy to "
+    "ensure the uniqueness requirement at the %data preparation phase "
+    "(e.g. when loading a zone).",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    NULL,                               // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    RRset_methods,                      // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)RRset_init,               // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
+
 
 
 // Module Initialization, all statics are initialized here
@@ -396,7 +427,55 @@ initModulePart_RRset(PyObject* mod) {
     Py_INCREF(&rrset_type);
     PyModule_AddObject(mod, "RRset",
                        reinterpret_cast<PyObject*>(&rrset_type));
-    
+
     return (true);
 }
 
+PyObject*
+createRRsetObject(const RRset& source) {
+    isc::dns::python::s_RRset* py_rrset = static_cast<isc::dns::python::s_RRset*>(
+        isc::dns::python::rrset_type.tp_alloc(&isc::dns::python::rrset_type, 0));
+    if (py_rrset == NULL) {
+        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
+                  "probably due to short memory");
+    }
+
+    // RRsets are noncopyable, so as a workaround we recreate a new one
+    // and copy over all content
+    try {
+        py_rrset->rrset = isc::dns::RRsetPtr(
+            new isc::dns::RRset(source.getName(), source.getClass(),
+                                source.getType(), source.getTTL()));
+
+        isc::dns::RdataIteratorPtr rdata_it(source.getRdataIterator());
+        for (rdata_it->first(); !rdata_it->isLast(); rdata_it->next()) {
+            py_rrset->rrset->addRdata(rdata_it->getCurrent());
+        }
+
+        isc::dns::RRsetPtr sigs = source.getRRsig();
+        if (sigs) {
+            py_rrset->rrset->addRRsig(sigs);
+        }
+        return py_rrset;
+    } catch (const std::bad_alloc&) {
+        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
+                  "probably due to short memory");
+    }
+}
+
+bool
+PyRRset_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &rrset_type));
+}
+
+RRset&
+PyRRset_ToRRset(PyObject* rrset_obj) {
+    s_RRset* rrset = static_cast<s_RRset*>(rrset_obj);
+    return (*rrset->rrset);
+}
+
+
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace

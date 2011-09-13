@@ -12,19 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 #include <dns/rdata.h>
+#include <dns/messagerenderer.h>
+#include <util/buffer.h>
+
+#include "rdata_python.h"
+#include "rrtype_python.h"
+#include "rrclass_python.h"
+#include "messagerenderer_python.h"
+
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc::dns::rdata;
-
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-static PyObject* po_InvalidRdataLength;
-static PyObject* po_InvalidRdataText;
-static PyObject* po_CharStringTooLong;
 
 //
 // Definition of the classes
@@ -38,17 +40,7 @@ static PyObject* po_CharStringTooLong;
 // Rdata
 //
 
-// The s_* Class simply coverst one instantiation of the object
-
-// Using a shared_ptr here should not really be necessary (PyObject
-// is already reference-counted), however internally on the cpp side,
-// not doing so might result in problems, since we can't copy construct
-// rdata field, adding them to rrsets results in a problem when the
-// rrset is destroyed later
-class s_Rdata : public PyObject {
-public:
-    RdataPtr rdata;
-};
+namespace {
 
 //
 // We declare the functions here, the definitions are below
@@ -86,60 +78,6 @@ static PyMethodDef Rdata_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-// This defines the complete type for reflection in python and
-// parsing of PyObject* to s_Rdata
-// Most of the functions are not actually implemented and NULL here.
-static PyTypeObject rdata_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.Rdata",
-    sizeof(s_Rdata),                    // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)Rdata_destroy,          // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    Rdata_str,                          // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Rdata class is an abstract base class that provides "
-    "a set of common interfaces to manipulate concrete RDATA objects.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    (richcmpfunc)RData_richcmp,         // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    Rdata_methods,                      // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)Rdata_init,               // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
-};
-
 static int
 Rdata_init(s_Rdata* self, PyObject* args) {
     s_RRType* rrtype;
@@ -152,12 +90,12 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
                                         &rrclass_type, &rrclass,
                                         &s)) {
-        self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass, s);
+        self->rdata = createRdata(*rrtype->cppobj, *rrclass->cppobj, s);
         return (0);
     } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
                                 &rrclass_type, &rrclass, &data, &len)) {
         InputBuffer input_buffer(data, len);
-        self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass,
+        self->rdata = createRdata(*rrtype->cppobj, *rrclass->cppobj,
                                   input_buffer, len);
         return (0);
     }
@@ -191,10 +129,10 @@ static PyObject*
 Rdata_toWire(s_Rdata* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
-    
+
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
-        
+
         OutputBuffer buffer(4);
         self->rdata->toWire(buffer);
         PyObject* rd_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
@@ -217,7 +155,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
 
 
 
-static PyObject* 
+static PyObject*
 RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
     bool c;
 
@@ -260,6 +198,75 @@ RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
 }
 // end of Rdata
 
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the initModulePart
+// function at the end of this file
+//
+static PyObject* po_InvalidRdataLength;
+static PyObject* po_InvalidRdataText;
+static PyObject* po_CharStringTooLong;
+
+// This defines the complete type for reflection in python and
+// parsing of PyObject* to s_Rdata
+// Most of the functions are not actually implemented and NULL here.
+PyTypeObject rdata_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.Rdata",
+    sizeof(s_Rdata),                    // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Rdata_destroy,          // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    Rdata_str,                          // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The Rdata class is an abstract base class that provides "
+    "a set of common interfaces to manipulate concrete RDATA objects.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)RData_richcmp,         // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Rdata_methods,                      // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Rdata_init,               // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
 
 // Module Initialization, all statics are initialized here
 bool
@@ -284,6 +291,10 @@ initModulePart_Rdata(PyObject* mod) {
     po_CharStringTooLong = PyErr_NewException("pydnspp.CharStringTooLong", NULL, NULL);
     PyModule_AddObject(mod, "CharStringTooLong", po_CharStringTooLong);
 
-    
+
     return (true);
 }
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace

@@ -11,19 +11,22 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+#include <Python.h>
 
 #include <dns/rrclass.h>
+#include <dns/messagerenderer.h>
+#include <util/buffer.h>
+#include <util/python/pycppwrapper_util.h>
+
+#include "rrclass_python.h"
+#include "messagerenderer_python.h"
+#include "pydnspp_common.h"
+
+
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
-
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-static PyObject* po_InvalidRRClass;
-static PyObject* po_IncompleteRRClass;
-
+using namespace isc::util::python;
 //
 // Definition of the classes
 //
@@ -36,11 +39,7 @@ static PyObject* po_IncompleteRRClass;
 // RRClass
 //
 
-// The s_* Class simply covers one instantiation of the object
-class s_RRClass : public PyObject {
-public:
-    RRClass* rrclass;
-};
+namespace {
 
 //
 // We declare the functions here, the definitions are below
@@ -67,6 +66,7 @@ static PyObject* RRClass_HS(s_RRClass *self);
 static PyObject* RRClass_NONE(s_RRClass *self);
 static PyObject* RRClass_ANY(s_RRClass *self);
 
+typedef CPPPyObjectContainer<s_RRClass, RRClass> RRClassContainer;
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -94,10 +94,202 @@ static PyMethodDef RRClass_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+static int
+RRClass_init(s_RRClass* self, PyObject* args) {
+    const char* s;
+    long i;
+    PyObject* bytes = NULL;
+    // The constructor argument can be a string ("IN"), an integer (1),
+    // or a sequence of numbers between 0 and 65535 (wire code)
+
+    // Note that PyArg_ParseType can set PyError, and we need to clear
+    // that if we try several like here. Otherwise the *next* python
+    // call will suddenly appear to throw an exception.
+    // (the way to do exceptions is to set PyErr and return -1)
+    try {
+        if (PyArg_ParseTuple(args, "s", &s)) {
+            self->cppobj = new RRClass(s);
+            return (0);
+        } else if (PyArg_ParseTuple(args, "l", &i)) {
+            if (i < 0 || i > 0xffff) {
+                PyErr_Clear();
+                PyErr_SetString(PyExc_ValueError,
+                                "RR class number out of range");
+                return (-1);
+            }
+            self->cppobj = new RRClass(i);
+            return (0);
+        } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
+            uint8_t data[2];
+            int result = readDataFromSequence(data, 2, bytes);
+            if (result != 0) {
+                return (result);
+            }
+            InputBuffer ib(data, 2);
+            self->cppobj = new RRClass(ib);
+            PyErr_Clear();
+            return (0);
+        }
+    // Incomplete is never thrown, a type error would have already been raised
+    //when we try to read the 2 bytes above
+    } catch (const InvalidRRClass& ic) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidRRClass, ic.what());
+        return (-1);
+    }
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "no valid type in constructor argument");
+    return (-1);
+}
+
+static void
+RRClass_destroy(s_RRClass* self) {
+    delete self->cppobj;
+    self->cppobj = NULL;
+    Py_TYPE(self)->tp_free(self);
+}
+
+static PyObject*
+RRClass_toText(s_RRClass* self) {
+    // Py_BuildValue makes python objects from native data
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+}
+
+static PyObject*
+RRClass_str(PyObject* self) {
+    // Simply call the to_text method we already defined
+    return (PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                                const_cast<char*>("")));
+}
+
+static PyObject*
+RRClass_toWire(s_RRClass* self, PyObject* args) {
+    PyObject* bytes;
+    s_MessageRenderer* mr;
+
+    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
+        PyObject* bytes_o = bytes;
+
+        OutputBuffer buffer(2);
+        self->cppobj->toWire(buffer);
+        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
+        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+        // We need to release the object we temporarily created here
+        // to prevent memory leak
+        Py_DECREF(n);
+        return (result);
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
+        self->cppobj->toWire(*mr->messagerenderer);
+        // If we return NULL it is seen as an error, so use this for
+        // None returns
+        Py_RETURN_NONE;
+    }
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "toWire argument must be a sequence object or a MessageRenderer");
+    return (NULL);
+}
+
+static PyObject*
+RRClass_getCode(s_RRClass* self) {
+    return (Py_BuildValue("I", self->cppobj->getCode()));
+}
+
+static PyObject*
+RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
+    bool c;
+
+    // Check for null and if the types match. If different type,
+    // simply return False
+    if (!other || (self->ob_type != other->ob_type)) {
+        Py_RETURN_FALSE;
+    }
+
+    switch (op) {
+    case Py_LT:
+        c = *self->cppobj < *other->cppobj;
+        break;
+    case Py_LE:
+        c = *self->cppobj < *other->cppobj ||
+            *self->cppobj == *other->cppobj;
+        break;
+    case Py_EQ:
+        c = *self->cppobj == *other->cppobj;
+        break;
+    case Py_NE:
+        c = *self->cppobj != *other->cppobj;
+        break;
+    case Py_GT:
+        c = *other->cppobj < *self->cppobj;
+        break;
+    case Py_GE:
+        c = *other->cppobj < *self->cppobj ||
+            *self->cppobj == *other->cppobj;
+        break;
+    default:
+        PyErr_SetString(PyExc_IndexError,
+                        "Unhandled rich comparison operator");
+        return (NULL);
+    }
+    if (c)
+        Py_RETURN_TRUE;
+    else
+        Py_RETURN_FALSE;
+}
+
+//
+// Common function for RRClass_IN/CH/etc.
+//
+static PyObject* RRClass_createStatic(RRClass stc) {
+    s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
+    if (ret != NULL) {
+        ret->cppobj = new RRClass(stc);
+    }
+    return (ret);
+}
+
+static PyObject* RRClass_IN(s_RRClass*) {
+    return (RRClass_createStatic(RRClass::IN()));
+}
+
+static PyObject* RRClass_CH(s_RRClass*) {
+    return (RRClass_createStatic(RRClass::CH()));
+}
+
+static PyObject* RRClass_HS(s_RRClass*) {
+    return (RRClass_createStatic(RRClass::HS()));
+}
+
+static PyObject* RRClass_NONE(s_RRClass*) {
+    return (RRClass_createStatic(RRClass::NONE()));
+}
+
+static PyObject* RRClass_ANY(s_RRClass*) {
+    return (RRClass_createStatic(RRClass::ANY()));
+}
+// end of RRClass
+
+} // end anonymous namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the initModulePart
+// function at the end of this file
+//
+PyObject* po_InvalidRRClass;
+PyObject* po_IncompleteRRClass;
+
+
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_RRClass
 // Most of the functions are not actually implemented and NULL here.
-static PyTypeObject rrclass_type = {
+PyTypeObject rrclass_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "pydnspp.RRClass",
     sizeof(s_RRClass),                  // tp_basicsize
@@ -111,7 +303,7 @@ static PyTypeObject rrclass_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     RRClass_str,                        // tp_str
     NULL,                               // tp_getattro
@@ -150,183 +342,6 @@ static PyTypeObject rrclass_type = {
     0                                   // tp_version_tag
 };
 
-static int
-RRClass_init(s_RRClass* self, PyObject* args) {
-    const char* s;
-    long i;
-    PyObject* bytes = NULL;
-    // The constructor argument can be a string ("IN"), an integer (1),
-    // or a sequence of numbers between 0 and 65535 (wire code)
-
-    // Note that PyArg_ParseType can set PyError, and we need to clear
-    // that if we try several like here. Otherwise the *next* python
-    // call will suddenly appear to throw an exception.
-    // (the way to do exceptions is to set PyErr and return -1)
-    try {
-        if (PyArg_ParseTuple(args, "s", &s)) {
-            self->rrclass = new RRClass(s);
-            return (0);
-        } else if (PyArg_ParseTuple(args, "l", &i)) {
-            if (i < 0 || i > 0xffff) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_ValueError,
-                                "RR class number out of range");
-                return (-1);
-            }
-            self->rrclass = new RRClass(i);
-            return (0);
-        } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-            uint8_t data[2];
-            int result = readDataFromSequence(data, 2, bytes);
-            if (result != 0) {
-                return (result);
-            }
-            InputBuffer ib(data, 2);
-            self->rrclass = new RRClass(ib);
-            PyErr_Clear();
-            return (0);
-        }
-    // Incomplete is never thrown, a type error would have already been raised
-    //when we try to read the 2 bytes above
-    } catch (const InvalidRRClass& ic) {
-        PyErr_Clear();
-        PyErr_SetString(po_InvalidRRClass, ic.what());
-        return (-1);
-    }
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "no valid type in constructor argument");
-    return (-1);
-}
-
-static void
-RRClass_destroy(s_RRClass* self) {
-    delete self->rrclass;
-    self->rrclass = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
-
-static PyObject*
-RRClass_toText(s_RRClass* self) {
-    // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->rrclass->toText().c_str()));
-}
-
-static PyObject*
-RRClass_str(PyObject* self) {
-    // Simply call the to_text method we already defined
-    return (PyObject_CallMethod(self,
-                               const_cast<char*>("to_text"),
-                                const_cast<char*>("")));
-}
-
-static PyObject*
-RRClass_toWire(s_RRClass* self, PyObject* args) {
-    PyObject* bytes;
-    s_MessageRenderer* mr;
-    
-    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-        PyObject* bytes_o = bytes;
-        
-        OutputBuffer buffer(2);
-        self->rrclass->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
-        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
-        // We need to release the object we temporarily created here
-        // to prevent memory leak
-        Py_DECREF(n);
-        return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->rrclass->toWire(*mr->messagerenderer);
-        // If we return NULL it is seen as an error, so use this for
-        // None returns
-        Py_RETURN_NONE;
-    }
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "toWire argument must be a sequence object or a MessageRenderer");
-    return (NULL);
-}
-
-static PyObject*
-RRClass_getCode(s_RRClass* self) {
-    return (Py_BuildValue("I", self->rrclass->getCode()));
-}
-
-static PyObject* 
-RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
-    bool c;
-
-    // Check for null and if the types match. If different type,
-    // simply return False
-    if (!other || (self->ob_type != other->ob_type)) {
-        Py_RETURN_FALSE;
-    }
-
-    switch (op) {
-    case Py_LT:
-        c = *self->rrclass < *other->rrclass;
-        break;
-    case Py_LE:
-        c = *self->rrclass < *other->rrclass ||
-            *self->rrclass == *other->rrclass;
-        break;
-    case Py_EQ:
-        c = *self->rrclass == *other->rrclass;
-        break;
-    case Py_NE:
-        c = *self->rrclass != *other->rrclass;
-        break;
-    case Py_GT:
-        c = *other->rrclass < *self->rrclass;
-        break;
-    case Py_GE:
-        c = *other->rrclass < *self->rrclass ||
-            *self->rrclass == *other->rrclass;
-        break;
-    default:
-        PyErr_SetString(PyExc_IndexError,
-                        "Unhandled rich comparison operator");
-        return (NULL);
-    }
-    if (c)
-        Py_RETURN_TRUE;
-    else
-        Py_RETURN_FALSE;
-}
-
-//
-// Common function for RRClass_IN/CH/etc.
-//
-static PyObject* RRClass_createStatic(RRClass stc) {
-    s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
-    if (ret != NULL) {
-        ret->rrclass = new RRClass(stc);
-    }
-    return (ret);
-}
-
-static PyObject* RRClass_IN(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::IN()));
-}
-
-static PyObject* RRClass_CH(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::CH()));
-}
-
-static PyObject* RRClass_HS(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::HS()));
-}
-
-static PyObject* RRClass_NONE(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::NONE()));
-}
-
-static PyObject* RRClass_ANY(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::ANY()));
-}
-// end of RRClass
-
 
 // Module Initialization, all statics are initialized here
 bool
@@ -348,6 +363,29 @@ initModulePart_RRClass(PyObject* mod) {
     Py_INCREF(&rrclass_type);
     PyModule_AddObject(mod, "RRClass",
                        reinterpret_cast<PyObject*>(&rrclass_type));
-    
+
     return (true);
 }
+
+PyObject*
+createRRClassObject(const RRClass& source) {
+    RRClassContainer container = PyObject_New(s_RRClass, &rrclass_type);
+    container.set(new RRClass(source));
+    return (container.release());
+}
+
+
+bool
+PyRRClass_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &rrclass_type));
+}
+
+RRClass&
+PyRRClass_ToRRClassPtr(PyObject* rrclass_obj) {
+    s_RRClass* rrclass = static_cast<s_RRClass*>(rrclass_obj);
+    return (*rrclass->cppobj);
+}
+
+} // end namespace python
+} // end namespace dns
+} // end namespace isc

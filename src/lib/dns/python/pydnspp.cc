@@ -40,39 +40,23 @@
 #include "pydnspp_common.h"
 #include "messagerenderer_python.h"
 #include "name_python.h"
+#include "rrclass_python.h"
+#include "rrtype_python.h"
+#include "rrttl_python.h"
+#include "rdata_python.h"
 #include "rcode_python.h"
+#include "opcode_python.h"
+#include "rrset_python.h"
 #include "tsigkey_python.h"
 #include "tsig_rdata_python.h"
 #include "tsigerror_python.h"
 #include "tsigrecord_python.h"
 #include "tsig_python.h"
+#include "question_python.h"
+#include "message_python.h"
+#include "edns_python.h"
 
-namespace isc {
-namespace dns {
-namespace python {
-// For our 'general' isc::Exceptions
-PyObject* po_IscException;
-PyObject* po_InvalidParameter;
-
-// For our own isc::dns::Exception
-PyObject* po_DNSMessageBADVERS;
-}
-}
-}
-
-// order is important here!
 using namespace isc::dns::python;
-
-#include <dns/python/rrclass_python.cc>        // needs Messagerenderer
-#include <dns/python/rrtype_python.cc>         // needs Messagerenderer
-#include <dns/python/rrttl_python.cc>          // needs Messagerenderer
-#include <dns/python/rdata_python.cc>          // needs Type, Class
-#include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
-#include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
-                                               // Name
-#include <dns/python/opcode_python.cc>
-#include <dns/python/edns_python.cc>           // needs Messagerenderer, Rcode
-#include <dns/python/message_python.cc>        // needs RRset, Question
 
 //
 // Definition of the module
