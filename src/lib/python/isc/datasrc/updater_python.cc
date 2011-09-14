@@ -37,6 +37,8 @@
 #include "datasrc.h"
 #include "updater_python.h"
 
+#include "updater_inc.cc"
+
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::datasrc;
@@ -87,7 +89,7 @@ ZoneUpdater_destroy(s_ZoneUpdater* const self) {
 
 // These are the functions we export
 //
-PyObject* ZoneUpdater_AddRRset(PyObject* po_self, PyObject* args) {
+PyObject* ZoneUpdater_addRRset(PyObject* po_self, PyObject* args) {
     // TODO err handling
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     PyObject* rrset_obj;
@@ -107,8 +109,7 @@ PyObject* ZoneUpdater_AddRRset(PyObject* po_self, PyObject* args) {
     }
 }
 
-PyObject* ZoneUpdater_DeleteRRset(PyObject* po_self, PyObject* args) {
-    // TODO err handling
+PyObject* ZoneUpdater_deleteRRset(PyObject* po_self, PyObject* args) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     PyObject* rrset_obj;
     if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
@@ -127,7 +128,7 @@ PyObject* ZoneUpdater_DeleteRRset(PyObject* po_self, PyObject* args) {
     }
 }
 
-PyObject* ZoneUpdater_Commit(PyObject* po_self, PyObject*) {
+PyObject* ZoneUpdater_commit(PyObject* po_self, PyObject*) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     try {
         self->cppobj->commit();
@@ -153,9 +154,12 @@ PyObject* ZoneUpdater_Commit(PyObject* po_self, PyObject*) {
 // 4. Documentation
 PyMethodDef ZoneUpdater_methods[] = {
 /*TODO    { "get_finder", ZoneUpdater_GetFinder, METH_NOARGS, "TODO" },*/
-    { "add_rrset", ZoneUpdater_AddRRset, METH_VARARGS, "TODO" },
-    { "delete_rrset", ZoneUpdater_DeleteRRset, METH_VARARGS, "TODO" },
-    { "commit", ZoneUpdater_Commit, METH_NOARGS, "TODO" },
+    { "add_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_addRRset), METH_VARARGS,
+      ZoneUpdater_addRRset_doc },
+    { "delete_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_deleteRRset), METH_VARARGS,
+      ZoneUpdater_deleteRRset_doc },
+    { "commit", reinterpret_cast<PyCFunction>(ZoneUpdater_commit), METH_NOARGS,
+      ZoneUpdater_commit_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -185,7 +189,7 @@ PyTypeObject zoneupdater_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The ZoneUpdater class objects is...(TODO COMPLETE THIS)",
+    ZoneUpdater_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
