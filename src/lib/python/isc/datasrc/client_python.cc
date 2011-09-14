@@ -110,8 +110,10 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
             return (createZoneIteratorObject(self->cppobj->getIterator(isc::dns::python::PyName_ToName(name_obj))));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"), ne.what());
+            return (NULL);
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
@@ -132,8 +134,10 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
             return (createZoneUpdaterObject(self->cppobj->getUpdater(isc::dns::python::PyName_ToName(name_obj), replace)));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"), ne.what());
+            return (NULL);
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
