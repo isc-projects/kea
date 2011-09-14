@@ -60,6 +60,7 @@ getDataSourceException(const char* ex_name) {
 namespace {
 
 PyObject* po_DataSourceError;
+PyObject* po_NotImplemented;
 
 PyModuleDef iscDataSrc = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
@@ -108,6 +109,10 @@ PyInit_datasrc(void) {
         po_DataSourceError = PyErr_NewException("isc.datasrc.Error", NULL,
                                                 NULL);
         PyObjectContainer(po_DataSourceError).installToModule(mod, "Error");
+        po_NotImplemented = PyErr_NewException("isc.datasrc.NotImplemented",
+                                               NULL, NULL);
+        PyObjectContainer(po_NotImplemented).installToModule(mod,
+                                                             "NotImplemented");
     } catch (...) {
         Py_DECREF(mod);
         return (NULL);
