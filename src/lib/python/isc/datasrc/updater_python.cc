@@ -86,14 +86,15 @@ ZoneUpdater_init(s_ZoneUpdater* self, PyObject* args) {
 // In many cases you can use it without modification, but check that carefully.
 void
 ZoneUpdater_destroy(s_ZoneUpdater* const self) {
-    // cppobj is a shared ptr so should take care of itself
+    // cppobj is a shared ptr, but to make sure things are not destroyed in
+    // the wrong order, we reset it here.
+    self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
 // These are the functions we export
 //
 PyObject* ZoneUpdater_addRRset(PyObject* po_self, PyObject* args) {
-    // TODO err handling
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     PyObject* rrset_obj;
     if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
