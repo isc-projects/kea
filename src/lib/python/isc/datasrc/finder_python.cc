@@ -40,6 +40,7 @@
 
 #include "datasrc.h"
 #include "finder_python.h"
+#include "finder_inc.cc"
 
 using namespace std;
 using namespace isc::util::python;
@@ -89,7 +90,7 @@ ZoneFinder_destroy(s_ZoneFinder* const self) {
 
 // These are the functions we export
 //
-PyObject* ZoneFinder_GetClass(PyObject* po_self, PyObject*) {
+PyObject* ZoneFinder_getClass(PyObject* po_self, PyObject*) {
     s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
     try {
         return (isc::dns::python::createRRClassObject(self->cppobj->getClass()));
@@ -99,7 +100,7 @@ PyObject* ZoneFinder_GetClass(PyObject* po_self, PyObject*) {
     }
 }
 
-PyObject* ZoneFinder_GetOrigin(PyObject* po_self, PyObject*) {
+PyObject* ZoneFinder_getOrigin(PyObject* po_self, PyObject*) {
     s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
     try {
         return (isc::dns::python::createNameObject(self->cppobj->getOrigin()));
@@ -109,7 +110,7 @@ PyObject* ZoneFinder_GetOrigin(PyObject* po_self, PyObject*) {
     }
 }
 
-PyObject* ZoneFinder_Find(PyObject* po_self, PyObject* args) {
+PyObject* ZoneFinder_find(PyObject* po_self, PyObject* args) {
     s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
     PyObject *name;
     PyObject *rrtype;
@@ -157,9 +158,12 @@ PyObject* ZoneFinder_Find(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneFinder_methods[] = {
-    { "get_class", ZoneFinder_GetClass, METH_NOARGS, "TODO" },
-    { "get_origin", ZoneFinder_GetOrigin, METH_NOARGS, "TODO" },
-    { "find", ZoneFinder_Find, METH_VARARGS, "TODO" },
+    { "get_origin", reinterpret_cast<PyCFunction>(ZoneFinder_getOrigin), METH_NOARGS,
+      ZoneFinder_getOrigin_doc },
+    { "get_class", reinterpret_cast<PyCFunction>(ZoneFinder_getClass), METH_NOARGS,
+      ZoneFinder_getClass_doc },
+    { "find", reinterpret_cast<PyCFunction>(ZoneFinder_find), METH_VARARGS,
+      ZoneFinder_find_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -189,7 +193,7 @@ PyTypeObject zonefinder_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The ZoneFinder class objects is...(TODO COMPLETE THIS)",
+    ZoneFinder_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare

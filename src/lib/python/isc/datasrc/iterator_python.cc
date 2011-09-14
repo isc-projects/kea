@@ -36,6 +36,8 @@
 #include "datasrc.h"
 #include "iterator_python.h"
 
+#include "iterator_inc.cc"
+
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::datasrc;
@@ -84,7 +86,7 @@ ZoneIterator_destroy(s_ZoneIterator* const self) {
 // We declare the functions here, the definitions are below
 // the type definition of the object, since both can use the other
 //
-PyObject* ZoneIterator_GetNextRRset(PyObject* po_self, PyObject*) {
+PyObject* ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
     s_ZoneIterator* self = static_cast<s_ZoneIterator*>(po_self);
     try {
         isc::dns::ConstRRsetPtr rrset = self->cppobj->getNextRRset();
@@ -117,7 +119,8 @@ PyObject* ZoneIterator_GetNextRRset(PyObject* po_self, PyObject*) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneIterator_methods[] = {
-    { "get_next_rrset", ZoneIterator_GetNextRRset, METH_NOARGS, "TODO" },
+    { "get_next_rrset", reinterpret_cast<PyCFunction>(ZoneIterator_getNextRRset),
+      METH_NOARGS, ZoneIterator_getNextRRset_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -148,7 +151,7 @@ PyTypeObject zoneiterator_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The ZoneIterator class objects is...(TODO COMPLETE THIS)",
+    ZoneIterator_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare

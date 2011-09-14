@@ -40,6 +40,7 @@
 #include "finder_python.h"
 #include "iterator_python.h"
 #include "updater_python.h"
+#include "client_inc.cc"
 
 using namespace std;
 using namespace isc::util::python;
@@ -79,7 +80,7 @@ void DataSourceClient_destroy(s_DataSourceClient* self);
 // These are the functions we export
 //
 PyObject*
-DataSourceClient_FindZone(PyObject* po_self, PyObject* args) {
+DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name;
     if (PyArg_ParseTuple(args, "O!", &isc::dns::python::name_type, &name)) {
@@ -100,7 +101,7 @@ DataSourceClient_FindZone(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
-DataSourceClient_GetIterator(PyObject* po_self, PyObject* args) {
+DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name_obj;
     if (PyArg_ParseTuple(args, "O!", &isc::dns::python::name_type, &name_obj)) {
@@ -120,7 +121,7 @@ DataSourceClient_GetIterator(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
-DataSourceClient_GetUpdater(PyObject* po_self, PyObject* args) {
+DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name_obj;
     PyObject *replace_obj;
@@ -150,9 +151,12 @@ DataSourceClient_GetUpdater(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef DataSourceClient_methods[] = {
-    { "find_zone", DataSourceClient_FindZone, METH_VARARGS, "TODO" },
-    { "get_iterator", DataSourceClient_GetIterator, METH_VARARGS, "TODO" },
-    { "get_updater", DataSourceClient_GetUpdater, METH_VARARGS, "TODO" },
+    { "find_zone", reinterpret_cast<PyCFunction>(DataSourceClient_findZone), METH_VARARGS,
+      DataSourceClient_findZone_doc },
+    { "get_iterator", reinterpret_cast<PyCFunction>(DataSourceClient_getIterator), METH_VARARGS,
+      DataSourceClient_getIterator_doc },
+    { "get_updater", reinterpret_cast<PyCFunction>(DataSourceClient_getUpdater), METH_VARARGS,
+      DataSourceClient_getUpdater_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -231,7 +235,7 @@ PyTypeObject datasourceclient_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The DataSourceClient class objects is...(COMPLETE THIS)",
+    DataSourceClient_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
