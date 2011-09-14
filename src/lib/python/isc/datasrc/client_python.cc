@@ -90,7 +90,8 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
 
             result::Result r = find_result.code;
             ZoneFinderPtr zfp = find_result.zone_finder;
-            return Py_BuildValue("IO", r, createZoneFinderObject(zfp));
+            // Use N instead of O so refcount isn't increased twice
+            return (Py_BuildValue("IN", r, createZoneFinderObject(zfp)));
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);

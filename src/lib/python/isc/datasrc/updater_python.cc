@@ -188,9 +188,9 @@ PyObject* ZoneUpdater_find(PyObject* po_self, PyObject* args) {
             ZoneFinder::Result r = find_result.code;
             isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
             if (rrsp) {
-                return Py_BuildValue("IO", r, isc::dns::python::createRRsetObject(*rrsp));
+                // Use N instead of O so the refcount isn't increased twice
+                return Py_BuildValue("IN", r, isc::dns::python::createRRsetObject(*rrsp));
             } else {
-                Py_INCREF(Py_None);
                 return Py_BuildValue("IO", r, Py_None);
             }
         } catch (const DataSourceError& dse) {

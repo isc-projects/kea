@@ -145,12 +145,12 @@ class DataSrcClient(unittest.TestCase):
                           None,
                           "foo")
 
+
 class DataSrcUpdater(unittest.TestCase):
 
     def setUp(self):
         # Make a fresh copy of the writable database with all original content
         shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
-
 
     def test_update_delete_commit(self):
         dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
