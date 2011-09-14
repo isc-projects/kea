@@ -21,6 +21,8 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace dns {
 
+#define IS_DIGIT(c) (('0' <= (c)) && ((c) <= '9'))
+
 std::string
 characterstr::getNextCharacterString(const std::string& input_str,
                               std::string::const_iterator& input_iterator)
@@ -36,27 +38,64 @@ characterstr::getNextCharacterString(const std::string& input_str,
 
     // Whether the <character-string> is separated with double quotes (")
     bool quotes_separated = (*input_iterator == '"');
+    // Whether the quotes are pared if the string is quotes separated
+    bool quotes_paired = false;
 
     if (quotes_separated) {
         ++input_iterator;
     }
 
     while(input_iterator < input_str.end()){
+        // Escaped characters processing
+        if (*input_iterator == '\\') {
+            if (input_iterator + 1 == input_str.end()) {
+                isc_throw(InvalidRdataText, "<character-string> ended \
+                          exceptionally.");
+            } else {
+                if (IS_DIGIT(*(input_iterator + 1))) {
+                    // \DDD where each D is a digit. It its the octet
+                    // corresponding to the decimal number described by DDD
+                    if (input_iterator + 3 >= input_str.end()) {
+                        isc_throw(InvalidRdataText, "<character-string> ended \
+                                  exceptionally.");
+                    } else {
+                        int n = 0;
+                        ++input_iterator;
+                        for (int i = 0; i < 3; ++i) {
+                            if (('0' <= *input_iterator) &&
+                                (*input_iterator <= '9')) {
+                                n = n*10 + (*input_iterator - '0');
+                                ++input_iterator;
+                            } else {
+                                isc_throw(InvalidRdataText, "Illegal decimal \
+                                          escaping series");
+                            }
+                        }
+                        if (n > 255) {
+                            isc_throw(InvalidRdataText, "Illegal octet \
+                                      number");
+                        }
+                        result.push_back(n);
+                        continue;
+                    }
+                } else {
+                    ++input_iterator;
+                    result.push_back(*input_iterator);
+                    ++input_iterator;
+                    continue;
+                }
+            }
+        }
+
         if (quotes_separated) {
             // If the <character-string> is seperated with quotes symbol and
             // another quotes symbol is encountered, it is the end of the
             // <character-string>
             if (*input_iterator == '"') {
-                // Inside a " delimited string any character can occur, except
-                // for a " itself, which must be quoted using \ (back slash).
-                if (*(input_iterator - 1) == '\\') {
-                    // pop the '\' character
-                    result.resize(result.size() - 1);
-                } else {
-                    ++input_iterator;
-                    // Reach the end of character string
-                    break;
-                }
+                quotes_paired = true;
+                ++input_iterator;
+                // Reach the end of character string
+                break;
             }
         } else if (*input_iterator == ' ') {
             // If the <character-string> is not seperated with quotes symbol,
@@ -71,6 +110,10 @@ characterstr::getNextCharacterString(const std::string& input_str,
 
     if (result.size() > MAX_CHARSTRING_LEN) {
         isc_throw(CharStringTooLong, "<character-string> is too long");
+    }
+
+    if (quotes_separated && !quotes_paired) {
+        isc_throw(InvalidRdataText, "The quotes are not paired");
     }
 
     return (result);

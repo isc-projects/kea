@@ -56,6 +56,7 @@ run_unittests_SOURCES += tsig_unittest.cc
 run_unittests_SOURCES += tsigerror_unittest.cc
 run_unittests_SOURCES += tsigkey_unittest.cc
 run_unittests_SOURCES += tsigrecord_unittest.cc
+run_unittests_SOURCES += character_string_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 # We shouldn't need to include BOTAN_LDFLAGS here, but there
