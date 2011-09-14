@@ -725,7 +725,6 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
                     statements_[FIND_PREVIOUS_WRAP], 0), dbparameters_->db_);
         }
         sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
-
         if (rc == SQLITE_DONE) {
             // No NSEC records, this DB doesn't support DNSSEC
             isc_throw(isc::NotImplemented, "The zone doesn't support DNSSEC");

@@ -1582,7 +1582,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
 
 TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
     // The domain exists, but doesn't have this RRType
-    // So we should get it's NSEC
+    // So we should get its NSEC
     shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
@@ -1591,15 +1591,14 @@ TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
                                          "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::NXRRSET,
+               this->rrttl_, ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
     // The domain exists, but doesn't have this RRType
-    // So we should get it's NSEC
+    // So we should get its NSEC
     //
     // The user will have to query us again to get the correct
     // answer (eg. prove there's not an exact match)
@@ -1613,8 +1612,7 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
     // Note that the NSEC name should NOT be synthesized.
     doFindTest(*finder, isc::dns::Name("a.wild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::WILDCARD_NXRRSET,
+               this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
@@ -1629,8 +1627,7 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
                                          "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("www1.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               isc::dns::RRTTL(3600),
-               ZoneFinder::NXDOMAIN,
+               this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                Name("www.example.org."), ZoneFinder::FIND_DNSSEC);
 
@@ -1639,16 +1636,13 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
     EXPECT_NO_THROW(doFindTest(*finder,
                                isc::dns::Name("notimplnsec.example.org."),
                                isc::dns::RRType::TXT(),
-                               isc::dns::RRType::NSEC(),
-                               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
-                               this->expected_rdatas_,
-                               this->expected_sig_rdatas_,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+                               isc::dns::RRType::NSEC(), this->rrttl_,
+                               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+                               this->empty_rdatas_, Name::ROOT_NAME(),
+                               ZoneFinder::FIND_DNSSEC));
 }
 
 TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
@@ -1660,8 +1654,7 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
 
     this->expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
     doFindTest(*finder, isc::dns::Name("nonterminal.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               isc::dns::RRTTL(3600),
+               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(), this->rrttl_,
                ZoneFinder::NXRRSET, // FIXME: Do we want to have specific code?
                this->expected_rdatas_, this->expected_sig_rdatas_,
                Name("l.example.org."), ZoneFinder::FIND_DNSSEC);
@@ -1671,15 +1664,12 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
     EXPECT_NO_THROW(doFindTest(*finder,
                                isc::dns::Name("here.wild.example.org."),
                                isc::dns::RRType::TXT(),
                                isc::dns::RRType::NSEC(),
-                               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET,
-                               this->expected_rdatas_,
-                               this->expected_sig_rdatas_,
+                               this->rrttl_, ZoneFinder::NXRRSET,
+                               this->empty_rdatas_, this->empty_rdatas_,
                                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
 }
 

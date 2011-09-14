@@ -316,8 +316,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // This variable is used to determine the difference between
     // NXDOMAIN and NXRRSET
     bool records_found = false;
-    bool glue_ok(options & FIND_GLUE_OK);
-    bool dnssec_data(options & FIND_DNSSEC);
+    bool glue_ok((options & FIND_GLUE_OK) != 0);
+    const bool dnssec_data((options & FIND_DNSSEC) != 0);
     bool get_cover(false);
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
@@ -533,7 +533,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     }
                 }
                 // This is the NXDOMAIN case (nothing found anywhere). If
-                // they wand DNSSEC data, try getting the NSEC record
+                // they want DNSSEC data, try getting the NSEC record
                 if (dnssec_data && !records_found) {
                     get_cover = true;
                 }
