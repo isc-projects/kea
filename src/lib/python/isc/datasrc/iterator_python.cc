@@ -61,6 +61,25 @@ namespace {
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_ZoneIterator, ZoneIterator> ZoneIteratorContainer;
 
+
+// General creation and destruction
+int
+ZoneIterator_init(s_ZoneIterator* self, PyObject* args) {
+    // can't be called directly
+    PyErr_SetString(PyExc_TypeError,
+                    "ZoneIterator cannot be constructed directly");
+
+    return (-1);
+}
+
+// This is a template of typical code logic of python object destructor.
+// In many cases you can use it without modification, but check that carefully.
+void
+ZoneIterator_destroy(s_ZoneIterator* const self) {
+    // cppobj is a shared ptr so no need to delete that
+    Py_TYPE(self)->tp_free(self);
+}
+
 //
 // We declare the functions here, the definitions are below
 // the type definition of the object, since both can use the other
@@ -79,13 +98,11 @@ PyObject* ZoneIterator_GetNextRRset(PyObject* po_self, PyObject*) {
         // We could also simply return None again
         PyErr_SetString(getDataSourceException("Error"), isce.what());
         return (NULL);
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
     }
-
 }
-
-// General creation and destruction
-int ZoneIterator_init(s_ZoneIterator* self, PyObject* args);
-void ZoneIterator_destroy(s_ZoneIterator* self);
 
 // These are the functions we export
 //
@@ -104,26 +121,6 @@ PyMethodDef ZoneIterator_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-// This is a template of typical code logic of python class initialization
-// with C++ backend.  You'll need to adjust it according to details of the
-// actual C++ class.
-int
-ZoneIterator_init(s_ZoneIterator* self, PyObject* args) {
-    // can't be called directly
-    PyErr_SetString(PyExc_TypeError,
-                    "ZoneIterator cannot be constructed directly");
-
-    return (-1);
-}
-
-// This is a template of typical code logic of python object destructor.
-// In many cases you can use it without modification, but check that carefully.
-void
-ZoneIterator_destroy(s_ZoneIterator* const self) {
-    //delete self->cppobj;
-    //self->cppobj = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
 
 } // end of unnamed namespace
 

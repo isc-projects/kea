@@ -27,6 +27,7 @@
 
 #include <datasrc/client.h>
 #include <datasrc/database.h>
+#include <datasrc/data_source.h>
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/iterator.h>
 #include <datasrc/zone.h>
@@ -71,19 +72,41 @@ typedef CPPPyObjectContainer<s_ZoneFinder, ZoneFinder> ZoneFinderContainer;
 //
 
 // General creation and destruction
-int ZoneFinder_init(s_ZoneFinder* self, PyObject* args);
-void ZoneFinder_destroy(s_ZoneFinder* self);
+int
+ZoneFinder_init(s_ZoneFinder* self, PyObject* args) {
+    // can't be called directly
+    PyErr_SetString(PyExc_TypeError,
+                    "ZoneFinder cannot be constructed directly");
+
+    return (-1);
+}
+
+void
+ZoneFinder_destroy(s_ZoneFinder* const self) {
+    // cppobj is shared ptr, so no need for explicit delete
+    Py_TYPE(self)->tp_free(self);
+}
 
 // These are the functions we export
 //
 PyObject* ZoneFinder_GetClass(PyObject* po_self, PyObject*) {
     s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
-    return (isc::dns::python::createRRClassObject(self->cppobj->getClass()));
+    try {
+        return (isc::dns::python::createRRClassObject(self->cppobj->getClass()));
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    }
 }
 
 PyObject* ZoneFinder_GetOrigin(PyObject* po_self, PyObject*) {
     s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
-    return (isc::dns::python::createNameObject(self->cppobj->getOrigin()));
+    try {
+        return (isc::dns::python::createNameObject(self->cppobj->getOrigin()));
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    }
 }
 
 PyObject* ZoneFinder_Find(PyObject* po_self, PyObject* args) {
@@ -95,20 +118,28 @@ PyObject* ZoneFinder_Find(PyObject* po_self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!O!OI", &isc::dns::python::name_type, &name,
                                          &isc::dns::python::rrtype_type, &rrtype,
                                          &target, &options_int)) {
-        ZoneFinder::FindOptions options = static_cast<ZoneFinder::FindOptions>(options_int);
-        ZoneFinder::FindResult find_result(
-            self->cppobj->find(isc::dns::python::PyName_ToName(name),
-                               isc::dns::python::PyRRType_ToRRType(rrtype),
-                               NULL,
-                               options
-                               ));
-        ZoneFinder::Result r = find_result.code;
-        isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
-        if (rrsp) {
-            return Py_BuildValue("IO", r, isc::dns::python::createRRsetObject(*rrsp));
-        } else {
-            Py_INCREF(Py_None);
-            return Py_BuildValue("IO", r, Py_None);
+        try {
+            ZoneFinder::FindOptions options = static_cast<ZoneFinder::FindOptions>(options_int);
+            ZoneFinder::FindResult find_result(
+                self->cppobj->find(isc::dns::python::PyName_ToName(name),
+                                   isc::dns::python::PyRRType_ToRRType(rrtype),
+                                   NULL,
+                                   options
+                                   ));
+            ZoneFinder::Result r = find_result.code;
+            isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
+            if (rrsp) {
+                return Py_BuildValue("IO", r, isc::dns::python::createRRsetObject(*rrsp));
+            } else {
+                Py_INCREF(Py_None);
+                return Py_BuildValue("IO", r, Py_None);
+            }
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
         }
     } else {
         return (NULL);
@@ -131,27 +162,6 @@ PyMethodDef ZoneFinder_methods[] = {
     { "find", ZoneFinder_Find, METH_VARARGS, "TODO" },
     { NULL, NULL, 0, NULL }
 };
-
-// This is a template of typical code logic of python class initialization
-// with C++ backend.  You'll need to adjust it according to details of the
-// actual C++ class.
-int
-ZoneFinder_init(s_ZoneFinder* self, PyObject* args) {
-    // can't be called directly
-    PyErr_SetString(PyExc_TypeError,
-                    "ZoneFinder cannot be constructed directly");
-
-    return (-1);
-}
-
-// This is a template of typical code logic of python object destructor.
-// In many cases you can use it without modification, but check that carefully.
-void
-ZoneFinder_destroy(s_ZoneFinder* const self) {
-    //delete self->cppobj;
-    //self->cppobj = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
 
 } // end of unnamed namespace
 

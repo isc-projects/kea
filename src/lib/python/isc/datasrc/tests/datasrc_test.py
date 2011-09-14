@@ -30,7 +30,7 @@ NEW_DB_FILE = TESTDATA_WRITE_PATH + "new_db.sqlite3"
 
 class DataSrcClient(unittest.TestCase):
 
-    def atest_iterate(self):
+    def test_iterate(self):
         dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
 
         # for RRSIGS, the TTL's are currently modified. This test should
@@ -169,8 +169,6 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n", rrset.to_text())
 
         rrset_to_delete = rrset;
-        # can't delete rrset with associated sig
-        rrset_to_delete.remove_rrsig()
 
         result, rrset = finder.find(isc.dns.Name("doesnotexist.example.com"),
                                     isc.dns.RRType.TXT(),
@@ -179,8 +177,13 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
 
-
+        # can't delete rrset with associated sig. Abuse that to force an
+        # exception first, then remove the sig, then delete the record
         updater = dsc.get_updater(isc.dns.Name("example.com"), True)
+        self.assertRaises(isc.datasrc.Error, updater.delete_rrset, rrset_to_delete)
+
+        rrset_to_delete.remove_rrsig()
+
         updater.delete_rrset(rrset_to_delete)
         updater.commit()
 
@@ -195,6 +198,9 @@ class DataSrcUpdater(unittest.TestCase):
         updater = dsc.get_updater(isc.dns.Name("example.com"), True)
         updater.add_rrset(rrset_to_delete)
         updater.commit()
+
+        # second commit should throw
+        self.assertRaises(isc.datasrc.Error, updater.commit)
 
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
