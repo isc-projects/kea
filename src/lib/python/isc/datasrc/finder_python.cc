@@ -148,9 +148,6 @@ PyObject* ZoneFinder_find(PyObject* po_self, PyObject* args) {
     return Py_BuildValue("I", 1);
 }
 
-// These are the functions we export
-// For a minimal support, we don't need them.
-
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
