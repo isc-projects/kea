@@ -152,7 +152,7 @@ class DataSrcUpdater(unittest.TestCase):
         shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
 
 
-    def test_update(self):
+    def test_update_delete_commit(self):
         dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
 
         # first make sure, through a separate finder, that some record exists
@@ -170,13 +170,6 @@ class DataSrcUpdater(unittest.TestCase):
 
         rrset_to_delete = rrset;
 
-        result, rrset = finder.find(isc.dns.Name("doesnotexist.example.com"),
-                                    isc.dns.RRType.TXT(),
-                                    None,
-                                    finder.FIND_DEFAULT)
-        self.assertEqual(finder.NXDOMAIN, result)
-        self.assertEqual(None, rrset)
-
         # can't delete rrset with associated sig. Abuse that to force an
         # exception first, then remove the sig, then delete the record
         updater = dsc.get_updater(isc.dns.Name("example.com"), True)
@@ -185,8 +178,26 @@ class DataSrcUpdater(unittest.TestCase):
         rrset_to_delete.remove_rrsig()
 
         updater.delete_rrset(rrset_to_delete)
+
+        # The record should be gone in the updater, but not in the original
+        # finder (since we have not committed)
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A(),
+                                     None,
+                                     finder.FIND_DEFAULT)
+        self.assertEqual(finder.NXDOMAIN, result)
+        self.assertEqual(None, rrset)
+
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n", rrset.to_text())
+
         updater.commit()
 
+        # the record should be gone now in the 'real' finder as well
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
                                     None,
@@ -202,6 +213,53 @@ class DataSrcUpdater(unittest.TestCase):
         # second commit should throw
         self.assertRaises(isc.datasrc.Error, updater.commit)
 
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n", rrset.to_text())
+
+    def test_update_delete_abort(self):
+        dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
+
+        # first make sure, through a separate finder, that some record exists
+        result, finder = dsc.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual(isc.dns.RRClass.IN(), finder.get_class())
+        self.assertEqual("example.com.", finder.get_origin().to_text())
+
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n", rrset.to_text())
+
+        rrset_to_delete = rrset;
+
+        # can't delete rrset with associated sig. Abuse that to force an
+        # exception first, then remove the sig, then delete the record
+        updater = dsc.get_updater(isc.dns.Name("example.com"), True)
+        self.assertRaises(isc.datasrc.Error, updater.delete_rrset, rrset_to_delete)
+
+        rrset_to_delete.remove_rrsig()
+
+        updater.delete_rrset(rrset_to_delete)
+
+        # The record should be gone in the updater, but not in the original
+        # finder (since we have not committed)
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A(),
+                                     None,
+                                     finder.FIND_DEFAULT)
+        self.assertEqual(finder.NXDOMAIN, result)
+        self.assertEqual(None, rrset)
+
+        # destroy the updater, which should make it roll back
+        updater = None
+
+        # the record should still be available in the 'real' finder as well
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
                                     None,
