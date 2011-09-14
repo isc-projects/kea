@@ -33,11 +33,14 @@
 
 #include <dns/python/name_python.h>
 #include <dns/python/rrset_python.h>
+#include <dns/python/rrclass_python.h>
+#include <dns/python/rrtype_python.h>
 
 #include "datasrc.h"
 #include "updater_python.h"
 
 #include "updater_inc.cc"
+#include "finder_inc.cc"
 
 using namespace std;
 using namespace isc::util::python;
@@ -142,9 +145,66 @@ PyObject* ZoneUpdater_commit(PyObject* po_self, PyObject*) {
     }
 }
 
-
 // These are the functions we export
-// For a minimal support, we don't need them.
+//
+PyObject* ZoneUpdater_getClass(PyObject* po_self, PyObject*) {
+    s_ZoneUpdater* self = static_cast<s_ZoneUpdater*>(po_self);
+    try {
+        return (isc::dns::python::createRRClassObject(self->cppobj->getFinder().getClass()));
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    }
+}
+
+PyObject* ZoneUpdater_getOrigin(PyObject* po_self, PyObject*) {
+    s_ZoneUpdater* self = static_cast<s_ZoneUpdater*>(po_self);
+    try {
+        return (isc::dns::python::createNameObject(self->cppobj->getFinder().getOrigin()));
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    }
+}
+
+PyObject* ZoneUpdater_find(PyObject* po_self, PyObject* args) {
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+    PyObject *name;
+    PyObject *rrtype;
+    PyObject *target;
+    int options_int;
+    if (PyArg_ParseTuple(args, "O!O!OI", &isc::dns::python::name_type, &name,
+                                         &isc::dns::python::rrtype_type, &rrtype,
+                                         &target, &options_int)) {
+        try {
+            ZoneFinder::FindOptions options = static_cast<ZoneFinder::FindOptions>(options_int);
+            ZoneFinder::FindResult find_result(
+                self->cppobj->getFinder().find(isc::dns::python::PyName_ToName(name),
+                                   isc::dns::python::PyRRType_ToRRType(rrtype),
+                                   NULL,
+                                   options
+                                   ));
+            ZoneFinder::Result r = find_result.code;
+            isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
+            if (rrsp) {
+                return Py_BuildValue("IO", r, isc::dns::python::createRRsetObject(*rrsp));
+            } else {
+                Py_INCREF(Py_None);
+                return Py_BuildValue("IO", r, Py_None);
+            }
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        }
+    } else {
+        return (NULL);
+    }
+    return Py_BuildValue("I", 1);
+}
+
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -153,13 +213,22 @@ PyObject* ZoneUpdater_commit(PyObject* po_self, PyObject*) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneUpdater_methods[] = {
-/*TODO    { "get_finder", ZoneUpdater_GetFinder, METH_NOARGS, "TODO" },*/
     { "add_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_addRRset), METH_VARARGS,
       ZoneUpdater_addRRset_doc },
     { "delete_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_deleteRRset), METH_VARARGS,
       ZoneUpdater_deleteRRset_doc },
     { "commit", reinterpret_cast<PyCFunction>(ZoneUpdater_commit), METH_NOARGS,
       ZoneUpdater_commit_doc },
+    // Instead of a getFinder, we implement the finder functionality directly
+    // This is because ZoneFinder is non-copyable, and we should not create
+    // a ZoneFinder object from a reference only (which is what is returned
+    // by getFinder(). Apart from that
+    { "get_origin", reinterpret_cast<PyCFunction>(ZoneUpdater_getOrigin), METH_NOARGS,
+      ZoneFinder_getOrigin_doc },
+    { "get_class", reinterpret_cast<PyCFunction>(ZoneUpdater_getClass), METH_NOARGS,
+      ZoneFinder_getClass_doc },
+    { "find", reinterpret_cast<PyCFunction>(ZoneUpdater_find), METH_VARARGS,
+      ZoneFinder_find_doc },
     { NULL, NULL, 0, NULL }
 };
 
