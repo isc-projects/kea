@@ -78,7 +78,9 @@ ZoneIterator_init(s_ZoneIterator* self, PyObject* args) {
 // In many cases you can use it without modification, but check that carefully.
 void
 ZoneIterator_destroy(s_ZoneIterator* const self) {
-    // cppobj is a shared ptr so no need to delete that
+    // cppobj is a shared ptr, but to make sure things are not destroyed in
+    // the wrong order, we reset it here.
+    self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
 

@@ -84,7 +84,9 @@ ZoneFinder_init(s_ZoneFinder* self, PyObject* args) {
 
 void
 ZoneFinder_destroy(s_ZoneFinder* const self) {
-    // cppobj is shared ptr, so no need for explicit delete
+    // cppobj is a shared ptr, but to make sure things are not destroyed in
+    // the wrong order, we reset it here.
+    self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
