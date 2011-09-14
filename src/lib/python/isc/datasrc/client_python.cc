@@ -27,6 +27,7 @@
 
 #include <datasrc/client.h>
 #include <datasrc/database.h>
+#include <datasrc/data_source.h>
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/iterator.h>
 
@@ -82,12 +83,17 @@ DataSourceClient_FindZone(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name;
     if (PyArg_ParseTuple(args, "O!", &isc::dns::python::name_type, &name)) {
-        DataSourceClient::FindResult find_result(
-            self->cppobj->findZone(isc::dns::python::PyName_ToName(name)));
+        try {
+            DataSourceClient::FindResult find_result(
+                self->cppobj->findZone(isc::dns::python::PyName_ToName(name)));
 
-        result::Result r = find_result.code;
-        ZoneFinderPtr zfp = find_result.zone_finder;
-        return Py_BuildValue("IO", r, createZoneFinderObject(zfp));
+            result::Result r = find_result.code;
+            ZoneFinderPtr zfp = find_result.zone_finder;
+            return Py_BuildValue("IO", r, createZoneFinderObject(zfp));
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        }
     } else {
         return (NULL);
     }
@@ -98,7 +104,16 @@ DataSourceClient_GetIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name_obj;
     if (PyArg_ParseTuple(args, "O!", &isc::dns::python::name_type, &name_obj)) {
-        return (createZoneIteratorObject(self->cppobj->getIterator(isc::dns::python::PyName_ToName(name_obj))));
+        try {
+            return (createZoneIteratorObject(self->cppobj->getIterator(isc::dns::python::PyName_ToName(name_obj))));
+        } catch (const isc::NotImplemented& ne) {
+            PyErr_SetString(getDataSourceException("NotImplemented"), ne.what());
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        }
     } else {
         return (NULL);
     }
@@ -111,7 +126,16 @@ DataSourceClient_GetUpdater(PyObject* po_self, PyObject* args) {
     PyObject *replace_obj;
     if (PyArg_ParseTuple(args, "O!O", &isc::dns::python::name_type, &name_obj, &replace_obj) && PyBool_Check(replace_obj)) {
         bool replace = (replace_obj != Py_False);
-        return (createZoneUpdaterObject(self->cppobj->getUpdater(isc::dns::python::PyName_ToName(name_obj), replace)));
+        try {
+            return (createZoneUpdaterObject(self->cppobj->getUpdater(isc::dns::python::PyName_ToName(name_obj), replace)));
+        } catch (const isc::NotImplemented& ne) {
+            PyErr_SetString(getDataSourceException("NotImplemented"), ne.what());
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        }
     } else {
         return (NULL);
     }

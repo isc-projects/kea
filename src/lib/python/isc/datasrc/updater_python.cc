@@ -27,6 +27,7 @@
 
 #include <datasrc/client.h>
 #include <datasrc/database.h>
+#include <datasrc/data_source.h>
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/zone.h>
 
@@ -67,62 +68,6 @@ typedef CPPPyObjectContainer<s_ZoneUpdater, ZoneUpdater> ZoneUpdaterContainer;
 //
 
 // General creation and destruction
-int ZoneUpdater_init(s_ZoneUpdater* self, PyObject* args);
-void ZoneUpdater_destroy(s_ZoneUpdater* self);
-
-// These are the functions we export
-//
-PyObject* ZoneUpdater_AddRRset(PyObject* po_self, PyObject* args) {
-    // TODO err handling
-    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
-    PyObject* rrset_obj;
-    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
-        self->cppobj->addRRset(isc::dns::python::PyRRset_ToRRset(rrset_obj));
-        Py_RETURN_NONE;
-    } else {
-        return (NULL);
-    }
-}
-
-PyObject* ZoneUpdater_DeleteRRset(PyObject* po_self, PyObject* args) {
-    // TODO err handling
-    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
-    PyObject* rrset_obj;
-    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
-        self->cppobj->deleteRRset(isc::dns::python::PyRRset_ToRRset(rrset_obj));
-        Py_RETURN_NONE;
-    } else {
-        return (NULL);
-    }
-}
-
-PyObject* ZoneUpdater_Commit(PyObject* po_self, PyObject*) {
-    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
-    self->cppobj->commit();
-    Py_RETURN_NONE;
-}
-
-
-// These are the functions we export
-// For a minimal support, we don't need them.
-
-// This list contains the actual set of functions we have in
-// python. Each entry has
-// 1. Python method name
-// 2. Our static function here
-// 3. Argument type
-// 4. Documentation
-PyMethodDef ZoneUpdater_methods[] = {
-/*    { "get_finder", ZoneUpdater_GetFinder, METH_NOARGS, "TODO" },*/
-    { "add_rrset", ZoneUpdater_AddRRset, METH_VARARGS, "TODO" },
-    { "delete_rrset", ZoneUpdater_DeleteRRset, METH_VARARGS, "TODO" },
-    { "commit", ZoneUpdater_Commit, METH_NOARGS, "TODO" },
-    { NULL, NULL, 0, NULL }
-};
-
-// This is a template of typical code logic of python class initialization
-// with C++ backend.  You'll need to adjust it according to details of the
-// actual C++ class.
 int
 ZoneUpdater_init(s_ZoneUpdater* self, PyObject* args) {
     // can't be called directly
@@ -136,10 +81,83 @@ ZoneUpdater_init(s_ZoneUpdater* self, PyObject* args) {
 // In many cases you can use it without modification, but check that carefully.
 void
 ZoneUpdater_destroy(s_ZoneUpdater* const self) {
-    //delete self->cppobj;
-    //self->cppobj = NULL;
+    // cppobj is a shared ptr so should take care of itself
     Py_TYPE(self)->tp_free(self);
 }
+
+// These are the functions we export
+//
+PyObject* ZoneUpdater_AddRRset(PyObject* po_self, PyObject* args) {
+    // TODO err handling
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+    PyObject* rrset_obj;
+    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
+        try {
+            self->cppobj->addRRset(isc::dns::python::PyRRset_ToRRset(rrset_obj));
+            Py_RETURN_NONE;
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        }
+    } else {
+        return (NULL);
+    }
+}
+
+PyObject* ZoneUpdater_DeleteRRset(PyObject* po_self, PyObject* args) {
+    // TODO err handling
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+    PyObject* rrset_obj;
+    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
+        try {
+            self->cppobj->deleteRRset(isc::dns::python::PyRRset_ToRRset(rrset_obj));
+            Py_RETURN_NONE;
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        }
+    } else {
+        return (NULL);
+    }
+}
+
+PyObject* ZoneUpdater_Commit(PyObject* po_self, PyObject*) {
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+    try {
+        self->cppobj->commit();
+        Py_RETURN_NONE;
+    } catch (const DataSourceError& dse) {
+        PyErr_SetString(getDataSourceException("Error"), dse.what());
+        return (NULL);
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    }
+}
+
+
+// These are the functions we export
+// For a minimal support, we don't need them.
+
+// This list contains the actual set of functions we have in
+// python. Each entry has
+// 1. Python method name
+// 2. Our static function here
+// 3. Argument type
+// 4. Documentation
+PyMethodDef ZoneUpdater_methods[] = {
+/*TODO    { "get_finder", ZoneUpdater_GetFinder, METH_NOARGS, "TODO" },*/
+    { "add_rrset", ZoneUpdater_AddRRset, METH_VARARGS, "TODO" },
+    { "delete_rrset", ZoneUpdater_DeleteRRset, METH_VARARGS, "TODO" },
+    { "commit", ZoneUpdater_Commit, METH_NOARGS, "TODO" },
+    { NULL, NULL, 0, NULL }
+};
 
 } // end of unnamed namespace
 
