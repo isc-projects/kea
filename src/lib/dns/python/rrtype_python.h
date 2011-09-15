@@ -40,8 +40,6 @@ public:
 
 extern PyTypeObject rrtype_type;
 
-bool initModulePart_RRType(PyObject* mod);
-
 /// This is a simple shortcut to create a python RRType object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
 /// On success, it returns a valid pointer to PyObject with a reference

@@ -253,6 +253,7 @@ PyTypeObject rdata_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_Rdata(PyObject* mod) {
@@ -279,6 +280,7 @@ initModulePart_Rdata(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 } // end python namespace
 } // end dns namespace

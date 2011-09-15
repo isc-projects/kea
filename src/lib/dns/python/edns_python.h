@@ -35,8 +35,6 @@ public:
 
 extern PyTypeObject edns_type;
 
-bool initModulePart_EDNS(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

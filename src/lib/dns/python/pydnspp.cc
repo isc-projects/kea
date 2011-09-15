@@ -38,25 +38,41 @@
 #include <dns/messagerenderer.h>
 
 #include "pydnspp_common.h"
-#include "messagerenderer_python.h"
-#include "name_python.h"
-#include "rrclass_python.h"
-#include "rrtype_python.h"
-#include "rrttl_python.h"
-#include "rdata_python.h"
-#include "rcode_python.h"
-#include "opcode_python.h"
-#include "rrset_python.h"
-#include "tsigkey_python.h"
-#include "tsig_rdata_python.h"
-#include "tsigerror_python.h"
-#include "tsigrecord_python.h"
-#include "tsig_python.h"
-#include "question_python.h"
-#include "message_python.h"
-#include "edns_python.h"
+/* Note that we do forward declarations of the initialization functions here,
+ * and these are not defined in headers (since they are not to be used in any
+ * other place */
+namespace isc {
+namespace dns {
+namespace python {
+namespace internal {
+
+bool initModulePart_EDNS(PyObject* mod);
+bool initModulePart_Message(PyObject* mod);
+bool initModulePart_MessageRenderer(PyObject* mod);
+bool initModulePart_Name(PyObject* mod);
+bool initModulePart_Opcode(PyObject* mod);
+bool initModulePart_Question(PyObject* mod);
+bool initModulePart_Rcode(PyObject* mod);
+bool initModulePart_Rdata(PyObject* mod);
+bool initModulePart_RRClass(PyObject* mod);
+bool initModulePart_RRset(PyObject* mod);
+bool initModulePart_RRTTL(PyObject* mod);
+bool initModulePart_RRType(PyObject* mod);
+bool initModulePart_TSIGError(PyObject* mod);
+bool initModulePart_TSIGKey(PyObject* mod);
+bool initModulePart_TSIGKeyRing(PyObject* mod);
+bool initModulePart_TSIGContext(PyObject* mod);
+bool initModulePart_TSIG(PyObject* mod);
+bool initModulePart_TSIGRecord(PyObject* mod);
+
+}
+} // namespace python
+} // namespace dns
+} // namespace isc
+
 
 using namespace isc::dns::python;
+using namespace isc::dns::python::internal;
 
 //
 // Definition of the module

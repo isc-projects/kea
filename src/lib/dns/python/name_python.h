@@ -61,8 +61,6 @@ public:
 extern PyTypeObject name_comparison_result_type;
 extern PyTypeObject name_type;
 
-bool initModulePart_Name(PyObject* mod);
-
 /// This is A simple shortcut to create a python Name object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
 /// On success, it returns a valid pointer to PyObject with a reference

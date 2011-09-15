@@ -393,6 +393,7 @@ PyTypeObject rrset_type = {
 
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_RRset(PyObject* mod) {
     // Add the exceptions to the module
@@ -417,6 +418,7 @@ initModulePart_RRset(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 PyObject*
 createRRsetObject(const RRset& source) {

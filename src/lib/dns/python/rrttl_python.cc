@@ -285,6 +285,7 @@ PyTypeObject rrttl_type = {
 };
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_RRTTL(PyObject* mod) {
     // Add the exceptions to the module
@@ -305,6 +306,7 @@ initModulePart_RRTTL(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 } // namespace python
 } // namespace dns

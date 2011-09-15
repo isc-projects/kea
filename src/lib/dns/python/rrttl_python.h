@@ -40,8 +40,6 @@ public:
 
 extern PyTypeObject rrttl_type;
 
-bool initModulePart_RRTTL(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

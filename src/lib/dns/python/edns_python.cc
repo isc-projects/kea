@@ -349,6 +349,7 @@ PyTypeObject edns_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 bool
 initModulePart_EDNS(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
@@ -366,6 +367,7 @@ initModulePart_EDNS(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 } // end namespace python
 } // end namespace dns
