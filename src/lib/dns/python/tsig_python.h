@@ -35,8 +35,6 @@ extern PyTypeObject tsigcontext_type;
 // Class specific exceptions
 extern PyObject* po_TSIGContextError;
 
-bool initModulePart_TSIGContext(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

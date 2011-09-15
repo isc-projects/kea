@@ -32,8 +32,6 @@ public:
 
 extern PyTypeObject tsigrecord_type;
 
-bool initModulePart_TSIGRecord(PyObject* mod);
-
 /// This is A simple shortcut to create a python TSIGRecord object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
 /// On success, it returns a valid pointer to PyObject with a reference

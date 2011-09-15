@@ -196,7 +196,7 @@ PyTypeObject tsigkey_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     NULL,                               // tp_str
     NULL,                               // tp_getattro
@@ -234,6 +234,7 @@ PyTypeObject tsigkey_type = {
 };
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_TSIGKey(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
@@ -276,6 +277,8 @@ initModulePart_TSIGKey(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
+
 } // namespace python
 } // namespace dns
 } // namespace isc
@@ -329,7 +332,7 @@ TSIGKeyRing_init(s_TSIGKeyRing* self, PyObject* args) {
                         "Invalid arguments to TSIGKeyRing constructor");
         return (-1);
     }
-    
+
     self->cppobj = new(nothrow) TSIGKeyRing();
     if (self->cppobj == NULL) {
         PyErr_SetString(po_IscException, "Allocating TSIGKeyRing failed");
@@ -354,7 +357,7 @@ TSIGKeyRing_size(const s_TSIGKeyRing* const self) {
 PyObject*
 TSIGKeyRing_add(const s_TSIGKeyRing* const self, PyObject* args) {
     s_TSIGKey* tsigkey;
-    
+
     if (PyArg_ParseTuple(args, "O!", &tsigkey_type, &tsigkey)) {
         try {
             const TSIGKeyRing::Result result =
@@ -436,7 +439,7 @@ PyTypeObject tsigkeyring_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     NULL,                               // tp_str
     NULL,                               // tp_getattro
@@ -472,6 +475,7 @@ PyTypeObject tsigkeyring_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 bool
 initModulePart_TSIGKeyRing(PyObject* mod) {
     if (PyType_Ready(&tsigkeyring_type) < 0) {
@@ -494,6 +498,8 @@ initModulePart_TSIGKeyRing(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
+
 } // namespace python
 } // namespace dns
 } // namespace isc

@@ -273,6 +273,7 @@ PyTypeObject question_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 bool
 initModulePart_Question(PyObject* mod) {
     // Add the exceptions to the module
@@ -289,6 +290,7 @@ initModulePart_Question(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 } // end python namespace
 } // end dns namespace

@@ -37,8 +37,6 @@ public:
 
 extern PyTypeObject rdata_type;
 
-bool initModulePart_Rdata(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

@@ -45,8 +45,6 @@ public:
 
 extern PyTypeObject rcode_type;
 
-bool initModulePart_Rcode(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

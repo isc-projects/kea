@@ -331,6 +331,7 @@ PyTypeObject rrclass_type = {
 
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_RRClass(PyObject* mod) {
     // Add the exceptions to the module
@@ -353,6 +354,7 @@ initModulePart_RRClass(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 PyObject*
 createRRClassObject(const RRClass& source) {

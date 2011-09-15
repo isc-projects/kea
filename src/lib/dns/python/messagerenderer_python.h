@@ -38,8 +38,6 @@ public:
 
 extern PyTypeObject messagerenderer_type;
 
-bool initModulePart_MessageRenderer(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

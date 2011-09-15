@@ -750,6 +750,7 @@ PyTypeObject message_type = {
 };
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_Message(PyObject* mod) {
     if (PyType_Ready(&message_type) < 0) {
@@ -816,6 +817,7 @@ initModulePart_Message(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 } // end python namespace
 } // end dns namespace

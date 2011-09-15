@@ -36,8 +36,6 @@ public:
 
 extern PyTypeObject tsig_type;
 
-bool initModulePart_TSIG(PyObject* mod);
-
 /// This is A simple shortcut to create a python TSIG object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
 /// On success, it returns a valid pointer to PyObject with a reference

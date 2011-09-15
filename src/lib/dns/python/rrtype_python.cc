@@ -428,6 +428,7 @@ PyTypeObject rrtype_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 bool
 initModulePart_RRType(PyObject* mod) {
     // Add the exceptions to the module
@@ -448,6 +449,7 @@ initModulePart_RRType(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 PyObject*
 createRRTypeObject(const RRType& source) {

@@ -46,8 +46,6 @@ public:
 
 extern PyTypeObject rrset_type;
 
-bool initModulePart_RRset(PyObject* mod);
-
 /// This is a simple shortcut to create a python RRset object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
 /// On success, it returns a valid pointer to PyObject with a reference

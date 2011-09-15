@@ -37,8 +37,6 @@ public:
 
 extern PyTypeObject question_type;
 
-bool initModulePart_Question(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

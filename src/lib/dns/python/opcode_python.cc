@@ -330,6 +330,7 @@ PyTypeObject opcode_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 bool
 initModulePart_Opcode(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
@@ -380,6 +381,7 @@ initModulePart_Opcode(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 } // end python namespace
 } // end dns namespace

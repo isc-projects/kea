@@ -40,8 +40,6 @@ public:
 
 extern PyTypeObject message_type;
 
-bool initModulePart_Message(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc
