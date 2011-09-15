@@ -18,6 +18,7 @@
 #include <dns/rrttl.h>
 #include <dns/messagerenderer.h>
 #include <util/buffer.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "rrttl_python.h"
 #include "pydnspp_common.h"
@@ -27,11 +28,17 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_RRTTL : public PyObject {
+public:
+    s_RRTTL() : cppobj(NULL) {};
+    isc::dns::RRTTL* cppobj;
+};
 
-int RRTTL_init(s_RRTTL* self, PyObject* args);
-void RRTTL_destroy(s_RRTTL* self);
+typedef CPPPyObjectContainer<s_RRTTL, RRTTL> RRTTLContainer;
 
 PyObject* RRTTL_toText(s_RRTTL* self);
 // This is a second version of toText, we need one where the argument
@@ -143,7 +150,7 @@ RRTTL_str(PyObject* self) {
 PyObject*
 RRTTL_toWire(s_RRTTL* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -158,7 +165,7 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->cppobj);
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -307,6 +314,24 @@ initModulePart_RRTTL(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+PyObject*
+createRRTTLObject(const RRTTL& source) {
+    RRTTLContainer container = PyObject_New(s_RRTTL, &rrttl_type);
+    container.set(new RRTTL(source));
+    return (container.release());
+}
+
+bool
+PyRRTTL_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &rrttl_type));
+}
+
+const RRTTL&
+PyRRTTL_ToRRTTL(const PyObject* rrttl_obj) {
+    const s_RRTTL* rrttl = static_cast<const s_RRTTL*>(rrttl_obj);
+    return (*rrttl->cppobj);
+}
 
 } // namespace python
 } // namespace dns

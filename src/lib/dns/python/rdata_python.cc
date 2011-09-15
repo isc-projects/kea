@@ -17,6 +17,7 @@
 #include <dns/rdata.h>
 #include <dns/messagerenderer.h>
 #include <util/buffer.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "rdata_python.h"
 #include "rrtype_python.h"
@@ -26,9 +27,16 @@
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 using namespace isc::dns::rdata;
 
 namespace {
+class s_Rdata : public PyObject {
+public:
+    isc::dns::rdata::ConstRdataPtr cppobj;
+};
+
+typedef CPPPyObjectContainer<s_Rdata, Rdata> RdataContainer;
 
 //
 // We declare the functions here, the definitions are below
@@ -68,8 +76,8 @@ PyMethodDef Rdata_methods[] = {
 
 int
 Rdata_init(s_Rdata* self, PyObject* args) {
-    s_RRType* rrtype;
-    s_RRClass* rrclass;
+    PyObject* rrtype;
+    PyObject* rrclass;
     const char* s;
     const char* data;
     Py_ssize_t len;
@@ -78,13 +86,15 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
                                         &rrclass_type, &rrclass,
                                         &s)) {
-        self->cppobj = createRdata(*rrtype->cppobj, *rrclass->cppobj, s);
+        self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
+                                   PyRRClass_ToRRClass(rrclass), s);
         return (0);
     } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
                                 &rrclass_type, &rrclass, &data, &len)) {
         InputBuffer input_buffer(data, len);
-        self->cppobj = createRdata(*rrtype->cppobj, *rrclass->cppobj,
-                                  input_buffer, len);
+        self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
+                                   PyRRClass_ToRRClass(rrclass),
+                                   input_buffer, len);
         return (0);
     }
 
@@ -116,7 +126,7 @@ Rdata_str(PyObject* self) {
 PyObject*
 Rdata_toWire(s_Rdata* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -130,7 +140,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         Py_DECREF(rd_bytes);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->cppobj);
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -281,6 +291,29 @@ initModulePart_Rdata(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+PyObject*
+createRdataObject(ConstRdataPtr source) {
+    s_Rdata* py_rdata =
+        static_cast<s_Rdata*>(rdata_type.tp_alloc(&rdata_type, 0));
+    if (py_rdata == NULL) {
+        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
+                  "probably due to short memory");
+    }
+    py_rdata->cppobj = source;
+    return (py_rdata);
+}
+
+bool
+PyRdata_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &rdata_type));
+}
+
+const Rdata&
+PyRdata_ToRdata(const PyObject* rdata_obj) {
+    const s_Rdata* rdata = static_cast<const s_Rdata*>(rdata_obj);
+    return (*rdata->cppobj);
+}
 
 } // end python namespace
 } // end dns namespace

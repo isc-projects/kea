@@ -24,19 +24,34 @@ namespace isc {
 namespace dns {
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object.
-//
-// since we don't use *Buffer in the python version (but work with
-// the already existing bytearray type where we use these custom buffers
-// in C++, we need to keep track of one here.
-class s_MessageRenderer : public PyObject {
-public:
-    s_MessageRenderer();
-    isc::util::OutputBuffer* outputbuffer;
-    MessageRenderer* cppobj;
-};
-
 extern PyTypeObject messagerenderer_type;
+
+/// This is a simple shortcut to create a python MessageRenderer object (in the
+/// form of a pointer to PyObject) with minimal exception safety.
+/// On success, it returns a valid pointer to PyObject with a reference
+/// counter of 1; if something goes wrong it throws an exception (it never
+/// returns a NULL pointer).
+/// This function is expected to be called within a try block
+/// followed by necessary setup for python exception.
+PyObject* createMessageRendererObject(const MessageRenderer& source);
+
+/// \brief Checks if the given python object is a MessageRenderer object
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type MessageRenderer, false otherwise
+bool PyMessageRenderer_Check(PyObject* obj);
+
+/// \brief Returns a reference to the MessageRenderer object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type MessageRenderer; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyMessageRenderer_Check()
+///
+/// \note This is not a copy; if the MessageRenderer is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param messagerenderer_obj The messagerenderer object to convert
+MessageRenderer& PyMessageRenderer_ToMessageRenderer(PyObject* messagerenderer_obj);
 
 } // namespace python
 } // namespace dns

@@ -30,6 +30,11 @@ using namespace isc::util;
 using namespace isc::util::python;
 
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_RRType : public PyObject {
+public:
+    const RRType* cppobj;
+};
 
 // General creation and destruction
 int RRType_init(s_RRType* self, PyObject* args);
@@ -185,7 +190,7 @@ RRType_str(PyObject* self) {
 PyObject*
 RRType_toWire(s_RRType* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -199,7 +204,7 @@ RRType_toWire(s_RRType* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->cppobj);
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -458,15 +463,14 @@ createRRTypeObject(const RRType& source) {
     return (container.release());
 }
 
-
 bool
 PyRRType_Check(PyObject* obj) {
     return (PyObject_TypeCheck(obj, &rrtype_type));
 }
 
 const RRType&
-PyRRType_ToRRType(PyObject* rrtype_obj) {
-    s_RRType* rrtype = static_cast<s_RRType*>(rrtype_obj);
+PyRRType_ToRRType(const PyObject* rrtype_obj) {
+    const s_RRType* rrtype = static_cast<const s_RRType*>(rrtype_obj);
     return (*rrtype->cppobj);
 }
 

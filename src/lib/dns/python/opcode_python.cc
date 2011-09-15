@@ -15,6 +15,7 @@
 #include <Python.h>
 
 #include <dns/opcode.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "pydnspp_common.h"
 #include "opcode_python.h"
@@ -23,8 +24,18 @@
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
 namespace {
+
+class s_Opcode : public PyObject {
+public:
+    s_Opcode() : cppobj(NULL), static_code(false) {}
+    const isc::dns::Opcode* cppobj;
+    bool static_code;
+};
+
+typedef CPPPyObjectContainer<s_Opcode, Opcode> OpcodeContainer;
 
 int Opcode_init(s_Opcode* const self, PyObject* args);
 void Opcode_destroy(s_Opcode* const self);
@@ -382,6 +393,25 @@ initModulePart_Opcode(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+
+PyObject*
+createOpcodeObject(const Opcode& source) {
+    OpcodeContainer container = PyObject_New(s_Opcode, &opcode_type);
+    container.set(new Opcode(source));
+    return (container.release());
+}
+
+bool
+PyOpcode_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &opcode_type));
+}
+
+const Opcode&
+PyOpcode_ToOpcode(const PyObject* opcode_obj) {
+    const s_Opcode* opcode = static_cast<const s_Opcode*>(opcode_obj);
+    return (*opcode->cppobj);
+}
 
 } // end python namespace
 } // end dns namespace

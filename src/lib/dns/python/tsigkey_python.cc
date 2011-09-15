@@ -43,11 +43,14 @@ using namespace isc::dns::python;
 // TSIGKey
 //
 
-// The s_* Class simply covers one instantiation of the object
-
-s_TSIGKey::s_TSIGKey() : cppobj(NULL) {}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_TSIGKey : public PyObject {
+public:
+    s_TSIGKey() : cppobj(NULL) {};
+    TSIGKey* cppobj;
+};
+
 //
 // We declare the functions here, the definitions are below
 // the type definition of the object, since both can use the other
@@ -96,8 +99,8 @@ TSIGKey_init(s_TSIGKey* self, PyObject* args) {
         }
 
         PyErr_Clear();
-        const s_Name* key_name;
-        const s_Name* algorithm_name;
+        const PyObject* key_name;
+        const PyObject* algorithm_name;
         PyObject* bytes_obj;
         const char* secret;
         Py_ssize_t secret_len;
@@ -107,8 +110,8 @@ TSIGKey_init(s_TSIGKey* self, PyObject* args) {
             if (secret_len == 0) {
                 secret = NULL;
             }
-            self->cppobj = new TSIGKey(*key_name->cppobj,
-                                       *algorithm_name->cppobj,
+            self->cppobj = new TSIGKey(PyName_ToName(key_name),
+                                       PyName_ToName(algorithm_name),
                                        secret, secret_len);
             return (0);
         }
@@ -279,6 +282,17 @@ initModulePart_TSIGKey(PyObject* mod) {
 }
 } // end namespace internal
 
+bool
+PyTSIGKey_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &tsigkey_type));
+}
+
+const TSIGKey&
+PyTSIGKey_ToTSIGKey(const PyObject* tsigkey_obj) {
+    const s_TSIGKey* tsigkey = static_cast<const s_TSIGKey*>(tsigkey_obj);
+    return (*tsigkey->cppobj);
+}
+
 } // namespace python
 } // namespace dns
 } // namespace isc
@@ -294,9 +308,13 @@ initModulePart_TSIGKey(PyObject* mod) {
 
 // The s_* Class simply covers one instantiation of the object
 
-s_TSIGKeyRing::s_TSIGKeyRing() : cppobj(NULL) {}
-
 namespace {
+class s_TSIGKeyRing : public PyObject {
+public:
+    s_TSIGKeyRing() : cppobj(NULL) {};
+    TSIGKeyRing* cppobj;
+};
+
 //
 // We declare the functions here, the definitions are below
 // the type definition of the object, since both can use the other
@@ -377,11 +395,11 @@ TSIGKeyRing_add(const s_TSIGKeyRing* const self, PyObject* args) {
 
 PyObject*
 TSIGKeyRing_remove(const s_TSIGKeyRing* self, PyObject* args) {
-    s_Name* key_name;
+    PyObject* key_name;
 
     if (PyArg_ParseTuple(args, "O!", &name_type, &key_name)) {
         const TSIGKeyRing::Result result =
-            self->cppobj->remove(*key_name->cppobj);
+            self->cppobj->remove(PyName_ToName(key_name));
         return (Py_BuildValue("I", result));
     }
 
@@ -393,13 +411,14 @@ TSIGKeyRing_remove(const s_TSIGKeyRing* self, PyObject* args) {
 
 PyObject*
 TSIGKeyRing_find(const s_TSIGKeyRing* self, PyObject* args) {
-    s_Name* key_name;
-    s_Name* algorithm_name;
+    PyObject* key_name;
+    PyObject* algorithm_name;
 
     if (PyArg_ParseTuple(args, "O!O!", &name_type, &key_name,
                          &name_type, &algorithm_name)) {
         const TSIGKeyRing::FindResult result =
-            self->cppobj->find(*key_name->cppobj, *algorithm_name->cppobj);
+            self->cppobj->find(PyName_ToName(key_name),
+                               PyName_ToName(algorithm_name));
         if (result.key != NULL) {
             s_TSIGKey* key = PyObject_New(s_TSIGKey, &tsigkey_type);
             if (key == NULL) {
@@ -499,6 +518,18 @@ initModulePart_TSIGKeyRing(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+bool
+PyTSIGKeyRing_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &tsigkeyring_type));
+}
+
+const TSIGKeyRing&
+PyTSIGKeyRing_ToTSIGKeyRing(const PyObject* tsigkeyring_obj) {
+    const s_TSIGKeyRing* tsigkeyring =
+        static_cast<const s_TSIGKeyRing*>(tsigkeyring_obj);
+    return (*tsigkeyring->cppobj);
+}
 
 } // namespace python
 } // namespace dns

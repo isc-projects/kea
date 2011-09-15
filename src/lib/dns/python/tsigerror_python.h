@@ -23,13 +23,6 @@ namespace isc {
 namespace dns {
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_TSIGError : public PyObject {
-public:
-    s_TSIGError();
-    const TSIGError* cppobj;
-};
-
 extern PyTypeObject tsigerror_type;
 
 /// This is A simple shortcut to create a python TSIGError object (in the
@@ -40,6 +33,7 @@ extern PyTypeObject tsigerror_type;
 /// This function is expected to be called with in a try block
 /// followed by necessary setup for python exception.
 PyObject* createTSIGErrorObject(const TSIGError& source);
+
 } // namespace python
 } // namespace dns
 } // namespace isc

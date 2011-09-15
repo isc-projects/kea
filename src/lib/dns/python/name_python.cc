@@ -31,6 +31,19 @@ using namespace isc::util;
 using namespace isc::util::python;
 
 namespace {
+// The s_* Class simply covers one instantiation of the object.
+class s_NameComparisonResult : public PyObject {
+public:
+    s_NameComparisonResult() : cppobj(NULL) {}
+    NameComparisonResult* cppobj;
+};
+
+class s_Name : public PyObject {
+public:
+    s_Name() : cppobj(NULL), position(0) {}
+    Name* cppobj;
+    size_t position;
+};
 
 int NameComparisonResult_init(s_NameComparisonResult*, PyObject*);
 void NameComparisonResult_destroy(s_NameComparisonResult* self);
@@ -282,7 +295,7 @@ Name_str(PyObject* self) {
 PyObject*
 Name_toWire(s_Name* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -296,7 +309,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         Py_DECREF(name_bytes);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->cppobj);
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -719,9 +732,9 @@ PyName_Check(PyObject* obj) {
     return (PyObject_TypeCheck(obj, &name_type));
 }
 
-Name&
-PyName_ToName(PyObject* name_obj) {
-    s_Name* name = static_cast<s_Name*>(name_obj);
+const Name&
+PyName_ToName(const PyObject* name_obj) {
+    const s_Name* name = static_cast<const s_Name*>(name_obj);
     return (*name->cppobj);
 }
 
