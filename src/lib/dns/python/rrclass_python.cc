@@ -35,24 +35,24 @@ namespace {
 //
 
 // General creation and destruction
-static int RRClass_init(s_RRClass* self, PyObject* args);
-static void RRClass_destroy(s_RRClass* self);
+int RRClass_init(s_RRClass* self, PyObject* args);
+void RRClass_destroy(s_RRClass* self);
 
 // These are the functions we export
-static PyObject* RRClass_toText(s_RRClass* self);
+PyObject* RRClass_toText(s_RRClass* self);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
-static PyObject* RRClass_str(PyObject* self);
-static PyObject* RRClass_toWire(s_RRClass* self, PyObject* args);
-static PyObject* RRClass_getCode(s_RRClass* self);
-static PyObject* RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op);
+PyObject* RRClass_str(PyObject* self);
+PyObject* RRClass_toWire(s_RRClass* self, PyObject* args);
+PyObject* RRClass_getCode(s_RRClass* self);
+PyObject* RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op);
 
 // Static function for direct class creation
-static PyObject* RRClass_IN(s_RRClass *self);
-static PyObject* RRClass_CH(s_RRClass *self);
-static PyObject* RRClass_HS(s_RRClass *self);
-static PyObject* RRClass_NONE(s_RRClass *self);
-static PyObject* RRClass_ANY(s_RRClass *self);
+PyObject* RRClass_IN(s_RRClass *self);
+PyObject* RRClass_CH(s_RRClass *self);
+PyObject* RRClass_HS(s_RRClass *self);
+PyObject* RRClass_NONE(s_RRClass *self);
+PyObject* RRClass_ANY(s_RRClass *self);
 
 typedef CPPPyObjectContainer<s_RRClass, RRClass> RRClassContainer;
 
@@ -62,7 +62,7 @@ typedef CPPPyObjectContainer<s_RRClass, RRClass> RRClassContainer;
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-static PyMethodDef RRClass_methods[] = {
+PyMethodDef RRClass_methods[] = {
     { "to_text", reinterpret_cast<PyCFunction>(RRClass_toText), METH_NOARGS,
       "Returns the string representation" },
     { "to_wire", reinterpret_cast<PyCFunction>(RRClass_toWire), METH_VARARGS,
@@ -82,7 +82,7 @@ static PyMethodDef RRClass_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static int
+int
 RRClass_init(s_RRClass* self, PyObject* args) {
     const char* s;
     long i;
@@ -131,20 +131,20 @@ RRClass_init(s_RRClass* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 RRClass_destroy(s_RRClass* self) {
     delete self->cppobj;
     self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 RRClass_toText(s_RRClass* self) {
     // Py_BuildValue makes python objects from native data
     return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
-static PyObject*
+PyObject*
 RRClass_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
@@ -152,7 +152,7 @@ RRClass_str(PyObject* self) {
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 RRClass_toWire(s_RRClass* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
@@ -180,12 +180,12 @@ RRClass_toWire(s_RRClass* self, PyObject* args) {
     return (NULL);
 }
 
-static PyObject*
+PyObject*
 RRClass_getCode(s_RRClass* self) {
     return (Py_BuildValue("I", self->cppobj->getCode()));
 }
 
-static PyObject*
+PyObject*
 RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
     bool c;
 
@@ -230,7 +230,7 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
 //
 // Common function for RRClass_IN/CH/etc.
 //
-static PyObject* RRClass_createStatic(RRClass stc) {
+PyObject* RRClass_createStatic(RRClass stc) {
     s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
     if (ret != NULL) {
         ret->cppobj = new RRClass(stc);
@@ -238,23 +238,23 @@ static PyObject* RRClass_createStatic(RRClass stc) {
     return (ret);
 }
 
-static PyObject* RRClass_IN(s_RRClass*) {
+PyObject* RRClass_IN(s_RRClass*) {
     return (RRClass_createStatic(RRClass::IN()));
 }
 
-static PyObject* RRClass_CH(s_RRClass*) {
+PyObject* RRClass_CH(s_RRClass*) {
     return (RRClass_createStatic(RRClass::CH()));
 }
 
-static PyObject* RRClass_HS(s_RRClass*) {
+PyObject* RRClass_HS(s_RRClass*) {
     return (RRClass_createStatic(RRClass::HS()));
 }
 
-static PyObject* RRClass_NONE(s_RRClass*) {
+PyObject* RRClass_NONE(s_RRClass*) {
     return (RRClass_createStatic(RRClass::NONE()));
 }
 
-static PyObject* RRClass_ANY(s_RRClass*) {
+PyObject* RRClass_ANY(s_RRClass*) {
     return (RRClass_createStatic(RRClass::ANY()));
 }
 

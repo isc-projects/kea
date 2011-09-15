@@ -30,16 +30,16 @@ using namespace isc::util;
 
 namespace {
 
-static int RRTTL_init(s_RRTTL* self, PyObject* args);
-static void RRTTL_destroy(s_RRTTL* self);
+int RRTTL_init(s_RRTTL* self, PyObject* args);
+void RRTTL_destroy(s_RRTTL* self);
 
-static PyObject* RRTTL_toText(s_RRTTL* self);
+PyObject* RRTTL_toText(s_RRTTL* self);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
-static PyObject* RRTTL_str(PyObject* self);
-static PyObject* RRTTL_toWire(s_RRTTL* self, PyObject* args);
-static PyObject* RRTTL_getValue(s_RRTTL* self);
-static PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
+PyObject* RRTTL_str(PyObject* self);
+PyObject* RRTTL_toWire(s_RRTTL* self, PyObject* args);
+PyObject* RRTTL_getValue(s_RRTTL* self);
+PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -47,7 +47,7 @@ static PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-static PyMethodDef RRTTL_methods[] = {
+PyMethodDef RRTTL_methods[] = {
     { "to_text", reinterpret_cast<PyCFunction>(RRTTL_toText), METH_NOARGS,
       "Returns the string representation" },
     { "to_wire", reinterpret_cast<PyCFunction>(RRTTL_toWire), METH_VARARGS,
@@ -62,7 +62,7 @@ static PyMethodDef RRTTL_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static int
+int
 RRTTL_init(s_RRTTL* self, PyObject* args) {
     const char* s;
     long long i;
@@ -119,20 +119,20 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 RRTTL_destroy(s_RRTTL* self) {
     delete self->rrttl;
     self->rrttl = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 RRTTL_toText(s_RRTTL* self) {
     // Py_BuildValue makes python objects from native data
     return (Py_BuildValue("s", self->rrttl->toText().c_str()));
 }
 
-static PyObject*
+PyObject*
 RRTTL_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
@@ -140,7 +140,7 @@ RRTTL_str(PyObject* self) {
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 RRTTL_toWire(s_RRTTL* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
@@ -169,12 +169,12 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
     return (NULL);
 }
 
-static PyObject*
+PyObject*
 RRTTL_getValue(s_RRTTL* self) {
     return (Py_BuildValue("I", self->rrttl->getValue()));
 }
 
-static PyObject*
+PyObject*
 RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
     bool c = false;
 
