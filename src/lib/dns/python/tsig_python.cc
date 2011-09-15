@@ -264,7 +264,7 @@ PyTypeObject tsigcontext_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     NULL,                               // tp_str
     NULL,                               // tp_getattro
@@ -308,6 +308,7 @@ PyTypeObject tsigcontext_type = {
 };
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_TSIGContext(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
@@ -359,6 +360,8 @@ initModulePart_TSIGContext(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
+
 } // namespace python
 } // namespace dns
 } // namespace isc

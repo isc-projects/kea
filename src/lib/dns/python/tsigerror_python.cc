@@ -190,7 +190,7 @@ TSIGError_toRcode(const s_TSIGError* const self) {
     return (NULL);
 }
 
-PyObject* 
+PyObject*
 TSIGError_richcmp(const s_TSIGError* const self,
                    const s_TSIGError* const other,
                    const int op)
@@ -252,7 +252,7 @@ PyTypeObject tsigerror_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     // THIS MAY HAVE TO BE CHANGED TO NULL:
     TSIGError_str,                       // tp_str
@@ -300,6 +300,7 @@ installTSIGErrorConstant(const char* name, const TSIGError& val) {
 }
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_TSIGError(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
@@ -358,6 +359,7 @@ initModulePart_TSIGError(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 PyObject*
 createTSIGErrorObject(const TSIGError& source) {

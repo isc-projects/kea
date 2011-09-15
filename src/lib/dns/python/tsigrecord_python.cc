@@ -226,7 +226,7 @@ PyTypeObject tsigrecord_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     TSIGRecord_str,                       // tp_str
     NULL,                               // tp_getattro
@@ -263,6 +263,7 @@ PyTypeObject tsigrecord_type = {
 };
 
 // Module Initialization, all statics are initialized here
+namespace internal {
 bool
 initModulePart_TSIGRecord(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
@@ -298,6 +299,7 @@ initModulePart_TSIGRecord(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 PyObject*
 createTSIGRecordObject(const TSIGRecord& source) {

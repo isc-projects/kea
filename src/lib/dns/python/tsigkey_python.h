@@ -39,9 +39,6 @@ public:
 extern PyTypeObject tsigkey_type;
 extern PyTypeObject tsigkeyring_type;
 
-bool initModulePart_TSIGKey(PyObject* mod);
-bool initModulePart_TSIGKeyRing(PyObject* mod);
-
 } // namespace python
 } // namespace dns
 } // namespace isc

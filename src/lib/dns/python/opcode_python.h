@@ -36,10 +36,7 @@ public:
     bool static_code;
 };
 
-
 extern PyTypeObject opcode_type;
-
-bool initModulePart_Opcode(PyObject* mod);
 
 } // namespace python
 } // namespace dns

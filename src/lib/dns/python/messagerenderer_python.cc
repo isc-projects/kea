@@ -225,6 +225,7 @@ PyTypeObject messagerenderer_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 bool initModulePart_MessageRenderer(PyObject* mod) {
     if (PyType_Ready(&messagerenderer_type) < 0) {
         return (false);
@@ -241,6 +242,8 @@ bool initModulePart_MessageRenderer(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
+
 } // namespace python
 } // namespace dns
 } // namespace isc

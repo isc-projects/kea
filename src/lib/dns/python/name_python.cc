@@ -624,6 +624,7 @@ PyTypeObject name_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 bool
 initModulePart_Name(PyObject* mod) {
     // Add the classes to the module
@@ -704,6 +705,7 @@ initModulePart_Name(PyObject* mod) {
 
     return (true);
 }
+} // end namespace internal
 
 PyObject*
 createNameObject(const Name& source) {
