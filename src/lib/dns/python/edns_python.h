@@ -30,7 +30,7 @@ namespace python {
 //
 class s_EDNS : public PyObject {
 public:
-    EDNS* edns;
+    EDNS* cppobj;
 };
 
 extern PyTypeObject edns_type;

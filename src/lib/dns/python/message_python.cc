@@ -171,10 +171,10 @@ Message_init(s_Message* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
-            self->message = new Message(Message::PARSE);
+            self->cppobj = new Message(Message::PARSE);
             return (0);
         } else if (i == Message::RENDER) {
-            self->message = new Message(Message::RENDER);
+            self->cppobj = new Message(Message::RENDER);
             return (0);
         } else {
             PyErr_SetString(PyExc_TypeError, "Message mode must be Message.PARSE or Message.RENDER");
@@ -189,8 +189,8 @@ Message_init(s_Message* self, PyObject* args) {
 
 void
 Message_destroy(s_Message* self) {
-    delete self->message;
-    self->message = NULL;
+    delete self->cppobj;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -204,7 +204,7 @@ Message_getHeaderFlag(s_Message* self, PyObject* args) {
         return (NULL);
     }
 
-    if (self->message->getHeaderFlag(
+    if (self->cppobj->getHeaderFlag(
             static_cast<Message::HeaderFlag>(messageflag))) {
         Py_RETURN_TRUE;
     } else {
@@ -229,7 +229,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     }
 
     try {
-        self->message->setHeaderFlag(
+        self->cppobj->setHeaderFlag(
             static_cast<Message::HeaderFlag>(messageflag), on == Py_True);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
@@ -245,7 +245,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_getQid(s_Message* self) {
-    return (Py_BuildValue("I", self->message->getQid()));
+    return (Py_BuildValue("I", self->cppobj->getQid()));
 }
 
 PyObject*
@@ -264,7 +264,7 @@ Message_setQid(s_Message* self, PyObject* args) {
     }
 
     try {
-        self->message->setQid(id);
+        self->cppobj->setQid(id);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -280,7 +280,7 @@ Message_getRcode(s_Message* self) {
     if (rcode != NULL) {
         rcode->cppobj = NULL;
         try {
-            rcode->cppobj = new Rcode(self->message->getRcode());
+            rcode->cppobj = new Rcode(self->cppobj->getRcode());
         } catch (const InvalidMessageOperation& imo) {
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
         } catch (...) {
@@ -302,7 +302,7 @@ Message_setRcode(s_Message* self, PyObject* args) {
         return (NULL);
     }
     try {
-        self->message->setRcode(*rcode->cppobj);
+        self->cppobj->setRcode(*rcode->cppobj);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -316,15 +316,15 @@ Message_getOpcode(s_Message* self) {
 
     opcode = static_cast<s_Opcode*>(opcode_type.tp_alloc(&opcode_type, 0));
     if (opcode != NULL) {
-        opcode->opcode = NULL;
+        opcode->cppobj = NULL;
         try {
-            opcode->opcode = new Opcode(self->message->getOpcode());
+            opcode->cppobj = new Opcode(self->cppobj->getOpcode());
         } catch (const InvalidMessageOperation& imo) {
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
         } catch (...) {
             PyErr_SetString(po_IscException, "Unexpected exception");
         }
-        if (opcode->opcode == NULL) {
+        if (opcode->cppobj == NULL) {
             Py_DECREF(opcode);
             return (NULL);
         }
@@ -340,7 +340,7 @@ Message_setOpcode(s_Message* self, PyObject* args) {
         return (NULL);
     }
     try {
-        self->message->setOpcode(*opcode->opcode);
+        self->cppobj->setOpcode(*opcode->cppobj);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -352,7 +352,7 @@ PyObject*
 Message_getEDNS(s_Message* self) {
     s_EDNS* edns;
     EDNS* edns_body;
-    ConstEDNSPtr src = self->message->getEDNS();
+    ConstEDNSPtr src = self->cppobj->getEDNS();
 
     if (!src) {
         Py_RETURN_NONE;
@@ -362,7 +362,7 @@ Message_getEDNS(s_Message* self) {
     }
     edns = static_cast<s_EDNS*>(opcode_type.tp_alloc(&edns_type, 0));
     if (edns != NULL) {
-        edns->edns = edns_body;
+        edns->cppobj = edns_body;
     }
 
     return (edns);
@@ -375,7 +375,7 @@ Message_setEDNS(s_Message* self, PyObject* args) {
         return (NULL);
     }
     try {
-        self->message->setEDNS(EDNSPtr(new EDNS(*edns->edns)));
+        self->cppobj->setEDNS(EDNSPtr(new EDNS(*edns->cppobj)));
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -386,7 +386,7 @@ Message_setEDNS(s_Message* self, PyObject* args) {
 PyObject*
 Message_getTSIGRecord(s_Message* self) {
     try {
-        const TSIGRecord* tsig_record = self->message->getTSIGRecord();
+        const TSIGRecord* tsig_record = self->cppobj->getTSIGRecord();
 
         if (tsig_record == NULL) {
             Py_RETURN_NONE;
@@ -416,7 +416,7 @@ Message_getRRCount(s_Message* self, PyObject* args) {
         return (NULL);
     }
     try {
-        return (Py_BuildValue("I", self->message->getRRCount(
+        return (Py_BuildValue("I", self->cppobj->getRRCount(
                                   static_cast<Message::Section>(section))));
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
@@ -429,8 +429,8 @@ PyObject*
 Message_getQuestion(s_Message* self) {
     QuestionIterator qi, qi_end;
     try {
-        qi = self->message->beginQuestion();
-        qi_end = self->message->endQuestion();
+        qi = self->cppobj->beginQuestion();
+        qi_end = self->cppobj->endQuestion();
     } catch (const InvalidMessageSection& ex) {
         PyErr_SetString(po_InvalidMessageSection, ex.what());
         return (NULL);
@@ -453,7 +453,7 @@ Message_getQuestion(s_Message* self) {
             Py_DECREF(list);
             return (NULL);
         }
-        question->question = *qi;
+        question->cppobj = *qi;
         if (PyList_Append(list, question) == -1) {
             Py_DECREF(question);
             Py_DECREF(list);
@@ -475,9 +475,9 @@ Message_getSection(s_Message* self, PyObject* args) {
     }
     RRsetIterator rrsi, rrsi_end;
     try {
-        rrsi = self->message->beginSection(
+        rrsi = self->cppobj->beginSection(
             static_cast<Message::Section>(section));
-        rrsi_end = self->message->endSection(
+        rrsi_end = self->cppobj->endSection(
             static_cast<Message::Section>(section));
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
@@ -503,7 +503,7 @@ Message_getSection(s_Message* self, PyObject* args) {
                 Py_DECREF(list);
                 return (NULL);
         }
-        rrset->rrset = *rrsi;
+        rrset->cppobj = *rrsi;
         if (PyList_Append(list, rrset) == -1) {
                 Py_DECREF(rrset);
                 Py_DECREF(list);
@@ -529,7 +529,7 @@ Message_addQuestion(s_Message* self, PyObject* args) {
         return (NULL);
     }
 
-    self->message->addQuestion(question->question);
+    self->cppobj->addQuestion(question->cppobj);
 
     Py_RETURN_NONE;
 }
@@ -545,8 +545,8 @@ Message_addRRset(s_Message* self, PyObject* args) {
     }
 
     try {
-        self->message->addRRset(static_cast<Message::Section>(section),
-                                rrset->rrset, sign == Py_True);
+        self->cppobj->addRRset(static_cast<Message::Section>(section),
+                               rrset->cppobj, sign == Py_True);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -567,10 +567,10 @@ Message_clear(s_Message* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
-            self->message->clear(Message::PARSE);
+            self->cppobj->clear(Message::PARSE);
             Py_RETURN_NONE;
         } else if (i == Message::RENDER) {
-            self->message->clear(Message::RENDER);
+            self->cppobj->clear(Message::RENDER);
             Py_RETURN_NONE;
         } else {
             PyErr_SetString(PyExc_TypeError,
@@ -584,7 +584,7 @@ Message_clear(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_makeResponse(s_Message* self) {
-    self->message->makeResponse();
+    self->cppobj->makeResponse();
     Py_RETURN_NONE;
 }
 
@@ -592,7 +592,7 @@ PyObject*
 Message_toText(s_Message* self) {
     // Py_BuildValue makes python objects from native data
     try {
-        return (Py_BuildValue("s", self->message->toText().c_str()));
+        return (Py_BuildValue("s", self->cppobj->toText().c_str()));
     } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -620,9 +620,9 @@ Message_toWire(s_Message* self, PyObject* args) {
                          &tsigcontext_type, &tsig_ctx)) {
         try {
             if (tsig_ctx == NULL) {
-                self->message->toWire(*mr->messagerenderer);
+                self->cppobj->toWire(*mr->cppobj);
             } else {
-                self->message->toWire(*mr->messagerenderer, *tsig_ctx->cppobj);
+                self->cppobj->toWire(*mr->cppobj, *tsig_ctx->cppobj);
             }
             // If we return NULL it is seen as an error, so use this for
             // None returns
@@ -663,7 +663,7 @@ Message_fromWire(s_Message* self, PyObject* args) {
 
     InputBuffer inbuf(b, len);
     try {
-        self->message->fromWire(inbuf);
+        self->cppobj->fromWire(inbuf);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());

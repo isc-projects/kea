@@ -76,7 +76,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
     // (the way to do exceptions is to set PyErr and return -1)
     try {
         if (PyArg_ParseTuple(args, "s", &s)) {
-            self->rrttl = new RRTTL(s);
+            self->cppobj = new RRTTL(s);
             return (0);
         } else if (PyArg_ParseTuple(args, "L", &i)) {
             PyErr_Clear();
@@ -84,7 +84,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
                 PyErr_SetString(PyExc_ValueError, "RR TTL number out of range");
                 return (-1);
             }
-            self->rrttl = new RRTTL(i);
+            self->cppobj = new RRTTL(i);
             return (0);
         } else if (PyArg_ParseTuple(args, "O", &bytes) &&
                    PySequence_Check(bytes)) {
@@ -95,7 +95,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
                 return (result);
             }
             InputBuffer ib(&data[0], size);
-            self->rrttl = new RRTTL(ib);
+            self->cppobj = new RRTTL(ib);
             PyErr_Clear();
             return (0);
         }
@@ -121,15 +121,15 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
 
 void
 RRTTL_destroy(s_RRTTL* self) {
-    delete self->rrttl;
-    self->rrttl = NULL;
+    delete self->cppobj;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
 RRTTL_toText(s_RRTTL* self) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->rrttl->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 PyObject*
@@ -149,7 +149,7 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
         PyObject* bytes_o = bytes;
 
         OutputBuffer buffer(4);
-        self->rrttl->toWire(buffer);
+        self->cppobj->toWire(buffer);
         PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
                                                 buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
@@ -158,7 +158,7 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->rrttl->toWire(*mr->messagerenderer);
+        self->cppobj->toWire(*mr->cppobj);
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -171,7 +171,7 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
 
 PyObject*
 RRTTL_getValue(s_RRTTL* self) {
-    return (Py_BuildValue("I", self->rrttl->getValue()));
+    return (Py_BuildValue("I", self->cppobj->getValue()));
 }
 
 PyObject*
@@ -186,24 +186,24 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
 
     switch (op) {
     case Py_LT:
-        c = *self->rrttl < *other->rrttl;
+        c = *self->cppobj < *other->cppobj;
         break;
     case Py_LE:
-        c = *self->rrttl < *other->rrttl ||
-            *self->rrttl == *other->rrttl;
+        c = *self->cppobj < *other->cppobj ||
+            *self->cppobj == *other->cppobj;
         break;
     case Py_EQ:
-        c = *self->rrttl == *other->rrttl;
+        c = *self->cppobj == *other->cppobj;
         break;
     case Py_NE:
-        c = *self->rrttl != *other->rrttl;
+        c = *self->cppobj != *other->cppobj;
         break;
     case Py_GT:
-        c = *other->rrttl < *self->rrttl;
+        c = *other->cppobj < *self->cppobj;
         break;
     case Py_GE:
-        c = *other->rrttl < *self->rrttl ||
-            *self->rrttl == *other->rrttl;
+        c = *other->cppobj < *self->cppobj ||
+            *self->cppobj == *other->cppobj;
         break;
     }
     if (c)

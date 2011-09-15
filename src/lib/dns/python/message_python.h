@@ -35,7 +35,7 @@ extern PyObject* po_InvalidMessageUDPSize;
 
 class s_Message : public PyObject {
 public:
-    isc::dns::Message* message;
+    isc::dns::Message* cppobj;
 };
 
 extern PyTypeObject message_type;

@@ -169,7 +169,7 @@ RRClass_toWire(s_RRClass* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->messagerenderer);
+        self->cppobj->toWire(*mr->cppobj);
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;

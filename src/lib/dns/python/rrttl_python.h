@@ -34,7 +34,7 @@ extern PyObject* po_IncompleteRRTTL;
 // The s_* Class simply covers one instantiation of the object
 class s_RRTTL : public PyObject {
 public:
-    isc::dns::RRTTL* rrttl;
+    isc::dns::RRTTL* cppobj;
 };
 
 
