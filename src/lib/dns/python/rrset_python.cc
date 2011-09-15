@@ -39,26 +39,26 @@ namespace {
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_RRset, RRset> RRsetContainer;
 
-static int RRset_init(s_RRset* self, PyObject* args);
-static void RRset_destroy(s_RRset* self);
+int RRset_init(s_RRset* self, PyObject* args);
+void RRset_destroy(s_RRset* self);
 
-static PyObject* RRset_getRdataCount(s_RRset* self);
-static PyObject* RRset_getName(s_RRset* self);
-static PyObject* RRset_getClass(s_RRset* self);
-static PyObject* RRset_getType(s_RRset* self);
-static PyObject* RRset_getTTL(s_RRset* self);
-static PyObject* RRset_setName(s_RRset* self, PyObject* args);
-static PyObject* RRset_setTTL(s_RRset* self, PyObject* args);
-static PyObject* RRset_toText(s_RRset* self);
-static PyObject* RRset_str(PyObject* self);
-static PyObject* RRset_toWire(s_RRset* self, PyObject* args);
-static PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
-static PyObject* RRset_getRdata(s_RRset* self);
-static PyObject* RRset_removeRRsig(s_RRset* self);
+PyObject* RRset_getRdataCount(s_RRset* self);
+PyObject* RRset_getName(s_RRset* self);
+PyObject* RRset_getClass(s_RRset* self);
+PyObject* RRset_getType(s_RRset* self);
+PyObject* RRset_getTTL(s_RRset* self);
+PyObject* RRset_setName(s_RRset* self, PyObject* args);
+PyObject* RRset_setTTL(s_RRset* self, PyObject* args);
+PyObject* RRset_toText(s_RRset* self);
+PyObject* RRset_str(PyObject* self);
+PyObject* RRset_toWire(s_RRset* self, PyObject* args);
+PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
+PyObject* RRset_getRdata(s_RRset* self);
+PyObject* RRset_removeRRsig(s_RRset* self);
 
 // TODO: iterator?
 
-static PyMethodDef RRset_methods[] = {
+PyMethodDef RRset_methods[] = {
     { "get_rdata_count", reinterpret_cast<PyCFunction>(RRset_getRdataCount), METH_NOARGS,
       "Returns the number of rdata fields." },
     { "get_name", reinterpret_cast<PyCFunction>(RRset_getName), METH_NOARGS,
@@ -91,7 +91,7 @@ static PyMethodDef RRset_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static int
+int
 RRset_init(s_RRset* self, PyObject* args) {
     s_Name* name;
     s_RRClass* rrclass;
@@ -112,7 +112,7 @@ RRset_init(s_RRset* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 RRset_destroy(s_RRset* self) {
     // Clear the shared_ptr so that its reference count is zero
     // before we call tp_free() (there is no direct release())
@@ -120,12 +120,12 @@ RRset_destroy(s_RRset* self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 RRset_getRdataCount(s_RRset* self) {
     return (Py_BuildValue("I", self->rrset->getRdataCount()));
 }
 
-static PyObject*
+PyObject*
 RRset_getName(s_RRset* self) {
     s_Name* name;
 
@@ -143,7 +143,7 @@ RRset_getName(s_RRset* self) {
     return (name);
 }
 
-static PyObject*
+PyObject*
 RRset_getClass(s_RRset* self) {
     s_RRClass* rrclass;
 
@@ -160,7 +160,7 @@ RRset_getClass(s_RRset* self) {
     return (rrclass);
 }
 
-static PyObject*
+PyObject*
 RRset_getType(s_RRset* self) {
     s_RRType* rrtype;
 
@@ -177,7 +177,7 @@ RRset_getType(s_RRset* self) {
     return (rrtype);
 }
 
-static PyObject*
+PyObject*
 RRset_getTTL(s_RRset* self) {
     s_RRTTL* rrttl;
 
@@ -194,7 +194,7 @@ RRset_getTTL(s_RRset* self) {
     return (rrttl);
 }
 
-static PyObject*
+PyObject*
 RRset_setName(s_RRset* self, PyObject* args) {
     s_Name* name;
     if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
@@ -204,7 +204,7 @@ RRset_setName(s_RRset* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-static PyObject*
+PyObject*
 RRset_setTTL(s_RRset* self, PyObject* args) {
     s_RRTTL* rrttl;
     if (!PyArg_ParseTuple(args, "O!", &rrttl_type, &rrttl)) {
@@ -214,7 +214,7 @@ RRset_setTTL(s_RRset* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-static PyObject*
+PyObject*
 RRset_toText(s_RRset* self) {
     try {
         return (Py_BuildValue("s", self->rrset->toText().c_str()));
@@ -224,7 +224,7 @@ RRset_toText(s_RRset* self) {
     }
 }
 
-static PyObject*
+PyObject*
 RRset_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
@@ -232,7 +232,7 @@ RRset_str(PyObject* self) {
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 RRset_toWire(s_RRset* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
@@ -266,7 +266,7 @@ RRset_toWire(s_RRset* self, PyObject* args) {
     return (NULL);
 }
 
-static PyObject*
+PyObject*
 RRset_addRdata(s_RRset* self, PyObject* args) {
     s_Rdata* rdata;
     if (!PyArg_ParseTuple(args, "O!", &rdata_type, &rdata)) {
@@ -283,7 +283,7 @@ RRset_addRdata(s_RRset* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 RRset_getRdata(s_RRset* self) {
     PyObject* list = PyList_New(0);
 
@@ -306,7 +306,7 @@ RRset_getRdata(s_RRset* self) {
     return (list);
 }
 
-static PyObject*
+PyObject*
 RRset_removeRRsig(s_RRset* self) {
     self->rrset->removeRRsig();
     Py_RETURN_NONE;
@@ -443,7 +443,7 @@ createRRsetObject(const RRset& source) {
         if (sigs) {
             py_rrset->rrset->addRRsig(sigs);
         }
-        return py_rrset;
+        return (py_rrset);
     } catch (const std::bad_alloc&) {
         isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
                   "probably due to short memory");
