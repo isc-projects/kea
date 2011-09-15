@@ -30,12 +30,34 @@ namespace python {
 //
 extern PyObject* po_EmptyQuestion;
 
-class s_Question : public PyObject {
-public:
-    isc::dns::QuestionPtr cppobj;
-};
-
 extern PyTypeObject question_type;
+
+/// This is a simple shortcut to create a python Question object (in the
+/// form of a pointer to PyObject) with minimal exception safety.
+/// On success, it returns a valid pointer to PyObject with a reference
+/// counter of 1; if something goes wrong it throws an exception (it never
+/// returns a NULL pointer).
+/// This function is expected to be called within a try block
+/// followed by necessary setup for python exception.
+PyObject* createQuestionObject(const Question& source);
+
+/// \brief Checks if the given python object is a Question object
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type Question, false otherwise
+bool PyQuestion_Check(PyObject* obj);
+
+/// \brief Returns a reference to the Question object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type Question; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyQuestion_Check()
+///
+/// \note This is not a copy; if the Question is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param question_obj The question object to convert
+const Question& PyQuestion_ToQuestion(const PyObject* question_obj);
 
 } // namespace python
 } // namespace dns

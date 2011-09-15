@@ -48,12 +48,14 @@ using namespace isc::dns::python;
 //
 // TSIGContext
 //
-
-// Trivial constructor.
-s_TSIGContext::s_TSIGContext() : cppobj(NULL) {
-}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_TSIGContext : public PyObject {
+public:
+    s_TSIGContext() : cppobj(NULL) {};
+    TSIGContext* cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIGContext, TSIGContext> TSIGContextContainer;
 
@@ -101,23 +103,23 @@ int
 TSIGContext_init(s_TSIGContext* self, PyObject* args) {
     try {
         // "From key" constructor
-        const s_TSIGKey* tsigkey_obj;
+        const PyObject* tsigkey_obj;
         if (PyArg_ParseTuple(args, "O!", &tsigkey_type, &tsigkey_obj)) {
-            self->cppobj = new TSIGContext(*tsigkey_obj->cppobj);
+            self->cppobj = new TSIGContext(PyTSIGKey_ToTSIGKey(tsigkey_obj));
             return (0);
         }
 
         // "From key param + keyring" constructor
         PyErr_Clear();
-        const s_Name* keyname_obj;
-        const s_Name* algname_obj;
-        const s_TSIGKeyRing* keyring_obj;
+        const PyObject* keyname_obj;
+        const PyObject* algname_obj;
+        const PyObject* keyring_obj;
         if (PyArg_ParseTuple(args, "O!O!O!", &name_type, &keyname_obj,
                              &name_type, &algname_obj, &tsigkeyring_type,
                              &keyring_obj)) {
-            self->cppobj = new TSIGContext(*keyname_obj->cppobj,
-                                           *algname_obj->cppobj,
-                                           *keyring_obj->cppobj);
+            self->cppobj = new TSIGContext(PyName_ToName(keyname_obj),
+                                           PyName_ToName(algname_obj),
+                                           PyTSIGKeyRing_ToTSIGKeyRing(keyring_obj));
             return (0);
         }
     } catch (const exception& ex) {
@@ -205,13 +207,13 @@ PyObject*
 TSIGContext_verify(s_TSIGContext* self, PyObject* args) {
     const char* data;
     Py_ssize_t data_len;
-    s_TSIGRecord* py_record;
+    PyObject* py_record;
     PyObject* py_maybe_none;
-    TSIGRecord* record;
+    const TSIGRecord* record;
 
     if (PyArg_ParseTuple(args, "O!y#", &tsigrecord_type, &py_record,
                          &data, &data_len)) {
-        record = py_record->cppobj;
+        record = &PyTSIGRecord_ToTSIGRecord(py_record);
     } else if (PyArg_ParseTuple(args, "Oy#", &py_maybe_none, &data,
                                 &data_len)) {
         record = NULL;
@@ -361,6 +363,17 @@ initModulePart_TSIGContext(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+bool
+PyTSIGContext_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &tsigcontext_type));
+}
+
+TSIGContext&
+PyTSIGContext_ToTSIGContext(PyObject* tsigcontext_obj) {
+    s_TSIGContext* tsigcontext = static_cast<s_TSIGContext*>(tsigcontext_obj);
+    return (*tsigcontext->cppobj);
+}
 
 } // namespace python
 } // namespace dns

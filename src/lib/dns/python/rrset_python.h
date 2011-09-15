@@ -32,18 +32,6 @@ namespace python {
 //
 extern PyObject* po_EmptyRRset;
 
-// The s_* Class simply coverst one instantiation of the object
-
-// Using a shared_ptr here should not really be necessary (PyObject
-// is already reference-counted), however internally on the cpp side,
-// not doing so might result in problems, since we can't copy construct
-// rdata field, adding them to rrsets results in a problem when the
-// rrset is destroyed later
-class s_RRset : public PyObject {
-public:
-    isc::dns::RRsetPtr cppobj;
-};
-
 extern PyTypeObject rrset_type;
 
 /// This is a simple shortcut to create a python RRset object (in the
@@ -72,6 +60,15 @@ bool PyRRset_Check(PyObject* obj);
 ///
 /// \param rrset_obj The rrset object to convert
 RRset& PyRRset_ToRRset(PyObject* rrset_obj);
+
+/// \brief Returns the shared_ptr of the RRset object contained within the
+///        given Python object.
+///
+/// \note The given object MUST be of type RRset; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyRRset_Check()
+///
+/// \param rrset_obj The rrset object to convert
+RRsetPtr PyRRset_ToRRsetPtr(PyObject* rrset_obj);
 
 
 } // namespace python

@@ -19,6 +19,7 @@
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "edns_python.h"
 #include "name_python.h"
@@ -30,11 +31,19 @@
 #include "pydnspp_common.h"
 
 using namespace isc::dns;
-using namespace isc::util;
 using namespace isc::dns::rdata;
 using namespace isc::dns::python;
+using namespace isc::util;
+using namespace isc::util::python;
 
 namespace {
+
+class s_EDNS : public PyObject {
+public:
+    EDNS* cppobj;
+};
+
+typedef CPPPyObjectContainer<s_EDNS, EDNS> EDNSContainer;
 
 // General creation and destruction
 int EDNS_init(s_EDNS* self, PyObject* args);
@@ -116,11 +125,11 @@ createFromRR(const Name& name, const RRClass& rrclass, const RRType& rrtype,
 int
 EDNS_init(s_EDNS* self, PyObject* args) {
     uint8_t version = EDNS::SUPPORTED_VERSION;
-    const s_Name* name;
-    const s_RRClass* rrclass;
-    const s_RRType* rrtype;
-    const s_RRTTL* rrttl;
-    const s_Rdata* rdata;
+    const PyObject* name;
+    const PyObject* rrclass;
+    const PyObject* rrtype;
+    const PyObject* rrttl;
+    const PyObject* rdata;
 
     if (PyArg_ParseTuple(args, "|b", &version)) {
         try {
@@ -140,9 +149,11 @@ EDNS_init(s_EDNS* self, PyObject* args) {
         // in this context so that we can share the try-catch logic with
         // EDNS_createFromRR() (see below).
         uint8_t extended_rcode;
-        self->cppobj = createFromRR(*name->cppobj, *rrclass->cppobj,
-                                  *rrtype->cppobj, *rrttl->cppobj,
-                                  *rdata->cppobj, extended_rcode);
+        self->cppobj = createFromRR(PyName_ToName(name),
+                                    PyRRClass_ToRRClass(rrclass),
+                                    PyRRType_ToRRType(rrtype),
+                                    PyRRTTL_ToRRTTL(rrttl),
+                                    PyRdata_ToRdata(rdata), extended_rcode);
         return (self->cppobj != NULL ? 0 : -1);
     }
 
@@ -177,7 +188,7 @@ PyObject*
 EDNS_toWire(const s_EDNS* const self, PyObject* args) {
     PyObject* bytes;
     uint8_t extended_rcode;
-    s_MessageRenderer* renderer;
+    PyObject* renderer;
 
     if (PyArg_ParseTuple(args, "Ob", &bytes, &extended_rcode) &&
         PySequence_Check(bytes)) {
@@ -194,8 +205,8 @@ EDNS_toWire(const s_EDNS* const self, PyObject* args) {
         return (result);
     } else if (PyArg_ParseTuple(args, "O!b", &messagerenderer_type,
                                 &renderer, &extended_rcode)) {
-        const unsigned int n = self->cppobj->toWire(*renderer->cppobj,
-                                                  extended_rcode);
+        const unsigned int n = self->cppobj->toWire(
+            PyMessageRenderer_ToMessageRenderer(renderer), extended_rcode);
 
         return (Py_BuildValue("I", n));
     }
@@ -253,11 +264,11 @@ EDNS_setUDPSize(s_EDNS* self, PyObject* args) {
 
 PyObject*
 EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
-    const s_Name* name;
-    const s_RRClass* rrclass;
-    const s_RRType* rrtype;
-    const s_RRTTL* rrttl;
-    const s_Rdata* rdata;
+    const PyObject* name;
+    const PyObject* rrclass;
+    const PyObject* rrtype;
+    const PyObject* rrttl;
+    const PyObject* rdata;
     s_EDNS* edns_obj = NULL;
 
     assert(null_self == NULL);
@@ -271,9 +282,12 @@ EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
             return (NULL);
         }
 
-        edns_obj->cppobj = createFromRR(*name->cppobj, *rrclass->cppobj,
-                                        *rrtype->cppobj, *rrttl->cppobj,
-                                        *rdata->cppobj, extended_rcode);
+        edns_obj->cppobj = createFromRR(PyName_ToName(name),
+                                        PyRRClass_ToRRClass(rrclass),
+                                        PyRRType_ToRRType(rrtype),
+                                        PyRRTTL_ToRRTTL(rrttl),
+                                        PyRdata_ToRdata(rdata),
+                                        extended_rcode);
         if (edns_obj->cppobj != NULL) {
             PyObject* extrcode_obj = Py_BuildValue("B", extended_rcode);
             return (Py_BuildValue("OO", edns_obj, extrcode_obj));
@@ -368,6 +382,24 @@ initModulePart_EDNS(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+PyObject*
+createEDNSObject(const EDNS& source) {
+    EDNSContainer container = PyObject_New(s_EDNS, &edns_type);
+    container.set(new EDNS(source));
+    return (container.release());
+}
+
+bool
+PyEDNS_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &edns_type));
+}
+
+const EDNS&
+PyEDNS_ToEDNS(const PyObject* edns_obj) {
+    const s_EDNS* edns = static_cast<const s_EDNS*>(edns_obj);
+    return (*edns->cppobj);
+}
 
 } // end namespace python
 } // end namespace dns

@@ -23,17 +23,34 @@ namespace isc {
 namespace dns {
 namespace python {
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
-class s_EDNS : public PyObject {
-public:
-    EDNS* cppobj;
-};
-
 extern PyTypeObject edns_type;
+
+/// This is a simple shortcut to create a python EDNS object (in the
+/// form of a pointer to PyObject) with minimal exception safety.
+/// On success, it returns a valid pointer to PyObject with a reference
+/// counter of 1; if something goes wrong it throws an exception (it never
+/// returns a NULL pointer).
+/// This function is expected to be called within a try block
+/// followed by necessary setup for python exception.
+PyObject* createEDNSObject(const EDNS& source);
+
+/// \brief Checks if the given python object is a EDNS object
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type EDNS, false otherwise
+bool PyEDNS_Check(PyObject* obj);
+
+/// \brief Returns a reference to the EDNS object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type EDNS; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyEDNS_Check()
+///
+/// \note This is not a copy; if the EDNS is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param edns_obj The edns object to convert
+const EDNS& PyEDNS_ToEDNS(const PyObject* edns_obj);
 
 } // namespace python
 } // namespace dns

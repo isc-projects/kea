@@ -17,6 +17,7 @@
 #include <util/buffer.h>
 
 #include <dns/messagerenderer.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "pydnspp_common.h"
 #include "messagerenderer_python.h"
@@ -24,8 +25,21 @@
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
 namespace {
+// The s_* Class simply covers one instantiation of the object.
+//
+// since we don't use *Buffer in the python version (but work with
+// the already existing bytearray type where we use these custom buffers
+// in C++, we need to keep track of one here.
+class s_MessageRenderer : public PyObject {
+public:
+    s_MessageRenderer();
+    isc::util::OutputBuffer* outputbuffer;
+    MessageRenderer* cppobj;
+};
+
 int MessageRenderer_init(s_MessageRenderer* self);
 void MessageRenderer_destroy(s_MessageRenderer* self);
 
@@ -81,7 +95,7 @@ MessageRenderer_destroy(s_MessageRenderer* self) {
 PyObject*
 MessageRenderer_getData(s_MessageRenderer* self) {
     return (Py_BuildValue("y#",
-                         self->cppobj->getData(),
+                          self->cppobj->getData(),
                           self->cppobj->getLength()));
 }
 
@@ -243,6 +257,41 @@ bool initModulePart_MessageRenderer(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+PyObject*
+createMessageRendererObject(const MessageRenderer& source) {
+    // should we copy? can we?
+    // copy the existing buffer into a new one, then create a new renderer with
+    // that buffer
+    s_MessageRenderer* mr = static_cast<s_MessageRenderer*>(
+        messagerenderer_type.tp_alloc(&messagerenderer_type, 0));
+    if (mr == NULL) {
+        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
+                  "probably due to short memory");
+    }
+    try {
+        mr->outputbuffer = new OutputBuffer(4096);
+        mr->outputbuffer->writeData(source.getData(), source.getLength());
+        mr->cppobj = new MessageRenderer(*mr->outputbuffer);
+
+        return (mr);
+    } catch (const std::bad_alloc&) {
+        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
+                  "probably due to short memory");
+    }
+}
+
+bool
+PyMessageRenderer_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &messagerenderer_type));
+}
+
+MessageRenderer&
+PyMessageRenderer_ToMessageRenderer(PyObject* messagerenderer_obj) {
+    s_MessageRenderer* messagerenderer = static_cast<s_MessageRenderer*>(messagerenderer_obj);
+    return (*messagerenderer->cppobj);
+}
+
 
 } // namespace python
 } // namespace dns

@@ -15,19 +15,39 @@
 #include <Python.h>
 
 #include <exceptions/exceptions.h>
-
 #include <dns/rcode.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "pydnspp_common.h"
 #include "rcode_python.h"
 
 using namespace isc::dns;
 using namespace isc::dns::python;
-
-// Trivial constructor.
-s_Rcode::s_Rcode() : cppobj(NULL), static_code(false) {}
+using namespace isc::util::python;
 
 namespace {
+// The s_* Class simply covers one instantiation of the object.
+//
+// We added a helper variable static_code here
+// Since we can create Rcodes dynamically with Rcode(int), but also
+// use the static globals (Rcode::NOERROR() etc), we use this
+// variable to see if the code came from one of the latter, in which
+// case Rcode_destroy should not free it (the other option is to
+// allocate new Rcodes for every use of the static ones, but this
+// seems more efficient).
+//
+// Follow-up note: we don't have to use the proxy function in the python lib;
+// we can just define class specific constants directly (see TSIGError).
+// We should make this cleanup later.
+class s_Rcode : public PyObject {
+public:
+    s_Rcode() : cppobj(NULL), static_code(false) {};
+    const Rcode* cppobj;
+    bool static_code;
+};
+
+typedef CPPPyObjectContainer<s_Rcode, Rcode> RcodeContainer;
+
 int Rcode_init(s_Rcode* const self, PyObject* args);
 void Rcode_destroy(s_Rcode* const self);
 
@@ -415,6 +435,24 @@ initModulePart_Rcode(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+PyObject*
+createRcodeObject(const Rcode& source) {
+    RcodeContainer container = PyObject_New(s_Rcode, &rcode_type);
+    container.set(new Rcode(source));
+    return (container.release());
+}
+
+bool
+PyRcode_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &rcode_type));
+}
+
+const Rcode&
+PyRcode_ToRcode(const PyObject* rcode_obj) {
+    const s_Rcode* rcode = static_cast<const s_Rcode*>(rcode_obj);
+    return (*rcode->cppobj);
+}
 
 } // namespace python
 } // namespace dns

@@ -33,11 +33,6 @@ extern PyObject* po_InvalidMessageSection;
 extern PyObject* po_InvalidMessageOperation;
 extern PyObject* po_InvalidMessageUDPSize;
 
-class s_Message : public PyObject {
-public:
-    isc::dns::Message* cppobj;
-};
-
 extern PyTypeObject message_type;
 
 } // namespace python

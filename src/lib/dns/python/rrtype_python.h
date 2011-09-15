@@ -31,13 +31,6 @@ namespace python {
 extern PyObject* po_InvalidRRType;
 extern PyObject* po_IncompleteRRType;
 
-// The s_* Class simply covers one instantiation of the object
-class s_RRType : public PyObject {
-public:
-    const RRType* cppobj;
-};
-
-
 extern PyTypeObject rrtype_type;
 
 /// This is a simple shortcut to create a python RRType object (in the
@@ -65,7 +58,7 @@ bool PyRRType_Check(PyObject* obj);
 /// may be destroyed, the caller must copy it itself.
 ///
 /// \param rrtype_obj The rrtype object to convert
-const RRType& PyRRType_ToRRType(PyObject* rrtype_obj);
+const RRType& PyRRType_ToRRType(const PyObject* rrtype_obj);
 
 
 } // namespace python

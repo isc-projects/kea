@@ -23,20 +23,34 @@ namespace isc {
 namespace dns {
 namespace python {
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
-
-class s_Opcode : public PyObject {
-public:
-    s_Opcode() : cppobj(NULL), static_code(false) {}
-    const isc::dns::Opcode* cppobj;
-    bool static_code;
-};
-
 extern PyTypeObject opcode_type;
+
+/// This is a simple shortcut to create a python Opcode object (in the
+/// form of a pointer to PyObject) with minimal exception safety.
+/// On success, it returns a valid pointer to PyObject with a reference
+/// counter of 1; if something goes wrong it throws an exception (it never
+/// returns a NULL pointer).
+/// This function is expected to be called within a try block
+/// followed by necessary setup for python exception.
+PyObject* createOpcodeObject(const Opcode& source);
+
+/// \brief Checks if the given python object is a Opcode object
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type Opcode, false otherwise
+bool PyOpcode_Check(PyObject* obj);
+
+/// \brief Returns a reference to the Opcode object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type Opcode; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyOpcode_Check()
+///
+/// \note This is not a copy; if the Opcode is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param opcode_obj The opcode object to convert
+const Opcode& PyOpcode_ToOpcode(const PyObject* opcode_obj);
 
 } // namespace python
 } // namespace dns

@@ -32,6 +32,10 @@ using namespace isc::util;
 using namespace isc;
 
 namespace {
+class s_Question : public PyObject {
+public:
+    isc::dns::QuestionPtr cppobj;
+};
 
 static int Question_init(s_Question* self, PyObject* args);
 static void Question_destroy(s_Question* self);
@@ -79,9 +83,9 @@ Question_init(s_Question* self, PyObject* args) {
     // that if we try several like here. Otherwise the *next* python
     // call will suddenly appear to throw an exception.
     // (the way to do exceptions is to set PyErr and return -1)
-    s_Name* name;
-    s_RRClass* rrclass;
-    s_RRType* rrtype;
+    PyObject* name;
+    PyObject* rrclass;
+    PyObject* rrtype;
 
     const char* b;
     Py_ssize_t len;
@@ -89,12 +93,12 @@ Question_init(s_Question* self, PyObject* args) {
 
     try {
         if (PyArg_ParseTuple(args, "O!O!O!", &name_type, &name,
-                                               &rrclass_type, &rrclass,
-                                               &rrtype_type, &rrtype
+                                             &rrclass_type, &rrclass,
+                                             &rrtype_type, &rrtype
            )) {
-            self->cppobj = QuestionPtr(new Question(*name->cppobj,
-                                       *rrclass->cppobj,
-                                       *rrtype->cppobj));
+            self->cppobj = QuestionPtr(new Question(PyName_ToName(name),
+                                                    PyRRClass_ToRRClass(rrclass),
+                                                    PyRRType_ToRRType(rrtype)));
             return (0);
         } else if (PyArg_ParseTuple(args, "y#|I", &b, &len, &position)) {
             PyErr_Clear();
@@ -133,41 +137,18 @@ Question_destroy(s_Question* self) {
 
 static PyObject*
 Question_getName(s_Question* self) {
-    s_Name* name;
-
-    // is this the best way to do this?
-    name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
-    if (name != NULL) {
-        name->cppobj = new Name(self->cppobj->getName());
-    }
-
-    return (name);
+    return (createNameObject(self->cppobj->getName()));
 }
 
 static PyObject*
 Question_getType(s_Question* self) {
-    s_RRType* rrtype;
-
-    rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
-    if (rrtype != NULL) {
-        rrtype->cppobj = new RRType(self->cppobj->getType());
-    }
-
-    return (rrtype);
+    return (createRRTypeObject(self->cppobj->getType()));
 }
 
 static PyObject*
 Question_getClass(s_Question* self) {
-    s_RRClass* rrclass;
-
-    rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
-    if (rrclass != NULL) {
-        rrclass->cppobj = new RRClass(self->cppobj->getClass());
-    }
-
-    return (rrclass);
+    return (createRRClassObject(self->cppobj->getClass()));
 }
-
 
 static PyObject*
 Question_toText(s_Question* self) {
@@ -186,7 +167,7 @@ Question_str(PyObject* self) {
 static PyObject*
 Question_toWire(s_Question* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -202,7 +183,7 @@ Question_toWire(s_Question* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->cppobj);
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -291,6 +272,25 @@ initModulePart_Question(PyObject* mod) {
     return (true);
 }
 } // end namespace internal
+
+PyObject*
+createQuestionObject(const Question& source) {
+    s_Question* question =
+        static_cast<s_Question*>(question_type.tp_alloc(&question_type, 0));
+    question->cppobj = QuestionPtr(new Question(source));
+    return (question);
+}
+
+bool
+PyQuestion_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &question_type));
+}
+
+const Question&
+PyQuestion_ToQuestion(const PyObject* question_obj) {
+    const s_Question* question = static_cast<const s_Question*>(question_obj);
+    return (*question->cppobj);
+}
 
 } // end python namespace
 } // end dns namespace

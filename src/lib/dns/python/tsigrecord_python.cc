@@ -45,10 +45,15 @@ using namespace isc::dns::python;
 //
 
 // Trivial constructor.
-s_TSIGRecord::s_TSIGRecord() : cppobj(NULL) {
-}
 
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_TSIGRecord : public PyObject {
+public:
+    s_TSIGRecord() : cppobj(NULL) {};
+    TSIGRecord* cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIGRecord, TSIGRecord> TSIGRecordContainer;
 
@@ -102,11 +107,12 @@ PyMethodDef TSIGRecord_methods[] = {
 int
 TSIGRecord_init(s_TSIGRecord* self, PyObject* args) {
     try {
-        const s_Name* py_name;
-        const s_TSIG* py_tsig;
+        const PyObject* py_name;
+        const PyObject* py_tsig;
         if (PyArg_ParseTuple(args, "O!O!", &name_type, &py_name,
                              &tsig_type, &py_tsig)) {
-            self->cppobj = new TSIGRecord(*py_name->cppobj, *py_tsig->cppobj);
+            self->cppobj = new TSIGRecord(PyName_ToName(py_name),
+                                          PyTSIG_ToTSIG(py_tsig));
             return (0);
         }
     } catch (const exception& ex) {
@@ -308,6 +314,19 @@ createTSIGRecordObject(const TSIGRecord& source) {
     container.set(new TSIGRecord(source));
     return (container.release());
 }
+
+bool
+PyTSIGRecord_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &tsigrecord_type));
+}
+
+const TSIGRecord&
+PyTSIGRecord_ToTSIGRecord(PyObject* tsigrecord_obj) {
+    s_TSIGRecord* tsigrecord = static_cast<s_TSIGRecord*>(tsigrecord_obj);
+    return (*tsigrecord->cppobj);
+}
+
+
 } // namespace python
 } // namespace dns
 } // namespace isc
