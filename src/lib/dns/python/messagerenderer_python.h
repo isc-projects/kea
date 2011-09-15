@@ -33,7 +33,7 @@ class s_MessageRenderer : public PyObject {
 public:
     s_MessageRenderer();
     isc::util::OutputBuffer* outputbuffer;
-    MessageRenderer* messagerenderer;
+    MessageRenderer* cppobj;
 };
 
 extern PyTypeObject messagerenderer_type;

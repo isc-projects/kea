@@ -41,7 +41,7 @@ extern PyObject* po_EmptyRRset;
 // rrset is destroyed later
 class s_RRset : public PyObject {
 public:
-    isc::dns::RRsetPtr rrset;
+    isc::dns::RRsetPtr cppobj;
 };
 
 extern PyTypeObject rrset_type;

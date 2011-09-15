@@ -97,7 +97,7 @@ Opcode_init(s_Opcode* const self, PyObject* args) {
     uint8_t code = 0;
     if (PyArg_ParseTuple(args, "b", &code)) {
         try {
-            self->opcode = new Opcode(code);
+            self->cppobj = new Opcode(code);
             self->static_code = false;
         } catch (const isc::OutOfRange& ex) {
             PyErr_SetString(PyExc_OverflowError, ex.what());
@@ -118,22 +118,22 @@ Opcode_init(s_Opcode* const self, PyObject* args) {
 void
 Opcode_destroy(s_Opcode* const self) {
     // Depending on whether we created the rcode or are referring
-    // to a global static one, we do or do not delete self->opcode here
+    // to a global static one, we do or do not delete self->cppobj here
     if (!self->static_code) {
-        delete self->opcode;
+        delete self->cppobj;
     }
-    self->opcode = NULL;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
 Opcode_getCode(const s_Opcode* const self) {
-    return (Py_BuildValue("I", self->opcode->getCode()));
+    return (Py_BuildValue("I", self->cppobj->getCode()));
 }
 
 PyObject*
 Opcode_toText(const s_Opcode* const self) {
-    return (Py_BuildValue("s", self->opcode->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 PyObject*
@@ -148,7 +148,7 @@ PyObject*
 Opcode_createStatic(const Opcode& opcode) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
-        ret->opcode = &opcode;
+        ret->cppobj = &opcode;
         ret->static_code = true;
     }
     return (ret);
@@ -255,10 +255,10 @@ Opcode_richcmp(const s_Opcode* const self, const s_Opcode* const other,
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
         return (NULL);
     case Py_EQ:
-        c = (*self->opcode == *other->opcode);
+        c = (*self->cppobj == *other->cppobj);
         break;
     case Py_NE:
-        c = (*self->opcode != *other->opcode);
+        c = (*self->cppobj != *other->cppobj);
         break;
     case Py_GT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");

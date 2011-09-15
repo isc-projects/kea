@@ -124,7 +124,7 @@ EDNS_init(s_EDNS* self, PyObject* args) {
 
     if (PyArg_ParseTuple(args, "|b", &version)) {
         try {
-            self->edns = new EDNS(version);
+            self->cppobj = new EDNS(version);
         } catch (const isc::InvalidParameter& ex) {
             PyErr_SetString(po_InvalidParameter, ex.what());
             return (-1);
@@ -140,10 +140,10 @@ EDNS_init(s_EDNS* self, PyObject* args) {
         // in this context so that we can share the try-catch logic with
         // EDNS_createFromRR() (see below).
         uint8_t extended_rcode;
-        self->edns = createFromRR(*name->cppobj, *rrclass->cppobj,
-                                  *rrtype->cppobj, *rrttl->rrttl,
-                                  *rdata->rdata, extended_rcode);
-        return (self->edns != NULL ? 0 : -1);
+        self->cppobj = createFromRR(*name->cppobj, *rrclass->cppobj,
+                                  *rrtype->cppobj, *rrttl->cppobj,
+                                  *rdata->cppobj, extended_rcode);
+        return (self->cppobj != NULL ? 0 : -1);
     }
 
     PyErr_Clear();
@@ -154,15 +154,15 @@ EDNS_init(s_EDNS* self, PyObject* args) {
 
 void
 EDNS_destroy(s_EDNS* const self) {
-    delete self->edns;
-    self->edns = NULL;
+    delete self->cppobj;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
 EDNS_toText(const s_EDNS* const self) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->edns->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 PyObject*
@@ -184,7 +184,7 @@ EDNS_toWire(const s_EDNS* const self, PyObject* args) {
         PyObject* bytes_o = bytes;
 
         OutputBuffer buffer(0);
-        self->edns->toWire(buffer, extended_rcode);
+        self->cppobj->toWire(buffer, extended_rcode);
         PyObject* rd_bytes = PyBytes_FromStringAndSize(
             static_cast<const char*>(buffer.getData()), buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, rd_bytes);
@@ -194,7 +194,7 @@ EDNS_toWire(const s_EDNS* const self, PyObject* args) {
         return (result);
     } else if (PyArg_ParseTuple(args, "O!b", &messagerenderer_type,
                                 &renderer, &extended_rcode)) {
-        const unsigned int n = self->edns->toWire(*renderer->messagerenderer,
+        const unsigned int n = self->cppobj->toWire(*renderer->cppobj,
                                                   extended_rcode);
 
         return (Py_BuildValue("I", n));
@@ -206,12 +206,12 @@ EDNS_toWire(const s_EDNS* const self, PyObject* args) {
 
 PyObject*
 EDNS_getVersion(const s_EDNS* const self) {
-    return (Py_BuildValue("B", self->edns->getVersion()));
+    return (Py_BuildValue("B", self->cppobj->getVersion()));
 }
 
 PyObject*
 EDNS_getDNSSECAwareness(const s_EDNS* const self) {
-    if (self->edns->getDNSSECAwareness()) {
+    if (self->cppobj->getDNSSECAwareness()) {
         Py_RETURN_TRUE;
     } else {
         Py_RETURN_FALSE;
@@ -224,13 +224,13 @@ EDNS_setDNSSECAwareness(s_EDNS* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O!", &PyBool_Type, &b)) {
         return (NULL);
     }
-    self->edns->setDNSSECAwareness(b == Py_True);
+    self->cppobj->setDNSSECAwareness(b == Py_True);
     Py_RETURN_NONE;
 }
 
 PyObject*
 EDNS_getUDPSize(const s_EDNS* const self) {
-    return (Py_BuildValue("I", self->edns->getUDPSize()));
+    return (Py_BuildValue("I", self->cppobj->getUDPSize()));
 }
 
 PyObject*
@@ -247,7 +247,7 @@ EDNS_setUDPSize(s_EDNS* self, PyObject* args) {
                         "UDP size is not an unsigned 16-bit integer");
         return (NULL);
     }
-    self->edns->setUDPSize(size);
+    self->cppobj->setUDPSize(size);
     Py_RETURN_NONE;
 }
 
@@ -271,10 +271,10 @@ EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
             return (NULL);
         }
 
-        edns_obj->edns = createFromRR(*name->cppobj, *rrclass->cppobj,
-                                      *rrtype->cppobj, *rrttl->rrttl,
-                                      *rdata->rdata, extended_rcode);
-        if (edns_obj->edns != NULL) {
+        edns_obj->cppobj = createFromRR(*name->cppobj, *rrclass->cppobj,
+                                        *rrtype->cppobj, *rrttl->cppobj,
+                                        *rdata->cppobj, extended_rcode);
+        if (edns_obj->cppobj != NULL) {
             PyObject* extrcode_obj = Py_BuildValue("B", extended_rcode);
             return (Py_BuildValue("OO", edns_obj, extrcode_obj));
         }

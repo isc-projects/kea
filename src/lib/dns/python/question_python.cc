@@ -92,15 +92,15 @@ Question_init(s_Question* self, PyObject* args) {
                                                &rrclass_type, &rrclass,
                                                &rrtype_type, &rrtype
            )) {
-            self->question = QuestionPtr(new Question(*name->cppobj,
-                                         *rrclass->cppobj,
-                                         *rrtype->cppobj));
+            self->cppobj = QuestionPtr(new Question(*name->cppobj,
+                                       *rrclass->cppobj,
+                                       *rrtype->cppobj));
             return (0);
         } else if (PyArg_ParseTuple(args, "y#|I", &b, &len, &position)) {
             PyErr_Clear();
             InputBuffer inbuf(b, len);
             inbuf.setPosition(position);
-            self->question = QuestionPtr(new Question(inbuf));
+            self->cppobj = QuestionPtr(new Question(inbuf));
             return (0);
         }
     } catch (const DNSMessageFORMERR& dmfe) {
@@ -117,7 +117,7 @@ Question_init(s_Question* self, PyObject* args) {
         return (-1);
     }
 
-    self->question = QuestionPtr();
+    self->cppobj = QuestionPtr();
 
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
@@ -127,7 +127,7 @@ Question_init(s_Question* self, PyObject* args) {
 
 static void
 Question_destroy(s_Question* self) {
-    self->question.reset();
+    self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -138,7 +138,7 @@ Question_getName(s_Question* self) {
     // is this the best way to do this?
     name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
     if (name != NULL) {
-        name->cppobj = new Name(self->question->getName());
+        name->cppobj = new Name(self->cppobj->getName());
     }
 
     return (name);
@@ -150,7 +150,7 @@ Question_getType(s_Question* self) {
 
     rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
     if (rrtype != NULL) {
-        rrtype->cppobj = new RRType(self->question->getType());
+        rrtype->cppobj = new RRType(self->cppobj->getType());
     }
 
     return (rrtype);
@@ -162,7 +162,7 @@ Question_getClass(s_Question* self) {
 
     rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
     if (rrclass != NULL) {
-        rrclass->cppobj = new RRClass(self->question->getClass());
+        rrclass->cppobj = new RRClass(self->cppobj->getClass());
     }
 
     return (rrclass);
@@ -172,7 +172,7 @@ Question_getClass(s_Question* self) {
 static PyObject*
 Question_toText(s_Question* self) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->question->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 static PyObject*
@@ -193,7 +193,7 @@ Question_toWire(s_Question* self, PyObject* args) {
 
         // Max length is Name::MAX_WIRE + rrclass (2) + rrtype (2)
         OutputBuffer buffer(Name::MAX_WIRE + 4);
-        self->question->toWire(buffer);
+        self->cppobj->toWire(buffer);
         PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
                                                 buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
@@ -202,7 +202,7 @@ Question_toWire(s_Question* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->question->toWire(*mr->messagerenderer);
+        self->cppobj->toWire(*mr->cppobj);
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
