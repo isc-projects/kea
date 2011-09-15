@@ -42,14 +42,17 @@ using namespace isc::dns::python;
 // TSIGError
 //
 
-// Trivial constructor.
-s_TSIGError::s_TSIGError() : cppobj(NULL) {
-}
-
 // Import pydoc text
 #include "tsigerror_python_inc.cc"
 
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_TSIGError : public PyObject {
+public:
+    s_TSIGError() : cppobj(NULL) {};
+    const TSIGError* cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIGError, TSIGError> TSIGErrorContainer;
 
@@ -107,9 +110,9 @@ TSIGError_init(s_TSIGError* self, PyObject* args) {
 
         // Constructor from Rcode
         PyErr_Clear();
-        s_Rcode* py_rcode;
+        PyObject* py_rcode;
         if (PyArg_ParseTuple(args, "O!", &rcode_type, &py_rcode)) {
-            self->cppobj = new TSIGError(*py_rcode->cppobj);
+            self->cppobj = new TSIGError(PyRcode_ToRcode(py_rcode));
             return (0);
         }
     } catch (const isc::OutOfRange& ex) {
@@ -172,13 +175,8 @@ TSIGError_str(PyObject* self) {
 
 PyObject*
 TSIGError_toRcode(const s_TSIGError* const self) {
-    typedef CPPPyObjectContainer<s_Rcode, Rcode> RcodePyObjectContainer;
-
     try {
-        RcodePyObjectContainer rcode_container(PyObject_New(s_Rcode,
-                                                            &rcode_type));
-        rcode_container.set(new Rcode(self->cppobj->toRcode()));
-        return (rcode_container.release());
+        return (createRcodeObject(self->cppobj->toRcode()));
     } catch (const exception& ex) {
         const string ex_what =
             "Failed to convert TSIGError to Rcode: " + string(ex.what());

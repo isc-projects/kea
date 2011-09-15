@@ -45,11 +45,15 @@ using namespace isc::dns::python;
 // TSIG RDATA
 //
 
-// Trivial constructor.
-s_TSIG::s_TSIG() : cppobj(NULL) {
-}
-
 namespace {
+    // The s_* Class simply covers one instantiation of the object
+class s_TSIG : public PyObject {
+public:
+    s_TSIG() : cppobj(NULL) {};
+    const rdata::any::TSIG* cppobj;
+};
+
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIG, any::TSIG> TSIGContainer;
 
@@ -367,6 +371,18 @@ createTSIGObject(const any::TSIG& source) {
     container.set(new any::TSIG(source));
     return (container.release());
 }
+
+bool
+PyTSIG_Check(PyObject* obj) {
+    return (PyObject_TypeCheck(obj, &tsig_type));
+}
+
+const any::TSIG&
+PyTSIG_ToTSIG(const PyObject* tsig_obj) {
+    const s_TSIG* tsig = static_cast<const s_TSIG*>(tsig_obj);
+    return (*tsig->cppobj);
+}
+
 } // namespace python
 } // namespace dns
 } // namespace isc

@@ -36,6 +36,19 @@ using namespace isc::util::python;
 
 namespace {
 
+// The s_* Class simply coverst one instantiation of the object
+
+// Using a shared_ptr here should not really be necessary (PyObject
+// is already reference-counted), however internally on the cpp side,
+// not doing so might result in problems, since we can't copy construct
+// rdata field, adding them to rrsets results in a problem when the
+// rrset is destroyed later
+class s_RRset : public PyObject {
+public:
+    isc::dns::RRsetPtr cppobj;
+};
+
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_RRset, RRset> RRsetContainer;
 
@@ -93,18 +106,20 @@ PyMethodDef RRset_methods[] = {
 
 int
 RRset_init(s_RRset* self, PyObject* args) {
-    s_Name* name;
-    s_RRClass* rrclass;
-    s_RRType* rrtype;
-    s_RRTTL* rrttl;
+    PyObject* name;
+    PyObject* rrclass;
+    PyObject* rrtype;
+    PyObject* rrttl;
 
     if (PyArg_ParseTuple(args, "O!O!O!O!", &name_type, &name,
                                            &rrclass_type, &rrclass,
                                            &rrtype_type, &rrtype,
                                            &rrttl_type, &rrttl
        )) {
-        self->cppobj = RRsetPtr(new RRset(*name->cppobj, *rrclass->cppobj,
-                                *rrtype->cppobj, *rrttl->cppobj));
+        self->cppobj = RRsetPtr(new RRset(PyName_ToName(name),
+                                          PyRRClass_ToRRClass(rrclass),
+                                          PyRRType_ToRRType(rrtype),
+                                          PyRRTTL_ToRRTTL(rrttl)));
         return (0);
     }
 
@@ -127,90 +142,41 @@ RRset_getRdataCount(s_RRset* self) {
 
 PyObject*
 RRset_getName(s_RRset* self) {
-    s_Name* name;
-
-    // is this the best way to do this?
-    name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
-    if (name != NULL) {
-        name->cppobj = new Name(self->cppobj->getName());
-        if (name->cppobj == NULL)
-          {
-            Py_DECREF(name);
-            return (NULL);
-          }
-    }
-
-    return (name);
+    return (createNameObject(self->cppobj->getName()));
 }
 
 PyObject*
 RRset_getClass(s_RRset* self) {
-    s_RRClass* rrclass;
-
-    rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
-    if (rrclass != NULL) {
-        rrclass->cppobj = new RRClass(self->cppobj->getClass());
-        if (rrclass->cppobj == NULL)
-          {
-            Py_DECREF(rrclass);
-            return (NULL);
-          }
-    }
-
-    return (rrclass);
+    return (createRRClassObject(self->cppobj->getClass()));
 }
 
 PyObject*
 RRset_getType(s_RRset* self) {
-    s_RRType* rrtype;
-
-    rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
-    if (rrtype != NULL) {
-        rrtype->cppobj = new RRType(self->cppobj->getType());
-        if (rrtype->cppobj == NULL)
-          {
-            Py_DECREF(rrtype);
-            return (NULL);
-          }
-    }
-
-    return (rrtype);
+    return (createRRTypeObject(self->cppobj->getType()));
 }
 
 PyObject*
 RRset_getTTL(s_RRset* self) {
-    s_RRTTL* rrttl;
-
-    rrttl = static_cast<s_RRTTL*>(rrttl_type.tp_alloc(&rrttl_type, 0));
-    if (rrttl != NULL) {
-        rrttl->cppobj = new RRTTL(self->cppobj->getTTL());
-        if (rrttl->cppobj == NULL)
-          {
-            Py_DECREF(rrttl);
-            return (NULL);
-          }
-    }
-
-    return (rrttl);
+    return (createRRTTLObject(self->cppobj->getTTL()));
 }
 
 PyObject*
 RRset_setName(s_RRset* self, PyObject* args) {
-    s_Name* name;
+    PyObject* name;
     if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         return (NULL);
     }
-    self->cppobj->setName(*name->cppobj);
+    self->cppobj->setName(PyName_ToName(name));
     Py_RETURN_NONE;
 }
 
 PyObject*
 RRset_setTTL(s_RRset* self, PyObject* args) {
-    s_RRTTL* rrttl;
+    PyObject* rrttl;
     if (!PyArg_ParseTuple(args, "O!", &rrttl_type, &rrttl)) {
         return (NULL);
     }
-    self->cppobj->setTTL(*rrttl->cppobj);
+    self->cppobj->setTTL(PyRRTTL_ToRRTTL(rrttl));
     Py_RETURN_NONE;
 }
 
@@ -235,7 +201,7 @@ RRset_str(PyObject* self) {
 PyObject*
 RRset_toWire(s_RRset* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     try {
         if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
@@ -250,7 +216,7 @@ RRset_toWire(s_RRset* self, PyObject* args) {
             Py_DECREF(n);
             return (result);
         } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-            self->cppobj->toWire(*mr->cppobj);
+            self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
             // If we return NULL it is seen as an error, so use this for
             // None returns
             Py_RETURN_NONE;
@@ -268,12 +234,12 @@ RRset_toWire(s_RRset* self, PyObject* args) {
 
 PyObject*
 RRset_addRdata(s_RRset* self, PyObject* args) {
-    s_Rdata* rdata;
+    PyObject* rdata;
     if (!PyArg_ParseTuple(args, "O!", &rdata_type, &rdata)) {
         return (NULL);
     }
     try {
-        self->cppobj->addRdata(*rdata->cppobj);
+        self->cppobj->addRdata(PyRdata_ToRdata(rdata));
         Py_RETURN_NONE;
     } catch (const std::bad_cast&) {
         PyErr_Clear();
@@ -290,18 +256,10 @@ RRset_getRdata(s_RRset* self) {
     RdataIteratorPtr it = self->cppobj->getRdataIterator();
 
     for (; !it->isLast(); it->next()) {
-        s_Rdata *rds = static_cast<s_Rdata*>(rdata_type.tp_alloc(&rdata_type, 0));
-        if (rds != NULL) {
-            // hmz them iterators/shared_ptrs and private constructors
-            // make this a bit weird, so we create a new one with
-            // the data available
-            const rdata::Rdata *rd = &it->getCurrent();
-            rds->cppobj = createRdata(self->cppobj->getType(),
-                                      self->cppobj->getClass(), *rd);
-            PyList_Append(list, rds);
-        } else {
-            return (NULL);
-        }
+        const rdata::Rdata *rd = &it->getCurrent();
+        PyList_Append(list,
+                      createRdataObject(createRdata(self->cppobj->getType(),
+                                        self->cppobj->getClass(), *rd)));
     }
 
     return (list);
@@ -423,8 +381,8 @@ initModulePart_RRset(PyObject* mod) {
 
 PyObject*
 createRRsetObject(const RRset& source) {
-    isc::dns::python::s_RRset* py_rrset = static_cast<isc::dns::python::s_RRset*>(
-        isc::dns::python::rrset_type.tp_alloc(&isc::dns::python::rrset_type, 0));
+    s_RRset* py_rrset =
+        static_cast<s_RRset*>(rrset_type.tp_alloc(&rrset_type, 0));
     if (py_rrset == NULL) {
         isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
                   "probably due to short memory");
@@ -464,6 +422,11 @@ PyRRset_ToRRset(PyObject* rrset_obj) {
     return (*rrset->cppobj);
 }
 
+RRsetPtr
+PyRRset_ToRRsetPtr(PyObject* rrset_obj) {
+    s_RRset* rrset = static_cast<s_RRset*>(rrset_obj);
+    return (rrset->cppobj);
+}
 
 
 } // end python namespace

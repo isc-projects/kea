@@ -26,17 +26,6 @@ namespace python {
 extern PyObject* po_InvalidRRClass;
 extern PyObject* po_IncompleteRRClass;
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
-// The s_* Class simply covers one instantiation of the object
-class s_RRClass : public PyObject {
-public:
-    RRClass* cppobj;
-};
-
 extern PyTypeObject rrclass_type;
 
 /// This is a simple shortcut to create a python RRClass object (in the
@@ -64,7 +53,7 @@ bool PyRRClass_Check(PyObject* obj);
 /// may be destroyed, the caller must copy it itself.
 ///
 /// \param rrclass_obj The rrclass object to convert
-RRClass& PyRRClass_ToRRClass(PyObject* rrclass_obj);
+const RRClass& PyRRClass_ToRRClass(const PyObject* rrclass_obj);
 
 
 } // namespace python

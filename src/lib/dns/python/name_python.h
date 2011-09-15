@@ -44,20 +44,6 @@ extern PyObject* po_DNSMessageFORMERR;
 //
 extern PyObject* po_NameRelation;
 
-// The s_* Class simply covers one instantiation of the object.
-class s_NameComparisonResult : public PyObject {
-public:
-    s_NameComparisonResult() : cppobj(NULL) {}
-    NameComparisonResult* cppobj;
-};
-
-class s_Name : public PyObject {
-public:
-    s_Name() : cppobj(NULL), position(0) {}
-    Name* cppobj;
-    size_t position;
-};
-
 extern PyTypeObject name_comparison_result_type;
 extern PyTypeObject name_type;
 
@@ -86,7 +72,7 @@ bool PyName_Check(PyObject* obj);
 /// may be destroyed, the caller must copy it itself.
 ///
 /// \param name_obj The name object to convert
-Name& PyName_ToName(PyObject* name_obj);
+const Name& PyName_ToName(const PyObject* name_obj);
 
 } // namespace python
 } // namespace dns

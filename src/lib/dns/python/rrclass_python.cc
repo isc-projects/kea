@@ -28,6 +28,12 @@ using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc::util::python;
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_RRClass : public PyObject {
+public:
+    s_RRClass() : cppobj(NULL) {};
+    RRClass* cppobj;
+};
 
 //
 // We declare the functions here, the definitions are below
@@ -155,7 +161,7 @@ RRClass_str(PyObject* self) {
 PyObject*
 RRClass_toWire(s_RRClass* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -169,7 +175,7 @@ RRClass_toWire(s_RRClass* self, PyObject* args) {
         Py_DECREF(n);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->cppobj);
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -369,9 +375,9 @@ PyRRClass_Check(PyObject* obj) {
     return (PyObject_TypeCheck(obj, &rrclass_type));
 }
 
-RRClass&
-PyRRClass_ToRRClassPtr(PyObject* rrclass_obj) {
-    s_RRClass* rrclass = static_cast<s_RRClass*>(rrclass_obj);
+const RRClass&
+PyRRClass_ToRRClass(const PyObject* rrclass_obj) {
+    const s_RRClass* rrclass = static_cast<const s_RRClass*>(rrclass_obj);
     return (*rrclass->cppobj);
 }
 
