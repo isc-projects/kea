@@ -32,37 +32,37 @@ using namespace isc::util::python;
 namespace {
 
 // General creation and destruction
-static int RRType_init(s_RRType* self, PyObject* args);
-static void RRType_destroy(s_RRType* self);
+int RRType_init(s_RRType* self, PyObject* args);
+void RRType_destroy(s_RRType* self);
 
 // These are the functions we export
-static PyObject*
+PyObject*
 RRType_toText(s_RRType* self);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
-static PyObject* RRType_str(PyObject* self);
-static PyObject* RRType_toWire(s_RRType* self, PyObject* args);
-static PyObject* RRType_getCode(s_RRType* self);
-static PyObject* RRType_richcmp(s_RRType* self, s_RRType* other, int op);
-static PyObject* RRType_NSEC3PARAM(s_RRType *self);
-static PyObject* RRType_DNAME(s_RRType *self);
-static PyObject* RRType_PTR(s_RRType *self);
-static PyObject* RRType_MX(s_RRType *self);
-static PyObject* RRType_DNSKEY(s_RRType *self);
-static PyObject* RRType_TXT(s_RRType *self);
-static PyObject* RRType_RRSIG(s_RRType *self);
-static PyObject* RRType_NSEC(s_RRType *self);
-static PyObject* RRType_AAAA(s_RRType *self);
-static PyObject* RRType_DS(s_RRType *self);
-static PyObject* RRType_OPT(s_RRType *self);
-static PyObject* RRType_A(s_RRType *self);
-static PyObject* RRType_NS(s_RRType *self);
-static PyObject* RRType_CNAME(s_RRType *self);
-static PyObject* RRType_SOA(s_RRType *self);
-static PyObject* RRType_NSEC3(s_RRType *self);
-static PyObject* RRType_IXFR(s_RRType *self);
-static PyObject* RRType_AXFR(s_RRType *self);
-static PyObject* RRType_ANY(s_RRType *self);
+PyObject* RRType_str(PyObject* self);
+PyObject* RRType_toWire(s_RRType* self, PyObject* args);
+PyObject* RRType_getCode(s_RRType* self);
+PyObject* RRType_richcmp(s_RRType* self, s_RRType* other, int op);
+PyObject* RRType_NSEC3PARAM(s_RRType *self);
+PyObject* RRType_DNAME(s_RRType *self);
+PyObject* RRType_PTR(s_RRType *self);
+PyObject* RRType_MX(s_RRType *self);
+PyObject* RRType_DNSKEY(s_RRType *self);
+PyObject* RRType_TXT(s_RRType *self);
+PyObject* RRType_RRSIG(s_RRType *self);
+PyObject* RRType_NSEC(s_RRType *self);
+PyObject* RRType_AAAA(s_RRType *self);
+PyObject* RRType_DS(s_RRType *self);
+PyObject* RRType_OPT(s_RRType *self);
+PyObject* RRType_A(s_RRType *self);
+PyObject* RRType_NS(s_RRType *self);
+PyObject* RRType_CNAME(s_RRType *self);
+PyObject* RRType_SOA(s_RRType *self);
+PyObject* RRType_NSEC3(s_RRType *self);
+PyObject* RRType_IXFR(s_RRType *self);
+PyObject* RRType_AXFR(s_RRType *self);
+PyObject* RRType_ANY(s_RRType *self);
 
 typedef CPPPyObjectContainer<s_RRType, RRType> RRTypeContainer;
 
@@ -72,7 +72,7 @@ typedef CPPPyObjectContainer<s_RRType, RRType> RRTypeContainer;
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-static PyMethodDef RRType_methods[] = {
+PyMethodDef RRType_methods[] = {
     { "to_text", reinterpret_cast<PyCFunction>(RRType_toText), METH_NOARGS,
       "Returns the string representation" },
     { "to_wire", reinterpret_cast<PyCFunction>(RRType_toWire), METH_VARARGS,
@@ -106,7 +106,7 @@ static PyMethodDef RRType_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static int
+int
 RRType_init(s_RRType* self, PyObject* args) {
     const char* s;
     long i;
@@ -162,27 +162,27 @@ RRType_init(s_RRType* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 RRType_destroy(s_RRType* self) {
     delete self->cppobj;
     self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 RRType_toText(s_RRType* self) {
     // Py_BuildValue makes python objects from native data
     return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
-static PyObject*
+PyObject*
 RRType_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self, const_cast<char*>("to_text"),
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 RRType_toWire(s_RRType* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
@@ -210,12 +210,12 @@ RRType_toWire(s_RRType* self, PyObject* args) {
     return (NULL);
 }
 
-static PyObject*
+PyObject*
 RRType_getCode(s_RRType* self) {
     return (Py_BuildValue("I", self->cppobj->getCode()));
 }
 
-static PyObject*
+PyObject*
 RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
     bool c;
 
@@ -260,7 +260,7 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
 //
 // Common function for RRType_A/NS/etc.
 //
-static PyObject* RRType_createStatic(RRType stc) {
+PyObject* RRType_createStatic(RRType stc) {
     s_RRType* ret = PyObject_New(s_RRType, &rrtype_type);
     if (ret != NULL) {
         ret->cppobj = new RRType(stc);
@@ -268,97 +268,97 @@ static PyObject* RRType_createStatic(RRType stc) {
     return (ret);
 }
 
-static PyObject*
+PyObject*
 RRType_NSEC3PARAM(s_RRType*) {
     return (RRType_createStatic(RRType::NSEC3PARAM()));
 }
 
-static PyObject*
+PyObject*
 RRType_DNAME(s_RRType*) {
     return (RRType_createStatic(RRType::DNAME()));
 }
 
-static PyObject*
+PyObject*
 RRType_PTR(s_RRType*) {
     return (RRType_createStatic(RRType::PTR()));
 }
 
-static PyObject*
+PyObject*
 RRType_MX(s_RRType*) {
     return (RRType_createStatic(RRType::MX()));
 }
 
-static PyObject*
+PyObject*
 RRType_DNSKEY(s_RRType*) {
     return (RRType_createStatic(RRType::DNSKEY()));
 }
 
-static PyObject*
+PyObject*
 RRType_TXT(s_RRType*) {
     return (RRType_createStatic(RRType::TXT()));
 }
 
-static PyObject*
+PyObject*
 RRType_RRSIG(s_RRType*) {
     return (RRType_createStatic(RRType::RRSIG()));
 }
 
-static PyObject*
+PyObject*
 RRType_NSEC(s_RRType*) {
     return (RRType_createStatic(RRType::NSEC()));
 }
 
-static PyObject*
+PyObject*
 RRType_AAAA(s_RRType*) {
     return (RRType_createStatic(RRType::AAAA()));
 }
 
-static PyObject*
+PyObject*
 RRType_DS(s_RRType*) {
     return (RRType_createStatic(RRType::DS()));
 }
 
-static PyObject*
+PyObject*
 RRType_OPT(s_RRType*) {
     return (RRType_createStatic(RRType::OPT()));
 }
 
-static PyObject*
+PyObject*
 RRType_A(s_RRType*) {
     return (RRType_createStatic(RRType::A()));
 }
 
-static PyObject*
+PyObject*
 RRType_NS(s_RRType*) {
     return (RRType_createStatic(RRType::NS()));
 }
 
-static PyObject*
+PyObject*
 RRType_CNAME(s_RRType*) {
     return (RRType_createStatic(RRType::CNAME()));
 }
 
-static PyObject*
+PyObject*
 RRType_SOA(s_RRType*) {
     return (RRType_createStatic(RRType::SOA()));
 }
 
-static PyObject*
+PyObject*
 RRType_NSEC3(s_RRType*) {
     return (RRType_createStatic(RRType::NSEC3()));
 }
 
-static PyObject*
+PyObject*
 RRType_IXFR(s_RRType*) {
     return (RRType_createStatic(RRType::IXFR()));
 }
 
-static PyObject*
+PyObject*
 RRType_AXFR(s_RRType*) {
     return (RRType_createStatic(RRType::AXFR()));
 }
 
-static PyObject*
+PyObject*
 RRType_ANY(s_RRType*) {
     return (RRType_createStatic(RRType::ANY()));
 }

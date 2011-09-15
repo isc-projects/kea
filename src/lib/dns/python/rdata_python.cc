@@ -36,16 +36,16 @@ namespace {
 //
 
 // General creation and destruction
-static int Rdata_init(s_Rdata* self, PyObject* args);
-static void Rdata_destroy(s_Rdata* self);
+int Rdata_init(s_Rdata* self, PyObject* args);
+void Rdata_destroy(s_Rdata* self);
 
 // These are the functions we export
-static PyObject* Rdata_toText(s_Rdata* self);
+PyObject* Rdata_toText(s_Rdata* self);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
-static PyObject* Rdata_str(PyObject* self);
-static PyObject* Rdata_toWire(s_Rdata* self, PyObject* args);
-static PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
+PyObject* Rdata_str(PyObject* self);
+PyObject* Rdata_toWire(s_Rdata* self, PyObject* args);
+PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -53,7 +53,7 @@ static PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-static PyMethodDef Rdata_methods[] = {
+PyMethodDef Rdata_methods[] = {
     { "to_text", reinterpret_cast<PyCFunction>(Rdata_toText), METH_NOARGS,
       "Returns the string representation" },
     { "to_wire", reinterpret_cast<PyCFunction>(Rdata_toWire), METH_VARARGS,
@@ -66,7 +66,7 @@ static PyMethodDef Rdata_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static int
+int
 Rdata_init(s_Rdata* self, PyObject* args) {
     s_RRType* rrtype;
     s_RRClass* rrclass;
@@ -91,7 +91,7 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 Rdata_destroy(s_Rdata* self) {
     // Clear the shared_ptr so that its reference count is zero
     // before we call tp_free() (there is no direct release())
@@ -99,13 +99,13 @@ Rdata_destroy(s_Rdata* self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 Rdata_toText(s_Rdata* self) {
     // Py_BuildValue makes python objects from native data
     return (Py_BuildValue("s", self->rdata->toText().c_str()));
 }
 
-static PyObject*
+PyObject*
 Rdata_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
@@ -113,7 +113,7 @@ Rdata_str(PyObject* self) {
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 Rdata_toWire(s_Rdata* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
@@ -141,9 +141,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
     return (NULL);
 }
 
-
-
-static PyObject*
+PyObject*
 RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
     bool c;
 
