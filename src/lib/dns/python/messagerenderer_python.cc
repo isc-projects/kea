@@ -65,15 +65,15 @@ PyMethodDef MessageRenderer_methods[] = {
 int
 MessageRenderer_init(s_MessageRenderer* self) {
     self->outputbuffer = new OutputBuffer(4096);
-    self->messagerenderer = new MessageRenderer(*self->outputbuffer);
+    self->cppobj = new MessageRenderer(*self->outputbuffer);
     return (0);
 }
 
 void
 MessageRenderer_destroy(s_MessageRenderer* self) {
-    delete self->messagerenderer;
+    delete self->cppobj;
     delete self->outputbuffer;
-    self->messagerenderer = NULL;
+    self->cppobj = NULL;
     self->outputbuffer = NULL;
     Py_TYPE(self)->tp_free(self);
 }
@@ -81,18 +81,18 @@ MessageRenderer_destroy(s_MessageRenderer* self) {
 PyObject*
 MessageRenderer_getData(s_MessageRenderer* self) {
     return (Py_BuildValue("y#",
-                         self->messagerenderer->getData(),
-                          self->messagerenderer->getLength()));
+                         self->cppobj->getData(),
+                          self->cppobj->getLength()));
 }
 
 PyObject*
 MessageRenderer_getLength(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getLength()));
+    return (Py_BuildValue("I", self->cppobj->getLength()));
 }
 
 PyObject*
 MessageRenderer_isTruncated(s_MessageRenderer* self) {
-    if (self->messagerenderer->isTruncated()) {
+    if (self->cppobj->isTruncated()) {
         Py_RETURN_TRUE;
     } else {
         Py_RETURN_FALSE;
@@ -101,17 +101,17 @@ MessageRenderer_isTruncated(s_MessageRenderer* self) {
 
 PyObject*
 MessageRenderer_getLengthLimit(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getLengthLimit()));
+    return (Py_BuildValue("I", self->cppobj->getLengthLimit()));
 }
 
 PyObject*
 MessageRenderer_getCompressMode(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getCompressMode()));
+    return (Py_BuildValue("I", self->cppobj->getCompressMode()));
 }
 
 PyObject*
 MessageRenderer_setTruncated(s_MessageRenderer* self) {
-    self->messagerenderer->setTruncated();
+    self->cppobj->setTruncated();
     Py_RETURN_NONE;
 }
 
@@ -131,7 +131,7 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self,
                         "MessageRenderer length limit out of range");
         return (NULL);
     }
-    self->messagerenderer->setLengthLimit(lengthlimit);
+    self->cppobj->setLengthLimit(lengthlimit);
     Py_RETURN_NONE;
 }
 
@@ -145,12 +145,12 @@ MessageRenderer_setCompressMode(s_MessageRenderer* self,
     }
 
     if (mode == MessageRenderer::CASE_INSENSITIVE) {
-        self->messagerenderer->setCompressMode(MessageRenderer::CASE_INSENSITIVE);
+        self->cppobj->setCompressMode(MessageRenderer::CASE_INSENSITIVE);
         // If we return NULL it is seen as an error, so use this for
         // None returns, it also applies to CASE_SENSITIVE.
         Py_RETURN_NONE;
     } else if (mode == MessageRenderer::CASE_SENSITIVE) {
-        self->messagerenderer->setCompressMode(MessageRenderer::CASE_SENSITIVE);
+        self->cppobj->setCompressMode(MessageRenderer::CASE_SENSITIVE);
         Py_RETURN_NONE;
     } else {
         PyErr_SetString(PyExc_TypeError,
@@ -162,7 +162,7 @@ MessageRenderer_setCompressMode(s_MessageRenderer* self,
 
 PyObject*
 MessageRenderer_clear(s_MessageRenderer* self) {
-    self->messagerenderer->clear();
+    self->cppobj->clear();
     Py_RETURN_NONE;
 }
 } // end of unnamed namespace

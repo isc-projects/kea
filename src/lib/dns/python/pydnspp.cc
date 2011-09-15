@@ -29,14 +29,6 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-
-#include <dns/exceptions.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-
 #include "pydnspp_common.h"
 /* Note that we do forward declarations of the initialization functions here,
  * and these are not defined in headers (since they are not to be used in any

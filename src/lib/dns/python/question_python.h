@@ -32,7 +32,7 @@ extern PyObject* po_EmptyQuestion;
 
 class s_Question : public PyObject {
 public:
-    isc::dns::QuestionPtr question;
+    isc::dns::QuestionPtr cppobj;
 };
 
 extern PyTypeObject question_type;

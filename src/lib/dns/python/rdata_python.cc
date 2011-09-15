@@ -78,12 +78,12 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
                                         &rrclass_type, &rrclass,
                                         &s)) {
-        self->rdata = createRdata(*rrtype->cppobj, *rrclass->cppobj, s);
+        self->cppobj = createRdata(*rrtype->cppobj, *rrclass->cppobj, s);
         return (0);
     } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
                                 &rrclass_type, &rrclass, &data, &len)) {
         InputBuffer input_buffer(data, len);
-        self->rdata = createRdata(*rrtype->cppobj, *rrclass->cppobj,
+        self->cppobj = createRdata(*rrtype->cppobj, *rrclass->cppobj,
                                   input_buffer, len);
         return (0);
     }
@@ -95,14 +95,14 @@ void
 Rdata_destroy(s_Rdata* self) {
     // Clear the shared_ptr so that its reference count is zero
     // before we call tp_free() (there is no direct release())
-    self->rdata.reset();
+    self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
 Rdata_toText(s_Rdata* self) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->rdata->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 PyObject*
@@ -122,7 +122,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         PyObject* bytes_o = bytes;
 
         OutputBuffer buffer(4);
-        self->rdata->toWire(buffer);
+        self->cppobj->toWire(buffer);
         PyObject* rd_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, rd_bytes);
         // We need to release the object we temporarily created here
@@ -130,7 +130,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         Py_DECREF(rd_bytes);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->rdata->toWire(*mr->messagerenderer);
+        self->cppobj->toWire(*mr->cppobj);
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -153,24 +153,24 @@ RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
 
     switch (op) {
     case Py_LT:
-        c = self->rdata->compare(*other->rdata) < 0;
+        c = self->cppobj->compare(*other->cppobj) < 0;
         break;
     case Py_LE:
-        c = self->rdata->compare(*other->rdata) < 0 ||
-            self->rdata->compare(*other->rdata) == 0;
+        c = self->cppobj->compare(*other->cppobj) < 0 ||
+            self->cppobj->compare(*other->cppobj) == 0;
         break;
     case Py_EQ:
-        c = self->rdata->compare(*other->rdata) == 0;
+        c = self->cppobj->compare(*other->cppobj) == 0;
         break;
     case Py_NE:
-        c = self->rdata->compare(*other->rdata) != 0;
+        c = self->cppobj->compare(*other->cppobj) != 0;
         break;
     case Py_GT:
-        c = self->rdata->compare(*other->rdata) > 0;
+        c = self->cppobj->compare(*other->cppobj) > 0;
         break;
     case Py_GE:
-        c = self->rdata->compare(*other->rdata) > 0 ||
-            self->rdata->compare(*other->rdata) == 0;
+        c = self->cppobj->compare(*other->cppobj) > 0 ||
+            self->cppobj->compare(*other->cppobj) == 0;
         break;
     default:
         PyErr_SetString(PyExc_IndexError,

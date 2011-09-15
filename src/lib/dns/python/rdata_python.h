@@ -32,7 +32,7 @@ extern PyObject* po_EmptyRdata;
 
 class s_Rdata : public PyObject {
 public:
-    isc::dns::rdata::RdataPtr rdata;
+    isc::dns::rdata::RdataPtr cppobj;
 };
 
 extern PyTypeObject rdata_type;

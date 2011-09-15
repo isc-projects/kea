@@ -31,8 +31,8 @@ namespace python {
 
 class s_Opcode : public PyObject {
 public:
-    s_Opcode() : opcode(NULL), static_code(false) {}
-    const isc::dns::Opcode* opcode;
+    s_Opcode() : cppobj(NULL), static_code(false) {}
+    const isc::dns::Opcode* cppobj;
     bool static_code;
 };
 
