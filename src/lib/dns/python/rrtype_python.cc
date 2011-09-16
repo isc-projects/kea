@@ -458,7 +458,7 @@ initModulePart_RRType(PyObject* mod) {
 
 PyObject*
 createRRTypeObject(const RRType& source) {
-    RRTypeContainer container = PyObject_New(s_RRType, &rrtype_type);
+    RRTypeContainer container(PyObject_New(s_RRType, &rrtype_type));
     container.set(new RRType(source));
     return (container.release());
 }

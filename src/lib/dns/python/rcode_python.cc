@@ -438,7 +438,7 @@ initModulePart_Rcode(PyObject* mod) {
 
 PyObject*
 createRcodeObject(const Rcode& source) {
-    RcodeContainer container = PyObject_New(s_Rcode, &rcode_type);
+    RcodeContainer container(PyObject_New(s_Rcode, &rcode_type));
     container.set(new Rcode(source));
     return (container.release());
 }

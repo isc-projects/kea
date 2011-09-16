@@ -309,8 +309,7 @@ initModulePart_TSIGRecord(PyObject* mod) {
 
 PyObject*
 createTSIGRecordObject(const TSIGRecord& source) {
-    TSIGRecordContainer container = PyObject_New(s_TSIGRecord,
-                                                 &tsigrecord_type);
+    TSIGRecordContainer container(PyObject_New(s_TSIGRecord, &tsigrecord_type));
     container.set(new TSIGRecord(source));
     return (container.release());
 }

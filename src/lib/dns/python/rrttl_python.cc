@@ -317,7 +317,7 @@ initModulePart_RRTTL(PyObject* mod) {
 
 PyObject*
 createRRTTLObject(const RRTTL& source) {
-    RRTTLContainer container = PyObject_New(s_RRTTL, &rrttl_type);
+    RRTTLContainer container(PyObject_New(s_RRTTL, &rrttl_type));
     container.set(new RRTTL(source));
     return (container.release());
 }
