@@ -37,17 +37,10 @@ using namespace isc::util::python;
 using namespace isc::dns;
 using namespace isc::dns::python;
 
-//
-// Definition of the classes
-//
-
 // For each class, we need a struct, a helper functions (init, destroy,
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 
-//
-// TSIGContext
-//
 namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_TSIGContext : public PyObject {

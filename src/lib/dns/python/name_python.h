@@ -23,11 +23,6 @@ namespace isc {
 namespace dns {
 namespace python {
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
 extern PyObject* po_EmptyLabel;
 extern PyObject* po_TooLongName;
 extern PyObject* po_TooLongLabel;
