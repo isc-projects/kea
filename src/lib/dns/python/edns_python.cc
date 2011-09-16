@@ -177,7 +177,7 @@ EDNS_toText(const s_EDNS* const self) {
 }
 
 PyObject*
-EDNS_str(PyObject* const self) {
+EDNS_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
                                 const_cast<char*>("to_text"),
