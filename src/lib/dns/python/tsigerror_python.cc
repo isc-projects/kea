@@ -361,7 +361,7 @@ initModulePart_TSIGError(PyObject* mod) {
 
 PyObject*
 createTSIGErrorObject(const TSIGError& source) {
-    TSIGErrorContainer container = PyObject_New(s_TSIGError, &tsigerror_type);
+    TSIGErrorContainer container(PyObject_New(s_TSIGError, &tsigerror_type));
     container.set(new TSIGError(source));
     return (container.release());
 }

@@ -385,7 +385,7 @@ initModulePart_EDNS(PyObject* mod) {
 
 PyObject*
 createEDNSObject(const EDNS& source) {
-    EDNSContainer container = PyObject_New(s_EDNS, &edns_type);
+    EDNSContainer container(PyObject_New(s_EDNS, &edns_type));
     container.set(new EDNS(source));
     return (container.release());
 }

@@ -397,7 +397,7 @@ initModulePart_Opcode(PyObject* mod) {
 
 PyObject*
 createOpcodeObject(const Opcode& source) {
-    OpcodeContainer container = PyObject_New(s_Opcode, &opcode_type);
+    OpcodeContainer container(PyObject_New(s_Opcode, &opcode_type));
     container.set(new Opcode(source));
     return (container.release());
 }

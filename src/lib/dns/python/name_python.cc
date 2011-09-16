@@ -722,7 +722,7 @@ initModulePart_Name(PyObject* mod) {
 
 PyObject*
 createNameObject(const Name& source) {
-    NameContainer container = PyObject_New(s_Name, &name_type);
+    NameContainer container(PyObject_New(s_Name, &name_type));
     container.set(new Name(source));
     return (container.release());
 }
