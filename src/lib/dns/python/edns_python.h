@@ -36,6 +36,8 @@ PyObject* createEDNSObject(const EDNS& source);
 
 /// \brief Checks if the given python object is a EDNS object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type EDNS, false otherwise
 bool PyEDNS_Check(PyObject* obj);

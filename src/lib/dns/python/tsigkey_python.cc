@@ -284,6 +284,9 @@ initModulePart_TSIGKey(PyObject* mod) {
 
 bool
 PyTSIGKey_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
     return (PyObject_TypeCheck(obj, &tsigkey_type));
 }
 
@@ -521,6 +524,9 @@ initModulePart_TSIGKeyRing(PyObject* mod) {
 
 bool
 PyTSIGKeyRing_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
     return (PyObject_TypeCheck(obj, &tsigkeyring_type));
 }
 

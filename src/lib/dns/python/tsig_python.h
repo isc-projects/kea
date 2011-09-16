@@ -30,6 +30,8 @@ extern PyObject* po_TSIGContextError;
 
 /// \brief Checks if the given python object is a TSIGContext object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type TSIGContext, false otherwise
 bool PyTSIGContext_Check(PyObject* obj);

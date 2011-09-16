@@ -372,6 +372,9 @@ createRRClassObject(const RRClass& source) {
 
 bool
 PyRRClass_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
     return (PyObject_TypeCheck(obj, &rrclass_type));
 }
 

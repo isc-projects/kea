@@ -36,6 +36,8 @@ PyObject* createOpcodeObject(const Opcode& source);
 
 /// \brief Checks if the given python object is a Opcode object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type Opcode, false otherwise
 bool PyOpcode_Check(PyObject* obj);

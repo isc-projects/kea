@@ -36,6 +36,8 @@ PyObject* createTSIGRecordObject(const TSIGRecord& source);
 
 /// \brief Checks if the given python object is a TSIGRecord object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type TSIGRecord, false otherwise
 bool PyTSIGRecord_Check(PyObject* obj);

@@ -40,6 +40,8 @@ PyObject* createTSIGObject(const rdata::any::TSIG& source);
 
 /// \brief Checks if the given python object is a TSIG object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type TSIG, false otherwise
 bool PyTSIG_Check(PyObject* obj);
