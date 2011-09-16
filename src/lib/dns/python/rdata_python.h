@@ -43,6 +43,8 @@ PyObject* createRdataObject(isc::dns::rdata::ConstRdataPtr source);
 
 /// \brief Checks if the given python object is a Rdata object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type Rdata, false otherwise
 bool PyRdata_Check(PyObject* obj);

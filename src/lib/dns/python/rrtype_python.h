@@ -44,6 +44,8 @@ PyObject* createRRTypeObject(const RRType& source);
 
 /// \brief Checks if the given python object is a RRType object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type RRType, false otherwise
 bool PyRRType_Check(PyObject* obj);

@@ -28,6 +28,8 @@ extern PyTypeObject tsigkeyring_type;
 
 /// \brief Checks if the given python object is a TSIGKey object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type TSIGKey, false otherwise
 bool PyTSIGKey_Check(PyObject* obj);

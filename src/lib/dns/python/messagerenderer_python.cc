@@ -283,6 +283,9 @@ createMessageRendererObject(const MessageRenderer& source) {
 
 bool
 PyMessageRenderer_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
     return (PyObject_TypeCheck(obj, &messagerenderer_type));
 }
 

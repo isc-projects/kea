@@ -37,6 +37,8 @@ PyObject* createMessageRendererObject(const MessageRenderer& source);
 
 /// \brief Checks if the given python object is a MessageRenderer object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type MessageRenderer, false otherwise
 bool PyMessageRenderer_Check(PyObject* obj);

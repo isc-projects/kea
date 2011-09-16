@@ -392,6 +392,9 @@ createEDNSObject(const EDNS& source) {
 
 bool
 PyEDNS_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
     return (PyObject_TypeCheck(obj, &edns_type));
 }
 
