@@ -15,9 +15,6 @@
 #include <Python.h>
 #include <pydnspp_common.h>
 
-
-#include <config.h>
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
