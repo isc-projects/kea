@@ -367,7 +367,7 @@ initModulePart_TSIG(PyObject* mod) {
 
 PyObject*
 createTSIGObject(const any::TSIG& source) {
-    TSIGContainer container = PyObject_New(s_TSIG, &tsig_type);
+    TSIGContainer container(PyObject_New(s_TSIG, &tsig_type));
     container.set(new any::TSIG(source));
     return (container.release());
 }

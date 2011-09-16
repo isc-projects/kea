@@ -364,7 +364,7 @@ initModulePart_RRClass(PyObject* mod) {
 
 PyObject*
 createRRClassObject(const RRClass& source) {
-    RRClassContainer container = PyObject_New(s_RRClass, &rrclass_type);
+    RRClassContainer container(PyObject_New(s_RRClass, &rrclass_type));
     container.set(new RRClass(source));
     return (container.release());
 }
