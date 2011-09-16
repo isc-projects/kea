@@ -5,7 +5,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 lib_LTLIBRARIES = libpydnspp.la
-libpydnspp_la_SOURCES = pydnspp_common.cc pydnspp_towire.h
+libpydnspp_la_SOURCES = pydnspp_common.cc pydnspp_common.h pydnspp_towire.h
 libpydnspp_la_SOURCES += name_python.cc name_python.h
 libpydnspp_la_SOURCES += rrset_python.cc rrset_python.h
 libpydnspp_la_SOURCES += rrclass_python.cc rrclass_python.h
@@ -38,19 +38,7 @@ pydnspp_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 pydnspp_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 
-# directly included from source files, so these don't have their own
-# rules
-EXTRA_DIST = pydnspp_common.h
-EXTRA_DIST += edns_python.cc
-EXTRA_DIST += message_python.cc
-EXTRA_DIST += rrclass_python.cc
-EXTRA_DIST += opcode_python.cc
-EXTRA_DIST += rrset_python.cc
-EXTRA_DIST += question_python.cc
-EXTRA_DIST += rrttl_python.cc
-EXTRA_DIST += rdata_python.cc
-EXTRA_DIST += rrtype_python.cc
-EXTRA_DIST += tsigerror_python_inc.cc
+EXTRA_DIST = tsigerror_python_inc.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.

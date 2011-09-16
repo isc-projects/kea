@@ -48,10 +48,6 @@ public:
     isc::dns::RRsetPtr cppobj;
 };
 
-
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_RRset, RRset> RRsetContainer;
-
 int RRset_init(s_RRset* self, PyObject* args);
 void RRset_destroy(s_RRset* self);
 
@@ -381,34 +377,30 @@ initModulePart_RRset(PyObject* mod) {
 
 PyObject*
 createRRsetObject(const RRset& source) {
+
+    // RRsets are noncopyable, so as a workaround we recreate a new one
+    // and copy over all content
+    RRsetPtr new_rrset = isc::dns::RRsetPtr(
+        new isc::dns::RRset(source.getName(), source.getClass(),
+                            source.getType(), source.getTTL()));
+
+    isc::dns::RdataIteratorPtr rdata_it(source.getRdataIterator());
+    for (rdata_it->first(); !rdata_it->isLast(); rdata_it->next()) {
+        new_rrset->addRdata(rdata_it->getCurrent());
+    }
+
+    isc::dns::RRsetPtr sigs = source.getRRsig();
+    if (sigs) {
+        new_rrset->addRRsig(sigs);
+    }
     s_RRset* py_rrset =
         static_cast<s_RRset*>(rrset_type.tp_alloc(&rrset_type, 0));
     if (py_rrset == NULL) {
         isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
                   "probably due to short memory");
     }
-
-    // RRsets are noncopyable, so as a workaround we recreate a new one
-    // and copy over all content
-    try {
-        py_rrset->cppobj = isc::dns::RRsetPtr(
-            new isc::dns::RRset(source.getName(), source.getClass(),
-                                source.getType(), source.getTTL()));
-
-        isc::dns::RdataIteratorPtr rdata_it(source.getRdataIterator());
-        for (rdata_it->first(); !rdata_it->isLast(); rdata_it->next()) {
-            py_rrset->cppobj->addRdata(rdata_it->getCurrent());
-        }
-
-        isc::dns::RRsetPtr sigs = source.getRRsig();
-        if (sigs) {
-            py_rrset->cppobj->addRRsig(sigs);
-        }
-        return (py_rrset);
-    } catch (const std::bad_alloc&) {
-        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
-                  "probably due to short memory");
-    }
+    py_rrset->cppobj = new_rrset;
+    return (py_rrset);
 }
 
 bool
