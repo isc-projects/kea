@@ -445,6 +445,9 @@ createRcodeObject(const Rcode& source) {
 
 bool
 PyRcode_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
     return (PyObject_TypeCheck(obj, &rcode_type));
 }
 

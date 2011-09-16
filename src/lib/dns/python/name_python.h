@@ -58,6 +58,8 @@ PyObject* createNameObject(const Name& source);
 
 /// \brief Checks if the given python object is a Name object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type Name, false otherwise
 bool PyName_Check(PyObject* obj);

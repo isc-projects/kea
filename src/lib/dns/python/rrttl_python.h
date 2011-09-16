@@ -44,6 +44,8 @@ PyObject* createRRTTLObject(const RRTTL& source);
 
 /// \brief Checks if the given python object is a RRTTL object
 ///
+/// \exception PyCPPWrapperException if obj is NULL
+///
 /// \param obj The object to check the type of
 /// \return true if the object is of type RRTTL, false otherwise
 bool PyRRTTL_Check(PyObject* obj);
