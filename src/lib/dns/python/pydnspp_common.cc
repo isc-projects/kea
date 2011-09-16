@@ -41,7 +41,6 @@
 #include "question_python.h"
 #include "message_python.h"
 
-// order is important here!
 using namespace isc::dns::python;
 
 namespace isc {
