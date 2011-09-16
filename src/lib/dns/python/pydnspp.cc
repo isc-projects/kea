@@ -21,7 +21,6 @@
 // name initModulePart_<name>, and return true/false instead of
 // NULL/*mod
 //
-// And of course care has to be taken that all identifiers be unique
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
