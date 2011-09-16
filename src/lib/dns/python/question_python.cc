@@ -18,6 +18,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/exceptions.h>
 #include <util/buffer.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "question_python.h"
 
@@ -29,6 +30,7 @@
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 using namespace isc;
 
 namespace {
