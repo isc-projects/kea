@@ -47,23 +47,14 @@ using namespace isc::util::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Zone Finder
-//
-
-// Trivial constructor.
-s_ZoneFinder::s_ZoneFinder() : cppobj(ZoneFinderPtr()) {
-}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_ZoneFinder : public PyObject {
+public:
+    s_ZoneFinder() : cppobj(ZoneFinderPtr()) {};
+    ZoneFinderPtr cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_ZoneFinder, ZoneFinder> ZoneFinderContainer;
 
@@ -221,6 +212,7 @@ PyTypeObject zonefinder_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_ZoneFinder(PyObject* mod) {
@@ -259,6 +251,7 @@ initModulePart_ZoneFinder(PyObject* mod) {
 
     return (true);
 }
+} // namespace internal
 
 PyObject*
 createZoneFinderObject(isc::datasrc::ZoneFinderPtr source) {
