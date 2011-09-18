@@ -27,6 +27,11 @@ datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/python/libpydnspp.la
 datasrc_la_LIBADD += $(PYTHON_LIB)
 datasrc_la_LIBADD += $(SQLITE_LIBS)
 
+EXTRA_DIST = client_inc.cc
+EXTRA_DIST += finder_inc.cc
+EXTRA_DIST += iterator_inc.cc
+EXTRA_DIST += updater_inc.cc
+
 CLEANDIRS = __pycache__
 
 clean-local:
