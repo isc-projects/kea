@@ -22,19 +22,9 @@ namespace datasrc {
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_ZoneFinder : public PyObject {
-public:
-    s_ZoneFinder();
-    ZoneFinderPtr cppobj;
-};
-
 extern PyTypeObject zonefinder_type;
 
-bool initModulePart_ZoneFinder(PyObject* mod);
-
 PyObject* createZoneFinderObject(isc::datasrc::ZoneFinderPtr source);
-
 
 } // namespace python
 } // namespace datasrc

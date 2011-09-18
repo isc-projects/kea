@@ -47,23 +47,14 @@ using namespace isc::util::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Zone Updater
-//
-
-// Trivial constructor.
-s_ZoneUpdater::s_ZoneUpdater() : cppobj(ZoneUpdaterPtr()) {
-}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_ZoneUpdater : public PyObject {
+public:
+    s_ZoneUpdater() : cppobj(ZoneUpdaterPtr()) {};
+    ZoneUpdaterPtr cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_ZoneUpdater, ZoneUpdater> ZoneUpdaterContainer;
 
@@ -288,6 +279,7 @@ PyTypeObject zoneupdater_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_ZoneUpdater(PyObject* mod) {
@@ -305,6 +297,7 @@ initModulePart_ZoneUpdater(PyObject* mod) {
 
     return (true);
 }
+} // namespace internal
 
 PyObject*
 createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source) {

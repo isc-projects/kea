@@ -47,23 +47,14 @@ using namespace isc::util::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// DataSourceClient
-//
-
-// Trivial constructor.
-s_DataSourceClient::s_DataSourceClient() : cppobj(NULL) {
-}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_DataSourceClient : public PyObject {
+public:
+    s_DataSourceClient() : cppobj(NULL) {};
+    DataSourceClient* cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_DataSourceClient, DataSourceClient>
     DataSourceClientContainer;
@@ -269,6 +260,7 @@ PyTypeObject datasourceclient_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_DataSourceClient(PyObject* mod) {
@@ -295,6 +287,7 @@ initModulePart_DataSourceClient(PyObject* mod) {
 
     return (true);
 }
+} // namespace internal
 
 } // namespace python
 } // namespace datasrc
