@@ -23,16 +23,7 @@ class DataSourceClient;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_DataSourceClient : public PyObject {
-public:
-    s_DataSourceClient();
-    DataSourceClient* cppobj;
-};
-
 extern PyTypeObject datasourceclient_type;
-
-bool initModulePart_DataSourceClient(PyObject* mod);
 
 } // namespace python
 } // namespace datasrc

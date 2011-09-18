@@ -53,6 +53,14 @@ getDataSourceException(const char* ex_name) {
     }
     return (ex_obj);
 }
+
+namespace internal {
+bool initModulePart_DataSourceClient(PyObject* mod);
+bool initModulePart_ZoneFinder(PyObject* mod);
+bool initModulePart_ZoneIterator(PyObject* mod);
+bool initModulePart_ZoneUpdater(PyObject* mod);
+} // end namespace internal
+
 } // end namespace python
 } // end namespace datasrc
 } // end namespace isc
@@ -77,6 +85,8 @@ PyModuleDef iscDataSrc = {
 };
 
 } // end anonymous namespace
+
+using namespace isc::datasrc::python::internal;
 
 PyMODINIT_FUNC
 PyInit_datasrc(void) {

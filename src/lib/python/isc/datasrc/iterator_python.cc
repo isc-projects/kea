@@ -43,23 +43,14 @@ using namespace isc::util::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Zone Iterator
-//
-
-// Trivial constructor.
-s_ZoneIterator::s_ZoneIterator() : cppobj(ZoneIteratorPtr()) {
-}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_ZoneIterator : public PyObject {
+public:
+    s_ZoneIterator() : cppobj(ZoneIteratorPtr()) {};
+    ZoneIteratorPtr cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_ZoneIterator, ZoneIterator> ZoneIteratorContainer;
 
@@ -182,6 +173,7 @@ PyTypeObject zoneiterator_type = {
     0                                   // tp_version_tag
 };
 
+namespace internal {
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_ZoneIterator(PyObject* mod) {
@@ -199,6 +191,7 @@ initModulePart_ZoneIterator(PyObject* mod) {
 
     return (true);
 }
+} // namespace internal
 
 PyObject*
 createZoneIteratorObject(isc::datasrc::ZoneIteratorPtr source) {

@@ -23,16 +23,7 @@ class DataSourceClient;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_ZoneIterator : public PyObject {
-public:
-    s_ZoneIterator();
-    ZoneIteratorPtr cppobj;
-};
-
 extern PyTypeObject zoneiterator_type;
-
-bool initModulePart_ZoneIterator(PyObject* mod);
 
 PyObject* createZoneIteratorObject(isc::datasrc::ZoneIteratorPtr source);
 
