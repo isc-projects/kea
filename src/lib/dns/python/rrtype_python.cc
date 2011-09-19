@@ -433,29 +433,6 @@ PyTypeObject rrtype_type = {
     0                                   // tp_version_tag
 };
 
-namespace internal {
-bool
-initModulePart_RRType(PyObject* mod) {
-    // Add the exceptions to the module
-    po_InvalidRRType = PyErr_NewException("pydnspp.InvalidRRType", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRRType", po_InvalidRRType);
-    po_IncompleteRRType = PyErr_NewException("pydnspp.IncompleteRRType", NULL, NULL);
-    PyModule_AddObject(mod, "IncompleteRRType", po_IncompleteRRType);
-
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rrtype_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrtype_type);
-    PyModule_AddObject(mod, "RRType",
-                       reinterpret_cast<PyObject*>(&rrtype_type));
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createRRTypeObject(const RRType& source) {
     RRTypeContainer container(PyObject_New(s_RRType, &rrtype_type));

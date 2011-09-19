@@ -341,60 +341,6 @@ PyTypeObject opcode_type = {
     0                                   // tp_version_tag
 };
 
-namespace internal {
-bool
-initModulePart_Opcode(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&opcode_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&opcode_type);
-    void* p = &opcode_type;
-    if (PyModule_AddObject(mod, "Opcode", static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&opcode_type);
-        return (false);
-    }
-
-    addClassVariable(opcode_type, "QUERY_CODE",
-                     Py_BuildValue("h", Opcode::QUERY_CODE));
-    addClassVariable(opcode_type, "IQUERY_CODE",
-                     Py_BuildValue("h", Opcode::IQUERY_CODE));
-    addClassVariable(opcode_type, "STATUS_CODE",
-                     Py_BuildValue("h", Opcode::STATUS_CODE));
-    addClassVariable(opcode_type, "RESERVED3_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED3_CODE));
-    addClassVariable(opcode_type, "NOTIFY_CODE",
-                     Py_BuildValue("h", Opcode::NOTIFY_CODE));
-    addClassVariable(opcode_type, "UPDATE_CODE",
-                     Py_BuildValue("h", Opcode::UPDATE_CODE));
-    addClassVariable(opcode_type, "RESERVED6_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED6_CODE));
-    addClassVariable(opcode_type, "RESERVED7_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED7_CODE));
-    addClassVariable(opcode_type, "RESERVED8_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED8_CODE));
-    addClassVariable(opcode_type, "RESERVED9_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED9_CODE));
-    addClassVariable(opcode_type, "RESERVED10_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED10_CODE));
-    addClassVariable(opcode_type, "RESERVED11_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED11_CODE));
-    addClassVariable(opcode_type, "RESERVED12_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED12_CODE));
-    addClassVariable(opcode_type, "RESERVED13_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED13_CODE));
-    addClassVariable(opcode_type, "RESERVED14_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED14_CODE));
-    addClassVariable(opcode_type, "RESERVED15_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED15_CODE));
-
-    return (true);
-}
-} // end namespace internal
-
-
 PyObject*
 createOpcodeObject(const Opcode& source) {
     OpcodeContainer container(PyObject_New(s_Opcode, &opcode_type));

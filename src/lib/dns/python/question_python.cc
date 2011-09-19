@@ -256,25 +256,6 @@ PyTypeObject question_type = {
     0                                   // tp_version_tag
 };
 
-namespace internal {
-bool
-initModulePart_Question(PyObject* mod) {
-    // Add the exceptions to the module
-
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&question_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&question_type);
-    PyModule_AddObject(mod, "Question",
-                       reinterpret_cast<PyObject*>(&question_type));
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createQuestionObject(const Question& source) {
     s_Question* question =

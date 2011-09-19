@@ -262,45 +262,6 @@ PyTypeObject tsigrecord_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_TSIGRecord(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&tsigrecord_type) < 0) {
-        return (false);
-    }
-    void* p = &tsigrecord_type;
-    if (PyModule_AddObject(mod, "TSIGRecord", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigrecord_type);
-
-    // The following template is the typical procedure for installing class
-    // variables.  If the class doesn't have a class variable, remove the
-    // entire try-catch clauses.
-    try {
-        // Constant class variables
-        installClassVariable(tsigrecord_type, "TSIG_TTL",
-                             Py_BuildValue("I", 0));
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in TSIGRecord initialization: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-        return (false);
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in TSIGRecord initialization");
-        return (false);
-    }
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createTSIGRecordObject(const TSIGRecord& source) {
     TSIGRecordContainer container(PyObject_New(s_TSIGRecord, &tsigrecord_type));

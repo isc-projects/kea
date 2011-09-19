@@ -239,25 +239,6 @@ PyTypeObject messagerenderer_type = {
     0                                   // tp_version_tag
 };
 
-namespace internal {
-bool initModulePart_MessageRenderer(PyObject* mod) {
-    if (PyType_Ready(&messagerenderer_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&messagerenderer_type);
-
-    addClassVariable(messagerenderer_type, "CASE_INSENSITIVE",
-                     Py_BuildValue("I", MessageRenderer::CASE_INSENSITIVE));
-    addClassVariable(messagerenderer_type, "CASE_SENSITIVE",
-                     Py_BuildValue("I", MessageRenderer::CASE_SENSITIVE));
-
-    PyModule_AddObject(mod, "MessageRenderer",
-                       reinterpret_cast<PyObject*>(&messagerenderer_type));
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createMessageRendererObject(const MessageRenderer& source) {
     // should we copy? can we?

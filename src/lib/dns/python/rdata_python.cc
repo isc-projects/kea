@@ -203,11 +203,11 @@ namespace python {
 //
 // Declaration of the custom exceptions
 // Initialization and addition of these go in the initModulePart
-// function at the end of this file
+// function in pydnspp
 //
-static PyObject* po_InvalidRdataLength;
-static PyObject* po_InvalidRdataText;
-static PyObject* po_CharStringTooLong;
+PyObject* po_InvalidRdataLength;
+PyObject* po_InvalidRdataText;
+PyObject* po_CharStringTooLong;
 
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_Rdata
@@ -262,35 +262,6 @@ PyTypeObject rdata_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-namespace internal {
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_Rdata(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rdata_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rdata_type);
-    PyModule_AddObject(mod, "Rdata",
-                       reinterpret_cast<PyObject*>(&rdata_type));
-
-    // Add the exceptions to the class
-    po_InvalidRdataLength = PyErr_NewException("pydnspp.InvalidRdataLength", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRdataLength", po_InvalidRdataLength);
-
-    po_InvalidRdataText = PyErr_NewException("pydnspp.InvalidRdataText", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRdataText", po_InvalidRdataText);
-
-    po_CharStringTooLong = PyErr_NewException("pydnspp.CharStringTooLong", NULL, NULL);
-    PyModule_AddObject(mod, "CharStringTooLong", po_CharStringTooLong);
-
-
-    return (true);
-}
-} // end namespace internal
 
 PyObject*
 createRdataObject(ConstRdataPtr source) {

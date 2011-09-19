@@ -273,7 +273,7 @@ namespace python {
 //
 // Declaration of the custom exceptions
 // Initialization and addition of these go in the initModulePart
-// function at the end of this file
+// function in pydnspp.cc
 //
 PyObject* po_InvalidRRClass;
 PyObject* po_IncompleteRRClass;
@@ -334,33 +334,6 @@ PyTypeObject rrclass_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_RRClass(PyObject* mod) {
-    // Add the exceptions to the module
-    po_InvalidRRClass = PyErr_NewException("pydnspp.InvalidRRClass", NULL, NULL);
-    Py_INCREF(po_InvalidRRClass);
-    PyModule_AddObject(mod, "InvalidRRClass", po_InvalidRRClass);
-    po_IncompleteRRClass = PyErr_NewException("pydnspp.IncompleteRRClass", NULL, NULL);
-    Py_INCREF(po_IncompleteRRClass);
-    PyModule_AddObject(mod, "IncompleteRRClass", po_IncompleteRRClass);
-
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rrclass_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrclass_type);
-    PyModule_AddObject(mod, "RRClass",
-                       reinterpret_cast<PyObject*>(&rrclass_type));
-
-    return (true);
-}
-} // end namespace internal
 
 PyObject*
 createRRClassObject(const RRClass& source) {

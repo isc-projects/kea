@@ -23,7 +23,9 @@ namespace isc {
 namespace dns {
 namespace python {
 
-extern PyObject* po_EmptyRdata;
+extern PyObject* po_InvalidRdataLength;
+extern PyObject* po_InvalidRdataText;
+extern PyObject* po_CharStringTooLong;
 
 extern PyTypeObject rdata_type;
 

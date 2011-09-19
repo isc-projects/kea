@@ -646,7 +646,7 @@ namespace python {
 //
 // Declaration of the custom exceptions
 // Initialization and addition of these go in the initModulePart
-// function at the end of this file
+// function in pydnspp.cc
 //
 PyObject* po_MessageTooShort;
 PyObject* po_InvalidMessageSection;
@@ -705,76 +705,6 @@ PyTypeObject message_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_Message(PyObject* mod) {
-    if (PyType_Ready(&message_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&message_type);
-
-    // Class variables
-    // These are added to the tp_dict of the type object
-    //
-    addClassVariable(message_type, "PARSE",
-                     Py_BuildValue("I", Message::PARSE));
-    addClassVariable(message_type, "RENDER",
-                     Py_BuildValue("I", Message::RENDER));
-
-    addClassVariable(message_type, "HEADERFLAG_QR",
-                     Py_BuildValue("I", Message::HEADERFLAG_QR));
-    addClassVariable(message_type, "HEADERFLAG_AA",
-                     Py_BuildValue("I", Message::HEADERFLAG_AA));
-    addClassVariable(message_type, "HEADERFLAG_TC",
-                     Py_BuildValue("I", Message::HEADERFLAG_TC));
-    addClassVariable(message_type, "HEADERFLAG_RD",
-                     Py_BuildValue("I", Message::HEADERFLAG_RD));
-    addClassVariable(message_type, "HEADERFLAG_RA",
-                     Py_BuildValue("I", Message::HEADERFLAG_RA));
-    addClassVariable(message_type, "HEADERFLAG_AD",
-                     Py_BuildValue("I", Message::HEADERFLAG_AD));
-    addClassVariable(message_type, "HEADERFLAG_CD",
-                     Py_BuildValue("I", Message::HEADERFLAG_CD));
-
-    addClassVariable(message_type, "SECTION_QUESTION",
-                     Py_BuildValue("I", Message::SECTION_QUESTION));
-    addClassVariable(message_type, "SECTION_ANSWER",
-                     Py_BuildValue("I", Message::SECTION_ANSWER));
-    addClassVariable(message_type, "SECTION_AUTHORITY",
-                     Py_BuildValue("I", Message::SECTION_AUTHORITY));
-    addClassVariable(message_type, "SECTION_ADDITIONAL",
-                     Py_BuildValue("I", Message::SECTION_ADDITIONAL));
-
-    addClassVariable(message_type, "DEFAULT_MAX_UDPSIZE",
-                     Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
-
-    /* Class-specific exceptions */
-    po_MessageTooShort = PyErr_NewException("pydnspp.MessageTooShort", NULL,
-                                            NULL);
-    PyModule_AddObject(mod, "MessageTooShort", po_MessageTooShort);
-    po_InvalidMessageSection =
-        PyErr_NewException("pydnspp.InvalidMessageSection", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageSection", po_InvalidMessageSection);
-    po_InvalidMessageOperation =
-        PyErr_NewException("pydnspp.InvalidMessageOperation", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageOperation",
-                       po_InvalidMessageOperation);
-    po_InvalidMessageUDPSize =
-        PyErr_NewException("pydnspp.InvalidMessageUDPSize", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
-    po_DNSMessageBADVERS = PyErr_NewException("pydnspp.DNSMessageBADVERS",
-                                              NULL, NULL);
-    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
-
-    PyModule_AddObject(mod, "Message",
-                       reinterpret_cast<PyObject*>(&message_type));
-
-
-    return (true);
-}
-} // end namespace internal
 
 } // end python namespace
 } // end dns namespace
