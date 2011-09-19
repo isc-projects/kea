@@ -197,6 +197,7 @@ DatabaseClient::Finder::getRRsets(const Name& name, const WantedTypes& types,
     }
 
     bool seen_cname(false);
+    bool seen_ds(false);
     bool seen_other(false);
     bool seen_ns(false);
 
@@ -243,8 +244,14 @@ DatabaseClient::Finder::getRRsets(const Name& name, const WantedTypes& types,
                 seen_cname = true;
             } else if (cur_type == RRType::NS()) {
                 seen_ns = true;
-            } else if (cur_type != RRType::RRSIG()) {//RRSIG can live anywhere
-                // FIXME: Is something else allowed in the delegation point? DS?
+            } else if (cur_type == RRType::DS()) {
+                seen_ds = true;
+            } else if (cur_type != RRType::RRSIG() &&
+                       cur_type != RRType::NSEC3() &&
+                       cur_type != RRType::NSEC()) {
+                // NSEC and RRSIG can coexist with anything, otherwise
+                // we've seen something that can't live together with potential
+                // CNAME or NS
                 seen_other = true;
             }
         } catch (const InvalidRRType&) {
@@ -261,7 +268,7 @@ DatabaseClient::Finder::getRRsets(const Name& name, const WantedTypes& types,
                       RDATA_COLUMN]);
         }
     }
-    if (seen_cname && (seen_other || seen_ns)) {
+    if (seen_cname && (seen_other || seen_ns || seen_ds)) {
         isc_throw(DataSourceError, "CNAME shares domain " << name <<
                   " with something else");
     }
