@@ -247,15 +247,15 @@ DatabaseClient::Finder::getRRsets(const Name& name, const WantedTypes& types,
                 // FIXME: Is something else allowed in the delegation point? DS?
                 seen_other = true;
             }
-        } catch (const InvalidRRType& irt) {
+        } catch (const InvalidRRType&) {
             isc_throw(DataSourceError, "Invalid RRType in database for " <<
                       name << ": " << columns[DatabaseAccessor::
                       TYPE_COLUMN]);
-        } catch (const InvalidRRTTL& irttl) {
+        } catch (const InvalidRRTTL&) {
             isc_throw(DataSourceError, "Invalid TTL in database for " <<
                       name << ": " << columns[DatabaseAccessor::
                       TTL_COLUMN]);
-        } catch (const rdata::InvalidRdataText& ird) {
+        } catch (const rdata::InvalidRdataText&) {
             isc_throw(DataSourceError, "Invalid rdata in database for " <<
                       name << ": " << columns[DatabaseAccessor::
                       RDATA_COLUMN]);
