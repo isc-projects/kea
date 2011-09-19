@@ -228,7 +228,7 @@ namespace python {
 //
 // Declaration of the custom exceptions
 // Initialization and addition of these go in the initModulePart
-// function at the end of this file
+// function in pydnspp.cc
 //
 PyObject* po_InvalidRRTTL;
 PyObject* po_IncompleteRRTTL;
@@ -290,30 +290,6 @@ PyTypeObject rrttl_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_RRTTL(PyObject* mod) {
-    // Add the exceptions to the module
-    po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRRTTL", po_InvalidRRTTL);
-    po_IncompleteRRTTL = PyErr_NewException("pydnspp.IncompleteRRTTL", NULL, NULL);
-    PyModule_AddObject(mod, "IncompleteRRTTL", po_IncompleteRRTTL);
-
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rrttl_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrttl_type);
-    PyModule_AddObject(mod, "RRTTL",
-                       reinterpret_cast<PyObject*>(&rrttl_type));
-
-    return (true);
-}
-} // end namespace internal
 
 PyObject*
 createRRTTLObject(const RRTTL& source) {
