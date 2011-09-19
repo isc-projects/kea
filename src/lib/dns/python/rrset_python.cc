@@ -345,36 +345,6 @@ PyTypeObject rrset_type = {
     0                                   // tp_version_tag
 };
 
-
-
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_RRset(PyObject* mod) {
-    // Add the exceptions to the module
-    po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
-    PyModule_AddObject(mod, "EmptyRRset", po_EmptyRRset);
-
-    // Add the enums to the module
-
-    // Add the constants to the module
-
-    // Add the classes to the module
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module
-
-    // NameComparisonResult
-    if (PyType_Ready(&rrset_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrset_type);
-    PyModule_AddObject(mod, "RRset",
-                       reinterpret_cast<PyObject*>(&rrset_type));
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createRRsetObject(const RRset& source) {
 

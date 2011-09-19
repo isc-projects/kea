@@ -337,26 +337,6 @@ PyTypeObject tsig_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_TSIG(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&tsig_type) < 0) {
-        return (false);
-    }
-    void* p = &tsig_type;
-    if (PyModule_AddObject(mod, "TSIG", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsig_type);
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createTSIGObject(const any::TSIG& source) {
     TSIGContainer container(PyObject_New(s_TSIG, &tsig_type));

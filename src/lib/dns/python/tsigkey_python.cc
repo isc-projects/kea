@@ -232,52 +232,6 @@ PyTypeObject tsigkey_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_TSIGKey(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&tsigkey_type) < 0) {
-        return (false);
-    }
-    void* p = &tsigkey_type;
-    if (PyModule_AddObject(mod, "TSIGKey", static_cast<PyObject*>(p)) != 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigkey_type);
-
-    try {
-        // Constant class variables
-        installClassVariable(tsigkey_type, "HMACMD5_NAME",
-                             createNameObject(TSIGKey::HMACMD5_NAME()));
-        installClassVariable(tsigkey_type, "HMACSHA1_NAME",
-                             createNameObject(TSIGKey::HMACSHA1_NAME()));
-        installClassVariable(tsigkey_type, "HMACSHA256_NAME",
-                             createNameObject(TSIGKey::HMACSHA256_NAME()));
-        installClassVariable(tsigkey_type, "HMACSHA224_NAME",
-                             createNameObject(TSIGKey::HMACSHA224_NAME()));
-        installClassVariable(tsigkey_type, "HMACSHA384_NAME",
-                             createNameObject(TSIGKey::HMACSHA384_NAME()));
-        installClassVariable(tsigkey_type, "HMACSHA512_NAME",
-                             createNameObject(TSIGKey::HMACSHA512_NAME()));
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in TSIGKey initialization: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-        return (false);
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in TSIGKey initialization");
-        return (false);
-    }
-
-    return (true);
-}
-} // end namespace internal
-
 bool
 PyTSIGKey_Check(PyObject* obj) {
     if (obj == NULL) {
@@ -489,31 +443,6 @@ PyTypeObject tsigkeyring_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-namespace internal {
-bool
-initModulePart_TSIGKeyRing(PyObject* mod) {
-    if (PyType_Ready(&tsigkeyring_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigkeyring_type);
-    void* p = &tsigkeyring_type;
-    if (PyModule_AddObject(mod, "TSIGKeyRing",
-                           static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&tsigkeyring_type);
-        return (false);
-    }
-
-    addClassVariable(tsigkeyring_type, "SUCCESS",
-                     Py_BuildValue("I", TSIGKeyRing::SUCCESS));
-    addClassVariable(tsigkeyring_type, "EXIST",
-                     Py_BuildValue("I", TSIGKeyRing::EXIST));
-    addClassVariable(tsigkeyring_type, "NOTFOUND",
-                     Py_BuildValue("I", TSIGKeyRing::NOTFOUND));
-
-    return (true);
-}
-} // end namespace internal
 
 bool
 PyTSIGKeyRing_Check(PyObject* obj) {

@@ -302,61 +302,6 @@ PyTypeObject tsigcontext_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-namespace internal {
-bool
-initModulePart_TSIGContext(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&tsigcontext_type) < 0) {
-        return (false);
-    }
-    void* p = &tsigcontext_type;
-    if (PyModule_AddObject(mod, "TSIGContext",
-                           static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigcontext_type);
-
-    try {
-        // Class specific exceptions
-        po_TSIGContextError = PyErr_NewException("pydnspp.TSIGContextError",
-                                                 po_IscException, NULL);
-        PyObjectContainer(po_TSIGContextError).installToModule(
-            mod, "TSIGContextError");
-
-        // Constant class variables
-        installClassVariable(tsigcontext_type, "STATE_INIT",
-                             Py_BuildValue("I", TSIGContext::INIT));
-        installClassVariable(tsigcontext_type, "STATE_SENT_REQUEST",
-                             Py_BuildValue("I", TSIGContext::SENT_REQUEST));
-        installClassVariable(tsigcontext_type, "STATE_RECEIVED_REQUEST",
-                             Py_BuildValue("I", TSIGContext::RECEIVED_REQUEST));
-        installClassVariable(tsigcontext_type, "STATE_SENT_RESPONSE",
-                             Py_BuildValue("I", TSIGContext::SENT_RESPONSE));
-        installClassVariable(tsigcontext_type, "STATE_VERIFIED_RESPONSE",
-                             Py_BuildValue("I",
-                                           TSIGContext::VERIFIED_RESPONSE));
-
-        installClassVariable(tsigcontext_type, "DEFAULT_FUDGE",
-                             Py_BuildValue("H", TSIGContext::DEFAULT_FUDGE));
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in TSIGContext initialization: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-        return (false);
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in TSIGContext initialization");
-        return (false);
-    }
-
-    return (true);
-}
-} // end namespace internal
-
 bool
 PyTSIGContext_Check(PyObject* obj) {
     if (obj == NULL) {

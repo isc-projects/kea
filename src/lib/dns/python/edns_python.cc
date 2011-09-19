@@ -363,26 +363,6 @@ PyTypeObject edns_type = {
     0                                   // tp_version_tag
 };
 
-namespace internal {
-bool
-initModulePart_EDNS(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&edns_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&edns_type);
-    void* p = &edns_type;
-    PyModule_AddObject(mod, "EDNS", static_cast<PyObject*>(p));
-
-    addClassVariable(edns_type, "SUPPORTED_VERSION",
-                     Py_BuildValue("B", EDNS::SUPPORTED_VERSION));
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createEDNSObject(const EDNS& source) {
     EDNSContainer container(PyObject_New(s_EDNS, &edns_type));

@@ -381,61 +381,6 @@ PyTypeObject rcode_type = {
     0                                   // tp_version_tag
 };
 
-namespace internal {
-bool
-initModulePart_Rcode(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rcode_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rcode_type);
-    void* p = &rcode_type;
-    if (PyModule_AddObject(mod, "Rcode", static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&rcode_type);
-        return (false);
-    }
-
-    addClassVariable(rcode_type, "NOERROR_CODE",
-                     Py_BuildValue("h", Rcode::NOERROR_CODE));
-    addClassVariable(rcode_type, "FORMERR_CODE",
-                     Py_BuildValue("h", Rcode::FORMERR_CODE));
-    addClassVariable(rcode_type, "SERVFAIL_CODE",
-                     Py_BuildValue("h", Rcode::SERVFAIL_CODE));
-    addClassVariable(rcode_type, "NXDOMAIN_CODE",
-                     Py_BuildValue("h", Rcode::NXDOMAIN_CODE));
-    addClassVariable(rcode_type, "NOTIMP_CODE",
-                     Py_BuildValue("h", Rcode::NOTIMP_CODE));
-    addClassVariable(rcode_type, "REFUSED_CODE",
-                     Py_BuildValue("h", Rcode::REFUSED_CODE));
-    addClassVariable(rcode_type, "YXDOMAIN_CODE",
-                     Py_BuildValue("h", Rcode::YXDOMAIN_CODE));
-    addClassVariable(rcode_type, "YXRRSET_CODE",
-                     Py_BuildValue("h", Rcode::YXRRSET_CODE));
-    addClassVariable(rcode_type, "NXRRSET_CODE",
-                     Py_BuildValue("h", Rcode::NXRRSET_CODE));
-    addClassVariable(rcode_type, "NOTAUTH_CODE",
-                     Py_BuildValue("h", Rcode::NOTAUTH_CODE));
-    addClassVariable(rcode_type, "NOTZONE_CODE",
-                     Py_BuildValue("h", Rcode::NOTZONE_CODE));
-    addClassVariable(rcode_type, "RESERVED11_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED11_CODE));
-    addClassVariable(rcode_type, "RESERVED12_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED12_CODE));
-    addClassVariable(rcode_type, "RESERVED13_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED13_CODE));
-    addClassVariable(rcode_type, "RESERVED14_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED14_CODE));
-    addClassVariable(rcode_type, "RESERVED15_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED15_CODE));
-    addClassVariable(rcode_type, "BADVERS_CODE",
-                     Py_BuildValue("h", Rcode::BADVERS_CODE));
-
-    return (true);
-}
-} // end namespace internal
-
 PyObject*
 createRcodeObject(const Rcode& source) {
     RcodeContainer container(PyObject_New(s_Rcode, &rcode_type));
