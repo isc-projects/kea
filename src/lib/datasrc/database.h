@@ -640,6 +640,33 @@ public:
             FoundRRsets;
         /// \brief Just shortcut for set of types
         typedef std::set<dns::RRType> WantedTypes;
+        /**
+         * \brief Searches database for RRsets of one domain.
+         *
+         * This method scans RRs of single domain specified by name and
+         * extracts any RRsets found and requested by parameters.
+         *
+         * It is used internally by find(), because it is called multiple
+         * times (usually with different domains).
+         *
+         * \param name Which domain name should be scanned.
+         * \param types List of types the caller is interested in.
+         * \param check_ns If this is set to true, it checks nothing lives
+         *     together with NS record (with few little exceptions, like RRSET
+         *     or NSEC). This check is meant for non-apex NS records.
+         * \param construct_name If this is NULL, the resulting RRsets have
+         *     their name set to name. If it is not NULL, it overrides the name
+         *     and uses this one (this can be used for wildcard synthesized
+         *     records).
+         * \return A pair, where the first element indicates if the domain
+         *     contains any RRs at all (not only the requested, it may happen
+         *     this is set to true, but the second part is empty). The second
+         *     part is map from RRtypes to RRsets of the corresponding types.
+         *     If the RRset is not present in DB, the RRtype is not there at
+         *     all (so you'll not find NULL pointer in the result).
+         * \throw DataSourceError If there's a low-level error with the
+         *     database or the database contains bad data.
+         */
         FoundRRsets getRRsets(const dns::Name& name, const WantedTypes& types,
                               bool check_ns,
                               const dns::Name* construct_name = NULL);
