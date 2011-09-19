@@ -175,8 +175,8 @@ private:
 }
 
 DatabaseClient::Finder::FoundRRsets
-DatabaseClient::Finder::getRRsets(const Name& name, const WantedTypes& types,
-                                  bool check_ns, const Name* construct_name)
+DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
+                                  bool check_ns, const string* construct_name)
 {
     RRsigStore sig_store;
     bool records_found = false;
@@ -184,17 +184,18 @@ DatabaseClient::Finder::getRRsets(const Name& name, const WantedTypes& types,
 
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(accessor_->getRecords(name.toText(), zone_id_));
+        context(accessor_->getRecords(name, zone_id_));
     // It must not return NULL, that's a bug of the implementation
     if (!context) {
-        isc_throw(isc::Unexpected, "Iterator context null at " +
-                  name.toText());
+        isc_throw(isc::Unexpected, "Iterator context null at " + name);
     }
 
     std::string columns[DatabaseAccessor::COLUMN_COUNT];
     if (construct_name == NULL) {
         construct_name = &name;
     }
+
+    const Name construct_name_object(*construct_name);
 
     bool seen_cname(false);
     bool seen_ds(false);
@@ -234,8 +235,8 @@ DatabaseClient::Finder::getRRsets(const Name& name, const WantedTypes& types,
                 // contains an rrtype that is different from the actual value
                 // of the 'type covered' field in the RRSIG Rdata).
                 //cur_sigtype(columns[SIGTYPE_COLUMN]);
-                addOrCreate(result[cur_type], *construct_name, getClass(),
-                            cur_type, cur_ttl,
+                addOrCreate(result[cur_type], construct_name_object,
+                            getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
                             *accessor_);
             }
@@ -305,6 +306,14 @@ namespace {
 // To conveniently put the RRTypes into the sets. This is not really clean
 // design, but it is hidden inside this file and makes the calls much more
 // convenient.
+//
+// While this is not straightforward use of the + operator, some mathematical
+// conventions do allow summing sets with elements (usually in communitative
+// way, we define only one order of the operator parameters, as the other
+// isn't used).
+//
+// This arguably produces more readable code than having bunch of proxy
+// functions and set.insert calls scattered through the code.
 std::set<RRType> operator +(std::set<RRType> set, const RRType& type) {
     set.insert(type);
     return (set);
@@ -354,7 +363,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         static const WantedTypes delegation_types(WantedTypes() +
                                                   RRType::DNAME() +
                                                   RRType::NS());
-        found = getRRsets(superdomain, delegation_types, i != remove_labels);
+        found = getRRsets(superdomain.toText(), delegation_types,
+                          i != remove_labels);
         if (found.first) {
             // It contains some RRs, so it exists.
             last_known = superdomain.getLabelCount();
@@ -401,7 +411,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
         static const WantedTypes final_types(WantedTypes() + RRType::CNAME() +
                                              RRType::NS() + RRType::NSEC());
-        found = getRRsets(name, final_types + type, name != origin);
+        found = getRRsets(name.toText(), final_types + type, name != origin);
         records_found = found.first;
 
         // NS records, CNAME record and Wanted Type records
@@ -444,21 +454,18 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // Go up to first non-empty domain.
 
                 remove_labels = current_label_count - last_known;
-                const Name star("*");
                 for (size_t i(1); i <= remove_labels; ++ i) {
                     // Construct the name with *
-                    // TODO: Once the underlying DatabaseAccessor takes
-                    // string, do the concatenation on strings, not
-                    // Names
                     const Name superdomain(name.split(i));
-                    const Name wildcard(star.concatenate(superdomain));
+                    const string wildcard("*." + superdomain.toText());
+                    const string construct_name(name.toText());
                     // TODO What do we do about DNAME here?
                     static const WantedTypes wildcard_types(WantedTypes() +
                                                             RRType::CNAME() +
                                                             RRType::NS() +
                                                             RRType::NSEC());
                     found = getRRsets(wildcard, wildcard_types + type, true,
-                                      &name);
+                                      &construct_name);
                     if (found.first) {
                         if (first_ns) {
                             // In case we are under NS, we don't
@@ -526,7 +533,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                 arg(name).arg(superdomain);
                         }
                         break;
-                    } else if (hasSubdomains(wildcard.toText())) {
+                    } else if (hasSubdomains(wildcard)) {
                         // Empty non-terminal asterisk
                         records_found = true;
                         get_cover = dnssec_data;
@@ -563,7 +570,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // Which one should contain the NSEC record?
                     const Name coverName(findPreviousName(name));
                     // Get the record and copy it out
-                    found = getRRsets(coverName, nsec_types, true);
+                    found = getRRsets(coverName.toText(), nsec_types, true);
                     const FoundIterator
                         nci(found.second.find(RRType::NSEC()));
                     if (nci != found.second.end()) {
