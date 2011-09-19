@@ -667,9 +667,9 @@ public:
          * \throw DataSourceError If there's a low-level error with the
          *     database or the database contains bad data.
          */
-        FoundRRsets getRRsets(const dns::Name& name, const WantedTypes& types,
-                              bool check_ns,
-                              const dns::Name* construct_name = NULL);
+        FoundRRsets getRRsets(const std::string& name,
+                              const WantedTypes& types, bool check_ns,
+                              const std::string* construct_name = NULL);
         /**
          * \brief Checks if something lives below this domain.
          *
