@@ -302,8 +302,6 @@ DatabaseClient::Finder::hasSubdomains(const std::string& name) {
 // Some manipulation with RRType sets
 namespace {
 
-const std::set<RRType> empty_types;
-
 // To conveniently put the RRTypes into the sets. This is not really clean
 // design, but it is hidden inside this file and makes the calls much more
 // convenient.
@@ -335,7 +333,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // we can't do it under NS, so we store it here to check
     isc::dns::RRsetPtr first_ns;
     // This is used at multiple places
-    static const WantedTypes nsec_types(empty_types + RRType::NSEC());
+    static const WantedTypes nsec_types(WantedTypes() + RRType::NSEC());
 
     // First, do we have any kind of delegation (NS/DNAME) here?
     const Name origin(getOrigin());
@@ -353,7 +351,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     for (int i(remove_labels); i > 0; --i) {
         Name superdomain(name.split(i));
         // Look if there's NS or DNAME (but ignore the NS in origin)
-        static const WantedTypes delegation_types(empty_types +
+        static const WantedTypes delegation_types(WantedTypes() +
                                                   RRType::DNAME() +
                                                   RRType::NS());
         found = getRRsets(superdomain, delegation_types, i != remove_labels);
@@ -401,7 +399,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         // It is special if there's a CNAME or NS, DNAME is ignored here
         // And we don't consider the NS in origin
 
-        static const WantedTypes final_types(empty_types + RRType::CNAME() +
+        static const WantedTypes final_types(WantedTypes() + RRType::CNAME() +
                                              RRType::NS() + RRType::NSEC());
         found = getRRsets(name, final_types + type, name != origin);
         records_found = found.first;
@@ -455,7 +453,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     const Name superdomain(name.split(i));
                     const Name wildcard(star.concatenate(superdomain));
                     // TODO What do we do about DNAME here?
-                    static const WantedTypes wildcard_types(empty_types +
+                    static const WantedTypes wildcard_types(WantedTypes() +
                                                             RRType::CNAME() +
                                                             RRType::NS() +
                                                             RRType::NSEC());
