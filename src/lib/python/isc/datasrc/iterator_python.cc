@@ -40,6 +40,7 @@
 
 using namespace std;
 using namespace isc::util::python;
+using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
@@ -52,8 +53,8 @@ public:
 };
 
 // Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_ZoneIterator, ZoneIterator> ZoneIteratorContainer;
-
+typedef CPPPyObjectContainer<s_ZoneIterator, ZoneIterator>
+    ZoneIteratorContainer;
 
 // General creation and destruction
 int
@@ -79,14 +80,15 @@ ZoneIterator_destroy(s_ZoneIterator* const self) {
 // We declare the functions here, the definitions are below
 // the type definition of the object, since both can use the other
 //
-PyObject* ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
+PyObject*
+ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
     s_ZoneIterator* self = static_cast<s_ZoneIterator*>(po_self);
     try {
         isc::dns::ConstRRsetPtr rrset = self->cppobj->getNextRRset();
         if (!rrset) {
             Py_RETURN_NONE;
         }
-        return (isc::dns::python::createRRsetObject(*rrset));
+        return (createRRsetObject(*rrset));
     } catch (const isc::Exception& isce) {
         // isc::Unexpected is thrown when we call getNextRRset() when we are
         // already done iterating ('iterating past end')
@@ -97,26 +99,16 @@ PyObject* ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     } catch (...) {
-        PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
         return (NULL);
     }
 }
 
-// These are the functions we export
-//
-
-// These are the functions we export
-// For a minimal support, we don't need them.
-
-// This list contains the actual set of functions we have in
-// python. Each entry has
-// 1. Python method name
-// 2. Our static function here
-// 3. Argument type
-// 4. Documentation
 PyMethodDef ZoneIterator_methods[] = {
-    { "get_next_rrset", reinterpret_cast<PyCFunction>(ZoneIterator_getNextRRset),
-      METH_NOARGS, ZoneIterator_getNextRRset_doc },
+    { "get_next_rrset",
+      reinterpret_cast<PyCFunction>(ZoneIterator_getNextRRset), METH_NOARGS,
+      ZoneIterator_getNextRRset_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -131,7 +123,7 @@ PyTypeObject zoneiterator_type = {
     "datasrc.ZoneIterator",
     sizeof(s_ZoneIterator),             // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(ZoneIterator_destroy),       // tp_dealloc
+    reinterpret_cast<destructor>(ZoneIterator_destroy),// tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
