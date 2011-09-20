@@ -353,6 +353,10 @@ PyRRClass_Check(PyObject* obj) {
 
 const RRClass&
 PyRRClass_ToRRClass(const PyObject* rrclass_obj) {
+    if (rrclass_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in RRClass PyObject conversion");
+    }
     const s_RRClass* rrclass = static_cast<const s_RRClass*>(rrclass_obj);
     return (*rrclass->cppobj);
 }

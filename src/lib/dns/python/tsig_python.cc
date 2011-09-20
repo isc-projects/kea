@@ -312,6 +312,10 @@ PyTSIGContext_Check(PyObject* obj) {
 
 TSIGContext&
 PyTSIGContext_ToTSIGContext(PyObject* tsigcontext_obj) {
+    if (tsigcontext_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in TSIGContext PyObject conversion");
+    }
     s_TSIGContext* tsigcontext = static_cast<s_TSIGContext*>(tsigcontext_obj);
     return (*tsigcontext->cppobj);
 }

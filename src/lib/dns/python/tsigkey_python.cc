@@ -454,6 +454,10 @@ PyTSIGKeyRing_Check(PyObject* obj) {
 
 const TSIGKeyRing&
 PyTSIGKeyRing_ToTSIGKeyRing(const PyObject* tsigkeyring_obj) {
+    if (tsigkeyring_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in TSIGKeyRing PyObject conversion");
+    }
     const s_TSIGKeyRing* tsigkeyring =
         static_cast<const s_TSIGKeyRing*>(tsigkeyring_obj);
     return (*tsigkeyring->cppobj);

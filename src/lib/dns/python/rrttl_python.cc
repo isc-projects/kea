@@ -308,6 +308,10 @@ PyRRTTL_Check(PyObject* obj) {
 
 const RRTTL&
 PyRRTTL_ToRRTTL(const PyObject* rrttl_obj) {
+    if (rrttl_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in RRTTL PyObject conversion");
+    }
     const s_RRTTL* rrttl = static_cast<const s_RRTTL*>(rrttl_obj);
     return (*rrttl->cppobj);
 }

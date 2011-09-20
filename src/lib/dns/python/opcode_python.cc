@@ -358,6 +358,10 @@ PyOpcode_Check(PyObject* obj) {
 
 const Opcode&
 PyOpcode_ToOpcode(const PyObject* opcode_obj) {
+    if (opcode_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Opcode PyObject conversion");
+    }
     const s_Opcode* opcode = static_cast<const s_Opcode*>(opcode_obj);
     return (*opcode->cppobj);
 }

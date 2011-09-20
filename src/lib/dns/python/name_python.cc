@@ -654,6 +654,10 @@ PyName_Check(PyObject* obj) {
 
 const Name&
 PyName_ToName(const PyObject* name_obj) {
+    if (name_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Name PyObject conversion");
+    }
     const s_Name* name = static_cast<const s_Name*>(name_obj);
     return (*name->cppobj);
 }
