@@ -476,7 +476,7 @@ public:
     virtual const std::string& getDBName() const = 0;
 
     /**
-     * \brief It returns the previous name in DNSSEC/NSEC order.
+     * \brief It returns the previous name in DNSSEC order.
      *
      * This is used in DatabaseClient::findPreviousName and does more
      * or less the real work, except for working on strings.
