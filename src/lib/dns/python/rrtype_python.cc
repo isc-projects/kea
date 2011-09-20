@@ -450,6 +450,10 @@ PyRRType_Check(PyObject* obj) {
 
 const RRType&
 PyRRType_ToRRType(const PyObject* rrtype_obj) {
+    if (rrtype_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in RRType PyObject conversion");
+    }
     const s_RRType* rrtype = static_cast<const s_RRType*>(rrtype_obj);
     return (*rrtype->cppobj);
 }

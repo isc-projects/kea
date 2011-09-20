@@ -398,6 +398,10 @@ PyRcode_Check(PyObject* obj) {
 
 const Rcode&
 PyRcode_ToRcode(const PyObject* rcode_obj) {
+    if (rcode_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Rcode PyObject conversion");
+    }
     const s_Rcode* rcode = static_cast<const s_Rcode*>(rcode_obj);
     return (*rcode->cppobj);
 }

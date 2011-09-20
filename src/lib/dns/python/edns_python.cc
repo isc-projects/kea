@@ -380,6 +380,10 @@ PyEDNS_Check(PyObject* obj) {
 
 const EDNS&
 PyEDNS_ToEDNS(const PyObject* edns_obj) {
+    if (edns_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in EDNS PyObject conversion");
+    }
     const s_EDNS* edns = static_cast<const s_EDNS*>(edns_obj);
     return (*edns->cppobj);
 }

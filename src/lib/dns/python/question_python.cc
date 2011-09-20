@@ -308,6 +308,10 @@ PyQuestion_Check(PyObject* obj) {
 
 const Question&
 PyQuestion_ToQuestion(const PyObject* question_obj) {
+    if (question_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Question PyObject conversion");
+    }
     const s_Question* question = static_cast<const s_Question*>(question_obj);
     return (*question->cppobj);
 }

@@ -285,6 +285,10 @@ PyRdata_Check(PyObject* obj) {
 
 const Rdata&
 PyRdata_ToRdata(const PyObject* rdata_obj) {
+    if (rdata_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Rdata PyObject conversion");
+    }
     const s_Rdata* rdata = static_cast<const s_Rdata*>(rdata_obj);
     return (*rdata->cppobj);
 }

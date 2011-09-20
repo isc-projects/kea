@@ -253,6 +253,10 @@ PyMessageRenderer_Check(PyObject* obj) {
 
 MessageRenderer&
 PyMessageRenderer_ToMessageRenderer(PyObject* messagerenderer_obj) {
+    if (messagerenderer_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in MessageRenderer PyObject conversion");
+    }
     s_MessageRenderer* messagerenderer = static_cast<s_MessageRenderer*>(messagerenderer_obj);
     return (*messagerenderer->cppobj);
 }

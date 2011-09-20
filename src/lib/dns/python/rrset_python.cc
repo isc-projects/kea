@@ -448,6 +448,10 @@ PyRRset_ToRRset(PyObject* rrset_obj) {
 
 RRsetPtr
 PyRRset_ToRRsetPtr(PyObject* rrset_obj) {
+    if (rrset_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in RRset PyObject conversion");
+    }
     s_RRset* rrset = static_cast<s_RRset*>(rrset_obj);
     return (rrset->cppobj);
 }
