@@ -19,8 +19,6 @@ EXTRA_DIST = bob.spec
 man_MANS = bind10.8
 EXTRA_DIST += $(man_MANS) bind10.xml bind10_messages.mes
 
-BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/bind10_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/bind10_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/bind10_messages.pyc
 EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/bind10_messages.py
 
@@ -34,9 +32,6 @@ endif
 $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py : bind10_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/bind10_messages.mes
-
-$(PYTHON_LOGMSGPKG_DIR)/bind10_messages.py: Makefile
-	echo "from work.bind10_messages import *" > $@
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 bind10: bind10_src.py $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py

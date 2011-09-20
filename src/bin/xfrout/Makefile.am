@@ -17,11 +17,6 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.pyc
 man_MANS = b10-xfrout.8
 EXTRA_DIST = $(man_MANS) b10-xfrout.xml xfrout_messages.mes
 
-BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/xfrout_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/xfrout_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/xfrout_messages.pyc
-EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/xfrout_messages.py
-
 if ENABLE_MAN
 
 b10-xfrout.8: b10-xfrout.xml
@@ -33,9 +28,6 @@ endif
 $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.py : xfrout_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/xfrout_messages.mes
-
-$(PYTHON_LOGMSGPKG_DIR)/xfrout_messages.py: Makefile
-	echo "from work.xfrout_messages import *" > $@
 
 xfrout.spec: xfrout.spec.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrout.spec.pre >$@
