@@ -127,6 +127,7 @@ const char* const TEST_RECORDS[][5] = {
     {"delegation.example.org.", "NS", "3600", "", "ns.example.com."},
     {"delegation.example.org.", "NS", "3600", "",
      "ns.delegation.example.org."},
+    {"delegation.example.org.", "DS", "3600", "", "1 RSAMD5 2 abcd"},
     {"delegation.example.org.", "RRSIG", "3600", "", "NS 5 3 3600 "
      "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"ns.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
@@ -171,11 +172,17 @@ const char* const TEST_RECORDS[][5] = {
     {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"*.nswild.example.org.", "NS", "3600", "", "ns.example.com."},
     // For finding previous, this one is the last one in the zone
     {"zzz.example.org.", "NSEC", "3600", "", "example.org NSEC"},
     // For NSEC empty non-terminal
     {"l.example.org.", "NSEC", "3600", "", "empty.nonterminal.example.org. NSEC"},
     {"empty.nonterminal.example.org.", "A", "3600", "", "192.0.2.1"},
+    // Invalid rdata
+    {"invalidrdata.example.org.", "A", "3600", "", "Bunch of nonsense"},
+    {"invalidrdata2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"invalidrdata2.example.org.", "RRSIG", "3600", "", "Nonsense"},
 
     {NULL, NULL, NULL, NULL, NULL},
 };
@@ -557,6 +564,8 @@ public:
             } else if (rname == "org.example.www2." ||
                        rname == "org.example.www1.") {
                 return ("www.example.org.");
+            } else if (rname == "org.example.badnsec2.") {
+                return ("badnsec1.example.org.");
             } else if (rname == "org.example.notimplnsec." ||
                        rname == "org.example.wild.here.") {
                 isc_throw(isc::NotImplemented, "Not implemented in this test");
@@ -1578,6 +1587,22 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
         // FIXME: What should be returned in this case? How does the
         // DNSSEC logic handle it?
     }
+
+    // Some strange things in the wild node
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("www.example.org.");
+    this->expected_sig_rdatas_.clear();
+    doFindTest(*finder, isc::dns::Name("a.cnamewild.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::CNAME(),
+               this->rrttl_, ZoneFinder::CNAME,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
+
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com.");
+    doFindTest(*finder, isc::dns::Name("a.nswild.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::NS(),
+               this->rrttl_, ZoneFinder::DELEGATION,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 }
 
 TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
@@ -2303,6 +2328,23 @@ TYPED_TEST(DatabaseClientTest, previous) {
         EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
                      isc::NotImplemented);
     }
+}
+
+TYPED_TEST(DatabaseClientTest, invalidRdata) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    EXPECT_THROW(finder->find(Name("invalidrdata.example.org."), RRType::A()),
+                 DataSourceError);
+    EXPECT_THROW(finder->find(Name("invalidrdata2.example.org."), RRType::A()),
+                 DataSourceError);
+}
+
+TEST_F(MockDatabaseClientTest, missingNSEC) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    EXPECT_THROW(finder->find(Name("badnsec2.example.org."), RRType::A(), NULL,
+                              ZoneFinder::FIND_DNSSEC),
+                 DataSourceError);
 }
 
 }
