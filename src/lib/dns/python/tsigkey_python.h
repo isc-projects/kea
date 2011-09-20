@@ -17,10 +17,11 @@
 
 #include <Python.h>
 
-#include <dns/tsigkey.h>
-
 namespace isc {
 namespace dns {
+class TSIGKey;
+class TSIGKeyRing;
+
 namespace python {
 
 extern PyTypeObject tsigkey_type;

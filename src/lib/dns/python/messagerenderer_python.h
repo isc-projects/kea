@@ -17,11 +17,12 @@
 
 #include <Python.h>
 
-#include <dns/messagerenderer.h>
 #include <util/buffer.h>
 
 namespace isc {
 namespace dns {
+class MessageRenderer;
+
 namespace python {
 
 extern PyTypeObject messagerenderer_type;

@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/edns.h>
-
 namespace isc {
 namespace dns {
+class EDNS;
+
 namespace python {
 
 extern PyTypeObject edns_type;

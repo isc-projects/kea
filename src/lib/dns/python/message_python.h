@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/message.h>
-
 namespace isc {
 namespace dns {
+class Message;
+
 namespace python {
 
 extern PyObject* po_MessageTooShort;

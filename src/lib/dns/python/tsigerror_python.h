@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/tsigerror.h>
-
 namespace isc {
 namespace dns {
+class TSIGError;
+
 namespace python {
 
 extern PyTypeObject tsigerror_type;

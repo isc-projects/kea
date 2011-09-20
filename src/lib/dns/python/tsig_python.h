@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/tsig.h>
-
 namespace isc {
 namespace dns {
+class TSIGContext;
+
 namespace python {
 
 extern PyTypeObject tsigcontext_type;

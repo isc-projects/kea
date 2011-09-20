@@ -17,11 +17,12 @@
 
 #include <Python.h>
 
-#include <dns/tsigrecord.h>
-
 namespace isc {
 namespace dns {
+class TSIGRecord;
+
 namespace python {
+
 
 extern PyTypeObject tsigrecord_type;
 
