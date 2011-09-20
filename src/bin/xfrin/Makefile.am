@@ -18,11 +18,6 @@ man_MANS = b10-xfrin.8
 EXTRA_DIST = $(man_MANS) b10-xfrin.xml
 EXTRA_DIST += xfrin.spec xfrin_messages.mes
 
-BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/xfrin_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/xfrin_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/xfrin_messages.pyc
-EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/xfrin_messages.py
-
 if ENABLE_MAN
 
 b10-xfrin.8: b10-xfrin.xml
@@ -34,9 +29,6 @@ endif
 $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.py : xfrin_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/xfrin_messages.mes
-
-$(PYTHON_LOGMSGPKG_DIR)/xfrin_messages.py: Makefile
-	echo "from work.xfrin_messages import *" > $@
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-xfrin: xfrin.py $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.py
