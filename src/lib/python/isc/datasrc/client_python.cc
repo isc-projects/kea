@@ -86,6 +86,9 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+            return (NULL);
         }
     } else {
         return (NULL);
@@ -107,6 +110,9 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
             return (NULL);
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -131,6 +137,9 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
             return (NULL);
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -259,35 +268,6 @@ PyTypeObject datasourceclient_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-namespace internal {
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_DataSourceClient(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&datasourceclient_type) < 0) {
-        return (false);
-    }
-    void* dscp = &datasourceclient_type;
-    if (PyModule_AddObject(mod, "DataSourceClient", static_cast<PyObject*>(dscp)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&datasourceclient_type);
-
-    isc::dns::python::addClassVariable(datasourceclient_type, "SUCCESS",
-                                       Py_BuildValue("I", result::SUCCESS));
-    isc::dns::python::addClassVariable(datasourceclient_type, "EXIST",
-                                       Py_BuildValue("I", result::EXIST));
-    isc::dns::python::addClassVariable(datasourceclient_type, "NOTFOUND",
-                                       Py_BuildValue("I", result::NOTFOUND));
-    isc::dns::python::addClassVariable(datasourceclient_type, "PARTIALMATCH",
-                                       Py_BuildValue("I", result::PARTIALMATCH));
-
-    return (true);
-}
-} // namespace internal
 
 } // namespace python
 } // namespace datasrc
