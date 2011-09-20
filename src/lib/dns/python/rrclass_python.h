@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/rrclass.h>
-
 namespace isc {
 namespace dns {
+class RRClass;
+
 namespace python {
 
 extern PyObject* po_InvalidRRClass;

@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/opcode.h>
-
 namespace isc {
 namespace dns {
+class Opcode;
+
 namespace python {
 
 extern PyTypeObject opcode_type;

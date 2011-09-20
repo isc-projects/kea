@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/question.h>
-
 namespace isc {
 namespace dns {
+class Question;
+
 namespace python {
 
 extern PyObject* po_EmptyQuestion;
