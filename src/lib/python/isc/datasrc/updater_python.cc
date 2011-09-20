@@ -44,6 +44,7 @@
 
 using namespace std;
 using namespace isc::util::python;
+using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
@@ -85,12 +86,13 @@ ZoneUpdater_destroy(s_ZoneUpdater* const self) {
 
 // These are the functions we export
 //
-PyObject* ZoneUpdater_addRRset(PyObject* po_self, PyObject* args) {
+PyObject*
+ZoneUpdater_addRRset(PyObject* po_self, PyObject* args) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     PyObject* rrset_obj;
-    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
+    if (PyArg_ParseTuple(args, "O!", &rrset_type, &rrset_obj)) {
         try {
-            self->cppobj->addRRset(isc::dns::python::PyRRset_ToRRset(rrset_obj));
+            self->cppobj->addRRset(PyRRset_ToRRset(rrset_obj));
             Py_RETURN_NONE;
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
@@ -104,12 +106,13 @@ PyObject* ZoneUpdater_addRRset(PyObject* po_self, PyObject* args) {
     }
 }
 
-PyObject* ZoneUpdater_deleteRRset(PyObject* po_self, PyObject* args) {
+PyObject*
+ZoneUpdater_deleteRRset(PyObject* po_self, PyObject* args) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     PyObject* rrset_obj;
-    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrset_type, &rrset_obj)) {
+    if (PyArg_ParseTuple(args, "O!", &rrset_type, &rrset_obj)) {
         try {
-            self->cppobj->deleteRRset(isc::dns::python::PyRRset_ToRRset(rrset_obj));
+            self->cppobj->deleteRRset(PyRRset_ToRRset(rrset_obj));
             Py_RETURN_NONE;
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
@@ -123,7 +126,8 @@ PyObject* ZoneUpdater_deleteRRset(PyObject* po_self, PyObject* args) {
     }
 }
 
-PyObject* ZoneUpdater_commit(PyObject* po_self, PyObject*) {
+PyObject*
+ZoneUpdater_commit(PyObject* po_self, PyObject*) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     try {
         self->cppobj->commit();
@@ -139,46 +143,52 @@ PyObject* ZoneUpdater_commit(PyObject* po_self, PyObject*) {
 
 // These are the functions we export
 //
-PyObject* ZoneUpdater_getClass(PyObject* po_self, PyObject*) {
+PyObject*
+ZoneUpdater_getClass(PyObject* po_self, PyObject*) {
     s_ZoneUpdater* self = static_cast<s_ZoneUpdater*>(po_self);
     try {
-        return (isc::dns::python::createRRClassObject(self->cppobj->getFinder().getClass()));
+        return (createRRClassObject(self->cppobj->getFinder().getClass()));
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     } catch (...) {
-        PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
         return (NULL);
     }
 }
 
-PyObject* ZoneUpdater_getOrigin(PyObject* po_self, PyObject*) {
+PyObject*
+ZoneUpdater_getOrigin(PyObject* po_self, PyObject*) {
     s_ZoneUpdater* self = static_cast<s_ZoneUpdater*>(po_self);
     try {
-        return (isc::dns::python::createNameObject(self->cppobj->getFinder().getOrigin()));
+        return (createNameObject(self->cppobj->getFinder().getOrigin()));
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     } catch (...) {
-        PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
         return (NULL);
     }
 }
 
-PyObject* ZoneUpdater_find(PyObject* po_self, PyObject* args) {
+PyObject*
+ZoneUpdater_find(PyObject* po_self, PyObject* args) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     PyObject *name;
     PyObject *rrtype;
     PyObject *target;
     int options_int;
-    if (PyArg_ParseTuple(args, "O!O!OI", &isc::dns::python::name_type, &name,
-                                         &isc::dns::python::rrtype_type, &rrtype,
+    if (PyArg_ParseTuple(args, "O!O!OI", &name_type, &name,
+                                         &rrtype_type, &rrtype,
                                          &target, &options_int)) {
         try {
-            ZoneFinder::FindOptions options = static_cast<ZoneFinder::FindOptions>(options_int);
+            ZoneFinder::FindOptions options =
+                static_cast<ZoneFinder::FindOptions>(options_int);
             ZoneFinder::FindResult find_result(
-                self->cppobj->getFinder().find(isc::dns::python::PyName_ToName(name),
-                                   isc::dns::python::PyRRType_ToRRType(rrtype),
+                self->cppobj->getFinder().find(PyName_ToName(name),
+                                   PyRRType_ToRRType(rrtype),
                                    NULL,
                                    options
                                    ));
@@ -186,7 +196,7 @@ PyObject* ZoneUpdater_find(PyObject* po_self, PyObject* args) {
             isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
             if (rrsp) {
                 // Use N instead of O so the refcount isn't increased twice
-                return Py_BuildValue("IN", r, isc::dns::python::createRRsetObject(*rrsp));
+                return Py_BuildValue("IN", r, createRRsetObject(*rrsp));
             } else {
                 return Py_BuildValue("IO", r, Py_None);
             }
@@ -197,7 +207,8 @@ PyObject* ZoneUpdater_find(PyObject* po_self, PyObject* args) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
         } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -214,20 +225,20 @@ PyObject* ZoneUpdater_find(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneUpdater_methods[] = {
-    { "add_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_addRRset), METH_VARARGS,
-      ZoneUpdater_addRRset_doc },
-    { "delete_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_deleteRRset), METH_VARARGS,
-      ZoneUpdater_deleteRRset_doc },
+    { "add_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_addRRset),
+      METH_VARARGS, ZoneUpdater_addRRset_doc },
+    { "delete_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_deleteRRset),
+      METH_VARARGS, ZoneUpdater_deleteRRset_doc },
     { "commit", reinterpret_cast<PyCFunction>(ZoneUpdater_commit), METH_NOARGS,
       ZoneUpdater_commit_doc },
     // Instead of a getFinder, we implement the finder functionality directly
     // This is because ZoneFinder is non-copyable, and we should not create
     // a ZoneFinder object from a reference only (which is what is returned
     // by getFinder(). Apart from that
-    { "get_origin", reinterpret_cast<PyCFunction>(ZoneUpdater_getOrigin), METH_NOARGS,
-      ZoneFinder_getOrigin_doc },
-    { "get_class", reinterpret_cast<PyCFunction>(ZoneUpdater_getClass), METH_NOARGS,
-      ZoneFinder_getClass_doc },
+    { "get_origin", reinterpret_cast<PyCFunction>(ZoneUpdater_getOrigin),
+      METH_NOARGS, ZoneFinder_getOrigin_doc },
+    { "get_class", reinterpret_cast<PyCFunction>(ZoneUpdater_getClass),
+      METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", reinterpret_cast<PyCFunction>(ZoneUpdater_find), METH_VARARGS,
       ZoneFinder_find_doc },
     { NULL, NULL, 0, NULL }
@@ -241,9 +252,9 @@ namespace python {
 PyTypeObject zoneupdater_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "datasrc.ZoneUpdater",
-    sizeof(s_ZoneUpdater),             // tp_basicsize
+    sizeof(s_ZoneUpdater),              // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(ZoneUpdater_destroy),       // tp_dealloc
+    reinterpret_cast<destructor>(ZoneUpdater_destroy),// tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -266,7 +277,7 @@ PyTypeObject zoneupdater_type = {
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
-    ZoneUpdater_methods,               // tp_methods
+    ZoneUpdater_methods,                // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
