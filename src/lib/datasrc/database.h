@@ -482,6 +482,10 @@ public:
      * or less the real work, except for working on strings.
      *
      * \param rname The name to ask for previous of, in reversed form.
+     *     We use the reversed form (see isc::dns::Name::reverse),
+     *     because then the case insensitive order of string representation
+     *     and the DNSSEC order correspond (eg. org.example.a is followed
+     *     by org.example.a.b which is followed by org.example.b, etc).
      * \param zone_id The zone to look through.
      * \return The previous name.
      *
