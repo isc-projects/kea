@@ -17,11 +17,6 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/zonemgr_messages.pyc
 man_MANS = b10-zonemgr.8
 EXTRA_DIST = $(man_MANS) b10-zonemgr.xml zonemgr_messages.mes
 
-BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/zonemgr_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/zonemgr_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/zonemgr_messages.pyc
-EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/zonemgr_messages.py
-
 if ENABLE_MAN
 
 b10-zonemgr.8: b10-zonemgr.xml
@@ -33,9 +28,6 @@ endif
 $(PYTHON_LOGMSGPKG_DIR)/work/zonemgr_messages.py : zonemgr_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/zonemgr_messages.mes
-
-$(PYTHON_LOGMSGPKG_DIR)/zonemgr_messages.py: Makefile
-	echo "from work.zonemgr_messages import *" > $@
 
 zonemgr.spec: zonemgr.spec.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" zonemgr.spec.pre >$@

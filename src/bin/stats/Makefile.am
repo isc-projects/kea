@@ -25,16 +25,6 @@ EXTRA_DIST += stats.spec stats-httpd.spec stats-schema.spec
 EXTRA_DIST += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 EXTRA_DIST += stats_messages.mes stats_httpd_messages.mes
 
-BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/stats_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_messages.pyc
-EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/stats_messages.py
-
-BUILT_SOURCES += $(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.pyc
-EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/stats_httpd_messages.py
-
 if ENABLE_MAN
 
 b10-stats.8: b10-stats.xml
@@ -49,15 +39,9 @@ $(PYTHON_LOGMSGPKG_DIR)/work/stats_messages.py : stats_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/stats_messages.mes
 
-$(PYTHON_LOGMSGPKG_DIR)/stats_messages.py: Makefile
-	echo "from work.stats_messages import *" > $@
-
 $(PYTHON_LOGMSGPKG_DIR)/work/stats_httpd_messages.py : stats_httpd_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/stats_httpd_messages.mes
-
-$(PYTHON_LOGMSGPKG_DIR)/stats_httpd_messages.py: Makefile
-	echo "from work.stats_httpd_messages import *" > $@
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-stats: stats.py $(PYTHON_LOGMSGPKG_DIR)/work/stats_messages.py

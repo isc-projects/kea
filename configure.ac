@@ -953,7 +953,6 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/cc/tests/cc_test
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/python/isc/log/tests/log_console.py
-           src/lib/python/isc/log_messages/__init__.py
            src/lib/python/isc/log_messages/work/__init__.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
