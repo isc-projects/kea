@@ -29,6 +29,7 @@
 #include "rdata_python.h"
 #include "messagerenderer_python.h"
 
+using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
@@ -138,22 +139,66 @@ RRset_getRdataCount(s_RRset* self) {
 
 PyObject*
 RRset_getName(s_RRset* self) {
-    return (createNameObject(self->cppobj->getName()));
+    try {
+        return (createNameObject(self->cppobj->getName()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting rrset Name: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting rrset Name");
+    }
+    return (NULL);
 }
 
 PyObject*
 RRset_getClass(s_RRset* self) {
-    return (createRRClassObject(self->cppobj->getClass()));
+    try {
+        return (createRRClassObject(self->cppobj->getClass()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRClass: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRClass");
+    }
+    return (NULL);
 }
 
 PyObject*
 RRset_getType(s_RRset* self) {
-    return (createRRTypeObject(self->cppobj->getType()));
+    try {
+        return (createRRTypeObject(self->cppobj->getType()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRType: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRType");
+    }
+    return (NULL);
 }
 
 PyObject*
 RRset_getTTL(s_RRset* self) {
-    return (createRRTTLObject(self->cppobj->getTTL()));
+    try {
+        return (createRRTTLObject(self->cppobj->getTTL()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question TTL: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question TTL");
+    }
+    return (NULL);
 }
 
 PyObject*
@@ -251,14 +296,28 @@ RRset_getRdata(s_RRset* self) {
 
     RdataIteratorPtr it = self->cppobj->getRdataIterator();
 
-    for (; !it->isLast(); it->next()) {
-        const rdata::Rdata *rd = &it->getCurrent();
-        PyList_Append(list,
-                      createRdataObject(createRdata(self->cppobj->getType(),
-                                        self->cppobj->getClass(), *rd)));
+    try {
+        for (; !it->isLast(); it->next()) {
+            const rdata::Rdata *rd = &it->getCurrent();
+            if (PyList_Append(list,
+                    createRdataObject(createRdata(self->cppobj->getType(),
+                                      self->cppobj->getClass(), *rd))) == -1) {
+                Py_DECREF(list);
+                return (NULL);
+            }
+        }
+        return (list);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting rrset Rdata: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting rrset Rdata");
     }
-
-    return (list);
+    Py_DECREF(list);
+    return (NULL);
 }
 
 PyObject*

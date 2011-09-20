@@ -148,7 +148,7 @@ PyObject*
 TSIGContext_getError(s_TSIGContext* self) {
     try {
         PyObjectContainer container(createTSIGErrorObject(
-                                        self->cppobj->getError()));
+                                    self->cppobj->getError()));
         return (Py_BuildValue("O", container.get()));
     } catch (const exception& ex) {
         const string ex_what =
