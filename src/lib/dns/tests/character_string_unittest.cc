@@ -28,8 +28,6 @@ using namespace isc::dns::characterstr;
 using namespace isc::dns::rdata;
 
 namespace {
-class CharacterStringTest : public ::testing::Test {
-};
 
 class CharacterString {
 public:
@@ -42,7 +40,7 @@ private:
     string characterStr_;
 };
 
-TEST_F(CharacterStringTest, testNormalCase) {
+TEST(CharacterStringTest, testNormalCase) {
     CharacterString cstr1("foo");
     EXPECT_EQ(string("foo"), cstr1.str());
 
@@ -59,7 +57,7 @@ TEST_F(CharacterStringTest, testNormalCase) {
     EXPECT_EQ(string("foo\""), cstr4.str());
 }
 
-TEST_F(CharacterStringTest, testBadCase) {
+TEST(CharacterStringTest, testBadCase) {
     // The <character-string> that started with quotes should also be ended
     // with quotes
     EXPECT_THROW(CharacterString cstr("\"foo"), InvalidRdataText);
@@ -72,7 +70,7 @@ TEST_F(CharacterStringTest, testBadCase) {
     EXPECT_THROW(CharacterString cstr(str), CharStringTooLong);
 }
 
-TEST_F(CharacterStringTest, testEscapeCharacter) {
+TEST(CharacterStringTest, testEscapeCharacter) {
     CharacterString cstr1("foo\\bar");
     EXPECT_EQ(string("foobar"), cstr1.str());
 

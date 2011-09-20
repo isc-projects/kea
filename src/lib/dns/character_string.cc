@@ -21,7 +21,11 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace dns {
 
-#define IS_DIGIT(c) (('0' <= (c)) && ((c) <= '9'))
+namespace {
+bool isDigit(char c) {
+    return ('0' <= c) && (c <= '9');
+}
+}
 
 std::string
 characterstr::getNextCharacterString(const std::string& input_str,
@@ -50,20 +54,19 @@ characterstr::getNextCharacterString(const std::string& input_str,
         if (*input_iterator == '\\') {
             if (input_iterator + 1 == input_str.end()) {
                 isc_throw(InvalidRdataText, "<character-string> ended \
-                          exceptionally.");
+                          prematurely.");
             } else {
-                if (IS_DIGIT(*(input_iterator + 1))) {
+                if (isDigit(*(input_iterator + 1))) {
                     // \DDD where each D is a digit. It its the octet
                     // corresponding to the decimal number described by DDD
                     if (input_iterator + 3 >= input_str.end()) {
                         isc_throw(InvalidRdataText, "<character-string> ended \
-                                  exceptionally.");
+                                  prematurely.");
                     } else {
                         int n = 0;
                         ++input_iterator;
                         for (int i = 0; i < 3; ++i) {
-                            if (('0' <= *input_iterator) &&
-                                (*input_iterator <= '9')) {
+                            if (isDigit(*input_iterator)) {
                                 n = n*10 + (*input_iterator - '0');
                                 ++input_iterator;
                             } else {
