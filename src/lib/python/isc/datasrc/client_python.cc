@@ -44,6 +44,7 @@
 
 using namespace std;
 using namespace isc::util::python;
+using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
@@ -59,25 +60,16 @@ public:
 typedef CPPPyObjectContainer<s_DataSourceClient, DataSourceClient>
     DataSourceClientContainer;
 
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// General creation and destruction
-int DataSourceClient_init(s_DataSourceClient* self, PyObject* args);
-void DataSourceClient_destroy(s_DataSourceClient* self);
-
 // These are the functions we export
 //
 PyObject*
 DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name;
-    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::name_type, &name)) {
+    if (PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         try {
             DataSourceClient::FindResult find_result(
-                self->cppobj->findZone(isc::dns::python::PyName_ToName(name)));
+                self->cppobj->findZone(PyName_ToName(name)));
 
             result::Result r = find_result.code;
             ZoneFinderPtr zfp = find_result.zone_finder;
@@ -87,7 +79,8 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
         } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -99,11 +92,13 @@ PyObject*
 DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name_obj;
-    if (PyArg_ParseTuple(args, "O!", &isc::dns::python::name_type, &name_obj)) {
+    if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
         try {
-            return (createZoneIteratorObject(self->cppobj->getIterator(isc::dns::python::PyName_ToName(name_obj))));
+            return (createZoneIteratorObject(
+                        self->cppobj->getIterator(PyName_ToName(name_obj))));
         } catch (const isc::NotImplemented& ne) {
-            PyErr_SetString(getDataSourceException("NotImplemented"), ne.what());
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            ne.what());
             return (NULL);
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
@@ -112,7 +107,8 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
         } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -125,12 +121,16 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name_obj;
     PyObject *replace_obj;
-    if (PyArg_ParseTuple(args, "O!O", &isc::dns::python::name_type, &name_obj, &replace_obj) && PyBool_Check(replace_obj)) {
+    if (PyArg_ParseTuple(args, "O!O", &name_type, &name_obj, &replace_obj) &&
+        PyBool_Check(replace_obj)) {
         bool replace = (replace_obj != Py_False);
         try {
-            return (createZoneUpdaterObject(self->cppobj->getUpdater(isc::dns::python::PyName_ToName(name_obj), replace)));
+            return (createZoneUpdaterObject(
+                        self->cppobj->getUpdater(PyName_ToName(name_obj),
+                                                 replace)));
         } catch (const isc::NotImplemented& ne) {
-            PyErr_SetString(getDataSourceException("NotImplemented"), ne.what());
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            ne.what());
             return (NULL);
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
@@ -139,7 +139,8 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
         } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -156,12 +157,13 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef DataSourceClient_methods[] = {
-    { "find_zone", reinterpret_cast<PyCFunction>(DataSourceClient_findZone), METH_VARARGS,
-      DataSourceClient_findZone_doc },
-    { "get_iterator", reinterpret_cast<PyCFunction>(DataSourceClient_getIterator), METH_VARARGS,
+    { "find_zone", reinterpret_cast<PyCFunction>(DataSourceClient_findZone),
+      METH_VARARGS, DataSourceClient_findZone_doc },
+    { "get_iterator",
+      reinterpret_cast<PyCFunction>(DataSourceClient_getIterator), METH_VARARGS,
       DataSourceClient_getIterator_doc },
-    { "get_updater", reinterpret_cast<PyCFunction>(DataSourceClient_getUpdater), METH_VARARGS,
-      DataSourceClient_getUpdater_doc },
+    { "get_updater", reinterpret_cast<PyCFunction>(DataSourceClient_getUpdater),
+      METH_VARARGS, DataSourceClient_getUpdater_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -222,9 +224,9 @@ namespace python {
 PyTypeObject datasourceclient_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "datasrc.DataSourceClient",
-    sizeof(s_DataSourceClient),                 // tp_basicsize
+    sizeof(s_DataSourceClient),         // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(DataSourceClient_destroy),       // tp_dealloc
+    reinterpret_cast<destructor>(DataSourceClient_destroy),// tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -247,7 +249,7 @@ PyTypeObject datasourceclient_type = {
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
-    DataSourceClient_methods,                   // tp_methods
+    DataSourceClient_methods,           // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
@@ -255,7 +257,7 @@ PyTypeObject datasourceclient_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(DataSourceClient_init),            // tp_init
+    reinterpret_cast<initproc>(DataSourceClient_init),// tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free

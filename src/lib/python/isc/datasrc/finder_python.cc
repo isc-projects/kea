@@ -44,6 +44,7 @@
 
 using namespace std;
 using namespace isc::util::python;
+using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
@@ -57,11 +58,6 @@ public:
 
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_ZoneFinder, ZoneFinder> ZoneFinderContainer;
-
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
 
 // General creation and destruction
 int
@@ -83,43 +79,48 @@ ZoneFinder_destroy(s_ZoneFinder* const self) {
 
 // These are the functions we export
 //
-PyObject* ZoneFinder_getClass(PyObject* po_self, PyObject*) {
+PyObject*
+ZoneFinder_getClass(PyObject* po_self, PyObject*) {
     s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
     try {
-        return (isc::dns::python::createRRClassObject(self->cppobj->getClass()));
+        return (createRRClassObject(self->cppobj->getClass()));
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     }
 }
 
-PyObject* ZoneFinder_getOrigin(PyObject* po_self, PyObject*) {
+PyObject*
+ZoneFinder_getOrigin(PyObject* po_self, PyObject*) {
     s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
     try {
-        return (isc::dns::python::createNameObject(self->cppobj->getOrigin()));
+        return (createNameObject(self->cppobj->getOrigin()));
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     } catch (...) {
-        PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
         return (NULL);
     }
 }
 
-PyObject* ZoneFinder_find(PyObject* po_self, PyObject* args) {
+PyObject*
+ZoneFinder_find(PyObject* po_self, PyObject* args) {
     s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
     PyObject *name;
     PyObject *rrtype;
     PyObject *target;
     int options_int;
-    if (PyArg_ParseTuple(args, "O!O!OI", &isc::dns::python::name_type, &name,
-                                         &isc::dns::python::rrtype_type, &rrtype,
+    if (PyArg_ParseTuple(args, "O!O!OI", &name_type, &name,
+                                         &rrtype_type, &rrtype,
                                          &target, &options_int)) {
         try {
-            ZoneFinder::FindOptions options = static_cast<ZoneFinder::FindOptions>(options_int);
+            ZoneFinder::FindOptions options =
+                static_cast<ZoneFinder::FindOptions>(options_int);
             ZoneFinder::FindResult find_result(
-                self->cppobj->find(isc::dns::python::PyName_ToName(name),
-                                   isc::dns::python::PyRRType_ToRRType(rrtype),
+                self->cppobj->find(PyName_ToName(name),
+                                   PyRRType_ToRRType(rrtype),
                                    NULL,
                                    options
                                    ));
@@ -127,7 +128,7 @@ PyObject* ZoneFinder_find(PyObject* po_self, PyObject* args) {
             isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
             if (rrsp) {
                 // Use N instead of O so the refcount isn't increased twice
-                return (Py_BuildValue("IN", r, isc::dns::python::createRRsetObject(*rrsp)));
+                return (Py_BuildValue("IN", r, createRRsetObject(*rrsp)));
             } else {
                 return (Py_BuildValue("IO", r, Py_None));
             }
@@ -138,7 +139,8 @@ PyObject* ZoneFinder_find(PyObject* po_self, PyObject* args) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
         } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -154,10 +156,10 @@ PyObject* ZoneFinder_find(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneFinder_methods[] = {
-    { "get_origin", reinterpret_cast<PyCFunction>(ZoneFinder_getOrigin), METH_NOARGS,
-      ZoneFinder_getOrigin_doc },
-    { "get_class", reinterpret_cast<PyCFunction>(ZoneFinder_getClass), METH_NOARGS,
-      ZoneFinder_getClass_doc },
+    { "get_origin", reinterpret_cast<PyCFunction>(ZoneFinder_getOrigin),
+      METH_NOARGS, ZoneFinder_getOrigin_doc },
+    { "get_class", reinterpret_cast<PyCFunction>(ZoneFinder_getClass),
+      METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", reinterpret_cast<PyCFunction>(ZoneFinder_find), METH_VARARGS,
       ZoneFinder_find_doc },
     { NULL, NULL, 0, NULL }
@@ -171,9 +173,9 @@ namespace python {
 PyTypeObject zonefinder_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "datasrc.ZoneFinder",
-    sizeof(s_ZoneFinder),             // tp_basicsize
+    sizeof(s_ZoneFinder),               // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(ZoneFinder_destroy),       // tp_dealloc
+    reinterpret_cast<destructor>(ZoneFinder_destroy),// tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -196,7 +198,7 @@ PyTypeObject zonefinder_type = {
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
-    ZoneFinder_methods,               // tp_methods
+    ZoneFinder_methods,                 // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
