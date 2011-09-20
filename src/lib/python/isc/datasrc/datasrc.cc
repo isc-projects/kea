@@ -29,9 +29,12 @@
 #include "updater_python.h"
 
 #include <util/python/pycppwrapper_util.h>
+#include <dns/python/pydnspp_common.h>
 
+using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 using namespace isc::util::python;
+using namespace isc::dns::python;
 
 namespace isc {
 namespace datasrc {
@@ -54,18 +57,110 @@ getDataSourceException(const char* ex_name) {
     return (ex_obj);
 }
 
-namespace internal {
-bool initModulePart_DataSourceClient(PyObject* mod);
-bool initModulePart_ZoneFinder(PyObject* mod);
-bool initModulePart_ZoneIterator(PyObject* mod);
-bool initModulePart_ZoneUpdater(PyObject* mod);
-} // end namespace internal
-
 } // end namespace python
 } // end namespace datasrc
 } // end namespace isc
 
 namespace {
+
+bool
+initModulePart_DataSourceClient(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&datasourceclient_type) < 0) {
+        return (false);
+    }
+    void* dscp = &datasourceclient_type;
+    if (PyModule_AddObject(mod, "DataSourceClient", static_cast<PyObject*>(dscp)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&datasourceclient_type);
+
+    addClassVariable(datasourceclient_type, "SUCCESS",
+                     Py_BuildValue("I", result::SUCCESS));
+    addClassVariable(datasourceclient_type, "EXIST",
+                     Py_BuildValue("I", result::EXIST));
+    addClassVariable(datasourceclient_type, "NOTFOUND",
+                     Py_BuildValue("I", result::NOTFOUND));
+    addClassVariable(datasourceclient_type, "PARTIALMATCH",
+                     Py_BuildValue("I", result::PARTIALMATCH));
+
+    return (true);
+}
+
+bool
+initModulePart_ZoneFinder(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&zonefinder_type) < 0) {
+        return (false);
+    }
+    void* zip = &zonefinder_type;
+    if (PyModule_AddObject(mod, "ZoneFinder", static_cast<PyObject*>(zip)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&zonefinder_type);
+
+    addClassVariable(zonefinder_type, "SUCCESS",
+                     Py_BuildValue("I", ZoneFinder::SUCCESS));
+    addClassVariable(zonefinder_type, "DELEGATION",
+                     Py_BuildValue("I", ZoneFinder::DELEGATION));
+    addClassVariable(zonefinder_type, "NXDOMAIN",
+                     Py_BuildValue("I", ZoneFinder::NXDOMAIN));
+    addClassVariable(zonefinder_type, "NXRRSET",
+                     Py_BuildValue("I", ZoneFinder::NXRRSET));
+    addClassVariable(zonefinder_type, "CNAME",
+                     Py_BuildValue("I", ZoneFinder::CNAME));
+    addClassVariable(zonefinder_type, "DNAME",
+                     Py_BuildValue("I", ZoneFinder::DNAME));
+
+    addClassVariable(zonefinder_type, "FIND_DEFAULT",
+                     Py_BuildValue("I", ZoneFinder::FIND_DEFAULT));
+    addClassVariable(zonefinder_type, "FIND_GLUE_OK",
+                     Py_BuildValue("I", ZoneFinder::FIND_GLUE_OK));
+    addClassVariable(zonefinder_type, "FIND_DNSSEC",
+                     Py_BuildValue("I", ZoneFinder::FIND_DNSSEC));
+
+
+    return (true);
+}
+
+bool
+initModulePart_ZoneIterator(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&zoneiterator_type) < 0) {
+        return (false);
+    }
+    void* zip = &zoneiterator_type;
+    if (PyModule_AddObject(mod, "ZoneIterator", static_cast<PyObject*>(zip)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&zoneiterator_type);
+
+    return (true);
+}
+
+bool
+initModulePart_ZoneUpdater(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&zoneupdater_type) < 0) {
+        return (false);
+    }
+    void* zip = &zoneupdater_type;
+    if (PyModule_AddObject(mod, "ZoneUpdater", static_cast<PyObject*>(zip)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&zoneupdater_type);
+
+    return (true);
+}
+
 
 PyObject* po_DataSourceError;
 PyObject* po_NotImplemented;
@@ -85,8 +180,6 @@ PyModuleDef iscDataSrc = {
 };
 
 } // end anonymous namespace
-
-using namespace isc::datasrc::python::internal;
 
 PyMODINIT_FUNC
 PyInit_datasrc(void) {

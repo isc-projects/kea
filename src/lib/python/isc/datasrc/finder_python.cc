@@ -100,6 +100,9 @@ PyObject* ZoneFinder_getOrigin(PyObject* po_self, PyObject*) {
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+        return (NULL);
     }
 }
 
@@ -133,6 +136,9 @@ PyObject* ZoneFinder_find(PyObject* po_self, PyObject* args) {
             return (NULL);
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
             return (NULL);
         }
     } else {
@@ -211,47 +217,6 @@ PyTypeObject zonefinder_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-namespace internal {
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_ZoneFinder(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&zonefinder_type) < 0) {
-        return (false);
-    }
-    void* zip = &zonefinder_type;
-    if (PyModule_AddObject(mod, "ZoneFinder", static_cast<PyObject*>(zip)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&zonefinder_type);
-
-    isc::dns::python::addClassVariable(zonefinder_type, "SUCCESS",
-                                       Py_BuildValue("I", ZoneFinder::SUCCESS));
-    isc::dns::python::addClassVariable(zonefinder_type, "DELEGATION",
-                                       Py_BuildValue("I", ZoneFinder::DELEGATION));
-    isc::dns::python::addClassVariable(zonefinder_type, "NXDOMAIN",
-                                       Py_BuildValue("I", ZoneFinder::NXDOMAIN));
-    isc::dns::python::addClassVariable(zonefinder_type, "NXRRSET",
-                                       Py_BuildValue("I", ZoneFinder::NXRRSET));
-    isc::dns::python::addClassVariable(zonefinder_type, "CNAME",
-                                       Py_BuildValue("I", ZoneFinder::CNAME));
-    isc::dns::python::addClassVariable(zonefinder_type, "DNAME",
-                                       Py_BuildValue("I", ZoneFinder::DNAME));
-
-    isc::dns::python::addClassVariable(zonefinder_type, "FIND_DEFAULT",
-                                       Py_BuildValue("I", ZoneFinder::FIND_DEFAULT));
-    isc::dns::python::addClassVariable(zonefinder_type, "FIND_GLUE_OK",
-                                       Py_BuildValue("I", ZoneFinder::FIND_GLUE_OK));
-    isc::dns::python::addClassVariable(zonefinder_type, "FIND_DNSSEC",
-                                       Py_BuildValue("I", ZoneFinder::FIND_DNSSEC));
-
-
-    return (true);
-}
-} // namespace internal
 
 PyObject*
 createZoneFinderObject(isc::datasrc::ZoneFinderPtr source) {
