@@ -19,9 +19,6 @@ EXTRA_DIST = bob.spec
 man_MANS = bind10.8
 EXTRA_DIST += $(man_MANS) bind10.xml bind10_messages.mes
 
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/bind10_messages.pyc
-EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/bind10_messages.py
-
 if ENABLE_MAN
 
 bind10.8: bind10.xml
