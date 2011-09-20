@@ -28,6 +28,9 @@
 #include <Python.h>
 #include <structmember.h>
 
+#include <dns/message.h>
+#include <dns/opcode.h>
+#include <dns/tsig.h>
 #include <util/python/pycppwrapper_util.h>
 
 #include "pydnspp_common.h"

@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/rrttl.h>
-
 namespace isc {
 namespace dns {
+class RRTTL;
+
 namespace python {
 
 extern PyObject* po_InvalidRRTTL;

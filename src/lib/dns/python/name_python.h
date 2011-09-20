@@ -17,10 +17,10 @@
 
 #include <Python.h>
 
-#include <dns/name.h>
-
 namespace isc {
 namespace dns {
+class Name;
+
 namespace python {
 
 extern PyObject* po_EmptyLabel;
