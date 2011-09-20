@@ -354,6 +354,10 @@ PyTSIG_Check(PyObject* obj) {
 
 const any::TSIG&
 PyTSIG_ToTSIG(const PyObject* tsig_obj) {
+    if (tsig_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in TSIG PyObject conversion");
+    }
     const s_TSIG* tsig = static_cast<const s_TSIG*>(tsig_obj);
     return (*tsig->cppobj);
 }

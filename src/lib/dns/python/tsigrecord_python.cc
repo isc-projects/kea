@@ -279,6 +279,10 @@ PyTSIGRecord_Check(PyObject* obj) {
 
 const TSIGRecord&
 PyTSIGRecord_ToTSIGRecord(PyObject* tsigrecord_obj) {
+    if (tsigrecord_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in TSIGRecord PyObject conversion");
+    }
     s_TSIGRecord* tsigrecord = static_cast<s_TSIGRecord*>(tsigrecord_obj);
     return (*tsigrecord->cppobj);
 }
