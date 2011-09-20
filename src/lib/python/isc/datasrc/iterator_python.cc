@@ -96,6 +96,9 @@ PyObject* ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"), "Unexpected exception");
+        return (NULL);
     }
 }
 
@@ -172,26 +175,6 @@ PyTypeObject zoneiterator_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-namespace internal {
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_ZoneIterator(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&zoneiterator_type) < 0) {
-        return (false);
-    }
-    void* zip = &zoneiterator_type;
-    if (PyModule_AddObject(mod, "ZoneIterator", static_cast<PyObject*>(zip)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&zoneiterator_type);
-
-    return (true);
-}
-} // namespace internal
 
 PyObject*
 createZoneIteratorObject(isc::datasrc::ZoneIteratorPtr source) {
