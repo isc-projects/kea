@@ -239,28 +239,9 @@ PyTypeObject messagerenderer_type = {
     0                                   // tp_version_tag
 };
 
-PyObject*
-createMessageRendererObject(const MessageRenderer& source) {
-    // should we copy? can we?
-    // copy the existing buffer into a new one, then create a new renderer with
-    // that buffer
-    s_MessageRenderer* mr = static_cast<s_MessageRenderer*>(
-        messagerenderer_type.tp_alloc(&messagerenderer_type, 0));
-    if (mr == NULL) {
-        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
-                  "probably due to short memory");
-    }
-    try {
-        mr->outputbuffer = new OutputBuffer(4096);
-        mr->outputbuffer->writeData(source.getData(), source.getLength());
-        mr->cppobj = new MessageRenderer(*mr->outputbuffer);
-
-        return (mr);
-    } catch (const std::bad_alloc&) {
-        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
-                  "probably due to short memory");
-    }
-}
+// If we need a createMessageRendererObject(), should we copy? can we?
+// copy the existing buffer into a new one, then create a new renderer with
+// that buffer?
 
 bool
 PyMessageRenderer_Check(PyObject* obj) {

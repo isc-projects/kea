@@ -311,8 +311,14 @@ Message_getOpcode(s_Message* self) {
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get message opcode: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (NULL);
     } catch (...) {
-        PyErr_SetString(po_IscException, "Unexpected exception");
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception getting opcode from message");
         return (NULL);
     }
 }
@@ -338,7 +344,17 @@ Message_getEDNS(s_Message* self) {
     if (!src) {
         Py_RETURN_NONE;
     }
-    return (createEDNSObject(*src));
+    try {
+        return (createEDNSObject(*src));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get EDNS from message: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting EDNS from message");
+    }
+    return (NULL);
 }
 
 PyObject*
@@ -418,13 +434,25 @@ Message_getQuestion(s_Message* self) {
         return (NULL);
     }
 
-    for (; qi != qi_end; ++qi) {
-        if (PyList_Append(list, createQuestionObject(**qi)) == -1) {
-            Py_DECREF(list);
-            return (NULL);
+    try {
+        for (; qi != qi_end; ++qi) {
+            if (PyList_Append(list, createQuestionObject(**qi)) == -1) {
+                Py_DECREF(list);
+                return (NULL);
+            }
         }
+        return (list);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting Question section: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting Question section");
     }
-    return (list);
+    Py_DECREF(list);
+    return (NULL);
 }
 
 PyObject*
@@ -458,18 +486,25 @@ Message_getSection(s_Message* self, PyObject* args) {
     if (list == NULL) {
         return (NULL);
     }
-    for (; rrsi != rrsi_end; ++rrsi) {
-        PyObject* rrset = createRRsetObject(**rrsi);
-        if (PyList_Append(list, rrset) == -1) {
-                Py_DECREF(rrset);
-                Py_DECREF(list);
-                return (NULL);
+    try {
+        for (; rrsi != rrsi_end; ++rrsi) {
+            if (PyList_Append(list, createRRsetObject(**rrsi)) == -1) {
+                    Py_DECREF(list);
+                    return (NULL);
+            }
         }
-        // PyList_Append increases refcount, so we remove ours since
-        // we don't need it anymore
-        Py_DECREF(rrset);
+        return (list);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure creating Question object: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure creating Question object");
     }
-    return (list);
+    Py_DECREF(list);
+    return (NULL);
 }
 
 //static PyObject* Message_beginQuestion(s_Message* self, PyObject* args);

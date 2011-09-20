@@ -26,15 +26,6 @@ namespace python {
 
 extern PyTypeObject messagerenderer_type;
 
-/// This is a simple shortcut to create a python MessageRenderer object (in the
-/// form of a pointer to PyObject) with minimal exception safety.
-/// On success, it returns a valid pointer to PyObject with a reference
-/// counter of 1; if something goes wrong it throws an exception (it never
-/// returns a NULL pointer).
-/// This function is expected to be called within a try block
-/// followed by necessary setup for python exception.
-PyObject* createMessageRendererObject(const MessageRenderer& source);
-
 /// \brief Checks if the given python object is a MessageRenderer object
 ///
 /// \exception PyCPPWrapperException if obj is NULL

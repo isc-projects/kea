@@ -20,13 +20,14 @@
 #include <util/buffer.h>
 #include <util/python/pycppwrapper_util.h>
 
+#include "pydnspp_common.h"
 #include "question_python.h"
-
 #include "name_python.h"
 #include "rrclass_python.h"
 #include "rrtype_python.h"
 #include "messagerenderer_python.h"
 
+using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
@@ -139,17 +140,50 @@ Question_destroy(s_Question* self) {
 
 static PyObject*
 Question_getName(s_Question* self) {
-    return (createNameObject(self->cppobj->getName()));
+    try {
+        return (createNameObject(self->cppobj->getName()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question Name: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question Name");
+    }
+    return (NULL);
 }
 
 static PyObject*
 Question_getType(s_Question* self) {
-    return (createRRTypeObject(self->cppobj->getType()));
+    try {
+        return (createRRTypeObject(self->cppobj->getType()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRType: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRType");
+    }
+    return (NULL);
 }
 
 static PyObject*
 Question_getClass(s_Question* self) {
-    return (createRRClassObject(self->cppobj->getClass()));
+    try {
+        return (createRRClassObject(self->cppobj->getClass()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRClass: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRClass");
+    }
+    return (NULL);
 }
 
 static PyObject*
