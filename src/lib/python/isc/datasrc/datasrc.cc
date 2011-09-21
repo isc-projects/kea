@@ -172,7 +172,7 @@ PyModuleDef iscDataSrc = {
     "These bindings are close match to the C++ API, but they are not complete "
     "(some parts are not needed) and some are done in more python-like ways.",
     -1,
-    NULL,// TODO do we need module-level functions?
+    NULL,
     NULL,
     NULL,
     NULL,
