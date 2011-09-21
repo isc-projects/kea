@@ -1674,15 +1674,12 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
 
 TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     // Same as NXDOMAIN_NSEC, but with empty non-terminal
-    //
-    // FIXME: Is the nonexistence of this node really the correct proof
-    // we need?
     shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
     doFindTest(*finder, isc::dns::Name("nonterminal.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(), this->rrttl_,
-               ZoneFinder::NXRRSET, // FIXME: Do we want to have specific code?
+               ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                Name("l.example.org."), ZoneFinder::FIND_DNSSEC);
 
