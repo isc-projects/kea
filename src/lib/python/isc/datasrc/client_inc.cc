@@ -102,7 +102,7 @@ Returns an iterator to the given zone.\n\
 This allows for traversing the whole zone. The returned object can\n\
 provide the RRsets one by one.\n\
 \n\
-This throws DataSourceError when the zone does not exist in the\n\
+This throws isc.datasrc.Error when the zone does not exist in the\n\
 datasource.\n\
 \n\
 The default implementation throws isc.NotImplemented. This allows for\n\
@@ -165,7 +165,7 @@ unconditionally or when replace is false).\n\
 \n\
 Exceptions:\n\
   NotImplemented The underlying data source does not support updates.\n\
-  DataSourceError Internal error in the underlying data source.\n\
+  isc.datasrc.Error Internal error in the underlying data source.\n\
   std.bad_alloc Resource allocation failure.\n\
 \n\
 Parameters:\n\

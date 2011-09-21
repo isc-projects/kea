@@ -73,7 +73,7 @@ ZoneFinder.find() conforms to the concept of \"merge\", the actual\n\
 internal representation is up to the implementation.\n\
 \n\
 This method must not be called once commit() is performed. If it calls\n\
-after commit() the implementation must throw a DataSourceError\n\
+after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
 \n\
 TodoAs noted above we may have to revisit the design details as we\n\
@@ -91,7 +91,7 @@ gain experiences:\n\
   information on whether there's a duplicate, etc.\n\
 \n\
 Exceptions:\n\
-  DataSourceError Called after commit(), RRset is invalid (see above),\n\
+  isc.datasrc.Error Called after commit(), RRset is invalid (see above),\n\
              internal data source error\n\
   std.bad_alloc Resource allocation failure\n\
 \n\
@@ -130,7 +130,7 @@ when deleting RRs.\n\
   get_rrsig() on the RRset returns a NULL pointer.\n\
 \n\
 This method must not be called once commit() is performed. If it calls\n\
-after commit() the implementation must throw a DataSourceError\n\
+after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
 \n\
 TodoAs noted above we may have to revisit the design details as we\n\
@@ -149,7 +149,7 @@ gain experiences:\n\
   exit, the number of actually deleted RRs, etc.\n\
 \n\
 Exceptions:\n\
-  DataSourceError Called after commit(), RRset is invalid (see above),\n\
+  isc.datasrc.Error Called after commit(), RRset is invalid (see above),\n\
              internal data source error\n\
   std.bad_alloc Resource allocation failure\n\
 \n\
@@ -171,10 +171,10 @@ with a general purpose database as a backend, for example, this method\n\
 would perform a \"commit\" statement for the database.\n\
 \n\
 This operation can only be performed at most once. A duplicate call\n\
-must result in a DatasourceError exception.\n\
+must result in a isc.datasrc.Error exception.\n\
 \n\
 Exceptions:\n\
-  DataSourceError Duplicate call of the method, internal data source\n\
+  isc.datasrc.Error Duplicate call of the method, internal data source\n\
              error\n\
 \n\
 ";
