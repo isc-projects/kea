@@ -112,6 +112,7 @@ ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
 
 PyObject*
 ZoneIterator_iter(PyObject *self) {
+    Py_INCREF(self);
     return (self);
 }
 
@@ -166,10 +167,8 @@ PyTypeObject zoneiterator_type = {
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
     0,                                  // tp_weaklistoffset
-    //reinterpret_cast<PyCFunction>(ZoneIterator_iter),                               // tp_iter
-    //reinterpret_cast<PyCFunction>(ZoneIterator_next),                               // tp_iternext
-    ZoneIterator_iter,
-    ZoneIterator_next,
+    ZoneIterator_iter,                  // tp_iter
+    ZoneIterator_next,                  // tp_iternext
     ZoneIterator_methods,               // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
