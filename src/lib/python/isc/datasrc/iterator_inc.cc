@@ -10,10 +10,11 @@ used. This is the abstract interface.\n\
 \n\
 There's no way to start iterating from the beginning again or return.\n\
 \n\
+The ZoneIterator is a python iterator, and can be iterated over directly.\n\
 ";
 
 const char* const ZoneIterator_getNextRRset_doc = "\
-get_next_r_rset() -> isc.dns.ConstRRset\n\
+get_next_rrset() -> isc.dns.ConstRRset\n\
 \n\
 Get next RRset from the zone.\n\
 \n\

@@ -157,7 +157,7 @@ specific derived class implementation).\n\
 If replace is true, any existing RRs of the zone will be deleted on\n\
 successful completion of updates (after commit() on the updater); if\n\
 it's false, the existing RRs will be intact unless explicitly deleted\n\
-by delete_r_rset() on the updater.\n\
+by delete_rrset() on the updater.\n\
 \n\
 A data source can be \"read only\" or can prohibit partial updates. In\n\
 such cases this method will result in an isc.NotImplemented exception\n\
