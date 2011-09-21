@@ -172,6 +172,7 @@ const char* const TEST_RECORDS[][5] = {
     {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"bao.example.org.", "NSEC", "3600", "", "wild.*.foo.*.bar.example.org. NSEC"},
     {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
     {"*.nswild.example.org.", "NS", "3600", "", "ns.example.com."},
     // For finding previous, this one is the last one in the zone
@@ -568,6 +569,8 @@ public:
                 return ("badnsec1.example.org.");
             } else if (rname == "org.example.brokenname.") {
                 return ("brokenname...example.org.");
+            } else if (rname == "org.example.bar.*.") {
+                return ("bao.example.org.");
             } else if (rname == "org.example.notimplnsec." ||
                        rname == "org.example.wild.here.") {
                 isc_throw(isc::NotImplemented, "Not implemented in this test");
@@ -1588,6 +1591,23 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                    this->expected_rdatas_, this->expected_sig_rdatas_);
         // FIXME: What should be returned in this case? How does the
         // DNSSEC logic handle it?
+    }
+
+    const char* negative_dnssec_names[] = {
+        "a.bar.example.org.",
+        "foo.baz.bar.example.org.",
+        "a.foo.bar.example.org.",
+        NULL
+    };
+
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("wild.*.foo.*.bar.example.org. NSEC");
+    this->expected_sig_rdatas_.clear();
+    for (const char** name(negative_dnssec_names); *name != NULL; ++ name) {
+        doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
+                   RRType::NSEC(), this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
+                   this->expected_rdatas_, this->expected_sig_rdatas_,
+                   Name("bao.example.org."), ZoneFinder::FIND_DNSSEC);
     }
 
     // Some strange things in the wild node
