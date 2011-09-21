@@ -1,3 +1,8 @@
+286.    [func]		ocean
+	libdns++: Implement the HINFO rrtype support according to RFC1034,
+	and RFC1035.
+	(Trac #1112, git 12d62d54d33fbb1572a1aa3089b0d547d02924aa)
+
 285.	[bug]		jelte
 	sqlite3 data source: fixed a race condition on initial startup,
 	when the database has not been initialized yet, and multiple
