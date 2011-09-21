@@ -67,20 +67,21 @@ Query::findAddrs(ZoneFinder& zone, const Name& qname,
     // Find A rrset
     if (qname_ != qname || qtype_ != RRType::A()) {
         ZoneFinder::FindResult a_result = zone.find(qname, RRType::A(), NULL,
-                                              options);
+                                                    options | dnssec_opt_);
         if (a_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
-                    boost::const_pointer_cast<RRset>(a_result.rrset));
+                    boost::const_pointer_cast<RRset>(a_result.rrset), dnssec_);
         }
     }
 
     // Find AAAA rrset
     if (qname_ != qname || qtype_ != RRType::AAAA()) {
         ZoneFinder::FindResult aaaa_result =
-            zone.find(qname, RRType::AAAA(), NULL, options);
+            zone.find(qname, RRType::AAAA(), NULL, options | dnssec_opt_);
         if (aaaa_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
-                    boost::const_pointer_cast<RRset>(aaaa_result.rrset));
+                    boost::const_pointer_cast<RRset>(aaaa_result.rrset),
+                    dnssec_);
         }
     }
 }
@@ -88,7 +89,7 @@ Query::findAddrs(ZoneFinder& zone, const Name& qname,
 void
 Query::putSOA(ZoneFinder& zone) const {
     ZoneFinder::FindResult soa_result(zone.find(zone.getOrigin(),
-        RRType::SOA()));
+        RRType::SOA(), NULL, dnssec_opt_));
     if (soa_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoSOA, "There's no SOA record in zone " <<
             zone.getOrigin().toText());
@@ -99,7 +100,7 @@ Query::putSOA(ZoneFinder& zone) const {
          * to insist.
          */
         response_.addRRset(Message::SECTION_AUTHORITY,
-            boost::const_pointer_cast<RRset>(soa_result.rrset));
+            boost::const_pointer_cast<RRset>(soa_result.rrset), dnssec_);
     }
 }
 
@@ -107,14 +108,15 @@ void
 Query::getAuthAdditional(ZoneFinder& zone) const {
     // Fill in authority and addtional sections.
     ZoneFinder::FindResult ns_result = zone.find(zone.getOrigin(),
-                                                 RRType::NS());
+                                                 RRType::NS(), NULL,
+                                                 dnssec_opt_);
     // zone origin name should have NS records
     if (ns_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoApexNS, "There's no apex NS records in zone " <<
                 zone.getOrigin().toText());
     } else {
         response_.addRRset(Message::SECTION_AUTHORITY,
-            boost::const_pointer_cast<RRset>(ns_result.rrset));
+            boost::const_pointer_cast<RRset>(ns_result.rrset), dnssec_);
         // Handle additional for authority section
         getAdditional(zone, *ns_result.rrset);
     }
@@ -147,12 +149,14 @@ Query::process() const {
         keep_doing = false;
         std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
         const ZoneFinder::FindResult db_result(
-            result.zone_finder->find(qname_, qtype_, target.get()));
+            result.zone_finder->find(qname_, qtype_, target.get(),
+                                     dnssec_opt_));
         switch (db_result.code) {
             case ZoneFinder::DNAME: {
                 // First, put the dname into the answer
                 response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                    boost::const_pointer_cast<RRset>(db_result.rrset),
+                    dnssec_);
                 /*
                  * Empty DNAME should never get in, as it is impossible to
                  * create one in master file.
@@ -188,7 +192,7 @@ Query::process() const {
                     qname_.getLabelCount() -
                     db_result.rrset->getName().getLabelCount()).
                     concatenate(dname.getDname())));
-                response_.addRRset(Message::SECTION_ANSWER, cname);
+                response_.addRRset(Message::SECTION_ANSWER, cname, dnssec_);
                 break;
             }
             case ZoneFinder::CNAME:
@@ -202,20 +206,23 @@ Query::process() const {
                  * So, just put it there.
                  */
                 response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                    boost::const_pointer_cast<RRset>(db_result.rrset),
+                    dnssec_);
                 break;
             case ZoneFinder::SUCCESS:
                 if (qtype_is_any) {
                     // If quety type is ANY, insert all RRs under the domain
                     // into answer section.
                     BOOST_FOREACH(RRsetPtr rrset, *target) {
-                        response_.addRRset(Message::SECTION_ANSWER, rrset);
+                        response_.addRRset(Message::SECTION_ANSWER, rrset,
+                                           dnssec_);
                         // Handle additional for answer section
                         getAdditional(*result.zone_finder, *rrset.get());
                     }
                 } else {
                     response_.addRRset(Message::SECTION_ANSWER,
-                        boost::const_pointer_cast<RRset>(db_result.rrset));
+                        boost::const_pointer_cast<RRset>(db_result.rrset),
+                        dnssec_);
                     // Handle additional for answer section
                     getAdditional(*result.zone_finder, *db_result.rrset);
                 }
@@ -233,7 +240,8 @@ Query::process() const {
             case ZoneFinder::DELEGATION:
                 response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
                 response_.addRRset(Message::SECTION_AUTHORITY,
-                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                    boost::const_pointer_cast<RRset>(db_result.rrset),
+                    dnssec_);
                 getAdditional(*result.zone_finder, *db_result.rrset);
                 break;
             case ZoneFinder::NXDOMAIN:

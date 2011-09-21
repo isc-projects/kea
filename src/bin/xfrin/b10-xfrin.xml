@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>May 19, 2011</date>
+    <date>September 8, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -92,7 +92,7 @@ in separate zonemgr process.
       The configurable settings are:
     </para>
 
-    <para><varname>transfers-in</varname>
+    <para><varname>transfers_in</varname>
       defines the maximum number of inbound zone transfers
       that can run concurrently. The default is 10.
     </para>

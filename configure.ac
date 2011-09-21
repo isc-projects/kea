@@ -12,6 +12,12 @@ AC_PROG_CXX
 
 # Libtool configuration
 #
+
+# libtool cannot handle spaces in paths, so exit early if there is one
+if [ test `echo $PWD | grep -c ' '` != "0"  ]; then
+    AC_MSG_ERROR([BIND 10 cannot be built in a directory that contains spaces, because of libtool limitations. Please change the directory name, or use a symbolic link that does not contain spaces.])
+fi
+
 # On FreeBSD (and probably some others), clang++ does not meet an autoconf
 # assumption in identifying libtool configuration regarding shared library:
 # the configure script will execute "$CC -shared $CFLAGS/$CXXFLAGS -v" and
@@ -856,6 +862,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
+                 src/lib/datasrc/tests/testdata/Makefile
                  src/lib/xfr/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile

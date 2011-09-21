@@ -40,7 +40,7 @@ public:
     ~RRSIG();
 
     // specialized methods
-    const RRType& typeCovered();
+    const RRType& typeCovered() const;
 private:
     RRSIGImpl* impl_;
 };

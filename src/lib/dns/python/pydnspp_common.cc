@@ -15,9 +15,45 @@
 #include <Python.h>
 #include <pydnspp_common.h>
 
+#include <exceptions/exceptions.h>
+
+#include <util/buffer.h>
+
+#include <dns/exceptions.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
+
+#include "pydnspp_common.h"
+#include "messagerenderer_python.h"
+#include "name_python.h"
+#include "rdata_python.h"
+#include "rrclass_python.h"
+#include "rrtype_python.h"
+#include "rrttl_python.h"
+#include "rrset_python.h"
+#include "rcode_python.h"
+#include "opcode_python.h"
+#include "tsigkey_python.h"
+#include "tsig_rdata_python.h"
+#include "tsigerror_python.h"
+#include "tsigrecord_python.h"
+#include "tsig_python.h"
+#include "question_python.h"
+#include "message_python.h"
+
+using namespace isc::dns::python;
+
 namespace isc {
 namespace dns {
 namespace python {
+// For our 'general' isc::Exceptions
+PyObject* po_IscException;
+PyObject* po_InvalidParameter;
+
+// For our own isc::dns::Exception
+PyObject* po_DNSMessageBADVERS;
+
+
 int
 readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
     PyObject* el = NULL;

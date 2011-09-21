@@ -142,7 +142,10 @@ class ZonemgrRefresh:
         """Set zone next refresh time after zone refresh fail.
            now + retry - retry_jitter <= next_refresh_time <= now + retry
            """
-        zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[RETRY_OFFSET])
+        if (self._get_zone_soa_rdata(zone_name_class) is not None):
+            zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[RETRY_OFFSET])
+        else:
+            zone_retry_time = 0.0
         zone_retry_time = max(self._lowerbound_retry, zone_retry_time)
         self._set_zone_timer(zone_name_class, zone_retry_time, self._refresh_jitter * zone_retry_time)
 
@@ -174,7 +177,8 @@ class ZonemgrRefresh:
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
         # Is zone expired?
-        if (self._zone_is_expired(zone_name_class)):
+        if ((self._get_zone_soa_rdata(zone_name_class) is None) or
+            self._zone_is_expired(zone_name_class)):
             self._set_zone_state(zone_name_class, ZONE_EXPIRED)
         else:
             self._set_zone_state(zone_name_class, ZONE_OK)
@@ -200,17 +204,19 @@ class ZonemgrRefresh:
         logger.debug(DBG_ZONEMGR_BASIC, ZONEMGR_LOAD_ZONE, zone_name_class[0], zone_name_class[1])
         zone_info = {}
         zone_soa = sqlite3_ds.get_zone_soa(str(zone_name_class[0]), self._db_file)
-        if not zone_soa:
-            logger.error(ZONEMGR_NO_SOA, zone_name_class[0], zone_name_class[1])
-            raise ZonemgrException("[b10-zonemgr] zone (%s, %s) doesn't have soa." % zone_name_class)
-        zone_info["zone_soa_rdata"] = zone_soa[7]
+        if zone_soa is None:
+            logger.warn(ZONEMGR_NO_SOA, zone_name_class[0], zone_name_class[1])
+            zone_info["zone_soa_rdata"] = None
+            zone_reload_time = 0.0
+        else:
+            zone_info["zone_soa_rdata"] = zone_soa[7]
+            zone_reload_time = float(zone_soa[7].split(" ")[RETRY_OFFSET])
         zone_info["zone_state"] = ZONE_OK
         zone_info["last_refresh_time"] = self._get_current_time()
         self._zonemgr_refresh_info[zone_name_class] = zone_info
         # Imposes some random jitters to avoid many zones need to do refresh at the same time.
-        zone_reload_jitter = float(zone_soa[7].split(" ")[RETRY_OFFSET])
-        zone_reload_jitter = max(self._lowerbound_retry, zone_reload_jitter)
-        self._set_zone_timer(zone_name_class, zone_reload_jitter, self._reload_jitter * zone_reload_jitter)
+        zone_reload_time = max(self._lowerbound_retry, zone_reload_time)
+        self._set_zone_timer(zone_name_class, zone_reload_time, self._reload_jitter * zone_reload_time)
 
     def _zone_is_expired(self, zone_name_class):
         """Judge whether a zone is expired or not."""
@@ -420,12 +426,6 @@ class ZonemgrRefresh:
 
     def update_config_data(self, new_config):
         """ update ZonemgrRefresh config """
-        # TODO: we probably want to store all this info in a nice
-        # class, so that we don't have to backup and restore every
-        # single value.
-        # TODO2: We also don't use get_default_value yet
-        backup = self._zonemgr_refresh_info.copy()
-
         # Get a new value, but only if it is defined (commonly used below)
         # We don't use "value or default", because if value would be
         # 0, we would take default
@@ -435,26 +435,21 @@ class ZonemgrRefresh:
             else:
                 return default
 
-        # store the values so we can restore them if there is a problem
-        lowerbound_refresh_backup = self._lowerbound_refresh
         self._lowerbound_refresh = val_or_default(
             new_config.get('lowerbound_refresh'), self._lowerbound_refresh)
 
-        lowerbound_retry_backup = self._lowerbound_retry
         self._lowerbound_retry = val_or_default(
             new_config.get('lowerbound_retry'), self._lowerbound_retry)
 
-        max_transfer_timeout_backup = self._max_transfer_timeout
         self._max_transfer_timeout = val_or_default(
             new_config.get('max_transfer_timeout'), self._max_transfer_timeout)
 
-        refresh_jitter_backup = self._refresh_jitter
         self._refresh_jitter = val_or_default(
             new_config.get('refresh_jitter'), self._refresh_jitter)
 
-        reload_jitter_backup = self._reload_jitter
         self._reload_jitter = val_or_default(
             new_config.get('reload_jitter'), self._reload_jitter)
+
         try:
             required = {}
             secondary_zones = new_config.get('secondary_zones')
@@ -469,6 +464,7 @@ class ZonemgrRefresh:
                     required[name_class] = True
                     # Add it only if it isn't there already
                     if not name_class in self._zonemgr_refresh_info:
+                        # If we are not able to find it in database, log an warning
                         self.zonemgr_add_zone(name_class)
                 # Drop the zones that are no longer there
                 # Do it in two phases, python doesn't like deleting while iterating
@@ -478,14 +474,7 @@ class ZonemgrRefresh:
                         to_drop.append(old_zone)
                 for drop in to_drop:
                     del self._zonemgr_refresh_info[drop]
-        # If we are not able to find it in database, restore the original
         except:
-            self._zonemgr_refresh_info = backup
-            self._lowerbound_refresh = lowerbound_refresh_backup
-            self._lowerbound_retry = lowerbound_retry_backup
-            self._max_transfer_timeout = max_transfer_timeout_backup
-            self._refresh_jitter = refresh_jitter_backup
-            self._reload_jitter = reload_jitter_backup
             raise
 
 class Zonemgr:

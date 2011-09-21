@@ -266,6 +266,17 @@ public:
     /// \brief Implementation of the getIterator method
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
+    /// In-memory data source is read-only, so this derived method will
+    /// result in a NotImplemented exception.
+    ///
+    /// \note We plan to use a database-based data source as a backend
+    /// persistent storage for an in-memory data source.  When it's
+    /// implemented we may also want to allow the user of the in-memory client
+    /// to update via its updater (this may or may not be a good idea and
+    /// is subject to further discussions).
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
+                                      bool replace) const;
+
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class
     // directly any more (it should be handled through DataSourceClient)?

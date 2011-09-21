@@ -111,7 +111,8 @@ public:
         dname_name_("dname.example.com"),
         has_SOA_(true),
         has_apex_NS_(true),
-        rrclass_(RRClass::IN())
+        rrclass_(RRClass::IN()),
+        include_rrsig_anyway_(false)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
@@ -137,11 +138,14 @@ public:
     // the apex NS.
     void setApexNSFlag(bool on) { has_apex_NS_ = on; }
 
+    // Turn this on if you want it to return RRSIGs regardless of FIND_GLUE_OK
+    void setIncludeRRSIGAnyway(bool on) { include_rrsig_anyway_ = on; }
+
 private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
     typedef map<Name, RRsetStore> Domains;
     Domains domains_;
-    void loadRRset(ConstRRsetPtr rrset) {
+    void loadRRset(RRsetPtr rrset) {
         domains_[rrset->getName()][rrset->getType()] = rrset;
         if (rrset->getName() == delegation_name_ &&
             rrset->getType() == RRType::NS()) {
@@ -149,6 +153,26 @@ private:
         } else if (rrset->getName() == dname_name_ &&
             rrset->getType() == RRType::DNAME()) {
             dname_rrset_ = rrset;
+        // Add some signatures
+        } else if (rrset->getName() == Name("example.com.") &&
+                   rrset->getType() == RRType::NS()) {
+            rrset->addRRsig(RdataPtr(new generic::RRSIG("NS 5 3 3600 "
+                                                        "20000101000000 "
+                                                        "20000201000000 "
+                                                        "12345 example.com. "
+                                                        "FAKEFAKEFAKE")));
+        } else if (rrset->getType() == RRType::A()) {
+            rrset->addRRsig(RdataPtr(new generic::RRSIG("A 5 3 3600 "
+                                                        "20000101000000 "
+                                                        "20000201000000 "
+                                                        "12345 example.com. "
+                                                        "FAKEFAKEFAKE")));
+        } else if (rrset->getType() == RRType::AAAA()) {
+            rrset->addRRsig(RdataPtr(new generic::RRSIG("AAAA 5 3 3600 "
+                                                        "20000101000000 "
+                                                        "20000201000000 "
+                                                        "12345 example.com. "
+                                                        "FAKEFAKEFAKE")));
         }
     }
 
@@ -161,6 +185,7 @@ private:
     ConstRRsetPtr delegation_rrset_;
     ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
+    bool include_rrsig_anyway_;
 };
 
 ZoneFinder::FindResult
@@ -195,7 +220,26 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         RRsetStore::const_iterator found_rrset =
             found_domain->second.find(type);
         if (found_rrset != found_domain->second.end()) {
-            return (FindResult(SUCCESS, found_rrset->second));
+            ConstRRsetPtr rrset;
+            // Strip whatever signature there is in case DNSSEC is not required
+            // Just to make sure the Query asks for it when it is needed
+            if (options & ZoneFinder::FIND_DNSSEC ||
+                include_rrsig_anyway_ ||
+                !found_rrset->second->getRRsig()) {
+                rrset = found_rrset->second;
+            } else {
+                RRsetPtr noconst(new RRset(found_rrset->second->getName(),
+                                           found_rrset->second->getClass(),
+                                           found_rrset->second->getType(),
+                                           found_rrset->second->getTTL()));
+                for (RdataIteratorPtr
+                     i(found_rrset->second->getRdataIterator());
+                     !i->isLast(); i->next()) {
+                    noconst->addRdata(i->getCurrent());
+                }
+                rrset = noconst;
+            }
+            return (FindResult(SUCCESS, rrset));
         }
 
         // If not found but we have a target, fill it with all RRsets here
@@ -302,6 +346,58 @@ TEST_F(QueryTest, exactMatch) {
     // find match rrset
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
                   www_a_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, exactMatchIgnoreSIG) {
+    // Check that we do not include the RRSIG when not requested even when
+    // we receive it from the data source.
+    mock_finder->setIncludeRRSIGAnyway(true);
+    Query query(memory_client, qname, qtype, response);
+    EXPECT_NO_THROW(query.process());
+    // find match rrset
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+                  www_a_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, dnssecPositive) {
+    // Just like exactMatch, but the signatures should be included as well
+    Query query(memory_client, qname, qtype, response, true);
+    EXPECT_NO_THROW(query.process());
+    // find match rrset
+    // We can't let responseCheck to check the additional section as well,
+    // it gets confused by the two RRs for glue.delegation.../RRSIG due
+    // to it's design and fixing it would be hard. Therefore we simply
+    // check manually this one time.
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
+                  (www_a_txt + std::string("www.example.com. 3600 IN RRSIG "
+                                           "A 5 3 3600 20000101000000 "
+                                           "20000201000000 12345 example.com. "
+                                           "FAKEFAKEFAKE\n")).c_str(),
+                  (zone_ns_txt + std::string("example.com. 3600 IN RRSIG NS 5 "
+                                             "3 3600 20000101000000 "
+                                             "20000201000000 12345 "
+                                             "example.com. FAKEFAKEFAKE\n")).
+                  c_str(), NULL);
+    RRsetIterator iterator(response.beginSection(Message::SECTION_ADDITIONAL));
+    const char* additional[] = {
+        "glue.delegation.example.com. 3600 IN A 192.0.2.153\n",
+        "glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
+            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
+        "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
+        "glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 "
+            "20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE\n",
+        "noglue.example.com. 3600 IN A 192.0.2.53\n",
+        "noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
+            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
+        NULL
+    };
+    for (const char** rr(additional); *rr != NULL; ++ rr) {
+        ASSERT_FALSE(iterator ==
+                     response.endSection(Message::SECTION_ADDITIONAL));
+        EXPECT_EQ(*rr, (*iterator)->toText());
+        iterator ++;
+    }
+    EXPECT_TRUE(iterator == response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
