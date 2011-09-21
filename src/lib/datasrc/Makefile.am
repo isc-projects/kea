@@ -24,6 +24,7 @@ libdatasrc_la_SOURCES += logger.h logger.cc
 libdatasrc_la_SOURCES += client.h iterator.h
 libdatasrc_la_SOURCES += database.h database.cc
 libdatasrc_la_SOURCES += sqlite3_accessor.h sqlite3_accessor.cc
+libdatasrc_la_SOURCES += factory.h factory.cc
 nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 
 libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
