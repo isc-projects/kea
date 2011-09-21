@@ -487,7 +487,10 @@ public:
      *     and the DNSSEC order correspond (eg. org.example.a is followed
      *     by org.example.a.b which is followed by org.example.b, etc).
      * \param zone_id The zone to look through.
-     * \return The previous name.
+     * \return The previous name, or the last name in the zone, if there's
+     *     no previous one (including out-of-zone cases).
+     * \note This function must return previous/last name even in case
+     *     the queried rname does not exist in the zone.
      *
      * \throw DataSourceError if there's a problem with the database.
      * \throw NotImplemented if this database doesn't support DNSSEC.
