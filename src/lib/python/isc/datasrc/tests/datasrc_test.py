@@ -146,9 +146,7 @@ class DataSrcClient(unittest.TestCase):
                          rrs.get_next_rrset().to_text())
         # there are more than 80 RRs in this zone... let's just count the rest
         count = 0
-        for rrset in rrs:
-            count = count + 1
-        self.assertEqual(40, count)
+        self.assertEqual(40, len(list(rrs)))
         # TODO should we catch this (iterating past end) and just return None
         # instead of failing?
         self.assertRaises(isc.datasrc.Error, rrs.get_next_rrset)
