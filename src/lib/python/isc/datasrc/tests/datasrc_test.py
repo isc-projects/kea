@@ -141,13 +141,9 @@ class DataSrcClient(unittest.TestCase):
                          "m. FAKEFAKEFAKEFAKE\n",
                          rrs.get_next_rrset().to_text())
         # there are more than 80 RRs in this zone... let's just count the rest
-        # hmm. this makes me think we might want a real iterator returned from
-        # get_iterator()
-        rrset = rrs.get_next_rrset()
         count = 0
-        while rrset is not None:
+        for rrset in rrs:
             count = count + 1
-            rrset = rrs.get_next_rrset()
         self.assertEqual(40, count)
         # TODO should we catch this (iterating past end) and just return None
         # instead of failing?
@@ -282,7 +278,7 @@ class DataSrcUpdater(unittest.TestCase):
 
         updater.commit()
         # second commit should raise exception
-        updater.commit()
+        self.assertRaises(isc.datasrc.Error, updater.commit)
 
         # the record should be gone now in the 'real' finder as well
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
