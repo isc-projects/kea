@@ -71,10 +71,16 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "AND rdtype=?3 AND rdata=?4",
     "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
     "WHERE zone_id = ?1 ORDER BY name, rdtype",
+    /*
+     * The ones for finding previous name. The first of them takes
+     * biggest smaller than something (therefore previous to the something),
+     * the second takes biggest (used in case when there's no previous,
+     * to "wrap around").
+     */
     "SELECT name FROM records " // FIND_PREVIOUS
     "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-    "rname < $2 ORDER BY rname DESC LIMIT 1", // FIND_PREVIOUS_WRAP
-    "SELECT name FROM records "
+    "rname < $2 ORDER BY rname DESC LIMIT 1",
+    "SELECT name FROM records " // FIND_PREVIOUS_WRAP
     "WHERE zone_id = ?1 AND rdtype = 'NSEC' "
     "ORDER BY rname DESC LIMIT 1"
 };
@@ -403,7 +409,7 @@ namespace {
 
 // Conversion to plain char
 const char*
-convertToPlainCharInternal(const unsigned char* ucp, sqlite3 *db) {
+convertToPlainChar(const unsigned char* ucp, sqlite3 *db) {
     if (ucp == NULL) {
         // The field can really be NULL, in which case we return an
         // empty string, or sqlite may have run out of memory, in
@@ -498,7 +504,8 @@ private:
 
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
         data[column] = convertToPlainChar(sqlite3_column_text(statement_,
-                                                              column));
+                                                              column),
+                                          accessor_->dbparameters_->db_);
     }
 
     void bindZoneId(const int zone_id) {
@@ -523,16 +530,6 @@ private:
     void finalize() {
         sqlite3_finalize(statement_);
         statement_ = NULL;
-    }
-
-    // This helper method converts from the unsigned char* type (used by
-    // sqlite3) to char* (wanted by std::string). Technically these types
-    // might not be directly convertable
-    // In case sqlite3_column_text() returns NULL, we just make it an
-    // empty string, unless it was caused by a memory error
-    const char* convertToPlainChar(const unsigned char* ucp) {
-        return (convertToPlainCharInternal(ucp,
-                                           accessor_->dbparameters_->db_));
     }
 
     const IteratorType iterator_type_;
@@ -682,24 +679,24 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS]);
     sqlite3_clear_bindings(dbparameters_->statements_[FIND_PREVIOUS]);
 
-    int rc = sqlite3_bind_int(dbparameters_->statements_[FIND_PREVIOUS], 1,
-                              zone_id);
-    if (rc != SQLITE_OK) {
+    if (sqlite3_bind_int(dbparameters_->statements_[FIND_PREVIOUS], 1,
+                         zone_id) != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
-                  " to SQL statement (find previous)");
+                  " to SQL statement (find previous): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
     }
-    rc = sqlite3_bind_text(dbparameters_->statements_[FIND_PREVIOUS], 2,
-                           rname.c_str(), -1, SQLITE_STATIC);
-    if (rc != SQLITE_OK) {
+    if (sqlite3_bind_text(dbparameters_->statements_[FIND_PREVIOUS], 2,
+                          rname.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind name " << rname <<
-                  " to SQL statement (find previous)");
+                  " to SQL statement (find previous): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
     }
 
     std::string result;
-    rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS]);
+    int rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS]);
     if (rc == SQLITE_ROW) {
         // We found it
-        result = convertToPlainCharInternal(sqlite3_column_text(dbparameters_->
+        result = convertToPlainChar(sqlite3_column_text(dbparameters_->
             statements_[FIND_PREVIOUS], 0), dbparameters_->db_);
     }
     sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS]);
@@ -710,18 +707,19 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
         sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
         sqlite3_clear_bindings(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
 
-        int rc = sqlite3_bind_int(
-            dbparameters_->statements_[FIND_PREVIOUS_WRAP], 1, zone_id);
-        if (rc != SQLITE_OK) {
+        if (sqlite3_bind_int(
+            dbparameters_->statements_[FIND_PREVIOUS_WRAP], 1, zone_id) !=
+            SQLITE_OK) {
             isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
-                      " to SQL statement (find previous wrap)");
+                      " to SQL statement (find previous wrap): " <<
+                      sqlite3_errmsg(dbparameters_->db_));
         }
 
         rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
         if (rc == SQLITE_ROW) {
             // We found it
             result =
-                convertToPlainCharInternal(sqlite3_column_text(dbparameters_->
+                convertToPlainChar(sqlite3_column_text(dbparameters_->
                     statements_[FIND_PREVIOUS_WRAP], 0), dbparameters_->db_);
         }
         sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
@@ -733,7 +731,7 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
 
     if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
         // Some kind of error
-        isc_throw(SQLite3Error, "Could get data for previous name");
+        isc_throw(SQLite3Error, "Could not get data for previous name");
     }
 
     return (result);
