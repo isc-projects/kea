@@ -83,6 +83,11 @@ ZoneIterator_destroy(s_ZoneIterator* const self) {
 PyObject*
 ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
     s_ZoneIterator* self = static_cast<s_ZoneIterator*>(po_self);
+    if (!self->cppobj) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "get_next_rrset() called past end of iterator");
+        return (NULL);
+    }
     try {
         isc::dns::ConstRRsetPtr rrset = self->cppobj->getNextRRset();
         if (!rrset) {
@@ -102,6 +107,23 @@ ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
         PyErr_SetString(getDataSourceException("Error"),
                         "Unexpected exception");
         return (NULL);
+    }
+}
+
+PyObject*
+ZoneIterator_iter(PyObject *self) {
+    return (self);
+}
+
+PyObject*
+ZoneIterator_next(PyObject* self) {
+    PyObject *result = ZoneIterator_getNextRRset(self, NULL);
+    // iter_next must return NULL without error instead of Py_None
+    if (result == Py_None) {
+        Py_DECREF(result);
+        return (NULL);
+    } else {
+        return (result);
     }
 }
 
@@ -144,8 +166,10 @@ PyTypeObject zoneiterator_type = {
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
     0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
+    //reinterpret_cast<PyCFunction>(ZoneIterator_iter),                               // tp_iter
+    //reinterpret_cast<PyCFunction>(ZoneIterator_next),                               // tp_iternext
+    ZoneIterator_iter,
+    ZoneIterator_next,
     ZoneIterator_methods,               // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
