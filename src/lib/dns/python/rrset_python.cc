@@ -12,55 +12,63 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
+
+#include <util/python/pycppwrapper_util.h>
+
 #include <dns/rrset.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
-static PyObject* po_EmptyRRset;
+#include "name_python.h"
+#include "pydnspp_common.h"
+#include "rrset_python.h"
+#include "rrclass_python.h"
+#include "rrtype_python.h"
+#include "rrttl_python.h"
+#include "rdata_python.h"
+#include "messagerenderer_python.h"
 
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
+using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
-// RRset
+namespace {
+
+// The s_* Class simply coverst one instantiation of the object
 
 // Using a shared_ptr here should not really be necessary (PyObject
 // is already reference-counted), however internally on the cpp side,
 // not doing so might result in problems, since we can't copy construct
-// rrsets, adding them to messages results in a problem when the
-// message is destroyed or cleared later
+// rdata field, adding them to rrsets results in a problem when the
+// rrset is destroyed later
 class s_RRset : public PyObject {
 public:
-    RRsetPtr rrset;
+    isc::dns::RRsetPtr cppobj;
 };
 
-static int RRset_init(s_RRset* self, PyObject* args);
-static void RRset_destroy(s_RRset* self);
+int RRset_init(s_RRset* self, PyObject* args);
+void RRset_destroy(s_RRset* self);
 
-static PyObject* RRset_getRdataCount(s_RRset* self);
-static PyObject* RRset_getName(s_RRset* self);
-static PyObject* RRset_getClass(s_RRset* self);
-static PyObject* RRset_getType(s_RRset* self);
-static PyObject* RRset_getTTL(s_RRset* self);
-static PyObject* RRset_setName(s_RRset* self, PyObject* args);
-static PyObject* RRset_setTTL(s_RRset* self, PyObject* args);
-static PyObject* RRset_toText(s_RRset* self);
-static PyObject* RRset_str(PyObject* self);
-static PyObject* RRset_toWire(s_RRset* self, PyObject* args);
-static PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
-static PyObject* RRset_getRdata(s_RRset* self);
+PyObject* RRset_getRdataCount(s_RRset* self);
+PyObject* RRset_getName(s_RRset* self);
+PyObject* RRset_getClass(s_RRset* self);
+PyObject* RRset_getType(s_RRset* self);
+PyObject* RRset_getTTL(s_RRset* self);
+PyObject* RRset_setName(s_RRset* self, PyObject* args);
+PyObject* RRset_setTTL(s_RRset* self, PyObject* args);
+PyObject* RRset_toText(s_RRset* self);
+PyObject* RRset_str(PyObject* self);
+PyObject* RRset_toWire(s_RRset* self, PyObject* args);
+PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
+PyObject* RRset_getRdata(s_RRset* self);
+PyObject* RRset_removeRRsig(s_RRset* self);
+
 // TODO: iterator?
 
-static PyMethodDef RRset_methods[] = {
+PyMethodDef RRset_methods[] = {
     { "get_rdata_count", reinterpret_cast<PyCFunction>(RRset_getRdataCount), METH_NOARGS,
       "Returns the number of rdata fields." },
     { "get_name", reinterpret_cast<PyCFunction>(RRset_getName), METH_NOARGS,
@@ -88,10 +96,250 @@ static PyMethodDef RRset_methods[] = {
       "Adds the rdata for one RR to the RRset.\nTakes an Rdata object as an argument" },
     { "get_rdata", reinterpret_cast<PyCFunction>(RRset_getRdata), METH_NOARGS,
       "Returns a List containing all Rdata elements" },
+    { "remove_rrsig", reinterpret_cast<PyCFunction>(RRset_removeRRsig), METH_NOARGS,
+      "Clears the list of RRsigs for this RRset" },
     { NULL, NULL, 0, NULL }
 };
 
-static PyTypeObject rrset_type = {
+int
+RRset_init(s_RRset* self, PyObject* args) {
+    PyObject* name;
+    PyObject* rrclass;
+    PyObject* rrtype;
+    PyObject* rrttl;
+
+    if (PyArg_ParseTuple(args, "O!O!O!O!", &name_type, &name,
+                                           &rrclass_type, &rrclass,
+                                           &rrtype_type, &rrtype,
+                                           &rrttl_type, &rrttl
+       )) {
+        self->cppobj = RRsetPtr(new RRset(PyName_ToName(name),
+                                          PyRRClass_ToRRClass(rrclass),
+                                          PyRRType_ToRRType(rrtype),
+                                          PyRRTTL_ToRRTTL(rrttl)));
+        return (0);
+    }
+
+    self->cppobj = RRsetPtr();
+    return (-1);
+}
+
+void
+RRset_destroy(s_RRset* self) {
+    // Clear the shared_ptr so that its reference count is zero
+    // before we call tp_free() (there is no direct release())
+    self->cppobj.reset();
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyObject*
+RRset_getRdataCount(s_RRset* self) {
+    return (Py_BuildValue("I", self->cppobj->getRdataCount()));
+}
+
+PyObject*
+RRset_getName(s_RRset* self) {
+    try {
+        return (createNameObject(self->cppobj->getName()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting rrset Name: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting rrset Name");
+    }
+    return (NULL);
+}
+
+PyObject*
+RRset_getClass(s_RRset* self) {
+    try {
+        return (createRRClassObject(self->cppobj->getClass()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRClass: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRClass");
+    }
+    return (NULL);
+}
+
+PyObject*
+RRset_getType(s_RRset* self) {
+    try {
+        return (createRRTypeObject(self->cppobj->getType()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRType: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRType");
+    }
+    return (NULL);
+}
+
+PyObject*
+RRset_getTTL(s_RRset* self) {
+    try {
+        return (createRRTTLObject(self->cppobj->getTTL()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question TTL: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question TTL");
+    }
+    return (NULL);
+}
+
+PyObject*
+RRset_setName(s_RRset* self, PyObject* args) {
+    PyObject* name;
+    if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
+        return (NULL);
+    }
+    self->cppobj->setName(PyName_ToName(name));
+    Py_RETURN_NONE;
+}
+
+PyObject*
+RRset_setTTL(s_RRset* self, PyObject* args) {
+    PyObject* rrttl;
+    if (!PyArg_ParseTuple(args, "O!", &rrttl_type, &rrttl)) {
+        return (NULL);
+    }
+    self->cppobj->setTTL(PyRRTTL_ToRRTTL(rrttl));
+    Py_RETURN_NONE;
+}
+
+PyObject*
+RRset_toText(s_RRset* self) {
+    try {
+        return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+    } catch (const EmptyRRset& ers) {
+        PyErr_SetString(po_EmptyRRset, ers.what());
+        return (NULL);
+    }
+}
+
+PyObject*
+RRset_str(PyObject* self) {
+    // Simply call the to_text method we already defined
+    return (PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                                const_cast<char*>("")));
+}
+
+PyObject*
+RRset_toWire(s_RRset* self, PyObject* args) {
+    PyObject* bytes;
+    PyObject* mr;
+
+    try {
+        if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
+            PyObject* bytes_o = bytes;
+
+            OutputBuffer buffer(4096);
+            self->cppobj->toWire(buffer);
+            PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
+            PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+            // We need to release the object we temporarily created here
+            // to prevent memory leak
+            Py_DECREF(n);
+            return (result);
+        } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
+            self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
+            // If we return NULL it is seen as an error, so use this for
+            // None returns
+            Py_RETURN_NONE;
+        }
+    } catch (const EmptyRRset& ers) {
+        PyErr_Clear();
+        PyErr_SetString(po_EmptyRRset, ers.what());
+        return (NULL);
+    }
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "toWire argument must be a sequence object or a MessageRenderer");
+    return (NULL);
+}
+
+PyObject*
+RRset_addRdata(s_RRset* self, PyObject* args) {
+    PyObject* rdata;
+    if (!PyArg_ParseTuple(args, "O!", &rdata_type, &rdata)) {
+        return (NULL);
+    }
+    try {
+        self->cppobj->addRdata(PyRdata_ToRdata(rdata));
+        Py_RETURN_NONE;
+    } catch (const std::bad_cast&) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError,
+                        "Rdata type to add must match type of RRset");
+        return (NULL);
+    }
+}
+
+PyObject*
+RRset_getRdata(s_RRset* self) {
+    PyObject* list = PyList_New(0);
+
+    RdataIteratorPtr it = self->cppobj->getRdataIterator();
+
+    try {
+        for (; !it->isLast(); it->next()) {
+            const rdata::Rdata *rd = &it->getCurrent();
+            if (PyList_Append(list,
+                    createRdataObject(createRdata(self->cppobj->getType(),
+                                      self->cppobj->getClass(), *rd))) == -1) {
+                Py_DECREF(list);
+                return (NULL);
+            }
+        }
+        return (list);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting rrset Rdata: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting rrset Rdata");
+    }
+    Py_DECREF(list);
+    return (NULL);
+}
+
+PyObject*
+RRset_removeRRsig(s_RRset* self) {
+    self->cppobj->removeRRsig();
+    Py_RETURN_NONE;
+}
+
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the module init at the
+// end
+//
+PyObject* po_EmptyRRset;
+
+PyTypeObject rrset_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "pydnspp.RRset",
     sizeof(s_RRset),                    // tp_basicsize
@@ -105,7 +353,7 @@ static PyTypeObject rrset_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     RRset_str,                          // tp_str
     NULL,                               // tp_getattro
@@ -156,247 +404,59 @@ static PyTypeObject rrset_type = {
     0                                   // tp_version_tag
 };
 
-static int
-RRset_init(s_RRset* self, PyObject* args) {
-    s_Name* name;
-    s_RRClass* rrclass;
-    s_RRType* rrtype;
-    s_RRTTL* rrttl;
+PyObject*
+createRRsetObject(const RRset& source) {
 
-    if (PyArg_ParseTuple(args, "O!O!O!O!", &name_type, &name,
-                                           &rrclass_type, &rrclass,
-                                           &rrtype_type, &rrtype,
-                                           &rrttl_type, &rrttl
-       )) {
-        self->rrset = RRsetPtr(new RRset(*name->cppobj, *rrclass->rrclass,
-                                *rrtype->rrtype, *rrttl->rrttl));
-        return (0);
+    // RRsets are noncopyable, so as a workaround we recreate a new one
+    // and copy over all content
+    RRsetPtr new_rrset = isc::dns::RRsetPtr(
+        new isc::dns::RRset(source.getName(), source.getClass(),
+                            source.getType(), source.getTTL()));
+
+    isc::dns::RdataIteratorPtr rdata_it(source.getRdataIterator());
+    for (rdata_it->first(); !rdata_it->isLast(); rdata_it->next()) {
+        new_rrset->addRdata(rdata_it->getCurrent());
     }
 
-    self->rrset = RRsetPtr();
-    return (-1);
-}
-
-static void
-RRset_destroy(s_RRset* self) {
-    // Clear the shared_ptr so that its reference count is zero
-    // before we call tp_free() (there is no direct release())
-    self->rrset.reset();
-    Py_TYPE(self)->tp_free(self);
-}
-
-static PyObject*
-RRset_getRdataCount(s_RRset* self) {
-    return (Py_BuildValue("I", self->rrset->getRdataCount()));
-}
-
-static PyObject*
-RRset_getName(s_RRset* self) {
-    s_Name* name;
-
-    // is this the best way to do this?
-    name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
-    if (name != NULL) {
-        name->cppobj = new Name(self->rrset->getName());
-        if (name->cppobj == NULL)
-          {
-            Py_DECREF(name);
-            return (NULL);
-          }
+    isc::dns::RRsetPtr sigs = source.getRRsig();
+    if (sigs) {
+        new_rrset->addRRsig(sigs);
     }
-
-    return (name);
-}
-
-static PyObject*
-RRset_getClass(s_RRset* self) {
-    s_RRClass* rrclass;
-
-    rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
-    if (rrclass != NULL) {
-        rrclass->rrclass = new RRClass(self->rrset->getClass());
-        if (rrclass->rrclass == NULL)
-          {
-            Py_DECREF(rrclass);
-            return (NULL);
-          }
+    s_RRset* py_rrset =
+        static_cast<s_RRset*>(rrset_type.tp_alloc(&rrset_type, 0));
+    if (py_rrset == NULL) {
+        isc_throw(PyCPPWrapperException, "Unexpected NULL C++ object, "
+                  "probably due to short memory");
     }
-
-    return (rrclass);
+    py_rrset->cppobj = new_rrset;
+    return (py_rrset);
 }
 
-static PyObject*
-RRset_getType(s_RRset* self) {
-    s_RRType* rrtype;
-
-    rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
-    if (rrtype != NULL) {
-        rrtype->rrtype = new RRType(self->rrset->getType());
-        if (rrtype->rrtype == NULL)
-          {
-            Py_DECREF(rrtype);
-            return (NULL);
-          }
-    }
-
-    return (rrtype);
-}
-
-static PyObject*
-RRset_getTTL(s_RRset* self) {
-    s_RRTTL* rrttl;
-
-    rrttl = static_cast<s_RRTTL*>(rrttl_type.tp_alloc(&rrttl_type, 0));
-    if (rrttl != NULL) {
-        rrttl->rrttl = new RRTTL(self->rrset->getTTL());
-        if (rrttl->rrttl == NULL)
-          {
-            Py_DECREF(rrttl);
-            return (NULL);
-          }
-    }
-
-    return (rrttl);
-}
-
-static PyObject*
-RRset_setName(s_RRset* self, PyObject* args) {
-    s_Name* name;
-    if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
-        return (NULL);
-    }
-    self->rrset->setName(*name->cppobj);
-    Py_RETURN_NONE;
-}
-
-static PyObject*
-RRset_setTTL(s_RRset* self, PyObject* args) {
-    s_RRTTL* rrttl;
-    if (!PyArg_ParseTuple(args, "O!", &rrttl_type, &rrttl)) {
-        return (NULL);
-    }
-    self->rrset->setTTL(*rrttl->rrttl);
-    Py_RETURN_NONE;
-}
-
-static PyObject*
-RRset_toText(s_RRset* self) {
-    try {
-        return (Py_BuildValue("s", self->rrset->toText().c_str()));
-    } catch (const EmptyRRset& ers) {
-        PyErr_SetString(po_EmptyRRset, ers.what());
-        return (NULL);
-    }
-}
-
-static PyObject*
-RRset_str(PyObject* self) {
-    // Simply call the to_text method we already defined
-    return (PyObject_CallMethod(self,
-                               const_cast<char*>("to_text"),
-                                const_cast<char*>("")));
-}
-
-static PyObject*
-RRset_toWire(s_RRset* self, PyObject* args) {
-    PyObject* bytes;
-    s_MessageRenderer* mr;
-
-    try {
-        if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-            PyObject* bytes_o = bytes;
-            
-            OutputBuffer buffer(4096);
-            self->rrset->toWire(buffer);
-            PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
-            PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
-            // We need to release the object we temporarily created here
-            // to prevent memory leak
-            Py_DECREF(n);
-            return (result);
-        } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-            self->rrset->toWire(*mr->messagerenderer);
-            // If we return NULL it is seen as an error, so use this for
-            // None returns
-            Py_RETURN_NONE;
-        }
-    } catch (const EmptyRRset& ers) {
-        PyErr_Clear();
-        PyErr_SetString(po_EmptyRRset, ers.what());
-        return (NULL);
-    }
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "toWire argument must be a sequence object or a MessageRenderer");
-    return (NULL);
-}
-
-static PyObject*
-RRset_addRdata(s_RRset* self, PyObject* args) {
-    s_Rdata* rdata;
-    if (!PyArg_ParseTuple(args, "O!", &rdata_type, &rdata)) {
-        return (NULL);
-    }
-    try {
-        self->rrset->addRdata(*rdata->rdata);
-        Py_RETURN_NONE;
-    } catch (const std::bad_cast&) {
-        PyErr_Clear();
-        PyErr_SetString(PyExc_TypeError,
-                        "Rdata type to add must match type of RRset");
-        return (NULL);
-    }
-}
-
-static PyObject*
-RRset_getRdata(s_RRset* self) {
-    PyObject* list = PyList_New(0);
-
-    RdataIteratorPtr it = self->rrset->getRdataIterator();
-
-    for (; !it->isLast(); it->next()) {
-        s_Rdata *rds = static_cast<s_Rdata*>(rdata_type.tp_alloc(&rdata_type, 0));
-        if (rds != NULL) {
-            // hmz them iterators/shared_ptrs and private constructors
-            // make this a bit weird, so we create a new one with
-            // the data available
-            const Rdata *rd = &it->getCurrent();
-            rds->rdata = createRdata(self->rrset->getType(), self->rrset->getClass(), *rd);
-            PyList_Append(list, rds);
-        } else {
-            return (NULL);
-        }
-    }
-    
-    return (list);
-}
-
-// end of RRset
-
-
-// Module Initialization, all statics are initialized here
 bool
-initModulePart_RRset(PyObject* mod) {
-    // Add the exceptions to the module
-    po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
-    PyModule_AddObject(mod, "EmptyRRset", po_EmptyRRset);
-
-    // Add the enums to the module
-
-    // Add the constants to the module
-
-    // Add the classes to the module
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module
-
-    // NameComparisonResult
-    if (PyType_Ready(&rrset_type) < 0) {
-        return (false);
+PyRRset_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
     }
-    Py_INCREF(&rrset_type);
-    PyModule_AddObject(mod, "RRset",
-                       reinterpret_cast<PyObject*>(&rrset_type));
-    
-    return (true);
+    return (PyObject_TypeCheck(obj, &rrset_type));
 }
 
+RRset&
+PyRRset_ToRRset(PyObject* rrset_obj) {
+    s_RRset* rrset = static_cast<s_RRset*>(rrset_obj);
+    return (*rrset->cppobj);
+}
+
+RRsetPtr
+PyRRset_ToRRsetPtr(PyObject* rrset_obj) {
+    if (rrset_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in RRset PyObject conversion");
+    }
+    s_RRset* rrset = static_cast<s_RRset*>(rrset_obj);
+    return (rrset->cppobj);
+}
+
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace

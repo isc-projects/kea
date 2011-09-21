@@ -23,19 +23,31 @@ class TSIGContext;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_TSIGContext : public PyObject {
-public:
-    s_TSIGContext();
-    TSIGContext* cppobj;
-};
-
 extern PyTypeObject tsigcontext_type;
 
 // Class specific exceptions
 extern PyObject* po_TSIGContextError;
 
-bool initModulePart_TSIGContext(PyObject* mod);
+/// \brief Checks if the given python object is a TSIGContext object
+///
+/// \exception PyCPPWrapperException if obj is NULL
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type TSIGContext, false otherwise
+bool PyTSIGContext_Check(PyObject* obj);
+
+/// \brief Returns a reference to the TSIGContext object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type TSIGContext; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyTSIGContext_Check()
+///
+/// \note This is not a copy; if the TSIGContext is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param tsigcontext_obj The tsigcontext object to convert
+TSIGContext& PyTSIGContext_ToTSIGContext(PyObject* tsigcontext_obj);
+
 
 } // namespace python
 } // namespace dns

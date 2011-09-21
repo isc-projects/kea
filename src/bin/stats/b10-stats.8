@@ -36,7 +36,7 @@ with other modules like
 \fBb10\-auth\fR
 and so on\&. It waits for coming data from other modules, then other modules send data to stats module periodically\&. Other modules send stats data to stats module independently from implementation of stats module, so the frequency of sending data may not be constant\&. Stats module collects data and aggregates it\&.
 \fBb10\-stats\fR
-invokes "sendstats" command for
+invokes an internal command for
 \fBbind10\fR
 after its initial starting because it\'s sure to collect statistics data from
 \fBbind10\fR\&.

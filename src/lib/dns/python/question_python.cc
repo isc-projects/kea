@@ -12,25 +12,34 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 #include <dns/question.h>
+#include <dns/messagerenderer.h>
+#include <dns/exceptions.h>
+#include <util/buffer.h>
+#include <util/python/pycppwrapper_util.h>
+
+#include "pydnspp_common.h"
+#include "question_python.h"
+#include "name_python.h"
+#include "rrclass_python.h"
+#include "rrtype_python.h"
+#include "messagerenderer_python.h"
+
+using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::python;
+using namespace isc::util;
+using namespace isc::util::python;
+using namespace isc;
 
-//
-// Question
-//
-
-// The s_* Class simply coverst one instantiation of the object
+namespace {
 class s_Question : public PyObject {
 public:
-    QuestionPtr question;
+    isc::dns::QuestionPtr cppobj;
 };
 
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// General creation and destruction
 static int Question_init(s_Question* self, PyObject* args);
 static void Question_destroy(s_Question* self);
 
@@ -69,10 +78,168 @@ static PyMethodDef Question_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+static int
+Question_init(s_Question* self, PyObject* args) {
+    // Try out the various combinations of arguments to call the
+    // correct cpp constructor.
+    // Note that PyArg_ParseType can set PyError, and we need to clear
+    // that if we try several like here. Otherwise the *next* python
+    // call will suddenly appear to throw an exception.
+    // (the way to do exceptions is to set PyErr and return -1)
+    PyObject* name;
+    PyObject* rrclass;
+    PyObject* rrtype;
+
+    const char* b;
+    Py_ssize_t len;
+    unsigned int position = 0;
+
+    try {
+        if (PyArg_ParseTuple(args, "O!O!O!", &name_type, &name,
+                                             &rrclass_type, &rrclass,
+                                             &rrtype_type, &rrtype
+           )) {
+            self->cppobj = QuestionPtr(new Question(PyName_ToName(name),
+                                                    PyRRClass_ToRRClass(rrclass),
+                                                    PyRRType_ToRRType(rrtype)));
+            return (0);
+        } else if (PyArg_ParseTuple(args, "y#|I", &b, &len, &position)) {
+            PyErr_Clear();
+            InputBuffer inbuf(b, len);
+            inbuf.setPosition(position);
+            self->cppobj = QuestionPtr(new Question(inbuf));
+            return (0);
+        }
+    } catch (const DNSMessageFORMERR& dmfe) {
+        PyErr_Clear();
+        PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
+        return (-1);
+    } catch (const IncompleteRRClass& irc) {
+        PyErr_Clear();
+        PyErr_SetString(po_IncompleteRRClass, irc.what());
+        return (-1);
+    } catch (const IncompleteRRType& irt) {
+        PyErr_Clear();
+        PyErr_SetString(po_IncompleteRRType, irt.what());
+        return (-1);
+    }
+
+    self->cppobj = QuestionPtr();
+
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "no valid type in constructor argument");
+    return (-1);
+}
+
+static void
+Question_destroy(s_Question* self) {
+    self->cppobj.reset();
+    Py_TYPE(self)->tp_free(self);
+}
+
+static PyObject*
+Question_getName(s_Question* self) {
+    try {
+        return (createNameObject(self->cppobj->getName()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question Name: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question Name");
+    }
+    return (NULL);
+}
+
+static PyObject*
+Question_getType(s_Question* self) {
+    try {
+        return (createRRTypeObject(self->cppobj->getType()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRType: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRType");
+    }
+    return (NULL);
+}
+
+static PyObject*
+Question_getClass(s_Question* self) {
+    try {
+        return (createRRClassObject(self->cppobj->getClass()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting question RRClass: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting question RRClass");
+    }
+    return (NULL);
+}
+
+static PyObject*
+Question_toText(s_Question* self) {
+    // Py_BuildValue makes python objects from native data
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+}
+
+static PyObject*
+Question_str(PyObject* self) {
+    // Simply call the to_text method we already defined
+    return (PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                                const_cast<char*>("")));
+}
+
+static PyObject*
+Question_toWire(s_Question* self, PyObject* args) {
+    PyObject* bytes;
+    PyObject* mr;
+
+    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
+        PyObject* bytes_o = bytes;
+
+        // Max length is Name::MAX_WIRE + rrclass (2) + rrtype (2)
+        OutputBuffer buffer(Name::MAX_WIRE + 4);
+        self->cppobj->toWire(buffer);
+        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
+                                                buffer.getLength());
+        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+        // We need to release the object we temporarily created here
+        // to prevent memory leak
+        Py_DECREF(n);
+        return (result);
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
+        // If we return NULL it is seen as an error, so use this for
+        // None returns
+        Py_RETURN_NONE;
+    }
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "toWire argument must be a sequence object or a MessageRenderer");
+    return (NULL);
+}
+
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_Question
 // Most of the functions are not actually implemented and NULL here.
-static PyTypeObject question_type = {
+PyTypeObject question_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "pydnspp.Question",
     sizeof(s_Question),                 // tp_basicsize
@@ -86,7 +253,7 @@ static PyTypeObject question_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     Question_str,                       // tp_str
     NULL,                               // tp_getattro
@@ -123,164 +290,32 @@ static PyTypeObject question_type = {
     0                                   // tp_version_tag
 };
 
-static int
-Question_init(s_Question* self, PyObject* args) {
-    // Try out the various combinations of arguments to call the
-    // correct cpp constructor.
-    // Note that PyArg_ParseType can set PyError, and we need to clear
-    // that if we try several like here. Otherwise the *next* python
-    // call will suddenly appear to throw an exception.
-    // (the way to do exceptions is to set PyErr and return -1)
-    s_Name* name;
-    s_RRClass* rrclass;
-    s_RRType* rrtype;
-
-    const char* b;
-    Py_ssize_t len;
-    unsigned int position = 0;
-
-    try {
-        if (PyArg_ParseTuple(args, "O!O!O!", &name_type, &name,
-                                               &rrclass_type, &rrclass,
-                                               &rrtype_type, &rrtype
-           )) {
-            self->question = QuestionPtr(new Question(*name->cppobj, *rrclass->rrclass,
-                                          *rrtype->rrtype));
-            return (0);
-        } else if (PyArg_ParseTuple(args, "y#|I", &b, &len, &position)) {
-            PyErr_Clear();
-            InputBuffer inbuf(b, len);
-            inbuf.setPosition(position);
-            self->question = QuestionPtr(new Question(inbuf));
-            return (0);
-        }
-    } catch (const DNSMessageFORMERR& dmfe) {
-        PyErr_Clear();
-        PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
-        return (-1);
-    } catch (const IncompleteRRClass& irc) {
-        PyErr_Clear();
-        PyErr_SetString(po_IncompleteRRClass, irc.what());
-        return (-1);
-    } catch (const IncompleteRRType& irt) {
-        PyErr_Clear();
-        PyErr_SetString(po_IncompleteRRType, irt.what());
-        return (-1);
-    }
-
-    self->question = QuestionPtr();
-
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "no valid type in constructor argument");
-    return (-1);
+PyObject*
+createQuestionObject(const Question& source) {
+    s_Question* question =
+        static_cast<s_Question*>(question_type.tp_alloc(&question_type, 0));
+    question->cppobj = QuestionPtr(new Question(source));
+    return (question);
 }
 
-static void
-Question_destroy(s_Question* self) {
-    self->question.reset();
-    Py_TYPE(self)->tp_free(self);
-}
-
-static PyObject*
-Question_getName(s_Question* self) {
-    s_Name* name;
-
-    // is this the best way to do this?
-    name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
-    if (name != NULL) {
-        name->cppobj = new Name(self->question->getName());
-    }
-
-    return (name);
-}
-
-static PyObject*
-Question_getType(s_Question* self) {
-    s_RRType* rrtype;
-
-    rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
-    if (rrtype != NULL) {
-        rrtype->rrtype = new RRType(self->question->getType());
-    }
-
-    return (rrtype);
-}
-
-static PyObject*
-Question_getClass(s_Question* self) {
-    s_RRClass* rrclass;
-
-    rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
-    if (rrclass != NULL) {
-        rrclass->rrclass = new RRClass(self->question->getClass());
-    }
-
-    return (rrclass);
-}
-
-
-static PyObject*
-Question_toText(s_Question* self) {
-    // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->question->toText().c_str()));
-}
-
-static PyObject*
-Question_str(PyObject* self) {
-    // Simply call the to_text method we already defined
-    return (PyObject_CallMethod(self,
-                               const_cast<char*>("to_text"),
-                                const_cast<char*>("")));
-}
-
-static PyObject*
-Question_toWire(s_Question* self, PyObject* args) {
-    PyObject* bytes;
-    s_MessageRenderer* mr;
-    
-    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-        PyObject* bytes_o = bytes;
-
-        // Max length is Name::MAX_WIRE + rrclass (2) + rrtype (2)
-        OutputBuffer buffer(Name::MAX_WIRE + 4);
-        self->question->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
-                                                buffer.getLength());
-        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
-        // We need to release the object we temporarily created here
-        // to prevent memory leak
-        Py_DECREF(n);
-        return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->question->toWire(*mr->messagerenderer);
-        // If we return NULL it is seen as an error, so use this for
-        // None returns
-        Py_RETURN_NONE;
-    }
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "toWire argument must be a sequence object or a MessageRenderer");
-    return (NULL);
-}
-
-// end of Question
-
-
-// Module Initialization, all statics are initialized here
 bool
-initModulePart_Question(PyObject* mod) {
-    // Add the exceptions to the module
-
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&question_type) < 0) {
-        return (false);
+PyQuestion_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
     }
-    Py_INCREF(&question_type);
-    PyModule_AddObject(mod, "Question",
-                       reinterpret_cast<PyObject*>(&question_type));
-    
-    return (true);
+    return (PyObject_TypeCheck(obj, &question_type));
 }
+
+const Question&
+PyQuestion_ToQuestion(const PyObject* question_obj) {
+    if (question_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Question PyObject conversion");
+    }
+    const s_Question* question = static_cast<const s_Question*>(question_obj);
+    return (*question->cppobj);
+}
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace
