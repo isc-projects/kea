@@ -35,6 +35,7 @@ run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += database_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
+run_unittests_SOURCES += factory_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
