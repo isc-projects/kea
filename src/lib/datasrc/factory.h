@@ -21,15 +21,41 @@
 //#include <exceptions/exceptions.h>
 
 #include <datasrc/client.h>
+#include <exceptions/exceptions.h>
 
 #include <cc/data.h>
 
 namespace isc {
 namespace datasrc {
 
-boost::shared_ptr<DataSourceClient>
+/// \brief Raised if the given config contains bad data
+///
+/// Depending on the datasource type, the configuration may differ (for
+/// instance, the sqlite3 datasource needs a database file).
+class DataSourceConfigError : public isc::Exception {
+public:
+    DataSourceConfigError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// \brief Create a datasource instance
+///
+/// This function is a fixed generator for datasource instances of all types.
+///
+/// Currently, the different types are hardcoded in the implementation of this
+/// function. However, we plan on making it more flexible, possibly through
+/// th
+///
+/// \note This function returns a raw pointer. The caller is expected to
+///       delete this pointer again. We don't return any specific smart
+///       pointer for flexibility. However, we highly advice that the
+///       return value of this function is directly put into a shared or
+///       scoped pointer.
+///
+/// \exception DataSourceConfigError if the given configuration values are
+///            bad for the given datasource type
+DataSourceClient*
 createDataSourceClient(const std::string& type,
-                       const isc::dns::RRClass& rrclass,
                        isc::data::ConstElementPtr config);
 
 }
