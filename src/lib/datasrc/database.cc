@@ -536,11 +536,30 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     } else if (hasSubdomains(wildcard)) {
                         // Empty non-terminal asterisk
                         records_found = true;
-                        get_cover = dnssec_data;
                         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                                   DATASRC_DATABASE_WILDCARD_EMPTY).
                             arg(accessor_->getDBName()).arg(wildcard).
                             arg(name);
+                        if (dnssec_data) {
+                            // Which one should contain the NSEC record?
+                            const Name
+                                coverName(findPreviousName(Name(wildcard)));
+                            // Get the record and copy it out
+                            found = getRRsets(coverName.toText(), nsec_types,
+                                              true);
+                            const FoundIterator
+                                nci(found.second.find(RRType::NSEC()));
+                            if (nci != found.second.end()) {
+                                result_status = WILDCARD_NXRRSET;
+                                result_rrset = nci->second;
+                            } else {
+                                // The previous doesn't contain NSEC, bug?
+                                isc_throw(DataSourceError, "No NSEC in " +
+                                          coverName.toText() + ", but it was "
+                                          "returned as previous - "
+                                          "accessor error?");
+                            }
+                        }
                         break;
                     }
                 }
