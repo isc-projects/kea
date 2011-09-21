@@ -11,11 +11,11 @@ identify the zone to be updated). The underlying realization of a\n\
 a general purpose database as a backend, it will involve performing\n\
 some form of \"begin transaction\" statement for the database.\n\
 \n\
-Updates (adding or deleting RRs) are made via add_r_rset() and\n\
-delete_r_rset() methods. Until the commit() method is called the\n\
+Updates (adding or deleting RRs) are made via add_rrset() and\n\
+delete_rrset() methods. Until the commit() method is called the\n\
 changes are local to the updater object. For example, they won't be\n\
 visible via a ZoneFinder object except the one returned by the\n\
-updater's own get_finder() method. The commit() completes the\n\
+updater's own find() method. The commit() completes the\n\
 transaction and makes the changes visible to others.\n\
 \n\
 This class does not provide an explicit \"rollback\" interface. If\n\
@@ -30,38 +30,16 @@ adding and deleting RRs (see the description of the related methods).\n\
 It may be revisited as we gain more experiences.\n\
 \n\
 ";
-/*
-const char* const ZoneUpdater_getFinder_doc = "\
-get_finder() -> ZoneFinder \n\
-\n\
-Return a finder for the zone being updated.\n\
-\n\
-The returned finder provides the functionalities of ZoneFinder for the\n\
-zone as updates are made via the updater. That is, before making any\n\
-update, the finder will be able to find all RRsets that exist in the\n\
-zone at the time the updater is created. If RRsets are added or\n\
-deleted via add_r_rset() or delete_r_rset(), this finder will find the\n\
-added ones or miss the deleted ones respectively.\n\
-\n\
-The finder returned by this method is effective only while the updates\n\
-are performed, i.e., from the construction of the corresponding\n\
-updater until commit() is performed or the updater is destructed\n\
-without commit. The result of a subsequent call to this method (or the\n\
-use of the result) after that is undefined.\n\
-\n\
-A reference to a ZoneFinder for the updated zone\n\
-\n\
-";
-*/
+
 const char* const ZoneUpdater_addRRset_doc = "\
-add_r_rset(rrset) -> void\n\
+add_rrset(rrset) -> void\n\
 \n\
 Add an RRset to a zone via the updater.\n\
 \n\
 - Whether the RR class is identical to that for the zone to be updated\n\
 - Whether the RRset is not empty, i.e., it has at least one RDATA\n\
 - Whether the RRset is not associated with an RRSIG, i.e., whether\n\
-  get_r_rsig() on the RRset returns a NULL pointer.\n\
+  get_rrsig() on the RRset returns a NULL pointer.\n\
 \n\
 and otherwise does not check any oddity. For example, it doesn't check\n\
 whether the owner name of the specified RRset is a subdomain of the\n\
@@ -123,11 +101,11 @@ Parameters:\n\
 ";
 
 const char* const ZoneUpdater_deleteRRset_doc = "\
-delete_r_rset(rrset) -> void\n\
+delete_rrset(rrset) -> void\n\
 \n\
 Delete an RRset from a zone via the updater.\n\
 \n\
-Like add_r_rset(), the detailed semantics and behavior of this method\n\
+Like add_rrset(), the detailed semantics and behavior of this method\n\
 may have to be revisited in a future version. The following are based\n\
 on the initial implementation decisions.\n\
 \n\
@@ -149,7 +127,7 @@ when deleting RRs.\n\
 - Whether the RR class is identical to that for the zone to be updated\n\
 - Whether the RRset is not empty, i.e., it has at least one RDATA\n\
 - Whether the RRset is not associated with an RRSIG, i.e., whether\n\
-  get_r_rsig() on the RRset returns a NULL pointer.\n\
+  get_rrsig() on the RRset returns a NULL pointer.\n\
 \n\
 This method must not be called once commit() is performed. If it calls\n\
 after commit() the implementation must throw a DataSourceError\n\
