@@ -30,6 +30,10 @@ NEW_DB_FILE = TESTDATA_WRITE_PATH + "new_db.sqlite3"
 
 class DataSrcClient(unittest.TestCase):
 
+    def test_construct(self):
+        # can't construct directly
+        self.assertRaises(TypeError, isc.datasrc.ZoneIterator)
+
     def test_iterate(self):
         dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
 
@@ -151,6 +155,10 @@ class DataSrcClient(unittest.TestCase):
 
         self.assertRaises(TypeError, dsc.get_iterator, "asdf")
 
+    def test_construct(self):
+        # can't construct directly
+        self.assertRaises(TypeError, isc.datasrc.ZoneFinder)
+
     def test_find(self):
         dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
 
@@ -230,7 +238,12 @@ class DataSrcUpdater(unittest.TestCase):
         # Make a fresh copy of the writable database with all original content
         shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
 
+    def test_construct(self):
+        # can't construct directly
+        self.assertRaises(TypeError, isc.datasrc.ZoneUpdater)
+
     def test_update_delete_commit(self):
+
         dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
 
         # first make sure, through a separate finder, that some record exists
