@@ -152,6 +152,16 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue((time1 + 3600 * (1 - self.zone_refresh._refresh_jitter)) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 3600)
 
+        # No soa rdata
+        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"] = None
+        time3 = time.time()
+        self.zone_refresh._set_zone_retry_timer(ZONE_NAME_CLASS1_IN)
+        zone_timeout = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
+        time4 = time.time()
+        self.assertTrue((time3 + self.zone_refresh._lowerbound_retry * (1 - self.zone_refresh._refresh_jitter))
+                         <= zone_timeout)
+        self.assertTrue(zone_timeout <= time4 + self.zone_refresh._lowerbound_retry)
+
     def test_zone_not_exist(self):
         self.assertFalse(self.zone_refresh._zone_not_exist(ZONE_NAME_CLASS1_IN))
         self.assertTrue(self.zone_refresh._zone_not_exist(ZONE_NAME_CLASS1_CH))
@@ -304,8 +314,8 @@ class TestZonemgrRefresh(unittest.TestCase):
         def get_zone_soa2(zone_name, db_file):
             return None
         sqlite3_ds.get_zone_soa = get_zone_soa2
-        self.assertRaises(ZonemgrException, self.zone_refresh.zonemgr_add_zone, \
-                                         ZONE_NAME_CLASS1_IN)
+        self.zone_refresh.zonemgr_add_zone(ZONE_NAME_CLASS2_IN)
+        self.assertTrue(self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS2_IN]["zone_soa_rdata"] is None)
         sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_zone_handle_notify(self):
@@ -361,6 +371,15 @@ class TestZonemgrRefresh(unittest.TestCase):
 
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_CH)
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_IN)
+
+        old_get_zone_soa = sqlite3_ds.get_zone_soa
+        def get_zone_soa(zone_name, db_file):
+            return None
+        sqlite3_ds.get_zone_soa = get_zone_soa
+        self.zone_refresh.zone_refresh_fail(ZONE_NAME_CLASS1_IN)
+        self.assertEqual(self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"],
+                         ZONE_EXPIRED)
+        sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_find_need_do_refresh_zone(self):
         time1 = time.time()
@@ -440,6 +459,8 @@ class TestZonemgrRefresh(unittest.TestCase):
                                            "class": "IN" } ]
                 }
         self.zone_refresh.update_config_data(config_data)
+        self.assertTrue(("example.net.", "IN") in
+                        self.zone_refresh._zonemgr_refresh_info)
 
         # update all values
         config_data = {
@@ -479,14 +500,16 @@ class TestZonemgrRefresh(unittest.TestCase):
                     "secondary_zones": [ { "name": "doesnotexist",
                                            "class": "IN" } ]
                 }
-        self.assertRaises(ZonemgrException,
-                          self.zone_refresh.update_config_data,
-                          config_data)
-        self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
-        self.assertEqual(30, self.zone_refresh._lowerbound_retry)
-        self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
-        self.assertEqual(0.25, self.zone_refresh._refresh_jitter)
-        self.assertEqual(0.35, self.zone_refresh._reload_jitter)
+        self.zone_refresh.update_config_data(config_data)
+        name_class = ("doesnotexist.", "IN")
+        self.assertTrue(self.zone_refresh._zonemgr_refresh_info[name_class]["zone_soa_rdata"]
+                        is None)
+        # The other configs should be updated successfully
+        self.assertEqual(61, self.zone_refresh._lowerbound_refresh)
+        self.assertEqual(31, self.zone_refresh._lowerbound_retry)
+        self.assertEqual(19801, self.zone_refresh._max_transfer_timeout)
+        self.assertEqual(0.21, self.zone_refresh._refresh_jitter)
+        self.assertEqual(0.71, self.zone_refresh._reload_jitter)
 
         # Make sure we accept 0 as a value
         config_data = {
@@ -526,10 +549,11 @@ class TestZonemgrRefresh(unittest.TestCase):
                         self.zone_refresh._zonemgr_refresh_info)
         # This one does not exist
         config.set_zone_list_from_name_classes(["example.net", "CH"])
-        self.assertRaises(ZonemgrException,
-                          self.zone_refresh.update_config_data, config)
-        # So it should not affect the old ones
-        self.assertTrue(("example.net.", "IN") in
+        self.zone_refresh.update_config_data(config)
+        self.assertFalse(("example.net.", "CH") in
+                        self.zone_refresh._zonemgr_refresh_info)
+        # Simply skip loading soa for the zone, the other configs should be updated successful
+        self.assertFalse(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
         # Make sure it works even when we "accidentally" forget the final dot
         config.set_zone_list_from_name_classes([("example.net", "IN")])
@@ -596,15 +620,18 @@ class TestZonemgr(unittest.TestCase):
         config_data3 = {"refresh_jitter" : 0.7}
         self.zonemgr.config_handler(config_data3)
         self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
-        # The zone doesn't exist in database, it should be rejected
+        # The zone doesn't exist in database, simply skip loading soa for it and log an warning
         self.zonemgr._zone_refresh = ZonemgrRefresh(None, "initdb.file", None,
                                                     config_data1)
         config_data1["secondary_zones"] = [{"name": "nonexistent.example",
                                             "class": "IN"}]
-        self.assertNotEqual(self.zonemgr.config_handler(config_data1),
-                            {"result": [0]})
-        # As it is rejected, the old value should be kept
-        self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
+        self.assertEqual(self.zonemgr.config_handler(config_data1),
+                         {"result": [0]})
+        # other configs should be updated successfully
+        name_class = ("nonexistent.example.", "IN")
+        self.assertTrue(self.zonemgr._zone_refresh._zonemgr_refresh_info[name_class]["zone_soa_rdata"]
+                        is None)
+        self.assertEqual(0.1, self.zonemgr._config_data.get("refresh_jitter"))
 
     def test_get_db_file(self):
         self.assertEqual("initdb.file", self.zonemgr.get_db_file())

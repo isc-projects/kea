@@ -63,12 +63,6 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
-% DATASRC_DATABASE_FIND_ERROR error retrieving data from datasource %1: %2
-This was an internal error while reading data from a datasource. This can either
-mean the specific data source implementation is not behaving correctly, or the
-data it provides is invalid. The current search is aborted.
-The error message contains specific information about the error.
-
 % DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3
 Debug information. The database data source is looking up records with the given
 name and type in the database.
@@ -78,18 +72,6 @@ The datasource backend provided resource records for the given RRset with
 different TTL values. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
-
-% DATASRC_DATABASE_FIND_UNCAUGHT_ERROR uncaught general error retrieving data from datasource %1: %2
-There was an uncaught general exception while reading data from a datasource.
-This most likely points to a logic error in the code, and can be considered a
-bug. The current search is aborted. Specific information about the exception is
-printed in this error message.
-
-% DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR uncaught error retrieving data from datasource %1: %2
-There was an uncaught ISC exception while reading data from a datasource. This
-most likely points to a logic error in the code, and can be considered a bug.
-The current search is aborted. Specific information about the exception is
-printed in this error message.
 
 % DATASRC_DATABASE_FOUND_DELEGATION Found delegation at %2 in %1
 When searching for a domain, the program met a delegation to a different zone
@@ -104,6 +86,11 @@ It will return the NS record instead.
 When searching for a domain, the program met a DNAME redirection to a different
 place in the domain space at the given domain name. It will return that one
 instead.
+
+% DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL empty non-terminal %2 in %1
+The domain name doesn't have any RRs, so it doesn't exist in the database.
+However, it has a subdomain, so it exists in the DNS address space. So we
+return NXRRSET instead of NXDOMAIN.
 
 % DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
 The data returned by the database backend did not contain any data for the given
@@ -134,6 +121,28 @@ While iterating through the zone, the time to live for RRs of the given RRset
 were found to be different. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_WILDCARD constructing RRset %3 from wildcard %2 in %1
+The database doesn't contain directly matching domain, but it does contain a
+wildcard one which is being used to synthesize the answer.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %2 because %3 contains NS in %1
+The database was queried to provide glue data and it didn't find direct match.
+It could create it from given wildcard, but matching wildcards is forbidden
+under a zone cut, which was found. Therefore the delegation will be returned
+instead.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_SUB wildcard %2 can't be used to construct %3 because %4 exists in %1
+The answer could be constructed using the wildcard, but the given subdomain
+exists, therefore this name is something like empty non-terminal (actually,
+from the protocol point of view, it is empty non-terminal, but the code
+discovers it differently).
+
+% DATASRC_DATABASE_WILDCARD_EMPTY implicit wildcard %2 used to construct %3 in %1
+The given wildcard exists implicitly in the domainspace, as empty nonterminal
+(eg. there's something like subdomain.*.example.org, so *.example.org exists
+implicitly, but is empty). This will produce NXRRSET, because the constructed
+domain is empty as well as the wildcard.
 
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
@@ -581,3 +590,38 @@ data source.
 % DATASRC_UNEXPECTED_QUERY_STATE unexpected query state
 This indicates a programming error. An internal task of unknown type was
 generated.
+
+% DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3
+Debug information.  A zone updater object is created to make updates to
+the shown zone on the shown backend database.
+
+% DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3
+Debug information.  A zone updater object is destroyed, either successfully
+or after failure of, making updates to the shown zone on the shown backend
+database.
+
+%DATASRC_DATABASE_UPDATER_ROLLBACK zone updates roll-backed for '%1/%2' on %3
+A zone updater is being destroyed without committing the changes.
+This would typically mean the update attempt was aborted due to some
+error, but may also be a bug of the application that forgets committing
+the changes.  The intermediate changes made through the updater won't
+be applied to the underlying database.  The zone name, its class, and
+the underlying database name are shown in the log message.
+
+%DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4
+A zone updater is being destroyed without committing the changes to
+the database, and attempts to rollback incomplete updates, but it
+unexpectedly fails.  The higher level implementation does not expect
+it to fail, so this means either a serious operational error in the
+underlying data source (such as a system failure of a database) or
+software bug in the underlying data source implementation.  In either
+case if this message is logged the administrator should carefully
+examine the underlying data source to see what exactly happens and
+whether the data is still valid.  The zone name, its class, and the
+underlying database name as well as the error message thrown from the
+database module are shown in the log message.
+
+% DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
+Debug information.  A set of updates to a zone has been successfully
+committed to the corresponding database backend.  The zone name,
+its class and the database name are printed.

@@ -568,8 +568,8 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = ../src/lib/cc ../src/lib/config \
-    ../src/lib/cryptolink ../src/lib/dns ../src/lib/datasrc \
+INPUT                  = ../src/lib/exceptions ../src/lib/cc \
+    ../src/lib/config ../src/lib/cryptolink ../src/lib/dns ../src/lib/datasrc \
     ../src/bin/auth ../src/bin/resolver ../src/lib/bench ../src/lib/log \
     ../src/lib/log/compiler ../src/lib/asiolink/ ../src/lib/nsas \
     ../src/lib/testutils ../src/lib/cache ../src/lib/server_common/ \
