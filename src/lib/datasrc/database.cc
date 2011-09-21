@@ -587,6 +587,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 catch (const isc::NotImplemented&) {
                     // Well, they want DNSSEC, but there is no available.
                     // So we don't provide anything.
+                    LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
+                        arg(accessor_->getDBName()).arg(name);
                 }
             }
             // Something is not here and we didn't decide yet what
