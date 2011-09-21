@@ -19,22 +19,88 @@
 #include "sqlite3_accessor.h"
 #include "memory_datasrc.h"
 
+using namespace isc::data;
+using namespace isc::datasrc;
+
+namespace {
+// This initial implementation hard codes specific details. These functions
+// should be moved to their corresponding backend libs if we plan on making
+// them dynamically loadable
+
+void
+addError(ElementPtr errors, const std::string& error) {
+    if (errors != ElementPtr() && errors->getType() == Element::list) {
+        errors->add(Element::create(error));
+    }
+}
+
+bool
+sqlite3CheckConfig(ConstElementPtr config, ElementPtr errors) {
+    bool result = true;
+    if (config->getType() != Element::map) {
+        addError(errors, "Base config for SQlite3 backend must be a map");
+        result = false;
+        if (!config->contains("file")) {
+            addError(errors,
+                     "Config for SQlite3 backend does not contain a 'file' value");
+            result = false;
+        } else if (config->get("file")->getType() != Element::string) {
+            addError(errors, "file value in SQLite3 backend is not a string");
+            result = false;
+        } else if (config->get("file")->stringValue() == "") {
+            addError(errors, "file value in SQLite3 backend is empty");
+            result = false;
+        }
+
+        if (!config->contains("class")) {
+            addError(errors, "Config for SQlite3 backend does not contain a 'class' value");
+            result = false;
+        } else if (config->get("class")->getType() != Element::string) {
+            addError(errors, "class value in SQLite3 backend is not a string");
+            result = false;
+        } else {
+            try {
+                isc::dns::RRClass rrclass(config->get("class")->stringValue());
+            } catch (const isc::dns::InvalidRRClass& ivrc) {
+                addError(errors, ivrc.what());
+                result = false;
+            } catch (const isc::dns::IncompleteRRClass& icrc) {
+                addError(errors, icrc.what());
+                result = false;
+            }
+        }
+    }
+
+    return (result);
+}
+
+DataSourceClient *
+sqlite3CreateInstance(isc::data::ConstElementPtr config) {
+    ElementPtr errors;
+    if (!sqlite3CheckConfig(config, errors)) {
+        isc_throw(DataSourceConfigError, errors->str());
+    }
+    isc::dns::RRClass rrclass(config->get("class")->stringValue());
+    std::string dbfile = config->get("file")->stringValue();
+    boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
+        new SQLite3Accessor(dbfile, rrclass));
+    return (new DatabaseClient(rrclass, sqlite3_accessor));
+}
+
+} // end anonymous namespace
+
 namespace isc {
 namespace datasrc {
 
-boost::shared_ptr<DataSourceClient>
+DataSourceClient *
 createDataSourceClient(const std::string& type,
-                       const isc::dns::RRClass& rrclass,
                        isc::data::ConstElementPtr config) {
     // For now, mapping hardcoded
     // config is assumed to be ok
     if (type == "sqlite3") {
-        boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
-            new SQLite3Accessor(config->get("dbfile")->stringValue(), rrclass));
-        return boost::shared_ptr<DataSourceClient>(
-            new DatabaseClient(rrclass, sqlite3_accessor));
+        return (sqlite3CreateInstance(config));
     } else if (type == "memory") {
-        return boost::shared_ptr<DataSourceClient>(new InMemoryClient());
+        return (new InMemoryClient());
     } else {
         isc_throw(DataSourceError, "Unknown datasource type: " << type);
     }
