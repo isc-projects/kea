@@ -566,6 +566,8 @@ public:
                 return ("www.example.org.");
             } else if (rname == "org.example.badnsec2.") {
                 return ("badnsec1.example.org.");
+            } else if (rname == "org.example.brokenname.") {
+                return ("brokenname...example.org.");
             } else if (rname == "org.example.notimplnsec." ||
                        rname == "org.example.wild.here.") {
                 isc_throw(isc::NotImplemented, "Not implemented in this test");
@@ -2344,6 +2346,13 @@ TEST_F(MockDatabaseClientTest, missingNSEC) {
 
     EXPECT_THROW(finder->find(Name("badnsec2.example.org."), RRType::A(), NULL,
                               ZoneFinder::FIND_DNSSEC),
+                 DataSourceError);
+}
+
+TEST_F(MockDatabaseClientTest, badName) {
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    EXPECT_THROW(finder->findPreviousName(Name("brokenname.example.org.")),
                  DataSourceError);
 }
 
