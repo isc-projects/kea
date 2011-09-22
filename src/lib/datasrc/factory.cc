@@ -37,14 +37,16 @@ addError(ElementPtr errors, const std::string& error) {
 bool
 sqlite3CheckConfig(ConstElementPtr config, ElementPtr errors) {
     bool result = true;
-    if (config->getType() != Element::map) {
+    if (!config || config->getType() != Element::map) {
         addError(errors, "Base config for SQlite3 backend must be a map");
         result = false;
+    } else {
         if (!config->contains("file")) {
             addError(errors,
                      "Config for SQlite3 backend does not contain a 'file' value");
             result = false;
-        } else if (config->get("file")->getType() != Element::string) {
+        } else if (!config->get("file") ||
+                   config->get("file")->getType() != Element::string) {
             addError(errors, "file value in SQLite3 backend is not a string");
             result = false;
         } else if (config->get("file")->stringValue() == "") {
@@ -55,7 +57,8 @@ sqlite3CheckConfig(ConstElementPtr config, ElementPtr errors) {
         if (!config->contains("class")) {
             addError(errors, "Config for SQlite3 backend does not contain a 'class' value");
             result = false;
-        } else if (config->get("class")->getType() != Element::string) {
+        } else if (!config->get("class") ||
+                   config->get("class")->getType() != Element::string) {
             addError(errors, "class value in SQLite3 backend is not a string");
             result = false;
         } else {
@@ -76,7 +79,7 @@ sqlite3CheckConfig(ConstElementPtr config, ElementPtr errors) {
 
 DataSourceClient *
 sqlite3CreateInstance(isc::data::ConstElementPtr config) {
-    ElementPtr errors;
+    ElementPtr errors(Element::createList());
     if (!sqlite3CheckConfig(config, errors)) {
         isc_throw(DataSourceConfigError, errors->str());
     }
@@ -85,6 +88,21 @@ sqlite3CreateInstance(isc::data::ConstElementPtr config) {
     boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
         new SQLite3Accessor(dbfile, rrclass));
     return (new DatabaseClient(rrclass, sqlite3_accessor));
+}
+
+bool
+memoryCheckConfig(ConstElementPtr, ElementPtr) {
+    // current inmem has no options (yet)
+    return true;
+}
+
+DataSourceClient *
+memoryCreateInstance(isc::data::ConstElementPtr config) {
+    ElementPtr errors(Element::createList());
+    if (!memoryCheckConfig(config, errors)) {
+        isc_throw(DataSourceConfigError, errors->str());
+    }
+    return (new InMemoryClient());
 }
 
 } // end anonymous namespace
@@ -100,7 +118,7 @@ createDataSourceClient(const std::string& type,
     if (type == "sqlite3") {
         return (sqlite3CreateInstance(config));
     } else if (type == "memory") {
-        return (new InMemoryClient());
+        return (memoryCreateInstance(config));
     } else {
         isc_throw(DataSourceError, "Unknown datasource type: " << type);
     }
