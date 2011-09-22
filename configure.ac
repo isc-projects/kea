@@ -155,6 +155,16 @@ fi
 PYTHON_SITEPKG_DIR=${pyexecdir}
 AC_SUBST(PYTHON_SITEPKG_DIR)
 
+# This will be commonly used in various Makefile.am's that need to generate
+# python log messages.
+PYTHON_LOGMSGPKG_DIR="\$(top_builddir)/src/lib/python/isc/log_messages"
+AC_SUBST(PYTHON_LOGMSGPKG_DIR)
+
+# This is python package paths commonly used in python tests.  See
+# README of log_messages for why it's included.
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python"
+AC_SUBST(COMMON_PYTHON_PATH)
+
 # Check for python development environments
 if test -x ${PYTHON}-config; then
 	PYTHON_INCLUDES=`${PYTHON}-config --includes`
@@ -812,6 +822,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/stats/tests/isc/config/Makefile
                  src/bin/stats/tests/isc/util/Makefile
                  src/bin/stats/tests/isc/log/Makefile
+                 src/bin/stats/tests/isc/log_messages/Makefile
                  src/bin/stats/tests/testdata/Makefile
                  src/bin/stats/tests/http/Makefile
                  src/bin/usermgr/Makefile
@@ -840,6 +851,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/log_messages/Makefile
+                 src/lib/python/isc/log_messages/work/Makefile
                  src/lib/python/isc/net/Makefile
                  src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
@@ -938,6 +951,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/cc/tests/cc_test
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/python/isc/log/tests/log_console.py
+           src/lib/python/isc/log_messages/work/__init__.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/cc/session_config.h.pre
