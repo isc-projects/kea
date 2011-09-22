@@ -729,5 +729,5 @@ void destroyInstance(DataSourceClient* instance) {
     delete instance;
 }
 
-}
-}
+} // end of namespace datasrc
+} // end of namespace isc

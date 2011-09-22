@@ -29,9 +29,13 @@
 #include <datasrc/logger.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
+#include <datasrc/factory.h>
+
+#include <cc/data.h>
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::data;
 
 namespace isc {
 namespace datasrc {
@@ -799,5 +803,26 @@ ZoneUpdaterPtr
 InMemoryClient::getUpdater(const isc::dns::Name&, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
+
+bool
+checkConfig(ConstElementPtr, ElementPtr) {
+    // current inmem has no options (yet)
+    return true;
+}
+
+DataSourceClient *
+createInstance(isc::data::ConstElementPtr config) {
+    ElementPtr errors(Element::createList());
+    if (!checkConfig(config, errors)) {
+        isc_throw(DataSourceConfigError, errors->str());
+    }
+    return (new InMemoryClient());
+}
+
+void destroyInstance(DataSourceClient* instance) {
+    delete instance;
+}
+
+
 } // end of namespace datasrc
 } // end of namespace dns

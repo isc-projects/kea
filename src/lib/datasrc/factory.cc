@@ -24,51 +24,71 @@
 using namespace isc::data;
 using namespace isc::datasrc;
 
-namespace {
-bool
-memoryCheckConfig(ConstElementPtr, ElementPtr) {
-    // current inmem has no options (yet)
-    return true;
-}
-
-DataSourceClient *
-memoryCreateInstance(isc::data::ConstElementPtr config) {
-    ElementPtr errors(Element::createList());
-    if (!memoryCheckConfig(config, errors)) {
-        isc_throw(DataSourceConfigError, errors->str());
-    }
-    return (new InMemoryClient());
-}
-
-} // end anonymous namespace
-
 namespace isc {
 namespace datasrc {
+
+DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
+                                                     ConstElementPtr config)
+{
+    // The name of the loadable module is type + _ds.so
+    // config is assumed to be ok
+    std::string dl_name = type + "_ds.so";
+
+    ds_lib = dlopen(dl_name.c_str(), RTLD_NOW | RTLD_LOCAL);
+    if (ds_lib == NULL) {
+        isc_throw(DataSourceError, "Unable to load " << type <<
+                  ": " << dlerror());
+    }
+    dlerror();
+    ds_creator* ds_create = (ds_creator*)dlsym(ds_lib, "createInstance");
+    const char* dlsym_error = dlerror();
+    if (dlsym_error != NULL) {
+        dlclose(ds_lib);
+        isc_throw(DataSourceError, "Error in library " << type <<
+                  ": " << dlsym_error);
+    }
+    try {
+        instance = ds_create(config);
+    } catch (...) {
+        dlclose(ds_lib);
+        throw;
+    }
+
+    dlerror();
+    destructor = (ds_destructor*)dlsym(ds_lib, "destroyInstance");
+    dlsym_error = dlerror();
+    if (dlsym_error != NULL) {
+        dlclose(ds_lib);
+        isc_throw(DataSourceError, "Error in library " << type <<
+                  ": " << dlsym_error);
+    }
+}
+
+DataSourceClientContainer::~DataSourceClientContainer() {
+    destructor(instance);
+    dlclose(ds_lib);
+}
 
 DataSourceClient *
 createDataSourceClient(const std::string& type,
                        isc::data::ConstElementPtr config) {
-    // For now, mapping hardcoded
+    // The name of the loadable module is type + _ds.so
     // config is assumed to be ok
-    if (type == "sqlite3") {
-        void *ds_lib = dlopen("sqlite3_ds.so", RTLD_LAZY);
-        if (ds_lib == NULL) {
-            isc_throw(DataSourceError, "Unable to load " << type <<
-                      ": " << dlerror());
-        }
-        dlerror();
-        ds_creator* ds_create = (ds_creator*)dlsym(ds_lib, "createInstance");
-        const char* dlsym_error = dlerror();
-        if (dlsym_error != NULL) {
-            isc_throw(DataSourceError, "Error in library " << type <<
-                      ": " << dlsym_error);
-        }
-        return (ds_create(config));
-    } else if (type == "memory") {
-        return (memoryCreateInstance(config));
-    } else {
-        isc_throw(DataSourceError, "Unknown datasource type: " << type);
+    std::string dl_name = type + "_ds.so";
+
+    void *ds_lib = dlopen(dl_name.c_str(), RTLD_LAZY);
+    if (ds_lib == NULL) {
+        isc_throw(DataSourceError, "Unable to load " << type <<
+                  ": " << dlerror());
     }
+    dlerror();
+    ds_creator* ds_create = (ds_creator*)dlsym(ds_lib, "createInstance");
+    const char* dlsym_error = dlerror();
+    if (dlsym_error != NULL) {
+        isc_throw(DataSourceError, "Error in library " << type <<
+                  ": " << dlsym_error);
+    }
+    return (ds_create(config));
 }
 
 } // end namespace datasrc
