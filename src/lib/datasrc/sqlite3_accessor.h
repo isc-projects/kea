@@ -24,6 +24,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <string>
 
+#include <cc/data.h>
+
 namespace isc {
 namespace dns {
 class RRClass;
@@ -186,6 +188,10 @@ private:
     friend class Context;
     const std::string database_name_;
 };
+
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config);
+
+extern "C" void destroyInstance(DataSourceClient* instance);
 
 }
 }

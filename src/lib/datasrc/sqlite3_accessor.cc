@@ -22,9 +22,11 @@
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
+#include <datasrc/factory.h>
 #include <util/filename.h>
 
 using namespace std;
+using namespace isc::data;
 
 #define SQLITE_SCHEMA_VERSION 1
 
@@ -656,6 +658,75 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
     }
     doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
         *dbparameters_, DEL_RECORD, params, "delete record from zone");
+}
+
+namespace {
+void
+addError(ElementPtr errors, const std::string& error) {
+    if (errors != ElementPtr() && errors->getType() == Element::list) {
+        errors->add(Element::create(error));
+    }
+}
+} // end anonymous namespace
+
+bool
+checkConfig(ConstElementPtr config, ElementPtr errors) {
+    bool result = true;
+    if (!config || config->getType() != Element::map) {
+        addError(errors, "Base config for SQlite3 backend must be a map");
+        result = false;
+    } else {
+        if (!config->contains("file")) {
+            addError(errors,
+                     "Config for SQlite3 backend does not contain a 'file' value");
+            result = false;
+        } else if (!config->get("file") ||
+                   config->get("file")->getType() != Element::string) {
+            addError(errors, "file value in SQLite3 backend is not a string");
+            result = false;
+        } else if (config->get("file")->stringValue() == "") {
+            addError(errors, "file value in SQLite3 backend is empty");
+            result = false;
+        }
+
+        if (!config->contains("class")) {
+            addError(errors, "Config for SQlite3 backend does not contain a 'class' value");
+            result = false;
+        } else if (!config->get("class") ||
+                   config->get("class")->getType() != Element::string) {
+            addError(errors, "class value in SQLite3 backend is not a string");
+            result = false;
+        } else {
+            try {
+                isc::dns::RRClass rrclass(config->get("class")->stringValue());
+            } catch (const isc::dns::InvalidRRClass& ivrc) {
+                addError(errors, ivrc.what());
+                result = false;
+            } catch (const isc::dns::IncompleteRRClass& icrc) {
+                addError(errors, icrc.what());
+                result = false;
+            }
+        }
+    }
+
+    return (result);
+}
+
+DataSourceClient *
+createInstance(isc::data::ConstElementPtr config) {
+    ElementPtr errors(Element::createList());
+    if (!checkConfig(config, errors)) {
+        isc_throw(DataSourceConfigError, errors->str());
+    }
+    isc::dns::RRClass rrclass(config->get("class")->stringValue());
+    std::string dbfile = config->get("file")->stringValue();
+    boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
+        new SQLite3Accessor(dbfile, rrclass));
+    return (new DatabaseClient(rrclass, sqlite3_accessor));
+}
+
+void destroyInstance(DataSourceClient* instance) {
+    delete instance;
 }
 
 }

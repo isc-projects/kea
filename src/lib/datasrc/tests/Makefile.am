@@ -36,6 +36,9 @@ run_unittests_SOURCES += database_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
 run_unittests_SOURCES += factory_unittest.cc
+# for the dlopened types we have tests for, we also need to include the
+# sources
+run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)

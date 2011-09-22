@@ -58,6 +58,8 @@ DataSourceClient*
 createDataSourceClient(const std::string& type,
                        isc::data::ConstElementPtr config);
 
+typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config);
+typedef void ds_destructor();
 }
 }
 #endif  // DATA_SOURCE_FACTORY_H

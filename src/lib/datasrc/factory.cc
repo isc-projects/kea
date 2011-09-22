@@ -19,6 +19,8 @@
 #include "sqlite3_accessor.h"
 #include "memory_datasrc.h"
 
+#include <dlfcn.h>
+
 using namespace isc::data;
 using namespace isc::datasrc;
 
@@ -116,7 +118,19 @@ createDataSourceClient(const std::string& type,
     // For now, mapping hardcoded
     // config is assumed to be ok
     if (type == "sqlite3") {
-        return (sqlite3CreateInstance(config));
+        void *ds_lib = dlopen("sqlite3_ds.so", RTLD_LAZY);
+        if (ds_lib == NULL) {
+            isc_throw(DataSourceError, "Unable to load " << type <<
+                      ": " << dlerror());
+        }
+        dlerror();
+        ds_creator* ds_create = (ds_creator*)dlsym(ds_lib, "createInstance");
+        const char* dlsym_error = dlerror();
+        if (dlsym_error != NULL) {
+            isc_throw(DataSourceError, "Error in library " << type <<
+                      ": " << dlsym_error);
+        }
+        return (ds_create(config));
     } else if (type == "memory") {
         return (memoryCreateInstance(config));
     } else {
