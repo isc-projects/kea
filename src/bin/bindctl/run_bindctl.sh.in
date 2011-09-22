@@ -20,7 +20,7 @@ export PYTHON_EXEC
 
 BINDCTL_PATH=@abs_top_builddir@/src/bin/bindctl
 
-PYTHONPATH=@abs_top_srcdir@/src/bin:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin:@abs_top_srcdir@/src/lib/python
+PYTHONPATH=@abs_top_srcdir@/src/bin:@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin:@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries

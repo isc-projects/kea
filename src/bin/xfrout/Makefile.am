@@ -6,9 +6,13 @@ pkglibexec_SCRIPTS = b10-xfrout
 
 b10_xfroutdir = $(pkgdatadir)
 b10_xfrout_DATA = xfrout.spec
-pyexec_DATA = xfrout_messages.py
 
-CLEANFILES=	b10-xfrout xfrout.pyc xfrout.spec xfrout_messages.py xfrout_messages.pyc
+nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.py
+pylogmessagedir = $(pyexecdir)/isc/log_messages/
+
+CLEANFILES = b10-xfrout xfrout.pyc xfrout.spec
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.pyc
 
 man_MANS = b10-xfrout.8
 EXTRA_DIST = $(man_MANS) b10-xfrout.xml xfrout_messages.mes
@@ -21,14 +25,15 @@ b10-xfrout.8: b10-xfrout.xml
 endif
 
 # Define rule to build logging source files from message file
-xfrout_messages.py: xfrout_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/xfrout/xfrout_messages.mes
+$(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.py : xfrout_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message \
+	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/xfrout_messages.mes
 
 xfrout.spec: xfrout.spec.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrout.spec.pre >$@
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-b10-xfrout: xfrout.py xfrout_messages.py
+b10-xfrout: xfrout.py $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrout.py >$@
 	chmod a+x $@

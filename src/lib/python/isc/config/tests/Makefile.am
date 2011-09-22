@@ -21,7 +21,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/python/isc/config \
+	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/python/isc/config \
 	B10_TEST_PLUGIN_DIR=$(abs_top_srcdir)/src/bin/cfgmgr/plugins \
 	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/tests/testdata \
 	CONFIG_WR_TESTDATA_PATH=$(abs_top_builddir)/src/lib/config/tests/testdata \

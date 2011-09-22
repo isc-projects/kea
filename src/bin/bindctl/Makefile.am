@@ -5,6 +5,8 @@ man_MANS = bindctl.1
 
 EXTRA_DIST = $(man_MANS) bindctl.xml
 
+noinst_SCRIPTS = run_bindctl.sh
+
 python_PYTHON = __init__.py bindcmd.py cmdparse.py exception.py moduleinfo.py \
 		mycollections.py
 pythondir = $(pyexecdir)/bindctl
