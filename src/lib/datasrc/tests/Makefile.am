@@ -29,8 +29,8 @@ run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += cache_unittest.cc
 run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 run_unittests_SOURCES += rbtree_unittest.cc
-run_unittests_SOURCES += zonetable_unittest.cc
-run_unittests_SOURCES += memory_datasrc_unittest.cc
+#run_unittests_SOURCES += zonetable_unittest.cc
+#run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += database_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
@@ -39,6 +39,7 @@ run_unittests_SOURCES += factory_unittest.cc
 # for the dlopened types we have tests for, we also need to include the
 # sources
 run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
+#run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/memory_datasrc.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
