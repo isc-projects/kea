@@ -155,12 +155,10 @@ fi
 PYTHON_SITEPKG_DIR=${pyexecdir}
 AC_SUBST(PYTHON_SITEPKG_DIR)
 
-# These will be commonly used in various Makefile.am's that need to generate
+# This will be commonly used in various Makefile.am's that need to generate
 # python log messages.
 PYTHON_LOGMSGPKG_DIR="\$(top_builddir)/src/lib/python/isc/log_messages"
 AC_SUBST(PYTHON_LOGMSGPKG_DIR)
-PYTHON_LOGMSGPKG_SRCDIR="\$(top_srcdir)/src/lib/python/isc/log_messages"
-AC_SUBST(PYTHON_LOGMSGPKG_SRCDIR)
 
 # This is python package paths commonly used in python tests.  See
 # README of log_messages for why it's included.
