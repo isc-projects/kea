@@ -1,3 +1,11 @@
+287.	[bug]*		jinmei
+	Python script files for log messages (xxx_messages.py) should have
+	been installed under the "isc" package.  This fix itself should
+	be a transparent change without affecting existing configurations
+	or other operational practices, but you may want to clean up the
+	python files from the common directly (such as "site-packages").
+	(Trac #1101, git 0eb576518f81c3758c7dbaa2522bd8302b1836b3)
+
 286.    [func]		ocean
 	libdns++: Implement the HINFO rrtype support according to RFC1034,
 	and RFC1035.
