@@ -24,36 +24,34 @@ which ensures the right directory is chosen.
 A python module or program that defines its own log messages needs to
 make sure that the setup described above is implemented.  It's a
 complicated process, but can generally be done by following a common
-pattern.  The following are a sample snippet for Makefile.in for a
-module named "mymodule" (which is supposed to be generated from a file
-"mymodule_messages.mes").  In many cases it should work simply by
-replacing 'mymodule' with the actual module name.
+pattern:
+
+1. Create the dummy script (see above) for the module and update
+   Makefile.am in this directory accordingly.  See (and use)
+   a helper shell script named gen-forwarder.sh.
+2. Update Makefil.am of the module that defines the log message.  The
+   following are a sample snippet for Makefile.am for a module named
+   "mymodule" (which is supposed to be generated from a file
+   "mymodule_messages.mes").  In many cases it should work simply by
+   replacing 'mymodule' with the actual module name.
 
 ====================  begin Makefile.am additions ===================
-nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.py
+nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/mymodule_messages.py
 pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
-CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.pyc
+CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/work/mymodule_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/mymodule_messages.pyc
 
 EXTRA_DIST = mymodule_messages.mes
 
-BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.pyc
-EXTRA_DIST += $(PYTHON_LOGMSGPKG_SRCDIR)/mymodule_messages.py
-
-$(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.py : mymodule_messages.mes
+$(PYTHON_LOGMSGPKG_DIR)/work/mymodule_messages.py : mymodule_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
-	-d $(PYTHON_LOGMSGPKG_DIR) -p $(srcdir)/mymodule_messages.mes
-
-$(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.py: Makefile
-	echo "from work.mymodule_messages import *" > $@
+	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/mymodule_messages.mes
 
 # This rule ensures mymodule_messages.py is (re)generated as a result of
 # 'make'.  If there's no other appropriate target, specify
 # mymodule_messages.py in BUILT_SOURCES.
-mymodule: <other source files> $(PYTHON_LOGMSGPKG_DIR)/mymodule_messages.py
+mymodule: <other source files> $(PYTHON_LOGMSGPKG_DIR)/work/mymodule_messages.py
 =====================  end Makefile.am additions ====================
 
 Notes:
@@ -67,11 +65,4 @@ Notes:
   used for other scripts in the same Makefile.am file.
 - $(PYTHON_LOGMSGPKG_DIR) should be set to point to this directory (or
   the corresponding build directory if it's different) by the
-  configure script.  $(PYTHON_LOGMSGPKG_SRCDIR) should be set to point
-  to this directory by the configure script.
-- The four lines starting from BUILT_SOURCES and the second make rule
-  are for preparing the dummy python file under the source tree.
-  Note that EXTRA_DIST is specified so that the python script is
-  placed in the source tree (not only in the build tree when these
-  two are different).  If you don't like this trick, you could
-  directly add the file in this directory alternatively.
+  configure script.
