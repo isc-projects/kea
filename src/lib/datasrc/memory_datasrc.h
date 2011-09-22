@@ -22,6 +22,8 @@
 #include <datasrc/zonetable.h>
 #include <datasrc/client.h>
 
+#include <cc/data.h>
+
 namespace isc {
 namespace dns {
 class Name;
@@ -213,7 +215,7 @@ private:
 /// while it wouldn't be safe to delete unnecessary zones inside the dedicated
 /// backend.
 ///
-/// The findZone() method takes a domain name and returns the best matching 
+/// The findZone() method takes a domain name and returns the best matching
 /// \c InMemoryZoneFinder in the form of (Boost) shared pointer, so that it can
 /// provide the general interface for all data sources.
 class InMemoryClient : public DataSourceClient {
@@ -283,6 +285,12 @@ private:
     class InMemoryClientImpl;
     InMemoryClientImpl* impl_;
 };
+
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config);
+
+extern "C" void destroyInstance(DataSourceClient* instance);
+
+
 }
 }
 #endif  // __DATA_SOURCE_MEMORY_H

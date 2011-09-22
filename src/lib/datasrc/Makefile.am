@@ -9,7 +9,7 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
 
-lib_LTLIBRARIES = libdatasrc.la sqlite3_ds.la
+lib_LTLIBRARIES = libdatasrc.la sqlite3_ds.la memory_ds.la
 libdatasrc_la_SOURCES = data_source.h data_source.cc
 libdatasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
 libdatasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
@@ -17,7 +17,7 @@ libdatasrc_la_SOURCES += query.h query.cc
 libdatasrc_la_SOURCES += cache.h cache.cc
 libdatasrc_la_SOURCES += rbtree.h
 libdatasrc_la_SOURCES += zonetable.h zonetable.cc
-libdatasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
+#libdatasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
 libdatasrc_la_SOURCES += zone.h
 libdatasrc_la_SOURCES += result.h
 libdatasrc_la_SOURCES += logger.h logger.cc
@@ -29,6 +29,9 @@ nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_LDFLAGS = -module
+
+memory_ds_la_SOURCES = memory_datasrc.h memory_datasrc.cc
+memory_ds_la_LDFLAGS = -module
 
 libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la

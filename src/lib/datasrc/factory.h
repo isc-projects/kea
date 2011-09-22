@@ -28,6 +28,21 @@
 namespace isc {
 namespace datasrc {
 
+typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config);
+typedef void ds_destructor(DataSourceClient* instance);
+
+class DataSourceClientContainer {
+public:
+    DataSourceClientContainer(const std::string& type,
+                              isc::data::ConstElementPtr config);
+    ~DataSourceClientContainer();
+private:
+    DataSourceClient* instance;
+    ds_destructor* destructor;
+    void *ds_lib;
+};
+
+
 /// \brief Raised if the given config contains bad data
 ///
 /// Depending on the datasource type, the configuration may differ (for
@@ -58,8 +73,6 @@ DataSourceClient*
 createDataSourceClient(const std::string& type,
                        isc::data::ConstElementPtr config);
 
-typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config);
-typedef void ds_destructor();
 }
 }
 #endif  // DATA_SOURCE_FACTORY_H
