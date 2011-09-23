@@ -575,11 +575,12 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                 result_status = WILDCARD_NXRRSET;
                                 result_rrset = nci->second;
                             } else {
-                                // The previous doesn't contain NSEC, bug?
+                                // The previous doesn't contain NSEC.
+                                // Badly signed zone or a bug?
                                 isc_throw(DataSourceError, "No NSEC in " +
                                           coverName.toText() + ", but it was "
                                           "returned as previous - "
-                                          "accessor error?");
+                                          "accessor error? Badly signed zone?");
                             }
                         }
                         break;
@@ -618,11 +619,12 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                         result_status = NXDOMAIN;
                         result_rrset = nci->second;
                     } else {
-                        // The previous doesn't contain NSEC, bug?
+                        // The previous doesn't contain NSEC.
+                        // Badly signed zone or a bug?
                         isc_throw(DataSourceError, "No NSEC in " +
                                   coverName.toText() + ", but it was "
                                   "returned as previous - "
-                                  "accessor error?");
+                                  "accessor error? Badly signed zone?");
                     }
                 }
                 catch (const isc::NotImplemented&) {
