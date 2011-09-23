@@ -2,10 +2,10 @@ namespace {
 const char* const ZoneFinder_doc = "\
 The base class to search a zone for RRsets.\n\
 \n\
-The ZoneFinder class is an abstract base class for representing an\n\
+The ZoneFinder class is a wrapper for the c++ base class for representing an\n\
 object that performs DNS lookups in a specific zone accessible via a\n\
 data source. In general, different types of data sources (in-memory,\n\
-database-based, etc) define their own derived classes of ZoneFinder,\n\
+database-based, etc) define their own derived c++ classes of ZoneFinder,\n\
 implementing ways to retrieve the required data through the common\n\
 interfaces declared in the base class. Each concrete ZoneFinder object\n\
 is therefore (conceptually) associated with a specific zone of one\n\
@@ -26,13 +26,6 @@ results for the same name and type can be different if other threads\n\
 or programs make updates to the zone between the lookups. We should\n\
 revisit this point as we gain more experiences.\n\
 \n\
-ZoneFinder()\n\
-\n\
-    The default constructor.\n\
-\n\
-    This is intentionally defined as protected as this base class\n\
-    should never be instantiated (except as part of a derived class).\n\
-\n\
 ";
 
 const char* const ZoneFinder_getOrigin_doc = "\
@@ -50,7 +43,7 @@ Return the RR class of the zone.\n\
 ";
 
 const char* const ZoneFinder_find_doc = "\
-find(name, type, target=NULL, options=FIND_DEFAULT) -> FindResult\n\
+find(name, type, target=NULL, options=FIND_DEFAULT) -> (code, FindResult)\n\
 \n\
 Search the zone for a given pair of domain name and RR type.\n\
 \n\
@@ -69,7 +62,7 @@ Search the zone for a given pair of domain name and RR type.\n\
   and the code of SUCCESS will be returned.\n\
 - If the search name matches a delegation point of DNAME, it returns\n\
   the code of DNAME and that DNAME RR.\n\
-- If the target isn't NULL, all RRsets under the domain are inserted\n\
+- If the target is a list, all RRsets under the domain are inserted\n\
   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned\n\
   instead of normall processing. This is intended to handle ANY query.\n\
   : this behavior is controversial as we discussed in\n\
@@ -77,6 +70,7 @@ Search the zone for a given pair of domain name and RR type.\n\
   We should revisit the interface before we heavily rely on it. The\n\
   options parameter specifies customized behavior of the search. Their\n\
   semantics is as follows:\n\
+  (This feature is disable at this time)\n\
 - GLUE_OK Allow search under a zone cut. By default the search will\n\
   stop once it encounters a zone cut. If this option is specified it\n\
   remembers information about the highest zone cut and continues the\n\
@@ -86,11 +80,8 @@ Search the zone for a given pair of domain name and RR type.\n\
   the search has encountered a zone cut, DELEGATION with the\n\
   information of the highest zone cut will be returned.\n\
 \n\
-A derived version of this method may involve internal resource\n\
-allocation, especially for constructing the resulting RRset, and may\n\
-throw an exception if it fails. It throws DuplicateRRset exception if\n\
-there are duplicate rrsets under the same domain. It should not throw\n\
-other types of exceptions.\n\
+This method raises an isc.datasrc.Error exception if there is an internal\n\
+error in the datasource.\n\
 \n\
 Parameters:\n\
   name       The domain name to be searched for.\n\
@@ -99,7 +90,7 @@ Parameters:\n\
              into it.\n\
   options    The search options.\n\
 \n\
-Return Value(s): A FindResult object enclosing the search result (see\n\
-above).\n\
+Return Value(s): A tuple of a result code an a FindResult object enclosing\n\
+the search result (see above).\n\
 ";
 } // unnamed namespace

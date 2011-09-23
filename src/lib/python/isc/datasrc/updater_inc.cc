@@ -14,14 +14,14 @@ some form of \"begin transaction\" statement for the database.\n\
 Updates (adding or deleting RRs) are made via add_rrset() and\n\
 delete_rrset() methods. Until the commit() method is called the\n\
 changes are local to the updater object. For example, they won't be\n\
-visible via a ZoneFinder object except the one returned by the\n\
-updater's own find() method. The commit() completes the\n\
-transaction and makes the changes visible to others.\n\
+visible via a ZoneFinder object, but only by the updater's own find()\n\
+method. The commit() completes the transaction and makes the changes\n\
+visible to others.\n\
 \n\
 This class does not provide an explicit \"rollback\" interface. If\n\
 something wrong or unexpected happens during the updates and the\n\
 caller wants to cancel the intermediate updates, the caller should\n\
-simply destruct the updater object without calling commit(). The\n\
+simply destroy the updater object without calling commit(). The\n\
 destructor is supposed to perform the \"rollback\" operation,\n\
 depending on the internal details of the derived class.\n\
 \n\
@@ -32,10 +32,10 @@ It may be revisited as we gain more experiences.\n\
 ";
 
 const char* const ZoneUpdater_addRRset_doc = "\
-add_rrset(rrset) -> void\n\
+add_rrset(rrset) -> No return value\n\
 \n\
 Add an RRset to a zone via the updater.\n\
-\n\
+It performs a few basic checks:\n\
 - Whether the RR class is identical to that for the zone to be updated\n\
 - Whether the RRset is not empty, i.e., it has at least one RDATA\n\
 - Whether the RRset is not associated with an RRSIG, i.e., whether\n\
@@ -76,7 +76,7 @@ This method must not be called once commit() is performed. If it calls\n\
 after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
 \n\
-TodoAs noted above we may have to revisit the design details as we\n\
+Todo As noted above we may have to revisit the design details as we\n\
 gain experiences:\n\
 \n\
 - we may want to check (and maybe reject) if there is already a\n\
@@ -92,8 +92,7 @@ gain experiences:\n\
 \n\
 Exceptions:\n\
   isc.datasrc.Error Called after commit(), RRset is invalid (see above),\n\
-             internal data source error\n\
-  std.bad_alloc Resource allocation failure\n\
+                    internal data source error, or wrapper error\n\
 \n\
 Parameters:\n\
   rrset      The RRset to be added\n\
@@ -101,7 +100,7 @@ Parameters:\n\
 ";
 
 const char* const ZoneUpdater_deleteRRset_doc = "\
-delete_rrset(rrset) -> void\n\
+delete_rrset(rrset) -> No return value\n\
 \n\
 Delete an RRset from a zone via the updater.\n\
 \n\
@@ -120,20 +119,21 @@ on the initial implementation decisions.\n\
 Ignoring the TTL may not look sensible, but it's based on the\n\
 observation that it will result in more intuitive result, especially\n\
 when the underlying data source is a general purpose database. See\n\
-also DatabaseAccessor.delete_record_in_zone() on this point. It also\n\
-matches the dynamic update protocol (RFC2136), where TTLs are ignored\n\
-when deleting RRs.\n\
+also the c++ documentation of DatabaseAccessor::DeleteRecordInZone()\n\
+on this point. It also matches the dynamic update protocol (RFC2136),\n\
+where TTLs are ignored when deleting RRs.\n\
 \n\
+This method performs a limited level of validation on the specified\n\
+RRset:\n\
 - Whether the RR class is identical to that for the zone to be updated\n\
 - Whether the RRset is not empty, i.e., it has at least one RDATA\n\
-- Whether the RRset is not associated with an RRSIG, i.e., whether\n\
-  get_rrsig() on the RRset returns a NULL pointer.\n\
+- Whether the RRset is not associated with an RRSIG\n\
 \n\
 This method must not be called once commit() is performed. If it calls\n\
 after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
 \n\
-TodoAs noted above we may have to revisit the design details as we\n\
+Todo: As noted above we may have to revisit the design details as we\n\
 gain experiences:\n\
 \n\
 - we may want to check (and maybe reject) if some or all of the RRs\n\
@@ -175,7 +175,7 @@ must result in a isc.datasrc.Error exception.\n\
 \n\
 Exceptions:\n\
   isc.datasrc.Error Duplicate call of the method, internal data source\n\
-             error\n\
+             error, or wrapper error\n\\n\
 \n\
 ";
 } // unnamed namespace
