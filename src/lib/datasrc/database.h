@@ -659,7 +659,7 @@ public:
          * \param name Which domain name should be scanned.
          * \param types List of types the caller is interested in.
          * \param check_ns If this is set to true, it checks nothing lives
-         *     together with NS record (with few little exceptions, like RRSET
+         *     together with NS record (with few little exceptions, like RRSIG
          *     or NSEC). This check is meant for non-apex NS records.
          * \param construct_name If this is NULL, the resulting RRsets have
          *     their name set to name. If it is not NULL, it overrides the name

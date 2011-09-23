@@ -308,7 +308,7 @@ namespace {
 // convenient.
 //
 // While this is not straightforward use of the + operator, some mathematical
-// conventions do allow summing sets with elements (usually in communitative
+// conventions do allow summing sets with elements (usually in commutative
 // way, we define only one order of the operator parameters, as the other
 // isn't used).
 //
