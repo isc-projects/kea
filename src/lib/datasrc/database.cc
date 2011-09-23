@@ -253,6 +253,9 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                 // NSEC and RRSIG can coexist with anything, otherwise
                 // we've seen something that can't live together with potential
                 // CNAME or NS
+                //
+                // NSEC3 lives in separate namespace from everything, therefore
+                // we just ignore it here for these checks as well.
                 seen_other = true;
             }
         } catch (const InvalidRRType&) {
