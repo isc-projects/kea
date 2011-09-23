@@ -369,6 +369,12 @@ TEST_F(SQLite3AccessorTest, findPrevious) {
     // A name that doesn't exist
     EXPECT_EQ("dns01.example.com.",
               accessor->findPreviousName(1, "com.exaMple.DNS01X."));
+    // The DB contains foo.bar.example.com., which would be in between
+    // these two names. However, that one does not have an NSEC record,
+    // which is how this database recognizes glue data, so it should
+    // be skipped.
+    EXPECT_EQ("example.com.",
+              accessor->findPreviousName(1, "com.example.cname-ext."));
 }
 
 TEST_F(SQLite3AccessorTest, findPreviousNoData) {
