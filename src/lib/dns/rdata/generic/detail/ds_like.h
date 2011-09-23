@@ -17,8 +17,25 @@
 
 #include <stdint.h>
 
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
+
+#include <boost/lexical_cast.hpp>
+
+#include <exceptions/exceptions.h>
+
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+
+namespace isc {
+namespace dns {
+namespace rdata {
+namespace generic {
+namespace detail {
 
 /// \brief \c rdata::DSLikeImpl class represents the DS-like RDATA for DS
 /// and DLV types.
@@ -26,10 +43,10 @@
 /// This class implements the basic interfaces inherited by the DS and DLV
 /// classes from the abstract \c rdata::Rdata class, and provides trivial
 /// accessors to DS-like RDATA.
-template<class Type, uint16_t typeCode>class DSLikeImpl {
+template <class Type, uint16_t typeCode> class DSLikeImpl {
     // Common sequence of toWire() operations used for the two versions of
     // toWire().
-    template<typename Output>
+    template <typename Output>
     void
     toWireCommon(Output& output) const {
         output.writeUint16(tag_);
@@ -45,10 +62,9 @@ public:
     ///
     /// \c InvalidRdataText is thrown if the method cannot process the
     /// parameter data for any of the number of reasons.
-    DSLikeImpl(const string& ds_str)
-    {
-        istringstream iss(ds_str);
-        stringbuf digestbuf;
+    DSLikeImpl(const std::string& ds_str) {
+        std::istringstream iss(ds_str);
+        std::stringbuf digestbuf;
         uint32_t tag, algorithm, digest_type;
 
         iss >> tag >> algorithm >> digest_type >> &digestbuf;
@@ -90,24 +106,19 @@ public:
             isc_throw(InvalidRdataLength, RRType(typeCode) << " too short");
         }
 
-        uint16_t tag = buffer.readUint16();
-        uint16_t algorithm = buffer.readUint8();
-        uint16_t digest_type = buffer.readUint8();
+        tag_ = buffer.readUint16();
+        algorithm_ = buffer.readUint8();
+        digest_type_ = buffer.readUint8();
 
         rdata_len -= 4;
         digest_.resize(rdata_len);
         buffer.readData(&digest_[0], rdata_len);
-
-        tag_ = tag;
-        algorithm_ = algorithm;
-        digest_type_ = digest_type;
     }
 
     /// \brief The copy constructor.
     ///
     /// Trivial for now, we could've used the default one.
-    DSLikeImpl(const DSLikeImpl& source)
-    {
+    DSLikeImpl(const DSLikeImpl& source) {
         digest_ = source.digest_;
         tag_ = source.tag_;
         algorithm_ = source.algorithm_;
@@ -117,7 +128,7 @@ public:
     /// \brief Convert the DS-like data to a string.
     ///
     /// \return A \c string object that represents the DS-like data.
-    string
+    std::string
     toText() const {
         using namespace boost;
         return (lexical_cast<string>(static_cast<int>(tag_)) +
@@ -189,9 +200,14 @@ private:
     uint16_t tag_;
     uint8_t algorithm_;
     uint8_t digest_type_;
-    vector<uint8_t> digest_;
+    std::vector<uint8_t> digest_;
 };
 
+}
+}
+}
+}
+}
 #endif //  __DS_LIKE_H
 
 // Local Variables: 
