@@ -91,6 +91,23 @@ TYPED_TEST(Rdata_DS_LIKE_Test, createFromWire_DS_LIKE) {
                                           "rdata_ds_fromWire")));
 }
 
+TYPED_TEST(Rdata_DS_LIKE_Test, assignment_DS_LIKE) {
+    TypeParam copy((string(ds_like_txt)));
+    copy = this->rdata_ds_like;
+    EXPECT_EQ(0, copy.compare(this->rdata_ds_like));
+
+    // Check if the copied data is valid even after the original is deleted
+    TypeParam* copy2 = new TypeParam(this->rdata_ds_like);
+    TypeParam copy3((string(ds_like_txt)));
+    copy3 = *copy2;
+    delete copy2;
+    EXPECT_EQ(0, copy3.compare(this->rdata_ds_like));
+
+    // Self assignment
+    copy = copy;
+    EXPECT_EQ(0, copy.compare(this->rdata_ds_like));
+}
+
 TYPED_TEST(Rdata_DS_LIKE_Test, getTag_DS_LIKE) {
     EXPECT_EQ(12892, Rdata_DS_LIKE_Test<TypeParam>::rdata_ds_like.getTag());
 }
