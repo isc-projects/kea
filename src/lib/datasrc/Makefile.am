@@ -17,7 +17,6 @@ libdatasrc_la_SOURCES += query.h query.cc
 libdatasrc_la_SOURCES += cache.h cache.cc
 libdatasrc_la_SOURCES += rbtree.h
 libdatasrc_la_SOURCES += zonetable.h zonetable.cc
-#libdatasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
 libdatasrc_la_SOURCES += zone.h
 libdatasrc_la_SOURCES += result.h
 libdatasrc_la_SOURCES += logger.h logger.cc
