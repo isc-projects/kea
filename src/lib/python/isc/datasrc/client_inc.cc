@@ -3,13 +3,13 @@ namespace {
 const char* const DataSourceClient_doc = "\
 The base class of data source clients.\n\
 \n\
-This is an abstract base class that defines the common interface for\n\
-various types of data source clients. A data source client is a top\n\
-level access point to a data source, allowing various operations on\n\
-the data source such as lookups, traversing or updates. The client\n\
-class itself has limited focus and delegates the responsibility for\n\
-these specific operations to other classes; in general methods of this\n\
-class act as factories of these other classes.\n\
+This is the python wrapper for the abstract base class that defines\n\
+the common interface for various types of data source clients. A data\n\
+source client is a top level access point to a data source, allowing \n\
+various operations on the data source such as lookups, traversing or \n\
+updates. The client class itself has limited focus and delegates \n\
+the responsibility for these specific operations to other (c++) classes;\n\
+in general methods of this class act as factories of these other classes.\n\
 \n\
 - InMemoryClient: A client of a conceptual data source that stores all\n\
   necessary data in memory for faster lookups\n\
@@ -49,49 +49,30 @@ server). In order to avoid a surprising disruption with a naive copy\n\
 it's prohibited explicitly. For the expected usage of the client\n\
 classes the restriction should be acceptable.\n\
 \n\
-TodoThis class is still not complete. It will need more factory\n\
+Todo: This class is still not complete. It will need more factory\n\
 methods, e.g. for (re)loading a zone.\n\
-\n\
-DataSourceClient()\n\
-\n\
-    Default constructor.\n\
-\n\
-    This is intentionally defined as protected as this base class\n\
-    should never be instantiated directly.\n\
-\n\
-    The constructor of a concrete derived class may throw an\n\
-    exception. This interface does not specify which exceptions can\n\
-    happen (at least at this moment), and the caller should expect any\n\
-    type of exception and react accordingly.\n\
-\n\
 ";
 
 const char* const DataSourceClient_findZone_doc = "\
-find_zone(name) -> FindResult\n\
+find_zone(name) -> (code, ZoneFinder)\n\
 \n\
 Returns a ZoneFinder for a zone that best matches the given name.\n\
 \n\
-- code: The result code of the operation.result.SUCCESS: A zone that\n\
-  gives an exact match is foundresult.PARTIALMATCH: A zone whose\n\
-  origin is a super domain of name is found (but there is no exact\n\
-  match)result.NOTFOUND: For all other cases.\n\
-- result.SUCCESS: A zone that gives an exact match is found\n\
-- result.PARTIALMATCH: A zone whose origin is a super domain of name\n\
+code: The result code of the operation (integer).\n\
+- DataSourceClient.SUCCESS: A zone that gives an exact match is found\n\
+- DataSourceClient.PARTIALMATCH: A zone whose origin is a super domain of name\n\
   is found (but there is no exact match)\n\
-- result.NOTFOUND: For all other cases.\n\
-- zone_finder: Pointer to a ZoneFinder object for the found zone if\n\
-  one is found; otherwise NULL.\n\
+- DataSourceClient.NOTFOUND: For all other cases.\n\
+ZoneFinder: ZoneFinder object for the found zone if one is found;\n\
+otherwise None.\n\
 \n\
-A specific derived version of this method may throw an exception. This\n\
-interface does not specify which exceptions can happen (at least at\n\
-this moment), and the caller should expect any type of exception and\n\
-react accordingly.\n\
+Any internal error will be raised as an isc.datasrc.Error exception\n\
 \n\
 Parameters:\n\
   name       A domain name for which the search is performed.\n\
 \n\
-Return Value(s): A FindResult object enclosing the search result (see\n\
-above).\n\
+Return Value(s): A tuple containing a result value and a ZoneFinder object or\n\
+None\n\
 ";
 
 const char* const DataSourceClient_getIterator_doc = "\
@@ -103,9 +84,9 @@ This allows for traversing the whole zone. The returned object can\n\
 provide the RRsets one by one.\n\
 \n\
 This throws isc.datasrc.Error when the zone does not exist in the\n\
-datasource.\n\
+datasource, or when an internal error occurs.\n\
 \n\
-The default implementation throws isc.NotImplemented. This allows for\n\
+The default implementation throws isc.datasrc.NotImplemented. This allows for\n\
 easy and fast deployment of minimal custom data sources, where the\n\
 user/implementator doesn't have to care about anything else but the\n\
 actual queries. Also, in some cases, it isn't possible to traverse the\n\
@@ -115,8 +96,8 @@ It is not fixed if a concrete implementation of this method can throw\n\
 anything else.\n\
 \n\
 Parameters:\n\
-  name       The name of zone apex to be traversed. It doesn't do\n\
-             nearest match as find_zone.\n\
+  isc.dns.Name The name of zone apex to be traversed. It doesn't do\n\
+               nearest match as find_zone.\n\
 \n\
 Return Value(s): Pointer to the iterator.\n\
 ";
@@ -152,7 +133,7 @@ case as handling multiple incoming AXFR streams concurrently, but this\n\
 interface does not even prohibit an attempt of getting more than one\n\
 updater for the same zone, as long as the underlying data source\n\
 allows such an operation (and any conflict resolution is left to the\n\
-specific derived class implementation).\n\
+specific implementation).\n\
 \n\
 If replace is true, any existing RRs of the zone will be deleted on\n\
 successful completion of updates (after commit() on the updater); if\n\
@@ -160,13 +141,13 @@ it's false, the existing RRs will be intact unless explicitly deleted\n\
 by delete_rrset() on the updater.\n\
 \n\
 A data source can be \"read only\" or can prohibit partial updates. In\n\
-such cases this method will result in an isc.NotImplemented exception\n\
+such cases this method will result in an isc.datasrc.NotImplemented exception\n\
 unconditionally or when replace is false).\n\
 \n\
 Exceptions:\n\
-  NotImplemented The underlying data source does not support updates.\n\
+  isc.datasrc. NotImplemented The underlying data source does not support\n\
+               updates.\n\
   isc.datasrc.Error Internal error in the underlying data source.\n\
-  std.bad_alloc Resource allocation failure.\n\
 \n\
 Parameters:\n\
   name       The zone name to be updated\n\
