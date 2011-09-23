@@ -48,7 +48,8 @@ using namespace isc::datasrc::python;
 namespace isc_datasrc_internal {
 // This is the shared code for the find() call in the finder and the updater
 // Is is intentionally not available through any header, nor at our standard
-// namespace.
+// namespace, as it is not supposed to be called anywhere but from finder and
+// updater
 PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
     if (finder == NULL) {
         PyErr_SetString(getDataSourceException("Error"),
