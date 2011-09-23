@@ -46,6 +46,8 @@ public:
     DataSourceClientContainer(const std::string& type,
                               isc::data::ConstElementPtr config);
     ~DataSourceClientContainer();
+    DataSourceClient& getInstance() { return *instance_; }
+
 private:
     DataSourceClient* instance_;
     ds_destructor* destructor_;
