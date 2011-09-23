@@ -175,8 +175,6 @@ const char* const TEST_RECORDS[][5] = {
     {"bao.example.org.", "NSEC", "3600", "", "wild.*.foo.*.bar.example.org. NSEC"},
     {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
     {"*.nswild.example.org.", "NS", "3600", "", "ns.example.com."},
-    // For finding previous, this one is the last one in the zone
-    {"zzz.example.org.", "NSEC", "3600", "", "example.org NSEC"},
     // For NSEC empty non-terminal
     {"l.example.org.", "NSEC", "3600", "", "empty.nonterminal.example.org. NSEC"},
     {"empty.nonterminal.example.org.", "A", "3600", "", "192.0.2.1"},
@@ -558,9 +556,7 @@ public:
         if (id == -1) {
             isc_throw(isc::NotImplemented, "Test not implemented behaviour");
         } else if (id == 42) {
-            if (rname == "org.example.") {
-                return ("zzz.example.org.");
-            } else if (rname == "org.example.nonterminal.") {
+            if (rname == "org.example.nonterminal.") {
                 return ("l.example.org.");
             } else if (rname == "org.example.www2." ||
                        rname == "org.example.www1.") {
@@ -2331,9 +2327,6 @@ TYPED_TEST(DatabaseClientTest, previous) {
 
     EXPECT_EQ(Name("www.example.org."),
               finder->findPreviousName(Name("www2.example.org.")));
-    // Check wrap around
-    EXPECT_EQ(Name("zzz.example.org."),
-              finder->findPreviousName(Name("example.org.")));
     // Check a name that doesn't exist there
     EXPECT_EQ(Name("www.example.org."),
               finder->findPreviousName(Name("www1.example.org.")));

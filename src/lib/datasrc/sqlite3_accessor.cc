@@ -48,8 +48,7 @@ enum StatementID {
     DEL_RECORD = 8,
     ITERATE = 9,
     FIND_PREVIOUS = 10,
-    FIND_PREVIOUS_WRAP = 11,
-    NUM_STATEMENTS = 12
+    NUM_STATEMENTS = 11
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -72,17 +71,13 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
     "WHERE zone_id = ?1 ORDER BY name, rdtype",
     /*
-     * The ones for finding previous name. The first of them takes
-     * biggest smaller than something (therefore previous to the something),
-     * the second takes biggest (used in case when there's no previous,
-     * to "wrap around").
+     * This one looks for previous name with NSEC record. It is done by
+     * using the reversed name. The NSEC is checked because we need to
+     * skip glue data, which don't have the NSEC.
      */
     "SELECT name FROM records " // FIND_PREVIOUS
     "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-    "rname < $2 ORDER BY rname DESC LIMIT 1",
-    "SELECT name FROM records " // FIND_PREVIOUS_WRAP
-    "WHERE zone_id = ?1 AND rdtype = 'NSEC' "
-    "ORDER BY rname DESC LIMIT 1"
+    "rname < $2 ORDER BY rname DESC LIMIT 1"
 };
 
 struct SQLite3Parameters {
@@ -702,31 +697,10 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS]);
 
     if (rc == SQLITE_DONE) {
-        // Nothing previous, wrap around (is it needed for anything?
-        // Well, just for completeness)
-        sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
-        sqlite3_clear_bindings(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
-
-        if (sqlite3_bind_int(
-            dbparameters_->statements_[FIND_PREVIOUS_WRAP], 1, zone_id) !=
-            SQLITE_OK) {
-            isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
-                      " to SQL statement (find previous wrap): " <<
-                      sqlite3_errmsg(dbparameters_->db_));
-        }
-
-        rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
-        if (rc == SQLITE_ROW) {
-            // We found it
-            result =
-                convertToPlainChar(sqlite3_column_text(dbparameters_->
-                    statements_[FIND_PREVIOUS_WRAP], 0), dbparameters_->db_);
-        }
-        sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS_WRAP]);
-        if (rc == SQLITE_DONE) {
-            // No NSEC records, this DB doesn't support DNSSEC
-            isc_throw(isc::NotImplemented, "The zone doesn't support DNSSEC");
-        }
+        // No NSEC records here, this DB doesn't support DNSSEC or
+        // we asked before the apex
+        isc_throw(isc::NotImplemented, "The zone doesn't support DNSSEC or "
+                  "query before apex");
     }
 
     if (rc != SQLITE_ROW && rc != SQLITE_DONE) {

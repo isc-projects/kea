@@ -487,13 +487,18 @@ public:
      *     and the DNSSEC order correspond (eg. org.example.a is followed
      *     by org.example.a.b which is followed by org.example.b, etc).
      * \param zone_id The zone to look through.
-     * \return The previous name, or the last name in the zone, if there's
-     *     no previous one (including out-of-zone cases).
-     * \note This function must return previous/last name even in case
+     * \return The previous name.
+     * \note This function must return previous name even in case
      *     the queried rname does not exist in the zone.
+     * \note This method must skip under-the-zone-cut data (glue data).
+     *     This might be implemented by looking for NSEC records (as glue
+     *     data don't have them) in the zone or in some other way.
      *
      * \throw DataSourceError if there's a problem with the database.
-     * \throw NotImplemented if this database doesn't support DNSSEC.
+     * \throw NotImplemented if this database doesn't support DNSSEC
+     *     or there's no previous name for the queried one (the NSECs
+     *     might be missing or the queried name is less or equal the
+     *     apex of the zone).
      */
     virtual std::string findPreviousName(int zone_id,
                                          const std::string& rname) const = 0;
