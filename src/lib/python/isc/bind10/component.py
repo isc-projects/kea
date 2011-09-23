@@ -55,7 +55,7 @@ class Component:
             doesn't start or crashes for some reason, the system simply tries
             to restart it and keeps running.
         """
-        pass
+        self.__running = False
     def start(self):
         """
         Start the component for the first time or restart it. If you need to
@@ -64,7 +64,10 @@ class Component:
 
         If you try to start an already running component, it raises ValueError.
         """
-        pass
+        if self.running():
+            raise ValueError("Can't start already running component")
+        self.start_internal()
+        self.__running = True
     def start_internal(self):
         """
         This method does the actual starting of a process. If you need to
@@ -80,7 +83,10 @@ class Component:
         If you try to stop a component that is not running, it raises
         ValueError.
         """
-        pass
+        if not self.running():
+            raise ValueError("Can't stop a component which is not running")
+        self.stop_internal()
+        self.__running = False
     def stop_internal(self):
         """
         This is the method that does the actual stopping of a component.
@@ -108,4 +114,4 @@ class Component:
         is called whenever the component really fails and there might be some
         time in between actual failure and the call.
         """
-        pass
+        return self.__running
