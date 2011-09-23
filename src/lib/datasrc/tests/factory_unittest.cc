@@ -31,7 +31,6 @@ namespace {
 // The default implementation is NotImplemented
 TEST(FactoryTest, memoryClient) {
     DataSourceClientContainer client("memory", ElementPtr());
-    DataSourceClientContainer client2("memory", ElementPtr());
 }
 
 TEST(FactoryTest, badType) {
@@ -122,6 +121,5 @@ TEST(FactoryTest, sqlite3ClientBadConfig3) {
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
                  SQLite3Error);
 }
-
 } // end anonymous namespace
 

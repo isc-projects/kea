@@ -69,28 +69,6 @@ DataSourceClientContainer::~DataSourceClientContainer() {
     dlclose(ds_lib);
 }
 
-DataSourceClient *
-createDataSourceClient(const std::string& type,
-                       isc::data::ConstElementPtr config) {
-    // The name of the loadable module is type + _ds.so
-    // config is assumed to be ok
-    std::string dl_name = type + "_ds.so";
-
-    void *ds_lib = dlopen(dl_name.c_str(), RTLD_LAZY);
-    if (ds_lib == NULL) {
-        isc_throw(DataSourceError, "Unable to load " << type <<
-                  ": " << dlerror());
-    }
-    dlerror();
-    ds_creator* ds_create = (ds_creator*)dlsym(ds_lib, "createInstance");
-    const char* dlsym_error = dlerror();
-    if (dlsym_error != NULL) {
-        isc_throw(DataSourceError, "Error in library " << type <<
-                  ": " << dlsym_error);
-    }
-    return (ds_create(config));
-}
-
 } // end namespace datasrc
 } // end namespace isc
 

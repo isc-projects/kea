@@ -804,6 +804,9 @@ InMemoryClient::getUpdater(const isc::dns::Name&, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
 
+// due to a c++ symbol lookup oddity, we need to explicitely put this into
+// an anonymous namespace. Once we remove memory.cc from the general datasource
+// lib, we can export this
 bool
 checkConfig(ConstElementPtr, ElementPtr) {
     // current inmem has no options (yet)
@@ -825,4 +828,4 @@ void destroyInstance(DataSourceClient* instance) {
 
 
 } // end of namespace datasrc
-} // end of namespace dns
+} // end of namespace isc
