@@ -45,66 +45,16 @@ using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
-namespace {
-// The s_* Class simply covers one instantiation of the object
-class s_ZoneFinder : public PyObject {
-public:
-    s_ZoneFinder() : cppobj(ZoneFinderPtr()) {};
-    ZoneFinderPtr cppobj;
-};
-
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_ZoneFinder, ZoneFinder> ZoneFinderContainer;
-
-// General creation and destruction
-int
-ZoneFinder_init(s_ZoneFinder* self, PyObject* args) {
-    // can't be called directly
-    PyErr_SetString(PyExc_TypeError,
-                    "ZoneFinder cannot be constructed directly");
-
-    return (-1);
-}
-
-void
-ZoneFinder_destroy(s_ZoneFinder* const self) {
-    // cppobj is a shared ptr, but to make sure things are not destroyed in
-    // the wrong order, we reset it here.
-    self->cppobj.reset();
-    Py_TYPE(self)->tp_free(self);
-}
-
-// These are the functions we export
-//
-PyObject*
-ZoneFinder_getClass(PyObject* po_self, PyObject*) {
-    s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
-    try {
-        return (createRRClassObject(self->cppobj->getClass()));
-    } catch (const std::exception& exc) {
-        PyErr_SetString(getDataSourceException("Error"), exc.what());
-        return (NULL);
-    }
-}
-
-PyObject*
-ZoneFinder_getOrigin(PyObject* po_self, PyObject*) {
-    s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
-    try {
-        return (createNameObject(self->cppobj->getOrigin()));
-    } catch (const std::exception& exc) {
-        PyErr_SetString(getDataSourceException("Error"), exc.what());
-        return (NULL);
-    } catch (...) {
+namespace isc_datasrc_internal {
+// This is the shared code for the find() call in the finder and the updater
+// Is is intentionally not available through any header, nor at our standard
+// namespace.
+PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
+    if (finder == NULL) {
         PyErr_SetString(getDataSourceException("Error"),
-                        "Unexpected exception");
+                        "Internal error in find() wrapper; finder object NULL");
         return (NULL);
     }
-}
-
-PyObject*
-ZoneFinder_find(PyObject* po_self, PyObject* args) {
-    s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
     PyObject *name;
     PyObject *rrtype;
     PyObject *target;
@@ -116,7 +66,7 @@ ZoneFinder_find(PyObject* po_self, PyObject* args) {
             ZoneFinder::FindOptions options =
                 static_cast<ZoneFinder::FindOptions>(options_int);
             ZoneFinder::FindResult find_result(
-                self->cppobj->find(PyName_ToName(name),
+                finder->find(PyName_ToName(name),
                                    PyRRType_ToRRType(rrtype),
                                    NULL,
                                    options
@@ -146,6 +96,69 @@ ZoneFinder_find(PyObject* po_self, PyObject* args) {
     return Py_BuildValue("I", 1);
 }
 
+} // end namespace internal
+
+namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_ZoneFinder : public PyObject {
+public:
+    s_ZoneFinder() : cppobj(ZoneFinderPtr()) {};
+    ZoneFinderPtr cppobj;
+};
+
+// Shortcut type which would be convenient for adding class variables safely.
+typedef CPPPyObjectContainer<s_ZoneFinder, ZoneFinder> ZoneFinderContainer;
+
+// General creation and destruction
+int
+ZoneFinder_init(s_ZoneFinder* self, PyObject* args) {
+    // can't be called directly
+    PyErr_SetString(PyExc_TypeError,
+                    "ZoneFinder cannot be constructed directly");
+
+    return (-1);
+}
+
+void
+ZoneFinder_destroy(s_ZoneFinder* const self) {
+    // cppobj is a shared ptr, but to make sure things are not destroyed in
+    // the wrong order, we reset it here.
+    self->cppobj.reset();
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyObject*
+ZoneFinder_getClass(PyObject* po_self, PyObject*) {
+    s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
+    try {
+        return (createRRClassObject(self->cppobj->getClass()));
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    }
+}
+
+PyObject*
+ZoneFinder_getOrigin(PyObject* po_self, PyObject*) {
+    s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
+    try {
+        return (createNameObject(self->cppobj->getOrigin()));
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
+        return (NULL);
+    }
+}
+
+PyObject*
+ZoneFinder_find(PyObject* po_self, PyObject* args) {
+    s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
+    return (isc_datasrc_internal::ZoneFinder_helper(self->cppobj.get(), args));
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -167,6 +180,7 @@ PyMethodDef ZoneFinder_methods[] = {
 namespace isc {
 namespace datasrc {
 namespace python {
+
 PyTypeObject zonefinder_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "datasrc.ZoneFinder",

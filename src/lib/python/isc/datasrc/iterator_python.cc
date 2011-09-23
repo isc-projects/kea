@@ -63,8 +63,6 @@ ZoneIterator_init(s_ZoneIterator* self, PyObject* args) {
     return (-1);
 }
 
-// This is a template of typical code logic of python object destructor.
-// In many cases you can use it without modification, but check that carefully.
 void
 ZoneIterator_destroy(s_ZoneIterator* const self) {
     // cppobj is a shared ptr, but to make sure things are not destroyed in

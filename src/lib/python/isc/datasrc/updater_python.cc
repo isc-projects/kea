@@ -45,6 +45,11 @@ using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
+namespace isc_datasrc_internal {
+// See finder_python.cc
+PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args);
+}
+
 namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_ZoneUpdater : public PyObject {
@@ -71,8 +76,6 @@ ZoneUpdater_init(s_ZoneUpdater* self, PyObject* args) {
     return (-1);
 }
 
-// This is a template of typical code logic of python object destructor.
-// In many cases you can use it without modification, but check that carefully.
 void
 ZoneUpdater_destroy(s_ZoneUpdater* const self) {
     // cppobj is a shared ptr, but to make sure things are not destroyed in
@@ -81,8 +84,6 @@ ZoneUpdater_destroy(s_ZoneUpdater* const self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-// These are the functions we export
-//
 PyObject*
 ZoneUpdater_addRRset(PyObject* po_self, PyObject* args) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
@@ -138,8 +139,6 @@ ZoneUpdater_commit(PyObject* po_self, PyObject*) {
     }
 }
 
-// These are the functions we export
-//
 PyObject*
 ZoneUpdater_getClass(PyObject* po_self, PyObject*) {
     s_ZoneUpdater* self = static_cast<s_ZoneUpdater*>(po_self);
@@ -172,6 +171,13 @@ ZoneUpdater_getOrigin(PyObject* po_self, PyObject*) {
 
 PyObject*
 ZoneUpdater_find(PyObject* po_self, PyObject* args) {
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+    return (isc_datasrc_internal::ZoneFinder_helper(&self->cppobj->getFinder(),
+                                                    args));
+}
+
+PyObject*
+AZoneUpdater_find(PyObject* po_self, PyObject* args) {
     s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
     PyObject *name;
     PyObject *rrtype;

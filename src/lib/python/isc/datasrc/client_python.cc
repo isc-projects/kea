@@ -57,8 +57,6 @@ public:
 typedef CPPPyObjectContainer<s_DataSourceClient, DataSourceClient>
     DataSourceClientContainer;
 
-// These are the functions we export
-//
 PyObject*
 DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
@@ -145,8 +143,6 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
     }
 }
 
-// These are the functions we export
-
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -164,9 +160,6 @@ PyMethodDef DataSourceClient_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-// This is a template of typical code logic of python class initialization
-// with C++ backend.  You'll need to adjust it according to details of the
-// actual C++ class.
 int
 DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
     // TODO: we should use the factory function which hasn't been written
@@ -201,8 +194,6 @@ DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
     return (-1);
 }
 
-// This is a template of typical code logic of python object destructor.
-// In many cases you can use it without modification, but check that carefully.
 void
 DataSourceClient_destroy(s_DataSourceClient* const self) {
     delete self->cppobj;

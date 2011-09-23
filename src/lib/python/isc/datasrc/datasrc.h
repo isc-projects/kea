@@ -29,7 +29,7 @@ namespace python {
 // C/C++ symbols defined in that module.  So we get access to these object
 // using the Python interpretor through this wrapper function.
 //
-// The __init__.py file should ensure isc.acl.acl has been loaded by the time
+// The __init__.py file should ensure isc.datasrc has been loaded by the time
 // whenever this function is called, and there shouldn't be any operation
 // within this function that can fail (such as dynamic memory allocation),
 // so this function should always succeed.  Yet there may be an overlooked
