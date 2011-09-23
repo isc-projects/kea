@@ -306,20 +306,47 @@ DatabaseClient::Finder::hasSubdomains(const std::string& name) {
 // Some manipulation with RRType sets
 namespace {
 
-// To conveniently put the RRTypes into the sets. This is not really clean
-// design, but it is hidden inside this file and makes the calls much more
-// convenient.
-//
-// While this is not straightforward use of the + operator, some mathematical
-// conventions do allow summing sets with elements (usually in commutative
-// way, we define only one order of the operator parameters, as the other
-// isn't used).
-//
-// This arguably produces more readable code than having bunch of proxy
-// functions and set.insert calls scattered through the code.
-std::set<RRType> operator +(std::set<RRType> set, const RRType& type) {
-    set.insert(type);
-    return (set);
+// Bunch of functions to construct specific sets of RRTypes we will
+// ask from it.
+typedef std::set<RRType> WantedTypes;
+
+const WantedTypes&
+NSEC_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::NSEC());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
+DELEGATION_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::DNAME());
+        result.insert(RRType::NS());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
+FINAL_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::CNAME());
+        result.insert(RRType::NS());
+        result.insert(RRType::NSEC());
+        initialized = true;
+    }
+    return (result);
 }
 
 }
@@ -344,8 +371,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // In case we are in GLUE_OK mode and start matching wildcards,
     // we can't do it under NS, so we store it here to check
     isc::dns::RRsetPtr first_ns;
-    // This is used at multiple places
-    static const WantedTypes nsec_types(WantedTypes() + RRType::NSEC());
 
     // First, do we have any kind of delegation (NS/DNAME) here?
     const Name origin(getOrigin());
@@ -363,10 +388,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     for (int i(remove_labels); i > 0; --i) {
         Name superdomain(name.split(i));
         // Look if there's NS or DNAME (but ignore the NS in origin)
-        static const WantedTypes delegation_types(WantedTypes() +
-                                                  RRType::DNAME() +
-                                                  RRType::NS());
-        found = getRRsets(superdomain.toText(), delegation_types,
+        found = getRRsets(superdomain.toText(), DELEGATION_TYPES(),
                           i != remove_labels);
         if (found.first) {
             // It contains some RRs, so it exists.
@@ -412,9 +434,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         // It is special if there's a CNAME or NS, DNAME is ignored here
         // And we don't consider the NS in origin
 
-        static const WantedTypes final_types(WantedTypes() + RRType::CNAME() +
-                                             RRType::NS() + RRType::NSEC());
-        found = getRRsets(name.toText(), final_types + type, name != origin);
+        WantedTypes final_types(FINAL_TYPES());
+        final_types.insert(type);
+        found = getRRsets(name.toText(), final_types, name != origin);
         records_found = found.first;
 
         // NS records, CNAME record and Wanted Type records
@@ -463,11 +485,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     const string wildcard("*." + superdomain.toText());
                     const string construct_name(name.toText());
                     // TODO What do we do about DNAME here?
-                    static const WantedTypes wildcard_types(WantedTypes() +
-                                                            RRType::CNAME() +
-                                                            RRType::NS() +
-                                                            RRType::NSEC());
-                    found = getRRsets(wildcard, wildcard_types + type, true,
+                    // The types are the same as with original query
+                    found = getRRsets(wildcard, final_types, true,
                                       &construct_name);
                     if (found.first) {
                         if (first_ns) {
@@ -517,7 +536,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                     // However, we need to get the RRset in the
                                     // name of the wildcard, not the constructed
                                     // one, so we walk it again
-                                    found = getRRsets(wildcard, nsec_types,
+                                    found = getRRsets(wildcard, NSEC_TYPES(),
                                                       true);
                                     result_rrset =
                                         found.second.find(RRType::NSEC())->
@@ -548,7 +567,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                             const Name
                                 coverName(findPreviousName(Name(wildcard)));
                             // Get the record and copy it out
-                            found = getRRsets(coverName.toText(), nsec_types,
+                            found = getRRsets(coverName.toText(), NSEC_TYPES(),
                                               true);
                             const FoundIterator
                                 nci(found.second.find(RRType::NSEC()));
@@ -592,7 +611,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // Which one should contain the NSEC record?
                     const Name coverName(findPreviousName(name));
                     // Get the record and copy it out
-                    found = getRRsets(coverName.toText(), nsec_types, true);
+                    found = getRRsets(coverName.toText(), NSEC_TYPES(), true);
                     const FoundIterator
                         nci(found.second.find(RRType::NSEC()));
                     if (nci != found.second.end()) {
