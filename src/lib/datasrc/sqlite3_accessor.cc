@@ -688,7 +688,7 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     }
 
     std::string result;
-    int rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS]);
+    const int rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS]);
     if (rc == SQLITE_ROW) {
         // We found it
         result = convertToPlainChar(sqlite3_column_text(dbparameters_->
