@@ -360,12 +360,7 @@ TEST_F(SQLite3AccessorTest, findPrevious) {
     // Largest name
     EXPECT_EQ("www.example.com.",
               accessor->findPreviousName(1, "com.example.wwww"));
-    // Wrap around
-    EXPECT_EQ("www.example.com.",
-              accessor->findPreviousName(1, "com.example."));
-    // Out of zone before and after
-    EXPECT_EQ("www.example.com.",
-              accessor->findPreviousName(1, "bb.example."));
+    // Out of zone after the last name
     EXPECT_EQ("www.example.com.",
               accessor->findPreviousName(1, "org.example."));
     // Case insensitive?
