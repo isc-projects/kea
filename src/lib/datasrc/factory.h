@@ -31,15 +31,25 @@ namespace datasrc {
 typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config);
 typedef void ds_destructor(DataSourceClient* instance);
 
+class DLHolder {
+public:
+    DLHolder(const std::string& name);
+    ~DLHolder();
+    void* getSym(const char* name);
+private:
+    const std::string ds_name_;
+    void *ds_lib_;
+};
+
 class DataSourceClientContainer {
 public:
     DataSourceClientContainer(const std::string& type,
                               isc::data::ConstElementPtr config);
     ~DataSourceClientContainer();
 private:
-    DataSourceClient* instance;
-    ds_destructor* destructor;
-    void *ds_lib;
+    DataSourceClient* instance_;
+    ds_destructor* destructor_;
+    DLHolder ds_lib_;
 };
 
 

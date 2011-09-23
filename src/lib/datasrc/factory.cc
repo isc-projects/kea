@@ -27,46 +27,50 @@ using namespace isc::datasrc;
 namespace isc {
 namespace datasrc {
 
-DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
-                                                     ConstElementPtr config)
-{
-    // The name of the loadable module is type + _ds.so
-    // config is assumed to be ok
-    std::string dl_name = type + "_ds.so";
 
-    ds_lib = dlopen(dl_name.c_str(), RTLD_NOW | RTLD_LOCAL);
-    if (ds_lib == NULL) {
-        isc_throw(DataSourceError, "Unable to load " << type <<
+DLHolder::DLHolder(const std::string& name) : ds_name_(name) {
+    ds_lib_ = dlopen(ds_name_.c_str(), RTLD_NOW | RTLD_LOCAL);
+    if (ds_lib_ == NULL) {
+        isc_throw(DataSourceError, "Unable to load " << ds_name_ <<
                   ": " << dlerror());
-    }
-    dlerror();
-    ds_creator* ds_create = (ds_creator*)dlsym(ds_lib, "createInstance");
-    const char* dlsym_error = dlerror();
-    if (dlsym_error != NULL) {
-        dlclose(ds_lib);
-        isc_throw(DataSourceError, "Error in library " << type <<
-                  ": " << dlsym_error);
-    }
-    try {
-        instance = ds_create(config);
-    } catch (...) {
-        dlclose(ds_lib);
-        throw;
-    }
-
-    dlerror();
-    destructor = (ds_destructor*)dlsym(ds_lib, "destroyInstance");
-    dlsym_error = dlerror();
-    if (dlsym_error != NULL) {
-        dlclose(ds_lib);
-        isc_throw(DataSourceError, "Error in library " << type <<
-                  ": " << dlsym_error);
     }
 }
 
+DLHolder::~DLHolder() {
+    dlclose(ds_lib_);
+}
+
+void*
+DLHolder::getSym(const char* name) {
+    // Since dlsym can return NULL on success, we check for errors by
+    // first clearing any existing errors with dlerror(), then calling dlsym,
+    // and finally checking for errors with dlerror()
+    dlerror();
+
+    void *sym = dlsym(ds_lib_, name);
+
+    const char* dlsym_error = dlerror();
+    if (dlsym_error != NULL) {
+        dlclose(ds_lib_);
+        isc_throw(DataSourceError, "Error in library " << ds_name_ <<
+                  ": " << dlsym_error);
+    }
+
+    return (sym);
+}
+
+DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
+                                                     ConstElementPtr config)
+: ds_lib_(type + "_ds.so")
+{
+    ds_creator* ds_create = (ds_creator*)ds_lib_.getSym("createInstance");
+    destructor_ = (ds_destructor*)ds_lib_.getSym("destroyInstance");
+
+    instance_ = ds_create(config);
+}
+
 DataSourceClientContainer::~DataSourceClientContainer() {
-    destructor(instance);
-    dlclose(ds_lib);
+    destructor_(instance_);
 }
 
 } // end namespace datasrc
