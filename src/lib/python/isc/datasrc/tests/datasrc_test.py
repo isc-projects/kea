@@ -28,11 +28,41 @@ BROKEN_DB_FILE = TESTDATA_PATH + "brokendb.sqlite3"
 WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
 NEW_DB_FILE = TESTDATA_WRITE_PATH + "new_db.sqlite3"
 
+def add_rrset(rrset_list, name, rrclass, rrtype, ttl, rdatas):
+    rrset_to_add = isc.dns.RRset(name, rrclass, rrtype, ttl)
+    if rdatas is not None:
+        for rdata in rdatas:
+            rrset_to_add.add_rdata(isc.dns.Rdata(rrtype, rrclass, rdata))
+    rrset_list.append(rrset_to_add)
+
+# helper function, we have no direct rrset comparison atm
+def rrsets_equal(a, b):
+    # no accessor for sigs either (so this only checks name, class, type, ttl,
+    # and rdata)
+    # also, because of the fake data in rrsigs, if the type is rrsig, the
+    # rdata is not checked
+    return a.get_name() == b.get_name() and\
+           a.get_class() == b.get_class() and\
+           a.get_type() == b.get_type() and \
+           a.get_ttl() == b.get_ttl() and\
+           (a.get_type() == isc.dns.RRType.RRSIG() or
+            sorted(a.get_rdata()) == sorted(b.get_rdata()))
+
+# returns true if rrset is in expected_rrsets
+# will remove the rrset from expected_rrsets if found
+def check_for_rrset(expected_rrsets, rrset):
+    for cur_rrset in expected_rrsets[:]:
+        if rrsets_equal(cur_rrset, rrset):
+            expected_rrsets.remove(cur_rrset)
+            return True
+    return False
+
 class DataSrcClient(unittest.TestCase):
 
     def test_construct(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneIterator)
+
 
     def test_iterate(self):
         dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
@@ -40,113 +70,101 @@ class DataSrcClient(unittest.TestCase):
         # for RRSIGS, the TTL's are currently modified. This test should
         # start failing when we fix that.
         rrs = dsc.get_iterator(isc.dns.Name("sql1.example.com."))
-        self.assertEqual("sql1.example.com. 3600 IN DNSKEY 256 3 5 AwEAAdYdRh" +
-                         "BAEY67R/8G1N5AjGF6asIiNh/pNGeQ8xDQP13JN2lo+sNqWcmpY" +
-                         "NhuVqRbLB+mamsU1XcCICSBvAlSmfz/ZUdafX23knArTlALxMms" +
-                         "pcfdpqun3Yr3YYnztuj06rV7RqmveYckWvAUXVYMSMQZfJ305fs" +
-                         "0dE/xLztL/CzZ\nsql1.example.com. 3600 IN DNSKEY 257" +
-                         " 3 5 AwEAAbaKDSa9XEFTsjSYpUTHRotTS9Tz3krfDucugW5Uok" +
-                         "GQKC26QlyHXlPTZkC+aRFUs/dicJX2kopndLcnlNAPWiKnKtrsF" +
-                         "SCnIJDBZIyvcKq+9RXmV3HK3bUdHnQZ88IZWBRmWKfZ6wnzHo53" +
-                         "kdYKAemTErkztaX3lRRPLYWpxRcDPEjysXT3Lh0vfL5D+CIO1yK" +
-                         "w/q7C+v6+/kYAxc2lfbNE3HpklSuF+dyX4nXxWgzbcFuLz5Bwfq" +
-                         "6ZJ9RYe/kNkA0uMWNa1KkGeRh8gg22kgD/KT5hPTnpezUWLvoY5" +
-                         "Qc7IB3T0y4n2JIwiF2ZrZYVrWgDjRWAzGsxJiJyjd6w2k0=\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("sql1.example.com. 3600 IN NS dns01.example.com.\nsq" +
-                         "l1.example.com. 3600 IN NS dns02.example.com.\nsql1" +
-                         ".example.com. 3600 IN NS dns03.example.com.\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("sql1.example.com. 7200 IN NSEC www.sql1.example.com" +
-                         ". NS SOA RRSIG NSEC DNSKEY\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("sql1.example.com. 3600 IN RRSIG SOA 5 3 3600 201003" +
-                         "22084536 20100220084536 12447 sql1.example.com. FAK" +
-                         "EFAKEFAKEFAKE\nsql1.example.com. 3600 IN RRSIG NS 5" +
-                         " 3 3600 20100322084536 20100220084536 12447 sql1.ex" +
-                         "ample.com. FAKEFAKEFAKEFAKE\nsql1.example.com. 3600" +
-                         " IN RRSIG NSEC 5 3 7200 20100322084536 201002200845" +
-                         "36 12447 sql1.example.com. FAKEFAKEFAKEFAKE\nsql1.e" +
-                         "xample.com. 3600 IN RRSIG DNSKEY 5 3 3600 201003220" +
-                         "84536 20100220084536 12447 sql1.example.com. FAKEFA" +
-                         "KEFAKEFAKE\nsql1.example.com. 3600 IN RRSIG DNSKEY " +
-                         "5 3 3600 20100322084536 20100220084536 33313 sql1.e" +
-                         "xample.com. FAKEFAKEFAKEFAKE\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("sql1.example.com. 3600 IN SOA master.example.com. a" +
-                         "dmin.example.com. 678 3600 1800 2419200 7200\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("www.sql1.example.com. 3600 IN A 192.0.2.100\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("www.sql1.example.com. 7200 IN NSEC sql1.example.com" +
-                         ". A RRSIG NSEC\n", rrs.get_next_rrset().to_text())
-        self.assertEqual("www.sql1.example.com. 3600 IN RRSIG A 5 4 3600 2010" +
-                         "0322084536 20100220084536 12447 sql1.example.com. F" +
-                         "AKEFAKEFAKEFAKE\nwww.sql1.example.com. 3600 IN RRSI" +
-                         "G NSEC 5 4 7200 20100322084536 20100220084536 12447" +
-                         " sql1.example.com. FAKEFAKEFAKEFAKE\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual(None, rrs.get_next_rrset())
+
+        # we do not know the order in which they are returned by the iterator
+        # but we do want to check them, so we put all records into one list
+        # sort it (doesn't matter which way it is sorted, as long as it is
+        # sorted)
+
+        # RRset is (atm) an unorderable type, and within an rrset, the
+        # rdatas and rrsigs may also be in random order. In theory the
+        # rrsets themselves can be returned in any order.
+        #
+        # So we create a second list with all rrsets we expect, and for each
+        # rrset we get from the iterator, see if it is in that list, and
+        # remove it.
+        #
+        # When the iterator is empty, we check no rrsets are left in the
+        # list of expected ones
+        expected_rrset_list = []
+
+        name = isc.dns.Name("sql1.example.com")
+        rrclass = isc.dns.RRClass.IN()
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.DNSKEY(), isc.dns.RRTTL(3600),
+                  [
+                     "256 3 5 AwEAAdYdRhBAEY67R/8G1N5AjGF6asIiNh/pNGeQ8xDQP13J"+
+                     "N2lo+sNqWcmpYNhuVqRbLB+mamsU1XcCICSBvAlSmfz/ZUdafX23knAr"+
+                     "TlALxMmspcfdpqun3Yr3YYnztuj06rV7RqmveYckWvAUXVYMSMQZfJ30"+
+                     "5fs0dE/xLztL/CzZ",
+                     "257 3 5 AwEAAbaKDSa9XEFTsjSYpUTHRotTS9Tz3krfDucugW5UokGQ"+
+                     "KC26QlyHXlPTZkC+aRFUs/dicJX2kopndLcnlNAPWiKnKtrsFSCnIJDB"+
+                     "ZIyvcKq+9RXmV3HK3bUdHnQZ88IZWBRmWKfZ6wnzHo53kdYKAemTErkz"+
+                     "taX3lRRPLYWpxRcDPEjysXT3Lh0vfL5D+CIO1yKw/q7C+v6+/kYAxc2l"+
+                     "fbNE3HpklSuF+dyX4nXxWgzbcFuLz5Bwfq6ZJ9RYe/kNkA0uMWNa1KkG"+
+                     "eRh8gg22kgD/KT5hPTnpezUWLvoY5Qc7IB3T0y4n2JIwiF2ZrZYVrWgD"+
+                     "jRWAzGsxJiJyjd6w2k0="
+                  ])
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.NS(), isc.dns.RRTTL(3600),
+                  [
+                    "dns01.example.com.",
+                    "dns02.example.com.",
+                    "dns03.example.com."
+                  ])
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.NSEC(), isc.dns.RRTTL(7200),
+                  [
+                     "www.sql1.example.com. NS SOA RRSIG NSEC DNSKEY"
+                  ])
+        # For RRSIGS, we can't add the fake data through the API, so we
+        # simply pass no rdata at all (which is skipped by the check later)
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.SOA(), isc.dns.RRTTL(3600),
+                  [
+                     "master.example.com. admin.example.com. 678 3600 1800 2419200 7200"
+                  ])
+        name = isc.dns.Name("www.sql1.example.com.")
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.A(), isc.dns.RRTTL(3600),
+                  [
+                     "192.0.2.100"
+                  ])
+        name = isc.dns.Name("www.sql1.example.com.")
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.NSEC(), isc.dns.RRTTL(7200),
+                  [
+                     "sql1.example.com. A RRSIG NSEC"
+                  ])
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
+
+        # rrs is an iterator, but also has direct get_next_rrset(), use
+        # the latter one here
+        rrset_to_check = rrs.get_next_rrset()
+        while (rrset_to_check != None):
+            self.assertTrue(check_for_rrset(expected_rrset_list,
+                                            rrset_to_check),
+                            "Unexpected rrset returned by iterator:\n" +
+                            rrset_to_check.to_text())
+            rrset_to_check = rrs.get_next_rrset()
+
+        # Now check there are none left
+        self.assertEqual(0, len(expected_rrset_list),
+                         "RRset(s) not returned by iterator: " +
+                         str([rrset.to_text() for rrset in expected_rrset_list ]
+                        ))
+
         # TODO should we catch this (iterating past end) and just return None
         # instead of failing?
         self.assertRaises(isc.datasrc.Error, rrs.get_next_rrset)
 
-        rrs = dsc.get_iterator(isc.dns.Name("example.com"))
-        self.assertEqual("*.wild.example.com. 3600 IN A 192.0.2.255\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("*.wild.example.com. 7200 IN NSEC www.example.com. A" +
-                         " RRSIG NSEC\n", rrs.get_next_rrset().to_text())
-        self.assertEqual("*.wild.example.com. 3600 IN RRSIG A 5 3 3600 201003" +
-                         "22084538 20100220084538 33495 example.com. FAKEFAKE" +
-                         "FAKEFAKE\n*.wild.example.com. 3600 IN RRSIG NSEC 5 " +
-                         "3 7200 20100322084538 20100220084538 33495 example." +
-                         "com. FAKEFAKEFAKEFAKE\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("cname-ext.example.com. 3600 IN CNAME www.sql1.examp" +
-                         "le.com.\n", rrs.get_next_rrset().to_text())
-        self.assertEqual("cname-ext.example.com. 7200 IN NSEC cname-int.examp" +
-                         "le.com. CNAME RRSIG NSEC\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("cname-ext.example.com. 3600 IN RRSIG CNAME 5 3 3600" +
-                         " 20100322084538 20100220084538 33495 example.com. F" +
-                         "AKEFAKEFAKEFAKE\ncname-ext.example.com. 3600 IN RRS" +
-                         "IG NSEC 5 3 7200 20100322084538 20100220084538 3349" +
-                         "5 example.com. FAKEFAKEFAKEFAKE\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("cname-int.example.com. 3600 IN CNAME www.example.co" +
-                         "m.\n", rrs.get_next_rrset().to_text())
-        self.assertEqual("cname-int.example.com. 7200 IN NSEC dname.example.c" +
-                         "om. CNAME RRSIG NSEC\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("cname-int.example.com. 3600 IN RRSIG CNAME 5 3 3600" +
-                         " 20100322084538 20100220084538 33495 example.com. F" +
-                         "AKEFAKEFAKEFAKE\ncname-int.example.com. 3600 IN RRS" +
-                         "IG NSEC 5 3 7200 20100322084538 20100220084538 3349" +
-                         "5 example.com. FAKEFAKEFAKEFAKE\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("dname.example.com. 3600 IN DNAME sql1.example.com.\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("dname.example.com. 7200 IN NSEC dns01.example.com. " +
-                         "DNAME RRSIG NSEC\n", rrs.get_next_rrset().to_text())
-        self.assertEqual("dname.example.com. 3600 IN RRSIG DNAME 5 3 3600 201" +
-                         "00322084538 20100220084538 33495 example.com. FAKEF" +
-                         "AKEFAKEFAKE\ndname.example.com. 3600 IN RRSIG NSEC " +
-                         "5 3 7200 20100322084538 20100220084538 33495 exampl" +
-                         "e.com. FAKEFAKEFAKEFAKE\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("dns01.example.com. 3600 IN A 192.0.2.1\n",
-                         rrs.get_next_rrset().to_text())
-        self.assertEqual("dns01.example.com. 7200 IN NSEC dns02.example.com. " +
-                         "A RRSIG NSEC\n", rrs.get_next_rrset().to_text())
-        self.assertEqual("dns01.example.com. 3600 IN RRSIG A 5 3 3600 2010032" +
-                         "2084538 20100220084538 33495 example.com. FAKEFAKEF" +
-                         "AKEFAKE\ndns01.example.com. 3600 IN RRSIG NSEC 5 3 " +
-                         "7200 20100322084538 20100220084538 33495 example.co" +
-                         "m. FAKEFAKEFAKEFAKE\n",
-                         rrs.get_next_rrset().to_text())
-        # there are more than 80 RRs in this zone... let's just count the rest
-        count = 0
-        self.assertEqual(40, len(list(rrs)))
+        rrets = dsc.get_iterator(isc.dns.Name("example.com"))
+        # there are more than 80 RRs in this zone... let's just count them
+        # (already did a full check of the smaller zone above)
+        self.assertEqual(55, len(list(rrets)))
         # TODO should we catch this (iterating past end) and just return None
         # instead of failing?
         self.assertRaises(isc.datasrc.Error, rrs.get_next_rrset)
