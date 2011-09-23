@@ -33,8 +33,9 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
+namespace {
 // hacks to make templates work
-template<class T>
+template <class T>
 class RRTYPE : public RRType {
 public:
     RRTYPE();
@@ -43,7 +44,6 @@ public:
 template<> RRTYPE<generic::DS>::RRTYPE() : RRType(RRType::DS()) {}
 template<> RRTYPE<generic::DLV>::RRTYPE() : RRType(RRType::DLV()) {}
 
-namespace {
 template <class DS_LIKE>
 class Rdata_DS_LIKE_Test : public RdataTest {
 protected:
@@ -51,7 +51,7 @@ protected:
 };
 
 string ds_like_txt("12892 5 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
-              "5F0EB5C777586DE18DA6B5");
+                   "5F0EB5C777586DE18DA6B5");
 
 template <class DS_LIKE>
 DS_LIKE const Rdata_DS_LIKE_Test<DS_LIKE>::rdata_ds_like(ds_like_txt);
@@ -103,7 +103,7 @@ TYPED_TEST(Rdata_DS_LIKE_Test, toWireRenderer) {
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_ds_fromWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>
+                        static_cast<const uint8_t*>
                         (Rdata_DS_LIKE_Test<TypeParam>::obuffer.getData()) + 2,
                         Rdata_DS_LIKE_Test<TypeParam>::obuffer.getLength() - 2,
                         &data[2], data.size() - 2);
@@ -116,8 +116,7 @@ TYPED_TEST(Rdata_DS_LIKE_Test, toWireBuffer) {
 
 TYPED_TEST(Rdata_DS_LIKE_Test, compare) {
     // trivial case: self equivalence
-    EXPECT_EQ(0,
-              TypeParam(ds_like_txt).compare(TypeParam(ds_like_txt)));
+    EXPECT_EQ(0, TypeParam(ds_like_txt).compare(TypeParam(ds_like_txt)));
 
     // TODO: need more tests
 }
