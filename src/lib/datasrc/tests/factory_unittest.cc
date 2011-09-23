@@ -120,6 +120,9 @@ TEST(FactoryTest, sqlite3ClientBadConfig3) {
     config->set("file", Element::create("/foo/bar/doesnotexist"));
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
                  SQLite3Error);
+
+    config->set("file", Element::create("/tmp/some_file.sqlite3"));
+    DataSourceClientContainer dsc("sqlite3", config);
 }
 } // end anonymous namespace
 
