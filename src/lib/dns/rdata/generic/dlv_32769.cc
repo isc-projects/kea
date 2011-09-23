@@ -12,32 +12,27 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <iostream>
 #include <string>
-#include <sstream>
-#include <vector>
-
-#include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
 #include <util/encode/hex.h>
 
 #include <dns/messagerenderer.h>
-#include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
 #include <stdio.h>
 #include <time.h>
 
+#include <dns/rdata/generic/detail/ds_like.h>
+
 using namespace std;
 using namespace isc::util;
 using namespace isc::util::encode;
+using namespace isc::dns::rdata::generic::detail;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
-
-#include <dns/rdata/generic/detail/ds_like.h>
 
 /// \brief Constructor from string.
 ///

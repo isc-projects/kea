@@ -30,9 +30,11 @@
 
 // BEGIN_RDATA_NAMESPACE
 
-template<class Type, uint16_t typeCode> class DSLikeImpl;
+namespace detail {
+template <class Type, uint16_t typeCode> class DSLikeImpl;
+}
 
-/// \brief \c rdata::DLV class represents the DLV RDATA as defined %in
+/// \brief \c rdata::generic::DLV class represents the DLV RDATA as defined in
 /// RFC4431.
 ///
 /// This class implements the basic interfaces inherited from the abstract
@@ -62,7 +64,7 @@ public:
     /// This method never throws an exception.
     uint16_t getTag() const;
 private:
-    typedef DSLikeImpl<DLV, 32769> DLVImpl;
+    typedef detail::DSLikeImpl<DLV, 32769> DLVImpl;
     DLVImpl* impl_;
 };
 
