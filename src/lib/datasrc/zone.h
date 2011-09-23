@@ -219,12 +219,15 @@ public:
     /// however it is recommended to stick to the ones listed here. The user
     /// of this method should be able to handle any exceptions.
     ///
+    /// This method does not include under-zone-cut data (glue data).
+    ///
     /// \param query The name for which one we look for a previous one. The
     ///     queried name doesn't have to exist in the zone.
     /// \return The preceding name
     ///
     /// \throw NotImplemented in case the data source backend doesn't support
-    ///     DNSSEC.
+    ///     DNSSEC or there is no previous in the zone (NSEC records might be
+    ///     missing in the DB, the queried name is less or equal to the apex).
     /// \throw DataSourceError for low-level or internal datasource errors
     ///     (like broken connection to database, wrong data living there).
     /// \throw std::bad_alloc For allocation errors.
