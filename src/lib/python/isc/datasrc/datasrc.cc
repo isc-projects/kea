@@ -43,11 +43,11 @@ PyObject*
 getDataSourceException(const char* ex_name) {
     PyObject* ex_obj = NULL;
 
-    PyObject* acl_module = PyImport_AddModule("isc.datasrc");
-    if (acl_module != NULL) {
-        PyObject* acl_dict = PyModule_GetDict(acl_module);
-        if (acl_dict != NULL) {
-            ex_obj = PyDict_GetItemString(acl_dict, ex_name);
+    PyObject* datasrc_module = PyImport_AddModule("isc.datasrc");
+    if (datasrc_module != NULL) {
+        PyObject* datasrc_dict = PyModule_GetDict(datasrc_module);
+        if (datasrc_dict != NULL) {
+            ex_obj = PyDict_GetItemString(datasrc_dict, ex_name);
         }
     }
 
