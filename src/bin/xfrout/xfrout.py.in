@@ -108,6 +108,7 @@ class XfroutSession():
         self._tsig_len = 0
         self._remote = remote
         self._acl = acl
+        self._zone_config = {}
         self.handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -170,6 +171,24 @@ class XfroutSession():
             return Rcode.FORMERR(), None
 
         return rcode, msg
+
+    def _get_transfer_acl(self, zone_name, zone_class):
+        '''Return the ACL that should be applied for a given zone.
+
+        The zone is identified by a tuple of name and RR class.
+        If a per zone configuration for the zone exists and contains
+        transfer_acl, that ACL will be used; otherwise, the default
+        ACL will be used.
+
+        '''
+        # Internally zone names are managed in lower cased label characters,
+        # so we first need to convert the name.
+        zone_name_lower = Name(zone_name.to_text(), True)
+        config_key = (zone_name_lower.to_text(), zone_class.to_text())
+        if config_key in self._zone_config and \
+                'transfer_acl' in self._zone_config[config_key]:
+            return self._zone_config[config_key]['transfer_acl']
+        return self._acl
 
     def _get_query_zone_name(self, msg):
         question = msg.get_question()[0]

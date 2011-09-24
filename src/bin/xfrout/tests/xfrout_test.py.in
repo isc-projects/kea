@@ -235,6 +235,34 @@ class TestXfroutSession(unittest.TestCase):
             self.xfrsess._acl = acl
         self.check_transfer_acl(acl_setter)
 
+    def test_get_transfer_acl(self):
+        # set the default ACL.  If there's no specific zone ACL, this one
+        # should be used.
+        self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+                {"from": "127.0.0.1", "action": "ACCEPT"}])
+        acl = self.xfrsess._get_transfer_acl(Name('example.com'), RRClass.IN())
+        self.assertEqual(acl, self.xfrsess._acl)
+
+        # install a per zone config with transfer ACL for example.com.  Then
+        # that ACL will be used for example.com; for others the default ACL
+        # will still be used.
+        com_acl = isc.acl.dns.REQUEST_LOADER.load([
+                {"from": "127.0.0.1", "action": "REJECT"}])
+        self.xfrsess._zone_config[('example.com.', 'IN')] = {}
+        self.xfrsess._zone_config[('example.com.', 'IN')]['transfer_acl'] = \
+            com_acl
+        self.assertEqual(com_acl,
+                         self.xfrsess._get_transfer_acl(Name('example.com'),
+                                                        RRClass.IN()))
+        self.assertEqual(self.xfrsess._acl,
+                         self.xfrsess._get_transfer_acl(Name('example.org'),
+                                                        RRClass.IN()))
+
+        # Name matching should be case insensitive.
+        self.assertEqual(com_acl,
+                         self.xfrsess._get_transfer_acl(Name('EXAMPLE.COM'),
+                                                        RRClass.IN()))
+
     def test_get_query_zone_name(self):
         msg = self.getmsg()
         self.assertEqual(self.xfrsess._get_query_zone_name(msg), "example.com.")
