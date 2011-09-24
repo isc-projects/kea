@@ -88,7 +88,7 @@ XFROUT_MAX_MESSAGE_SIZE = 65535
 
 # In practice, RR class is almost always fixed, so if and when we allow
 # it to be configured, it's convenient to make it optional.
-DEFAULT_RRCLASS = RRClass('IN')
+DEFAULT_RRCLASS = RRClass.IN()
 
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
