@@ -126,7 +126,8 @@ class TestXfroutSession(unittest.TestCase):
                                        TSIGKeyRing(), ('127.0.0.1', 12345),
                                        # When not testing ACLs, simply accept
                                        isc.acl.dns.REQUEST_LOADER.load(
-                                           [{"action": "ACCEPT"}]))
+                                           [{"action": "ACCEPT"}]),
+                                       {})
         self.mdata = self.create_request_data(False)
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
 
@@ -231,7 +232,31 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(rcode.to_text(), "REFUSED")
 
     def test_transfer_acl(self):
+        # ACL checks only with the default ACL
         def acl_setter(acl):
+            self.xfrsess._acl = acl
+        self.check_transfer_acl(acl_setter)
+
+    def test_transfer_zoneacl(self):
+        # ACL check with a per zone ACL + default ACL.  The per zone ACL
+        # should match the queryied zone, so it should be used.
+        def acl_setter(acl):
+            zone_key = ('example.com.', 'IN')
+            self.xfrsess._zone_config[zone_key] = {}
+            self.xfrsess._zone_config[zone_key]['transfer_acl'] = acl
+            self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+                    {"from": "127.0.0.1", "action": "DROP"}])
+        self.check_transfer_acl(acl_setter)
+
+    def test_transfer_zoneacl_nomatch(self):
+        # similar to the previous one, but the per zone doesn't match the
+        # query.  The default should be used.
+        def acl_setter(acl):
+            zone_key = ('example.org.', 'IN')
+            self.xfrsess._zone_config[zone_key] = {}
+            self.xfrsess._zone_config[zone_key]['transfer_acl'] = \
+                isc.acl.dns.REQUEST_LOADER.load([
+                    {"from": "127.0.0.1", "action": "DROP"}])
             self.xfrsess._acl = acl
         self.check_transfer_acl(acl_setter)
 

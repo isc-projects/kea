@@ -99,7 +99,7 @@ def get_rrset_len(rrset):
 
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
-                 acl):
+                 default_acl, zone_config):
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
@@ -107,8 +107,8 @@ class XfroutSession():
         self._tsig_ctx = None
         self._tsig_len = 0
         self._remote = remote
-        self._acl = acl
-        self._zone_config = {}
+        self._acl = default_acl
+        self._zone_config = zone_config
         self.handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -144,31 +144,29 @@ class XfroutSession():
         try:
             msg = Message(Message.PARSE)
             Message.from_wire(msg, mdata)
-
-            # TSIG related checks
-            rcode = self._check_request_tsig(msg, mdata)
-
-            if rcode == Rcode.NOERROR():
-                # ACL checks
-                acl_result = self._acl.execute(
-                    isc.acl.dns.RequestContext(self._remote,
-                                               msg.get_tsig_record()))
-                if acl_result == DROP:
-                    logger.info(XFROUT_QUERY_DROPPED,
-                                self._get_query_zone_name(msg),
-                                self._get_query_zone_class(msg),
-                                self._remote[0], self._remote[1])
-                    return None, None
-                elif acl_result == REJECT:
-                    logger.info(XFROUT_QUERY_REJECTED,
-                                self._get_query_zone_name(msg),
-                                self._get_query_zone_class(msg),
-                                self._remote[0], self._remote[1])
-                    return Rcode.REFUSED(), msg
-
-        except Exception as err:
+        except Exception as err: # Exception is too broad
             logger.error(XFROUT_PARSE_QUERY_ERROR, err)
             return Rcode.FORMERR(), None
+
+        # TSIG related checks
+        rcode = self._check_request_tsig(msg, mdata)
+
+        if rcode == Rcode.NOERROR():
+            # ACL checks
+            zone_name = msg.get_question()[0].get_name()
+            zone_class = msg.get_question()[0].get_class()
+            acl = self._get_transfer_acl(zone_name, zone_class)
+            acl_result = acl.execute(
+                isc.acl.dns.RequestContext(self._remote,
+                                           msg.get_tsig_record()))
+            if acl_result == DROP:
+                logger.info(XFROUT_QUERY_DROPPED, zone_name, zone_class,
+                            self._remote[0], self._remote[1])
+                return None, None
+            elif acl_result == REJECT:
+                logger.info(XFROUT_QUERY_REJECTED, zone_name, zone_class,
+                            self._remote[0], self._remote[1])
+                return Rcode.REFUSED(), msg
 
         return rcode, msg
 
@@ -406,10 +404,12 @@ class XfroutSession():
         self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len,
                                          count_since_last_tsig_sign)
 
-class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
+class UnixSockServer(socketserver_mixin.NoPollMixIn,
+                     ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
-    def __init__(self, sock_file, handle_class, shutdown_event, config_data, cc):
+    def __init__(self, sock_file, handle_class, shutdown_event, config_data,
+                 cc):
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
         socketserver_mixin.NoPollMixIn.__init__(self)
@@ -505,7 +505,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         if not request_data:
             return
 
-        t = threading.Thread(target = self.finish_request,
+        t = threading.Thread(target=self.finish_request,
                              args = (sock_fd, request_data))
         if self.daemon_threads:
             t.daemon = True
@@ -529,10 +529,14 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         return sock.getpeername()
 
     def finish_request(self, sock_fd, request_data):
-        '''Finish one request by instantiating RequestHandlerClass.'''
+        '''Finish one request by instantiating RequestHandlerClass.
+
+        This method creates a XfroutSession object.
+        '''
         self.RequestHandlerClass(sock_fd, request_data, self,
                                  self.tsig_key_ring,
-                                 self._guess_remote(sock_fd), self._acl)
+                                 self._guess_remote(sock_fd), self._acl,
+                                 self._zone_config)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
@@ -673,8 +677,10 @@ class XfroutServer:
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
-        self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession,
-                                                  self._shutdown_event, self._config_data,
+        self._unix_socket_server = UnixSockServer(self._listen_sock_file,
+                                                  XfroutSession,
+                                                  self._shutdown_event,
+                                                  self._config_data,
                                                   self._cc)
         listener = threading.Thread(target=self._unix_socket_server.serve_forever)
         listener.start()
