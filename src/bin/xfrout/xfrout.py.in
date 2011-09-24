@@ -86,6 +86,9 @@ TSIG_SIGN_EVERY_NTH = 96
 
 XFROUT_MAX_MESSAGE_SIZE = 65535
 
+# In practice, RR class is almost always fixed, so if and when we allow
+# it to be configured, it's convenient to make it optional.
+DEFAULT_RRCLASS = RRClass('IN')
 
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
@@ -401,10 +404,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     def _common_init(self):
         self._lock = threading.Lock()
         self._transfers_counter = 0
-        # This default value will probably get overwritten by the (same)
-        # default value from the spec file. This is here just to make
-        # sure and to make the default value in tests consistent.
+        # These default values will probably get overwritten by the (same)
+        # default value from the spec file. These are here just to make
+        # sure and to make the default values in tests consistent.
         self._acl = REQUEST_LOADER.load('[{"action": "ACCEPT"}]')
+        self._zone_config = {}
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
@@ -551,15 +555,48 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             pass
 
     def update_config_data(self, new_config):
-        '''Apply the new config setting of xfrout module. '''
+        '''Apply the new config setting of xfrout module.
+
+        Note: this method does not provide strong exception guarantee;
+        if an exception is raised in the middle of parsing and building the
+        given config data, the incomplete set of new configuration will
+        remain.  This should be fixed.
+        '''
         logger.info(XFROUT_NEW_CONFIG)
         if 'query_acl' in new_config:
             self._acl = REQUEST_LOADER.load(new_config['query_acl'])
+        if 'zone_config' in new_config:
+            self._zone_config = \
+                self.__create_zone_config(new_config.get('zone_config'))
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
         self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
         self._lock.release()
         logger.info(XFROUT_NEW_CONFIG_DONE)
+
+    def __create_zone_config(self, zone_config_list):
+        new_config = {}
+        for zconf in zone_config_list:
+            # convert the class, origin (name) pair.  First build pydnspp
+            # object to reject invalid input.
+            if 'class' in zconf:
+                zclass = RRClass(zconf['class'])
+            else:
+                zclass = DEFAULT_RRCLASS
+            zorigin = Name(zconf['origin'], True)
+            config_key = (zclass.to_text(), zorigin.to_text())
+
+            # reject duplicate config
+            if config_key in new_config:
+                raise ValueError('Duplicaet zone_config for ' +
+                                 str(zorigin) + '/' + str(zclass))
+
+            # create a new config entry, build any given (and known) config
+            new_config[config_key] = {}
+            if 'transfer_acl' in zconf:
+                new_config[config_key]['transfer_acl'] = \
+                    REQUEST_LOADER.load(zconf['transfer_acl'])
+        return new_config
 
     def set_tsig_key_ring(self, key_list):
         """Set the tsig_key_ring , given a TSIG key string list representation. """

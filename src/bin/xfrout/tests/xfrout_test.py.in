@@ -636,17 +636,17 @@ class TestUnixSockServer(unittest.TestCase):
                                              socket.AI_NUMERICHOST)[0][4])
         self.assertEqual(isc.acl.acl.ACCEPT, self.unix._acl.execute(context))
 
-    def check_loaded_ACL(self):
+    def check_loaded_ACL(self, acl):
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("127.0.0.1",
                                              1234, 0, socket.SOCK_DGRAM,
                                              socket.IPPROTO_UDP,
                                              socket.AI_NUMERICHOST)[0][4])
-        self.assertEqual(isc.acl.acl.ACCEPT, self.unix._acl.execute(context))
+        self.assertEqual(isc.acl.acl.ACCEPT, acl.execute(context))
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("192.0.2.1",
                                              1234, 0, socket.SOCK_DGRAM,
                                              socket.IPPROTO_UDP,
                                              socket.AI_NUMERICHOST)[0][4])
-        self.assertEqual(isc.acl.acl.REJECT, self.unix._acl.execute(context))
+        self.assertEqual(isc.acl.acl.REJECT, acl.execute(context))
 
     def test_update_config_data(self):
         self.check_default_ACL()
@@ -673,12 +673,77 @@ class TestUnixSockServer(unittest.TestCase):
         # Load the ACL
         self.unix.update_config_data({'query_acl': [{'from': '127.0.0.1',
                                                'action': 'ACCEPT'}]})
-        self.check_loaded_ACL()
+        self.check_loaded_ACL(self.unix._acl)
         # Pass a wrong data there and check it does not replace the old one
         self.assertRaises(isc.acl.acl.LoaderError,
                           self.unix.update_config_data,
                           {'query_acl': ['Something bad']})
-        self.check_loaded_ACL()
+        self.check_loaded_ACL(self.unix._acl)
+
+    def test_zone_config_data(self):
+        # By default, there's no specific zone config
+        self.assertEqual({}, self.unix._zone_config)
+
+        # Adding config for a specific zone.  The config is empty unless
+        # explicitly specified.
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com',
+                                            'class': 'IN'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+
+        # zone class can be omitted
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+
+        # zone class, name are stored in the "normalized" form.  class
+        # strings are upper cased, names are down cased.
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'EXAMPLE.com'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+
+        # invalid zone class, name will result in exceptions
+        self.assertRaises(EmptyLabel,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'bad..example'}]})
+        self.assertRaises(InvalidRRClass,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'example.com',
+                                            'class': 'badclass'}]})
+
+        # Configuring a couple of more zones
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com'},
+                                           {'origin': 'example.com',
+                                            'class': 'CH'},
+                                           {'origin': 'example.org'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+        self.assertEqual({}, self.unix._zone_config[('CH', 'example.com.')])
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.org.')])
+
+        # Duplicate data: should be rejected with an exception
+        self.assertRaises(ValueError,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'example.com'},
+                                           {'origin': 'example.org'},
+                                           {'origin': 'example.com'}]})
+
+    def test_zone_config_data_with_acl(self):
+        # Similar to the previous test, but with transfer_acl config
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com',
+                                            'transfer_acl':
+                                                [{'from': '127.0.0.1',
+                                                  'action': 'ACCEPT'}]}]})
+        acl = self.unix._zone_config[('IN', 'example.com.')]['transfer_acl']
+        self.check_loaded_ACL(acl)
+
+        # invalid ACL syntax will be rejected with exception
+        self.assertRaises(isc.acl.acl.LoaderError,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'example.com',
+                                            'transfer_acl':
+                                                [{'action': 'BADACTION'}]}]})
 
     def test_get_db_file(self):
         self.assertEqual(self.unix.get_db_file(), "initdb.file")
