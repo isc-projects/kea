@@ -66,6 +66,9 @@ def send_shutdown(module_name, **kwargs):
 class ThreadingServerManager:
     def __init__(self, server, *args, **kwargs):
         self.server = None
+        # retrying to create a server object until 3 times because a
+        # SessionTimeout depending on some environment or timing may
+        # be accidentally raised
         n = 0
         while True:
             try:
@@ -73,7 +76,6 @@ class ThreadingServerManager:
             except isc.cc.session.SessionTimeout:
                 if self.server is not None:
                     self.server.shutdown()
-                # retrying until 3 times
                 if n >2: raise
                 n = n + 1
                 continue
