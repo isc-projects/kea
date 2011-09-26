@@ -76,6 +76,7 @@ class Component:
             raise ValueError("Can't start already running component")
         self.start_internal()
         self.__running = True
+        self.__start_time = time.time()
 
     def start_internal(self):
         """
@@ -114,9 +115,15 @@ class Component:
         """
         self.failed_internal()
         self.__running = False
-        if self.__kind == 'core':
+        # If it is a core component or the needed component failed to start
+        # (including it stopped really soon)
+        if self.__kind == 'core' or \
+            (self.__kind == 'needed' and time.time() - 10 < self.__start_time):
             self.__dead = True
             self.__boss.shutdown(1)
+        # This means we want to restart
+        else:
+            self.start()
 
     def failed_internal(self):
         """
