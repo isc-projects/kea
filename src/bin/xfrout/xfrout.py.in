@@ -48,10 +48,22 @@ except ImportError as e:
     # must keep running, so we warn about it and move forward.
     log.error(XFROUT_IMPORT, str(e))
 
-from isc.acl.acl import ACCEPT, REJECT, DROP
+from isc.acl.acl import ACCEPT, REJECT, DROP, LoaderError
 from isc.acl.dns import REQUEST_LOADER
 
 isc.util.process.rename()
+
+class XfroutConfigError(Exception):
+    """An exception indicating an error in updating xfrout configuration.
+
+    This exception is raised when the xfrout process encouters an error in
+    handling configuration updates.  Not all syntax error can be caught
+    at the module-CC layer, so xfrout needs to (explicitly or implicitly)
+    validate the given configuration data itself.  When it finds an error
+    it raises this exception (either directly or by converting an exception
+    from other modules) as a unified error in configuration.
+    """
+    pass
 
 def init_paths():
     global SPECFILE_PATH
@@ -583,7 +595,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         '''
         logger.info(XFROUT_NEW_CONFIG)
         if 'transfer_acl' in new_config:
-            self._acl = REQUEST_LOADER.load(new_config['transfer_acl'])
+            try:
+                self._acl = REQUEST_LOADER.load(new_config['transfer_acl'])
+            except LoaderError as e:
+                raise XfroutConfigError('Failed to parse transfer_acl: ' +
+                                        str(e))
         zone_config = new_config.get('zone_config')
         if zone_config is not None:
             self._zone_config = self.__create_zone_config(zone_config)
@@ -608,14 +624,19 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
 
             # reject duplicate config
             if config_key in new_config:
-                raise ValueError('Duplicaet zone_config for ' +
-                                 str(zorigin) + '/' + str(zclass))
+                raise XfroutConfigError('Duplicaet zone_config for ' +
+                                        str(zorigin) + '/' + str(zclass))
 
             # create a new config entry, build any given (and known) config
             new_config[config_key] = {}
             if 'transfer_acl' in zconf:
-                new_config[config_key]['transfer_acl'] = \
-                    REQUEST_LOADER.load(zconf['transfer_acl'])
+                try:
+                    new_config[config_key]['transfer_acl'] = \
+                        REQUEST_LOADER.load(zconf['transfer_acl'])
+                except LoaderError as e:
+                    raise XfroutConfigError('Failed to parse transfer_acl ' +
+                                            'for ' + zorigin.to_text() + '/' +
+                                            zclass_str + ': ' + str(e))
         return new_config
 
     def set_tsig_key_ring(self, key_list):
@@ -785,6 +806,10 @@ if '__main__' == __name__:
         logger.INFO(XFROUT_STOPPED_BY_KEYBOARD)
     except SessionError as e:
         logger.error(XFROUT_CC_SESSION_ERROR, str(e))
+    except ModuleCCSessionError as e:
+        logger.error(XFROUT_MODULECC_SESSION_ERROR, str(e))
+    except XfroutConfigError as e:
+        logger.error(XFROUT_CONFIG_ERROR, str(e))
     except SessionTimeout as e:
         logger.error(XFROUT_CC_SESSION_TIMEOUT_ERROR)
 

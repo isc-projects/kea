@@ -745,7 +745,7 @@ class TestUnixSockServer(unittest.TestCase):
                                                'action': 'ACCEPT'}]})
         self.check_loaded_ACL(self.unix._acl)
         # Pass a wrong data there and check it does not replace the old one
-        self.assertRaises(isc.acl.acl.LoaderError,
+        self.assertRaises(XfroutConfigError,
                           self.unix.update_config_data,
                           {'transfer_acl': ['Something bad']})
         self.check_loaded_ACL(self.unix._acl)
@@ -792,7 +792,7 @@ class TestUnixSockServer(unittest.TestCase):
         self.assertEqual({}, self.unix._zone_config[('IN', 'example.org.')])
 
         # Duplicate data: should be rejected with an exception
-        self.assertRaises(ValueError,
+        self.assertRaises(XfroutConfigError,
                           self.unix.update_config_data,
                           {'zone_config': [{'origin': 'example.com'},
                                            {'origin': 'example.org'},
@@ -809,7 +809,7 @@ class TestUnixSockServer(unittest.TestCase):
         self.check_loaded_ACL(acl)
 
         # invalid ACL syntax will be rejected with exception
-        self.assertRaises(isc.acl.acl.LoaderError,
+        self.assertRaises(XfroutConfigError,
                           self.unix.update_config_data,
                           {'zone_config': [{'origin': 'example.com',
                                             'transfer_acl':
