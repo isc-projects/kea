@@ -390,23 +390,13 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertEqual(ht.address_family, socket.AF_INET6)
                 self.assertTrue(isinstance(ht.socket, socket.socket))
 
-        # dual stack (address is ipv4)
-        if self.ipv6_enabled:
-            server_addresses = get_availaddr()
-            self.stats_httpd = MyStatsHttpd(server_addresses)
-            for ht in self.stats_httpd.httpd:
-                self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
-                self.assertEqual(ht.address_family, socket.AF_INET)
-                self.assertTrue(isinstance(ht.socket, socket.socket))
-
-        # only-ipv4 single stack
-        if not self.ipv6_enabled:
-            server_addresses = get_availaddr()
-            self.stats_httpd = MyStatsHttpd(server_addresses)
-            for ht in self.stats_httpd.httpd:
-                self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
-                self.assertEqual(ht.address_family, socket.AF_INET)
-                self.assertTrue(isinstance(ht.socket, socket.socket))
+        # dual/single stack (address is ipv4)
+        server_addresses = get_availaddr()
+        self.stats_httpd = MyStatsHttpd(server_addresses)
+        for ht in self.stats_httpd.httpd:
+            self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
+            self.assertEqual(ht.address_family, socket.AF_INET)
+            self.assertTrue(isinstance(ht.socket, socket.socket))
 
         # any address (IPv4)
         server_addresses = get_availaddr(address='0.0.0.0')
