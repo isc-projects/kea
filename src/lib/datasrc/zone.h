@@ -62,6 +62,17 @@ public:
     /// we need to add one proving there's no exact match and this is
     /// actually the best wildcard we have). Data sources that don't
     /// support DNSSEC don't need to distinguish them.
+    ///
+    /// In case of NXRRSET related results, the returned NSEC record
+    /// belongs to the domain which would provide the result if it
+    /// contained the correct type (in case of NXRRSET, it is the queried
+    /// domain, in case of WILDCARD_NXRRSET, it is the wildcard domain
+    /// that matched the query name). In case of empty nonterminal cases,
+    /// an NSEC is provided for the interval where the empty nonterminal
+    /// lives, which is the one ending in the subdomain of the empty
+    /// nonterminal.
+    ///
+    /// In case of NXDOMAIN, the returned NSEC covers the queried domain.
     enum Result {
         SUCCESS,                ///< An exact match is found.
         DELEGATION,             ///< The search encounters a zone cut.
