@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from isc.log_messages.bind10_messages import *
+import time
 
 logger = isc.log.Logger("boss")
 
@@ -56,6 +57,11 @@ class Component:
             to restart it and keeps running.
         """
         self.__running = False
+        # Dead like really dead. No resurrection possible.
+        self.__dead = False
+        self.__kind = kind
+        self.__boss = boss
+
     def start(self):
         """
         Start the component for the first time or restart it. If you need to
@@ -64,16 +70,20 @@ class Component:
 
         If you try to start an already running component, it raises ValueError.
         """
+        if self.__dead:
+            raise ValueError("Can't resurrect already dead component")
         if self.running():
             raise ValueError("Can't start already running component")
         self.start_internal()
         self.__running = True
+
     def start_internal(self):
         """
         This method does the actual starting of a process. If you need to
         change the way the component is started, replace this method.
         """
         pass
+
     def stop(self):
         """
         Stop the component. If you need to modify the way a component is
@@ -87,12 +97,14 @@ class Component:
             raise ValueError("Can't stop a component which is not running")
         self.stop_internal()
         self.__running = False
+
     def stop_internal(self):
         """
         This is the method that does the actual stopping of a component.
         You can replace this method if you want a different way to do it.
         """
         pass
+
     def failed(self):
         """
         Notify the component it crashed. This will be called from boss object.
@@ -100,14 +112,23 @@ class Component:
         If you try to call failed on a component that is not running,
         a ValueError is raised.
         """
-        pass
+        self.failed_internal()
+        self.__running = False
+        if self.__kind == 'core':
+            self.__dead = True
+            self.__boss.shutdown(1)
+
     def failed_internal(self):
         """
         This method is called from failed. You can replace it if you need
         some specific behaviour when the component crashes. The default
         implementation is empty.
+
+        Do not raise exceptions from here, please. The propper shutdown
+        would have not happened.
         """
         pass
+
     def running(self):
         """
         Informs if the component is currently running. It assumes the failed
