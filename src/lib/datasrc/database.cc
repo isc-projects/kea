@@ -351,6 +351,36 @@ FINAL_TYPES() {
 
 }
 
+RRsetPtr
+DatabaseClient::Finder::findNSECCover(const Name& name) {
+    try {
+        // Which one should contain the NSEC record?
+        const Name coverName(findPreviousName(name));
+        // Get the record and copy it out
+        FoundRRsets found = getRRsets(coverName.toText(), NSEC_TYPES(), true);
+        const FoundIterator
+            nci(found.second.find(RRType::NSEC()));
+        if (nci != found.second.end()) {
+            return (nci->second);
+        } else {
+            // The previous doesn't contain NSEC.
+            // Badly signed zone or a bug?
+            isc_throw(DataSourceError, "No NSEC in " +
+                      coverName.toText() + ", but it was "
+                      "returned as previous - "
+                      "accessor error? Badly signed zone?");
+        }
+    }
+    catch (const isc::NotImplemented&) {
+        // Well, they want DNSSEC, but there is no available.
+        // So we don't provide anything.
+        LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
+            arg(accessor_->getDBName()).arg(name);
+    }
+    // We didn't find it, return nothing
+    return (RRsetPtr());
+}
+
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
@@ -380,9 +410,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     const size_t current_label_count(name.getLabelCount());
     // This is how many labels we remove to get origin
     size_t remove_labels(current_label_count - origin_label_count);
-
-    // Type shortcut, used a lot here
-    typedef std::map<RRType, RRsetPtr>::const_iterator FoundIterator;
 
     // Now go trough all superdomains from origin down
     for (int i(remove_labels); i > 0; --i) {
@@ -563,24 +590,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                             arg(accessor_->getDBName()).arg(wildcard).
                             arg(name);
                         if (dnssec_data) {
-                            // Which one should contain the NSEC record?
-                            const Name
-                                coverName(findPreviousName(Name(wildcard)));
-                            // Get the record and copy it out
-                            found = getRRsets(coverName.toText(), NSEC_TYPES(),
-                                              true);
-                            const FoundIterator
-                                nci(found.second.find(RRType::NSEC()));
-                            if (nci != found.second.end()) {
+                            result_rrset = findNSECCover(Name(wildcard));
+                            if (result_rrset) {
                                 result_status = WILDCARD_NXRRSET;
-                                result_rrset = nci->second;
-                            } else {
-                                // The previous doesn't contain NSEC.
-                                // Badly signed zone or a bug?
-                                isc_throw(DataSourceError, "No NSEC in " +
-                                          coverName.toText() + ", but it was "
-                                          "returned as previous - "
-                                          "accessor error? Badly signed zone?");
                             }
                         }
                         break;
@@ -608,30 +620,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         if (result_status == SUCCESS) {
             // Should we look for NSEC covering the name?
             if (get_cover) {
-                try {
-                    // Which one should contain the NSEC record?
-                    const Name coverName(findPreviousName(name));
-                    // Get the record and copy it out
-                    found = getRRsets(coverName.toText(), NSEC_TYPES(), true);
-                    const FoundIterator
-                        nci(found.second.find(RRType::NSEC()));
-                    if (nci != found.second.end()) {
-                        result_status = NXDOMAIN;
-                        result_rrset = nci->second;
-                    } else {
-                        // The previous doesn't contain NSEC.
-                        // Badly signed zone or a bug?
-                        isc_throw(DataSourceError, "No NSEC in " +
-                                  coverName.toText() + ", but it was "
-                                  "returned as previous - "
-                                  "accessor error? Badly signed zone?");
-                    }
-                }
-                catch (const isc::NotImplemented&) {
-                    // Well, they want DNSSEC, but there is no available.
-                    // So we don't provide anything.
-                    LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
-                        arg(accessor_->getDBName()).arg(name);
+                result_rrset = findNSECCover(name);
+                if (result_rrset) {
+                    result_status = NXDOMAIN;
                 }
             }
             // Something is not here and we didn't decide yet what
