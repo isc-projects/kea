@@ -455,7 +455,9 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd.cc_session.close()
         self.assertRaises(ValueError, self.stats_httpd.start)
 
-    def test_select_failure1(self):
+    def test_failure_with_a_select_error (self):
+        """checks select.error is raised if the exception except
+        errno.EINTR is raised while it's selecting"""
         def raise_select_except(*args):
             raise select.error('dummy error')
         orig_select = stats_httpd.select.select
@@ -464,7 +466,9 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertRaises(select.error, self.stats_httpd.start)
         stats_httpd.select.select = orig_select
 
-    def test_select_failure2(self):
+    def test_nofailure_with_errno_EINTR(self):
+        """checks no exception is raised if errno.EINTR is raised
+        while it's selecting"""
         def raise_select_except(*args):
             raise select.error(errno.EINTR)
         orig_select = stats_httpd.select.select
