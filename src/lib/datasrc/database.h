@@ -691,6 +691,23 @@ public:
          * \param name The domain to check.
          */
         bool hasSubdomains(const std::string& name);
+
+        /**
+         * \brief Get the NSEC covering a name.
+         *
+         * This one calls findPreviousName on the given name and extracts an NSEC
+         * record on the result. It handles various error cases. The method exists
+         * to share code present at more than one location.
+         */
+        dns::RRsetPtr findNSECCover(const dns::Name& name);
+
+        /**
+         * \brief Convenience type shortcut.
+         *
+         * To find stuff in the result of getRRsets.
+         */
+        typedef std::map<dns::RRType, dns::RRsetPtr>::const_iterator
+            FoundIterator;
     };
 
     /**
