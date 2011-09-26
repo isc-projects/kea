@@ -156,6 +156,9 @@ const char* const TEST_RECORDS[][5] = {
     // doesn't break anything
     {"example.org.", "NS", "3600", "", "ns.example.com."},
     {"example.org.", "A", "3600", "", "192.0.2.1"},
+    {"example.org.", "NSEC", "3600", "", "acnamesig1.example.org. NS A NSEC RRSIG"},
+    {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
+              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
               "20000201000000 12345 example.org. FAKEFAKEFAKE"},
 
@@ -558,6 +561,8 @@ public:
         } else if (id == 42) {
             if (rname == "org.example.nonterminal.") {
                 return ("l.example.org.");
+            } else if (rname == "org.example.aa.") {
+                return ("example.org.");
             } else if (rname == "org.example.www2." ||
                        rname == "org.example.www1.") {
                 return ("www.example.org.");
@@ -1673,6 +1678,15 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                Name("www.example.org."), ZoneFinder::FIND_DNSSEC);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("acnamesig1.example.org. NS A NSEC RRSIG");
+    // This tests it works correctly in apex (there was a bug, where a check
+    // for NS-alone was there and it would throw).
+    doFindTest(*finder, isc::dns::Name("aa.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
+               this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               Name("example.org."), ZoneFinder::FIND_DNSSEC);
 
     // Check that if the DB doesn't support it, the exception from there
     // is not propagated and it only does not include the NSEC
