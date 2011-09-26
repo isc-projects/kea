@@ -86,10 +86,6 @@ TSIG_SIGN_EVERY_NTH = 96
 
 XFROUT_MAX_MESSAGE_SIZE = 65535
 
-# In practice, RR class is almost always fixed, so if and when we allow
-# it to be configured, it's convenient to make it optional.
-DEFAULT_RRCLASS = RRClass.IN()
-
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
     bytes = bytearray()
@@ -182,7 +178,7 @@ class XfroutSession():
         # Internally zone names are managed in lower cased label characters,
         # so we first need to convert the name.
         zone_name_lower = Name(zone_name.to_text(), True)
-        config_key = (zone_name_lower.to_text(), zone_class.to_text())
+        config_key = (zone_class.to_text(), zone_name_lower.to_text())
         if config_key in self._zone_config and \
                 'transfer_acl' in self._zone_config[config_key]:
             return self._zone_config[config_key]['transfer_acl']
@@ -417,8 +413,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
         self._common_init()
-        self.update_config_data(config_data)
         self._cc = cc
+        self.update_config_data(config_data)
 
     def _common_init(self):
         self._lock = threading.Lock()
@@ -586,11 +582,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         remain.  This should be fixed.
         '''
         logger.info(XFROUT_NEW_CONFIG)
-        if 'query_acl' in new_config:
-            self._acl = REQUEST_LOADER.load(new_config['query_acl'])
-        if 'zone_config' in new_config:
-            self._zone_config = \
-                self.__create_zone_config(new_config.get('zone_config'))
+        if 'transfer_acl' in new_config:
+            self._acl = REQUEST_LOADER.load(new_config['transfer_acl'])
+        zone_config = new_config.get('zone_config')
+        if zone_config is not None:
+            self._zone_config = self.__create_zone_config(zone_config)
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
         self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
@@ -602,10 +598,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         for zconf in zone_config_list:
             # convert the class, origin (name) pair.  First build pydnspp
             # object to reject invalid input.
-            if 'class' in zconf:
-                zclass = RRClass(zconf['class'])
-            else:
-                zclass = DEFAULT_RRCLASS
+            zclass_str = zconf.get('class')
+            if zclass_str is None:
+                #zclass_str = 'IN' # temporary
+                zclass_str = self._cc.get_default_value('zone_config/class')
+            zclass = RRClass(zclass_str)
             zorigin = Name(zconf['origin'], True)
             config_key = (zclass.to_text(), zorigin.to_text())
 
