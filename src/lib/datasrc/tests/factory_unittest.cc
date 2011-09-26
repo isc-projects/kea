@@ -26,10 +26,78 @@
 using namespace isc::datasrc;
 using namespace isc::data;
 
+std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
+
 namespace {
 
-// The default implementation is NotImplemented
+TEST(FactoryTest, sqlite3ClientBadConfig) {
+    // We start out by building the configuration data bit by bit,
+    // testing each form of 'bad config', until we have a good one.
+    // Then we do some very basic operation on the client (detailed
+    // tests are left to the implementation-specific backends)
+    ElementPtr config;
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config = Element::create("asdf");
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config = Element::createMap();
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config->set("class", ElementPtr());
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config->set("class", Element::create(1));
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config->set("class", Element::create("FOO"));
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config->set("class", Element::create("IN"));
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config->set("database_file", ElementPtr());
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config->set("database_file", Element::create(1));
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 DataSourceConfigError);
+
+    config->set("database_file", Element::create("/foo/bar/doesnotexist"));
+    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
+                 SQLite3Error);
+
+    config->set("database_file", Element::create(SQLITE_DBFILE_EXAMPLE_ORG));
+    DataSourceClientContainer dsc("sqlite3", config);
+
+    DataSourceClient::FindResult result1(
+        dsc.getInstance().findZone(isc::dns::Name("example.org.")));
+    ASSERT_EQ(result::SUCCESS, result1.code);
+
+    DataSourceClient::FindResult result2(
+        dsc.getInstance().findZone(isc::dns::Name("no.such.zone.")));
+    ASSERT_EQ(result::NOTFOUND, result2.code);
+
+    ZoneIteratorPtr iterator(dsc.getInstance().getIterator(
+        isc::dns::Name("example.org.")));
+
+    ZoneUpdaterPtr updater(dsc.getInstance().getUpdater(
+        isc::dns::Name("example.org."), false));
+}
+
 TEST(FactoryTest, memoryClient) {
+    // We start out by building the configuration data bit by bit,
+    // testing each form of 'bad config', until we have a good one.
+    // Then we do some very basic operation on the client (detailed
+    // tests are left to the implementation-specific backends)
     ElementPtr config;
     ASSERT_THROW(DataSourceClientContainer client("memory", config),
                  DataSourceConfigError);
@@ -83,84 +151,25 @@ TEST(FactoryTest, memoryClient) {
                  DataSourceConfigError);
 
     config->set("zones", Element::createList());
-    DataSourceClientContainer("memory", config);
+    DataSourceClientContainer dsc("memory", config);
+
+    // Once it is able to load some zones, we should add a few tests
+    // here to see that it does.
+    DataSourceClient::FindResult result(
+        dsc.getInstance().findZone(isc::dns::Name("no.such.zone.")));
+    ASSERT_EQ(result::NOTFOUND, result.code);
+
+    ASSERT_THROW(dsc.getInstance().getIterator(isc::dns::Name("example.org.")),
+                 DataSourceError);
+
+    ASSERT_THROW(dsc.getInstance().getUpdater(isc::dns::Name("no.such.zone."),
+                                              false), isc::NotImplemented);
 }
 
 TEST(FactoryTest, badType) {
-    ASSERT_THROW(DataSourceClientContainer("foo", ElementPtr()), DataSourceError);
+    ASSERT_THROW(DataSourceClientContainer("foo", ElementPtr()),
+                                           DataSourceError);
 }
 
-TEST(FactoryTest, sqlite3ClientBadConfig) {
-    ElementPtr config;
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config = Element::create("asdf");
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config = Element::createMap();
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("class", ElementPtr());
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("class", Element::create(1));
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("class", Element::create("FOO"));
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("class", Element::create("IN"));
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("database_file", ElementPtr());
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("database_file", Element::create(1));
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("database_file", Element::create("/foo/bar/doesnotexist"));
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 SQLite3Error);
-}
-
-
-TEST(FactoryTest, sqlite3ClientBadConfig3) {
-    ElementPtr config;
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config = Element::create("asdf");
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config = Element::createMap();
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("database_file", ElementPtr());
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("database_file", Element::create(1));
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
-
-    config->set("database_file", Element::create("/foo/bar/doesnotexist"));
-    ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 SQLite3Error);
-
-    // TODO remove this one (now config isn't bad anymore) or find better filename
-    config->set("database_file", Element::create("/tmp/some_file.sqlite3"));
-    DataSourceClientContainer dsc("sqlite3", config);
-}
 } // end anonymous namespace
 

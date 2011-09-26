@@ -27,12 +27,10 @@ using namespace isc::datasrc;
 namespace isc {
 namespace datasrc {
 
-
-DLHolder::DLHolder(const std::string& name) : ds_name_(name) {
-    ds_lib_ = dlopen(ds_name_.c_str(), RTLD_NOW | RTLD_LOCAL);
+DLHolder::DLHolder(const std::string& name) {
+    ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (ds_lib_ == NULL) {
-        isc_throw(DataSourceError, "Unable to load " << ds_name_ <<
-                  ": " << dlerror());
+        isc_throw(DataSourceLibraryError, dlerror());
     }
 }
 
@@ -51,9 +49,7 @@ DLHolder::getSym(const char* name) {
 
     const char* dlsym_error = dlerror();
     if (dlsym_error != NULL) {
-        dlclose(ds_lib_);
-        isc_throw(DataSourceError, "Error in library " << ds_name_ <<
-                  ": " << dlsym_error);
+        isc_throw(DataSourceLibraryError, dlsym_error);
     }
 
     return (sym);
