@@ -366,10 +366,17 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
         } else {
             // The previous doesn't contain NSEC.
             // Badly signed zone or a bug?
+
+            // FIXME: Currently, if the zone is not signed, we could get
+            // here. In that case we can't really throw, but for now, we can't
+            // recognize it. So we don't throw at all, enable it once
+            // we have a is_signed flag or something.
+#if 0
             isc_throw(DataSourceError, "No NSEC in " +
                       coverName.toText() + ", but it was "
                       "returned as previous - "
                       "accessor error? Badly signed zone?");
+#endif
         }
     }
     catch (const isc::NotImplemented&) {
