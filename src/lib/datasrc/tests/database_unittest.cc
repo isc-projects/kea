@@ -2368,9 +2368,19 @@ TYPED_TEST(DatabaseClientTest, invalidRdata) {
 TEST_F(MockDatabaseClientTest, missingNSEC) {
     shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
+    /*
+     * FIXME: For now, we can't really distinguish this bogus input
+     * from not-signed zone so we can't throw. But once we can,
+     * enable the original test.
+     */
+#if 0
     EXPECT_THROW(finder->find(Name("badnsec2.example.org."), RRType::A(), NULL,
                               ZoneFinder::FIND_DNSSEC),
                  DataSourceError);
+#endif
+    doFindTest(*finder, Name("badnsec2.example.org."), RRType::A(),
+               RRType::A(), this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_);
 }
 
 TEST_F(MockDatabaseClientTest, badName) {
