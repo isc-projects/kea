@@ -16,6 +16,7 @@
 #include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -804,12 +805,122 @@ InMemoryClient::getUpdater(const isc::dns::Name&, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
 
-// due to a c++ symbol lookup oddity, we need to explicitely put this into
-// an anonymous namespace. Once we remove memory.cc from the general datasource
-// lib, we can export this
+
+namespace {
+// convencience function to add an error message to a list of those
+// (TODO: move functions like these to some util lib?)
+void
+addError(ElementPtr errors, const std::string& error) {
+    if (errors != ElementPtr() && errors->getType() == Element::list) {
+        errors->add(Element::create(error));
+    }
+}
+
+/// Check if the given element exists in the map, and if it is a string
 bool
-checkConfig(ConstElementPtr, ElementPtr) {
-    // current inmem has no options (yet)
+checkConfigElementString(ConstElementPtr config, const std::string& name,
+                         ElementPtr errors)
+{
+    if (!config->contains(name)) {
+        addError(errors,
+                 "Config for memory backend does not contain a '"
+                 "type"
+                 "' value");
+        return false;
+    } else if (!config->get(name) ||
+               config->get(name)->getType() != Element::string) {
+        addError(errors, "value of " + name +
+                 " in memory backend config is not a string");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool
+checkZoneConfig(ConstElementPtr config, ElementPtr errors) {
+    bool result = true;
+    if (!config || config->getType() != Element::map) {
+        addError(errors, "Elements in memory backend's zone list must be maps");
+        result = false;
+    } else {
+        if (!checkConfigElementString(config, "origin", errors)) {
+            result = false;
+        }
+        if (!checkConfigElementString(config, "file", errors)) {
+            result = false;
+        }
+        // we could add some existence/readabilty/parsability checks here
+        // if we want
+    }
+    return result;
+}
+
+} // end anonymous namespace
+
+bool
+checkConfig(ConstElementPtr config, ElementPtr errors) {
+    /* Specific configuration is under discussion, right now this accepts
+     * the 'old' configuration, see [TODO]
+     * So for memory datasource, we get a structure like this:
+     * { "type": string ("memory"),
+     *   "class": string ("IN"/"CH"/etc),
+     *   "zones": list
+     * }
+     * Zones list is a list of maps:
+     * { "origin": string,
+     *     "file": string
+     * }
+     *
+     * At this moment we cannot be completely sure of the contents of the
+     * structure, so we have to do some more extensive tests than should
+     * strictly be necessary (e.g. existence and type of elements)
+     */
+    bool result = true;
+
+    if (!config || config->getType() != Element::map) {
+        addError(errors, "Base config for memory backend must be a map");
+        result = false;
+    } else {
+        if (!checkConfigElementString(config, "type", errors)) {
+            result = false;
+        } else {
+            if (config->get("type")->stringValue() != "memory") {
+                addError(errors,
+                         "Config for memory backend is not of type \"memory\"");
+                result = false;
+            }
+        }
+        if (!checkConfigElementString(config, "class", errors)) {
+            result = false;
+        } else {
+            try {
+                RRClass rrc(config->get("class")->stringValue());
+            } catch (const isc::Exception& rrce) {
+                addError(errors,
+                         "Error parsing class config for memory backend: " +
+                         std::string(rrce.what()));
+                result = false;
+            }
+        }
+        if (!config->contains("zones")) {
+            addError(errors, "No 'zones' element in memory backend config");
+            result = false;
+        } else if (!config->get("zones") ||
+                   config->get("zones")->getType() != Element::list) {
+            addError(errors, "'zones' element in memory backend config is not a list");
+            result = false;
+        } else {
+            BOOST_FOREACH(ConstElementPtr zone_config,
+                          config->get("zones")->listValue()) {
+                if (!checkZoneConfig(zone_config, errors)) {
+                    result = false;
+                }
+            }
+        }
+    }
+
+    return (result);
     return true;
 }
 
