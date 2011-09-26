@@ -375,6 +375,11 @@ TEST_F(SQLite3AccessorTest, findPrevious) {
     // be skipped.
     EXPECT_EQ("example.com.",
               accessor->findPreviousName(1, "com.example.cname-ext."));
+    // Throw when we are before the origin
+    EXPECT_THROW(accessor->findPreviousName(1, "com.example."),
+                 isc::NotImplemented);
+    EXPECT_THROW(accessor->findPreviousName(1, "a.example."),
+                 isc::NotImplemented);
 }
 
 TEST_F(SQLite3AccessorTest, findPreviousNoData) {
