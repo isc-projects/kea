@@ -128,6 +128,26 @@ class ComponentTests(unittest.TestCase):
         # Nor started
         self.assertRaises(ValueError, component.start)
 
+    def check_restarted(self, component):
+        """
+        Check the component restarted successfully.
+
+        Currently, it is implemented as starting it again right away. This will
+        change, it will register itself into the restart schedule in boss. But
+        as the integration with boss is not clear yet, we don't know how
+        exactly that will happen.
+
+        Reset the self.__start_called to False before calling the function when
+        the component should fail.
+        """
+        self.assertFalse(self.__shutdown)
+        self.assertTrue(self.__start_called)
+        self.assertFalse(self.__stop_called)
+        self.assertTrue(self.__failed_called)
+        self.assertTrue(component.running())
+        # Check it can't be started again
+        self.assertRaises(ValueError, component.start)
+
     def do_start_stop(self, kind):
         """
         This is a body of a test. It creates a componend of given kind,
@@ -202,6 +222,37 @@ class ComponentTests(unittest.TestCase):
         component.failed()
         # Check the component is still dead
         self.check_dead(component)
+
+    def test_start_fail_needed(self):
+        """
+        Start and then fail a needed component. As this happens really soon after
+        being started, it is considered failure to start and should bring down the
+        whole server.
+        """
+        # Just ordinary startup
+        component = self.create_component('needed')
+        self.check_startup(component)
+        component.start()
+        self.check_started(component)
+        # Make it fail right away.
+        component.failed()
+        self.check_dead(component)
+
+    def test_start_fail_needed_later(self):
+        """
+        Start and then fail a needed component. But the failure is later on, so
+        we just restart it and will be happy.
+        """
+        # Just ordinary startup
+        component = self.create_component('needed')
+        self.check_startup(component)
+        component.start()
+        self.check_started(component)
+        # Make it fail later on
+        self.__start_called = False
+        self.timeskip()
+        component.failed()
+        self.check_restarted(component)
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
