@@ -102,6 +102,9 @@ class ComponentTests(unittest.TestCase):
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
         self.assertFalse(component.running())
+        # We can't stop or fail the component yet
+        self.assertRaises(ValueError, component.stop)
+        self.assertRaises(ValueError, component.failed)
 
     def check_started(self, component):
         """
@@ -173,6 +176,8 @@ class ComponentTests(unittest.TestCase):
         self.assertFalse(component.running())
         # Check it can't be stopped twice
         self.assertRaises(ValueError, component.stop)
+        # Or failed
+        self.assertRaises(ValueError, component.failed)
         # But it can be started again if it is stopped
         # (no more checking here, just it doesn't crash)
         component.start()
