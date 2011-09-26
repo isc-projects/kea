@@ -2353,6 +2353,13 @@ TYPED_TEST(DatabaseClientTest, previous) {
 
         EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
                      isc::NotImplemented);
+    } else {
+        // No need to test this on mock one, because we test only that
+        // the exception gets through
+
+        // A name before the origin
+        EXPECT_THROW(finder->findPreviousName(Name("example.com")),
+                     isc::NotImplemented);
     }
 }
 
