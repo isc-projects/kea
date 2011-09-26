@@ -9,6 +9,7 @@ import sys
 import threading
 import tempfile
 import json
+import signal
 
 import msgq
 import isc.config.cfgmgr
@@ -18,6 +19,24 @@ import stats_httpd
 # Change value of BIND10_MSGQ_SOCKET_FILE in environment variables
 if 'BIND10_MSGQ_SOCKET_FILE' not in os.environ:
     os.environ['BIND10_MSGQ_SOCKET_FILE'] = tempfile.mktemp(prefix='msgq_socket_')
+
+class SignalHandler():
+    """A signal handler class for deadlock in unittest"""
+    def __init__(self, fail_handler, timeout=20):
+        """sets a schedule in SIGARM for invoking the handler via
+        unittest.TestCase after timeout seconds (default is 20)"""
+        self.fail_handler = fail_handler
+        self.orig_handler = signal.signal(signal.SIGALRM, self.sig_handler)
+        signal.alarm(timeout)
+
+    def reset(self):
+        """resets the schedule in SIGALRM"""
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, self.orig_handler)
+
+    def sig_handler(self, signal, frame):
+        """envokes unittest.TestCase.fail as a signal handler"""
+        self.fail_handler("A deadlock might be detected")
 
 def send_command(command_name, module_name, params=None, session=None, nonblock=False, timeout=None):
     if session is not None:
