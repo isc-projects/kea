@@ -20,6 +20,7 @@ import unittest
 import os
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from isc.cc.session import *
+import isc.config
 from pydnspp import *
 from xfrout import *
 import xfrout
@@ -241,7 +242,7 @@ class TestXfroutSession(unittest.TestCase):
         # ACL check with a per zone ACL + default ACL.  The per zone ACL
         # should match the queryied zone, so it should be used.
         def acl_setter(acl):
-            zone_key = ('example.com.', 'IN')
+            zone_key = ('IN', 'example.com.')
             self.xfrsess._zone_config[zone_key] = {}
             self.xfrsess._zone_config[zone_key]['transfer_acl'] = acl
             self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
@@ -252,7 +253,7 @@ class TestXfroutSession(unittest.TestCase):
         # similar to the previous one, but the per zone doesn't match the
         # query.  The default should be used.
         def acl_setter(acl):
-            zone_key = ('example.org.', 'IN')
+            zone_key = ('IN', 'example.org.')
             self.xfrsess._zone_config[zone_key] = {}
             self.xfrsess._zone_config[zone_key]['transfer_acl'] = \
                 isc.acl.dns.REQUEST_LOADER.load([
@@ -273,8 +274,8 @@ class TestXfroutSession(unittest.TestCase):
         # will still be used.
         com_acl = isc.acl.dns.REQUEST_LOADER.load([
                 {"from": "127.0.0.1", "action": "REJECT"}])
-        self.xfrsess._zone_config[('example.com.', 'IN')] = {}
-        self.xfrsess._zone_config[('example.com.', 'IN')]['transfer_acl'] = \
+        self.xfrsess._zone_config[('IN', 'example.com.')] = {}
+        self.xfrsess._zone_config[('IN', 'example.com.')]['transfer_acl'] = \
             com_acl
         self.assertEqual(com_acl,
                          self.xfrsess._get_transfer_acl(Name('example.com'),
@@ -639,9 +640,11 @@ class TestXfroutSession(unittest.TestCase):
         # and it should not have sent anything else
         self.assertEqual(0, len(self.sock.sendqueue))
 
-class MyCCSession():
+class MyCCSession(isc.config.ConfigData):
     def __init__(self):
-        pass
+        module_spec = isc.config.module_spec_from_file(
+            xfrout.SPECFILE_LOCATION)
+        ConfigData.__init__(self, module_spec)
 
     def get_remote_config_value(self, module_name, identifier):
         if module_name == "Auth" and identifier == "database_file":
@@ -738,13 +741,13 @@ class TestUnixSockServer(unittest.TestCase):
         self.assertEqual(self.unix.tsig_key_ring.size(), 0)
 
         # Load the ACL
-        self.unix.update_config_data({'query_acl': [{'from': '127.0.0.1',
+        self.unix.update_config_data({'transfer_acl': [{'from': '127.0.0.1',
                                                'action': 'ACCEPT'}]})
         self.check_loaded_ACL(self.unix._acl)
         # Pass a wrong data there and check it does not replace the old one
         self.assertRaises(isc.acl.acl.LoaderError,
                           self.unix.update_config_data,
-                          {'query_acl': ['Something bad']})
+                          {'transfer_acl': ['Something bad']})
         self.check_loaded_ACL(self.unix._acl)
 
     def test_zone_config_data(self):
