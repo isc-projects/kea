@@ -113,6 +113,8 @@ class Component:
         If you try to call failed on a component that is not running,
         a ValueError is raised.
         """
+        if not self.running():
+            raise ValueError("Can't fail component that isn't running")
         self.failed_internal()
         self.__running = False
         # If it is a core component or the needed component failed to start
