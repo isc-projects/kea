@@ -202,7 +202,7 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(response.getheader('Location'),
                          "http://%s:%d%s" % (self.address, self.port, stats_httpd.XML_URL_PATH))
 
-        # # 404 NotFound
+        # 404 NotFound
         self.client._http_vsn_str = 'HTTP/1.0'
         self.client.putrequest('GET', '/path/to/foo/bar')
         self.client.endheaders()
