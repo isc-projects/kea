@@ -32,13 +32,12 @@ import time
 import threading
 import http.client
 import xml.etree.ElementTree
-import signal
 import random
 
 import isc
 import stats_httpd
 import stats
-from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, send_command, send_shutdown
+from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, SignalHandler, send_command, send_shutdown
 
 DUMMY_DATA = {
     'Boss' : {
@@ -100,9 +99,8 @@ def is_ipv6_enabled(address='::1', port=8001):
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
     def setUp(self):
-        # deadlock will be killed afer 20 secs
-        signal.signal(signal.SIGALRM, self.my_signal_handler)
-        signal.alarm(20)
+        # set the signal handler for deadlock
+        self.sig_handler = SignalHandler(self.fail)
         self.base = BaseModules()
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats = self.stats_server.server
@@ -120,9 +118,8 @@ class TestHttpHandler(unittest.TestCase):
         self.stats_httpd_server.shutdown()
         self.stats_server.shutdown()
         self.base.shutdown()
-
-    def my_signal_handler(self, signal, frame):
-        self.fail("A deadlock might be detected")
+        # reset the signal handler
+        self.sig_handler.reset()
 
     def test_do_GET(self):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
@@ -285,18 +282,16 @@ class TestHttpServerError(unittest.TestCase):
 class TestHttpServer(unittest.TestCase):
     """Tests for HttpServer class"""
     def setUp(self):
-        # deadlock will be killed afer 20 secs
-        signal.signal(signal.SIGALRM, self.my_signal_handler)
-        signal.alarm(20)
+        # set the signal handler for deadlock
+        self.sig_handler = SignalHandler(self.fail)
         self.base = BaseModules()
 
     def tearDown(self):
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
         self.base.shutdown()
-
-    def my_signal_handler(self, signal, frame):
-        self.fail("A deadlock might be detected")
+        # reset the signal handler
+        self.sig_handler.reset()
 
     def test_httpserver(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
@@ -318,9 +313,8 @@ class TestStatsHttpd(unittest.TestCase):
     """Tests for StatsHttpd class"""
 
     def setUp(self):
-        # deadlock will be killed afer 20 secs
-        signal.signal(signal.SIGALRM, self.my_signal_handler)
-        signal.alarm(20)
+        # set the signal handler for deadlock
+        self.sig_handler = SignalHandler(self.fail)
         self.base = BaseModules()
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats_server.run()
@@ -332,9 +326,8 @@ class TestStatsHttpd(unittest.TestCase):
             self.stats_httpd.stop()
         self.stats_server.shutdown()
         self.base.shutdown()
-
-    def my_signal_handler(self, signal, frame):
-        self.fail("A deadlock might be detected")
+        # reset the signal handler
+        self.sig_handler.reset()
 
     def test_init(self):
         server_address = get_availaddr()

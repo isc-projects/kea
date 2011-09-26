@@ -27,11 +27,10 @@ import threading
 import io
 import time
 import imp
-import signal
 
 import stats
 import isc.cc.session
-from test_utils import BaseModules, ThreadingServerManager, MyStats, send_command, send_shutdown
+from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown
 
 class TestUtilties(unittest.TestCase):
     items = [
@@ -147,9 +146,8 @@ class TestCallback(unittest.TestCase):
 
 class TestStats(unittest.TestCase):
     def setUp(self):
-        # deadlock will be killed afer 20 secs
-        signal.signal(signal.SIGALRM, self.my_signal_handler)
-        signal.alarm(20)
+        # set the signal handler for deadlock
+        self.sig_handler = SignalHandler(self.fail)
         self.base = BaseModules()
         self.stats = stats.Stats()
         self.const_timestamp = 1308730448.965706
@@ -158,9 +156,8 @@ class TestStats(unittest.TestCase):
 
     def tearDown(self):
         self.base.shutdown()
-
-    def my_signal_handler(self, signal, frame):
-        self.fail("A deadlock might be detected")
+        # reset the signal handler
+        self.sig_handler.reset()
 
     def test_init(self):
         self.assertEqual(self.stats.module_name, 'Stats')
