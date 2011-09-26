@@ -357,8 +357,8 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
         // Which one should contain the NSEC record?
         const Name coverName(findPreviousName(name));
         // Get the record and copy it out
-        FoundRRsets found = getRRsets(coverName.toText(), NSEC_TYPES(),
-                                      coverName != getOrigin());
+        const FoundRRsets found = getRRsets(coverName.toText(), NSEC_TYPES(),
+                                            coverName != getOrigin());
         const FoundIterator
             nci(found.second.find(RRType::NSEC()));
         if (nci != found.second.end()) {
