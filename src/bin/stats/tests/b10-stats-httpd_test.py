@@ -58,9 +58,14 @@ DUMMY_DATA = {
     }
 
 def get_availaddr(address='127.0.0.1', port=8001):
-    """returns tuple of address and port available to listen on the
-    platform. Default port range is between 8001 and 65535. If port is
-    over flow(greater than 65535), OverflowError is thrown"""
+    """returns a tuple of address and port which is available to
+    listen on the platform. The first argument is a address for
+    search. The second argument is a port for search. If a set of
+    address and port is failed on the search for the availability, the
+    port number is increased and it goes on the next trial until the
+    available set of address and port is looked up. If the port number
+    reaches over 65535, it may stop the search and raise a
+    OverflowError exception."""
     while True:
         for addr in socket.getaddrinfo(
             address, port, 0,
