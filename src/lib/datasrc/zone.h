@@ -70,12 +70,11 @@ public:
     /// that matched the query name). In case of an empty nonterminal,
     /// an NSEC is provided for the interval where the empty nonterminal
     /// lives. The end of the interval is the subdomain causing existence
-    /// of the empty nonterminal (if there's sub.x.example.com, and no
-    /// x.example.com, then x.example.com exists implicitly - is the empty
+    /// of the empty nonterminal (if there's sub.x.example.com, and no record
+    /// in x.example.com, then x.example.com exists implicitly - is the empty
     /// nonterminal and sub.x.example.com is the subdomain causing it).
     ///
-    /// Examples: if zone "example.com" has the following
-    /// record:
+    /// Examples: if zone "example.com" has the following record:
     /// \code
     /// a.b.example.com. NSEC c.example.com.
     /// \endcode
