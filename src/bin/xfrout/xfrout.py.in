@@ -431,6 +431,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         '''Initialization shared with the mock server class used for tests'''
         self._lock = threading.Lock()
         self._transfers_counter = 0
+        self._zone_config = {}
+        self._acl = None # this will be initialized in update_config_data()
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
@@ -536,10 +538,13 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
 
         This method creates a XfroutSession object.
         '''
+        self._lock.acquire()
+        acl = self._acl
+        zone_config = self._zone_config
+        self._lock.release()
         self.RequestHandlerClass(sock_fd, request_data, self,
                                  self.tsig_key_ring,
-                                 self._guess_remote(sock_fd), self._acl,
-                                 self._zone_config)
+                                 self._guess_remote(sock_fd), acl, zone_config)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
@@ -583,24 +588,30 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module.
 
-        Note: this method does not provide strong exception guarantee;
-        if an exception is raised in the middle of parsing and building the
-        given config data, the incomplete set of new configuration will
-        remain.  This should be fixed.
         '''
-        logger.info(XFROUT_NEW_CONFIG)
-        if 'transfer_acl' in new_config:
-            try:
-                self._acl = REQUEST_LOADER.load(new_config['transfer_acl'])
-            except LoaderError as e:
-                raise XfroutConfigError('Failed to parse transfer_acl: ' +
-                                        str(e))
-        zone_config = new_config.get('zone_config')
-        if zone_config is not None:
-            self._zone_config = self.__create_zone_config(zone_config)
         self._lock.acquire()
-        self._max_transfers_out = new_config.get('transfers_out')
-        self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
+        try:
+            logger.info(XFROUT_NEW_CONFIG)
+            new_acl = self._acl
+            if 'transfer_acl' in new_config:
+                try:
+                    new_acl = REQUEST_LOADER.load(new_config['transfer_acl'])
+                except LoaderError as e:
+                    raise XfroutConfigError('Failed to parse transfer_acl: ' +
+                                            str(e))
+
+            new_zone_config = self._zone_config
+            zconfig_data = new_config.get('zone_config')
+            if zconfig_data is not None:
+                new_zone_config = self.__create_zone_config(zconfig_data)
+
+            self._acl = new_acl
+            self._zone_config = new_zone_config
+            self._max_transfers_out = new_config.get('transfers_out')
+            self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
+        except Exception as e:
+            self._lock.release()
+            raise e
         self._lock.release()
         logger.info(XFROUT_NEW_CONFIG_DONE)
 
