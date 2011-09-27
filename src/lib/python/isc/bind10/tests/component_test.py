@@ -340,6 +340,14 @@ class ComponentTests(unittest.TestCase):
         self.assertRaises(TestError, component.start)
         self.__check_restarted(component)
 
+    def test_bad_kind(self):
+        """
+        Test the component rejects nonsensual kinds. This includes bad
+        capitalization.
+        """
+        for kind in ['Core', 'CORE', 'nonsense', 'need ed', 'required']:
+            self.assertRaises(ValueError, Component, 'No process', self, kind)
+
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
     isc.log.resetUnitTestRootLogger()

@@ -56,6 +56,8 @@ class Component:
             doesn't start or crashes for some reason, the system simply tries
             to restart it and keeps running.
         """
+        if kind not in ['core', 'needed', 'dispensable']:
+            raise ValueError('Component kind can not be ' + kind)
         self.__running = False
         # Dead like really dead. No resurrection possible.
         self.__dead = False
