@@ -22,6 +22,47 @@
 
 #include <datasrc/zone.h>
 
+/// \file
+/// Datasource clients
+///
+/// The data source client API is specified in client.h, and provides the
+/// functionality to query and modify data in the data sources. There are
+/// multiple datasource implementations, and by subclassing DataSourceClient or
+/// DatabaseClient, more can be added.
+///
+/// All datasources are implemented as loadable modules, with a name of the
+/// form "<type>_ds.so". This has been chosen intentionally, to minimize
+/// confusion and potential mistakes.
+///
+/// In order to use a datasource client backend, the class
+/// DataSourceClientContainer is provided in factory.h; this will load the
+/// library, set up the instance, and clean everything up once it is destroyed.
+///
+/// Access to the actual instance is provided with the getInstance() method
+/// in DataSourceClientContainer
+///
+/// \note Depending on actual usage, we might consider making the container
+/// a transparent abstraction layer, so it can be used as a DataSourceClient
+/// directly. This has some other implications though so for now the only access
+/// provided is through getInstance()).
+///
+/// For datasource backends, we use a dynamically loaded library system (with
+/// dlopen()). This library must contain the following things;
+/// - A subclass of DataSourceClient or DatabaseClient (which itself is a
+///   subclass of DataSourceClient)
+/// - A creator function for an instance of that subclass, of the form:
+/// \code
+/// extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr cfg);
+/// \endcode
+/// - A destructor for said instance, of the form:
+/// \code
+/// extern "C" void destroyInstance(isc::data::DataSourceClient* instance);
+/// \endcode
+///
+/// See the documentation for the \link DataSourceClient \endlink class for
+/// more information on implementing subclasses of it.
+///
+
 namespace isc {
 namespace datasrc {
 
@@ -38,6 +79,9 @@ typedef boost::shared_ptr<ZoneIterator> ZoneIteratorPtr;
 /// has limited focus and delegates the responsibility for these specific
 /// operations to other classes; in general methods of this class act as
 /// factories of these other classes.
+///
+/// See \link datasrc/client.h datasrc/client.h \endlink for more information
+/// on adding datasource implementations.
 ///
 /// The following derived classes are currently (expected to be) provided:
 /// - \c InMemoryClient: A client of a conceptual data source that stores
