@@ -63,7 +63,7 @@ typedef void ds_destructor(DataSourceClient* instance);
 ///       in other places than for dynamically loading datasources, then, apart
 ///       from moving it to another location, we also need to make the
 ///       exceptions raised more general.
-class DLHolder {
+class LibraryContainer {
 public:
     /// \brief Constructor
     ///
@@ -72,12 +72,12 @@ public:
     ///
     /// \exception DataSourceLibraryError If the library cannot be found or
     ///            cannot be loaded.
-    DLHolder(const std::string& name);
+    LibraryContainer(const std::string& name);
 
     /// \brief Destructor
     ///
     /// Cleans up the library by calling dlclose()
-    ~DLHolder();
+    ~LibraryContainer();
 
     /// \brief Retrieve a symbol
     ///
@@ -101,7 +101,9 @@ private:
 /// Given a datasource type and a type-specific set of configuration data,
 /// the corresponding dynamic library is loaded (if it hadn't been already),
 /// and an instance is created. This instance is stored within this structure,
-/// and can be accessed through getInstance().
+/// and can be accessed through getInstance(). Upon destruction of this
+/// container, the stored instance of the DataSourceClient is deleted with
+/// the destructor function provided by the loaded library.
 ///
 /// The 'type' is actually the name of the library, minus the '_ds.so' postfix
 /// Datasource implementation libraries therefore have a fixed name, both for
@@ -112,8 +114,12 @@ private:
 /// There are of course some demands to an implementation, not all of which
 /// can be verified compile-time. It must provide a creator and destructor
 /// functions. The creator function must return an instance of a subclass of
-/// DataSourceClient.
+/// DataSourceClient. The prototypes of these functions are as follows:
+/// \code
+/// extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr cfg);
 ///
+/// extern "C" void destroyInstance(isc::data::DataSourceClient* instance);
+/// \endcode
 class DataSourceClientContainer {
 public:
     /// \brief Constructor
@@ -145,7 +151,7 @@ public:
 private:
     DataSourceClient* instance_;
     ds_destructor* destructor_;
-    DLHolder ds_lib_;
+    LibraryContainer ds_lib_;
 };
 
 } // end namespace datasrc

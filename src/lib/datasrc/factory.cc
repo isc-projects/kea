@@ -27,19 +27,19 @@ using namespace isc::datasrc;
 namespace isc {
 namespace datasrc {
 
-DLHolder::DLHolder(const std::string& name) {
+LibraryContainer::LibraryContainer(const std::string& name) {
     ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (ds_lib_ == NULL) {
         isc_throw(DataSourceLibraryError, dlerror());
     }
 }
 
-DLHolder::~DLHolder() {
+LibraryContainer::~LibraryContainer() {
     dlclose(ds_lib_);
 }
 
 void*
-DLHolder::getSym(const char* name) {
+LibraryContainer::getSym(const char* name) {
     // Since dlsym can return NULL on success, we check for errors by
     // first clearing any existing errors with dlerror(), then calling dlsym,
     // and finally checking for errors with dlerror()
