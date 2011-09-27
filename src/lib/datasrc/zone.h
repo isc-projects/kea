@@ -67,10 +67,14 @@ public:
     /// belongs to the domain which would provide the result if it
     /// contained the correct type (in case of NXRRSET, it is the queried
     /// domain, in case of WILDCARD_NXRRSET, it is the wildcard domain
-    /// that matched the query name). In case of empty nonterminal cases,
+    /// that matched the query name). In case of an empty nonterminal,
     /// an NSEC is provided for the interval where the empty nonterminal
-    /// lives, which is the one ending in the subdomain of the empty
-    /// nonterminal.  Examples: if zone "example.com" has the following
+    /// lives. The end of the interval is the subdomain causing existence
+    /// of the empty nonterminal (if there's sub.x.example.com, and no
+    /// x.example.com, then x.example.com exists implicitly - is the empty
+    /// nonterminal and sub.x.example.com is the subdomain causing it).
+    ///
+    /// Examples: if zone "example.com" has the following
     /// record:
     /// \code
     /// a.b.example.com. NSEC c.example.com.
