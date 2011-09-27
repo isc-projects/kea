@@ -70,7 +70,20 @@ public:
     /// that matched the query name). In case of empty nonterminal cases,
     /// an NSEC is provided for the interval where the empty nonterminal
     /// lives, which is the one ending in the subdomain of the empty
-    /// nonterminal.
+    /// nonterminal.  Examples: if zone "example.com" has the following
+    /// record:
+    /// \code
+    /// a.b.example.com. NSEC c.example.com.
+    /// \endcode
+    /// a call to \c find() for "b.example.com." will result in NXRRSET,
+    /// and if the FIND_DNSSEC option is set this NSEC will be returned.
+    /// Likewise, if zone "example.org" has the following record,
+    /// \code
+    /// x.*.example.org. NSEC a.example.org.
+    /// \endcode
+    /// a call to \c find() for "y.example.org" will result in
+    /// WILDCARD_NXRRSET (*.example.org is an empty nonterminal wildcard node),
+    /// and if the FIND_DNSSEC option is set this NSEC will be returned.
     ///
     /// In case of NXDOMAIN, the returned NSEC covers the queried domain.
     enum Result {
