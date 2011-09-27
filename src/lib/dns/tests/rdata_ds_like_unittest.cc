@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -62,8 +62,7 @@ typedef testing::Types<generic::DS, generic::DLV> Implementations;
 TYPED_TEST_CASE(Rdata_DS_LIKE_Test, Implementations);
 
 TYPED_TEST(Rdata_DS_LIKE_Test, toText_DS_LIKE) {
-    EXPECT_EQ(ds_like_txt,
-              Rdata_DS_LIKE_Test<TypeParam>::rdata_ds_like.toText());
+    EXPECT_EQ(ds_like_txt, this->rdata_ds_like.toText());
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, badText_DS_LIKE) {
@@ -74,11 +73,6 @@ TYPED_TEST(Rdata_DS_LIKE_Test, badText_DS_LIKE) {
                  InvalidRdataText);
     EXPECT_THROW(const TypeParam ds_like2("11111 5 2"), InvalidRdataText);
     EXPECT_THROW(const TypeParam ds_like2("GARBAGE IN"), InvalidRdataText);
-}
-
-// this test currently fails; we must fix it, and then migrate the test to
-// badText_DS_LIKE
-TYPED_TEST(Rdata_DS_LIKE_Test, DISABLED_badText_DS_LIKE) {
     // no space between the digest type and the digest.
     EXPECT_THROW(const TypeParam ds_like2(
                      "12892 5 2F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
@@ -86,7 +80,7 @@ TYPED_TEST(Rdata_DS_LIKE_Test, DISABLED_badText_DS_LIKE) {
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, createFromWire_DS_LIKE) {
-    EXPECT_EQ(0, Rdata_DS_LIKE_Test<TypeParam>::rdata_ds_like.compare(
+    EXPECT_EQ(0, this->rdata_ds_like.compare(
               *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass::IN(),
                                           "rdata_ds_fromWire")));
 }
@@ -109,26 +103,26 @@ TYPED_TEST(Rdata_DS_LIKE_Test, assignment_DS_LIKE) {
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, getTag_DS_LIKE) {
-    EXPECT_EQ(12892, Rdata_DS_LIKE_Test<TypeParam>::rdata_ds_like.getTag());
+    EXPECT_EQ(12892, this->rdata_ds_like.getTag());
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, toWireRenderer) {
     Rdata_DS_LIKE_Test<TypeParam>::renderer.skip(2);
     TypeParam rdata_ds_like(ds_like_txt);
-    rdata_ds_like.toWire(Rdata_DS_LIKE_Test<TypeParam>::renderer);
+    rdata_ds_like.toWire(this->renderer);
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_ds_fromWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t*>
-                        (Rdata_DS_LIKE_Test<TypeParam>::obuffer.getData()) + 2,
-                        Rdata_DS_LIKE_Test<TypeParam>::obuffer.getLength() - 2,
+                        (this->obuffer.getData()) + 2,
+                        this->obuffer.getLength() - 2,
                         &data[2], data.size() - 2);
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, toWireBuffer) {
     TypeParam rdata_ds_like(ds_like_txt);
-    rdata_ds_like.toWire(Rdata_DS_LIKE_Test<TypeParam>::obuffer);
+    rdata_ds_like.toWire(this->obuffer);
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, compare) {
