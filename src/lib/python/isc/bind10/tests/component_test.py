@@ -22,6 +22,12 @@ import isc.log
 import time
 from isc.bind10.component import Component
 
+class TestError(Exception):
+    """
+    Just a private exception not known to anybody we use for our tests.
+    """
+    pass
+
 class ComponentTests(unittest.TestCase):
     """
     Tests for the bind10.component.Component class
@@ -76,6 +82,18 @@ class ComponentTests(unittest.TestCase):
         This only notes the component called the method.
         """
         self.__failed_called = True
+
+    def fail_to_start(self):
+        """
+        Mock function. It can be installed into the component's start_internal
+        to simulate a component that fails to start by raising an exception.
+        """
+        orig_started = self.__start_called
+        self.__start_called = True
+        if not orig_started:
+            # This one is from restart. Avoid infinite recursion for now.
+            # FIXME: We should use the restart scheduler to avoid it, not this.
+            raise TestError("Test error")
 
     def create_component(self, kind):
         """
@@ -287,6 +305,39 @@ class ComponentTests(unittest.TestCase):
         self.__start_called = False
         self.timeskip()
         component.failed()
+        self.check_restarted(component)
+
+    def test_fail_core(self):
+        """
+        Failure to start a core component. Should bring the system down
+        and the exception should get through.
+        """
+        component = self.create_component('core')
+        self.check_startup(component)
+        component.start_internal = self.fail_to_start
+        self.assertRaises(TestError, component.start)
+        self.check_dead(component)
+
+    def test_fail_needed(self):
+        """
+        Failure to start a needed component. Should bring the system down
+        and the exception should get through.
+        """
+        component = self.create_component('needed')
+        self.check_startup(component)
+        component.start_internal = self.fail_to_start
+        self.assertRaises(TestError, component.start)
+        self.check_dead(component)
+
+    def test_fail_dispensable(self):
+        """
+        Failure to start a dispensable component. The exception should get
+        through, but it should be restarted.
+        """
+        component = self.create_component('dispensable')
+        self.check_startup(component)
+        component.start_internal = self.fail_to_start
+        self.assertRaises(TestError, component.start)
         self.check_restarted(component)
 
 if __name__ == '__main__':
