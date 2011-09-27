@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,9 +22,6 @@
 #include <dns/rdataclass.h>
 
 #include <dns/rdata/generic/detail/ds_like.h>
-
-#include <stdio.h>
-#include <time.h>
 
 using namespace std;
 using namespace isc::util;
