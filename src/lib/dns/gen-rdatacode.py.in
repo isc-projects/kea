@@ -42,10 +42,6 @@ heading_txt = '''///////////////
 ///////////////
 
 '''
-rrtypeh_txt = '''// Many RR implementation files require definition of RR types.
-#include <dns/rrtype.h>
-
-'''
 
 def import_classdef(class_txt, file):
     content = ''
@@ -204,7 +200,6 @@ def generate_rdatadef(file, basemtime):
         return
     rdata_deffile = open(file, 'w')
     rdata_deffile.write(heading_txt)
-    rdata_deffile.write(rrtypeh_txt)
     rdata_deffile.write(class_definitions)
     rdata_deffile.close()
 
