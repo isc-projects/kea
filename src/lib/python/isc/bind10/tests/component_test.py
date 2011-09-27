@@ -259,6 +259,36 @@ class ComponentTests(unittest.TestCase):
         component.failed()
         self.check_restarted(component)
 
+    def test_start_fail_dispensable(self):
+        """
+        Start and then fail a dispensable component. Should just get restarted.
+        """
+        # Just ordinary startup
+        component = self.create_component('needed')
+        self.check_startup(component)
+        component.start()
+        self.check_started(component)
+        # Make it fail right away
+        self.__start_called = False
+        component.failed()
+        self.check_restarted(component)
+
+    def test_start_fail_dispensable(self):
+        """
+        Start and then later on fail a dispensable component. Should just get
+        restarted.
+        """
+        # Just ordinary startup
+        component = self.create_component('needed')
+        self.check_startup(component)
+        component.start()
+        self.check_started(component)
+        # Make it fail later on
+        self.__start_called = False
+        self.timeskip()
+        component.failed()
+        self.check_restarted(component)
+
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
     isc.log.resetUnitTestRootLogger()
