@@ -656,9 +656,9 @@ class MyCCSession(isc.config.ConfigData):
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
         self._shutdown_event = threading.Event()
-        self._max_transfers_out = 10
-        self._cc = MyCCSession()
         self._common_init()
+        self._cc = MyCCSession()
+        self.update_config_data(self._cc.get_full_config())
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):

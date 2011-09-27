@@ -91,7 +91,6 @@ init_paths()
 
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
-MAX_TRANSFERS_OUT = 10
 VERBOSE_MODE = False
 # tsig sign every N axfr packets.
 TSIG_SIGN_EVERY_NTH = 96
@@ -429,13 +428,9 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         self.update_config_data(config_data)
 
     def _common_init(self):
+        '''Initialization shared with the mock server class used for tests'''
         self._lock = threading.Lock()
         self._transfers_counter = 0
-        # These default values will probably get overwritten by the (same)
-        # default value from the spec file. These are here just to make
-        # sure and to make the default values in tests consistent.
-        self._acl = REQUEST_LOADER.load('[{"action": "ACCEPT"}]')
-        self._zone_config = {}
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
