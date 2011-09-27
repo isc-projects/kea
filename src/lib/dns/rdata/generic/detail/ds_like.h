@@ -64,10 +64,12 @@ public:
     /// parameter data for any of the number of reasons.
     DSLikeImpl(const std::string& ds_str) {
         std::istringstream iss(ds_str);
+        // peekc should be of iss's char_type for isspace to work
+        std::istringstream::char_type peekc;
         std::stringbuf digestbuf;
         uint32_t tag, algorithm, digest_type;
 
-        iss >> tag >> algorithm >> digest_type >> &digestbuf;
+        iss >> tag >> algorithm >> digest_type;
         if (iss.bad() || iss.fail()) {
             isc_throw(InvalidRdataText,
                       "Invalid " << RRType(typeCode) << " text");
@@ -84,6 +86,14 @@ public:
             isc_throw(InvalidRdataText,
                       RRType(typeCode) << " digest type out of range");
         }
+
+        peekc = iss.peek();
+        if (!iss.good() || !isspace(peekc, iss.getloc())) {
+            isc_throw(InvalidRdataText,
+                      RRType(typeCode) << " presentation format error");
+        }
+
+        iss >> &digestbuf;
 
         tag_ = tag;
         algorithm_ = algorithm;
