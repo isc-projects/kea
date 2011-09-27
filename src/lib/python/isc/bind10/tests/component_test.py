@@ -53,7 +53,7 @@ class ComponentTests(unittest.TestCase):
         # Return the original time function
         isc.bind10.component.time.time = self.__orig_time
 
-    def timeskip(self):
+    def __timeskip(self):
         """
         Skip in time to future some 30s. Implemented by replacing the
         time.time function in the tested module with function that returns
@@ -62,28 +62,28 @@ class ComponentTests(unittest.TestCase):
         tm = time.time()
         isc.bind10.component.time.time = lambda: tm + 30
 
-    def start(self):
+    def __start(self):
         """
         Mock function, installed into the component into start_internal.
         This only notes the component was "started".
         """
         self.__start_called = True
 
-    def stop(self):
+    def __stop(self):
         """
         Mock function, installed into the component into stop_internal.
         This only notes the component was "stopped".
         """
         self.__stop_called = True
 
-    def fail(self):
+    def __fail(self):
         """
         Mock function, installed into the component into failed_internal.
         This only notes the component called the method.
         """
         self.__failed_called = True
 
-    def fail_to_start(self):
+    def __fail_to_start(self):
         """
         Mock function. It can be installed into the component's start_internal
         to simulate a component that fails to start by raising an exception.
@@ -95,7 +95,7 @@ class ComponentTests(unittest.TestCase):
             # FIXME: We should use the restart scheduler to avoid it, not this.
             raise TestError("Test error")
 
-    def create_component(self, kind):
+    def __create_component(self, kind):
         """
         Convenience function that creates a component of given kind
         and installs the mock functions into it so we can hook up into
@@ -105,12 +105,12 @@ class ComponentTests(unittest.TestCase):
         kind of tests and we pretend to be the boss.
         """
         component = Component('No process', self, kind)
-        component.start_internal = self.start
-        component.stop_internal = self.stop
-        component.failed_internal = self.fail
+        component.start_internal = self.__start
+        component.stop_internal = self.__stop
+        component.failed_internal = self.__fail
         return component
 
-    def check_startup(self, component):
+    def __check_startup(self, component):
         """
         Check that nothing was called yet. A newly created component should
         not get started right away, so this should pass after the creation.
@@ -124,7 +124,7 @@ class ComponentTests(unittest.TestCase):
         self.assertRaises(ValueError, component.stop)
         self.assertRaises(ValueError, component.failed)
 
-    def check_started(self, component):
+    def __check_started(self, component):
         """
         Check the component was started, but not stopped anyhow yet.
         """
@@ -134,7 +134,7 @@ class ComponentTests(unittest.TestCase):
         self.assertFalse(self.__failed_called)
         self.assertTrue(component.running())
 
-    def check_dead(self, component):
+    def __check_dead(self, component):
         """
         Check the component is completely dead, and the server too.
         """
@@ -149,7 +149,7 @@ class ComponentTests(unittest.TestCase):
         # Nor started
         self.assertRaises(ValueError, component.start)
 
-    def check_restarted(self, component):
+    def __check_restarted(self, component):
         """
         Check the component restarted successfully.
 
@@ -169,7 +169,7 @@ class ComponentTests(unittest.TestCase):
         # Check it can't be started again
         self.assertRaises(ValueError, component.start)
 
-    def do_start_stop(self, kind):
+    def __do_start_stop(self, kind):
         """
         This is a body of a test. It creates a componend of given kind,
         then starts it and stops it. It checks correct functions are called
@@ -178,11 +178,11 @@ class ComponentTests(unittest.TestCase):
         It also checks the component can't be started/stopped twice.
         """
         # Create it and check it did not do any funny stuff yet
-        component = self.create_component(kind)
-        self.check_startup(component)
+        component = self.__create_component(kind)
+        self.__check_startup(component)
         # Start it and check it called the correct starting functions
         component.start()
-        self.check_started(component)
+        self.__check_started(component)
         # Check it can't be started twice
         self.assertRaises(ValueError, component.start)
         # Stop it again and check
@@ -204,31 +204,31 @@ class ComponentTests(unittest.TestCase):
         """
         A start-stop test for core component. See do_start_stop.
         """
-        self.do_start_stop('core')
+        self.__do_start_stop('core')
     def test_start_stop_needed(self):
         """
         A start-stop test for needed component. See do_start_stop.
         """
-        self.do_start_stop('needed')
+        self.__do_start_stop('needed')
     def test_start_stop_dispensable(self):
         """
         A start-stop test for dispensable component. See do_start_stop.
         """
-        self.do_start_stop('dispensable')
+        self.__do_start_stop('dispensable')
 
     def test_start_fail_core(self):
         """
         Start and then fail a core component. It should stop the whole server.
         """
         # Just ordinary startup
-        component = self.create_component('core')
-        self.check_startup(component)
+        component = self.__create_component('core')
+        self.__check_startup(component)
         component.start()
-        self.check_started(component)
+        self.__check_started(component)
         # Pretend the component died
         component.failed()
         # It should bring down the whole server
-        self.check_dead(component)
+        self.__check_dead(component)
 
     def test_start_fail_core_later(self):
         """
@@ -236,15 +236,15 @@ class ComponentTests(unittest.TestCase):
         It should still stop the whole server.
         """
         # Just ordinary startup
-        component = self.create_component('core')
-        self.check_startup(component)
+        component = self.__create_component('core')
+        self.__check_startup(component)
         component.start()
-        self.check_started(component)
-        self.timeskip()
+        self.__check_started(component)
+        self.__timeskip()
         # Pretend the componend died some time later
         component.failed()
         # Check the component is still dead
-        self.check_dead(component)
+        self.__check_dead(component)
 
     def test_start_fail_needed(self):
         """
@@ -253,13 +253,13 @@ class ComponentTests(unittest.TestCase):
         whole server.
         """
         # Just ordinary startup
-        component = self.create_component('needed')
-        self.check_startup(component)
+        component = self.__create_component('needed')
+        self.__check_startup(component)
         component.start()
-        self.check_started(component)
+        self.__check_started(component)
         # Make it fail right away.
         component.failed()
-        self.check_dead(component)
+        self.__check_dead(component)
 
     def test_start_fail_needed_later(self):
         """
@@ -267,29 +267,29 @@ class ComponentTests(unittest.TestCase):
         we just restart it and will be happy.
         """
         # Just ordinary startup
-        component = self.create_component('needed')
-        self.check_startup(component)
+        component = self.__create_component('needed')
+        self.__check_startup(component)
         component.start()
-        self.check_started(component)
+        self.__check_started(component)
         # Make it fail later on
         self.__start_called = False
-        self.timeskip()
+        self.__timeskip()
         component.failed()
-        self.check_restarted(component)
+        self.__check_restarted(component)
 
     def test_start_fail_dispensable(self):
         """
         Start and then fail a dispensable component. Should just get restarted.
         """
         # Just ordinary startup
-        component = self.create_component('needed')
-        self.check_startup(component)
+        component = self.__create_component('needed')
+        self.__check_startup(component)
         component.start()
-        self.check_started(component)
+        self.__check_started(component)
         # Make it fail right away
         self.__start_called = False
         component.failed()
-        self.check_restarted(component)
+        self.__check_restarted(component)
 
     def test_start_fail_dispensable(self):
         """
@@ -297,48 +297,48 @@ class ComponentTests(unittest.TestCase):
         restarted.
         """
         # Just ordinary startup
-        component = self.create_component('needed')
-        self.check_startup(component)
+        component = self.__create_component('needed')
+        self.__check_startup(component)
         component.start()
-        self.check_started(component)
+        self.__check_started(component)
         # Make it fail later on
         self.__start_called = False
-        self.timeskip()
+        self.__timeskip()
         component.failed()
-        self.check_restarted(component)
+        self.__check_restarted(component)
 
     def test_fail_core(self):
         """
         Failure to start a core component. Should bring the system down
         and the exception should get through.
         """
-        component = self.create_component('core')
-        self.check_startup(component)
-        component.start_internal = self.fail_to_start
+        component = self.__create_component('core')
+        self.__check_startup(component)
+        component.start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
-        self.check_dead(component)
+        self.__check_dead(component)
 
     def test_fail_needed(self):
         """
         Failure to start a needed component. Should bring the system down
         and the exception should get through.
         """
-        component = self.create_component('needed')
-        self.check_startup(component)
-        component.start_internal = self.fail_to_start
+        component = self.__create_component('needed')
+        self.__check_startup(component)
+        component.start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
-        self.check_dead(component)
+        self.__check_dead(component)
 
     def test_fail_dispensable(self):
         """
         Failure to start a dispensable component. The exception should get
         through, but it should be restarted.
         """
-        component = self.create_component('dispensable')
-        self.check_startup(component)
-        component.start_internal = self.fail_to_start
+        component = self.__create_component('dispensable')
+        self.__check_startup(component)
+        component.start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
-        self.check_restarted(component)
+        self.__check_restarted(component)
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
