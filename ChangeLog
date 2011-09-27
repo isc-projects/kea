@@ -1,3 +1,7 @@
+278.	[func]		dvv
+	Implement the DLV rrtype according to RFC4431.
+	(Trac #1144, git TBD)
+
 277.	[func]		jerry
 	Implement the SRV rrtype according to RFC2782.
 	(Trac #1128, git 5fd94aa027828c50e63ae1073d9d6708e0a9c223)
