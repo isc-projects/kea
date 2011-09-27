@@ -74,9 +74,13 @@ class Component:
             raise ValueError("Can't resurrect already dead component")
         if self.running():
             raise ValueError("Can't start already running component")
-        self.start_internal()
         self.__running = True
         self.__start_time = time.time()
+        try:
+            self.start_internal()
+        except:
+            self.failed()
+            raise
 
     def start_internal(self):
         """
