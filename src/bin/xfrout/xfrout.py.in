@@ -630,7 +630,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
 
             # reject duplicate config
             if config_key in new_config:
-                raise XfroutConfigError('Duplicaet zone_config for ' +
+                raise XfroutConfigError('Duplicate zone_config for ' +
                                         str(zorigin) + '/' + str(zclass))
 
             # create a new config entry, build any given (and known) config
