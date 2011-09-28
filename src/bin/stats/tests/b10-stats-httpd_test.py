@@ -84,7 +84,10 @@ def get_availaddr(address='127.0.0.1', port=8001):
 def is_ipv6_enabled(address='::1', port=8001):
     """checks IPv6 enabled on the platform. address for check is '::1'
     and port for check is random number between 8001 and
-    65535. Retrying is 3 times even if it fails."""
+    65535. Retrying is 3 times even if it fails. The built-in socket
+    module provides a 'has_ipv6' parameter, but it's not used here
+    because there may be a situation where the value is True on an
+    environment where the IPv6 config is disabled."""
     for p in random.sample(range(port, 65535), 3):
         try:
             sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
