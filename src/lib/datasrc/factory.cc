@@ -19,6 +19,8 @@
 #include "sqlite3_accessor.h"
 #include "memory_datasrc.h"
 
+#include <datasrc/logger.h>
+
 #include <dlfcn.h>
 
 using namespace isc::data;
