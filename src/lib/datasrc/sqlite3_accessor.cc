@@ -674,7 +674,7 @@ addError(ElementPtr errors, const std::string& error) {
 bool
 checkConfig(ConstElementPtr config, ElementPtr errors) {
     /* Specific configuration is under discussion, right now this accepts
-     * the 'old' configuration, see [TODO]
+     * the 'old' configuration, see header file
      */
     bool result = true;
 
