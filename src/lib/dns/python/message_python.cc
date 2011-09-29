@@ -12,49 +12,39 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <exceptions/exceptions.h>
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/tsig.h>
+#include <dns/exceptions.h>
+#include <dns/messagerenderer.h>
 
+#include "name_python.h"
+#include "question_python.h"
+#include "edns_python.h"
+#include "rcode_python.h"
+#include "opcode_python.h"
+#include "rrset_python.h"
+#include "message_python.h"
+#include "messagerenderer_python.h"
+#include "tsig_python.h"
+#include "tsigrecord_python.h"
+#include "pydnspp_common.h"
+
+using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
 
 namespace {
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-PyObject* po_MessageTooShort;
-PyObject* po_InvalidMessageSection;
-PyObject* po_InvalidMessageOperation;
-PyObject* po_InvalidMessageUDPSize;
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Message
-//
-
-// The s_* Class simply coverst one instantiation of the object
 class s_Message : public PyObject {
 public:
-    Message* message;
+    isc::dns::Message* cppobj;
 };
 
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// General creation and destruction
 int Message_init(s_Message* self, PyObject* args);
 void Message_destroy(s_Message* self);
 
@@ -178,59 +168,6 @@ PyMethodDef Message_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-// This defines the complete type for reflection in python and
-// parsing of PyObject* to s_Message
-// Most of the functions are not actually implemented and NULL here.
-PyTypeObject message_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.Message",
-    sizeof(s_Message),                  // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)Message_destroy,        // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    Message_str,                        // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Message class encapsulates a standard DNS message.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    NULL,                               // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    Message_methods,                    // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)Message_init,             // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
-};
-
 int
 Message_init(s_Message* self, PyObject* args) {
     int i;
@@ -238,10 +175,10 @@ Message_init(s_Message* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
-            self->message = new Message(Message::PARSE);
+            self->cppobj = new Message(Message::PARSE);
             return (0);
         } else if (i == Message::RENDER) {
-            self->message = new Message(Message::RENDER);
+            self->cppobj = new Message(Message::RENDER);
             return (0);
         } else {
             PyErr_SetString(PyExc_TypeError, "Message mode must be Message.PARSE or Message.RENDER");
@@ -256,8 +193,8 @@ Message_init(s_Message* self, PyObject* args) {
 
 void
 Message_destroy(s_Message* self) {
-    delete self->message;
-    self->message = NULL;
+    delete self->cppobj;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -271,7 +208,7 @@ Message_getHeaderFlag(s_Message* self, PyObject* args) {
         return (NULL);
     }
 
-    if (self->message->getHeaderFlag(
+    if (self->cppobj->getHeaderFlag(
             static_cast<Message::HeaderFlag>(messageflag))) {
         Py_RETURN_TRUE;
     } else {
@@ -296,7 +233,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     }
 
     try {
-        self->message->setHeaderFlag(
+        self->cppobj->setHeaderFlag(
             static_cast<Message::HeaderFlag>(messageflag), on == Py_True);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
@@ -312,7 +249,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_getQid(s_Message* self) {
-    return (Py_BuildValue("I", self->message->getQid()));
+    return (Py_BuildValue("I", self->cppobj->getQid()));
 }
 
 PyObject*
@@ -331,7 +268,7 @@ Message_setQid(s_Message* self, PyObject* args) {
     }
 
     try {
-        self->message->setQid(id);
+        self->cppobj->setQid(id);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -341,35 +278,25 @@ Message_setQid(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_getRcode(s_Message* self) {
-    s_Rcode* rcode;
-
-    rcode = static_cast<s_Rcode*>(rcode_type.tp_alloc(&rcode_type, 0));
-    if (rcode != NULL) {
-        rcode->cppobj = NULL;
-        try {
-            rcode->cppobj = new Rcode(self->message->getRcode());
-        } catch (const InvalidMessageOperation& imo) {
-            PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        } catch (...) {
-            PyErr_SetString(po_IscException, "Unexpected exception");
-        }
-        if (rcode->cppobj == NULL) {
-            Py_DECREF(rcode);
-            return (NULL);
-        }
+    try {
+        return (createRcodeObject(self->cppobj->getRcode()));
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException, "Unexpected exception");
+        return (NULL);
     }
-
-    return (rcode);
 }
 
 PyObject*
 Message_setRcode(s_Message* self, PyObject* args) {
-    s_Rcode* rcode;
+    PyObject* rcode;
     if (!PyArg_ParseTuple(args, "O!", &rcode_type, &rcode)) {
         return (NULL);
     }
     try {
-        self->message->setRcode(*rcode->cppobj);
+        self->cppobj->setRcode(PyRcode_ToRcode(rcode));
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -379,35 +306,31 @@ Message_setRcode(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_getOpcode(s_Message* self) {
-    s_Opcode* opcode;
-
-    opcode = static_cast<s_Opcode*>(opcode_type.tp_alloc(&opcode_type, 0));
-    if (opcode != NULL) {
-        opcode->opcode = NULL;
-        try {
-            opcode->opcode = new Opcode(self->message->getOpcode());
-        } catch (const InvalidMessageOperation& imo) {
-            PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        } catch (...) {
-            PyErr_SetString(po_IscException, "Unexpected exception");
-        }
-        if (opcode->opcode == NULL) {
-            Py_DECREF(opcode);
-            return (NULL);
-        }
+    try {
+        return (createOpcodeObject(self->cppobj->getOpcode()));
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get message opcode: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception getting opcode from message");
+        return (NULL);
     }
-
-    return (opcode);
 }
 
 PyObject*
 Message_setOpcode(s_Message* self, PyObject* args) {
-    s_Opcode* opcode;
+    PyObject* opcode;
     if (!PyArg_ParseTuple(args, "O!", &opcode_type, &opcode)) {
         return (NULL);
     }
     try {
-        self->message->setOpcode(*opcode->opcode);
+        self->cppobj->setOpcode(PyOpcode_ToOpcode(opcode));
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -417,32 +340,31 @@ Message_setOpcode(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_getEDNS(s_Message* self) {
-    s_EDNS* edns;
-    EDNS* edns_body;
-    ConstEDNSPtr src = self->message->getEDNS();
-
+    ConstEDNSPtr src = self->cppobj->getEDNS();
     if (!src) {
         Py_RETURN_NONE;
     }
-    if ((edns_body = new(nothrow) EDNS(*src)) == NULL) {
-        return (PyErr_NoMemory());
+    try {
+        return (createEDNSObject(*src));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get EDNS from message: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting EDNS from message");
     }
-    edns = static_cast<s_EDNS*>(opcode_type.tp_alloc(&edns_type, 0));
-    if (edns != NULL) {
-        edns->edns = edns_body;
-    }
-
-    return (edns);
+    return (NULL);
 }
 
 PyObject*
 Message_setEDNS(s_Message* self, PyObject* args) {
-    s_EDNS* edns;
+    PyObject* edns;
     if (!PyArg_ParseTuple(args, "O!", &edns_type, &edns)) {
         return (NULL);
     }
     try {
-        self->message->setEDNS(EDNSPtr(new EDNS(*edns->edns)));
+        self->cppobj->setEDNS(EDNSPtr(new EDNS(PyEDNS_ToEDNS(edns))));
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -453,7 +375,7 @@ Message_setEDNS(s_Message* self, PyObject* args) {
 PyObject*
 Message_getTSIGRecord(s_Message* self) {
     try {
-        const TSIGRecord* tsig_record = self->message->getTSIGRecord();
+        const TSIGRecord* tsig_record = self->cppobj->getTSIGRecord();
 
         if (tsig_record == NULL) {
             Py_RETURN_NONE;
@@ -483,7 +405,7 @@ Message_getRRCount(s_Message* self, PyObject* args) {
         return (NULL);
     }
     try {
-        return (Py_BuildValue("I", self->message->getRRCount(
+        return (Py_BuildValue("I", self->cppobj->getRRCount(
                                   static_cast<Message::Section>(section))));
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
@@ -496,8 +418,8 @@ PyObject*
 Message_getQuestion(s_Message* self) {
     QuestionIterator qi, qi_end;
     try {
-        qi = self->message->beginQuestion();
-        qi_end = self->message->endQuestion();
+        qi = self->cppobj->beginQuestion();
+        qi_end = self->cppobj->endQuestion();
     } catch (const InvalidMessageSection& ex) {
         PyErr_SetString(po_InvalidMessageSection, ex.what());
         return (NULL);
@@ -512,23 +434,25 @@ Message_getQuestion(s_Message* self) {
         return (NULL);
     }
 
-    for (; qi != qi_end; ++qi) {
-        s_Question *question = static_cast<s_Question*>(
-            question_type.tp_alloc(&question_type, 0));
-        if (question == NULL) {
-            Py_DECREF(question);
-            Py_DECREF(list);
-            return (NULL);
+    try {
+        for (; qi != qi_end; ++qi) {
+            if (PyList_Append(list, createQuestionObject(**qi)) == -1) {
+                Py_DECREF(list);
+                return (NULL);
+            }
         }
-        question->question = *qi;
-        if (PyList_Append(list, question) == -1) {
-            Py_DECREF(question);
-            Py_DECREF(list);
-            return (NULL);
-        }
-        Py_DECREF(question);
+        return (list);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure getting Question section: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure getting Question section");
     }
-    return (list);
+    Py_DECREF(list);
+    return (NULL);
 }
 
 PyObject*
@@ -542,9 +466,9 @@ Message_getSection(s_Message* self, PyObject* args) {
     }
     RRsetIterator rrsi, rrsi_end;
     try {
-        rrsi = self->message->beginSection(
+        rrsi = self->cppobj->beginSection(
             static_cast<Message::Section>(section));
-        rrsi_end = self->message->endSection(
+        rrsi_end = self->cppobj->endSection(
             static_cast<Message::Section>(section));
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
@@ -562,25 +486,25 @@ Message_getSection(s_Message* self, PyObject* args) {
     if (list == NULL) {
         return (NULL);
     }
-    for (; rrsi != rrsi_end; ++rrsi) {
-        s_RRset *rrset = static_cast<s_RRset*>(
-            rrset_type.tp_alloc(&rrset_type, 0));
-        if (rrset == NULL) {
-                Py_DECREF(rrset);
-                Py_DECREF(list);
-                return (NULL);
+    try {
+        for (; rrsi != rrsi_end; ++rrsi) {
+            if (PyList_Append(list, createRRsetObject(**rrsi)) == -1) {
+                    Py_DECREF(list);
+                    return (NULL);
+            }
         }
-        rrset->rrset = *rrsi;
-        if (PyList_Append(list, rrset) == -1) {
-                Py_DECREF(rrset);
-                Py_DECREF(list);
-                return (NULL);
-        }
-        // PyList_Append increases refcount, so we remove ours since
-        // we don't need it anymore
-        Py_DECREF(rrset);
+        return (list);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure creating Question object: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure creating Question object");
     }
-    return (list);
+    Py_DECREF(list);
+    return (NULL);
 }
 
 //static PyObject* Message_beginQuestion(s_Message* self, PyObject* args);
@@ -590,14 +514,14 @@ Message_getSection(s_Message* self, PyObject* args) {
 //static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
 PyObject*
 Message_addQuestion(s_Message* self, PyObject* args) {
-    s_Question *question;
+    PyObject* question;
 
     if (!PyArg_ParseTuple(args, "O!", &question_type, &question)) {
         return (NULL);
     }
 
-    self->message->addQuestion(question->question);
-    
+    self->cppobj->addQuestion(PyQuestion_ToQuestion(question));
+
     Py_RETURN_NONE;
 }
 
@@ -605,15 +529,15 @@ PyObject*
 Message_addRRset(s_Message* self, PyObject* args) {
     PyObject *sign = Py_False;
     int section;
-    s_RRset* rrset;
+    PyObject* rrset;
     if (!PyArg_ParseTuple(args, "iO!|O!", &section, &rrset_type, &rrset,
                           &PyBool_Type, &sign)) {
         return (NULL);
     }
 
     try {
-        self->message->addRRset(static_cast<Message::Section>(section),
-                                rrset->rrset, sign == Py_True);
+        self->cppobj->addRRset(static_cast<Message::Section>(section),
+                               PyRRset_ToRRsetPtr(rrset), sign == Py_True);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -634,10 +558,10 @@ Message_clear(s_Message* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
-            self->message->clear(Message::PARSE);
+            self->cppobj->clear(Message::PARSE);
             Py_RETURN_NONE;
         } else if (i == Message::RENDER) {
-            self->message->clear(Message::RENDER);
+            self->cppobj->clear(Message::RENDER);
             Py_RETURN_NONE;
         } else {
             PyErr_SetString(PyExc_TypeError,
@@ -651,7 +575,7 @@ Message_clear(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_makeResponse(s_Message* self) {
-    self->message->makeResponse();
+    self->cppobj->makeResponse();
     Py_RETURN_NONE;
 }
 
@@ -659,7 +583,7 @@ PyObject*
 Message_toText(s_Message* self) {
     // Py_BuildValue makes python objects from native data
     try {
-        return (Py_BuildValue("s", self->message->toText().c_str()));
+        return (Py_BuildValue("s", self->cppobj->toText().c_str()));
     } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -680,16 +604,17 @@ Message_str(PyObject* self) {
 
 PyObject*
 Message_toWire(s_Message* self, PyObject* args) {
-    s_MessageRenderer* mr;
-    s_TSIGContext* tsig_ctx = NULL;
-    
+    PyObject* mr;
+    PyObject* tsig_ctx = NULL;
+
     if (PyArg_ParseTuple(args, "O!|O!", &messagerenderer_type, &mr,
                          &tsigcontext_type, &tsig_ctx)) {
         try {
             if (tsig_ctx == NULL) {
-                self->message->toWire(*mr->messagerenderer);
+                self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
             } else {
-                self->message->toWire(*mr->messagerenderer, *tsig_ctx->cppobj);
+                self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr),
+                                     PyTSIGContext_ToTSIGContext(tsig_ctx));
             }
             // If we return NULL it is seen as an error, so use this for
             // None returns
@@ -727,10 +652,10 @@ Message_fromWire(s_Message* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "y#", &b, &len)) {
         return (NULL);
     }
-    
+
     InputBuffer inbuf(b, len);
     try {
-        self->message->fromWire(inbuf);
+        self->cppobj->fromWire(inbuf);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -747,71 +672,75 @@ Message_fromWire(s_Message* self, PyObject* args) {
     }
 }
 
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_Message(PyObject* mod) {
-    if (PyType_Ready(&message_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&message_type);
-    
-    // Class variables
-    // These are added to the tp_dict of the type object
-    //
-    addClassVariable(message_type, "PARSE",
-                     Py_BuildValue("I", Message::PARSE));
-    addClassVariable(message_type, "RENDER",
-                     Py_BuildValue("I", Message::RENDER));
-
-    addClassVariable(message_type, "HEADERFLAG_QR",
-                     Py_BuildValue("I", Message::HEADERFLAG_QR));
-    addClassVariable(message_type, "HEADERFLAG_AA",
-                     Py_BuildValue("I", Message::HEADERFLAG_AA));
-    addClassVariable(message_type, "HEADERFLAG_TC",
-                     Py_BuildValue("I", Message::HEADERFLAG_TC));
-    addClassVariable(message_type, "HEADERFLAG_RD",
-                     Py_BuildValue("I", Message::HEADERFLAG_RD));
-    addClassVariable(message_type, "HEADERFLAG_RA",
-                     Py_BuildValue("I", Message::HEADERFLAG_RA));
-    addClassVariable(message_type, "HEADERFLAG_AD",
-                     Py_BuildValue("I", Message::HEADERFLAG_AD));
-    addClassVariable(message_type, "HEADERFLAG_CD",
-                     Py_BuildValue("I", Message::HEADERFLAG_CD));
-
-    addClassVariable(message_type, "SECTION_QUESTION",
-                     Py_BuildValue("I", Message::SECTION_QUESTION));
-    addClassVariable(message_type, "SECTION_ANSWER",
-                     Py_BuildValue("I", Message::SECTION_ANSWER));
-    addClassVariable(message_type, "SECTION_AUTHORITY",
-                     Py_BuildValue("I", Message::SECTION_AUTHORITY));
-    addClassVariable(message_type, "SECTION_ADDITIONAL",
-                     Py_BuildValue("I", Message::SECTION_ADDITIONAL));
-
-    addClassVariable(message_type, "DEFAULT_MAX_UDPSIZE",
-                     Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
-
-    /* Class-specific exceptions */
-    po_MessageTooShort = PyErr_NewException("pydnspp.MessageTooShort", NULL,
-                                            NULL);
-    PyModule_AddObject(mod, "MessageTooShort", po_MessageTooShort);
-    po_InvalidMessageSection =
-        PyErr_NewException("pydnspp.InvalidMessageSection", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageSection", po_InvalidMessageSection);
-    po_InvalidMessageOperation =
-        PyErr_NewException("pydnspp.InvalidMessageOperation", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageOperation",
-                       po_InvalidMessageOperation);
-    po_InvalidMessageUDPSize =
-        PyErr_NewException("pydnspp.InvalidMessageUDPSize", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
-    po_DNSMessageBADVERS = PyErr_NewException("pydnspp.DNSMessageBADVERS",
-                                              NULL, NULL);
-    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
-
-    PyModule_AddObject(mod, "Message",
-                       reinterpret_cast<PyObject*>(&message_type));
-
-
-    return (true);
-}
 } // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the initModulePart
+// function in pydnspp.cc
+//
+PyObject* po_MessageTooShort;
+PyObject* po_InvalidMessageSection;
+PyObject* po_InvalidMessageOperation;
+PyObject* po_InvalidMessageUDPSize;
+
+// This defines the complete type for reflection in python and
+// parsing of PyObject* to s_Message
+// Most of the functions are not actually implemented and NULL here.
+PyTypeObject message_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.Message",
+    sizeof(s_Message),                  // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Message_destroy,        // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    Message_str,                        // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The Message class encapsulates a standard DNS message.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    NULL,                               // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Message_methods,                    // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Message_init,             // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace

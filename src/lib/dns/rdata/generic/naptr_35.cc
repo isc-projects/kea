@@ -20,6 +20,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/character_string.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -28,6 +29,8 @@
 using namespace std;
 using namespace boost;
 using namespace isc::util;
+using namespace isc::dns;
+using namespace isc::dns::characterstr;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -54,79 +57,6 @@ skipLeftSpaces(const std::string& input_str,
     while (input_iterator < input_str.end() && isspace(*input_iterator)) {
         ++input_iterator;
     }
-}
-
-/// Get a <character-string> from a string
-///
-/// \param input_str The input string
-/// \param input_iterator The iterator from which to start extracting,
-///        the iterator will be updated to new position after the function
-///        is returned
-/// \return A std::string that contains the extracted <character-string>
-std::string
-getNextCharacterString(const std::string& input_str,
-                       std::string::const_iterator& input_iterator)
-{
-    string result;
-
-    // If the input string only contains white-spaces, it is an invalid
-    // <character-string>
-    if (input_iterator >= input_str.end()) {
-        isc_throw(InvalidRdataText, "Invalid NAPTR text format, \
-                  <character-string> field is missing.");
-    }
-
-    // Whether the <character-string> is separated with double quotes (")
-    bool quotes_separated = (*input_iterator == '"');
-
-    if (quotes_separated) {
-        ++input_iterator;
-    }
-
-    while(input_iterator < input_str.end()){
-        if (quotes_separated) {
-            // If the <character-string> is seperated with quotes symbol and
-            // another quotes symbol is encountered, it is the end of the
-            // <character-string>
-            if (*input_iterator == '"') {
-                ++input_iterator;
-                break;
-            }
-        } else if (*input_iterator == ' ') {
-            // If the <character-string> is not seperated with quotes symbol,
-            // it is seperated with <space> char
-            break;
-        }
-
-        result.push_back(*input_iterator);
-
-        ++input_iterator;
-    }
-
-    if (result.size() > MAX_CHARSTRING_LEN) {
-        isc_throw(CharStringTooLong, "NAPTR <character-string> is too long");
-    }
-
-    return (result);
-}
-
-/// Get a <character-string> from a input buffer
-///
-/// \param buffer The input buffer
-/// \param len The input buffer total length
-/// \return A std::string that contains the extracted <character-string>
-std::string
-getNextCharacterString(InputBuffer& buffer, size_t len) {
-    uint8_t str_len = buffer.readUint8();
-
-    size_t pos = buffer.getPosition();
-    if (len - pos < str_len) {
-        isc_throw(InvalidRdataLength, "Invalid NAPTR string length");
-    }
-
-    uint8_t buf[MAX_CHARSTRING_LEN];
-    buffer.readData(buf, str_len);
-    return (string(buf, buf + str_len));
 }
 
 } // Anonymous namespace
@@ -194,36 +124,12 @@ NAPTR::NAPTR(const NAPTR& naptr):
 
 void
 NAPTR::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint16(order_);
-    buffer.writeUint16(preference_);
-
-    buffer.writeUint8(flags_.size());
-    buffer.writeData(flags_.c_str(), flags_.size());
-
-    buffer.writeUint8(services_.size());
-    buffer.writeData(services_.c_str(), services_.size());
-
-    buffer.writeUint8(regexp_.size());
-    buffer.writeData(regexp_.c_str(), regexp_.size());
-
-    replacement_.toWire(buffer);
+    toWireHelper(buffer);
 }
 
 void
 NAPTR::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint16(order_);
-    renderer.writeUint16(preference_);
-
-    renderer.writeUint8(flags_.size());
-    renderer.writeData(flags_.c_str(), flags_.size());
-
-    renderer.writeUint8(services_.size());
-    renderer.writeData(services_.c_str(), services_.size());
-
-    renderer.writeUint8(regexp_.size());
-    renderer.writeData(regexp_.c_str(), regexp_.size());
-
-    replacement_.toWire(renderer);
+    toWireHelper(renderer);
 }
 
 string

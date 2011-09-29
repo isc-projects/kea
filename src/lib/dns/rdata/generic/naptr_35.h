@@ -46,6 +46,26 @@ public:
     const std::string& getRegexp() const;
     const Name& getReplacement() const;
 private:
+    /// Helper template function for toWire()
+    ///
+    /// \param outputer Where to write data in
+    template <typename T>
+    void toWireHelper(T& outputer) const {
+        outputer.writeUint16(order_);
+        outputer.writeUint16(preference_);
+
+        outputer.writeUint8(flags_.size());
+        outputer.writeData(flags_.c_str(), flags_.size());
+
+        outputer.writeUint8(services_.size());
+        outputer.writeData(services_.c_str(), services_.size());
+
+        outputer.writeUint8(regexp_.size());
+        outputer.writeData(regexp_.c_str(), regexp_.size());
+
+        replacement_.toWire(outputer);
+    }
+
     uint16_t order_;
     uint16_t preference_;
     std::string flags_;
