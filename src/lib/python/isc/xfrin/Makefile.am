@@ -1,6 +1,6 @@
 SUBDIRS = . tests
 
-python_PYTHON = __init__.py
+python_PYTHON = __init__.py diff.py
 
 pythondir = $(pyexecdir)/isc/xfrin
 
