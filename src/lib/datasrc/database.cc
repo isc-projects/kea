@@ -174,105 +174,42 @@ private:
 };
 }
 
-std::pair<bool, isc::dns::RRsetPtr>
-DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
-                                 const isc::dns::RRType* type,
-                                 bool want_cname, bool want_dname,
-                                 bool want_ns,
-                                 const isc::dns::Name* construct_name)
+DatabaseClient::Finder::FoundRRsets
+DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
+                                  bool check_ns, const string* construct_name)
 {
     RRsigStore sig_store;
     bool records_found = false;
-    isc::dns::RRsetPtr result_rrset;
+    std::map<RRType, RRsetPtr> result;
 
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(accessor_->getRecords(name.toText(), zone_id_));
+        context(accessor_->getRecords(name, zone_id_));
     // It must not return NULL, that's a bug of the implementation
     if (!context) {
-        isc_throw(isc::Unexpected, "Iterator context null at " +
-                  name.toText());
+        isc_throw(isc::Unexpected, "Iterator context null at " + name);
     }
 
     std::string columns[DatabaseAccessor::COLUMN_COUNT];
     if (construct_name == NULL) {
         construct_name = &name;
     }
+
+    const Name construct_name_object(*construct_name);
+
+    bool seen_cname(false);
+    bool seen_ds(false);
+    bool seen_other(false);
+    bool seen_ns(false);
+
     while (context->getNext(columns)) {
-        if (!records_found) {
-            records_found = true;
-        }
+        // The domain is not empty
+        records_found = true;
 
         try {
-            const isc::dns::RRType cur_type(columns[DatabaseAccessor::
-                                            TYPE_COLUMN]);
-            const isc::dns::RRTTL cur_ttl(columns[DatabaseAccessor::
-                                          TTL_COLUMN]);
-            // Ths sigtype column was an optimization for finding the
-            // relevant RRSIG RRs for a lookup. Currently this column is
-            // not used in this revised datasource implementation. We
-            // should either start using it again, or remove it from use
-            // completely (i.e. also remove it from the schema and the
-            // backend implementation).
-            // Note that because we don't use it now, we also won't notice
-            // it if the value is wrong (i.e. if the sigtype column
-            // contains an rrtype that is different from the actual value
-            // of the 'type covered' field in the RRSIG Rdata).
-            //cur_sigtype(columns[SIGTYPE_COLUMN]);
+            const RRType cur_type(columns[DatabaseAccessor::TYPE_COLUMN]);
 
-            // Check for delegations before checking for the right type.
-            // This is needed to properly delegate request for the NS
-            // record itself.
-            //
-            // This happens with NS only, CNAME must be alone and DNAME
-            // is not checked in the exact queried domain.
-            if (want_ns && cur_type == isc::dns::RRType::NS()) {
-                if (result_rrset &&
-                    result_rrset->getType() != isc::dns::RRType::NS()) {
-                    isc_throw(DataSourceError, "NS found together with data"
-                              " in non-apex domain " + name.toText());
-                }
-                addOrCreate(result_rrset, *construct_name, getClass(),
-                            cur_type, cur_ttl,
-                            columns[DatabaseAccessor::RDATA_COLUMN],
-                            *accessor_);
-            } else if (type != NULL && cur_type == *type) {
-                if (result_rrset &&
-                    result_rrset->getType() == isc::dns::RRType::CNAME()) {
-                    isc_throw(DataSourceError, "CNAME found but it is not "
-                              "the only record for " + name.toText());
-                } else if (result_rrset && want_ns &&
-                           result_rrset->getType() == isc::dns::RRType::NS()) {
-                    isc_throw(DataSourceError, "NS found together with data"
-                              " in non-apex domain " + name.toText());
-                }
-                addOrCreate(result_rrset, *construct_name, getClass(),
-                            cur_type, cur_ttl,
-                            columns[DatabaseAccessor::RDATA_COLUMN],
-                            *accessor_);
-            } else if (want_cname && cur_type == isc::dns::RRType::CNAME()) {
-                // There should be no other data, so result_rrset should
-                // be empty.
-                if (result_rrset) {
-                    isc_throw(DataSourceError, "CNAME found but it is not "
-                              "the only record for " + name.toText());
-                }
-                addOrCreate(result_rrset, *construct_name, getClass(),
-                            cur_type, cur_ttl,
-                            columns[DatabaseAccessor::RDATA_COLUMN],
-                            *accessor_);
-            } else if (want_dname && cur_type == isc::dns::RRType::DNAME()) {
-                // There should be max one RR of DNAME present
-                if (result_rrset &&
-                    result_rrset->getType() == isc::dns::RRType::DNAME()) {
-                    isc_throw(DataSourceError, "DNAME with multiple RRs in " +
-                              name.toText());
-                }
-                addOrCreate(result_rrset, *construct_name, getClass(),
-                            cur_type, cur_ttl,
-                            columns[DatabaseAccessor::RDATA_COLUMN],
-                            *accessor_);
-            } else if (cur_type == isc::dns::RRType::RRSIG()) {
+            if (cur_type == RRType::RRSIG()) {
                 // If we get signatures before we get the actual data, we
                 // can't know which ones to keep and which to drop...
                 // So we keep a separate store of any signature that may be
@@ -280,27 +217,76 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                 // done.
                 // A possible optimization here is to not store them for
                 // types we are certain we don't need
-                sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
-                    getClass(), columns[DatabaseAccessor::RDATA_COLUMN]));
+                sig_store.addSig(rdata::createRdata(cur_type, getClass(),
+                     columns[DatabaseAccessor::RDATA_COLUMN]));
             }
-        } catch (const isc::dns::InvalidRRType& irt) {
+
+            if (types.find(cur_type) != types.end()) {
+                // This type is requested, so put it into result
+                const RRTTL cur_ttl(columns[DatabaseAccessor::TTL_COLUMN]);
+                // Ths sigtype column was an optimization for finding the
+                // relevant RRSIG RRs for a lookup. Currently this column is
+                // not used in this revised datasource implementation. We
+                // should either start using it again, or remove it from use
+                // completely (i.e. also remove it from the schema and the
+                // backend implementation).
+                // Note that because we don't use it now, we also won't notice
+                // it if the value is wrong (i.e. if the sigtype column
+                // contains an rrtype that is different from the actual value
+                // of the 'type covered' field in the RRSIG Rdata).
+                //cur_sigtype(columns[SIGTYPE_COLUMN]);
+                addOrCreate(result[cur_type], construct_name_object,
+                            getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *accessor_);
+            }
+
+            if (cur_type == RRType::CNAME()) {
+                seen_cname = true;
+            } else if (cur_type == RRType::NS()) {
+                seen_ns = true;
+            } else if (cur_type == RRType::DS()) {
+                seen_ds = true;
+            } else if (cur_type != RRType::RRSIG() &&
+                       cur_type != RRType::NSEC3() &&
+                       cur_type != RRType::NSEC()) {
+                // NSEC and RRSIG can coexist with anything, otherwise
+                // we've seen something that can't live together with potential
+                // CNAME or NS
+                //
+                // NSEC3 lives in separate namespace from everything, therefore
+                // we just ignore it here for these checks as well.
+                seen_other = true;
+            }
+        } catch (const InvalidRRType&) {
             isc_throw(DataSourceError, "Invalid RRType in database for " <<
                       name << ": " << columns[DatabaseAccessor::
                       TYPE_COLUMN]);
-        } catch (const isc::dns::InvalidRRTTL& irttl) {
+        } catch (const InvalidRRTTL&) {
             isc_throw(DataSourceError, "Invalid TTL in database for " <<
                       name << ": " << columns[DatabaseAccessor::
                       TTL_COLUMN]);
-        } catch (const isc::dns::rdata::InvalidRdataText& ird) {
+        } catch (const rdata::InvalidRdataText&) {
             isc_throw(DataSourceError, "Invalid rdata in database for " <<
                       name << ": " << columns[DatabaseAccessor::
                       RDATA_COLUMN]);
         }
     }
-    if (result_rrset) {
-        sig_store.appendSignatures(result_rrset);
+    if (seen_cname && (seen_other || seen_ns || seen_ds)) {
+        isc_throw(DataSourceError, "CNAME shares domain " << name <<
+                  " with something else");
     }
-    return (std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset));
+    if (check_ns && seen_ns && seen_other) {
+        isc_throw(DataSourceError, "NS shares domain " << name <<
+                  " with something else");
+    }
+    // Add signatures to all found RRsets
+    for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
+         i != result.end(); ++ i) {
+        sig_store.appendSignatures(i->second);
+    }
+
+    return (FoundRRsets(records_found, result));
 }
 
 bool
@@ -317,6 +303,92 @@ DatabaseClient::Finder::hasSubdomains(const std::string& name) {
     return (context->getNext(columns));
 }
 
+// Some manipulation with RRType sets
+namespace {
+
+// Bunch of functions to construct specific sets of RRTypes we will
+// ask from it.
+typedef std::set<RRType> WantedTypes;
+
+const WantedTypes&
+NSEC_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::NSEC());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
+DELEGATION_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::DNAME());
+        result.insert(RRType::NS());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
+FINAL_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::CNAME());
+        result.insert(RRType::NS());
+        result.insert(RRType::NSEC());
+        initialized = true;
+    }
+    return (result);
+}
+
+}
+
+RRsetPtr
+DatabaseClient::Finder::findNSECCover(const Name& name) {
+    try {
+        // Which one should contain the NSEC record?
+        const Name coverName(findPreviousName(name));
+        // Get the record and copy it out
+        const FoundRRsets found = getRRsets(coverName.toText(), NSEC_TYPES(),
+                                            coverName != getOrigin());
+        const FoundIterator
+            nci(found.second.find(RRType::NSEC()));
+        if (nci != found.second.end()) {
+            return (nci->second);
+        } else {
+            // The previous doesn't contain NSEC.
+            // Badly signed zone or a bug?
+
+            // FIXME: Currently, if the zone is not signed, we could get
+            // here. In that case we can't really throw, but for now, we can't
+            // recognize it. So we don't throw at all, enable it once
+            // we have a is_signed flag or something.
+#if 0
+            isc_throw(DataSourceError, "No NSEC in " +
+                      coverName.toText() + ", but it was "
+                      "returned as previous - "
+                      "accessor error? Badly signed zone?");
+#endif
+        }
+    }
+    catch (const isc::NotImplemented&) {
+        // Well, they want DNSSEC, but there is no available.
+        // So we don't provide anything.
+        LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
+            arg(accessor_->getDBName()).arg(name);
+    }
+    // We didn't find it, return nothing
+    return (RRsetPtr());
+}
+
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
@@ -326,10 +398,12 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // This variable is used to determine the difference between
     // NXDOMAIN and NXRRSET
     bool records_found = false;
-    bool glue_ok(options & FIND_GLUE_OK);
+    bool glue_ok((options & FIND_GLUE_OK) != 0);
+    const bool dnssec_data((options & FIND_DNSSEC) != 0);
+    bool get_cover(false);
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
-    std::pair<bool, isc::dns::RRsetPtr> found;
+    FoundRRsets found;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(accessor_->getDBName()).arg(name).arg(type);
     // In case we are in GLUE_OK mode and start matching wildcards,
@@ -337,11 +411,11 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     isc::dns::RRsetPtr first_ns;
 
     // First, do we have any kind of delegation (NS/DNAME) here?
-    Name origin(getOrigin());
-    size_t origin_label_count(origin.getLabelCount());
+    const Name origin(getOrigin());
+    const size_t origin_label_count(origin.getLabelCount());
     // Number of labels in the last known non-empty domain
     size_t last_known(origin_label_count);
-    size_t current_label_count(name.getLabelCount());
+    const size_t current_label_count(name.getLabelCount());
     // This is how many labels we remove to get origin
     size_t remove_labels(current_label_count - origin_label_count);
 
@@ -349,35 +423,44 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     for (int i(remove_labels); i > 0; --i) {
         Name superdomain(name.split(i));
         // Look if there's NS or DNAME (but ignore the NS in origin)
-        found = getRRset(superdomain, NULL, false, true,
-                         i != remove_labels && !glue_ok);
+        found = getRRsets(superdomain.toText(), DELEGATION_TYPES(),
+                          i != remove_labels);
         if (found.first) {
             // It contains some RRs, so it exists.
             last_known = superdomain.getLabelCount();
-            // In case we are in GLUE_OK, we want to store the highest
-            // encountered RRset.
-            if (glue_ok && !first_ns && i != remove_labels) {
-                first_ns = getRRset(superdomain, NULL, false, false,
-                                    true).second;
-            }
-        }
-        if (found.second) {
-            // We found something redirecting somewhere else
-            // (it can be only NS or DNAME here)
-            result_rrset = found.second;
-            if (result_rrset->getType() == isc::dns::RRType::NS()) {
+
+            const FoundIterator nsi(found.second.find(RRType::NS()));
+            const FoundIterator dni(found.second.find(RRType::DNAME()));
+            // In case we are in GLUE_OK mode, we want to store the
+            // highest encountered NS (but not apex)
+            if (glue_ok && !first_ns && i != remove_labels &&
+                nsi != found.second.end()) {
+                first_ns = nsi->second;
+            } else if (!glue_ok && i != remove_labels &&
+                       nsi != found.second.end()) {
+                // Do a NS delegation, but ignore NS in glue_ok mode. Ignore
+                // delegation in apex
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_DELEGATION).
                     arg(accessor_->getDBName()).arg(superdomain);
+                result_rrset = nsi->second;
                 result_status = DELEGATION;
-            } else {
+                // No need to go lower, found
+                break;
+            } else if (dni != found.second.end()) {
+                // Very similar with DNAME
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_DNAME).
                     arg(accessor_->getDBName()).arg(superdomain);
+                result_rrset = dni->second;
                 result_status = DNAME;
+                if (result_rrset->getRdataCount() != 1) {
+                    isc_throw(DataSourceError, "DNAME at " << superdomain <<
+                              " has " << result_rrset->getRdataCount() <<
+                              " rdata, 1 expected");
+                }
+                break;
             }
-            // Don't search more
-            break;
         }
     }
 
@@ -385,21 +468,37 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         // Try getting the final result and extract it
         // It is special if there's a CNAME or NS, DNAME is ignored here
         // And we don't consider the NS in origin
-        found = getRRset(name, &type, true, false, name != origin && !glue_ok);
+
+        WantedTypes final_types(FINAL_TYPES());
+        final_types.insert(type);
+        found = getRRsets(name.toText(), final_types, name != origin);
         records_found = found.first;
-        result_rrset = found.second;
-        if (result_rrset && name != origin && !glue_ok &&
-            result_rrset->getType() == isc::dns::RRType::NS()) {
+
+        // NS records, CNAME record and Wanted Type records
+        const FoundIterator nsi(found.second.find(RRType::NS()));
+        const FoundIterator cni(found.second.find(RRType::CNAME()));
+        const FoundIterator wti(found.second.find(type));
+        if (name != origin && !glue_ok && nsi != found.second.end()) {
+            // There's a delegation at the exact node.
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
                 arg(accessor_->getDBName()).arg(name);
             result_status = DELEGATION;
-        } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
-                   result_rrset->getType() == isc::dns::RRType::CNAME()) {
+            result_rrset = nsi->second;
+        } else if (type != isc::dns::RRType::CNAME() &&
+                   cni != found.second.end()) {
+            // A CNAME here
             result_status = CNAME;
-        }
-
-        if (!result_rrset && !records_found) {
+            result_rrset = cni->second;
+            if (result_rrset->getRdataCount() != 1) {
+                isc_throw(DataSourceError, "CNAME with " <<
+                          result_rrset->getRdataCount() <<
+                          " rdata at " << name << ", expected 1");
+            }
+        } else if (wti != found.second.end()) {
+            // Just get the answer
+            result_rrset = wti->second;
+        } else if (!records_found) {
             // Nothing lives here.
             // But check if something lives below this
             // domain and if so, pretend something is here as well.
@@ -408,23 +507,22 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                           DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
                     arg(accessor_->getDBName()).arg(name);
                 records_found = true;
+                get_cover = dnssec_data;
             } else {
                 // It's not empty non-terminal. So check for wildcards.
                 // We remove labels one by one and look for the wildcard there.
                 // Go up to first non-empty domain.
 
                 remove_labels = current_label_count - last_known;
-                Name star("*");
                 for (size_t i(1); i <= remove_labels; ++ i) {
                     // Construct the name with *
-                    // TODO: Once the underlying DatabaseAccessor takes
-                    // string, do the concatenation on strings, not
-                    // Names
-                    Name superdomain(name.split(i));
-                    Name wildcard(star.concatenate(superdomain));
+                    const Name superdomain(name.split(i));
+                    const string wildcard("*." + superdomain.toText());
+                    const string construct_name(name.toText());
                     // TODO What do we do about DNAME here?
-                    found = getRRset(wildcard, &type, true, false, true,
-                                     &name);
+                    // The types are the same as with original query
+                    found = getRRsets(wildcard, final_types, true,
+                                      &construct_name);
                     if (found.first) {
                         if (first_ns) {
                             // In case we are under NS, we don't
@@ -445,7 +543,42 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                             // domain, but it could be empty non-terminal. In
                             // that case, we need to cancel the match.
                             records_found = true;
-                            result_rrset = found.second;
+                            const FoundIterator
+                                cni(found.second.find(RRType::CNAME()));
+                            const FoundIterator
+                                nsi(found.second.find(RRType::NS()));
+                            const FoundIterator
+                                nci(found.second.find(RRType::NSEC()));
+                            const FoundIterator wti(found.second.find(type));
+                            if (cni != found.second.end() &&
+                                type != RRType::CNAME()) {
+                                result_rrset = cni->second;
+                                result_status = CNAME;
+                            } else if (nsi != found.second.end()) {
+                                result_rrset = nsi->second;
+                                result_status = DELEGATION;
+                            } else if (wti != found.second.end()) {
+                                result_rrset = wti->second;
+                                result_status = WILDCARD;
+                            } else {
+                                // NXRRSET case in the wildcard
+                                result_status = WILDCARD_NXRRSET;
+                                if (dnssec_data &&
+                                    nci != found.second.end()) {
+                                    // User wants a proof the wildcard doesn't
+                                    // contain it
+                                    //
+                                    // However, we need to get the RRset in the
+                                    // name of the wildcard, not the constructed
+                                    // one, so we walk it again
+                                    found = getRRsets(wildcard, NSEC_TYPES(),
+                                                      true);
+                                    result_rrset =
+                                        found.second.find(RRType::NSEC())->
+                                        second;
+                                }
+                            }
+
                             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                                       DATASRC_DATABASE_WILDCARD).
                                 arg(accessor_->getDBName()).arg(wildcard).
@@ -457,33 +590,63 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                 arg(name).arg(superdomain);
                         }
                         break;
-                    } else if (hasSubdomains(wildcard.toText())) {
+                    } else if (hasSubdomains(wildcard)) {
                         // Empty non-terminal asterisk
                         records_found = true;
                         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                                   DATASRC_DATABASE_WILDCARD_EMPTY).
                             arg(accessor_->getDBName()).arg(wildcard).
                             arg(name);
+                        if (dnssec_data) {
+                            result_rrset = findNSECCover(Name(wildcard));
+                            if (result_rrset) {
+                                result_status = WILDCARD_NXRRSET;
+                            }
+                        }
                         break;
                     }
                 }
+                // This is the NXDOMAIN case (nothing found anywhere). If
+                // they want DNSSEC data, try getting the NSEC record
+                if (dnssec_data && !records_found) {
+                    get_cover = true;
+                }
+            }
+        } else if (dnssec_data) {
+            // This is the "usual" NXRRSET case
+            // So in case they want DNSSEC, provide the NSEC
+            // (which should be available already here)
+            result_status = NXRRSET;
+            const FoundIterator nci(found.second.find(RRType::NSEC()));
+            if (nci != found.second.end()) {
+                result_rrset = nci->second;
             }
         }
     }
 
     if (!result_rrset) {
-        if (records_found) {
-            logger.debug(DBG_TRACE_DETAILED,
-                         DATASRC_DATABASE_FOUND_NXRRSET)
-                        .arg(accessor_->getDBName()).arg(name)
-                        .arg(getClass()).arg(type);
-            result_status = NXRRSET;
-        } else {
-            logger.debug(DBG_TRACE_DETAILED,
-                         DATASRC_DATABASE_FOUND_NXDOMAIN)
-                        .arg(accessor_->getDBName()).arg(name)
-                        .arg(getClass()).arg(type);
-            result_status = NXDOMAIN;
+        if (result_status == SUCCESS) {
+            // Should we look for NSEC covering the name?
+            if (get_cover) {
+                result_rrset = findNSECCover(name);
+                if (result_rrset) {
+                    result_status = NXDOMAIN;
+                }
+            }
+            // Something is not here and we didn't decide yet what
+            if (records_found) {
+                logger.debug(DBG_TRACE_DETAILED,
+                             DATASRC_DATABASE_FOUND_NXRRSET)
+                    .arg(accessor_->getDBName()).arg(name)
+                    .arg(getClass()).arg(type);
+                result_status = NXRRSET;
+            } else {
+                logger.debug(DBG_TRACE_DETAILED,
+                             DATASRC_DATABASE_FOUND_NXDOMAIN)
+                    .arg(accessor_->getDBName()).arg(name)
+                    .arg(getClass()).arg(type);
+                result_status = NXDOMAIN;
+            }
         }
     } else {
         logger.debug(DBG_TRACE_DETAILED,
@@ -491,6 +654,26 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     .arg(accessor_->getDBName()).arg(*result_rrset);
     }
     return (FindResult(result_status, result_rrset));
+}
+
+Name
+DatabaseClient::Finder::findPreviousName(const Name& name) const {
+    const string str(accessor_->findPreviousName(zone_id_,
+                                                 name.reverse().toText()));
+    try {
+        return (Name(str));
+    }
+    /*
+     * To avoid having the same code many times, we just catch all the
+     * exceptions and handle them in a common code below
+     */
+    catch (const isc::dns::EmptyLabel&) {}
+    catch (const isc::dns::TooLongLabel&) {}
+    catch (const isc::dns::BadLabelType&) {}
+    catch (const isc::dns::BadEscape&) {}
+    catch (const isc::dns::TooLongName&) {}
+    catch (const isc::dns::IncompleteName&) {}
+    isc_throw(DataSourceError, "Bad name " + str + " from findPreviousName");
 }
 
 Name

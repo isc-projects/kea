@@ -17,20 +17,12 @@
 
 #include <Python.h>
 
-#include <util/python/pycppwrapper_util.h>
-
 namespace isc {
 namespace dns {
-class NameComparisonResult;
 class Name;
 
 namespace python {
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
 extern PyObject* po_EmptyLabel;
 extern PyObject* po_TooLongName;
 extern PyObject* po_TooLongLabel;
@@ -47,24 +39,8 @@ extern PyObject* po_DNSMessageFORMERR;
 //
 extern PyObject* po_NameRelation;
 
-// The s_* Class simply covers one instantiation of the object.
-class s_NameComparisonResult : public PyObject {
-public:
-    s_NameComparisonResult() : cppobj(NULL) {}
-    NameComparisonResult* cppobj;
-};
-
-class s_Name : public PyObject {
-public:
-    s_Name() : cppobj(NULL), position(0) {}
-    Name* cppobj;
-    size_t position;
-};
-
 extern PyTypeObject name_comparison_result_type;
 extern PyTypeObject name_type;
-
-bool initModulePart_Name(PyObject* mod);
 
 /// This is A simple shortcut to create a python Name object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
@@ -74,6 +50,27 @@ bool initModulePart_Name(PyObject* mod);
 /// This function is expected to be called with in a try block
 /// followed by necessary setup for python exception.
 PyObject* createNameObject(const Name& source);
+
+/// \brief Checks if the given python object is a Name object
+///
+/// \exception PyCPPWrapperException if obj is NULL
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type Name, false otherwise
+bool PyName_Check(PyObject* obj);
+
+/// \brief Returns a reference to the Name object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type Name; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyName_Check()
+///
+/// \note This is not a copy; if the Name is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param name_obj The name object to convert
+const Name& PyName_ToName(const PyObject* name_obj);
+
 } // namespace python
 } // namespace dns
 } // namespace isc

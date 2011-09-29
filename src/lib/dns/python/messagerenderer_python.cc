@@ -17,6 +17,7 @@
 #include <util/buffer.h>
 
 #include <dns/messagerenderer.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "pydnspp_common.h"
 #include "messagerenderer_python.h"
@@ -24,15 +25,21 @@
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
-
-// MessageRenderer
-
-s_MessageRenderer::s_MessageRenderer() : outputbuffer(NULL),
-                                         messagerenderer(NULL)
-{
-}
+using namespace isc::util::python;
 
 namespace {
+// The s_* Class simply covers one instantiation of the object.
+//
+// since we don't use *Buffer in the python version (but work with
+// the already existing bytearray type where we use these custom buffers
+// in C++, we need to keep track of one here.
+class s_MessageRenderer : public PyObject {
+public:
+    s_MessageRenderer();
+    isc::util::OutputBuffer* outputbuffer;
+    MessageRenderer* cppobj;
+};
+
 int MessageRenderer_init(s_MessageRenderer* self);
 void MessageRenderer_destroy(s_MessageRenderer* self);
 
@@ -72,15 +79,15 @@ PyMethodDef MessageRenderer_methods[] = {
 int
 MessageRenderer_init(s_MessageRenderer* self) {
     self->outputbuffer = new OutputBuffer(4096);
-    self->messagerenderer = new MessageRenderer(*self->outputbuffer);
+    self->cppobj = new MessageRenderer(*self->outputbuffer);
     return (0);
 }
 
 void
 MessageRenderer_destroy(s_MessageRenderer* self) {
-    delete self->messagerenderer;
+    delete self->cppobj;
     delete self->outputbuffer;
-    self->messagerenderer = NULL;
+    self->cppobj = NULL;
     self->outputbuffer = NULL;
     Py_TYPE(self)->tp_free(self);
 }
@@ -88,18 +95,18 @@ MessageRenderer_destroy(s_MessageRenderer* self) {
 PyObject*
 MessageRenderer_getData(s_MessageRenderer* self) {
     return (Py_BuildValue("y#",
-                         self->messagerenderer->getData(),
-                          self->messagerenderer->getLength()));
+                          self->cppobj->getData(),
+                          self->cppobj->getLength()));
 }
 
 PyObject*
 MessageRenderer_getLength(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getLength()));
+    return (Py_BuildValue("I", self->cppobj->getLength()));
 }
 
 PyObject*
 MessageRenderer_isTruncated(s_MessageRenderer* self) {
-    if (self->messagerenderer->isTruncated()) {
+    if (self->cppobj->isTruncated()) {
         Py_RETURN_TRUE;
     } else {
         Py_RETURN_FALSE;
@@ -108,17 +115,17 @@ MessageRenderer_isTruncated(s_MessageRenderer* self) {
 
 PyObject*
 MessageRenderer_getLengthLimit(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getLengthLimit()));
+    return (Py_BuildValue("I", self->cppobj->getLengthLimit()));
 }
 
 PyObject*
 MessageRenderer_getCompressMode(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getCompressMode()));
+    return (Py_BuildValue("I", self->cppobj->getCompressMode()));
 }
 
 PyObject*
 MessageRenderer_setTruncated(s_MessageRenderer* self) {
-    self->messagerenderer->setTruncated();
+    self->cppobj->setTruncated();
     Py_RETURN_NONE;
 }
 
@@ -138,7 +145,7 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self,
                         "MessageRenderer length limit out of range");
         return (NULL);
     }
-    self->messagerenderer->setLengthLimit(lengthlimit);
+    self->cppobj->setLengthLimit(lengthlimit);
     Py_RETURN_NONE;
 }
 
@@ -152,12 +159,12 @@ MessageRenderer_setCompressMode(s_MessageRenderer* self,
     }
 
     if (mode == MessageRenderer::CASE_INSENSITIVE) {
-        self->messagerenderer->setCompressMode(MessageRenderer::CASE_INSENSITIVE);
+        self->cppobj->setCompressMode(MessageRenderer::CASE_INSENSITIVE);
         // If we return NULL it is seen as an error, so use this for
         // None returns, it also applies to CASE_SENSITIVE.
         Py_RETURN_NONE;
     } else if (mode == MessageRenderer::CASE_SENSITIVE) {
-        self->messagerenderer->setCompressMode(MessageRenderer::CASE_SENSITIVE);
+        self->cppobj->setCompressMode(MessageRenderer::CASE_SENSITIVE);
         Py_RETURN_NONE;
     } else {
         PyErr_SetString(PyExc_TypeError,
@@ -169,12 +176,11 @@ MessageRenderer_setCompressMode(s_MessageRenderer* self,
 
 PyObject*
 MessageRenderer_clear(s_MessageRenderer* self) {
-    self->messagerenderer->clear();
+    self->cppobj->clear();
     Py_RETURN_NONE;
 }
 } // end of unnamed namespace
 
-// end of MessageRenderer
 namespace isc {
 namespace dns {
 namespace python {
@@ -233,37 +239,29 @@ PyTypeObject messagerenderer_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
+// If we need a createMessageRendererObject(), should we copy? can we?
+// copy the existing buffer into a new one, then create a new renderer with
+// that buffer?
+
 bool
-initModulePart_MessageRenderer(PyObject* mod) {
-    // Add the exceptions to the module
-
-    // Add the enums to the module
-
-    // Add the constants to the module
-
-    // Add the classes to the module
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module
-
-    // NameComparisonResult
-    if (PyType_Ready(&messagerenderer_type) < 0) {
-        return (false);
+PyMessageRenderer_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
     }
-    Py_INCREF(&messagerenderer_type);
-
-    // Class variables
-    // These are added to the tp_dict of the type object
-    addClassVariable(messagerenderer_type, "CASE_INSENSITIVE",
-                     Py_BuildValue("I", MessageRenderer::CASE_INSENSITIVE));
-    addClassVariable(messagerenderer_type, "CASE_SENSITIVE",
-                     Py_BuildValue("I", MessageRenderer::CASE_SENSITIVE));
-
-    PyModule_AddObject(mod, "MessageRenderer",
-                       reinterpret_cast<PyObject*>(&messagerenderer_type));
-    
-    return (true);
+    return (PyObject_TypeCheck(obj, &messagerenderer_type));
 }
+
+MessageRenderer&
+PyMessageRenderer_ToMessageRenderer(PyObject* messagerenderer_obj) {
+    if (messagerenderer_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in MessageRenderer PyObject conversion");
+    }
+    s_MessageRenderer* messagerenderer = static_cast<s_MessageRenderer*>(messagerenderer_obj);
+    return (*messagerenderer->cppobj);
+}
+
+
 } // namespace python
 } // namespace dns
 } // namespace isc
