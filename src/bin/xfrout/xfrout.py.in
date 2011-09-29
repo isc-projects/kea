@@ -48,10 +48,22 @@ except ImportError as e:
     # must keep running, so we warn about it and move forward.
     log.error(XFROUT_IMPORT, str(e))
 
-from isc.acl.acl import ACCEPT, REJECT, DROP
+from isc.acl.acl import ACCEPT, REJECT, DROP, LoaderError
 from isc.acl.dns import REQUEST_LOADER
 
 isc.util.process.rename()
+
+class XfroutConfigError(Exception):
+    """An exception indicating an error in updating xfrout configuration.
+
+    This exception is raised when the xfrout process encouters an error in
+    handling configuration updates.  Not all syntax error can be caught
+    at the module-CC layer, so xfrout needs to (explicitly or implicitly)
+    validate the given configuration data itself.  When it finds an error
+    it raises this exception (either directly or by converting an exception
+    from other modules) as a unified error in configuration.
+    """
+    pass
 
 def init_paths():
     global SPECFILE_PATH
@@ -79,13 +91,11 @@ init_paths()
 
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
-MAX_TRANSFERS_OUT = 10
 VERBOSE_MODE = False
 # tsig sign every N axfr packets.
 TSIG_SIGN_EVERY_NTH = 96
 
 XFROUT_MAX_MESSAGE_SIZE = 65535
-
 
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
@@ -96,7 +106,7 @@ def get_rrset_len(rrset):
 
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
-                 acl):
+                 default_acl, zone_config):
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
@@ -104,7 +114,8 @@ class XfroutSession():
         self._tsig_ctx = None
         self._tsig_len = 0
         self._remote = remote
-        self._acl = acl
+        self._acl = default_acl
+        self._zone_config = zone_config
         self.handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -140,33 +151,49 @@ class XfroutSession():
         try:
             msg = Message(Message.PARSE)
             Message.from_wire(msg, mdata)
-
-            # TSIG related checks
-            rcode = self._check_request_tsig(msg, mdata)
-
-            if rcode == Rcode.NOERROR():
-                # ACL checks
-                acl_result = self._acl.execute(
-                    isc.acl.dns.RequestContext(self._remote,
-                                               msg.get_tsig_record()))
-                if acl_result == DROP:
-                    logger.info(XFROUT_QUERY_DROPPED,
-                                self._get_query_zone_name(msg),
-                                self._get_query_zone_class(msg),
-                                self._remote[0], self._remote[1])
-                    return None, None
-                elif acl_result == REJECT:
-                    logger.info(XFROUT_QUERY_REJECTED,
-                                self._get_query_zone_name(msg),
-                                self._get_query_zone_class(msg),
-                                self._remote[0], self._remote[1])
-                    return Rcode.REFUSED(), msg
-
-        except Exception as err:
+        except Exception as err: # Exception is too broad
             logger.error(XFROUT_PARSE_QUERY_ERROR, err)
             return Rcode.FORMERR(), None
 
+        # TSIG related checks
+        rcode = self._check_request_tsig(msg, mdata)
+
+        if rcode == Rcode.NOERROR():
+            # ACL checks
+            zone_name = msg.get_question()[0].get_name()
+            zone_class = msg.get_question()[0].get_class()
+            acl = self._get_transfer_acl(zone_name, zone_class)
+            acl_result = acl.execute(
+                isc.acl.dns.RequestContext(self._remote,
+                                           msg.get_tsig_record()))
+            if acl_result == DROP:
+                logger.info(XFROUT_QUERY_DROPPED, zone_name, zone_class,
+                            self._remote[0], self._remote[1])
+                return None, None
+            elif acl_result == REJECT:
+                logger.info(XFROUT_QUERY_REJECTED, zone_name, zone_class,
+                            self._remote[0], self._remote[1])
+                return Rcode.REFUSED(), msg
+
         return rcode, msg
+
+    def _get_transfer_acl(self, zone_name, zone_class):
+        '''Return the ACL that should be applied for a given zone.
+
+        The zone is identified by a tuple of name and RR class.
+        If a per zone configuration for the zone exists and contains
+        transfer_acl, that ACL will be used; otherwise, the default
+        ACL will be used.
+
+        '''
+        # Internally zone names are managed in lower cased label characters,
+        # so we first need to convert the name.
+        zone_name_lower = Name(zone_name.to_text(), True)
+        config_key = (zone_class.to_text(), zone_name_lower.to_text())
+        if config_key in self._zone_config and \
+                'transfer_acl' in self._zone_config[config_key]:
+            return self._zone_config[config_key]['transfer_acl']
+        return self._acl
 
     def _get_query_zone_name(self, msg):
         question = msg.get_question()[0]
@@ -384,10 +411,12 @@ class XfroutSession():
         self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len,
                                          count_since_last_tsig_sign)
 
-class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
+class UnixSockServer(socketserver_mixin.NoPollMixIn,
+                     ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
-    def __init__(self, sock_file, handle_class, shutdown_event, config_data, cc):
+    def __init__(self, sock_file, handle_class, shutdown_event, config_data,
+                 cc):
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
         socketserver_mixin.NoPollMixIn.__init__(self)
@@ -395,16 +424,15 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
         self._common_init()
-        self.update_config_data(config_data)
         self._cc = cc
+        self.update_config_data(config_data)
 
     def _common_init(self):
+        '''Initialization shared with the mock server class used for tests'''
         self._lock = threading.Lock()
         self._transfers_counter = 0
-        # This default value will probably get overwritten by the (same)
-        # default value from the spec file. This is here just to make
-        # sure and to make the default value in tests consistent.
-        self._acl = REQUEST_LOADER.load('[{"action": "ACCEPT"}]')
+        self._zone_config = {}
+        self._acl = None # this will be initialized in update_config_data()
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
@@ -482,7 +510,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         if not request_data:
             return
 
-        t = threading.Thread(target = self.finish_request,
+        t = threading.Thread(target=self.finish_request,
                              args = (sock_fd, request_data))
         if self.daemon_threads:
             t.daemon = True
@@ -506,10 +534,17 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         return sock.getpeername()
 
     def finish_request(self, sock_fd, request_data):
-        '''Finish one request by instantiating RequestHandlerClass.'''
+        '''Finish one request by instantiating RequestHandlerClass.
+
+        This method creates a XfroutSession object.
+        '''
+        self._lock.acquire()
+        acl = self._acl
+        zone_config = self._zone_config
+        self._lock.release()
         self.RequestHandlerClass(sock_fd, request_data, self,
                                  self.tsig_key_ring,
-                                 self._guess_remote(sock_fd), self._acl)
+                                 self._guess_remote(sock_fd), acl, zone_config)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
@@ -551,15 +586,64 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             pass
 
     def update_config_data(self, new_config):
-        '''Apply the new config setting of xfrout module. '''
-        logger.info(XFROUT_NEW_CONFIG)
-        if 'query_acl' in new_config:
-            self._acl = REQUEST_LOADER.load(new_config['query_acl'])
+        '''Apply the new config setting of xfrout module.
+
+        '''
         self._lock.acquire()
-        self._max_transfers_out = new_config.get('transfers_out')
-        self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
+        try:
+            logger.info(XFROUT_NEW_CONFIG)
+            new_acl = self._acl
+            if 'transfer_acl' in new_config:
+                try:
+                    new_acl = REQUEST_LOADER.load(new_config['transfer_acl'])
+                except LoaderError as e:
+                    raise XfroutConfigError('Failed to parse transfer_acl: ' +
+                                            str(e))
+
+            new_zone_config = self._zone_config
+            zconfig_data = new_config.get('zone_config')
+            if zconfig_data is not None:
+                new_zone_config = self.__create_zone_config(zconfig_data)
+
+            self._acl = new_acl
+            self._zone_config = new_zone_config
+            self._max_transfers_out = new_config.get('transfers_out')
+            self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
+        except Exception as e:
+            self._lock.release()
+            raise e
         self._lock.release()
         logger.info(XFROUT_NEW_CONFIG_DONE)
+
+    def __create_zone_config(self, zone_config_list):
+        new_config = {}
+        for zconf in zone_config_list:
+            # convert the class, origin (name) pair.  First build pydnspp
+            # object to reject invalid input.
+            zclass_str = zconf.get('class')
+            if zclass_str is None:
+                #zclass_str = 'IN' # temporary
+                zclass_str = self._cc.get_default_value('zone_config/class')
+            zclass = RRClass(zclass_str)
+            zorigin = Name(zconf['origin'], True)
+            config_key = (zclass.to_text(), zorigin.to_text())
+
+            # reject duplicate config
+            if config_key in new_config:
+                raise XfroutConfigError('Duplicate zone_config for ' +
+                                        str(zorigin) + '/' + str(zclass))
+
+            # create a new config entry, build any given (and known) config
+            new_config[config_key] = {}
+            if 'transfer_acl' in zconf:
+                try:
+                    new_config[config_key]['transfer_acl'] = \
+                        REQUEST_LOADER.load(zconf['transfer_acl'])
+                except LoaderError as e:
+                    raise XfroutConfigError('Failed to parse transfer_acl ' +
+                                            'for ' + zorigin.to_text() + '/' +
+                                            zclass_str + ': ' + str(e))
+        return new_config
 
     def set_tsig_key_ring(self, key_list):
         """Set the tsig_key_ring , given a TSIG key string list representation. """
@@ -617,8 +701,10 @@ class XfroutServer:
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
-        self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession,
-                                                  self._shutdown_event, self._config_data,
+        self._unix_socket_server = UnixSockServer(self._listen_sock_file,
+                                                  XfroutSession,
+                                                  self._shutdown_event,
+                                                  self._config_data,
                                                   self._cc)
         listener = threading.Thread(target=self._unix_socket_server.serve_forever)
         listener.start()
@@ -726,6 +812,10 @@ if '__main__' == __name__:
         logger.INFO(XFROUT_STOPPED_BY_KEYBOARD)
     except SessionError as e:
         logger.error(XFROUT_CC_SESSION_ERROR, str(e))
+    except ModuleCCSessionError as e:
+        logger.error(XFROUT_MODULECC_SESSION_ERROR, str(e))
+    except XfroutConfigError as e:
+        logger.error(XFROUT_CONFIG_ERROR, str(e))
     except SessionTimeout as e:
         logger.error(XFROUT_CC_SESSION_TIMEOUT_ERROR)
 
