@@ -33,6 +33,8 @@ class DiffTest(unittest.TestCase):
         """
         # Track what was called already
         self.__updater_requested = False
+        self.__compact_called = False
+        self.__data_operations = []
         # Some common values
         self.__rrclass = RRClass.IN()
         self.__type = RRType.A()
@@ -54,6 +56,27 @@ class DiffTest(unittest.TestCase):
         self.__rrset_multi.add_rdata(self.__rdata)
         self.__rrset_multi.add_rdata(Rdata(self.__type, self.__rrclass,
                                            '192.0.2.2'))
+
+    def __mock_compact(self):
+        """
+        This can be put into the diff to hook into it's compact method and see
+        if it gets called.
+        """
+        self.__compact_called = True
+
+    def add_rrset(self, rrset):
+        """
+        This one is part of pretending to be a zone updater. It writes down
+        addition of an rrset was requested.
+        """
+        self.__data_operations.append(('add', rrset))
+
+    def remove_rrset(self, rrset):
+        """
+        This one is part of pretending to be a zone updater. It writes down
+        removal of an rrset was requested.
+        """
+        self.__data_operations.append(('remove', rrset))
 
     def get_updater(self, zone_name, replace):
         """
@@ -126,6 +149,29 @@ class DiffTest(unittest.TestCase):
         """
         diff = Diff(self, Name('example.org.'))
         self.__data_common(diff, diff.remove_data, 'remove')
+
+    def test_apply(self):
+        """
+        Schedule few additions and check the apply works by passing the
+        data into the updater.
+        """
+        # Prepare the diff
+        diff = Diff(self, Name('example.org.'))
+        diff.add_data(self.__rrset1)
+        diff.remove_data(self.__rrset2)
+        dlist = [('add', self.__rrset1), ('remove', self.__rrset2)]
+        self.assertEqual(dlist, diff.get_buffer())
+        # Do the apply, hook the compact method
+        diff.compact = self.__mock_compact
+        diff.apply()
+        # It should call the compact
+        self.assertTrue(self.__compact_called)
+        # And pass the data. Our local history of what happened is the same
+        # format, so we can check the same way
+        self.assertEqual(dlist, self.__data_operations)
+        # And the buffer in diff should become empty, as everything
+        # got inside.
+        self.assertEqual([], diff.get_buffer())
 
 if __name__ == "__main__":
     isc.log.init("bind10")
