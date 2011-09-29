@@ -602,6 +602,26 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(MessageTest, fromWireCombineRRs) {
+    // This message contains 3 RRs in the answer section in the order of
+    // A, AAAA, A types.  fromWire() should combine the two A RRs into a
+    // single RRset by default.
+    UnitTestUtil::readWireData("message_fromWire19.wire", received_data);
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message_parse.fromWire(buffer);
+
+    RRsetIterator it = message_parse.beginSection(Message::SECTION_ANSWER);
+    RRsetIterator it_end = message_parse.endSection(Message::SECTION_ANSWER);
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(2, (*it)->getRdataCount());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::AAAA(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+}
+
 TEST_F(MessageTest, EDNS0ExtRcode) {
     // Extended Rcode = BADVERS
     factoryFromFile(message_parse, "message_fromWire10.wire");
