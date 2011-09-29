@@ -35,6 +35,8 @@ class DiffTest(unittest.TestCase):
         self.__updater_requested = False
         self.__compact_called = False
         self.__data_operations = []
+        self.__apply_called = False
+        self.__commit_called = False
         # Some common values
         self.__rrclass = RRClass.IN()
         self.__type = RRType.A()
@@ -59,10 +61,24 @@ class DiffTest(unittest.TestCase):
 
     def __mock_compact(self):
         """
-        This can be put into the diff to hook into it's compact method and see
+        This can be put into the diff to hook into its compact method and see
         if it gets called.
         """
         self.__compact_called = True
+
+    def __mock_apply(self):
+        """
+        This can be put into the diff to hook into its apply method and see
+        it gets called.
+        """
+        self.__apply_called = True
+
+    def commit(self):
+        """
+        This is part of pretending to be a zone updater. This notes the commit
+        was called.
+        """
+        self.__commit_called = True
 
     def add_rrset(self, rrset):
         """
@@ -172,6 +188,23 @@ class DiffTest(unittest.TestCase):
         # And the buffer in diff should become empty, as everything
         # got inside.
         self.assertEqual([], diff.get_buffer())
+
+    def test_commit(self):
+        """
+        If we call a commit, it should first apply whatever changes are
+        left (we hook into that instead of checking the effect) and then
+        the commit on the updater should have been called.
+
+        Then we check it raises value error for whatever operation we try.
+        """
+        diff = Diff(self, Name('example.org.'))
+        diff.add_data(self.__rrset1)
+        diff.apply = self.__mock_apply
+        diff.commit()
+        self.assertTrue(self.__apply_called)
+        self.assertTrue(self.__commit_called)
+        # The data should be handled by apply which we replaced.
+        self.assertEqual([], self.__data_operations)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
