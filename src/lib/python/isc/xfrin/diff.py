@@ -50,7 +50,12 @@ class Diff:
         You can also expect isc.datasrc.Error or isc.datasrc.NotImplemented
         exceptions.
         """
-        pass
+        self.__updater = datasource.get_updater(zone, False)
+        if self.__updater is None:
+            # The no such zone case
+            raise NoSuchZone("Zone " + str(zone) +
+                             " does not exist in the data source " +
+                             str(datasource))
 
     def add_data(self, rr):
         """
