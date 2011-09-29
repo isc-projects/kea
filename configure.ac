@@ -437,7 +437,7 @@ AC_ARG_WITH([botan],
   AC_HELP_STRING([--with-botan=PATH],
     [specify exact directory of Botan library]),
     [botan_path="$withval"])
-if test "${botan_path}" == "no" ; then
+if test "${botan_path}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
 fi
 if test "${botan_path}" != "yes" ; then
@@ -510,7 +510,7 @@ AC_ARG_WITH([log4cplus],
   AC_HELP_STRING([--with-log4cplus=PATH],
     [specify exact directory of log4cplus library and headers]),
     [log4cplus_path="$withval"])
-if test "${log4cplus_path}" == "no" ; then
+if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
