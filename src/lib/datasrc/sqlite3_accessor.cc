@@ -669,7 +669,6 @@ addError(ElementPtr errors, const std::string& error) {
         errors->add(Element::create(error));
     }
 }
-} // end anonymous namespace
 
 bool
 checkConfig(ConstElementPtr config, ElementPtr errors) {
@@ -704,6 +703,8 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
 
     return (result);
 }
+
+} // end anonymous namespace
 
 DataSourceClient *
 createInstance(isc::data::ConstElementPtr config) {

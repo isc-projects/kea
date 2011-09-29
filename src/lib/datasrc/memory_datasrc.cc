@@ -856,8 +856,6 @@ checkZoneConfig(ConstElementPtr config, ElementPtr errors) {
     return result;
 }
 
-} // end anonymous namespace
-
 bool
 checkConfig(ConstElementPtr config, ElementPtr errors) {
     /* Specific configuration is under discussion, right now this accepts
@@ -923,6 +921,8 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
     return (result);
     return true;
 }
+
+} // end anonymous namespace
 
 DataSourceClient *
 createInstance(isc::data::ConstElementPtr config) {
