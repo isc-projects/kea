@@ -1,3 +1,10 @@
+288.    [bug]       stephen
+	Fixed problem whereby the order in which component files appeared in
+	rdataclass.cc was system dependent, leading to problems on some
+	systems where data types were used before the header file in which
+	they were declared was included.
+	(Trac #1202, git 4a605525cda67bea8c43ca8b3eae6e6749797450)
+
 287.	[bug]*		jinmei
 	Python script files for log messages (xxx_messages.py) should have
 	been installed under the "isc" package.  This fix itself should

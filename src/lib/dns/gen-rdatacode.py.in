@@ -133,7 +133,15 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
     if classdir_mtime < getmtime('@srcdir@/rdata'):
         classdir_mtime = getmtime('@srcdir@/rdata')
 
-    for dir in list(os.listdir('@srcdir@/rdata')):
+    # Sort directories before iterating through them so that the directory
+    # list is processed in the same order on all systems.  The resulting
+    # files should compile regardless of the order in which the components
+    # are included but...  Having a fixed order for the directories should
+    # eliminate system-dependent problems.  (Note that the drectory names
+    # in BIND 10 are ASCII, so the order should be locale-independent.)
+    dirlist = os.listdir('@srcdir@/rdata')
+    dirlist.sort()
+    for dir in dirlist:
         classdir = '@srcdir@/rdata' + os.sep + dir
         m = re_typecode.match(dir)
         if os.path.isdir(classdir) and (m != None or dir == 'generic'):
@@ -145,7 +153,12 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
                 class_code = m.group(2)
                 if not class_code in classcode2txt:
                     classcode2txt[class_code] = class_txt
-            for file in list(os.listdir(classdir)):
+
+            # Same considerations as directories regarding sorted order
+            # also apply to files.
+            filelist = os.listdir(classdir)
+            filelist.sort()
+            for file in filelist:
                 file = classdir + os.sep + file
                 m = re_typecode.match(os.path.split(file)[1])
                 if m != None:

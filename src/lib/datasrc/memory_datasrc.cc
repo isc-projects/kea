@@ -661,6 +661,12 @@ InMemoryZoneFinder::getFileName() const {
     return (impl_->file_name_);
 }
 
+isc::dns::Name
+InMemoryZoneFinder::findPreviousName(const isc::dns::Name&) const {
+    isc_throw(NotImplemented, "InMemory data source doesn't support DNSSEC "
+              "yet, can't find previous name");
+}
+
 /// Implementation details for \c InMemoryClient hidden from the public
 /// interface.
 ///
