@@ -66,7 +66,10 @@ class Diff:
         If this is not the case or if the diff was already commited, this
         raises the ValueError exception.
         """
-        pass
+        if rr.get_rdata_count() != 1:
+            raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
+                             'it holds ' + str(rr.get_rdata_count()))
+        self.__buffer.append(('add', rr))
 
     def remove_data(self, rr):
         """
