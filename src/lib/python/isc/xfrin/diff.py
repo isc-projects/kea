@@ -56,6 +56,7 @@ class Diff:
             raise NoSuchZone("Zone " + str(zone) +
                              " does not exist in the data source " +
                              str(datasource))
+        self.__buffer = []
 
     def add_data(self, rr):
         """
@@ -103,3 +104,13 @@ class Diff:
         This might raise isc.datasrc.Error.
         """
         pass
+
+    def get_buffer(self):
+        """
+        Returns the current buffer of changes not yet passed into the data
+        source. It is in a form like [('add', rrset), ('remove', rrset),
+        ('remove', rrset), ...].
+
+        Probably useful only for testing and introspection purposes.
+        """
+        return self.__buffer

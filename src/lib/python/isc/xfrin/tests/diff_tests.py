@@ -55,6 +55,7 @@ class DiffTest(unittest.TestCase):
         """
         diff = Diff(self, Name('example.org.'))
         self.assertTrue(self.__updater_requested)
+        self.assertEqual([], diff.get_buffer())
 
     def test_create_nonexist(self):
         """
