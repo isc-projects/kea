@@ -1,3 +1,21 @@
+289.	[func]*		jinmei
+	b10-xfrout: ACLs for xfrout can now be configured per zone basis.
+	A per zone ACl is part of a more general zone configuration.  A
+	quick example for configuring an ACL for zone "example.com" that
+	rejects any transfer request for that zone is as follows:
+	> config add Xfrout/zone_config
+	> config set Xfrout/zone_config[0]/origin "example.com"
+	> config add Xfrout/zone_config[0]/transfer_acl
+	> config set Xfrout/zone_config[0]/transfer_acl[0] {"action": "REJECT"}
+	The previous global ACL (query_acl) was renamed to transfer_acl,
+	which now works as the default ACL.  Note: backward compatibility
+	is not provided, so an existing configuration using query_acl
+	needs to be updated by hand.
+	Note: the per zone configuration framework is a temporary
+	workaround.  It will eventually be redesigned as a system wide
+	configuration.
+	(Trac #1165, git 698176eccd5d55759fe9448b2c249717c932ac31)
+
 288.    [bug]       stephen
 	Fixed problem whereby the order in which component files appeared in
 	rdataclass.cc was system dependent, leading to problems on some
