@@ -176,11 +176,6 @@
     </para>
 
     <para>
-      <command>b10-host</command> does not do reverse lookups by
-      default yet (by detecting if name is a IPv4 or IPv6 address).
-    </para>
-
-    <para>
       <option>-p</option> is not a standard feature.
     </para>
   </refsect1>
