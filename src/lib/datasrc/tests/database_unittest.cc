@@ -851,7 +851,17 @@ public:
 
 // The following two lines instantiate test cases with concrete accessor
 // classes to be tested.
+// XXX: clang++ installed on our FreeBSD buildbot cannot complete compiling
+// this file, seemingly due to the size of the code.  We'll consider more
+// complete workaround, but for a short term workaround we'll reduce the
+// number of tested accessor classes (thus reducing the amount of code
+// to be compiled) for this particular environment.
+#if defined(__clang__) && defined(__FreeBSD__)
+typedef ::testing::Types<MockAccessor> TestAccessorTypes;
+#else
 typedef ::testing::Types<MockAccessor, TestSQLite3Accessor> TestAccessorTypes;
+#endif
+
 TYPED_TEST_CASE(DatabaseClientTest, TestAccessorTypes);
 
 // In some cases the entire test fixture is for the mock accessor only.
