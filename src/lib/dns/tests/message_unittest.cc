@@ -175,7 +175,6 @@ TEST_F(MessageTest, headerFlag) {
     EXPECT_THROW(message_parse.setHeaderFlag(Message::HEADERFLAG_QR),
                  InvalidMessageOperation);
 }
-
 TEST_F(MessageTest, getEDNS) {
     EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
 
@@ -532,7 +531,46 @@ TEST_F(MessageTest, appendSection) {
     
 }
 
+TEST_F(MessageTest, parseHeader) {
+    received_data.clear();
+    UnitTestUtil::readWireData("message_fromWire1", received_data);
+
+    // parseHeader() isn't allowed in the render mode.
+    InputBuffer buffer(&received_data[0], received_data.size());
+    EXPECT_THROW(message_render.parseHeader(buffer), InvalidMessageOperation);
+
+    message_parse.parseHeader(buffer);
+    EXPECT_EQ(0x1035, message_parse.getQid());
+    EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
+    EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_RA));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_AD));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_CD));
+    EXPECT_EQ(1, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2, message_parse.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
+
+    // Only the header part should have been examined.
+    EXPECT_EQ(12, buffer.getPosition()); // 12 = size of the header section
+    EXPECT_TRUE(message_parse.beginQuestion() == message_parse.endQuestion());
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_ANSWER) ==
+                message_parse.endSection(Message::SECTION_ANSWER));
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_AUTHORITY) ==
+                message_parse.endSection(Message::SECTION_AUTHORITY));
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_ADDITIONAL) ==
+                message_parse.endSection(Message::SECTION_ADDITIONAL));
+}
+
 TEST_F(MessageTest, fromWire) {
+    // fromWire() isn't allowed in the render mode.
+    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
+                 InvalidMessageOperation);
+
     factoryFromFile(message_parse, "message_fromWire1");
     EXPECT_EQ(0x1035, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
