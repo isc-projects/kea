@@ -117,7 +117,18 @@ class Diff:
         It also can raise isc.datasrc.Error. If that happens, you should stop
         using this object and abort the modification.
         """
-        pass
+        # First, compact the data
+        self.compact()
+        # Then pass the data inside the data source
+        for (operation, rrset) in self.__buffer:
+            if operation == 'add':
+                self.__updater.add_rrset(rrset)
+            elif operation == 'remove':
+                self.__updater.remove_rrset(rrset)
+            else:
+                raise ValueError('Unknown operation ' + operation)
+        # As everything is already in, drop the buffer
+        self.__buffer = []
 
     def commit(self):
         """
