@@ -63,6 +63,11 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
+% DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED %1 doesn't support DNSSEC when asked for NSEC data covering %2
+The datasource tried to provide an NSEC proof that the named domain does not
+exist, but the database backend doesn't support DNSSEC. No proof is included
+in the answer as a result.
+
 % DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3
 Debug information. The database data source is looking up records with the given
 name and type in the database.
