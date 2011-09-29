@@ -622,6 +622,64 @@ TEST_F(MessageTest, fromWireCombineRRs) {
     EXPECT_EQ(1, (*it)->getRdataCount());
 }
 
+// A helper function for a test pattern commonly used in several tests below.
+void
+preserveRRCheck(const Message& message, Message::Section section) {
+    RRsetIterator it = message.beginSection(section);
+    RRsetIterator it_end = message.endSection(section);
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("192.0.2.1", (*it)->getRdataIterator()->getCurrent().toText());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::AAAA(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("2001:db8::1", (*it)->getRdataIterator()->getCurrent().toText());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("192.0.2.2", (*it)->getRdataIterator()->getCurrent().toText());
+}
+
+TEST_F(MessageTest, fromWirePreserveAnswer) {
+    // Using the same data as the previous test, but specify the PRESERVE_ORDER
+    // option.  The received order of RRs should be preserved, and each RR
+    // should be stored in a single RRset.
+    UnitTestUtil::readWireData("message_fromWire19.wire", received_data);
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message_parse.fromWire(buffer, Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve answer RRs");
+        preserveRRCheck(message_parse, Message::SECTION_ANSWER);
+    }
+}
+
+TEST_F(MessageTest, fromWirePreserveAuthority) {
+    // Same for the previous test, but for the authority section.
+    UnitTestUtil::readWireData("message_fromWire20.wire", received_data);
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message_parse.fromWire(buffer, Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve authority RRs");
+        preserveRRCheck(message_parse, Message::SECTION_AUTHORITY);
+    }
+}
+
+TEST_F(MessageTest, fromWirePreserveAdditional) {
+    // Same for the previous test, but for the additional section.
+    UnitTestUtil::readWireData("message_fromWire21.wire", received_data);
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message_parse.fromWire(buffer, Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve additional RRs");
+        preserveRRCheck(message_parse, Message::SECTION_ADDITIONAL);
+    }
+}
+
 TEST_F(MessageTest, EDNS0ExtRcode) {
     // Extended Rcode = BADVERS
     factoryFromFile(message_parse, "message_fromWire10.wire");

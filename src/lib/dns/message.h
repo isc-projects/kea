@@ -581,11 +581,26 @@ public:
     /// message
     void toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx);
 
+    /// Parse options.
+    ///
+    /// describe PRESERVE_ORDER: note doesn't affect EDNS or TSIG.
+    ///
+    /// The option values are used as a parameter for \c fromWire().
+    /// These are values of a bitmask type.  Bitwise operations can be
+    /// performed on these values to express compound options.
+    enum ParseOptions {
+        PARSE_DEFAULT = 0,       ///< The default options
+        PRESERVE_ORDER = 1       ///< Preserve RR order and don't combining
+    };
+
     /// \brief Parse the header section of the \c Message.
     void parseHeader(isc::util::InputBuffer& buffer);
 
     /// \brief Parse the \c Message.
-    void fromWire(isc::util::InputBuffer& buffer);
+    ///
+    /// \param buffer
+    void fromWire(isc::util::InputBuffer& buffer, ParseOptions options
+        = PARSE_DEFAULT);
 
     ///
     /// \name Protocol constants
