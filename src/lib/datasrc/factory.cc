@@ -51,7 +51,7 @@ LibraryContainer::getSym(const char* name) {
 
     const char* dlsym_error = dlerror();
     if (dlsym_error != NULL) {
-        isc_throw(DataSourceLibraryError, dlsym_error);
+        isc_throw(DataSourceLibrarySymbolError, dlsym_error);
     }
 
     return (sym);
@@ -61,8 +61,10 @@ DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
                                                      ConstElementPtr config)
 : ds_lib_(type + "_ds.so")
 {
-    ds_creator* ds_create = (ds_creator*)ds_lib_.getSym("createInstance");
-    destructor_ = (ds_destructor*)ds_lib_.getSym("destroyInstance");
+    ds_creator* ds_create =
+        reinterpret_cast<ds_creator*>(ds_lib_.getSym("createInstance"));
+    destructor_ =
+        reinterpret_cast<ds_destructor*>(ds_lib_.getSym("destroyInstance"));
 
     instance_ = ds_create(config);
 }

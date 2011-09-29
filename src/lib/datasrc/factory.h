@@ -15,10 +15,7 @@
 #ifndef __DATA_SOURCE_FACTORY_H
 #define __DATA_SOURCE_FACTORY_H 1
 
-//#include <boost/noncopyable.hpp>
-//#include <boost/shared_ptr.hpp>
-
-//#include <exceptions/exceptions.h>
+#include <boost/noncopyable.hpp>
 
 #include <datasrc/data_source.h>
 #include <datasrc/client.h>
@@ -31,10 +28,19 @@ namespace datasrc {
 
 
 /// \brief Raised if there is an error loading the datasource implementation
-///        library, or if that library misses a needed symbol
+///        library
 class DataSourceLibraryError : public DataSourceError {
 public:
     DataSourceLibraryError(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
+
+/// \brief Raised if there is an error reading a symbol from the datasource
+///        implementation library
+class DataSourceLibrarySymbolError : public DataSourceError {
+public:
+    DataSourceLibrarySymbolError(const char* file, size_t line,
+                                 const char* what) :
         DataSourceError(file, line, what) {}
 };
 
@@ -63,7 +69,7 @@ typedef void ds_destructor(DataSourceClient* instance);
 ///       in other places than for dynamically loading datasources, then, apart
 ///       from moving it to another location, we also need to make the
 ///       exceptions raised more general.
-class LibraryContainer {
+class LibraryContainer : boost::noncopyable {
 public:
     /// \brief Constructor
     ///
@@ -83,11 +89,19 @@ public:
     ///
     /// This retrieves a symbol from the loaded library.
     ///
-    /// \exception DataSourceLibraryError if the symbol cannot be found, or if
-    ///            another error (as reported by dlerror() occurs.
+    /// \exception DataSourceLibrarySymbolError if the symbol cannot be found,
+    ///            or if another error (as reported by dlerror() occurs.
     ///
     /// \param name The name of the symbol to retrieve
-    /// \return A pointer to the symbol
+    /// \return A pointer to the symbol. This may be NULL, and if so, indicates
+    ///         the symbol does indeed exist, but has the value NULL itself.
+    ///         If the symbol does not exist, a DataSourceLibrarySymbolError is
+    ///         raised.
+    ///
+    /// \note The argument is a const char* (and not a std::string like the
+    ///       argument in the constructor). This argument is always a fixed
+    ///       string in the code, while the other can be read from
+    ///       configuration, and needs modification
     void* getSym(const char* name);
 private:
     /// Pointer to the dynamically loaded library structure
@@ -120,12 +134,14 @@ private:
 ///
 /// extern "C" void destroyInstance(isc::data::DataSourceClient* instance);
 /// \endcode
-class DataSourceClientContainer {
+class DataSourceClientContainer : boost::noncopyable {
 public:
     /// \brief Constructor
     ///
     /// \exception DataSourceLibraryError if there is an error loading the
     ///            backend library
+    /// \exception DataSourceLibrarySymbolError if the library does not have
+    ///            the needed symbols, or if there is an error reading them
     /// \exception DataSourceConfigError if the given config is not correct
     ///            for the given type
     ///
