@@ -138,7 +138,8 @@ class Diff:
 
         This might raise isc.datasrc.Error.
         """
-        pass
+        self.apply()
+        self.__updater.commit()
 
     def get_buffer(self):
         """
