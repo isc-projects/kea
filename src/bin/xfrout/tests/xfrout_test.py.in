@@ -20,6 +20,7 @@ import unittest
 import os
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from isc.cc.session import *
+import isc.config
 from pydnspp import *
 from xfrout import *
 import xfrout
@@ -101,20 +102,24 @@ class TestXfroutSession(unittest.TestCase):
     def message_has_tsig(self, msg):
         return msg.get_tsig_record() is not None
 
-    def create_request_data_with_tsig(self):
+    def create_request_data(self, with_tsig=False):
         msg = Message(Message.RENDER)
         query_id = 0x1035
         msg.set_qid(query_id)
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
-        query_question = Question(Name("example.com."), RRClass.IN(), RRType.AXFR())
+        query_question = Question(Name("example.com"), RRClass.IN(),
+                                  RRType.AXFR())
         msg.add_question(query_question)
 
         renderer = MessageRenderer()
-        tsig_ctx = MockTSIGContext(TSIG_KEY)
-        msg.to_wire(renderer, tsig_ctx)
-        reply_data = renderer.get_data()
-        return reply_data
+        if with_tsig:
+            tsig_ctx = MockTSIGContext(TSIG_KEY)
+            msg.to_wire(renderer, tsig_ctx)
+        else:
+            msg.to_wire(renderer)
+        request_data = renderer.get_data()
+        return request_data
 
     def setUp(self):
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
@@ -122,8 +127,9 @@ class TestXfroutSession(unittest.TestCase):
                                        TSIGKeyRing(), ('127.0.0.1', 12345),
                                        # When not testing ACLs, simply accept
                                        isc.acl.dns.REQUEST_LOADER.load(
-                                           [{"action": "ACCEPT"}]))
-        self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
+                                           [{"action": "ACCEPT"}]),
+                                       {})
+        self.mdata = self.create_request_data(False)
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
 
     def test_parse_query_message(self):
@@ -131,7 +137,7 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(get_rcode.to_text(), "NOERROR")
 
         # tsig signed query message
-        request_data = self.create_request_data_with_tsig()
+        request_data = self.create_request_data(True)
         # BADKEY
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "NOTAUTH")
@@ -143,8 +149,9 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(rcode.to_text(), "NOERROR")
         self.assertTrue(self.xfrsess._tsig_ctx is not None)
 
+    def check_transfer_acl(self, acl_setter):
         # ACL checks, put some ACL inside
-        self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+        acl_setter(isc.acl.dns.REQUEST_LOADER.load([
             {
                 "from": "127.0.0.1",
                 "action": "ACCEPT"
@@ -153,7 +160,7 @@ class TestXfroutSession(unittest.TestCase):
                 "from": "192.0.2.1",
                 "action": "DROP"
             }
-        ])
+        ]))
         # Localhost (the default in this test) is accepted
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "NOERROR")
@@ -165,6 +172,10 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._remote = ('192.0.2.2', 12345)
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
+
+        # TSIG signed request
+        request_data = self.create_request_data(True)
+
         # If the TSIG check fails, it should not check ACL
         # (If it checked ACL as well, it would just drop the request)
         self.xfrsess._remote = ('192.0.2.1', 12345)
@@ -174,36 +185,36 @@ class TestXfroutSession(unittest.TestCase):
         self.assertTrue(self.xfrsess._tsig_ctx is not None)
 
         # ACL using TSIG: successful case
-        self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+        acl_setter(isc.acl.dns.REQUEST_LOADER.load([
             {"key": "example.com", "action": "ACCEPT"}, {"action": "REJECT"}
-        ])
+        ]))
         self.assertEqual(TSIGKeyRing.SUCCESS,
                          self.xfrsess._tsig_key_ring.add(TSIG_KEY))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "NOERROR")
 
         # ACL using TSIG: key name doesn't match; should be rejected
-        self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+        acl_setter(isc.acl.dns.REQUEST_LOADER.load([
             {"key": "example.org", "action": "ACCEPT"}, {"action": "REJECT"}
-        ])
+        ]))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
 
         # ACL using TSIG: no TSIG; should be rejected
-        self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+        acl_setter(isc.acl.dns.REQUEST_LOADER.load([
             {"key": "example.org", "action": "ACCEPT"}, {"action": "REJECT"}
-        ])
+        ]))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
 
         #
         # ACL using IP + TSIG: both should match
         #
-        self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+        acl_setter(isc.acl.dns.REQUEST_LOADER.load([
                 {"ALL": [{"key": "example.com"}, {"from": "192.0.2.1"}],
                  "action": "ACCEPT"},
                 {"action": "REJECT"}
-        ])
+        ]))
         # both matches
         self.xfrsess._remote = ('192.0.2.1', 12345)
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
@@ -220,6 +231,63 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._remote = ('192.0.2.2', 12345)
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
+
+    def test_transfer_acl(self):
+        # ACL checks only with the default ACL
+        def acl_setter(acl):
+            self.xfrsess._acl = acl
+        self.check_transfer_acl(acl_setter)
+
+    def test_transfer_zoneacl(self):
+        # ACL check with a per zone ACL + default ACL.  The per zone ACL
+        # should match the queryied zone, so it should be used.
+        def acl_setter(acl):
+            zone_key = ('IN', 'example.com.')
+            self.xfrsess._zone_config[zone_key] = {}
+            self.xfrsess._zone_config[zone_key]['transfer_acl'] = acl
+            self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+                    {"from": "127.0.0.1", "action": "DROP"}])
+        self.check_transfer_acl(acl_setter)
+
+    def test_transfer_zoneacl_nomatch(self):
+        # similar to the previous one, but the per zone doesn't match the
+        # query.  The default should be used.
+        def acl_setter(acl):
+            zone_key = ('IN', 'example.org.')
+            self.xfrsess._zone_config[zone_key] = {}
+            self.xfrsess._zone_config[zone_key]['transfer_acl'] = \
+                isc.acl.dns.REQUEST_LOADER.load([
+                    {"from": "127.0.0.1", "action": "DROP"}])
+            self.xfrsess._acl = acl
+        self.check_transfer_acl(acl_setter)
+
+    def test_get_transfer_acl(self):
+        # set the default ACL.  If there's no specific zone ACL, this one
+        # should be used.
+        self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
+                {"from": "127.0.0.1", "action": "ACCEPT"}])
+        acl = self.xfrsess._get_transfer_acl(Name('example.com'), RRClass.IN())
+        self.assertEqual(acl, self.xfrsess._acl)
+
+        # install a per zone config with transfer ACL for example.com.  Then
+        # that ACL will be used for example.com; for others the default ACL
+        # will still be used.
+        com_acl = isc.acl.dns.REQUEST_LOADER.load([
+                {"from": "127.0.0.1", "action": "REJECT"}])
+        self.xfrsess._zone_config[('IN', 'example.com.')] = {}
+        self.xfrsess._zone_config[('IN', 'example.com.')]['transfer_acl'] = \
+            com_acl
+        self.assertEqual(com_acl,
+                         self.xfrsess._get_transfer_acl(Name('example.com'),
+                                                        RRClass.IN()))
+        self.assertEqual(self.xfrsess._acl,
+                         self.xfrsess._get_transfer_acl(Name('example.org'),
+                                                        RRClass.IN()))
+
+        # Name matching should be case insensitive.
+        self.assertEqual(com_acl,
+                         self.xfrsess._get_transfer_acl(Name('EXAMPLE.COM'),
+                                                        RRClass.IN()))
 
     def test_get_query_zone_name(self):
         msg = self.getmsg()
@@ -572,9 +640,11 @@ class TestXfroutSession(unittest.TestCase):
         # and it should not have sent anything else
         self.assertEqual(0, len(self.sock.sendqueue))
 
-class MyCCSession():
+class MyCCSession(isc.config.ConfigData):
     def __init__(self):
-        pass
+        module_spec = isc.config.module_spec_from_file(
+            xfrout.SPECFILE_LOCATION)
+        ConfigData.__init__(self, module_spec)
 
     def get_remote_config_value(self, module_name, identifier):
         if module_name == "Auth" and identifier == "database_file":
@@ -586,9 +656,9 @@ class MyCCSession():
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
         self._shutdown_event = threading.Event()
-        self._max_transfers_out = 10
-        self._cc = MyCCSession()
         self._common_init()
+        self._cc = MyCCSession()
+        self.update_config_data(self._cc.get_full_config())
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
@@ -636,17 +706,17 @@ class TestUnixSockServer(unittest.TestCase):
                                              socket.AI_NUMERICHOST)[0][4])
         self.assertEqual(isc.acl.acl.ACCEPT, self.unix._acl.execute(context))
 
-    def check_loaded_ACL(self):
+    def check_loaded_ACL(self, acl):
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("127.0.0.1",
                                              1234, 0, socket.SOCK_DGRAM,
                                              socket.IPPROTO_UDP,
                                              socket.AI_NUMERICHOST)[0][4])
-        self.assertEqual(isc.acl.acl.ACCEPT, self.unix._acl.execute(context))
+        self.assertEqual(isc.acl.acl.ACCEPT, acl.execute(context))
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("192.0.2.1",
                                              1234, 0, socket.SOCK_DGRAM,
                                              socket.IPPROTO_UDP,
                                              socket.AI_NUMERICHOST)[0][4])
-        self.assertEqual(isc.acl.acl.REJECT, self.unix._acl.execute(context))
+        self.assertEqual(isc.acl.acl.REJECT, acl.execute(context))
 
     def test_update_config_data(self):
         self.check_default_ACL()
@@ -671,14 +741,79 @@ class TestUnixSockServer(unittest.TestCase):
         self.assertEqual(self.unix.tsig_key_ring.size(), 0)
 
         # Load the ACL
-        self.unix.update_config_data({'query_acl': [{'from': '127.0.0.1',
+        self.unix.update_config_data({'transfer_acl': [{'from': '127.0.0.1',
                                                'action': 'ACCEPT'}]})
-        self.check_loaded_ACL()
+        self.check_loaded_ACL(self.unix._acl)
         # Pass a wrong data there and check it does not replace the old one
-        self.assertRaises(isc.acl.acl.LoaderError,
+        self.assertRaises(XfroutConfigError,
                           self.unix.update_config_data,
-                          {'query_acl': ['Something bad']})
-        self.check_loaded_ACL()
+                          {'transfer_acl': ['Something bad']})
+        self.check_loaded_ACL(self.unix._acl)
+
+    def test_zone_config_data(self):
+        # By default, there's no specific zone config
+        self.assertEqual({}, self.unix._zone_config)
+
+        # Adding config for a specific zone.  The config is empty unless
+        # explicitly specified.
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com',
+                                            'class': 'IN'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+
+        # zone class can be omitted
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+
+        # zone class, name are stored in the "normalized" form.  class
+        # strings are upper cased, names are down cased.
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'EXAMPLE.com'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+
+        # invalid zone class, name will result in exceptions
+        self.assertRaises(EmptyLabel,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'bad..example'}]})
+        self.assertRaises(InvalidRRClass,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'example.com',
+                                            'class': 'badclass'}]})
+
+        # Configuring a couple of more zones
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com'},
+                                           {'origin': 'example.com',
+                                            'class': 'CH'},
+                                           {'origin': 'example.org'}]})
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.com.')])
+        self.assertEqual({}, self.unix._zone_config[('CH', 'example.com.')])
+        self.assertEqual({}, self.unix._zone_config[('IN', 'example.org.')])
+
+        # Duplicate data: should be rejected with an exception
+        self.assertRaises(XfroutConfigError,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'example.com'},
+                                           {'origin': 'example.org'},
+                                           {'origin': 'example.com'}]})
+
+    def test_zone_config_data_with_acl(self):
+        # Similar to the previous test, but with transfer_acl config
+        self.unix.update_config_data({'zone_config':
+                                          [{'origin': 'example.com',
+                                            'transfer_acl':
+                                                [{'from': '127.0.0.1',
+                                                  'action': 'ACCEPT'}]}]})
+        acl = self.unix._zone_config[('IN', 'example.com.')]['transfer_acl']
+        self.check_loaded_ACL(acl)
+
+        # invalid ACL syntax will be rejected with exception
+        self.assertRaises(XfroutConfigError,
+                          self.unix.update_config_data,
+                          {'zone_config': [{'origin': 'example.com',
+                                            'transfer_acl':
+                                                [{'action': 'BADACTION'}]}]})
 
     def test_get_db_file(self):
         self.assertEqual(self.unix.get_db_file(), "initdb.file")

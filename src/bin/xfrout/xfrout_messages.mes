@@ -47,6 +47,17 @@ a valid TSIG key.
 There was a problem reading from the command and control channel. The
 most likely cause is that the msgq daemon is not running.
 
+% XFROUT_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
+There was a problem in the lower level module handling configuration and
+control commands.  This could happen for various reasons, but the most likely
+cause is that the configuration database contains a syntax error and xfrout
+failed to start at initialization.  A detailed error message from the module
+will also be displayed.
+
+% XFROUT_CONFIG_ERROR error found in configuration data: %1
+The xfrout process encountered an error when installing the configuration at
+startup time.  Details of the error are included in the log message.
+
 % XFROUT_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response
 There was a problem reading a response from another module over the
 command and control channel. The most likely cause is that the
