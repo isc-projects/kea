@@ -30,6 +30,7 @@ libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
+libdatasrc_la_LIBADD += $(SQLITE_LIBS)
 
 BUILT_SOURCES = datasrc_messages.h datasrc_messages.cc
 datasrc_messages.h datasrc_messages.cc: Makefile datasrc_messages.mes

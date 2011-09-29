@@ -141,6 +141,10 @@ public:
     // Turn this on if you want it to return RRSIGs regardless of FIND_GLUE_OK
     void setIncludeRRSIGAnyway(bool on) { include_rrsig_anyway_ = on; }
 
+    Name findPreviousName(const Name&) const {
+        isc_throw(isc::NotImplemented, "Mock doesn't support previous name");
+    }
+
 private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
     typedef map<Name, RRsetStore> Domains;

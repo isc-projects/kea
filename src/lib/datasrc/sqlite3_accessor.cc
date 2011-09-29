@@ -47,7 +47,8 @@ enum StatementID {
     ADD_RECORD = 7,
     DEL_RECORD = 8,
     ITERATE = 9,
-    NUM_STATEMENTS = 10
+    FIND_PREVIOUS = 10,
+    NUM_STATEMENTS = 11
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -68,7 +69,15 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
     "AND rdtype=?3 AND rdata=?4",
     "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
-    "WHERE zone_id = ?1 ORDER BY name, rdtype"
+    "WHERE zone_id = ?1 ORDER BY name, rdtype",
+    /*
+     * This one looks for previous name with NSEC record. It is done by
+     * using the reversed name. The NSEC is checked because we need to
+     * skip glue data, which don't have the NSEC.
+     */
+    "SELECT name FROM records " // FIND_PREVIOUS
+    "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
+    "rname < $2 ORDER BY rname DESC LIMIT 1"
 };
 
 struct SQLite3Parameters {
@@ -391,6 +400,28 @@ SQLite3Accessor::getZone(const std::string& name) const {
     return (std::pair<bool, int>(false, 0));
 }
 
+namespace {
+
+// Conversion to plain char
+const char*
+convertToPlainChar(const unsigned char* ucp, sqlite3 *db) {
+    if (ucp == NULL) {
+        // The field can really be NULL, in which case we return an
+        // empty string, or sqlite may have run out of memory, in
+        // which case we raise an error
+        if (sqlite3_errcode(db) == SQLITE_NOMEM) {
+            isc_throw(DataSourceError,
+                      "Sqlite3 backend encountered a memory allocation "
+                      "error in sqlite3_column_text()");
+        } else {
+            return ("");
+        }
+    }
+    const void* p = ucp;
+    return (static_cast<const char*>(p));
+}
+
+}
 class SQLite3Accessor::Context : public DatabaseAccessor::IteratorContext {
 public:
     // Construct an iterator for all records. When constructed this
@@ -468,7 +499,8 @@ private:
 
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
         data[column] = convertToPlainChar(sqlite3_column_text(statement_,
-                                                              column));
+                                                              column),
+                                          accessor_->dbparameters_->db_);
     }
 
     void bindZoneId(const int zone_id) {
@@ -493,29 +525,6 @@ private:
     void finalize() {
         sqlite3_finalize(statement_);
         statement_ = NULL;
-    }
-
-    // This helper method converts from the unsigned char* type (used by
-    // sqlite3) to char* (wanted by std::string). Technically these types
-    // might not be directly convertable
-    // In case sqlite3_column_text() returns NULL, we just make it an
-    // empty string, unless it was caused by a memory error
-    const char* convertToPlainChar(const unsigned char* ucp) {
-        if (ucp == NULL) {
-            // The field can really be NULL, in which case we return an
-            // empty string, or sqlite may have run out of memory, in
-            // which case we raise an error
-            if (sqlite3_errcode(accessor_->dbparameters_->db_)
-                                == SQLITE_NOMEM) {
-                isc_throw(DataSourceError,
-                        "Sqlite3 backend encountered a memory allocation "
-                        "error in sqlite3_column_text()");
-            } else {
-                return ("");
-            }
-        }
-        const void* p = ucp;
-        return (static_cast<const char*>(p));
     }
 
     const IteratorType iterator_type_;
@@ -656,6 +665,50 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
     }
     doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
         *dbparameters_, DEL_RECORD, params, "delete record from zone");
+}
+
+std::string
+SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
+    const
+{
+    sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS]);
+    sqlite3_clear_bindings(dbparameters_->statements_[FIND_PREVIOUS]);
+
+    if (sqlite3_bind_int(dbparameters_->statements_[FIND_PREVIOUS], 1,
+                         zone_id) != SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (find previous): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+    if (sqlite3_bind_text(dbparameters_->statements_[FIND_PREVIOUS], 2,
+                          rname.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind name " << rname <<
+                  " to SQL statement (find previous): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+
+    std::string result;
+    const int rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS]);
+    if (rc == SQLITE_ROW) {
+        // We found it
+        result = convertToPlainChar(sqlite3_column_text(dbparameters_->
+            statements_[FIND_PREVIOUS], 0), dbparameters_->db_);
+    }
+    sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS]);
+
+    if (rc == SQLITE_DONE) {
+        // No NSEC records here, this DB doesn't support DNSSEC or
+        // we asked before the apex
+        isc_throw(isc::NotImplemented, "The zone doesn't support DNSSEC or "
+                  "query before apex");
+    }
+
+    if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
+        // Some kind of error
+        isc_throw(SQLite3Error, "Could not get data for previous name");
+    }
+
+    return (result);
 }
 
 }

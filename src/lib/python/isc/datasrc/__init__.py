@@ -1,5 +1,5 @@
-from isc.datasrc.master import *
-from isc.datasrc.sqlite3_ds import *
+import sys
+import os
 
 for base in sys.path[:]:
     datasrc_libdir = os.path.join(base, 'isc/datasrc/.libs')
@@ -7,3 +7,6 @@ for base in sys.path[:]:
         sys.path.insert(0, datasrc_libdir)
 
 from datasrc import *
+from isc.datasrc.sqlite3_ds import *
+from isc.datasrc.master import *
+
