@@ -35,7 +35,7 @@ import errno
 from optparse import OptionParser, OptionValueError
 from isc.util import socketserver_mixin
 
-from xfrout_messages import *
+from isc.log_messages.xfrout_messages import *
 
 isc.log.init("b10-xfrout")
 logger = isc.log.Logger("xfrout")

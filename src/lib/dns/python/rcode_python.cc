@@ -15,34 +15,39 @@
 #include <Python.h>
 
 #include <exceptions/exceptions.h>
-
 #include <dns/rcode.h>
+#include <util/python/pycppwrapper_util.h>
 
 #include "pydnspp_common.h"
 #include "rcode_python.h"
 
 using namespace isc::dns;
 using namespace isc::dns::python;
-
-//
-// Declaration of the custom exceptions (None for this class)
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// Rcode
-//
-
-// Trivial constructor.
-s_Rcode::s_Rcode() : cppobj(NULL), static_code(false) {}
+using namespace isc::util::python;
 
 namespace {
+// The s_* Class simply covers one instantiation of the object.
+//
+// We added a helper variable static_code here
+// Since we can create Rcodes dynamically with Rcode(int), but also
+// use the static globals (Rcode::NOERROR() etc), we use this
+// variable to see if the code came from one of the latter, in which
+// case Rcode_destroy should not free it (the other option is to
+// allocate new Rcodes for every use of the static ones, but this
+// seems more efficient).
+//
+// Follow-up note: we don't have to use the proxy function in the python lib;
+// we can just define class specific constants directly (see TSIGError).
+// We should make this cleanup later.
+class s_Rcode : public PyObject {
+public:
+    s_Rcode() : cppobj(NULL), static_code(false) {};
+    const Rcode* cppobj;
+    bool static_code;
+};
+
+typedef CPPPyObjectContainer<s_Rcode, Rcode> RcodeContainer;
+
 int Rcode_init(s_Rcode* const self, PyObject* args);
 void Rcode_destroy(s_Rcode* const self);
 
@@ -282,7 +287,7 @@ Rcode_BADVERS(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::BADVERS()));
 }
 
-PyObject* 
+PyObject*
 Rcode_richcmp(const s_Rcode* const self, const s_Rcode* const other,
               const int op)
 {
@@ -376,59 +381,31 @@ PyTypeObject rcode_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_Rcode(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rcode_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rcode_type);
-    void* p = &rcode_type;
-    if (PyModule_AddObject(mod, "Rcode", static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&rcode_type);
-        return (false);
-    }
-
-    addClassVariable(rcode_type, "NOERROR_CODE",
-                     Py_BuildValue("h", Rcode::NOERROR_CODE));
-    addClassVariable(rcode_type, "FORMERR_CODE",
-                     Py_BuildValue("h", Rcode::FORMERR_CODE));
-    addClassVariable(rcode_type, "SERVFAIL_CODE",
-                     Py_BuildValue("h", Rcode::SERVFAIL_CODE));
-    addClassVariable(rcode_type, "NXDOMAIN_CODE",
-                     Py_BuildValue("h", Rcode::NXDOMAIN_CODE));
-    addClassVariable(rcode_type, "NOTIMP_CODE",
-                     Py_BuildValue("h", Rcode::NOTIMP_CODE));
-    addClassVariable(rcode_type, "REFUSED_CODE",
-                     Py_BuildValue("h", Rcode::REFUSED_CODE));
-    addClassVariable(rcode_type, "YXDOMAIN_CODE",
-                     Py_BuildValue("h", Rcode::YXDOMAIN_CODE));
-    addClassVariable(rcode_type, "YXRRSET_CODE",
-                     Py_BuildValue("h", Rcode::YXRRSET_CODE));
-    addClassVariable(rcode_type, "NXRRSET_CODE",
-                     Py_BuildValue("h", Rcode::NXRRSET_CODE));
-    addClassVariable(rcode_type, "NOTAUTH_CODE",
-                     Py_BuildValue("h", Rcode::NOTAUTH_CODE));
-    addClassVariable(rcode_type, "NOTZONE_CODE",
-                     Py_BuildValue("h", Rcode::NOTZONE_CODE));
-    addClassVariable(rcode_type, "RESERVED11_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED11_CODE));
-    addClassVariable(rcode_type, "RESERVED12_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED12_CODE));
-    addClassVariable(rcode_type, "RESERVED13_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED13_CODE));
-    addClassVariable(rcode_type, "RESERVED14_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED14_CODE));
-    addClassVariable(rcode_type, "RESERVED15_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED15_CODE));
-    addClassVariable(rcode_type, "BADVERS_CODE",
-                     Py_BuildValue("h", Rcode::BADVERS_CODE));
-
-    return (true);
+PyObject*
+createRcodeObject(const Rcode& source) {
+    RcodeContainer container(PyObject_New(s_Rcode, &rcode_type));
+    container.set(new Rcode(source));
+    return (container.release());
 }
+
+bool
+PyRcode_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
+    return (PyObject_TypeCheck(obj, &rcode_type));
+}
+
+const Rcode&
+PyRcode_ToRcode(const PyObject* rcode_obj) {
+    if (rcode_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Rcode PyObject conversion");
+    }
+    const s_Rcode* rcode = static_cast<const s_Rcode*>(rcode_obj);
+    return (*rcode->cppobj);
+}
+
 } // namespace python
 } // namespace dns
 } // namespace isc

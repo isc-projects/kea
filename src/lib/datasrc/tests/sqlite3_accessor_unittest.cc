@@ -351,6 +351,45 @@ TEST_F(SQLite3AccessorTest, getRecords) {
     EXPECT_FALSE(context->getNext(columns));
 }
 
+TEST_F(SQLite3AccessorTest, findPrevious) {
+    EXPECT_EQ("dns01.example.com.",
+              accessor->findPreviousName(1, "com.example.dns02."));
+    // A name that doesn't exist
+    EXPECT_EQ("dns01.example.com.",
+              accessor->findPreviousName(1, "com.example.dns01x."));
+    // Largest name
+    EXPECT_EQ("www.example.com.",
+              accessor->findPreviousName(1, "com.example.wwww"));
+    // Out of zone after the last name
+    EXPECT_EQ("www.example.com.",
+              accessor->findPreviousName(1, "org.example."));
+    // Case insensitive?
+    EXPECT_EQ("dns01.example.com.",
+              accessor->findPreviousName(1, "com.exaMple.DNS02."));
+    // A name that doesn't exist
+    EXPECT_EQ("dns01.example.com.",
+              accessor->findPreviousName(1, "com.exaMple.DNS01X."));
+    // The DB contains foo.bar.example.com., which would be in between
+    // these two names. However, that one does not have an NSEC record,
+    // which is how this database recognizes glue data, so it should
+    // be skipped.
+    EXPECT_EQ("example.com.",
+              accessor->findPreviousName(1, "com.example.cname-ext."));
+    // Throw when we are before the origin
+    EXPECT_THROW(accessor->findPreviousName(1, "com.example."),
+                 isc::NotImplemented);
+    EXPECT_THROW(accessor->findPreviousName(1, "a.example."),
+                 isc::NotImplemented);
+}
+
+TEST_F(SQLite3AccessorTest, findPreviousNoData) {
+    // This one doesn't hold any NSEC records, so it shouldn't work
+    // The underlying DB/data don't support DNSSEC, so it's not implemented
+    // (does it make sense? Or different exception here?)
+    EXPECT_THROW(accessor->findPreviousName(3, "com.example.sql2.www."),
+                 isc::NotImplemented);
+}
+
 // Test fixture for creating a db that automatically deletes it before start,
 // and when done
 class SQLite3Create : public ::testing::Test {

@@ -28,6 +28,9 @@
 #include <dns/name.h>
 #include <exceptions/exceptions.h>
 
+#include <map>
+#include <set>
+
 namespace isc {
 namespace datasrc {
 
@@ -471,6 +474,34 @@ public:
      * \return the name of the database
      */
     virtual const std::string& getDBName() const = 0;
+
+    /**
+     * \brief It returns the previous name in DNSSEC order.
+     *
+     * This is used in DatabaseClient::findPreviousName and does more
+     * or less the real work, except for working on strings.
+     *
+     * \param rname The name to ask for previous of, in reversed form.
+     *     We use the reversed form (see isc::dns::Name::reverse),
+     *     because then the case insensitive order of string representation
+     *     and the DNSSEC order correspond (eg. org.example.a is followed
+     *     by org.example.a.b which is followed by org.example.b, etc).
+     * \param zone_id The zone to look through.
+     * \return The previous name.
+     * \note This function must return previous name even in case
+     *     the queried rname does not exist in the zone.
+     * \note This method must skip under-the-zone-cut data (glue data).
+     *     This might be implemented by looking for NSEC records (as glue
+     *     data don't have them) in the zone or in some other way.
+     *
+     * \throw DataSourceError if there's a problem with the database.
+     * \throw NotImplemented if this database doesn't support DNSSEC
+     *     or there's no previous name for the queried one (the NSECs
+     *     might be missing or the queried name is less or equal the
+     *     apex of the zone).
+     */
+    virtual std::string findPreviousName(int zone_id,
+                                         const std::string& rname) const = 0;
 };
 
 /**
@@ -587,6 +618,12 @@ public:
                                 const FindOptions options = FIND_DEFAULT);
 
         /**
+         * \brief Implementation of ZoneFinder::findPreviousName method.
+         */
+        virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
+            const;
+
+        /**
          * \brief The zone ID
          *
          * This function provides the stored zone ID as passed to the
@@ -609,54 +646,42 @@ public:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
-
+        //
+        /// \brief Shortcut name for the result of getRRsets
+        typedef std::pair<bool, std::map<dns::RRType, dns::RRsetPtr> >
+            FoundRRsets;
+        /// \brief Just shortcut for set of types
+        typedef std::set<dns::RRType> WantedTypes;
         /**
-         * \brief Searches database for an RRset
+         * \brief Searches database for RRsets of one domain.
          *
-         * This method scans RRs of single domain specified by name and finds
-         * RRset with given type or any of redirection RRsets that are
-         * requested.
+         * This method scans RRs of single domain specified by name and
+         * extracts any RRsets found and requested by parameters.
          *
-         * This function is used internally by find(), because this part is
-         * called multiple times with slightly different parameters.
+         * It is used internally by find(), because it is called multiple
+         * times (usually with different domains).
          *
          * \param name Which domain name should be scanned.
-         * \param type The RRType which is requested. This can be NULL, in
-         *     which case the method will look for the redirections only.
-         * \param want_cname If this is true, CNAME redirection may be returned
-         *     instead of the RRset with given type. If there's CNAME and
-         *     something else or the CNAME has multiple RRs, it throws
-         *     DataSourceError.
-         * \param want_dname If this is true, DNAME redirection may be returned
-         *     instead. This is with type = NULL only and is not checked in
-         *     other circumstances. If the DNAME has multiple RRs, it throws
-         *     DataSourceError.
-         * \param want_ns This allows redirection by NS to be returned. If
-         *     any other data is met as well, DataSourceError is thrown.
-         * \param construct_name If set to non-NULL, the resulting RRset will
-         *     be constructed for this name instead of the queried one. This
-         *     is useful for wildcards.
-         * \note It may happen that some of the above error conditions are not
-         *     detected in some circumstances. The goal here is not to validate
-         *     the domain in DB, but to avoid bad behaviour resulting from
-         *     broken data.
-         * \return First part of the result tells if the domain contains any
-         *     RRs. This can be used to decide between NXDOMAIN and NXRRSET.
-         *     The second part is the RRset found (if any) with any relevant
-         *     signatures attached to it.
-         * \todo This interface doesn't look very elegant. Any better idea
-         *     would be nice.
+         * \param types List of types the caller is interested in.
+         * \param check_ns If this is set to true, it checks nothing lives
+         *     together with NS record (with few little exceptions, like RRSIG
+         *     or NSEC). This check is meant for non-apex NS records.
+         * \param construct_name If this is NULL, the resulting RRsets have
+         *     their name set to name. If it is not NULL, it overrides the name
+         *     and uses this one (this can be used for wildcard synthesized
+         *     records).
+         * \return A pair, where the first element indicates if the domain
+         *     contains any RRs at all (not only the requested, it may happen
+         *     this is set to true, but the second part is empty). The second
+         *     part is map from RRtypes to RRsets of the corresponding types.
+         *     If the RRset is not present in DB, the RRtype is not there at
+         *     all (so you'll not find NULL pointer in the result).
+         * \throw DataSourceError If there's a low-level error with the
+         *     database or the database contains bad data.
          */
-        std::pair<bool, isc::dns::RRsetPtr> getRRset(const isc::dns::Name&
-                                                     name,
-                                                     const isc::dns::RRType*
-                                                     type,
-                                                     bool want_cname,
-                                                     bool want_dname,
-                                                     bool want_ns, const
-                                                     isc::dns::Name*
-                                                     construct_name = NULL);
-
+        FoundRRsets getRRsets(const std::string& name,
+                              const WantedTypes& types, bool check_ns,
+                              const std::string* construct_name = NULL);
         /**
          * \brief Checks if something lives below this domain.
          *
@@ -666,6 +691,23 @@ public:
          * \param name The domain to check.
          */
         bool hasSubdomains(const std::string& name);
+
+        /**
+         * \brief Get the NSEC covering a name.
+         *
+         * This one calls findPreviousName on the given name and extracts an NSEC
+         * record on the result. It handles various error cases. The method exists
+         * to share code present at more than one location.
+         */
+        dns::RRsetPtr findNSECCover(const dns::Name& name);
+
+        /**
+         * \brief Convenience type shortcut.
+         *
+         * To find stuff in the result of getRRsets.
+         */
+        typedef std::map<dns::RRType, dns::RRsetPtr>::const_iterator
+            FoundIterator;
     };
 
     /**

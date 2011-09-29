@@ -299,8 +299,8 @@ initModulePart_@CPPCLASS@(PyObject* mod) {
 
 PyObject*
 create@CPPCLASS@Object(const @CPPCLASS@& source) {
-    @CPPCLASS@Container container =
-        PyObject_New(s_@CPPCLASS@, &@cppclass@_type);
+    @CPPCLASS@Container container(PyObject_New(s_@CPPCLASS@,
+                                               &@cppclass@_type));
     container.set(new @CPPCLASS@(source));
     return (container.release());
 }
