@@ -58,6 +58,18 @@ class Diff:
                              str(datasource))
         self.__buffer = []
 
+    def __data_common(self, rr, operation):
+        """
+        Schedules an operation with rr.
+
+        It does all the real work of add_data and remove_data, including
+        all checks.
+        """
+        if rr.get_rdata_count() != 1:
+            raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
+                             'it holds ' + str(rr.get_rdata_count()))
+        self.__buffer.append((operation, rr))
+
     def add_data(self, rr):
         """
         Schedules addition of an RR into the zone in this diff.
@@ -66,10 +78,7 @@ class Diff:
         If this is not the case or if the diff was already commited, this
         raises the ValueError exception.
         """
-        if rr.get_rdata_count() != 1:
-            raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
-                             'it holds ' + str(rr.get_rdata_count()))
-        self.__buffer.append(('add', rr))
+        self.__data_common(rr, 'add')
 
     def remove_data(self, rr):
         """
@@ -78,6 +87,17 @@ class Diff:
         The rr is of isc.dns.RRset type and it must contain only one RR.
         If this is not the case or if the diff was already commited, this
         raises the ValueError exception.
+        """
+        self.__data_common(rr, 'remove')
+
+    def compact(self):
+        """
+        Tries to compact the operations in buffer a little by putting some of
+        the operations together, forming RRsets with more than one RR.
+
+        This is called by apply before putting the data into datasource.
+
+        It is currently empty and needs implementing.
         """
         pass
 
@@ -94,7 +114,8 @@ class Diff:
 
         This raises ValueError if the diff was already commited.
 
-        It also can raise isc.datasrc.Error.
+        It also can raise isc.datasrc.Error. If that happens, you should stop
+        using this object and abort the modification.
         """
         pass
 
@@ -114,6 +135,7 @@ class Diff:
         source. It is in a form like [('add', rrset), ('remove', rrset),
         ('remove', rrset), ...].
 
-        Probably useful only for testing and introspection purposes.
+        Probably useful only for testing and introspection purposes. Don't
+        modify the list.
         """
         return self.__buffer
