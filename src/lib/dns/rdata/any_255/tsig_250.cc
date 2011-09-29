@@ -23,6 +23,7 @@
 #include <util/encode/base64.h>
 
 #include <dns/messagerenderer.h>
+#include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/tsigerror.h>

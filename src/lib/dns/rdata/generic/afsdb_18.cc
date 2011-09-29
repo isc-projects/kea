@@ -26,6 +26,7 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
+using namespace isc::util;
 using namespace isc::util::str;
 
 // BEGIN_ISC_NAMESPACE
