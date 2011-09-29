@@ -89,27 +89,43 @@ class DiffTest(unittest.TestCase):
         self.assertRaises(NoSuchZone, Diff, self, Name('none.example.org.'))
         self.assertTrue(self.__updater_requested)
 
+    def __data_common(self, diff, method, name):
+        """
+        Common part of test for test_add and test_remove.
+        """
+        # Try putting there the bad data first
+        self.assertRaises(ValueError, method, self.__rrset_empty)
+        self.assertRaises(ValueError, method, self.__rrset_multi)
+        # They were not added
+        self.assertEqual([], diff.get_buffer())
+        # Add some proper data
+        method(self.__rrset1)
+        method(self.__rrset2)
+        dlist = [(name, self.__rrset1), (name, self.__rrset2)]
+        self.assertEqual(dlist, diff.get_buffer())
+        # Check the data are not destroyed by raising an exception because of
+        # bad data
+        self.assertRaises(ValueError, method, self.__rrset_empty)
+        self.assertEqual(dlist, diff.get_buffer())
+
     def test_add(self):
         """
         Try to add few items into the diff and see they are stored in there.
 
-        Also try passing an rrset that has more differnt amount of RRs than 1.
+        Also try passing an rrset that has differnt amount of RRs than 1.
         """
         diff = Diff(self, Name('example.org.'))
-        # Try putting there the bad data first
-        self.assertRaises(ValueError, diff.add_data, self.__rrset_empty)
-        self.assertRaises(ValueError, diff.add_data, self.__rrset_multi)
-        # They were not added
-        self.assertEqual([], diff.get_buffer())
-        # Add some proper data
-        diff.add_data(self.__rrset1)
-        diff.add_data(self.__rrset2)
-        dlist = [('add', self.__rrset1), ('add', self.__rrset2)]
-        self.assertEqual(dlist, diff.get_buffer())
-        # Check the data are not destroyed by raising an exception because of
-        # bad data
-        self.assertRaises(ValueError, diff.add_data, self.__rrset_empty)
-        self.assertEqual(dlist, diff.get_buffer())
+        self.__data_common(diff, diff.add_data, 'add')
+
+    def test_remove(self):
+        """
+        Try scheduling removal of few items into the diff and see they are
+        stored in there.
+
+        Also try passing an rrset that has different amount of RRs than 1.
+        """
+        diff = Diff(self, Name('example.org.'))
+        self.__data_common(diff, diff.remove_data, 'remove')
 
 if __name__ == "__main__":
     isc.log.init("bind10")
