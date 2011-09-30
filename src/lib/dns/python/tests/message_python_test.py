@@ -427,6 +427,7 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertRaises(InvalidMessageOperation, self.r.to_text)
 
     def test_from_wire(self):
+        self.r.from_wire(2, 2)
         self.assertRaises(TypeError, self.r.from_wire, 1)
         self.assertRaises(InvalidMessageOperation,
                           Message.from_wire, self.r, bytes())
