@@ -37,6 +37,13 @@ run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += change_user_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
+# This is a temporary workaround for #1206, where the InMemoryClient has been
+# moved to an ldopened library. We could add that library to LDADD, but that
+# is nonportable. When #1207 is done this becomes moot anyway, and the
+# specific workaround is not needed anymore, so we can then remove this
+# line again.
+run_unittests_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
+
 
 nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
 

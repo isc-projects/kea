@@ -22,6 +22,8 @@
 #include <datasrc/zonetable.h>
 #include <datasrc/client.h>
 
+#include <cc/data.h>
+
 namespace isc {
 namespace dns {
 class Name;
@@ -219,7 +221,7 @@ private:
 /// while it wouldn't be safe to delete unnecessary zones inside the dedicated
 /// backend.
 ///
-/// The findZone() method takes a domain name and returns the best matching 
+/// The findZone() method takes a domain name and returns the best matching
 /// \c InMemoryZoneFinder in the form of (Boost) shared pointer, so that it can
 /// provide the general interface for all data sources.
 class InMemoryClient : public DataSourceClient {
@@ -289,6 +291,31 @@ private:
     class InMemoryClientImpl;
     InMemoryClientImpl* impl_;
 };
+
+/// \brief Creates an instance of the Memory datasource client
+///
+/// Currently the configuration passed here must be a MapElement, formed as
+/// follows:
+/// \code
+/// { "type": string ("memory"),
+///   "class": string ("IN"/"CH"/etc),
+///   "zones": list
+/// }
+/// Zones list is a list of maps:
+/// { "origin": string,
+///   "file": string
+/// }
+/// \endcode
+/// (i.e. the configuration that was used prior to the datasource refactor)
+///
+/// This configuration setup is currently under discussion and will change in
+/// the near future.
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config);
+
+/// \brief Destroy the instance created by createInstance()
+extern "C" void destroyInstance(DataSourceClient* instance);
+
+
 }
 }
 #endif  // __DATA_SOURCE_MEMORY_H
