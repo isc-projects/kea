@@ -590,7 +590,7 @@ public:
     /// performed on these values to express compound options.
     enum ParseOptions {
         PARSE_DEFAULT = 0,       ///< The default options
-        PRESERVE_ORDER = 1       ///< Preserve RR order and don't combining
+        PRESERVE_ORDER = 1       ///< Preserve RR order and don't combine them
     };
 
     /// \brief Parse the header section of the \c Message.
@@ -676,6 +676,6 @@ std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 #endif  // __MESSAGE_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
