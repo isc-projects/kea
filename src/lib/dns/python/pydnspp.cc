@@ -89,64 +89,91 @@ initModulePart_Message(PyObject* mod) {
     if (PyType_Ready(&message_type) < 0) {
         return (false);
     }
+    void* p = &message_type;
+    if (PyModule_AddObject(mod, "Message", static_cast<PyObject*>(p)) < 0) {
+        return (false);
+    }
     Py_INCREF(&message_type);
 
-    // Class variables
-    // These are added to the tp_dict of the type object
-    //
-    addClassVariable(message_type, "PARSE",
-                     Py_BuildValue("I", Message::PARSE));
-    addClassVariable(message_type, "RENDER",
-                     Py_BuildValue("I", Message::RENDER));
+    try {
+        //
+        // Constant class variables
+        //
 
-    addClassVariable(message_type, "HEADERFLAG_QR",
-                     Py_BuildValue("I", Message::HEADERFLAG_QR));
-    addClassVariable(message_type, "HEADERFLAG_AA",
-                     Py_BuildValue("I", Message::HEADERFLAG_AA));
-    addClassVariable(message_type, "HEADERFLAG_TC",
-                     Py_BuildValue("I", Message::HEADERFLAG_TC));
-    addClassVariable(message_type, "HEADERFLAG_RD",
-                     Py_BuildValue("I", Message::HEADERFLAG_RD));
-    addClassVariable(message_type, "HEADERFLAG_RA",
-                     Py_BuildValue("I", Message::HEADERFLAG_RA));
-    addClassVariable(message_type, "HEADERFLAG_AD",
-                     Py_BuildValue("I", Message::HEADERFLAG_AD));
-    addClassVariable(message_type, "HEADERFLAG_CD",
-                     Py_BuildValue("I", Message::HEADERFLAG_CD));
+        // Parse mode
+        installClassVariable(message_type, "PARSE",
+                             Py_BuildValue("I", Message::PARSE));
+        installClassVariable(message_type, "RENDER",
+                             Py_BuildValue("I", Message::RENDER));
 
-    addClassVariable(message_type, "SECTION_QUESTION",
-                     Py_BuildValue("I", Message::SECTION_QUESTION));
-    addClassVariable(message_type, "SECTION_ANSWER",
-                     Py_BuildValue("I", Message::SECTION_ANSWER));
-    addClassVariable(message_type, "SECTION_AUTHORITY",
-                     Py_BuildValue("I", Message::SECTION_AUTHORITY));
-    addClassVariable(message_type, "SECTION_ADDITIONAL",
-                     Py_BuildValue("I", Message::SECTION_ADDITIONAL));
+        // Parse options
+        installClassVariable(message_type, "PARSE_DEFAULT",
+                             Py_BuildValue("I", Message::PARSE_DEFAULT));
+        installClassVariable(message_type, "PRESERVE_ORDER",
+                             Py_BuildValue("I", Message::PRESERVE_ORDER));
 
-    addClassVariable(message_type, "DEFAULT_MAX_UDPSIZE",
-                     Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
+        // Header flags
+        installClassVariable(message_type, "HEADERFLAG_QR",
+                             Py_BuildValue("I", Message::HEADERFLAG_QR));
+        installClassVariable(message_type, "HEADERFLAG_AA",
+                             Py_BuildValue("I", Message::HEADERFLAG_AA));
+        installClassVariable(message_type, "HEADERFLAG_TC",
+                             Py_BuildValue("I", Message::HEADERFLAG_TC));
+        installClassVariable(message_type, "HEADERFLAG_RD",
+                             Py_BuildValue("I", Message::HEADERFLAG_RD));
+        installClassVariable(message_type, "HEADERFLAG_RA",
+                             Py_BuildValue("I", Message::HEADERFLAG_RA));
+        installClassVariable(message_type, "HEADERFLAG_AD",
+                             Py_BuildValue("I", Message::HEADERFLAG_AD));
+        installClassVariable(message_type, "HEADERFLAG_CD",
+                             Py_BuildValue("I", Message::HEADERFLAG_CD));
 
-    /* Class-specific exceptions */
-    po_MessageTooShort = PyErr_NewException("pydnspp.MessageTooShort", NULL,
-                                            NULL);
-    PyModule_AddObject(mod, "MessageTooShort", po_MessageTooShort);
-    po_InvalidMessageSection =
-        PyErr_NewException("pydnspp.InvalidMessageSection", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageSection", po_InvalidMessageSection);
-    po_InvalidMessageOperation =
-        PyErr_NewException("pydnspp.InvalidMessageOperation", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageOperation",
-                       po_InvalidMessageOperation);
-    po_InvalidMessageUDPSize =
-        PyErr_NewException("pydnspp.InvalidMessageUDPSize", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
-    po_DNSMessageBADVERS = PyErr_NewException("pydnspp.DNSMessageBADVERS",
-                                              NULL, NULL);
-    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
+        // Sections
+        installClassVariable(message_type, "SECTION_QUESTION",
+                             Py_BuildValue("I", Message::SECTION_QUESTION));
+        installClassVariable(message_type, "SECTION_ANSWER",
+                             Py_BuildValue("I", Message::SECTION_ANSWER));
+        installClassVariable(message_type, "SECTION_AUTHORITY",
+                             Py_BuildValue("I", Message::SECTION_AUTHORITY));
+        installClassVariable(message_type, "SECTION_ADDITIONAL",
+                             Py_BuildValue("I", Message::SECTION_ADDITIONAL));
 
-    PyModule_AddObject(mod, "Message",
-                       reinterpret_cast<PyObject*>(&message_type));
+        // Protocol constant
+        installClassVariable(message_type, "DEFAULT_MAX_UDPSIZE",
+                             Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
 
+        /* Class-specific exceptions */
+        po_MessageTooShort =
+            PyErr_NewException("pydnspp.MessageTooShort", NULL, NULL);
+        PyObjectContainer(po_MessageTooShort).installToModule(
+            mod, "MessageTooShort");
+        po_InvalidMessageSection =
+            PyErr_NewException("pydnspp.InvalidMessageSection", NULL, NULL);
+        PyObjectContainer(po_InvalidMessageSection).installToModule(
+            mod, "InvalidMessageSection");
+        po_InvalidMessageOperation =
+            PyErr_NewException("pydnspp.InvalidMessageOperation", NULL, NULL);
+        PyObjectContainer(po_InvalidMessageOperation).installToModule(
+            mod, "InvalidMessageOperation");
+        po_InvalidMessageUDPSize =
+            PyErr_NewException("pydnspp.InvalidMessageUDPSize", NULL, NULL);
+        PyObjectContainer(po_InvalidMessageUDPSize).installToModule(
+            mod, "InvalidMessageUDPSize");
+        po_DNSMessageBADVERS =
+            PyErr_NewException("pydnspp.DNSMessageBADVERS", NULL, NULL);
+        PyObjectContainer(po_DNSMessageBADVERS).installToModule(
+            mod, "DNSMessageBADVERS");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in Message initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Message initialization");
+        return (false);
+    }
 
     return (true);
 }
