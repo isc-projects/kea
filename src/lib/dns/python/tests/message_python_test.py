@@ -469,6 +469,10 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertEqual("192.0.2.2", rdata[1].to_text())
         self.assertEqual(2, len(rdata))
 
+    def test_from_wire_short_buffer(self):
+        data = read_wire_data("message_fromWire22.wire")
+        self.assertRaises(DNSMessageFORMERR, self.p.from_wire, data[:-1])
+
     def test_from_wire_combind_rrs(self):
         factoryFromFile(self.p, "message_fromWire19.wire")
         rrset = self.p.get_section(Message.SECTION_ANSWER)[0]
