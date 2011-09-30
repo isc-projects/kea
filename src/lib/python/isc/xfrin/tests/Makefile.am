@@ -12,7 +12,7 @@ endif
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 if ENABLE_PYTHON_COVERAGE
-	touch $(abs_top_srcdir)/.coverage 
+	touch $(abs_top_srcdir)/.coverage
 	rm -f .coverage
 	${LN_S} $(abs_top_srcdir)/.coverage .coverage
 endif
