@@ -606,6 +606,14 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(MessageTest, fromWireShortBuffer) {
+    // We trim a valid message (ending with an SOA RR) for one byte.
+    // fromWire() should throw an exception while parsing the trimmed RR.
+    UnitTestUtil::readWireData("message_fromWire22.wire", received_data);
+    InputBuffer buffer(&received_data[0], received_data.size() - 1);
+    EXPECT_THROW(message_parse.fromWire(buffer), InvalidBufferPosition);
+}
+
 TEST_F(MessageTest, fromWireCombineRRs) {
     // This message contains 3 RRs in the answer section in the order of
     // A, AAAA, A types.  fromWire() should combine the two A RRs into a
