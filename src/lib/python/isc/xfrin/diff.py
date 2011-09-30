@@ -18,6 +18,8 @@ This helps the XFR in process with accumulating parts of diff and applying
 it to the datasource.
 """
 
+import isc.dns
+
 class NoSuchZone(Exception):
     """
     This is raised if a diff for non-existant zone is being created.
@@ -116,7 +118,19 @@ class Diff:
         and do more merging, but such diffs should be rare in practice anyway,
         so we don't bother and do it this simple way.
         """
-        pass
+        buf = []
+        for (op, rrset) in self.__buffer:
+            old = buf[-1][1] if len(buf) > 0 else None
+            if old is None or op != buf[-1][0] or \
+                rrset.get_name() != old.get_name() or \
+                rrset.get_type() != old.get_type():
+                buf.append((op, isc.dns.RRset(rrset.get_name(),
+                                              rrset.get_class(),
+                                              rrset.get_type(),
+                                              rrset.get_ttl())))
+            for rdatum in rrset.get_rdata():
+                buf[-1][1].add_rdata(rdatum)
+        self.__buffer = buf
 
     def apply(self):
         """
