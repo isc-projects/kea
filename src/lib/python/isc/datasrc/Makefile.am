@@ -16,6 +16,12 @@ datasrc_la_SOURCES += client_python.cc client_python.h
 datasrc_la_SOURCES += iterator_python.cc iterator_python.h
 datasrc_la_SOURCES += finder_python.cc finder_python.h
 datasrc_la_SOURCES += updater_python.cc updater_python.h
+# This is a temporary workaround for #1206, where the InMemoryClient has been
+# moved to an ldopened library. We could add that library to LDADD, but that
+# is nonportable. When #1207 is done this becomes moot anyway, and the
+# specific workaround is not needed anymore, so we can then remove this
+# line again.
+datasrc_la_SOURCES += ${top_srcdir}/src/lib/datasrc/sqlite3_accessor.cc
 
 datasrc_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 datasrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
