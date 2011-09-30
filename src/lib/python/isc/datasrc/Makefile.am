@@ -1,17 +1,16 @@
 SUBDIRS = . tests
 
 # old data, should be removed in the near future once conversion is done
+pythondir = $(pyexecdir)/isc/datasrc
 python_PYTHON = __init__.py master.py sqlite3_ds.py
 
-#pythondir = $(pyexecdir)/isc/pydatasrc
 
 # new data
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(SQLITE_CFLAGS)
 
-pythondir = $(pyexecdir)/isc
-pyexec_LTLIBRARIES = datasrc.la
+python_LTLIBRARIES = datasrc.la
 datasrc_la_SOURCES = datasrc.cc datasrc.h
 datasrc_la_SOURCES += client_python.cc client_python.h
 datasrc_la_SOURCES += iterator_python.cc iterator_python.h
