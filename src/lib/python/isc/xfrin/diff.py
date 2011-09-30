@@ -58,6 +58,15 @@ class Diff:
                              str(datasource))
         self.__buffer = []
 
+    def __check_commited(self):
+        """
+        This checks if the diff is already commited. If it is, it raises
+        ValueError. This check is for methods that need to work only on
+        yet uncommited diffs.
+        """
+        if self.__updater is None:
+            raise ValueError("The diff is already commited, you come late")
+
     def __data_common(self, rr, operation):
         """
         Schedules an operation with rr.
@@ -65,6 +74,7 @@ class Diff:
         It does all the real work of add_data and remove_data, including
         all checks.
         """
+        self.__check_commited()
         if rr.get_rdata_count() != 1:
             raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
                              'it holds ' + str(rr.get_rdata_count()))
@@ -117,6 +127,7 @@ class Diff:
         It also can raise isc.datasrc.Error. If that happens, you should stop
         using this object and abort the modification.
         """
+        self.__check_commited()
         # First, compact the data
         self.compact()
         # Then pass the data inside the data source
@@ -138,8 +149,14 @@ class Diff:
 
         This might raise isc.datasrc.Error.
         """
+        self.__check_commited()
+        # Push the data inside the data source
         self.apply()
+        # Make sure they are visible.
         self.__updater.commit()
+        # Remove the updater. That will free some resources for one, but
+        # mark this object as already commited, so we can check
+        self.__updater = None
 
     def get_buffer(self):
         """
