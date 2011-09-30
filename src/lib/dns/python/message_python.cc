@@ -39,6 +39,9 @@ using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
 
+// Import pydoc text
+#include "message_python_inc.cc"
+
 namespace {
 class s_Message : public PyObject {
 public:
@@ -75,7 +78,7 @@ PyObject* Message_makeResponse(s_Message* self);
 PyObject* Message_toText(s_Message* self);
 PyObject* Message_str(PyObject* self);
 PyObject* Message_toWire(s_Message* self, PyObject* args);
-PyObject* Message_fromWire(s_Message* self, PyObject* args);
+PyObject* Message_fromWire(PyObject* const pyself, PyObject* args);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -157,14 +160,7 @@ PyMethodDef Message_methods[] = {
       "If the given message is not in RENDER mode, an "
       "InvalidMessageOperation is raised.\n"
        },
-    { "from_wire", reinterpret_cast<PyCFunction>(Message_fromWire), METH_VARARGS,
-      "Parses the given wire format to a Message object.\n"
-      "The first argument is a Message to parse the data into.\n"
-      "The second argument must implement the buffer interface.\n"
-      "If the given message is not in PARSE mode, an "
-      "InvalidMessageOperation is raised.\n"
-      "Raises MessageTooShort, DNSMessageFORMERR or DNSMessageBADVERS "
-      " if there is a problem parsing the message." },
+    { "from_wire", Message_fromWire, METH_VARARGS, Message_fromWire_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -646,30 +642,54 @@ Message_toWire(s_Message* self, PyObject* args) {
 }
 
 PyObject*
-Message_fromWire(s_Message* self, PyObject* args) {
+Message_fromWire(PyObject* const pyself, PyObject* args) {
+    s_Message* self = static_cast<s_Message*>(pyself);
     const char* b;
     Py_ssize_t len;
-    if (!PyArg_ParseTuple(args, "y#", &b, &len)) {
-        return (NULL);
+    unsigned int options = Message::PARSE_DEFAULT;
+        
+    if (PyArg_ParseTuple(args, "y#", &b, &len) ||
+        PyArg_ParseTuple(args, "y#I", &b, &len, &options)) {
+        // We need to clear the error in case the first call to ParseTuple
+        // fails.
+        PyErr_Clear();
+
+        InputBuffer inbuf(b, len);
+        try {
+            self->cppobj->fromWire(
+                inbuf, static_cast<Message::ParseOptions>(options));
+            Py_RETURN_NONE;
+        } catch (const InvalidMessageOperation& imo) {
+            PyErr_SetString(po_InvalidMessageOperation, imo.what());
+            return (NULL);
+        } catch (const DNSMessageFORMERR& dmfe) {
+            PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
+            return (NULL);
+        } catch (const DNSMessageBADVERS& dmfe) {
+            PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
+            return (NULL);
+        } catch (const MessageTooShort& mts) {
+            PyErr_SetString(po_MessageTooShort, mts.what());
+            return (NULL);
+        } catch (const InvalidBufferPosition& ex) {
+            PyErr_SetString(po_DNSMessageFORMERR, ex.what());
+            return (NULL);
+        } catch (const exception& ex) {
+            const string ex_what =
+                "Error in Message.from_wire: " + string(ex.what());
+            PyErr_SetString(PyExc_RuntimeError, ex_what.c_str());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Unexpected exception in Message.from_wire");
+            return (NULL);
+        }
     }
 
-    InputBuffer inbuf(b, len);
-    try {
-        self->cppobj->fromWire(inbuf);
-        Py_RETURN_NONE;
-    } catch (const InvalidMessageOperation& imo) {
-        PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
-    } catch (const DNSMessageFORMERR& dmfe) {
-        PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
-        return (NULL);
-    } catch (const DNSMessageBADVERS& dmfe) {
-        PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
-        return (NULL);
-    } catch (const MessageTooShort& mts) {
-        PyErr_SetString(po_MessageTooShort, mts.what());
-        return (NULL);
-    }
+    PyErr_SetString(PyExc_TypeError,
+                    "from_wire() arguments must be a byte object and "
+                    "(optional) parse options");
+    return (NULL);
 }
 
 } // end of unnamed namespace
