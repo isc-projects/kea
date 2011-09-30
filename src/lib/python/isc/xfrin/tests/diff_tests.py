@@ -216,6 +216,46 @@ class DiffTest(unittest.TestCase):
         # But it is NOP in this situation anyway
         diff.compact()
 
+    def test_autoapply(self):
+        """
+        Test the apply is called all by itself after 100 tasks are added.
+        """
+        diff = Diff(self, Name('example.org.'))
+        # A method to check the apply is called _after_ the 100th element
+        # is added. We don't use it anywhere else, so we define it locally
+        # as lambda function
+        def check():
+            self.assertEqual(100, len(diff.get_buffer()))
+            self.__mock_apply()
+        orig_apply = diff.apply
+        diff.apply = check
+        # If we put 99, nothing happens yet
+        for i in range(0, 99):
+            diff.add_data(self.__rrset1)
+        expected = [('add', self.__rrset1)] * 99
+        self.assertEqual(expected, diff.get_buffer())
+        self.assertFalse(self.__apply_called)
+        # Now we push the 100th and it should call the apply method
+        # This will _not_ flush the data yet, as we replaced the method.
+        # It, however, would in the real life.
+        diff.add_data(self.__rrset1)
+        # Now the apply method (which is replaced by our check) should
+        # have been called. If it wasn't, this is false. If it was, but
+        # still with 99 elements, the check would complain
+        self.assertTrue(self.__apply_called)
+        # Reset the buffer by calling the original apply.
+        orig_apply()
+        self.assertEqual([], diff.get_buffer())
+        # Similar with remove
+        self.__apply_called = False
+        for i in range(0, 99):
+            diff.remove_data(self.__rrset2)
+        expected = [('remove', self.__rrset2)] * 99
+        self.assertEqual(expected, diff.get_buffer())
+        self.assertFalse(self.__apply_called)
+        diff.remove_data(self.__rrset2)
+        self.assertTrue(self.__apply_called)
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     unittest.main()
