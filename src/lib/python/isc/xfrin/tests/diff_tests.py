@@ -256,6 +256,72 @@ class DiffTest(unittest.TestCase):
         diff.remove_data(self.__rrset2)
         self.assertTrue(self.__apply_called)
 
+    def test_compact(self):
+        """
+        Test the compaction works as expected, eg. it compacts only consecutive
+        changes of the same operation and on the same domain/type.
+
+        The test case checks that it does merge them, but also puts some
+        different operations "in the middle", changes the type and name and
+        places the same kind of change further away of each other to see they
+        are not merged in that case.
+        """
+        diff = Diff(self, Name('example.org.'))
+        # Check we can do a compact on empty data, it shouldn't break
+        diff.compact()
+        self.assertEqual([], diff.get_buffer())
+        # This data is the way it should look like after the compact
+        # ('operation', 'domain.prefix', 'type', ['rdata', 'rdata'])
+        # The notes say why the each of consecutive can't be merged
+        data = [
+            ('add', 'a', 'A', ['192.0.2.1', '192.0.2.2']),
+            # Different type.
+            ('add', 'a', 'AAAA', ['2001:db8::1', '2001:db8::2']),
+            # Different operation
+            ('remove', 'a', 'AAAA', ['2001:db8::3']),
+            # Different domain
+            ('remove', 'b', 'AAAA', ['2001:db8::4']),
+            # This does not get merged with the first, even if logically
+            # possible. We just don't do this.
+            ('add', 'a', 'A', ['192.0.2.3'])
+            ]
+        # Now, fill the data into the diff, in a "flat" way, one by one
+        for (op, nprefix, rrtype, rdata) in data:
+            name = Name(nprefix + '.example.org.')
+            rrtype_obj = RRType(rrtype)
+            for rdatum in rdata:
+                rrset = RRset(name, self.__rrclass, rrtype_obj, self.__ttl)
+                rrset.add_rdata(Rdata(rrtype_obj, self.__rrclass, rdatum))
+                if op == 'add':
+                    diff.add_data(rrset)
+                else:
+                    diff.remove_data(rrset)
+        # Compact it
+        diff.compact()
+        # Now check they got compacted. They should be in the same order as
+        # pushed inside. So it should be the same as data modulo being in
+        # the rrsets and isc.dns objects.
+        def check():
+            buf = diff.get_buffer()
+            self.assertEqual(len(data), len(buf))
+            for (expected, received) in zip(data, buf):
+                (eop, ename, etype, edata) = expected
+                (rop, rrrset) = received
+                self.assertEqual(eop, rop)
+                ename_obj = Name(ename + '.example.org.')
+                self.assertEqual(ename_obj, rrrset.get_name())
+                # We check on names to make sure they are printed nicely
+                self.assertEqual(etype, str(rrrset.get_type()))
+                rdata = rrrset.get_rdata()
+                self.assertEqual(len(edata), len(rdata))
+                # It should also preserve the order
+                for (edatum, rdatum) in zip(edata, rdata):
+                    self.assertEqual(edatum, str(rdatum))
+        check()
+        # Try another compact does nothing, but survives
+        diff.compact()
+        check()
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     unittest.main()
