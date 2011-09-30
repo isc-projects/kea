@@ -673,6 +673,18 @@ Message_fromWire(PyObject* const pyself, PyObject* args) {
         } catch (const MessageTooShort& mts) {
             PyErr_SetString(po_MessageTooShort, mts.what());
             return (NULL);
+        } catch (const InvalidBufferPosition& ex) {
+            PyErr_SetString(po_DNSMessageFORMERR, ex.what());
+            return (NULL);
+        } catch (const exception& ex) {
+            const string ex_what =
+                "Error in Message.from_wire: " + string(ex.what());
+            PyErr_SetString(PyExc_RuntimeError, ex_what.c_str());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Unexpected exception in Message.from_wire");
+            return (NULL);
         }
     }
 
