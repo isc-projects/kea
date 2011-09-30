@@ -107,6 +107,8 @@ initModulePart_Message(PyObject* mod) {
                              Py_BuildValue("I", Message::RENDER));
 
         // Parse options
+        installClassVariable(message_type, "PARSE_DEFAULT",
+                             Py_BuildValue("I", Message::PARSE_DEFAULT));
         installClassVariable(message_type, "PRESERVE_ORDER",
                              Py_BuildValue("I", Message::PRESERVE_ORDER));
 

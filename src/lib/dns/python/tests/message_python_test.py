@@ -29,12 +29,9 @@ if "TESTDATA_PATH" in os.environ:
 else:
     testdata_path = "../tests/testdata"
 
-def factoryFromFile(message, file, parse_options=None):
+def factoryFromFile(message, file, parse_options=Message.PARSE_DEFAULT):
     data = read_wire_data(file)
-    if parse_options is None:
-        message.from_wire(data)
-    else:
-        message.from_wire(data, parse_options)
+    message.from_wire(data, parse_options)
     return data
 
 # we don't have direct comparison for rrsets right now (should we?

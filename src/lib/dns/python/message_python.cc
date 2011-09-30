@@ -39,6 +39,9 @@ using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
 
+// Import pydoc text
+#include "message_python_inc.cc"
+
 namespace {
 class s_Message : public PyObject {
 public:
@@ -157,14 +160,7 @@ PyMethodDef Message_methods[] = {
       "If the given message is not in RENDER mode, an "
       "InvalidMessageOperation is raised.\n"
        },
-    { "from_wire", Message_fromWire, METH_VARARGS,
-      "Parses the given wire format to a Message object.\n"
-      "The first argument is a Message to parse the data into.\n"
-      "The second argument must implement the buffer interface.\n"
-      "If the given message is not in PARSE mode, an "
-      "InvalidMessageOperation is raised.\n"
-      "Raises MessageTooShort, DNSMessageFORMERR or DNSMessageBADVERS "
-      " if there is a problem parsing the message." },
+    { "from_wire", Message_fromWire, METH_VARARGS, Message_fromWire_doc },
     { NULL, NULL, 0, NULL }
 };
 
