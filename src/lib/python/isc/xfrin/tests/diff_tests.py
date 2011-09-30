@@ -199,12 +199,22 @@ class DiffTest(unittest.TestCase):
         """
         diff = Diff(self, Name('example.org.'))
         diff.add_data(self.__rrset1)
+        orig_apply = diff.apply
         diff.apply = self.__mock_apply
         diff.commit()
         self.assertTrue(self.__apply_called)
         self.assertTrue(self.__commit_called)
         # The data should be handled by apply which we replaced.
         self.assertEqual([], self.__data_operations)
+        # Now check all range of other methods raise ValueError
+        self.assertRaises(ValueError, diff.commit)
+        self.assertRaises(ValueError, diff.add_data, self.__rrset2)
+        self.assertRaises(ValueError, diff.remove_data, self.__rrset1)
+        diff.apply = orig_apply
+        self.assertRaises(ValueError, diff.apply)
+        # This one does not state it should raise, so check it doesn't
+        # But it is NOP in this situation anyway
+        diff.compact()
 
 if __name__ == "__main__":
     isc.log.init("bind10")
