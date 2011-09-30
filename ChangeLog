@@ -1,3 +1,11 @@
+288.?	[func]		jinmei
+	libdns++/pydnspp: added an option parameter to the "from wire"
+	methods of the Message class.  One option is defined,
+	PRESERVE_ORDER, which specifies the parser to handle each RR
+	separately, preserving the order, and construct RRsets in the
+	message sections so that each RRset contains only one RR.
+	(Trac #1258, git TBD)
+
 287.	[bug]*		jinmei
 	Python script files for log messages (xxx_messages.py) should have
 	been installed under the "isc" package.  This fix itself should

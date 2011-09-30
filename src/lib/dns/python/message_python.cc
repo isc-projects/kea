@@ -647,6 +647,7 @@ Message_fromWire(PyObject* const pyself, PyObject* args) {
     const char* b;
     Py_ssize_t len;
     unsigned int options = Message::PARSE_DEFAULT;
+        
     if (PyArg_ParseTuple(args, "y#", &b, &len) ||
         PyArg_ParseTuple(args, "y#I", &b, &len, &options)) {
         // We need to clear the error in case the first call to ParseTuple
@@ -685,7 +686,9 @@ Message_fromWire(PyObject* const pyself, PyObject* args) {
         }
     }
 
-    PyErr_SetString(PyExc_TypeError, "Invalid arguments to Message.from_wire");
+    PyErr_SetString(PyExc_TypeError,
+                    "from_wire() arguments must be a byte object and "
+                    "(optional) parse options");
     return (NULL);
 }
 
