@@ -646,7 +646,7 @@ Message_fromWire(PyObject* const pyself, PyObject* args) {
     s_Message* self = static_cast<s_Message*>(pyself);
     const char* b;
     Py_ssize_t len;
-    Message::ParseOptions options = Message::PARSE_DEFAULT;
+    unsigned int options = Message::PARSE_DEFAULT;
     if (PyArg_ParseTuple(args, "y#", &b, &len) ||
         PyArg_ParseTuple(args, "y#I", &b, &len, &options)) {
         // We need to clear the error in case the first call to ParseTuple
@@ -655,7 +655,8 @@ Message_fromWire(PyObject* const pyself, PyObject* args) {
 
         InputBuffer inbuf(b, len);
         try {
-            self->cppobj->fromWire(inbuf, options);
+            self->cppobj->fromWire(
+                inbuf, static_cast<Message::ParseOptions>(options));
             Py_RETURN_NONE;
         } catch (const InvalidMessageOperation& imo) {
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
