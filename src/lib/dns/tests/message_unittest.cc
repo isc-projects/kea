@@ -118,16 +118,20 @@ protected:
     vector<unsigned char> received_data;
     vector<unsigned char> expected_data;
 
-    void factoryFromFile(Message& message, const char* datafile);
+    void factoryFromFile(Message& message, const char* datafile,
+                         Message::ParseOptions options =
+                         Message::PARSE_DEFAULT);
 };
 
 void
-MessageTest::factoryFromFile(Message& message, const char* datafile) {
+MessageTest::factoryFromFile(Message& message, const char* datafile,
+                             Message::ParseOptions options)
+{
     received_data.clear();
     UnitTestUtil::readWireData(datafile, received_data);
 
     InputBuffer buffer(&received_data[0], received_data.size());
-    message.fromWire(buffer);
+    message.fromWire(buffer, options);
 }
 
 TEST_F(MessageTest, headerFlag) {
@@ -606,9 +610,7 @@ TEST_F(MessageTest, fromWireCombineRRs) {
     // This message contains 3 RRs in the answer section in the order of
     // A, AAAA, A types.  fromWire() should combine the two A RRs into a
     // single RRset by default.
-    UnitTestUtil::readWireData("message_fromWire19.wire", received_data);
-    InputBuffer buffer(&received_data[0], received_data.size());
-    message_parse.fromWire(buffer);
+    factoryFromFile(message_parse, "message_fromWire19.wire");
 
     RRsetIterator it = message_parse.beginSection(Message::SECTION_ANSWER);
     RRsetIterator it_end = message_parse.endSection(Message::SECTION_ANSWER);
@@ -649,9 +651,8 @@ TEST_F(MessageTest, fromWirePreserveAnswer) {
     // Using the same data as the previous test, but specify the PRESERVE_ORDER
     // option.  The received order of RRs should be preserved, and each RR
     // should be stored in a single RRset.
-    UnitTestUtil::readWireData("message_fromWire19.wire", received_data);
-    InputBuffer buffer(&received_data[0], received_data.size());
-    message_parse.fromWire(buffer, Message::PRESERVE_ORDER);
+    factoryFromFile(message_parse, "message_fromWire19.wire",
+                    Message::PRESERVE_ORDER);
     {
         SCOPED_TRACE("preserve answer RRs");
         preserveRRCheck(message_parse, Message::SECTION_ANSWER);
@@ -660,9 +661,8 @@ TEST_F(MessageTest, fromWirePreserveAnswer) {
 
 TEST_F(MessageTest, fromWirePreserveAuthority) {
     // Same for the previous test, but for the authority section.
-    UnitTestUtil::readWireData("message_fromWire20.wire", received_data);
-    InputBuffer buffer(&received_data[0], received_data.size());
-    message_parse.fromWire(buffer, Message::PRESERVE_ORDER);
+    factoryFromFile(message_parse, "message_fromWire20.wire",
+                    Message::PRESERVE_ORDER);
     {
         SCOPED_TRACE("preserve authority RRs");
         preserveRRCheck(message_parse, Message::SECTION_AUTHORITY);
@@ -671,9 +671,8 @@ TEST_F(MessageTest, fromWirePreserveAuthority) {
 
 TEST_F(MessageTest, fromWirePreserveAdditional) {
     // Same for the previous test, but for the additional section.
-    UnitTestUtil::readWireData("message_fromWire21.wire", received_data);
-    InputBuffer buffer(&received_data[0], received_data.size());
-    message_parse.fromWire(buffer, Message::PRESERVE_ORDER);
+    factoryFromFile(message_parse, "message_fromWire21.wire",
+                    Message::PRESERVE_ORDER);
     {
         SCOPED_TRACE("preserve additional RRs");
         preserveRRCheck(message_parse, Message::SECTION_ADDITIONAL);
