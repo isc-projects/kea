@@ -24,6 +24,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <string>
 
+#include <cc/data.h>
+
 namespace isc {
 namespace dns {
 class RRClass;
@@ -190,6 +192,18 @@ private:
     friend class Context;
     const std::string database_name_;
 };
+
+/// \brief Creates an instance of the SQlite3 datasource client
+///
+/// Currently the configuration passed here must be a MapElement, containing
+/// one item called "database_file", whose value is a string
+///
+/// This configuration setup is currently under discussion and will change in
+/// the near future.
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config);
+
+/// \brief Destroy the instance created by createInstance()
+extern "C" void destroyInstance(DataSourceClient* instance);
 
 }
 }
