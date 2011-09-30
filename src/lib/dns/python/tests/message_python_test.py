@@ -29,9 +29,12 @@ if "TESTDATA_PATH" in os.environ:
 else:
     testdata_path = "../tests/testdata"
 
-def factoryFromFile(message, file):
+def factoryFromFile(message, file, parse_options=None):
     data = read_wire_data(file)
-    message.from_wire(data)
+    if parse_options is None:
+        message.from_wire(data)
+    else:
+        message.from_wire(data, parse_options)
     return data
 
 # we don't have direct comparison for rrsets right now (should we?
@@ -465,6 +468,50 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertEqual("192.0.2.1", rdata[0].to_text())
         self.assertEqual("192.0.2.2", rdata[1].to_text())
         self.assertEqual(2, len(rdata))
+
+    def test_from_wire_combind_rrs(self):
+        factoryFromFile(self.p, "message_fromWire19.wire")
+        rrset = self.p.get_section(Message.SECTION_ANSWER)[0]
+        self.assertEqual(RRType("A"), rrset.get_type())
+        self.assertEqual(2, len(rrset.get_rdata()))
+
+        rrset = self.p.get_section(Message.SECTION_ANSWER)[1]
+        self.assertEqual(RRType("AAAA"), rrset.get_type())
+        self.assertEqual(1, len(rrset.get_rdata()))
+
+    def check_preserve_rrs(self, message, section):
+        rrset = message.get_section(section)[0]
+        self.assertEqual(RRType("A"), rrset.get_type())
+        rdata = rrset.get_rdata()
+        self.assertEqual(1, len(rdata))
+        self.assertEqual('192.0.2.1', rdata[0].to_text())
+
+        rrset = message.get_section(section)[1]
+        self.assertEqual(RRType("AAAA"), rrset.get_type())
+        rdata = rrset.get_rdata()
+        self.assertEqual(1, len(rdata))
+        self.assertEqual('2001:db8::1', rdata[0].to_text())
+
+        rrset = message.get_section(section)[2]
+        self.assertEqual(RRType("A"), rrset.get_type())
+        rdata = rrset.get_rdata()
+        self.assertEqual(1, len(rdata))
+        self.assertEqual('192.0.2.2', rdata[0].to_text())
+
+    def test_from_wire_preserve_answer(self):
+        factoryFromFile(self.p, "message_fromWire19.wire",
+                        Message.PRESERVE_ORDER)
+        self.check_preserve_rrs(self.p, Message.SECTION_ANSWER)
+
+    def test_from_wire_preserve_authority(self):
+        factoryFromFile(self.p, "message_fromWire20.wire",
+                        Message.PRESERVE_ORDER)
+        self.check_preserve_rrs(self.p, Message.SECTION_AUTHORITY)
+
+    def test_from_wire_preserve_additional(self):
+        factoryFromFile(self.p, "message_fromWire21.wire",
+                        Message.PRESERVE_ORDER)
+        self.check_preserve_rrs(self.p, Message.SECTION_ADDITIONAL)
 
     def test_EDNS0ExtCode(self):
         # Extended Rcode = BADVERS
