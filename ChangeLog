@@ -1,3 +1,11 @@
+290.	[func]		jinmei
+	libdns++/pydnspp: added an option parameter to the "from wire"
+	methods of the Message class.  One option is defined,
+	PRESERVE_ORDER, which specifies the parser to handle each RR
+	separately, preserving the order, and constructs RRsets in the
+	message sections so that each RRset contains only one RR.
+	(Trac #1258, git c874cb056e2a5e656165f3c160e1b34ccfe8b302)
+
 289.	[func]*		jinmei
 	b10-xfrout: ACLs for xfrout can now be configured per zone basis.
 	A per zone ACl is part of a more general zone configuration.  A
