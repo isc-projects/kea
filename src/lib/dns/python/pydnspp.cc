@@ -106,6 +106,10 @@ initModulePart_Message(PyObject* mod) {
         installClassVariable(message_type, "RENDER",
                              Py_BuildValue("I", Message::RENDER));
 
+        // Parse options
+        installClassVariable(message_type, "PRESERVE_ORDER",
+                             Py_BuildValue("I", Message::PRESERVE_ORDER));
+
         // Header flags
         installClassVariable(message_type, "HEADERFLAG_QR",
                              Py_BuildValue("I", Message::HEADERFLAG_QR));
