@@ -649,27 +649,34 @@ PyObject*
 Message_fromWire(s_Message* self, PyObject* args) {
     const char* b;
     Py_ssize_t len;
-    if (!PyArg_ParseTuple(args, "y#", &b, &len)) {
-        return (NULL);
+    Message::ParseOptions options = Message::PARSE_DEFAULT;
+    if (PyArg_ParseTuple(args, "y#", &b, &len) ||
+        PyArg_ParseTuple(args, "y#I", &b, &len, &options)) {
+        // We need to clear the error in case the first call to ParseTuple
+        // fails.
+        PyErr_Clear();
+
+        InputBuffer inbuf(b, len);
+        try {
+            self->cppobj->fromWire(inbuf, options);
+            Py_RETURN_NONE;
+        } catch (const InvalidMessageOperation& imo) {
+            PyErr_SetString(po_InvalidMessageOperation, imo.what());
+            return (NULL);
+        } catch (const DNSMessageFORMERR& dmfe) {
+            PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
+            return (NULL);
+        } catch (const DNSMessageBADVERS& dmfe) {
+            PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
+            return (NULL);
+        } catch (const MessageTooShort& mts) {
+            PyErr_SetString(po_MessageTooShort, mts.what());
+            return (NULL);
+        }
     }
 
-    InputBuffer inbuf(b, len);
-    try {
-        self->cppobj->fromWire(inbuf);
-        Py_RETURN_NONE;
-    } catch (const InvalidMessageOperation& imo) {
-        PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
-    } catch (const DNSMessageFORMERR& dmfe) {
-        PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
-        return (NULL);
-    } catch (const DNSMessageBADVERS& dmfe) {
-        PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
-        return (NULL);
-    } catch (const MessageTooShort& mts) {
-        PyErr_SetString(po_MessageTooShort, mts.what());
-        return (NULL);
-    }
+    PyErr_SetString(PyExc_TypeError, "Invalid arguments to Message.from_wire");
+    return (NULL);
 }
 
 } // end of unnamed namespace
