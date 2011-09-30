@@ -108,9 +108,13 @@ class Diff:
         Tries to compact the operations in buffer a little by putting some of
         the operations together, forming RRsets with more than one RR.
 
-        This is called by apply before putting the data into datasource.
+        This is called by apply before putting the data into datasource. You
+        may, but not have to, call this manually.
 
-        It is currently empty and needs implementing.
+        Currently it merges consecutive same operations on the same
+        domain/type. We could do more fancy things, like sorting by the domain
+        and do more merging, but such diffs should be rare in practice anyway,
+        so we don't bother and do it this simple way.
         """
         pass
 
