@@ -79,6 +79,9 @@ class Diff:
             raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
                              'it holds ' + str(rr.get_rdata_count()))
         self.__buffer.append((operation, rr))
+        if len(self.__buffer) >= 100:
+            # Time to auto-apply, so the data don't accumulate too much
+            self.apply()
 
     def add_data(self, rr):
         """
