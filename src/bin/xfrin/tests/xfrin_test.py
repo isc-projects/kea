@@ -174,6 +174,35 @@ class MockXfrinConnection(XfrinConnection):
 
         return reply_data
 
+class TestXfrinState(unittest.TestCase):
+    def setUp(self):
+        self.sock_map = {}
+        self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME_STR,
+                                        TEST_RRCLASS, TEST_DB_FILE,
+                                        threading.Event(),
+                                        TEST_MASTER_IPV4_ADDRINFO)
+        self.ns_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
+                              RRTTL(3600))
+        self.ns_rrset.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS,
+                                      'ns.example.com'))
+
+class TestXfrinInitialSOA(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinInitialSOA()
+
+    def test_handle_rr(self):
+        # normal case
+        self.state.handle_rr(self.conn, soa_rrset)
+        self.assertEqual(type(XfrinFirstData()),
+                         type(self.conn.get_xfrstate()))
+        self.assertEqual(1234, self.conn._end_serial)
+
+    def test_handle_not_soa(self):
+        # The given RR is not of SOA
+        self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
 class TestXfrinConnection(unittest.TestCase):
     def setUp(self):
         if os.path.exists(TEST_DB_FILE):
