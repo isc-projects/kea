@@ -18,6 +18,13 @@ import unittest
 from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata
 from isc.xfrin.diff import Diff, NoSuchZone
 
+class TestError(Exception):
+    """
+    Just to have something to be raised during the tests.
+    Not used outside.
+    """
+    pass
+
 class DiffTest(unittest.TestCase):
     """
     Tests for the isc.xfrin.diff.Diff class.
@@ -37,6 +44,7 @@ class DiffTest(unittest.TestCase):
         self.__data_operations = []
         self.__apply_called = False
         self.__commit_called = False
+        self.__broken_called = False
         # Some common values
         self.__rrclass = RRClass.IN()
         self.__type = RRType.A()
@@ -72,6 +80,15 @@ class DiffTest(unittest.TestCase):
         it gets called.
         """
         self.__apply_called = True
+
+    def __broken_operation(self, *args):
+        """
+        This can be used whenever an operation should fail. It raises TestError.
+        It should take whatever amount of parameters needed, so it can be put
+        quite anywhere.
+        """
+        self.__broken_called = True
+        raise TestError("Test error")
 
     def commit(self):
         """
@@ -339,6 +356,45 @@ class DiffTest(unittest.TestCase):
         rrset.add_rdata(Rdata(RRType.NS(), RRClass.CH(), 'ns.example.org.'))
         self.assertRaises(ValueError, diff.add_data, rrset)
         self.assertRaises(ValueError, diff.remove_data, rrset)
+
+    def __do_raise_test(self):
+        """
+        Do a raise test. Expects that one of the operations is exchanged for
+        broken version.
+        """
+        diff = Diff(self, Name('example.org.'))
+        diff.add_data(self.__rrset1)
+        diff.remove_data(self.__rrset2)
+        self.assertRaises(TestError, diff.commit)
+        self.assertTrue(self.__broken_called)
+        self.assertRaises(ValueError, diff.add_data, self.__rrset1)
+        self.assertRaises(ValueError, diff.remove_data, self.__rrset2)
+        self.assertRaises(ValueError, diff.commit)
+        self.assertRaises(ValueError, diff.apply)
+
+    def test_raise_add(self):
+        """
+        Test the exception from add_rrset is propagated and the diff can't be
+        used afterwards.
+        """
+        self.add_rrset = self.__broken_operation
+        self.__do_raise_test()
+
+    def test_raise_remove(self):
+        """
+        Test the exception from remove_rrset is propagated and the diff can't be
+        used afterwards.
+        """
+        self.remove_rrset = self.__broken_operation
+        self.__do_raise_test()
+
+    def test_raise_commit(self):
+        """
+        Test the exception from updater's commit gets propagated and it can't be
+        used afterwards.
+        """
+        self.commit = self.__broken_operation
+        self.__do_raise_test()
 
 if __name__ == "__main__":
     isc.log.init("bind10")
