@@ -181,17 +181,26 @@ class XfrinIXFRDeleteSOA(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() != RRType.SOA():
             # this shouldn't happen; should this occur it means an internal
-            # bug.
+            #
             raise XfrinException(rr.get_type().to_text() + \
                                      ' RR is given in IXFRDeleteSOA state')
         conn._diff.remove_data(rr)
         self.set_xfrstate(conn, XfrinIXFRDelete())
         return True
 
-class XfrinAXFR(XfrinState):
+class XfrinIXFRDelete(XfrinState):
+    def handle_rr(self, conn, rr):
+        if rr.get_type() == RRType.SOA():
+            conn._current_serial = get_soa_serial(rr.get_rdata()[0])
+            self.set_xfrstate(conn, XfrinAddSOA())
+            return False
+        conn._diff.remove_data(rr)
+        return True
+
+class XfrinAddSOA(XfrinState):
     pass
 
-class XfrinIXFRDelete(XfrinState):
+class XfrinAXFR(XfrinState):
     pass
 
 class XfrinConnection(asyncore.dispatcher):
@@ -212,6 +221,7 @@ class XfrinConnection(asyncore.dispatcher):
         # transfer type may differ due to IXFR->AXFR fallback:
         self._request_type = None
         self._end_serial = None # essentially private
+        self._current_serial = None
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._zone_name = zone_name
         self._sock_map = sock_map
