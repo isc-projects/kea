@@ -45,6 +45,7 @@ class DiffTest(unittest.TestCase):
         self.__apply_called = False
         self.__commit_called = False
         self.__broken_called = False
+        self.__warn_called = False
         # Some common values
         self.__rrclass = RRClass.IN()
         self.__type = RRType.A()
@@ -89,6 +90,13 @@ class DiffTest(unittest.TestCase):
         """
         self.__broken_called = True
         raise TestError("Test error")
+
+    def warn(self, *args):
+        """
+        This is for checking the warn function was called, we replace the logger
+        in the tested module.
+        """
+        self.__warn_called = True
 
     def commit(self):
         """
@@ -395,6 +403,27 @@ class DiffTest(unittest.TestCase):
         """
         self.commit = self.__broken_operation
         self.__do_raise_test()
+
+    def test_ttl(self):
+        """
+        Test the TTL handling. A warn function should have been called if they
+        differ, but that's all, it should not crash or raise.
+        """
+        orig_logger = isc.xfrin.diff.logger
+        try:
+            isc.xfrin.diff.logger = self
+            diff = Diff(self, Name('example.org.'))
+            diff.add_data(self.__rrset1)
+            rrset2 = RRset(Name('a.example.org.'), self.__rrclass,
+                                  self.__type, RRTTL(120))
+            rrset2.add_rdata(Rdata(self.__type, self.__rrclass, '192.10.2.2'))
+            diff.add_data(rrset2)
+            # They should get compacted together and complain.
+            diff.compact()
+            self.assertEqual(1, len(diff.get_buffer()))
+            self.assertTrue(self.__warn_called)
+        finally:
+            isc.xfrin.diff.logger = orig_logger
 
 if __name__ == "__main__":
     isc.log.init("bind10")
