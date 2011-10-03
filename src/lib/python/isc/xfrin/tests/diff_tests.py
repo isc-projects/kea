@@ -160,7 +160,7 @@ class DiffTest(unittest.TestCase):
         self.assertRaises(NoSuchZone, Diff, self, Name('none.example.org.'))
         self.assertTrue(self.__updater_requested)
 
-    def __data_common(self, diff, method, name):
+    def __data_common(self, diff, method, operation):
         """
         Common part of test for test_add and test_remove.
         """
@@ -169,10 +169,10 @@ class DiffTest(unittest.TestCase):
         self.assertRaises(ValueError, method, self.__rrset_multi)
         # They were not added
         self.assertEqual([], diff.get_buffer())
-        # Add some proper data
+        # Put some proper data into the diff
         method(self.__rrset1)
         method(self.__rrset2)
-        dlist = [(name, self.__rrset1), (name, self.__rrset2)]
+        dlist = [(operation, self.__rrset1), (operation, self.__rrset2)]
         self.assertEqual(dlist, diff.get_buffer())
         # Check the data are not destroyed by raising an exception because of
         # bad data
