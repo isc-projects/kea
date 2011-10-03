@@ -91,6 +91,10 @@ class Diff:
         if rr.get_rdata_count() != 1:
             raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
                              'it holds ' + str(rr.get_rdata_count()))
+        if rr.get_class() != self.__updater.get_class():
+            raise ValueError("The rrset's class " + str(rr.get_class()) +
+                             " does not match updater's " +
+                             str(self.__updater.get_class()))
         self.__buffer.append((operation, rr))
         if len(self.__buffer) >= DIFF_APPLY_TRESHOLD:
             # Time to auto-apply, so the data don't accumulate too much
@@ -103,6 +107,9 @@ class Diff:
         The rr is of isc.dns.RRset type and it must contain only one RR.
         If this is not the case or if the diff was already commited, this
         raises the ValueError exception.
+
+        The rr class must match the one of the datasource client. If
+        it does not, ValueError is raised.
         """
         self.__data_common(rr, 'add')
 
@@ -113,6 +120,9 @@ class Diff:
         The rr is of isc.dns.RRset type and it must contain only one RR.
         If this is not the case or if the diff was already commited, this
         raises the ValueError exception.
+
+        The rr class must match the one of the datasource client. If
+        it does not, ValueError is raised.
         """
         self.__data_common(rr, 'remove')
 
