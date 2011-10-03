@@ -272,6 +272,31 @@ class TestXfrinIAXFDeleteSOA(TestXfrinState):
         self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
                           self.ns_rrset)
 
+class TestXfrinIAXFDelete(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        XfrinIXFRDelete().set_xfrstate(self.conn, XfrinIXFRDelete())
+        self.state = self.conn.get_xfrstate()
+
+    def test_handle_delete_rr(self):
+        # Non SOA RRs are simply (goting to be) removed in this state
+        self.assertTrue(self.state.handle_rr(self.conn, self.ns_rrset))
+        self.assertEqual([('remove', self.ns_rrset)],
+                         self.conn._diff.get_buffer())
+        # The state shouldn't change
+        self.assertEqual(type(XfrinIXFRDelete()),
+                         type(self.conn.get_xfrstate()))
+
+    def test_handle_soa(self):
+        # SOA in this state means the beginning of added RRs.  This SOA
+        # should also be added in the next state, so handle_rr() should return
+        # false.
+        self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual([], self.conn._diff.get_buffer())
+        self.assertEqual(1234, self.conn._current_serial)
+        self.assertEqual(type(XfrinAddSOA()),
+                         type(self.conn.get_xfrstate()))
+
 class TestXfrinConnection(unittest.TestCase):
     def setUp(self):
         if os.path.exists(TEST_DB_FILE):
