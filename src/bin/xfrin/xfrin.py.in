@@ -285,7 +285,7 @@ class XfrinConnection(asyncore.dispatcher):
 
     def zone_str(self):
         '''A convenient function for logging to include zone name and class'''
-        return self._zone_name + '/' + str(self._rrclass)
+        return self._zone_name.to_text() + '/' + str(self._rrclass)
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
@@ -306,7 +306,7 @@ class XfrinConnection(asyncore.dispatcher):
         msg.set_qid(query_id)
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
-        query_question = Question(Name(self._zone_name), self._rrclass, query_type)
+        query_question = Question(self._zone_name, self._rrclass, query_type)
         msg.add_question(query_question)
         return msg
 
@@ -404,30 +404,31 @@ class XfrinConnection(asyncore.dispatcher):
         try:
             ret = XFRIN_OK
             if check_soa:
-                logstr = 'SOA check for \'%s\' ' % self._zone_name
+                logstr = 'SOA check for \'%s\' ' % self.zone_str()
                 ret =  self._check_soa_serial()
 
             if ret == XFRIN_OK:
                 if not ixfr_first:
-                    logger.info(XFRIN_AXFR_TRANSFER_STARTED, self._zone_name)
+                    logger.info(XFRIN_AXFR_TRANSFER_STARTED, self.zone_str())
                     self._send_query(RRType.AXFR())
-                    isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
+                    isc.datasrc.sqlite3_ds.load(self._db_file,
+                                                self._zone_name.to_text(),
                                                 self._handle_axfrin_response)
-                    logger.info(XFRIN_AXFR_TRANSFER_SUCCESS, self._zone_name)
+                    logger.info(XFRIN_AXFR_TRANSFER_SUCCESS, self.zone_str())
 
         except XfrinException as e:
-            logger.error(XFRIN_AXFR_TRANSFER_FAILURE, self._zone_name, str(e))
+            logger.error(XFRIN_AXFR_TRANSFER_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
             #TODO, recover data source.
         except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
-            logger.error(XFRIN_AXFR_DATABASE_FAILURE, self._zone_name, str(e))
+            logger.error(XFRIN_AXFR_DATABASE_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
         except UserWarning as e:
             # XXX: this is an exception from our C++ library via the
             # Boost.Python binding.  It would be better to have more more
             # specific exceptions, but at this moment this is the finest
             # granularity.
-            logger.error(XFRIN_AXFR_INTERNAL_FAILURE, self._zone_name, str(e))
+            logger.error(XFRIN_AXFR_INTERNAL_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
         finally:
            self.close()
@@ -940,7 +941,7 @@ class Xfrin:
         xfrin_thread = threading.Thread(target = process_xfrin,
                                         args = (self,
                                                 self.recorder,
-                                                zone_name.to_text(),
+                                                zone_name,
                                                 rrclass,
                                                 db_file,
                                                 self._shutdown_event,
