@@ -94,6 +94,13 @@ class DiffTest(unittest.TestCase):
         """
         self.__data_operations.append(('remove', rrset))
 
+    def get_class(self):
+        """
+        This one is part of pretending to be a zone updater. It returns
+        the IN class.
+        """
+        return self.__rrclass
+
     def get_updater(self, zone_name, replace):
         """
         This one pretends this is the data source client and serves
@@ -321,6 +328,17 @@ class DiffTest(unittest.TestCase):
         # Try another compact does nothing, but survives
         diff.compact()
         check()
+
+    def test_wrong_class(self):
+        """
+        Test a wrong class of rrset is rejected.
+        """
+        diff = Diff(self, Name('example.org.'))
+        rrset = RRset(Name('a.example.org.'), RRClass.CH(), RRType.NS(),
+                      self.__ttl)
+        rrset.add_rdata(Rdata(RRType.NS(), RRClass.CH(), 'ns.example.org.'))
+        self.assertRaises(ValueError, diff.add_data, rrset)
+        self.assertRaises(ValueError, diff.remove_data, rrset)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
