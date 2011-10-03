@@ -78,7 +78,7 @@ PyObject* Message_makeResponse(s_Message* self);
 PyObject* Message_toText(s_Message* self);
 PyObject* Message_str(PyObject* self);
 PyObject* Message_toWire(s_Message* self, PyObject* args);
-PyObject* Message_fromWire(PyObject* const pyself, PyObject* args);
+PyObject* Message_fromWire(PyObject* pyself, PyObject* args);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -160,7 +160,7 @@ PyMethodDef Message_methods[] = {
       "If the given message is not in RENDER mode, an "
       "InvalidMessageOperation is raised.\n"
        },
-    { "from_wire", reinterpret_cast<PyCFunction>(Message_fromWire), METH_VARARGS, Message_fromWire_doc },
+    { "from_wire", Message_fromWire, METH_VARARGS, Message_fromWire_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -642,8 +642,8 @@ Message_toWire(s_Message* self, PyObject* args) {
 }
 
 PyObject*
-Message_fromWire(PyObject* const pyself, PyObject* args) {
-    s_Message* self = static_cast<s_Message*>(pyself);
+Message_fromWire(PyObject* pyself, PyObject* args) {
+    s_Message* const self = static_cast<s_Message*>(pyself);
     const char* b;
     Py_ssize_t len;
     unsigned int options = Message::PARSE_DEFAULT;
