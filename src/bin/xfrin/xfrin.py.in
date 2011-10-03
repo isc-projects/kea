@@ -192,16 +192,51 @@ class XfrinIXFRDelete(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() == RRType.SOA():
             conn._current_serial = get_soa_serial(rr.get_rdata()[0])
-            self.set_xfrstate(conn, XfrinAddSOA())
+            self.set_xfrstate(conn, XfrinIXFRAddSOA())
             return False
         conn._diff.remove_data(rr)
         return True
 
-class XfrinAddSOA(XfrinState):
-    pass
+class XfrinIXFRAddSOA(XfrinState):
+    def handle_rr(self, conn, rr):
+        if rr.get_type() != RRType.SOA():
+            # this shouldn't happen; should this occur it means an internal
+            #
+            raise XfrinException(rr.get_type().to_text() + \
+                                     ' RR is given in IXFRAddSOA state')
+        conn._diff.add_data(rr)
+        self.set_xfrstate(conn, XfrinIXFRAdd())
+        return True
+
+class XfrinIXFRAdd(XfrinState):
+    def handle_rr(self, conn, rr):
+        if rr.get_type() == RRType.SOA():
+            soa_serial = get_soa_serial(rr.get_rdata()[0])
+            if soa_serial == conn._end_serial:
+                conn._diff.commit()
+                self.set_xfrstate(conn, XfrinIXFREnd())
+                return True
+            elif soa_serial != conn._current_serial:
+                raise XfrinProtocolError('IXFR out of sync: expected ' + \
+                                             'serial ' + \
+                                             str(conn._current_serial) + \
+                                             ', got ' + str(soa_serial))
+            else:
+                conn._diff.commit()
+                self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
+                return False
+        conn._diff.add_data(rr)
+        return True
+
+class XfrinIXFREnd(XfrinState):
+    def handle_rr(self, conn, rr):
+        raise XfrinProtocolError('Extra data after the end of IXFR diffs: ' + \
+                                     rr.to_text())
 
 class XfrinAXFR(XfrinState):
-    pass
+    def handle_rr(self, conn, rr):
+        raise XfrinException('Falling back from IXFR to AXFR not ' + \
+                                 'supported yet')
 
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''

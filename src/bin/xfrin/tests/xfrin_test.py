@@ -256,7 +256,7 @@ class TestXfrinFirstData(TestXfrinState):
         self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
         self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
 
-class TestXfrinIAXFDeleteSOA(TestXfrinState):
+class TestXfrinIXFRDeleteSOA(TestXfrinState):
     def setUp(self):
         super().setUp()
         self.state = XfrinIXFRDeleteSOA()
@@ -272,9 +272,11 @@ class TestXfrinIAXFDeleteSOA(TestXfrinState):
         self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
                           self.ns_rrset)
 
-class TestXfrinIAXFDelete(TestXfrinState):
+class TestXfrinIXFRDelete(TestXfrinState):
     def setUp(self):
         super().setUp()
+        # We need record the state in 'conn' to check the case where the
+        # state doesn't change.
         XfrinIXFRDelete().set_xfrstate(self.conn, XfrinIXFRDelete())
         self.state = self.conn.get_xfrstate()
 
@@ -294,8 +296,82 @@ class TestXfrinIAXFDelete(TestXfrinState):
         self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
         self.assertEqual([], self.conn._diff.get_buffer())
         self.assertEqual(1234, self.conn._current_serial)
-        self.assertEqual(type(XfrinAddSOA()),
+        self.assertEqual(type(XfrinIXFRAddSOA()),
                          type(self.conn.get_xfrstate()))
+
+class TestXfrinIXFRAddSOA(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinIXFRAddSOA()
+
+    def test_handle_rr(self):
+        self.assertTrue(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual(type(XfrinIXFRAdd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([('add', soa_rrset)],
+                         self.conn._diff.get_buffer())
+
+    def test_handle_non_soa(self):
+        self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
+class TestXfrinIXFRAdd(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        # We need record the state in 'conn' to check the case where the
+        # state doesn't change.
+        XfrinIXFRAdd().set_xfrstate(self.conn, XfrinIXFRAdd())
+        self.conn._current_serial = 1230
+        self.state = self.conn.get_xfrstate()
+
+    def test_handle_add_rr(self):
+        # Non SOA RRs are simply (goting to be) added in this state
+        self.assertTrue(self.state.handle_rr(self.conn, self.ns_rrset))
+        self.assertEqual([('add', self.ns_rrset)],
+                         self.conn._diff.get_buffer())
+        # The state shouldn't change
+        self.assertEqual(type(XfrinIXFRAdd()), type(self.conn.get_xfrstate()))
+
+    def test_handle_end_soa(self):
+        self.conn._end_serial = 1234
+        self.conn._diff.add_data(self.ns_rrset) # put some dummy change
+        self.assertTrue(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        # handle_rr should have caused commit, and the buffer should now be
+        # empty.
+        self.assertEqual([], self.conn._diff.get_buffer())
+
+    def test_handle_new_delete(self):
+        # SOA RR whose serial is the current one means we are going to a new
+        # difference, starting with removing that SOA.
+        self.conn._diff.add_data(self.ns_rrset) # put some dummy change
+        self.assertFalse(self.state.handle_rr(self.conn, self.begin_soa))
+        self.assertEqual([], self.conn._diff.get_buffer())
+        self.assertEqual(type(XfrinIXFRDeleteSOA()),
+                         type(self.conn.get_xfrstate()))
+
+    def test_handle_out_of_sync(self):
+        # getting SOA with an inconsistent serial.  This is an error.
+        self.conn._end_serial = 1235
+        self.assertRaises(XfrinProtocolError, self.state.handle_rr,
+                          self.conn, soa_rrset)
+
+class TestXfrinIXFREnd(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinIXFREnd()
+
+    def test_handle_rr(self):
+        self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
+class TestXfrinAXFR(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinAXFR()
+
+    def test_handle_rr(self):
+        self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
+                          soa_rrset)
 
 class TestXfrinConnection(unittest.TestCase):
     def setUp(self):
