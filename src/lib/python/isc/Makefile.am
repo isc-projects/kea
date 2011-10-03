@@ -1,5 +1,5 @@
 SUBDIRS = datasrc cc config dns log net notify util testutils acl bind10
-SUBDIRS += log_messages xfrin
+SUBDIRS += xfrin log_messages
 
 python_PYTHON = __init__.py
 

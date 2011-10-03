@@ -19,6 +19,8 @@ it to the datasource.
 """
 
 import isc.dns
+import isc.log
+from isc.log_messages.libxfrin_messages import *
 
 class NoSuchZone(Exception):
     """
@@ -36,6 +38,8 @@ number.
 """
 # If changing this, modify the tests accordingly as well.
 DIFF_APPLY_TRESHOLD = 100
+
+logger = isc.log.Logger('libxfrin')
 
 class Diff:
     """
@@ -150,6 +154,9 @@ class Diff:
                                               rrset.get_class(),
                                               rrset.get_type(),
                                               rrset.get_ttl())))
+            if rrset.get_ttl() != buf[-1][1].get_ttl():
+                logger.warn(LIBXFRIN_DIFFERENT_TTL, rrset.get_ttl(),
+                            buf[-1][1].get_ttl())
             for rdatum in rrset.get_rdata():
                 buf[-1][1].add_rdata(rdatum)
         self.__buffer = buf
