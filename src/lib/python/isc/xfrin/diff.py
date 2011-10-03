@@ -73,12 +73,13 @@ class Diff:
 
     def __check_commited(self):
         """
-        This checks if the diff is already commited. If it is, it raises
-        ValueError. This check is for methods that need to work only on
+        This checks if the diff is already commited or broken. If it is, it
+        raises ValueError. This check is for methods that need to work only on
         yet uncommited diffs.
         """
         if self.__updater is None:
-            raise ValueError("The diff is already commited, you come late")
+            raise ValueError("The diff is already commited or it has raised " +
+                             "an exception, you come late")
 
     def __data_common(self, rr, operation):
         """
@@ -172,15 +173,21 @@ class Diff:
         self.__check_commited()
         # First, compact the data
         self.compact()
-        # Then pass the data inside the data source
-        for (operation, rrset) in self.__buffer:
-            if operation == 'add':
-                self.__updater.add_rrset(rrset)
-            elif operation == 'remove':
-                self.__updater.remove_rrset(rrset)
-            else:
-                raise ValueError('Unknown operation ' + operation)
-        # As everything is already in, drop the buffer
+        try:
+            # Then pass the data inside the data source
+            for (operation, rrset) in self.__buffer:
+                if operation == 'add':
+                    self.__updater.add_rrset(rrset)
+                elif operation == 'remove':
+                    self.__updater.remove_rrset(rrset)
+                else:
+                    raise ValueError('Unknown operation ' + operation)
+            # As everything is already in, drop the buffer
+        except:
+            # If there's a problem, we can't continue.
+            self.__updater = None
+            raise
+
         self.__buffer = []
 
     def commit(self):
@@ -195,10 +202,15 @@ class Diff:
         # Push the data inside the data source
         self.apply()
         # Make sure they are visible.
-        self.__updater.commit()
-        # Remove the updater. That will free some resources for one, but
-        # mark this object as already commited, so we can check
-        self.__updater = None
+        try:
+            self.__updater.commit()
+        finally:
+            # Remove the updater. That will free some resources for one, but
+            # mark this object as already commited, so we can check
+
+            # We remove it even in case the commit failed, as that makes us
+            # unusable.
+            self.__updater = None
 
     def get_buffer(self):
         """
