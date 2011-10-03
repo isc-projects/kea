@@ -18,6 +18,7 @@ import socket
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
+from isc.xfrin.diff import Diff
 import isc.log
 
 #
@@ -178,10 +179,30 @@ class TestXfrinState(unittest.TestCase):
                                         TEST_RRCLASS, TEST_DB_FILE,
                                         threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
+        self.begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
+                               RRTTL(3600))
+        self.begin_soa.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS,
+                                       'm. r. 1230 0 0 0 0'))
         self.ns_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
                               RRTTL(3600))
         self.ns_rrset.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS,
                                       'ns.example.com'))
+        self.__data_operations = []
+        self.conn._diff = Diff(self, TEST_ZONE_NAME)
+
+    # The following methods are to emulate a data source updater used by
+    # the Diff object.  For our testing purposes they can simply be no-op.
+    def get_updater(self, zone_name, replace):
+        return self
+
+    def add_rrset(self, rrset):
+        pass
+
+    def remove_rrset(self, rrset):
+        pass
+
+    def commit(self):
+        pass
 
 class TestXfrinInitialSOA(TestXfrinState):
     def setUp(self):
@@ -209,11 +230,7 @@ class TestXfrinFirstData(TestXfrinState):
 
     def test_handle_ixfr_begin_soa(self):
         self.conn._request_type = RRType.IXFR()
-        begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
-                          RRTTL(3600))
-        begin_soa.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS,
-                                  'm. r. 1230 0 0 0 0'))
-        self.assertFalse(self.state.handle_rr(self.conn, begin_soa))
+        self.assertFalse(self.state.handle_rr(self.conn, self.begin_soa))
         self.assertEqual(type(XfrinIXFRDeleteSOA()),
                          type(self.conn.get_xfrstate()))
 
@@ -221,11 +238,7 @@ class TestXfrinFirstData(TestXfrinState):
         # If the original type is AXFR, other conditions aren't considered,
         # and AXFR processing will continue
         self.conn._request_type = RRType.AXFR()
-        begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
-                          RRTTL(3600))
-        begin_soa.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS,
-                                  'm. r. 1230 0 0 0 0'))
-        self.assertFalse(self.state.handle_rr(self.conn, begin_soa))
+        self.assertFalse(self.state.handle_rr(self.conn, self.begin_soa))
         self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
 
     def test_handle_ixfr_to_axfr(self):
@@ -242,6 +255,22 @@ class TestXfrinFirstData(TestXfrinState):
         # be rejected anyway, but at this point we should switch to AXFR.
         self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
         self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
+
+class TestXfrinIAXFDeleteSOA(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinIXFRDeleteSOA()
+
+    def test_handle_rr(self):
+        self.assertTrue(self.state.handle_rr(self.conn, self.begin_soa))
+        self.assertEqual(type(XfrinIXFRDelete()),
+                         type(self.conn.get_xfrstate()))
+        self.assertEqual([('remove', self.begin_soa)],
+                         self.conn._diff.get_buffer())
+
+    def test_handle_non_soa(self):
+        self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
 
 class TestXfrinConnection(unittest.TestCase):
     def setUp(self):
