@@ -175,7 +175,7 @@ class MockXfrinConnection(XfrinConnection):
 class TestXfrinState(unittest.TestCase):
     def setUp(self):
         self.sock_map = {}
-        self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME_STR,
+        self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
                                         TEST_RRCLASS, TEST_DB_FILE,
                                         threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
@@ -378,7 +378,7 @@ class TestXfrinConnection(unittest.TestCase):
         if os.path.exists(TEST_DB_FILE):
             os.remove(TEST_DB_FILE)
         self.sock_map = {}
-        self.conn = MockXfrinConnection(self.sock_map, 'example.com.',
+        self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
                                         TEST_RRCLASS, TEST_DB_FILE,
                                         threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
@@ -435,14 +435,14 @@ class TestXfrinConnection(unittest.TestCase):
         # to confirm an AF_INET6 socket has been created.  A naive application
         # tends to assume it's IPv4 only and hardcode AF_INET.  This test
         # uncovers such a bug.
-        c = MockXfrinConnection({}, 'example.com.', TEST_RRCLASS, TEST_DB_FILE,
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS, TEST_DB_FILE,
                                 threading.Event(),
                                 TEST_MASTER_IPV6_ADDRINFO)
         c.bind(('::', 0))
         c.close()
 
     def test_init_chclass(self):
-        c = XfrinConnection({}, 'example.com.', RRClass.CH(), TEST_DB_FILE,
+        c = XfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(), TEST_DB_FILE,
                             threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
         axfrmsg = c._create_query(RRType.AXFR())
         self.assertEqual(axfrmsg.get_question()[0].get_class(),
