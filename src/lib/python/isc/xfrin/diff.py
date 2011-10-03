@@ -51,24 +51,24 @@ class Diff:
     the changes to underlying data source right away, but keeps them for
     a while.
     """
-    def __init__(self, datasource, zone):
+    def __init__(self, ds_client, zone):
         """
         Initializes the diff to a ready state. It checks the zone exists
         in the datasource and if not, NoSuchZone is raised. This also creates
         a transaction in the data source.
 
-        The datasource is the one containing the zone. Zone is isc.dns.Name
-        object representing the name of the zone (its apex).
+        The ds_client is the datasource client containing the zone. Zone is
+        isc.dns.Name object representing the name of the zone (its apex).
 
         You can also expect isc.datasrc.Error or isc.datasrc.NotImplemented
         exceptions.
         """
-        self.__updater = datasource.get_updater(zone, False)
+        self.__updater = ds_client.get_updater(zone, False)
         if self.__updater is None:
             # The no such zone case
             raise NoSuchZone("Zone " + str(zone) +
                              " does not exist in the data source " +
-                             str(datasource))
+                             str(ds_client))
         self.__buffer = []
 
     def __check_commited(self):
