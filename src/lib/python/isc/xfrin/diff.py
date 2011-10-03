@@ -26,6 +26,17 @@ class NoSuchZone(Exception):
     """
     pass
 
+"""
+This is the amount of changes we accumulate before calling Diff.apply
+automatically.
+
+The number 100 is just taken from Bind9. We don't know the rationale
+for exactly this amount, but we think it is just some randomly chosen
+number.
+"""
+# If changing this, modify the tests accordingly as well.
+DIFF_APPLY_TRESHOLD = 100
+
 class Diff:
     """
     The class represents a diff against current state of datasource on
@@ -81,7 +92,7 @@ class Diff:
             raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
                              'it holds ' + str(rr.get_rdata_count()))
         self.__buffer.append((operation, rr))
-        if len(self.__buffer) >= 100:
+        if len(self.__buffer) >= DIFF_APPLY_TRESHOLD:
             # Time to auto-apply, so the data don't accumulate too much
             self.apply()
 
