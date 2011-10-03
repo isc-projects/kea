@@ -160,7 +160,7 @@ PyMethodDef Message_methods[] = {
       "If the given message is not in RENDER mode, an "
       "InvalidMessageOperation is raised.\n"
        },
-    { "from_wire", Message_fromWire, METH_VARARGS, Message_fromWire_doc },
+    { "from_wire", reinterpret_cast<PyCFunction>(Message_fromWire), METH_VARARGS, Message_fromWire_doc },
     { NULL, NULL, 0, NULL }
 };
 
