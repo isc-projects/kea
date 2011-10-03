@@ -5,6 +5,8 @@ BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/work/libxfrin_messages.py
 nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/libxfrin_messages.py
 pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
+EXTRA_DIST = libxfrin_messages.mes
+
 CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/work/libxfrin_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/libxfrin_messages.pyc
 
