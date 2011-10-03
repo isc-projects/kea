@@ -57,7 +57,7 @@
       by the BIND 10 boss process (<command>bind10</command>) and eventually
       exited by it.  The server is intended to be server requests by HTTP
       clients like web browsers and third-party modules. When the server is
-      asked, it requests BIND 10 statistics data from
+      asked, it requests BIND 10 statistics data or its schema from
       <command>b10-stats</command>, and it sends the data back in Python
       dictionary format and the server converts it into XML format. The server
       sends it to the HTTP client. The server can send three types of document,
@@ -112,12 +112,6 @@
       of <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum> about
       how to configure the settings.
     </para>
-    <para><filename>/usr/local/share/bind10-devel/stats-schema.spec</filename>
-      <!--TODO: The filename should be computed from prefix-->
-      &mdash; This is a spec file for data schema of
-      of BIND 10 statistics. This schema cannot be configured 
-      via <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
-    </para>
     <para>
       <filename>/usr/local/share/bind10-devel/stats-httpd-xml.tpl</filename>
       <!--TODO: The filename should be computed from prefix-->
@@ -138,7 +132,7 @@
   <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
     <para>
-      The configurable setting in 
+      The configurable setting in
       <filename>stats-httpd.spec</filename> is:
     </para>
     <variablelist>

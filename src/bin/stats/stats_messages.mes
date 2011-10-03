@@ -28,16 +28,6 @@ control bus. A likely problem is that the message bus daemon
 This debug message is printed when the stats module has received a
 configuration update from the configuration manager.
 
-% STATS_RECEIVED_REMOVE_COMMAND received command to remove %1
-A remove command for the given name was sent to the stats module, and
-the given statistics value will now be removed. It will not appear in
-statistics reports until it appears in a statistics update from a
-module again.
-
-% STATS_RECEIVED_RESET_COMMAND received command to reset all statistics
-The stats module received a command to clear all collected statistics.
-The data is cleared until it receives an update from the modules again.
-
 % STATS_RECEIVED_SHOW_ALL_COMMAND received command to show all statistics
 The stats module received a command to show all statistics that it has
 collected.
@@ -72,4 +62,15 @@ installation problem, where the specification file stats.spec is
 from a different version of BIND 10 than the stats module itself.
 Please check your installation.
 
+% STATS_STARTING starting
+The stats module will be now starting.
 
+% STATS_RECEIVED_SHOWSCHEMA_ALL_COMMAND received command to show all statistics schema
+The stats module received a command to show all statistics schemas of all modules.
+
+% STATS_RECEIVED_SHOWSCHEMA_NAME_COMMAND received command to show statistics schema for %1
+The stats module received a command to show the specified statistics schema of the specified module.
+
+% STATS_START_ERROR stats module error: %1
+An internal error occurred while starting the stats module. The stats
+module will be now shutting down.
