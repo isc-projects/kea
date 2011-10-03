@@ -185,7 +185,7 @@ init(PyObject*, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-// This initialization is for unit tests.  It allows message settings to be
+// This initialization is for unit tests.  It allows message settings to
 // be determined by a set of B10_xxx environment variables.  (See the
 // description of initLogger() for more details.)  The function has been named
 // resetUnitTestRootLogger() here as being more descriptive and
