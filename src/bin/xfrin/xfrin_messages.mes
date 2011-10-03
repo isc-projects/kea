@@ -89,3 +89,12 @@ daemon will now shut down.
 % XFRIN_UNKNOWN_ERROR unknown error: %1
 An uncaught exception was raised while running the xfrin daemon. The
 exception message is printed in the log message.
+
+% XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
+In an attempt of IXFR processing, the begenning SOA of the first difference
+(following the initial SOA that specified the final SOA for all the
+differences) was found.  This means a connection for xfrin tried IXFR
+and really aot a response for incremental updates.
+
+% XFRIN_GOT_NONINCREMENTAL_RESP got nonincremental response for %1
+TBD

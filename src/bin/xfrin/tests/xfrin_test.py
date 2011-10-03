@@ -45,13 +45,10 @@ TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
                   'master.example.com. admin.example.com ' +
                   '1234 3600 1800 2419200 7200')
-soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
-                  RRTTL(3600))
+soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(), RRTTL(3600))
 soa_rrset.add_rdata(soa_rdata)
-example_axfr_question = Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                 RRType.AXFR())
-example_soa_question = Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                 RRType.SOA())
+example_axfr_question = Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.AXFR())
+example_soa_question = Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA())
 default_questions = [example_axfr_question]
 default_answers = [soa_rrset]
 
@@ -193,7 +190,7 @@ class TestXfrinInitialSOA(TestXfrinState):
 
     def test_handle_rr(self):
         # normal case
-        self.state.handle_rr(self.conn, soa_rrset)
+        self.assertTrue(self.state.handle_rr(self.conn, soa_rrset))
         self.assertEqual(type(XfrinFirstData()),
                          type(self.conn.get_xfrstate()))
         self.assertEqual(1234, self.conn._end_serial)
@@ -202,6 +199,49 @@ class TestXfrinInitialSOA(TestXfrinState):
         # The given RR is not of SOA
         self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
                           self.ns_rrset)
+
+class TestXfrinFirstData(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinFirstData()
+        self.conn._request_type = RRType.IXFR()
+        self.conn._request_serial = 1230 # arbitrary chosen serial < 1234
+
+    def test_handle_ixfr_begin_soa(self):
+        self.conn._request_type = RRType.IXFR()
+        begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
+                          RRTTL(3600))
+        begin_soa.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS,
+                                  'm. r. 1230 0 0 0 0'))
+        self.assertFalse(self.state.handle_rr(self.conn, begin_soa))
+        self.assertEqual(type(XfrinIXFRDeleteSOA()),
+                         type(self.conn.get_xfrstate()))
+
+    def test_handle_axfr(self):
+        # If the original type is AXFR, other conditions aren't considered,
+        # and AXFR processing will continue
+        self.conn._request_type = RRType.AXFR()
+        begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
+                          RRTTL(3600))
+        begin_soa.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS,
+                                  'm. r. 1230 0 0 0 0'))
+        self.assertFalse(self.state.handle_rr(self.conn, begin_soa))
+        self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
+
+    def test_handle_ixfr_to_axfr(self):
+        # Detecting AXFR-compatible IXFR response by seeing a non SOA RR after
+        # the initial SOA.  Should switch to AXFR.
+        self.assertFalse(self.state.handle_rr(self.conn, self.ns_rrset))
+        self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
+
+    def test_handle_ixfr_to_axfr_by_different_soa(self):
+        # Response contains two consecutive SOA but the serial of the second
+        # does not match the requested one.  The only possible interpretation
+        # at this point is that it's an AXFR-compatible IXFR that only
+        # consists of the SOA RR.  It will result in broken zone and should
+        # be rejected anyway, but at this point we should switch to AXFR.
+        self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
 
 class TestXfrinConnection(unittest.TestCase):
     def setUp(self):

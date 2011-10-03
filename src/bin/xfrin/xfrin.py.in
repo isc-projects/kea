@@ -62,6 +62,9 @@ ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
 ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 
+# Constants for debug levels, to be removed when we have #1074.
+DBG_XFRIN_TRACE = 3
+
 # These two default are currently hard-coded. For config this isn't
 # necessary, but we need these defaults for optional command arguments
 # (TODO: have similar support to get default values for command
@@ -154,10 +157,30 @@ class XfrinInitialSOA(XfrinState):
         # xfr could be inefficient, but shouldn't do any harm otherwise)
 
         self.set_xfrstate(conn, XfrinFirstData())
+        return True
 
 class XfrinFirstData(XfrinState):
     def handle_rr(self, conn, rr):
-        pass
+        # If the transfer begins with one SOA record, it is an AXFR,
+        # if it begins with two SOAs (the serial of the second one being
+        # equal to our serial), it is an IXFR.
+        if conn._request_type == RRType.IXFR() and \
+                rr.get_type() == RRType.SOA() and \
+                conn._request_serial == get_soa_serial(rr.get_rdata()[0]):
+            logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_INCREMENTAL_RESP,
+                         conn.zone_str())
+            self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
+        else:
+            logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
+                         conn.zone_str())
+            self.set_xfrstate(conn, XfrinAXFR())
+        return False    # need to revisit this RR in an update context
+
+class XfrinIXFRDeleteSOA(XfrinState):
+    pass
+
+class XfrinAXFR(XfrinState):
+    pass
 
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
@@ -173,6 +196,9 @@ class XfrinConnection(asyncore.dispatcher):
 
         asyncore.dispatcher.__init__(self, map=sock_map)
         self.__state = None
+        # Requested transfer type (RRType.AXFR or RRType.IXFR).  The actual
+        # transfer type may differ due to IXFR->AXFR fallback:
+        self._request_type = None
         self._end_serial = None # essentially private
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._zone_name = zone_name
@@ -199,6 +225,10 @@ class XfrinConnection(asyncore.dispatcher):
 
     def get_xfrstate(self):
         return self.__state
+
+    def zone_str(self):
+        '''A convenient function for logging to include zone name and class'''
+        return self._zone_name + '/' + str(self._rrclass)
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
