@@ -29,6 +29,7 @@ from isc.config.ccsession import *
 from isc.notify import notify_out
 import isc.util.process
 import isc.net.parse
+import isc.xfrin.diff
 from isc.log_messages.xfrin_messages import *
 
 isc.log.init("b10-xfrin")
@@ -172,14 +173,25 @@ class XfrinFirstData(XfrinState):
             self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
         else:
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
-                         conn.zone_str())
+                 conn.zone_str())
             self.set_xfrstate(conn, XfrinAXFR())
         return False    # need to revisit this RR in an update context
 
 class XfrinIXFRDeleteSOA(XfrinState):
-    pass
+    def handle_rr(self, conn, rr):
+        if rr.get_type() != RRType.SOA():
+            # this shouldn't happen; should this occur it means an internal
+            # bug.
+            raise XfrinException(rr.get_type().to_text() + \
+                                     ' RR is given in IXFRDeleteSOA state')
+        conn._diff.remove_data(rr)
+        self.set_xfrstate(conn, XfrinIXFRDelete())
+        return True
 
 class XfrinAXFR(XfrinState):
+    pass
+
+class XfrinIXFRDelete(XfrinState):
     pass
 
 class XfrinConnection(asyncore.dispatcher):
