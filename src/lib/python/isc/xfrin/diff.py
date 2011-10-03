@@ -32,7 +32,7 @@ class NoSuchZone(Exception):
 This is the amount of changes we accumulate before calling Diff.apply
 automatically.
 
-The number 100 is just taken from Bind9. We don't know the rationale
+The number 100 is just taken from BIND 9. We don't know the rationale
 for exactly this amount, but we think it is just some randomly chosen
 number.
 """
