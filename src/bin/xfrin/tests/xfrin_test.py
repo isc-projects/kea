@@ -449,17 +449,34 @@ class TestXfrinConnection(unittest.TestCase):
                          RRClass.CH())
         c.close()
 
-    def test_send_query(self):
-        def create_msg(query_type):
-            msg = Message(Message.RENDER)
-            query_id = 0x1035
-            msg.set_qid(query_id)
-            msg.set_opcode(Opcode.QUERY())
-            msg.set_rcode(Rcode.NOERROR())
-            query_question = Question(Name("example.com."), RRClass.IN(), query_type)
-            msg.add_question(query_question)
-            return msg
+    def test_create_query(self):
+        def check_query(expected_qtype, expected_authority):
+            '''Helper method to repeat the same pattern of tests'''
+            self.assertEqual(Opcode.QUERY(), msg.get_opcode())
+            self.assertEqual(Rcode.NOERROR(), msg.get_rcode())
+            self.assertEqual(1, msg.get_rr_count(Message.SECTION_QUESTION))
+            self.assertEqual(TEST_ZONE_NAME, msg.get_question()[0].get_name())
+            self.assertEqual(expected_qtype, msg.get_question()[0].get_type())
+            self.assertEqual(0, msg.get_rr_count(Message.SECTION_ANSWER))
+            self.assertEqual(0, msg.get_rr_count(Message.SECTION_ADDITIONAL))
+            if expected_authority is None:
+                self.assertEqual(0,
+                                 msg.get_rr_count(Message.SECTION_AUTHORITY))
+            else:
+                self.assertEqual(1,
+                                 msg.get_rr_count(Message.SECTION_AUTHORITY))
 
+        # Actual tests start here
+
+        # SOA query
+        msg = self.conn._create_query(RRType.SOA())
+        check_query(RRType.SOA(), None)
+
+        # AXFR query
+        msg = self.conn._create_query(RRType.AXFR())
+        check_query(RRType.AXFR(), None)
+
+    def test_send_query(self):
         def message_has_tsig(data):
             # a simple check if the actual data contains a TSIG RR.
             # At our level this simple check should suffice; other detailed
@@ -467,14 +484,6 @@ class TestXfrinConnection(unittest.TestCase):
             msg = Message(Message.PARSE)
             msg.from_wire(data)
             return msg.get_tsig_record() is not None
-
-        self.conn._create_query = create_msg
-        # soa request
-        self.conn._send_query(RRType.SOA())
-        self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x06\x00\x01')
-        # axfr request
-        self.conn._send_query(RRType.AXFR())
-        self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
 
         # soa request with tsig
         self.conn._tsig_key = TSIG_KEY
