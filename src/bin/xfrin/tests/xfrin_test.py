@@ -814,7 +814,7 @@ class TestXfrinConnection(unittest.TestCase):
         # transferred, and simply returns the number of RRs.  The return value
         # may be used an assertion value for test cases.
         rrs = 0
-        for rr in self.conn._handle_xfrin_response():
+        for rr in self.conn._handle_axfrin_response():
             rrs += 1
         return rrs
 

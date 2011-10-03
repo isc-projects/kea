@@ -398,8 +398,8 @@ class XfrinConnection(asyncore.dispatcher):
         # now.
         return XFRIN_OK
 
-    def do_xfrin(self, check_soa, ixfr_first = False):
-        '''Do xfr by sending xfr request and parsing response. '''
+    def do_xfrin(self, check_soa, ixfr_first=False):
+        '''Do an xfr session by sending xfr request and parsing responses.'''
 
         try:
             ret = XFRIN_OK
@@ -408,12 +408,12 @@ class XfrinConnection(asyncore.dispatcher):
                 ret =  self._check_soa_serial()
 
             if ret == XFRIN_OK:
-                logger.info(XFRIN_AXFR_TRANSFER_STARTED, self._zone_name)
-                self._send_query(RRType.AXFR())
-                isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
-                                            self._handle_xfrin_response)
-
-                logger.info(XFRIN_AXFR_TRANSFER_SUCCESS, self._zone_name)
+                if not ixfr_first:
+                    logger.info(XFRIN_AXFR_TRANSFER_STARTED, self._zone_name)
+                    self._send_query(RRType.AXFR())
+                    isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
+                                                self._handle_axfrin_response)
+                    logger.info(XFRIN_AXFR_TRANSFER_SUCCESS, self._zone_name)
 
         except XfrinException as e:
             logger.error(XFRIN_AXFR_TRANSFER_FAILURE, self._zone_name, str(e))
@@ -493,7 +493,7 @@ class XfrinConnection(asyncore.dispatcher):
                 yield (rrset_name, rrset_ttl, rrset_class, rrset_type,
                        rdata_text)
 
-    def _handle_xfrin_response(self):
+    def _handle_axfrin_response(self):
         '''Return a generator for the response to a zone transfer. '''
         while True:
             data_len = self._get_request_response(2)
