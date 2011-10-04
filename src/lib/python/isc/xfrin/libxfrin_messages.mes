@@ -15,8 +15,7 @@
 # No namespace declaration - these constants go in the global namespace
 # of the libxfrin_messages python module.
 
-% LIBXFRIN_DIFFERENT_TTL multiple data with different TTLs (%1, %2) on %3/%4
+% LIBXFRIN_DIFFERENT_TTL multiple data with different TTLs (%1, %2) on %3/%4. Adjusting %2 -> %1.
 The xfrin module received an update containing multiple rdata changes for the
-same RRset. But the TTLs of these don't match each other. The data will be put
-into the underlying data source. What happens with the TTLs is up to the
-data source.
+same RRset. But the TTLs of these don't match each other. As we combine them
+together, the later one get's overwritten to the earlier one in the sequence.
