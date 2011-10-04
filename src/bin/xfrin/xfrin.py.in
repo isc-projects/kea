@@ -185,6 +185,9 @@ class XfrinIXFRDeleteSOA(XfrinState):
             # bug.
             raise XfrinException(rr.get_type().to_text() + \
                                      ' RR is given in IXFRDeleteSOA state')
+        # This is the beginning state of one difference sequence (changes
+        # for one SOA update).  We need to create a new Diff object now.
+        conn._diff = Diff(conn._datasrc_client, conn._zone_name)
         conn._diff.remove_data(rr)
         self.set_xfrstate(conn, XfrinIXFRDelete())
         return True
