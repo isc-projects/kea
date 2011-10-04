@@ -7,7 +7,20 @@ This is the python wrapper for the abstract base class that defines\n\
 the common interface for various types of data source clients. A data\n\
 source client is a top level access point to a data source, allowing \n\
 various operations on the data source such as lookups, traversing or \n\
-updates. The client class itself has limited focus and delegates \n\
+updates.\n\
+This class serves as both the factory and the main interface to those \n\
+classes.\n\
+\n\
+The constructor takes two arguments; a type (string), and\n\
+configuration data for a datasource client of that type. The configuration\n\
+data is currently passed as a JSON in string form, and its contents depend\n\
+on the type of datasource from the first argument. For instance, a\n\
+datasource of type \"sqlite3\" takes the config \n\
+{ \"database_file\": \"/var/example.org\" }\n\
+We may in the future add support for passing configuration data,\n\
+but right now we limit it to a JSON-formatted string\n\
+\n\
+The client class itself has limited focus and delegates \n\
 the responsibility for these specific operations to other (c++) classes;\n\
 in general methods of this class act as factories of these other classes.\n\
 \n\
