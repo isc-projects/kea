@@ -87,7 +87,7 @@ public:
                       RRType(typeCode) << " digest type out of range");
         }
 
-        peekc = iss.peek();
+        iss.read(&peekc, 1);
         if (!iss.good() || !isspace(peekc, iss.getloc())) {
             isc_throw(InvalidRdataText,
                       RRType(typeCode) << " presentation format error");
