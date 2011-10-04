@@ -34,13 +34,13 @@ namespace detail {
 template <class Type, uint16_t typeCode> class DSLikeImpl;
 }
 
-/// \brief \c rdata::generic::DS class represents the DS RDATA as defined in
-/// RFC3658.
+/// \brief \c rdata::generic::DLV class represents the DLV RDATA as defined in
+/// RFC4431.
 ///
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
-/// DS RDATA.
-class DS : public Rdata {
+/// DLV RDATA.
+class DLV : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
@@ -54,18 +54,18 @@ public:
     /// This operator provides the strong exception guarantee: When an
     /// exception is thrown the content of the assignment target will be
     /// intact.
-    DS& operator=(const DS& source);
+    DLV& operator=(const DLV& source);
 
     /// \brief The destructor.
-    ~DS();
+    ~DLV();
 
     /// \brief Return the value of the Tag field.
     ///
     /// This method never throws an exception.
     uint16_t getTag() const;
 private:
-    typedef detail::DSLikeImpl<DS, 43> DSImpl;
-    DSImpl* impl_;
+    typedef detail::DSLikeImpl<DLV, 32769> DLVImpl;
+    DLVImpl* impl_;
 };
 
 // END_RDATA_NAMESPACE
