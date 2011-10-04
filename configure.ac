@@ -853,6 +853,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/testutils/Makefile
                  src/lib/python/isc/bind10/Makefile
                  src/lib/python/isc/bind10/tests/Makefile
+                 src/lib/python/isc/xfrin/Makefile
+                 src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
