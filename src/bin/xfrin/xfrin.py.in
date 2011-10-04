@@ -341,7 +341,7 @@ class XfrinConnection(asyncore.dispatcher):
             if result != ZoneFinder.SUCCESS:
                 raise XfrinException('SOA RR not found in zone: ' +
                                      self.zone_str())
-            # Especially for database-based zones, working zones may be in
+            # Especially for database-based zones, a working zone may be in
             # a broken state where it has more than one SOA RR.  We proactively
             # check the condition and abort the xfr attempt if we identify it.
             if soa_rrset.get_rdata_count() != 1:
