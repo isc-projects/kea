@@ -146,6 +146,17 @@ class XfrinState:
         '''
         conn._XfrinConnection__set_xfrstate(new_state)
 
+    def finish_message(self, conn):
+        '''Perform any final processing after handling all RRs of a response.
+
+        This method then returns a boolean indicating whether to continue
+        receiving the message.  Unless it's in the end of the entire XFR
+        session, we should continue, so this default method simply returns
+        True.
+
+        '''
+        return True
+
 class XfrinInitialSOA(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() != RRType.SOA():
@@ -237,6 +248,15 @@ class XfrinIXFREnd(XfrinState):
     def handle_rr(self, conn, rr):
         raise XfrinProtocolError('Extra data after the end of IXFR diffs: ' + \
                                      rr.to_text())
+
+    def finish_message(self, conn):
+        '''Final processing after processing an entire IXFR session.
+
+        There will be more actions here, but for now we simply return False,
+        indicating there will be no more message to receive.
+
+        '''
+        return False
 
 class XfrinAXFR(XfrinState):
     def handle_rr(self, conn, rr):
@@ -559,11 +579,10 @@ class XfrinConnection(asyncore.dispatcher):
                 while not rr_handled:
                     rr_handled = self.__state.handle_rr(self, rr)
 
+            read_next_msg = self.__state.finish_message(self)
+
             if self._shutdown_event.is_set():
                 raise XfrinException('xfrin is forced to stop')
-
-            # placeholder
-            read_next_msg = False
 
     def _handle_axfrin_response(self):
         '''Return a generator for the response to a zone transfer. '''
