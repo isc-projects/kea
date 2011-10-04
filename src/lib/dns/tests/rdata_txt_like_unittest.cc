@@ -16,12 +16,7 @@
 
 #include <util/buffer.h>
 #include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
 #include <dns/rdataclass.h>
-#include <dns/rrclass.h>
-#include <dns/rrtype.h>
-
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
@@ -83,24 +78,22 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     // normal case is covered in toWireBuffer.
 
     // surrounding double-quotes shouldn't change the result.
-    EXPECT_EQ(0, Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.compare
-                      (Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like_quoted));
+    EXPECT_EQ(0, this->rdata_txt_like.compare(this->rdata_txt_like_quoted));
 
     // Null character-string.
-    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
-    TypeParam(string("")).toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+    this->obuffer.clear();
+    TypeParam(string("")).toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        this->obuffer.getData(),
+                        this->obuffer.getLength(),
                         wiredata_nulltxt, sizeof (wiredata_nulltxt));
 
     // Longest possible character-string.
-    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
-    TypeParam(string(255, 'a')).
-                               toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+    this->obuffer.clear();
+    TypeParam(string(255, 'a')).  toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        this->obuffer.getData(),
+                        this->obuffer.getLength(),
                         &wiredata_longesttxt[0], wiredata_longesttxt.size());
 
     // Too long text for a valid character-string.
@@ -135,28 +128,27 @@ makeLargest(vector<uint8_t>& data) {
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
-    EXPECT_EQ(0, Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.compare(
+    EXPECT_EQ(0, this->rdata_txt_like.compare(
                   *rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                         "rdata_txt_fromWire1")));
 
     // Empty character string
-    EXPECT_EQ(0, Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like_empty.compare(
+    EXPECT_EQ(0, this->rdata_txt_like_empty.compare(
                   *rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                         "rdata_txt_fromWire2.wire")));
 
     // Multiple character strings
-    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
+    this->obuffer.clear();
     rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-                         "rdata_txt_fromWire3.wire")->
-                               toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+                         "rdata_txt_fromWire3.wire")->toWire(this->obuffer);
     // the result should be 'wiredata_txt' repeated twice
     vector<uint8_t> expected_data(wiredata_txt_like, wiredata_txt_like +
                                   sizeof(wiredata_txt_like));
     expected_data.insert(expected_data.end(), wiredata_txt_like,
                          wiredata_txt_like + sizeof(wiredata_txt_like));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        this->obuffer.getData(),
+                        this->obuffer.getLength(),
                         &expected_data[0], expected_data.size());
 
     // Largest length of data.  There's nothing special, but should be
@@ -167,11 +159,11 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     InputBuffer ibuffer(&largest_txt_like_data[0],
                         largest_txt_like_data.size());
     TypeParam largest_txt_like(ibuffer, largest_txt_like_data.size());
-    Rdata_TXT_LIKE_Test<TypeParam>::obuffer.clear();
-    largest_txt_like.toWire(Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+    this->obuffer.clear();
+    largest_txt_like.toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        this->obuffer.getData(),
+                        this->obuffer.getLength(),
                         &largest_txt_like_data[0],
                         largest_txt_like_data.size());
 
@@ -194,16 +186,33 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
-    Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.toWire
-                                     (Rdata_TXT_LIKE_Test<TypeParam>::obuffer);
+    this->rdata_txt_like.toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getData(),
-                        Rdata_TXT_LIKE_Test<TypeParam>::obuffer.getLength(),
+                        this->obuffer.getData(),
+                        this->obuffer.getLength(),
                         wiredata_txt_like, sizeof(wiredata_txt_like));
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
-    EXPECT_EQ("\"Test String\"",
-              Rdata_TXT_LIKE_Test<TypeParam>::rdata_txt_like.toText());
+    EXPECT_EQ("\"Test String\"", this->rdata_txt_like.toText());
 }
+
+TYPED_TEST(Rdata_TXT_LIKE_Test, assignment) {
+    TypeParam rdata1("assignment1");
+    TypeParam rdata2("assignment2");
+    rdata1 = rdata2;
+    EXPECT_EQ(0, rdata2.compare(rdata1));
+
+    // Check if the copied data is valid even after the original is deleted
+    TypeParam* rdata3 = new TypeParam(rdata1);
+    TypeParam rdata4("assignment3");
+    rdata4 = *rdata3;
+    delete rdata3;
+    EXPECT_EQ(0, rdata4.compare(rdata1));
+
+    // Self assignment
+    rdata2 = rdata2;
+    EXPECT_EQ(0, rdata2.compare(rdata1));
+}
+
 }
