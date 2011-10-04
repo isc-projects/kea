@@ -137,9 +137,27 @@ def get_soa_serial(soa_rdata):
 class XfrinState:
     '''
     The states of the incomding *XFR state machine.
+
+    We (will) handle both IXFR and AXFR with a single integrated state
+    machine because they cannot be distinguished immediately - an AXFR
+    response to an IXFR request can only be detected when the first two (2)
+    response RRs have already been received.
+    NOTE: the AXFR part of the state machine is incomplete at this point.
+
+    This implementation uses the state design patter, where each state
+    is represented as a subclass of the base XfrinState class.  The base
+    class defines two abstract interfaces: handle_rr() and finish_message().
+    These methods handle specific part of XFR protocols and (if necessary)
+    perform the state transition.
+
+    The XfrinState and its subclasses are designed to be stateless, and
+    can be used as singleton objects.  For now, however, we always instantiate
+    a new object for every state transition, partly because the introduction
+    of singleton will make a code bit complicated, and partly because
+    the overhead of object instantiotion wouldn't be significant for xfrin.
     '''
     def set_xfrstate(self, conn, new_state):
-        '''Set the XfrConnection to a given new state
+        '''Set the XfrConnection to a given new state.
 
         As a "friend" class, this method intentionally gets access to the
         connection's "private" method.
@@ -308,7 +326,7 @@ class XfrinConnection(asyncore.dispatcher):
         return TSIGContext(key)
 
     def _get_datasrc_client(self, rrclass):
-        # Create a client here once #1206 is done
+        # TODO: create a DataSourceClient assuming the sqlite3 backend for now
         return None
 
     def __set_xfrstate(self, new_state):
