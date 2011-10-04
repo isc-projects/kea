@@ -52,10 +52,6 @@ class DataSourceConfigError : public DataSourceError {
 public:
     DataSourceConfigError(const char* file, size_t line, const char* what) :
         DataSourceError(file, line, what) {}
-    // This exception is created in the dynamic modules. Apparently
-    // sunstudio can't handle it if we then automatically derive the
-    // destructor, so we provide it explicitely
-    ~DataSourceConfigError() throw() {}
 };
 
 typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config);

@@ -70,7 +70,16 @@ DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
     ds_creator* ds_create = (ds_creator*)ds_lib_.getSym("createInstance");
     destructor_ = (ds_destructor*)ds_lib_.getSym("destroyInstance");
 
-    instance_ = ds_create(config);
+    // We catch and reraise copies of known-to-be-thrown exceptions
+    // Since otherwise, if the constructor fails, the stack unroll loop may
+    // want access to the then-destroyed library for info
+    try {
+        instance_ = ds_create(config);
+    } catch (const DataSourceConfigError& dsce) {
+        throw DataSourceConfigError(dsce);
+    } catch (const DataSourceError& dse) {
+        throw DataSourceError(dse);
+    }
 }
 
 DataSourceClientContainer::~DataSourceClientContainer() {
