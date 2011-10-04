@@ -163,6 +163,7 @@ initModulePart_ZoneUpdater(PyObject* mod) {
 
 
 PyObject* po_DataSourceError;
+PyObject* po_DataSourceConfigError;
 PyObject* po_NotImplemented;
 
 PyModuleDef iscDataSrc = {
@@ -212,6 +213,10 @@ PyInit_datasrc(void) {
         po_DataSourceError = PyErr_NewException("isc.datasrc.Error", NULL,
                                                 NULL);
         PyObjectContainer(po_DataSourceError).installToModule(mod, "Error");
+        po_DataSourceConfigError = PyErr_NewException("isc.datasrc.ConfigError",
+                                                      NULL, NULL);
+        PyObjectContainer(po_DataSourceConfigError).installToModule(mod,
+                                                                "ConfigError");
         po_NotImplemented = PyErr_NewException("isc.datasrc.NotImplemented",
                                                NULL, NULL);
         PyObjectContainer(po_NotImplemented).installToModule(mod,

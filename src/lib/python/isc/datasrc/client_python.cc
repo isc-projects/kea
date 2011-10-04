@@ -164,20 +164,38 @@ DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
     // yet. For now we hardcode the sqlite3 initialization, and pass it one
     // string for the database file. (similar to how the 'old direct'
     // sqlite3_ds code works)
+    char* ds_type_str;
+    char* ds_config_str;
     try {
-        // Turn the given argument into config Element; then simply call factory class to do its magic
-        char *ds_type_str;
-        char* ds_config_str;
+        // Turn the given argument into config Element; then simply call
+        // factory class to do its magic
 
         // for now, ds_config must be JSON string
         if (PyArg_ParseTuple(args, "ss", &ds_type_str, &ds_config_str)) {
-            isc::data::ConstElementPtr ds_config = isc::data::Element::fromJSON(ds_config_str);
-            self->cppobj = new DataSourceClientContainer(ds_type_str, ds_config);
+            isc::data::ConstElementPtr ds_config =
+                isc::data::Element::fromJSON(ds_config_str);
+            self->cppobj = new DataSourceClientContainer(ds_type_str,
+                                                         ds_config);
             return (0);
         } else {
             return (-1);
         }
-
+    } catch (const isc::data::JSONError& je) {
+        const string ex_what = "JSON parse error in data source configuration "
+                               "data for type " +
+                               string(ds_type_str) + ":" + je.what();
+        PyErr_SetString(getDataSourceException("ConfigError"), ex_what.c_str());
+        return (-1);
+    } catch (const DataSourceConfigError& dsce) {
+        const string ex_what = "Bad data source configuration data for type " +
+                               string(ds_type_str) + ":" + string(dsce.what());
+        PyErr_SetString(getDataSourceException("ConfigError"), ex_what.c_str());
+        return (-1);
+    } catch (const DataSourceError& dse) {
+        const string ex_what = "Failed to create DataSourceClient of type " +
+                               string(ds_type_str) + ":" + dse.what();
+        PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
+        return (-1);
     } catch (const exception& ex) {
         const string ex_what = "Failed to construct DataSourceClient object: " +
             string(ex.what());
