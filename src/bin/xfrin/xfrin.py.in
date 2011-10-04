@@ -536,6 +536,32 @@ class XfrinConnection(asyncore.dispatcher):
                 yield (rrset_name, rrset_ttl, rrset_class, rrset_type,
                        rdata_text)
 
+    def _handle_xfrin_responses(self):
+        read_next_msg = True
+        while read_next_msg:
+            data_len = self._get_request_response(2)
+            msg_len = socket.htons(struct.unpack('H', data_len)[0])
+            recvdata = self._get_request_response(msg_len)
+            msg = Message(Message.PARSE)
+            msg.from_wire(recvdata, Message.PRESERVE_ORDER)
+
+            # TSIG related checks, including an unexpected signed response
+            self._check_response_tsig(msg, recvdata)
+
+            # Perform response status validation
+            self._check_response_status(msg)
+
+            for rr in msg.get_section(Message.SECTION_ANSWER):
+                rr_handled = False
+                while not rr_handled:
+                    rr_handled = self.__state.handle_rr(self, rr)
+
+            if self._shutdown_event.is_set():
+                raise XfrinException('xfrin is forced to stop')
+
+            # placeholder
+            read_next_msg = False
+
     def _handle_axfrin_response(self):
         '''Return a generator for the response to a zone transfer. '''
         while True:
