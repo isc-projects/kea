@@ -509,7 +509,6 @@ class XfrinConnection(asyncore.dispatcher):
             # TODO: rename it: AXFR->XFR (or remove it)
             logger.error(XFRIN_AXFR_TRANSFER_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
-            #TODO, recover data source.
         except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
             logger.error(XFRIN_AXFR_DATABASE_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
