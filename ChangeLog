@@ -1,3 +1,7 @@
+292.	[func]		dvv
+	Implement the DLV rrtype according to RFC4431.
+	(Trac #1144, git TBD)
+
 291.    [func]          naokikambe
 	Statistics items are specified by each module's spec file.
 	Stats module can read these through the config manager. Stats
