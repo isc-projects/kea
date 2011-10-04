@@ -21,7 +21,7 @@ datasrc_la_SOURCES += updater_python.cc updater_python.h
 # is nonportable. When #1207 is done this becomes moot anyway, and the
 # specific workaround is not needed anymore, so we can then remove this
 # line again.
-datasrc_la_SOURCES += ${top_srcdir}/src/lib/datasrc/sqlite3_accessor.cc
+#datasrc_la_SOURCES += ${top_srcdir}/src/lib/datasrc/sqlite3_accessor.cc
 
 datasrc_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 datasrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)

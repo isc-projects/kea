@@ -65,7 +65,7 @@ class DataSrcClient(unittest.TestCase):
 
 
     def test_iterate(self):
-        dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", "{ \"database_file\": \"" + READ_ZONE_DB_FILE + "\" }")
 
         # for RRSIGS, the TTL's are currently modified. This test should
         # start failing when we fix that.
@@ -176,7 +176,7 @@ class DataSrcClient(unittest.TestCase):
         self.assertRaises(TypeError, isc.datasrc.ZoneFinder)
 
     def test_find(self):
-        dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", "{ \"database_file\": \"" + READ_ZONE_DB_FILE + "\"}")
 
         result, finder = dsc.find_zone(isc.dns.Name("example.com"))
         self.assertEqual(finder.SUCCESS, result)
@@ -260,7 +260,7 @@ class DataSrcUpdater(unittest.TestCase):
 
     def test_update_delete_commit(self):
 
-        dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", "{ \"database_file\": \"" + WRITE_ZONE_DB_FILE + "\"}")
 
         # first make sure, through a separate finder, that some record exists
         result, finder = dsc.find_zone(isc.dns.Name("example.com"))
@@ -334,7 +334,7 @@ class DataSrcUpdater(unittest.TestCase):
                          rrset.to_text())
 
     def test_update_delete_abort(self):
-        dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", "{ \"database_file\": \"" + WRITE_ZONE_DB_FILE + "\"}")
 
         # first make sure, through a separate finder, that some record exists
         result, finder = dsc.find_zone(isc.dns.Name("example.com"))
