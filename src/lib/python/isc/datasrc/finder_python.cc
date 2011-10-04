@@ -103,7 +103,7 @@ namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_ZoneFinder : public PyObject {
 public:
-    s_ZoneFinder() : cppobj(ZoneFinderPtr()) {};
+    s_ZoneFinder() : cppobj(ZoneFinderPtr()), base_obj(NULL) {};
     ZoneFinderPtr cppobj;
     // This is a reference to a base object; if the object of this class
     // depends on another object to be in scope during its lifetime,
