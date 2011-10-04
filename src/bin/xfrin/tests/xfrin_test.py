@@ -1069,7 +1069,7 @@ class TestIXFRResponse(TestXfrinConnection):
         self.check_diffs([[('remove', begin_soa_rrset), ('add', soa_rrset)]],
                          self.conn._datasrc_client.committed_diffs)
 
-    def test_ixfr_response_multi_sequence(self):
+    def test_ixfr_response_multi_sequences(self):
         '''Similar to the previous case, but with multiple diff seqs.
 
         '''
@@ -1137,8 +1137,7 @@ class TestIXFRSession(TestXfrinConnection):
         self.check_diffs([[('remove', begin_soa_rrset), ('add', soa_rrset)]],
                          self.conn._datasrc_client.committed_diffs)
 
-        # Check if the query was IXFR.  We only check for the RR type.  Other
-        # details are tested in test_create_query().
+        # Check if the query was IXFR.
         qdata = self.conn.query_data[2:]
         qmsg = Message(Message.PARSE)
         qmsg.from_wire(qdata, len(qdata))
