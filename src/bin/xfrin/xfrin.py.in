@@ -28,8 +28,9 @@ from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 from isc.notify import notify_out
 import isc.util.process
+from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
-import isc.xfrin.diff
+from isc.xfrin.diff import Diff
 from isc.log_messages.xfrin_messages import *
 
 isc.log.init("b10-xfrin")
@@ -181,7 +182,7 @@ class XfrinIXFRDeleteSOA(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() != RRType.SOA():
             # this shouldn't happen; should this occur it means an internal
-            #
+            # bug.
             raise XfrinException(rr.get_type().to_text() + \
                                      ' RR is given in IXFRDeleteSOA state')
         conn._diff.remove_data(rr)
@@ -191,6 +192,7 @@ class XfrinIXFRDeleteSOA(XfrinState):
 class XfrinIXFRDelete(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() == RRType.SOA():
+            # This is the only place where current_serial is set
             conn._current_serial = get_soa_serial(rr.get_rdata()[0])
             self.set_xfrstate(conn, XfrinIXFRAddSOA())
             return False
@@ -201,7 +203,7 @@ class XfrinIXFRAddSOA(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() != RRType.SOA():
             # this shouldn't happen; should this occur it means an internal
-            #
+            # bug.
             raise XfrinException(rr.get_type().to_text() + \
                                      ' RR is given in IXFRAddSOA state')
         conn._diff.add_data(rr)
@@ -256,12 +258,17 @@ class XfrinConnection(asyncore.dispatcher):
         # transfer type may differ due to IXFR->AXFR fallback:
         self._request_type = None
         self._end_serial = None # essentially private
-        self._current_serial = None
-        self.create_socket(master_addrinfo[0], master_addrinfo[1])
+
+        # Zone parameters
         self._zone_name = zone_name
-        self._sock_map = sock_map
         self._rrclass = rrclass
-        self._db_file = db_file
+
+        # Data source handlers
+        self._db_file = db_file # temporary for sqlite3 specific code
+        self._datasrc_client = self._get_datasrc_client(rrclass)
+
+        self.create_socket(master_addrinfo[0], master_addrinfo[1])
+        self._sock_map = sock_map
         self._soa_rr_count = 0
         self._idle_timeout = idle_timeout
         self.setblocking(1)
@@ -276,6 +283,10 @@ class XfrinConnection(asyncore.dispatcher):
 
     def __create_tsig_ctx(self, key):
         return TSIGContext(key)
+
+    def _get_datasrc_client(self, rrclass):
+        # Create a client here once #1206 is done
+        return None
 
     def __set_xfrstate(self, new_state):
         self.__state = new_state
@@ -298,16 +309,47 @@ class XfrinConnection(asyncore.dispatcher):
             return False
 
     def _create_query(self, query_type):
-        '''Create dns query message. '''
+        '''Create an XFR-related query message.
 
+        query_type is either SOA, AXFR or IXFR.  For type IXFR, it searches
+        the associated data source for the current SOA record to include
+        it in the query.  If the corresponding zone or the SOA record
+        cannot be found, it raises an XfrinException exception.  Note that
+        this may not necessarily a broken configuration; for the first attempt
+        of transfer the secondary may not have any boot-strap zone
+        information, in which case IXFR simply won't work.  The xfrin
+        should then fall back to AXFR.  _request_serial is recorded for
+        later use.
+
+        '''
         msg = Message(Message.RENDER)
         query_id = random.randint(0, 0xFFFF)
         self._query_id = query_id
         msg.set_qid(query_id)
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
-        query_question = Question(self._zone_name, self._rrclass, query_type)
-        msg.add_question(query_question)
+        msg.add_question(Question(self._zone_name, self._rrclass, query_type))
+        if query_type == RRType.IXFR():
+            # get the zone finder.  this must be SUCCESS (not even
+            # PARTIALMATCH) because we are specifying the zone origin name.
+            result, finder = self._datasrc_client.find_zone(self._zone_name)
+            if result != DataSourceClient.SUCCESS:
+                raise XfrinException('Zone not found in the given data ' +
+                                     'source: ' + self.zone_str())
+            result, soa_rrset = finder.find(self._zone_name, RRType.SOA(),
+                                            None, ZoneFinder.FIND_DEFAULT)
+            if result != ZoneFinder.SUCCESS:
+                raise XfrinException('SOA RR not found in zone: ' +
+                                     self.zone_str())
+            # Especially for database-based zones, working zones may be in
+            # a broken state where it has more than one SOA RR.  We proactively
+            # check the condition and abort the xfr attempt if we identify it.
+            if soa_rrset.get_rdata_count() != 1:
+                raise XfrinException('Invalid number of SOA RRs for ' +
+                                     self.zone_str() + ': ' +
+                                     str(soa_rrset.get_rdata_count()))
+            msg.add_rrset(Message.SECTION_AUTHORITY, soa_rrset)
+            self._request_serial = get_soa_serial(soa_rrset.get_rdata()[0])
         return msg
 
     def _send_data(self, data):
