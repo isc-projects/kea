@@ -61,10 +61,14 @@ DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
                                                      ConstElementPtr config)
 : ds_lib_(type + "_ds.so")
 {
-    ds_creator* ds_create =
-        reinterpret_cast<ds_creator*>(ds_lib_.getSym("createInstance"));
-    destructor_ =
-        reinterpret_cast<ds_destructor*>(ds_lib_.getSym("destroyInstance"));
+    // We are casting from a data to a function pointer here
+    // Some compilers (rightfully) complain about that, but
+    // c-style casts are accepted the most here. If we run
+    // into any that also don't like this, we might need to
+    // use some form of union cast or memory copy to get
+    // from the void* to the function pointer.
+    ds_creator* ds_create = (ds_creator*)ds_lib_.getSym("createInstance");
+    destructor_ = (ds_destructor*)ds_lib_.getSym("destroyInstance");
 
     instance_ = ds_create(config);
 }
