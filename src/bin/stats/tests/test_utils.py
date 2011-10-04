@@ -105,14 +105,9 @@ class MockMsgq:
             self.msgq.run()
         except Exception:
             pass
-        finally:
-            # explicitly shut down the socket of the msgq before
-            # shutting down the msgq
-            self.msgq.listen_socket.shutdown(msgq.socket.SHUT_RDWR)
-            self.msgq.shutdown()
 
     def shutdown(self):
-        # do nothing for avoiding shutting down the msgq twice
+        # do nothing
         pass
 
 class MockCfgmgr:
@@ -362,3 +357,10 @@ class BaseModules:
         self.cfgmgr.shutdown()
         # MockMsgq
         self.msgq.shutdown()
+        # remove the unused socket file
+        socket_file = self.msgq.server.msgq.socket_file
+        try:
+            if os.path.exists(socket_file):
+                os.remove(socket_file)
+        except OSError:
+            pass
