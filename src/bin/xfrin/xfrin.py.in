@@ -505,18 +505,24 @@ class XfrinConnection(asyncore.dispatcher):
                                                 self._handle_axfrin_response)
                     logger.info(XFRIN_AXFR_TRANSFER_SUCCESS, self.zone_str())
 
-        except XfrinException as e:
+        except (XfrinException, XfrinProtocolError) as e:
+            # TODO: rename it: AXFR->XFR (or remove it)
             logger.error(XFRIN_AXFR_TRANSFER_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
             #TODO, recover data source.
         except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
             logger.error(XFRIN_AXFR_DATABASE_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
-        except UserWarning as e:
-            # XXX: this is an exception from our C++ library via the
-            # Boost.Python binding.  It would be better to have more more
-            # specific exceptions, but at this moment this is the finest
-            # granularity.
+        except Exception as e:
+            # Catching all possible exceptions like this is generally not a
+            # good practice, but handling an xfr session could result in
+            # so many types of exceptions, including ones from the DNS library
+            # or from the data source library.  Eventually we'd introduce a
+            # hierarchy for exception classes from a base "ISC exception" and
+            # catch it here, but until then we need broadest coverage so that
+            # we won't miss anything.
+
+            # TODO: rename it: both 'AXFR' and 'INTERNAL' are inappropriate
             logger.error(XFRIN_AXFR_INTERNAL_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
         finally:
