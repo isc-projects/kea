@@ -54,7 +54,7 @@ namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_ZoneUpdater : public PyObject {
 public:
-    s_ZoneUpdater() : cppobj(ZoneUpdaterPtr()) {};
+    s_ZoneUpdater() : cppobj(ZoneUpdaterPtr()), base_obj(NULL) {};
     ZoneUpdaterPtr cppobj;
     // This is a reference to a base object; if the object of this class
     // depends on another object to be in scope during its lifetime,
