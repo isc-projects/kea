@@ -56,6 +56,12 @@ class s_ZoneUpdater : public PyObject {
 public:
     s_ZoneUpdater() : cppobj(ZoneUpdaterPtr()) {};
     ZoneUpdaterPtr cppobj;
+    // This is a reference to a base object; if the object of this class
+    // depends on another object to be in scope during its lifetime,
+    // we use INCREF the base object upon creation, and DECREF it at
+    // the end of the destructor
+    // This is an optional argument to createXXX(). If NULL, it is ignored.
+    PyObject* base_obj;
 };
 
 // Shortcut type which would be convenient for adding class variables safely.
@@ -81,6 +87,9 @@ ZoneUpdater_destroy(s_ZoneUpdater* const self) {
     // cppobj is a shared ptr, but to make sure things are not destroyed in
     // the wrong order, we reset it here.
     self->cppobj.reset();
+    if (self->base_obj != NULL) {
+        Py_DECREF(self->base_obj);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -303,11 +312,16 @@ PyTypeObject zoneupdater_type = {
 };
 
 PyObject*
-createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source) {
+createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source,
+                        PyObject* base_obj)
+{
     s_ZoneUpdater* py_zi = static_cast<s_ZoneUpdater*>(
         zoneupdater_type.tp_alloc(&zoneupdater_type, 0));
     if (py_zi != NULL) {
         py_zi->cppobj = source;
+    }
+    if (base_obj != NULL) {
+        Py_INCREF(base_obj);
     }
     return (py_zi);
 }

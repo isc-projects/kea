@@ -24,7 +24,15 @@ namespace python {
 
 extern PyTypeObject zonefinder_type;
 
-PyObject* createZoneFinderObject(isc::datasrc::ZoneFinderPtr source);
+/// \brief Create a ZoneFinder python object
+///
+/// \param source The zone iterator pointer to wrap
+/// \param base_obj An optional PyObject that this ZoneFinder depends on
+///                 Its refcount is increased, and will be decreased when
+///                 this zone iterator is destroyed, making sure that the
+///                 base object is never destroyed before this zonefinder.
+PyObject* createZoneFinderObject(isc::datasrc::ZoneFinderPtr source,
+                                 PyObject* base_obj = NULL);
 
 } // namespace python
 } // namespace datasrc
