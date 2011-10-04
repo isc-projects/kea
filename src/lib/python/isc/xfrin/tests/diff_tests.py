@@ -418,9 +418,16 @@ class DiffTest(unittest.TestCase):
                                   self.__type, RRTTL(120))
             rrset2.add_rdata(Rdata(self.__type, self.__rrclass, '192.10.2.2'))
             diff.add_data(rrset2)
+            rrset2 = RRset(Name('a.example.org.'), self.__rrclass,
+                                  self.__type, RRTTL(6000))
+            rrset2.add_rdata(Rdata(self.__type, self.__rrclass, '192.10.2.3'))
+            diff.add_data(rrset2)
             # They should get compacted together and complain.
             diff.compact()
             self.assertEqual(1, len(diff.get_buffer()))
+            # The TTL stays on the first value, no matter if smaller or bigger
+            # ones come later.
+            self.assertEqual(self.__ttl, diff.get_buffer()[0][1].get_ttl())
             self.assertTrue(self.__warn_called)
         finally:
             isc.xfrin.diff.logger = orig_logger
