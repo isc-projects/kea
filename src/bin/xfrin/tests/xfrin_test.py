@@ -77,20 +77,25 @@ class MockDataSourceClient():
 
     This class provides a minimal set of wrappers related the data source
     API that would be used by Diff objects.  For our testing purposes they
-    can be alsmot no-op.
+    only keep truck of the history of the changes.
 
     '''
+    def __init__(self):
+        self.committed_diffs = []
+        self.diffs = []
+
     def get_updater(self, zone_name, replace):
         return self
 
     def add_rrset(self, rrset):
-        pass
+        self.diffs.append(('add', rrset))
 
     def remove_rrset(self, rrset):
-        pass
+        self.diffs.append(('remove', rrset))
 
     def commit(self):
-        pass
+        self.committed_diffs.append(self.diffs)
+        self.diffs = []
 
 class MockXfrin(Xfrin):
     # This is a class attribute of a callable object that specifies a non
@@ -258,7 +263,7 @@ class TestXfrinState(unittest.TestCase):
                               RRTTL(3600))
         self.ns_rrset.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS,
                                       'ns.example.com'))
-        self.__data_operations = []
+        self.conn._datasrc_client = MockDataSourceClient()
         self.conn._diff = Diff(MockDataSourceClient(), TEST_ZONE_NAME)
 
 class TestXfrinInitialSOA(TestXfrinState):
@@ -317,6 +322,9 @@ class TestXfrinIXFRDeleteSOA(TestXfrinState):
     def setUp(self):
         super().setUp()
         self.state = XfrinIXFRDeleteSOA()
+        # In this state a new Diff object is expected to be created.  To
+        # confirm it, we nullify it beforehand.
+        self.conn._diff = None
 
     def test_handle_rr(self):
         self.assertTrue(self.state.handle_rr(self.conn, self.begin_soa))
@@ -980,7 +988,32 @@ class TestIXFR(TestXfrinConnection):
         self.conn._query_id = self.conn.qid = 1035
         self.conn._request_serial = 1230
         self.conn._request_type = RRType.IXFR()
-        self.conn._diff = Diff(MockDataSourceClient(), TEST_ZONE_NAME)
+        self._zone_name = TEST_ZONE_NAME
+        self.conn._datasrc_client = MockDataSourceClient()
+
+    def check_diffs(self, expected, actual):
+        '''A helper method checking the differences made in the IXFR session.
+
+        '''
+        self.assertEqual(len(expected), len(actual))
+        for (diffs_exp, diffs_actual) in zip(expected, actual):
+            self.assertEqual(len(diffs_exp), len(diffs_actual))
+            for (diff_exp, diff_actual) in zip(diffs_exp, diffs_actual):
+                # operation should match
+                self.assertEqual(diff_exp[0], diff_actual[0])
+                # The diff as RRset should be equal (for simplicity we assume
+                # all RRsets contain exactly one RDATA)
+                self.assertEqual(diff_exp[1].get_name(),
+                                 diff_actual[1].get_name())
+                self.assertEqual(diff_exp[1].get_type(),
+                                 diff_actual[1].get_type())
+                self.assertEqual(diff_exp[1].get_class(),
+                                 diff_actual[1].get_class())
+                self.assertEqual(diff_exp[1].get_rdata_count(),
+                                 diff_actual[1].get_rdata_count())
+                self.assertEqual(1, diff_exp[1].get_rdata_count())
+                self.assertEqual(diff_exp[1].get_rdata()[0],
+                                 diff_actual[1].get_rdata()[0])
 
     def test_ixfr_response(self):
         '''A simplest form of IXFR response.
@@ -994,6 +1027,9 @@ class TestIXFR(TestXfrinConnection):
         XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
         self.conn._handle_xfrin_responses()
         self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([], self.conn._datasrc_client.diffs)
+        self.check_diffs([[('remove', begin_soa_rrset), ('add', soa_rrset)]],
+                         self.conn._datasrc_client.committed_diffs)
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
