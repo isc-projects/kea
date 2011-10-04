@@ -16,6 +16,10 @@
 """
 This helps the XFR in process with accumulating parts of diff and applying
 it to the datasource.
+
+The name of the module is not yet fully decided. We might want to move it
+under isc.datasrc or somewhere else, because we might want to reuse it with
+future DDNS process. But until then, it lives here.
 """
 
 import isc.dns
