@@ -283,6 +283,9 @@ class TestXfrinInitialSOA(TestXfrinState):
         self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
                           self.ns_rrset)
 
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
 class TestXfrinFirstData(TestXfrinState):
     def setUp(self):
         super().setUp()
@@ -318,6 +321,9 @@ class TestXfrinFirstData(TestXfrinState):
         self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
         self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
 
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
 class TestXfrinIXFRDeleteSOA(TestXfrinState):
     def setUp(self):
         super().setUp()
@@ -336,6 +342,9 @@ class TestXfrinIXFRDeleteSOA(TestXfrinState):
     def test_handle_non_soa(self):
         self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
                           self.ns_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
 
 class TestXfrinIXFRDelete(TestXfrinState):
     def setUp(self):
@@ -364,6 +373,9 @@ class TestXfrinIXFRDelete(TestXfrinState):
         self.assertEqual(type(XfrinIXFRAddSOA()),
                          type(self.conn.get_xfrstate()))
 
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
 class TestXfrinIXFRAddSOA(TestXfrinState):
     def setUp(self):
         super().setUp()
@@ -378,6 +390,9 @@ class TestXfrinIXFRAddSOA(TestXfrinState):
     def test_handle_non_soa(self):
         self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
                           self.ns_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
 
 class TestXfrinIXFRAdd(TestXfrinState):
     def setUp(self):
@@ -420,6 +435,9 @@ class TestXfrinIXFRAdd(TestXfrinState):
         self.assertRaises(XfrinProtocolError, self.state.handle_rr,
                           self.conn, soa_rrset)
 
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
 class TestXfrinIXFREnd(TestXfrinState):
     def setUp(self):
         super().setUp()
@@ -429,6 +447,9 @@ class TestXfrinIXFREnd(TestXfrinState):
         self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
                           self.ns_rrset)
 
+    def test_finish_message(self):
+        self.assertFalse(self.state.finish_message(self.conn))
+
 class TestXfrinAXFR(TestXfrinState):
     def setUp(self):
         super().setUp()
@@ -437,6 +458,9 @@ class TestXfrinAXFR(TestXfrinState):
     def test_handle_rr(self):
         self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
                           soa_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
 
 class TestXfrinConnection(unittest.TestCase):
     '''Convenient parent class for XFR-protocol tests.
@@ -1080,6 +1104,19 @@ class TestIXFR(TestXfrinConnection):
                            ('add', soa_rrset),
                            ('add', self.create_a('192.0.2.6'))]],
                          self.conn._datasrc_client.committed_diffs)
+
+    def test_ixfr_response_multi_messages(self):
+        '''Similar to the first case, but RRs span over multiple messages.
+
+        '''
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset, begin_soa_rrset, soa_rrset])
+        self.conn.reply_data += self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset])
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
