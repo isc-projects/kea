@@ -473,7 +473,13 @@ class XfrinConnection(asyncore.dispatcher):
                 ret =  self._check_soa_serial()
 
             if ret == XFRIN_OK:
-                if not ixfr_first:
+                if ixfr_first:
+                    # TODO: log it
+                    self._request_type = RRType.IXFR()
+                    self._send_query(RRType.IXFR())
+                    self.__state = XfrinInitialSOA()
+                    self._handle_xfrin_responses()
+                else:
                     logger.info(XFRIN_AXFR_TRANSFER_STARTED, self.zone_str())
                     self._send_query(RRType.AXFR())
                     isc.datasrc.sqlite3_ds.load(self._db_file,
