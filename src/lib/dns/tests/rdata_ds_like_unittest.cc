@@ -125,11 +125,43 @@ TYPED_TEST(Rdata_DS_LIKE_Test, toWireBuffer) {
     rdata_ds_like.toWire(this->obuffer);
 }
 
+string ds_like_txt1("12892 5 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
+                   "5F0EB5C777586DE18DA6B5");
+// different tag
+string ds_like_txt2("12893 5 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
+                   "5F0EB5C777586DE18DA6B5");
+// different algorithm
+string ds_like_txt3("12892 6 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
+                   "5F0EB5C777586DE18DA6B5");
+// different digest type
+string ds_like_txt4("12892 5 3 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
+                   "5F0EB5C777586DE18DA6B5");
+// different digest
+string ds_like_txt5("12892 5 2 F2E184C0E1D615D20EB3C223ACED3B03C773DD952D"
+                   "5F0EB5C777586DE18DA6B5");
+// different digest length
+string ds_like_txt6("12892 5 2 F2E184C0E1D615D20EB3C223ACED3B03C773DD952D"
+                   "5F0EB5C777586DE18DA6B555");
+
 TYPED_TEST(Rdata_DS_LIKE_Test, compare) {
     // trivial case: self equivalence
     EXPECT_EQ(0, TypeParam(ds_like_txt).compare(TypeParam(ds_like_txt)));
 
-    // TODO: need more tests
+    // non-equivalence tests
+    EXPECT_LT(TypeParam(ds_like_txt1).compare(TypeParam(ds_like_txt2)), 0);
+    EXPECT_GT(TypeParam(ds_like_txt2).compare(TypeParam(ds_like_txt1)), 0);
+
+    EXPECT_LT(TypeParam(ds_like_txt1).compare(TypeParam(ds_like_txt3)), 0);
+    EXPECT_GT(TypeParam(ds_like_txt3).compare(TypeParam(ds_like_txt1)), 0);
+
+    EXPECT_LT(TypeParam(ds_like_txt1).compare(TypeParam(ds_like_txt4)), 0);
+    EXPECT_GT(TypeParam(ds_like_txt4).compare(TypeParam(ds_like_txt1)), 0);
+
+    EXPECT_LT(TypeParam(ds_like_txt1).compare(TypeParam(ds_like_txt5)), 0);
+    EXPECT_GT(TypeParam(ds_like_txt5).compare(TypeParam(ds_like_txt1)), 0);
+
+    EXPECT_LT(TypeParam(ds_like_txt1).compare(TypeParam(ds_like_txt6)), 0);
+    EXPECT_GT(TypeParam(ds_like_txt6).compare(TypeParam(ds_like_txt1)), 0);
 }
 
 }
