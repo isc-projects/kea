@@ -990,6 +990,20 @@ class TestIXFR(TestXfrinConnection):
         self.conn._request_type = RRType.IXFR()
         self._zone_name = TEST_ZONE_NAME
         self.conn._datasrc_client = MockDataSourceClient()
+        XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
+
+    def create_a(self, address):
+        rrset = RRset(Name('a.example.com'), TEST_RRCLASS, RRType.A(),
+                      RRTTL(3600))
+        rrset.add_rdata(Rdata(RRType.A(), TEST_RRCLASS, address))
+        return rrset
+
+    def create_soa(self, serial):
+        rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
+                      RRTTL(3600))
+        rdata_str = 'm. r. ' + serial + ' 3600 1800 2419200 7200'
+        rrset.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS, rdata_str))
+        return rrset
 
     def check_diffs(self, expected, actual):
         '''A helper method checking the differences made in the IXFR session.
@@ -1024,11 +1038,47 @@ class TestIXFR(TestXfrinConnection):
         self.conn.reply_data = self.conn.create_response_data(
             questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
             answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
-        XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
         self.conn._handle_xfrin_responses()
         self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
         self.assertEqual([], self.conn._datasrc_client.diffs)
         self.check_diffs([[('remove', begin_soa_rrset), ('add', soa_rrset)]],
+                         self.conn._datasrc_client.committed_diffs)
+
+    def test_ixfr_response_multi_sequence(self):
+        '''Similar to the previous case, but with multiple diff seqs.
+
+        '''
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset,
+                     # removing one A in serial 1230
+                     begin_soa_rrset, self.create_a('192.0.2.1'),
+                     # adding one A in serial 1231
+                     self.create_soa('1231'), self.create_a('192.0.2.2'),
+                     # removing one A in serial 1231
+                     self.create_soa('1231'), self.create_a('192.0.2.3'),
+                     # adding one A in serial 1232
+                     self.create_soa('1232'), self.create_a('192.0.2.4'),
+                     # removing one A in serial 1232
+                     self.create_soa('1232'), self.create_a('192.0.2.5'),
+                     # adding one A in serial 1234
+                     soa_rrset, self.create_a('192.0.2.6'),
+                     soa_rrset])
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([], self.conn._datasrc_client.diffs)
+        self.check_diffs([[('remove', begin_soa_rrset),
+                           ('remove', self.create_a('192.0.2.1')),
+                           ('add', self.create_soa('1231')),
+                           ('add', self.create_a('192.0.2.2'))],
+                          [('remove', self.create_soa('1231')),
+                           ('remove', self.create_a('192.0.2.3')),
+                           ('add', self.create_soa('1232')),
+                           ('add', self.create_a('192.0.2.4'))],
+                          [('remove', self.create_soa('1232')),
+                           ('remove', self.create_a('192.0.2.5')),
+                           ('add', soa_rrset),
+                           ('add', self.create_a('192.0.2.6'))]],
                          self.conn._datasrc_client.committed_diffs)
 
 class TestXfrinRecorder(unittest.TestCase):
