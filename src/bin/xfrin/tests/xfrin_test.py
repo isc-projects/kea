@@ -458,11 +458,46 @@ class TestXfrinAXFR(TestXfrinState):
         self.state = XfrinAXFR()
 
     def test_handle_rr(self):
-        self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
-                          soa_rrset)
+        """
+        Test we can put data inside.
+        """
+        # Put some data inside
+        data = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.A(), RRTTL(3600))
+        data.add_rdata(Rdata(RRType.A(), TEST_RRCLASS, '192.0.2.1'))
+        self.assertTrue(self.state.handle_rr(self.conn, data))
+        # This test uses internal Diff structure to check the behaviour of
+        # XfrinAXFR. Maybe there could be a cleaner way, but it would be more
+        # complicated.
+        self.assertEqual([('add', data)],
+                         self.state._XfrinAXFR__diff.get_buffer())
+        # This SOA terminates the transef
+        self.assertTrue(self.state.handle_rr(self.conn, soa_rrset))
+        # It should have changed the state
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        # The data should have been commited
+        # FIXME: Or, should we wait and see there are no data after this,
+        # to do the commit? Pass it to the AXFREnd?
+        self.assertEqual([], self.state._XfrinAXFR__diff.get_buffer())
+        self.assertRaises(ValueError, self.state._XfrinAXFR__diff.commit)
 
     def test_finish_message(self):
+        """
+        Check normal end of message.
+        """
+        # When a message ends, nothing happens usually
         self.assertTrue(self.state.finish_message(self.conn))
+
+class TestXfrinAXFREnd(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinAXFREnd()
+
+    def test_handle_rr(self):
+        self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
+    def test_finish_message(self):
+        self.assertFalse(self.state.finish_message(self.conn))
 
 class TestXfrinConnection(unittest.TestCase):
     '''Convenient parent class for XFR-protocol tests.
