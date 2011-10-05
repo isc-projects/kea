@@ -16,10 +16,6 @@ import isc.config.cfgmgr
 import stats
 import stats_httpd
 
-# Change value of BIND10_MSGQ_SOCKET_FILE in environment variables
-if 'BIND10_MSGQ_SOCKET_FILE' not in os.environ:
-    os.environ['BIND10_MSGQ_SOCKET_FILE'] = tempfile.mktemp(prefix='msgq_socket_')
-
 class SignalHandler():
     """A signal handler class for deadlock in unittest"""
     def __init__(self, fail_handler, timeout=20):
