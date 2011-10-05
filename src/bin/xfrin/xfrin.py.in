@@ -487,30 +487,36 @@ class XfrinConnection(asyncore.dispatcher):
         try:
             ret = XFRIN_OK
             self._request_type = request_type
+            # Right now RRType.[IA]XFR().to_text() is 'TYPExxx', so we need
+            # to hardcode here.
+            request_str = 'IXFR' if request_type == RRType.IXFR() else 'AXFR'
             if check_soa:
                 logstr = 'SOA check for \'%s\' ' % self.zone_str()
                 ret =  self._check_soa_serial()
 
             if ret == XFRIN_OK:
+                logger.info(XFRIN_XFR_TRANSFER_STARTED, request_str,
+                            self.zone_str())
                 if self._request_type == RRType.IXFR():
-                    # TODO: log it
                     self._request_type = RRType.IXFR()
                     self._send_query(self._request_type)
                     self.__state = XfrinInitialSOA()
                     self._handle_xfrin_responses()
                 else:
-                    logger.info(XFRIN_AXFR_TRANSFER_STARTED, self.zone_str())
                     self._send_query(self._request_type)
                     isc.datasrc.sqlite3_ds.load(self._db_file,
                                                 self._zone_name.to_text(),
                                                 self._handle_axfrin_response)
-                    logger.info(XFRIN_AXFR_TRANSFER_SUCCESS, self.zone_str())
+                logger.info(XFRIN_XFR_TRANSFER_SUCCESS, request_str,
+                            self.zone_str())
 
         except (XfrinException, XfrinProtocolError) as e:
-            # TODO: rename it: AXFR->XFR (or remove it)
-            logger.error(XFRIN_AXFR_TRANSFER_FAILURE, self.zone_str(), str(e))
+            logger.error(XFRIN_XFR_TRANSFER_FAILURE, request_str,
+                         self.zone_str(), str(e))
             ret = XFRIN_FAIL
         except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
+            # Note: this is old code and used only for AXFR.  This will be
+            # soon removed anyway, so we'll leave it.
             logger.error(XFRIN_AXFR_DATABASE_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
         except Exception as e:
@@ -522,8 +528,8 @@ class XfrinConnection(asyncore.dispatcher):
             # catch it here, but until then we need broadest coverage so that
             # we won't miss anything.
 
-            # TODO: rename it: both 'AXFR' and 'INTERNAL' are inappropriate
-            logger.error(XFRIN_AXFR_INTERNAL_FAILURE, self.zone_str(), str(e))
+            logger.error(XFRIN_XFR_OTHER_FAILURE, request_str,
+                         self.zone_str(), str(e))
             ret = XFRIN_FAIL
         finally:
             # Make sure any remaining transaction in the diff is closed
