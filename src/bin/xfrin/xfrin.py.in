@@ -481,25 +481,26 @@ class XfrinConnection(asyncore.dispatcher):
         # now.
         return XFRIN_OK
 
-    def do_xfrin(self, check_soa, ixfr_first=False):
+    def do_xfrin(self, check_soa, request_type=RRType.AXFR()):
         '''Do an xfr session by sending xfr request and parsing responses.'''
 
         try:
             ret = XFRIN_OK
+            self._request_type = request_type
             if check_soa:
                 logstr = 'SOA check for \'%s\' ' % self.zone_str()
                 ret =  self._check_soa_serial()
 
             if ret == XFRIN_OK:
-                if ixfr_first:
+                if self._request_type == RRType.IXFR():
                     # TODO: log it
                     self._request_type = RRType.IXFR()
-                    self._send_query(RRType.IXFR())
+                    self._send_query(self._request_type)
                     self.__state = XfrinInitialSOA()
                     self._handle_xfrin_responses()
                 else:
                     logger.info(XFRIN_AXFR_TRANSFER_STARTED, self.zone_str())
-                    self._send_query(RRType.AXFR())
+                    self._send_query(self._request_type)
                     isc.datasrc.sqlite3_ds.load(self._db_file,
                                                 self._zone_name.to_text(),
                                                 self._handle_axfrin_response)
@@ -660,7 +661,7 @@ class XfrinConnection(asyncore.dispatcher):
 
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                   shutdown_event, master_addrinfo, check_soa, verbose,
-                  tsig_key):
+                  tsig_key, request_type):
     xfrin_recorder.increment(zone_name)
 
     # Create a data source client used in this XFR session.  Right now we
@@ -680,7 +681,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                            tsig_key, verbose)
     ret = XFRIN_FAIL
     if conn.connect_to_master():
-        ret = conn.do_xfrin(check_soa)
+        ret = conn.do_xfrin(check_soa, request_type)
 
     # Publish the zone transfer result news, so zonemgr can reset the
     # zone timer, and xfrout can notify the zone's slaves if the result
@@ -924,7 +925,7 @@ class Xfrin:
                                            rrclass,
                                            self._get_db_file(),
                                            master_addr,
-                                           zone_info.tsig_key,
+                                           zone_info.tsig_key, RRType.AXFR(),
                                            True)
                     answer = create_answer(ret[0], ret[1])
 
@@ -944,7 +945,7 @@ class Xfrin:
                                        rrclass,
                                        db_file,
                                        master_addr,
-                                       tsig_key,
+                                       tsig_key, RRType.AXFR(),
                                        (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
 
@@ -1062,7 +1063,7 @@ class Xfrin:
             self._cc_check_command()
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key, check_soa=True):
+                    tsig_key, request_type, check_soa=True):
         if "pydnspp" not in sys.modules:
             return (1, "xfrin failed, can't load dns message python library: 'pydnspp'")
 
@@ -1082,7 +1083,7 @@ class Xfrin:
                                                 self._shutdown_event,
                                                 master_addrinfo, check_soa,
                                                 self._verbose,
-                                                tsig_key))
+                                                tsig_key, request_type))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
