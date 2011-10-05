@@ -1,8 +1,8 @@
+SUBDIRS = testdata .
+
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = xfrin_test.py
 EXTRA_DIST = $(PYTESTS)
-EXTRA_DIST += testdata/example.com # not necessarily needed, but for reference
-EXTRA_DIST += testdata/example.com.sqlite3
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
