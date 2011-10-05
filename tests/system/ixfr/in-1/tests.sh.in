@@ -1,0 +1,151 @@
+#!/bin/sh
+#
+# Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2000, 2001  Internet Software Consortium.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# This script performs the first IXFR-IN test.  A BIND 9 nameserver (the
+# "server") contains a version of the zone (version N) and two previous
+# versions, N-2 and N-4.  A BIND 10 nameserver (the "client") is loaded with
+# version N-2 of the zone.  A NOTIFY is sent to it, and it is expected that
+# it will send an IXFR to the server and update itself with the latest version
+# of the zone.  (The changes are such that the update should be in the form of
+# a single UDP packet.)
+#
+# The code checks that the zones are identical, and checks the BIND 10 log
+# file to ensure that the debug message recording the sending of the IXFR
+# request and the receipt of the single update is recorded.
+
+. @abs_top_builddir@/tests/system/conf.sh
+
+IXFR_SERVER=10.53.0.1   # BIND 9
+IXFR_CLIENT=10.53.0.2   # BIND 10
+
+# Short-hand for getting SOA - just supply address of the server
+DIG_SOA="$DIG +norecurse +short -p $DNS_PORT example. SOA"
+
+status=0
+
+# do_rndc
+#
+# Controls the BIND 9 IXFR server.  Called do_rndc (instead of rndc) to avoid
+# confusion if rndc itself is in the search path.
+#
+# $* - Command to execute (which may be multiple tokens)
+do_rndc () {
+    $RNDC -c $SYSTEM_TOP/common/rndc.conf -s $IXFR_SERVER -p $RNDC_PORT $* 2>&1 \
+        | sed 's/^/I:ns1 /'
+}
+
+# wait_for_update
+#
+# Given a serial number and a server, poll the nameserver until the SOA serial
+# number is different from that given.  The poll takes place every five seconds
+# for a minute.
+#
+# $1 - Server to check
+# $2 - Serial number to check against
+#
+# Returns:
+# 0 - Serial number is different (requires another poll to obatin it)
+# 1 - Serial number has not changed
+wait_for_update() {
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12
+    do
+        new_serial=`$DIG_SOA @$1 | $AWK '{print $3}'`
+        if [ "$new_serial" != "$2" ];
+        then
+            break
+        fi
+        sleep 5
+    done
+
+    if [ "$new_serial" = "$2" ];
+    then
+        return 1
+    fi
+    return 0
+}
+
+
+
+# update_server_zone
+#
+# Reloads the example. zone in the IXFR server and waits a maximum of 50
+# seconds for it to be served.
+#
+# $1 - Name of new zone file (should be in the default directory).
+update_server_zone() {
+    old_serial=`$DIG_SOA @$IXFR_SERVER | $AWK '{print $3}'`
+    echo "I:ns1 IXFR server loading $1"
+    cp $1 ns1/zone.db
+    do_rndc reload
+    wait_for_update $IXFR_SERVER $old_serial
+
+    if [ $? -ne 0 ];
+    then
+        echo "R:ns1 FAIL IXFR server did not update zone after reload"
+        return 1
+    fi
+
+    new_serial=`$DIG_SOA @$IXFR_SERVER | $AWK '{print $3}'`
+    echo "R:ns1 IXFR server was at serial $old_serial, now at $new_serial"
+    return 0
+}
+
+# The current state of the nameservers is that they should both be running the
+# "n - 4" version of the zone.
+#
+# Load the BIND 9 system (the IXFR server) with the "n - 2" and "n" version of
+# the zones.  With ixfr-from-differences set to "yes", the nameserver should
+# generate the differences between them.
+
+echo "I:updating IXFR-server for ixfr-in tests"
+
+update_server_zone $IXFR_TOP/largezone_n-2.db
+if [ $? != 0 ]; then
+    status=1
+fi
+
+# Wait a bit - it seems that if two updates are loaded in quick succession,
+# the second sometimes gets lost.
+
+sleep 5
+update_server_zone $IXFR_TOP/largezone_n-0.db
+if [ $? != 0 ]; then
+    status=1
+fi
+
+# Get the IXFR server to notify the slave server of the new zone.  Do this by
+# allowing notifies and then triggering a re-notification of the server.
+
+echo "I:notifying IXFR-client of presence of new zones"
+cp ns1/named_notify.conf ns1/named.conf
+do_rndc reconfig
+do_rndc notify example
+
+# Store the SOA serial number of the latest zone in the BIND 9 server
+server_serial=`$DIG_SOA @$IXFR_SERVER | $AWK '{print $3}'`
+echo "I:SOA serial of IXFR server is $server_serial"
+
+client_serial=`$DIG_SOA @$IXFR_CLIENT | $AWK '{print $3}'`
+echo "I:SOA serial of IXFR client is $client_serial"
+
+# Now compare the two zones - they should be the same.
+
+# Check the BIND 10 log, looking for the IXFR messages that
+# indicate that it has initiated an IXFR.
+
+echo "I:exit status: $status"
+exit $status
