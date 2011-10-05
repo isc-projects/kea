@@ -217,7 +217,7 @@ class XfrinIXFRDeleteSOA(XfrinState):
         # This is the beginning state of one difference sequence (changes
         # for one SOA update).  We need to create a new Diff object now.
         conn._diff = Diff(conn._datasrc_client, conn._zone_name)
-        conn._diff.remove_data(rr)
+        conn._diff.delete_data(rr)
         self.set_xfrstate(conn, XfrinIXFRDelete())
         return True
 
@@ -228,7 +228,7 @@ class XfrinIXFRDelete(XfrinState):
             conn._current_serial = get_soa_serial(rr.get_rdata()[0])
             self.set_xfrstate(conn, XfrinIXFRAddSOA())
             return False
-        conn._diff.remove_data(rr)
+        conn._diff.delete_data(rr)
         return True
 
 class XfrinIXFRAddSOA(XfrinState):
@@ -285,12 +285,16 @@ class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
 
     def __init__(self,
-                 sock_map, zone_name, rrclass, db_file, shutdown_event,
-                 master_addrinfo, tsig_key = None, verbose = False,
-                 idle_timeout = 60):
-        ''' idle_timeout: max idle time for read data from socket.
-            db_file: specify the data source file.
-            check_soa: when it's true, check soa first before sending xfr query
+                 sock_map, zone_name, rrclass, datasrc_client, db_file,
+                 shutdown_event, master_addrinfo, tsig_key = None,
+                 verbose=False, idle_timeout=60):
+        '''Constructor of the XfirnConnection class.
+
+        idle_timeout: max idle time for read data from socket.
+        datasrc_client: the data source client object used for the XFR session.
+                        This will eventually replace db_file completely.
+        db_file: specify the data source file (should soon be deprecated).
+
         '''
 
         asyncore.dispatcher.__init__(self, map=sock_map)
@@ -306,7 +310,7 @@ class XfrinConnection(asyncore.dispatcher):
 
         # Data source handlers
         self._db_file = db_file # temporary for sqlite3 specific code
-        self._datasrc_client = self._get_datasrc_client(rrclass)
+        self._datasrc_client = datasrc_client
 
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._sock_map = sock_map
@@ -324,10 +328,6 @@ class XfrinConnection(asyncore.dispatcher):
 
     def __create_tsig_ctx(self, key):
         return TSIGContext(key)
-
-    def _get_datasrc_client(self, rrclass):
-        # TODO: create a DataSourceClient assuming the sqlite3 backend for now
-        return None
 
     def __set_xfrstate(self, new_state):
         self.__state = new_state
@@ -658,9 +658,21 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                   shutdown_event, master_addrinfo, check_soa, verbose,
                   tsig_key):
     xfrin_recorder.increment(zone_name)
+
+    # Create a data source client used in this XFR session.  Right now we
+    # still assume an sqlite3-based data source, and use both the old and new
+    # data source APIs.  We also need to use a mock client for tests.
+    # For a temporary workaround to deal with these situations, we skip the
+    # creation when the given file is none (the test case).  Eventually
+    # this code will be much cleaner.
+    datasrc_client = None
+    if db_file is not None:
+        datasrc_client = DataSourceClient(db_file)
+
+    # Create a TCP connection for the XFR session and perform the operation.
     sock_map = {}
-    conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
-                           shutdown_event, master_addrinfo,
+    conn = XfrinConnection(sock_map, zone_name, rrclass, datasrc_client,
+                           db_file, shutdown_event, master_addrinfo,
                            tsig_key, verbose)
     ret = XFRIN_FAIL
     if conn.connect_to_master():
@@ -1045,8 +1057,8 @@ class Xfrin:
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 
-    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo, tsig_key,
-                    check_soa = True):
+    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
+                    tsig_key, check_soa=True):
         if "pydnspp" not in sys.modules:
             return (1, "xfrin failed, can't load dns message python library: 'pydnspp'")
 
