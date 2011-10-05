@@ -314,11 +314,9 @@ class TestXfrinFirstData(TestXfrinState):
         self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
 
     def test_handle_ixfr_to_axfr_by_different_soa(self):
-        # Response contains two consecutive SOA but the serial of the second
-        # does not match the requested one.  The only possible interpretation
-        # at this point is that it's an AXFR-compatible IXFR that only
-        # consists of the SOA RR.  It will result in broken zone and should
-        # be rejected anyway, but at this point we should switch to AXFR.
+        # An unusual case: Response contains two consecutive SOA but the
+        # serial of the second does not match the requested one.  See
+        # the documentation for XfrinFirstData.handle_rr().
         self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
         self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
 

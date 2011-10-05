@@ -243,9 +243,37 @@ class XfrinInitialSOA(XfrinState):
 
 class XfrinFirstData(XfrinState):
     def handle_rr(self, conn, rr):
-        # If the transfer begins with one SOA record, it is an AXFR,
-        # if it begins with two SOAs (the serial of the second one being
-        # equal to our serial), it is an IXFR.
+        '''Handle the first RR after initial SOA in an XFR session.
+
+        This state happens exactly once in an XFR session, where
+        we decide whether it's incremental update ("real" IXFR) or
+        non incremental update (AXFR or AXFR-style IXFR).
+        If we initiated IXFR and the transfer begins with two SOAs
+        (the serial of the second one being equal to our serial),
+        it's incremental; otherwise it's non incremental.
+
+        This method always return False (unlike many other handle_rr()
+        methods) because this first RR must be examined again in the
+        determined update context.
+
+        Note that in the non incremental case the RR should normally be
+        something other SOA, but it's still possible it's an SOA with a
+        different serial than ours.  The only possible interpretation at
+        this point is that it's non incremental update that only consists
+        of the SOA RR.  It will result in broken zone (for example, it
+        wouldn't even contain an apex NS) and should be rejected at post
+        XFR processing, but in terms of the XFR session processing we
+        accept it and move forward.
+
+        Note further that, in the half-broken SOA-only transfer case,
+        these two SOAs are supposed to be the same as stated in Section 2.2
+        of RFC 5936.  We don't check that condition here, either; we'll
+        leave whether and how to deal with that situation to the end of
+        the processing of non incremental update.  See also a related
+        discussion at the IETF dnsext wg:
+        http://www.ietf.org/mail-archive/web/dnsext/current/msg07908.html
+
+        '''
         if conn._request_type == RRType.IXFR() and \
                 rr.get_type() == RRType.SOA() and \
                 conn._request_serial == get_soa_serial(rr.get_rdata()[0]):
@@ -256,7 +284,7 @@ class XfrinFirstData(XfrinState):
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
                  conn.zone_str())
             self.set_xfrstate(conn, XfrinAXFR())
-        return False    # need to revisit this RR in an update context
+        return False
 
 class XfrinIXFRDeleteSOA(XfrinState):
     def handle_rr(self, conn, rr):
