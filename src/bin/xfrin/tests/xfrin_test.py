@@ -1692,6 +1692,38 @@ class TestXfrin(unittest.TestCase):
         # since this has failed, we should still have the previous config
         self._check_zones_config(config2)
 
+    def common_ixfr_setup(self, xfr_mode, ixfr_disabled):
+        # This helper method explicitly sets up a zone configuration with
+        # ixfr_disabled, and invokes either retransfer or refresh.
+        # Shared by some of the following test cases.
+        config = {'zones': [
+                {'name': 'example.com.',
+                 'master_addr': '192.0.2.1',
+                 'ixfr_disabled': ixfr_disabled}]}
+        self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
+        self.assertEqual(self.xfr.command_handler(xfr_mode,
+                                                  self.args)['result'][0], 0)
+
+    def test_command_handler_retransfer_ixfr_enabled(self):
+        # If IXFR is explicitly enabled in config, IXFR will be used
+        self.common_ixfr_setup('retransfer', False)
+        self.assertEqual(RRType.IXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_refresh_ixfr_enabled(self):
+        # Same for refresh
+        self.common_ixfr_setup('refresh', False)
+        self.assertEqual(RRType.IXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_retransfer_ixfr_disabled(self):
+        # Similar to the previous case, but explicitly disabled.  AXFR should
+        # be used.
+        self.common_ixfr_setup('retransfer', True)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_refresh_ixfr_disabled(self):
+        # Same for refresh
+        self.common_ixfr_setup('refresh', True)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
 def raise_interrupt():
     raise KeyboardInterrupt()
