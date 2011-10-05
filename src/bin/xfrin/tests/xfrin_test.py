@@ -528,7 +528,7 @@ class TestXfrinConnection(unittest.TestCase):
 
         verify_ctx = None
         if self.soa_response_params['tsig']:
-            # xfrin (curreently) always uses TCP.  strip off the length field.
+            # xfrin (currently) always uses TCP.  strip off the length field.
             query_data = self.conn.query_data[2:]
             query_message = Message(Message.PARSE)
             query_message.from_wire(query_data)
