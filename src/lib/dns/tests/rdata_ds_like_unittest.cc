@@ -164,7 +164,7 @@ TYPED_TEST(Rdata_DS_LIKE_Test, compare) {
     EXPECT_GT(TypeParam(ds_like_txt6).compare(TypeParam(ds_like_txt1)), 0);
 
     // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(this->rdata_ds_like.compare(*RdataTest::rdata_nomatch),
+    EXPECT_THROW(this->rdata_ds_like.compare(*this->rdata_nomatch),
                  bad_cast);
 }
 
