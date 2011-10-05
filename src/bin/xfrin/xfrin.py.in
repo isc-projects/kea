@@ -938,14 +938,17 @@ class Xfrin:
                                                           rrclass)
                 zone_info = self._get_zone_info(zone_name, rrclass)
                 tsig_key = None
+                request_type = RRType.AXFR()
                 if zone_info:
                     tsig_key = zone_info.tsig_key
+                    if not zone_info.ixfr_disabled:
+                        request_type = RRType.IXFR()
                 db_file = args.get('db_file') or self._get_db_file()
                 ret = self.xfrin_start(zone_name,
                                        rrclass,
                                        db_file,
                                        master_addr,
-                                       tsig_key, RRType.AXFR(),
+                                       tsig_key, request_type,
                                        (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
 
