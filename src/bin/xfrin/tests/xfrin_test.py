@@ -267,6 +267,15 @@ class TestXfrinState(unittest.TestCase):
         self.conn._datasrc_client = MockDataSourceClient()
         self.conn._diff = Diff(MockDataSourceClient(), TEST_ZONE_NAME)
 
+class TestXfrinStateBase(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+
+    def test_handle_rr_on_base(self):
+        # The base version of handle_rr() isn't supposed to be called
+        # directly (the argument doesn't matter in this test)
+        self.assertRaises(XfrinException, XfrinState().handle_rr, None)
+
 class TestXfrinInitialSOA(TestXfrinState):
     def setUp(self):
         super().setUp()
