@@ -811,6 +811,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
+                 src/bin/xfrin/tests/testdata/Makefile
                  src/bin/xfrout/Makefile
                  src/bin/xfrout/tests/Makefile
                  src/bin/zonemgr/Makefile
