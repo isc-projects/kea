@@ -205,6 +205,12 @@ class XfrinState:
 
         All subclass has their specific behaviors for this method, so
         there is no default definition.
+
+        This method returns a boolean value: True if the given RR was
+        fully handled and the caller should go to the next RR; False
+        if the caller needs to call this method with the (possibly) new
+        state for the same RR again.
+
         '''
         pass
 
