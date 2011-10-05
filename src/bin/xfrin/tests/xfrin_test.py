@@ -160,14 +160,15 @@ class MockXfrin(Xfrin):
             MockXfrin.check_command_hook()
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key, check_soa=True):
+                    tsig_key, request_type, check_soa=True):
         # store some of the arguments for verification, then call this
         # method in the superclass
         self.xfrin_started_master_addr = master_addrinfo[2][0]
         self.xfrin_started_master_port = master_addrinfo[2][1]
+        self.xfrin_started_request_type = request_type
         return Xfrin.xfrin_start(self, zone_name, rrclass, None,
                                  master_addrinfo, tsig_key,
-                                 check_soa)
+                                 request_type, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, db_file, shutdown_event,
@@ -1164,7 +1165,7 @@ class TestIXFRSession(TestXfrinConnection):
                                     RRType.IXFR())],
                 answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
         self.conn.response_generator = create_ixfr_response
-        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, True))
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
 
         # Check some details of the IXFR protocol processing
         self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
@@ -1190,14 +1191,14 @@ class TestIXFRSession(TestXfrinConnection):
                 answers=[soa_rrset, begin_soa_rrset, soa_rrset,
                          self._create_soa('1235')])
         self.conn.response_generator = create_ixfr_response
-        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, True))
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
 
     def test_do_xfrin_fail(self):
         '''IXFR fails due to a bogus DNS message.
 
         '''
         self._create_broken_response_data()
-        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, True))
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
 
 class TestIXFRSessionWithSQLite3(TestXfrinConnection):
     '''Tests for IXFR sessions using an SQLite3 DB.
@@ -1240,7 +1241,7 @@ class TestIXFRSessionWithSQLite3(TestXfrinConnection):
 
         # Confirm xfrin succeeds and SOA is updated
         self.assertEqual(1230, self.get_zone_serial())
-        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, True))
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
         self.assertEqual(1234, self.get_zone_serial())
 
     def test_do_xfrin_sqlite3_fail(self):
@@ -1258,7 +1259,7 @@ class TestIXFRSessionWithSQLite3(TestXfrinConnection):
         self.conn.response_generator = create_ixfr_response
 
         self.assertEqual(1230, self.get_zone_serial())
-        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, True))
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
         self.assertEqual(1230, self.get_zone_serial())
 
 class TestXfrinRecorder(unittest.TestCase):
@@ -1386,6 +1387,8 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 0)
         self.assertEqual(self.args['master'], self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(self.args['port']), self.xfr.xfrin_started_master_port)
+        # By default we use AXFR (for now)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
     def test_command_handler_retransfer_short_command1(self):
         # try it when only specifying the zone name (of unknown zone)
@@ -1498,6 +1501,8 @@ class TestXfrin(unittest.TestCase):
                          self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(TEST_MASTER_PORT),
                          self.xfr.xfrin_started_master_port)
+        # By default we use AXFR (for now)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
     def test_command_handler_notify(self):
         # at this level, refresh is no different than retransfer.
