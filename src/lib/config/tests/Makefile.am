@@ -31,4 +31,4 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 
 endif
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)

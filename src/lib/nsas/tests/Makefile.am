@@ -60,4 +60,4 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)
