@@ -144,25 +144,69 @@ class XfrinState:
     response RRs have already been received.
     NOTE: the AXFR part of the state machine is incomplete at this point.
 
-    This implementation uses the state design patter, where each state
-    is represented as a subclass of the base XfrinState class.  The base
-    class defines two abstract interfaces: handle_rr() and finish_message().
-    These methods handle specific part of XFR protocols and (if necessary)
-    perform the state transition.
+    The following diagram summarizes the state transition.  After sending
+    the query, xfrin starts the process with the InitialSOA state (all
+    IXFR/AXFR response begins with an SOA).  When it reaches IXFREnd
+    (or AXFREnd, which is not yet implemented and not shown here), the
+    process successfully completes.
+
+
+            (recv SOA)       (AXFR-style IXFR)
+    InitialSOA------->FirstData------------->AXFR
+                          |                     (non SOA, delete)
+               (pure IXFR,|                           +-------+
+            keep handling)|             (Delete SOA)  V       |
+                          + ->IXFRDeleteSOA------>IXFRDelete--+
+                                   ^                   |
+                (see SOA, not end, |          (see SOA)|
+            commit, keep handling) |                   |
+                                   |                   V
+                      +---------IXFRAdd<----------+IXFRAddSOA
+        (non SOA, add)|         ^  |    (Add SOA)
+                      ----------+  |
+                                   |(see SOA w/ end serial, commit changes)
+                                   V
+                                IXFREnd
+
+    This implementation uses the state design pattern, where each state
+    is represented as a subclass of the base XfrinState class.  Each concrete
+    subclass of XfrinState is assumed to define two methods: handle_rr() and
+    finish_message().  These methods handle specific part of XFR protocols
+    and (if necessary) perform the state transition.
+
+    Conceptually, XfrinState and its subclasses are a "friend" of
+    XfrinConnection and are assumed to be allowed to access its internal
+    information (even though Python does not have a strict access control
+    between different classes).
 
     The XfrinState and its subclasses are designed to be stateless, and
     can be used as singleton objects.  For now, however, we always instantiate
     a new object for every state transition, partly because the introduction
     of singleton will make a code bit complicated, and partly because
     the overhead of object instantiotion wouldn't be significant for xfrin.
+
     '''
     def set_xfrstate(self, conn, new_state):
         '''Set the XfrConnection to a given new state.
 
         As a "friend" class, this method intentionally gets access to the
         connection's "private" method.
+
         '''
         conn._XfrinConnection__set_xfrstate(new_state)
+
+    def handle_rr(self, conn):
+        '''Handle one RR of an XFR response message.
+
+        Depending on the state, the RR is generally added or deleted in the
+        corresponding data source, or in some special cases indicates
+        a specifi transition, such as starting a new IXFR difference
+        sequence or completing the session.
+
+        All subclass has their specific behaviors for this method, so
+        there is no default definition.
+        '''
+        pass
 
     def finish_message(self, conn):
         '''Perform any final processing after handling all RRs of a response.
@@ -183,9 +227,10 @@ class XfrinInitialSOA(XfrinState):
         conn._end_serial = get_soa_serial(rr.get_rdata()[0])
 
         # FIXME: we need to check the serial is actually greater than ours.
-        # To do so, however, we need a way to find records from datasource.
-        # Complete that part later as a separate task.  (Always performing
-        # xfr could be inefficient, but shouldn't do any harm otherwise)
+        # To do so, however, we need to implement serial number arithmetic.
+        # Although it wouldn't be a big task, we'll leave it for a separate
+        # task for now.  (Always performing xfr could be inefficient, but
+        # shouldn't do any harm otherwise)
 
         self.set_xfrstate(conn, XfrinFirstData())
         return True
@@ -298,11 +343,16 @@ class XfrinConnection(asyncore.dispatcher):
         '''
 
         asyncore.dispatcher.__init__(self, map=sock_map)
+
+        # The XFR state.  Coceptually this is purely private, so we emphasize
+        # the fact by the double underscore.  Other classes are assumed to
+        # get access to this via get_xfrstate(), and only XfrinState classes
+        # are assumed to be allowed to modify it via __set_xfrstate().
         self.__state = None
+
         # Requested transfer type (RRType.AXFR or RRType.IXFR).  The actual
         # transfer type may differ due to IXFR->AXFR fallback:
         self._request_type = None
-        self._end_serial = None # essentially private
 
         # Zone parameters
         self._zone_name = zone_name
