@@ -1210,7 +1210,7 @@ class TestIXFRSessionWithSQLite3(TestXfrinConnection):
     '''
     def setUp(self):
         self.sqlite3db_src = TESTDATA_SRCDIR + '/example.com.sqlite3'
-        self.sqlite3db_obj = TESTDATA_SRCDIR + '/example.com.sqlite3.copy'
+        self.sqlite3db_obj = TESTDATA_OBJDIR + '/example.com.sqlite3.copy'
         super().setUp()
         if os.path.exists(self.sqlite3db_obj):
             os.unlink(self.sqlite3db_obj)
