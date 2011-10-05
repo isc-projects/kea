@@ -87,7 +87,7 @@ class DiffTest(unittest.TestCase):
         """
         self.__data_operations.append(('add', rrset))
 
-    def remove_rrset(self, rrset):
+    def delete_rrset(self, rrset):
         """
         This one is part of pretending to be a zone updater. It writes down
         removal of an rrset was requested.
