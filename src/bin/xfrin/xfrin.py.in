@@ -339,7 +339,7 @@ class XfrinConnection(asyncore.dispatcher):
                  sock_map, zone_name, rrclass, datasrc_client, db_file,
                  shutdown_event, master_addrinfo, tsig_key = None,
                  verbose=False, idle_timeout=60):
-        '''Constructor of the XfirnConnection class.
+        '''Constructor of the XfrinConnection class.
 
         idle_timeout: max idle time for read data from socket.
         datasrc_client: the data source client object used for the XFR session.
@@ -350,7 +350,7 @@ class XfrinConnection(asyncore.dispatcher):
 
         asyncore.dispatcher.__init__(self, map=sock_map)
 
-        # The XFR state.  Coceptually this is purely private, so we emphasize
+        # The XFR state.  Conceptually this is purely private, so we emphasize
         # the fact by the double underscore.  Other classes are assumed to
         # get access to this via get_xfrstate(), and only XfrinState classes
         # are assumed to be allowed to modify it via __set_xfrstate().
