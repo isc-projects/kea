@@ -767,6 +767,8 @@ fi
 #
 AC_PATH_PROGS(PERL, perl5 perl)
 AC_SUBST(PERL)
+AC_PATH_PROGS(AWK, gawk awk)
+AC_SUBST(AWK)
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
@@ -959,9 +961,13 @@ AC_OUTPUT([doc/version.ent
            src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
+           tests/system/run.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
            tests/system/bindctl/nsx1/b10-config.db.template
+           tests/system/ixfr/in-1/setup.sh
+           tests/system/ixfr/in-1/tests.sh
+           tests/system/ixfr/in-1/nsx2/b10-config.db
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -990,6 +996,9 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x tests/system/conf.sh
+           chmod +x tests/system/run.sh
+           chmod +x tests/system/ixfr/in-1/setup.sh
+           chmod +x tests/system/ixfr/in-1/tests.sh
           ])
 AC_OUTPUT
 
