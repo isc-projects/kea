@@ -152,6 +152,12 @@ class Component:
         """
         return self.__running
 
+specials = {}
+"""
+List of specially started components. Each one should be the class than can
+be created for that component.
+"""
+
 class Configurator:
     """
     This thing keeps track of configuration changes and starts and stops
