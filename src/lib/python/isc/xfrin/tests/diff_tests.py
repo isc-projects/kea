@@ -37,6 +37,7 @@ class DiffTest(unittest.TestCase):
         self.__data_operations = []
         self.__apply_called = False
         self.__commit_called = False
+        self.__should_replace = False
         # Some common values
         self.__rrclass = RRClass.IN()
         self.__type = RRType.A()
@@ -103,7 +104,7 @@ class DiffTest(unittest.TestCase):
         it returns self.
         """
         # The diff should not delete the old data.
-        self.assertFalse(replace)
+        self.assertEqual(self.__should_replace, replace)
         self.__updater_requested = True
         # Pretend this zone doesn't exist
         if zone_name == Name('none.example.org.'):
@@ -321,6 +322,14 @@ class DiffTest(unittest.TestCase):
         # Try another compact does nothing, but survives
         diff.compact()
         check()
+
+    def test_relpace(self):
+        """
+        Test that when we want to replace the whole zone, it is propagated.
+        """
+        self.__should_replace = True
+        diff = Diff(self, "example.org.", True)
+        self.assertTrue(self.__updater_requested)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
