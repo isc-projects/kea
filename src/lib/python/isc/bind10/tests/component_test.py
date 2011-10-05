@@ -20,7 +20,7 @@ Tests for the bind10.component module
 import unittest
 import isc.log
 import time
-from isc.bind10.component import Component
+from isc.bind10.component import Component, Configurator, specials
 
 class TestError(Exception):
     """
@@ -352,6 +352,67 @@ class ComponentTests(unittest.TestCase):
         """
         for kind in ['Core', 'CORE', 'nonsense', 'need ed', 'required']:
             self.assertRaises(ValueError, Component, 'No process', self, kind)
+
+class TestComponent(Component):
+    """
+    A test component. It does not start any processes or so, it just logs
+    information about what happens.
+    """
+    def __init__(self, owner, name, kind):
+        """
+        Initializes the component. The owner is the test that started the
+        component. The logging will happen into it.
+
+        The process is used as a name for the logging.
+        """
+        Component.__init__(self, name, owner, kind)
+        self.__owner = owner
+        self.__name = name
+        self.log('init')
+
+    def log(self, event):
+        """
+        Log an event into the owner. The owner can then check the correct
+        order of events that happened.
+        """
+        self.__owner.log.append((self.__name, event))
+
+    def start_internal(self):
+        self.log('start')
+
+    def stop_internal(self):
+        self.log('stop')
+
+    def failed_internal(self):
+        self.log('failed')
+
+class ConfiguratorTest(unittest.TestCase):
+    """
+    Tests for the configurator.
+    """
+    def setUp(self):
+        """
+        Insert the special evaluated test components we use and prepare the
+        log.
+        """
+        # We put our functions inside instead of class constructors,
+        # so we can look into what is happening more easily
+        self.__orig_specials = copy(specials)
+        specials['test'] = self.__component_test
+        log = []
+
+    def tearDown(self):
+        """
+        Clean up the special evaluated test components.
+        """
+        specials = self.__orig_specials
+
+    def __component_test(self, process, boss, kind):
+        """
+        Create a test component. It will log events to us.
+        """
+        self.assertEqual(self, boss)
+        return TestComponent(self, process, kind)
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
