@@ -332,9 +332,38 @@ class XfrinIXFREnd(XfrinState):
         return False
 
 class XfrinAXFR(XfrinState):
+    def __init__(self):
+        self.__diff = None
+
     def handle_rr(self, conn, rr):
-        raise XfrinException('Falling back from IXFR to AXFR not ' +
-                             'supported yet')
+        """
+        Handle the RR by putting it into the zone.
+        """
+        if self.__diff is None:
+            # This is the first RR there. So create the diff to accumulate
+            # data
+            self.__diff = Diff(conn._datasrc_client, conn._zone_name, True)
+        self.__diff.add_data(rr)
+        if rr.get_type() == RRType.SOA():
+            # Soa means end. We commit the data and move to the final state
+            self.set_xfrstate(conn, XfrinAXFREnd())
+            self.__diff.commit()
+        # Yes, we've eaten this RR.
+        return True
+
+class XfrinAXFREnd(XfrinState):
+    def handle_rr(self, conn, rr):
+        raise XfrinProtocolError('Extra data after the end of AXFR: ' +
+                                 rr.to_text())
+
+    def finish_message(self, conn):
+        """
+        Final processing after processing an entire AXFR session.
+
+        There might be more actions here, but for now we simply return False,
+        indicating there will be no more message to receive.
+        """
+        return False
 
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
