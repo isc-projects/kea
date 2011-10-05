@@ -73,7 +73,7 @@ class Diff:
         """
         Schedules an operation with rr.
 
-        It does all the real work of add_data and remove_data, including
+        It does all the real work of add_data and delete_data, including
         all checks.
         """
         self.__check_commited()
@@ -95,9 +95,9 @@ class Diff:
         """
         self.__data_common(rr, 'add')
 
-    def remove_data(self, rr):
+    def delete_data(self, rr):
         """
-        Schedules removal of an RR from the zone in this diff.
+        Schedules deleting an RR from the zone in this diff.
 
         The rr is of isc.dns.RRset type and it must contain only one RR.
         If this is not the case or if the diff was already commited, this
@@ -156,7 +156,7 @@ class Diff:
             if operation == 'add':
                 self.__updater.add_rrset(rrset)
             elif operation == 'remove':
-                self.__updater.remove_rrset(rrset)
+                self.__updater.delete_rrset(rrset)
             else:
                 raise ValueError('Unknown operation ' + operation)
         # As everything is already in, drop the buffer

@@ -164,7 +164,7 @@ class DiffTest(unittest.TestCase):
         Also try passing an rrset that has different amount of RRs than 1.
         """
         diff = Diff(self, Name('example.org.'))
-        self.__data_common(diff, diff.remove_data, 'remove')
+        self.__data_common(diff, diff.delete_data, 'remove')
 
     def test_apply(self):
         """
@@ -174,7 +174,7 @@ class DiffTest(unittest.TestCase):
         # Prepare the diff
         diff = Diff(self, Name('example.org.'))
         diff.add_data(self.__rrset1)
-        diff.remove_data(self.__rrset2)
+        diff.delete_data(self.__rrset2)
         dlist = [('add', self.__rrset1), ('remove', self.__rrset2)]
         self.assertEqual(dlist, diff.get_buffer())
         # Do the apply, hook the compact method
@@ -209,7 +209,7 @@ class DiffTest(unittest.TestCase):
         # Now check all range of other methods raise ValueError
         self.assertRaises(ValueError, diff.commit)
         self.assertRaises(ValueError, diff.add_data, self.__rrset2)
-        self.assertRaises(ValueError, diff.remove_data, self.__rrset1)
+        self.assertRaises(ValueError, diff.delete_data, self.__rrset1)
         diff.apply = orig_apply
         self.assertRaises(ValueError, diff.apply)
         # This one does not state it should raise, so check it doesn't
@@ -249,11 +249,11 @@ class DiffTest(unittest.TestCase):
         # Similar with remove
         self.__apply_called = False
         for i in range(0, 99):
-            diff.remove_data(self.__rrset2)
+            diff.delete_data(self.__rrset2)
         expected = [('remove', self.__rrset2)] * 99
         self.assertEqual(expected, diff.get_buffer())
         self.assertFalse(self.__apply_called)
-        diff.remove_data(self.__rrset2)
+        diff.delete_data(self.__rrset2)
         self.assertTrue(self.__apply_called)
 
     def test_compact(self):
@@ -295,7 +295,7 @@ class DiffTest(unittest.TestCase):
                 if op == 'add':
                     diff.add_data(rrset)
                 else:
-                    diff.remove_data(rrset)
+                    diff.delete_data(rrset)
         # Compact it
         diff.compact()
         # Now check they got compacted. They should be in the same order as
