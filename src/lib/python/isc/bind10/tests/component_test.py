@@ -34,7 +34,7 @@ class ComponentTests(unittest.TestCase):
     """
     def setUp(self):
         """
-        Pretend a newly started system
+        Pretend a newly started system.
         """
         self.__shutdown = False
         self.__exitcode = None
@@ -44,14 +44,19 @@ class ComponentTests(unittest.TestCase):
         # Back up the time function, we may want to replace it with something
         self.__orig_time = isc.bind10.component.time.time
 
+    def tearDown(self):
+        """
+        Clean up after tests.
+        """
+        # Return the original time function
+        isc.bind10.component.time.time = self.__orig_time
+
     def shutdown(self, exitcode=0):
         """
         Mock function to shut down. We just note we were asked to do so.
         """
         self.__shutdown = True
         self.__exitcode = None
-        # Return the original time function
-        isc.bind10.component.time.time = self.__orig_time
 
     def __timeskip(self):
         """
