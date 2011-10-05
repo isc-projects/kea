@@ -1028,7 +1028,8 @@ class Xfrin:
         news(command: zone_new_data_ready) to zone manager and xfrout.
         if xfrin failed, just tell the bad news to zone manager, so that
         it can reset the refresh timer for that zone. '''
-        param = {'zone_name': zone_name, 'zone_class': zone_class.to_text()}
+        param = {'zone_name': zone_name.to_text(),
+                 'zone_class': zone_class.to_text()}
         if xfr_result == XFRIN_OK:
             msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
             # catch the exception, in case msgq has been killed.
