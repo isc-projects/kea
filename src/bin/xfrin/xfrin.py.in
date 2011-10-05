@@ -204,7 +204,9 @@ class XfrinState:
         sequence or completing the session.
 
         All subclass has their specific behaviors for this method, so
-        there is no default definition.
+        there is no default definition.  If the base class version
+        is called, it's a bug of the caller, and it's notified via
+        an XfrinException exception.
 
         This method returns a boolean value: True if the given RR was
         fully handled and the caller should go to the next RR; False
@@ -212,7 +214,8 @@ class XfrinState:
         state for the same RR again.
 
         '''
-        pass
+        raise XfrinException("Internal bug: " +
+                             "XfrinState.handle_rr() called directly")
 
     def finish_message(self, conn):
         '''Perform any final processing after handling all RRs of a response.
