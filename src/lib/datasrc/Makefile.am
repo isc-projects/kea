@@ -28,13 +28,13 @@ nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_LDFLAGS = -module
 sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-sqlite3_ds_la_LIBADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la
+sqlite3_ds_la_LIBADD += libdatasrc.la
 sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)
 
 memory_ds_la_SOURCES = memory_datasrc.h memory_datasrc.cc
 memory_ds_la_LDFLAGS = -module
 memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-memory_ds_la_LIBADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la
+memory_ds_la_LIBADD += libdatasrc.la
 
 libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
