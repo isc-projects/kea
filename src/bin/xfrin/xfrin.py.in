@@ -212,8 +212,8 @@ class XfrinIXFRDeleteSOA(XfrinState):
         if rr.get_type() != RRType.SOA():
             # this shouldn't happen; should this occur it means an internal
             # bug.
-            raise XfrinException(rr.get_type().to_text() + \
-                                     ' RR is given in IXFRDeleteSOA state')
+            raise XfrinException(rr.get_type().to_text() +
+                                 ' RR is given in IXFRDeleteSOA state')
         # This is the beginning state of one difference sequence (changes
         # for one SOA update).  We need to create a new Diff object now.
         conn._diff = Diff(conn._datasrc_client, conn._zone_name)
@@ -236,8 +236,8 @@ class XfrinIXFRAddSOA(XfrinState):
         if rr.get_type() != RRType.SOA():
             # this shouldn't happen; should this occur it means an internal
             # bug.
-            raise XfrinException(rr.get_type().to_text() + \
-                                     ' RR is given in IXFRAddSOA state')
+            raise XfrinException(rr.get_type().to_text() +
+                                 ' RR is given in IXFRAddSOA state')
         conn._diff.add_data(rr)
         self.set_xfrstate(conn, XfrinIXFRAdd())
         return True
@@ -251,10 +251,10 @@ class XfrinIXFRAdd(XfrinState):
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
             elif soa_serial != conn._current_serial:
-                raise XfrinProtocolError('IXFR out of sync: expected ' + \
-                                             'serial ' + \
-                                             str(conn._current_serial) + \
-                                             ', got ' + str(soa_serial))
+                raise XfrinProtocolError('IXFR out of sync: expected ' +
+                                         'serial ' +
+                                         str(conn._current_serial) +
+                                         ', got ' + str(soa_serial))
             else:
                 conn._diff.commit()
                 self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
@@ -264,8 +264,8 @@ class XfrinIXFRAdd(XfrinState):
 
 class XfrinIXFREnd(XfrinState):
     def handle_rr(self, conn, rr):
-        raise XfrinProtocolError('Extra data after the end of IXFR diffs: ' + \
-                                     rr.to_text())
+        raise XfrinProtocolError('Extra data after the end of IXFR diffs: ' +
+                                 rr.to_text())
 
     def finish_message(self, conn):
         '''Final processing after processing an entire IXFR session.
@@ -278,8 +278,8 @@ class XfrinIXFREnd(XfrinState):
 
 class XfrinAXFR(XfrinState):
     def handle_rr(self, conn, rr):
-        raise XfrinException('Falling back from IXFR to AXFR not ' + \
-                                 'supported yet')
+        raise XfrinException('Falling back from IXFR to AXFR not ' +
+                             'supported yet')
 
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
