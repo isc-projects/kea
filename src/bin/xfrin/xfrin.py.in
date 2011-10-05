@@ -525,7 +525,11 @@ class XfrinConnection(asyncore.dispatcher):
             logger.error(XFRIN_AXFR_INTERNAL_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
         finally:
-           self.close()
+            # Make sure any remaining transaction in the diff is closed
+            # (if not yet - possible in case of xfr-level exception) as soon
+            # as possible
+            self._diff = None
+            self.close()
 
         return ret
 
