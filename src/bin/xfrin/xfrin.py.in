@@ -229,7 +229,7 @@ class XfrinInitialSOA(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() != RRType.SOA():
             raise XfrinProtocolError('First RR in zone transfer must be SOA ('
-                                     + rr.get_type().to_text() + ' given)')
+                                     + rr.get_type().to_text() + ' received)')
         conn._end_serial = get_soa_serial(rr.get_rdata()[0])
 
         # FIXME: we need to check the serial is actually greater than ours.
