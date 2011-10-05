@@ -142,7 +142,6 @@ class XfrinState:
     machine because they cannot be distinguished immediately - an AXFR
     response to an IXFR request can only be detected when the first two (2)
     response RRs have already been received.
-    NOTE: the AXFR part of the state machine is incomplete at this point.
 
     The following diagram summarizes the state transition.  After sending
     the query, xfrin starts the process with the InitialSOA state (all
@@ -151,8 +150,13 @@ class XfrinState:
     process successfully completes.
 
 
-            (recv SOA)       (AXFR-style IXFR)
-    InitialSOA------->FirstData------------->AXFR
+            (recv SOA)       (AXFR-style IXFR)      (SOA)
+    InitialSOA------->FirstData------------->AXFR--------->AXFREnd
+                          |                  |  ^
+                          |                  |  |
+                          |                  +--+
+                          |                (non SOA)
+                          |
                           |                     (non SOA, delete)
                (pure IXFR,|                           +-------+
             keep handling)|             (Delete SOA)  V       |
