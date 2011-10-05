@@ -637,8 +637,12 @@ doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
     const size_t column_count =
         sizeof(update_params) / sizeof(update_params[0]);
     for (int i = 0; i < column_count; ++i) {
-        if (sqlite3_bind_text(stmt, ++param_id, update_params[i].c_str(), -1,
-                              SQLITE_TRANSIENT) != SQLITE_OK) {
+        // The old sqlite3 data source API assumes NULL for an empty column.
+        // We need to provide compatibility at least for now.
+        if (sqlite3_bind_text(stmt, ++param_id,
+                              update_params[i].empty() ? NULL :
+                              update_params[i].c_str(),
+                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
             isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
                       sqlite3_errmsg(dbparams.db_));
         }
