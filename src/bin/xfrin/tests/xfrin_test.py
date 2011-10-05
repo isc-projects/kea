@@ -1238,9 +1238,28 @@ class TestIXFRSessionWithSQLite3(TestXfrinConnection):
                 answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
         self.conn.response_generator = create_ixfr_response
 
+        # Confirm xfrin succeeds and SOA is updated
         self.assertEqual(1230, self.get_zone_serial())
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, True))
         self.assertEqual(1234, self.get_zone_serial())
+
+    def test_do_xfrin_sqlite3_fail(self):
+        '''Similar to the previous test, but xfrin fails due to error.
+
+        Check the DB is not changed.
+
+        '''
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR())],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset,
+                         self._create_soa('1235')])
+        self.conn.response_generator = create_ixfr_response
+
+        self.assertEqual(1230, self.get_zone_serial())
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, True))
+        self.assertEqual(1230, self.get_zone_serial())
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
