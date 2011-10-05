@@ -575,7 +575,6 @@ class XfrinConnection(asyncore.dispatcher):
             # to hardcode here.
             request_str = 'IXFR' if request_type == RRType.IXFR() else 'AXFR'
             if check_soa:
-                logstr = 'SOA check for \'%s\' ' % self.zone_str()
                 ret =  self._check_soa_serial()
 
             if ret == XFRIN_OK:
