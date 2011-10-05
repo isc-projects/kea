@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
+import shutil
 import socket
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
@@ -37,6 +38,9 @@ TEST_MASTER_IPV6_ADDRESS = '::1'
 TEST_MASTER_IPV6_ADDRINFO = (socket.AF_INET6, socket.SOCK_STREAM,
                              socket.IPPROTO_TCP, '',
                              (TEST_MASTER_IPV6_ADDRESS, 53))
+
+TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
+TESTDATA_OBJDIR = os.getenv("TESTDATAOBJDIR")
 # XXX: This should be a non priviledge port that is unlikely to be used.
 # If some other process uses this port test will fail.
 TEST_MASTER_PORT = '53535'
@@ -127,7 +131,7 @@ class MockDataSourceClient():
     def add_rrset(self, rrset):
         self.diffs.append(('add', rrset))
 
-    def remove_rrset(self, rrset):
+    def delete_rrset(self, rrset):
         self.diffs.append(('remove', rrset))
 
     def commit(self):
@@ -161,15 +165,15 @@ class MockXfrin(Xfrin):
         # method in the superclass
         self.xfrin_started_master_addr = master_addrinfo[2][0]
         self.xfrin_started_master_port = master_addrinfo[2][1]
-        return Xfrin.xfrin_start(self, zone_name, rrclass, db_file,
+        return Xfrin.xfrin_start(self, zone_name, rrclass, None,
                                  master_addrinfo, tsig_key,
                                  check_soa)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, db_file, shutdown_event,
                  master_addr):
-        super().__init__(sock_map, zone_name, rrclass, db_file, shutdown_event,
-                         master_addr)
+        super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
+                         db_file, shutdown_event, master_addr)
         self.query_data = b''
         self.reply_data = b''
         self.force_time_out = False
@@ -177,11 +181,6 @@ class MockXfrinConnection(XfrinConnection):
         self.qlen = None
         self.qid = None
         self.response_generator = None
-
-    # The following three implement a simplified mock of DataSourceClient
-    # and ZoneFinder classes for testing purposes.
-    def _get_datasrc_client(self, rrclass):
-        return MockDataSourceClient()
 
     def _asyncore_loop(self):
         if self.force_close:
@@ -634,8 +633,8 @@ class TestAXFR(TestXfrinConnection):
         c.close()
 
     def test_init_chclass(self):
-        c = XfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(), TEST_DB_FILE,
-                            threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(), TEST_DB_FILE,
+                                threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
         axfrmsg = c._create_query(RRType.AXFR())
         self.assertEqual(axfrmsg.get_question()[0].get_class(),
                          RRClass.CH())
@@ -1199,6 +1198,49 @@ class TestIXFRSession(TestXfrinConnection):
         '''
         self._create_broken_response_data()
         self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, True))
+
+class TestIXFRSessionWithSQLite3(TestXfrinConnection):
+    '''Tests for IXFR sessions using an SQLite3 DB.
+
+    These are provided mainly to confirm the implementation actually works
+    in an environment closer to actual operational environments.  So we
+    only check a few common cases; other details are tested using mock
+    data sources.
+
+    '''
+    def setUp(self):
+        self.sqlite3db_src = TESTDATA_SRCDIR + '/example.com.sqlite3'
+        self.sqlite3db_obj = TESTDATA_SRCDIR + '/example.com.sqlite3.copy'
+        super().setUp()
+        if os.path.exists(self.sqlite3db_obj):
+            os.unlink(self.sqlite3db_obj)
+        shutil.copyfile(self.sqlite3db_src, self.sqlite3db_obj)
+        self.conn._datasrc_client = DataSourceClient(self.sqlite3db_obj)
+
+    def tearDown(self):
+        if os.path.exists(self.sqlite3db_obj):
+            os.unlink(self.sqlite3db_obj)
+
+    def get_zone_serial(self):
+        result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
+        self.assertEqual(DataSourceClient.SUCCESS, result)
+        result, soa = finder.find(TEST_ZONE_NAME, RRType.SOA(),
+                                  None, ZoneFinder.FIND_DEFAULT)
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(1, soa.get_rdata_count())
+        return get_soa_serial(soa.get_rdata()[0])
+
+    def test_do_xfrin_sqlite3(self):
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR())],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self.conn.response_generator = create_ixfr_response
+
+        self.assertEqual(1230, self.get_zone_serial())
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, True))
+        self.assertEqual(1234, self.get_zone_serial())
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
