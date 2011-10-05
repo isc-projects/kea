@@ -151,3 +151,38 @@ class Component:
         time in between actual failure and the call.
         """
         return self.__running
+
+class Configurator:
+    """
+    This thing keeps track of configuration changes and starts and stops
+    components as it goes. It also handles the inital startup and final
+    shutdown.
+    """
+    def __init__(self, boss):
+        """
+        Initializes the configurator, but nothing is started yet.
+
+        The boss parameter is the boss object used to start and stop processes.
+        """
+        pass
+
+    def startup(self, configuration):
+        """
+        Starts the first set of processes. This configuration is expected
+        to be hardcoded from the boss itself to start the configuration
+        manager and other similar things.
+        """
+        pass
+
+    def shutdown(self):
+        """
+        Shuts everything down.
+        """
+        pass
+
+    def reconfigure(configuration):
+        """
+        Changes configuration from the current one to the provided. It
+        starts and stops all the components as needed.
+        """
+        pass
