@@ -26,6 +26,13 @@
 # Short-hand for getting SOA - just supply address of the server
 DIG_SOA="$DIG +norecurse +short -p $DNS_PORT example. SOA"
 
+# All IXFR tests use a BIND 9 server serving a BIND 10 client
+SERVER_NAME=ns1
+SERVER_IP=10.53.0.1   # BIND 9
+
+CLIENT_NAME=nsx2
+CLIENT_IP=10.53.0.2   # BIND 10
+
 # \brief Check Arguments
 #
 # All functions take the name of the server as the firsrt argument and its IP
@@ -204,5 +211,55 @@ update_server_zone() {
 
     new_serial=`$DIG_SOA @$ip | $AWK '{print $3}'`
     echo "I:$name was at serial $old_serial, now at $new_serial"
+    return 0
+}
+
+# \brief Compare client and server SOAs
+#
+# Checks the SOAs of two systems and reports if they are not equal.
+#
+# \arg $1 Name of the IXFR server
+# \arg $2 IP of the IXFR server 
+# \arg $3 Name of the IXFR client
+# \arg $4 IP of the IXFR client
+#
+# \return 0 if the systems have the same SOA, 1 if not.  In the latter case,
+#         an error will be output.
+compare_soa() {
+
+    # If the following checks fail, the code is wrong.
+
+    check_name_ip $*
+    if [ $? -ne 0 ];
+    then
+        echo "R:FAIL compare_soa - name or ip address of server not supplied"
+        return 1
+    fi
+
+    server_name=$1
+    shift
+    server_ip=$1
+    shift
+
+    check_name_ip $*
+    if [ $? -ne 0 ];
+    then
+        echo "R:FAIL compare_soa - name or ip address of client not supplied"
+        return 1
+    fi
+
+    client_name=$1
+    shift
+    client_ip=$1
+    shift
+
+    client_serial=`$DIG_SOA @$client_ip | $AWK '{print $3}'`
+    server_serial=`$DIG_SOA @$server_ip | $AWK '{print $3}'`
+    if [ "$client_serial" != "$server_serial" ];
+    then
+        echo "R:FAIL client $client_name serial $client_serial not same as server $server_name serial $server_serial"
+        return 1
+    fi
+
     return 0
 }
