@@ -19,7 +19,7 @@ libacl_la_LIBADD += $(top_builddir)/src/lib/util/libutil.la
 # DNS specialized one
 lib_LTLIBRARIES += libdnsacl.la
 
-libdnsacl_la_SOURCES = dns.h dns.cc
+libdnsacl_la_SOURCES = dns.h dns.cc dnsname_check.h
 
 libdnsacl_la_LIBADD = libacl.la
 libdnsacl_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la

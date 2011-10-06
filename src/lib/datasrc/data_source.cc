@@ -903,7 +903,7 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
             result = proveNX(q, task, zoneinfo, true);
             if (result != DataSrc::SUCCESS) {
                 m.setRcode(Rcode::SERVFAIL());
-                logger.error(DATASRC_QUERY_WILDCARD_PROVENX_FAIL).
+                logger.error(DATASRC_QUERY_WILDCARD_PROVE_NX_FAIL).
                     arg(task->qname).arg(result);
                 return (DataSrc::ERROR);
             }
@@ -945,7 +945,7 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
 void
 DataSrc::doQuery(Query& q) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_QUERY_PROCESS).arg(q.qname()).
-        arg(q.qclass());
+        arg(q.qtype()).arg(q.qclass());
     Message& m = q.message();
     vector<RRsetPtr> additional;
 
@@ -1162,7 +1162,7 @@ DataSrc::doQuery(Query& q) {
                 result = proveNX(q, task, zoneinfo, false);
                 if (result != DataSrc::SUCCESS) {
                     m.setRcode(Rcode::SERVFAIL());
-                    logger.error(DATASRC_QUERY_PROVENX_FAIL).arg(task->qname);
+                    logger.error(DATASRC_QUERY_PROVE_NX_FAIL).arg(task->qname);
                     return;
                 }
             }

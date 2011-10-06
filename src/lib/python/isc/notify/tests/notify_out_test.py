@@ -21,6 +21,7 @@ import time
 import socket
 from isc.datasrc import sqlite3_ds
 from isc.notify import notify_out, SOCK_DATA
+import isc.log
 
 # our fake socket, where we can read and insert messages
 class MockSocket():
@@ -79,7 +80,6 @@ class TestZoneNotifyInfo(unittest.TestCase):
         self.info.prepare_notify_out()
         self.assertEqual(self.info.get_current_notify_target(), ('127.0.0.1', 53))
 
-        self.assertEqual('127.0.0.1#53', notify_out.addr_to_str(('127.0.0.1', 53)))
         self.info.set_next_notify_target()
         self.assertEqual(self.info.get_current_notify_target(), ('1.1.1.1', 5353))
         self.info.set_next_notify_target()
@@ -223,29 +223,30 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(0, len(self._notify._waiting_zones))
 
     def test_handle_notify_reply(self):
-        self.assertEqual(notify_out._BAD_REPLY_PACKET, self._notify._handle_notify_reply(None, b'badmsg'))
+        fake_address = ('192.0.2.1', 53)
+        self.assertEqual(notify_out._BAD_REPLY_PACKET, self._notify._handle_notify_reply(None, b'badmsg', fake_address))
         example_com_info = self._notify._notify_infos[('example.com.', 'IN')]
         example_com_info.notify_msg_id = 0X2f18
 
         # test with right notify reply message
         data = b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01'
-        self.assertEqual(notify_out._REPLY_OK, self._notify._handle_notify_reply(example_com_info, data))
+        self.assertEqual(notify_out._REPLY_OK, self._notify._handle_notify_reply(example_com_info, data, fake_address))
 
         # test with unright query id
         data = b'\x2e\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01'
-        self.assertEqual(notify_out._BAD_QUERY_ID, self._notify._handle_notify_reply(example_com_info, data))
+        self.assertEqual(notify_out._BAD_QUERY_ID, self._notify._handle_notify_reply(example_com_info, data, fake_address))
 
         # test with unright query name
         data = b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03net\x00\x00\x06\x00\x01'
-        self.assertEqual(notify_out._BAD_QUERY_NAME, self._notify._handle_notify_reply(example_com_info, data))
+        self.assertEqual(notify_out._BAD_QUERY_NAME, self._notify._handle_notify_reply(example_com_info, data, fake_address))
 
         # test with unright opcode
         data = b'\x2f\x18\x80\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01'
-        self.assertEqual(notify_out._BAD_OPCODE, self._notify._handle_notify_reply(example_com_info, data))
+        self.assertEqual(notify_out._BAD_OPCODE, self._notify._handle_notify_reply(example_com_info, data, fake_address))
 
         # test with unright qr
         data = b'\x2f\x18\x10\x10\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01'
-        self.assertEqual(notify_out._BAD_QR, self._notify._handle_notify_reply(example_com_info, data))
+        self.assertEqual(notify_out._BAD_QR, self._notify._handle_notify_reply(example_com_info, data, fake_address))
 
     def test_send_notify_message_udp_ipv4(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
@@ -299,6 +300,15 @@ class TestNotifyOut(unittest.TestCase):
         example_net_info.notify_try_num = notify_out._MAX_NOTIFY_TRY_NUM
         self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_NONE)
         self.assertNotEqual(cur_tgt, example_net_info._notify_current)
+
+        cur_tgt = example_net_info._notify_current
+        example_net_info.create_socket('127.0.0.1')
+        # dns message, will result in bad_qid, but what we are testing
+        # here is whether handle_notify_reply is called correctly
+        example_net_info._sock.remote_end().send(b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01')
+        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_READ)
+        self.assertNotEqual(cur_tgt, example_net_info._notify_current)
+
 
     def _example_net_data_reader(self):
         zone_data = [
@@ -406,6 +416,7 @@ class TestNotifyOut(unittest.TestCase):
         self.assertFalse(thread.is_alive())
 
 if __name__== "__main__":
+    isc.log.init("bind10")
     unittest.main()
 
 

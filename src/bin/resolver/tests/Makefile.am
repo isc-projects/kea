@@ -39,6 +39,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+run_unittests_LDADD += $(top_builddir)/src/lib/acl/libdnsacl.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la

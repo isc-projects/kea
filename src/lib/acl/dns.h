@@ -13,14 +13,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef ACL_DNS_H
-#define ACL_DNS_H
+#define ACL_DNS_H 1
 
-#include "loader.h"
+#include <string>
+#include <vector>
 
-#include <asiolink/io_address.h>
-#include <dns/message.h>
+#include <boost/shared_ptr.hpp>
+
+#include <cc/data.h>
+
+#include <acl/ip_check.h>
+#include <acl/dnsname_check.h>
+#include <acl/loader.h>
 
 namespace isc {
+namespace dns {
+class TSIGRecord;
+}
 namespace acl {
 namespace dns {
 
@@ -30,47 +39,74 @@ namespace dns {
  * This plays the role of Context of the generic template ACLs (in namespace
  * isc::acl).
  *
- * It is simple structure holding just the bunch of information. Therefore
- * the names don't end up with a slash, there are no methods so they can't be
- * confused with local variables.
+ * It is a simple structure holding just the bunch of information. Therefore
+ * the names don't end up with an underscore; there are no methods so they
+ * can't be confused with local variables.
  *
- * \todo Do we want a constructor to set this in a shorter manner? So we can
- *     call the ACLs directly?
+ * This structure is generally expected to be ephemeral and read-only: It
+ * would be constructed immediately before a particular ACL is checked
+ * and used only for the ACL match purposes.  Due to this nature, and since
+ * ACL processing is often performance sensitive (typically it's performed
+ * against all incoming packets), the construction is designed to be
+ * lightweight: it tries to avoid expensive data copies or dynamic memory
+ * allocation as much as possible.  Specifically, the constructor can
+ * take a pointer or reference to an object and keeps it as a reference
+ * (not making a local copy).  This also means the caller is responsible for
+ * keeping the passed parameters valid while this structure is used.
+ * This should generally be reasonable as this structure is expected to be
+ * used only for a very short period as stated above.
+ *
+ * Based on the minimalist philosophy, the initial implementation only
+ * maintains the remote (source) IP address of the request and (optionally)
+ * the TSIG record included in the request.  We may add more parameters of
+ * the request as we see the need for them.  Possible additional parameters
+ * are the local (destination) IP address, the remote and local port numbers,
+ * various fields of the DNS request (e.g. a particular header flag value).
  */
 struct RequestContext {
-    /// \brief The DNS message (payload).
-    isc::dns::ConstMessagePtr message;
-    /// \brief The remote IP address (eg. the client).
-    asiolink::IOAddress remote_address;
-    /// \brief The local IP address (ours, of the interface where we received).
-    asiolink::IOAddress local_address;
-    /// \brief The remote port.
-    uint16_t remote_port;
-    /// \brief The local port.
-    uint16_t local_port;
-    /**
-     * \brief Name of the TSIG key the message is signed with.
-     *
-     * This will be either the name of the TSIG key the message is signed with,
-     * or empty string, if the message is not signed. It is true we could get
-     * the information from the message itself, but because at the time when
-     * the ACL is checked, the signature has been verified already, so passing
-     * it around is probably cheaper.
-     *
-     * It is expected that messages with invalid signatures are handled before
-     * ACL.
-     */
-    std::string tsig_key_name;
+    /// The constructor
+    ///
+    /// This is a trivial constructor that perform straightforward
+    /// initialization of the member variables from the given parameters.
+    ///
+    /// \exception None
+    ///
+    /// \parameter remote_address_param The remote IP address
+    /// \parameter tsig_param A valid pointer to the TSIG record included in
+    /// the request or NULL if the request doesn't contain a TSIG.
+    RequestContext(const IPAddress& remote_address_param,
+                   const isc::dns::TSIGRecord* tsig_param) :
+        remote_address(remote_address_param),
+        tsig(tsig_param)
+    {}
+
+    ///
+    /// \name Parameter variables
+    ///
+    /// These member variables must be immutable so that the integrity of
+    /// the structure is kept throughout its lifetime.  The easiest way is
+    /// to declare the variable as const.  If it's not possible for a
+    /// particular variable, it must be defined as private and accessible
+    /// only via an accessor method.
+    //@{
+    /// \brief The remote IP address (eg. the client's IP address).
+    const IPAddress& remote_address;
+
+    /// \brief The TSIG record included in the request message, if any.
+    ///
+    /// If the request doesn't include a TSIG, this member will be NULL.
+    const isc::dns::TSIGRecord* const tsig;
+    //@}
 };
 
 /// \brief DNS based check.
-typedef acl::Check<RequestContext> Check;
+typedef acl::Check<RequestContext> RequestCheck;
 /// \brief DNS based compound check.
 typedef acl::CompoundCheck<RequestContext> CompoundCheck;
 /// \brief DNS based ACL.
-typedef acl::ACL<RequestContext> ACL;
+typedef acl::ACL<RequestContext> RequestACL;
 /// \brief DNS based ACL loader.
-typedef acl::Loader<RequestContext> Loader;
+typedef acl::Loader<RequestContext> RequestLoader;
 
 /**
  * \brief Loader singleton access function.
@@ -80,10 +116,39 @@ typedef acl::Loader<RequestContext> Loader;
  * one is enough, this one will have registered default checks and it
  * is known one, so any plugins can registrer additional checks as well.
  */
-Loader& getLoader();
+RequestLoader& getRequestLoader();
 
-}
-}
-}
+// The following is essentially private to the implementation and could
+// be hidden in the implementation file.  But it's visible via this header
+// file for testing purposes.  They are not supposed to be used by normal
+// applications directly, and to signal the intent, they are given inside
+// a separate namespace.
+namespace internal {
+
+// Shortcut typedef
+typedef isc::acl::IPCheck<RequestContext> RequestIPCheck;
+typedef isc::acl::dns::NameCheck<RequestContext> RequestKeyCheck;
+
+class RequestCheckCreator : public acl::Loader<RequestContext>::CheckCreator {
+public:
+    virtual std::vector<std::string> names() const;
+
+    virtual boost::shared_ptr<RequestCheck>
+    create(const std::string& name, isc::data::ConstElementPtr definition,
+           const acl::Loader<RequestContext>& loader);
+
+    /// Until we are sure how the various rules work for this case, we won't
+    /// allow unexpected special interpretation for list definitions.
+    virtual bool allowListAbbreviation() const { return (false); }
+};
+} // end of namespace "internal"
+
+} // end of namespace "dns"
+} // end of namespace "acl"
+} // end of namespace "isc"
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

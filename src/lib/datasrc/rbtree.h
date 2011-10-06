@@ -704,9 +704,9 @@ public:
     /// \brief Find with callback and node chain.
     ///
     /// This version of \c find() is specifically designed for the backend
-    /// of the \c MemoryZone class, and implements all necessary features
-    /// for that purpose.  Other applications shouldn't need these additional
-    /// features, and should normally use the simpler versions.
+    /// of the \c InMemoryZoneFinder class, and implements all necessary
+    /// features for that purpose.  Other applications shouldn't need these
+    /// additional features, and should normally use the simpler versions.
     ///
     /// This version of \c find() calls the callback whenever traversing (on
     /// the way from root down the tree) a marked node on the way down through

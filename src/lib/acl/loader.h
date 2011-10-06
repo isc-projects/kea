@@ -15,7 +15,8 @@
 #ifndef ACL_LOADER_H
 #define ACL_LOADER_H
 
-#include "acl.h"
+#include <exceptions/exceptions.h>
+#include <acl/acl.h>
 #include <cc/data.h>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -81,7 +82,7 @@ public:
  * or if it doesn't contain one of the accepted values.
  *
  * \param action The JSON representation of the action. It must be a string
- *     and contain one of "ACCEPT", "REJECT" or "DENY".
+ *     and contain one of "ACCEPT", "REJECT" or "DROP.
  * \note We could define different names or add aliases if needed.
  */
 BasicAction defaultActionLoader(data::ConstElementPtr action);
@@ -100,21 +101,21 @@ BasicAction defaultActionLoader(data::ConstElementPtr action);
  *
  * An ACL definition looks like this:
  * \verbatim
- * [
- *   {
- *      "action": "ACCEPT",
- *      "match-type": <parameter>
- *   },
- *   {
- *      "action": "REJECT",
- *      "match-type": <parameter>
- *      "another-match-type": [<parameter1>, <parameter2>]
-*    },
-*    {
-*       "action": "DROP"
-*    }
- * ]
- * \endverbatim
+ [
+   {
+      "action": "ACCEPT",
+      "match-type": <parameter>
+   },
+   {
+      "action": "REJECT",
+      "match-type": <parameter>,
+      "another-match-type": [<parameter1>, <parameter2>]
+   },
+   {
+      "action": "DROP"
+   }
+ ]
+ \endverbatim
  *
  * This is a list of elements. Each element must have an "action"
  * entry/keyword. That one specifies which action is returned if this
@@ -297,16 +298,28 @@ public:
      * \brief Load an ACL.
      *
      * This parses an ACL list, creates the checks and actions of each element
-     * and returns it. It may throw LoaderError if it isn't a list or the
-     * "action" key is missing in some element. Also, no exceptions from
-     * loadCheck (therefore from whatever creator is used) and from the
-     * actionLoader passed to constructor are not caught.
+     * and returns it.
+     *
+     * No exceptions from \c loadCheck (therefore from whatever creator is
+     * used) and from the actionLoader passed to constructor are caught.
+     *
+     * \exception InvalidParameter The given element is NULL (most likely a
+     * caller's bug)
+     * \exception LoaderError The given element isn't a list or the
+     * "action" key is missing in some element
      *
      * \param description The JSON list of ACL.
+     *
+     * \return The newly created ACL object
      */
     boost::shared_ptr<ACL<Context, Action> > load(const data::ConstElementPtr&
                                                   description) const
     {
+        if (!description) {
+            isc_throw(isc::InvalidParameter,
+                      "Null description is passed to ACL loader");
+        }
+
         // We first check it's a list, so we can use the list reference
         // (the list may be huge)
         if (description->getType() != data::Element::list) {
@@ -460,3 +473,7 @@ private:
 #include "logic_check.h"
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

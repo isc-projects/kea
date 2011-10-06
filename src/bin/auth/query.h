@@ -26,7 +26,7 @@ class RRset;
 }
 
 namespace datasrc {
-class MemoryDataSrc;
+class DataSourceClient;
 }
 
 namespace auth {
@@ -36,10 +36,8 @@ namespace auth {
 ///
 /// Many of the design details for this class are still in flux.
 /// We'll revisit and update them as we add more functionality, for example:
-/// - memory_datasrc parameter of the constructor.  It is a data source that
-///   uses in memory dedicated backend.
 /// - as a related point, we may have to pass the RR class of the query.
-///   in the initial implementation the RR class is an attribute of memory
+///   in the initial implementation the RR class is an attribute of
 ///   datasource and omitted.  It's not clear if this assumption holds with
 ///   generic data sources.  On the other hand, it will help keep
 ///   implementation simpler, and we might rather want to modify the design
@@ -51,7 +49,7 @@ namespace auth {
 ///   separate attribute setter.
 /// - likewise, we'll eventually need to do per zone access control, for which
 ///   we need querier's information such as its IP address.
-/// - memory_datasrc and response may better be parameters to process() instead
+/// - datasrc_client and response may better be parameters to process() instead
 ///   of the constructor.
 ///
 /// <b>Note:</b> The class name is intentionally the same as the one used in
@@ -71,7 +69,7 @@ private:
     /// Adds a SOA of the zone into the authority zone of response_.
     /// Can throw NoSOA.
     ///
-    void putSOA(const isc::datasrc::Zone& zone) const;
+    void putSOA(isc::datasrc::ZoneFinder& zone) const;
 
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records).
@@ -83,11 +81,11 @@ private:
     /// This method may throw a exception because its underlying methods may
     /// throw exceptions.
     ///
-    /// \param zone The Zone wherein the additional data to the query is bo be
-    /// found.
+    /// \param zone The ZoneFinder through which the additional data for the
+    /// query is to be found.
     /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
     /// processing.
-    void getAdditional(const isc::datasrc::Zone& zone,
+    void getAdditional(isc::datasrc::ZoneFinder& zone,
                        const isc::dns::RRset& rrset) const;
 
     /// \brief Find address records for a specified name.
@@ -102,18 +100,19 @@ private:
     /// The glue records must exactly match the name in the NS RDATA, without
     /// CNAME or wildcard processing.
     ///
-    /// \param zone The \c Zone wherein the address records is to be found.
+    /// \param zone The \c ZoneFinder through which the address records is to
+    /// be found.
     /// \param qname The name in rrset RDATA.
     /// \param options The search options.
-    void findAddrs(const isc::datasrc::Zone& zone,
+    void findAddrs(isc::datasrc::ZoneFinder& zone,
                    const isc::dns::Name& qname,
-                   const isc::datasrc::Zone::FindOptions options
-                   = isc::datasrc::Zone::FIND_DEFAULT) const;
+                   const isc::datasrc::ZoneFinder::FindOptions options
+                   = isc::datasrc::ZoneFinder::FIND_DEFAULT) const;
 
-    /// \brief Look up \c Zone's NS and address records for the NS RDATA
-    /// (domain name) for authoritative answer.
+    /// \brief Look up a zone's NS RRset and their address records for an
+    /// authoritative answer.
     ///
-    /// On returning an authoritative answer, insert the \c Zone's NS into the
+    /// On returning an authoritative answer, insert a zone's NS into the
     /// authority section and AAAA/A RRs of each of the NS RDATA into the
     /// additional section.
     ///
@@ -126,25 +125,29 @@ private:
     /// include AAAA/A RRs under a zone cut in additional section. (BIND 9
     /// excludes under-cut RRs; NSD include them.)
     ///
-    /// \param zone The \c Zone wherein the additional data to the query is to
-    /// be found.
-    void getAuthAdditional(const isc::datasrc::Zone& zone) const;
+    /// \param zone The \c ZoneFinder through which the NS and additional data
+    /// for the query are to be found.
+    void getAuthAdditional(isc::datasrc::ZoneFinder& zone) const;
 
 public:
     /// Constructor from query parameters.
     ///
     /// This constructor never throws an exception.
     ///
-    /// \param memory_datasrc The memory datasource wherein the answer to the query is
+    /// \param datasrc_client The datasource wherein the answer to the query is
     /// to be found.
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
-    Query(const isc::datasrc::MemoryDataSrc& memory_datasrc,
+    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
+    ///     possible.
+    Query(const isc::datasrc::DataSourceClient& datasrc_client,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-          isc::dns::Message& response) :
-        memory_datasrc_(memory_datasrc), qname_(qname), qtype_(qtype),
-        response_(response)
+          isc::dns::Message& response, bool dnssec = false) :
+        datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
+        response_(response), dnssec_(dnssec),
+        dnssec_opt_(dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
+                    isc::datasrc::ZoneFinder::FIND_DEFAULT)
     {}
 
     /// Process the query.
@@ -157,7 +160,7 @@ public:
     /// successful search would result in adding a corresponding RRset to
     /// the answer section of the response.
     ///
-    /// If no matching zone is found in the memory datasource, the RCODE of
+    /// If no matching zone is found in the datasource, the RCODE of
     /// SERVFAIL will be set in the response.
     /// <b>Note:</b> this is different from the error code that BIND 9 returns
     /// by default when it's configured as an authoritative-only server (and
@@ -208,10 +211,12 @@ public:
     };
 
 private:
-    const isc::datasrc::MemoryDataSrc& memory_datasrc_;
+    const isc::datasrc::DataSourceClient& datasrc_client_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
+    const bool dnssec_;
+    const isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
 };
 
 }

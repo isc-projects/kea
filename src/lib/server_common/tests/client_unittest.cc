@@ -89,30 +89,6 @@ TEST_F(ClientTest, constructIPv6) {
                         client6->getRequestSourceIPAddress().getData(), 16));
 }
 
-TEST_F(ClientTest, ACLCheckIPv4) {
-    // Exact match
-    EXPECT_TRUE(IPCheck<Client>("192.0.2.1").matches(*client4));
-    // Exact match (negative)
-    EXPECT_FALSE(IPCheck<Client>("192.0.2.53").matches(*client4));
-    // Prefix match
-    EXPECT_TRUE(IPCheck<Client>("192.0.2.0/24").matches(*client4));
-    // Prefix match (negative)
-    EXPECT_FALSE(IPCheck<Client>("192.0.1.0/24").matches(*client4));
-    // Address family mismatch (the first 4 bytes of the IPv6 address has the
-    // same binary representation as the client's IPv4 address, which
-    // shouldn't confuse the match logic)
-    EXPECT_FALSE(IPCheck<Client>("c000:0201::").matches(*client4));
-}
-
-TEST_F(ClientTest, ACLCheckIPv6) {
-    // The following are a set of tests of the same concept as ACLCheckIPv4
-    EXPECT_TRUE(IPCheck<Client>("2001:db8::1").matches(*client6));
-    EXPECT_FALSE(IPCheck<Client>("2001:db8::53").matches(*client6));
-    EXPECT_TRUE(IPCheck<Client>("2001:db8::/64").matches(*client6));
-    EXPECT_FALSE(IPCheck<Client>("2001:db8:1::/64").matches(*client6));
-    EXPECT_FALSE(IPCheck<Client>("32.1.13.184").matches(*client6));
-}
-
 TEST_F(ClientTest, toText) {
     EXPECT_EQ("192.0.2.1#53214", client4->toText());
     EXPECT_EQ("2001:db8::1#53216", client6->toText());

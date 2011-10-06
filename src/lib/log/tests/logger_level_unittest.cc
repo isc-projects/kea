@@ -20,7 +20,7 @@
 #include <log/logger.h>
 #include <log/logger_manager.h>
 #include <log/log_messages.h>
-#include <log/logger_name.h>
+#include <log/logger_support.h>
 
 using namespace isc;
 using namespace isc::log;
@@ -29,7 +29,9 @@ using namespace std;
 class LoggerLevelTest : public ::testing::Test {
 protected:
     LoggerLevelTest() {
-        // Logger initialization is done in main()
+        // Logger initialization is done in main().  As logging tests may
+        // alter the default logging output, it is reset here.
+        resetUnitTestRootLogger();
     }
     ~LoggerLevelTest() {
         LoggerManager::reset();
@@ -57,7 +59,7 @@ TEST_F(LoggerLevelTest, Creation) {
     EXPECT_EQ(42, level3.dbglevel);
 }
 
-TEST(LoggerLevel, getSeverity) {
+TEST_F(LoggerLevelTest, getSeverity) {
     EXPECT_EQ(DEBUG, getSeverity("DEBUG"));
     EXPECT_EQ(DEBUG, getSeverity("debug"));
     EXPECT_EQ(DEBUG, getSeverity("DeBuG"));

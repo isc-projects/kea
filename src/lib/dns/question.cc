@@ -57,9 +57,18 @@ Question::toWire(OutputBuffer& buffer) const {
 
 unsigned int
 Question::toWire(AbstractMessageRenderer& renderer) const {
+    const size_t pos0 = renderer.getLength();
+
     renderer.writeName(name_);
     rrtype_.toWire(renderer);
     rrclass_.toWire(renderer);
+
+    // Make sure the renderer has a room for the question
+    if (renderer.getLength() > renderer.getLengthLimit()) {
+        renderer.trim(renderer.getLength() - pos0);
+        renderer.setTruncated();
+        return (0);
+    }
 
     return (1);                 // number of "entries"
 }

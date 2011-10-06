@@ -18,12 +18,28 @@
 #include <cstddef>
 #include <string>
 #include <iostream>
+
+#include <exceptions/exceptions.h>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_level.h>
 
 namespace isc {
 namespace log {
 
+/// \brief Format Failure
+///
+/// This exception is used to wrap a bad_lexical_cast exception thrown during
+/// formatting an argument.
+
+class FormatFailure : public isc::Exception {
+public:
+    FormatFailure(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+
+///
 /// \brief The internal replacement routine
 ///
 /// This is used internally by the Formatter. Replaces a placeholder
@@ -156,13 +172,29 @@ public:
     /// \param arg The argument to place into the placeholder.
     template<class Arg> Formatter& arg(const Arg& value) {
         if (logger_) {
-            return (arg(boost::lexical_cast<std::string>(value)));
+            try {
+                return (arg(boost::lexical_cast<std::string>(value)));
+            } catch (const boost::bad_lexical_cast& ex) {
+
+                // A bad_lexical_cast during a conversion to a string is
+                // *extremely* unlikely to fail.  However, there is nothing
+                // in the documentation that rules it out, so we need to handle
+                // it.  As it is a potentially very serious problem, throw the
+                // exception detailing the problem with as much information as
+                // we can.  (Note that this does not include 'value' -
+                // boost::lexical_cast failed to convert it to a string, so an
+                // attempt to do so here would probably fail as well.)
+                isc_throw(FormatFailure, "bad_lexical_cast in call to "
+                          "Formatter::arg(): " << ex.what());
+            }
         } else {
             return (*this);
         }
     }
 
     /// \brief String version of arg.
+    ///
+    /// \param arg The text to place into the placeholder.
     Formatter& arg(const std::string& arg) {
         if (logger_) {
             // Note that this method does a replacement and returns the
@@ -179,7 +211,6 @@ public:
         }
         return (*this);
     }
-
 };
 
 }

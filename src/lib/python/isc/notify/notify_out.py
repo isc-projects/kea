@@ -23,11 +23,15 @@ import errno
 from isc.datasrc import sqlite3_ds
 from isc.net import addr
 import isc
-try:
-    from pydnspp import *
-except ImportError as e:
-    # C++ loadable module may not be installed;
-    sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
+from isc.log_messages.notify_out_messages import *
+
+logger = isc.log.Logger("notify_out")
+
+# there used to be a printed message if this import failed, but if
+# we can't import we should not start anyway, and logging an error
+# is a bad idea since the logging system is most likely not
+# initialized yet. see trac ticket #1103
+from pydnspp import *
 
 ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
 _MAX_NOTIFY_NUM = 30
@@ -46,9 +50,6 @@ _BAD_QR = 4
 _BAD_REPLY_PACKET = 5
 
 SOCK_DATA = b's'
-def addr_to_str(addr):
-    return '%s#%s' % (addr[0], addr[1])
-
 
 class ZoneNotifyInfo:
     '''This class keeps track of notify-out information for one zone.'''
@@ -105,11 +106,10 @@ class NotifyOut:
     notify message to its slaves). notify service can be started by
     calling  dispatcher(), and it can be stoped by calling shutdown()
     in another thread. '''
-    def __init__(self, datasrc_file, log=None, verbose=True):
+    def __init__(self, datasrc_file, verbose=True):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
-        self._log = log
         self._serving = False
         self._read_sock, self._write_sock = socket.socketpair()
         self._read_sock.setblocking(False)
@@ -362,18 +362,19 @@ class NotifyOut:
         tgt = zone_notify_info.get_current_notify_target()
         if event_type == _EVENT_READ:
             reply = self._get_notify_reply(zone_notify_info.get_socket(), tgt)
-            if reply:
-                if self._handle_notify_reply(zone_notify_info, reply):
+            if reply is not None:
+                if self._handle_notify_reply(zone_notify_info, reply, tgt):
                     self._notify_next_target(zone_notify_info)
 
         elif event_type == _EVENT_TIMEOUT and zone_notify_info.notify_try_num > 0:
-            self._log_msg('info', 'notify retry to %s' % addr_to_str(tgt))
+            logger.info(NOTIFY_OUT_TIMEOUT, tgt[0], tgt[1])
 
         tgt = zone_notify_info.get_current_notify_target()
         if tgt:
             zone_notify_info.notify_try_num += 1
             if zone_notify_info.notify_try_num > _MAX_NOTIFY_TRY_NUM:
-                self._log_msg('info', 'notify to %s: retried exceeded' % addr_to_str(tgt))
+                logger.warn(NOTIFY_OUT_RETRY_EXCEEDED, tgt[0], tgt[1],
+                            _MAX_NOTIFY_TRY_NUM)
                 self._notify_next_target(zone_notify_info)
             else:
                 # set exponential backoff according rfc1996 section 3.6
@@ -412,10 +413,15 @@ class NotifyOut:
         try:
             sock = zone_notify_info.create_socket(addrinfo[0])
             sock.sendto(render.get_data(), 0, addrinfo)
-            self._log_msg('info', 'sending notify to %s' % addr_to_str(addrinfo))
+            logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
+                        addrinfo[1])
         except (socket.error, addr.InvalidAddress) as err:
-            self._log_msg('error', 'send notify to %s failed: %s' %
-                          (addr_to_str(addrinfo), str(err)))
+            logger.error(NOTIFY_OUT_SOCKET_ERROR, addrinfo[0],
+                         addrinfo[1], err)
+            return False
+        except addr.InvalidAddress as iae:
+            logger.error(NOTIFY_OUT_INVALID_ADDRESS, addrinfo[0],
+                         addrinfo[1], iae)
             return False
 
         return True
@@ -446,34 +452,38 @@ class NotifyOut:
         msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         return msg, qid
 
-    def _handle_notify_reply(self, zone_notify_info, msg_data):
+    def _handle_notify_reply(self, zone_notify_info, msg_data, from_addr):
         '''Parse the notify reply message.
-        TODO, the error message should be refined properly.
         rcode will not checked here, If we get the response
         from the slave, it means the slaves has got the notify.'''
         msg = Message(Message.PARSE)
         try:
-            errstr = 'notify reply error: '
             msg.from_wire(msg_data)
             if not msg.get_header_flag(Message.HEADERFLAG_QR):
-                self._log_msg('error', errstr + 'bad flags')
+                logger.warn(NOTIFY_OUT_REPLY_QR_NOT_SET, from_addr[0],
+                            from_addr[1])
                 return _BAD_QR
 
             if msg.get_qid() != zone_notify_info.notify_msg_id:
-                self._log_msg('error', errstr + 'bad query ID')
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QID, from_addr[0],
+                            from_addr[1], msg.get_qid(),
+                            zone_notify_info.notify_msg_id)
                 return _BAD_QUERY_ID
 
             question = msg.get_question()[0]
             if question.get_name() != Name(zone_notify_info.zone_name):
-                self._log_msg('error', errstr + 'bad query name')
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QUERY_NAME, from_addr[0],
+                            from_addr[1], question.get_name().to_text(),
+                            Name(zone_notify_info.zone_name).to_text())
                 return _BAD_QUERY_NAME
 
             if msg.get_opcode() != Opcode.NOTIFY():
-                self._log_msg('error', errstr + 'bad opcode')
+                logger.warn(NOTIFY_OUT_REPLY_BAD_OPCODE, from_addr[0],
+                            from_addr[1], msg.get_opcode().to_text())
                 return _BAD_OPCODE
         except Exception as err:
             # We don't care what exception, just report it?
-            self._log_msg('error', errstr + str(err))
+            logger.error(NOTIFY_OUT_REPLY_UNCAUGHT_EXCEPTION, err)
             return _BAD_REPLY_PACKET
 
         return _REPLY_OK
@@ -481,14 +491,9 @@ class NotifyOut:
     def _get_notify_reply(self, sock, tgt_addr):
         try:
             msg, addr = sock.recvfrom(512)
-        except socket.error:
-            self._log_msg('error', "notify to %s failed: can't read notify reply" % addr_to_str(tgt_addr))
+        except socket.error as err:
+            logger.error(NOTIFY_OUT_SOCKET_RECV_ERROR, tgt_addr[0],
+                         tgt_addr[1], err)
             return None
 
         return msg
-
-
-    def _log_msg(self, level, msg):
-        if self._log:
-            self._log.log_message(level, msg)
-

@@ -19,6 +19,7 @@ import socket
 import tempfile
 import sys
 from cmdctl import *
+import isc.log
 
 SPEC_FILE_PATH = '..' + os.sep
 if 'CMDCTL_SPEC_PATH' in os.environ:
@@ -173,7 +174,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.server._user_infos['root'] = ['aa', 'aaa']
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertFalse(ret)
-        self.assertEqual(msg, ['password doesn\'t match'])
+        self.assertEqual(msg, ['username or password error'])
 
     def test_check_user_name_and_pwd_2(self):
         user_info = {'username':'root', 'password':'abc123'}
@@ -214,7 +215,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
 
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertFalse(ret)
-        self.assertEqual(msg, ['user doesn\'t exist'])
+        self.assertEqual(msg, ['username or password error'])
 
     def test_do_POST(self):
         self.handler.headers = {}
@@ -447,6 +448,7 @@ class TestFuncNotInClass(unittest.TestCase):
 
 
 if __name__== "__main__":
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
 
 

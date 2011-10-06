@@ -13,9 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# \brief Severity test
-#
-# Checks that the logger will limit the output of messages less severy than
+# Checks that the logger will limit the output of messages less severe than
 # the severity/debug setting.
 
 testname="Severity test"
@@ -33,7 +31,7 @@ passfail() {
     fi
 }
 
-echo -n "1. runInitTest default parameters:"
+echo -n "1. Default parameters:"
 cat > $tempfile << .
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
 ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file

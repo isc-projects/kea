@@ -20,3 +20,10 @@ Some of the classes defined here--for example, IOSocket, IOEndpoint,
 and IOAddress--are to be used by BIND 10 modules as wrappers around
 ASIO-specific classes.
 
+
+Logging
+-------
+
+At this point, nothing is logged by this low-level library. We may
+revisit that in the future, if we find suitable messages to log, but
+right now there are also no loggers initialized or called.

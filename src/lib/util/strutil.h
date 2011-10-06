@@ -18,13 +18,26 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <sstream>
 #include <vector>
+#include <exceptions/exceptions.h>
+#include <boost/lexical_cast.hpp>
 
 namespace isc {
 namespace util {
 namespace str {
 
 /// \brief A Set of C++ Utilities for Manipulating Strings
+
+///
+/// \brief A standard string util exception that is thrown if getToken or
+/// numToToken are called with bad input data
+///
+class StringTokenError : public Exception {
+public:
+    StringTokenError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 /// \brief Normalize Backslash
 ///
@@ -139,6 +152,55 @@ inline void lowercase(std::string& text) {
 std::string format(const std::string& format,
     const std::vector<std::string>& args);
 
+
+/// \brief Returns one token from the given stringstream
+///
+/// Using the >> operator, with basic error checking
+///
+/// \exception StringTokenError if the token cannot be read from the stream
+///
+/// \param iss stringstream to read one token from
+///
+/// \return the first token read from the stringstream
+std::string getToken(std::istringstream& iss);
+
+/// \brief Converts a string token to an *unsigned* integer.
+///
+/// The value is converted using a lexical cast, with error and bounds
+/// checking.
+///
+/// NumType is a *signed* integral type (e.g. int32_t) that is sufficiently
+/// wide to store resulting integers.
+///
+/// BitSize is the maximum number of bits that the resulting integer can take.
+/// This function first checks whether the given token can be converted to
+/// an integer of NumType type.  It then confirms the conversion result is
+/// within the valid range, i.e., [0, 2^BitSize - 1].  The second check is
+/// necessary because lexical_cast<T> where T is an unsigned integer type
+/// doesn't correctly reject negative numbers when compiled with SunStudio.
+///
+/// \exception StringTokenError if the value is out of range, or if it
+///            could not be converted
+///
+/// \param num_token the string token to convert
+///
+/// \return the converted value, of type NumType
+template <typename NumType, int BitSize>
+NumType
+tokenToNum(const std::string& num_token) {
+    NumType num;
+    try {
+        num = boost::lexical_cast<NumType>(num_token);
+    } catch (const boost::bad_lexical_cast& ex) {
+        isc_throw(StringTokenError, "Invalid SRV numeric parameter: " <<
+                  num_token);
+    }
+    if (num < 0 || num >= (static_cast<NumType>(1) << BitSize)) {
+        isc_throw(StringTokenError, "Numeric SRV parameter out of range: " <<
+                  num);
+    }
+    return (num);
+}
 
 } // namespace str
 } // namespace util

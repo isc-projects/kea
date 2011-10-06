@@ -62,7 +62,6 @@ using namespace isc::dns::rdata;
 //
 
 const uint16_t Message::DEFAULT_MAX_UDPSIZE;
-const Name test_name("test.example.com");
 
 namespace isc {
 namespace util {
@@ -79,7 +78,8 @@ const uint16_t TSIGContext::DEFAULT_FUDGE;
 namespace {
 class MessageTest : public ::testing::Test {
 protected:
-    MessageTest() : obuffer(0), renderer(obuffer),
+    MessageTest() : test_name("test.example.com"), obuffer(0),
+                    renderer(obuffer),
                     message_parse(Message::PARSE),
                     message_render(Message::RENDER),
                     bogus_section(static_cast<Message::Section>(
@@ -103,8 +103,9 @@ protected:
                                              "FAKEFAKEFAKEFAKE"));
         rrset_aaaa->addRRsig(rrset_rrsig);
     }
-    
+
     static Question factoryFromFile(const char* datafile);
+    const Name test_name;
     OutputBuffer obuffer;
     MessageRenderer renderer;
     Message message_parse;
@@ -114,18 +115,23 @@ protected:
     RRsetPtr rrset_aaaa;        // AAAA RRset with one RDATA with RRSIG
     RRsetPtr rrset_rrsig;       // RRSIG for the AAAA RRset
     TSIGContext tsig_ctx;
+    vector<unsigned char> received_data;
     vector<unsigned char> expected_data;
 
-    static void factoryFromFile(Message& message, const char* datafile);
+    void factoryFromFile(Message& message, const char* datafile,
+                         Message::ParseOptions options =
+                         Message::PARSE_DEFAULT);
 };
 
 void
-MessageTest::factoryFromFile(Message& message, const char* datafile) {
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
+MessageTest::factoryFromFile(Message& message, const char* datafile,
+                             Message::ParseOptions options)
+{
+    received_data.clear();
+    UnitTestUtil::readWireData(datafile, received_data);
 
-    InputBuffer buffer(&data[0], data.size());
-    message.fromWire(buffer);
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message.fromWire(buffer, options);
 }
 
 TEST_F(MessageTest, headerFlag) {
@@ -173,7 +179,6 @@ TEST_F(MessageTest, headerFlag) {
     EXPECT_THROW(message_parse.setHeaderFlag(Message::HEADERFLAG_QR),
                  InvalidMessageOperation);
 }
-
 TEST_F(MessageTest, getEDNS) {
     EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
 
@@ -530,7 +535,46 @@ TEST_F(MessageTest, appendSection) {
     
 }
 
+TEST_F(MessageTest, parseHeader) {
+    received_data.clear();
+    UnitTestUtil::readWireData("message_fromWire1", received_data);
+
+    // parseHeader() isn't allowed in the render mode.
+    InputBuffer buffer(&received_data[0], received_data.size());
+    EXPECT_THROW(message_render.parseHeader(buffer), InvalidMessageOperation);
+
+    message_parse.parseHeader(buffer);
+    EXPECT_EQ(0x1035, message_parse.getQid());
+    EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
+    EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_RA));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_AD));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_CD));
+    EXPECT_EQ(1, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2, message_parse.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
+
+    // Only the header part should have been examined.
+    EXPECT_EQ(12, buffer.getPosition()); // 12 = size of the header section
+    EXPECT_TRUE(message_parse.beginQuestion() == message_parse.endQuestion());
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_ANSWER) ==
+                message_parse.endSection(Message::SECTION_ANSWER));
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_AUTHORITY) ==
+                message_parse.endSection(Message::SECTION_AUTHORITY));
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_ADDITIONAL) ==
+                message_parse.endSection(Message::SECTION_ADDITIONAL));
+}
+
 TEST_F(MessageTest, fromWire) {
+    // fromWire() isn't allowed in the render mode.
+    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
+                 InvalidMessageOperation);
+
     factoryFromFile(message_parse, "message_fromWire1");
     EXPECT_EQ(0x1035, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
@@ -560,6 +604,87 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
+}
+
+TEST_F(MessageTest, fromWireShortBuffer) {
+    // We trim a valid message (ending with an SOA RR) for one byte.
+    // fromWire() should throw an exception while parsing the trimmed RR.
+    UnitTestUtil::readWireData("message_fromWire22.wire", received_data);
+    InputBuffer buffer(&received_data[0], received_data.size() - 1);
+    EXPECT_THROW(message_parse.fromWire(buffer), InvalidBufferPosition);
+}
+
+TEST_F(MessageTest, fromWireCombineRRs) {
+    // This message contains 3 RRs in the answer section in the order of
+    // A, AAAA, A types.  fromWire() should combine the two A RRs into a
+    // single RRset by default.
+    factoryFromFile(message_parse, "message_fromWire19.wire");
+
+    RRsetIterator it = message_parse.beginSection(Message::SECTION_ANSWER);
+    RRsetIterator it_end = message_parse.endSection(Message::SECTION_ANSWER);
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(2, (*it)->getRdataCount());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::AAAA(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+}
+
+// A helper function for a test pattern commonly used in several tests below.
+void
+preserveRRCheck(const Message& message, Message::Section section) {
+    RRsetIterator it = message.beginSection(section);
+    RRsetIterator it_end = message.endSection(section);
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("192.0.2.1", (*it)->getRdataIterator()->getCurrent().toText());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::AAAA(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("2001:db8::1", (*it)->getRdataIterator()->getCurrent().toText());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("192.0.2.2", (*it)->getRdataIterator()->getCurrent().toText());
+}
+
+TEST_F(MessageTest, fromWirePreserveAnswer) {
+    // Using the same data as the previous test, but specify the PRESERVE_ORDER
+    // option.  The received order of RRs should be preserved, and each RR
+    // should be stored in a single RRset.
+    factoryFromFile(message_parse, "message_fromWire19.wire",
+                    Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve answer RRs");
+        preserveRRCheck(message_parse, Message::SECTION_ANSWER);
+    }
+}
+
+TEST_F(MessageTest, fromWirePreserveAuthority) {
+    // Same for the previous test, but for the authority section.
+    factoryFromFile(message_parse, "message_fromWire20.wire",
+                    Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve authority RRs");
+        preserveRRCheck(message_parse, Message::SECTION_AUTHORITY);
+    }
+}
+
+TEST_F(MessageTest, fromWirePreserveAdditional) {
+    // Same for the previous test, but for the additional section.
+    factoryFromFile(message_parse, "message_fromWire21.wire",
+                    Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve additional RRs");
+        preserveRRCheck(message_parse, Message::SECTION_ADDITIONAL);
+    }
 }
 
 TEST_F(MessageTest, EDNS0ExtRcode) {
@@ -618,15 +743,43 @@ testGetTime() {
     return (NOW);
 }
 
+// bit-wise constant flags to configure DNS header flags for test
+// messages.
+const unsigned int QR_FLAG = 0x1;
+const unsigned int AA_FLAG = 0x2;
+const unsigned int RD_FLAG = 0x4;
+
 void
 commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
-                      TSIGContext& tsig_ctx, const char* const expected_file)
+                      TSIGContext& tsig_ctx, const char* const expected_file,
+                      unsigned int message_flags = RD_FLAG,
+                      RRType qtype = RRType::A(),
+                      const vector<const char*>* answer_data = NULL)
 {
     message.setOpcode(Opcode::QUERY());
     message.setRcode(Rcode::NOERROR());
-    message.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    if ((message_flags & QR_FLAG) != 0) {
+        message.setHeaderFlag(Message::HEADERFLAG_QR);
+    }
+    if ((message_flags & AA_FLAG) != 0) {
+        message.setHeaderFlag(Message::HEADERFLAG_AA);
+    }
+    if ((message_flags & RD_FLAG) != 0) {
+        message.setHeaderFlag(Message::HEADERFLAG_RD);
+    }
     message.addQuestion(Question(Name("www.example.com"), RRClass::IN(),
-                                 RRType::A()));
+                                 qtype));
+
+    if (answer_data != NULL) {
+        RRsetPtr ans_rrset(new RRset(Name("www.example.com"), RRClass::IN(),
+                                     qtype, RRTTL(86400)));
+        for (vector<const char*>::const_iterator it = answer_data->begin();
+             it != answer_data->end();
+             ++it) {
+            ans_rrset->addRdata(createRdata(qtype, RRClass::IN(), *it));
+        }
+        message.addRRset(Message::SECTION_ANSWER, ans_rrset);
+    }
 
     message.toWire(renderer, tsig_ctx);
     vector<unsigned char> expected_data;
@@ -668,6 +821,182 @@ TEST_F(MessageTest, toWireWithEDNSAndTSIG) {
         commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
                               "message_toWire3.wire");
     }
+}
+
+// Some of the following tests involve truncation.  We use the query name
+// "www.example.com" and some TXT question/answers.  The length of the
+// header and question will be 33 bytes.  If we also try to include a
+// TSIG of the same key name (not compressed) with HMAC-MD5, the TSIG RR
+// will be 85 bytes.
+
+// A long TXT RDATA.  With a fully compressed owner name, the corresponding
+// RR will be 268 bytes.
+const char* const long_txt1 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde";
+
+// With a fully compressed owner name, the corresponding RR will be 212 bytes.
+// It should result in truncation even without TSIG (33 + 268 + 212 = 513)
+const char* const long_txt2 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456";
+
+// With a fully compressed owner name, the corresponding RR will be 127 bytes.
+// So, it can fit in the standard 512 bytes with txt1 and without TSIG, but
+// adding a TSIG would result in truncation (33 + 268 + 127 + 85 = 513)
+const char* const long_txt3 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01";
+
+// This is 1 byte shorter than txt3, which will result in a possible longest
+// message containing answer RRs and TSIG.
+const char* const long_txt4 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0";
+
+// Example output generated by
+// "dig -y www.example.com:SFuWd/q99SzF8Yzd1QbB9g== www.example.com txt
+// QID: 0x22c2
+// Time Signed: 0x00004e179212
+TEST_F(MessageTest, toWireTSIGTruncation) {
+    isc::util::detail::gettimeFunction = testGetTime<0x4e179212>;
+
+    // Verify a validly signed query so that we can use the TSIG context
+
+    factoryFromFile(message_parse, "message_fromWire17.wire");
+    EXPECT_EQ(TSIGError::NOERROR(),
+              tsig_ctx.verify(message_parse.getTSIGRecord(),
+                              &received_data[0], received_data.size()));
+
+    message_render.setQid(0x22c2);
+    vector<const char*> answer_data;
+    answer_data.push_back(long_txt1);
+    answer_data.push_back(long_txt2);
+    {
+        SCOPED_TRACE("Message sign with TSIG and TC bit on");
+        commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                              "message_toWire4.wire",
+                              QR_FLAG|AA_FLAG|RD_FLAG,
+                              RRType::TXT(), &answer_data);
+    }
+}
+
+TEST_F(MessageTest, toWireTSIGTruncation2) {
+    // Similar to the previous test, but without TSIG it wouldn't cause
+    // truncation.
+    isc::util::detail::gettimeFunction = testGetTime<0x4e179212>;
+    factoryFromFile(message_parse, "message_fromWire17.wire");
+    EXPECT_EQ(TSIGError::NOERROR(),
+              tsig_ctx.verify(message_parse.getTSIGRecord(),
+                              &received_data[0], received_data.size()));
+
+    message_render.setQid(0x22c2);
+    vector<const char*> answer_data;
+    answer_data.push_back(long_txt1);
+    answer_data.push_back(long_txt3);
+    {
+        SCOPED_TRACE("Message sign with TSIG and TC bit on (2)");
+        commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                              "message_toWire4.wire",
+                              QR_FLAG|AA_FLAG|RD_FLAG,
+                              RRType::TXT(), &answer_data);
+    }
+}
+
+TEST_F(MessageTest, toWireTSIGTruncation3) {
+    // Similar to previous ones, but truncation occurs due to too many
+    // Questions (very unusual, but not necessarily illegal).
+
+    // We are going to create a message starting with a standard
+    // header (12 bytes) and multiple questions in the Question
+    // section of the same owner name (changing the RRType, just so
+    // that it would be the form that would be accepted by the BIND 9
+    // parser).  The first Question is 21 bytes in length, and the subsequent
+    // ones are 6 bytes.  We'll also use a TSIG whose size is 85 bytes.
+    // Up to 66 questions can fit in the standard 512-byte buffer
+    // (12 + 21 + 6 * 65 + 85 = 508).  If we try to add one more it would
+    // result in truncation.
+    message_render.setOpcode(Opcode::QUERY());
+    message_render.setRcode(Rcode::NOERROR());
+    for (int i = 1; i <= 67; ++i) {
+        message_render.addQuestion(Question(Name("www.example.com"),
+                                            RRClass::IN(), RRType(i)));
+    }
+    message_render.toWire(renderer, tsig_ctx);
+
+    // Check the rendered data by parsing it.  We only check it has the
+    // TC bit on, has the correct number of questions, and has a TSIG RR.
+    // Checking the signature wouldn't be necessary for this rare case
+    // scenario.
+    InputBuffer buffer(renderer.getData(), renderer.getLength());
+    message_parse.fromWire(buffer);
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
+    // Note that the number of questions are 66, not 67 as we tried to add.
+    EXPECT_EQ(66, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_TRUE(message_parse.getTSIGRecord() != NULL);
+}
+
+TEST_F(MessageTest, toWireTSIGNoTruncation) {
+    // A boundary case that shouldn't cause truncation: the resulting
+    // response message with a TSIG will be 512 bytes long.
+    isc::util::detail::gettimeFunction = testGetTime<0x4e17b38d>;
+    factoryFromFile(message_parse, "message_fromWire18.wire");
+    EXPECT_EQ(TSIGError::NOERROR(),
+              tsig_ctx.verify(message_parse.getTSIGRecord(),
+                              &received_data[0], received_data.size()));
+
+    message_render.setQid(0xd6e2);
+    vector<const char*> answer_data;
+    answer_data.push_back(long_txt1);
+    answer_data.push_back(long_txt4);
+    {
+        SCOPED_TRACE("Message sign with TSIG, no truncation");
+        commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                              "message_toWire5.wire",
+                              QR_FLAG|AA_FLAG|RD_FLAG,
+                              RRType::TXT(), &answer_data);
+    }
+}
+
+// This is a buggy renderer for testing.  It behaves like the straightforward
+// MessageRenderer, but once it has some data, its setLengthLimit() ignores
+// the given parameter and resets the limit to the current length, making
+// subsequent insertion result in truncation, which would make TSIG RR
+// rendering fail unexpectedly in the test that follows.
+class BadRenderer : public MessageRenderer {
+public:
+    BadRenderer(isc::util::OutputBuffer& buffer) :
+        MessageRenderer(buffer)
+    {}
+    virtual void setLengthLimit(size_t len) {
+        if (getLength() > 0) {
+            MessageRenderer::setLengthLimit(getLength());
+        } else {
+            MessageRenderer::setLengthLimit(len);
+        }
+    }
+};
+
+TEST_F(MessageTest, toWireTSIGLengthErrors) {
+    // specify an unusual short limit that wouldn't be able to hold
+    // the TSIG.
+    renderer.setLengthLimit(tsig_ctx.getTSIGLength() - 1);
+    // Use commonTSIGToWireCheck() only to call toWire() with otherwise valid
+    // conditions.  The checks inside it don't matter because we expect an
+    // exception before any of the checks.
+    EXPECT_THROW(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                                       "message_toWire2.wire"),
+                 InvalidParameter);
+
+    // This one is large enough for TSIG, but the remaining limit isn't
+    // even enough for the Header section.
+    renderer.clear();
+    message_render.clear(Message::RENDER);
+    renderer.setLengthLimit(tsig_ctx.getTSIGLength() + 1);
+    EXPECT_THROW(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                                       "message_toWire2.wire"),
+                 InvalidParameter);
+
+    // Trying to render a message with TSIG using a buggy renderer.
+    obuffer.clear();
+    BadRenderer bad_renderer(obuffer);
+    bad_renderer.setLengthLimit(512);
+    message_render.clear(Message::RENDER);
+    EXPECT_THROW(commonTSIGToWireCheck(message_render, bad_renderer, tsig_ctx,
+                                       "message_toWire2.wire"),
+                 Unexpected);
 }
 
 TEST_F(MessageTest, toWireWithoutOpcode) {

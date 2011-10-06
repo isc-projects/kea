@@ -398,6 +398,8 @@ class BindCmdInterpreter(Cmd):
                 print("Error: " + str(dte))
             except isc.cc.data.DataNotFoundError as dnfe:
                 print("Error: " + str(dnfe))
+            except isc.cc.data.DataAlreadyPresentError as dape:
+                print("Error: " + str(dape))
             except KeyError as ke:
                 print("Error: missing " + str(ke))
         else:
@@ -634,7 +636,15 @@ class BindCmdInterpreter(Cmd):
                     # we have more data to show
                     line += "/"
                 else:
-                    line += "\t" + json.dumps(value_map['value'])
+                    # if type is named_set, don't print value if None
+                    # (it is either {} meaning empty, or None, meaning
+                    # there actually is data, but not to be shown with
+                    # the current command
+                    if value_map['type'] == 'named_set' and\
+                       value_map['value'] is None:
+                        line += "/\t"
+                    else:
+                        line += "\t" + json.dumps(value_map['value'])
                 line += "\t" + value_map['type']
                 line += "\t"
                 if value_map['default']:
@@ -649,10 +659,9 @@ class BindCmdInterpreter(Cmd):
                 data, default = self.config_data.get_value(identifier)
                 print(json.dumps(data))
         elif cmd.command == "add":
-            if 'value' in cmd.params:
-                self.config_data.add_value(identifier, cmd.params['value'])
-            else:
-                self.config_data.add_value(identifier)
+            self.config_data.add_value(identifier,
+                                       cmd.params.get('value_or_name'),
+                                       cmd.params.get('value_for_set'))
         elif cmd.command == "remove":
             if 'value' in cmd.params:
                 self.config_data.remove_value(identifier, cmd.params['value'])
@@ -674,9 +683,12 @@ class BindCmdInterpreter(Cmd):
         elif cmd.command == "revert":
             self.config_data.clear_local_changes()
         elif cmd.command == "commit":
-            self.config_data.commit()
+            try:
+                self.config_data.commit()
+            except isc.config.ModuleCCSessionError as mcse:
+                print(str(mcse))
         elif cmd.command == "diff":
-            print(self.config_data.get_local_changes());
+            print(self.config_data.get_local_changes())
         elif cmd.command == "go":
             self.go(identifier)
 

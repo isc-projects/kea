@@ -81,6 +81,11 @@ class TestModuleSpec(unittest.TestCase):
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec20.spec")
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec21.spec")
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec26.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec34.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec35.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec36.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec37.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec38.spec")
 
     def validate_data(self, specfile_name, datafile_name):
         dd = self.read_spec_file(specfile_name);
@@ -98,6 +103,9 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_6.data"))
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_7.data"))
         self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
+        self.assertEqual(True, self.validate_data("spec32.spec", "data32_1.data"))
+        self.assertEqual(False, self.validate_data("spec32.spec", "data32_2.data"))
+        self.assertEqual(False, self.validate_data("spec32.spec", "data32_3.data"))
 
     def validate_command_params(self, specfile_name, datafile_name, cmd_name):
         dd = self.read_spec_file(specfile_name);
@@ -119,6 +127,17 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_7.data", 'cmd1'))
         self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_8.data", 'cmd1'))
         self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_8.data", 'cmd2'))
+
+    def test_statistics_validation(self):
+        def _validate_stat(specfile_name, datafile_name):
+            dd = self.read_spec_file(specfile_name);
+            data_file = open(self.spec_file(datafile_name))
+            data_str = data_file.read()
+            data = isc.cc.data.parse_value_str(data_str)
+            return dd.validate_statistics(True, data, [])
+        self.assertFalse(self.read_spec_file("spec1.spec").validate_statistics(True, None, None));
+        self.assertTrue(_validate_stat("spec33.spec", "data33_1.data"))
+        self.assertFalse(_validate_stat("spec33.spec", "data33_2.data"))
 
     def test_init(self):
         self.assertRaises(ModuleSpecError, ModuleSpec, 1)
@@ -266,6 +285,80 @@ class TestModuleSpec(unittest.TestCase):
                           }
                          )
 
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "a_datetime",
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': 1,
+                            'item_format': "date-time"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "a_date",
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': 1,
+                            'item_format': "date"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "a_time",
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': 1,
+                            'item_format': "time"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "a_datetime",
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': "2011-05-27T19:42:57Z",
+                            'item_format': "dummy-format"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "a_date",
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': "2011-05-27",
+                            'item_format': "dummy-format"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "a_time",
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': "19:42:57Z",
+                            'item_format': "dummy-format"
+                          }
+                         )
+
+    def test_check_format(self):
+        self.assertTrue(isc.config.module_spec._check_format('2011-05-27T19:42:57Z', 'date-time'))
+        self.assertTrue(isc.config.module_spec._check_format('2011-05-27', 'date'))
+        self.assertTrue(isc.config.module_spec._check_format('19:42:57', 'time'))
+        self.assertFalse(isc.config.module_spec._check_format('2011-05-27T19:42:57Z', 'dummy'))
+        self.assertFalse(isc.config.module_spec._check_format('2011-05-27', 'dummy'))
+        self.assertFalse(isc.config.module_spec._check_format('19:42:57', 'dummy'))
+        self.assertFalse(isc.config.module_spec._check_format('2011-13-99T99:99:99Z', 'date-time'))
+        self.assertFalse(isc.config.module_spec._check_format('2011-13-99', 'date'))
+        self.assertFalse(isc.config.module_spec._check_format('99:99:99', 'time'))
+        self.assertFalse(isc.config.module_spec._check_format('', 'date-time'))
+        self.assertFalse(isc.config.module_spec._check_format(None, 'date-time'))
+        self.assertFalse(isc.config.module_spec._check_format(None, None))
+        # wrong date-time-type format not ending with "Z"
+        self.assertFalse(isc.config.module_spec._check_format('2011-05-27T19:42:57', 'date-time'))
+        # wrong date-type format ending with "T"
+        self.assertFalse(isc.config.module_spec._check_format('2011-05-27T', 'date'))
+        # wrong time-type format ending with "Z"
+        self.assertFalse(isc.config.module_spec._check_format('19:42:57Z', 'time'))
+
     def test_validate_type(self):
         errors = []
         self.assertEqual(True, isc.config.module_spec._validate_type({ 'item_type': 'integer' }, 1, errors))
@@ -302,6 +395,25 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'map' }, 1, None))
         self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'map' }, 1, errors))
         self.assertEqual(['1 should be a map'], errors)
+
+    def test_validate_format(self):
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_format({ 'item_format': 'date-time' }, "2011-05-27T19:42:57Z", errors))
+        self.assertEqual(False, isc.config.module_spec._validate_format({ 'item_format': 'date-time' }, "a", None))
+        self.assertEqual(False, isc.config.module_spec._validate_format({ 'item_format': 'date-time' }, "a", errors))
+        self.assertEqual(['format type of a should be date-time'], errors)
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_format({ 'item_format': 'date' }, "2011-05-27", errors))
+        self.assertEqual(False, isc.config.module_spec._validate_format({ 'item_format': 'date' }, "a", None))
+        self.assertEqual(False, isc.config.module_spec._validate_format({ 'item_format': 'date' }, "a", errors))
+        self.assertEqual(['format type of a should be date'], errors)
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_format({ 'item_format': 'time' }, "19:42:57", errors))
+        self.assertEqual(False, isc.config.module_spec._validate_format({ 'item_format': 'time' }, "a", None))
+        self.assertEqual(False, isc.config.module_spec._validate_format({ 'item_format': 'time' }, "a", errors))
+        self.assertEqual(['format type of a should be time'], errors)
 
     def test_validate_spec(self):
         spec = { 'item_name': "an_item",

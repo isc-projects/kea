@@ -26,7 +26,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <acl/acl.h>
+#include <acl/dns.h>
 #include <acl/loader.h>
 
 #include <asiodns/asiodns.h>
@@ -62,6 +62,7 @@ using boost::shared_ptr;
 using namespace isc;
 using namespace isc::util;
 using namespace isc::acl;
+using isc::acl::dns::RequestACL;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::config;
@@ -82,7 +83,9 @@ public:
         client_timeout_(4000),
         lookup_timeout_(30000),
         retries_(3),
-        query_acl_(new Resolver::ClientACL(REJECT)),
+        // we apply "reject all" (implicit default of the loader) ACL by
+        // default:
+        query_acl_(acl::dns::getRequestLoader().load(Element::fromJSON("[]"))),
         rec_query_(NULL)
     {}
 
@@ -160,11 +163,11 @@ public:
                                          OutputBufferPtr buffer,
                                          DNSServer* server);
 
-    const Resolver::ClientACL& getQueryACL() const {
+    const RequestACL& getQueryACL() const {
         return (*query_acl_);
     }
 
-    void setQueryACL(shared_ptr<const Resolver::ClientACL> new_acl) {
+    void setQueryACL(shared_ptr<const RequestACL> new_acl) {
         query_acl_ = new_acl;
     }
 
@@ -192,7 +195,7 @@ public:
 
 private:
     /// ACL on incoming queries
-    shared_ptr<const Resolver::ClientACL> query_acl_;
+    shared_ptr<const RequestACL> query_acl_;
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
@@ -514,8 +517,11 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
     const RRClass qclass = question->getClass();
 
     // Apply query ACL
-    Client client(io_message);
-    const BasicAction query_action(getQueryACL().execute(client));
+    const Client client(io_message);
+    const BasicAction query_action(
+        getQueryACL().execute(acl::dns::RequestContext(
+                                  client.getRequestSourceIPAddress(),
+                                  query_message->getTSIGRecord())));
     if (query_action == isc::acl::REJECT) {
         LOG_INFO(resolver_logger, RESOLVER_QUERY_REJECTED)
             .arg(question->getName()).arg(qtype).arg(qclass).arg(client);
@@ -574,32 +580,6 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
     return (RECURSION);
 }
 
-namespace {
-// This is a simplified ACL parser for the initial implementation with minimal
-// external dependency.  For a longer term we'll switch to a more generic
-// loader with allowing more complicated ACL syntax.
-shared_ptr<const Resolver::ClientACL>
-createQueryACL(isc::data::ConstElementPtr acl_config) {
-    if (!acl_config) {
-        return (shared_ptr<const Resolver::ClientACL>());
-    }
-
-    shared_ptr<Resolver::ClientACL> new_acl(
-        new Resolver::ClientACL(REJECT));
-    BOOST_FOREACH(ConstElementPtr rule, acl_config->listValue()) {
-        ConstElementPtr action = rule->get("action");
-        ConstElementPtr from = rule->get("from");
-        if (!action || !from) {
-            isc_throw(BadValue, "query ACL misses mandatory parameter");
-        }
-        new_acl->append(shared_ptr<IPCheck<Client> >(
-                            new IPCheck<Client>(from->stringValue())),
-                        defaultActionLoader(action));
-    }
-    return (new_acl);
-}
-}
-
 ConstElementPtr
 Resolver::updateConfig(ConstElementPtr config) {
     LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_CONFIG_UPDATED)
@@ -616,8 +596,10 @@ Resolver::updateConfig(ConstElementPtr config) {
         ConstElementPtr listenAddressesE(config->get("listen_on"));
         AddressList listenAddresses(parseAddresses(listenAddressesE,
                                                       "listen_on"));
-        shared_ptr<const ClientACL> query_acl(createQueryACL(
-                                                  config->get("query_acl")));
+        const ConstElementPtr query_acl_cfg(config->get("query_acl"));
+        const shared_ptr<const RequestACL> query_acl =
+            query_acl_cfg ? acl::dns::getRequestLoader().load(query_acl_cfg) :
+            shared_ptr<RequestACL>();
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;
         int ctimeout = impl_->client_timeout_;
@@ -777,13 +759,13 @@ Resolver::getListenAddresses() const {
     return (impl_->listen_);
 }
 
-const Resolver::ClientACL&
+const RequestACL&
 Resolver::getQueryACL() const {
     return (impl_->getQueryACL());
 }
 
 void
-Resolver::setQueryACL(shared_ptr<const ClientACL> new_acl) {
+Resolver::setQueryACL(shared_ptr<const RequestACL> new_acl) {
     if (!new_acl) {
         isc_throw(InvalidParameter, "NULL pointer is passed to setQueryACL");
     }

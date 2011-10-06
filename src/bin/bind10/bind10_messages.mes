@@ -1,0 +1,204 @@
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the xfrin messages python module.
+
+% BIND10_CHECK_MSGQ_ALREADY_RUNNING checking if msgq is already running
+The boss process is starting up and will now check if the message bus
+daemon is already running. If so, it will not be able to start, as it
+needs a dedicated message bus.
+
+% BIND10_CONFIGURATION_START_AUTH start authoritative server: %1
+This message shows whether or not the authoritative server should be
+started according to the configuration.
+
+% BIND10_CONFIGURATION_START_RESOLVER start resolver: %1
+This message shows whether or not the resolver should be
+started according to the configuration.
+
+% BIND10_INVALID_USER invalid user: %1
+The boss process was started with the -u option, to drop root privileges
+and continue running as the specified user, but the user is unknown.
+
+% BIND10_KILLING_ALL_PROCESSES killing all started processes
+The boss module was not able to start every process it needed to start
+during startup, and will now kill the processes that did get started.
+
+% BIND10_KILL_PROCESS killing process %1
+The boss module is sending a kill signal to process with the given name,
+as part of the process of killing all started processes during a failed
+startup, as described for BIND10_KILLING_ALL_PROCESSES
+
+% BIND10_MSGQ_ALREADY_RUNNING msgq daemon already running, cannot start
+There already appears to be a message bus daemon running. Either an
+old process was not shut down correctly, and needs to be killed, or
+another instance of BIND10, with the same msgq domain socket, is
+running, which needs to be stopped.
+
+% BIND10_MSGQ_DAEMON_ENDED b10-msgq process died, shutting down
+The message bus daemon has died. This is a fatal error, since it may
+leave the system in an inconsistent state. BIND10 will now shut down.
+
+% BIND10_MSGQ_DISAPPEARED msgq channel disappeared
+While listening on the message bus channel for messages, it suddenly
+disappeared. The msgq daemon may have died. This might lead to an
+inconsistent state of the system, and BIND 10 will now shut down.
+
+% BIND10_PROCESS_ENDED_NO_EXIT_STATUS process %1 (PID %2) died: exit status not available
+The given process ended unexpectedly, but no exit status is
+available. See BIND10_PROCESS_ENDED_WITH_EXIT_STATUS for a longer
+description.
+
+% BIND10_PROCESS_ENDED_WITH_EXIT_STATUS process %1 (PID %2) terminated, exit status = %3
+The given process ended unexpectedly with the given exit status.
+Depending on which module it was, it may simply be restarted, or it
+may be a problem that will cause the boss module to shut down too.
+The latter happens if it was the message bus daemon, which, if it has
+died suddenly, may leave the system in an inconsistent state. BIND10
+will also shut down now if it has been run with --brittle.
+
+% BIND10_READING_BOSS_CONFIGURATION reading boss configuration
+The boss process is starting up, and will now process the initial
+configuration, as received from the configuration manager.
+
+% BIND10_RECEIVED_COMMAND received command: %1
+The boss module received a command and shall now process it. The command
+is printed.
+
+% BIND10_RECEIVED_NEW_CONFIGURATION received new configuration: %1
+The boss module received a configuration update and is going to apply
+it now. The new configuration is printed.
+
+% BIND10_RECEIVED_SIGNAL received signal %1
+The boss module received the given signal.
+
+% BIND10_RESURRECTED_PROCESS resurrected %1 (PID %2)
+The given process has been restarted successfully, and is now running
+with the given process id.
+
+% BIND10_RESURRECTING_PROCESS resurrecting dead %1 process...
+The given process has ended unexpectedly, and is now restarted.
+
+% BIND10_SELECT_ERROR error in select() call: %1
+There was a fatal error in the call to select(), used to see if a child
+process has ended or if there is a message on the message bus. This
+should not happen under normal circumstances and is considered fatal,
+so BIND 10 will now shut down. The specific error is printed.
+
+% BIND10_SEND_SIGKILL sending SIGKILL to %1 (PID %2)
+The boss module is sending a SIGKILL signal to the given process.
+
+% BIND10_SEND_SIGTERM sending SIGTERM to %1 (PID %2)
+The boss module is sending a SIGTERM signal to the given process.
+
+% BIND10_SHUTDOWN stopping the server
+The boss process received a command or signal telling it to shut down.
+It will send a shutdown command to each process. The processes that do
+not shut down will then receive a SIGTERM signal. If that doesn't work,
+it shall send SIGKILL signals to the processes still alive.
+
+% BIND10_SHUTDOWN_COMPLETE all processes ended, shutdown complete
+All child processes have been stopped, and the boss process will now
+stop itself.
+
+% BIND10_SOCKCREATOR_BAD_CAUSE unknown error cause from socket creator: %1
+The socket creator reported an error when creating a socket. But the function
+which failed is unknown (not one of 'S' for socket or 'B' for bind).
+
+% BIND10_SOCKCREATOR_BAD_RESPONSE unknown response for socket request: %1
+The boss requested a socket from the creator, but the answer is unknown. This
+looks like a programmer error.
+
+% BIND10_SOCKCREATOR_CRASHED the socket creator crashed
+The socket creator terminated unexpectedly. It is not possible to restart it
+(because the boss already gave up root privileges), so the system is going
+to terminate.
+
+% BIND10_SOCKCREATOR_EOF eof while expecting data from socket creator
+There should be more data from the socket creator, but it closed the socket.
+It probably crashed.
+
+% BIND10_SOCKCREATOR_INIT initializing socket creator parser
+The boss module initializes routines for parsing the socket creator
+protocol.
+
+% BIND10_SOCKCREATOR_KILL killing the socket creator
+The socket creator is being terminated the aggressive way, by sending it
+sigkill. This should not happen usually.
+
+% BIND10_SOCKCREATOR_TERMINATE terminating socket creator
+The boss module sends a request to terminate to the socket creator.
+
+% BIND10_SOCKCREATOR_TRANSPORT_ERROR transport error when talking to the socket creator: %1
+Either sending or receiving data from the socket creator failed with the given
+error. The creator probably crashed or some serious OS-level problem happened,
+as the communication happens only on local host.
+
+% BIND10_SOCKET_CREATED successfully created socket %1
+The socket creator successfully created and sent a requested socket, it has
+the given file number.
+
+% BIND10_SOCKET_ERROR error on %1 call in the creator: %2/%3
+The socket creator failed to create the requested socket. It failed on the
+indicated OS API function with given error.
+
+% BIND10_SOCKET_GET requesting socket [%1]:%2 of type %3 from the creator
+The boss forwards a request for a socket to the socket creator.
+
+% BIND10_STARTED_PROCESS started %1
+The given process has successfully been started.
+
+% BIND10_STARTED_PROCESS_PID started %1 (PID %2)
+The given process has successfully been started, and has the given PID.
+
+% BIND10_STARTING starting BIND10: %1
+Informational message on startup that shows the full version.
+
+% BIND10_STARTING_PROCESS starting process %1
+The boss module is starting the given process.
+
+% BIND10_STARTING_PROCESS_PORT starting process %1 (to listen on port %2)
+The boss module is starting the given process, which will listen on the
+given port number.
+
+% BIND10_STARTING_PROCESS_PORT_ADDRESS starting process %1 (to listen on %2#%3)
+The boss module is starting the given process, which will listen on the
+given address and port number (written as <address>#<port>).
+
+% BIND10_STARTUP_COMPLETE BIND 10 started
+All modules have been successfully started, and BIND 10 is now running.
+
+% BIND10_STARTUP_ERROR error during startup: %1
+There was a fatal error when BIND10 was trying to start. The error is
+shown, and BIND10 will now shut down.
+
+% BIND10_START_AS_NON_ROOT starting %1 as a user, not root. This might fail.
+The given module is being started or restarted without root privileges.
+If the module needs these privileges, it may have problems starting.
+Note that this issue should be resolved by the pending 'socket-creator'
+process; once that has been implemented, modules should not need root
+privileges anymore. See tickets #800 and #801 for more information.
+
+% BIND10_STOP_PROCESS asking %1 to shut down
+The boss module is sending a shutdown command to the given module over
+the message channel.
+
+% BIND10_UNKNOWN_CHILD_PROCESS_ENDED unknown child pid %1 exited
+An unknown child process has exited. The PID is printed, but no further
+action will be taken by the boss process.
+
+% BIND10_INVALID_STATISTICS_DATA invalid specification of statistics data specified
+An error was encountered when the boss module specified
+statistics data which is invalid for the boss specification file.

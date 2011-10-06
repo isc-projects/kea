@@ -43,6 +43,7 @@
 using namespace std;
 using boost::scoped_ptr;
 using namespace isc::acl;
+using isc::acl::dns::RequestContext;
 using namespace isc::data;
 using namespace isc::testutils;
 using namespace isc::asiodns;
@@ -57,19 +58,23 @@ protected:
     DNSService dnss;
     Resolver server;
     scoped_ptr<const IOEndpoint> endpoint;
-    scoped_ptr<const IOMessage> request;
+    scoped_ptr<const IOMessage> query_message;
     scoped_ptr<const Client> client;
+    scoped_ptr<const RequestContext> request;
     ResolverConfig() : dnss(ios, NULL, NULL, NULL) {
         server.setDNSService(dnss);
         server.setConfigured();
     }
-    const Client& createClient(const string& source_addr) {
+    const RequestContext& createRequest(const string& source_addr) {
         endpoint.reset(IOEndpoint::create(IPPROTO_UDP, IOAddress(source_addr),
                                           53210));
-        request.reset(new IOMessage(NULL, 0, IOSocket::getDummyUDPSocket(),
-                                    *endpoint));
-        client.reset(new Client(*request));
-        return (*client);
+        query_message.reset(new IOMessage(NULL, 0,
+                                          IOSocket::getDummyUDPSocket(),
+                                          *endpoint));
+        client.reset(new Client(*query_message));
+        request.reset(new RequestContext(client->getRequestSourceIPAddress(),
+                                         NULL));
+        return (*request);
     }
     void invalidTest(const string &JSON, const string& name);
 };
@@ -100,14 +105,14 @@ TEST_F(ResolverConfig, forwardAddresses) {
 
 TEST_F(ResolverConfig, forwardAddressConfig) {
     // Try putting there some address
-    ElementPtr config(Element::fromJSON("{"
-        "\"forward_addresses\": ["
-        "   {"
-        "       \"address\": \"192.0.2.1\","
-        "       \"port\": 53"
-        "   }"
-        "]"
-        "}"));
+    ConstElementPtr config(Element::fromJSON("{"
+                                             "\"forward_addresses\": ["
+                                             " {"
+                                             "   \"address\": \"192.0.2.1\","
+                                             "   \"port\": 53"
+                                             " }"
+                                             "]"
+                                             "}"));
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
     EXPECT_TRUE(server.isForwarding());
@@ -127,14 +132,14 @@ TEST_F(ResolverConfig, forwardAddressConfig) {
 
 TEST_F(ResolverConfig, rootAddressConfig) {
     // Try putting there some address
-    ElementPtr config(Element::fromJSON("{"
-        "\"root_addresses\": ["
-        "   {"
-        "       \"address\": \"192.0.2.1\","
-        "       \"port\": 53"
-        "   }"
-        "]"
-        "}"));
+    ConstElementPtr config(Element::fromJSON("{"
+                                             "\"root_addresses\": ["
+                                             " {"
+                                             "    \"address\": \"192.0.2.1\","
+                                             "    \"port\": 53"
+                                             " }"
+                                             "]"
+                                             "}"));
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
     ASSERT_EQ(1, server.getRootAddresses().size());
@@ -210,12 +215,12 @@ TEST_F(ResolverConfig, timeouts) {
 }
 
 TEST_F(ResolverConfig, timeoutsConfig) {
-    ElementPtr config = Element::fromJSON("{"
-            "\"timeout_query\": 1000,"
-            "\"timeout_client\": 2000,"
-            "\"timeout_lookup\": 3000,"
-            "\"retries\": 4"
-            "}");
+    ConstElementPtr config = Element::fromJSON("{"
+                                               "\"timeout_query\": 1000,"
+                                               "\"timeout_client\": 2000,"
+                                               "\"timeout_lookup\": 3000,"
+                                               "\"retries\": 4"
+                                               "}");
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
     EXPECT_EQ(1000, server.getQueryTimeout());
@@ -253,51 +258,51 @@ TEST_F(ResolverConfig, invalidTimeoutsConfig) {
 
 TEST_F(ResolverConfig, defaultQueryACL) {
     // If no configuration is loaded, the default ACL should reject everything.
-    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("192.0.2.1")));
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createRequest("192.0.2.1")));
     EXPECT_EQ(REJECT, server.getQueryACL().execute(
-                  createClient("2001:db8::1")));
+                  createRequest("2001:db8::1")));
 
     // The following would be allowed if the server had loaded the default
     // configuration from the spec file.  In this context it should not have
     // happened, and they should be rejected just like the above cases.
-    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("127.0.0.1")));
-    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("::1")));
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createRequest("127.0.0.1")));
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createRequest("::1")));
 }
 
 TEST_F(ResolverConfig, emptyQueryACL) {
     // Explicitly configured empty ACL should have the same effect.
-    ElementPtr config(Element::fromJSON("{ \"query_acl\": [] }"));
+    ConstElementPtr config(Element::fromJSON("{ \"query_acl\": [] }"));
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
-    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("192.0.2.1")));
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createRequest("192.0.2.1")));
     EXPECT_EQ(REJECT, server.getQueryACL().execute(
-                  createClient("2001:db8::1")));
+                  createRequest("2001:db8::1")));
 }
 
 TEST_F(ResolverConfig, queryACLIPv4) {
     // A simple "accept" query for a specific IPv4 address
-    ElementPtr config(Element::fromJSON(
-                          "{ \"query_acl\": "
-                          "  [ {\"action\": \"ACCEPT\","
-                          "     \"from\": \"192.0.2.1\"} ] }"));
+    ConstElementPtr config(Element::fromJSON(
+                               "{ \"query_acl\": "
+                               "  [ {\"action\": \"ACCEPT\","
+                               "     \"from\": \"192.0.2.1\"} ] }"));
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
-    EXPECT_EQ(ACCEPT, server.getQueryACL().execute(createClient("192.0.2.1")));
+    EXPECT_EQ(ACCEPT, server.getQueryACL().execute(createRequest("192.0.2.1")));
     EXPECT_EQ(REJECT, server.getQueryACL().execute(
-                  createClient("2001:db8::1")));
+                  createRequest("2001:db8::1")));
 }
 
 TEST_F(ResolverConfig, queryACLIPv6) {
     // same for IPv6
-    ElementPtr config(Element::fromJSON(
-                          "{ \"query_acl\": "
-                          "  [ {\"action\": \"ACCEPT\","
-                          "     \"from\": \"2001:db8::1\"} ] }"));
+    ConstElementPtr config(Element::fromJSON(
+                               "{ \"query_acl\": "
+                               "  [ {\"action\": \"ACCEPT\","
+                               "     \"from\": \"2001:db8::1\"} ] }"));
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
-    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("192.0.2.1")));
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createRequest("192.0.2.1")));
     EXPECT_EQ(ACCEPT, server.getQueryACL().execute(
-                  createClient("2001:db8::1")));
+                  createRequest("2001:db8::1")));
 }
 
 TEST_F(ResolverConfig, multiEntryACL) {
@@ -306,30 +311,47 @@ TEST_F(ResolverConfig, multiEntryACL) {
     // as it should have been tested in the underlying ACL module.  All we
     // have to do to check is a reasonably complicated ACL configuration is
     // loaded as expected.
-    ElementPtr config(Element::fromJSON(
-                          "{ \"query_acl\": "
-                          "  [ {\"action\": \"ACCEPT\","
-                          "     \"from\": \"192.0.2.1\"},"
-                          "    {\"action\": \"REJECT\","
-                          "     \"from\": \"192.0.2.0/24\"},"
-                          "    {\"action\": \"DROP\","
-                          "     \"from\": \"2001:db8::1\"},"
-                          "] }"));
+    ConstElementPtr config(Element::fromJSON(
+                               "{ \"query_acl\": "
+                               "  [ {\"action\": \"ACCEPT\","
+                               "     \"from\": \"192.0.2.1\"},"
+                               "    {\"action\": \"REJECT\","
+                               "     \"from\": \"192.0.2.0/24\"},"
+                               "    {\"action\": \"DROP\","
+                               "     \"from\": \"2001:db8::1\"},"
+                               "] }"));
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
-    EXPECT_EQ(ACCEPT, server.getQueryACL().execute(createClient("192.0.2.1")));
-    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("192.0.2.2")));
+    EXPECT_EQ(ACCEPT, server.getQueryACL().execute(createRequest("192.0.2.1")));
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createRequest("192.0.2.2")));
     EXPECT_EQ(DROP, server.getQueryACL().execute(
-                  createClient("2001:db8::1")));
+                  createRequest("2001:db8::1")));
     EXPECT_EQ(REJECT, server.getQueryACL().execute(
-                  createClient("2001:db8::2"))); // match the default rule
+                  createRequest("2001:db8::2"))); // match the default rule
 }
+
 
 int
 getResultCode(ConstElementPtr result) {
     int rcode;
     isc::config::parseAnswer(rcode, result);
     return (rcode);
+}
+
+TEST_F(ResolverConfig, queryACLActionOnly) {
+    // "action only" rule will be accepted by the loader, which can
+    // effectively change the default action.
+    ConstElementPtr config(Element::fromJSON(
+                               "{ \"query_acl\": "
+                               "  [ {\"action\": \"ACCEPT\","
+                               "     \"from\": \"192.0.2.1\"},"
+                               "    {\"action\": \"DROP\"} ] }"));
+    EXPECT_EQ(0, getResultCode(server.updateConfig(config)));
+    EXPECT_EQ(ACCEPT, server.getQueryACL().execute(createRequest("192.0.2.1")));
+
+    // We reject non matching queries by default, but the last resort
+    // rule should have changed the action in that case to "DROP".
+    EXPECT_EQ(DROP, server.getQueryACL().execute(createRequest("192.0.2.2")));
 }
 
 TEST_F(ResolverConfig, badQueryACL) {
@@ -346,10 +368,6 @@ TEST_F(ResolverConfig, badQueryACL) {
                   server.updateConfig(
                       Element::fromJSON("{ \"query_acl\":"
                                         " [ {\"from\": \"192.0.2.1\"} ] }"))));
-    EXPECT_EQ(1, getResultCode(
-                  server.updateConfig(
-                      Element::fromJSON("{ \"query_acl\":"
-                                        " [ {\"action\": \"DROP\"} ] }"))));
     // invalid "action"
     EXPECT_EQ(1, getResultCode(
                   server.updateConfig(
@@ -361,7 +379,6 @@ TEST_F(ResolverConfig, badQueryACL) {
                       Element::fromJSON("{ \"query_acl\":"
                                         " [ {\"action\": \"BADACTION\","
                                         "    \"from\": \"192.0.2.1\"}]}"))));
-
     // invalid "from"
     EXPECT_EQ(1, getResultCode(
                   server.updateConfig(
