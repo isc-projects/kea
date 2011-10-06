@@ -937,7 +937,12 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
         error = "Configuration error: " + errors->str();
         return (NULL);
     }
-    return (new InMemoryClient());
+    try {
+        return (new InMemoryClient());
+    } catch (const std::exception& exc) {
+        error = std::string("Error creating memory datasource: ") + exc.what();
+        return (NULL);
+    }
 }
 
 void destroyInstance(DataSourceClient* instance) {
