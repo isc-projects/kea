@@ -146,8 +146,7 @@ class XfrinState:
     The following diagram summarizes the state transition.  After sending
     the query, xfrin starts the process with the InitialSOA state (all
     IXFR/AXFR response begins with an SOA).  When it reaches IXFREnd
-    (or AXFREnd, which is not yet implemented and not shown here), the
-    process successfully completes.
+    or AXFREnd, the process successfully completes.
 
 
             (recv SOA)       (AXFR-style IXFR)   (SOA, add)
