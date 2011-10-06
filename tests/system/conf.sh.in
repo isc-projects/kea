@@ -51,7 +51,7 @@ export RNDC=$BIND9_TOP/bin/rndc/rndc
 export TESTSOCK=$BIND9_TOP/bin/tests/system/testsock.pl
 export DIGCOMP=$BIND9_TOP/bin/tests/system/digcomp.pl
 
-export SUBDIRS="bindctl glue ixfr/in-1"
+export SUBDIRS="bindctl glue ixfr/in-1 ixfr/in-2"
 #SUBDIRS="dnssec masterfile xfer"
 
 # PERL will be an empty string if no perl interpreter was found.  A similar

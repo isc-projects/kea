@@ -969,6 +969,8 @@ AC_OUTPUT([doc/version.ent
            tests/system/ixfr/common_tests.sh
            tests/system/ixfr/in-1/setup.sh
            tests/system/ixfr/in-1/nsx2/b10-config.db
+           tests/system/ixfr/in-2/setup.sh
+           tests/system/ixfr/in-2/nsx2/b10-config.db
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -1001,6 +1003,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x tests/system/ixfr/ixfr_init.sh
            chmod +x tests/system/ixfr/common_tests.sh
            chmod +x tests/system/ixfr/in-1/setup.sh
+           chmod +x tests/system/ixfr/in-2/setup.sh
           ])
 AC_OUTPUT
 

@@ -27,7 +27,7 @@ find . -type f \( \
 
 status=0
 
-for d in `find . -type d -maxdepth 1 -mindepth 1 -print`
+for d in `find . -maxdepth 2 -mindepth 1 -type d -print`
 do
    test ! -f $d/clean.sh || ( cd $d && sh clean.sh )
 done
