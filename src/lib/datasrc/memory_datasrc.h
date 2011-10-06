@@ -310,7 +310,8 @@ private:
 ///
 /// This configuration setup is currently under discussion and will change in
 /// the near future.
-extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config);
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config,
+                                            std::string& error);
 
 /// \brief Destroy the instance created by createInstance()
 extern "C" void destroyInstance(DataSourceClient* instance);
