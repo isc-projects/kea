@@ -115,6 +115,10 @@ initModulePart_ZoneFinder(PyObject* mod) {
                      Py_BuildValue("I", ZoneFinder::CNAME));
     addClassVariable(zonefinder_type, "DNAME",
                      Py_BuildValue("I", ZoneFinder::DNAME));
+    addClassVariable(zonefinder_type, "WILDCARD",
+                     Py_BuildValue("I", ZoneFinder::WILDCARD));
+    addClassVariable(zonefinder_type, "WILDCARD_NXRRSET",
+                     Py_BuildValue("I", ZoneFinder::WILDCARD_NXRRSET));
 
     addClassVariable(zonefinder_type, "FIND_DEFAULT",
                      Py_BuildValue("I", ZoneFinder::FIND_DEFAULT));

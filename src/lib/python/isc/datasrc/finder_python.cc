@@ -160,6 +160,27 @@ ZoneFinder_find(PyObject* po_self, PyObject* args) {
     return (isc_datasrc_internal::ZoneFinder_helper(self->cppobj.get(), args));
 }
 
+PyObject*
+ZoneFinder_findPreviousName(PyObject* po_self, PyObject* args) {
+    s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
+    PyObject *name_obj;
+    if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
+        try {
+            return (createNameObject(
+                self->cppobj->findPreviousName(PyName_ToName(name_obj))));
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
+            return (NULL);
+        }
+    } else {
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -173,6 +194,8 @@ PyMethodDef ZoneFinder_methods[] = {
       METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", reinterpret_cast<PyCFunction>(ZoneFinder_find), METH_VARARGS,
       ZoneFinder_find_doc },
+    { "find_previous_name", reinterpret_cast<PyCFunction>(ZoneFinder_findPreviousName),
+      METH_VARARGS, ZoneFinder_find_doc },/*TODO DOC*/
     { NULL, NULL, 0, NULL }
 };
 
