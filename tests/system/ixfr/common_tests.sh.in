@@ -56,12 +56,12 @@ status=0
 
 # Store the SOA serial number of the BIND 10 client for later use.
 old_client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
-echo "I:SOA serial of IXFR client is $old_client_serial"
+echo "I:SOA serial of IXFR client $CLIENT_NAME is $old_client_serial"
 
 # Load the BIND 9 system (the IXFR server) with the "n - 2" and "n" version of
 # the zones.  With ixfr-from-differences set to "yes", the nameserver should
 # generate the differences between them.
-echo "I:updating IXFR-server for ixfr-in tests"
+echo "I:updating IXFR-server $SERVER_NAME for ixfr-in tests"
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-2.db
 if [ $? != 0 ];
 then
@@ -82,7 +82,7 @@ fi
 
 # Get the IXFR server to notify the slave server of the new zone.  Do this by
 # allowing notifies and then triggering a re-notification of the server.
-echo "I:notifying IXFR-client of presence of new zones"
+echo "I:notifying IXFR-client $CLIENT_NAME of presence of new version of zone"
 cp ns1/named_notify.conf ns1/named.conf
 
 do_rndc $SERVER_NAME $SERVER_IP reconfig
@@ -110,7 +110,7 @@ client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
 server_serial=`$DIG_SOA @$SERVER_IP | $AWK '{print $3}'`
 if [ "$client_serial" != "$server_serial" ];
 then
-    echo "R:FAIL client serial not same as server serial after update"
+    echo "R:FAIL client serial $client_serial not same as server serial $server_serial after update"
     status=1
 fi
 
