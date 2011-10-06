@@ -28,23 +28,23 @@ destination should be one of "console", "file", or "syslog".
 
 % LOG_BAD_SEVERITY unrecognized log severity: %1
 A logger severity value was given that was not recognized. The severity
-should be one of "DEBUG", "INFO", "WARN", "ERROR", or "FATAL".
+should be one of "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE".
 
 % LOG_BAD_STREAM bad log console output stream: %1
-A log console output stream was given that was not recognized. The output
-stream should be one of "stdout", or "stderr"
+Logging has been configured so that output is written to the terminal
+(console) but the stream on which it is to be written is not recognised.
+Allowed values are "stdout" and "stderr".
 
 % LOG_DUPLICATE_MESSAGE_ID duplicate message ID (%1) in compiled code
-During start-up, BIND10 detected that the given message identification had
-been defined multiple times in the BIND10 code.
-
-This has no ill-effects other than the possibility that an erronous
-message may be logged.  However, as it is indicative of a programming
-error, please log a bug report.
+During start-up, BIND 10 detected that the given message identification
+had been defined multiple times in the BIND 10 code.  This indicates a
+programming error; please submit a bug report.
 
 % LOG_DUPLICATE_NAMESPACE line %1: duplicate $NAMESPACE directive found
 When reading a message file, more than one $NAMESPACE directive was found.
-Such a condition is regarded as an error and the read will be abandoned.
+(This directive is used to set a C++ namespace when generating header
+files during software development.)  Such a condition is regarded as an
+error and the read will be abandoned.
 
 % LOG_INPUT_OPEN_FAIL unable to open message file %1 for input: %2
 The program was not able to open the specified input message file for
@@ -99,10 +99,10 @@ There may be several reasons why this message may appear:
 - The program outputting the message may not use that particular message
 (e.g. it originates in a module not used by the program.)
 
-- The local file was written for an earlier version of the BIND10 software
+- The local file was written for an earlier version of the BIND 10 software
 and the later version no longer generates that message.
 
-Whatever the reason, there is no impact on the operation of BIND10.
+Whatever the reason, there is no impact on the operation of BIND 10.
 
 % LOG_OPEN_OUTPUT_FAIL unable to open %1 for output: %2
 Originating within the logging code, the program was not able to open
@@ -115,7 +115,7 @@ This error is generated when the compiler finds a $PREFIX directive with
 more than one argument.
 
 Note: the $PREFIX directive is deprecated and will be removed in a future
-version of BIND10.
+version of BIND 10.
 
 % LOG_PREFIX_INVALID_ARG line %1: $PREFIX directive has an invalid argument ('%2')
 Within a message file, the $PREFIX directive takes a single argument,
@@ -123,13 +123,13 @@ a prefix to be added to the symbol names when a C++ file is created.
 As such, it must adhere to restrictions on C++ symbol names (e.g. may
 only contain alphanumeric characters or underscores, and may nor start
 with a digit).  A $PREFIX directive was found with an argument (given
-in the message) that violates those restictions.
+in the message) that violates those restrictions.
 
 Note: the $PREFIX directive is deprecated and will be removed in a future
-version of BIND10.
+version of BIND 10.
 
 % LOG_READING_LOCAL_FILE reading local message file %1
-This is an informational message output by BIND10 when it starts to read
+This is an informational message output by BIND 10 when it starts to read
 a local message file.  (A local message file may replace the text of
 one of more messages; the ID of the message will not be changed though.)
 

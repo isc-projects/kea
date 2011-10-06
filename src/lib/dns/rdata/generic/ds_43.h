@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// BEGIN_HEADER_GUARD
+
 #include <stdint.h>
 
 #include <string>
@@ -21,8 +23,6 @@
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 
-// BEGIN_HEADER_GUARD
-
 // BEGIN_ISC_NAMESPACE
 
 // BEGIN_COMMON_DECLARATIONS
@@ -30,20 +30,41 @@
 
 // BEGIN_RDATA_NAMESPACE
 
-struct DSImpl;
+namespace detail {
+template <class Type, uint16_t typeCode> class DSLikeImpl;
+}
 
+/// \brief \c rdata::generic::DS class represents the DS RDATA as defined in
+/// RFC3658.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class, and provides trivial accessors specific to the
+/// DS RDATA.
 class DS : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
+
+    /// \brief Assignment operator.
+    ///
+    /// It internally allocates a resource, and if it fails a corresponding
+    /// standard exception will be thrown.
+    /// This operator never throws an exception otherwise.
+    ///
+    /// This operator provides the strong exception guarantee: When an
+    /// exception is thrown the content of the assignment target will be
+    /// intact.
     DS& operator=(const DS& source);
+
+    /// \brief The destructor.
     ~DS();
 
+    /// \brief Return the value of the Tag field.
     ///
-    /// Specialized methods
-    ///
+    /// This method never throws an exception.
     uint16_t getTag() const;
 private:
+    typedef detail::DSLikeImpl<DS, 43> DSImpl;
     DSImpl* impl_;
 };
 

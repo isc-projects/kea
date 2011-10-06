@@ -31,5 +31,14 @@ libcache_la_SOURCES  += cache_entry_key.h cache_entry_key.cc
 libcache_la_SOURCES  += rrset_copy.h rrset_copy.cc
 libcache_la_SOURCES  += local_zone_data.h local_zone_data.cc
 libcache_la_SOURCES  += message_utility.h message_utility.cc
+libcache_la_SOURCES  += logger.h logger.cc
+nodist_libcache_la_SOURCES = cache_messages.cc cache_messages.h
 
-CLEANFILES = *.gcno *.gcda
+BUILT_SOURCES = cache_messages.cc cache_messages.h
+
+cache_messages.cc cache_messages.h: cache_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/cache/cache_messages.mes
+
+CLEANFILES = *.gcno *.gcda cache_messages.cc cache_messages.h
+
+EXTRA_DIST = cache_messages.mes

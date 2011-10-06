@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>Oct 15, 2010</date>
+    <date>August 11, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -64,9 +64,10 @@
       send stats data to stats module independently from
       implementation of stats module, so the frequency of sending data
       may not be constant. Stats module collects data and aggregates
-      it. <command>b10-stats</command> invokes "sendstats" command
+      it. <command>b10-stats</command> invokes an internal command
       for <command>bind10</command> after its initial starting because it's
       sure to collect statistics data from <command>bind10</command>.
+<!-- TODO: reword that last sentence? -->
     </para>
   </refsect1>
 
@@ -87,18 +88,129 @@
   </refsect1>
 
   <refsect1>
+    <title>CONFIGURATION AND COMMANDS</title>
+
+    <para>
+      The <command>b10-stats</command> command does not have any
+      configurable settings.
+    </para>
+
+<!-- TODO: formating -->
+    <para>
+      The configuration commands are:
+    </para>
+
+    <para>
+<!-- TODO: remove is removed in trac930 -->
+      <command>remove</command> removes the named statistics name and data.
+    </para>
+
+    <para>
+<!-- TODO: reset is removed in trac930 -->
+      <command>reset</command> will reset all statistics data to
+      default values except for constant names.
+      This may re-add previously removed statistics names.
+    </para>
+
+    <para>
+      <command>set</command>
+<!-- TODO: document this -->
+    </para>
+
+    <para>
+      <command>show</command> will send the statistics data
+      in JSON format.
+      By default, it outputs all the statistics data it has collected.
+      An optional item name may be specified to receive individual output.
+    </para>
+
+<!-- TODO: document showschema -->
+
+    <para>
+      <command>shutdown</command> will shutdown the
+      <command>b10-stats</command> process.
+      (Note that the <command>bind10</command> parent may restart it.)
+    </para>
+
+    <para>
+      <command>status</command> simply indicates that the daemon is
+      running.
+    </para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>STATISTICS DATA</title>
+
+    <para>
+      The <command>b10-stats</command> daemon contains these statistics:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>report_time</term>
+<!-- TODO: why not named stats.report_time? -->
+        <listitem><simpara>The latest report date and time in
+          ISO 8601 format.</simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.boot_time</term>
+        <listitem><simpara>The date and time when this daemon was
+          started in ISO 8601 format.
+          This is a constant which can't be reset except by restarting
+          <command>b10-stats</command>.
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.last_update_time</term>
+        <listitem><simpara>The date and time (in ISO 8601 format)
+          when this daemon last received data from another component.
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.lname</term>
+        <listitem><simpara>This is the name used for the
+          <command>b10-msgq</command> command-control channel.
+          (This is a constant which can't be reset except by restarting
+          <command>b10-stats</command>.)
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.start_time</term>
+        <listitem><simpara>This is the date and time (in ISO 8601 format)
+          when this daemon started collecting data.
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.timestamp</term>
+        <listitem><simpara>The current date and time represented in
+          seconds since UNIX epoch (1970-01-01T0 0:00:00Z) with
+          precision (delimited with a period) up to
+          one hundred thousandth of second.</simpara></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      See other manual pages for explanations for their statistics
+      that are kept track by <command>b10-stats</command>.
+    </para>
+
+  </refsect1>
+
+  <refsect1>
     <title>FILES</title>
     <para><filename>/usr/local/share/bind10-devel/stats.spec</filename>
       <!--TODO: The filename should be computed from prefix-->
       &mdash; This is a spec file for <command>b10-stats</command>. It
       contains commands for <command>b10-stats</command>. They can be
       invoked
-      via <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
-    </para>
-    <para><filename>/usr/local/share/bind10-devel/stats-schema.spec</filename>
-      <!--TODO: The filename should be computed from prefix-->
-      &mdash; This is a spec file for data schema of
-      of BIND 10 statistics. This schema cannot be configured 
       via <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
     </para>
   </refsect1>
@@ -126,7 +238,7 @@
     <title>HISTORY</title>
     <para>
       The <command>b10-stats</command> daemon was initially designed
-      and implemented by Naoki Kambe of JPRS in Oct 2010.
+      and implemented by Naoki Kambe of JPRS in October 2010.
     </para>
   </refsect1>
 </refentry><!--

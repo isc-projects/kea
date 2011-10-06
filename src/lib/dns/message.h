@@ -565,16 +565,74 @@ public:
     /// \c tsig_ctx will be updated based on the fact it was used for signing
     /// and with the latest MAC.
     ///
+    /// \exception InvalidMessageOperation The message is not in the Render
+    /// mode, or either Rcode or Opcode is not set.
+    /// \exception InvalidParameter The allowable limit of \c renderer is too
+    /// small for a TSIG or the Header section.  Note that this shouldn't
+    /// happen with parameters as defined in the standard protocols,
+    /// so it's more likely a program bug.
+    /// \exception Unexpected Rendering the TSIG RR fails.  The implementation
+    /// internally makes sure this doesn't happen, so if that ever occurs
+    /// it should mean a bug either in the TSIG context or in the renderer
+    /// implementation.
+    ///
     /// \param renderer See the other version
     /// \param tsig_ctx A TSIG context that is to be used for signing the
     /// message
     void toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx);
 
+    /// Parse options.
+    ///
+    /// describe PRESERVE_ORDER: note doesn't affect EDNS or TSIG.
+    ///
+    /// The option values are used as a parameter for \c fromWire().
+    /// These are values of a bitmask type.  Bitwise operations can be
+    /// performed on these values to express compound options.
+    enum ParseOptions {
+        PARSE_DEFAULT = 0,       ///< The default options
+        PRESERVE_ORDER = 1       ///< Preserve RR order and don't combine them
+    };
+
     /// \brief Parse the header section of the \c Message.
     void parseHeader(isc::util::InputBuffer& buffer);
 
-    /// \brief Parse the \c Message.
-    void fromWire(isc::util::InputBuffer& buffer);
+    /// \brief (Re)build a \c Message object from wire-format data.
+    ///
+    /// This method parses the given wire format data to build a
+    /// complete Message object.  On success, the values of the header section
+    /// fields can be accessible via corresponding get methods, and the
+    /// question and following sections can be accessible via the
+    /// corresponding iterators.  If the message contains an EDNS or TSIG,
+    /// they can be accessible via \c getEDNS() and \c getTSIGRecord(),
+    /// respectively.
+    ///
+    /// This \c Message must be in the \c PARSE mode.
+    ///
+    /// This method performs strict validation on the given message based
+    /// on the DNS protocol specifications.  If the given message data is
+    /// invalid, this method throws an exception (see the exception list).
+    ///
+    /// By default, this method combines RRs of the same name, RR type and
+    /// RR class in a section into a single RRset, even if they are interleaved
+    /// with a different type of RR (though it would be a rare case in
+    /// practice).  If the \c PRESERVE_ORDER option is specified, it handles
+    /// each RR separately, in the appearing order, and converts it to a
+    /// separate RRset (so this RRset should contain exactly one Rdata).
+    /// This mode will be necessary when the higher level protocol is
+    /// ordering conscious.  For example, in AXFR and IXFR, the position of
+    /// the SOA RRs are crucial.
+    ///
+    /// \exception InvalidMessageOperation \c Message is in the RENDER mode
+    /// \exception DNSMessageFORMERR The given message data is syntactically
+    /// \exception MessageTooShort The given data is shorter than a valid
+    /// header section
+    /// \exception std::bad_alloc Memory allocation failure
+    /// \exception Others \c Name, \c Rdata, and \c EDNS classes can also throw
+    ///
+    /// \param buffer A input buffer object that stores the wire data
+    /// \param options Parse options
+    void fromWire(isc::util::InputBuffer& buffer, ParseOptions options
+        = PARSE_DEFAULT);
 
     ///
     /// \name Protocol constants
@@ -618,6 +676,6 @@ std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 #endif  // __MESSAGE_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

@@ -2,12 +2,12 @@
 .\"     Title: b10-xfrin
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: May 19, 2011
+.\"      Date: September 8, 2011
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-XFRIN" "8" "May 19, 2011" "BIND10" "BIND10"
+.TH "B10\-XFRIN" "8" "September 8, 2011" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -61,7 +61,7 @@ receives its configurations from
 .PP
 The configurable settings are:
 .PP
-\fItransfers\-in\fR
+\fItransfers_in\fR
 defines the maximum number of inbound zone transfers that can run concurrently\&. The default is 10\&.
 .PP
 
@@ -71,6 +71,9 @@ is a list of zones known to the
 daemon\&. The list items are:
 \fIname\fR
 (the zone name),
+\fIclass\fR
+(defaults to
+\(lqIN\(rq),
 \fImaster_addr\fR
 (the zone master to transfer from),
 \fImaster_port\fR
@@ -125,7 +128,7 @@ to define the class (defaults to
 \fImaster\fR
 to define the IP address of the authoritative server to transfer from, and
 \fIport\fR
-to define the port number on the authoritative server (defaults to 53)\&. If the address or port is not specified, it will use the values previously defined in the
+to define the port number on the authoritative server (defaults to 53)\&. If the address or port is not specified, it will use the value previously defined in the
 \fIzones\fR
 configuration\&.
 .PP

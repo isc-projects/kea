@@ -20,6 +20,7 @@
 
 #include <log/message_dictionary.h>
 #include <log/logger_manager.h>
+#include <log/logger_support.h>
 #include <log/logger.h>
 
 #include <config/ccsession.h>
@@ -35,7 +36,7 @@ using boost::bind;
 // (tags/RELEASE_28 115909)) on OSX, where unwinding the stack
 // segfaults the moment this exception was thrown and caught.
 //
-// Placing it in a named namespace instead of the original
+// Placing it in a named namespace instead of the originalRecommend
 // unnamed namespace appears to solve this, so as a temporary
 // workaround, we create a local randomly named namespace here
 // to solve this issue.
@@ -184,6 +185,27 @@ init(PyObject*, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+// This initialization is for unit tests.  It allows message settings to
+// be determined by a set of B10_xxx environment variables.  (See the
+// description of initLogger() for more details.)  The function has been named
+// resetUnitTestRootLogger() here as being more descriptive and
+// trying to avoid confusion.
+PyObject*
+resetUnitTestRootLogger(PyObject*, PyObject*) {
+    try {
+        isc::log::resetUnitTestRootLogger();
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+    Py_RETURN_NONE;
+}
+
 PyObject*
 logConfigUpdate(PyObject*, PyObject* args) {
     // we have no wrappers for ElementPtr and ConfigData,
@@ -246,6 +268,12 @@ PyMethodDef methods[] = {
         "logging severity (one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
         "'FATAL'), a debug level (integer in the range 0-99) and a file name "
         "of a dictionary with message text translations."},
+    {"resetUnitTestRootLogger", resetUnitTestRootLogger, METH_VARARGS,
+        "Resets the configuration of the root logger to that set by the "
+        "B10_XXX environment variables.  It is aimed at unit tests, where "
+        "the logging is initialized by the code under test; called before "
+        "the unit test starts, this function resets the logging configuration "
+        "to that in use for the C++ unit tests."},
     {"log_config_update", logConfigUpdate, METH_VARARGS,
         "Update logger settings. This method is automatically used when "
         "ModuleCCSession is initialized with handle_logging_config set "

@@ -1,10 +1,44 @@
 SUBDIRS = . tests
 
+# old data, should be removed in the near future once conversion is done
+pythondir = $(pyexecdir)/isc/datasrc
 python_PYTHON = __init__.py master.py sqlite3_ds.py
 
-pythondir = $(pyexecdir)/isc/datasrc
+
+# new data
+
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(SQLITE_CFLAGS)
+
+python_LTLIBRARIES = datasrc.la
+datasrc_la_SOURCES = datasrc.cc datasrc.h
+datasrc_la_SOURCES += client_python.cc client_python.h
+datasrc_la_SOURCES += iterator_python.cc iterator_python.h
+datasrc_la_SOURCES += finder_python.cc finder_python.h
+datasrc_la_SOURCES += updater_python.cc updater_python.h
+# This is a temporary workaround for #1206, where the InMemoryClient has been
+# moved to an ldopened library. We could add that library to LDADD, but that
+# is nonportable. When #1207 is done this becomes moot anyway, and the
+# specific workaround is not needed anymore, so we can then remove this
+# line again.
+datasrc_la_SOURCES += ${top_srcdir}/src/lib/datasrc/sqlite3_accessor.cc
+
+datasrc_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+datasrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
+datasrc_la_LDFLAGS = $(PYTHON_LDFLAGS)
+datasrc_la_LDFLAGS += -module
+datasrc_la_LIBADD = $(top_builddir)/src/lib/datasrc/libdatasrc.la
+datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/python/libpydnspp.la
+datasrc_la_LIBADD += $(PYTHON_LIB)
+#datasrc_la_LIBADD += $(SQLITE_LIBS)
+
+EXTRA_DIST = client_inc.cc
+EXTRA_DIST += finder_inc.cc
+EXTRA_DIST += iterator_inc.cc
+EXTRA_DIST += updater_inc.cc
 
 CLEANDIRS = __pycache__
 
 clean-local:
 	rm -rf $(CLEANDIRS)
+

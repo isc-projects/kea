@@ -12,20 +12,126 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "dns.h"
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
+
+#include <exceptions/exceptions.h>
+
+#include <dns/name.h>
+#include <dns/tsigrecord.h>
+
+#include <cc/data.h>
+
+#include <acl/dns.h>
+#include <acl/ip_check.h>
+#include <acl/dnsname_check.h>
+#include <acl/loader.h>
+#include <acl/logic_check.h>
+
+using namespace std;
+using boost::shared_ptr;
+using namespace isc::dns;
+using namespace isc::data;
 
 namespace isc {
 namespace acl {
+
+/// The specialization of \c IPCheck for access control with \c RequestContext.
+///
+/// It returns \c true if the remote (source) IP address of the request
+/// matches the expression encapsulated in the \c IPCheck, and returns
+/// \c false if not.
+template <>
+bool
+IPCheck<dns::RequestContext>::matches(
+    const dns::RequestContext& request) const
+{
+    return (compare(request.remote_address.getData(),
+                    request.remote_address.getFamily()));
+}
+
 namespace dns {
 
-Loader&
-getLoader() {
-    static Loader* loader(NULL);
-    if (loader == NULL) {
-        loader = new Loader(REJECT);
-        // TODO: This is the place where we register default check creators
-        // like IP check, etc, once we have them.
+/// The specialization of \c NameCheck for access control with
+/// \c RequestContext.
+///
+/// It returns \c true if the request contains a TSIG record and its key
+/// (owner) name is equal to the name stored in the check; otherwise
+/// it returns \c false.
+template<>
+bool
+NameCheck<RequestContext>::matches(const RequestContext& request) const {
+    return (request.tsig != NULL && request.tsig->getName() == name_);
+}
+
+vector<string>
+internal::RequestCheckCreator::names() const {
+    // Probably we should eventually build this vector in a more
+    // sophisticated way.  For now, it's simple enough to hardcode
+    // everything.
+    vector<string> supported_names;
+    supported_names.push_back("from");
+    supported_names.push_back("key");
+    return (supported_names);
+}
+
+shared_ptr<RequestCheck>
+internal::RequestCheckCreator::create(const string& name,
+                                      ConstElementPtr definition,
+                                      // unused:
+                                      const acl::Loader<RequestContext>&)
+{
+    if (!definition) {
+        isc_throw(LoaderError,
+                  "NULL pointer is passed to RequestCheckCreator");
     }
+
+    if (name == "from") {
+        return (shared_ptr<internal::RequestIPCheck>(
+                    new internal::RequestIPCheck(definition->stringValue())));
+    } else if (name == "key") {
+        return (shared_ptr<internal::RequestKeyCheck>(
+                    new internal::RequestKeyCheck(
+                        Name(definition->stringValue()))));
+    } else {
+        // This case shouldn't happen (normally) as it should have been
+        // rejected at the loader level.  But we explicitly catch the case
+        // and throw an exception for that.
+        isc_throw(LoaderError, "Invalid check name for RequestCheck: " <<
+                  name);
+    }
+}
+
+RequestLoader&
+getRequestLoader() {
+    static RequestLoader* loader(NULL);
+    if (loader == NULL) {
+        // Creator registration may throw, so we first store the new loader
+        // in an auto pointer in order to provide the strong exception
+        // guarantee.
+        auto_ptr<RequestLoader> loader_ptr =
+            auto_ptr<RequestLoader>(new RequestLoader(REJECT));
+
+        // Register default check creator(s)
+        loader_ptr->registerCreator(shared_ptr<internal::RequestCheckCreator>(
+                                        new internal::RequestCheckCreator()));
+        loader_ptr->registerCreator(
+            shared_ptr<NotCreator<RequestContext> >(
+                new NotCreator<RequestContext>("NOT")));
+        loader_ptr->registerCreator(
+            shared_ptr<LogicCreator<AnyOfSpec, RequestContext> >(
+                new LogicCreator<AnyOfSpec, RequestContext>("ANY")));
+        loader_ptr->registerCreator(
+            shared_ptr<LogicCreator<AllOfSpec, RequestContext> >(
+                new LogicCreator<AllOfSpec, RequestContext>("ALL")));
+
+        // From this point there shouldn't be any exception thrown
+        loader = loader_ptr.release();
+    }
+
     return (*loader);
 }
 

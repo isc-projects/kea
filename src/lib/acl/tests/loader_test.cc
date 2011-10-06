@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "creators.h"
+#include <exceptions/exceptions.h>
 #include <acl/loader.h>
 #include <string>
 #include <gtest/gtest.h>
@@ -373,7 +374,10 @@ TEST_F(LoaderTest, ACLPropagate) {
                      Element::fromJSON(
                          "[{\"action\": \"ACCEPT\", \"throw\": 1}]")),
                  TestCreatorError);
+}
 
+TEST_F(LoaderTest, nullDescription) {
+    EXPECT_THROW(loader_.load(ConstElementPtr()), isc::InvalidParameter);
 }
 
 }

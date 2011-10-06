@@ -14,11 +14,12 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
 #include <string.h>
 
 #include <gtest/gtest.h>
 #include <acl/ip_check.h>
+
+#include "sockaddr.h"
 
 using namespace isc::acl;
 using namespace isc::acl::internal;
@@ -159,32 +160,8 @@ TEST(IPFunctionCheck, SplitIPAddress) {
     EXPECT_THROW(splitIPAddress(" 1/ "), isc::InvalidParameter);
 }
 
-const struct sockaddr&
-getSockAddr(const char* const addr) {
-    struct addrinfo hints, *res;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_NUMERICHOST;
-
-    if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
-        static struct sockaddr_storage ss;
-        void* ss_ptr = &ss;
-        memcpy(ss_ptr, res->ai_addr, res->ai_addrlen);
-        freeaddrinfo(res);
-        return (*static_cast<struct sockaddr*>(ss_ptr));
-    }
-
-    // We don't expect getaddrinfo to fail for our tests.  But if that
-    // ever happens we return a dummy value that would make subsequent test
-    // fail.
-    static struct sockaddr sa_dummy;
-    sa_dummy.sa_family = AF_UNSPEC;
-    return (sa_dummy);
-}
-
 TEST(IPAddress, constructIPv4) {
-    IPAddress ipaddr(getSockAddr("192.0.2.1"));
+    IPAddress ipaddr(tests::getSockAddr("192.0.2.1"));
     const char expected_data[4] = { 192, 0, 2, 1 };
     EXPECT_EQ(AF_INET, ipaddr.getFamily());
     EXPECT_EQ(4, ipaddr.getLength());
@@ -192,7 +169,7 @@ TEST(IPAddress, constructIPv4) {
 }
 
 TEST(IPAddress, constructIPv6) {
-    IPAddress ipaddr(getSockAddr("2001:db8:1234:abcd::53"));
+    IPAddress ipaddr(tests::getSockAddr("2001:db8:1234:abcd::53"));
     const char expected_data[16] = { 0x20, 0x01, 0x0d, 0xb8, 0x12, 0x34, 0xab,
                                      0xcd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                      0x00, 0x53 };

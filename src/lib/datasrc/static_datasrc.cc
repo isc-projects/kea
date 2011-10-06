@@ -70,6 +70,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors = RRsetPtr(new RRset(authors_name, RRClass::CH(),
                                  RRType::TXT(), RRTTL(0)));
     authors->addRdata(generic::TXT("Chen Zhengzhang")); // Jerry
+    authors->addRdata(generic::TXT("Dmitriy Volodin"));
     authors->addRdata(generic::TXT("Evan Hunt"));
     authors->addRdata(generic::TXT("Haidong Wang")); // Ocean
     authors->addRdata(generic::TXT("Han Feng"));
@@ -161,7 +162,7 @@ StaticDataSrc::findRRset(const Name& qname,
         arg(qtype);
     flags = 0;
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        LOG_ERROR(logger, DATASRC_STATIC_BAD_CLASS);
+        LOG_ERROR(logger, DATASRC_STATIC_CLASS_NOT_CH);
         return (ERROR);
     }
 

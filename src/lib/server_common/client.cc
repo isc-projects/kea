@@ -66,10 +66,3 @@ std::ostream&
 isc::server_common::operator<<(std::ostream& os, const Client& client) {
     return (os << client.toText());
 }
-
-template <>
-bool
-IPCheck<Client>::matches(const Client& client) const {
-    const IPAddress& request_src(client.getRequestSourceIPAddress());
-    return (compare(request_src.getData(), request_src.getFamily()));
-}

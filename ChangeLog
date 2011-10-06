@@ -1,4 +1,4 @@
-266.    [func]*		tomek
+293.    [func]*		tomek
 	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
 	multicast groups and listens to incoming DHCPv6 client messages.
 	Received messages are then echoed back to clients. This
@@ -7,6 +7,184 @@
 	detection routines are not implemented yet, so interface name
 	and its address must be specified in interfaces.txt.
 	(Trac #878, git 3b1a604abf5709bfda7271fa94213f7d823de69d)
+
+292.	[func]		dvv
+	Implement the DLV rrtype according to RFC4431.
+	(Trac #1144, git d267c0511a07c41cd92e3b0b9ee9bf693743a7cf)
+
+291.    [func]          naokikambe
+	Statistics items are specified by each module's spec file.
+	Stats module can read these through the config manager. Stats
+	module and stats httpd report statistics data and statistics
+	schema by each module via both bindctl and HTTP/XML.
+	(Trac #928,#929,#930,#1175, git 054699635affd9c9ecbe7a108d880829f3ba229e)
+
+290.	[func]		jinmei
+	libdns++/pydnspp: added an option parameter to the "from wire"
+	methods of the Message class.  One option is defined,
+	PRESERVE_ORDER, which specifies the parser to handle each RR
+	separately, preserving the order, and constructs RRsets in the
+	message sections so that each RRset contains only one RR.
+	(Trac #1258, git c874cb056e2a5e656165f3c160e1b34ccfe8b302)
+
+289.	[func]*		jinmei
+	b10-xfrout: ACLs for xfrout can now be configured per zone basis.
+	A per zone ACl is part of a more general zone configuration.  A
+	quick example for configuring an ACL for zone "example.com" that
+	rejects any transfer request for that zone is as follows:
+	> config add Xfrout/zone_config
+	> config set Xfrout/zone_config[0]/origin "example.com"
+	> config add Xfrout/zone_config[0]/transfer_acl
+	> config set Xfrout/zone_config[0]/transfer_acl[0] {"action": "REJECT"}
+	The previous global ACL (query_acl) was renamed to transfer_acl,
+	which now works as the default ACL.  Note: backward compatibility
+	is not provided, so an existing configuration using query_acl
+	needs to be updated by hand.
+	Note: the per zone configuration framework is a temporary
+	workaround.  It will eventually be redesigned as a system wide
+	configuration.
+	(Trac #1165, git 698176eccd5d55759fe9448b2c249717c932ac31)
+
+288.    [bug]       stephen
+	Fixed problem whereby the order in which component files appeared in
+	rdataclass.cc was system dependent, leading to problems on some
+	systems where data types were used before the header file in which
+	they were declared was included.
+	(Trac #1202, git 4a605525cda67bea8c43ca8b3eae6e6749797450)
+
+287.	[bug]*		jinmei
+	Python script files for log messages (xxx_messages.py) should have
+	been installed under the "isc" package.  This fix itself should
+	be a transparent change without affecting existing configurations
+	or other operational practices, but you may want to clean up the
+	python files from the common directly (such as "site-packages").
+	(Trac #1101, git 0eb576518f81c3758c7dbaa2522bd8302b1836b3)
+
+286.    [func]		ocean
+	libdns++: Implement the HINFO rrtype support according to RFC1034,
+	and RFC1035.
+	(Trac #1112, git 12d62d54d33fbb1572a1aa3089b0d547d02924aa)
+
+285.	[bug]		jelte
+	sqlite3 data source: fixed a race condition on initial startup,
+	when the database has not been initialized yet, and multiple
+	processes are trying to do so, resulting in one of them failing.
+	(Trac #326, git 5de6f9658f745e05361242042afd518b444d7466)
+
+284.	[bug]		jerry
+	b10-zonemgr: zonemgr will not terminate on empty zones, it will
+	log a warning and try to do zone transfer for them.
+	(Trac #1153, git 0a39659638fc68f60b95b102968d7d0ad75443ea)
+
+283.    [bug]		zhanglikun
+	Make stats and boss processes wait for answer messages from each
+	other in block mode to avoid orphan answer messages, add an internal
+	command "getstats" to boss process for getting statistics data from
+	boss.
+	(Trac #519, git 67d8e93028e014f644868fede3570abb28e5fb43)
+
+282.    [func]		ocean
+	libdns++: Implement the NAPTR rrtype according to RFC2915,
+	RFC2168 and RFC3403.
+	(Trac #1130, git 01d8d0f13289ecdf9996d6d5d26ac0d43e30549c)
+
+bind10-devel-20110819 released on August 19, 2011
+
+281.	[func]		jelte
+	Added a new type for configuration data: "named set". This allows for
+	similar configuration as the current "list" type, but with strings
+	instead of indices as identifiers. The intended use is for instance
+	/foo/zones/example.org/bar instead of /foo/zones[2]/bar. Currently
+	this new type is not in use yet.
+	(Trac #926, git 06aeefc4787c82db7f5443651f099c5af47bd4d6)
+
+280.	[func]		jerry
+	libdns++: Implement the MINFO rrtype according to RFC1035.
+	(Trac #1113, git 7a9a19d6431df02d48a7bc9de44f08d9450d3a37)
+
+279.	[func]		jerry
+	libdns++: Implement the AFSDB rrtype according to RFC1183.
+	(Trac #1114, git ce052cd92cd128ea3db5a8f154bd151956c2920c)
+
+278.	[doc]		jelte
+	Add logging configuration documentation to the guide.
+	(Trac #1011, git 2cc500af0929c1f268aeb6f8480bc428af70f4c4)
+
+277.	[func]		jerry
+	libdns++: Implement the SRV rrtype according to RFC2782.
+	(Trac #1128, git 5fd94aa027828c50e63ae1073d9d6708e0a9c223)
+
+276.	[func]		stephen
+	Although the top-level loggers are named after the program (e.g.
+	b10-auth, b10-resolver), allow the logger configuration to omit the
+	"b10-" prefix and use just the module name.
+	(Trac #1003, git a01cd4ac5a68a1749593600c0f338620511cae2d)
+
+275.	[func]		jinmei
+	Added support for TSIG key matching in ACLs.  The xfrout ACL can
+	now refer to TSIG key names using the "key" attribute.  For
+	example, the following specifies an ACL that allows zone transfer
+	if and only if the request is signed with a TSIG of a key name
+	"key.example":
+	> config set Xfrout/query_acl[0] {"action": "ACCEPT", \
+	                                  "key": "key.example"}
+	(Trac #1104, git 9b2e89cabb6191db86f88ee717f7abc4171fa979)
+
+274.	[bug]		naokikambe
+	add unittests for functions xml_handler, xsd_handler and xsl_handler
+	respectively to make sure their behaviors are correct, regardless of
+	whether type which xml.etree.ElementTree.tostring() after Python3.2
+	returns is str or byte.
+	(Trac #1021, git 486bf91e0ecc5fbecfe637e1e75ebe373d42509b)
+
+273.	[func]		vorner
+	It is possible to specify ACL for the xfrout module. It is in the ACL
+	configuration key and has the usual ACL syntax. It currently supports
+	only the source address. Default ACL accepts everything.
+	(Trac #772, git 50070c824270d5da1db0b716db73b726d458e9f7)
+
+272.	[func]		jinmei
+	libdns++/pydnspp: TSIG signing now handles truncated DNS messages
+	(i.e. with TC bit on) with TSIG correctly.
+	(Trac #910, 8e00f359e81c3cb03c5075710ead0f87f87e3220)
+
+271.	[func]		stephen
+	Default logging for unit tests changed to severity DEBUG (level 99)
+	with the output routed to /dev/null.  This can be altered by setting
+	the B10_LOGGER_XXX environment variables.
+	(Trac #1024, git 72a0beb8dfe85b303f546d09986461886fe7a3d8)
+
+270.	[func]		jinmei
+	Added python bindings for ACLs using the DNS request as the
+	context.  They are accessible via the isc.acl.dns module.
+	(Trac #983, git c24553e21fe01121a42e2136d0a1230d75812b27)
+
+269.	[bug]		y-aharen
+	Modified IntervalTimerTest not to rely on the accuracy of the timer.
+	This fix addresses occasional failure of build tests.
+	(Trac #1016, git 090c4c5abac33b2b28d7bdcf3039005a014f9c5b)
+
+268.	[func]		stephen
+	Add environment variable to allow redirection of logging output during
+	unit tests.
+	(Trac #1071, git 05164f9d61006869233b498d248486b4307ea8b6)
+
+bind10-devel-20110705 released on July 05, 2011
+
+267.	[func]		tomek
+	Added a dummy module for DHCP6. This module does not actually
+	do anything at this point, and BIND 10 has no option for
+	starting it yet. It is included as a base for further
+	development.
+	(Trac #990, git 4a590df96a1b1d373e87f1f56edaceccb95f267d)
+
+266.	[func]		Multiple developers
+        Convert various error messages, debugging and other output
+        to the new logging interface, including for b10-resolver,
+        the resolver library, the CC library, b10-auth, b10-cfgmgr,
+        b10-xfrin, and b10-xfrout. This includes a lot of new
+        documentation describing the new log messages.
+        (Trac #738, #739, #742, #746, #759, #761, #762)
 
 265.	[func]*		jinmei
 	b10-resolver: Introduced ACL on incoming queries.  By default the
@@ -62,7 +240,7 @@
 	Now builds and runs with Python 3.2
 	(Trac #710, git dae1d2e24f993e1eef9ab429326652f40a006dfb)
 
-257.	[bug]           y-aharen
+257.	[bug]		y-aharen
 	Fixed a bug an instance of IntervalTimerImpl may be destructed 
 	while deadline_timer is holding the handler. This fix addresses
 	occasional failure of IntervalTimerTest.destructIntervalTimer.
@@ -71,25 +249,25 @@
 256.	[bug]		jerry
 	src/bin/xfrin: update xfrin to check TSIG before other part of
 	incoming message.
-	(Trac955, git 261450e93af0b0406178e9ef121f81e721e0855c)
+	(Trac #955, git 261450e93af0b0406178e9ef121f81e721e0855c)
 
 255.	[func]		zhang likun
 	src/lib/cache:  remove empty code in lib/cache and the corresponding
 	suppression rule in	src/cppcheck-suppress.lst.
-	(Trac639, git 4f714bac4547d0a025afd314c309ca5cb603e212)
+	(Trac #639, git 4f714bac4547d0a025afd314c309ca5cb603e212)
 
 254.	[bug]		jinmei
 	b10-xfrout: failed to send notifies over IPv6 correctly.
-	(Trac964, git 3255c92714737bb461fb67012376788530f16e40)
+	(Trac #964, git 3255c92714737bb461fb67012376788530f16e40)
 
-253.    [func]		jelte
+253.	[func]		jelte
 	Add configuration options for logging through the virtual module
 	Logging.
-	(Trac 736, git 9fa2a95177265905408c51d13c96e752b14a0824)
+	(Trac #736, git 9fa2a95177265905408c51d13c96e752b14a0824)
 
-252.    [func]      	stephen
+252.	[func]		stephen
 	Add syslog as destination for logging.
-	(Trac976, git 31a30f5485859fd3df2839fc309d836e3206546e)
+	(Trac #976, git 31a30f5485859fd3df2839fc309d836e3206546e)
 
 251.	[bug]*		jinmei
 	Make sure bindctl private files are non readable to anyone except
@@ -98,38 +276,38 @@
 	group will have to be adjusted.  Also note that this change is
 	only effective for a fresh install; if these files already exist,
 	their permissions must be adjusted by hand (if necessary).
-	(Trac870, git 461fc3cb6ebabc9f3fa5213749956467a14ebfd4)
+	(Trac #870, git 461fc3cb6ebabc9f3fa5213749956467a14ebfd4)
 
-250.    [bug]           ocean
+250.	[bug]		ocean
 	src/lib/util/encode, in some conditions, the DecodeNormalizer's
 	iterator may reach the end() and when later being dereferenced
 	it will cause crash on some platform.
-	(Trac838, git 83e33ec80c0c6485d8b116b13045b3488071770f)
+	(Trac #838, git 83e33ec80c0c6485d8b116b13045b3488071770f)
 
-249.    [func]      	jerry
+249.	[func]		jerry
 	xfrout: add support for TSIG verification.
-	(Trac816, git 3b2040e2af2f8139c1c319a2cbc429035d93f217)
+	(Trac #816, git 3b2040e2af2f8139c1c319a2cbc429035d93f217)
 
-248.    [func]      	stephen
+248.	[func]		stephen
 	Add file and stderr as destinations for logging.
-	(Trac555, git 38b3546867425bd64dbc5920111a843a3330646b)
+	(Trac #555, git 38b3546867425bd64dbc5920111a843a3330646b)
 
-247.    [func]      	jelte
+247.	[func]		jelte
 	Upstream queries from the resolver now set EDNS0 buffer size.
-	(Trac834, git 48e10c2530fe52c9bde6197db07674a851aa0f5d)
+	(Trac #834, git 48e10c2530fe52c9bde6197db07674a851aa0f5d)
 
-246.    [func]      	stephen
+246.	[func]		stephen
 	Implement logging using log4cplus (http://log4cplus.sourceforge.net)
-	(Trac899, git 31d3f525dc01638aecae460cb4bc2040c9e4df10)
+	(Trac #899, git 31d3f525dc01638aecae460cb4bc2040c9e4df10)
 
-245.    [func]      	vorner
+245.	[func]		vorner
 	Authoritative server can now sign the answers using TSIG
 	(configured in tsig_keys/keys, list of strings like
 	"name:<base64-secret>:sha1-hmac"). It doesn't use them for
 	ACL yet, only verifies them and signs if the request is signed.
-	(Trac875, git fe5e7003544e4e8f18efa7b466a65f336d8c8e4d)
+	(Trac #875, git fe5e7003544e4e8f18efa7b466a65f336d8c8e4d)
 
-244.	[func] 		stephen
+244.	[func]		stephen
 	In unit tests, allow the choice of whether unhandled exceptions are
 	caught in the unit test program (and details printed) or allowed to
 	propagate to the default exception handler.  See the bind10-dev thread
@@ -139,7 +317,7 @@
 
 243.	[func]*		feng
 	Add optional hmac algorithm SHA224/384/812.
-	(Trac#782, git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1)
+	(Trac #782, git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1)
 
 bind10-devel-20110519 released on May 19, 2011
 
@@ -186,7 +364,7 @@ bind10-devel-20110519 released on May 19, 2011
 	stats module and stats-httpd module, and maybe with other
 	statistical modules in future. "stats.spec" has own configuration
 	and commands of stats module, if it requires.
-	(Trac#719, git a234b20dc6617392deb8a1e00eb0eed0ff353c0a)
+	(Trac #719, git a234b20dc6617392deb8a1e00eb0eed0ff353c0a)
 
 236.	[func]		jelte
 	C++ client side of configuration now uses BIND10 logging system.
@@ -229,13 +407,13 @@ bind10-devel-20110519 released on May 19, 2011
 	instead of '%s,%d', which allows us to cope better with
 	mismatched placeholders and allows reordering of them in
 	case of translation.
-	(Trac901, git 4903410e45670b30d7283f5d69dc28c2069237d6)
+	(Trac #901, git 4903410e45670b30d7283f5d69dc28c2069237d6)
 
 230.	[bug]		naokikambe
 	Removed too repeated verbose messages in two cases of:
 	 - when auth sends statistics data to stats
 	 - when stats receives statistics data from other modules
-	(Trac#620, git 0ecb807011196eac01f281d40bc7c9d44565b364)
+	(Trac #620, git 0ecb807011196eac01f281d40bc7c9d44565b364)
 
 229.	[doc]		jreed
 	Add manual page for b10-host.

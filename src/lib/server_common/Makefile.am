@@ -20,6 +20,9 @@ lib_LTLIBRARIES = libserver_common.la
 libserver_common_la_SOURCES = client.h client.cc
 libserver_common_la_SOURCES += keyring.h keyring.cc
 libserver_common_la_SOURCES += portconfig.h portconfig.cc
+libserver_common_la_SOURCES += logger.h logger.cc
+nodist_libserver_common_la_SOURCES = server_common_messages.h
+nodist_libserver_common_la_SOURCES += server_common_messages.cc
 libserver_common_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
@@ -27,5 +30,10 @@ libserver_common_la_LIBADD += $(top_builddir)/src/lib/config/libcfgclient.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/acl/libacl.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
+BUILT_SOURCES = server_common_messages.h server_common_messages.cc
+server_common_messages.h server_common_messages.cc: server_common_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/server_common/server_common_messages.mes
 
-CLEANFILES = *.gcno *.gcda
+EXTRA_DIST = server_common_messages.mes
+
+CLEANFILES = *.gcno *.gcda server_common_messages.h server_common_messages.cc

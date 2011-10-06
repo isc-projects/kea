@@ -18,12 +18,23 @@
 
 using namespace isc::log;
 
+class LoggerSupportTest : public ::testing::Test {
+protected:
+    LoggerSupportTest() {
+        // Logger initialization is done in main().  As logging tests may
+        // alter the default logging output, it is reset here.
+        resetUnitTestRootLogger();
+    }
+    ~LoggerSupportTest() {
+    }
+};
+
 // Check that the initialized flag can be manipulated.  This is a bit chicken-
 // -and-egg: we want to reset to the flag to the original value at the end
 // of the test, so use the functions to do that.  But we are trying to check
 // that these functions in fact work.
 
-TEST(LoggerSupportTest, InitializedFlag) {
+TEST_F(LoggerSupportTest, InitializedFlag) {
     bool current_flag = isLoggingInitialized();
 
     // check we can flip the flag.
@@ -51,7 +62,7 @@ TEST(LoggerSupportTest, InitializedFlag) {
 // Check that a logger will throw an exception if logging has not been
 // initialized.
 
-TEST(LoggerSupportTest, LoggingInitializationCheck) {
+TEST_F(LoggerSupportTest, LoggingInitializationCheck) {
 
     // Assert that logging has been initialized (it should be in main()).
     bool current_flag = isLoggingInitialized();

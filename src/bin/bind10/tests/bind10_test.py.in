@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from bind10 import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
+from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -26,6 +26,7 @@ import socket
 from isc.net.addr import IPAddr
 import time
 import isc
+import isc.log
 
 from isc.testutils.parse_args import TestOptParser, OptsError
 
@@ -136,9 +137,27 @@ class TestBoB(unittest.TestCase):
             def group_sendmsg(self, msg, group):
                 (self.msg, self.group) = (msg, group)
             def group_recvmsg(self, nonblock, seq): pass
+        class DummyModuleCCSession():
+            module_spec = isc.config.module_spec.ModuleSpec({
+                    "module_name": "Boss",
+                    "statistics": [
+                        {
+                            "item_name": "boot_time",
+                            "item_type": "string",
+                            "item_optional": False,
+                            "item_default": "1970-01-01T00:00:00Z",
+                            "item_title": "Boot time",
+                            "item_description": "A date time when bind10 process starts initially",
+                            "item_format": "date-time"
+                            }
+                        ]
+                    })
+            def get_module_spec(self):
+                return self.module_spec
         bob = BoB()
         bob.verbose = True
         bob.cc_session = DummySession()
+        bob.ccs = DummyModuleCCSession()
         # a bad command
         self.assertEqual(bob.command_handler(-1, None),
                          isc.config.ccsession.create_answer(1, "bad command"))
@@ -146,14 +165,22 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.command_handler("shutdown", None),
                          isc.config.ccsession.create_answer(0))
         self.assertFalse(bob.runnable)
+        # "getstats" command
+        self.assertEqual(bob.command_handler("getstats", None),
+                         isc.config.ccsession.create_answer(0,
+                            { "owner": "Boss",
+                              "data": {
+                                'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                            }}))
         # "sendstats" command
         self.assertEqual(bob.command_handler("sendstats", None),
                          isc.config.ccsession.create_answer(0))
         self.assertEqual(bob.cc_session.group, "Stats")
         self.assertEqual(bob.cc_session.msg,
                          isc.config.ccsession.create_command(
-                'set', { "stats_data": {
-                        'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                "set", { "owner": "Boss",
+                         "data": {
+                        "boot_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", _BASETIME)
                         }}))
         # "ping" command
         self.assertEqual(bob.command_handler("ping", None),
@@ -192,6 +219,13 @@ class MockBob(BoB):
         self.cmdctl = False
         self.c_channel_env = {}
         self.processes = { }
+        self.creator = False
+
+    def start_creator(self):
+        self.creator = True
+
+    def stop_creator(self, kill=False):
+        self.creator = False
 
     def read_bind10_config(self):
         # Configuration options are set directly
@@ -336,6 +370,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.msgq, core)
         self.assertEqual(bob.cfgmgr, core)
         self.assertEqual(bob.ccsession, core)
+        self.assertEqual(bob.creator, core)
         self.assertEqual(bob.auth, auth)
         self.assertEqual(bob.resolver, resolver)
         self.assertEqual(bob.xfrout, auth)
@@ -764,4 +799,5 @@ class TestBrittle(unittest.TestCase):
         self.assertFalse(bob.runnable)
 
 if __name__ == '__main__':
+    isc.log.resetUnitTestRootLogger()
     unittest.main()

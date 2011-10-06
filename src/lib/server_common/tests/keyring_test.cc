@@ -38,7 +38,8 @@ public:
         specfile(std::string(TEST_DATA_PATH) + "/spec.spec")
     {
         session.getMessages()->add(createAnswer());
-        mccs.reset(new ModuleCCSession(specfile, session, NULL, NULL, false));
+        mccs.reset(new ModuleCCSession(specfile, session, NULL, NULL,
+                                       false, false));
     }
     isc::cc::FakeSession session;
     std::auto_ptr<ModuleCCSession> mccs;

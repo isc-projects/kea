@@ -22,8 +22,22 @@
 
 import json
 
-class DataNotFoundError(Exception): pass
-class DataTypeError(Exception): pass
+class DataNotFoundError(Exception):
+    """Raised if an identifier does not exist according to a spec file,
+       or if an item is addressed that is not in the current (or default)
+       config (such as a nonexistent list or map element)"""
+    pass
+
+class DataAlreadyPresentError(Exception):
+    """Raised if there is an attemt to add an element to a list or a
+       map that is already present in that list or map (i.e. if 'add'
+       is used when it should be 'set')"""
+    pass
+
+class DataTypeError(Exception):
+    """Raised if there is an attempt to set an element that is of a
+       different type than the type specified in the specification."""
+    pass
 
 def remove_identical(a, b):
     """Removes the values from dict a that are the same as in dict b.

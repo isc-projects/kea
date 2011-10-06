@@ -47,6 +47,18 @@ import isc.net.parse
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 from isc.util import socketserver_mixin
+from isc.log_messages.cmdctl_messages import *
+
+# TODO: these debug-levels are hard-coded here; we are planning on
+# creating a general set of debug levels, see ticket #1074. When done,
+# we should remove these values and use the general ones in the
+# logger.debug calls
+
+# Debug level for communication with BIND10
+DBG_CMDCTL_MESSAGING = 30
+
+isc.log.init("b10-cmdctl")
+logger = isc.log.Logger("cmdctl")
 
 try:
     import threading
@@ -173,7 +185,8 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if not user_name:
             return False, ["need user name"]
         if not self.server.get_user_info(user_name):
-            return False, ["user doesn't exist"]
+            logger.info(CMDCTL_NO_SUCH_USER, user_name)
+            return False, ["username or password error"]
 
         user_pwd = user_info.get('password')
         if not user_pwd:
@@ -181,7 +194,8 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         local_info = self.server.get_user_info(user_name)
         pwd_hashval = sha1((user_pwd + local_info[1]).encode())
         if pwd_hashval.hexdigest() != local_info[0]:
-            return False, ["password doesn't match"] 
+            logger.info(CMDCTL_BAD_PASSWORD, user_name)
+            return False, ["username or password error"]
 
         return True, None
    
@@ -281,7 +295,7 @@ class CommandControl():
                 errstr = 'unknown config item: ' + key
             
             if errstr != None:
-                self.log_info('Fail to apply config data, ' + errstr) 
+                logger.error(CMDCTL_BAD_CONFIG_DATA, errstr);
                 return ccsession.create_answer(1, errstr)
 
         return ccsession.create_answer(0)
@@ -387,8 +401,8 @@ class CommandControl():
         '''Send the command from bindctl to proper module. '''
         errstr = 'unknown error'
         answer = None
-        if self._verbose:
-            self.log_info("Begin send command '%s' to module '%s'" %(command_name, module_name))
+        logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_SEND_COMMAND,
+                     command_name, module_name)
 
         if module_name == self._module_name:
             # Process the command sent to cmdctl directly. 
@@ -396,14 +410,13 @@ class CommandControl():
         else:
             msg = ccsession.create_command(command_name, params)
             seq = self._cc.group_sendmsg(msg, module_name)
+            logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT,
+                         command_name, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
             try:
                 answer, env = self._cc.group_recvmsg(False, seq)
             except isc.cc.session.SessionTimeout:
                 errstr = "Module '%s' not responding" % module_name
-
-        if self._verbose:
-            self.log_info("Finish send command '%s' to module '%s'" % (command_name, module_name))
 
         if answer:
             try:
@@ -415,16 +428,13 @@ class CommandControl():
                     else:
                         return rcode, {}
                 else:
-                    # TODO: exception
                     errstr = str(answer['result'][1])
             except ccsession.ModuleCCSessionError as mcse:
                 errstr = str("Error in ccsession answer:") + str(mcse)
-                self.log_info(errstr)
+
+        logger.error(CMDCTL_COMMAND_ERROR, command_name, module_name, errstr)
         return 1, {'error': errstr}
     
-    def log_info(self, msg):
-        sys.stdout.write("[b10-cmdctl] %s\n" % str(msg))
-
     def get_cmdctl_config_data(self):
         ''' If running in source code tree, use keyfile, certificate
         and user accounts file in source code. '''
@@ -481,14 +491,15 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                 for row in reader:
                     self._user_infos[row[0]] = [row[1], row[2]]
             except (IOError, IndexError) as e:
-                self.log_info("Fail to read user database, %s" % e)                
+                logger.error(CMDCTL_USER_DATABASE_READ_ERROR,
+                             accounts_file, e)
             finally:
                 if csvfile:
                     csvfile.close()
 
         self._accounts_file = accounts_file
         if len(self._user_infos) == 0:
-            self.log_info("Fail to get user information, will deny any user")                
+            logger.error(CMDCTL_NO_USER_ENTRIES_READ)
          
     def get_user_info(self, username):
         '''Get user's salt and hashed string. If the user
@@ -520,7 +531,7 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                                       ssl_version = ssl.PROTOCOL_SSLv23)
             return ssl_sock 
         except (ssl.SSLError, CmdctlException) as err :
-            self.log_info("Deny client's connection because %s" % str(err))
+            logger.info(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
             self.close_request(sock)
             # raise socket error to finish the request
             raise socket.error
@@ -547,9 +558,6 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
     def send_command_to_module(self, module_name, command_name, params):
         return self.cmdctl.send_command_with_check(module_name, command_name, params)
    
-    def log_info(self, msg):
-        sys.stdout.write("[b10-cmdctl] %s\n" % str(msg))
-
 httpd = None
 
 def signal_handler(signal, frame):
@@ -607,15 +615,13 @@ if __name__ == '__main__':
         run(options.addr, options.port, options.idle_timeout, options.verbose)
         result = 0
     except isc.cc.SessionError as err:
-        sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
-                         "is the command channel daemon running?\n")        
+        logger.fatal(CMDCTL_CC_SESSION_ERROR, err)
     except isc.cc.SessionTimeout:
-        sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
-                         "is the configuration manager running?\n")        
+        logger.fatal(CMDCTL_CC_SESSION_TIMEOUT)
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-cmdctl] exit from Cmdctl\n")
+        logger.info(CMDCTL_STOPPED_BY_KEYBOARD)
     except CmdctlException as err:
-        sys.stderr.write("[b10-cmdctl] " + str(err) + "\n")
+        logger.fatal(CMDCTL_UNCAUGHT_EXCEPTION, err);
 
     if httpd:
         httpd.shutdown()

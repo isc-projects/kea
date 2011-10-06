@@ -27,16 +27,7 @@ class TSIG;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_TSIG : public PyObject {
-public:
-    s_TSIG();
-    const rdata::any::TSIG* cppobj;
-};
-
 extern PyTypeObject tsig_type;
-
-bool initModulePart_TSIG(PyObject* mod);
 
 /// This is A simple shortcut to create a python TSIG object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
@@ -46,6 +37,26 @@ bool initModulePart_TSIG(PyObject* mod);
 /// This function is expected to be called with in a try block
 /// followed by necessary setup for python exception.
 PyObject* createTSIGObject(const rdata::any::TSIG& source);
+
+/// \brief Checks if the given python object is a TSIG object
+///
+/// \exception PyCPPWrapperException if obj is NULL
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type TSIG, false otherwise
+bool PyTSIG_Check(PyObject* obj);
+
+/// \brief Returns a reference to the TSIG object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type TSIG; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyTSIG_Check()
+///
+/// \note This is not a copy; if the TSIG is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param tsig_obj The tsig object to convert
+const rdata::any::TSIG& PyTSIG_ToTSIG(const PyObject* tsig_obj);
 
 } // namespace python
 } // namespace dns

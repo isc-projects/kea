@@ -94,6 +94,22 @@ public:
 /// the reference to be decreased, the original bare pointer should be
 /// extracted using the \c release() method.
 ///
+/// In some other cases, it would be convenient if it's possible to create
+/// an "empty" container and reset it with a Python object later.
+/// For example, we may want to create a temporary Python object in the
+/// middle of a function and make sure that it's valid within the rest of
+/// the function scope, while we want to make sure its reference is released
+/// when the function returns (either normally or as a result of exception).
+/// To allow this scenario, this class defines the default constructor
+/// and the \c reset() method.  The default constructor allows the class
+/// object with an "empty" (NULL) Python object, while \c reset() allows
+/// the stored object to be replaced with a new one.  If there's a valid
+/// object was already set, \c reset() releases its reference.
+/// In general, it's safer to construct the container object with a valid
+/// Python object pointer.  The use of the default constructor and
+/// \c reset() should therefore be restricted to cases where it's
+/// absolutely necessary.
+///
 /// There are two convenience methods for commonly used operations:
 /// \c installAsClassVariable() to add the PyObject as a class variable
 /// and \c installToModule to add the PyObject to a specified python module.
@@ -166,16 +182,27 @@ public:
 /// exception in a python biding written in C/C++.  See the code comment
 /// of the method for more details.
 struct PyObjectContainer {
+    PyObjectContainer() : obj_(NULL) {}
     PyObjectContainer(PyObject* obj) : obj_(obj) {
         if (obj_ == NULL) {
             isc_throw(PyCPPWrapperException, "Unexpected NULL PyObject, "
                       "probably due to short memory");
         }
     }
-    virtual ~PyObjectContainer() {
+    ~PyObjectContainer() {
         if (obj_ != NULL) {
             Py_DECREF(obj_);
         }
+    }
+    void reset(PyObject* obj) {
+        if (obj == NULL) {
+            isc_throw(PyCPPWrapperException, "Unexpected NULL PyObject, "
+                      "probably due to short memory");
+        }
+        if (obj_ != NULL) {
+            Py_DECREF(obj_);
+        }
+        obj_ = obj;
     }
     PyObject* get() {
         return (obj_);
@@ -266,7 +293,7 @@ protected:
 /// \c PyObject_New() to the caller.
 template <typename PYSTRUCT, typename CPPCLASS>
 struct CPPPyObjectContainer : public PyObjectContainer {
-    CPPPyObjectContainer(PYSTRUCT* obj) : PyObjectContainer(obj) {}
+    explicit CPPPyObjectContainer(PYSTRUCT* obj) : PyObjectContainer(obj) {}
 
     // This method associates a C++ object with the corresponding python
     // object enclosed in this class.

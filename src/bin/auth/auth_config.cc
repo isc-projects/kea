@@ -107,7 +107,7 @@ DatasourcesConfig::commit() {
     // server implementation details, and isn't scalable wrt the number of
     // data source types, and should eventually be improved.
     // Currently memory data source for class IN is the only possibility.
-    server_.setMemoryDataSrc(RRClass::IN(), AuthSrv::MemoryDataSrcPtr());
+    server_.setInMemoryClient(RRClass::IN(), AuthSrv::InMemoryClientPtr());
 
     BOOST_FOREACH(shared_ptr<AuthConfigParser> datasrc_config, datasources_) {
         datasrc_config->commit();
@@ -125,12 +125,12 @@ public:
     {}
     virtual void build(ConstElementPtr config_value);
     virtual void commit() {
-        server_.setMemoryDataSrc(rrclass_, memory_datasrc_);
+        server_.setInMemoryClient(rrclass_, memory_client_);
     }
 private:
     AuthSrv& server_;
     RRClass rrclass_;
-    AuthSrv::MemoryDataSrcPtr memory_datasrc_;
+    AuthSrv::InMemoryClientPtr memory_client_;
 };
 
 void
@@ -143,8 +143,8 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
     // We'd eventually optimize building zones (in case of reloading) by
     // selectively loading fresh zones.  Right now we simply check the
     // RR class is supported by the server implementation.
-    server_.getMemoryDataSrc(rrclass_);
-    memory_datasrc_ = AuthSrv::MemoryDataSrcPtr(new MemoryDataSrc());
+    server_.getInMemoryClient(rrclass_);
+    memory_client_ = AuthSrv::InMemoryClientPtr(new InMemoryClient());
 
     ConstElementPtr zones_config = config_value->get("zones");
     if (!zones_config) {
@@ -163,9 +163,10 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin->str());
         }
-        shared_ptr<MemoryZone> new_zone(new MemoryZone(rrclass_,
+        shared_ptr<InMemoryZoneFinder> zone_finder(new
+                                                   InMemoryZoneFinder(rrclass_,
             Name(origin->stringValue())));
-        const result::Result result = memory_datasrc_->addZone(new_zone);
+        const result::Result result = memory_client_->addZone(zone_finder);
         if (result == result::EXIST) {
             isc_throw(AuthConfigError, "zone "<< origin->str()
                       << " already exists");
@@ -177,7 +178,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
          * need the load method to be split into some kind of build and
          * commit/abort parts.
          */
-        new_zone->load(file->stringValue());
+        zone_finder->load(file->stringValue());
     }
 }
 

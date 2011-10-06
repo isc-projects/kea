@@ -37,6 +37,31 @@ manager is appended to the log error. The most likely cause is that
 the module is of a different (command specification) version than the
 running configuration manager.
 
+% CONFIG_LOG_EXPLICIT will use logging configuration for explicitly-named logger %1
+This is a debug message.  When processing the "loggers" part of the
+configuration file, the configuration library found an entry for the named
+logger that matches the logger specification for the program.  The logging
+configuration for the program will be updated with the information.
+
+% CONFIG_LOG_IGNORE_EXPLICIT ignoring logging configuration for explicitly-named logger %1
+This is a debug message.  When processing the "loggers" part of the
+configuration file, the configuration library found an entry for the
+named logger.  As this does not match the logger specification for the
+program, it has been ignored.
+
+% CONFIG_LOG_IGNORE_WILD ignoring logging configuration for wildcard logger %1
+This is a debug message.  When processing the "loggers" part of the
+configuration file, the configuration library found the named wildcard
+entry (one containing the "*" character) that matched a logger already
+matched by an explicitly named entry.  The configuration is ignored.
+
+% CONFIG_LOG_WILD_MATCH will use logging configuration for wildcard logger %1
+This is a debug message.  When processing the "loggers" part of
+the configuration file, the configuration library found the named
+wildcard entry (one containing the "*" character) that matches a logger
+specification in the program. The logging configuration for the program
+will be updated with the information.
+
 % CONFIG_JSON_PARSE JSON parse error in %1: %2
 There was an error parsing the JSON file. The given file does not appear
 to be in valid JSON format. Please verify that the filename is correct
