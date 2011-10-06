@@ -21,11 +21,11 @@
 
 sh clean.sh
 
-# Set up the IXFR server - Load an old version of the zone.
+# Set up the initial version of the IXFR server - Load an old version of the zone.
 
 cp -f ns1/named_nonotify.conf ns1/named.conf
 cp -f $IXFR_TOP/largezone_n-4.db ns1/zone.db
 
-# Set up the IXFR client
+# Set up the IXFR client - load the same version of the zone.
 
 ${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-4.db
