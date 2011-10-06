@@ -931,10 +931,11 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
 } // end anonymous namespace
 
 DataSourceClient *
-createInstance(isc::data::ConstElementPtr config) {
+createInstance(isc::data::ConstElementPtr config, std::string& error) {
     ElementPtr errors(Element::createList());
     if (!checkConfig(config, errors)) {
-        isc_throw(DataSourceConfigError, errors->str());
+        error = "Configuration error: " + errors->str();
+        return (NULL);
     }
     return (new InMemoryClient());
 }

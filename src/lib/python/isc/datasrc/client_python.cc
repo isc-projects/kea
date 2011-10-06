@@ -184,12 +184,7 @@ DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
         const string ex_what = "JSON parse error in data source configuration "
                                "data for type " +
                                string(ds_type_str) + ":" + je.what();
-        PyErr_SetString(getDataSourceException("ConfigError"), ex_what.c_str());
-        return (-1);
-    } catch (const DataSourceConfigError& dsce) {
-        const string ex_what = "Bad data source configuration data for type " +
-                               string(ds_type_str) + ":" + string(dsce.what());
-        PyErr_SetString(getDataSourceException("ConfigError"), ex_what.c_str());
+        PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
         return (-1);
     } catch (const DataSourceError& dse) {
         const string ex_what = "Failed to create DataSourceClient of type " +
