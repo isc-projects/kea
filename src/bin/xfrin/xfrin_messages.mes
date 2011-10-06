@@ -15,25 +15,26 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrin messages python module.
 
-% XFRIN_AXFR_INTERNAL_FAILURE AXFR transfer of zone %1 failed: %2
-The AXFR transfer for the given zone has failed due to an internal
-problem in the bind10 python wrapper library.
-The error is shown in the log message.
+% XFRIN_XFR_OTHER_FAILURE %1 transfer of zone %2 failed: %3
+The XFR transfer for the given zone has failed due to a problem outside
+of the xfrin module.  Possible reasons are a broken DNS message or failure
+in database connection.  The error is shown in the log message.
 
 % XFRIN_AXFR_DATABASE_FAILURE AXFR transfer of zone %1 failed: %2
 The AXFR transfer for the given zone has failed due to a database problem.
+The error is shown in the log message.  Note: due to the code structure
+this can only happen for AXFR.
+
+% XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 failed: %3
+The XFR transfer for the given zone has failed due to a protocol error.
 The error is shown in the log message.
 
-% XFRIN_AXFR_TRANSFER_FAILURE AXFR transfer of zone %1 failed: %2
-The AXFR transfer for the given zone has failed due to a protocol error.
-The error is shown in the log message.
-
-% XFRIN_AXFR_TRANSFER_STARTED AXFR transfer of zone %1 started
+% XFRIN_XFR_TRANSFER_STARTED %1 transfer of zone %2 started
 A connection to the master server has been made, the serial value in
 the SOA record has been checked, and a zone transfer has been started.
 
-% XFRIN_AXFR_TRANSFER_SUCCESS AXFR transfer of zone %1 succeeded
-The AXFR transfer of the given zone was successfully completed.
+% XFRIN_XFR_TRANSFER_SUCCESS %1 transfer of zone %2 succeeded
+The XFR transfer of the given zone was successfully completed.
 
 % XFRIN_BAD_MASTER_ADDR_FORMAT bad format for master address: %1
 The given master address is not a valid IP address.
@@ -89,3 +90,12 @@ daemon will now shut down.
 % XFRIN_UNKNOWN_ERROR unknown error: %1
 An uncaught exception was raised while running the xfrin daemon. The
 exception message is printed in the log message.
+
+% XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
+In an attempt of IXFR processing, the begenning SOA of the first difference
+(following the initial SOA that specified the final SOA for all the
+differences) was found.  This means a connection for xfrin tried IXFR
+and really aot a response for incremental updates.
+
+% XFRIN_GOT_NONINCREMENTAL_RESP got nonincremental response for %1
+TBD
