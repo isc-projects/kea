@@ -168,6 +168,38 @@ class XfrinState:
                                    V
                                 IXFREnd
 
+    Note that changes are committed for every "difference sequence"
+    (i.e. changes for one SOA update).  This means when an IXFR response
+    contains multiple difference sequences and something goes wrong
+    after several commits, these changes have been published and visible
+    to clients even if the IXFR session is subsequently aborted.
+    It is not clear if this is valid in terms of the protocol specification.
+    Section 4 of RFC 1995 states:
+
+       An IXFR client, should only replace an older version with a newer
+       version after all the differences have been successfully processed.
+
+    If this "replacement" is for the changes of one difference sequence
+    and "all the differences" mean the changes for that sequence, this
+    implementation strictly follows what RFC states.  If this is for
+    the entire IXFR response (that may contain multiple sequences),
+    we should implement it with one big transaction and one final commit
+    at the very end.
+
+    For now, we implement it with multiple smaller commits for two
+    reasons.  First, this is what BIND 9 does, and we generally port
+    the implementation logic here.  BIND 9 has been supporting IXFR
+    for many years, so the fact that it still behaves this way
+    probably means it at least doesn't cause a severe operational
+    problem in practice.  Second, especially because BIND 10 would
+    often uses a database backend, a larger transaction could cause an
+    undesirable effects, e.g. suspending normal lookups for a longer
+    period depending on the characteristics of the database.  Even if
+    we find something wrong in a later sequeunce and abort the
+    session, we can start another incremental update from what has
+    been validated, or we can switch to AXFR to replace the zone
+    completely.
+
     This implementation uses the state design pattern, where each state
     is represented as a subclass of the base XfrinState class.  Each concrete
     subclass of XfrinState is assumed to define two methods: handle_rr() and
