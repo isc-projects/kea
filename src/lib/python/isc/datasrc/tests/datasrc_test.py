@@ -68,14 +68,14 @@ class DataSrcClient(unittest.TestCase):
         self.assertRaises(TypeError, isc.datasrc.DataSourceClient, "sqlite3", 1)
         self.assertRaises(isc.datasrc.Error,
                           isc.datasrc.DataSourceClient, "foo", "{}")
-        self.assertRaises(isc.datasrc.ConfigError,
+        self.assertRaises(isc.datasrc.Error,
                           isc.datasrc.DataSourceClient, "sqlite3", "")
-        self.assertRaises(isc.datasrc.ConfigError,
+        self.assertRaises(isc.datasrc.Error,
                           isc.datasrc.DataSourceClient, "sqlite3", "{}")
-        self.assertRaises(isc.datasrc.ConfigError,
+        self.assertRaises(isc.datasrc.Error,
                           isc.datasrc.DataSourceClient, "sqlite3",
                           "{ \"foo\": 1 }")
-        self.assertRaises(isc.datasrc.ConfigError,
+        self.assertRaises(isc.datasrc.Error,
                           isc.datasrc.DataSourceClient, "memory",
                           "{ \"foo\": 1 }")
 

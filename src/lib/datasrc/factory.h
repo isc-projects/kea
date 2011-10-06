@@ -44,17 +44,8 @@ public:
         DataSourceError(file, line, what) {}
 };
 
-/// \brief Raised if the given config contains bad data
-///
-/// Depending on the datasource type, the configuration may differ (for
-/// instance, the sqlite3 datasource needs a database file).
-class DataSourceConfigError : public DataSourceError {
-public:
-    DataSourceConfigError(const char* file, size_t line, const char* what) :
-        DataSourceError(file, line, what) {}
-};
-
-typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config);
+typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config,
+                                     std::string& error);
 typedef void ds_destructor(DataSourceClient* instance);
 
 /// \brief Container class for dynamically loaded libraries
