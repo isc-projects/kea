@@ -35,7 +35,13 @@ run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += database_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
+if !USE_STATIC_LINK
+# This test uses dynamically loadable module.  It will cause various
+# troubles with static link such as "missing" symbols in the static object
+# for the module.  As a workaround we disable this particualr test
+# in this case.
 run_unittests_SOURCES += factory_unittest.cc
+endif
 # for the dlopened types we have tests for, we also need to include the
 # sources
 run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
