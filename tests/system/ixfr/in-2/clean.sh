@@ -18,7 +18,7 @@
 # Clean up after zone transfer tests.
 
 rm -f ns1/named.conf
-rm -f ns1/largezone.db
+rm -f ns1/zone.db
 rm -f ns1/named.memstats
 
 rm -f nsx2/bind10.run
