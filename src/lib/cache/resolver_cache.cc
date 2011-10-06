@@ -17,6 +17,7 @@
 #include "resolver_cache.h"
 #include "dns/message.h"
 #include "rrset_cache.h"
+#include "logger.h"
 #include <string>
 #include <algorithm>
 
@@ -29,6 +30,7 @@ namespace cache {
 ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
     cache_class_(cache_class)
 {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, CACHE_RESOLVER_INIT).arg(cache_class);
     local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(cache_class_.getCode()));
     rrsets_cache_ = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE,
                                                  cache_class_.getCode()));
@@ -45,6 +47,8 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
 ResolverClassCache::ResolverClassCache(const CacheSizeInfo& cache_info) :
     cache_class_(cache_info.cclass)
 {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, CACHE_RESOLVER_INIT_INFO).
+        arg(cache_class_);
     uint16_t klass = cache_class_.getCode();
     // TODO We should find one way to load local zone data.
     local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(klass));
@@ -69,8 +73,11 @@ ResolverClassCache::lookup(const isc::dns::Name& qname,
                       const isc::dns::RRType& qtype,
                       isc::dns::Message& response) const
 {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_LOOKUP_MSG).
+        arg(qname).arg(qtype);
     // message response should has question section already.
     if (response.beginQuestion() == response.endQuestion()) {
+        LOG_ERROR(logger, CACHE_RESOLVER_NO_QUESTION).arg(qname).arg(qtype);
         isc_throw(MessageNoQuestionSection, "Message has no question section");
     }
 
@@ -79,6 +86,8 @@ ResolverClassCache::lookup(const isc::dns::Name& qname,
     // answer section.
     RRsetPtr rrset_ptr = local_zone_data_->lookup(qname, qtype);
     if (rrset_ptr) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_LOCAL_MSG).
+            arg(qname).arg(qtype);
         response.addRRset(Message::SECTION_ANSWER, rrset_ptr);
         return (true);
     }
@@ -91,11 +100,15 @@ isc::dns::RRsetPtr
 ResolverClassCache::lookup(const isc::dns::Name& qname,
                const isc::dns::RRType& qtype) const
 {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_LOOKUP_RRSET).
+        arg(qname).arg(qtype);
     // Algorithm:
     // 1. Search in local zone data first,
     // 2. Then do search in rrsets_cache_.
     RRsetPtr rrset_ptr = local_zone_data_->lookup(qname, qtype);
     if (rrset_ptr) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_LOCAL_RRSET).
+            arg(qname).arg(qtype);
         return (rrset_ptr);
     } else {
         RRsetEntryPtr rrset_entry = rrsets_cache_->lookup(qname, qtype);
@@ -109,6 +122,10 @@ ResolverClassCache::lookup(const isc::dns::Name& qname,
 
 bool
 ResolverClassCache::update(const isc::dns::Message& msg) {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_UPDATE_MSG).
+        arg((*msg.beginQuestion())->getName()).
+        arg((*msg.beginQuestion())->getType()).
+        arg((*msg.beginQuestion())->getClass());
     return (messages_cache_->update(msg));
 }
 
@@ -130,6 +147,9 @@ ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr& rrset_ptr,
 
 bool
 ResolverClassCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_UPDATE_RRSET).
+        arg(rrset_ptr->getName()).arg(rrset_ptr->getType()).
+        arg(rrset_ptr->getClass());
     // First update local zone, then update rrset cache.
     local_zone_data_->update((*rrset_ptr.get()));
     updateRRsetCache(rrset_ptr, rrsets_cache_);
@@ -166,6 +186,8 @@ ResolverCache::lookup(const isc::dns::Name& qname,
     if (cc) {
         return (cc->lookup(qname, qtype, response));
     } else {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_UNKNOWN_CLASS_MSG).
+            arg(qclass);
         return (false);
     }
 }
@@ -179,6 +201,8 @@ ResolverCache::lookup(const isc::dns::Name& qname,
     if (cc) {
         return (cc->lookup(qname, qtype));
     } else {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_UNKNOWN_CLASS_RRSET).
+            arg(qclass);
         return (RRsetPtr());
     }
 }
@@ -187,6 +211,8 @@ isc::dns::RRsetPtr
 ResolverCache::lookupDeepestNS(const isc::dns::Name& qname,
                                const isc::dns::RRClass& qclass) const
 {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RESOLVER_DEEPEST).arg(qname).
+        arg(qclass);
     isc::dns::RRType qtype = RRType::NS();
     ResolverClassCache* cc = getClassCache(qclass);
     if (cc) {
@@ -213,6 +239,9 @@ ResolverCache::update(const isc::dns::Message& msg) {
     if (cc) {
         return (cc->update(msg));
     } else {
+        LOG_DEBUG(logger, DBG_TRACE_DATA,
+                  CACHE_RESOLVER_UPDATE_UNKNOWN_CLASS_MSG).
+            arg((*msg.beginQuestion())->getClass());
         return (false);
     }
 }
@@ -223,6 +252,9 @@ ResolverCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
     if (cc) {
         return (cc->update(rrset_ptr));
     } else {
+        LOG_DEBUG(logger, DBG_TRACE_DATA,
+                  CACHE_RESOLVER_UPDATE_UNKNOWN_CLASS_RRSET).
+            arg(rrset_ptr->getClass());
         return (false);
     }
 }

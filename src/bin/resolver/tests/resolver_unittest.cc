@@ -27,6 +27,7 @@
 using namespace std;
 using namespace isc::dns;
 using namespace isc::data;
+using isc::acl::dns::RequestACL;
 using namespace isc::testutils;
 using isc::UnitTestUtil;
 
@@ -156,8 +157,7 @@ TEST_F(ResolverTest, notifyFail) {
 TEST_F(ResolverTest, setQueryACL) {
     // valid cases are tested through other tests.  We only explicitly check
     // an invalid case: passing a NULL shared pointer.
-    EXPECT_THROW(server.setQueryACL(
-                     boost::shared_ptr<const Resolver::ClientACL>()),
+    EXPECT_THROW(server.setQueryACL(boost::shared_ptr<const RequestACL>()),
                  isc::InvalidParameter);
 }
 

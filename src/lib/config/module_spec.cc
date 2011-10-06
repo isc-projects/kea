@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium.
+// Copyright (C) 2010, 2011  Internet Systems Consortium.
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,10 +67,13 @@ check_config_item(ConstElementPtr spec) {
         check_leaf_item(spec, "list_item_spec", Element::map, true);
         check_config_item(spec->get("list_item_spec"));
     }
-    // todo: add stuff for type map
-    if (Element::nameToType(spec->get("item_type")->stringValue()) == Element::map) {
+
+    if (spec->get("item_type")->stringValue() == "map") {
         check_leaf_item(spec, "map_item_spec", Element::list, true);
         check_config_item_list(spec->get("map_item_spec"));
+    } else if (spec->get("item_type")->stringValue() == "named_set") {
+        check_leaf_item(spec, "named_set_item_spec", Element::map, true);
+        check_config_item(spec->get("named_set_item_spec"));
     }
 }
 
@@ -81,6 +84,61 @@ check_config_item_list(ConstElementPtr spec) {
     }
     BOOST_FOREACH(ConstElementPtr item, spec->listValue()) {
         check_config_item(item);
+    }
+}
+
+// checks whether the given element is a valid statistics specification
+// returns false if the specification is bad
+bool
+check_format(ConstElementPtr value, ConstElementPtr format_name) {
+    typedef std::map<std::string, std::string> format_types;
+    format_types time_formats;
+    // TODO: should be added other format types if necessary
+    time_formats.insert(
+        format_types::value_type("date-time", "%Y-%m-%dT%H:%M:%SZ") );
+    time_formats.insert(
+        format_types::value_type("date", "%Y-%m-%d") );
+    time_formats.insert(
+        format_types::value_type("time", "%H:%M:%S") );
+    BOOST_FOREACH (const format_types::value_type& f, time_formats) {
+        if (format_name->stringValue() == f.first) {
+            struct tm tm;
+            std::vector<char> buf(32);
+            memset(&tm, 0, sizeof(tm));
+            // reverse check
+            return (strptime(value->stringValue().c_str(),
+                             f.second.c_str(), &tm) != NULL
+                    && strftime(&buf[0], buf.size(),
+                                f.second.c_str(), &tm) != 0
+                    && strncmp(value->stringValue().c_str(),
+                               &buf[0], buf.size()) == 0);
+        }
+    }
+    return (false);
+}
+
+void check_statistics_item_list(ConstElementPtr spec);
+
+void
+check_statistics_item_list(ConstElementPtr spec) {
+    if (spec->getType() != Element::list) {
+        throw ModuleSpecError("statistics is not a list of elements");
+    }
+    BOOST_FOREACH(ConstElementPtr item, spec->listValue()) {
+        check_config_item(item);
+        // additional checks for statistics
+        check_leaf_item(item, "item_title", Element::string, true);
+        check_leaf_item(item, "item_description", Element::string, true);
+        check_leaf_item(item, "item_format", Element::string, false);
+        // checks name of item_format and validation of item_default
+        if (item->contains("item_format")
+            && item->contains("item_default")) {
+            if(!check_format(item->get("item_default"),
+                             item->get("item_format"))) {
+                throw ModuleSpecError(
+                    "item_default not valid type of item_format");
+            }
+        }
     }
 }
 
@@ -112,6 +170,9 @@ check_data_specification(ConstElementPtr spec) {
     }
     if (spec->contains("commands")) {
         check_command_list(spec->get("commands"));
+    }
+    if (spec->contains("statistics")) {
+        check_statistics_item_list(spec->get("statistics"));
     }
 }
 
@@ -162,6 +223,15 @@ ModuleSpec::getConfigSpec() const {
     }
 }
 
+ConstElementPtr
+ModuleSpec::getStatisticsSpec() const {
+    if (module_specification->contains("statistics")) {
+        return (module_specification->get("statistics"));
+    } else {
+        return (ElementPtr());
+    }
+}
+
 const std::string
 ModuleSpec::getModuleName() const {
     return (module_specification->get("module_name")->stringValue());
@@ -179,6 +249,12 @@ ModuleSpec::getModuleDescription() const {
 bool
 ModuleSpec::validateConfig(ConstElementPtr data, const bool full) const {
     ConstElementPtr spec = module_specification->find("config_data");
+    return (validateSpecList(spec, data, full, ElementPtr()));
+}
+
+bool
+ModuleSpec::validateStatistics(ConstElementPtr data, const bool full) const {
+    ConstElementPtr spec = module_specification->find("statistics");
     return (validateSpecList(spec, data, full, ElementPtr()));
 }
 
@@ -217,6 +293,14 @@ ModuleSpec::validateConfig(ConstElementPtr data, const bool full,
                             ElementPtr errors) const
 {
     ConstElementPtr spec = module_specification->find("config_data");
+    return (validateSpecList(spec, data, full, errors));
+}
+
+bool
+ModuleSpec::validateStatistics(ConstElementPtr data, const bool full,
+                               ElementPtr errors) const
+{
+    ConstElementPtr spec = module_specification->find("statistics");
     return (validateSpecList(spec, data, full, errors));
 }
 
@@ -286,7 +370,8 @@ check_type(ConstElementPtr spec, ConstElementPtr element) {
             return (cur_item_type == "list");
             break;
         case Element::map:
-            return (cur_item_type == "map");
+            return (cur_item_type == "map" ||
+                    cur_item_type == "named_set");
             break;
     }
     return (false);
@@ -323,7 +408,27 @@ ModuleSpec::validateItem(ConstElementPtr spec, ConstElementPtr data,
         }
     }
     if (data->getType() == Element::map) {
-        if (!validateSpecList(spec->get("map_item_spec"), data, full, errors)) {
+        // either a normal 'map' or a 'named set' (determined by which
+        // subspecification it has)
+        if (spec->contains("map_item_spec")) {
+            if (!validateSpecList(spec->get("map_item_spec"), data, full, errors)) {
+                return (false);
+            }
+        } else {
+            typedef std::pair<std::string, ConstElementPtr> maptype;
+
+            BOOST_FOREACH(maptype m, data->mapValue()) {
+                if (!validateItem(spec->get("named_set_item_spec"), m.second, full, errors)) {
+                    return (false);
+                }
+            }
+        }
+    }
+    if (spec->contains("item_format")) {
+        if (!check_format(data, spec->get("item_format"))) {
+            if (errors) {
+                errors->add(Element::create("Format mismatch"));
+            }
             return (false);
         }
     }

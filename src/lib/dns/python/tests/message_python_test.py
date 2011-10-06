@@ -21,6 +21,7 @@ import unittest
 import os
 from pydnspp import *
 from testutil import *
+from pyunittests_util import fix_current_time
 
 # helper functions for tests taken from c++ unittests
 if "TESTDATA_PATH" in os.environ:
@@ -28,10 +29,10 @@ if "TESTDATA_PATH" in os.environ:
 else:
     testdata_path = "../tests/testdata"
 
-def factoryFromFile(message, file):
+def factoryFromFile(message, file, parse_options=Message.PARSE_DEFAULT):
     data = read_wire_data(file)
-    message.from_wire(data)
-    pass
+    message.from_wire(data, parse_options)
+    return data
 
 # we don't have direct comparison for rrsets right now (should we?
 # should go in the cpp version first then), so also no direct list
@@ -43,6 +44,15 @@ def compare_rrset_list(list1, list2):
         if str(list1[i]) != str(list2[i]):
             return False
     return True
+
+# These are used for TSIG + TC tests
+LONG_TXT1 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde";
+
+LONG_TXT2 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456";
+
+LONG_TXT3 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01";
+
+LONG_TXT4 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0";
 
 # a complete message taken from cpp tests, for testing towire and totext
 def create_message():
@@ -62,16 +72,12 @@ def create_message():
     message_render.add_rrset(Message.SECTION_ANSWER, rrset)
     return message_render
 
-def strip_mutable_tsig_data(data):
-    # Unfortunately we cannot easily compare TSIG RR because we can't tweak
-    # current time.  As a work around this helper function strips off the time
-    # dependent part of TSIG RDATA, i.e., the MAC (assuming HMAC-MD5) and
-    # Time Signed.
-    return data[0:-32] + data[-26:-22] + data[-6:]
-
 class MessageTest(unittest.TestCase):
 
     def setUp(self):
+        # make sure we don't use faked time unless explicitly do so in tests
+        fix_current_time(None)
+
         self.p = Message(Message.PARSE)
         self.r = Message(Message.RENDER)
 
@@ -89,6 +95,10 @@ class MessageTest(unittest.TestCase):
         self.bogus_below_section = Message.SECTION_QUESTION - 1
         self.tsig_key = TSIGKey("www.example.com:SFuWd/q99SzF8Yzd1QbB9g==")
         self.tsig_ctx = TSIGContext(self.tsig_key)
+
+    def tearDown(self):
+        # reset any faked current time setting (it would affect other tests)
+        fix_current_time(None)
 
     def test_init(self):
         self.assertRaises(TypeError, Message, -1)
@@ -285,32 +295,111 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidMessageOperation, self.r.to_wire,
                           MessageRenderer())
 
-    def __common_tsigquery_setup(self):
+    def __common_tsigmessage_setup(self, flags=[Message.HEADERFLAG_RD],
+                                   rrtype=RRType("A"), answer_data=None):
         self.r.set_opcode(Opcode.QUERY())
         self.r.set_rcode(Rcode.NOERROR())
-        self.r.set_header_flag(Message.HEADERFLAG_RD)
+        for flag in flags:
+            self.r.set_header_flag(flag)
+        if answer_data is not None:
+            rrset = RRset(Name("www.example.com"), RRClass("IN"),
+                          rrtype, RRTTL(86400))
+            for rdata in answer_data:
+                rrset.add_rdata(Rdata(rrtype, RRClass("IN"), rdata))
+            self.r.add_rrset(Message.SECTION_ANSWER, rrset)
         self.r.add_question(Question(Name("www.example.com"),
-                                     RRClass("IN"), RRType("A")))
+                                     RRClass("IN"), rrtype))
 
     def __common_tsig_checks(self, expected_file):
         renderer = MessageRenderer()
         self.r.to_wire(renderer, self.tsig_ctx)
-        actual_wire = strip_mutable_tsig_data(renderer.get_data())
-        expected_wire = strip_mutable_tsig_data(read_wire_data(expected_file))
-        self.assertEqual(expected_wire, actual_wire)
+        self.assertEqual(read_wire_data(expected_file), renderer.get_data())
 
     def test_to_wire_with_tsig(self):
+        fix_current_time(0x4da8877a)
         self.r.set_qid(0x2d65)
-        self.__common_tsigquery_setup()
+        self.__common_tsigmessage_setup()
         self.__common_tsig_checks("message_toWire2.wire")
 
     def test_to_wire_with_edns_tsig(self):
+        fix_current_time(0x4db60d1f)
         self.r.set_qid(0x6cd)
-        self.__common_tsigquery_setup()
+        self.__common_tsigmessage_setup()
         edns = EDNS()
         edns.set_udp_size(4096)
         self.r.set_edns(edns)
         self.__common_tsig_checks("message_toWire3.wire")
+
+    def test_to_wire_tsig_truncation(self):
+        fix_current_time(0x4e179212)
+        data = factoryFromFile(self.p, "message_fromWire17.wire")
+        self.assertEqual(TSIGError.NOERROR,
+                         self.tsig_ctx.verify(self.p.get_tsig_record(), data))
+        self.r.set_qid(0x22c2)
+        self.__common_tsigmessage_setup([Message.HEADERFLAG_QR,
+                                         Message.HEADERFLAG_AA,
+                                         Message.HEADERFLAG_RD],
+                                        RRType("TXT"),
+                                        [LONG_TXT1, LONG_TXT2])
+        self.__common_tsig_checks("message_toWire4.wire")
+
+    def test_to_wire_tsig_truncation2(self):
+        fix_current_time(0x4e179212)
+        data = factoryFromFile(self.p, "message_fromWire17.wire")
+        self.assertEqual(TSIGError.NOERROR,
+                         self.tsig_ctx.verify(self.p.get_tsig_record(), data))
+        self.r.set_qid(0x22c2)
+        self.__common_tsigmessage_setup([Message.HEADERFLAG_QR,
+                                         Message.HEADERFLAG_AA,
+                                         Message.HEADERFLAG_RD],
+                                        RRType("TXT"),
+                                        [LONG_TXT1, LONG_TXT3])
+        self.__common_tsig_checks("message_toWire4.wire")
+
+    def test_to_wire_tsig_truncation3(self):
+        self.r.set_opcode(Opcode.QUERY())
+        self.r.set_rcode(Rcode.NOERROR())
+        for i in range(1, 68):
+            self.r.add_question(Question(Name("www.example.com"),
+                                         RRClass("IN"), RRType(i)))
+        renderer = MessageRenderer()
+        self.r.to_wire(renderer, self.tsig_ctx)
+
+        self.p.from_wire(renderer.get_data())
+        self.assertTrue(self.p.get_header_flag(Message.HEADERFLAG_TC))
+        self.assertEqual(66, self.p.get_rr_count(Message.SECTION_QUESTION))
+        self.assertNotEqual(None, self.p.get_tsig_record())
+
+    def test_to_wire_tsig_no_truncation(self):
+        fix_current_time(0x4e17b38d)
+        data = factoryFromFile(self.p, "message_fromWire18.wire")
+        self.assertEqual(TSIGError.NOERROR,
+                         self.tsig_ctx.verify(self.p.get_tsig_record(), data))
+        self.r.set_qid(0xd6e2)
+        self.__common_tsigmessage_setup([Message.HEADERFLAG_QR,
+                                         Message.HEADERFLAG_AA,
+                                         Message.HEADERFLAG_RD],
+                                        RRType("TXT"),
+                                        [LONG_TXT1, LONG_TXT4])
+        self.__common_tsig_checks("message_toWire5.wire")
+
+    def test_to_wire_tsig_length_errors(self):
+        renderer = MessageRenderer()
+        renderer.set_length_limit(84) # 84 = expected TSIG length - 1
+        self.__common_tsigmessage_setup()
+        self.assertRaises(TSIGContextError,
+                          self.r.to_wire, renderer, self.tsig_ctx)
+
+        renderer.clear()
+        self.r.clear(Message.RENDER)
+        renderer.set_length_limit(86) # 86 = expected TSIG length + 1
+        self.__common_tsigmessage_setup()
+        self.assertRaises(TSIGContextError,
+                          self.r.to_wire, renderer, self.tsig_ctx)
+
+        # skip the last test of the corresponding C++ test: it requires
+        # subclassing MessageRenderer, which is (currently) not possible
+        # for python.  In any case, it's very unlikely to happen in practice.
 
     def test_to_text(self):
         message_render = create_message()
@@ -376,6 +465,54 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertEqual("192.0.2.1", rdata[0].to_text())
         self.assertEqual("192.0.2.2", rdata[1].to_text())
         self.assertEqual(2, len(rdata))
+
+    def test_from_wire_short_buffer(self):
+        data = read_wire_data("message_fromWire22.wire")
+        self.assertRaises(DNSMessageFORMERR, self.p.from_wire, data[:-1])
+
+    def test_from_wire_combind_rrs(self):
+        factoryFromFile(self.p, "message_fromWire19.wire")
+        rrset = self.p.get_section(Message.SECTION_ANSWER)[0]
+        self.assertEqual(RRType("A"), rrset.get_type())
+        self.assertEqual(2, len(rrset.get_rdata()))
+
+        rrset = self.p.get_section(Message.SECTION_ANSWER)[1]
+        self.assertEqual(RRType("AAAA"), rrset.get_type())
+        self.assertEqual(1, len(rrset.get_rdata()))
+
+    def check_preserve_rrs(self, message, section):
+        rrset = message.get_section(section)[0]
+        self.assertEqual(RRType("A"), rrset.get_type())
+        rdata = rrset.get_rdata()
+        self.assertEqual(1, len(rdata))
+        self.assertEqual('192.0.2.1', rdata[0].to_text())
+
+        rrset = message.get_section(section)[1]
+        self.assertEqual(RRType("AAAA"), rrset.get_type())
+        rdata = rrset.get_rdata()
+        self.assertEqual(1, len(rdata))
+        self.assertEqual('2001:db8::1', rdata[0].to_text())
+
+        rrset = message.get_section(section)[2]
+        self.assertEqual(RRType("A"), rrset.get_type())
+        rdata = rrset.get_rdata()
+        self.assertEqual(1, len(rdata))
+        self.assertEqual('192.0.2.2', rdata[0].to_text())
+
+    def test_from_wire_preserve_answer(self):
+        factoryFromFile(self.p, "message_fromWire19.wire",
+                        Message.PRESERVE_ORDER)
+        self.check_preserve_rrs(self.p, Message.SECTION_ANSWER)
+
+    def test_from_wire_preserve_authority(self):
+        factoryFromFile(self.p, "message_fromWire20.wire",
+                        Message.PRESERVE_ORDER)
+        self.check_preserve_rrs(self.p, Message.SECTION_AUTHORITY)
+
+    def test_from_wire_preserve_additional(self):
+        factoryFromFile(self.p, "message_fromWire21.wire",
+                        Message.PRESERVE_ORDER)
+        self.check_preserve_rrs(self.p, Message.SECTION_ADDITIONAL)
 
     def test_EDNS0ExtCode(self):
         # Extended Rcode = BADVERS

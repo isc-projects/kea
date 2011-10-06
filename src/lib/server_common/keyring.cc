@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <server_common/keyring.h>
+#include <server_common/logger.h>
 
 using namespace isc::dns;
 using namespace isc::data;
@@ -31,6 +32,7 @@ updateKeyring(const std::string&, ConstElementPtr data,
               const isc::config::ConfigData&) {
     ConstElementPtr list(data->get("keys"));
     KeyringPtr load(new TSIGKeyRing);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_KEYS_UPDATE);
 
     // Note that 'data' only contains explicitly configured config parameters.
     // So if we use the default list is NULL, rather than an empty list, and
@@ -50,6 +52,7 @@ initKeyring(config::ModuleCCSession& session) {
         // We are already initialized
         return;
     }
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_KEYS_INIT);
     session.addRemoteConfig("tsig_keys", updateKeyring, false);
 }
 
@@ -59,6 +62,7 @@ deinitKeyring(config::ModuleCCSession& session) {
         // Not initialized, ignore it
         return;
     }
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_KEYS_DEINIT);
     keyring.reset();
     session.removeRemoteConfig("tsig_keys");
 }

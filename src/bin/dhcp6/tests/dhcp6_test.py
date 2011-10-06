@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from bind10 import ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
+from bind10_src import ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
 
 import unittest
 import sys

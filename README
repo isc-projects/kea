@@ -8,10 +8,10 @@ for serving, maintaining, and developing DNS.
 BIND10-devel is new development leading up to the production
 BIND 10 release. It contains prototype code and experimental
 interfaces. Nevertheless it is ready to use now for testing the
-new BIND 10 infrastructure ideas. The Year 2 milestones of the
-five year plan are described here:
+new BIND 10 infrastructure ideas. The Year 3 goals of the five
+year plan are described here:
 
-	https://bind10.isc.org/wiki/Year2Milestones
+	http://bind10.isc.org/wiki/Year3Goals
 
 This release includes the bind10 master process, b10-msgq message
 bus, b10-auth authoritative DNS server (with SQLite3 and in-memory
@@ -67,8 +67,8 @@ e.g.,
 Operating-System specific tips:
 
 - FreeBSD
-  You may need to install a python binding for sqlite3 by hand.  A
-  sample procedure is as follows:
+  You may need to install a python binding for sqlite3 by hand.
+  A sample procedure is as follows:
   - add the following to /etc/make.conf
     PYTHON_VERSION=3.1
   - build and install the python binding from ports, assuming the top

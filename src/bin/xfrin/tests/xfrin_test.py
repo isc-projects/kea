@@ -18,6 +18,7 @@ import socket
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
+import isc.log
 
 #
 # Commonly used (mostly constant) test parameters
@@ -954,13 +955,20 @@ class TestXfrin(unittest.TestCase):
                 self.assertEqual(zone_info.tsig_key.to_text(), TSIGKey(zone_config['tsig_key']).to_text())
             else:
                 self.assertIsNone(zone_info.tsig_key)
+            if 'ixfr_disabled' in zone_config and\
+               zone_config.get('ixfr_disabled'):
+                self.assertTrue(zone_info.ixfr_disabled)
+            else:
+                # if not set, should default to False
+                self.assertFalse(zone_info.ixfr_disabled)
 
     def test_command_handler_zones(self):
         config1 = { 'transfers_in': 3,
                    'zones': [
                    { 'name': 'test.example.',
                     'master_addr': '192.0.2.1',
-                    'master_port': 53
+                    'master_port': 53,
+                    'ixfr_disabled': False
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config1)['result'][0], 0)
@@ -971,7 +979,8 @@ class TestXfrin(unittest.TestCase):
                    { 'name': 'test.example.',
                     'master_addr': '192.0.2.2',
                     'master_port': 53,
-                    'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g=="
+                    'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g==",
+                    'ixfr_disabled': True
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config2)['result'][0], 0)
@@ -1115,6 +1124,7 @@ class TestMain(unittest.TestCase):
 
 if __name__== "__main__":
     try:
+        isc.log.resetUnitTestRootLogger()
         unittest.main()
     except KeyboardInterrupt as e:
         print(e)

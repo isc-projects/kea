@@ -48,9 +48,9 @@ using namespace isc::datasrc;
 using namespace isc::config;
 
 namespace {
-class AuthConmmandTest : public ::testing::Test {
+class AuthCommandTest : public ::testing::Test {
 protected:
-    AuthConmmandTest() : server(false, xfrout), rcode(-1) {
+    AuthCommandTest() : server(false, xfrout), rcode(-1) {
         server.setStatisticsSession(&statistics_session);
     }
     void checkAnswer(const int expected_code) {
@@ -60,21 +60,20 @@ protected:
     MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
-    AuthSrv::ConstMemoryDataSrcPtr memory_datasrc;
     ConstElementPtr result;
     int rcode;
 public:
     void stopServer();          // need to be public for boost::bind
 };
 
-TEST_F(AuthConmmandTest, unknownCommand) {
+TEST_F(AuthCommandTest, unknownCommand) {
     result = execAuthServerCommand(server, "no_such_command",
                                    ConstElementPtr());
     parseAnswer(rcode, result);
     EXPECT_EQ(1, rcode);
 }
 
-TEST_F(AuthConmmandTest, DISABLED_unexpectedException) {
+TEST_F(AuthCommandTest, DISABLED_unexpectedException) {
     // execAuthServerCommand() won't catch standard exceptions.
     // Skip this test for now: ModuleCCSession doesn't seem to validate
     // commands.
@@ -83,7 +82,7 @@ TEST_F(AuthConmmandTest, DISABLED_unexpectedException) {
                  runtime_error);
 }
 
-TEST_F(AuthConmmandTest, sendStatistics) {
+TEST_F(AuthCommandTest, sendStatistics) {
     result = execAuthServerCommand(server, "sendstats", ConstElementPtr());
     // Just check some message has been sent.  Detailed tests specific to
     // statistics are done in its own tests.
@@ -92,15 +91,15 @@ TEST_F(AuthConmmandTest, sendStatistics) {
 }
 
 void
-AuthConmmandTest::stopServer() {
+AuthCommandTest::stopServer() {
     result = execAuthServerCommand(server, "shutdown", ConstElementPtr());
     parseAnswer(rcode, result);
     assert(rcode == 0); // make sure the test stops when something is wrong
 }
 
-TEST_F(AuthConmmandTest, shutdown) {
+TEST_F(AuthCommandTest, shutdown) {
     isc::asiolink::IntervalTimer itimer(server.getIOService());
-    itimer.setup(boost::bind(&AuthConmmandTest::stopServer, this), 1);
+    itimer.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
     server.getIOService().run();
     EXPECT_EQ(0, rcode);
 }
@@ -110,18 +109,18 @@ TEST_F(AuthConmmandTest, shutdown) {
 // zones, and checks the zones are correctly loaded.
 void
 zoneChecks(AuthSrv& server) {
-    EXPECT_TRUE(server.getMemoryDataSrc(RRClass::IN()));
-    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test1.example")).zone->
+    EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::A()).code);
-    EXPECT_EQ(Zone::NXRRSET, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test1.example")).zone->
+    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::AAAA()).code);
-    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test2.example")).zone->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::A()).code);
-    EXPECT_EQ(Zone::NXRRSET, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test2.example")).zone->
+    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::AAAA()).code);
 }
 
@@ -147,25 +146,25 @@ configureZones(AuthSrv& server) {
 
 void
 newZoneChecks(AuthSrv& server) {
-    EXPECT_TRUE(server.getMemoryDataSrc(RRClass::IN()));
-    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test1.example")).zone->
+    EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::A()).code);
     // now test1.example should have ns/AAAA
-    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test1.example")).zone->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::AAAA()).code);
 
     // test2.example shouldn't change
-    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test2.example")).zone->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::A()).code);
-    EXPECT_EQ(Zone::NXRRSET, server.getMemoryDataSrc(RRClass::IN())->
-              findZone(Name("ns.test2.example")).zone->
+    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
+              findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::AAAA()).code);
 }
 
-TEST_F(AuthConmmandTest, loadZone) {
+TEST_F(AuthCommandTest, loadZone) {
     configureZones(server);
 
     ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
@@ -182,7 +181,7 @@ TEST_F(AuthConmmandTest, loadZone) {
     newZoneChecks(server);
 }
 
-TEST_F(AuthConmmandTest, loadBrokenZone) {
+TEST_F(AuthCommandTest, loadBrokenZone) {
     configureZones(server);
 
     ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
@@ -195,7 +194,7 @@ TEST_F(AuthConmmandTest, loadBrokenZone) {
     zoneChecks(server);     // zone shouldn't be replaced
 }
 
-TEST_F(AuthConmmandTest, loadUnreadableZone) {
+TEST_F(AuthCommandTest, loadUnreadableZone) {
     configureZones(server);
 
     // install the zone file as unreadable
@@ -209,7 +208,7 @@ TEST_F(AuthConmmandTest, loadUnreadableZone) {
     zoneChecks(server);     // zone shouldn't be replaced
 }
 
-TEST_F(AuthConmmandTest, loadZoneWithoutDataSrc) {
+TEST_F(AuthCommandTest, loadZoneWithoutDataSrc) {
     // try to execute load command without configuring the zone beforehand.
     // it should fail.
     result = execAuthServerCommand(server, "loadzone",
@@ -218,7 +217,7 @@ TEST_F(AuthConmmandTest, loadZoneWithoutDataSrc) {
     checkAnswer(1);
 }
 
-TEST_F(AuthConmmandTest, loadSqlite3DataSrc) {
+TEST_F(AuthCommandTest, loadSqlite3DataSrc) {
     // For sqlite3 data source we don't have to do anything (the data source
     // (re)loads itself automatically)
     result = execAuthServerCommand(server, "loadzone",
@@ -228,7 +227,7 @@ TEST_F(AuthConmmandTest, loadSqlite3DataSrc) {
     checkAnswer(0);
 }
 
-TEST_F(AuthConmmandTest, loadZoneInvalidParams) {
+TEST_F(AuthCommandTest, loadZoneInvalidParams) {
     configureZones(server);
 
     // null arg

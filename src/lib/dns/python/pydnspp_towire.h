@@ -93,10 +93,10 @@ toWireWrapper(const PYSTRUCT* const self, PyObject* args) {
         }
 
         // To MessageRenderer version
-        s_MessageRenderer* renderer;
+        PyObject* renderer;
         if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &renderer)) {
             const unsigned int n = TOWIRECALLER(*self->cppobj)(
-                *renderer->messagerenderer);
+                PyMessageRenderer_ToMessageRenderer(renderer));
 
             return (Py_BuildValue("I", n));
         }

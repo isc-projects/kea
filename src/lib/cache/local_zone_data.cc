@@ -16,6 +16,7 @@
 #include "local_zone_data.h"
 #include "cache_entry_key.h"
 #include "rrset_copy.h"
+#include "logger.h"
 
 using namespace std;
 using namespace isc::dns;
@@ -33,8 +34,10 @@ LocalZoneData::lookup(const isc::dns::Name& name,
     string key = genCacheEntryName(name, type);
     RRsetMapIterator iter = rrsets_map_.find(key);
     if (iter == rrsets_map_.end()) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_LOCALZONE_UNKNOWN).arg(key);
         return (RRsetPtr());
     } else {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_LOCALZONE_FOUND).arg(key);
         return (iter->second);
     }
 }
@@ -43,6 +46,7 @@ void
 LocalZoneData::update(const isc::dns::RRset& rrset) {
     //TODO Do we really need to recreate the rrset again?
     string key = genCacheEntryName(rrset.getName(), rrset.getType());
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_LOCALZONE_UPDATE).arg(key);
     RRset* rrset_copy = new RRset(rrset.getName(), rrset.getClass(),
                                   rrset.getType(), rrset.getTTL());
 

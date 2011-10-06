@@ -31,6 +31,10 @@ class MessageTest(unittest.TestCase):
         self.msg2_str = "{\"aaa\": [1, 1.1, true, false, null]}";
         self.msg2_wire = self.msg2_str.encode()
 
+        self.msg3 = { "aaa": [ 1, 1.1, True, False, "string\n" ] }
+        self.msg3_str = "{\"aaa\": [1, 1.1, true, false, \"string\n\" ]}";
+        self.msg3_wire = self.msg3_str.encode()
+
     def test_encode_json(self):
         self.assertEqual(self.msg1_wire, isc.cc.message.to_wire(self.msg1))
         self.assertEqual(self.msg2_wire, isc.cc.message.to_wire(self.msg2))
@@ -40,6 +44,7 @@ class MessageTest(unittest.TestCase):
     def test_decode_json(self):
         self.assertEqual(self.msg1, isc.cc.message.from_wire(self.msg1_wire))
         self.assertEqual(self.msg2, isc.cc.message.from_wire(self.msg2_wire))
+        self.assertEqual(self.msg3, isc.cc.message.from_wire(self.msg3_wire))
 
         self.assertRaises(AttributeError, isc.cc.message.from_wire, 1)
         self.assertRaises(ValueError, isc.cc.message.from_wire, b'\x001')

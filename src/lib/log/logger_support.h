@@ -19,6 +19,13 @@
 
 #include <string>
 #include <log/logger.h>
+#include <log/logger_unittest_support.h>
+
+/// \file
+/// \brief Logging initialization functions
+///
+/// Contains a set of functions relating to logging initialization that are
+/// used by the production code.
 
 namespace isc {
 namespace log {
@@ -33,17 +40,13 @@ namespace log {
 /// \return true if logging has been initialized, false if not
 bool isLoggingInitialized();
 
-/// \brief Set "logging initialized" flag
-///
-/// Sets the state of the "logging initialized" flag.
+/// \brief Set state of "logging initialized" flag
 ///
 /// \param state State to set the flag to. (This is expected to be "true" - the
 ///        default - for all code apart from specific unit tests.)
 void setLoggingInitialized(bool state = true);
 
-
-
-/// \brief Run-Time Initialization
+/// \brief Run-time initialization
 ///
 /// Performs run-time initialization of the logger in particular supplying:
 ///
@@ -62,43 +65,7 @@ void initLogger(const std::string& root,
                 isc::log::Severity severity = isc::log::INFO,
                 int dbglevel = 0, const char* file = NULL);
 
-
-/// \brief Run-Time Initialization from Environment
-///
-/// Performs run-time initialization of the logger via the setting of
-/// environment variables.  These are:
-///
-/// B10_LOGGER_ROOT
-/// Name of the root logger.  If not given, the string "bind10" will be used.
-///
-/// B10_LOGGER_SEVERITY
-/// Severity of messages that will be logged.  This must be one of the strings
-/// "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE". (Must be upper case
-/// and must not contain leading or trailing spaces.)  If not specified (or if
-/// specified but incorrect), the default passed as argument to this function
-/// (currently INFO) will be used.
-///
-/// B10_LOGGER_DBGLEVEL
-/// Ignored if the level is not DEBUG, this should be a number between 0 and
-/// 99 indicating the logging severity.  The default is 0.  If outside these
-/// limits or if not a number, The value passed to this function (default
-/// of 0) is used.
-///
-/// B10_LOGGER_LOCALMSG
-/// If defined, the path specification of a file that contains message
-/// definitions replacing ones in the default dictionary.
-///
-/// Any errors in the settings cause messages to be output to stderr.
-///
-/// This function is aimed at test programs, allowing the default settings to
-/// be overridden by the tester.  It is not intended for use in production
-/// code.
-
-void initLogger(isc::log::Severity severity = isc::log::INFO,
-                int dbglevel = 0);
-
 } // namespace log
 } // namespace isc
-
 
 #endif // __LOGGER_SUPPORT_H

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110519, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110809, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -12,6 +12,12 @@ AC_PROG_CXX
 
 # Libtool configuration
 #
+
+# libtool cannot handle spaces in paths, so exit early if there is one
+if [ test `echo $PWD | grep -c ' '` != "0"  ]; then
+    AC_MSG_ERROR([BIND 10 cannot be built in a directory that contains spaces, because of libtool limitations. Please change the directory name, or use a symbolic link that does not contain spaces.])
+fi
+
 # On FreeBSD (and probably some others), clang++ does not meet an autoconf
 # assumption in identifying libtool configuration regarding shared library:
 # the configure script will execute "$CC -shared $CFLAGS/$CXXFLAGS -v" and
@@ -139,6 +145,26 @@ else
 	AC_SUBST(pkgpyexecdir)
 fi
 
+# We need to store the default pyexecdir in a separate variable so that
+# we can specify in Makefile.am the install directory of various BIND 10
+# python scripts and loadable modules; in Makefile.am we cannot replace
+# $(pyexecdir) using itself, e.g, this doesn't work:
+# pyexecdir = $(pyexecdir)/isc/some_module
+# The separate variable makes this setup possible as follows:
+# pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/some_module
+PYTHON_SITEPKG_DIR=${pyexecdir}
+AC_SUBST(PYTHON_SITEPKG_DIR)
+
+# This will be commonly used in various Makefile.am's that need to generate
+# python log messages.
+PYTHON_LOGMSGPKG_DIR="\$(top_builddir)/src/lib/python/isc/log_messages"
+AC_SUBST(PYTHON_LOGMSGPKG_DIR)
+
+# This is python package paths commonly used in python tests.  See
+# README of log_messages for why it's included.
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python"
+AC_SUBST(COMMON_PYTHON_PATH)
+
 # Check for python development environments
 if test -x ${PYTHON}-config; then
 	PYTHON_INCLUDES=`${PYTHON}-config --includes`
@@ -260,6 +286,8 @@ B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compa
 case "$host" in
 *-solaris*)
 	MULTITHREADING_FLAG=-pthreads
+	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
+	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
 	;;
 *)
 	MULTITHREADING_FLAG=-pthread
@@ -409,7 +437,7 @@ AC_ARG_WITH([botan],
   AC_HELP_STRING([--with-botan=PATH],
     [specify exact directory of Botan library]),
     [botan_path="$withval"])
-if test "${botan_path}" == "no" ; then
+if test "${botan_path}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
 fi
 if test "${botan_path}" != "yes" ; then
@@ -482,7 +510,7 @@ AC_ARG_WITH([log4cplus],
   AC_HELP_STRING([--with-log4cplus=PATH],
     [specify exact directory of log4cplus library and headers]),
     [log4cplus_path="$withval"])
-if test "${log4cplus_path}" == "no" ; then
+if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
@@ -789,12 +817,6 @@ AC_CONFIG_FILES([Makefile
                  src/bin/zonemgr/tests/Makefile
                  src/bin/stats/Makefile
                  src/bin/stats/tests/Makefile
-                 src/bin/stats/tests/isc/Makefile
-                 src/bin/stats/tests/isc/cc/Makefile
-                 src/bin/stats/tests/isc/config/Makefile
-                 src/bin/stats/tests/isc/util/Makefile
-                 src/bin/stats/tests/testdata/Makefile
-                 src/bin/stats/tests/http/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
@@ -809,21 +831,30 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
+                 src/lib/python/isc/acl/Makefile
+                 src/lib/python/isc/acl/tests/Makefile
                  src/lib/python/isc/util/Makefile
                  src/lib/python/isc/util/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/datasrc/tests/Makefile
+                 src/lib/python/isc/dns/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/log_messages/Makefile
+                 src/lib/python/isc/log_messages/work/Makefile
                  src/lib/python/isc/net/Makefile
                  src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
                  src/lib/python/isc/notify/tests/Makefile
                  src/lib/python/isc/testutils/Makefile
+                 src/lib/python/isc/bind10/Makefile
+                 src/lib/python/isc/bind10/tests/Makefile
+                 src/lib/python/isc/xfrin/Makefile
+                 src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -839,6 +870,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
+                 src/lib/datasrc/tests/testdata/Makefile
                  src/lib/xfr/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
@@ -856,6 +888,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/util/python/Makefile
                  src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  src/lib/acl/Makefile
@@ -889,7 +922,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/bind10/bind10.py
+           src/bin/bind10/bind10_src.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
            src/bin/bindctl/run_bindctl.sh
@@ -913,17 +946,19 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/cc/tests/cc_test
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/python/isc/log/tests/log_console.py
+           src/lib/python/isc/log_messages/work/__init__.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
-           src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
+           src/lib/log/tests/init_logger_test.sh
            src/lib/log/tests/local_file_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
+           src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
            tests/system/glue/setup.sh
@@ -948,12 +983,13 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
-           chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
-           chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
+           chmod +x src/lib/log/tests/init_logger_test.sh
+           chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
+           chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x tests/system/conf.sh
           ])

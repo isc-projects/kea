@@ -17,63 +17,149 @@ $NAMESPACE isc::datasrc
 # \brief Messages for the data source library
 
 % DATASRC_CACHE_CREATE creating the hotspot cache
-Debug information that the hotspot cache was created at startup.
+This is a debug message issued during startup when the hotspot cache
+is created.
 
 % DATASRC_CACHE_DESTROY destroying the hotspot cache
 Debug information. The hotspot cache is being destroyed.
 
-% DATASRC_CACHE_DISABLE disabling the cache
-The hotspot cache is disabled from now on. It is not going to store
-information or return anything.
+% DATASRC_CACHE_DISABLE disabling the hotspot cache
+A debug message issued when the hotspot cache is disabled.
 
-% DATASRC_CACHE_ENABLE enabling the cache
-The hotspot cache is enabled from now on.
+% DATASRC_CACHE_ENABLE enabling the hotspot cache
+A debug message issued when the hotspot cache is enabled.
 
-% DATASRC_CACHE_EXPIRED the item '%1' is expired
-Debug information. There was an attempt to look up an item in the hotspot
-cache. And the item was actually there, but it was too old, so it was removed
-instead and nothing is reported (the external behaviour is the same as with
-CACHE_NOT_FOUND).
+% DATASRC_CACHE_EXPIRED item '%1' in the hotspot cache has expired
+A debug message issued when a hotspot cache lookup located the item but it
+had expired.  The item was removed and the program proceeded as if the item
+had not been found.
 
 % DATASRC_CACHE_FOUND the item '%1' was found
-Debug information. An item was successfully looked up in the hotspot cache.
+Debug information. An item was successfully located in the hotspot cache.
 
-% DATASRC_CACHE_FULL cache is full, dropping oldest
+% DATASRC_CACHE_FULL hotspot cache is full, dropping oldest
 Debug information. After inserting an item into the hotspot cache, the
 maximum number of items was exceeded, so the least recently used item will
 be dropped. This should be directly followed by CACHE_REMOVE.
 
-% DATASRC_CACHE_INSERT inserting item '%1' into the cache
-Debug information. It means a new item is being inserted into the hotspot
+% DATASRC_CACHE_INSERT inserting item '%1' into the hotspot cache
+A debug message indicating that a new item is being inserted into the hotspot
 cache.
 
-% DATASRC_CACHE_NOT_FOUND the item '%1' was not found
-Debug information. It was attempted to look up an item in the hotspot cache,
-but it is not there.
+% DATASRC_CACHE_NOT_FOUND the item '%1' was not found in the hotspot cache
+A debug message issued when hotspot cache was searched for the specified
+item but it was not found.
 
-% DATASRC_CACHE_OLD_FOUND older instance of cache item found, replacing
+% DATASRC_CACHE_OLD_FOUND older instance of hotspot cache item '%1' found, replacing
 Debug information. While inserting an item into the hotspot cache, an older
-instance of an item with the same name was found. The old instance will be
-removed. This should be directly followed by CACHE_REMOVE.
+instance of an item with the same name was found; the old instance will be
+removed. This will be directly followed by CACHE_REMOVE.
 
-% DATASRC_CACHE_REMOVE removing '%1' from the cache
+% DATASRC_CACHE_REMOVE removing '%1' from the hotspot cache
 Debug information. An item is being removed from the hotspot cache.
 
-% DATASRC_CACHE_SLOTS setting the cache size to '%1', dropping '%2' items
+% DATASRC_CACHE_SLOTS setting the hotspot cache size to '%1', dropping '%2' items
 The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
+% DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED %1 doesn't support DNSSEC when asked for NSEC data covering %2
+The datasource tried to provide an NSEC proof that the named domain does not
+exist, but the database backend doesn't support DNSSEC. No proof is included
+in the answer as a result.
+
+% DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3
+Debug information. The database data source is looking up records with the given
+name and type in the database.
+
+% DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ in %1 for elements of %2/%3/%4, setting to %5
+The datasource backend provided resource records for the given RRset with
+different TTL values. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_FOUND_DELEGATION Found delegation at %2 in %1
+When searching for a domain, the program met a delegation to a different zone
+at the given domain name. It will return that one instead.
+
+% DATASRC_DATABASE_FOUND_DELEGATION_EXACT Found delegation at %2 (exact match) in %1
+The program found the domain requested, but it is a delegation point to a
+different zone, therefore it is not authoritative for this domain name.
+It will return the NS record instead.
+
+% DATASRC_DATABASE_FOUND_DNAME Found DNAME at %2 in %1
+When searching for a domain, the program met a DNAME redirection to a different
+place in the domain space at the given domain name. It will return that one
+instead.
+
+% DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL empty non-terminal %2 in %1
+The domain name doesn't have any RRs, so it doesn't exist in the database.
+However, it has a subdomain, so it exists in the DNS address space. So we
+return NXRRSET instead of NXDOMAIN.
+
+% DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
+The data returned by the database backend did not contain any data for the given
+domain name, class and type.
+
+% DATASRC_DATABASE_FOUND_NXRRSET search in datasource %1 resulted in NXRRSET for %2/%3/%4
+The data returned by the database backend contained data for the given domain
+name and class, but not for the given type.
+
+% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2
+The data returned by the database backend contained data for the given domain
+name, and it either matches the type or has a relevant type. The RRset that is
+returned is printed.
+
+% DATASRC_DATABASE_ITERATE iterating zone %1
+The program is reading the whole zone, eg. not searching for data, but going
+through each of the RRsets there.
+
+% DATASRC_DATABASE_ITERATE_END iterating zone finished
+While iterating through the zone, the program reached end of the data.
+
+% DATASRC_DATABASE_ITERATE_NEXT next RRset in zone is %1/%2
+While iterating through the zone, the program extracted next RRset from it.
+The name and RRtype of the RRset is indicated in the message.
+
+% DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4
+While iterating through the zone, the time to live for RRs of the given RRset
+were found to be different. This isn't allowed on the wire and is considered
+an error, so we set it to the lowest value we found (but we don't modify the
+database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_WILDCARD constructing RRset %3 from wildcard %2 in %1
+The database doesn't contain directly matching domain, but it does contain a
+wildcard one which is being used to synthesize the answer.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %2 because %3 contains NS in %1
+The database was queried to provide glue data and it didn't find direct match.
+It could create it from given wildcard, but matching wildcards is forbidden
+under a zone cut, which was found. Therefore the delegation will be returned
+instead.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_SUB wildcard %2 can't be used to construct %3 because %4 exists in %1
+The answer could be constructed using the wildcard, but the given subdomain
+exists, therefore this name is something like empty non-terminal (actually,
+from the protocol point of view, it is empty non-terminal, but the code
+discovers it differently).
+
+% DATASRC_DATABASE_WILDCARD_EMPTY implicit wildcard %2 used to construct %3 in %1
+The given wildcard exists implicitly in the domainspace, as empty nonterminal
+(eg. there's something like subdomain.*.example.org, so *.example.org exists
+implicitly, but is empty). This will produce NXRRSET, because the constructed
+domain is empty as well as the wildcard.
+
 % DATASRC_DO_QUERY handling query for '%1/%2'
-Debug information. We're processing some internal query for given name and
-type.
+A debug message indicating that a query for the given name and RR type is being
+processed.
 
 % DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
 Debug information. An RRset is being added to the in-memory data source.
 
 % DATASRC_MEM_ADD_WILDCARD adding wildcards for '%1'
-Debug information. Some special marks above each * in wildcard name are needed.
-They are being added now for this name.
+This is a debug message issued during the processing of a wildcard
+name. The internal domain name tree is scanned and some nodes are
+specially marked to allow the wildcard lookup to succeed.
 
 % DATASRC_MEM_ADD_ZONE adding zone '%1/%2'
 Debug information. A zone is being added into the in-memory data source.
@@ -114,9 +200,9 @@ stop the search.
 Debug information. A DNAME was found instead of the requested information.
 
 % DATASRC_MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%1'
-It was requested for DNAME and NS records to be put into the same domain
-which is not the apex (the top of the zone). This is forbidden by RFC
-2672, section 3. This indicates a problem with provided data.
+A request was made for DNAME and NS records to be put into the same
+domain which is not the apex (the top of the zone). This is forbidden
+by RFC 2672 (section 3) and indicates a problem with provided data.
 
 % DATASRC_MEM_DOMAIN_EMPTY requested domain '%1' is empty
 Debug information. The requested domain exists in the tree of domains, but
@@ -142,7 +228,7 @@ in-memory data source.
 % DATASRC_MEM_LOAD loading zone '%1' from file '%2'
 Debug information. The content of master file is being loaded into the memory.
 
-% DATASRC_MEM_NOTFOUND requested domain '%1' not found
+% DATASRC_MEM_NOT_FOUND requested domain '%1' not found
 Debug information. The requested domain does not exist.
 
 % DATASRC_MEM_NS_ENCOUNTERED encountered a NS
@@ -201,11 +287,11 @@ behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
 
 % DATASRC_META_ADD adding a data source into meta data source
-Debug information. Yet another data source is being added into the meta data
-source. (probably at startup or reconfiguration)
+This is a debug message issued during startup or reconfiguration.
+Another data source is being added into the meta data source.
 
 % DATASRC_META_ADD_CLASS_MISMATCH mismatch between classes '%1' and '%2'
-It was attempted to add a data source into a meta data source. But their
+It was attempted to add a data source into a meta data source, but their
 classes do not match.
 
 % DATASRC_META_REMOVE removing data source from meta data source
@@ -234,11 +320,11 @@ specific error already.
 The domain lives in another zone. But it is not possible to generate referral
 information for it.
 
-% DATASRC_QUERY_CACHED data for %1/%2 found in cache
+% DATASRC_QUERY_CACHED data for %1/%2 found in hotspot cache
 Debug information. The requested data were found in the hotspot cache, so
 no query is sent to the real data source.
 
-% DATASRC_QUERY_CHECK_CACHE checking cache for '%1/%2'
+% DATASRC_QUERY_CHECK_CACHE checking hotspot cache for '%1/%2'
 Debug information. While processing a query, lookup to the hotspot cache
 is being made.
 
@@ -251,10 +337,9 @@ Debug information. The software is trying to identify delegation points on the
 way down to the given domain.
 
 % DATASRC_QUERY_EMPTY_CNAME CNAME at '%1' is empty
-There was an CNAME and it was being followed. But it contains no records,
-so there's nowhere to go. There will be no answer. This indicates a problem
-with supplied data.
-We tried to follow
+A CNAME chain was being followed and an entry was found that pointed
+to a domain name that had no RRsets associated with it. As a result,
+the query cannot be answered. This indicates a problem with supplied data.
 
 % DATASRC_QUERY_EMPTY_DNAME the DNAME on '%1' is empty
 During an attempt to synthesize CNAME from this DNAME it was discovered the
@@ -262,11 +347,11 @@ DNAME is empty (it has no records). This indicates problem with supplied data.
 
 % DATASRC_QUERY_FAIL query failed
 Some subtask of query processing failed. The reason should have been reported
-already. We are returning SERVFAIL.
+already and a SERVFAIL will be returned to the querying system.
 
 % DATASRC_QUERY_FOLLOW_CNAME following CNAME at '%1'
-Debug information. The domain is a CNAME (or a DNAME and we created a CNAME
-for it already), so it's being followed.
+Debug information. The domain is a CNAME (or a DNAME and a CNAME for it
+has already been created) and the search is following this chain.
 
 % DATASRC_QUERY_GET_MX_ADDITIONAL addition of A/AAAA for '%1' requested by MX '%2'
 Debug information. While processing a query, a MX record was met. It
@@ -291,14 +376,14 @@ operation code.
 Debug information. The last DO_QUERY is an auth query.
 
 % DATASRC_QUERY_IS_GLUE glue query (%1/%2)
-Debug information. The last DO_QUERY is query for glue addresses.
+Debug information. The last DO_QUERY is a query for glue addresses.
 
 % DATASRC_QUERY_IS_NOGLUE query for non-glue addresses (%1/%2)
-Debug information. The last DO_QUERY is query for addresses that are not
+Debug information. The last DO_QUERY is a query for addresses that are not
 glue.
 
 % DATASRC_QUERY_IS_REF query for referral (%1/%2)
-Debug information. The last DO_QUERY is query for referral information.
+Debug information. The last DO_QUERY is a query for referral information.
 
 % DATASRC_QUERY_IS_SIMPLE simple query (%1/%2)
 Debug information. The last DO_QUERY is a simple query.
@@ -322,11 +407,11 @@ The underlying data source failed to answer the no-glue query. 1 means some
 error, 2 is not implemented. The data source should have logged the specific
 error already.
 
-% DATASRC_QUERY_NO_CACHE_ANY_AUTH ignoring cache for ANY query (%1/%2 in %3 class)
+% DATASRC_QUERY_NO_CACHE_ANY_AUTH ignoring hotspot cache for ANY query (%1/%2 in %3 class)
 Debug information. The hotspot cache is ignored for authoritative ANY queries
 for consistency reasons.
 
-% DATASRC_QUERY_NO_CACHE_ANY_SIMPLE ignoring cache for ANY query (%1/%2 in %3 class)
+% DATASRC_QUERY_NO_CACHE_ANY_SIMPLE ignoring hotspot cache for ANY query (%1/%2 in %3 class)
 Debug information. The hotspot cache is ignored for ANY queries for consistency
 reasons.
 
@@ -345,7 +430,7 @@ domain. Maybe someone sent a query to the wrong server for some reason.
 % DATASRC_QUERY_PROCESS processing query '%1/%2' in the '%3' class
 Debug information. A sure query is being processed now.
 
-% DATASRC_QUERY_PROVENX_FAIL unable to prove nonexistence of '%1'
+% DATASRC_QUERY_PROVE_NX_FAIL unable to prove nonexistence of '%1'
 The user wants DNSSEC and we discovered the entity doesn't exist (either
 domain or the record). But there was an error getting NSEC/NSEC3 record
 to prove the nonexistence.
@@ -365,9 +450,9 @@ error, 2 is not implemented. The data source should have logged the specific
 error already.
 
 % DATASRC_QUERY_SYNTH_CNAME synthesizing CNAME from DNAME on '%1'
-Debug information. While answering a query, a DNAME was met. The DNAME itself
-will be returned, but along with it a CNAME for clients which don't understand
-DNAMEs will be synthesized.
+This is a debug message. While answering a query, a DNAME was encountered. The
+DNAME itself will be returned, along with a synthesized CNAME for clients that
+do not understand the DNAME RR.
 
 % DATASRC_QUERY_TASK_FAIL task failed with %1
 The query subtask failed. The reason should have been reported by the subtask
@@ -391,7 +476,7 @@ domain is being looked for now.
 During an attempt to cover the domain by a wildcard an error happened. The
 exact kind was hopefully already reported.
 
-% DATASRC_QUERY_WILDCARD_PROVENX_FAIL unable to prove nonexistence of '%1' (%2)
+% DATASRC_QUERY_WILDCARD_PROVE_NX_FAIL unable to prove nonexistence of '%1' (%2)
 While processing a wildcard, it wasn't possible to prove nonexistence of the
 given domain or record.  The code is 1 for error and 2 for not implemented.
 
@@ -401,17 +486,27 @@ enough information for it.  The code is 1 for error, 2 for not implemented.
 
 % DATASRC_SQLITE_CLOSE closing SQLite database
 Debug information. The SQLite data source is closing the database file.
+
+% DATASRC_SQLITE_CONNOPEN Opening sqlite database file '%1'
+The database file is being opened so it can start providing data.
+
+% DATASRC_SQLITE_CONNCLOSE Closing sqlite database
+The database file is no longer needed and is being closed.
+
 % DATASRC_SQLITE_CREATE SQLite data source created
 Debug information. An instance of SQLite data source is being created.
 
 % DATASRC_SQLITE_DESTROY SQLite data source destroyed
 Debug information. An instance of SQLite data source is being destroyed.
 
+% DATASRC_SQLITE_DROPCONN SQLite3Database is being deinitialized
+The object around a database connection is being destroyed.
+
 % DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'
 Debug information. The SQLite data source is trying to identify which zone
 should hold this domain.
 
-% DATASRC_SQLITE_ENCLOSURE_NOTFOUND no zone contains it
+% DATASRC_SQLITE_ENCLOSURE_NOT_FOUND no zone contains '%1'
 Debug information. The last SQLITE_ENCLOSURE query was unsuccessful; there's
 no such zone in our data.
 
@@ -459,25 +554,35 @@ source.
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
 
+% DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
+A wrapper object to hold database connection is being initialized.
+
 % DATASRC_SQLITE_OPEN opening SQLite database '%1'
 Debug information. The SQLite data source is loading an SQLite database in
 the provided file.
 
 % DATASRC_SQLITE_PREVIOUS looking for name previous to '%1'
-Debug information. We're trying to look up name preceding the supplied one.
+This is a debug message.  The name given was not found, so the program
+is searching for the next name higher up the hierarchy (e.g. if
+www.example.com were queried for and not found, the software searches
+for the "previous" name, example.com).
 
 % DATASRC_SQLITE_PREVIOUS_NO_ZONE no zone containing '%1'
-The SQLite data source tried to identify name preceding this one. But this
-one is not contained in any zone in the data source.
+The name given was not found, so the program is searching for the next
+name higher up the hierarchy (e.g. if www.example.com were queried
+for and not found, the software searches for the "previous" name,
+example.com). However, this name is not contained in any zone in the
+data source. This is an error since it indicates a problem in the earlier
+processing of the query.
 
 % DATASRC_SQLITE_SETUP setting up SQLite database
 The database for SQLite data source was found empty. It is assumed this is the
 first run and it is being initialized with current schema.  It'll still contain
 no data, but it will be ready for use.
 
-% DATASRC_STATIC_BAD_CLASS static data source can handle CH only
-For some reason, someone asked the static data source a query that is not in
-the CH class.
+% DATASRC_STATIC_CLASS_NOT_CH static data source can handle CH class only
+An error message indicating that a query requesting a RR for a class other
+that CH was sent to the static data source (which only handles CH queries).
 
 % DATASRC_STATIC_CREATE creating the static datasource
 Debug information. The static data source (the one holding stuff like
@@ -491,3 +596,37 @@ data source.
 This indicates a programming error. An internal task of unknown type was
 generated.
 
+% DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3
+Debug information.  A zone updater object is created to make updates to
+the shown zone on the shown backend database.
+
+% DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3
+Debug information.  A zone updater object is destroyed, either successfully
+or after failure of, making updates to the shown zone on the shown backend
+database.
+
+%DATASRC_DATABASE_UPDATER_ROLLBACK zone updates roll-backed for '%1/%2' on %3
+A zone updater is being destroyed without committing the changes.
+This would typically mean the update attempt was aborted due to some
+error, but may also be a bug of the application that forgets committing
+the changes.  The intermediate changes made through the updater won't
+be applied to the underlying database.  The zone name, its class, and
+the underlying database name are shown in the log message.
+
+%DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4
+A zone updater is being destroyed without committing the changes to
+the database, and attempts to rollback incomplete updates, but it
+unexpectedly fails.  The higher level implementation does not expect
+it to fail, so this means either a serious operational error in the
+underlying data source (such as a system failure of a database) or
+software bug in the underlying data source implementation.  In either
+case if this message is logged the administrator should carefully
+examine the underlying data source to see what exactly happens and
+whether the data is still valid.  The zone name, its class, and the
+underlying database name as well as the error message thrown from the
+database module are shown in the log message.
+
+% DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
+Debug information.  A set of updates to a zone has been successfully
+committed to the corresponding database backend.  The zone name,
+its class and the database name are printed.

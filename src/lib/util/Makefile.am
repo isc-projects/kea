@@ -1,4 +1,4 @@
-SUBDIRS = . io unittests tests pyunittests
+SUBDIRS = . io unittests tests pyunittests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util

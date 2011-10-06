@@ -19,9 +19,11 @@
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
+#include <util/strutil.h>
 #include <util/encode/base64.h>
 
 #include <dns/messagerenderer.h>
+#include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/tsigerror.h>
@@ -30,6 +32,7 @@ using namespace std;
 using namespace boost;
 using namespace isc::util;
 using namespace isc::util::encode;
+using namespace isc::util::str;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -64,45 +67,6 @@ struct TSIG::TSIGImpl {
     const uint16_t error_;
     const vector<uint8_t> other_data_;
 };
-
-namespace {
-string
-getToken(istringstream& iss, const string& full_input) {
-    string token;
-    iss >> token;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid TSIG text: parse error " <<
-                  full_input);
-    }
-    return (token);
-}
-
-// This helper function converts a string token to an *unsigned* integer.
-// NumType is a *signed* integral type (e.g. int32_t) that is sufficiently
-// wide to store resulting integers.
-// BitSize is the maximum number of bits that the resulting integer can take.
-// This function first checks whether the given token can be converted to
-// an integer of NumType type.  It then confirms the conversion result is
-// within the valid range, i.e., [0, 2^NumType - 1].  The second check is
-// necessary because lexical_cast<T> where T is an unsigned integer type
-// doesn't correctly reject negative numbers when compiled with SunStudio.
-template <typename NumType, int BitSize>
-NumType
-tokenToNum(const string& num_token) {
-    NumType num;
-    try {
-        num = lexical_cast<NumType>(num_token);
-    } catch (const boost::bad_lexical_cast& ex) {
-        isc_throw(InvalidRdataText, "Invalid TSIG numeric parameter: " <<
-                  num_token);
-    }
-    if (num < 0 || num >= (static_cast<NumType>(1) << BitSize)) {
-        isc_throw(InvalidRdataText, "Numeric TSIG parameter out of range: " <<
-                  num);
-    }
-    return (num);
-}
-}
 
 /// \brief Constructor from string.
 ///
@@ -148,47 +112,52 @@ tokenToNum(const string& num_token) {
 TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
     istringstream iss(tsig_str);
 
-    const Name algorithm(getToken(iss, tsig_str));
-    const int64_t time_signed = tokenToNum<int64_t, 48>(getToken(iss,
-                                                                 tsig_str));
-    const int32_t fudge = tokenToNum<int32_t, 16>(getToken(iss, tsig_str));
-    const int32_t macsize = tokenToNum<int32_t, 16>(getToken(iss, tsig_str));
+    try {
+        const Name algorithm(getToken(iss));
+        const int64_t time_signed = tokenToNum<int64_t, 48>(getToken(iss));
+        const int32_t fudge = tokenToNum<int32_t, 16>(getToken(iss));
+        const int32_t macsize = tokenToNum<int32_t, 16>(getToken(iss));
 
-    const string mac_txt = (macsize > 0) ? getToken(iss, tsig_str) : "";
-    vector<uint8_t> mac;
-    decodeBase64(mac_txt, mac);
-    if (mac.size() != macsize) {
-        isc_throw(InvalidRdataText, "TSIG MAC size and data are inconsistent");
+        const string mac_txt = (macsize > 0) ? getToken(iss) : "";
+        vector<uint8_t> mac;
+        decodeBase64(mac_txt, mac);
+        if (mac.size() != macsize) {
+            isc_throw(InvalidRdataText, "TSIG MAC size and data are inconsistent");
+        }
+
+        const int32_t orig_id = tokenToNum<int32_t, 16>(getToken(iss));
+
+        const string error_txt = getToken(iss);
+        int32_t error = 0;
+        // XXX: In the initial implementation we hardcode the mnemonics.
+        // We'll soon generalize this.
+        if (error_txt == "BADSIG") {
+            error = 16;
+        } else if (error_txt == "BADKEY") {
+            error = 17;
+        } else if (error_txt == "BADTIME") {
+            error = 18;
+        } else {
+            error = tokenToNum<int32_t, 16>(error_txt);
+        }
+
+        const int32_t otherlen = tokenToNum<int32_t, 16>(getToken(iss));
+        const string otherdata_txt = (otherlen > 0) ? getToken(iss) : "";
+        vector<uint8_t> other_data;
+        decodeBase64(otherdata_txt, other_data);
+
+        if (!iss.eof()) {
+            isc_throw(InvalidRdataText, "Unexpected input for TSIG RDATA: " <<
+                    tsig_str);
+        }
+
+        impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
+                            error, other_data);
+
+    } catch (const StringTokenError& ste) {
+        isc_throw(InvalidRdataText, "Invalid TSIG text: " << ste.what() <<
+                  ": " << tsig_str);
     }
-
-    const int32_t orig_id = tokenToNum<int32_t, 16>(getToken(iss, tsig_str));
-
-    const string error_txt = getToken(iss, tsig_str);
-    int32_t error = 0;
-    // XXX: In the initial implementation we hardcode the mnemonics.
-    // We'll soon generalize this.
-    if (error_txt == "BADSIG") {
-        error = 16;
-    } else if (error_txt == "BADKEY") {
-        error = 17;
-    } else if (error_txt == "BADTIME") {
-        error = 18;
-    } else {
-        error = tokenToNum<int32_t, 16>(error_txt);
-    }
-
-    const int32_t otherlen = tokenToNum<int32_t, 16>(getToken(iss, tsig_str));
-    const string otherdata_txt = (otherlen > 0) ? getToken(iss, tsig_str) : "";
-    vector<uint8_t> other_data;
-    decodeBase64(otherdata_txt, other_data);
-
-    if (!iss.eof()) {
-        isc_throw(InvalidRdataText, "Unexpected input for TSIG RDATA: " <<
-                  tsig_str);
-    }
-
-    impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
-                         error, other_data);
 }
 
 /// \brief Constructor from wire-format data.

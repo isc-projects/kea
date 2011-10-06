@@ -58,10 +58,32 @@ getTSIGTime() {
 }
 
 struct TSIGContext::TSIGContextImpl {
-    TSIGContextImpl(const TSIGKey& key) :
-        state_(INIT), key_(key), error_(Rcode::NOERROR()),
-        previous_timesigned_(0)
-    {}
+    TSIGContextImpl(const TSIGKey& key,
+                    TSIGError error = TSIGError::NOERROR()) :
+        state_(INIT), key_(key), error_(error),
+        previous_timesigned_(0), digest_len_(0)
+    {
+        if (error == TSIGError::NOERROR()) {
+            // In normal (NOERROR) case, the key should be valid, and we
+            // should be able to pre-create a corresponding HMAC object,
+            // which will be likely to be used for sign or verify later.
+            // We do this in the constructor so that we can know the expected
+            // digest length in advance.  The creation should normally succeed,
+            // but the key information could be still broken, which could
+            // trigger an exception inside the cryptolink module.  We ignore
+            // it at this moment; a subsequent sign/verify operation will try
+            // to create the HMAC, which would also fail.
+            try {
+                hmac_.reset(CryptoLink::getCryptoLink().createHMAC(
+                                key_.getSecret(), key_.getSecretLength(),
+                                key_.getAlgorithm()),
+                            deleteHMAC);
+            } catch (const Exception&) {
+                return;
+            }
+            digest_len_ = hmac_->getOutputLength();
+        }
+    }
 
     // This helper method is used from verify().  It's expected to be called
     // just before verify() returns.  It updates internal state based on
@@ -83,6 +105,23 @@ struct TSIGContext::TSIGContextImpl {
         }
         error_ = error;
         return (error);
+    }
+
+    // A shortcut method to create an HMAC object for sign/verify.  If one
+    // has been successfully created in the constructor, return it; otherwise
+    // create a new one and return it.  In the former case, the ownership is
+    // transferred to the caller; the stored HMAC will be reset after the
+    // call.
+    HMACPtr createHMAC() {
+        if (hmac_) {
+            HMACPtr ret = HMACPtr();
+            ret.swap(hmac_);
+            return (ret);
+        }
+        return (HMACPtr(CryptoLink::getCryptoLink().createHMAC(
+                            key_.getSecret(), key_.getSecretLength(),
+                            key_.getAlgorithm()),
+                        deleteHMAC));
     }
 
     // The following three are helper methods to compute the digest for
@@ -111,6 +150,8 @@ struct TSIGContext::TSIGContextImpl {
     vector<uint8_t> previous_digest_;
     TSIGError error_;
     uint64_t previous_timesigned_; // only meaningful for response with BADTIME
+    size_t digest_len_;
+    HMACPtr hmac_;
 };
 
 void
@@ -221,8 +262,7 @@ TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
         // be used in subsequent response with a TSIG indicating a BADKEY
         // error.
         impl_ = new TSIGContextImpl(TSIGKey(key_name, algorithm_name,
-                                            NULL, 0));
-        impl_->error_ = TSIGError::BAD_KEY();
+                                            NULL, 0), TSIGError::BAD_KEY());
     } else {
         impl_ = new TSIGContextImpl(*result.key);
     }
@@ -230,6 +270,45 @@ TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
 
 TSIGContext::~TSIGContext() {
     delete impl_;
+}
+
+size_t
+TSIGContext::getTSIGLength() const {
+    //
+    // The space required for an TSIG record is:
+    //
+    //	n1 bytes for the (key) name
+    //	2 bytes for the type
+    //	2 bytes for the class
+    //	4 bytes for the ttl
+    //	2 bytes for the rdlength
+    //	n2 bytes for the algorithm name
+    //	6 bytes for the time signed
+    //	2 bytes for the fudge
+    //	2 bytes for the MAC size
+    //	x bytes for the MAC
+    //	2 bytes for the original id
+    //	2 bytes for the error
+    //	2 bytes for the other data length
+    //	y bytes for the other data (at most)
+    // ---------------------------------
+    //     26 + n1 + n2 + x + y bytes
+    //
+
+    // Normally the digest length ("x") is the length of the underlying
+    // hash output.  If a key related error occurred, however, the
+    // corresponding TSIG will be "unsigned", and the digest length will be 0.
+    const size_t digest_len =
+        (impl_->error_ == TSIGError::BAD_KEY() ||
+         impl_->error_ == TSIGError::BAD_SIG()) ? 0 : impl_->digest_len_;
+
+    // Other Len ("y") is normally 0; if BAD_TIME error occurred, the
+    // subsequent TSIG will contain 48 bits of the server current time.
+    const size_t other_len = (impl_->error_ == TSIGError::BAD_TIME()) ? 6 : 0;
+
+    return (26 + impl_->key_.getKeyName().getLength() +
+            impl_->key_.getAlgorithmName().getLength() +
+            digest_len + other_len);
 }
 
 TSIGContext::State
@@ -276,11 +355,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
         return (tsig);
     }
 
-    HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
-                     impl_->key_.getSecret(),
-                     impl_->key_.getSecretLength(),
-                     impl_->key_.getAlgorithm()),
-                 deleteHMAC);
+    HMACPtr hmac(impl_->createHMAC());
 
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
@@ -406,11 +481,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
         return (impl_->postVerifyUpdate(error, NULL, 0));
     }
 
-    HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
-                     impl_->key_.getSecret(),
-                     impl_->key_.getSecretLength(),
-                     impl_->key_.getAlgorithm()),
-                 deleteHMAC);
+    HMACPtr hmac(impl_->createHMAC());
 
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.

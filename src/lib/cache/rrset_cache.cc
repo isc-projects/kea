@@ -14,8 +14,9 @@
 
 #include <config.h>
 
-#include <string>
 #include "rrset_cache.h"
+#include "logger.h"
+#include <string>
 #include <nsas/nsas_entry_compare.h>
 #include <nsas/hash_table.h>
 #include <nsas/hash_deleter.h>
@@ -34,20 +35,28 @@ RRsetCache::RRsetCache(uint32_t cache_size,
     rrset_lru_((3 * cache_size),
                   new HashDeleter<RRsetEntry>(rrset_table_))
 {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, CACHE_RRSET_INIT).arg(cache_size).
+        arg(RRClass(rrset_class));
 }
 
 RRsetEntryPtr
 RRsetCache::lookup(const isc::dns::Name& qname,
                    const isc::dns::RRType& qtype)
 {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_LOOKUP).arg(qname).
+        arg(qtype).arg(RRClass(class_));
     const string entry_name = genCacheEntryName(qname, qtype);
-    RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(entry_name, RRClass(class_)));
+
+    RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(entry_name,
+                                                       RRClass(class_)));
     if (entry_ptr) {
         if (entry_ptr->getExpireTime() > time(NULL)) {
             // Only touch the non-expired rrset entries
             rrset_lru_.touch(entry_ptr);
             return (entry_ptr);
         } else {
+            LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_EXPIRED).arg(qname).
+                arg(qtype).arg(RRClass(class_));
             // the rrset entry has expired, so just remove it from
             // hash table and lru list.
             rrset_table_.remove(entry_ptr->hashKey());
@@ -55,19 +64,31 @@ RRsetCache::lookup(const isc::dns::Name& qname,
         }
     }
 
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_NOT_FOUND).arg(qname).
+        arg(qtype).arg(RRClass(class_));
     return (RRsetEntryPtr());
 }
 
 RRsetEntryPtr
-RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
+RRsetCache::update(const isc::dns::RRset& rrset,
+                   const RRsetTrustLevel& level)
+{
+    LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_UPDATE).arg(rrset.getName()).
+        arg(rrset.getType()).arg(rrset.getClass());
     // TODO: If the RRset is an NS, we should update the NSAS as well
     // lookup first
     RRsetEntryPtr entry_ptr = lookup(rrset.getName(), rrset.getType());
     if (entry_ptr) {
         if (entry_ptr->getTrustLevel() > level) {
+            LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_UNTRUSTED).
+                arg(rrset.getName()).arg(rrset.getType()).
+                arg(rrset.getClass());
             // existed rrset entry is more authoritative, just return it
             return (entry_ptr);
         } else {
+            LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_REMOVE_OLD).
+                arg(rrset.getName()).arg(rrset.getType()).
+                arg(rrset.getClass());
             // Remove the old rrset entry from the lru list.
             rrset_lru_.remove(entry_ptr);
         }

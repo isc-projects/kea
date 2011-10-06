@@ -12,57 +12,41 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
 #include <vector>
 
 #include <dns/rrttl.h>
+#include <dns/messagerenderer.h>
+#include <util/buffer.h>
+#include <util/python/pycppwrapper_util.h>
+
+#include "rrttl_python.h"
+#include "pydnspp_common.h"
+#include "messagerenderer_python.h"
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-static PyObject* po_InvalidRRTTL;
-static PyObject* po_IncompleteRRTTL;
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
-// RRTTL
-//
-
+namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_RRTTL : public PyObject {
 public:
-    RRTTL* rrttl;
+    s_RRTTL() : cppobj(NULL) {};
+    isc::dns::RRTTL* cppobj;
 };
 
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
+typedef CPPPyObjectContainer<s_RRTTL, RRTTL> RRTTLContainer;
 
-// General creation and destruction
-static int RRTTL_init(s_RRTTL* self, PyObject* args);
-static void RRTTL_destroy(s_RRTTL* self);
-
-// These are the functions we export
-static PyObject* RRTTL_toText(s_RRTTL* self);
+PyObject* RRTTL_toText(s_RRTTL* self);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
-static PyObject* RRTTL_str(PyObject* self);
-static PyObject* RRTTL_toWire(s_RRTTL* self, PyObject* args);
-static PyObject* RRTTL_getValue(s_RRTTL* self);
-static PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
+PyObject* RRTTL_str(PyObject* self);
+PyObject* RRTTL_toWire(s_RRTTL* self, PyObject* args);
+PyObject* RRTTL_getValue(s_RRTTL* self);
+PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -70,7 +54,7 @@ static PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-static PyMethodDef RRTTL_methods[] = {
+PyMethodDef RRTTL_methods[] = {
     { "to_text", reinterpret_cast<PyCFunction>(RRTTL_toText), METH_NOARGS,
       "Returns the string representation" },
     { "to_wire", reinterpret_cast<PyCFunction>(RRTTL_toWire), METH_VARARGS,
@@ -85,10 +69,174 @@ static PyMethodDef RRTTL_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+int
+RRTTL_init(s_RRTTL* self, PyObject* args) {
+    const char* s;
+    long long i;
+    PyObject* bytes = NULL;
+    // The constructor argument can be a string ("1234"), an integer (1),
+    // or a sequence of numbers between 0 and 255 (wire code)
+
+    // Note that PyArg_ParseType can set PyError, and we need to clear
+    // that if we try several like here. Otherwise the *next* python
+    // call will suddenly appear to throw an exception.
+    // (the way to do exceptions is to set PyErr and return -1)
+    try {
+        if (PyArg_ParseTuple(args, "s", &s)) {
+            self->cppobj = new RRTTL(s);
+            return (0);
+        } else if (PyArg_ParseTuple(args, "L", &i)) {
+            PyErr_Clear();
+            if (i < 0 || i > 0xffffffff) {
+                PyErr_SetString(PyExc_ValueError, "RR TTL number out of range");
+                return (-1);
+            }
+            self->cppobj = new RRTTL(i);
+            return (0);
+        } else if (PyArg_ParseTuple(args, "O", &bytes) &&
+                   PySequence_Check(bytes)) {
+            Py_ssize_t size = PySequence_Size(bytes);
+            vector<uint8_t> data(size);
+            int result = readDataFromSequence(&data[0], size, bytes);
+            if (result != 0) {
+                return (result);
+            }
+            InputBuffer ib(&data[0], size);
+            self->cppobj = new RRTTL(ib);
+            PyErr_Clear();
+            return (0);
+        }
+    } catch (const IncompleteRRTTL& icc) {
+        // Ok so one of our functions has thrown a C++ exception.
+        // We need to translate that to a Python Exception
+        // First clear any existing error that was set
+        PyErr_Clear();
+        // Now set our own exception
+        PyErr_SetString(po_IncompleteRRTTL, icc.what());
+        // And return negative
+        return (-1);
+    } catch (const InvalidRRTTL& ic) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidRRTTL, ic.what());
+        return (-1);
+    }
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "no valid type in constructor argument");
+    return (-1);
+}
+
+void
+RRTTL_destroy(s_RRTTL* self) {
+    delete self->cppobj;
+    self->cppobj = NULL;
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyObject*
+RRTTL_toText(s_RRTTL* self) {
+    // Py_BuildValue makes python objects from native data
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+}
+
+PyObject*
+RRTTL_str(PyObject* self) {
+    // Simply call the to_text method we already defined
+    return (PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                                const_cast<char*>("")));
+}
+
+PyObject*
+RRTTL_toWire(s_RRTTL* self, PyObject* args) {
+    PyObject* bytes;
+    PyObject* mr;
+
+    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
+        PyObject* bytes_o = bytes;
+
+        OutputBuffer buffer(4);
+        self->cppobj->toWire(buffer);
+        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
+                                                buffer.getLength());
+        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+        // We need to release the object we temporarily created here
+        // to prevent memory leak
+        Py_DECREF(n);
+        return (result);
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
+        // If we return NULL it is seen as an error, so use this for
+        // None returns
+        Py_RETURN_NONE;
+    }
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "toWire argument must be a sequence object or a MessageRenderer");
+    return (NULL);
+}
+
+PyObject*
+RRTTL_getValue(s_RRTTL* self) {
+    return (Py_BuildValue("I", self->cppobj->getValue()));
+}
+
+PyObject*
+RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
+    bool c = false;
+
+    // Check for null and if the types match. If different type,
+    // simply return False
+    if (!other || (self->ob_type != other->ob_type)) {
+        Py_RETURN_FALSE;
+    }
+
+    switch (op) {
+    case Py_LT:
+        c = *self->cppobj < *other->cppobj;
+        break;
+    case Py_LE:
+        c = *self->cppobj < *other->cppobj ||
+            *self->cppobj == *other->cppobj;
+        break;
+    case Py_EQ:
+        c = *self->cppobj == *other->cppobj;
+        break;
+    case Py_NE:
+        c = *self->cppobj != *other->cppobj;
+        break;
+    case Py_GT:
+        c = *other->cppobj < *self->cppobj;
+        break;
+    case Py_GE:
+        c = *other->cppobj < *self->cppobj ||
+            *self->cppobj == *other->cppobj;
+        break;
+    }
+    if (c)
+        Py_RETURN_TRUE;
+    else
+        Py_RETURN_FALSE;
+}
+
+} // end anonymous namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the initModulePart
+// function in pydnspp.cc
+//
+PyObject* po_InvalidRRTTL;
+PyObject* po_IncompleteRRTTL;
+
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_RRTTL
 // Most of the functions are not actually implemented and NULL here.
-static PyTypeObject rrttl_type = {
+PyTypeObject rrttl_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "pydnspp.RRTTL",
     sizeof(s_RRTTL),                    // tp_basicsize
@@ -102,7 +250,7 @@ static PyTypeObject rrttl_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     RRTTL_str,                          // tp_str
     NULL,                               // tp_getattro
@@ -143,176 +291,31 @@ static PyTypeObject rrttl_type = {
     0                                   // tp_version_tag
 };
 
-static int
-RRTTL_init(s_RRTTL* self, PyObject* args) {
-    const char* s;
-    long long i;
-    PyObject* bytes = NULL;
-    // The constructor argument can be a string ("1234"), an integer (1),
-    // or a sequence of numbers between 0 and 255 (wire code)
-
-    // Note that PyArg_ParseType can set PyError, and we need to clear
-    // that if we try several like here. Otherwise the *next* python
-    // call will suddenly appear to throw an exception.
-    // (the way to do exceptions is to set PyErr and return -1)
-    try {
-        if (PyArg_ParseTuple(args, "s", &s)) {
-            self->rrttl = new RRTTL(s);
-            return (0);
-        } else if (PyArg_ParseTuple(args, "L", &i)) {
-            PyErr_Clear();
-            if (i < 0 || i > 0xffffffff) {
-                PyErr_SetString(PyExc_ValueError, "RR TTL number out of range");
-                return (-1);
-            }
-            self->rrttl = new RRTTL(i);
-            return (0);
-        } else if (PyArg_ParseTuple(args, "O", &bytes) &&
-                   PySequence_Check(bytes)) {
-            Py_ssize_t size = PySequence_Size(bytes);
-            vector<uint8_t> data(size);
-            int result = readDataFromSequence(&data[0], size, bytes);
-            if (result != 0) {
-                return (result);
-            }
-            InputBuffer ib(&data[0], size);
-            self->rrttl = new RRTTL(ib);
-            PyErr_Clear();
-            return (0);
-        }
-    } catch (const IncompleteRRTTL& icc) {
-        // Ok so one of our functions has thrown a C++ exception.
-        // We need to translate that to a Python Exception
-        // First clear any existing error that was set
-        PyErr_Clear();
-        // Now set our own exception
-        PyErr_SetString(po_IncompleteRRTTL, icc.what());
-        // And return negative
-        return (-1);
-    } catch (const InvalidRRTTL& ic) {
-        PyErr_Clear();
-        PyErr_SetString(po_InvalidRRTTL, ic.what());
-        return (-1);
-    }
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "no valid type in constructor argument");
-    return (-1);
+PyObject*
+createRRTTLObject(const RRTTL& source) {
+    RRTTLContainer container(PyObject_New(s_RRTTL, &rrttl_type));
+    container.set(new RRTTL(source));
+    return (container.release());
 }
 
-static void
-RRTTL_destroy(s_RRTTL* self) {
-    delete self->rrttl;
-    self->rrttl = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
-
-static PyObject*
-RRTTL_toText(s_RRTTL* self) {
-    // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->rrttl->toText().c_str()));
-}
-
-static PyObject*
-RRTTL_str(PyObject* self) {
-    // Simply call the to_text method we already defined
-    return (PyObject_CallMethod(self,
-                               const_cast<char*>("to_text"),
-                                const_cast<char*>("")));
-}
-
-static PyObject*
-RRTTL_toWire(s_RRTTL* self, PyObject* args) {
-    PyObject* bytes;
-    s_MessageRenderer* mr;
-    
-    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-        PyObject* bytes_o = bytes;
-        
-        OutputBuffer buffer(4);
-        self->rrttl->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
-                                                buffer.getLength());
-        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
-        // We need to release the object we temporarily created here
-        // to prevent memory leak
-        Py_DECREF(n);
-        return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->rrttl->toWire(*mr->messagerenderer);
-        // If we return NULL it is seen as an error, so use this for
-        // None returns
-        Py_RETURN_NONE;
-    }
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "toWire argument must be a sequence object or a MessageRenderer");
-    return (NULL);
-}
-
-static PyObject*
-RRTTL_getValue(s_RRTTL* self) {
-    return (Py_BuildValue("I", self->rrttl->getValue()));
-}
-
-static PyObject* 
-RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
-    bool c = false;
-
-    // Check for null and if the types match. If different type,
-    // simply return False
-    if (!other || (self->ob_type != other->ob_type)) {
-        Py_RETURN_FALSE;
-    }
-
-    switch (op) {
-    case Py_LT:
-        c = *self->rrttl < *other->rrttl;
-        break;
-    case Py_LE:
-        c = *self->rrttl < *other->rrttl ||
-            *self->rrttl == *other->rrttl;
-        break;
-    case Py_EQ:
-        c = *self->rrttl == *other->rrttl;
-        break;
-    case Py_NE:
-        c = *self->rrttl != *other->rrttl;
-        break;
-    case Py_GT:
-        c = *other->rrttl < *self->rrttl;
-        break;
-    case Py_GE:
-        c = *other->rrttl < *self->rrttl ||
-            *self->rrttl == *other->rrttl;
-        break;
-    }
-    if (c)
-        Py_RETURN_TRUE;
-    else
-        Py_RETURN_FALSE;
-}
-// end of RRTTL
-
-
-// Module Initialization, all statics are initialized here
 bool
-initModulePart_RRTTL(PyObject* mod) {
-    // Add the exceptions to the module
-    po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRRTTL", po_InvalidRRTTL);
-    po_IncompleteRRTTL = PyErr_NewException("pydnspp.IncompleteRRTTL", NULL, NULL);
-    PyModule_AddObject(mod, "IncompleteRRTTL", po_IncompleteRRTTL);
-
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rrttl_type) < 0) {
-        return (false);
+PyRRTTL_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
     }
-    Py_INCREF(&rrttl_type);
-    PyModule_AddObject(mod, "RRTTL",
-                       reinterpret_cast<PyObject*>(&rrttl_type));
-    
-    return (true);
+    return (PyObject_TypeCheck(obj, &rrttl_type));
 }
+
+const RRTTL&
+PyRRTTL_ToRRTTL(const PyObject* rrttl_obj) {
+    if (rrttl_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in RRTTL PyObject conversion");
+    }
+    const s_RRTTL* rrttl = static_cast<const s_RRTTL*>(rrttl_obj);
+    return (*rrttl->cppobj);
+}
+
+} // namespace python
+} // namespace dns
+} // namespace isc

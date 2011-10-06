@@ -20,8 +20,6 @@
 #include <stdexcept>
 #include <string>
 
-#include <util/python/pycppwrapper_util.h>
-
 namespace isc {
 namespace dns {
 namespace python {

@@ -43,6 +43,7 @@ using namespace isc::util;
 
 static const char* VERSION = "1.0-0";
 
+/// \file log/compiler/message.cc
 /// \brief Message Compiler
 ///
 /// \b Overview<BR>
@@ -55,13 +56,16 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-v | -h | \<message-file\>]</tt>
+/// <tt>message [-v | -h | -p | -d <dir> | <message-file>]</tt>
 ///
-/// It reads the message file and writes out two files of the same name in the
-/// default directory but with extensions of .h and .cc.
+/// It reads the message file and writes out two files of the same
+/// name in the current working directory (unless -d is used) but
+/// with extensions of .h and .cc, or .py if -p is used.
 ///
-/// \-v causes it to print the version number and exit. \-h prints a help
-/// message (and exits).
+/// -v causes it to print the version number and exit. -h prints a help
+/// message (and exits). -p sets the output to python. -d <dir> will make
+/// it write the output file(s) to dir instead of current working
+/// directory
 
 
 /// \brief Print Version
@@ -80,11 +84,12 @@ version() {
 void
 usage() {
     cout <<
-        "Usage: message [-h] [-v] [-p] <message-file>\n" <<
+        "Usage: message [-h] [-v] [-p] [-d dir] <message-file>\n" <<
         "\n" <<
         "-h       Print this message and exit\n" <<
         "-v       Print the program version and exit\n" <<
         "-p       Output python source instead of C++ ones\n" <<
+        "-d <dir> Place output files in given directory\n" <<
         "\n" <<
         "<message-file> is the name of the input message file.\n";
 }
@@ -106,7 +111,7 @@ currentTime() {
 
     // Convert to string and strip out the trailing newline
     string current_time = buffer;
-    return isc::util::str::trim(current_time);
+    return (isc::util::str::trim(current_time));
 }
 
 
@@ -127,7 +132,7 @@ sentinel(Filename& file) {
     string ext = file.extension();
     string sentinel_text = "__" + name + "_" + ext.substr(1);
     isc::util::str::uppercase(sentinel_text);
-    return sentinel_text;
+    return (sentinel_text);
 }
 
 
@@ -154,7 +159,7 @@ quoteString(const string& instring) {
         outstring += instring[i];
     }
 
-    return outstring;
+    return (outstring);
 }
 
 
@@ -177,7 +182,7 @@ sortedIdentifiers(MessageDictionary& dictionary) {
     }
     sort(ident.begin(), ident.end());
 
-    return ident;
+    return (ident);
 }
 
 
@@ -207,7 +212,7 @@ splitNamespace(string ns) {
 
     // ... and return the vector of namespace components split on the single
     // colon.
-    return isc::util::str::tokens(ns, ":");
+    return (isc::util::str::tokens(ns, ":"));
 }
 
 
@@ -249,14 +254,22 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
 /// \param file Name of the message file. The source code is written to a file
 ///     file of the same name but with a .py suffix.
 /// \param dictionary The dictionary holding the message definitions.
+/// \param output_directory if not null NULL, output files are written
+///     to the given directory. If NULL, they are written to the current
+///     working directory.
 ///
 /// \note We don't use the namespace as in C++. We don't need it, because
 ///     python file/module works as implicit namespace as well.
 
 void
-writePythonFile(const string& file, MessageDictionary& dictionary) {
+writePythonFile(const string& file, MessageDictionary& dictionary,
+                const char* output_directory)
+{
     Filename message_file(file);
     Filename python_file(Filename(message_file.name()).useAsDefault(".py"));
+    if (output_directory != NULL) {
+        python_file.setDirectory(output_directory);
+    }
 
     // Open the file for writing
     ofstream pyfile(python_file.fullName().c_str());
@@ -291,13 +304,19 @@ writePythonFile(const string& file, MessageDictionary& dictionary) {
 /// \param ns Namespace in which the definitions are to be placed.  An empty
 /// string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
+/// \param output_directory if not null NULL, output files are written
+///     to the given directory. If NULL, they are written to the current
+///     working directory.
 
 void
 writeHeaderFile(const string& file, const vector<string>& ns_components,
-                MessageDictionary& dictionary)
+                MessageDictionary& dictionary, const char* output_directory)
 {
     Filename message_file(file);
     Filename header_file(Filename(message_file.name()).useAsDefault(".h"));
+    if (output_directory != NULL) {
+        header_file.setDirectory(output_directory);
+    }
 
     // Text to use as the sentinels.
     string sentinel_text = sentinel(header_file);
@@ -382,13 +401,25 @@ replaceNonAlphaNum(char c) {
 /// optimisation is done at link-time, not compiler-time.  In this it _may_
 /// decide to remove the initializer object because of a lack of references
 /// to it.  But until BIND-10 is ported to Windows, we won't know.
-
+///
+/// \param file Name of the message file.  The header file is written to a
+/// file of the same name but with a .h suffix.
+/// \param ns Namespace in which the definitions are to be placed.  An empty
+/// string indicates no namespace.
+/// \param dictionary Dictionary holding the message definitions.
+/// \param output_directory if not null NULL, output files are written
+///     to the given directory. If NULL, they are written to the current
+///     working directory.
 void
 writeProgramFile(const string& file, const vector<string>& ns_components,
-                 MessageDictionary& dictionary)
+                 MessageDictionary& dictionary,
+                 const char* output_directory)
 {
     Filename message_file(file);
     Filename program_file(Filename(message_file.name()).useAsDefault(".cc"));
+    if (output_directory) {
+        program_file.setDirectory(output_directory);
+    }
 
     // Open the output file for writing
     ofstream ccfile(program_file.fullName().c_str());
@@ -496,30 +527,35 @@ warnDuplicates(MessageReader& reader) {
 int
 main(int argc, char* argv[]) {
 
-    const char* soptions = "hvp";               // Short options
+    const char* soptions = "hvpd:";               // Short options
 
     optind = 1;             // Ensure we start a new scan
     int  opt;               // Value of the option
 
     bool doPython = false;
+    const char *output_directory = NULL;
 
     while ((opt = getopt(argc, argv, soptions)) != -1) {
         switch (opt) {
+            case 'd':
+                output_directory = optarg;
+                break;
+
             case 'p':
                 doPython = true;
                 break;
 
             case 'h':
                 usage();
-                return 0;
+                return (0);
 
             case 'v':
                 version();
-                return 0;
+                return (0);
 
             default:
                 // A message will have already been output about the error.
-                return 1;
+                return (1);
         }
     }
 
@@ -527,11 +563,11 @@ main(int argc, char* argv[]) {
     if (optind < (argc - 1)) {
         cout << "Error: excess arguments in command line\n";
         usage();
-        return 1;
+        return (1);
     } else if (optind >= argc) {
         cout << "Error: missing message file\n";
         usage();
-        return 1;
+        return (1);
     }
     string message_file = argv[optind];
 
@@ -552,7 +588,7 @@ main(int argc, char* argv[]) {
             }
 
             // Write the whole python file
-            writePythonFile(message_file, dictionary);
+            writePythonFile(message_file, dictionary, output_directory);
         } else {
             // Get the namespace into which the message definitions will be put and
             // split it into components.
@@ -560,16 +596,18 @@ main(int argc, char* argv[]) {
                 splitNamespace(reader.getNamespace());
 
             // Write the header file.
-            writeHeaderFile(message_file, ns_components, dictionary);
+            writeHeaderFile(message_file, ns_components, dictionary,
+                            output_directory);
 
             // Write the file that defines the message symbols and text
-            writeProgramFile(message_file, ns_components, dictionary);
+            writeProgramFile(message_file, ns_components, dictionary,
+                             output_directory);
         }
 
         // Finally, warn of any duplicates encountered.
         warnDuplicates(reader);
     }
-    catch (MessageException& e) {
+    catch (const MessageException& e) {
         // Create an error message from the ID and the text
         MessageDictionary& global = MessageDictionary::globalDictionary();
         string text = e.id();
@@ -583,9 +621,9 @@ main(int argc, char* argv[]) {
 
         cerr << text << "\n";
 
-        return 1;
+        return (1);
     }
 
-    return 0;
+    return (0);
 
 }

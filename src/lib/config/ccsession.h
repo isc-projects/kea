@@ -179,7 +179,7 @@ public:
      * We'll need to develop a cleaner solution, and then remove this knob)
      * @param handle_logging If true, the ModuleCCSession will automatically
      * take care of logging configuration through the virtual Logging config
-     * module.
+     * module. Defaults to true.
      */
     ModuleCCSession(const std::string& spec_file_name,
                     isc::cc::AbstractSession& session,
@@ -189,7 +189,7 @@ public:
                         const std::string& command,
                         isc::data::ConstElementPtr args) = NULL,
                     bool start_immediately = true,
-                    bool handle_logging = false
+                    bool handle_logging = true
                     );
 
     /// Start receiving new commands and configuration changes asynchronously.
@@ -377,10 +377,10 @@ default_logconfig_handler(const std::string& module_name,
 /// \brief Returns the loggers related to this module
 ///
 /// This function does two things;
-/// - it drops the configuration parts for loggers for other modules
+/// - it drops the configuration parts for loggers for other modules.
 /// - it replaces the '*' in the name of the loggers by the name of
 ///   this module, but *only* if the expanded name is not configured
-///   explicitely
+///   explicitly.
 ///
 /// Examples: if this is the module b10-resolver,
 /// For the config names ['*', 'b10-auth']

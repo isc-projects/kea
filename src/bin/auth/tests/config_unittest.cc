@@ -57,12 +57,12 @@ protected:
 
 TEST_F(AuthConfigTest, datasourceConfig) {
     // By default, we don't have any in-memory data source.
-    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
     configureAuthServer(server, Element::fromJSON(
                             "{\"datasources\": [{\"type\": \"memory\"}]}"));
     // after successful configuration, we should have one (with empty zoneset).
-    ASSERT_NE(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
-    EXPECT_EQ(0, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
 TEST_F(AuthConfigTest, databaseConfig) {
@@ -82,7 +82,7 @@ TEST_F(AuthConfigTest, versionConfig) {
 }
 
 TEST_F(AuthConfigTest, exceptionGuarantee) {
-    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
     // This configuration contains an invalid item, which will trigger
     // an exception.
     EXPECT_THROW(configureAuthServer(
@@ -92,7 +92,7 @@ TEST_F(AuthConfigTest, exceptionGuarantee) {
                          " \"no_such_config_var\": 1}")),
                  AuthConfigError);
     // The server state shouldn't change
-    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
 }
 
 TEST_F(AuthConfigTest, exceptionConversion) {
@@ -154,22 +154,22 @@ protected:
 TEST_F(MemoryDatasrcConfigTest, addZeroDataSrc) {
     parser->build(Element::fromJSON("[]"));
     parser->commit();
-    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
 }
 
 TEST_F(MemoryDatasrcConfigTest, addEmpty) {
     // By default, we don't have any in-memory data source.
-    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
     parser->build(Element::fromJSON("[{\"type\": \"memory\"}]"));
     parser->commit();
-    EXPECT_EQ(0, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
 TEST_F(MemoryDatasrcConfigTest, addZeroZone) {
     parser->build(Element::fromJSON("[{\"type\": \"memory\","
                                     "  \"zones\": []}]"));
     parser->commit();
-    EXPECT_EQ(0, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
 TEST_F(MemoryDatasrcConfigTest, addOneZone) {
@@ -179,10 +179,10 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
                       "               \"file\": \"" TEST_DATA_DIR
                       "/example.zone\"}]}]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
     // Check it actually loaded something
-    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(rrclass)->findZone(
-        Name("ns.example.com.")).zone->find(Name("ns.example.com."),
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(rrclass)->findZone(
+        Name("ns.example.com.")).zone_finder->find(Name("ns.example.com."),
         RRType::A()).code);
 }
 
@@ -199,7 +199,7 @@ TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
                       "               \"file\": \"" TEST_DATA_DIR
                       "/example.net.zone\"}]}]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(3, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(3, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
 TEST_F(MemoryDatasrcConfigTest, replace) {
@@ -209,9 +209,9 @@ TEST_F(MemoryDatasrcConfigTest, replace) {
                       "               \"file\": \"" TEST_DATA_DIR
                       "/example.zone\"}]}]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
     EXPECT_EQ(isc::datasrc::result::SUCCESS,
-              server.getMemoryDataSrc(rrclass)->findZone(
+              server.getInMemoryClient(rrclass)->findZone(
                   Name("example.com")).code);
 
     // create a new parser, and install a new set of configuration.  It
@@ -227,9 +227,9 @@ TEST_F(MemoryDatasrcConfigTest, replace) {
                       "               \"file\": \"" TEST_DATA_DIR
                       "/example.net.zone\"}]}]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(2, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(2, server.getInMemoryClient(rrclass)->getZoneCount());
     EXPECT_EQ(isc::datasrc::result::NOTFOUND,
-              server.getMemoryDataSrc(rrclass)->findZone(
+              server.getInMemoryClient(rrclass)->findZone(
                   Name("example.com")).code);
 }
 
@@ -241,9 +241,9 @@ TEST_F(MemoryDatasrcConfigTest, exception) {
                       "               \"file\": \"" TEST_DATA_DIR
                       "/example.zone\"}]}]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
     EXPECT_EQ(isc::datasrc::result::SUCCESS,
-              server.getMemoryDataSrc(rrclass)->findZone(
+              server.getInMemoryClient(rrclass)->findZone(
                   Name("example.com")).code);
 
     // create a new parser, and try to load something. It will throw,
@@ -262,9 +262,9 @@ TEST_F(MemoryDatasrcConfigTest, exception) {
     // commit it
 
     // The original should be untouched
-    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
     EXPECT_EQ(isc::datasrc::result::SUCCESS,
-              server.getMemoryDataSrc(rrclass)->findZone(
+              server.getInMemoryClient(rrclass)->findZone(
                   Name("example.com")).code);
 }
 
@@ -275,13 +275,13 @@ TEST_F(MemoryDatasrcConfigTest, remove) {
                       "               \"file\": \"" TEST_DATA_DIR
                       "/example.zone\"}]}]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 
     delete parser;
     parser = createAuthConfigParser(server, "datasources"); 
     EXPECT_NO_THROW(parser->build(Element::fromJSON("[]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
 }
 
 TEST_F(MemoryDatasrcConfigTest, adDuplicateZones) {
