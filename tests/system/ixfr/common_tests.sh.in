@@ -15,19 +15,35 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# This script performs the first IXFR-IN test.  A BIND 9 nameserver (the
-# "server") contains a version of the zone (version N) and two previous
-# versions, N-2 and N-4.  A BIND 10 nameserver (the "client") is loaded with
-# version N-2 of the zone.  A NOTIFY is sent to it, and it is expected that
-# it will send an IXFR to the server and update itself with the latest version
-# of the zone.  (The changes are such that the update should be in the form of
-# a single UDP packet.)
+# \file
+# This script is used in a couple of IXFR tests.
 #
-# The code checks that the zones are identical, and checks the BIND 10 log
-# file to ensure that the debug message recording the sending of the IXFR
-# request and the receipt of the single update is recorded.
+# Preconditions:\n
+# The BIND 9 nameserver (ns1, 10.53.0.1, acting as the IXFR server) is loaded
+# with the N-4 version of the zone.  It may hold prior versions as well.
+# Notifications are disabled.
+#
+# The BIND 10 nameserver (nsx2, 10.53.0.2, acting as the IXFR client) is loaded
+# with an earlier (unspecified) version of the zone.
+#
+# Actions:\n
+# This script updates the IXFR server with the N-2 and N-0 versions of the zone.
+# It then updates the BIND 10 configuration so that it looks for IXFRs from
+# the IXFR server and causes the server to send the client a NOTIFY.  After
+# waiting for the client to update from the server, it compares SOA serials,
+# reporting an error if they are different.
+#
+# Caller Actions:\n
+# The caller can pre-load the BIND 10 IXFR client with whatever version of the
+# zone it requires.  It can also load the BIND 9 IXFR server with zones earlier
+# than N-4.
+#
+# After this test has finished, it is up to the caller to check the logs
+# to see if they report the expected behavior.
 
-. ../ixfr_init.sh
+# Set up variables etc.
+. @abs_top_builddir@/tests/system/conf.sh
+. $IXFR_TOP/ixfr_init.sh
 
 SERVER_NAME=ns1
 SERVER_IP=10.53.0.1   # BIND 9
@@ -37,18 +53,14 @@ CLIENT_IP=10.53.0.2   # BIND 10
 
 status=0
 
-# The current state of the nameservers is that they should both be running the
-# "n - 4" version of the zone.
 
 # Store the SOA serial number of the BIND 10 client for later use.
-
 old_client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
 echo "I:SOA serial of IXFR client is $old_client_serial"
 
 # Load the BIND 9 system (the IXFR server) with the "n - 2" and "n" version of
 # the zones.  With ixfr-from-differences set to "yes", the nameserver should
 # generate the differences between them.
-
 echo "I:updating IXFR-server for ixfr-in tests"
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-2.db
 if [ $? != 0 ];
@@ -58,7 +70,6 @@ fi
 
 # Wait a bit - it seems that if two updates are loaded in quick succession,
 # the second sometimes gets lost.
-
 sleep 5
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-0.db
 if [ $? != 0 ];
@@ -66,9 +77,11 @@ then
     status=1
 fi
 
+# TODO: Need to alter configuration of BIND 10 server such that it accepts
+# NOTIFYs from and sends IXFR requests to the BIND 9 master.
+
 # Get the IXFR server to notify the slave server of the new zone.  Do this by
 # allowing notifies and then triggering a re-notification of the server.
-
 echo "I:notifying IXFR-client of presence of new zones"
 cp ns1/named_notify.conf ns1/named.conf
 
@@ -78,9 +91,6 @@ then
     status=1
 fi
 
-# TODO: Need to alter configuration of BIND 10 server such that it accepts
-# NOTIFYs from and sens IXFR requests to the BIND 9 master.
-
 do_rndc $SERVER_NAME $SERVER_IP notify example
 if [ $? != 0 ];
 then
@@ -88,7 +98,6 @@ then
 fi
 
 # Wait for the client to update itself.
-
 wait_for_update $CLIENT_NAME $CLIENT_IP $old_client_serial
 if [ $? != 0 ];
 then
@@ -101,13 +110,8 @@ client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
 server_serial=`$DIG_SOA @$SERVER_IP | $AWK '{print $3}'`
 if [ "$client_serial" != "$server_serial" ];
 then
-    echo "I: FAIL - client serial not same as server serial after update"
+    echo "R:FAIL client serial not same as server serial after update"
     status=1
 fi
 
-# TODO: Check the BIND 10 log, looking for the IXFR messages that indicate that
-# it has initiated an IXFR and that it received the update within a single
-# packet.
-
-echo "I:exit status: $status"
 exit $status
