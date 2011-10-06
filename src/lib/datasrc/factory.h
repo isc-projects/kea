@@ -133,8 +133,9 @@ public:
     ///            backend library
     /// \exception DataSourceLibrarySymbolError if the library does not have
     ///            the needed symbols, or if there is an error reading them
-    /// \exception DataSourceConfigError if the given config is not correct
-    ///            for the given type
+    /// \exception DataError if the given config is not correct
+    ///            for the given type, or if there was a problem during
+    ///            initialization
     ///
     /// \param type The type of the datasource client. Based on the value of
     ///             type, a specific backend library is used, by appending the
