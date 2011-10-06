@@ -14,10 +14,12 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
+import shutil
 import socket
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
+from isc.xfrin.diff import Diff
 import isc.log
 
 #
@@ -36,22 +38,31 @@ TEST_MASTER_IPV6_ADDRESS = '::1'
 TEST_MASTER_IPV6_ADDRINFO = (socket.AF_INET6, socket.SOCK_STREAM,
                              socket.IPPROTO_TCP, '',
                              (TEST_MASTER_IPV6_ADDRESS, 53))
+
+TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
+TESTDATA_OBJDIR = os.getenv("TESTDATAOBJDIR")
 # XXX: This should be a non priviledge port that is unlikely to be used.
 # If some other process uses this port test will fail.
 TEST_MASTER_PORT = '53535'
 
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 
+# SOA intended to be used for the new SOA as a result of transfer.
 soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
                   'master.example.com. admin.example.com ' +
                   '1234 3600 1800 2419200 7200')
-soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
-                  RRTTL(3600))
+soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(), RRTTL(3600))
 soa_rrset.add_rdata(soa_rdata)
-example_axfr_question = Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                 RRType.AXFR())
-example_soa_question = Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                 RRType.SOA())
+
+# SOA intended to be used for the current SOA at the secondary side.
+# Note that its serial is smaller than that of soa_rdata.
+begin_soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
+                        'master.example.com. admin.example.com ' +
+                        '1230 3600 1800 2419200 7200')
+begin_soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(), RRTTL(3600))
+begin_soa_rrset.add_rdata(begin_soa_rdata)
+example_axfr_question = Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.AXFR())
+example_soa_question = Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA())
 default_questions = [example_axfr_question]
 default_answers = [soa_rrset]
 
@@ -64,6 +75,78 @@ class MockCC():
             return TEST_MASTER_PORT
         if identifier == "zones/class":
             return TEST_RRCLASS_STR
+
+class MockDataSourceClient():
+    '''A simple mock data source client.
+
+    This class provides a minimal set of wrappers related the data source
+    API that would be used by Diff objects.  For our testing purposes they
+    only keep truck of the history of the changes.
+
+    '''
+    def __init__(self):
+        self.committed_diffs = []
+        self.diffs = []
+
+    def get_class(self):
+        '''Mock version of get_class().
+
+        We simply return the commonly used constant RR class.  If and when
+        we use this mock for a different RR class we need to adjust it
+        accordingly.
+
+        '''
+        return TEST_RRCLASS
+
+    def find_zone(self, zone_name):
+        '''Mock version of find_zone().
+
+        It returns itself (subsequently acting as a mock ZoneFinder) for
+        some test zone names.  For some others it returns either NOTFOUND
+        or PARTIALMATCH.
+
+        '''
+        if zone_name == TEST_ZONE_NAME or \
+                zone_name == Name('no-soa.example') or \
+                zone_name == Name('dup-soa.example'):
+            return (isc.datasrc.DataSourceClient.SUCCESS, self)
+        elif zone_name == Name('no-such-zone.example'):
+            return (DataSourceClient.NOTFOUND, None)
+        elif zone_name == Name('partial-match-zone.example'):
+            return (DataSourceClient.PARTIALMATCH, self)
+        raise ValueError('Unexpected input to mock client: bug in test case?')
+
+    def find(self, name, rrtype, target, options):
+        '''Mock ZoneFinder.find().
+
+        It returns the predefined SOA RRset to queries for SOA of the common
+        test zone name.  It also emulates some unusual cases for special
+        zone names.
+
+        '''
+        if name == TEST_ZONE_NAME and rrtype == RRType.SOA():
+            return (ZoneFinder.SUCCESS, begin_soa_rrset)
+        if name == Name('no-soa.example'):
+            return (ZoneFinder.NXDOMAIN, None)
+        if name == Name('dup-soa.example'):
+            dup_soa_rrset = RRset(name, TEST_RRCLASS, RRType.SOA(), RRTTL(0))
+            dup_soa_rrset.add_rdata(begin_soa_rdata)
+            dup_soa_rrset.add_rdata(soa_rdata)
+            return (ZoneFinder.SUCCESS, dup_soa_rrset)
+        raise ValueError('Unexpected input to mock finder: bug in test case?')
+
+    def get_updater(self, zone_name, replace):
+        return self
+
+    def add_rrset(self, rrset):
+        self.diffs.append(('add', rrset))
+
+    def delete_rrset(self, rrset):
+        self.diffs.append(('delete', rrset))
+
+    def commit(self):
+        self.committed_diffs.append(self.diffs)
+        self.diffs = []
 
 class MockXfrin(Xfrin):
     # This is a class attribute of a callable object that specifies a non
@@ -87,20 +170,21 @@ class MockXfrin(Xfrin):
             MockXfrin.check_command_hook()
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key, check_soa=True):
+                    tsig_key, request_type, check_soa=True):
         # store some of the arguments for verification, then call this
         # method in the superclass
         self.xfrin_started_master_addr = master_addrinfo[2][0]
         self.xfrin_started_master_port = master_addrinfo[2][1]
-        return Xfrin.xfrin_start(self, zone_name, rrclass, db_file,
+        self.xfrin_started_request_type = request_type
+        return Xfrin.xfrin_start(self, zone_name, rrclass, None,
                                  master_addrinfo, tsig_key,
-                                 check_soa)
+                                 request_type, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, db_file, shutdown_event,
                  master_addr):
-        super().__init__(sock_map, zone_name, rrclass, db_file, shutdown_event,
-                         master_addr)
+        super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
+                         db_file, shutdown_event, master_addr)
         self.query_data = b''
         self.reply_data = b''
         self.force_time_out = False
@@ -122,7 +206,8 @@ class MockXfrinConnection(XfrinConnection):
         data = self.reply_data[:size]
         self.reply_data = self.reply_data[size:]
         if len(data) < size:
-            raise XfrinTestException('cannot get reply data')
+            raise XfrinTestException('cannot get reply data (' + str(size) +
+                                     ' bytes)')
         return data
 
     def send(self, data):
@@ -174,12 +259,241 @@ class MockXfrinConnection(XfrinConnection):
 
         return reply_data
 
+class TestXfrinState(unittest.TestCase):
+    def setUp(self):
+        self.sock_map = {}
+        self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
+                                        TEST_RRCLASS, TEST_DB_FILE,
+                                        threading.Event(),
+                                        TEST_MASTER_IPV4_ADDRINFO)
+        self.begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
+                               RRTTL(3600))
+        self.begin_soa.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS,
+                                       'm. r. 1230 0 0 0 0'))
+        self.ns_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
+                              RRTTL(3600))
+        self.ns_rrset.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS,
+                                      'ns.example.com'))
+        self.conn._datasrc_client = MockDataSourceClient()
+        self.conn._diff = Diff(MockDataSourceClient(), TEST_ZONE_NAME)
+
+class TestXfrinStateBase(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+
+    def test_handle_rr_on_base(self):
+        # The base version of handle_rr() isn't supposed to be called
+        # directly (the argument doesn't matter in this test)
+        self.assertRaises(XfrinException, XfrinState().handle_rr, None)
+
+class TestXfrinInitialSOA(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinInitialSOA()
+
+    def test_handle_rr(self):
+        # normal case
+        self.assertTrue(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual(type(XfrinFirstData()),
+                         type(self.conn.get_xfrstate()))
+        self.assertEqual(1234, self.conn._end_serial)
+
+    def test_handle_not_soa(self):
+        # The given RR is not of SOA
+        self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
+class TestXfrinFirstData(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinFirstData()
+        self.conn._request_type = RRType.IXFR()
+        self.conn._request_serial = 1230 # arbitrary chosen serial < 1234
+
+    def test_handle_ixfr_begin_soa(self):
+        self.conn._request_type = RRType.IXFR()
+        self.assertFalse(self.state.handle_rr(self.conn, self.begin_soa))
+        self.assertEqual(type(XfrinIXFRDeleteSOA()),
+                         type(self.conn.get_xfrstate()))
+
+    def test_handle_axfr(self):
+        # If the original type is AXFR, other conditions aren't considered,
+        # and AXFR processing will continue
+        self.conn._request_type = RRType.AXFR()
+        self.assertFalse(self.state.handle_rr(self.conn, self.begin_soa))
+        self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
+
+    def test_handle_ixfr_to_axfr(self):
+        # Detecting AXFR-compatible IXFR response by seeing a non SOA RR after
+        # the initial SOA.  Should switch to AXFR.
+        self.assertFalse(self.state.handle_rr(self.conn, self.ns_rrset))
+        self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
+
+    def test_handle_ixfr_to_axfr_by_different_soa(self):
+        # An unusual case: Response contains two consecutive SOA but the
+        # serial of the second does not match the requested one.  See
+        # the documentation for XfrinFirstData.handle_rr().
+        self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual(type(XfrinAXFR()), type(self.conn.get_xfrstate()))
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
+class TestXfrinIXFRDeleteSOA(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinIXFRDeleteSOA()
+        # In this state a new Diff object is expected to be created.  To
+        # confirm it, we nullify it beforehand.
+        self.conn._diff = None
+
+    def test_handle_rr(self):
+        self.assertTrue(self.state.handle_rr(self.conn, self.begin_soa))
+        self.assertEqual(type(XfrinIXFRDelete()),
+                         type(self.conn.get_xfrstate()))
+        self.assertEqual([('delete', self.begin_soa)],
+                         self.conn._diff.get_buffer())
+
+    def test_handle_non_soa(self):
+        self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
+class TestXfrinIXFRDelete(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        # We need record the state in 'conn' to check the case where the
+        # state doesn't change.
+        XfrinIXFRDelete().set_xfrstate(self.conn, XfrinIXFRDelete())
+        self.state = self.conn.get_xfrstate()
+
+    def test_handle_delete_rr(self):
+        # Non SOA RRs are simply (goting to be) deleted in this state
+        self.assertTrue(self.state.handle_rr(self.conn, self.ns_rrset))
+        self.assertEqual([('delete', self.ns_rrset)],
+                         self.conn._diff.get_buffer())
+        # The state shouldn't change
+        self.assertEqual(type(XfrinIXFRDelete()),
+                         type(self.conn.get_xfrstate()))
+
+    def test_handle_soa(self):
+        # SOA in this state means the beginning of added RRs.  This SOA
+        # should also be added in the next state, so handle_rr() should return
+        # false.
+        self.assertFalse(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual([], self.conn._diff.get_buffer())
+        self.assertEqual(1234, self.conn._current_serial)
+        self.assertEqual(type(XfrinIXFRAddSOA()),
+                         type(self.conn.get_xfrstate()))
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
+class TestXfrinIXFRAddSOA(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinIXFRAddSOA()
+
+    def test_handle_rr(self):
+        self.assertTrue(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual(type(XfrinIXFRAdd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([('add', soa_rrset)],
+                         self.conn._diff.get_buffer())
+
+    def test_handle_non_soa(self):
+        self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
+class TestXfrinIXFRAdd(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        # We need record the state in 'conn' to check the case where the
+        # state doesn't change.
+        XfrinIXFRAdd().set_xfrstate(self.conn, XfrinIXFRAdd())
+        self.conn._current_serial = 1230
+        self.state = self.conn.get_xfrstate()
+
+    def test_handle_add_rr(self):
+        # Non SOA RRs are simply (goting to be) added in this state
+        self.assertTrue(self.state.handle_rr(self.conn, self.ns_rrset))
+        self.assertEqual([('add', self.ns_rrset)],
+                         self.conn._diff.get_buffer())
+        # The state shouldn't change
+        self.assertEqual(type(XfrinIXFRAdd()), type(self.conn.get_xfrstate()))
+
+    def test_handle_end_soa(self):
+        self.conn._end_serial = 1234
+        self.conn._diff.add_data(self.ns_rrset) # put some dummy change
+        self.assertTrue(self.state.handle_rr(self.conn, soa_rrset))
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        # handle_rr should have caused commit, and the buffer should now be
+        # empty.
+        self.assertEqual([], self.conn._diff.get_buffer())
+
+    def test_handle_new_delete(self):
+        self.conn._end_serial = 1234
+        # SOA RR whose serial is the current one means we are going to a new
+        # difference, starting with removing that SOA.
+        self.conn._diff.add_data(self.ns_rrset) # put some dummy change
+        self.assertFalse(self.state.handle_rr(self.conn, self.begin_soa))
+        self.assertEqual([], self.conn._diff.get_buffer())
+        self.assertEqual(type(XfrinIXFRDeleteSOA()),
+                         type(self.conn.get_xfrstate()))
+
+    def test_handle_out_of_sync(self):
+        # getting SOA with an inconsistent serial.  This is an error.
+        self.conn._end_serial = 1235
+        self.assertRaises(XfrinProtocolError, self.state.handle_rr,
+                          self.conn, soa_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
+class TestXfrinIXFREnd(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinIXFREnd()
+
+    def test_handle_rr(self):
+        self.assertRaises(XfrinProtocolError, self.state.handle_rr, self.conn,
+                          self.ns_rrset)
+
+    def test_finish_message(self):
+        self.assertFalse(self.state.finish_message(self.conn))
+
+class TestXfrinAXFR(TestXfrinState):
+    def setUp(self):
+        super().setUp()
+        self.state = XfrinAXFR()
+
+    def test_handle_rr(self):
+        self.assertRaises(XfrinException, self.state.handle_rr, self.conn,
+                          soa_rrset)
+
+    def test_finish_message(self):
+        self.assertTrue(self.state.finish_message(self.conn))
+
 class TestXfrinConnection(unittest.TestCase):
+    '''Convenient parent class for XFR-protocol tests.
+
+    This class provides common setups and helper methods for protocol related
+    tests on AXFR and IXFR.
+
+    '''
+
     def setUp(self):
         if os.path.exists(TEST_DB_FILE):
             os.remove(TEST_DB_FILE)
         self.sock_map = {}
-        self.conn = MockXfrinConnection(self.sock_map, 'example.com.',
+        self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
                                         TEST_RRCLASS, TEST_DB_FILE,
                                         threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
@@ -200,6 +514,101 @@ class TestXfrinConnection(unittest.TestCase):
         self.conn.close()
         if os.path.exists(TEST_DB_FILE):
             os.remove(TEST_DB_FILE)
+
+    def _handle_xfrin_response(self):
+        # This helper methods iterates over all RRs (excluding the ending SOA)
+        # transferred, and simply returns the number of RRs.  The return value
+        # may be used an assertion value for test cases.
+        rrs = 0
+        for rr in self.conn._handle_axfrin_response():
+            rrs += 1
+        return rrs
+
+    def _create_normal_response_data(self):
+        # This helper method creates a simple sequence of DNS messages that
+        # forms a valid AXFR transaction.  It consists of two messages, each
+        # containing just a single SOA RR.
+        tsig_1st = self.axfr_response_params['tsig_1st']
+        tsig_2nd = self.axfr_response_params['tsig_2nd']
+        self.conn.reply_data = self.conn.create_response_data(tsig_ctx=tsig_1st)
+        self.conn.reply_data += \
+            self.conn.create_response_data(tsig_ctx=tsig_2nd)
+
+    def _create_soa_response_data(self):
+        # This helper method creates a DNS message that is supposed to be
+        # used a valid response to SOA queries prior to XFR.
+        # If tsig is True, it tries to verify the query with a locally
+        # created TSIG context (which may or may not succeed) so that the
+        # response will include a TSIG.
+        # If axfr_after_soa is True, it resets the response_generator so that
+        # a valid XFR messages will follow.
+
+        verify_ctx = None
+        if self.soa_response_params['tsig']:
+            # xfrin (currently) always uses TCP.  strip off the length field.
+            query_data = self.conn.query_data[2:]
+            query_message = Message(Message.PARSE)
+            query_message.from_wire(query_data)
+            verify_ctx = TSIGContext(TSIG_KEY)
+            verify_ctx.verify(query_message.get_tsig_record(), query_data)
+
+        self.conn.reply_data = self.conn.create_response_data(
+            bad_qid=self.soa_response_params['bad_qid'],
+            response=self.soa_response_params['response'],
+            rcode=self.soa_response_params['rcode'],
+            questions=self.soa_response_params['questions'],
+            tsig_ctx=verify_ctx)
+        if self.soa_response_params['axfr_after_soa'] != None:
+            self.conn.response_generator = \
+                self.soa_response_params['axfr_after_soa']
+
+    def _create_broken_response_data(self):
+        # This helper method creates a bogus "DNS message" that only contains
+        # 4 octets of data.  The DNS message parser will raise an exception.
+        bogus_data = b'xxxx'
+        self.conn.reply_data = struct.pack('H', socket.htons(len(bogus_data)))
+        self.conn.reply_data += bogus_data
+
+    def check_diffs(self, expected, actual):
+        '''A helper method checking the differences made in the IXFR session.
+
+        '''
+        self.assertEqual(len(expected), len(actual))
+        for (diffs_exp, diffs_actual) in zip(expected, actual):
+            self.assertEqual(len(diffs_exp), len(diffs_actual))
+            for (diff_exp, diff_actual) in zip(diffs_exp, diffs_actual):
+                # operation should match
+                self.assertEqual(diff_exp[0], diff_actual[0])
+                # The diff as RRset should be equal (for simplicity we assume
+                # all RRsets contain exactly one RDATA)
+                self.assertEqual(diff_exp[1].get_name(),
+                                 diff_actual[1].get_name())
+                self.assertEqual(diff_exp[1].get_type(),
+                                 diff_actual[1].get_type())
+                self.assertEqual(diff_exp[1].get_class(),
+                                 diff_actual[1].get_class())
+                self.assertEqual(diff_exp[1].get_rdata_count(),
+                                 diff_actual[1].get_rdata_count())
+                self.assertEqual(1, diff_exp[1].get_rdata_count())
+                self.assertEqual(diff_exp[1].get_rdata()[0],
+                                 diff_actual[1].get_rdata()[0])
+
+    def _create_a(self, address):
+        rrset = RRset(Name('a.example.com'), TEST_RRCLASS, RRType.A(),
+                      RRTTL(3600))
+        rrset.add_rdata(Rdata(RRType.A(), TEST_RRCLASS, address))
+        return rrset
+
+    def _create_soa(self, serial):
+        rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
+                      RRTTL(3600))
+        rdata_str = 'm. r. ' + serial + ' 3600 1800 2419200 7200'
+        rrset.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS, rdata_str))
+        return rrset
+
+class TestAXFR(TestXfrinConnection):
+    def setUp(self):
+        super().setUp()
 
     def __create_mock_tsig(self, key, error):
         # This helper function creates a MockTSIGContext for a given key
@@ -236,31 +645,82 @@ class TestXfrinConnection(unittest.TestCase):
         # to confirm an AF_INET6 socket has been created.  A naive application
         # tends to assume it's IPv4 only and hardcode AF_INET.  This test
         # uncovers such a bug.
-        c = MockXfrinConnection({}, 'example.com.', TEST_RRCLASS, TEST_DB_FILE,
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS, TEST_DB_FILE,
                                 threading.Event(),
                                 TEST_MASTER_IPV6_ADDRINFO)
         c.bind(('::', 0))
         c.close()
 
     def test_init_chclass(self):
-        c = XfrinConnection({}, 'example.com.', RRClass.CH(), TEST_DB_FILE,
-                            threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(), TEST_DB_FILE,
+                                threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
         axfrmsg = c._create_query(RRType.AXFR())
         self.assertEqual(axfrmsg.get_question()[0].get_class(),
                          RRClass.CH())
         c.close()
 
-    def test_send_query(self):
-        def create_msg(query_type):
-            msg = Message(Message.RENDER)
-            query_id = 0x1035
-            msg.set_qid(query_id)
-            msg.set_opcode(Opcode.QUERY())
-            msg.set_rcode(Rcode.NOERROR())
-            query_question = Question(Name("example.com."), RRClass.IN(), query_type)
-            msg.add_question(query_question)
-            return msg
+    def test_create_query(self):
+        def check_query(expected_qtype, expected_auth):
+            '''Helper method to repeat the same pattern of tests'''
+            self.assertEqual(Opcode.QUERY(), msg.get_opcode())
+            self.assertEqual(Rcode.NOERROR(), msg.get_rcode())
+            self.assertEqual(1, msg.get_rr_count(Message.SECTION_QUESTION))
+            self.assertEqual(TEST_ZONE_NAME, msg.get_question()[0].get_name())
+            self.assertEqual(expected_qtype, msg.get_question()[0].get_type())
+            self.assertEqual(0, msg.get_rr_count(Message.SECTION_ANSWER))
+            self.assertEqual(0, msg.get_rr_count(Message.SECTION_ADDITIONAL))
+            if expected_auth is None:
+                self.assertEqual(0,
+                                 msg.get_rr_count(Message.SECTION_AUTHORITY))
+            else:
+                self.assertEqual(1,
+                                 msg.get_rr_count(Message.SECTION_AUTHORITY))
+                auth_rr = msg.get_section(Message.SECTION_AUTHORITY)[0]
+                self.assertEqual(expected_auth.get_name(), auth_rr.get_name())
+                self.assertEqual(expected_auth.get_type(), auth_rr.get_type())
+                self.assertEqual(expected_auth.get_class(),
+                                 auth_rr.get_class())
+                # In our test scenario RDATA must be 1
+                self.assertEqual(1, expected_auth.get_rdata_count())
+                self.assertEqual(1, auth_rr.get_rdata_count())
+                self.assertEqual(expected_auth.get_rdata()[0],
+                                 auth_rr.get_rdata()[0])
 
+        # Actual tests start here
+        # SOA query
+        msg = self.conn._create_query(RRType.SOA())
+        check_query(RRType.SOA(), None)
+
+        # AXFR query
+        msg = self.conn._create_query(RRType.AXFR())
+        check_query(RRType.AXFR(), None)
+
+        # IXFR query
+        msg = self.conn._create_query(RRType.IXFR())
+        check_query(RRType.IXFR(), begin_soa_rrset)
+        self.assertEqual(1230, self.conn._request_serial)
+
+    def test_create_ixfr_query_fail(self):
+        # In these cases _create_query() will fail to find a valid SOA RR to
+        # insert in the IXFR query, and should raise an exception.
+
+        self.conn._zone_name = Name('no-such-zone.example')
+        self.assertRaises(XfrinException, self.conn._create_query,
+                          RRType.IXFR())
+
+        self.conn._zone_name = Name('partial-match-zone.example')
+        self.assertRaises(XfrinException, self.conn._create_query,
+                          RRType.IXFR())
+
+        self.conn._zone_name = Name('no-soa.example')
+        self.assertRaises(XfrinException, self.conn._create_query,
+                          RRType.IXFR())
+
+        self.conn._zone_name = Name('dup-soa.example')
+        self.assertRaises(XfrinException, self.conn._create_query,
+                          RRType.IXFR())
+
+    def test_send_query(self):
         def message_has_tsig(data):
             # a simple check if the actual data contains a TSIG RR.
             # At our level this simple check should suffice; other detailed
@@ -268,14 +728,6 @@ class TestXfrinConnection(unittest.TestCase):
             msg = Message(Message.PARSE)
             msg.from_wire(data)
             return msg.get_tsig_record() is not None
-
-        self.conn._create_query = create_msg
-        # soa request
-        self.conn._send_query(RRType.SOA())
-        self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x06\x00\x01')
-        # axfr request
-        self.conn._send_query(RRType.AXFR())
-        self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
 
         # soa request with tsig
         self.conn._tsig_key = TSIG_KEY
@@ -467,7 +919,7 @@ class TestXfrinConnection(unittest.TestCase):
         self.conn._send_query(RRType.AXFR())
         self.assertRaises(Exception, self._handle_xfrin_response)
 
-    def test_response(self):
+    def test_axfr_response(self):
         # normal case.
         self.conn.response_generator = self._create_normal_response_data
         self.conn._send_query(RRType.AXFR())
@@ -598,10 +1050,7 @@ class TestXfrinConnection(unittest.TestCase):
 
     def test_do_soacheck_broken_response(self):
         self.conn.response_generator = self._create_broken_response_data
-        # XXX: TODO: this test failed here, should xfr not raise an
-        # exception but simply drop and return FAIL?
-        #self.assertEqual(self.conn.do_xfrin(True), XFRIN_FAIL)
-        self.assertRaises(MessageTooShort, self.conn.do_xfrin, True)
+        self.assertEqual(self.conn.do_xfrin(True), XFRIN_FAIL)
 
     def test_do_soacheck_badqid(self):
         # the QID mismatch would internally trigger a XfrinException exception,
@@ -610,59 +1059,226 @@ class TestXfrinConnection(unittest.TestCase):
         self.conn.response_generator = self._create_soa_response_data
         self.assertEqual(self.conn.do_xfrin(True), XFRIN_FAIL)
 
-    def _handle_xfrin_response(self):
-        # This helper methods iterates over all RRs (excluding the ending SOA)
-        # transferred, and simply returns the number of RRs.  The return value
-        # may be used an assertion value for test cases.
-        rrs = 0
-        for rr in self.conn._handle_xfrin_response():
-            rrs += 1
-        return rrs
+class TestIXFRResponse(TestXfrinConnection):
+    def setUp(self):
+        super().setUp()
+        self.conn._query_id = self.conn.qid = 1035
+        self.conn._request_serial = 1230
+        self.conn._request_type = RRType.IXFR()
+        self._zone_name = TEST_ZONE_NAME
+        self.conn._datasrc_client = MockDataSourceClient()
+        XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
 
-    def _create_normal_response_data(self):
-        # This helper method creates a simple sequence of DNS messages that
-        # forms a valid XFR transaction.  It consists of two messages, each
-        # containing just a single SOA RR.
-        tsig_1st = self.axfr_response_params['tsig_1st']
-        tsig_2nd = self.axfr_response_params['tsig_2nd']
-        self.conn.reply_data = self.conn.create_response_data(tsig_ctx=tsig_1st)
-        self.conn.reply_data += \
-            self.conn.create_response_data(tsig_ctx=tsig_2nd)
+    def test_ixfr_response(self):
+        '''A simplest form of IXFR response.
 
-    def _create_soa_response_data(self):
-        # This helper method creates a DNS message that is supposed to be
-        # used a valid response to SOA queries prior to XFR.
-        # If tsig is True, it tries to verify the query with a locally
-        # created TSIG context (which may or may not succeed) so that the
-        # response will include a TSIG.
-        # If axfr_after_soa is True, it resets the response_generator so that
-        # a valid XFR messages will follow.
+        It simply updates the zone's SOA one time.
 
-        verify_ctx = None
-        if self.soa_response_params['tsig']:
-            # xfrin (curreently) always uses TCP.  strip off the length field.
-            query_data = self.conn.query_data[2:]
-            query_message = Message(Message.PARSE)
-            query_message.from_wire(query_data)
-            verify_ctx = TSIGContext(TSIG_KEY)
-            verify_ctx.verify(query_message.get_tsig_record(), query_data)
-
+        '''
         self.conn.reply_data = self.conn.create_response_data(
-            bad_qid=self.soa_response_params['bad_qid'],
-            response=self.soa_response_params['response'],
-            rcode=self.soa_response_params['rcode'],
-            questions=self.soa_response_params['questions'],
-            tsig_ctx=verify_ctx)
-        if self.soa_response_params['axfr_after_soa'] != None:
-            self.conn.response_generator = \
-                self.soa_response_params['axfr_after_soa']
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([], self.conn._datasrc_client.diffs)
+        self.check_diffs([[('delete', begin_soa_rrset), ('add', soa_rrset)]],
+                         self.conn._datasrc_client.committed_diffs)
 
-    def _create_broken_response_data(self):
-        # This helper method creates a bogus "DNS message" that only contains
-        # 4 octets of data.  The DNS message parser will raise an exception.
-        bogus_data = b'xxxx'
-        self.conn.reply_data = struct.pack('H', socket.htons(len(bogus_data)))
-        self.conn.reply_data += bogus_data
+    def test_ixfr_response_multi_sequences(self):
+        '''Similar to the previous case, but with multiple diff seqs.
+
+        '''
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset,
+                     # removing one A in serial 1230
+                     begin_soa_rrset, self._create_a('192.0.2.1'),
+                     # adding one A in serial 1231
+                     self._create_soa('1231'), self._create_a('192.0.2.2'),
+                     # removing one A in serial 1231
+                     self._create_soa('1231'), self._create_a('192.0.2.3'),
+                     # adding one A in serial 1232
+                     self._create_soa('1232'), self._create_a('192.0.2.4'),
+                     # removing one A in serial 1232
+                     self._create_soa('1232'), self._create_a('192.0.2.5'),
+                     # adding one A in serial 1234
+                     soa_rrset, self._create_a('192.0.2.6'),
+                     soa_rrset])
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([], self.conn._datasrc_client.diffs)
+        self.check_diffs([[('delete', begin_soa_rrset),
+                           ('delete', self._create_a('192.0.2.1')),
+                           ('add', self._create_soa('1231')),
+                           ('add', self._create_a('192.0.2.2'))],
+                          [('delete', self._create_soa('1231')),
+                           ('delete', self._create_a('192.0.2.3')),
+                           ('add', self._create_soa('1232')),
+                           ('add', self._create_a('192.0.2.4'))],
+                          [('delete', self._create_soa('1232')),
+                           ('delete', self._create_a('192.0.2.5')),
+                           ('add', soa_rrset),
+                           ('add', self._create_a('192.0.2.6'))]],
+                         self.conn._datasrc_client.committed_diffs)
+
+    def test_ixfr_response_multi_messages(self):
+        '''Similar to the first case, but RRs span over multiple messages.
+
+        '''
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset, begin_soa_rrset, soa_rrset])
+        self.conn.reply_data += self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset])
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        self.check_diffs([[('delete', begin_soa_rrset), ('add', soa_rrset)]],
+                         self.conn._datasrc_client.committed_diffs)
+
+    def test_ixfr_response_broken(self):
+        '''Test with a broken response.
+
+        '''
+        # SOA sequence is out-of-sync
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset, begin_soa_rrset, soa_rrset,
+                     self._create_soa('1235')])
+        self.assertRaises(XfrinProtocolError,
+                          self.conn._handle_xfrin_responses)
+        # no diffs should have been committed
+        self.check_diffs([], self.conn._datasrc_client.committed_diffs)
+
+    def test_ixfr_response_extra(self):
+        '''Test with an extra RR after the end of IXFR diff sequences.
+
+        IXFR should be rejected, but complete diff sequences should be
+        committed; it's not clear whether it's compliant to the protocol
+        specification, but it is how BIND 9 works and we do the same.
+        '''
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset,
+                     self._create_a('192.0.2.1')])
+        self.assertRaises(XfrinProtocolError,
+                          self.conn._handle_xfrin_responses)
+        self.check_diffs([[('delete', begin_soa_rrset), ('add', soa_rrset)]],
+                         self.conn._datasrc_client.committed_diffs)
+
+class TestIXFRSession(TestXfrinConnection):
+    '''Tests for a full IXFR session (query and response).
+
+    Detailed corner cases should have been covered in test_create_query()
+    and TestIXFRResponse, so we'll only check some typical cases to confirm
+    the general logic flow.
+    '''
+    def setUp(self):
+        super().setUp()
+
+    def test_do_xfrin(self):
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR())],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self.conn.response_generator = create_ixfr_response
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
+
+        # Check some details of the IXFR protocol processing
+        self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        self.check_diffs([[('delete', begin_soa_rrset), ('add', soa_rrset)]],
+                         self.conn._datasrc_client.committed_diffs)
+
+        # Check if the query was IXFR.
+        qdata = self.conn.query_data[2:]
+        qmsg = Message(Message.PARSE)
+        qmsg.from_wire(qdata, len(qdata))
+        self.assertEqual(1, qmsg.get_rr_count(Message.SECTION_QUESTION))
+        self.assertEqual(TEST_ZONE_NAME, qmsg.get_question()[0].get_name())
+        self.assertEqual(RRType.IXFR(), qmsg.get_question()[0].get_type())
+
+    def test_do_xfrin_fail(self):
+        '''IXFR fails due to a protocol error.
+
+        '''
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR())],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset,
+                         self._create_soa('1235')])
+        self.conn.response_generator = create_ixfr_response
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
+
+    def test_do_xfrin_fail(self):
+        '''IXFR fails due to a bogus DNS message.
+
+        '''
+        self._create_broken_response_data()
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
+
+class TestIXFRSessionWithSQLite3(TestXfrinConnection):
+    '''Tests for IXFR sessions using an SQLite3 DB.
+
+    These are provided mainly to confirm the implementation actually works
+    in an environment closer to actual operational environments.  So we
+    only check a few common cases; other details are tested using mock
+    data sources.
+
+    '''
+    def setUp(self):
+        self.sqlite3db_src = TESTDATA_SRCDIR + '/example.com.sqlite3'
+        self.sqlite3db_obj = TESTDATA_OBJDIR + '/example.com.sqlite3.copy'
+        super().setUp()
+        if os.path.exists(self.sqlite3db_obj):
+            os.unlink(self.sqlite3db_obj)
+        shutil.copyfile(self.sqlite3db_src, self.sqlite3db_obj)
+        self.conn._datasrc_client = DataSourceClient(self.sqlite3db_obj)
+
+    def tearDown(self):
+        if os.path.exists(self.sqlite3db_obj):
+            os.unlink(self.sqlite3db_obj)
+
+    def get_zone_serial(self):
+        result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
+        self.assertEqual(DataSourceClient.SUCCESS, result)
+        result, soa = finder.find(TEST_ZONE_NAME, RRType.SOA(),
+                                  None, ZoneFinder.FIND_DEFAULT)
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(1, soa.get_rdata_count())
+        return get_soa_serial(soa.get_rdata()[0])
+
+    def test_do_xfrin_sqlite3(self):
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR())],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self.conn.response_generator = create_ixfr_response
+
+        # Confirm xfrin succeeds and SOA is updated
+        self.assertEqual(1230, self.get_zone_serial())
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
+        self.assertEqual(1234, self.get_zone_serial())
+
+    def test_do_xfrin_sqlite3_fail(self):
+        '''Similar to the previous test, but xfrin fails due to error.
+
+        Check the DB is not changed.
+
+        '''
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR())],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset,
+                         self._create_soa('1235')])
+        self.conn.response_generator = create_ixfr_response
+
+        self.assertEqual(1230, self.get_zone_serial())
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
+        self.assertEqual(1230, self.get_zone_serial())
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
@@ -789,6 +1405,8 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 0)
         self.assertEqual(self.args['master'], self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(self.args['port']), self.xfr.xfrin_started_master_port)
+        # By default we use AXFR (for now)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
     def test_command_handler_retransfer_short_command1(self):
         # try it when only specifying the zone name (of unknown zone)
@@ -901,6 +1519,8 @@ class TestXfrin(unittest.TestCase):
                          self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(TEST_MASTER_PORT),
                          self.xfr.xfrin_started_master_port)
+        # By default we use AXFR (for now)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
     def test_command_handler_notify(self):
         # at this level, refresh is no different than retransfer.
@@ -1090,6 +1710,38 @@ class TestXfrin(unittest.TestCase):
         # since this has failed, we should still have the previous config
         self._check_zones_config(config2)
 
+    def common_ixfr_setup(self, xfr_mode, ixfr_disabled):
+        # This helper method explicitly sets up a zone configuration with
+        # ixfr_disabled, and invokes either retransfer or refresh.
+        # Shared by some of the following test cases.
+        config = {'zones': [
+                {'name': 'example.com.',
+                 'master_addr': '192.0.2.1',
+                 'ixfr_disabled': ixfr_disabled}]}
+        self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
+        self.assertEqual(self.xfr.command_handler(xfr_mode,
+                                                  self.args)['result'][0], 0)
+
+    def test_command_handler_retransfer_ixfr_enabled(self):
+        # If IXFR is explicitly enabled in config, IXFR will be used
+        self.common_ixfr_setup('retransfer', False)
+        self.assertEqual(RRType.IXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_refresh_ixfr_enabled(self):
+        # Same for refresh
+        self.common_ixfr_setup('refresh', False)
+        self.assertEqual(RRType.IXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_retransfer_ixfr_disabled(self):
+        # Similar to the previous case, but explicitly disabled.  AXFR should
+        # be used.
+        self.common_ixfr_setup('retransfer', True)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_refresh_ixfr_disabled(self):
+        # Same for refresh
+        self.common_ixfr_setup('refresh', True)
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
 def raise_interrupt():
     raise KeyboardInterrupt()
