@@ -20,6 +20,7 @@ Tests for the bind10.component module
 import unittest
 import isc.log
 import time
+import copy
 from isc.bind10.component import Component, Configurator, specials
 
 class TestError(Exception):
@@ -28,25 +29,24 @@ class TestError(Exception):
     """
     pass
 
-class ComponentTests(unittest.TestCase):
+class BossUtils:
     """
-    Tests for the bind10.component.Component class
+    A class that brings some utilities for pretending we're Boss.
+    This is expected to be inherited by the testcases themself.
     """
     def setUp(self):
         """
-        Pretend a newly started system.
+        Part of setup. Should be called by descendand's setUp.
         """
-        self.__shutdown = False
-        self.__exitcode = None
-        self.__start_called = False
-        self.__stop_called = False
-        self.__failed_called = False
+        self._shutdown = False
+        self._exitcode = None
         # Back up the time function, we may want to replace it with something
         self.__orig_time = isc.bind10.component.time.time
 
     def tearDown(self):
         """
-        Clean up after tests.
+        Clean up after tests. If the descendand implements a tearDown, it
+        should call this method internally.
         """
         # Return the original time function
         isc.bind10.component.time.time = self.__orig_time
@@ -55,10 +55,10 @@ class ComponentTests(unittest.TestCase):
         """
         Mock function to shut down. We just note we were asked to do so.
         """
-        self.__shutdown = True
-        self.__exitcode = None
+        self._shutdown = True
+        self._exitcode = None
 
-    def __timeskip(self):
+    def _timeskip(self):
         """
         Skip in time to future some 30s. Implemented by replacing the
         time.time function in the tested module with function that returns
@@ -66,6 +66,21 @@ class ComponentTests(unittest.TestCase):
         """
         tm = time.time()
         isc.bind10.component.time.time = lambda: tm + 30
+
+class ComponentTests(BossUtils, unittest.TestCase):
+    """
+    Tests for the bind10.component.Component class
+    """
+    def setUp(self):
+        """
+        Pretend a newly started system.
+        """
+        BossUtils.setUp(self)
+        self._shutdown = False
+        self._exitcode = None
+        self.__start_called = False
+        self.__stop_called = False
+        self.__failed_called = False
 
     def __start(self):
         """
@@ -120,7 +135,7 @@ class ComponentTests(unittest.TestCase):
         Check that nothing was called yet. A newly created component should
         not get started right away, so this should pass after the creation.
         """
-        self.assertFalse(self.__shutdown)
+        self.assertFalse(self._shutdown)
         self.assertFalse(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
@@ -133,7 +148,7 @@ class ComponentTests(unittest.TestCase):
         """
         Check the component was started, but not stopped anyhow yet.
         """
-        self.assertFalse(self.__shutdown)
+        self.assertFalse(self._shutdown)
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
@@ -143,11 +158,11 @@ class ComponentTests(unittest.TestCase):
         """
         Check the component is completely dead, and the server too.
         """
-        self.assertTrue(self.__shutdown)
+        self.assertTrue(self._shutdown)
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
-        self.assertNotEqual(0, self.__exitcode)
+        self.assertNotEqual(0, self._exitcode)
         self.assertFalse(component.running())
         # Surely it can't be stopped again
         self.assertRaises(ValueError, component.stop)
@@ -166,7 +181,7 @@ class ComponentTests(unittest.TestCase):
         Reset the self.__start_called to False before calling the function when
         the component should fail.
         """
-        self.assertFalse(self.__shutdown)
+        self.assertFalse(self._shutdown)
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
@@ -192,7 +207,7 @@ class ComponentTests(unittest.TestCase):
         self.assertRaises(ValueError, component.start)
         # Stop it again and check
         component.stop()
-        self.assertFalse(self.__shutdown)
+        self.assertFalse(self._shutdown)
         self.assertTrue(self.__start_called)
         self.assertTrue(self.__stop_called)
         self.assertFalse(self.__failed_called)
@@ -245,7 +260,7 @@ class ComponentTests(unittest.TestCase):
         self.__check_startup(component)
         component.start()
         self.__check_started(component)
-        self.__timeskip()
+        self._timeskip()
         # Pretend the componend died some time later
         component.failed()
         # Check the component is still dead
@@ -278,7 +293,7 @@ class ComponentTests(unittest.TestCase):
         self.__check_started(component)
         # Make it fail later on
         self.__start_called = False
-        self.__timeskip()
+        self._timeskip()
         component.failed()
         self.__check_restarted(component)
 
@@ -308,7 +323,7 @@ class ComponentTests(unittest.TestCase):
         self.__check_started(component)
         # Make it fail later on
         self.__start_called = False
-        self.__timeskip()
+        self._timeskip()
         component.failed()
         self.__check_restarted(component)
 
@@ -369,6 +384,7 @@ class TestComponent(Component):
         self.__owner = owner
         self.__name = name
         self.log('init')
+        self.log(kind)
 
     def log(self, event):
         """
@@ -386,25 +402,66 @@ class TestComponent(Component):
     def failed_internal(self):
         self.log('failed')
 
-class ConfiguratorTest(unittest.TestCase):
+class FailComponent(Component):
+    """
+    A mock component that fails whenever it is started.
+    """
+    def start_internal(self):
+        raise TestError("test error")
+
+class ConfiguratorTest(BossUtils, unittest.TestCase):
     """
     Tests for the configurator.
     """
     def setUp(self):
         """
         Insert the special evaluated test components we use and prepare the
-        log.
+        log. Also provide some data for the tests and prepare us to pretend
+        we're boss.
         """
+        BossUtils.setUp(self)
         # We put our functions inside instead of class constructors,
         # so we can look into what is happening more easily
-        self.__orig_specials = copy(specials)
+        self.__orig_specials = copy.copy(specials)
         specials['test'] = self.__component_test
-        log = []
+        self.log = []
+        # The core "hardcoded" configuration
+        self.__core = {
+            'core1': {
+                'priority': 5,
+                'process': 'core1',
+                'special': 'test',
+                'kind': 'core'
+            },
+            'core2': {
+                'process': 'core2',
+                'special': 'test',
+                'kind': 'core'
+            },
+            'core3': {
+                'process': 'core3',
+                'priority': 3,
+                'special': 'test',
+                'kind': 'core'
+            }
+        }
+        # How they should be started. The are created in the order they are
+        # found in the dict, but then they should be started by priority.
+        # This expects that the same dict returns its keys in the same order
+        # every time
+        self.__core_log_create = []
+        for core in self.__core.keys():
+            self.__core_log_create.append((core, 'init'))
+            self.__core_log_create.append((core, 'core'))
+        self.__core_log_start = [('core1', 'start'), ('core3', 'start'),
+                                 ('core2', 'start')]
+        self.__core_log = self.__core_log_create + self.__core_log_start
 
     def tearDown(self):
         """
-        Clean up the special evaluated test components.
+        Clean up the special evaluated test components and other stuff.
         """
+        BossUtils.tearDown(self)
         specials = self.__orig_specials
 
     def __component_test(self, process, boss, kind):
@@ -413,6 +470,94 @@ class ConfiguratorTest(unittest.TestCase):
         """
         self.assertEqual(self, boss)
         return TestComponent(self, process, kind)
+
+    def test_init(self):
+        """
+        Tests the configurator can be created and it does not create
+        any components yet, nor does it remember anything.
+        """
+        configurator = Configurator(self)
+        self.assertEqual([], self.log)
+        self.assertEqual({}, configurator._components)
+        self.assertEqual({}, configurator._old_config)
+        self.assertFalse(configurator._running)
+
+    def test_run_plan(self):
+        """
+        Test the internal function of running plans. Just see it can handle
+        the commands in the given order. We see that by the log.
+
+        Also includes one that raises, so we see it just stops there.
+        """
+        # Prepare the configurator and the plan
+        configurator = Configurator(self)
+        started = self.__component_test('second', self, 'dispensable')
+        started.start()
+        stopped = self.__component_test('first', self, 'core')
+        configurator._components = {'second': started}
+        plan = [
+            {
+                'component': stopped,
+                'command': 'start',
+                'name': 'first'
+            },
+            {
+                'component': started,
+                'command': 'stop',
+                'name': 'second'
+            },
+            {
+                'component': FailComponent('third', self, 'needed'),
+                'command': 'start',
+                'name': 'third'
+            },
+            {
+                'component': self.__component_test('fourth', self, 'core'),
+                'command': 'start',
+                'name': 'fourth'
+            }
+        ]
+        # Don't include the preparation into the log
+        self.log = []
+        # The error from the third component is propagated
+        self.assertRaises(TestError, configurator._run_plan, plan)
+        # The first two were handled, the rest not, due to the exception
+        self.assertEqual([('first', 'start'), ('second', 'stop')], self.log)
+        self.assertEqual({'first': stopped}, configurator._components)
+
+    def test_build_plan(self):
+        """
+        Test building the plan correctly. Currently, we let it only create
+        the initial plan when the old configuration is empty, as we don't need
+        more for the starts.
+        """
+        configurator = Configurator(self)
+        plan = configurator._build_plan({}, self.__core)
+        # This should have created the components
+        self.assertEqual(self.__core_log_create, self.log)
+        self.assertEqual(3, len(plan))
+        for (task, name) in zip(plan, ['core1', 'core3', 'core2']):
+            self.assertTrue('component' in task)
+            self.assertEqual('start', task['command'])
+            self.assertEqual(name, task['name'])
+        # TODO: More scenarios for changes between configurations are needed
+
+    def test_startup(self):
+        """
+        Passes some configuration to the startup method and sees if
+        the components are started up.
+
+        It also checks the components are kept inside the configurator.
+        """
+        configurator = Configurator(self)
+        configurator.startup(self.__core)
+        self.assertEqual(self.__core_log, self.log)
+        for core in self.__core.keys():
+            self.assertTrue(core in configurator._components)
+        self.assertEqual(self.__core, configurator._old_config)
+        self.assertTrue(configurator._running)
+        # It can't be started twice
+        self.assertRaises(ValueError, configurator.startup, self.__core)
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
