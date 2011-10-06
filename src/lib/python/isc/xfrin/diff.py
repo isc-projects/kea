@@ -93,7 +93,7 @@ class Diff:
         """
         Schedules an operation with rr.
 
-        It does all the real work of add_data and remove_data, including
+        It does all the real work of add_data and delete_data, including
         all checks.
         """
         self.__check_commited()
@@ -122,9 +122,9 @@ class Diff:
         """
         self.__data_common(rr, 'add')
 
-    def remove_data(self, rr):
+    def delete_data(self, rr):
         """
-        Schedules removal of an RR from the zone in this diff.
+        Schedules deleting an RR from the zone in this diff.
 
         The rr is of isc.dns.RRset type and it must contain only one RR.
         If this is not the case or if the diff was already commited, this
@@ -133,7 +133,7 @@ class Diff:
         The rr class must match the one of the datasource client. If
         it does not, ValueError is raised.
         """
-        self.__data_common(rr, 'remove')
+        self.__data_common(rr, 'delete')
 
     def compact(self):
         """
@@ -189,8 +189,8 @@ class Diff:
             for (operation, rrset) in self.__buffer:
                 if operation == 'add':
                     self.__updater.add_rrset(rrset)
-                elif operation == 'remove':
-                    self.__updater.remove_rrset(rrset)
+                elif operation == 'delete':
+                    self.__updater.delete_rrset(rrset)
                 else:
                     raise ValueError('Unknown operation ' + operation)
             # As everything is already in, drop the buffer
@@ -219,15 +219,15 @@ class Diff:
             # Remove the updater. That will free some resources for one, but
             # mark this object as already commited, so we can check
 
-            # We remove it even in case the commit failed, as that makes us
+            # We delete it even in case the commit failed, as that makes us
             # unusable.
             self.__updater = None
 
     def get_buffer(self):
         """
         Returns the current buffer of changes not yet passed into the data
-        source. It is in a form like [('add', rrset), ('remove', rrset),
-        ('remove', rrset), ...].
+        source. It is in a form like [('add', rrset), ('delete', rrset),
+        ('delete', rrset), ...].
 
         Probably useful only for testing and introspection purposes. Don't
         modify the list.
