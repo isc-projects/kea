@@ -17,7 +17,6 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <net/if.h>
 
 #include "dhcp6/iface_mgr.h"
 #include "dhcp6/dhcp6.h"
