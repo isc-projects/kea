@@ -231,6 +231,21 @@ class DataSrcClient(unittest.TestCase):
             "cname-ext.example.com. 3600 IN CNAME www.sql1.example.com.\n",
             rrset.to_text())
 
+        result, rrset = finder.find(isc.dns.Name("foo.wild.example.com"),
+                                    isc.dns.RRType.A(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.WILDCARD, result)
+        self.assertEqual("foo.wild.example.com. 3600 IN A 192.0.2.255\n",
+                         rrset.to_text())
+
+        result, rrset = finder.find(isc.dns.Name("foo.wild.example.com"),
+                                    isc.dns.RRType.TXT(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.WILDCARD_NXRRSET, result)
+        self.assertEqual(None, rrset)
+
         self.assertRaises(TypeError, finder.find,
                           "foo",
                           isc.dns.RRType.A(),
@@ -247,6 +262,20 @@ class DataSrcClient(unittest.TestCase):
                           None,
                           "foo")
 
+    def test_find_previous(self):
+        dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
+
+        result, finder = dsc.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.SUCCESS, result)
+
+        prev = finder.find_previous_name(isc.dns.Name("bbb.example.com"))
+        self.assertEqual("example.com.", prev.to_text())
+
+        prev = finder.find_previous_name(isc.dns.Name("zzz.example.com"))
+        self.assertEqual("www.example.com.", prev.to_text())
+
+        prev = finder.find_previous_name(prev)
+        self.assertEqual("*.wild.example.com.", prev.to_text())
 
 class DataSrcUpdater(unittest.TestCase):
 
