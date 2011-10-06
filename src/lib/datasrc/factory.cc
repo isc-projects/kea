@@ -77,8 +77,10 @@ DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
             isc_throw(DataSourceError, error);
         }
     } catch (const std::exception& exc) {
-        isc_throw(DataSourceError, "Unknown uncaugt exception from " + type +
-                                   " createInstance" + exc.what());
+        isc_throw(DataSourceError, "Unknown uncaught exception from " + type +
+                                   " createInstance: " + exc.what());
+    } catch (...) {
+        isc_throw(DataSourceError, "Unknown uncaught exception from " + type);
     }
 }
 
