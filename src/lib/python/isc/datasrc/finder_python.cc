@@ -163,7 +163,7 @@ ZoneFinder_find(PyObject* po_self, PyObject* args) {
 PyObject*
 ZoneFinder_findPreviousName(PyObject* po_self, PyObject* args) {
     s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
-    PyObject *name_obj;
+    PyObject* name_obj;
     if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
         try {
             return (createNameObject(
