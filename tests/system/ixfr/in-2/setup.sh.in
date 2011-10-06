@@ -18,14 +18,12 @@
 . @abs_top_builddir@/tests/system/conf.sh
 
 # Clean up from last time
-
 sh clean.sh
 
-# Set up the initial version of the IXFR server - Load an old version of the zone.
-
+# Set up the initial version of the IXFR server - load the n-6 version of the
+# zone.  The configuration file enables IXFR and disabled notifies.
 cp -f ns1/named_nonotify.conf ns1/named.conf
-cp -f $IXFR_TOP/largezone_n-4.db ns1/zone.db
+cp -f $IXFR_TOP/largezone_n-6.db ns1/zone.db
 
-# Set up the IXFR client - load the same version of the zone.
-
-${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-4.db
+# Set up the IXFR client - load an earlier version of the zone
+${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-6.db

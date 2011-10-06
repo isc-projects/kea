@@ -17,7 +17,6 @@
 
 # Clean up after zone transfer tests.
 
-rm -f ns1/named.conf
 rm -f ns1/zone.db
 rm -f ns1/named.memstats
 
