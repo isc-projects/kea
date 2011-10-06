@@ -1,0 +1,10 @@
+The directories in-1 to in-4 implement the following tests:
+
+in-1: Check that BIND 10 can receive IXFR in a single UDP packet.
+in-2: Check that BIND 10 can receive IXFR via TCP.
+in-3: Check that BIND 10 will request AXFR if the server does not support IXFR.
+in-4: Check that BIND 10 will request IXFR when its SOA refresh times out
+
+The tests are described more fully in the document:
+
+http://bind10.isc.org/wiki/IxfrSystemTests

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-. @abs_top_builddir@/tests/system/conf.sh
+. /home/stephen/bind10/tests/system/conf.sh
 
 # Clean up from last time
 
@@ -28,4 +28,4 @@ cp -f $IXFR_TOP/largezone_n-4.db ns1/zone.db
 
 # Set up the IXFR client - load the same version of the zone.
 
-${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-6.db
+${B10_LOADZONE} -o . -d ./nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-4.db
