@@ -29,6 +29,8 @@ using namespace isc;
 using namespace isc::asiolink;
 
 namespace {
+const char* const INTERFACE_FILE = TEST_DATA_BUILDDIR "/interfaces.txt";
+
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
 public:
@@ -114,7 +116,7 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     // test detects that interfaces can be detected
     // there is no code for that now, but interfaces are
     // read from file
-    fstream fakeifaces("interfaces.txt", ios::out|ios::trunc);
+    fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
     fakeifaces << "eth0 fe80::1234";
     fakeifaces.close();
 
@@ -210,7 +212,7 @@ TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    fstream fakeifaces("interfaces.txt", ios::out|ios::trunc);
+    fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
     fakeifaces << "lo ::1";
     fakeifaces.close();
 
