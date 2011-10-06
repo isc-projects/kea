@@ -27,94 +27,32 @@
 # file to ensure that the debug message recording the sending of the IXFR
 # request and the receipt of the single update is recorded.
 
-. @abs_top_builddir@/tests/system/conf.sh
+. ../ixfr_init.sh
 
-IXFR_SERVER=10.53.0.1   # BIND 9
-IXFR_CLIENT=10.53.0.2   # BIND 10
+SERVER_NAME=ns1
+SERVER_IP=10.53.0.1   # BIND 9
 
-# Short-hand for getting SOA - just supply address of the server
-DIG_SOA="$DIG +norecurse +short -p $DNS_PORT example. SOA"
+CLIENT_NAME=nsx2
+CLIENT_IP=10.53.0.2   # BIND 10
 
 status=0
 
-# do_rndc
-#
-# Controls the BIND 9 IXFR server.  Called do_rndc (instead of rndc) to avoid
-# confusion if rndc itself is in the search path.
-#
-# $* - Command to execute (which may be multiple tokens)
-do_rndc () {
-    $RNDC -c $SYSTEM_TOP/common/rndc.conf -s $IXFR_SERVER -p $RNDC_PORT $* 2>&1 \
-        | sed 's/^/I:ns1 /'
-}
-
-# wait_for_update
-#
-# Given a serial number and a server, poll the nameserver until the SOA serial
-# number is different from that given.  The poll takes place every five seconds
-# for a minute.
-#
-# $1 - Server to check
-# $2 - Serial number to check against
-#
-# Returns:
-# 0 - Serial number is different (requires another poll to obatin it)
-# 1 - Serial number has not changed
-wait_for_update() {
-    for i in 1 2 3 4 5 6 7 8 9 10 11 12
-    do
-        new_serial=`$DIG_SOA @$1 | $AWK '{print $3}'`
-        if [ "$new_serial" != "$2" ];
-        then
-            break
-        fi
-        sleep 5
-    done
-
-    if [ "$new_serial" = "$2" ];
-    then
-        return 1
-    fi
-    return 0
-}
-
-
-
-# update_server_zone
-#
-# Reloads the example. zone in the IXFR server and waits a maximum of 50
-# seconds for it to be served.
-#
-# $1 - Name of new zone file (should be in the default directory).
-update_server_zone() {
-    old_serial=`$DIG_SOA @$IXFR_SERVER | $AWK '{print $3}'`
-    echo "I:ns1 IXFR server loading $1"
-    cp $1 ns1/zone.db
-    do_rndc reload
-    wait_for_update $IXFR_SERVER $old_serial
-
-    if [ $? -ne 0 ];
-    then
-        echo "R:ns1 FAIL IXFR server did not update zone after reload"
-        return 1
-    fi
-
-    new_serial=`$DIG_SOA @$IXFR_SERVER | $AWK '{print $3}'`
-    echo "R:ns1 IXFR server was at serial $old_serial, now at $new_serial"
-    return 0
-}
-
 # The current state of the nameservers is that they should both be running the
 # "n - 4" version of the zone.
-#
+
+# Store the SOA serial number of the BIND 10 client for later use.
+
+old_client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
+echo "I:SOA serial of IXFR client is $old_client_serial"
+
 # Load the BIND 9 system (the IXFR server) with the "n - 2" and "n" version of
 # the zones.  With ixfr-from-differences set to "yes", the nameserver should
 # generate the differences between them.
 
 echo "I:updating IXFR-server for ixfr-in tests"
-
-update_server_zone $IXFR_TOP/largezone_n-2.db
-if [ $? != 0 ]; then
+update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-2.db
+if [ $? != 0 ];
+then
     status=1
 fi
 
@@ -122,8 +60,9 @@ fi
 # the second sometimes gets lost.
 
 sleep 5
-update_server_zone $IXFR_TOP/largezone_n-0.db
-if [ $? != 0 ]; then
+update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-0.db
+if [ $? != 0 ];
+then
     status=1
 fi
 
@@ -132,20 +71,43 @@ fi
 
 echo "I:notifying IXFR-client of presence of new zones"
 cp ns1/named_notify.conf ns1/named.conf
-do_rndc reconfig
-do_rndc notify example
 
-# Store the SOA serial number of the latest zone in the BIND 9 server
-server_serial=`$DIG_SOA @$IXFR_SERVER | $AWK '{print $3}'`
-echo "I:SOA serial of IXFR server is $server_serial"
+do_rndc $SERVER_NAME $SERVER_IP reconfig
+if [ $? != 0 ];
+then
+    status=1
+fi
 
-client_serial=`$DIG_SOA @$IXFR_CLIENT | $AWK '{print $3}'`
-echo "I:SOA serial of IXFR client is $client_serial"
+# TODO: Need to alter configuration of BIND 10 server such that it accepts
+# NOTIFYs from and sens IXFR requests to the BIND 9 master.
 
-# Now compare the two zones - they should be the same.
+do_rndc $SERVER_NAME $SERVER_IP notify example
+if [ $? != 0 ];
+then
+    status=1
+fi
 
-# Check the BIND 10 log, looking for the IXFR messages that
-# indicate that it has initiated an IXFR.
+# Wait for the client to update itself.
+
+wait_for_update $CLIENT_NAME $CLIENT_IP $old_client_serial
+if [ $? != 0 ];
+then
+    status=1
+fi
+
+# Has updated, get the latest serial of the client and server - they
+# should be the same.
+client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
+server_serial=`$DIG_SOA @$SERVER_IP | $AWK '{print $3}'`
+if [ "$client_serial" != "$server_serial" ];
+then
+    echo "I: FAIL - client serial not same as server serial after update"
+    status=1
+fi
+
+# TODO: Check the BIND 10 log, looking for the IXFR messages that indicate that
+# it has initiated an IXFR and that it received the update within a single
+# packet.
 
 echo "I:exit status: $status"
 exit $status
