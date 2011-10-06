@@ -16,17 +16,14 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 . @abs_top_builddir@/tests/system/conf.sh
-
 # Clean up from last time
 
 sh clean.sh
 
 # Set up the initial version of the IXFR server - load the latest version of
 # the zone.
-
 cp -f $IXFR_TOP/largezone_n-0.db ns1/zone.db
 
 # Set up the IXFR client - load a previous version of the zone with a short
 # refresh time.
-
 ${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-2_refresh.db
