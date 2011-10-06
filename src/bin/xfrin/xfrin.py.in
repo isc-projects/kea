@@ -150,12 +150,12 @@ class XfrinState:
     process successfully completes.
 
 
-            (recv SOA)       (AXFR-style IXFR)      (SOA)
+            (recv SOA)       (AXFR-style IXFR)   (SOA, add)
     InitialSOA------->FirstData------------->AXFR--------->AXFREnd
-                          |                  |  ^
-                          |                  |  |
-                          |                  +--+
-                          |                (non SOA)
+                          |                  |  ^         (post xfr
+                          |                  |  |        checks, then
+                          |                  +--+        commit)
+                          |            (non SOA, add)
                           |
                           |                     (non SOA, delete)
                (pure IXFR,|                           +-------+
@@ -259,6 +259,9 @@ class XfrinFirstData(XfrinState):
         else:
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
                  conn.zone_str())
+            # We are now goint to add RRs to the new zone.  We need create
+            # a Diff object.  It will be used throughtout the XFR session.
+            conn._diff = Diff(conn._datasrc_client, conn._zone_name, True)
             self.set_xfrstate(conn, XfrinAXFR())
         return False    # need to revisit this RR in an update context
 
@@ -332,22 +335,15 @@ class XfrinIXFREnd(XfrinState):
         return False
 
 class XfrinAXFR(XfrinState):
-    def __init__(self):
-        self.__diff = None
-
     def handle_rr(self, conn, rr):
         """
         Handle the RR by putting it into the zone.
         """
-        if self.__diff is None:
-            # This is the first RR there. So create the diff to accumulate
-            # data
-            self.__diff = Diff(conn._datasrc_client, conn._zone_name, True)
-        self.__diff.add_data(rr)
+        conn._diff.add_data(rr)
         if rr.get_type() == RRType.SOA():
-            # Soa means end. We commit the data and move to the final state
+            # SOA means end.  Don't commit it yet - we need to perform
+            # post-transfer checks
             self.set_xfrstate(conn, XfrinAXFREnd())
-            self.__diff.commit()
         # Yes, we've eaten this RR.
         return True
 
@@ -360,9 +356,14 @@ class XfrinAXFREnd(XfrinState):
         """
         Final processing after processing an entire AXFR session.
 
+        In this process all the AXFR changes are committed to the
+        data source.
+
         There might be more actions here, but for now we simply return False,
         indicating there will be no more message to receive.
+
         """
+        conn._diff.commit()
         return False
 
 class XfrinConnection(asyncore.dispatcher):
