@@ -71,9 +71,14 @@ DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
     destructor_ = (ds_destructor*)ds_lib_.getSym("destroyInstance");
 
     std::string error;
-    instance_ = ds_create(config, error);
-    if (instance_ == NULL) {
-        isc_throw(DataSourceError, error);
+    try {
+        instance_ = ds_create(config, error);
+        if (instance_ == NULL) {
+            isc_throw(DataSourceError, error);
+        }
+    } catch (const std::exception& exc) {
+        isc_throw(DataSourceError, "Unknown uncaugt exception from " + type +
+                                   " createInstance" + exc.what());
     }
 }
 

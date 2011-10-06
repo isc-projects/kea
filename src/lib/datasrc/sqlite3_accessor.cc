@@ -763,7 +763,7 @@ DataSourceClient *
 createInstance(isc::data::ConstElementPtr config, std::string& error) {
     ElementPtr errors(Element::createList());
     if (!checkConfig(config, errors)) {
-        error = std::string("Configuration error: " + errors->str());
+        error = "Configuration error: " + errors->str();
         return (NULL);
     }
     std::string dbfile = config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
@@ -772,7 +772,7 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
             new SQLite3Accessor(dbfile, isc::dns::RRClass::IN()));
         return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
     } catch (const std::exception& exc) {
-        error = exc.what();
+        error = std::string("Error creating sqlite3 datasource: ") + exc.what();
         return (NULL);
     }
 }
