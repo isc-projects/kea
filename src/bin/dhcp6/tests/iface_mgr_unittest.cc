@@ -139,7 +139,11 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     delete ifacemgr;
 }
 
-TEST_F(IfaceMgrTest, sockets) {
+// TODO: disabled due to other naming on various systems
+// (lo in Linux, lo0 in BSD systems)
+// Fix for this is available on 1186 branch, will reenable
+// this test once 1186 is merged
+TEST_F(IfaceMgrTest, DISABLED_sockets) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
@@ -198,7 +202,11 @@ TEST_F(IfaceMgrTest, socketsMcast) {
     delete ifacemgr;
 }
 
-TEST_F(IfaceMgrTest, sendReceive) {
+// TODO: disabled due to other naming on various systems
+// (lo in Linux, lo0 in BSD systems)
+// Fix for this is available on 1186 branch, will reenable
+// this test once 1186 is merged
+TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
