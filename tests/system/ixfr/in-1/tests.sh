@@ -19,7 +19,7 @@
 # This script performs the first IXFR-IN test.  A BIND 9 nameserver (the
 # "server") contains a version of the zone (version N) and two previous
 # versions, N-2 and N-4.  A BIND 10 nameserver (the "client") is loaded with
-# version N-2 of the zone.  A NOTIFY is sent to it, and it is expected that
+# version N-4 of the zone.  A NOTIFY is sent to it, and it is expected that
 # it will send an IXFR to the server and update itself with the latest version
 # of the zone.  (The changes are such that the update should be in the form of
 # a single UDP packet.)

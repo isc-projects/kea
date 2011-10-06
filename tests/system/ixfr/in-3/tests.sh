@@ -37,11 +37,6 @@ echo "I:SOA serial of IXFR client $CLIENT_NAME is $old_client_serial"
 # Do this by allowing notifies and then triggering a re-notification of the
 # server.
 echo "I:notifying IXFR-client $CLIENT_NAME of presence of new version of zone"
-cp ns1/named_notify.conf ns1/named.conf
-
-do_rndc $SERVER_NAME $SERVER_IP reconfig
-status=`expr $status + $?`
-
 do_rndc $SERVER_NAME $SERVER_IP notify example
 status=`expr $status + $?`
 

@@ -19,7 +19,7 @@
 # includes the main configuration script that defines the various environment
 # variables, as well as defining useful shell subroutines.
 
-. /home/stephen/bind10/tests/system/conf.sh
+. @abs_top_builddir@/tests/system/conf.sh
 
 # Useful symbols used in the IXFR tests.
 
