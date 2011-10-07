@@ -138,19 +138,6 @@ private:
 };
 
 SQLite3Accessor::SQLite3Accessor(const std::string& filename,
-                                 const isc::dns::RRClass& rrclass) :
-    dbparameters_(new SQLite3Parameters),
-    filename_(filename),
-    class_(rrclass.toText()),
-    database_name_("sqlite3_" +
-                   isc::util::Filename(filename).nameAndExtension())
-{
-    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
-
-    open(filename);
-}
-
-SQLite3Accessor::SQLite3Accessor(const std::string& filename,
                                  const string& rrclass) :
     dbparameters_(new SQLite3Parameters),
     filename_(filename),
@@ -771,7 +758,7 @@ createInstance(isc::data::ConstElementPtr config) {
     }
     std::string dbfile = config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
     boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
-        new SQLite3Accessor(dbfile, isc::dns::RRClass::IN()));
+        new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
     return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
 }
 
