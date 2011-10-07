@@ -965,6 +965,11 @@ AC_OUTPUT([doc/version.ent
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
            tests/system/bindctl/nsx1/b10-config.db.template
+           tests/system/ixfr/db.example.n0
+           tests/system/ixfr/db.example.n2
+           tests/system/ixfr/db.example.n2.refresh
+           tests/system/ixfr/db.example.n4
+           tests/system/ixfr/db.example.n6
            tests/system/ixfr/ixfr_init.sh
            tests/system/ixfr/common_tests.sh
            tests/system/ixfr/in-1/setup.sh

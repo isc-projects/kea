@@ -1,5 +1,4 @@
-; Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
-; Copyright (C) 2000, 2001  Internet Software Consortium.
+; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +15,14 @@
 $ORIGIN example.
 $TTL 3600
 
-@		        IN	SOA	ns2.example. hostmaster.example. 92 3600 900 7200 300
+@       IN	SOA	ns1.example. hostmaster.example. 98 3600 900 7200 300
 
-                IN	NS	ns2.example.
-                IN	NS	ns3.example.
+        IN	NS	ns1.example.
+        IN	NS	ns2.example.
 
-www             IN  A   192.0.2.1
+ns1     IN  A   192.0.2.1
+ns2     IN  A   192.0.2.2
+
+a-1     IN  A   192.0.2.101
+
+$INCLUDE @abs_top_builddir@/tests/system/ixfr/db.example.common
