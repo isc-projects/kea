@@ -98,4 +98,8 @@ differences) was found.  This means a connection for xfrin tried IXFR
 and really aot a response for incremental updates.
 
 % XFRIN_GOT_NONINCREMENTAL_RESP got nonincremental response for %1
-TBD
+Non incremental transfer was detected at the "first data" of a transfer,
+which is the RR following the initial SOA.  Non incremental transfer is
+either AXFR or AXFR-style IXFR.  In the latter case, it means that
+in a response to IXFR query the first data is not SOA or its SOA serial
+is not equal to the requested SOA serial.
