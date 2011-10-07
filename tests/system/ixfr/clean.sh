@@ -1,7 +1,7 @@
+
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 2000, 2001  Internet Software Consortium.
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 # Clean up after zone transfer tests.
 
 rm -f ns1/named.conf
-rm -f ns1/zone.db
+rm -f ns1/db.example
 rm -f ns1/named.memstats
 
 rm -f nsx2/bind10.run
