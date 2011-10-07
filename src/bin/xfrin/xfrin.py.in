@@ -321,7 +321,7 @@ class XfrinFirstData(XfrinState):
         else:
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
                  conn.zone_str())
-            # We are now goint to add RRs to the new zone.  We need create
+            # We are now going to add RRs to the new zone.  We need create
             # a Diff object.  It will be used throughtout the XFR session.
             conn._diff = Diff(conn._datasrc_client, conn._zone_name, True)
             self.set_xfrstate(conn, XfrinAXFR())
@@ -405,6 +405,12 @@ class XfrinAXFR(XfrinState):
         if rr.get_type() == RRType.SOA():
             # SOA means end.  Don't commit it yet - we need to perform
             # post-transfer checks
+
+            soa_serial = get_soa_serial(rr.get_rdata()[0])
+            if conn._end_serial != soa_serial:
+                logger.warn(XFRIN_AXFR_INCONSISTENT_SOA, conn.zone_str(),
+                            conn._end_serial, soa_serial)
+
             self.set_xfrstate(conn, XfrinAXFREnd())
         # Yes, we've eaten this RR.
         return True
@@ -432,15 +438,14 @@ class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
 
     def __init__(self,
-                 sock_map, zone_name, rrclass, datasrc_client, db_file,
-                 shutdown_event, master_addrinfo, tsig_key = None,
-                 verbose=False, idle_timeout=60):
-        '''Constructor of the XfrinConnection class.
+                 sock_map, zone_name, rrclass, datasrc_client,
+                 shutdown_event, master_addrinfo, tsig_key=None,
+                 idle_timeout=60):
+        '''Constructor of the XfirnConnection class.
 
         idle_timeout: max idle time for read data from socket.
         datasrc_client: the data source client object used for the XFR session.
                         This will eventually replace db_file completely.
-        db_file: specify the data source file (should soon be deprecated).
 
         '''
 
@@ -460,8 +465,7 @@ class XfrinConnection(asyncore.dispatcher):
         self._zone_name = zone_name
         self._rrclass = rrclass
 
-        # Data source handlers
-        self._db_file = db_file # temporary for sqlite3 specific code
+        # Data source handler
         self._datasrc_client = datasrc_client
 
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
@@ -470,7 +474,6 @@ class XfrinConnection(asyncore.dispatcher):
         self._idle_timeout = idle_timeout
         self.setblocking(1)
         self._shutdown_event = shutdown_event
-        self._verbose = verbose
         self._master_address = master_addrinfo[2]
         self._tsig_key = tsig_key
         self._tsig_ctx = None
@@ -648,27 +651,15 @@ class XfrinConnection(asyncore.dispatcher):
             if ret == XFRIN_OK:
                 logger.info(XFRIN_XFR_TRANSFER_STARTED, request_str,
                             self.zone_str())
-                if self._request_type == RRType.IXFR():
-                    self._request_type = RRType.IXFR()
-                    self._send_query(self._request_type)
-                    self.__state = XfrinInitialSOA()
-                    self._handle_xfrin_responses()
-                else:
-                    self._send_query(self._request_type)
-                    isc.datasrc.sqlite3_ds.load(self._db_file,
-                                                self._zone_name.to_text(),
-                                                self._handle_axfrin_response)
+                self._send_query(self._request_type)
+                self.__state = XfrinInitialSOA()
+                self._handle_xfrin_responses()
                 logger.info(XFRIN_XFR_TRANSFER_SUCCESS, request_str,
                             self.zone_str())
 
         except (XfrinException, XfrinProtocolError) as e:
             logger.error(XFRIN_XFR_TRANSFER_FAILURE, request_str,
                          self.zone_str(), str(e))
-            ret = XFRIN_FAIL
-        except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
-            # Note: this is old code and used only for AXFR.  This will be
-            # soon removed anyway, so we'll leave it.
-            logger.error(XFRIN_AXFR_DATABASE_FAILURE, self.zone_str(), str(e))
             ret = XFRIN_FAIL
         except Exception as e:
             # Catching all possible exceptions like this is generally not a
@@ -716,9 +707,6 @@ class XfrinConnection(asyncore.dispatcher):
         '''Check validation of xfr response. '''
 
         self._check_response_header(msg)
-
-        if msg.get_rr_count(Message.SECTION_ANSWER) == 0:
-            raise XfrinException('answer section is empty')
 
         if msg.get_rr_count(Message.SECTION_QUESTION) > 1:
             raise XfrinException('query section count greater than 1')
@@ -775,31 +763,6 @@ class XfrinConnection(asyncore.dispatcher):
             if self._shutdown_event.is_set():
                 raise XfrinException('xfrin is forced to stop')
 
-    def _handle_axfrin_response(self):
-        '''Return a generator for the response to a zone transfer. '''
-        while True:
-            data_len = self._get_request_response(2)
-            msg_len = socket.htons(struct.unpack('H', data_len)[0])
-            recvdata = self._get_request_response(msg_len)
-            msg = Message(Message.PARSE)
-            msg.from_wire(recvdata)
-
-            # TSIG related checks, including an unexpected signed response
-            self._check_response_tsig(msg, recvdata)
-
-            # Perform response status validation
-            self._check_response_status(msg)
-
-            answer_section = msg.get_section(Message.SECTION_ANSWER)
-            for rr in self._handle_answer_section(answer_section):
-                yield rr
-
-            if self._soa_rr_count == 2:
-                break
-
-            if self._shutdown_event.is_set():
-                raise XfrinException('xfrin is forced to stop')
-
     def handle_read(self):
         '''Read query's response from socket. '''
 
@@ -817,8 +780,8 @@ class XfrinConnection(asyncore.dispatcher):
         pass
 
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
-                  shutdown_event, master_addrinfo, check_soa, verbose,
-                  tsig_key, request_type):
+                  shutdown_event, master_addrinfo, check_soa, tsig_key,
+                  request_type):
     xfrin_recorder.increment(zone_name)
 
     # Create a data source client used in this XFR session.  Right now we
@@ -834,8 +797,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
     # Create a TCP connection for the XFR session and perform the operation.
     sock_map = {}
     conn = XfrinConnection(sock_map, zone_name, rrclass, datasrc_client,
-                           db_file, shutdown_event, master_addrinfo,
-                           tsig_key, verbose)
+                           shutdown_event, master_addrinfo, tsig_key)
     ret = XFRIN_FAIL
     if conn.connect_to_master():
         ret = conn.do_xfrin(check_soa, request_type)
@@ -977,13 +939,12 @@ class ZoneInfo:
                 (str(self.master_addr), self.master_port))
 
 class Xfrin:
-    def __init__(self, verbose = False):
+    def __init__(self):
         self._max_transfers_in = 10
         self._zones = {}
         self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
-        self._verbose = verbose
 
     def _cc_setup(self):
         '''This method is used only as part of initialization, but is
@@ -1243,7 +1204,6 @@ class Xfrin:
                                                 db_file,
                                                 self._shutdown_event,
                                                 master_addrinfo, check_soa,
-                                                self._verbose,
                                                 tsig_key, request_type))
 
         xfrin_thread.start()
@@ -1263,9 +1223,9 @@ def set_signal_handler():
 
 def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-            help="display more about what is going on")
+            help="This option is obsolete and has no effect.")
 
-def main(xfrin_class, use_signal = True):
+def main(xfrin_class, use_signal=True):
     """The main loop of the Xfrin daemon.
 
     @param xfrin_class: A class of the Xfrin object.  This is normally Xfrin,
@@ -1282,7 +1242,7 @@ def main(xfrin_class, use_signal = True):
 
         if use_signal:
             set_signal_handler()
-        xfrind = xfrin_class(verbose = options.verbose)
+        xfrind = xfrin_class()
         xfrind.startup()
     except KeyboardInterrupt:
         logger.info(XFRIN_STOPPED_BY_KEYBOARD)
