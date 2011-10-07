@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 2001, 2002  Internet Software Consortium.
+# Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,15 +15,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-. @abs_top_builddir@/tests/system/conf.sh
-# Clean up from last time
+# Clean up after zone transfer tests.
 
-sh clean.sh
+rm -f ns1/named.conf
+rm -f ns1/zone.db
+rm -f ns1/named.memstats
 
-# Set up the initial version of the IXFR server - load the latest version of
-# the zone.
-cp -f $IXFR_TOP/named_noixfr.conf ns1/named.conf
-cp -f $IXFR_TOP/largezone_n-0.db ns1/zone.db
-
-# Set up the IXFR client - load a previous version of the zone.
-${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-2.db
+rm -f nsx2/bind10.run
+rm -f nsx2/zone.sqlite3

@@ -50,7 +50,7 @@
 . @abs_top_builddir@/tests/system/conf.sh
 . $IXFR_TOP/ixfr_init.sh
 
-status=0
+set -e
 
 # Store the SOA serial number of the BIND 10 client for later use.
 old_client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
@@ -61,13 +61,11 @@ echo "I:SOA serial of IXFR client $CLIENT_NAME is $old_client_serial"
 # generate the differences between them.
 echo "I:updating IXFR-server $SERVER_NAME for ixfr-in tests"
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-2.db
-status=`expr $status + $?`
 
 # Wait a bit - it seems that if two updates are loaded in quick succession,
 # the second sometimes gets lost.
 sleep 5
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-0.db
-status=`expr $status + $?`
 
 # TODO: Need to alter configuration of BIND 10 server such that it accepts
 # NOTIFYs from and sends IXFR requests to the BIND 9 master.
@@ -76,21 +74,13 @@ status=`expr $status + $?`
 # Do this by allowing notifies and then triggering a re-notification of the
 # server.
 echo "I:notifying IXFR-client $CLIENT_NAME of presence of new version of zone"
-cp ns1/named_notify.conf ns1/named.conf
-
+cp $IXFR_TOP/named_notify.conf ns1/named.conf
 do_rndc $SERVER_NAME $SERVER_IP reconfig
-status=`expr $status + $?`
-
 do_rndc $SERVER_NAME $SERVER_IP notify example
-status=`expr $status + $?`
 
 # Wait for the client to update itself.
 wait_for_update $CLIENT_NAME $CLIENT_IP $old_client_serial
-status=`expr $status + $?`
 
 # Has updated, get the latest serial of the client and server - they
 # should be the same.
 compare_soa $SERVER_NAME $SERVER_IP $CLIENT_NAME $CLIENT_IP
-status=`expr $status + $?`
-
-exit $status
