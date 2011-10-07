@@ -174,7 +174,9 @@ TEST_F(IfaceMgrTest, DISABLED_sockets) {
     delete ifacemgr;
 }
 
-TEST_F(IfaceMgrTest, socketsMcast) {
+// TODO: disabled due to other naming on various systems
+// (lo in Linux, lo0 in BSD systems)
+TEST_F(IfaceMgrTest, DISABLED_socketsMcast) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
