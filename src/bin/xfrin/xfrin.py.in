@@ -646,9 +646,6 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._check_response_header(msg)
 
-        if msg.get_rr_count(Message.SECTION_ANSWER) == 0:
-            raise XfrinException('answer section is empty')
-
         if msg.get_rr_count(Message.SECTION_QUESTION) > 1:
             raise XfrinException('query section count greater than 1')
 
