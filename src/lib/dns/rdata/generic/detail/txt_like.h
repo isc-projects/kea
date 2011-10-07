@@ -188,15 +188,18 @@ public:
         // This implementation is not efficient.  Revisit this (TBD).
         OutputBuffer this_buffer(0);
         toWire(this_buffer);
+        uint8_t const* const this_data = (uint8_t const*)this_buffer.getData();
         size_t this_len = this_buffer.getLength();
 
         OutputBuffer other_buffer(0);
         other.toWire(other_buffer);
+        uint8_t const* const other_data
+                                      = (uint8_t const*)other_buffer.getData();
         const size_t other_len = other_buffer.getLength();
 
         const size_t cmplen = min(this_len, other_len);
-        const int cmp = memcmp(this_buffer.getData(), other_buffer.getData(),
-                               cmplen);
+        const int cmp = memcmp(this_data, other_data, cmplen);
+
         if (cmp != 0) {
             return (cmp);
         } else {
