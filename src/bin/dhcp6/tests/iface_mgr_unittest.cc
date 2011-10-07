@@ -105,7 +105,7 @@ TEST_F(IfaceMgrTest, getIface) {
     EXPECT_EQ(1, tmp->ifindex_);
 
     // check that non-existing interfaces are not returned
-    EXPECT_TRUE(ifacemgr->getIface("wifi0") == NULL );
+    EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi0") );
 
     delete ifacemgr;
 }
