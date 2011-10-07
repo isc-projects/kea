@@ -215,4 +215,39 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, assignment) {
     EXPECT_EQ(0, rdata2.compare(rdata1));
 }
 
+TYPED_TEST(Rdata_TXT_LIKE_Test, compare) {
+    string const txt1 ("aaaaaaaa");
+    string const txt2 ("aaaaaaaaaa");
+    string const txt3 ("bbbbbbbb");
+    string const txt4 (129, 'a');
+    string const txt5 (128, 'b');
+
+    EXPECT_EQ(TypeParam(txt1).compare(TypeParam(txt1)), 0);
+
+    EXPECT_LT(TypeParam("").compare(TypeParam(txt1)), 0);
+    EXPECT_GT(TypeParam(txt1).compare(TypeParam("")), 0);
+
+    EXPECT_LT(TypeParam(txt1).compare(TypeParam(txt2)), 0);
+    EXPECT_GT(TypeParam(txt2).compare(TypeParam(txt1)), 0);
+
+    EXPECT_LT(TypeParam(txt1).compare(TypeParam(txt3)), 0);
+    EXPECT_GT(TypeParam(txt3).compare(TypeParam(txt1)), 0);
+
+    // we're comparing the data raw, starting at the length octet, so a shorter
+    // string sorts before a longer one no matter the lexicopraphical order
+    EXPECT_LT(TypeParam(txt3).compare(TypeParam(txt2)), 0);
+    EXPECT_GT(TypeParam(txt2).compare(TypeParam(txt3)), 0);
+
+    // to make sure the length octet compares unsigned
+    EXPECT_LT(TypeParam(txt1).compare(TypeParam(txt4)), 0);
+    EXPECT_GT(TypeParam(txt4).compare(TypeParam(txt1)), 0);
+
+    EXPECT_LT(TypeParam(txt5).compare(TypeParam(txt4)), 0);
+    EXPECT_GT(TypeParam(txt4).compare(TypeParam(txt5)), 0);
+
+    // comparison attempt between incompatible RR types should be rejected
+    EXPECT_THROW(TypeParam(txt1).compare(*this->rdata_nomatch),
+                 bad_cast);
+}
+
 }
