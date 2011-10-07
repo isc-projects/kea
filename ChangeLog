@@ -1,3 +1,8 @@
+294.	[func]		jelte, jinmei, vorner
+	b10-xfrin now supports incoming IXFR.  See BIND 10 Guide for
+	how to configure it and operational notes.
+	(Trac #1212, multiple git merges)
+
 293.    [func]*		tomek
 	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
 	multicast groups and listens to incoming DHCPv6 client messages.
