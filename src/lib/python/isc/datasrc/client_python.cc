@@ -120,9 +120,12 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
         PyBool_Check(replace_obj)) {
         bool replace = (replace_obj != Py_False);
         try {
-            return (createZoneUpdaterObject(
-                        self->cppobj->getUpdater(PyName_ToName(name_obj),
-                                                 replace)));
+            ZoneUpdaterPtr updater =
+                self->cppobj->getUpdater(PyName_ToName(name_obj), replace);
+            if (!updater) {
+                return (Py_None);
+            }
+            return (createZoneUpdaterObject(updater));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),
                             ne.what());
