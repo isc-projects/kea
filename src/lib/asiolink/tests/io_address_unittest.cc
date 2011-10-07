@@ -25,7 +25,6 @@ using namespace isc::asiolink;
 TEST(IOAddressTest, fromText) {
     IOAddress io_address_v4("192.0.2.1");
     EXPECT_EQ("192.0.2.1", io_address_v4.toText());
-    EXPECT_EQ(0, strcmp("192.0.2.1", (const char *)io_address_v4));
 
     IOAddress io_address_v6("2001:db8::1234");
     EXPECT_EQ("2001:db8::1234", io_address_v6.toText());

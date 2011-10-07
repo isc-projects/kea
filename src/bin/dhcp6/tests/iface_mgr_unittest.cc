@@ -250,7 +250,7 @@ TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
     EXPECT_EQ(0, memcmp(&sendPkt.data_[0], &rcvPkt->data_[0],
                         rcvPkt->data_len_) );
 
-    EXPECT_EQ(sendPkt.remote_addr_, rcvPkt->remote_addr_);
+    EXPECT_EQ(sendPkt.remote_addr_.toText(), rcvPkt->remote_addr_.toText());
     EXPECT_EQ(rcvPkt->remote_port_, 10546);
 
     delete rcvPkt;
