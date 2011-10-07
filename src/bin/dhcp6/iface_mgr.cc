@@ -226,17 +226,6 @@ IfaceMgr::getIface(const std::string& ifname) {
 }
 
 
-/**
- * Opens UDP/IPv6 socket and binds it to specific address, interface nad port.
- *
- * @param ifname name of the interface
- * @param addr address to be bound.
- * @param port UDP port.
- * @param mcast Should multicast address also be bound?
- *
- * @return socket descriptor, if socket creation, binding and multicast
- * group join were all successful. -1 otherwise.
- */
 int
 IfaceMgr::openSocket(const std::string& ifname,
                      const IOAddress& addr,
