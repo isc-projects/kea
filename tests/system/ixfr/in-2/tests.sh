@@ -29,7 +29,7 @@
 # On entry, the IXFR server is at version N-6.  The common tests assume that
 # it is an N-4, so update it.
 echo "I:updating IXFR-server $SERVER_NAME to suitable start version"
-update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-4.db
+update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n4
 status=$?
 
 # The pre-requisites for this test are the same as for the common tests, so
