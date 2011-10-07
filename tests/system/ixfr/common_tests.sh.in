@@ -1,7 +1,7 @@
+
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 2000, 2001  Internet Software Consortium.
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -60,12 +60,12 @@ echo "I:SOA serial of IXFR client $CLIENT_NAME is $old_client_serial"
 # the zones.  With ixfr-from-differences set to "yes", the nameserver should
 # generate the differences between them.
 echo "I:updating IXFR-server $SERVER_NAME for ixfr-in tests"
-update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-2.db
+update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n2
 
 # Wait a bit - it seems that if two updates are loaded in quick succession,
 # the second sometimes gets lost.
 sleep 5
-update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/largezone_n-0.db
+update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n0
 
 # TODO: Need to alter configuration of BIND 10 server such that it accepts
 # NOTIFYs from and sends IXFR requests to the BIND 9 master.

@@ -23,7 +23,7 @@ sh clean.sh
 # Set up the initial version of the IXFR server - load the n-4 version of the
 # zone.  The configuration file enables IXFR and disabled notifies.
 cp -f $IXFR_TOP/named_nonotify.conf ns1/named.conf
-cp -f $IXFR_TOP/largezone_n-4.db ns1/zone.db
+cp -f $IXFR_TOP/db.example.n4 ns1/db.example
 
 # Set up the IXFR client - load the same version of the zone.
-${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/largezone_n-4.db
+${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/db.example.n4

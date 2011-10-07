@@ -195,7 +195,7 @@ update_server_zone() {
     old_serial=`$DIG_SOA @$ip | $AWK '{print $3}'`
 
     echo "I:$name IXFR server loading $1"
-    cp $file $name/zone.db
+    cp $file $name/db.example
     do_rndc $name $ip reload
     if [ $? -ne 0 ];
     then

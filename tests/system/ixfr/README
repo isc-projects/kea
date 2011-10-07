@@ -46,15 +46,23 @@ Test Files
 
 Data Files
 ----------
-(All within tests/system/ixfr.)
+(All within tests/system/ixfr.  Some .in files are processed to substitute
+for build variables in the build process to give the files listed here.)
 
-largezone_n-X.db: These files hold the RRs for a zone for which should not
+db.example.nX. These files hold the RRs for a zone for which should not
 fit within a single UDP packet.  The files are different versions of the zone
 - the N-0 version (i.e. the latest version - "N" - the "-0" is present so
 that the files have a consistent name), N-2 etc. (See the full description
 of the tests for the meaning of N-2 etc.)
 
-largezone_n-2_refresh.db: The N-2 version of the zone, but with a small SOA refresh time (for test 4)
+db.example.common: A set of RRs to bulk out the zone to be larger than can
+be contained in a single UDP packet.
+
+db.example.n2.refresh: The N-2 version of the zone, but with a small SOA
+refresh time (for test 4).
+
+named_xxxx.conf: Various BIND 9 configuration files with NOTIFYs and/or
+IXFR enabled or disabled.
 
 Directories
 -----------

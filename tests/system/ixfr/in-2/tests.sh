@@ -1,7 +1,7 @@
+
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 2000, 2001  Internet Software Consortium.
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,8 @@
 # it will send an IXFR to the server and update itself with the latest version
 # of the zone.  (The changes are such that the update will have to take place
 # over TCP.)
+
+. ../ixfr_init.sh
 
 # On entry, the IXFR server is at version N-6.  The common tests assume that
 # it is an N-4, so update it.
