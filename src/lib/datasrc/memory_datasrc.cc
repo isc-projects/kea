@@ -942,6 +942,10 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
     } catch (const std::exception& exc) {
         error = std::string("Error creating memory datasource: ") + exc.what();
         return (NULL);
+    } catch (...) {
+        error = std::string("Error creating memory datasource, "
+                            "unknown exception");
+        return (NULL);
     }
 }
 

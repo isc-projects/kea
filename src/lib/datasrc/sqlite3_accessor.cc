@@ -774,6 +774,10 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
     } catch (const std::exception& exc) {
         error = std::string("Error creating sqlite3 datasource: ") + exc.what();
         return (NULL);
+    } catch (...) {
+        error = std::string("Error creating sqlite3 datasource, "
+                            "unknown exception");
+        return (NULL);
     }
 }
 
