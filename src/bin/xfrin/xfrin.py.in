@@ -258,7 +258,7 @@ class XfrinFirstData(XfrinState):
         else:
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
                  conn.zone_str())
-            # We are now goint to add RRs to the new zone.  We need create
+            # We are now going to add RRs to the new zone.  We need create
             # a Diff object.  It will be used throughtout the XFR session.
             conn._diff = Diff(conn._datasrc_client, conn._zone_name, True)
             self.set_xfrstate(conn, XfrinAXFR())
@@ -342,6 +342,12 @@ class XfrinAXFR(XfrinState):
         if rr.get_type() == RRType.SOA():
             # SOA means end.  Don't commit it yet - we need to perform
             # post-transfer checks
+
+            soa_serial = get_soa_serial(rr.get_rdata()[0])
+            if conn._end_serial != soa_serial:
+                logger.warn(XFRIN_AXFR_INCONSISTENT_SOA, conn.zone_str(),
+                            conn._end_serial, soa_serial)
+
             self.set_xfrstate(conn, XfrinAXFREnd())
         # Yes, we've eaten this RR.
         return True

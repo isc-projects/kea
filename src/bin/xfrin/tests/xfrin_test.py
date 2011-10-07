@@ -495,6 +495,7 @@ class TestXfrinAXFR(TestXfrinState):
     def setUp(self):
         super().setUp()
         self.state = XfrinAXFR()
+        self.conn._end_serial = 1234
 
     def test_handle_rr(self):
         """
@@ -513,6 +514,13 @@ class TestXfrinAXFR(TestXfrinState):
         # At this point, the data haven't been committed yet
         self.assertEqual([('add', self.a_rrset), ('add', soa_rrset)],
                          self.conn._diff.get_buffer())
+
+    def test_handle_rr_mismatch_soa(self):
+        """ SOA with inconsistent serial - unexpected, but we accept it.
+
+        """
+        self.assertTrue(self.state.handle_rr(self.conn, begin_soa_rrset))
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
 
     def test_finish_message(self):
         """
@@ -566,6 +574,8 @@ class TestXfrinConnection(unittest.TestCase):
             'axfr_after_soa': self._create_normal_response_data
             }
         self.axfr_response_params = {
+            'question_1st': default_questions,
+            'question_2nd': default_questions,
             'tsig_1st': None,
             'tsig_2nd': None
             }
@@ -579,12 +589,16 @@ class TestXfrinConnection(unittest.TestCase):
         # This helper method creates a simple sequence of DNS messages that
         # forms a valid AXFR transaction.  It consists of two messages: the
         # first one containing SOA, NS, the second containing the trailing SOA.
+        question_1st = self.axfr_response_params['question_1st']
+        question_2nd = self.axfr_response_params['question_2nd']
         tsig_1st = self.axfr_response_params['tsig_1st']
         tsig_2nd = self.axfr_response_params['tsig_2nd']
         self.conn.reply_data = self.conn.create_response_data(
-            answers=[soa_rrset, self._create_ns()], tsig_ctx=tsig_1st)
+            questions=question_1st, answers=[soa_rrset, self._create_ns()],
+            tsig_ctx=tsig_1st)
         self.conn.reply_data += \
-            self.conn.create_response_data(tsig_ctx=tsig_2nd)
+            self.conn.create_response_data(questions=question_2nd,
+                                           tsig_ctx=tsig_2nd)
 
     def _create_soa_response_data(self):
         # This helper method creates a DNS message that is supposed to be
@@ -958,6 +972,108 @@ class TestAXFR(TestXfrinConnection):
 
     def test_axfr_response(self):
         # A simple normal case: AXFR consists of SOA, NS, then trailing SOA.
+        self.conn.response_generator = self._create_normal_response_data
+        self.conn._send_query(RRType.AXFR())
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        check_diffs(self.assertEqual,
+                    [[('add', self._create_ns()), ('add', soa_rrset)]],
+                    self.conn._datasrc_client.committed_diffs)
+
+    def test_axfr_response_soa_mismatch(self):
+        '''AXFR response whose begin/end SOAs are not same.
+
+        What should we do this is moot, for now we accept it, so does BIND 9.
+
+        '''
+        ns_rr = self._create_ns()
+        a_rr = self._create_a('192.0.2.1')
+        self.conn._send_query(RRType.AXFR())
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                RRType.AXFR())],
+            # begin serial=1230, end serial=1234. end will be used.
+            answers=[begin_soa_rrset, ns_rr, a_rr, soa_rrset])
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        check_diffs(self.assertEqual,
+                    [[('add', ns_rr), ('add', a_rr), ('add', soa_rrset)]],
+                    self.conn._datasrc_client.committed_diffs)
+
+    def test_axfr_response_extra(self):
+        '''Test with an extra RR after the end of AXFR session.
+
+        The session should be rejected, and nothing should be committed.
+
+        '''
+        ns_rr = self._create_ns()
+        a_rr = self._create_a('192.0.2.1')
+        self.conn._send_query(RRType.AXFR())
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                RRType.AXFR())],
+            answers=[soa_rrset, ns_rr, a_rr, soa_rrset, a_rr])
+        self.assertRaises(XfrinProtocolError,
+                          self.conn._handle_xfrin_responses)
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([], self.conn._datasrc_client.committed_diffs)
+
+    def test_axfr_response_qname_mismatch(self):
+        '''AXFR response with a mismatch question name.
+
+        Our implementation accepts that, so does BIND 9.
+
+        '''
+        self.axfr_response_params['question_1st'] = \
+            [Question(Name('mismatch.example'), TEST_RRCLASS, RRType.AXFR())]
+        self.conn.response_generator = self._create_normal_response_data
+        self.conn._send_query(RRType.AXFR())
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        check_diffs(self.assertEqual,
+                    [[('add', self._create_ns()), ('add', soa_rrset)]],
+                    self.conn._datasrc_client.committed_diffs)
+
+    def test_axfr_response_qclass_mismatch(self):
+        '''AXFR response with a mismatch RR class.
+
+        Our implementation accepts that, so does BIND 9.
+
+        '''
+        self.axfr_response_params['question_1st'] = \
+            [Question(TEST_ZONE_NAME, RRClass.CH(), RRType.AXFR())]
+        self.conn.response_generator = self._create_normal_response_data
+        self.conn._send_query(RRType.AXFR())
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        check_diffs(self.assertEqual,
+                    [[('add', self._create_ns()), ('add', soa_rrset)]],
+                    self.conn._datasrc_client.committed_diffs)
+
+    def test_axfr_response_qtype_mismatch(self):
+        '''AXFR response with a mismatch RR type.
+
+        Our implementation accepts that, so does BIND 9.
+
+        '''
+        # returning IXFR in question to AXFR query
+        self.axfr_response_params['question_1st'] = \
+            [Question(TEST_ZONE_NAME, RRClass.CH(), RRType.IXFR())]
+        self.conn.response_generator = self._create_normal_response_data
+        self.conn._send_query(RRType.AXFR())
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        check_diffs(self.assertEqual,
+                    [[('add', self._create_ns()), ('add', soa_rrset)]],
+                    self.conn._datasrc_client.committed_diffs)
+
+    def test_axfr_response_empty_question(self):
+        '''AXFR response with an empty question.
+
+        Our implementation accepts that, so does BIND 9.
+
+        '''
+        self.axfr_response_params['question_1st'] = []
         self.conn.response_generator = self._create_normal_response_data
         self.conn._send_query(RRType.AXFR())
         self.conn._handle_xfrin_responses()
