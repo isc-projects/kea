@@ -35,7 +35,7 @@ void
 IfaceMgr::instanceCreate() {
     if (instance_) {
         // no need to do anything. Instance is already created.
-        // Who called it again anyway? Uh oh. Had to be us, as 
+        // Who called it again anyway? Uh oh. Had to be us, as
         // this is private method.
         return;
     }
@@ -91,7 +91,7 @@ IfaceMgr::IfaceMgr() {
         if (!openSockets()) {
             isc_throw(Unexpected, "Failed to open/bind sockets.");
         }
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
         cout << "IfaceMgr creation failed:" << ex.what() << endl;
 
         // TODO Uncomment this (or call LOG_FATAL) once
@@ -138,7 +138,7 @@ IfaceMgr::detectIfaces() {
         iface.addrs_.push_back(addr);
         ifaces_.push_back(iface);
         interfaces.close();
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
         // TODO: deallocate whatever memory we used
         // not that important, since this function is going to be
         // thrown away as soon as we get proper interface detection
@@ -241,27 +241,22 @@ int
 IfaceMgr::openSocket(const std::string& ifname,
                      const IOAddress& addr,
                      int port) {
-    struct sockaddr_storage name;
-    int name_len;
-    struct sockaddr_in6 *addr6;
+    struct sockaddr_in6 addr6;
 
     cout << "Creating socket on " << ifname << "/" << addr.toText()
          << "/port=" << port << endl;
 
-    memset(&name, 0, sizeof(name));
-    addr6 = (struct sockaddr_in6 *)&name;
-    addr6->sin6_family = AF_INET6;
-    addr6->sin6_port = htons(port);
-    addr6->sin6_scope_id = if_nametoindex(ifname.c_str());
+    memset(&addr6, 0, sizeof(addr6));
+    addr6.sin6_family = AF_INET6;
+    addr6.sin6_port = htons(port);
+    addr6.sin6_scope_id = if_nametoindex(ifname.c_str());
 
-    memcpy(&addr6->sin6_addr,
+    memcpy(&addr6.sin6_addr,
            addr.getAddress().to_v6().to_bytes().data(),
-           sizeof(addr6->sin6_addr));
-
+           sizeof(addr6.sin6_addr));
 #ifdef HAVE_SA_LEN
-    addr6->sin6_len = sizeof(*addr6);
+    addr6->sin6_len = sizeof(addr6);
 #endif
-    name_len = sizeof(*addr6);
 
     // TODO: use sockcreator once it becomes available
 
@@ -282,13 +277,12 @@ IfaceMgr::openSocket(const std::string& ifname,
         return (-1);
     }
 
-    if (bind(sock, (struct sockaddr *)&name, name_len) < 0) {
+    if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
         cout << "Failed to bind socket " << sock << " to " << addr.toText()
              << "/port=" << port << endl;
         close(sock);
         return (-1);
     }
-
 #ifdef IPV6_RECVPKTINFO
     /* RFC3542 - a new way */
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
@@ -476,7 +470,7 @@ IfaceMgr::receive() {
         // during reception (see iov_len below), so we are
         // safe
         pkt = new Pkt6(65536);
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
         cout << "Failed to create new packet." << endl;
         return (0);
     }
