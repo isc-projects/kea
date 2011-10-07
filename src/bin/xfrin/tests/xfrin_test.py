@@ -112,6 +112,7 @@ class MockDataSourceClient():
 
     '''
     def __init__(self):
+        self.force_fail = False # if True, raise an exception on commit
         self.committed_diffs = []
         self.diffs = []
 
@@ -162,6 +163,8 @@ class MockDataSourceClient():
         self.diffs.append(('remove', rrset))
 
     def commit(self):
+        if self.force_fail:
+            raise isc.datasrc.Error('Updater.commit() failed')
         self.committed_diffs.append(self.diffs)
         self.diffs = []
 
@@ -198,10 +201,10 @@ class MockXfrin(Xfrin):
                                  request_type, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
-    def __init__(self, sock_map, zone_name, rrclass, db_file, shutdown_event,
+    def __init__(self, sock_map, zone_name, rrclass, shutdown_event,
                  master_addr):
         super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
-                         db_file, shutdown_event, master_addr)
+                         shutdown_event, master_addr)
         self.query_data = b''
         self.reply_data = b''
         self.force_time_out = False
@@ -282,8 +285,7 @@ class TestXfrinState(unittest.TestCase):
     def setUp(self):
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
-                                        TEST_RRCLASS, TEST_DB_FILE,
-                                        threading.Event(),
+                                        TEST_RRCLASS, threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
         self.begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
                                RRTTL(3600))
@@ -553,8 +555,7 @@ class TestXfrinConnection(unittest.TestCase):
             os.remove(TEST_DB_FILE)
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
-                                        TEST_RRCLASS, TEST_DB_FILE,
-                                        threading.Event(),
+                                        TEST_RRCLASS, threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
         self.soa_response_params = {
             'questions': [example_soa_question],
@@ -678,14 +679,13 @@ class TestAXFR(TestXfrinConnection):
         # to confirm an AF_INET6 socket has been created.  A naive application
         # tends to assume it's IPv4 only and hardcode AF_INET.  This test
         # uncovers such a bug.
-        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS, TEST_DB_FILE,
-                                threading.Event(),
-                                TEST_MASTER_IPV6_ADDRINFO)
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS,
+                                threading.Event(), TEST_MASTER_IPV6_ADDRINFO)
         c.bind(('::', 0))
         c.close()
 
     def test_init_chclass(self):
-        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(), TEST_DB_FILE,
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(),
                                 threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
         axfrmsg = c._create_query(RRType.AXFR())
         self.assertEqual(axfrmsg.get_question()[0].get_class(),
@@ -1061,10 +1061,10 @@ class TestAXFR(TestXfrinConnection):
         self.conn.response_generator = self._create_broken_response_data
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
 
-    def test_do_xfrin_dberror(self):
-        # DB file is under a non existent directory, so its creation will fail,
-        # which will make the transfer fail.
-        self.conn._db_file = "not_existent/" + TEST_DB_FILE
+    def test_do_xfrin_datasrc_error(self):
+        # Emulate failure in the data source client on commit.
+        self.conn._datasrc_client.force_fail = True
+        self.conn.response_generator = self._create_normal_response_data
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
 
     def test_do_soacheck_and_xfrin(self):
