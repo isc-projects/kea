@@ -277,6 +277,10 @@ class DataSrcClient(unittest.TestCase):
         prev = finder.find_previous_name(prev)
         self.assertEqual("*.wild.example.com.", prev.to_text())
 
+        self.assertRaises(isc.datasrc.NotImplemented,
+                          finder.find_previous_name,
+                          isc.dns.Name("com"))
+
 class DataSrcUpdater(unittest.TestCase):
 
     def setUp(self):

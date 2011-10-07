@@ -62,6 +62,10 @@ Search the zone for a given pair of domain name and RR type.\n\
   and the code of SUCCESS will be returned.\n\
 - If the search name matches a delegation point of DNAME, it returns\n\
   the code of DNAME and that DNAME RR.\n\
+- If the result was synthesized by a wildcard match, it returns the\n\
+  code WILDCARD and the synthesized RRset\n\
+- If the query matched a wildcard name, but not its type, it returns the\n\
+  code WILDCARD_NXRRSET, and None\n\
 - If the target is a list, all RRsets under the domain are inserted\n\
   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned\n\
   instead of normall processing. This is intended to handle ANY query.\n\
@@ -92,5 +96,23 @@ Parameters:\n\
 \n\
 Return Value(s): A tuple of a result code an a FindResult object enclosing\n\
 the search result (see above).\n\
+";
+
+const char* const ZoneFinder_find_previous_name_doc = "\
+find_previous_name(isc.dns.Name) -> isc.dns.Name\n\
+\n\
+Gets the previous name in the DNSSEC order. This can be used\n\
+to find the correct NSEC records for proving nonexistence\n\
+of domains.\n\
+\n\
+This method does not include under-zone-cut data (glue data).\n\
+\n\
+Raises isc.datasrc.NotImplemented in case the data source backend\n\
+doesn't support DNSSEC or there is no previous in the zone (NSEC\n\
+records might be missing in the DB, the queried name is less or\n\
+equal to the apex).\n\
+\n\
+Raises isc.datasrc.Error for low-level or internal datasource errors\n\
+(like broken connection to database, wrong data living there).\n\
 ";
 } // unnamed namespace
