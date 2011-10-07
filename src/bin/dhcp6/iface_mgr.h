@@ -70,6 +70,18 @@ namespace isc {
 
         void detectIfaces();
 
+        /**
+         * Opens UDP/IPv6 socket and binds it to specific address, interface
+         * and port.
+         *
+         * @param ifname name of the interface
+         * @param addr address to be bound.
+         * @param port UDP port.
+         * @param mcast Should multicast address also be bound?
+         *
+         * @return socket descriptor, if socket creation, binding and multicast
+         * group join were all successful. -1 otherwise.
+         */
         int openSocket(const std::string& ifname,
                        const isc::asiolink::IOAddress& addr,
                        int port);
