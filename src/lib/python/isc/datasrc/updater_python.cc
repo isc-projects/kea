@@ -176,51 +176,6 @@ ZoneUpdater_find(PyObject* po_self, PyObject* args) {
                                                     args));
 }
 
-PyObject*
-AZoneUpdater_find(PyObject* po_self, PyObject* args) {
-    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
-    PyObject *name;
-    PyObject *rrtype;
-    PyObject *target;
-    int options_int;
-    if (PyArg_ParseTuple(args, "O!O!OI", &name_type, &name,
-                                         &rrtype_type, &rrtype,
-                                         &target, &options_int)) {
-        try {
-            ZoneFinder::FindOptions options =
-                static_cast<ZoneFinder::FindOptions>(options_int);
-            ZoneFinder::FindResult find_result(
-                self->cppobj->getFinder().find(PyName_ToName(name),
-                                   PyRRType_ToRRType(rrtype),
-                                   NULL,
-                                   options
-                                   ));
-            ZoneFinder::Result r = find_result.code;
-            isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
-            if (rrsp) {
-                // Use N instead of O so the refcount isn't increased twice
-                return Py_BuildValue("IN", r, createRRsetObject(*rrsp));
-            } else {
-                return Py_BuildValue("IO", r, Py_None);
-            }
-        } catch (const DataSourceError& dse) {
-            PyErr_SetString(getDataSourceException("Error"), dse.what());
-            return (NULL);
-        } catch (const std::exception& exc) {
-            PyErr_SetString(getDataSourceException("Error"), exc.what());
-            return (NULL);
-        } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"),
-                            "Unexpected exception");
-            return (NULL);
-        }
-    } else {
-        return (NULL);
-    }
-    return Py_BuildValue("I", 1);
-}
-
-
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
