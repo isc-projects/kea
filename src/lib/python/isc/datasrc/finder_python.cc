@@ -168,6 +168,10 @@ ZoneFinder_findPreviousName(PyObject* po_self, PyObject* args) {
         try {
             return (createNameObject(
                 self->cppobj->findPreviousName(PyName_ToName(name_obj))));
+        } catch (const isc::NotImplemented& nie) {
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            nie.what());
+            return (NULL);
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
@@ -188,14 +192,12 @@ ZoneFinder_findPreviousName(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneFinder_methods[] = {
-    { "get_origin", reinterpret_cast<PyCFunction>(ZoneFinder_getOrigin),
-      METH_NOARGS, ZoneFinder_getOrigin_doc },
-    { "get_class", reinterpret_cast<PyCFunction>(ZoneFinder_getClass),
-      METH_NOARGS, ZoneFinder_getClass_doc },
-    { "find", reinterpret_cast<PyCFunction>(ZoneFinder_find), METH_VARARGS,
-      ZoneFinder_find_doc },
-    { "find_previous_name", reinterpret_cast<PyCFunction>(ZoneFinder_findPreviousName),
-      METH_VARARGS, ZoneFinder_find_doc },/*TODO DOC*/
+    { "get_origin", ZoneFinder_getOrigin, METH_NOARGS,
+       ZoneFinder_getOrigin_doc },
+    { "get_class", ZoneFinder_getClass, METH_NOARGS, ZoneFinder_getClass_doc },
+    { "find", ZoneFinder_find, METH_VARARGS, ZoneFinder_find_doc },
+    { "find_previous_name", ZoneFinder_findPreviousName, METH_VARARGS,
+      ZoneFinder_find_previous_name_doc },
     { NULL, NULL, 0, NULL }
 };
 
