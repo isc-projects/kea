@@ -73,7 +73,6 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 }
 
 // TODO: Implement getPlainMac() test as soon as interface detection is implemented.
-
 TEST_F(IfaceMgrTest, getIface) {
 
     cout << "Interface checks. Please ignore socket binding errors." << endl;
@@ -106,7 +105,7 @@ TEST_F(IfaceMgrTest, getIface) {
     EXPECT_EQ(1, tmp->ifindex_);
 
     // check that non-existing interfaces are not returned
-    EXPECT_EQ(0, ifacemgr->getIface("wifi0") );
+    EXPECT_TRUE(ifacemgr->getIface("wifi0") == NULL );
 
     delete ifacemgr;
 }
