@@ -1435,8 +1435,8 @@ class TestIXFRSession(TestXfrinConnection):
         self._create_broken_response_data()
         self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
 
-class TestIXFRSessionWithSQLite3(TestXfrinConnection):
-    '''Tests for IXFR sessions using an SQLite3 DB.
+class TestXFRSessionWithSQLite3(TestXfrinConnection):
+    '''Tests for XFR sessions using an SQLite3 DB.
 
     These are provided mainly to confirm the implementation actually works
     in an environment closer to actual operational environments.  So we
@@ -1472,7 +1472,7 @@ class TestIXFRSessionWithSQLite3(TestXfrinConnection):
         result, soa = finder.find(name, type, None, ZoneFinder.FIND_DEFAULT)
         return result == ZoneFinder.SUCCESS
 
-    def test_do_xfrin_sqlite3(self):
+    def test_do_ixfrin_sqlite3(self):
         def create_ixfr_response():
             self.conn.reply_data = self.conn.create_response_data(
                 questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
@@ -1485,7 +1485,7 @@ class TestIXFRSessionWithSQLite3(TestXfrinConnection):
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
         self.assertEqual(1234, self.get_zone_serial())
 
-    def test_do_xfrin_sqlite3_fail(self):
+    def test_do_ixfrin_sqlite3_fail(self):
         '''Similar to the previous test, but xfrin fails due to error.
 
         Check the DB is not changed.
@@ -1503,46 +1503,68 @@ class TestIXFRSessionWithSQLite3(TestXfrinConnection):
         self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
         self.assertEqual(1230, self.get_zone_serial())
 
-    def test_do_xfrin_axfr_sqlite3(self):
-        '''AXFR-style IXFR.
+    def axfr_check(self, type):
+        '''Common checks for AXFR and AXFR-style IXFR
 
         '''
-        def create_ixfr_response():
+        def create_response():
             self.conn.reply_data = self.conn.create_response_data(
-                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                    RRType.IXFR())],
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, type)],
                 answers=[soa_rrset, self._create_ns(), soa_rrset])
-        self.conn.response_generator = create_ixfr_response
+        self.conn.response_generator = create_response
 
         # Confirm xfrin succeeds and SOA is updated, A RR is deleted.
         self.assertEqual(1230, self.get_zone_serial())
         self.assertTrue(self.record_exist(Name('dns01.example.com'),
                                           RRType.A()))
-        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, type))
         self.assertEqual(1234, self.get_zone_serial())
         self.assertFalse(self.record_exist(Name('dns01.example.com'),
                                            RRType.A()))
 
-    def test_do_xfrin_axfr_sqlite3_fail(self):
-        '''Similar to the previous test, but xfrin fails due to error.
+    def test_do_ixfrin_axfr_sqlite3(self):
+        '''AXFR-style IXFR.
+
+        '''
+        self.axfr_check(RRType.IXFR())
+
+    def test_do_axfrin_sqlite3(self):
+        '''AXFR.
+
+        '''
+        self.axfr_check(RRType.AXFR())
+
+    def axfr_failure_check(self, type):
+        '''Similar to the previous two tests, but xfrin fails due to error.
 
         Check the DB is not changed.
 
         '''
-        def create_ixfr_response():
+        def create_response():
             self.conn.reply_data = self.conn.create_response_data(
-                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                    RRType.IXFR())],
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, type)],
                 answers=[soa_rrset, self._create_ns(), soa_rrset, soa_rrset])
-        self.conn.response_generator = create_ixfr_response
+        self.conn.response_generator = create_response
 
         self.assertEqual(1230, self.get_zone_serial())
         self.assertTrue(self.record_exist(Name('dns01.example.com'),
                                           RRType.A()))
-        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, type))
         self.assertEqual(1230, self.get_zone_serial())
         self.assertTrue(self.record_exist(Name('dns01.example.com'),
                                           RRType.A()))
+
+    def test_do_xfrin_axfr_sqlite3_fail(self):
+        '''Failure case for AXFR-style IXFR.
+
+        '''
+        self.axfr_failure_check(RRType.IXFR())
+
+    def test_do_axfrin_sqlite3_fail(self):
+        '''Failure case for AXFR.
+
+        '''
+        self.axfr_failure_check(RRType.AXFR())
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
