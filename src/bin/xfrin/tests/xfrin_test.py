@@ -576,6 +576,8 @@ class TestXfrinConnection(unittest.TestCase):
         self.axfr_response_params = {
             'question_1st': default_questions,
             'question_2nd': default_questions,
+            'answer_1st': [soa_rrset, self._create_ns()],
+            'answer_2nd': default_answers,
             'tsig_1st': None,
             'tsig_2nd': None
             }
@@ -591,13 +593,16 @@ class TestXfrinConnection(unittest.TestCase):
         # first one containing SOA, NS, the second containing the trailing SOA.
         question_1st = self.axfr_response_params['question_1st']
         question_2nd = self.axfr_response_params['question_2nd']
+        answer_1st = self.axfr_response_params['answer_1st']
+        answer_2nd = self.axfr_response_params['answer_2nd']
         tsig_1st = self.axfr_response_params['tsig_1st']
         tsig_2nd = self.axfr_response_params['tsig_2nd']
         self.conn.reply_data = self.conn.create_response_data(
-            questions=question_1st, answers=[soa_rrset, self._create_ns()],
+            questions=question_1st, answers=answer_1st,
             tsig_ctx=tsig_1st)
         self.conn.reply_data += \
             self.conn.create_response_data(questions=question_2nd,
+                                           answers=answer_2nd,
                                            tsig_ctx=tsig_2nd)
 
     def _create_soa_response_data(self):
@@ -852,13 +857,6 @@ class TestAXFR(TestXfrinConnection):
             questions=[example_axfr_question, example_axfr_question])
         self.assertRaises(XfrinException, self.conn._handle_xfrin_responses)
 
-    def test_response_empty_answer(self):
-        self.conn._send_query(RRType.AXFR())
-        self.conn.reply_data = self.conn.create_response_data(answers=[])
-        # Should an empty answer trigger an exception?  Even though it's very
-        # unusual it's not necessarily invalid.  Need to revisit.
-        self.assertRaises(XfrinException, self.conn._handle_xfrin_responses)
-
     def test_response_non_response(self):
         self.conn._send_query(RRType.AXFR())
         self.conn.reply_data = self.conn.create_response_data(response = False)
@@ -972,6 +970,27 @@ class TestAXFR(TestXfrinConnection):
 
     def test_axfr_response(self):
         # A simple normal case: AXFR consists of SOA, NS, then trailing SOA.
+        self.conn.response_generator = self._create_normal_response_data
+        self.conn._send_query(RRType.AXFR())
+        self.conn._handle_xfrin_responses()
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        check_diffs(self.assertEqual,
+                    [[('add', self._create_ns()), ('add', soa_rrset)]],
+                    self.conn._datasrc_client.committed_diffs)
+
+    def test_response_empty_answer(self):
+        '''Test with an empty AXFR answer section.
+
+        This is an unusual response, but there is no reason to reject it.
+        The second message is a complete AXFR response, and transfer should
+        succeed just like the normal case.
+
+        '''
+
+        self.axfr_response_params['answer_1st'] = []
+        self.axfr_response_params['answer_2nd'] = [soa_rrset,
+                                                   self._create_ns(),
+                                                   soa_rrset]
         self.conn.response_generator = self._create_normal_response_data
         self.conn._send_query(RRType.AXFR())
         self.conn._handle_xfrin_responses()
