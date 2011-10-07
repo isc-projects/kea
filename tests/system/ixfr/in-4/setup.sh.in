@@ -22,6 +22,7 @@ sh clean.sh
 
 # Set up the initial version of the IXFR server - load the latest version of
 # the zone.
+cp $IXFR_TOP/named_noixfr.conf ns1/named.conf
 cp -f $IXFR_TOP/largezone_n-0.db ns1/zone.db
 
 # Set up the IXFR client - load a previous version of the zone with a short
