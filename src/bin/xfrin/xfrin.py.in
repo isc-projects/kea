@@ -369,15 +369,14 @@ class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
 
     def __init__(self,
-                 sock_map, zone_name, rrclass, datasrc_client, db_file,
-                 shutdown_event, master_addrinfo, tsig_key = None,
+                 sock_map, zone_name, rrclass, datasrc_client,
+                 shutdown_event, master_addrinfo, tsig_key=None,
                  verbose=False, idle_timeout=60):
         '''Constructor of the XfirnConnection class.
 
         idle_timeout: max idle time for read data from socket.
         datasrc_client: the data source client object used for the XFR session.
                         This will eventually replace db_file completely.
-        db_file: specify the data source file (should soon be deprecated).
 
         '''
 
@@ -397,8 +396,7 @@ class XfrinConnection(asyncore.dispatcher):
         self._zone_name = zone_name
         self._rrclass = rrclass
 
-        # Data source handlers
-        self._db_file = db_file # temporary for sqlite3 specific code
+        # Data source handler
         self._datasrc_client = datasrc_client
 
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
@@ -596,11 +594,6 @@ class XfrinConnection(asyncore.dispatcher):
             logger.error(XFRIN_XFR_TRANSFER_FAILURE, request_str,
                          self.zone_str(), str(e))
             ret = XFRIN_FAIL
-        except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
-            # Note: this is old code and used only for AXFR.  This will be
-            # soon removed anyway, so we'll leave it.
-            logger.error(XFRIN_AXFR_DATABASE_FAILURE, self.zone_str(), str(e))
-            ret = XFRIN_FAIL
         except Exception as e:
             # Catching all possible exceptions like this is generally not a
             # good practice, but handling an xfr session could result in
@@ -740,8 +733,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
     # Create a TCP connection for the XFR session and perform the operation.
     sock_map = {}
     conn = XfrinConnection(sock_map, zone_name, rrclass, datasrc_client,
-                           db_file, shutdown_event, master_addrinfo,
-                           tsig_key, verbose)
+                           shutdown_event, master_addrinfo, tsig_key, verbose)
     ret = XFRIN_FAIL
     if conn.connect_to_master():
         ret = conn.do_xfrin(check_soa, request_type)
