@@ -165,12 +165,13 @@ DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
     // TODO: we should use the factory function which hasn't been written
     // yet. For now we hardcode the sqlite3 initialization, and pass it one
     // string for the database file. (similar to how the 'old direct'
-    // sqlite3_ds code works)
+    // sqlite3_ds code works).  Of course, we shouldn't hardcode the RR class
+    // at that point.
     try {
         char* db_file_name;
         if (PyArg_ParseTuple(args, "s", &db_file_name)) {
             boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
-                new SQLite3Accessor(db_file_name, isc::dns::RRClass::IN()));
+                new SQLite3Accessor(db_file_name, "IN"));
             self->cppobj = new DatabaseClient(isc::dns::RRClass::IN(),
                                               sqlite3_accessor);
             return (0);
