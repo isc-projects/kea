@@ -371,7 +371,7 @@ class XfrinConnection(asyncore.dispatcher):
     def __init__(self,
                  sock_map, zone_name, rrclass, datasrc_client,
                  shutdown_event, master_addrinfo, tsig_key=None,
-                 verbose=False, idle_timeout=60):
+                 idle_timeout=60):
         '''Constructor of the XfirnConnection class.
 
         idle_timeout: max idle time for read data from socket.
@@ -405,7 +405,6 @@ class XfrinConnection(asyncore.dispatcher):
         self._idle_timeout = idle_timeout
         self.setblocking(1)
         self._shutdown_event = shutdown_event
-        self._verbose = verbose
         self._master_address = master_addrinfo[2]
         self._tsig_key = tsig_key
         self._tsig_ctx = None
@@ -716,8 +715,8 @@ class XfrinConnection(asyncore.dispatcher):
         pass
 
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
-                  shutdown_event, master_addrinfo, check_soa, verbose,
-                  tsig_key, request_type):
+                  shutdown_event, master_addrinfo, check_soa, tsig_key,
+                  request_type):
     xfrin_recorder.increment(zone_name)
 
     # Create a data source client used in this XFR session.  Right now we
@@ -733,7 +732,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
     # Create a TCP connection for the XFR session and perform the operation.
     sock_map = {}
     conn = XfrinConnection(sock_map, zone_name, rrclass, datasrc_client,
-                           shutdown_event, master_addrinfo, tsig_key, verbose)
+                           shutdown_event, master_addrinfo, tsig_key)
     ret = XFRIN_FAIL
     if conn.connect_to_master():
         ret = conn.do_xfrin(check_soa, request_type)
@@ -875,13 +874,12 @@ class ZoneInfo:
                 (str(self.master_addr), self.master_port))
 
 class Xfrin:
-    def __init__(self, verbose = False):
+    def __init__(self):
         self._max_transfers_in = 10
         self._zones = {}
         self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
-        self._verbose = verbose
 
     def _cc_setup(self):
         '''This method is used only as part of initialization, but is
@@ -1141,7 +1139,6 @@ class Xfrin:
                                                 db_file,
                                                 self._shutdown_event,
                                                 master_addrinfo, check_soa,
-                                                self._verbose,
                                                 tsig_key, request_type))
 
         xfrin_thread.start()
@@ -1161,9 +1158,9 @@ def set_signal_handler():
 
 def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-            help="display more about what is going on")
+            help="This option is obsolete and has no effect.")
 
-def main(xfrin_class, use_signal = True):
+def main(xfrin_class, use_signal=True):
     """The main loop of the Xfrin daemon.
 
     @param xfrin_class: A class of the Xfrin object.  This is normally Xfrin,
@@ -1180,7 +1177,7 @@ def main(xfrin_class, use_signal = True):
 
         if use_signal:
             set_signal_handler()
-        xfrind = xfrin_class(verbose = options.verbose)
+        xfrind = xfrin_class()
         xfrind.startup()
     except KeyboardInterrupt:
         logger.info(XFRIN_STOPPED_BY_KEYBOARD)
