@@ -148,8 +148,8 @@ class XfrinState:
     IXFR/AXFR response begins with an SOA).  When it reaches IXFREnd
     or AXFREnd, the process successfully completes.
 
-
-            (recv SOA)       (AXFR-style IXFR)   (SOA, add)
+                             (AXFR or
+            (recv SOA)        AXFR-style IXFR)  (SOA, add)
     InitialSOA------->FirstData------------->AXFR--------->AXFREnd
                           |                  |  ^         (post xfr
                           |                  |  |        checks, then
