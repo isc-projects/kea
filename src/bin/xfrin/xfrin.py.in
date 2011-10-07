@@ -586,16 +586,9 @@ class XfrinConnection(asyncore.dispatcher):
             if ret == XFRIN_OK:
                 logger.info(XFRIN_XFR_TRANSFER_STARTED, request_str,
                             self.zone_str())
-                if self._request_type == RRType.IXFR():
-                    self._request_type = RRType.IXFR()
-                    self._send_query(self._request_type)
-                    self.__state = XfrinInitialSOA()
-                    self._handle_xfrin_responses()
-                else:
-                    self._send_query(self._request_type)
-                    isc.datasrc.sqlite3_ds.load(self._db_file,
-                                                self._zone_name.to_text(),
-                                                self._handle_axfrin_response)
+                self._send_query(self._request_type)
+                self.__state = XfrinInitialSOA()
+                self._handle_xfrin_responses()
                 logger.info(XFRIN_XFR_TRANSFER_SUCCESS, request_str,
                             self.zone_str())
 
@@ -709,31 +702,6 @@ class XfrinConnection(asyncore.dispatcher):
                     rr_handled = self.__state.handle_rr(self, rr)
 
             read_next_msg = self.__state.finish_message(self)
-
-            if self._shutdown_event.is_set():
-                raise XfrinException('xfrin is forced to stop')
-
-    def _handle_axfrin_response(self):
-        '''Return a generator for the response to a zone transfer. '''
-        while True:
-            data_len = self._get_request_response(2)
-            msg_len = socket.htons(struct.unpack('H', data_len)[0])
-            recvdata = self._get_request_response(msg_len)
-            msg = Message(Message.PARSE)
-            msg.from_wire(recvdata)
-
-            # TSIG related checks, including an unexpected signed response
-            self._check_response_tsig(msg, recvdata)
-
-            # Perform response status validation
-            self._check_response_status(msg)
-
-            answer_section = msg.get_section(Message.SECTION_ANSWER)
-            for rr in self._handle_answer_section(answer_section):
-                yield rr
-
-            if self._soa_rr_count == 2:
-                break
 
             if self._shutdown_event.is_set():
                 raise XfrinException('xfrin is forced to stop')
