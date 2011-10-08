@@ -383,6 +383,11 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
+    def test_update_for_no_zone(self):
+        dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
+        self.assertEqual(None,
+                         dsc.get_updater(isc.dns.Name("notexistent.example"),
+                                         True))
 
 if __name__ == "__main__":
     isc.log.init("bind10")
