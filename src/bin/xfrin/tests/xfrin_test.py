@@ -1539,6 +1539,12 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
         self.assertEqual(1230, self.get_zone_serial())
 
+    def test_do_ixfrin_nozone_sqlite3(self):
+        self.conn._zone_name = Name('nosuchzone.example')
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
+        # This should fail even before starting state transition
+        self.assertEqual(None, self.conn.get_xfrstate())
+
     def axfr_check(self, type):
         '''Common checks for AXFR and AXFR-style IXFR
 
@@ -1601,6 +1607,22 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
 
         '''
         self.axfr_failure_check(RRType.AXFR())
+
+    def test_do_axfrin_nozone_sqlite3(self):
+        def create_response():
+            # Within this test, owner names of the question/RRs don't matter,
+            # so we use pre-defined names (which are "out of zone") for
+            # simplicity.
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.AXFR())],
+                answers=[soa_rrset, self._create_ns(), soa_rrset, soa_rrset])
+        self.conn.response_generator = create_response
+        self.conn._zone_name = Name('nosuchzone.example')
+        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.AXFR()))
+        # This should fail in the FirstData state
+        self.assertEqual(type(XfrinFirstData()),
+                         type(self.conn.get_xfrstate()))
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
