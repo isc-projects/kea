@@ -50,7 +50,7 @@
 	configuration.
 	(Trac #1165, git 698176eccd5d55759fe9448b2c249717c932ac31)
 
-288.    [bug]       stephen
+288.    [bug]		stephen
 	Fixed problem whereby the order in which component files appeared in
 	rdataclass.cc was system dependent, leading to problems on some
 	systems where data types were used before the header file in which
