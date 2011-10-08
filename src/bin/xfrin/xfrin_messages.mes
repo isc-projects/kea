@@ -103,3 +103,19 @@ which is the RR following the initial SOA.  Non incremental transfer is
 either AXFR or AXFR-style IXFR.  In the latter case, it means that
 in a response to IXFR query the first data is not SOA or its SOA serial
 is not equal to the requested SOA serial.
+
+% XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received
+The serial fields of the first and last SOAs of AXFR (including AXFR-style
+IXFR) are not the same.  According to RFC 5936 these two SOAs must be the
+"same" (not only for the serial), but it is still not clear what the
+receiver should do if this condition does not hold.  There was a discussion
+about this at the IETF dnsext wg:
+http://www.ietf.org/mail-archive/web/dnsext/current/msg07908.html
+and the general feeling seems that it would be better to reject the
+transfer if a mismatch is detected.  On the other hand, also as noted
+in that email thread, neither BIND 9 nor NSD performs any comparison
+on the SOAs.  For now, we only check the serials (ignoring other fields)
+and only leave a warning log message when a mismatch is found.  If it
+turns out to happen with a real world primary server implementation
+and that server actually feeds broken data (e.g. mixed versions of
+zone), we can consider a stricter action.
