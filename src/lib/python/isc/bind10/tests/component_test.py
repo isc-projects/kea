@@ -568,7 +568,59 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             'command': 'stop',
             'component': component
         }], plan)
-        # TODO: More scenarios for changes between configurations are needed
+
+        # We want to switch a component. So, prepare the configurator so it
+        # holds one
+        configurator._run_plan(configurator._build_plan(self.__core, bigger))
+        # Get a different configuration with a different component
+        different = copy.copy(self.__core)
+        different['another'] = {
+            'special': 'test',
+            'process': 'another',
+            'kind': 'dispensable'
+        }
+        self.log = []
+        plan = configurator._build_plan(bigger, different)
+        self.assertEqual([('another', 'init'), ('another', 'dispensable')],
+                         self.log)
+        self.assertEqual(2, len(plan))
+        self.assertEqual('stop', plan[0]['command'])
+        self.assertTrue('component' in plan[0])
+        self.assertEqual('start', plan[1]['command'])
+        self.assertEqual('another', plan[1]['name'])
+        self.assertTrue('component' in plan[1])
+
+    def __do_switch(self, option, value):
+        """
+        Start it with some component and then switch the configuration of the
+        component. This will probably raise, as it is not yet supported.
+        """
+        configurator = Configurator(self)
+        compconfig = {
+            'special': 'test',
+            'process': 'process',
+            'priority': 13,
+            'kind': 'core'
+        }
+        modifiedconfig = copy.copy(compconfig)
+        modifiedconfig[option] = value
+        return configurator._build_plan({'comp': compconfig},
+                                        {'comp': modifiedconfig})
+
+    def test_change_config_plan(self):
+        """
+        Test changing a configuration of one component. This is not yet
+        implemented and should therefore throw.
+        """
+        self.assertRaises(NotImplemented, self.__do_switch, 'kind',
+                          'dispensable')
+        self.assertRaises(NotImplemented, self.__do_switch, 'special',
+                          'not_a_test')
+        self.assertRaises(NotImplemented, self.__do_switch, 'process',
+                          'different')
+        # This does not change anything on running component, so no need to
+        # raise
+        self.assertEqual([], self.__do_switch('priority', 5))
 
     def test_startup(self):
         """
