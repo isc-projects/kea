@@ -193,6 +193,14 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
                         wiredata_txt_like, sizeof(wiredata_txt_like));
 }
 
+TYPED_TEST(Rdata_TXT_LIKE_Test, toWireRenderer) {
+    this->rdata_txt_like.toWire(this->renderer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        this->renderer.getData(),
+                        this->renderer.getLength(),
+                        wiredata_txt_like, sizeof(wiredata_txt_like));
+}
+
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
     EXPECT_EQ("\"Test String\"", this->rdata_txt_like.toText());
 }
