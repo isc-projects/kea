@@ -81,6 +81,6 @@ do_rndc $SERVER_NAME $SERVER_IP notify example
 # Wait for the client to update itself.
 wait_for_update $CLIENT_NAME $CLIENT_IP $old_client_serial
 
-# Has updated, get the latest serial of the client and server - they
+# Has updated, compare the client and server's versions of the zone s- they
 # should be the same.
-compare_soa $SERVER_NAME $SERVER_IP $CLIENT_NAME $CLIENT_IP
+compare_zones $SERVER_NAME $SERVER_IP $CLIENT_NAME $CLIENT_IP

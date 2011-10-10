@@ -23,3 +23,6 @@ rm -f ns1/named.memstats
 
 rm -f nsx2/bind10.run
 rm -f nsx2/zone.sqlite3
+
+rm -f client.dig
+rm -f server.dig
