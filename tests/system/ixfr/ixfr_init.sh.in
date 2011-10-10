@@ -320,7 +320,7 @@ compare_zones() {
     diff client.dig server.dig
     if [ $? -eq 0 ];
     then
-        echo "I: client and server zones identical"
+        echo "I:client and server zones identical"
     else
         echo "R:FAIL client $client_name zone not same as server $server_name zone"
         return 1
