@@ -54,8 +54,14 @@ namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_ZoneUpdater : public PyObject {
 public:
-    s_ZoneUpdater() : cppobj(ZoneUpdaterPtr()) {};
+    s_ZoneUpdater() : cppobj(ZoneUpdaterPtr()), base_obj(NULL) {};
     ZoneUpdaterPtr cppobj;
+    // This is a reference to a base object; if the object of this class
+    // depends on another object to be in scope during its lifetime,
+    // we use INCREF the base object upon creation, and DECREF it at
+    // the end of the destructor
+    // This is an optional argument to createXXX(). If NULL, it is ignored.
+    PyObject* base_obj;
 };
 
 // Shortcut type which would be convenient for adding class variables safely.
@@ -81,6 +87,9 @@ ZoneUpdater_destroy(s_ZoneUpdater* const self) {
     // cppobj is a shared ptr, but to make sure things are not destroyed in
     // the wrong order, we reset it here.
     self->cppobj.reset();
+    if (self->base_obj != NULL) {
+        Py_DECREF(self->base_obj);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -176,51 +185,6 @@ ZoneUpdater_find(PyObject* po_self, PyObject* args) {
                                                     args));
 }
 
-PyObject*
-AZoneUpdater_find(PyObject* po_self, PyObject* args) {
-    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
-    PyObject *name;
-    PyObject *rrtype;
-    PyObject *target;
-    int options_int;
-    if (PyArg_ParseTuple(args, "O!O!OI", &name_type, &name,
-                                         &rrtype_type, &rrtype,
-                                         &target, &options_int)) {
-        try {
-            ZoneFinder::FindOptions options =
-                static_cast<ZoneFinder::FindOptions>(options_int);
-            ZoneFinder::FindResult find_result(
-                self->cppobj->getFinder().find(PyName_ToName(name),
-                                   PyRRType_ToRRType(rrtype),
-                                   NULL,
-                                   options
-                                   ));
-            ZoneFinder::Result r = find_result.code;
-            isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
-            if (rrsp) {
-                // Use N instead of O so the refcount isn't increased twice
-                return Py_BuildValue("IN", r, createRRsetObject(*rrsp));
-            } else {
-                return Py_BuildValue("IO", r, Py_None);
-            }
-        } catch (const DataSourceError& dse) {
-            PyErr_SetString(getDataSourceException("Error"), dse.what());
-            return (NULL);
-        } catch (const std::exception& exc) {
-            PyErr_SetString(getDataSourceException("Error"), exc.what());
-            return (NULL);
-        } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"),
-                            "Unexpected exception");
-            return (NULL);
-        }
-    } else {
-        return (NULL);
-    }
-    return Py_BuildValue("I", 1);
-}
-
-
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -303,11 +267,16 @@ PyTypeObject zoneupdater_type = {
 };
 
 PyObject*
-createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source) {
+createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source,
+                        PyObject* base_obj)
+{
     s_ZoneUpdater* py_zi = static_cast<s_ZoneUpdater*>(
         zoneupdater_type.tp_alloc(&zoneupdater_type, 0));
     if (py_zi != NULL) {
         py_zi->cppobj = source;
+    }
+    if (base_obj != NULL) {
+        Py_INCREF(base_obj);
     }
     return (py_zi);
 }

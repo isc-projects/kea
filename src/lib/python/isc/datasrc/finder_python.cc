@@ -103,8 +103,14 @@ namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_ZoneFinder : public PyObject {
 public:
-    s_ZoneFinder() : cppobj(ZoneFinderPtr()) {};
+    s_ZoneFinder() : cppobj(ZoneFinderPtr()), base_obj(NULL) {};
     ZoneFinderPtr cppobj;
+    // This is a reference to a base object; if the object of this class
+    // depends on another object to be in scope during its lifetime,
+    // we use INCREF the base object upon creation, and DECREF it at
+    // the end of the destructor
+    // This is an optional argument to createXXX(). If NULL, it is ignored.
+    PyObject* base_obj;
 };
 
 // Shortcut type which would be convenient for adding class variables safely.
@@ -125,6 +131,9 @@ ZoneFinder_destroy(s_ZoneFinder* const self) {
     // cppobj is a shared ptr, but to make sure things are not destroyed in
     // the wrong order, we reset it here.
     self->cppobj.reset();
+    if (self->base_obj != NULL) {
+        Py_DECREF(self->base_obj);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -160,6 +169,31 @@ ZoneFinder_find(PyObject* po_self, PyObject* args) {
     return (isc_datasrc_internal::ZoneFinder_helper(self->cppobj.get(), args));
 }
 
+PyObject*
+ZoneFinder_findPreviousName(PyObject* po_self, PyObject* args) {
+    s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
+    PyObject* name_obj;
+    if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
+        try {
+            return (createNameObject(
+                self->cppobj->findPreviousName(PyName_ToName(name_obj))));
+        } catch (const isc::NotImplemented& nie) {
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            nie.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
+            return (NULL);
+        }
+    } else {
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -167,12 +201,12 @@ ZoneFinder_find(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneFinder_methods[] = {
-    { "get_origin", reinterpret_cast<PyCFunction>(ZoneFinder_getOrigin),
-      METH_NOARGS, ZoneFinder_getOrigin_doc },
-    { "get_class", reinterpret_cast<PyCFunction>(ZoneFinder_getClass),
-      METH_NOARGS, ZoneFinder_getClass_doc },
-    { "find", reinterpret_cast<PyCFunction>(ZoneFinder_find), METH_VARARGS,
-      ZoneFinder_find_doc },
+    { "get_origin", ZoneFinder_getOrigin, METH_NOARGS,
+       ZoneFinder_getOrigin_doc },
+    { "get_class", ZoneFinder_getClass, METH_NOARGS, ZoneFinder_getClass_doc },
+    { "find", ZoneFinder_find, METH_VARARGS, ZoneFinder_find_doc },
+    { "find_previous_name", ZoneFinder_findPreviousName, METH_VARARGS,
+      ZoneFinder_find_previous_name_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -233,11 +267,15 @@ PyTypeObject zonefinder_type = {
 };
 
 PyObject*
-createZoneFinderObject(isc::datasrc::ZoneFinderPtr source) {
+createZoneFinderObject(isc::datasrc::ZoneFinderPtr source, PyObject* base_obj) {
     s_ZoneFinder* py_zi = static_cast<s_ZoneFinder*>(
         zonefinder_type.tp_alloc(&zonefinder_type, 0));
     if (py_zi != NULL) {
         py_zi->cppobj = source;
+        py_zi->base_obj = base_obj;
+    }
+    if (base_obj != NULL) {
+        Py_INCREF(base_obj);
     }
     return (py_zi);
 }
