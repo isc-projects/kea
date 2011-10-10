@@ -61,7 +61,7 @@ init_logger_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS += $(TESTS)
 
 # Additional test using the shell.  These are principally tests
 # where the global logging environment is affected, and where the
