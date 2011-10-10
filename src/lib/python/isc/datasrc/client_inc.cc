@@ -123,7 +123,7 @@ Return an updater to make updates to a specific zone.\n\
 The RR class of the zone is the one that the client is expected to\n\
 handle (see the detailed description of this class).\n\
 \n\
-If the specified zone is not found via the client, a NULL pointer will\n\
+If the specified zone is not found via the client, a None object will\n\
 be returned; in other words a completely new zone cannot be created\n\
 using an updater. It must be created beforehand (even if it's an empty\n\
 placeholder) in a way specific to the underlying data source.\n\

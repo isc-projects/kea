@@ -63,5 +63,10 @@ IOAddress::getFamily() const {
     }
 }
 
+const asio::ip::address& 
+IOAddress::getAddress() const {
+    return asio_address_;
+}
+
 } // namespace asiolink
 } // namespace isc
