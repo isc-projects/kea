@@ -1,3 +1,10 @@
+297.	[build]		jreed
+	Do not install the unittest libraries. At this time, they
+	are not useful without source tree (and they may or may
+	not have googletest support). Also, convert several makefiles
+	to build tests at "check" time and not build time.
+	(Trac #1091, git TODO)
+
 296.	[bug]		jinmei
 	__init__.py for isc.dns was installed in the wrong directory,
 	which would now make xfrin fail to start.  It was also bad
