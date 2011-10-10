@@ -51,10 +51,10 @@ export RNDC=$BIND9_TOP/bin/rndc/rndc
 export TESTSOCK=$BIND9_TOP/bin/tests/system/testsock.pl
 export DIGCOMP=$BIND9_TOP/bin/tests/system/digcomp.pl
 
-export SUBDIRS="bindctl glue"
+export SUBDIRS="bindctl glue ixfr/in-2"
 # Add appropriate subdirectories to the above statement as the tests become
 # available.
-#SUBDIRS="dnssec masterfile ixfr/in-1 ixfr/in-2 ixfr/in-2 ixfr/in-4"
+#SUBDIRS="dnssec masterfile ixfr/in-1 ixfr/in-2 ixfr/in-4"
 
 # PERL will be an empty string if no perl interpreter was found.  A similar
 # comment applies to AWK.

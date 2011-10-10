@@ -1,4 +1,3 @@
-
 #!/bin/sh
 #
 # Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -28,18 +27,55 @@
 
 # On entry, the IXFR server is at version N-6.  The common tests assume that
 # it is an N-4, so update it.
-echo "I:updating IXFR-server $SERVER_NAME to suitable start version"
+echo "I:$SERVER_NAME updating IXFR-server to suitable start version"
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n4
-status=$?
+if [ $? -ne 0 ];
+then
+    return $status
+fi
 
 # The pre-requisites for this test are the same as for the common tests, so
 # we can execute that directly.
-
 . ../common_tests.sh
-status=`expr $status + $?`
+if [ $? -ne 0 ];
+then
+    return $status
+fi
 
-# TODO: Check the BIND 10 log, looking for the IXFR messages that indicate that
-# it has initiated an IXFR and that it received the update via TCP.
+# TEMPORARY: at the time of writing (October 2011) BIND 10 does not attempt
+# a UDP transfer first.  Therefore just check for TCP transfer.
+
+# Check that the client initiated and completed an IXFR.  Use a simple grep as
+# the syntax and capabilities of egrep may vary between systems.
+grep XFRIN_XFR_TRANSFER_STARTED nsx2/bind10.run | grep IXFR > /dev/null
+if [ $? -ne 0 ];
+then
+    echo "R:$CLIENT_NAME FAIL no 'IXFR started' message in the BIND 10 log"
+    return 1
+fi
+
+grep XFRIN_XFR_TRANSFER_SUCCESS | grep IXFR > /dev/null
+if [ $? -ne 0 ];
+then
+    echo "R:$CLIENT_NAME FAIL no 'IXFR successful' message in the BIND 10 log"
+    return 1
+fi
+
+# Look in the named log file to see if a TCP IXFR was requested.  Again use a
+# simple grep.
+grep "transfer of" ns1/named.run | grep "sending TCP message" > /dev/null
+if [ $? -ne 0 ];
+then
+    echo "R:$SERVER_NAME FAIL no 'sending TCP' message in the BIND 9 log"
+    return 1
+fi
+
+grep "IXFR ended" ns1/named.run > /dev/null
+if [ $? -ne 0 ];
+then
+    echo "R:$SERVER_NAME FAIL no 'IXFR ended' message in the BIND 9 log"
+    return 1
+fi
 
 echo "I:exit status: $status"
 exit $status
