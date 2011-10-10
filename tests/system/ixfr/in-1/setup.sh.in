@@ -26,4 +26,5 @@ cp -f $IXFR_TOP/named_nonotify.conf ns1/named.conf
 cp -f $IXFR_TOP/db.example.n4 ns1/db.example
 
 # Set up the IXFR client - load the same version of the zone.
-${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/db.example.n4
+cp -f $IXFR_TOP/b10-config.db nsx2/b10-config.db
+${B10_LOADZONE} -o . -d $IXFR_TOP/zone.sqlite3 $IXFR_TOP/db.example.n4

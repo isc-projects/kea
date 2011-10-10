@@ -136,7 +136,7 @@ wait_for_update() {
 
     # Now poll the server looking for the new serial number
 
-    echo "I:waiting for SOA serial of $name to change from $serial"
+    echo "I:$name waiting for SOA serial to change from $serial"
     for i in `seq 1 12`
     do
         if [ $i -gt 1 ];
@@ -147,6 +147,7 @@ wait_for_update() {
         new_serial=`$DIG_SOA @$ip | $AWK '{print $3}'`
         if [ "$new_serial" != "$serial" ];
         then
+            echo "I:$name SOA serial was at $serial, now at $new_serial"
             return 0
         fi
     done
@@ -215,9 +216,8 @@ update_server_zone() {
         echo "R:$name FAIL IXFR server did not update zone after reload"
         return 1
     fi
-
     new_serial=`$DIG_SOA @$ip | $AWK '{print $3}'`
-    echo "I:$name was at serial $old_serial, now at $new_serial"
+
     return 0
 }
 
@@ -313,13 +313,15 @@ compare_zones() {
     client_ip=$1
     shift
 
-    $DIG @$client_ip example. axfr | grep -v '^;' | grep -v '^$' \
+    $DIG @$client_ip -p $DNS_PORT example. axfr | grep -v '^;' | grep -v '^$' \
          | sed -e 's/ //g' -e 's/\t//g' > client.dig
-    $DIG @$server_ip example. axfr | grep -v '^;' | grep -v '^$' \
+    $DIG @$server_ip -p $DNS_PORT example. axfr | grep -v '^;' | grep -v '^$' \
          | sed -e 's/ //g' -e 's/\t//g' > server.dig
     diff client.dig server.dig
-    if [ $? -ne 0 ];
+    if [ $? -eq 0 ];
     then
+        echo "I: client and server zones identical"
+    else
         echo "R:FAIL client $client_name zone not same as server $server_name zone"
         return 1
     fi
