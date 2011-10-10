@@ -1,3 +1,7 @@
+294.	[func]		dvv
+	Implement the SPF rrtype according to RFC4408.
+	(Trac #1140, git tbd)
+
 293.    [func]*		tomek
 	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
 	multicast groups and listens to incoming DHCPv6 client messages.
