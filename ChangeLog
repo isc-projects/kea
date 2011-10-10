@@ -3,7 +3,7 @@
 	are not useful without source tree (and they may or may
 	not have googletest support). Also, convert several makefiles
 	to build tests at "check" time and not build time.
-	(Trac #1091, git TODO)
+	(Trac #1091, git 2adf4a90ad79754d52126e7988769580d20501c3)
 
 296.	[bug]		jinmei
 	__init__.py for isc.dns was installed in the wrong directory,
