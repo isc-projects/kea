@@ -1483,11 +1483,14 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
     def setUp(self):
         self.sqlite3db_src = TESTDATA_SRCDIR + '/example.com.sqlite3'
         self.sqlite3db_obj = TESTDATA_OBJDIR + '/example.com.sqlite3.copy'
+        self.empty_sqlite3db_obj = TESTDATA_OBJDIR + '/empty.sqlite3'
         self.sqlite3db_cfg = "{ \"database_file\": \"" +\
                              self.sqlite3db_obj + "\"}"
         super().setUp()
         if os.path.exists(self.sqlite3db_obj):
             os.unlink(self.sqlite3db_obj)
+        if os.path.exists(self.empty_sqlite3db_obj):
+            os.unlink(self.empty_sqlite3db_obj)
         shutil.copyfile(self.sqlite3db_src, self.sqlite3db_obj)
         self.conn._datasrc_client = DataSourceClient("sqlite3",
                                                      self.sqlite3db_cfg)
@@ -1495,6 +1498,8 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
     def tearDown(self):
         if os.path.exists(self.sqlite3db_obj):
             os.unlink(self.sqlite3db_obj)
+        if os.path.exists(self.empty_sqlite3db_obj):
+            os.unlink(self.empty_sqlite3db_obj)
 
     def get_zone_serial(self):
         result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
@@ -1612,20 +1617,30 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         self.axfr_failure_check(RRType.AXFR())
 
     def test_do_axfrin_nozone_sqlite3(self):
+        '''AXFR test with an empty SQLite3 DB file, thus no target zone there.
+
+        For now, we provide backward compatible behavior: xfrin will create
+        the zone (after even setting up the entire schema) in the zone.
+        Note: a future version of this test will make it fail.
+
+        '''
+        self.conn._db_file = self.empty_sqlite3db_obj
+        self.conn._datasrc_client = DataSourceClient(
+            "sqlite3",
+            "{ \"database_file\": \"" + self.empty_sqlite3db_obj + "\"}")
         def create_response():
-            # Within this test, owner names of the question/RRs don't matter,
-            # so we use pre-defined names (which are "out of zone") for
-            # simplicity.
             self.conn.reply_data = self.conn.create_response_data(
                 questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
                                     RRType.AXFR())],
-                answers=[soa_rrset, self._create_ns(), soa_rrset, soa_rrset])
+                answers=[soa_rrset, self._create_ns(), soa_rrset])
         self.conn.response_generator = create_response
-        self.conn._zone_name = Name('nosuchzone.example')
-        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.AXFR()))
-        # This should fail in the FirstData state
-        self.assertEqual(type(XfrinFirstData()),
+        self.conn._zone_name = Name('example.com')
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.AXFR()))
+        self.assertEqual(type(XfrinAXFREnd()),
                          type(self.conn.get_xfrstate()))
+        self.assertEqual(1234, self.get_zone_serial())
+        self.assertFalse(self.record_exist(Name('dns01.example.com'),
+                                           RRType.A()))
 
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
