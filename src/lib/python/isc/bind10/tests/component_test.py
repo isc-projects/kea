@@ -445,7 +445,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
                 'kind': 'core'
             }
         }
-        # How they should be started. The are created in the order they are
+        # How they should be started. They are created in the order they are
         # found in the dict, but then they should be started by priority.
         # This expects that the same dict returns its keys in the same order
         # every time

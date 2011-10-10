@@ -219,7 +219,31 @@ class Configurator:
         Any configuration problems are expected to be handled here, so the
         plan is not yet run.
         """
-        pass
+        plan_add = []
+        plan = []
+        # Handle introduction of new components
+        for cname in new.keys():
+            if cname not in old:
+                params = new[cname]
+                creator = Component
+                if 'special' in params:
+                    # TODO: Better error handling
+                    creator = specials[params['special']]
+                component = creator(params['process'], self.__boss,
+                                    params['kind'])
+                priority = 0
+                if 'priority' in params:
+                    priority = params['priority']
+                # We store tuples, priority first, so we can easily sort
+                plan_add.append((priority, {
+                    'component': component,
+                    'command': 'start',
+                    'name': cname
+                }))
+        # Push the starts there sorted by priority
+        plan.extend([command for (_, command) in sorted(plan_add,
+                                                        reverse=True)])
+        return plan
 
     def _run_plan(self, plan):
         """
