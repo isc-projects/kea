@@ -931,12 +931,22 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
 } // end anonymous namespace
 
 DataSourceClient *
-createInstance(isc::data::ConstElementPtr config) {
+createInstance(isc::data::ConstElementPtr config, std::string& error) {
     ElementPtr errors(Element::createList());
     if (!checkConfig(config, errors)) {
-        isc_throw(DataSourceConfigError, errors->str());
+        error = "Configuration error: " + errors->str();
+        return (NULL);
     }
-    return (new InMemoryClient());
+    try {
+        return (new InMemoryClient());
+    } catch (const std::exception& exc) {
+        error = std::string("Error creating memory datasource: ") + exc.what();
+        return (NULL);
+    } catch (...) {
+        error = std::string("Error creating memory datasource, "
+                            "unknown exception");
+        return (NULL);
+    }
 }
 
 void destroyInstance(DataSourceClient* instance) {

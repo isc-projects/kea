@@ -1,0 +1,10 @@
+eth0 fe80::21e:8cff:fe9b:7349
+
+#
+# only first line is read.
+# please use following format:
+# interface-name link-local-ipv6-address
+#
+# This file will become obsolete once proper interface detection 
+# is implemented.
+#
