@@ -971,15 +971,12 @@ AC_OUTPUT([doc/version.ent
            tests/system/ixfr/db.example.n4
            tests/system/ixfr/db.example.n6
            tests/system/ixfr/ixfr_init.sh
+           tests/system/ixfr/b10-config.db
            tests/system/ixfr/common_tests.sh
            tests/system/ixfr/in-1/setup.sh
-           tests/system/ixfr/in-1/nsx2/b10-config.db
            tests/system/ixfr/in-2/setup.sh
-           tests/system/ixfr/in-2/nsx2/b10-config.db
            tests/system/ixfr/in-3/setup.sh
-           tests/system/ixfr/in-3/nsx2/b10-config.db
            tests/system/ixfr/in-4/setup.sh
-           tests/system/ixfr/in-4/nsx2/b10-config.db
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh

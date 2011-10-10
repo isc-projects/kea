@@ -26,4 +26,5 @@ cp -f $IXFR_TOP/named_noixfr.conf ns1/named.conf
 cp -f $IXFR_TOP/db.example.n0 ns1/db.example
 
 # Set up the IXFR client - load a previous version of the zone.
-${B10_LOADZONE} -o . -d @builddir@/nsx2/zone.sqlite3 $IXFR_TOP/db.example.n2
+cp -f $IXFR_TOP/b10-config.db nsx2/b10-config.db
+${B10_LOADZONE} -o . -d $IXFR_TOP/zone.sqlite3 $IXFR_TOP/db.example.n2
