@@ -16,11 +16,11 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # \file
-# This script performs the thrid IXFR-IN test.  A BIND 9 nameserver (the
+# This script performs the third IXFR-IN test.  A BIND 9 nameserver (the
 # "server") contains a version of the zone (version N) and has IXFRs disabled.
 # A BIND 10 nameserver (the "client") is loaded with version N-2 of the zone.
 # A NOTIFY is sent to it, and it is expected that it will send an IXFR to the
-# server; the server should not respond to the request, so ther client should
+# server; the server should not respond to the request, so the client should
 # then send an AXFR request and receive the latest copy of the zone.
 
 . ../ixfr_init.sh

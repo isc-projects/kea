@@ -20,7 +20,7 @@
 #
 # Preconditions:\n
 # The BIND 9 nameserver (ns1, 10.53.0.1, acting as the IXFR server) is loaded
-# with the N-4 version of the zone.  It may hold prior versions as well.
+# with the N-4 version of the zone.  (It may hold prior versions as well.)
 # Notifications are disabled.
 #
 # The BIND 10 nameserver (nsx2, 10.53.0.2, acting as the IXFR client) is loaded
@@ -30,8 +30,8 @@
 # This script updates the IXFR server with the N-2 and N-0 versions of the zone.
 # It then updates the BIND 10 configuration so that it looks for IXFRs from
 # the IXFR server and causes the server to send the client a NOTIFY.  After
-# waiting for the client to update from the server, it compares SOA serials,
-# reporting an error if they are different.
+# waiting for the client to update from the server, it compares ther zones of
+# the two system, reporting an error if they are different.
 #
 # Caller Actions:\n
 # The caller can pre-load the BIND 10 IXFR client with whatever version of the
@@ -40,9 +40,6 @@
 #
 # After this test has finished, it is up to the caller to check the logs
 # to see if they report the expected behavior.
-#
-# \arg $1 If present (and set to "yes"), after updating the IXFR server,
-#      ensure that NOTIFYs are enabled and send a NOTIFY to the slave.
 #
 # \return 0 if the script executed successfully, non-zero otherwise
 
