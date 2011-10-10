@@ -219,9 +219,18 @@ class Configurator:
         Any configuration problems are expected to be handled here, so the
         plan is not yet run.
         """
-        plan_add = []
         plan = []
+        # Handle removals of old components
+        for cname in old.keys():
+            if cname not in new:
+                component = self._components[cname]
+                if component.running():
+                    plan.append({
+                        'command': 'stop',
+                        'component': component
+                    })
         # Handle introduction of new components
+        plan_add = []
         for cname in new.keys():
             if cname not in old:
                 params = new[cname]
