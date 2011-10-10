@@ -30,7 +30,9 @@ namespace isc {
 namespace datasrc {
 
 LibraryContainer::LibraryContainer(const std::string& name) {
-    ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_LOCAL);
+    // use RTLD_GLOBAL so that shared symbols (e.g. exceptions)
+    // are recognized as such
+    ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (ds_lib_ == NULL) {
         isc_throw(DataSourceLibraryError, dlerror());
     }
