@@ -44,21 +44,8 @@ public:
         DataSourceError(file, line, what) {}
 };
 
-/// \brief Raised if the given config contains bad data
-///
-/// Depending on the datasource type, the configuration may differ (for
-/// instance, the sqlite3 datasource needs a database file).
-class DataSourceConfigError : public DataSourceError {
-public:
-    DataSourceConfigError(const char* file, size_t line, const char* what) :
-        DataSourceError(file, line, what) {}
-    // This exception is created in the dynamic modules. Apparently
-    // sunstudio can't handle it if we then automatically derive the
-    // destructor, so we provide it explicitely
-    ~DataSourceConfigError() throw() {}
-};
-
-typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config);
+typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config,
+                                     std::string& error);
 typedef void ds_destructor(DataSourceClient* instance);
 
 /// \brief Container class for dynamically loaded libraries
@@ -146,8 +133,9 @@ public:
     ///            backend library
     /// \exception DataSourceLibrarySymbolError if the library does not have
     ///            the needed symbols, or if there is an error reading them
-    /// \exception DataSourceConfigError if the given config is not correct
-    ///            for the given type
+    /// \exception DataError if the given config is not correct
+    ///            for the given type, or if there was a problem during
+    ///            initialization
     ///
     /// \param type The type of the datasource client. Based on the value of
     ///             type, a specific backend library is used, by appending the

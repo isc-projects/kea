@@ -310,7 +310,14 @@ private:
 ///
 /// This configuration setup is currently under discussion and will change in
 /// the near future.
-extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config);
+///
+/// \param config The configuration for the datasource instance
+/// \param error This string will be set to an error message if an error occurs
+///              during initialization
+/// \return An instance of the memory datasource client, or NULL if there was
+///         an error
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config,
+                                            std::string& error);
 
 /// \brief Destroy the instance created by createInstance()
 extern "C" void destroyInstance(DataSourceClient* instance);

@@ -59,7 +59,7 @@
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
       When triggered it can request and receive a zone transfer and store
-      the zone in a BIND 10 zone data store.
+      the zone in a BIND 10 zone data source.
     </para>
 
 <!-- TODO:
@@ -68,9 +68,13 @@ The logic for handling transfer triggers or zone management is handled
 in separate zonemgr process.
 -->
 
-    <note><simpara>
-      This prototype release only supports AXFR. IXFR is not implemented.
-    </simpara></note>
+    <para>
+      The <command>b10-xfrin</command> daemon supports both AXFR and
+      IXFR.  Due to some implementation limitations of the current
+      development release, however, it only tries AXFR by default,
+      and care should be taken to enable IXFR.
+      See the BIND 10 Guide for more details.
+    </para>
 
     <para>
       This daemon communicates with BIND 10 over a
@@ -105,7 +109,8 @@ in separate zonemgr process.
       <varname>name</varname> (the zone name),
       <varname>class</varname> (defaults to <quote>IN</quote>),
       <varname>master_addr</varname> (the zone master to transfer from),
-      <varname>master_port</varname> (defaults to 53), and
+      <varname>master_port</varname> (defaults to 53),
+      <varname>ixfr_disabled</varname> (defaults to false), and
       <varname>tsig_key</varname> (optional TSIG key to use).
       The <varname>tsig_key</varname> is specified using a full string
       colon-delimited name:key:algorithm representation (e.g.

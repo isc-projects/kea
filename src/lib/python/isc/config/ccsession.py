@@ -510,10 +510,10 @@ class UIModuleCCSession(MultiConfigData):
 
     def _remove_value_from_list(self, identifier, value):
         if value is None:
-            # we are directly removing an list index
+            # we are directly removing a list index
             id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
             if list_indices is None:
-                raise DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
+                raise isc.cc.data.DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
             else:
                 self.set_value(identifier, None)
         else:
