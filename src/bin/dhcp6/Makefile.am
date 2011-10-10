@@ -4,9 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cc -I$(top_builddir)/src/lib/cc
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/asiolink
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -31,8 +29,10 @@ spec_config.h: spec_config.h.pre
 
 BUILT_SOURCES = spec_config.h
 pkglibexec_PROGRAMS = b10-dhcp6
+
 b10_dhcp6_SOURCES = main.cc iface_mgr.cc dhcp6_srv.cc
 b10_dhcp6_SOURCES += iface_mgr.h dhcp6_srv.h
+
 b10_dhcp6_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libcc.la

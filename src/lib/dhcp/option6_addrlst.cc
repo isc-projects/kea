@@ -17,10 +17,10 @@
 #include <sstream>
 #include "exceptions/exceptions.h"
 
-#include "libdhcp.h"
-#include "option6_addrlst.h"
-#include "dhcp6.h"
-#include "io_address.h"
+#include "asiolink/io_address.h"
+#include "dhcp/libdhcp.h"
+#include "dhcp/option6_addrlst.h"
+#include "dhcp/dhcp6.h"
 
 using namespace std;
 using namespace isc;

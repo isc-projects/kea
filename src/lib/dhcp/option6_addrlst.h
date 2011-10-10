@@ -16,8 +16,8 @@
 #define OPTION6_ADDRLST_H_
 
 #include <vector>
-#include "io_address.h"
-#include "option.h"
+#include "asiolink/io_address.h"
+#include "dhcp/option.h"
 
 namespace isc {
 namespace dhcp {
