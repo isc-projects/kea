@@ -1,11 +1,11 @@
-297.	[build]		jreed
+296.	[build]		jreed
 	Do not install the unittest libraries. At this time, they
 	are not useful without source tree (and they may or may
 	not have googletest support). Also, convert several makefiles
 	to build tests at "check" time and not build time.
 	(Trac #1091, git 2adf4a90ad79754d52126e7988769580d20501c3)
 
-296.	[bug]		jinmei
+295.	[bug]		jinmei
 	__init__.py for isc.dns was installed in the wrong directory,
 	which would now make xfrin fail to start.  It was also bad
 	in that it replaced any existing __init__.py in th public
@@ -13,15 +13,6 @@
 	check if the wrong init file is in the wrong place, in which
 	case it should be removed.
 	(Trac #1285, git af3b17472694f58b3d6a56d0baf64601b0f6a6a1)
-
-295.	[func]*		jinmei
-	b10-xfrin: the AXFR implementation is unified with IXFR, and
-	handles corner cases more carefully.  Note: As a result of this
-	change, xfrin does not create a new (SQLite3) zone in a fresh DB
-	file upon receiving AXFR any more.  Initial zone content must be
-	prepared by hand (e.g. with b10-loadzone) until a more generic
-	tool for zone management is provided.
-	(Trac #1209, git 5ca7b409bccc815cee58c804236504fda1c1c147)
 
 294.	[func]		jelte, jinmei, vorner
 	b10-xfrin now supports incoming IXFR.  See BIND 10 Guide for

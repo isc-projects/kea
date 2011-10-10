@@ -1276,13 +1276,6 @@ TODO
      In the current development release of BIND 10, incoming zone
      transfers are only available for SQLite3-based data sources,
      that is, they don't work for an in-memory data source.
-     Furthermore, the corresponding SQLite3 database must be
-     configured with a list of zone names by hand.  One possible way
-     to do this is to use the <command>b10-loadzone</command> command
-     to load dummy zone content of the zone for which the secondary
-     service is provided (and then force transfer using AXFR from the primary
-     server).  In future versions we will provide more convenient way
-     to set up the secondary.
     </simpara></note>
 
     <para>
