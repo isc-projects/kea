@@ -551,7 +551,7 @@ class XfrinConnection(asyncore.dispatcher):
             msg.add_rrset(Message.SECTION_AUTHORITY, zone_soa_rr)
             self._request_serial = get_soa_serial(zone_soa_rr.get_rdata()[0])
         else:
-            # For AXFR, we temporariy provide backward compatible behavior
+            # For AXFR, we temporarily provide backward compatible behavior
             # where xfrin is responsible for creating zone in the corresponding
             # DB table.  Note that the code below uses the old data source
             # API and assumes SQLite3 in an ugly manner.  We'll have to
