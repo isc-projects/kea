@@ -35,6 +35,7 @@ run_unittests_SOURCES += rdata_ptr_unittest.cc rdata_cname_unittest.cc
 run_unittests_SOURCES += rdata_dname_unittest.cc
 run_unittests_SOURCES += rdata_afsdb_unittest.cc
 run_unittests_SOURCES += rdata_opt_unittest.cc
+run_unittests_SOURCES += rdata_dhcid_unittest.cc
 run_unittests_SOURCES += rdata_dnskey_unittest.cc
 run_unittests_SOURCES += rdata_ds_like_unittest.cc
 run_unittests_SOURCES += rdata_nsec_unittest.cc
