@@ -527,9 +527,8 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
 
     def test_build_plan(self):
         """
-        Test building the plan correctly. Currently, we let it only create
-        the initial plan when the old configuration is empty, as we don't need
-        more for the starts.
+        Test building the plan correctly. Not complete yet, this grows as we
+        add more ways of changing the plan.
         """
         configurator = Configurator(self)
         plan = configurator._build_plan({}, self.__core)
@@ -540,6 +539,35 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             self.assertTrue('component' in task)
             self.assertEqual('start', task['command'])
             self.assertEqual(name, task['name'])
+
+        # A plan to go from older state to newer one containing more components
+        bigger = copy.copy(self.__core)
+        bigger['additional'] = {
+            'priority': 6,
+            'special': 'test',
+            'process': 'additional',
+            'kind': 'needed'
+        }
+        self.log = []
+        plan = configurator._build_plan(self.__core, bigger)
+        self.assertEqual([('additional', 'init'), ('additional', 'needed')],
+                         self.log)
+        self.assertEqual(1, len(plan))
+        self.assertTrue('component' in plan[0])
+        component = plan[0]['component']
+        self.assertEqual('start', plan[0]['command'])
+        self.assertEqual('additional', plan[0]['name'])
+
+        # Now remove the one component again
+        # We run the plan so the component is wired into internal structures
+        configurator._run_plan(plan)
+        self.log = []
+        plan = configurator._build_plan(bigger, self.__core)
+        self.assertEqual([], self.log)
+        self.assertEqual([{
+            'command': 'stop',
+            'component': component
+        }], plan)
         # TODO: More scenarios for changes between configurations are needed
 
     def test_startup(self):
