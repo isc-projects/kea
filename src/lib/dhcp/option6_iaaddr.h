@@ -15,8 +15,8 @@
 #ifndef OPTION6_IAADDR_H_
 #define OPTION6_IAADDR_H_
 
-#include "io_address.h"
-#include "option.h"
+#include "asiolink/io_address.h"
+#include "dhcp/option.h"
 
 namespace isc {
 namespace dhcp {

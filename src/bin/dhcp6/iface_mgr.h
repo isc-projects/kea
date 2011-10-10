@@ -17,7 +17,7 @@
 
 #include <list>
 #include <boost/shared_ptr.hpp>
-#include "io_address.h"
+#include "asiolink/io_address.h"
 #include "dhcp/pkt6.h"
 
 namespace isc {

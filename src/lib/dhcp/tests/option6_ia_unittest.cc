@@ -211,13 +211,13 @@ TEST_F(Option6IATest, suboptions_unpack) {
         buf[i] = 0;
     memcpy(&buf[0], expected, 48);
 
-    Option6IA * ia;
+    Option6IA* ia = 0;
     EXPECT_NO_THROW({
-            ia = new Option6IA(Option::V6, D6O_IA_NA,
-                               buf, 128, 4, 44);
+        ia = new Option6IA(Option::V6, D6O_IA_NA,
+                           buf, 128, 4, 44);
+        cout << "Parsed option:" << endl << ia->toText() << endl;
     });
-
-    cout << "Parsed option:" << endl << ia->toText() << endl;
+    ASSERT_TRUE(ia);
 
     EXPECT_EQ(D6O_IA_NA, ia->getType());
     EXPECT_EQ(0x13579ace, ia->getIAID());
@@ -250,7 +250,5 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     delete ia;
 }
-
-
 
 }

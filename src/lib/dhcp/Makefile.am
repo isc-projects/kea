@@ -1,8 +1,6 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/asiolink
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 CLEANFILES = *.gcno *.gcda

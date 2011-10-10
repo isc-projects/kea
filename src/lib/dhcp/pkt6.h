@@ -18,7 +18,7 @@
 #include <iostream>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
-#include "io_address.h"
+#include "asiolink/io_address.h"
 #include "option.h"
 
 namespace isc {
