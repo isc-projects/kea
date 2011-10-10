@@ -15,9 +15,9 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # \file
-# This file should be run by all IXFR tests before going anything else.  It
-# includes the main configuration script that defines the various environment
-# variables, as well as defining useful shell subroutines.
+# This file should be run by all IXFR tests before doing anything else.  It
+# includes the main configuration script to set the environment variables as
+# well as defining useful shell subroutines.
 
 . @abs_top_builddir@/tests/system/conf.sh
 
@@ -26,7 +26,8 @@
 # Short-hand for getting SOA - just supply address of the server
 DIG_SOA="$DIG +norecurse +short -p $DNS_PORT example. SOA"
 
-# All IXFR tests use a BIND 9 server serving a BIND 10 client
+# All IXFR tests use a BIND 9 server serving a BIND 10 client.  These have the
+# smae name and use the same address in all tests.
 SERVER_NAME=ns1
 SERVER_IP=10.53.0.1   # BIND 9
 
@@ -35,7 +36,7 @@ CLIENT_IP=10.53.0.2   # BIND 10
 
 # \brief Check Arguments
 #
-# All functions take the name of the server as the firsrt argument and its IP
+# Most functions take the name of  nameserver as the first argument and its IP
 # address as the second.  This function is passed "$*" and just checks that
 # both $1 and $2 are defined.
 #
@@ -65,9 +66,12 @@ check_name_ip() {
 # Controls the BIND 9 IXFR server.  Called do_rndc (instead of rndc) to avoid
 # confusion if rndc itself is in the search path.
 #
-# $1 - Name of the server (ns1, nsx2 etc.)
-# $2 - IP address of the server
-# $* - Command to execute (which may be multiple tokens)
+# \arg $1 - Name of the server (ns1, nsx2 etc.)
+# \arg $2 - IP address of the server
+# \arg $* - Command to execute (which may be multiple tokens)
+#
+# \return 0 on success, 1 on failure (in which case an error message will
+#         have been output).
 do_rndc () {
 
     # If the following checks fail, the code is wrong.
@@ -105,7 +109,7 @@ do_rndc () {
 # \arg $3 - Serial number to check against
 #
 # \return 0 if the serial number is different (requires another poll to obtain
-#         it), 1 if the serial number has not changed.
+#         it), 1 if the serial number has not changed after one minute.
 wait_for_update() {
 
     # If the following checks fail, the code is wrong.
@@ -124,7 +128,6 @@ wait_for_update() {
     shift
 
     serial=$1
-    shift
     if [ "$serial" = "" ];
     then
         echo "R:FAIL wait_for_update - serial number not supplied"
@@ -163,6 +166,9 @@ wait_for_update() {
 # \arg $2 - IP address of the server
 # \arg $3 - Zone file to load
 # \arg $* - Command to execute (which may be multiple tokens)
+#
+# \return 0 on success, 1 on failure (for which an error message will have
+#         been output).
 update_server_zone() {
 
     # If the following checks fail, the code is wrong.
@@ -195,7 +201,7 @@ update_server_zone() {
 
     old_serial=`$DIG_SOA @$ip | $AWK '{print $3}'`
 
-    echo "I:$name IXFR server loading $1"
+    echo "I:$name IXFR server loading $file"
     cp $file $name/db.example
     do_rndc $name $ip reload
     if [ $? -ne 0 ];
@@ -269,9 +275,9 @@ compare_soa() {
 #
 # Checks the zones of two systems and reports if they are not identical.
 #
-# The check is simplistic. The zones are listed via "dig" and comment lines,
-# blank lines and spaces/tabs are removed, then the output sorted.  The two
-# files are then compared.  They should be identical.
+# The check is simplistic. Each zone is listed via "dig", after which comment
+# lines, blank lines and spaces/tabs are removed, and the result sorted.  The
+# output from each system is then compared.  They should be identical.
 #
 # \arg $1 Name of the IXFR server
 # \arg $2 IP of the IXFR server 

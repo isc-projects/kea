@@ -19,8 +19,8 @@
 # This script performs the fourth IXFR-IN test.  A BIND 9 nameserver (the
 # "server") contains a version of the zone (version N) and has IXFRs enabled.
 # A BIND 10 nameserver (the "client") is loaded with version N-2 of the zone
-# and a small refresh time.  After this expires, the IXFR client should have
-# sent an IXFR request to the IXFR server.
+# and a small refresh time.  After this expires, the IXFR client should send
+# an IXFR request to the IXFR server.
 
 . ../ixfr_init.sh
 status=$?
