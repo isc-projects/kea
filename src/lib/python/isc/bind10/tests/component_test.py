@@ -612,15 +612,18 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         Test changing a configuration of one component. This is not yet
         implemented and should therefore throw.
         """
-        self.assertRaises(NotImplemented, self.__do_switch, 'kind',
+        self.assertRaises(NotImplementedError, self.__do_switch, 'kind',
                           'dispensable')
-        self.assertRaises(NotImplemented, self.__do_switch, 'special',
+        self.assertRaises(NotImplementedError, self.__do_switch, 'special',
                           'not_a_test')
-        self.assertRaises(NotImplemented, self.__do_switch, 'process',
+        self.assertRaises(NotImplementedError, self.__do_switch, 'process',
                           'different')
         # This does not change anything on running component, so no need to
         # raise
         self.assertEqual([], self.__do_switch('priority', 5))
+        # Check against false positive, if the data are the same, but different
+        # instance
+        self.assertEqual([], self.__do_switch('special', 'test'))
 
     def test_startup(self):
         """

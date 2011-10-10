@@ -229,6 +229,16 @@ class Configurator:
                         'command': 'stop',
                         'component': component
                     })
+        # Handle transitions of configuration of what is here
+        for cname in new.keys():
+            if cname in old:
+                for option in ['special', 'process', 'kind']:
+                    if new[cname].get(option) != old[cname].get(option):
+                        raise NotImplementedError('Changing configuration of' +
+                                                  ' a running component is ' +
+                                                  'not yet supported. Remove' +
+                                                  ' and re-add ' + cname +
+                                                  'to get the same effect')
         # Handle introduction of new components
         plan_add = []
         for cname in new.keys():
@@ -240,9 +250,7 @@ class Configurator:
                     creator = specials[params['special']]
                 component = creator(params['process'], self.__boss,
                                     params['kind'])
-                priority = 0
-                if 'priority' in params:
-                    priority = params['priority']
+                priority = params.get('priority', 0)
                 # We store tuples, priority first, so we can easily sort
                 plan_add.append((priority, {
                     'component': component,
