@@ -1,3 +1,12 @@
+296.	[bug]		jinmei
+	__init__.py for isc.dns was installed in the wrong directory,
+	which would now make xfrin fail to start.  It was also bad
+	in that it replaced any existing __init__.py in th public
+	site-packages directory.  After applying this fix You may want to
+	check if the wrong init file is in the wrong place, in which
+	case it should be removed.
+	(Trac #1285, git af3b17472694f58b3d6a56d0baf64601b0f6a6a1)
+
 295.	[func]*		jinmei
 	b10-xfrin: the AXFR implementation is unified with IXFR, and
 	handles corner cases more carefully.  Note: As a result of this
