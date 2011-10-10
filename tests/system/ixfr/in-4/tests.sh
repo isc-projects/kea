@@ -17,19 +17,26 @@
 
 # \file
 # This script performs the fourth IXFR-IN test.  A BIND 9 nameserver (the
-# "server") contains a version of the zone (version N) and has IXFRs disabled.
+# "server") contains a version of the zone (version N) and has IXFRs enabled.
 # A BIND 10 nameserver (the "client") is loaded with version N-2 of the zone
 # and a small refresh time.  After this expires, the IXFR client should have
-# sent a request to the IXFR server.
+# sent an IXFR request to the IXFR server.
 
 . ../ixfr_init.sh
 status=$?
+
+# Ensure the server has the latest copy of the zone.  The implicit assumption
+# here is that starting the two systems and reloading the IXFR server takes
+# less time than the SOA refresh time set in the "db.example.n2.refresh" zone
+# file.
+cp $IXFR_TOP/db.example.n0 ns1/db.example
+do_rndc $SERVER_NAME $SERVER_IP reload
 
 # Store the SOA serial number of the BIND 10 client for later use.
 old_client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
 echo "I:SOA serial of IXFR client $CLIENT_NAME is $old_client_serial"
 
-# Wait for the client to update itself. 20 seconds has been given as the
+# Wait for the client to update itself. 30 seconds has been given as the
 # refresh interface and 2 seconds as the retry interval.  The wait_for_update
 # function will check for up to a minute looking for the new serial.
 wait_for_update $CLIENT_NAME $CLIENT_IP $old_client_serial

@@ -15,7 +15,7 @@
 $ORIGIN example.
 $TTL 3600
 
-@       IN	SOA	ns1.example. hostmaster.example. 98 3600 900 7200 300
+@       IN	SOA	ns1.example. hostmaster.example. 98 30 2 7200 300
 
         IN	NS	ns1.example.
         IN	NS	ns2.example.

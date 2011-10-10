@@ -20,10 +20,10 @@
 
 sh clean.sh
 
-# Set up the initial version of the IXFR server - load the latest version of
-# the zone.
-cp $IXFR_TOP/named_noixfr.conf ns1/named.conf
-cp -f $IXFR_TOP/db.example.n0 ns1/db.example
+# Set up the initial version of the ixfr server - load the last-but-one version
+# of the zone.
+cp $IXFR_TOP/named_nonotify.conf ns1/named.conf
+cp -f $IXFR_TOP/db.example.n2.refresh ns1/db.example
 
 # Set up the IXFR client - load a previous version of the zone with a short
 # refresh time.
