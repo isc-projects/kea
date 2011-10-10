@@ -24,6 +24,9 @@ EXTRA_DIST += rdata/generic/cname_5.h
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.cc
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.h
 EXTRA_DIST += rdata/generic/detail/txt_like.h
+EXTRA_DIST += rdata/generic/detail/ds_like.h
+EXTRA_DIST += rdata/generic/dlv_32769.cc
+EXTRA_DIST += rdata/generic/dlv_32769.h
 EXTRA_DIST += rdata/generic/dname_39.cc
 EXTRA_DIST += rdata/generic/dname_39.h
 EXTRA_DIST += rdata/generic/dnskey_48.cc
@@ -107,6 +110,7 @@ libdns___la_SOURCES += character_string.h character_string.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 libdns___la_SOURCES += rdata/generic/detail/txt_like.h
+libdns___la_SOURCES += rdata/generic/detail/ds_like.h
 
 libdns___la_CPPFLAGS = $(AM_CPPFLAGS)
 # Most applications of libdns++ will only implicitly rely on libcryptolink,

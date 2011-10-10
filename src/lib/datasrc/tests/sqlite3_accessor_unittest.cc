@@ -57,36 +57,34 @@ const char* SQLITE_NEW_DBFILE = TEST_DATA_BUILDDIR "/newdb.sqlite3";
 
 // Opening works (the content is tested in different tests)
 TEST(SQLite3Open, common) {
-    EXPECT_NO_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_EXAMPLE,
-                                             RRClass::IN()));
+    EXPECT_NO_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_EXAMPLE, "IN"));
 }
 
 // The file can't be opened
 TEST(SQLite3Open, notExist) {
-    EXPECT_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_NOTEXIST,
-                                          RRClass::IN()), SQLite3Error);
+    EXPECT_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_NOTEXIST, "IN"),
+                 SQLite3Error);
 }
 
 // It rejects broken DB
 TEST(SQLite3Open, brokenDB) {
-    EXPECT_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_BROKENDB,
-                                          RRClass::IN()), SQLite3Error);
+    EXPECT_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_BROKENDB, "IN"),
+                 SQLite3Error);
 }
 
 // Test we can create the schema on the fly
 TEST(SQLite3Open, memoryDB) {
-    EXPECT_NO_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_MEMORY,
-                                             RRClass::IN()));
+    EXPECT_NO_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_MEMORY, "IN"));
 }
 
 // Test fixture for querying the db
 class SQLite3AccessorTest : public ::testing::Test {
 public:
     SQLite3AccessorTest() {
-        initAccessor(SQLITE_DBFILE_EXAMPLE, RRClass::IN());
+        initAccessor(SQLITE_DBFILE_EXAMPLE, "IN");
     }
     // So it can be re-created with different data
-    void initAccessor(const std::string& filename, const RRClass& rrclass) {
+    void initAccessor(const std::string& filename, const string& rrclass) {
         accessor.reset(new SQLite3Accessor(filename, rrclass));
     }
     // The tested accessor
@@ -112,14 +110,14 @@ TEST_F(SQLite3AccessorTest, noZone) {
 
 // This zone is there, but in different class
 TEST_F(SQLite3AccessorTest, noClass) {
-    initAccessor(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
+    initAccessor(SQLITE_DBFILE_EXAMPLE, "CH");
     EXPECT_FALSE(accessor->getZone("example.com.").first);
 }
 
 // This tests the iterator context
 TEST_F(SQLite3AccessorTest, iterator) {
     // Our test zone is conveniently small, but not empty
-    initAccessor(SQLITE_DBFILE_EXAMPLE_ORG, RRClass::IN());
+    initAccessor(SQLITE_DBFILE_EXAMPLE_ORG, "IN");
 
     const std::pair<bool, int> zone_info(accessor->getZone("example.org."));
     ASSERT_TRUE(zone_info.first);
@@ -207,12 +205,12 @@ TEST_F(SQLite3AccessorTest, iterator) {
 }
 
 TEST(SQLite3Open, getDBNameExample2) {
-    SQLite3Accessor accessor(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
+    SQLite3Accessor accessor(SQLITE_DBFILE_EXAMPLE2, "IN");
     EXPECT_EQ(SQLITE_DBNAME_EXAMPLE2, accessor.getDBName());
 }
 
 TEST(SQLite3Open, getDBNameExampleROOT) {
-    SQLite3Accessor accessor(SQLITE_DBFILE_EXAMPLE_ROOT, RRClass::IN());
+    SQLite3Accessor accessor(SQLITE_DBFILE_EXAMPLE_ROOT, "IN");
     EXPECT_EQ(SQLITE_DBNAME_EXAMPLE_ROOT, accessor.getDBName());
 }
 
@@ -410,7 +408,7 @@ bool isReadable(const char* filename) {
 TEST_F(SQLite3Create, creationtest) {
     ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
     // Should simply be created
-    SQLite3Accessor accessor(SQLITE_NEW_DBFILE, RRClass::IN());
+    SQLite3Accessor accessor(SQLITE_NEW_DBFILE, "IN");
     ASSERT_TRUE(isReadable(SQLITE_NEW_DBFILE));
 }
 
@@ -422,12 +420,12 @@ TEST_F(SQLite3Create, emptytest) {
     ASSERT_EQ(SQLITE_OK, sqlite3_open(SQLITE_NEW_DBFILE, &db));
 
     // empty, but not locked, so creating it now should work
-    SQLite3Accessor accessor2(SQLITE_NEW_DBFILE, RRClass::IN());
+    SQLite3Accessor accessor2(SQLITE_NEW_DBFILE, "IN");
 
     sqlite3_close(db);
 
     // should work now that we closed it
-    SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, RRClass::IN());
+    SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, "IN");
 }
 
 TEST_F(SQLite3Create, lockedtest) {
@@ -439,13 +437,13 @@ TEST_F(SQLite3Create, lockedtest) {
     sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION", NULL, NULL, NULL);
 
     // should not be able to open it
-    EXPECT_THROW(SQLite3Accessor accessor2(SQLITE_NEW_DBFILE, RRClass::IN()),
+    EXPECT_THROW(SQLite3Accessor accessor2(SQLITE_NEW_DBFILE, "IN"),
                  SQLite3Error);
 
     sqlite3_exec(db, "ROLLBACK TRANSACTION", NULL, NULL, NULL);
 
     // should work now that we closed it
-    SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, RRClass::IN());
+    SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, "IN");
 }
 
 TEST_F(SQLite3AccessorTest, clone) {
@@ -508,11 +506,11 @@ protected:
             isc_throw(isc::Exception,
                       "Error setting up; command failed: " << install_cmd);
         };
-        initAccessor(TEST_DATA_BUILDDIR "/test.sqlite3.copied", RRClass::IN());
+        initAccessor(TEST_DATA_BUILDDIR "/test.sqlite3.copied", "IN");
         zone_id = accessor->getZone("example.com.").second;
         another_accessor.reset(new SQLite3Accessor(
                                    TEST_DATA_BUILDDIR "/test.sqlite3.copied",
-                                   RRClass::IN()));
+                                   "IN"));
         expected_stored.push_back(common_expected_data);
     }
 

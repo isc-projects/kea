@@ -11,6 +11,7 @@ EXTRA_DIST += zonemgr_messages.py
 EXTRA_DIST += cfgmgr_messages.py
 EXTRA_DIST += config_messages.py
 EXTRA_DIST += notify_out_messages.py
+EXTRA_DIST += libxfrin_messages.py
 
 CLEANFILES = __init__.pyc
 CLEANFILES += bind10_messages.pyc
@@ -23,6 +24,7 @@ CLEANFILES += zonemgr_messages.pyc
 CLEANFILES += cfgmgr_messages.pyc
 CLEANFILES += config_messages.pyc
 CLEANFILES += notify_out_messages.pyc
+CLEANFILES += libxfrin_messages.pyc
 
 CLEANDIRS = __pycache__
 
