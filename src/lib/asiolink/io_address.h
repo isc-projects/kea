@@ -74,6 +74,14 @@ public:
     /// \return A string representation of the address.
     std::string toText() const;
 
+    /// \brief Returns const reference to the underlying address object.
+    ///
+    /// This is useful, when access to interface offerted by
+    //  asio::ip::address_v4 and asio::ip::address_v6 is beneficial.
+    /// 
+    /// \return A const reference to asio::ip::address object
+    const asio::ip::address& getAddress() const;
+
     /// \brief Returns the address family
     ///
     /// \return AF_INET for IPv4 or AF_INET6 for IPv6.

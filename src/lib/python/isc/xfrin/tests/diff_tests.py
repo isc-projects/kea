@@ -46,6 +46,7 @@ class DiffTest(unittest.TestCase):
         self.__commit_called = False
         self.__broken_called = False
         self.__warn_called = False
+        self.__should_replace = False
         # Some common values
         self.__rrclass = RRClass.IN()
         self.__type = RRType.A()
@@ -112,12 +113,12 @@ class DiffTest(unittest.TestCase):
         """
         self.__data_operations.append(('add', rrset))
 
-    def remove_rrset(self, rrset):
+    def delete_rrset(self, rrset):
         """
         This one is part of pretending to be a zone updater. It writes down
         removal of an rrset was requested.
         """
-        self.__data_operations.append(('remove', rrset))
+        self.__data_operations.append(('delete', rrset))
 
     def get_class(self):
         """
@@ -135,7 +136,7 @@ class DiffTest(unittest.TestCase):
         it returns self.
         """
         # The diff should not delete the old data.
-        self.assertFalse(replace)
+        self.assertEqual(self.__should_replace, replace)
         self.__updater_requested = True
         # Pretend this zone doesn't exist
         if zone_name == Name('none.example.org.'):
@@ -162,7 +163,7 @@ class DiffTest(unittest.TestCase):
 
     def __data_common(self, diff, method, operation):
         """
-        Common part of test for test_add and test_remove.
+        Common part of test for test_add and test_delte.
         """
         # Try putting there the bad data first
         self.assertRaises(ValueError, method, self.__rrset_empty)
@@ -188,7 +189,7 @@ class DiffTest(unittest.TestCase):
         diff = Diff(self, Name('example.org.'))
         self.__data_common(diff, diff.add_data, 'add')
 
-    def test_remove(self):
+    def test_delete(self):
         """
         Try scheduling removal of few items into the diff and see they are
         stored in there.
@@ -196,7 +197,7 @@ class DiffTest(unittest.TestCase):
         Also try passing an rrset that has different amount of RRs than 1.
         """
         diff = Diff(self, Name('example.org.'))
-        self.__data_common(diff, diff.remove_data, 'remove')
+        self.__data_common(diff, diff.delete_data, 'delete')
 
     def test_apply(self):
         """
@@ -206,8 +207,8 @@ class DiffTest(unittest.TestCase):
         # Prepare the diff
         diff = Diff(self, Name('example.org.'))
         diff.add_data(self.__rrset1)
-        diff.remove_data(self.__rrset2)
-        dlist = [('add', self.__rrset1), ('remove', self.__rrset2)]
+        diff.delete_data(self.__rrset2)
+        dlist = [('add', self.__rrset1), ('delete', self.__rrset2)]
         self.assertEqual(dlist, diff.get_buffer())
         # Do the apply, hook the compact method
         diff.compact = self.__mock_compact
@@ -241,7 +242,7 @@ class DiffTest(unittest.TestCase):
         # Now check all range of other methods raise ValueError
         self.assertRaises(ValueError, diff.commit)
         self.assertRaises(ValueError, diff.add_data, self.__rrset2)
-        self.assertRaises(ValueError, diff.remove_data, self.__rrset1)
+        self.assertRaises(ValueError, diff.delete_data, self.__rrset1)
         diff.apply = orig_apply
         self.assertRaises(ValueError, diff.apply)
         # This one does not state it should raise, so check it doesn't
@@ -278,14 +279,14 @@ class DiffTest(unittest.TestCase):
         # Reset the buffer by calling the original apply.
         orig_apply()
         self.assertEqual([], diff.get_buffer())
-        # Similar with remove
+        # Similar with delete
         self.__apply_called = False
         for i in range(0, 99):
-            diff.remove_data(self.__rrset2)
-        expected = [('remove', self.__rrset2)] * 99
+            diff.delete_data(self.__rrset2)
+        expected = [('delete', self.__rrset2)] * 99
         self.assertEqual(expected, diff.get_buffer())
         self.assertFalse(self.__apply_called)
-        diff.remove_data(self.__rrset2)
+        diff.delete_data(self.__rrset2)
         self.assertTrue(self.__apply_called)
 
     def test_compact(self):
@@ -310,9 +311,9 @@ class DiffTest(unittest.TestCase):
             # Different type.
             ('add', 'a', 'AAAA', ['2001:db8::1', '2001:db8::2']),
             # Different operation
-            ('remove', 'a', 'AAAA', ['2001:db8::3']),
+            ('delete', 'a', 'AAAA', ['2001:db8::3']),
             # Different domain
-            ('remove', 'b', 'AAAA', ['2001:db8::4']),
+            ('delete', 'b', 'AAAA', ['2001:db8::4']),
             # This does not get merged with the first, even if logically
             # possible. We just don't do this.
             ('add', 'a', 'A', ['192.0.2.3'])
@@ -327,7 +328,7 @@ class DiffTest(unittest.TestCase):
                 if op == 'add':
                     diff.add_data(rrset)
                 else:
-                    diff.remove_data(rrset)
+                    diff.delete_data(rrset)
         # Compact it
         diff.compact()
         # Now check they got compacted. They should be in the same order as
@@ -363,7 +364,7 @@ class DiffTest(unittest.TestCase):
                       self.__ttl)
         rrset.add_rdata(Rdata(RRType.NS(), RRClass.CH(), 'ns.example.org.'))
         self.assertRaises(ValueError, diff.add_data, rrset)
-        self.assertRaises(ValueError, diff.remove_data, rrset)
+        self.assertRaises(ValueError, diff.delete_data, rrset)
 
     def __do_raise_test(self):
         """
@@ -372,11 +373,11 @@ class DiffTest(unittest.TestCase):
         """
         diff = Diff(self, Name('example.org.'))
         diff.add_data(self.__rrset1)
-        diff.remove_data(self.__rrset2)
+        diff.delete_data(self.__rrset2)
         self.assertRaises(TestError, diff.commit)
         self.assertTrue(self.__broken_called)
         self.assertRaises(ValueError, diff.add_data, self.__rrset1)
-        self.assertRaises(ValueError, diff.remove_data, self.__rrset2)
+        self.assertRaises(ValueError, diff.delete_data, self.__rrset2)
         self.assertRaises(ValueError, diff.commit)
         self.assertRaises(ValueError, diff.apply)
 
@@ -388,12 +389,12 @@ class DiffTest(unittest.TestCase):
         self.add_rrset = self.__broken_operation
         self.__do_raise_test()
 
-    def test_raise_remove(self):
+    def test_raise_delete(self):
         """
-        Test the exception from remove_rrset is propagated and the diff can't be
+        Test the exception from delete_rrset is propagated and the diff can't be
         used afterwards.
         """
-        self.remove_rrset = self.__broken_operation
+        self.delete_rrset = self.__broken_operation
         self.__do_raise_test()
 
     def test_raise_commit(self):
@@ -431,6 +432,14 @@ class DiffTest(unittest.TestCase):
             self.assertTrue(self.__warn_called)
         finally:
             isc.xfrin.diff.logger = orig_logger
+
+    def test_relpace(self):
+        """
+        Test that when we want to replace the whole zone, it is propagated.
+        """
+        self.__should_replace = True
+        diff = Diff(self, "example.org.", True)
+        self.assertTrue(self.__updater_requested)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
