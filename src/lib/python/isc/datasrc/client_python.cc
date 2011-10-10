@@ -118,9 +118,13 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
         PyBool_Check(replace_obj)) {
         bool replace = (replace_obj != Py_False);
         try {
-            return (createZoneUpdaterObject(
-                        self->cppobj->getInstance().getUpdater(PyName_ToName(name_obj),
-                                                 replace), po_self));
+            ZoneUpdaterPtr updater =
+                self->cppobj->getInstance().getUpdater(PyName_ToName(name_obj),
+                                                       replace);
+            if (!updater) {
+                return (Py_None);
+            }
+            return (createZoneUpdaterObject(updater, po_self));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),
                             ne.what());
@@ -160,10 +164,6 @@ PyMethodDef DataSourceClient_methods[] = {
 
 int
 DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
-    // TODO: we should use the factory function which hasn't been written
-    // yet. For now we hardcode the sqlite3 initialization, and pass it one
-    // string for the database file. (similar to how the 'old direct'
-    // sqlite3_ds code works)
     char* ds_type_str;
     char* ds_config_str;
     try {
