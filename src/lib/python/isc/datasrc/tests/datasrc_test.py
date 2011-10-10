@@ -278,7 +278,7 @@ class DataSrcClient(unittest.TestCase):
                           "foo")
 
     def test_find_previous(self):
-        dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
         result, finder = dsc.find_zone(isc.dns.Name("example.com"))
         self.assertEqual(finder.SUCCESS, result)
