@@ -62,7 +62,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)
 
 EXTRA_DIST =  testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.signed
