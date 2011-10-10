@@ -30,7 +30,9 @@ namespace isc {
 namespace datasrc {
 
 LibraryContainer::LibraryContainer(const std::string& name) {
-    ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_LOCAL);
+    // use RTLD_GLOBAL so that shared symbols (e.g. exceptions)
+    // are recognized as such
+    ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (ds_lib_ == NULL) {
         isc_throw(DataSourceLibraryError, dlerror());
     }
@@ -70,7 +72,18 @@ DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
     ds_creator* ds_create = (ds_creator*)ds_lib_.getSym("createInstance");
     destructor_ = (ds_destructor*)ds_lib_.getSym("destroyInstance");
 
-    instance_ = ds_create(config);
+    std::string error;
+    try {
+        instance_ = ds_create(config, error);
+        if (instance_ == NULL) {
+            isc_throw(DataSourceError, error);
+        }
+    } catch (const std::exception& exc) {
+        isc_throw(DataSourceError, "Unknown uncaught exception from " + type +
+                                   " createInstance: " + exc.what());
+    } catch (...) {
+        isc_throw(DataSourceError, "Unknown uncaught exception from " + type);
+    }
 }
 
 DataSourceClientContainer::~DataSourceClientContainer() {

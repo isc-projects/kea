@@ -751,15 +751,25 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
 } // end anonymous namespace
 
 DataSourceClient *
-createInstance(isc::data::ConstElementPtr config) {
+createInstance(isc::data::ConstElementPtr config, std::string& error) {
     ElementPtr errors(Element::createList());
     if (!checkConfig(config, errors)) {
-        isc_throw(DataSourceConfigError, errors->str());
+        error = "Configuration error: " + errors->str();
+        return (NULL);
     }
     std::string dbfile = config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
-    boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
-        new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
-    return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
+    try {
+        boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
+            new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
+        return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
+    } catch (const std::exception& exc) {
+        error = std::string("Error creating sqlite3 datasource: ") + exc.what();
+        return (NULL);
+    } catch (...) {
+        error = std::string("Error creating sqlite3 datasource, "
+                            "unknown exception");
+        return (NULL);
+    }
 }
 
 void destroyInstance(DataSourceClient* instance) {
