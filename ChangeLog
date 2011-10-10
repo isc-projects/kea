@@ -1,3 +1,27 @@
+295.	[func]*		jinmei
+	b10-xfrin: the AXFR implementation is unified with IXFR, and
+	handles corner cases more carefully.  Note: As a result of this
+	change, xfrin does not create a new (SQLite3) zone in a fresh DB
+	file upon receiving AXFR any more.  Initial zone content must be
+	prepared by hand (e.g. with b10-loadzone) until a more generic
+	tool for zone management is provided.
+	(Trac #1209, git 5ca7b409bccc815cee58c804236504fda1c1c147)
+
+294.	[func]		jelte, jinmei, vorner
+	b10-xfrin now supports incoming IXFR.  See BIND 10 Guide for
+	how to configure it and operational notes.
+	(Trac #1212, multiple git merges)
+
+293.    [func]*		tomek
+	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
+	multicast groups and listens to incoming DHCPv6 client messages.
+	Received messages are then echoed back to clients. This
+	functionality is limited, but it can be used to test out client
+	resiliency to unexpected messages. Note that network interface
+	detection routines are not implemented yet, so interface name
+	and its address must be specified in interfaces.txt.
+	(Trac #878, git 3b1a604abf5709bfda7271fa94213f7d823de69d)
+
 292.	[func]		dvv
 	Implement the DLV rrtype according to RFC4431.
 	(Trac #1144, git d267c0511a07c41cd92e3b0b9ee9bf693743a7cf)
@@ -35,7 +59,7 @@
 	configuration.
 	(Trac #1165, git 698176eccd5d55759fe9448b2c249717c932ac31)
 
-288.    [bug]       stephen
+288.    [bug]		stephen
 	Fixed problem whereby the order in which component files appeared in
 	rdataclass.cc was system dependent, leading to problems on some
 	systems where data types were used before the header file in which

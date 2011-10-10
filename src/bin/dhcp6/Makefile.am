@@ -19,7 +19,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 CLEANFILES = *.gcno *.gcda spec_config.h
 
 man_MANS = b10-dhcp6.8
-EXTRA_DIST = $(man_MANS) dhcp6.spec
+EXTRA_DIST = $(man_MANS) dhcp6.spec interfaces.txt
 
 #if ENABLE_MAN
 #b10-dhcp6.8: b10-dhcp6.xml
@@ -31,8 +31,8 @@ spec_config.h: spec_config.h.pre
 
 BUILT_SOURCES = spec_config.h
 pkglibexec_PROGRAMS = b10-dhcp6
-b10_dhcp6_SOURCES = main.cc
-b10_dhcp6_SOURCES += dhcp6.h
+b10_dhcp6_SOURCES = main.cc iface_mgr.cc pkt6.cc dhcp6_srv.cc
+b10_dhcp6_SOURCES += iface_mgr.h pkt6.h dhcp6_srv.h dhcp6.h
 b10_dhcp6_LDADD =  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libutil.la
@@ -49,5 +49,4 @@ b10_dhcp6_LDADD += $(SQLITE_LIBS)
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_dhcp6dir = $(pkgdatadir)
-b10_dhcp6_DATA = dhcp6.spec
-
+b10_dhcp6_DATA = dhcp6.spec interfaces.txt

@@ -37,43 +37,43 @@ TEST(FactoryTest, sqlite3ClientBadConfig) {
     // tests are left to the implementation-specific backends)
     ElementPtr config;
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config = Element::create("asdf");
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config = Element::createMap();
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", ElementPtr());
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", Element::create(1));
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", Element::create("FOO"));
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", Element::create("IN"));
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("database_file", ElementPtr());
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("database_file", Element::create(1));
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("database_file", Element::create("/foo/bar/doesnotexist"));
     ASSERT_THROW(DataSourceClientContainer("sqlite3", config),
-                 SQLite3Error);
+                 DataSourceError);
 
     config->set("database_file", Element::create(SQLITE_DBFILE_EXAMPLE_ORG));
     DataSourceClientContainer dsc("sqlite3", config);
@@ -100,55 +100,55 @@ TEST(FactoryTest, memoryClient) {
     // tests are left to the implementation-specific backends)
     ElementPtr config;
     ASSERT_THROW(DataSourceClientContainer client("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config = Element::create("asdf");
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config = Element::createMap();
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("type", ElementPtr());
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("type", Element::create(1));
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("type", Element::create("FOO"));
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("type", Element::create("memory"));
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", ElementPtr());
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", Element::create(1));
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", Element::create("FOO"));
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("class", Element::create("IN"));
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("zones", ElementPtr());
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("zones", Element::create(1));
     ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceConfigError);
+                 DataSourceError);
 
     config->set("zones", Element::createList());
     DataSourceClientContainer dsc("memory", config);
