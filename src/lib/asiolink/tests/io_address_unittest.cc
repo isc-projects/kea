@@ -18,6 +18,8 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_address.h>
 
+#include <cstring>
+
 using namespace isc::asiolink;
 
 TEST(IOAddressTest, fromText) {

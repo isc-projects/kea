@@ -650,6 +650,7 @@ fi
 #
 if test "$gtest_path" != "no"
 then
+	DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest=\"$gtest_path\""
 	if test "$gtest_path" != "yes"; then
 		GTEST_PATHS=$gtest_path
 		if test -x "${gtest_path}/bin/gtest-config" ; then
@@ -690,8 +691,10 @@ else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
 	GTEST_LDADD=
+	DISTCHECK_GTEST_CONFIGURE_FLAG=
 fi
 AM_CONDITIONAL(HAVE_GTEST, test $gtest_path != "no")
+AC_SUBST(DISTCHECK_GTEST_CONFIGURE_FLAG)
 AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
@@ -811,6 +814,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
+                 src/bin/xfrin/tests/testdata/Makefile
                  src/bin/xfrout/Makefile
                  src/bin/xfrout/tests/Makefile
                  src/bin/zonemgr/Makefile
