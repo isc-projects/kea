@@ -35,6 +35,8 @@ Dhcpv6Srv::Dhcpv6Srv() {
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
     setServerID();
+
+    shutdown = false;
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
@@ -43,7 +45,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
 
 bool
 Dhcpv6Srv::run() {
-    while (true) {
+    while (!shutdown) {
         boost::shared_ptr<Pkt6> query; // client's message
         boost::shared_ptr<Pkt6> rsp;   // server's response
 
@@ -132,11 +134,13 @@ Dhcpv6Srv::setServerID() {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6>& solicit) {
+Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6> solicit) {
 
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_ADVERTISE,
                                            solicit->getTransid(),
                                            Pkt6::UDP));
+
+    /// TODO Rewrite this once LeaseManager is implemented.
 
     // answer client's IA (this is mostly a dummy,
     // so let's answer only first IA and hope there is only one)
@@ -171,7 +175,7 @@ Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6>& solicit) {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRequest(boost::shared_ptr<Pkt6>& request) {
+Dhcpv6Srv::processRequest(boost::shared_ptr<Pkt6> request) {
     /// TODO: Implement processRequest() for real
     boost::shared_ptr<Pkt6> reply = processSolicit(request);
     reply->setType(DHCPV6_REPLY);
@@ -179,7 +183,7 @@ Dhcpv6Srv::processRequest(boost::shared_ptr<Pkt6>& request) {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRenew(boost::shared_ptr<Pkt6>& renew) {
+Dhcpv6Srv::processRenew(boost::shared_ptr<Pkt6> renew) {
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
                                            renew->getTransid(),
                                            Pkt6::UDP));
@@ -187,7 +191,7 @@ Dhcpv6Srv::processRenew(boost::shared_ptr<Pkt6>& renew) {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRebind(boost::shared_ptr<Pkt6>& rebind) {
+Dhcpv6Srv::processRebind(boost::shared_ptr<Pkt6> rebind) {
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
                                            rebind->getTransid(),
                                            Pkt6::UDP));
@@ -195,7 +199,7 @@ Dhcpv6Srv::processRebind(boost::shared_ptr<Pkt6>& rebind) {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processConfirm(boost::shared_ptr<Pkt6>& confirm) {
+Dhcpv6Srv::processConfirm(boost::shared_ptr<Pkt6> confirm) {
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
                                            confirm->getTransid(),
                                            Pkt6::UDP));
@@ -203,7 +207,7 @@ Dhcpv6Srv::processConfirm(boost::shared_ptr<Pkt6>& confirm) {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRelease(boost::shared_ptr<Pkt6>& release) {
+Dhcpv6Srv::processRelease(boost::shared_ptr<Pkt6> release) {
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
                                            release->getTransid(),
                                            Pkt6::UDP));
@@ -211,7 +215,7 @@ Dhcpv6Srv::processRelease(boost::shared_ptr<Pkt6>& release) {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processDecline(boost::shared_ptr<Pkt6>& decline) {
+Dhcpv6Srv::processDecline(boost::shared_ptr<Pkt6> decline) {
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
                                            decline->getTransid(),
                                            Pkt6::UDP));
@@ -219,7 +223,7 @@ Dhcpv6Srv::processDecline(boost::shared_ptr<Pkt6>& decline) {
 }
 
 boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processInfRequest(boost::shared_ptr<Pkt6>& infRequest) {
+Dhcpv6Srv::processInfRequest(boost::shared_ptr<Pkt6> infRequest) {
     boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
                                            infRequest->getTransid(),
                                            Pkt6::UDP));

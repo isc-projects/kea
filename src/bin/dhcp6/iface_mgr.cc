@@ -25,6 +25,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::dhcp;
 
 namespace isc {
 
@@ -44,14 +45,16 @@ IfaceMgr::instanceCreate() {
 
 IfaceMgr&
 IfaceMgr::instance() {
-    if (instance_ == 0)
+    if (instance_ == 0) {
         instanceCreate();
+    }
     return (*instance_);
 }
 
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
     :name_(name), ifindex_(ifindex), mac_len_(0) {
-    memset(mac_, 0, 20);
+
+    memset(mac_, 0, sizeof(mac_));
 }
 
 std::string
@@ -64,10 +67,11 @@ IfaceMgr::Iface::getFullName() const {
 std::string
 IfaceMgr::Iface::getPlainMac() const {
     ostringstream tmp;
+    tmp.fill('0');
+    tmp << hex;
     for (int i=0; i<mac_len_; i++) {
-        tmp.fill('0');
         tmp.width(2);
-        tmp << (hex) << (int) mac_[i];
+        tmp << mac_[i];
         if (i<mac_len_-1) {
             tmp << ":";
         }
@@ -108,6 +112,7 @@ IfaceMgr::~IfaceMgr() {
         control_buf_ = 0;
         control_buf_len_ = 0;
     }
+    control_buf_len_ = 0;
 }
 
 void
@@ -225,18 +230,6 @@ IfaceMgr::getIface(const std::string& ifname) {
     return (NULL); // not found
 }
 
-
-/**
- * Opens UDP/IPv6 socket and binds it to specific address, interface and port.
- *
- * @param ifname name of the interface
- * @param addr address to be bound.
- * @param port UDP port.
- * @param mcast Should multicast address also be bound?
- *
- * @return socket descriptor, if socket creation, binding and multicast
- * group join were all successful. -1 otherwise.
- */
 int
 IfaceMgr::openSocket(const std::string& ifname,
                      const IOAddress& addr,

@@ -17,34 +17,51 @@
 
 #include <list>
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 #include "asiolink/io_address.h"
 #include "dhcp/pkt6.h"
 
 namespace isc {
 
-    /**
-     * IfaceMgr is an interface manager class that detects available network
-     * interfaces, configured addresses, link-local addresses, and provides
-     * API for using sockets.
-     *
-     */
-    class IfaceMgr {
+    namespace dhcp {
+    /// @brief handles network interfaces, transmission and reception
+    ///
+    /// IfaceMgr is an interface manager class that detects available network
+    /// interfaces, configured addresses, link-local addresses, and provides
+    /// API for using sockets.
+    ///
+    class IfaceMgr : public boost::noncopyable {
     public:
+        /// type that defines list of addresses
         typedef std::list<isc::asiolink::IOAddress> Addr6Lst;
-        struct Iface { // TODO: could be a class as well
-            std::string name_; // network interface name
-            int ifindex_; // interface index (a value that uniquely indentifies
-                          // an interface
-            Addr6Lst addrs_;
-            char mac_[20]; // Infiniband used 20 bytes indentifiers
-            int mac_len_;
 
+        /// maximum MAC address length (Infiniband uses 20 bytes)
+        static const unsigned int MAX_MAC_LEN = 20;
+
+        /// @brief represents a single network interface
+        ///
+        /// Iface structure represents network interface with all useful
+        /// information, like name, interface index, MAC address and
+        /// list of assigned addresses
+        struct Iface {
+            /// constructor
             Iface(const std::string& name, int ifindex);
+
+            /// returns full interface name in format ifname/ifindex
             std::string getFullName() const;
+
+            /// returns link-layer address a plain text
             std::string getPlainMac() const;
 
-            int sendsock_; // socket used to sending data
-            int recvsock_; // socket used for receiving data
+            std::string name_; /// network interface name
+            int ifindex_;      /// interface index (a value that uniquely
+                               /// indentifies an interface
+            Addr6Lst addrs_;   /// list of assigned addresses
+            uint8_t mac_[MAX_MAC_LEN]; /// link-layer address
+            int mac_len_;      /// length of link-layer address (usually 6)
+
+            int sendsock_; /// socket used to sending data
+            int recvsock_; /// socket used for receiving data
 
             // next field is not needed, let's keep it in cointainers
         };
@@ -54,31 +71,99 @@ namespace isc {
         //      also hide it (make it public make tests easier for now)
         typedef std::list<Iface> IfaceLst;
 
+        /// IfaceMgr is a singleton class. This method returns reference
+        /// to its sole instance.
+        ///
+        /// @return the only existing instance of interface manager
         static IfaceMgr& instance();
 
-        Iface * getIface(int ifindex);
-        Iface * getIface(const std::string& ifname);
+        /// @brief Returns interface with specified interface index
+        ///
+        /// @param ifindex index of searched interface
+        ///
+        /// @return interface with requested index (or NULL if no such
+        ///         interface is present)
+        ///
+        Iface*
+        getIface(int ifindex);
 
-        void printIfaces(std::ostream& out = std::cout);
+        /// @brief Returns interface with specified interface name
+        ///
+        /// @param ifname name of searched interface
+        ///
+        /// @return interface with requested name (or NULL if no such
+        ///         interface is present)
+        ///
+        Iface*
+        getIface(const std::string& ifname);
 
-        bool send(boost::shared_ptr<Pkt6> pkt);
+        /// debugging method that prints out all available interfaces
+        ///
+        /// @param out specifies stream to print list of interfaces to
+        void
+        printIfaces(std::ostream& out = std::cout);
+
+        /// @brief Sends a packet.
+        ///
+        /// Sends a packet. All parameters regarding interface, destination
+        /// address are set in pkt object.
+        ///
+        /// @param pkt packet to be sent
+        ///
+        /// @return true if sending was successful
+        ///
+        bool
+        send(boost::shared_ptr<Pkt6> pkt);
+
+        /// @brief Tries to receive packet over open sockets.
+        ///
+        /// Attempts to receive a single packet of any of the open sockets.
+        /// If reception is successful and all information about its sender
+        /// are obtained, Pkt6 object is created and returned.
+        ///
+        /// @return Pkt6 object representing received packet (or NULL)
+        ///
         boost::shared_ptr<Pkt6> receive();
 
         // don't use private, we need derived classes in tests
     protected:
-        IfaceMgr(); // don't create IfaceMgr directly, use instance() method
+
+        /// @brief Protected constructor.
+        ///
+        /// Protected constructor. This is a singleton class. We don't want
+        /// anyone to create instances of IfaceMgr. Use instance() method
+        IfaceMgr();
+
         ~IfaceMgr();
 
-        void detectIfaces();
+        /// @brief Detects network interfaces.
+        ///
+        /// This method will eventually detect available interfaces. For now
+        /// it offers stub implementation. First interface name and link-local
+        /// IPv6 address is read from intefaces.txt file.
+        void
+        detectIfaces();
 
+        ///
+        /// Opens UDP/IPv6 socket and binds it to address, interface nad port.
+        ///
+        /// @param ifname name of the interface
+        /// @param addr address to be bound.
+        /// @param port UDP port.
+        ///
+        /// @return socket descriptor, if socket creation, binding and multicast
+        /// group join were all successful. -1 otherwise.
         int openSocket(const std::string& ifname,
                        const isc::asiolink::IOAddress& addr,
                        int port);
 
         // TODO: having 2 maps (ifindex->iface and ifname->iface would)
         //      probably be better for performance reasons
+
+        /// List of available interfaces
         IfaceLst ifaces_;
 
+        /// a pointer to a sole instance of this class (a singleton)
         static IfaceMgr * instance_;
 
         // TODO: Also keep this interface on Iface once interface detection
@@ -90,15 +175,38 @@ namespace isc {
         // is bound to multicast address. And we all know what happens
         // to people who try to use multicast as source address.
 
+        /// control-buffer, used in transmission and reception
         char * control_buf_;
         int control_buf_len_;
 
     private:
-        bool openSockets();
-        static void instanceCreate();
-        bool joinMcast(int sock, const std::string& ifname,
-                       const std::string& mcast);
+        /// Opens sockets on detected interfaces.
+        bool
+        openSockets();
+
+        /// creates a single instance of this class (a singleton implementation)
+        static void
+        instanceCreate();
+
+        /// @brief Joins IPv6 multicast group on a socket.
+        ///
+        /// Socket must be created and bound to an address. Note that this
+        /// address is different than the multicast address. For example DHCPv6
+        /// server should bind its socket to link-local address (fe80::1234...)
+        /// and later join ff02::1:2 multicast group.
+        ///
+        /// @param sock socket fd (socket must be bound)
+        /// @param ifname interface name (for link-scoped multicast groups)
+        /// @param mcast multicast address to join (e.g. "ff02::1:2")
+        ///
+        /// @return true if multicast join was successful
+        ///
+        bool
+        joinMcast(int sock, const std::string& ifname,
+                  const std::string& mcast);
     };
-};
+
+    }; // namespace isc::dhcp
+}; // namespace isc
 
 #endif
