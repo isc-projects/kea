@@ -182,6 +182,13 @@ class Configurator:
         self._old_config = {}
         self._running = False
 
+    def __reconfigure_internal(self, old, new):
+        """
+        Does a switch from one configuration to another.
+        """
+        self._run_plan(self._build_plan(old, new))
+        self._old_config = new
+
     def startup(self, configuration):
         """
         Starts the first set of processes. This configuration is expected
@@ -191,22 +198,28 @@ class Configurator:
         if self._running:
             raise ValueError("Trying to start the component configurator " +
                              "twice")
-        self._run_plan(self._build_plan({}, configuration))
-        self._old_config = configuration
+        self.__reconfigure_internal({}, configuration)
         self._running = True
 
     def shutdown(self):
         """
         Shuts everything down.
         """
-        pass
+        if not self._running:
+            raise ValueError("Trying to shutdown the component " +
+                             "configurator while it's not yet running")
+        self.__reconfigure_internal(self._old_config, {})
+        self._running = False
 
-    def reconfigure(configuration):
+    def reconfigure(self, configuration):
         """
         Changes configuration from the current one to the provided. It
         starts and stops all the components as needed.
         """
-        pass
+        if not self._running:
+            raise ValueError("Trying to reconfigure the component " +
+                             "configurator while it's not yet running")
+        self.__reconfigure_internal(self._old_config, configuration)
 
     def _build_plan(self, old, new):
         """
@@ -227,7 +240,8 @@ class Configurator:
                 if component.running():
                     plan.append({
                         'command': 'stop',
-                        'component': component
+                        'component': component,
+                        'name': cname
                     })
         # Handle transitions of configuration of what is here
         for cname in new.keys():

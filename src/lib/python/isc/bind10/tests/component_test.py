@@ -566,6 +566,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual([], self.log)
         self.assertEqual([{
             'command': 'stop',
+            'name': 'additional',
             'component': component
         }], plan)
 
@@ -585,6 +586,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
                          self.log)
         self.assertEqual(2, len(plan))
         self.assertEqual('stop', plan[0]['command'])
+        self.assertEqual('additional', plan[0]['name'])
         self.assertTrue('component' in plan[0])
         self.assertEqual('start', plan[1]['command'])
         self.assertEqual('another', plan[1]['name'])
@@ -625,14 +627,34 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # instance
         self.assertEqual([], self.__do_switch('special', 'test'))
 
-    def test_startup(self):
+    def __check_shutdown_log(self):
+        """
+        Checks the log for shutting down from the core configuration.
+        """
+        # We know everything must be stopped, we know what it is.
+        # But we don't know the order, so we check everything is exactly
+        # once in the log
+        components = set(self.__core.keys())
+        for (name, command) in self.log:
+            self.assertEqual('stop', command)
+            self.assertTrue(name in components)
+            components.remove(name)
+        self.assertEqual(set([]), components, "Some component wasn't stopped")
+
+    def test_run(self):
         """
         Passes some configuration to the startup method and sees if
-        the components are started up.
+        the components are started up. Then it reconfigures it with
+        empty configuration, the original configuration again and shuts
+        down.
 
         It also checks the components are kept inside the configurator.
         """
         configurator = Configurator(self)
+        # Can't reconfigure nor stop yet
+        self.assertRaises(ValueError, configurator.reconfigure, self.__core)
+        self.assertRaises(ValueError, configurator.shutdown)
+        # Start it
         configurator.startup(self.__core)
         self.assertEqual(self.__core_log, self.log)
         for core in self.__core.keys():
@@ -641,6 +663,34 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertTrue(configurator._running)
         # It can't be started twice
         self.assertRaises(ValueError, configurator.startup, self.__core)
+
+        self.log = []
+        # Reconfigure - stop everything
+        configurator.reconfigure({})
+        self.assertEqual({}, configurator._components)
+        self.assertEqual({}, configurator._old_config)
+        self.assertTrue(configurator._running)
+        self.__check_shutdown_log()
+
+        # Start it again
+        self.log = []
+        configurator.reconfigure(self.__core)
+        self.assertEqual(self.__core_log, self.log)
+        for core in self.__core.keys():
+            self.assertTrue(core in configurator._components)
+        self.assertEqual(self.__core, configurator._old_config)
+        self.assertTrue(configurator._running)
+
+        # Do a shutdown
+        self.log = []
+        configurator.shutdown()
+        self.assertEqual({}, configurator._components)
+        self.assertEqual({}, configurator._old_config)
+        self.assertFalse(configurator._running)
+        self.__check_shutdown_log()
+
+        # It can't be stopped twice
+        self.assertRaises(ValueError, configurator.shutdown)
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
