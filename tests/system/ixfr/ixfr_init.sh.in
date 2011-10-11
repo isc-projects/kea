@@ -118,7 +118,7 @@ wait_for_update() {
     if [ $? -ne 0 ];
     then
         echo "R:FAIL wait_for_update - name or ip address of system not supplied"
-        return 1t
+        return 1
 
     fi
 
@@ -137,7 +137,7 @@ wait_for_update() {
     # Now poll the server looking for the new serial number
 
     echo "I:$name waiting for SOA serial to change from $serial"
-    for i in `seq 1 12`
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12
     do
         if [ $i -gt 1 ];
         then
