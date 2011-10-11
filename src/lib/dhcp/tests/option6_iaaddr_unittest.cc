@@ -36,7 +36,7 @@ public:
 
 TEST_F(Option6IAAddrTest, basic) {
 
-    boost::shared_array<char> simple_buf(new char[128]);
+    boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         simple_buf[i] = 0;
     simple_buf[0]=0x20;

@@ -40,7 +40,7 @@ TEST_F(LibDhcpTest, basic) {
 }
 
 TEST_F(LibDhcpTest, packOptions6) {
-    boost::shared_array<char> buf(new char[512]);
+    boost::shared_array<uint8_t> buf(new uint8_t[512]);
     isc::dhcp::Option::Option6Lst opts; // list of options
 
     // generate content for options
@@ -94,7 +94,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     // we can't use packed directly, as shared_array would try to
     // free it eventually
-    boost::shared_array<char> buf(new char[512]);
+    boost::shared_array<uint8_t> buf(new uint8_t[512]);
     memcpy(&buf[0], packed, 35);
 
     unsigned int offset;

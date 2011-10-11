@@ -34,8 +34,6 @@ b10_dhcp6_SOURCES = main.cc iface_mgr.cc dhcp6_srv.cc
 b10_dhcp6_SOURCES += iface_mgr.h dhcp6_srv.h
 
 b10_dhcp6_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/liblog.la

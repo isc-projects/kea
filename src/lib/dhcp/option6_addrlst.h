@@ -57,7 +57,7 @@ public:
     /// @param offset offset to beginning of option data
     /// @param len length of option data
     ///
-    Option6AddrLst(unsigned short type, boost::shared_array<char> buf,
+    Option6AddrLst(unsigned short type, boost::shared_array<uint8_t> buf,
                    unsigned int buf_len,
                    unsigned int offset,
                    unsigned int len);
@@ -71,7 +71,7 @@ public:
     /// @return offset to the next unused char (just after stored option)
     ///
     unsigned int
-    pack(boost::shared_array<char> buf, unsigned int buf_len,
+    pack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
          unsigned int offset);
 
     /// @brief Parses received data
@@ -84,7 +84,7 @@ public:
     /// @return offset to the next unparsed char (just after parsed option)
     ///
     virtual unsigned int
-    unpack(boost::shared_array<char> buf,
+    unpack(boost::shared_array<uint8_t> buf,
            unsigned int buf_len,
            unsigned int offset,
            unsigned int parse_len);

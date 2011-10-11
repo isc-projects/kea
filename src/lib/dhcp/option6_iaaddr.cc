@@ -36,7 +36,7 @@ Option6IAAddr::Option6IAAddr(unsigned short type,
 }
 
 Option6IAAddr::Option6IAAddr(unsigned short type,
-                             boost::shared_array<char> buf,
+                             boost::shared_array<uint8_t> buf,
                              unsigned int buf_len,
                              unsigned int offset,
                              unsigned int option_len)
@@ -45,7 +45,7 @@ Option6IAAddr::Option6IAAddr(unsigned short type,
 }
 
 unsigned int
-Option6IAAddr::pack(boost::shared_array<char> buf,
+Option6IAAddr::pack(boost::shared_array<uint8_t> buf,
                     unsigned int buf_len,
                     unsigned int offset) {
     if (len() > buf_len) {
@@ -73,7 +73,7 @@ Option6IAAddr::pack(boost::shared_array<char> buf,
 }
 
 unsigned int
-Option6IAAddr::unpack(boost::shared_array<char> buf,
+Option6IAAddr::unpack(boost::shared_array<uint8_t> buf,
                   unsigned int buf_len,
                   unsigned int offset,
                   unsigned int parse_len) {
@@ -82,10 +82,7 @@ Option6IAAddr::unpack(boost::shared_array<char> buf,
     }
 
     // 16 bytes: IPv6 address
-    /// TODO Implement fromBytes() method in IOAddress
-    char addr_str[INET6_ADDRSTRLEN];
-    inet_ntop(AF_INET6, &buf[offset], addr_str,INET6_ADDRSTRLEN);
-    addr_ = IOAddress(string(addr_str));
+    addr_ = IOAddress::from_bytes(AF_INET6, &buf[offset]);
     offset += 16;
 
     preferred_ = ntohl(*(uint32_t*)&buf[offset]);

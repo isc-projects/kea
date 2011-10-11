@@ -118,7 +118,7 @@ Dhcpv6Srv::setServerID() {
     /// TODO implement this for real once interface detection is done.
     /// Use hardcoded server-id for now
 
-    boost::shared_array<char> srvid(new char[14]);
+    boost::shared_array<uint8_t> srvid(new uint8_t[14]);
     srvid[0] = 0;
     srvid[1] = 1; // DUID type 1 = DUID-LLT (see section 9.2 of RFC3315)
     srvid[2] = 0;

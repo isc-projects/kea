@@ -61,7 +61,7 @@ TEST_F(OptionTest, basic6) {
 // tests contructor used in pkt reception
 // option contains actual data
 TEST_F(OptionTest, data1) {
-    boost::shared_array<char> buf(new char[32]);
+    boost::shared_array<uint8_t> buf(new uint8_t[32]);
     for (int i=0; i<32; i++)
         buf[i] = 100+i;
     Option* opt = new Option(Option::V6, 333, //type
@@ -92,7 +92,7 @@ TEST_F(OptionTest, data1) {
 // with different input parameters
 TEST_F(OptionTest, data2) {
 
-    boost::shared_array<char> simple_buf(new char[128]);
+    boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         simple_buf[i] = 0;
     simple_buf[0]=0xa1;
@@ -137,7 +137,7 @@ TEST_F(OptionTest, data2) {
 //  +----opt3
 //
 TEST_F(OptionTest, suboptions1) {
-    boost::shared_array<char> buf(new char[128]);
+    boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 100+i;
     Option* opt1 = new Option(Option::V6, 65535, //type
@@ -159,7 +159,7 @@ TEST_F(OptionTest, suboptions1) {
     EXPECT_EQ(9, opt3->len());
     EXPECT_EQ(20, opt1->len());
 
-    char expected[] = {
+    uint8_t expected[] = {
         0xff, 0xff, 0, 16, 100, 101, 102,
         0, 7, 0, 5, 103, 104, 105, 106, 107,
         0, 13, 0, 0 // no data at all
@@ -181,7 +181,7 @@ TEST_F(OptionTest, suboptions1) {
 //        +----opt3
 //
 TEST_F(OptionTest, suboptions2) {
-    boost::shared_array<char> buf(new char[128]);
+    boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 100+i;
     Option* opt1 = new Option(Option::V6, 65535, //type
@@ -199,7 +199,7 @@ TEST_F(OptionTest, suboptions2) {
     // opt2 len = 4 (just header) + len(opt3)
     // opt1 len = 7 + len(opt2)
 
-    char expected[] = {
+    uint8_t expected[] = {
         0xff, 0xff, 0, 16, 100, 101, 102,
         0, 13, 0, 9,
         0, 7, 0, 5, 103, 104, 105, 106, 107,
@@ -215,7 +215,7 @@ TEST_F(OptionTest, suboptions2) {
 }
 
 TEST_F(OptionTest, addgetdel) {
-    boost::shared_array<char> buf(new char[128]);
+    boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 100+i;
     Option* parent = new Option(Option::V6, 65535); //type

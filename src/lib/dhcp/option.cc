@@ -32,7 +32,7 @@ Option::Option(Universe u, unsigned short type)
 
 }
 
-Option::Option(Universe u, unsigned short type, boost::shared_array<char> buf,
+Option::Option(Universe u, unsigned short type, boost::shared_array<uint8_t> buf,
                unsigned int offset, unsigned int len)
     :universe_(u), type_(type), data_(buf),
      data_len_(len), offset_(offset)
@@ -43,7 +43,7 @@ Option::Option(Universe u, unsigned short type, boost::shared_array<char> buf,
 }
 
 unsigned int
-Option::pack(boost::shared_array<char> buf,
+Option::pack(boost::shared_array<uint8_t> buf,
              unsigned int buf_len,
              unsigned int offset) {
     switch (universe_) {
@@ -58,14 +58,14 @@ Option::pack(boost::shared_array<char> buf,
 
 
 unsigned int
-Option::pack4(boost::shared_array<char> buf,
+Option::pack4(boost::shared_array<uint8_t> buf,
              unsigned int buf_len,
              unsigned int offset) {
     if ( offset+len() > buf_len ) {
         isc_throw(OutOfRange, "Failed to pack v4 option=" <<
                   type_ << ",len=" << data_len_ << ": too small buffer.");
     }
-    char *ptr = &buf[offset];
+    uint8_t *ptr = &buf[offset];
     ptr[0] = type_;
     ptr[1] = data_len_;
     ptr += 2;
@@ -75,7 +75,7 @@ Option::pack4(boost::shared_array<char> buf,
 }
 
 unsigned int
-Option::pack6(boost::shared_array<char> buf,
+Option::pack6(boost::shared_array<uint8_t> buf,
              unsigned int buf_len,
              unsigned int offset) {
     if ( offset+len() > buf_len ) {
@@ -85,7 +85,7 @@ Option::pack6(boost::shared_array<char> buf,
 
     int length = len() - getHeaderLen();
 
-    char * ptr = &buf[offset];
+    uint8_t * ptr = &buf[offset];
     *(uint16_t*)ptr = htons(type_);
     ptr += 2;
     *(uint16_t*)ptr = htons(length);
@@ -99,7 +99,7 @@ Option::pack6(boost::shared_array<char> buf,
 }
 
 unsigned int
-Option::unpack(boost::shared_array<char> buf,
+Option::unpack(boost::shared_array<uint8_t> buf,
                unsigned int buf_len,
                unsigned int offset,
                unsigned int parse_len) {
@@ -116,7 +116,7 @@ Option::unpack(boost::shared_array<char> buf,
 }
 
 unsigned int
-Option::unpack4(boost::shared_array<char>,
+Option::unpack4(boost::shared_array<uint8_t>,
                 unsigned int ,
                 unsigned int ,
                 unsigned int ) {
@@ -125,7 +125,7 @@ Option::unpack4(boost::shared_array<char>,
 }
 
 unsigned int
-Option::unpack6(boost::shared_array<char> buf,
+Option::unpack6(boost::shared_array<uint8_t> buf,
                 unsigned int buf_len,
                 unsigned int offset,
                 unsigned int parse_len) {
@@ -209,7 +209,7 @@ std::string Option::toText(int indent /* =0 */ ) {
             tmp << ":";
         }
         tmp << setfill('0') << setw(2) << hex
-            << (unsigned short)(unsigned char)data_[offset_+i];
+            << (unsigned short)(unsigned uint8_t)data_[offset_+i];
     }
 
     // print suboptions
@@ -226,7 +226,7 @@ Option::getType() {
     return type_;
 }
 
-char*
+uint8_t*
 Option::getData() {
     if (data_len_) {
         return (&data_[offset_]);

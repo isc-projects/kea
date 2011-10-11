@@ -32,7 +32,7 @@ public:
     // to different elements in shared array. Therefore we need to share
     // pointer to the whole array and remember offset where data for
     // this option begins
-    Option6IA(Universe u, unsigned short type, boost::shared_array<char> buf,
+    Option6IA(Universe u, unsigned short type, boost::shared_array<uint8_t> buf,
               unsigned int buf_len,
               unsigned int offset,
               unsigned int len);
@@ -40,20 +40,20 @@ public:
     // writes option in wire-format to buf, returns pointer to first unused
     // byte after stored option
     unsigned int
-    pack(boost::shared_array<char> buf, unsigned int buf_len,
+    pack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
          unsigned int offset);
 
     // parses received buffer, returns offset to the first unused byte after
     // parsed option
     virtual unsigned int
-    unpack(boost::shared_array<char> buf,
+    unpack(boost::shared_array<uint8_t> buf,
            unsigned int buf_len,
            unsigned int offset,
            unsigned int parse_len);
 
     /// Provides human readable text representation
     ///
-    /// @param indent number of leading space characterss
+    /// @param indent number of leading space characters
     ///
     /// @return string with text represenation
     ///
