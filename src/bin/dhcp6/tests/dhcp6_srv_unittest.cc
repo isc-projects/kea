@@ -74,7 +74,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     EXPECT_NO_THROW( srv = new NakedDhcpv6Srv(); );
 
     // a dummy content for client-id
-    boost::shared_array<char> clntDuid(new char[32]);
+    boost::shared_array<uint8_t> clntDuid(new uint8_t[32]);
     for (int i=0; i<32; i++)
         clntDuid[i] = 100+i;
 

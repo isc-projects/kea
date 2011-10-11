@@ -31,31 +31,31 @@ Option6IA::Option6IA(Universe u, unsigned short type, unsigned int iaid)
 }
 
 
-Option6IA::Option6IA(Universe u, unsigned short type, 
-                   boost::shared_array<char> buf, 
+Option6IA::Option6IA(Universe u, unsigned short type,
+                   boost::shared_array<uint8_t> buf,
                    unsigned int buf_len,
-                   unsigned int offset, 
+                   unsigned int offset,
                    unsigned int option_len)
     :Option(u, type) {
     unpack(buf, buf_len, offset, option_len);
 }
 
 unsigned int
-Option6IA::pack(boost::shared_array<char> buf,
+Option6IA::pack(boost::shared_array<uint8_t> buf,
                 unsigned int buf_len,
                 unsigned int offset) {
     if (offset + len() > buf_len) {
-        isc_throw(OutOfRange, "Failed to pack IA option: len=" << len() 
+        isc_throw(OutOfRange, "Failed to pack IA option: len=" << len()
                   << ", buffer=" << buf_len << ": too small buffer.");
     }
-    
-    char* ptr = &buf[offset];
+
+    uint8_t* ptr = &buf[offset];
     *(uint16_t*)ptr = htons(type_);
     ptr += 2;
     *(uint16_t*)ptr = htons(len() - 4); // len() returns complete option length
     // len field contains length without 4-byte option header
     ptr += 2;
-    
+
     *(uint32_t*)ptr = htonl(iaid_);
     ptr += 4;
 
@@ -69,10 +69,10 @@ Option6IA::pack(boost::shared_array<char> buf,
     return offset;
 }
 
-unsigned int 
-Option6IA::unpack(boost::shared_array<char> buf,
+unsigned int
+Option6IA::unpack(boost::shared_array<uint8_t> buf,
                   unsigned int buf_len,
-                  unsigned int offset, 
+                  unsigned int offset,
                   unsigned int parse_len) {
     if (parse_len<12 || offset+12>buf_len) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
@@ -83,7 +83,7 @@ Option6IA::unpack(boost::shared_array<char> buf,
     offset +=4;
     t2_ = ntohl(*(uint32_t*)&buf[offset]);
     offset +=4;
-    offset = LibDHCP::unpackOptions6(buf, buf_len, offset, 
+    offset = LibDHCP::unpackOptions6(buf, buf_len, offset,
                                      parse_len - 12, optionLst_);
 
     return (offset);
@@ -118,7 +118,7 @@ std::string Option6IA::toText(int indent /* = 0*/) {
 }
 
 unsigned short Option6IA::len() {
-    
+
     unsigned short length = 4/*header*/ + 12 /* option content */; // header
 
     // length of all suboptions
@@ -129,4 +129,3 @@ unsigned short Option6IA::len() {
     }
     return (length);
 }
-

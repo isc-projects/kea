@@ -37,7 +37,7 @@ Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto_ proto /* = UDP */)
      proto_(proto)
 {
     try {
-        data_ = boost::shared_array<char>(new char[dataLen]);
+        data_ = boost::shared_array<uint8_t>(new uint8_t[dataLen]);
         data_len_ = dataLen;
     } catch (const std::exception& ex) {
         // TODO move to LOG_FATAL()
@@ -49,7 +49,7 @@ Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto_ proto /* = UDP */)
 }
 
 
-Pkt6::Pkt6(unsigned char msg_type,
+Pkt6::Pkt6(uint8_t msg_type,
            unsigned int transid,
            DHCPv6Proto_ proto /*= UDP*/)
     :local_addr_("::"),
@@ -59,7 +59,7 @@ Pkt6::Pkt6(unsigned char msg_type,
      transid_(transid) {
 
     try {
-        data_ = boost::shared_array<char>(new char[4]);
+        data_ = boost::shared_array<uint8_t>(new uint8_t[4]);
         data_len_ = 4;
     } catch (Exception e) {
         cout << "Packet creation failed:" << e.what() << endl;
@@ -122,7 +122,7 @@ Pkt6::packUDP() {
              << length << endl;
 
         try {
-            data_ = boost::shared_array<char>(new char[length]);
+            data_ = boost::shared_array<uint8_t>(new uint8_t[length]);
             data_len_ = length;
         } catch (Exception e) {
             cout << "Failed to allocate " << length << "-byte buffer:"
@@ -208,8 +208,8 @@ Pkt6::unpackUDP() {
         return (false);
     }
     msg_type_ = data_[0];
-    transid_ = ( ((unsigned char)data_[1]) << 16 ) + 
-        (((unsigned char)data_[2]) << 8) + ((unsigned char)data_[3]);
+    transid_ = ( (data_[1]) << 16 ) +
+        ((data_[2]) << 8) + (data_[3]);
     transid_ = transid_ & 0xffffff;
 
     unsigned int offset = LibDHCP::unpackOptions6(data_,
@@ -286,7 +286,7 @@ Pkt6::getOption(unsigned short opt_type) {
  *
  * @return message type.
  */
-unsigned char
+uint8_t
 Pkt6::getType() {
     return (msg_type_);
 }

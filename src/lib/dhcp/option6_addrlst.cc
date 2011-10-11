@@ -41,7 +41,7 @@ Option6AddrLst::Option6AddrLst(unsigned short type,
 }
 
 Option6AddrLst::Option6AddrLst(unsigned short type,
-                               boost::shared_array<char> buf,
+                               boost::shared_array<uint8_t> buf,
                                unsigned int buf_len,
                                unsigned int offset,
                                unsigned int option_len)
@@ -61,7 +61,7 @@ Option6AddrLst::setAddresses(std::vector<isc::asiolink::IOAddress>& addrs) {
 }
 
 unsigned int
-Option6AddrLst::pack(boost::shared_array<char> buf,
+Option6AddrLst::pack(boost::shared_array<uint8_t> buf,
                     unsigned int buf_len,
                     unsigned int offset) {
     if (len() > buf_len) {
@@ -88,7 +88,7 @@ Option6AddrLst::pack(boost::shared_array<char> buf,
 }
 
 unsigned int
-Option6AddrLst::unpack(boost::shared_array<char> buf,
+Option6AddrLst::unpack(boost::shared_array<uint8_t> buf,
                   unsigned int buf_len,
                   unsigned int offset,
                   unsigned int option_len) {

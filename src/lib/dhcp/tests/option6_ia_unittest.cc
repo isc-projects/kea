@@ -38,7 +38,7 @@ public:
 
 TEST_F(Option6IATest, basic) {
 
-    boost::shared_array<char> simple_buf(new char[128]);
+    boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         simple_buf[i] = 0;
     simple_buf[0]=0xa1; // iaid
@@ -109,7 +109,7 @@ TEST_F(Option6IATest, basic) {
 }
 
 TEST_F(Option6IATest, simple) {
-    boost::shared_array<char> simple_buf(new char[128]);
+    boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         simple_buf[i] = 0;
 
@@ -128,7 +128,7 @@ TEST_F(Option6IATest, simple) {
 
 // test if option can build suboptions
 TEST_F(Option6IATest, suboptions_pack) {
-    boost::shared_array<char> buf(new char[128]);
+    boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 0;
     buf[0] = 0xff;
@@ -154,7 +154,7 @@ TEST_F(Option6IATest, suboptions_pack) {
     ASSERT_EQ(4, sub1->len());
     ASSERT_EQ(48, ia->len());
 
-    char expected[] = {
+    uint8_t expected[] = {
         D6O_IA_NA/256, D6O_IA_NA%256, // type
         0, 44, // length
         0x13, 0x57, 0x9a, 0xce, // iaid
@@ -186,7 +186,7 @@ TEST_F(Option6IATest, suboptions_pack) {
 TEST_F(Option6IATest, suboptions_unpack) {
 
 
-    char expected[] = {
+    uint8_t expected[] = {
         D6O_IA_NA/256, D6O_IA_NA%256, // type
         0, 28, // length
         0x13, 0x57, 0x9a, 0xce, // iaid
@@ -206,7 +206,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
         0, 0 // len
     };
 
-    boost::shared_array<char> buf(new char[128]);
+    boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 0;
     memcpy(&buf[0], expected, 48);

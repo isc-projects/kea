@@ -66,11 +66,11 @@ TEST(IOAddressTest, Family) {
 
 TEST(IOAddressTest, from_bytes) {
     // 2001:db8:1::dead:beef
-    char v6[] = {
+    uint8_t v6[] = {
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0, 0,
         0, 0, 0, 0, 0xde, 0xad, 0xbe, 0xef };
 
-    char v4[] = { 192, 0 , 2, 3 };
+    uint8_t v4[] = { 192, 0 , 2, 3 };
 
     IOAddress addr("::");
     EXPECT_NO_THROW({

@@ -44,7 +44,7 @@ public:
     ///         used byte)
     ///
     static unsigned int
-    packOptions6(boost::shared_array<char> buf, unsigned int buf_len,
+    packOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
                  unsigned int offset,
                  isc::dhcp::Option::Option6Lst& options);
 
@@ -62,7 +62,7 @@ public:
     /// @return offset to first byte after last parsed option
     ///
     static unsigned int
-    unpackOptions6(boost::shared_array<char> buf, unsigned int buf_len,
+    unpackOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
                    unsigned int offset, unsigned int parse_len,
                    isc::dhcp::Option::Option6Lst& options_);
 

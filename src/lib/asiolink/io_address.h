@@ -95,7 +95,7 @@ public:
     ///
     /// \return Created IOAddress object
     static IOAddress
-    from_bytes(short family, const char* data);
+    from_bytes(short family, const uint8_t* data);
 
     /// \brief Compare addresses for equality
     ///

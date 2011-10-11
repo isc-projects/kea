@@ -56,7 +56,7 @@ namespace isc {
         ///      and hide following fields as protected
         /// buffer that holds memory. It is shared_array as options may
         /// share pointer to this buffer
-        boost::shared_array<char> data_;
+        boost::shared_array<uint8_t> data_;
 
         // length of the data
         unsigned int data_len_;
