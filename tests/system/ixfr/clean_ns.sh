@@ -1,4 +1,3 @@
-
 #!/bin/sh
 #
 # Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Clean up after zone transfer tests.
+# Clean up nameserver directories after zone transfer tests.
 
 rm -f ns1/named.conf
 rm -f ns1/db.example
