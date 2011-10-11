@@ -28,13 +28,9 @@ using namespace isc::dhcp;
 // static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
 
-std::string
-LibDHCP::version() {
-    return PACKAGE_VERSION;
-}
-
 unsigned int
-LibDHCP::unpackOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
+LibDHCP::unpackOptions6(const boost::shared_array<uint8_t> buf,
+                        unsigned int buf_len,
                         unsigned int offset, unsigned int parse_len,
                         isc::dhcp::Option::Option6Lst& options) {
     if (offset + parse_len > buf_len) {
@@ -44,7 +40,7 @@ LibDHCP::unpackOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
     }
     unsigned int end = offset + parse_len;
 
-    while (offset<end) {
+    while ( offset +4 <= end ) {
         unsigned int opt_type = buf[offset]*256 + buf[offset+1];
         offset += 2;
         unsigned int opt_len = buf[offset]*256 + buf[offset+1];
@@ -92,9 +88,9 @@ unsigned int
 LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
                       unsigned int data_len,
                       unsigned int offset,
-                      isc::dhcp::Option::Option6Lst& options) {
+                      const isc::dhcp::Option::Option6Lst& options) {
     try {
-        for (isc::dhcp::Option::Option6Lst::iterator it = options.begin();
+        for (isc::dhcp::Option::Option6Lst::const_iterator it = options.begin();
              it != options.end();
              ++it) {
             unsigned short opt_len = (*it).second->len();
