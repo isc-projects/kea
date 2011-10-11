@@ -1,3 +1,7 @@
+297.	[func]		dvv
+	Implement the SPF rrtype according to RFC4408.
+	(Trac #1140, git 146934075349f94ee27f23bf9ff01711b94e369e)
+
 296.	[build]		jreed
 	Do not install the unittest libraries. At this time, they
 	are not useful without source tree (and they may or may
