@@ -33,12 +33,6 @@ public:
     }
 };
 
-TEST_F(LibDhcpTest, basic) {
-    // dummy test
-
-    EXPECT_EQ(LibDHCP::version(), PACKAGE_VERSION);
-}
-
 TEST_F(LibDhcpTest, packOptions6) {
     boost::shared_array<uint8_t> buf(new uint8_t[512]);
     isc::dhcp::Option::Option6Lst opts; // list of options

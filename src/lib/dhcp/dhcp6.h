@@ -22,18 +22,18 @@
 #define D6O_IA_NA                               3
 #define D6O_IA_TA                               4
 #define D6O_IAADDR                              5
-#define D6O_ORO                                         6
+#define D6O_ORO                                 6
 #define D6O_PREFERENCE                          7
 #define D6O_ELAPSED_TIME                        8
 #define D6O_RELAY_MSG                           9
 /* Option code 10 unassigned. */
 #define D6O_AUTH                                11
 #define D6O_UNICAST                             12
-#define D6O_STATUS_CODE                                 13
+#define D6O_STATUS_CODE                         13
 #define D6O_RAPID_COMMIT                        14
 #define D6O_USER_CLASS                          15
 #define D6O_VENDOR_CLASS                        16
-#define D6O_VENDOR_OPTS                                 17
+#define D6O_VENDOR_OPTS                         17
 #define D6O_INTERFACE_ID                        18
 #define D6O_RECONF_MSG                          19
 #define D6O_RECONF_ACCEPT                       20
@@ -43,7 +43,7 @@
 #define D6O_DOMAIN_SEARCH                       24 /* RFC3646 */
 #define D6O_IA_PD                               25 /* RFC3633 */
 #define D6O_IAPREFIX                            26 /* RFC3633 */
-#define D6O_NIS_SERVERS                                 27 /* RFC3898 */
+#define D6O_NIS_SERVERS                         27 /* RFC3898 */
 #define D6O_NISP_SERVERS                        28 /* RFC3898 */
 #define D6O_NIS_DOMAIN_NAME                     29 /* RFC3898 */
 #define D6O_NISP_DOMAIN_NAME                    30 /* RFC3898 */
@@ -55,13 +55,13 @@
 #define D6O_GEOCONF_CIVIC                       36 /* RFC4776 */
 #define D6O_REMOTE_ID                           37 /* RFC4649 */
 #define D6O_SUBSCRIBER_ID                       38 /* RFC4580 */
-#define D6O_CLIENT_FQDN                                 39 /* RFC4704 */
+#define D6O_CLIENT_FQDN                         39 /* RFC4704 */
 #define D6O_PANA_AGENT                          40 /* paa-option */
 #define D6O_NEW_POSIX_TIMEZONE                  41 /* RFC4833 */
 #define D6O_NEW_TZDB_TIMEZONE                   42 /* RFC4833 */
-#define D6O_ERO                                         43 /* RFC4994 */
+#define D6O_ERO                                 43 /* RFC4994 */
 #define D6O_LQ_QUERY                            44 /* RFC5007 */
-#define D6O_CLIENT_DATA                                 45 /* RFC5007 */
+#define D6O_CLIENT_DATA                         45 /* RFC5007 */
 #define D6O_CLT_TIME                            46 /* RFC5007 */
 #define D6O_LQ_RELAY_DATA                       47 /* RFC5007 */
 #define D6O_LQ_CLIENT_LINK                      48 /* RFC5007 */
@@ -76,7 +76,7 @@
 #define STATUS_NotOnLink         4
 #define STATUS_UseMulticast      5
 #define STATUS_NoPrefixAvail     6
-#define STATUS_UnknownQueryType          7
+#define STATUS_UnknownQueryType  7
 #define STATUS_MalformedQuery    8
 #define STATUS_NotConfigured     9
 #define STATUS_NotAllowed       10
@@ -106,8 +106,8 @@ extern const int dhcpv6_type_name_max;
 /* DUID type definitions (RFC3315 section 9).
  */
 #define DUID_LLT        1
-#define DUID_EN                 2
-#define DUID_LL                 3
+#define DUID_EN         2
+#define DUID_LL         3
 
 /* Offsets into IA_*'s where Option spaces commence.  */
 #define IA_NA_OFFSET 12 /* IAID, T1, T2, all 4 octets each */
