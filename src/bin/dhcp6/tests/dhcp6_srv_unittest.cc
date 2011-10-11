@@ -31,6 +31,21 @@ using namespace isc::dhcp;
 // Maybe it should be isc::test?
 namespace test {
 
+class NakedDhcpv6Srv: public Dhcpv6Srv {
+    // "naked" Interface Manager, exposes internal fields
+public:
+    NakedDhcpv6Srv() { }
+
+    boost::shared_ptr<Pkt6>
+    processSolicit(boost::shared_ptr<Pkt6>& request) {
+        return Dhcpv6Srv::processSolicit(request);
+    }
+    boost::shared_ptr<Pkt6>
+    processRequest(boost::shared_ptr<Pkt6>& request) {
+        return Dhcpv6Srv::processRequest(request);
+    }
+};
+
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
     Dhcpv6SrvTest() {
@@ -45,7 +60,6 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // srv has stubbed interface detection. It will read
     // interfaces.txt instead. It will pretend to have detected
     // fe80::1234 link-local address on eth0 interface. Obviously
-
     // an attempt to bind this socket will fail.
     EXPECT_NO_THROW( {
         Dhcpv6Srv * srv = new Dhcpv6Srv();
@@ -55,15 +69,21 @@ TEST_F(Dhcpv6SrvTest, basic) {
 
 }
 
-TEST_F(Dhcpv6SrvTest,Solicit_basic) {
-    Dhcpv6Srv * srv = 0;
-    EXPECT_NO_THROW( srv = new Dhcpv6Srv(); );
+TEST_F(Dhcpv6SrvTest, Solicit_basic) {
+    NakedDhcpv6Srv * srv = 0;
+    EXPECT_NO_THROW( srv = new NakedDhcpv6Srv(); );
+
+    // a dummy content for client-id
+    boost::shared_array<char> clntDuid(new char[32]);
+    for (int i=0; i<32; i++)
+        clntDuid[i] = 100+i;
 
     boost::shared_ptr<Pkt6> sol =
         boost::shared_ptr<Pkt6>(new Pkt6(DHCPV6_SOLICIT,
                                          1234, Pkt6::UDP));
 
-    boost::shared_ptr<Option6IA> ia(new Option6IA(Option::V6, D6O_IA_NA, 2345));
+    boost::shared_ptr<Option6IA> ia =
+        boost::shared_ptr<Option6IA>(new Option6IA(Option::V6, D6O_IA_NA, 234));
     ia->setT1(1501);
     ia->setT2(2601);
     sol->addOption(ia);
@@ -74,6 +94,20 @@ TEST_F(Dhcpv6SrvTest,Solicit_basic) {
     // ia->addOption(addr);
     // sol->addOption(ia);
 
+    // constructed very simple SOLICIT message with:
+    // - client-id option (mandatory)
+    // - IA option (a request for address, without any addresses)
+
+    // expected returned ADVERTISE message:
+    // - copy of client-id
+    // - server-id
+    // - IA that includes IAADDR
+
+    boost::shared_ptr<Option> clientid =
+        boost::shared_ptr<Option>(new Option(Option::V6, D6O_CLIENTID,
+                                             clntDuid, 0, 16));
+    sol->addOption(clientid);
+
     boost::shared_ptr<Pkt6> reply = srv->processSolicit(sol);
 
     // check if we get response at all
@@ -83,10 +117,26 @@ TEST_F(Dhcpv6SrvTest,Solicit_basic) {
     EXPECT_EQ( 1234, reply->getTransid() );
 
     boost::shared_ptr<Option> tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE( tmp != boost::shared_ptr<Option>() );
+    ASSERT_TRUE( tmp );
 
     Option6IA * reply_ia = dynamic_cast<Option6IA*> ( tmp.get() );
-    EXPECT_EQ( 2345, reply_ia->getIAID() );
+    EXPECT_EQ( 234, reply_ia->getIAID() );
+
+    // check that there's an address included
+    EXPECT_TRUE( reply_ia->getOption(D6O_IAADDR));
+
+    // check that server included our own client-id
+    tmp = reply->getOption(D6O_CLIENTID);
+    ASSERT_TRUE( tmp );
+    EXPECT_EQ(clientid->getType(), tmp->getType() );
+    ASSERT_EQ(clientid->len(), tmp->len() );
+    EXPECT_FALSE(memcmp(clientid->getData(), tmp->getData(), tmp->len() ) );
+    // check that server included its server-id
+    tmp = reply->getOption(D6O_SERVERID);
+    EXPECT_EQ(tmp->getType(), srv->getServerID()->getType() );
+    ASSERT_EQ(tmp->len(),  srv->getServerID()->len() );
+    EXPECT_FALSE( memcmp(tmp->getData(), srv->getServerID()->getData(),
+                      tmp->len()) );
 
     // more checks to be implemented
     delete srv;

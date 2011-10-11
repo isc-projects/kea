@@ -27,6 +27,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::dhcp;
 
 // name of loopback interface detection
 char LOOPBACK[32] = "lo";
@@ -61,6 +62,9 @@ public:
 // is named lo on Linux and lo0 on BSD boxes. We need to find out
 // which is available. This is not a real test, but rather a workaround
 // that will go away when interface detection is implemented.
+
+// NOTE: At this stage of development, write access to current directory
+// during running tests is required.
 TEST_F(IfaceMgrTest, loDetect) {
 
     unlink("interfaces.txt");
@@ -365,7 +369,7 @@ TEST_F(IfaceMgrTest, DISABLED_sendReceive) {
 
     rcvPkt = ifacemgr->receive();
 
-    ASSERT_TRUE( rcvPkt != NULL ); // received our own packet
+    ASSERT_TRUE( rcvPkt ); // received our own packet
 
     // let's check that we received what was sent
     EXPECT_EQ(sendPkt->data_len_, rcvPkt->data_len_);

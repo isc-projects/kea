@@ -16,15 +16,14 @@
 #define DHCPV6_SRV_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 #include "dhcp/pkt6.h"
 #include "dhcp/option.h"
 #include <iostream>
 
-namespace test {
-class Dhcpv6SrvTest_Solicit_basic_Test;
-}
-
 namespace isc {
+
+    namespace dhcp {
     /// @brief DHCPv6 server service.
     ///
     /// This singleton class represents DHCPv6 server. It contains all
@@ -33,8 +32,8 @@ namespace isc {
     /// that is going to be used as server-identifier, receives incoming
     /// packets, processes them, manages leases assignment and generates
     /// appropriate responses.
-    class Dhcpv6Srv {
-    private:
+    class Dhcpv6Srv : public boost::noncopyable {
+        private:
 
         /// @brief A private copy constructor.
         ///
@@ -53,13 +52,6 @@ namespace isc {
         /// Its definition is here to prevent creation of any copies.
         ///
         Dhcpv6Srv& operator=(const Dhcpv6Srv& src);
-
-        /// @brief Returns server-intentifier option
-        ///
-        /// @return reference to server-id option
-        ///
-        boost::shared_ptr<isc::dhcp::Option>&
-        getServerID() { return serverid_; }
 
         /// @brief Sets server-identifier.
         ///
@@ -88,6 +80,13 @@ namespace isc {
         /// @brief Destructor. Shuts down DHCPv6 service.
         ~Dhcpv6Srv();
 
+        /// @brief Returns server-intentifier option
+        ///
+        /// @return reference to server-id option
+        ///
+        boost::shared_ptr<isc::dhcp::Option>&
+        getServerID() { return serverid_; }
+
         /// @brief Main server processing loop.
         ///
         /// Main server processing loop. Receives incoming packets, verifies
@@ -115,7 +114,7 @@ namespace isc {
         /// @return ADVERTISE, REPLY message or NULL
         ///
         boost::shared_ptr<Pkt6>
-        processSolicit(boost::shared_ptr<Pkt6>& solicit);
+        processSolicit(boost::shared_ptr<Pkt6> solicit);
 
         /// @brief Processes incoming REQUEST and returns REPLY response.
         ///
@@ -129,36 +128,38 @@ namespace isc {
         ///
         /// @return REPLY message or NULL
         boost::shared_ptr<Pkt6>
-        processRequest(boost::shared_ptr<Pkt6>& request);
+        processRequest(boost::shared_ptr<Pkt6> request);
 
         /// @brief Stub function that will handle incoming RENEW messages.
         boost::shared_ptr<Pkt6>
-        processRenew(boost::shared_ptr<Pkt6>& renew);
+        processRenew(boost::shared_ptr<Pkt6> renew);
 
          /// @brief Stub function that will handle incoming REBIND messages.
         boost::shared_ptr<Pkt6>
-        processRebind(boost::shared_ptr<Pkt6>& rebind);
+        processRebind(boost::shared_ptr<Pkt6> rebind);
 
         /// @brief Stub function that will handle incoming CONFIRM messages.
         boost::shared_ptr<Pkt6>
-        processConfirm(boost::shared_ptr<Pkt6>& confirm);
+        processConfirm(boost::shared_ptr<Pkt6> confirm);
 
         /// @brief Stub function that will handle incoming RELEASE messages.
         boost::shared_ptr<Pkt6>
-        processRelease(boost::shared_ptr<Pkt6>& release);
+        processRelease(boost::shared_ptr<Pkt6> release);
 
         /// @brief Stub function that will handle incoming DECLINE messages.
         boost::shared_ptr<Pkt6>
-        processDecline(boost::shared_ptr<Pkt6>& decline);
+        processDecline(boost::shared_ptr<Pkt6> decline);
 
         /// @brief Stub function that will handle incoming INF-REQUEST messages.
         boost::shared_ptr<Pkt6>
-        processInfRequest(boost::shared_ptr<Pkt6>& infRequest);
+        processInfRequest(boost::shared_ptr<Pkt6> infRequest);
 
-        bool shutdown;
-
-        friend class test::Dhcpv6SrvTest_Solicit_basic_Test;
+        /// indicates if shutdown is in progress. Setting it to true will
+        /// initiate server shutdown procedure.
+        volatile bool shutdown;
     };
-};
+
+    }; // namespace isc::dhcp
+}; // namespace isc
 
 #endif // DHCP6_SRV_H
