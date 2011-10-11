@@ -49,6 +49,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
 endif
 
-check_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = $(TESTS)
 
 EXTRA_DIST = testdata/spec.spec
