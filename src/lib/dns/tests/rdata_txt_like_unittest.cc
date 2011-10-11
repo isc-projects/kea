@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -86,11 +86,11 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         this->obuffer.getData(),
                         this->obuffer.getLength(),
-                        wiredata_nulltxt, sizeof (wiredata_nulltxt));
+                        wiredata_nulltxt, sizeof(wiredata_nulltxt));
 
     // Longest possible character-string.
     this->obuffer.clear();
-    TypeParam(string(255, 'a')).  toWire(this->obuffer);
+    TypeParam(string(255, 'a')).toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         this->obuffer.getData(),
                         this->obuffer.getLength(),
@@ -224,11 +224,11 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, assignment) {
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, compare) {
-    string const txt1 ("aaaaaaaa");
-    string const txt2 ("aaaaaaaaaa");
-    string const txt3 ("bbbbbbbb");
-    string const txt4 (129, 'a');
-    string const txt5 (128, 'b');
+    string const txt1("aaaaaaaa");
+    string const txt2("aaaaaaaaaa");
+    string const txt3("bbbbbbbb");
+    string const txt4(129, 'a');
+    string const txt5(128, 'b');
 
     EXPECT_EQ(TypeParam(txt1).compare(TypeParam(txt1)), 0);
 
