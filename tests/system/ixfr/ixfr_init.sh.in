@@ -314,9 +314,9 @@ compare_zones() {
     shift
 
     $DIG @$client_ip -p $DNS_PORT example. axfr | grep -v '^;' | grep -v '^$' \
-         | sed -e 's/ //g' -e 's/\t//g' > client.dig
+         | sed -e 's/ //g' -e 's/\t//g' | sort > client.dig
     $DIG @$server_ip -p $DNS_PORT example. axfr | grep -v '^;' | grep -v '^$' \
-         | sed -e 's/ //g' -e 's/\t//g' > server.dig
+         | sed -e 's/ //g' -e 's/\t//g' | sort > server.dig
     diff client.dig server.dig
     if [ $? -eq 0 ];
     then

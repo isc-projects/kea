@@ -1,1 +1,1 @@
-../clean.sh
+../clean_ns.sh
