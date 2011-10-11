@@ -29,7 +29,7 @@ public:
     typedef std::multimap<unsigned int, boost::shared_ptr<Option> > Option6Lst;
     typedef boost::shared_ptr<Option> Factory(Option::Universe u,
                                               unsigned short type,
-                                              boost::shared_array<char> buf,
+                                              boost::shared_array<uint8_t> buf,
                                               unsigned int offset,
                                               unsigned int len);
 
@@ -42,14 +42,14 @@ public:
     // to different elements in shared array. Therefore we need to share
     // pointer to the whole array and remember offset where data for
     // this option begins
-    Option(Universe u, unsigned short type, boost::shared_array<char> buf,
+    Option(Universe u, unsigned short type, boost::shared_array<uint8_t> buf,
            unsigned int offset,
            unsigned int len);
 
     // writes option in wire-format to buf, returns pointer to first unused
     // byte after stored option
     virtual unsigned int
-    pack(boost::shared_array<char> buf,
+    pack(boost::shared_array<uint8_t> buf,
          unsigned int buf_len,
          unsigned int offset);
 
@@ -67,7 +67,7 @@ public:
     /// @return offset after last parsed option
     ///
     virtual unsigned int
-    unpack(boost::shared_array<char> buf,
+    unpack(boost::shared_array<uint8_t> buf,
            unsigned int buf_len,
            unsigned int offset,
            unsigned int parse_len);
@@ -113,7 +113,7 @@ public:
     ///
     /// @return pointer to actual data (or NULL if there is no data)
     ///
-    virtual char*
+    virtual uint8_t*
     getData();
 
     /// Adds a sub-option.
@@ -160,7 +160,7 @@ protected:
     /// @return offset to the next byte after last used byte
     ///
     virtual unsigned int
-    pack4(boost::shared_array<char> buf,
+    pack4(boost::shared_array<uint8_t> buf,
           unsigned int buf_len,
           unsigned int offset);
 
@@ -175,7 +175,7 @@ protected:
     /// @return offset to the next byte after last used byte
     ///
     virtual unsigned int
-    pack6(boost::shared_array<char> buf,
+    pack6(boost::shared_array<uint8_t> buf,
           unsigned int buf_len,
           unsigned int offset);
 
@@ -189,7 +189,7 @@ protected:
     /// @return offset to the next byte after last parsed byte
     ///
     virtual unsigned int
-    unpack4(boost::shared_array<char> buf,
+    unpack4(boost::shared_array<uint8_t> buf,
             unsigned int buf_len,
             unsigned int offset,
             unsigned int parse_len);
@@ -204,7 +204,7 @@ protected:
     /// @return offset to the next byte after last parsed byte
     ///
     virtual unsigned int
-    unpack6(boost::shared_array<char> buf,
+    unpack6(boost::shared_array<uint8_t> buf,
             unsigned int buf_len,
             unsigned int offset,
             unsigned int parse_len);
@@ -212,7 +212,7 @@ protected:
     Universe universe_; // option universe (V4 or V6)
     unsigned short type_; // option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
 
-    boost::shared_array<char> data_;
+    boost::shared_array<uint8_t> data_;
     unsigned int data_len_; // length of data only. Use len() if you want to
                             // know proper length with option header overhead
     unsigned int offset_; // data is a shared_pointer that points out to the

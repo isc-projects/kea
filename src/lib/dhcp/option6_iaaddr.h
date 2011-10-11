@@ -22,37 +22,37 @@ namespace isc {
 namespace dhcp {
 
 class Option6IAAddr: public Option {
-        
+
 public:
     // ctor, used for options constructed, usually during transmission
-    Option6IAAddr(unsigned short type, 
+    Option6IAAddr(unsigned short type,
                   isc::asiolink::IOAddress addr,
                   unsigned int prefered,
-                  unsigned int valid); 
+                  unsigned int valid);
 
     // ctor, used for received options
-    // boost::shared_array allows sharing a buffer, but it requires that 
+    // boost::shared_array allows sharing a buffer, but it requires that
     // different instances share pointer to the whole array, not point
     // to different elements in shared array. Therefore we need to share
     // pointer to the whole array and remember offset where data for
     // this option begins
-    Option6IAAddr(unsigned short type, boost::shared_array<char> buf, 
+    Option6IAAddr(unsigned short type, boost::shared_array<uint8_t> buf,
                   unsigned int buf_len,
-                  unsigned int offset, 
+                  unsigned int offset,
                   unsigned int len);
-    
-    // writes option in wire-format to buf, returns pointer to first unused 
+
+    // writes option in wire-format to buf, returns pointer to first unused
     // byte after stored option
     unsigned int
-    pack(boost::shared_array<char> buf, unsigned int buf_len, 
+    pack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
          unsigned int offset);
 
     // parses received buffer, returns offset to the first unused byte after
     // parsed option
-    virtual unsigned int 
-    unpack(boost::shared_array<char> buf, 
+    virtual unsigned int
+    unpack(boost::shared_array<uint8_t> buf,
            unsigned int buf_len,
-           unsigned int offset, 
+           unsigned int offset,
            unsigned int parse_len);
 
     virtual std::string toText(int indent = 0);
@@ -76,5 +76,5 @@ protected:
 
 } // isc::dhcp namespace
 } // isc namespace
-    
+
 #endif /* OPTION_IA_H_ */
