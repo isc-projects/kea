@@ -43,6 +43,7 @@ using namespace isc::config;
 using namespace isc::util;
 
 using namespace isc;
+using namespace isc::dhcp;
 
 namespace {
 
