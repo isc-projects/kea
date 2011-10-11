@@ -24,13 +24,6 @@ namespace dhcp {
 class LibDHCP {
 
 public:
-    /// Returns version of the library.
-    ///
-    /// @return string that contains libdhcp version.
-    ///
-    static std::string
-    version();
-
     /// Builds collection of options.
     ///
     /// Builds raw (on-wire) data for provided collection of options.
@@ -46,7 +39,7 @@ public:
     static unsigned int
     packOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
                  unsigned int offset,
-                 isc::dhcp::Option::Option6Lst& options);
+                 const isc::dhcp::Option::Option6Lst& options);
 
     ///
     /// Parses provided buffer and creates Option objects.
@@ -62,7 +55,7 @@ public:
     /// @return offset to first byte after last parsed option
     ///
     static unsigned int
-    unpackOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
+    unpackOptions6(const boost::shared_array<uint8_t> buf, unsigned int buf_len,
                    unsigned int offset, unsigned int parse_len,
                    isc::dhcp::Option::Option6Lst& options_);
 

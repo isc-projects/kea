@@ -22,5 +22,4 @@ EXTRA_DIST  = README
 
 libdhcp_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcp_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libdhcp_la_LDFLAGS  = $(LOG4CPLUS_LDFLAGS)
 libdhcp_la_LIBADD   = $(top_builddir)/src/lib/util/libutil.la
