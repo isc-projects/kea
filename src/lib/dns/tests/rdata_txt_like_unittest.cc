@@ -129,17 +129,17 @@ makeLargest(vector<uint8_t>& data) {
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     EXPECT_EQ(0, this->rdata_txt_like.compare(
-                  *rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
+                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                         "rdata_txt_fromWire1")));
 
     // Empty character string
     EXPECT_EQ(0, this->rdata_txt_like_empty.compare(
-                  *rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
+                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                         "rdata_txt_fromWire2.wire")));
 
     // Multiple character strings
     this->obuffer.clear();
-    rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
+    this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                          "rdata_txt_fromWire3.wire")->toWire(this->obuffer);
     // the result should be 'wiredata_txt' repeated twice
     vector<uint8_t> expected_data(wiredata_txt_like, wiredata_txt_like +
@@ -175,12 +175,12 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     EXPECT_THROW(TypeParam(ibuffer2, 65536), InvalidRdataLength);
 
     // RDATA is empty, which is invalid for TXT_LIKE.
-    EXPECT_THROW(rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
+    EXPECT_THROW(this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                       "rdata_txt_fromWire4.wire"),
                  DNSMessageFORMERR);
 
     // character-string length is too large, which could cause overrun.
-    EXPECT_THROW(rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
+    EXPECT_THROW(this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
                                       "rdata_txt_fromWire5.wire"),
                  DNSMessageFORMERR);
 }
