@@ -47,7 +47,7 @@
           { "item_name": "ixfr_disabled",
             "item_type": "boolean",
             "item_optional": false,
-            "item_default": false
+            "item_default": true
           }
           ]
         }
