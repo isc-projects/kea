@@ -58,8 +58,7 @@ TEST_F(Option6IATest, basic) {
 
     // create an option
     // unpack() is called from constructor
-    Option6IA* opt = new Option6IA(Option::V6,
-                                   D6O_IA_NA,
+    Option6IA* opt = new Option6IA(D6O_IA_NA,
                                    simple_buf,
                                    128,
                                    0,
@@ -113,8 +112,7 @@ TEST_F(Option6IATest, simple) {
     for (int i=0; i<128; i++)
         simple_buf[i] = 0;
 
-    Option6IA * ia = new Option6IA(Option::V6, D6O_IA_NA,
-                                   1234);
+    Option6IA * ia = new Option6IA(D6O_IA_NA, 1234);
     ia->setT1(2345);
     ia->setT2(3456);
 
@@ -135,8 +133,7 @@ TEST_F(Option6IATest, suboptions_pack) {
     buf[1] = 0xfe;
     buf[2] = 0xfc;
 
-    Option6IA * ia = new Option6IA(Option::V6, D6O_IA_NA,
-                                   0x13579ace);
+    Option6IA * ia = new Option6IA(D6O_IA_NA, 0x13579ace);
     ia->setT1(0x2345);
     ia->setT2(0x3456);
 
@@ -213,8 +210,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     Option6IA* ia = 0;
     EXPECT_NO_THROW({
-        ia = new Option6IA(Option::V6, D6O_IA_NA,
-                           buf, 128, 4, 44);
+        ia = new Option6IA(D6O_IA_NA, buf, 128, 4, 44);
         cout << "Parsed option:" << endl << ia->toText() << endl;
     });
     ASSERT_TRUE(ia);

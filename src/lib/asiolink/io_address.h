@@ -29,6 +29,12 @@
 namespace isc {
 namespace asiolink {
 
+    /// Defines length of IPv6 address.
+    const static size_t V6ADDRESS_LEN = 16;
+
+    /// Defines length of IPv4 address.
+    const static size_t V4ADDRESS_LEN = 4;
+
 /// \brief The \c IOAddress class represents an IP addresses (version
 /// agnostic)
 ///
