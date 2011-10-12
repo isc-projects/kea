@@ -22,11 +22,15 @@
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
+#include <datasrc/factory.h>
 #include <util/filename.h>
 
 using namespace std;
+using namespace isc::data;
 
 #define SQLITE_SCHEMA_VERSION 1
+
+#define CONFIG_ITEM_DATABASE_FILE "database_file"
 
 namespace isc {
 namespace datasrc {
@@ -132,19 +136,6 @@ private:
     const StatementID stmt_id_;
     const char* const desc_;
 };
-
-SQLite3Accessor::SQLite3Accessor(const std::string& filename,
-                                 const isc::dns::RRClass& rrclass) :
-    dbparameters_(new SQLite3Parameters),
-    filename_(filename),
-    class_(rrclass.toText()),
-    database_name_("sqlite3_" +
-                   isc::util::Filename(filename).nameAndExtension())
-{
-    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
-
-    open(filename);
-}
 
 SQLite3Accessor::SQLite3Accessor(const std::string& filename,
                                  const string& rrclass) :
@@ -637,8 +628,12 @@ doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
     const size_t column_count =
         sizeof(update_params) / sizeof(update_params[0]);
     for (int i = 0; i < column_count; ++i) {
-        if (sqlite3_bind_text(stmt, ++param_id, update_params[i].c_str(), -1,
-                              SQLITE_TRANSIENT) != SQLITE_OK) {
+        // The old sqlite3 data source API assumes NULL for an empty column.
+        // We need to provide compatibility at least for now.
+        if (sqlite3_bind_text(stmt, ++param_id,
+                              update_params[i].empty() ? NULL :
+                              update_params[i].c_str(),
+                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
             isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
                       sqlite3_errmsg(dbparams.db_));
         }
@@ -711,5 +706,75 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     return (result);
 }
 
+namespace {
+void
+addError(ElementPtr errors, const std::string& error) {
+    if (errors != ElementPtr() && errors->getType() == Element::list) {
+        errors->add(Element::create(error));
+    }
 }
+
+bool
+checkConfig(ConstElementPtr config, ElementPtr errors) {
+    /* Specific configuration is under discussion, right now this accepts
+     * the 'old' configuration, see header file
+     */
+    bool result = true;
+
+    if (!config || config->getType() != Element::map) {
+        addError(errors, "Base config for SQlite3 backend must be a map");
+        result = false;
+    } else {
+        if (!config->contains(CONFIG_ITEM_DATABASE_FILE)) {
+            addError(errors,
+                     "Config for SQlite3 backend does not contain a '"
+                     CONFIG_ITEM_DATABASE_FILE
+                     "' value");
+            result = false;
+        } else if (!config->get(CONFIG_ITEM_DATABASE_FILE) ||
+                   config->get(CONFIG_ITEM_DATABASE_FILE)->getType() !=
+                   Element::string) {
+            addError(errors, "value of " CONFIG_ITEM_DATABASE_FILE
+                     " in SQLite3 backend is not a string");
+            result = false;
+        } else if (config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue() ==
+                   "") {
+            addError(errors, "value of " CONFIG_ITEM_DATABASE_FILE
+                     " in SQLite3 backend is empty");
+            result = false;
+        }
+    }
+
+    return (result);
 }
+
+} // end anonymous namespace
+
+DataSourceClient *
+createInstance(isc::data::ConstElementPtr config, std::string& error) {
+    ElementPtr errors(Element::createList());
+    if (!checkConfig(config, errors)) {
+        error = "Configuration error: " + errors->str();
+        return (NULL);
+    }
+    std::string dbfile = config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
+    try {
+        boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
+            new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
+        return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
+    } catch (const std::exception& exc) {
+        error = std::string("Error creating sqlite3 datasource: ") + exc.what();
+        return (NULL);
+    } catch (...) {
+        error = std::string("Error creating sqlite3 datasource, "
+                            "unknown exception");
+        return (NULL);
+    }
+}
+
+void destroyInstance(DataSourceClient* instance) {
+    delete instance;
+}
+
+} // end of namespace datasrc
+} // end of namespace isc

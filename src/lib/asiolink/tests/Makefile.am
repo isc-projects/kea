@@ -53,4 +53,4 @@ run_unittests_CXXFLAGS += -Wno-error
 endif
 endif
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)

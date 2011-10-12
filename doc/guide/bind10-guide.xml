@@ -1257,21 +1257,65 @@ TODO
     <para>
       Incoming zones are transferred using the <command>b10-xfrin</command>
       process which is started by <command>bind10</command>.
-      When received, the zone is stored in the BIND 10
-      data store, and its records can be served by
+      When received, the zone is stored in the corresponding BIND 10
+      data source, and its records can be served by
       <command>b10-auth</command>.
       In combination with <command>b10-zonemgr</command> (for
       automated SOA checks), this allows the BIND 10 server to
       provide <quote>secondary</quote> service.
     </para>
 
+    <para>
+      The <command>b10-xfrin</command> process supports both AXFR and
+      IXFR.  Due to some implementation limitations of the current
+      development release, however, it only tries AXFR by default,
+      and care should be taken to enable IXFR.
+    </para>
+
     <note><simpara>
-     The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.)
-
-<!-- TODO: sqlite3 data source only? -->
-
+     In the current development release of BIND 10, incoming zone
+     transfers are only available for SQLite3-based data sources,
+     that is, they don't work for an in-memory data source.
     </simpara></note>
+
+    <para>
+      To enable IXFR, you need to
+      configure <command>b10-xfrin</command> with an explicit zone
+      configuration for the zone.
+      For example, to enable IXFR for a zone named "example.com"
+      (whose master address is assumed to be 2001:db8::53 here),
+      run the following at the <command>bindctl</command> prompt:
+
+      <screen>&gt; <userinput>config add Xfrin/zones</userinput>
+&gt; <userinput>config set Xfrin/zones[0]/name "<option>example.com</option>"</userinput>
+&gt; <userinput>config set Xfrin/zones[0]/master_addr "<option>2001:db8::53</option>"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+      (We assume there has been no zone configuration before).
+      Note that you do NOT have to explicitly enable IXFR in the zone
+      configuration; once it's defined, IXFR is enabled by default.
+      This also means if you specify a zone configuration for some
+      other reason but don't want to use IXFR for that zone, you need
+      to disable it explicitly:
+
+      <screen>&gt; <userinput>config set Xfrin/zones[0]/ixfr_disabled true</userinput></screen>
+    </para>
+
+    <para>
+      One reason why IXFR is disabled by default in the current
+      release is because it does not support automatic fallback from IXFR to
+      AXFR when it encounters a primary server that doesn't support
+      outbound IXFR (and, not many existing implementations support
+      it).  Another, related reason is that it does not use AXFR even
+      if it has no knowledge about the zone (like at the very first
+      time the secondary server is set up).  IXFR requires the
+      "current version" of the zone, so obviously it doesn't work
+      in this situation and AXFR is the only workable choice.
+      The current release of <command>b10-xfrin</command> does not
+      make this selection automatically.
+      These features will be implemented in a near future
+      version, at which point we will enable IXFR by default.
+    </para>
 
 <!-- TODO:
 

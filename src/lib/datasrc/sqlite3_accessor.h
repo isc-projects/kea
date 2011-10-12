@@ -24,6 +24,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <string>
 
+#include <cc/data.h>
+
 namespace isc {
 namespace dns {
 class RRClass;
@@ -65,20 +67,10 @@ public:
      * doesn't work (it is broken, doesn't exist and can't be created, etc).
      *
      * \param filename The database file to be used.
-     * \param rrclass Which class of data it should serve (while the database
-     *     file can contain multiple classes of data, single database can
-     *     provide only one class).
-     */
-    SQLite3Accessor(const std::string& filename,
-                    const isc::dns::RRClass& rrclass);
-
-    /**
-     * \brief Constructor
-     *
-     * Same as the other version, but takes rrclass as a bare string.
-     * we should obsolete the other version and unify the constructor to
-     * this version; the SQLite3Accessor is expected to be "dumb" and
-     * shouldn't care about DNS specific information such as RRClass.
+     * \param rrclass Textual representation of RR class ("IN", "CH", etc),
+     *     specifying which class of data it should serve (while the database
+     *     file can contain multiple classes of data, a single accessor can
+     *     work with only one class).
      */
     SQLite3Accessor(const std::string& filename, const std::string& rrclass);
 
@@ -190,6 +182,25 @@ private:
     friend class Context;
     const std::string database_name_;
 };
+
+/// \brief Creates an instance of the SQlite3 datasource client
+///
+/// Currently the configuration passed here must be a MapElement, containing
+/// one item called "database_file", whose value is a string
+///
+/// This configuration setup is currently under discussion and will change in
+/// the near future.
+///
+/// \param config The configuration for the datasource instance
+/// \param error This string will be set to an error message if an error occurs
+///              during initialization
+/// \return An instance of the sqlite3 datasource client, or NULL if there was
+///         an error
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config,
+                                            std::string& error);
+
+/// \brief Destroy the instance created by createInstance()
+extern "C" void destroyInstance(DataSourceClient* instance);
 
 }
 }
