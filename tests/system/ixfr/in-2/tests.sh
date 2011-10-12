@@ -54,7 +54,7 @@ then
     return 1
 fi
 
-grep XFRIN_XFR_TRANSFER_SUCCESS | grep IXFR > /dev/null
+grep XFRIN_XFR_TRANSFER_SUCCESS nsx2/bind10.run | grep IXFR > /dev/null
 if [ $? -ne 0 ];
 then
     echo "R:$CLIENT_NAME FAIL no 'IXFR successful' message in the BIND 10 log"
