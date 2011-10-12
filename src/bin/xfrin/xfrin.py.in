@@ -876,7 +876,12 @@ class ZoneInfo:
         self.set_master_port(config_data.get('master_port'))
         self.set_zone_class(config_data.get('class'))
         self.set_tsig_key(config_data.get('tsig_key'))
-        self.set_ixfr_disabled(config_data.get('ixfr_disabled'))
+        # XXX: harecode the default for ixfr_disabled.  We should retrieve
+        # it from the 
+        ixfr_disabled = config_data.get('ixfr_disabled')
+        if ixfr_disabled is None:
+            ixfr_disabled = True
+        self.set_ixfr_disabled(ixfr_disabled)
 
     def set_name(self, name_str):
         """Set the name for this zone given a name string.
@@ -952,14 +957,14 @@ class ZoneInfo:
                 raise XfrinZoneInfoException(errmsg)
 
     def set_ixfr_disabled(self, ixfr_disabled):
-        """Set ixfr_disabled. If set to False (the default), it will use
+        """Set ixfr_disabled. If set to False, it will use
            IXFR for incoming transfers. If set to True, it will use AXFR.
            At this moment there is no automatic fallback"""
-        # don't care what type it is; if evaluates to true, set to True
-        if ixfr_disabled:
-            self.ixfr_disabled = True
+        if ixfr_disabled is None:
+            self.ixfr_disabled = \
+                self._module_cc.get_default_value("zones/ixfr_disabled")
         else:
-            self.ixfr_disabled = False
+            self.ixfr_disabled = ixfr_disabled
 
     def get_master_addr_info(self):
         return (self.master_addr.family, socket.SOCK_STREAM,
