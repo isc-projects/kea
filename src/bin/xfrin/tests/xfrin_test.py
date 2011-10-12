@@ -1944,7 +1944,11 @@ class TestXfrin(unittest.TestCase):
                 # if not set, should default to False
                 self.assertFalse(zone_info.use_ixfr)
 
-    def test_command_handler_zones(self):
+    def test_config_handler_zones(self):
+        # This test passes a number of good and bad configs, and checks whether
+        # the values are reflected in the structure that will dictate the
+        # actual behaviour. It also checks if bad values are correctly
+        # handled
         config1 = { 'transfers_in': 3,
                    'zones': [
                    { 'name': 'test.example.',
