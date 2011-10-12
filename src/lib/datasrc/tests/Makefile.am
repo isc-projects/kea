@@ -1,4 +1,4 @@
-SUBDIRS = . testdata
+SUBDIRS = testdata
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/lib/dns
@@ -29,12 +29,23 @@ run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += cache_unittest.cc
 run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 run_unittests_SOURCES += rbtree_unittest.cc
-run_unittests_SOURCES += zonetable_unittest.cc
-run_unittests_SOURCES += memory_datasrc_unittest.cc
+#run_unittests_SOURCES += zonetable_unittest.cc
+#run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += database_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
+if !USE_STATIC_LINK
+# This test uses dynamically loadable module.  It will cause various
+# troubles with static link such as "missing" symbols in the static object
+# for the module.  As a workaround we disable this particualr test
+# in this case.
+run_unittests_SOURCES += factory_unittest.cc
+endif
+# for the dlopened types we have tests for, we also need to include the
+# sources
+run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
+#run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/memory_datasrc.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
@@ -51,7 +62,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)
 
 EXTRA_DIST =  testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.signed

@@ -62,7 +62,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)
 
 EXTRA_DIST  = testdata/message_cname_referral.wire
 EXTRA_DIST += testdata/message_example_com_soa.wire

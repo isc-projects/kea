@@ -17,10 +17,11 @@
 # Clean up nameserver directories after zone transfer tests.
 
 rm -f ns1/named.conf
-rm -f ns1/db.example
+rm -f ns1/db.example*
 rm -f ns1/named.memstats
 
 rm -f nsx2/bind10.run
+rm -f nsx2/b10-config.db
 rm -f ../zone.sqlite3
 
 rm -f client.dig

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/base64.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -52,7 +52,7 @@ DHCID::DHCID(const string& dhcid_str) {
     stringbuf digestbuf;
 
     iss >> &digestbuf;
-    isc::util::encode::decodeHex(digestbuf.str(), digest_);
+    isc::util::encode::decodeBase64(digestbuf.str(), digest_);
 
     // RFC4701 states DNS software should consider the RDATA section to
     // be opaque, but there must be at least three bytes in the data:
@@ -112,7 +112,7 @@ DHCID::toWire(AbstractMessageRenderer& renderer) const {
 /// \return A string representation of \c DHCID.
 string
 DHCID::toText() const {
-    return (isc::util::encode::encodeHex(digest_));
+    return (isc::util::encode::encodeBase64(digest_));
 }
 
 /// \brief Compare two instances of \c DHCID RDATA.

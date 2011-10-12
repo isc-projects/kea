@@ -29,13 +29,15 @@ run_unittests_SOURCES += rdata_unittest.h rdata_unittest.cc
 run_unittests_SOURCES += rdatafields_unittest.cc
 run_unittests_SOURCES += rdata_in_a_unittest.cc rdata_in_aaaa_unittest.cc
 run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
-run_unittests_SOURCES += rdata_txt_unittest.cc rdata_mx_unittest.cc
+run_unittests_SOURCES += rdata_txt_like_unittest.cc
+run_unittests_SOURCES += rdata_mx_unittest.cc
 run_unittests_SOURCES += rdata_ptr_unittest.cc rdata_cname_unittest.cc
 run_unittests_SOURCES += rdata_dname_unittest.cc
 run_unittests_SOURCES += rdata_afsdb_unittest.cc
 run_unittests_SOURCES += rdata_opt_unittest.cc
+run_unittests_SOURCES += rdata_dhcid_unittest.cc
 run_unittests_SOURCES += rdata_dnskey_unittest.cc
-run_unittests_SOURCES += rdata_ds_unittest.cc
+run_unittests_SOURCES += rdata_ds_like_unittest.cc
 run_unittests_SOURCES += rdata_nsec_unittest.cc
 run_unittests_SOURCES += rdata_nsec3_unittest.cc
 run_unittests_SOURCES += rdata_nsecbitmap_unittest.cc
@@ -71,4 +73,4 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
-noinst_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)

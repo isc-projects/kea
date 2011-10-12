@@ -23,6 +23,7 @@
 #include <util/python/pycppwrapper_util.h>
 
 #include <datasrc/client.h>
+#include <datasrc/factory.h>
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
 #include <datasrc/sqlite3_accessor.h>
@@ -50,12 +51,8 @@ namespace {
 class s_DataSourceClient : public PyObject {
 public:
     s_DataSourceClient() : cppobj(NULL) {};
-    DataSourceClient* cppobj;
+    DataSourceClientContainer* cppobj;
 };
-
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_DataSourceClient, DataSourceClient>
-    DataSourceClientContainer;
 
 PyObject*
 DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
@@ -64,12 +61,12 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         try {
             DataSourceClient::FindResult find_result(
-                self->cppobj->findZone(PyName_ToName(name)));
+                self->cppobj->getInstance().findZone(PyName_ToName(name)));
 
             result::Result r = find_result.code;
             ZoneFinderPtr zfp = find_result.zone_finder;
             // Use N instead of O so refcount isn't increased twice
-            return (Py_BuildValue("IN", r, createZoneFinderObject(zfp)));
+            return (Py_BuildValue("IN", r, createZoneFinderObject(zfp, po_self)));
         } catch (const std::exception& exc) {
             PyErr_SetString(getDataSourceException("Error"), exc.what());
             return (NULL);
@@ -90,7 +87,8 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
         try {
             return (createZoneIteratorObject(
-                        self->cppobj->getIterator(PyName_ToName(name_obj))));
+                self->cppobj->getInstance().getIterator(PyName_ToName(name_obj)),
+                po_self));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),
                             ne.what());
@@ -120,9 +118,13 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
         PyBool_Check(replace_obj)) {
         bool replace = (replace_obj != Py_False);
         try {
-            return (createZoneUpdaterObject(
-                        self->cppobj->getUpdater(PyName_ToName(name_obj),
-                                                 replace)));
+            ZoneUpdaterPtr updater =
+                self->cppobj->getInstance().getUpdater(PyName_ToName(name_obj),
+                                                       replace);
+            if (!updater) {
+                return (Py_None);
+            }
+            return (createZoneUpdaterObject(updater, po_self));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),
                             ne.what());
@@ -162,22 +164,33 @@ PyMethodDef DataSourceClient_methods[] = {
 
 int
 DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
-    // TODO: we should use the factory function which hasn't been written
-    // yet. For now we hardcode the sqlite3 initialization, and pass it one
-    // string for the database file. (similar to how the 'old direct'
-    // sqlite3_ds code works)
+    char* ds_type_str;
+    char* ds_config_str;
     try {
-        char* db_file_name;
-        if (PyArg_ParseTuple(args, "s", &db_file_name)) {
-            boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
-                new SQLite3Accessor(db_file_name, isc::dns::RRClass::IN()));
-            self->cppobj = new DatabaseClient(isc::dns::RRClass::IN(),
-                                              sqlite3_accessor);
+        // Turn the given argument into config Element; then simply call
+        // factory class to do its magic
+
+        // for now, ds_config must be JSON string
+        if (PyArg_ParseTuple(args, "ss", &ds_type_str, &ds_config_str)) {
+            isc::data::ConstElementPtr ds_config =
+                isc::data::Element::fromJSON(ds_config_str);
+            self->cppobj = new DataSourceClientContainer(ds_type_str,
+                                                         ds_config);
             return (0);
         } else {
             return (-1);
         }
-
+    } catch (const isc::data::JSONError& je) {
+        const string ex_what = "JSON parse error in data source configuration "
+                               "data for type " +
+                               string(ds_type_str) + ":" + je.what();
+        PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
+        return (-1);
+    } catch (const DataSourceError& dse) {
+        const string ex_what = "Failed to create DataSourceClient of type " +
+                               string(ds_type_str) + ":" + dse.what();
+        PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
+        return (-1);
     } catch (const exception& ex) {
         const string ex_what = "Failed to construct DataSourceClient object: " +
             string(ex.what());
