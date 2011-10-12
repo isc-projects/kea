@@ -876,8 +876,7 @@ class ZoneInfo:
         self.set_master_port(config_data.get('master_port'))
         self.set_zone_class(config_data.get('class'))
         self.set_tsig_key(config_data.get('tsig_key'))
-        use_ixfr = config_data.get('use_ixfr')
-        self.set_use_ixfr(use_ixfr)
+        self.set_use_ixfr(config_data.get('use_ixfr'))
 
     def set_name(self, name_str):
         """Set the name for this zone given a name string.
