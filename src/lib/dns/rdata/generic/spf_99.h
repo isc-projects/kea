@@ -30,13 +30,39 @@
 
 template<class Type, uint16_t typeCode> class TXTLikeImpl;
 
+/// \brief \c rdata::SPF class represents the SPF RDATA as defined %in
+/// RFC4408.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class. The semantics of the class is provided by
+/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
 class SPF : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
+    /// \brief Assignment operator.
+    ///
+    /// It internally allocates a resource, and if it fails a corresponding
+    /// standard exception will be thrown.
+    /// This operator never throws an exception otherwise.
+    ///
+    /// This operator provides the strong exception guarantee: When an
+    /// exception is thrown the content of the assignment target will be
+    /// intact.
     SPF& operator=(const SPF& source);
+
+    /// \brief The destructor.
     ~SPF();
+
+    ///
+    /// Specialized methods
+    ///
+
+    /// \brief Return a reference to the data strings
+    ///
+    /// This method never throws an exception.
+    const std::vector<std::vector<uint8_t> >& getString() const;
 
 private:
     typedef TXTLikeImpl<SPF, 99> SPFImpl;
