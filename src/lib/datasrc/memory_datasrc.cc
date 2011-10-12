@@ -830,7 +830,7 @@ checkConfigElementString(ConstElementPtr config, const std::string& name,
     if (!config->contains(name)) {
         addError(errors,
                  "Config for memory backend does not contain a '"
-                 "type"
+                 +name+
                  "' value");
         return false;
     } else if (!config->get(name) ||

@@ -90,6 +90,7 @@ EXTRA_DIST += question_fromWire question_toWire1 question_toWire2
 EXTRA_DIST += rdatafields1.spec rdatafields2.spec rdatafields3.spec
 EXTRA_DIST += rdatafields4.spec rdatafields5.spec rdatafields6.spec
 EXTRA_DIST += rdata_cname_fromWire rdata_dname_fromWire rdata_dnskey_fromWire
+EXTRA_DIST += rdata_dhcid_fromWire rdata_dhcid_toWire
 EXTRA_DIST += rdata_ds_fromWire rdata_in_a_fromWire rdata_in_aaaa_fromWire
 EXTRA_DIST += rdata_mx_fromWire rdata_mx_toWire1 rdata_mx_toWire2
 EXTRA_DIST += rdata_ns_fromWire

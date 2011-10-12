@@ -19,6 +19,7 @@ import isc.dns
 import unittest
 import os
 import shutil
+import json
 
 TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
 TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep
@@ -381,7 +382,39 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
+    def test_two_modules(self):
+        # load two modules, and check if they don't interfere
+        mem_cfg = { "type": "memory", "class": "IN", "zones": [] };
+        dsc_mem = isc.datasrc.DataSourceClient("memory", json.dumps(mem_cfg))
+        dsc_sql = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
+
+        # check if exceptions are working
+        self.assertRaises(isc.datasrc.Error, isc.datasrc.DataSourceClient,
+                          "memory", "{}")
+        self.assertRaises(isc.datasrc.Error, isc.datasrc.DataSourceClient,
+                          "sqlite3", "{}")
+
+        # see if a lookup succeeds in sqlite3 ds
+        result, finder = dsc_sql.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual(isc.dns.RRClass.IN(), finder.get_class())
+        self.assertEqual("example.com.", finder.get_origin().to_text())
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # see if a lookup fails in mem ds
+        result, finder = dsc_mem.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.NXDOMAIN, result)
+
+
     def test_update_delete_abort(self):
+        # we don't do enything with this one, just making sure loading two
+        # datasources
         dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
 
         # first make sure, through a separate finder, that some record exists
