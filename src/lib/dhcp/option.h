@@ -24,36 +24,78 @@ namespace dhcp {
 
 class Option {
 public:
+    /// length of the usual DHCPv4 option header (there are exceptions)
+    const static size_t OPTION4_HDR_LEN = 2;
+
+    /// length of any DHCPv6 option header
+    const static size_t OPTION6_HDR_LEN = 4;
+
+    /// defines option universe DHCPv4 or DHCPv6
     enum Universe { V4, V6 };
-    typedef std::map<unsigned int, boost::shared_ptr<Option> > Option4Lst;
-    typedef std::multimap<unsigned int, boost::shared_ptr<Option> > Option6Lst;
+
+    /// a collection of DHCPv4 options
+    typedef std::map<unsigned int, boost::shared_ptr<Option> >
+    Option4Collection;
+
+    /// a collection of DHCPv6 options
+    typedef std::multimap<unsigned int, boost::shared_ptr<Option> >
+    Option6Collection;
+
+    /// @brief a factory function prototype
+    ///
+    /// @param u option universe (DHCPv4 or DHCPv6)
+    /// @param type option type
+    /// @param buf pointer to a buffer
+    /// @param offset offset to first data byte in that buffer
+    /// @param len data length of this option
+    ///
+    /// @return a pointer to a created option object
     typedef boost::shared_ptr<Option> Factory(Option::Universe u,
                                               unsigned short type,
                                               boost::shared_array<uint8_t> buf,
                                               unsigned int offset,
                                               unsigned int len);
 
-    // ctor, used for options constructed, usually during transmission
+    /// @brief ctor, used for options constructed, usually during transmission
+    ///
+    /// @param u option universe (DHCPv4 or DHCPv6)
+    /// @param type option type
     Option(Universe u, unsigned short type);
 
-    // ctor, used for received options
-    // boost::shared_array allows sharing a buffer, but it requires that
-    // different instances share pointer to the whole array, not point
-    // to different elements in shared array. Therefore we need to share
-    // pointer to the whole array and remember offset where data for
-    // this option begins
+    /// @brief ctor, used for received options
+    ///
+    /// boost::shared_array allows sharing a buffer, but it requires that
+    /// different instances share pointer to the whole array, not point
+    /// to different elements in shared array. Therefore we need to share
+    /// pointer to the whole array and remember offset where data for
+    /// this option begins
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @param type option type
+    /// @param buf pointer to a buffer
+    /// @param offset offset in a buffer pointing to first byte of data
+    /// @param len length of the option data
     Option(Universe u, unsigned short type, boost::shared_array<uint8_t> buf,
            unsigned int offset,
            unsigned int len);
 
-    // writes option in wire-format to buf, returns pointer to first unused
-    // byte after stored option
+    /// @brief writes option in wire-format to buf
+    ///
+    /// Writes option in wire-format to buffer, returns pointer to first unused
+    /// byte after stored option (that is useful for writing options one after
+    /// another)
+    ///
+    /// @param buf pointer to a buffer
+    /// @param buf_len length of the buffer
+    /// @param offset offset to place, where option shout be stored
+    ///
+    /// @return offset to first unused byte after stored option
+    ///
     virtual unsigned int
     pack(boost::shared_array<uint8_t> buf,
          unsigned int buf_len,
          unsigned int offset);
 
-    ///
     /// @brief Parses buffer.
     ///
     /// Parses received buffer, returns offset to the first unused byte after
@@ -65,28 +107,23 @@ public:
     /// @param parse_len how many bytes should be parsed
     ///
     /// @return offset after last parsed option
-    ///
     virtual unsigned int
     unpack(boost::shared_array<uint8_t> buf,
            unsigned int buf_len,
            unsigned int offset,
            unsigned int parse_len);
 
-    ///
     /// Returns string representation of the option.
     ///
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    ///
     virtual std::string
     toText(int indent = 0);
 
-    ///
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
     /// @return option type
-    ///
     unsigned short
     getType();
 
@@ -94,32 +131,33 @@ public:
     /// option header)
     ///
     /// @return length of the option
-    ///
     virtual unsigned short
     len();
 
     /// @brief Returns length of header (2 for v4, 4 for v6)
     ///
     /// @return length of option header
-    ///
     virtual unsigned short
     getHeaderLen();
 
     /// returns if option is valid (e.g. option may be truncated)
+    ///
+    /// @return true, if option is valid
     virtual bool
     valid();
 
     /// Returns pointer to actual data.
     ///
     /// @return pointer to actual data (or NULL if there is no data)
-    ///
     virtual uint8_t*
     getData();
 
     /// Adds a sub-option.
     ///
-    /// @param opt shared pointer to a suboption that is going to be added.
+    /// Some DHCPv6 options can have suboptions. This method allows adding
+    /// options within options.
     ///
+    /// @param opt shared pointer to a suboption that is going to be added.
     void
     addOption(boost::shared_ptr<Option> opt);
 
@@ -128,7 +166,6 @@ public:
     /// @param type type of requested suboption
     ///
     /// @return shared_ptr to requested suoption
-    ///
     boost::shared_ptr<isc::dhcp::Option>
     getOption(unsigned short type);
 
@@ -141,15 +178,12 @@ public:
     bool
     delOption(unsigned short type);
 
-    /// TODO Need to implement getOptions() as well
-
-    // just to force that every option has virtual dtor
+    /// just to force that every option has virtual dtor
     virtual
     ~Option();
 
 protected:
 
-    ///
     /// Builds raw (over-wire) buffer of this option, including all
     /// defined suboptions. Version for building DHCPv4 options.
     ///
@@ -158,13 +192,11 @@ protected:
     /// @param offset offset from start of the buf buffer
     ///
     /// @return offset to the next byte after last used byte
-    ///
     virtual unsigned int
     pack4(boost::shared_array<uint8_t> buf,
           unsigned int buf_len,
           unsigned int offset);
 
-    ///
     /// Builds raw (over-wire) buffer of this option, including all
     /// defined suboptions. Version for building DHCPv4 options.
     ///
@@ -173,13 +205,11 @@ protected:
     /// @param offset offset from start of the buf buffer
     ///
     /// @return offset to the next byte after last used byte
-    ///
     virtual unsigned int
     pack6(boost::shared_array<uint8_t> buf,
           unsigned int buf_len,
           unsigned int offset);
 
-    ///
     /// Parses provided buffer and creates DHCPv4 options.
     ///
     /// @param buf buffer that contains raw buffer to parse (on-wire format)
@@ -187,14 +217,12 @@ protected:
     /// @param offset offset from start of the buf buffer
     ///
     /// @return offset to the next byte after last parsed byte
-    ///
     virtual unsigned int
     unpack4(boost::shared_array<uint8_t> buf,
             unsigned int buf_len,
             unsigned int offset,
             unsigned int parse_len);
 
-    ///
     /// Parses provided buffer and creates DHCPv6 options.
     ///
     /// @param buf buffer that contains raw buffer to parse (on-wire format)
@@ -202,26 +230,35 @@ protected:
     /// @param offset offset from start of the buf buffer
     ///
     /// @return offset to the next byte after last parsed byte
-    ///
     virtual unsigned int
     unpack6(boost::shared_array<uint8_t> buf,
             unsigned int buf_len,
             unsigned int offset,
             unsigned int parse_len);
 
-    Universe universe_; // option universe (V4 or V6)
-    unsigned short type_; // option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
+    /// option universe (V4 or V6)
+    Universe universe_;
 
+    /// option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
+    unsigned short type_;
+
+    /// shared pointer to a buffer (usually a part of packet)
     boost::shared_array<uint8_t> data_;
-    unsigned int data_len_; // length of data only. Use len() if you want to
-                            // know proper length with option header overhead
-    unsigned int offset_; // data is a shared_pointer that points out to the
-                          // whole packet. offset_ specifies where data for
-                          // this option begins.
 
-    // TODO: probably 2 different containers have to be used for v4 (unique
-    // options) and v6 (options with the same type can repeat)
-    Option6Lst optionLst_;
+    /// length of data only. Use len() if you want to
+    /// know proper length with option header overhead
+    unsigned int data_len_;
+
+    /// data is a shared_pointer that points out to the
+    /// whole packet. offset_ specifies where data for
+    /// this option begins.
+    unsigned int offset_;
+
+    /// collection for storing suboptions
+    Option6Collection options_;
+
+    /// TODO: probably 2 different containers have to be used for v4 (unique
+    /// options) and v6 (options with the same type can repeat)
 };
 
 } // namespace isc::dhcp

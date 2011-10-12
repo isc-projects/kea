@@ -35,7 +35,7 @@ public:
 
 TEST_F(LibDhcpTest, packOptions6) {
     boost::shared_array<uint8_t> buf(new uint8_t[512]);
-    isc::dhcp::Option::Option6Lst opts; // list of options
+    isc::dhcp::Option::Option6Collection opts; // list of options
 
     // generate content for options
     for (int i=0;i<64;i++) {
@@ -84,7 +84,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     // More advanced uses are validated in tests dedicated for
     // specific derived classes.
 
-    isc::dhcp::Option::Option6Lst options; // list of options
+    isc::dhcp::Option::Option6Collection options; // list of options
 
     // we can't use packed directly, as shared_array would try to
     // free it eventually
@@ -99,7 +99,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_EQ(35, offset); // parsed first 35 bytes (offset 0..34)
     EXPECT_EQ(options.size(), 5); // there should be 5 options
 
-    isc::dhcp::Option::Option6Lst::const_iterator x = options.find(12);
+    isc::dhcp::Option::Option6Collection::const_iterator x = options.find(12);
     ASSERT_NE(x, options.end()); // option 1 should exist
     EXPECT_EQ(12, x->second->getType());  // this should be option 12
     ASSERT_EQ(9, x->second->len()); // it should be of length 9

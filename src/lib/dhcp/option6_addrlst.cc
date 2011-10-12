@@ -29,15 +29,13 @@ using namespace isc::asiolink;
 
 
 Option6AddrLst::Option6AddrLst(unsigned short type,
-                               std::vector<isc::asiolink::IOAddress>& addrs)
-    :Option(V6, type) {
-    addrs_ = addrs;
+                               const AddressContainer& addrs)
+    :Option(V6, type), addrs_(addrs) {
 }
 
 Option6AddrLst::Option6AddrLst(unsigned short type,
-                               isc::asiolink::IOAddress addr)
-    :Option(V6, type) {
-    addrs_.push_back(addr);
+                               const isc::asiolink::IOAddress& addr)
+    :Option(V6, type), addrs_(1,addr) {
 }
 
 Option6AddrLst::Option6AddrLst(unsigned short type,
@@ -50,13 +48,13 @@ Option6AddrLst::Option6AddrLst(unsigned short type,
 }
 
 void
-Option6AddrLst::setAddress(isc::asiolink::IOAddress addr) {
+Option6AddrLst::setAddress(const isc::asiolink::IOAddress& addr) {
     addrs_.clear();
     addrs_.push_back(addr);
 }
 
 void
-Option6AddrLst::setAddresses(std::vector<isc::asiolink::IOAddress>& addrs) {
+Option6AddrLst::setAddresses(const AddressContainer& addrs) {
     addrs_ = addrs;
 }
 
@@ -80,8 +78,8 @@ Option6AddrLst::pack(boost::shared_array<uint8_t> buf,
          ++addr) {
         memcpy(&buf[offset],
                addr->getAddress().to_v6().to_bytes().data(),
-               16);
-        offset += 16;
+               V6ADDRESS_LEN);
+        offset += V6ADDRESS_LEN;
     }
 
     return offset;
@@ -118,7 +116,7 @@ std::string Option6AddrLst::toText(int indent /* =0 */) {
 
     tmp << "type=" << type_ << " " << addrs_.size() << "addr(s): ";
 
-    for (AddrsContainer::const_iterator addr=addrs_.begin();
+    for (AddressContainer::const_iterator addr=addrs_.begin();
          addr!=addrs_.end();
          ++addr) {
         tmp << addr->toText() << " ";
@@ -128,5 +126,5 @@ std::string Option6AddrLst::toText(int indent /* =0 */) {
 
 unsigned short Option6AddrLst::len() {
 
-    return (4 /* DHCPv6 option header len */ + addrs_.size()*16);
+    return (OPTION6_HDR_LEN + addrs_.size()*16);
 }

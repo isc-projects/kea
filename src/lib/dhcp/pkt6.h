@@ -88,7 +88,7 @@ namespace isc {
         /// TODO Need to implement getOptions() as well
 
         // XXX: add *a lot* here
-        isc::dhcp::Option::Option6Lst options_;
+        isc::dhcp::Option::Option6Collection options_;
 
     protected:
         bool packTCP();
