@@ -83,7 +83,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
                                          1234, Pkt6::UDP));
 
     boost::shared_ptr<Option6IA> ia =
-        boost::shared_ptr<Option6IA>(new Option6IA(Option::V6, D6O_IA_NA, 234));
+        boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, 234));
     ia->setT1(1501);
     ia->setT2(2601);
     sol->addOption(ia);
