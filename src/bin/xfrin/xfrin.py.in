@@ -1061,6 +1061,8 @@ class Xfrin:
                 # we should check if it matches one of them, and then use it.)
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
                 zone_info = self._get_zone_info(zone_name, rrclass)
+                notify_addr = self._parse_master_and_port(args, zone_name,
+                                                          rrclass)
                 if zone_info is None:
                     # TODO what to do? no info known about zone. defaults?
                     errmsg = "Got notification to retransfer unknown zone " + zone_name.to_text()
@@ -1068,13 +1070,22 @@ class Xfrin:
                     answer = create_answer(1, errmsg)
                 else:
                     master_addr = zone_info.get_master_addr_info()
-                    ret = self.xfrin_start(zone_name,
-                                           rrclass,
-                                           self._get_db_file(),
-                                           master_addr,
-                                           zone_info.tsig_key, RRType.AXFR(),
-                                           True)
-                    answer = create_answer(ret[0], ret[1])
+                    request_type = RRType.AXFR()
+                    if notify_addr == master_addr:
+                        ret = self.xfrin_start(zone_name,
+                                               rrclass,
+                                               self._get_db_file(),
+                                               master_addr,
+                                               zone_info.tsig_key, request_type,
+                                               True)
+                        answer = create_answer(ret[0], ret[1])
+                    else:
+                        errmsg = "Got notification for " + zone_name.to_text()\
+                               + "from unknown address: " + notify_addr[2][0];
+                        logger.error(XFRIN_NOTIFY_UNKNOWN_MASTER,
+                                     zone_name.to_text(), notify_addr[2][0],
+                                     master_addr[2][0])
+                        answer = create_answer(1, errmsg)
 
             elif command == 'retransfer' or command == 'refresh':
                 # Xfrin receives the retransfer/refresh from cmdctl(sent by bindctl).
