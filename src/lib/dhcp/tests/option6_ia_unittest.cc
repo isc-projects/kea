@@ -39,22 +39,22 @@ public:
 TEST_F(Option6IATest, basic) {
 
     boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
-    for (int i=0; i<128; i++)
+    for (int i = 0; i < 128; i++)
         simple_buf[i] = 0;
-    simple_buf[0]=0xa1; // iaid
-    simple_buf[1]=0xa2;
-    simple_buf[2]=0xa3;
-    simple_buf[3]=0xa4;
+    simple_buf[0] = 0xa1; // iaid
+    simple_buf[1] = 0xa2;
+    simple_buf[2] = 0xa3;
+    simple_buf[3] = 0xa4;
 
-    simple_buf[4]=0x81; // T1
-    simple_buf[5]=0x02;
-    simple_buf[6]=0x03;
-    simple_buf[7]=0x04;
+    simple_buf[4] = 0x81; // T1
+    simple_buf[5] = 0x02;
+    simple_buf[6] = 0x03;
+    simple_buf[7] = 0x04;
 
-    simple_buf[8]=0x84; // T2
-    simple_buf[9]=0x03;
-    simple_buf[10]=0x02;
-    simple_buf[11]=0x01;
+    simple_buf[8] = 0x84; // T2
+    simple_buf[9] = 0x03;
+    simple_buf[10] = 0x02;
+    simple_buf[11] = 0x01;
 
     // create an option
     // unpack() is called from constructor
@@ -104,12 +104,14 @@ TEST_F(Option6IATest, basic) {
                           (simple_buf[74] << 8) +
                           (simple_buf[75]) );
 
-    delete opt;
+    EXPECT_NO_THROW(
+        delete opt;
+    );
 }
 
 TEST_F(Option6IATest, simple) {
     boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
-    for (int i=0; i<128; i++)
+    for (int i = 0; i < 128; i++)
         simple_buf[i] = 0;
 
     Option6IA * ia = new Option6IA(D6O_IA_NA, 1234);
@@ -121,7 +123,9 @@ TEST_F(Option6IATest, simple) {
     EXPECT_EQ(2345, ia->getT1());
     EXPECT_EQ(3456, ia->getT2());
 
-    delete ia;
+    EXPECT_NO_THROW(
+        delete ia;
+    );
 }
 
 // test if option can build suboptions
@@ -176,7 +180,9 @@ TEST_F(Option6IATest, suboptions_pack) {
 
     EXPECT_EQ(0, memcmp(&buf[10], expected, 48));
 
-    delete ia;
+    EXPECT_NO_THROW(
+        delete ia;
+    );
 }
 
 // test if option can parse suboptions
@@ -204,7 +210,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
     };
 
     boost::shared_array<uint8_t> buf(new uint8_t[128]);
-    for (int i=0; i<128; i++)
+    for (int i = 0; i < 128; i++)
         buf[i] = 0;
     memcpy(&buf[0], expected, 48);
 
@@ -235,16 +241,18 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     // checks for dummy option
     subopt = ia->getOption(0xcafe);
-    ASSERT_FALSE(subopt == boost::shared_ptr<Option>()); // non-NULL
+    ASSERT_TRUE(subopt); // should be non-NULL
 
     EXPECT_EQ(0xcafe, subopt->getType());
     EXPECT_EQ(4, subopt->len());
     EXPECT_EQ(NULL, subopt->getData());
 
     subopt = ia->getOption(1); // get option 1
-    ASSERT_EQ(subopt, boost::shared_ptr<Option>()); // NULL
+    ASSERT_FALSE(subopt); // should be NULL
 
-    delete ia;
+    EXPECT_NO_THROW(
+        delete ia;
+    );
 }
 
 }

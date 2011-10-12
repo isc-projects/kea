@@ -43,7 +43,9 @@ TEST_F(OptionTest, basic4) {
     EXPECT_EQ(NULL, opt->getData());
     EXPECT_EQ(2, opt->len()); // just v4 header
 
-    delete opt;
+    EXPECT_NO_THROW(
+        delete opt;
+    );
 }
 
 // tests simple constructor
@@ -55,14 +57,16 @@ TEST_F(OptionTest, basic6) {
     EXPECT_EQ(NULL, opt->getData());
     EXPECT_EQ(4, opt->len()); // just v6 header
 
-    delete opt;
+    EXPECT_NO_THROW(
+        delete opt;
+    );
 }
 
 // tests contructor used in pkt reception
 // option contains actual data
 TEST_F(OptionTest, data1) {
     boost::shared_array<uint8_t> buf(new uint8_t[32]);
-    for (int i=0; i<32; i++)
+    for (int i = 0; i < 32; i++)
         buf[i] = 100+i;
     Option* opt = new Option(Option::V6, 333, //type
                              buf,
@@ -85,7 +89,9 @@ TEST_F(OptionTest, data1) {
     // payload
     EXPECT_EQ(0, memcmp(&buf[3], &buf[24], 7) );
 
-    delete opt;
+    EXPECT_NO_THROW(
+        delete opt;
+    );
 }
 
 // another text that tests the same thing, just
@@ -93,20 +99,20 @@ TEST_F(OptionTest, data1) {
 TEST_F(OptionTest, data2) {
 
     boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
-    for (int i=0; i<128; i++)
+    for (int i = 0; i < 128; i++)
         simple_buf[i] = 0;
-    simple_buf[0]=0xa1;
-    simple_buf[1]=0xa2;
-    simple_buf[2]=0xa3;
-    simple_buf[3]=0xa4;
+    simple_buf[0] = 0xa1;
+    simple_buf[1] = 0xa2;
+    simple_buf[2] = 0xa3;
+    simple_buf[3] = 0xa4;
 
     // create an option (unpack content)
-    Option* opt = new Option(Option::V6, 
+    Option* opt = new Option(Option::V6,
                              D6O_CLIENTID,
                              simple_buf,
-                             0, 
+                             0,
                              4);
-    
+
     // pack this option again in the same buffer, but in
     // different place
     int offset18 = opt->pack(simple_buf, 128, 10);
@@ -123,11 +129,13 @@ TEST_F(OptionTest, data2) {
 
     // if option length is correct
     EXPECT_EQ(4, simple_buf[12]*256 + simple_buf[13]);
-    
+
     // if option content is correct
     EXPECT_EQ(0, memcmp(&simple_buf[0], &simple_buf[14],4));
 
-    delete opt;
+    EXPECT_NO_THROW(
+        delete opt;
+    );
 }
 
 // check that an option can contain 2 suboptions:
@@ -171,7 +179,9 @@ TEST_F(OptionTest, suboptions1) {
     // payload
     EXPECT_EQ(0, memcmp(&buf[20], expected, 20) );
 
-    delete opt1;
+    EXPECT_NO_THROW(
+        delete opt1;
+    );
 }
 
 // check that an option can contain 2 suboptions:
@@ -211,7 +221,9 @@ TEST_F(OptionTest, suboptions2) {
     // payload
     EXPECT_EQ(0, memcmp(&buf[20], expected, 20) );
 
-    delete opt1;
+    EXPECT_NO_THROW(
+        delete opt1;
+    );
 }
 
 TEST_F(OptionTest, addgetdel) {

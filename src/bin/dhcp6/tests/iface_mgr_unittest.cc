@@ -142,6 +142,9 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
              << pkt->local_addr_.toText() << "\");" << endl;
         cout << "    pkt->ifindex_ = " << pkt->ifindex_ << ";" << endl;
         cout << "    pkt->iface_ = \"" << pkt->iface_ << "\";" << endl;
+
+        // TODO it is better to declare an array and then memcpy it to
+        // packet.
         for (int i=0; i< pkt->data_len_; i++) {
             cout << "    pkt->data_[" << i << "]="
                  << (int)(unsigned char)pkt->data_[i] << "; ";
