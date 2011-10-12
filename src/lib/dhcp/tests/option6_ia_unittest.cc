@@ -19,6 +19,9 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include "dhcp/dhcp6.h"
 #include "dhcp/option.h"
 #include "dhcp/option6_ia.h"
