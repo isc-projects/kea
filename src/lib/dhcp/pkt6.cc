@@ -99,6 +99,7 @@ Pkt6::packUDP() {
         data_len_ = length;
     }
 
+    data_len_ = length;
     try {
         // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
         data_[0] = msg_type_;
