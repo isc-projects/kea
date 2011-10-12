@@ -31,7 +31,7 @@ echo "I:$SERVER_NAME updating IXFR-server to suitable start version"
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n4
 if [ $? -ne 0 ];
 then
-    return $status
+    return 1
 fi
 
 # The pre-requisites for this test are the same as for the common tests, so
@@ -39,7 +39,7 @@ fi
 . ../common_tests.sh
 if [ $? -ne 0 ];
 then
-    return $status
+    return 1
 fi
 
 # TEMPORARY: at the time of writing (October 2011) BIND 10 does not attempt
@@ -77,5 +77,5 @@ then
     return 1
 fi
 
-echo "I:exit status: $status"
-exit $status
+echo "I:exit status: 0"
+return 0
