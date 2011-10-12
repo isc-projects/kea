@@ -876,7 +876,7 @@ class ZoneInfo:
         self.set_master_port(config_data.get('master_port'))
         self.set_zone_class(config_data.get('class'))
         self.set_tsig_key(config_data.get('tsig_key'))
-        self.set_ixfr_disabled(config_data.get('ixfr_disabled'))
+        self.set_use_ixfr(config_data.get('use_ixfr'))
 
     def set_name(self, name_str):
         """Set the name for this zone given a name string.
@@ -951,15 +951,16 @@ class ZoneInfo:
                 errmsg = "bad TSIG key string: " + tsig_key_str
                 raise XfrinZoneInfoException(errmsg)
 
-    def set_ixfr_disabled(self, ixfr_disabled):
-        """Set ixfr_disabled. If set to False (the default), it will use
-           IXFR for incoming transfers. If set to True, it will use AXFR.
+    def set_use_ixfr(self, use_ixfr):
+        """Set use_ixfr. If set to True, it will use
+           IXFR for incoming transfers. If set to False, it will use AXFR.
            At this moment there is no automatic fallback"""
-        # don't care what type it is; if evaluates to true, set to True
-        if ixfr_disabled:
-            self.ixfr_disabled = True
+        # TODO: http://bind10.isc.org/ticket/1279
+        if use_ixfr is None:
+            self.use_ixfr = \
+                self._module_cc.get_default_value("zones/use_ixfr")
         else:
-            self.ixfr_disabled = False
+            self.use_ixfr = use_ixfr
 
     def get_master_addr_info(self):
         return (self.master_addr.family, socket.SOCK_STREAM,
@@ -1065,12 +1066,15 @@ class Xfrin:
                     logger.error(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_name.to_text())
                     answer = create_answer(1, errmsg)
                 else:
+                    request_type = RRType.AXFR()
+                    if zone_info.use_ixfr:
+                        request_type = RRType.IXFR()
                     master_addr = zone_info.get_master_addr_info()
                     ret = self.xfrin_start(zone_name,
                                            rrclass,
                                            self._get_db_file(),
                                            master_addr,
-                                           zone_info.tsig_key, RRType.AXFR(),
+                                           zone_info.tsig_key, request_type,
                                            True)
                     answer = create_answer(ret[0], ret[1])
 
@@ -1086,7 +1090,7 @@ class Xfrin:
                 request_type = RRType.AXFR()
                 if zone_info:
                     tsig_key = zone_info.tsig_key
-                    if not zone_info.ixfr_disabled:
+                    if zone_info.use_ixfr:
                         request_type = RRType.IXFR()
                 db_file = args.get('db_file') or self._get_db_file()
                 ret = self.xfrin_start(zone_name,
