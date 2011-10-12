@@ -77,14 +77,26 @@ initModulePart_DataSourceClient(PyObject* mod) {
     }
     Py_INCREF(&datasourceclient_type);
 
-    addClassVariable(datasourceclient_type, "SUCCESS",
-                     Py_BuildValue("I", result::SUCCESS));
-    addClassVariable(datasourceclient_type, "EXIST",
-                     Py_BuildValue("I", result::EXIST));
-    addClassVariable(datasourceclient_type, "NOTFOUND",
-                     Py_BuildValue("I", result::NOTFOUND));
-    addClassVariable(datasourceclient_type, "PARTIALMATCH",
-                     Py_BuildValue("I", result::PARTIALMATCH));
+    try {
+        installClassVariable(datasourceclient_type, "SUCCESS",
+                             Py_BuildValue("I", result::SUCCESS));
+        installClassVariable(datasourceclient_type, "EXIST",
+                             Py_BuildValue("I", result::EXIST));
+        installClassVariable(datasourceclient_type, "NOTFOUND",
+                             Py_BuildValue("I", result::NOTFOUND));
+        installClassVariable(datasourceclient_type, "PARTIALMATCH",
+                             Py_BuildValue("I", result::PARTIALMATCH));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in DataSourceClient initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+            "Unexpected failure in DataSourceClient initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -103,26 +115,41 @@ initModulePart_ZoneFinder(PyObject* mod) {
     }
     Py_INCREF(&zonefinder_type);
 
-    addClassVariable(zonefinder_type, "SUCCESS",
-                     Py_BuildValue("I", ZoneFinder::SUCCESS));
-    addClassVariable(zonefinder_type, "DELEGATION",
-                     Py_BuildValue("I", ZoneFinder::DELEGATION));
-    addClassVariable(zonefinder_type, "NXDOMAIN",
-                     Py_BuildValue("I", ZoneFinder::NXDOMAIN));
-    addClassVariable(zonefinder_type, "NXRRSET",
-                     Py_BuildValue("I", ZoneFinder::NXRRSET));
-    addClassVariable(zonefinder_type, "CNAME",
-                     Py_BuildValue("I", ZoneFinder::CNAME));
-    addClassVariable(zonefinder_type, "DNAME",
-                     Py_BuildValue("I", ZoneFinder::DNAME));
+    try {
+        installClassVariable(zonefinder_type, "SUCCESS",
+                             Py_BuildValue("I", ZoneFinder::SUCCESS));
+        installClassVariable(zonefinder_type, "DELEGATION",
+                             Py_BuildValue("I", ZoneFinder::DELEGATION));
+        installClassVariable(zonefinder_type, "NXDOMAIN",
+                             Py_BuildValue("I", ZoneFinder::NXDOMAIN));
+        installClassVariable(zonefinder_type, "NXRRSET",
+                             Py_BuildValue("I", ZoneFinder::NXRRSET));
+        installClassVariable(zonefinder_type, "CNAME",
+                             Py_BuildValue("I", ZoneFinder::CNAME));
+        installClassVariable(zonefinder_type, "DNAME",
+                             Py_BuildValue("I", ZoneFinder::DNAME));
+        installClassVariable(zonefinder_type, "WILDCARD",
+                             Py_BuildValue("I", ZoneFinder::WILDCARD));
+        installClassVariable(zonefinder_type, "WILDCARD_NXRRSET",
+                             Py_BuildValue("I", ZoneFinder::WILDCARD_NXRRSET));
 
-    addClassVariable(zonefinder_type, "FIND_DEFAULT",
-                     Py_BuildValue("I", ZoneFinder::FIND_DEFAULT));
-    addClassVariable(zonefinder_type, "FIND_GLUE_OK",
-                     Py_BuildValue("I", ZoneFinder::FIND_GLUE_OK));
-    addClassVariable(zonefinder_type, "FIND_DNSSEC",
-                     Py_BuildValue("I", ZoneFinder::FIND_DNSSEC));
-
+        installClassVariable(zonefinder_type, "FIND_DEFAULT",
+                             Py_BuildValue("I", ZoneFinder::FIND_DEFAULT));
+        installClassVariable(zonefinder_type, "FIND_GLUE_OK",
+                             Py_BuildValue("I", ZoneFinder::FIND_GLUE_OK));
+        installClassVariable(zonefinder_type, "FIND_DNSSEC",
+                             Py_BuildValue("I", ZoneFinder::FIND_DNSSEC));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in ZoneFinder initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in ZoneFinder initialization");
+        return (false);
+    }
 
     return (true);
 }

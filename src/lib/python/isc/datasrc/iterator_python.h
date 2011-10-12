@@ -25,7 +25,15 @@ namespace python {
 
 extern PyTypeObject zoneiterator_type;
 
-PyObject* createZoneIteratorObject(isc::datasrc::ZoneIteratorPtr source);
+/// \brief Create a ZoneIterator python object
+///
+/// \param source The zone iterator pointer to wrap
+/// \param base_obj An optional PyObject that this ZoneIterator depends on
+///                 Its refcount is increased, and will be decreased when
+///                 this zone iterator is destroyed, making sure that the
+///                 base object is never destroyed before this zone iterator.
+PyObject* createZoneIteratorObject(isc::datasrc::ZoneIteratorPtr source,
+                                   PyObject* base_obj = NULL);
 
 
 } // namespace python

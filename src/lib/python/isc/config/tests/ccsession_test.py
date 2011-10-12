@@ -747,6 +747,9 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertEqual({'Spec2': {'item5': []}}, uccs._local_changes)
         uccs.add_value("Spec2/item5", None);
         self.assertEqual({'Spec2': {'item5': ['']}}, uccs._local_changes)
+        # Intending to empty a list element, but forget specifying the index.
+        self.assertRaises(isc.cc.data.DataTypeError,
+                          uccs.remove_value, "Spec2/item5", None)
 
     def test_add_remove_value_named_set(self):
         fake_conn = fakeUIConn()

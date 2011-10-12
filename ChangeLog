@@ -1,3 +1,42 @@
+297.	[func]		dvv
+	Implement the SPF rrtype according to RFC4408.
+	(Trac #1140, git 146934075349f94ee27f23bf9ff01711b94e369e)
+
+296.	[build]		jreed
+	Do not install the unittest libraries. At this time, they
+	are not useful without source tree (and they may or may
+	not have googletest support). Also, convert several makefiles
+	to build tests at "check" time and not build time.
+	(Trac #1091, git 2adf4a90ad79754d52126e7988769580d20501c3)
+
+295.	[bug]		jinmei
+	__init__.py for isc.dns was installed in the wrong directory,
+	which would now make xfrin fail to start.  It was also bad
+	in that it replaced any existing __init__.py in th public
+	site-packages directory.  After applying this fix You may want to
+	check if the wrong init file is in the wrong place, in which
+	case it should be removed.
+	(Trac #1285, git af3b17472694f58b3d6a56d0baf64601b0f6a6a1)
+
+294.	[func]		jelte, jinmei, vorner
+	b10-xfrin now supports incoming IXFR.  See BIND 10 Guide for
+	how to configure it and operational notes.
+	(Trac #1212, multiple git merges)
+
+293.    [func]*		tomek
+	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
+	multicast groups and listens to incoming DHCPv6 client messages.
+	Received messages are then echoed back to clients. This
+	functionality is limited, but it can be used to test out client
+	resiliency to unexpected messages. Note that network interface
+	detection routines are not implemented yet, so interface name
+	and its address must be specified in interfaces.txt.
+	(Trac #878, git 3b1a604abf5709bfda7271fa94213f7d823de69d)
+
+292.	[func]		dvv
+	Implement the DLV rrtype according to RFC4431.
+	(Trac #1144, git d267c0511a07c41cd92e3b0b9ee9bf693743a7cf)
+
 291.    [func]          naokikambe
 	Statistics items are specified by each module's spec file.
 	Stats module can read these through the config manager. Stats
@@ -31,7 +70,7 @@
 	configuration.
 	(Trac #1165, git 698176eccd5d55759fe9448b2c249717c932ac31)
 
-288.    [bug]       stephen
+288.    [bug]		stephen
 	Fixed problem whereby the order in which component files appeared in
 	rdataclass.cc was system dependent, leading to problems on some
 	systems where data types were used before the header file in which

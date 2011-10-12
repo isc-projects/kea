@@ -1,4 +1,5 @@
 python_PYTHON = __init__.py
+pythondir = $(pyexecdir)/isc/dns
 
 CLEANDIRS = __pycache__
 

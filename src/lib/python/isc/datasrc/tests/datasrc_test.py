@@ -19,14 +19,16 @@ import isc.dns
 import unittest
 import os
 import shutil
+import json
 
 TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
 TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep
 
 READ_ZONE_DB_FILE = TESTDATA_PATH + "example.com.sqlite3"
-BROKEN_DB_FILE = TESTDATA_PATH + "brokendb.sqlite3"
 WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
-NEW_DB_FILE = TESTDATA_WRITE_PATH + "new_db.sqlite3"
+
+READ_ZONE_DB_CONFIG = "{ \"database_file\": \"" + READ_ZONE_DB_FILE + "\" }"
+WRITE_ZONE_DB_CONFIG = "{ \"database_file\": \"" + WRITE_ZONE_DB_FILE + "\"}"
 
 def add_rrset(rrset_list, name, rrclass, rrtype, ttl, rdatas):
     rrset_to_add = isc.dns.RRset(name, rrclass, rrtype, ttl)
@@ -59,13 +61,27 @@ def check_for_rrset(expected_rrsets, rrset):
 
 class DataSrcClient(unittest.TestCase):
 
-    def test_construct(self):
+    def test_constructors(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneIterator)
 
+        self.assertRaises(TypeError, isc.datasrc.DataSourceClient, 1, "{}")
+        self.assertRaises(TypeError, isc.datasrc.DataSourceClient, "sqlite3", 1)
+        self.assertRaises(isc.datasrc.Error,
+                          isc.datasrc.DataSourceClient, "foo", "{}")
+        self.assertRaises(isc.datasrc.Error,
+                          isc.datasrc.DataSourceClient, "sqlite3", "")
+        self.assertRaises(isc.datasrc.Error,
+                          isc.datasrc.DataSourceClient, "sqlite3", "{}")
+        self.assertRaises(isc.datasrc.Error,
+                          isc.datasrc.DataSourceClient, "sqlite3",
+                          "{ \"foo\": 1 }")
+        self.assertRaises(isc.datasrc.Error,
+                          isc.datasrc.DataSourceClient, "memory",
+                          "{ \"foo\": 1 }")
 
     def test_iterate(self):
-        dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
         # for RRSIGS, the TTL's are currently modified. This test should
         # start failing when we fix that.
@@ -176,7 +192,7 @@ class DataSrcClient(unittest.TestCase):
         self.assertRaises(TypeError, isc.datasrc.ZoneFinder)
 
     def test_find(self):
-        dsc = isc.datasrc.DataSourceClient(READ_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
         result, finder = dsc.find_zone(isc.dns.Name("example.com"))
         self.assertEqual(finder.SUCCESS, result)
@@ -231,6 +247,21 @@ class DataSrcClient(unittest.TestCase):
             "cname-ext.example.com. 3600 IN CNAME www.sql1.example.com.\n",
             rrset.to_text())
 
+        result, rrset = finder.find(isc.dns.Name("foo.wild.example.com"),
+                                    isc.dns.RRType.A(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.WILDCARD, result)
+        self.assertEqual("foo.wild.example.com. 3600 IN A 192.0.2.255\n",
+                         rrset.to_text())
+
+        result, rrset = finder.find(isc.dns.Name("foo.wild.example.com"),
+                                    isc.dns.RRType.TXT(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.WILDCARD_NXRRSET, result)
+        self.assertEqual(None, rrset)
+
         self.assertRaises(TypeError, finder.find,
                           "foo",
                           isc.dns.RRType.A(),
@@ -247,6 +278,24 @@ class DataSrcClient(unittest.TestCase):
                           None,
                           "foo")
 
+    def test_find_previous(self):
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
+
+        result, finder = dsc.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.SUCCESS, result)
+
+        prev = finder.find_previous_name(isc.dns.Name("bbb.example.com"))
+        self.assertEqual("example.com.", prev.to_text())
+
+        prev = finder.find_previous_name(isc.dns.Name("zzz.example.com"))
+        self.assertEqual("www.example.com.", prev.to_text())
+
+        prev = finder.find_previous_name(prev)
+        self.assertEqual("*.wild.example.com.", prev.to_text())
+
+        self.assertRaises(isc.datasrc.NotImplemented,
+                          finder.find_previous_name,
+                          isc.dns.Name("com"))
 
 class DataSrcUpdater(unittest.TestCase):
 
@@ -260,7 +309,7 @@ class DataSrcUpdater(unittest.TestCase):
 
     def test_update_delete_commit(self):
 
-        dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
 
         # first make sure, through a separate finder, that some record exists
         result, finder = dsc.find_zone(isc.dns.Name("example.com"))
@@ -333,8 +382,40 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
+    def test_two_modules(self):
+        # load two modules, and check if they don't interfere
+        mem_cfg = { "type": "memory", "class": "IN", "zones": [] };
+        dsc_mem = isc.datasrc.DataSourceClient("memory", json.dumps(mem_cfg))
+        dsc_sql = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
+
+        # check if exceptions are working
+        self.assertRaises(isc.datasrc.Error, isc.datasrc.DataSourceClient,
+                          "memory", "{}")
+        self.assertRaises(isc.datasrc.Error, isc.datasrc.DataSourceClient,
+                          "sqlite3", "{}")
+
+        # see if a lookup succeeds in sqlite3 ds
+        result, finder = dsc_sql.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual(isc.dns.RRClass.IN(), finder.get_class())
+        self.assertEqual("example.com.", finder.get_origin().to_text())
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A(),
+                                    None,
+                                    finder.FIND_DEFAULT)
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # see if a lookup fails in mem ds
+        result, finder = dsc_mem.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.NXDOMAIN, result)
+
+
     def test_update_delete_abort(self):
-        dsc = isc.datasrc.DataSourceClient(WRITE_ZONE_DB_FILE)
+        # we don't do enything with this one, just making sure loading two
+        # datasources
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
 
         # first make sure, through a separate finder, that some record exists
         result, finder = dsc.find_zone(isc.dns.Name("example.com"))
@@ -383,6 +464,11 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
+    def test_update_for_no_zone(self):
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        self.assertEqual(None,
+                         dsc.get_updater(isc.dns.Name("notexistent.example"),
+                                         True))
 
 if __name__ == "__main__":
     isc.log.init("bind10")

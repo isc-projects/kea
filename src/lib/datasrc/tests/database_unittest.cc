@@ -830,8 +830,7 @@ public:
 class TestSQLite3Accessor : public SQLite3Accessor {
 public:
     TestSQLite3Accessor() : SQLite3Accessor(
-        TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied",
-        RRClass::IN())
+        TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied", "IN")
     {
         startUpdateZone("example.org.", true);
         string columns[ADD_COLUMN_COUNT];
