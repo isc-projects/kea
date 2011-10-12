@@ -75,6 +75,7 @@ in separate zonemgr process.
       and care should be taken to enable IXFR.
       See the BIND 10 Guide for more details.
     </para>
+<!-- TODO: http://bind10.isc.org/ticket/1279 -->
 
     <para>
       This daemon communicates with BIND 10 over a

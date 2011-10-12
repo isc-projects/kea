@@ -956,6 +956,7 @@ class ZoneInfo:
         """Set use_ixfr. If set to True, it will use
            IXFR for incoming transfers. If set to False, it will use AXFR.
            At this moment there is no automatic fallback"""
+        # TODO: http://bind10.isc.org/ticket/1279
         if use_ixfr is None:
             self.use_ixfr = \
                 self._module_cc.get_default_value("zones/use_ixfr")
