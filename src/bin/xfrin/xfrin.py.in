@@ -1067,12 +1067,15 @@ class Xfrin:
                     logger.error(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_name.to_text())
                     answer = create_answer(1, errmsg)
                 else:
+                    request_type = RRType.AXFR()
+                    if zone_info.use_ixfr:
+                        request_type = RRType.IXFR()
                     master_addr = zone_info.get_master_addr_info()
                     ret = self.xfrin_start(zone_name,
                                            rrclass,
                                            self._get_db_file(),
                                            master_addr,
-                                           zone_info.tsig_key, RRType.AXFR(),
+                                           zone_info.tsig_key, request_type,
                                            True)
                     answer = create_answer(ret[0], ret[1])
 
