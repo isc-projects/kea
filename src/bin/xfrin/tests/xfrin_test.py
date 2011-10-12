@@ -1937,12 +1937,12 @@ class TestXfrin(unittest.TestCase):
                 self.assertEqual(zone_info.tsig_key.to_text(), TSIGKey(zone_config['tsig_key']).to_text())
             else:
                 self.assertIsNone(zone_info.tsig_key)
-            if 'ixfr_disabled' in zone_config and\
-               zone_config.get('ixfr_disabled'):
-                self.assertTrue(zone_info.ixfr_disabled)
+            if 'use_ixfr' in zone_config and\
+               zone_config.get('use_ixfr'):
+                self.assertTrue(zone_info.use_ixfr)
             else:
                 # if not set, should default to False
-                self.assertFalse(zone_info.ixfr_disabled)
+                self.assertFalse(zone_info.use_ixfr)
 
     def test_command_handler_zones(self):
         config1 = { 'transfers_in': 3,
@@ -1950,7 +1950,7 @@ class TestXfrin(unittest.TestCase):
                    { 'name': 'test.example.',
                     'master_addr': '192.0.2.1',
                     'master_port': 53,
-                    'ixfr_disabled': False
+                    'use_ixfr': False
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config1)['result'][0], 0)
@@ -1962,7 +1962,7 @@ class TestXfrin(unittest.TestCase):
                     'master_addr': '192.0.2.2',
                     'master_port': 53,
                     'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g==",
-                    'ixfr_disabled': True
+                    'use_ixfr': True
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config2)['result'][0], 0)
@@ -2072,37 +2072,37 @@ class TestXfrin(unittest.TestCase):
         # since this has failed, we should still have the previous config
         self._check_zones_config(config2)
 
-    def common_ixfr_setup(self, xfr_mode, ixfr_disabled):
+    def common_ixfr_setup(self, xfr_mode, use_ixfr):
         # This helper method explicitly sets up a zone configuration with
-        # ixfr_disabled, and invokes either retransfer or refresh.
+        # use_ixfr, and invokes either retransfer or refresh.
         # Shared by some of the following test cases.
         config = {'zones': [
                 {'name': 'example.com.',
                  'master_addr': '192.0.2.1',
-                 'ixfr_disabled': ixfr_disabled}]}
+                 'use_ixfr': use_ixfr}]}
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self.assertEqual(self.xfr.command_handler(xfr_mode,
                                                   self.args)['result'][0], 0)
 
     def test_command_handler_retransfer_ixfr_enabled(self):
         # If IXFR is explicitly enabled in config, IXFR will be used
-        self.common_ixfr_setup('retransfer', False)
+        self.common_ixfr_setup('retransfer', True)
         self.assertEqual(RRType.IXFR(), self.xfr.xfrin_started_request_type)
 
     def test_command_handler_refresh_ixfr_enabled(self):
         # Same for refresh
-        self.common_ixfr_setup('refresh', False)
+        self.common_ixfr_setup('refresh', True)
         self.assertEqual(RRType.IXFR(), self.xfr.xfrin_started_request_type)
 
     def test_command_handler_retransfer_ixfr_disabled(self):
         # Similar to the previous case, but explicitly disabled.  AXFR should
         # be used.
-        self.common_ixfr_setup('retransfer', True)
+        self.common_ixfr_setup('retransfer', False)
         self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
     def test_command_handler_refresh_ixfr_disabled(self):
         # Same for refresh
-        self.common_ixfr_setup('refresh', True)
+        self.common_ixfr_setup('refresh', False)
         self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
 def raise_interrupt():
