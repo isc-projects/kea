@@ -38,6 +38,13 @@ public:
 
 TEST_F(Option6AddrLstTest, basic) {
 
+    // limiting tests to just a 2001:db8::/32 as is *wrong*.
+    // Good tests check corner cases as well.
+    // ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff checks
+    // for integer overflow
+    // ff02::face:b00c checks if multicast addresses
+    // can be represented properly.
+
     uint8_t sampledata[] = {
         // 2001:db8:1::dead:beef
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0, 0,
@@ -93,7 +100,7 @@ TEST_F(Option6AddrLstTest, basic) {
     };
 
     boost::shared_array<uint8_t> buf(new uint8_t[300]);
-    for (int i=0; i<300; i++)
+    for (int i = 0; i < 300; i++)
         buf[i] = 0;
 
     memcpy(&buf[0], sampledata, 48);

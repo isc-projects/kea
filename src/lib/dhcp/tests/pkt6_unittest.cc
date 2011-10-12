@@ -39,7 +39,7 @@ public:
 TEST_F(Pkt6Test, constructor) {
     Pkt6 * pkt1 = new Pkt6(17);
 
-    ASSERT_EQ(pkt1->data_len_, 17);
+    EXPECT_EQ(pkt1->data_len_, 17);
 
     delete pkt1;
 }
@@ -85,28 +85,83 @@ Pkt6 *capture1() {
     return (pkt);
 }
 
-TEST_F(Pkt6Test, parse_solicit1) {
+TEST_F(Pkt6Test, unpack_solicit1) {
     Pkt6 * sol = capture1();
 
     ASSERT_EQ(true, sol->unpack());
 
-    boost::shared_ptr<isc::dhcp::Option> null;
+    // check for length
+    EXPECT_EQ(98, sol->len() );
+
+    // check for type
+    EXPECT_EQ(DHCPV6_SOLICIT, sol->getType() );
 
     // check that all present options are returned
-    EXPECT_NE(null, sol->getOption(D6O_CLIENTID)); // client-id is present
-    EXPECT_NE(null, sol->getOption(D6O_IA_NA));    // IA_NA is present
-    EXPECT_NE(null, sol->getOption(D6O_ELAPSED_TIME));  // elapsed is present
-    EXPECT_NE(null, sol->getOption(D6O_NAME_SERVERS));
-    EXPECT_NE(null, sol->getOption(D6O_ORO));
+    EXPECT_TRUE(sol->getOption(D6O_CLIENTID)); // client-id is present
+    EXPECT_TRUE(sol->getOption(D6O_IA_NA));    // IA_NA is present
+    EXPECT_TRUE(sol->getOption(D6O_ELAPSED_TIME));  // elapsed is present
+    EXPECT_TRUE(sol->getOption(D6O_NAME_SERVERS));
+    EXPECT_TRUE(sol->getOption(D6O_ORO));
 
     // let's check that non-present options are not returned
-    EXPECT_EQ(null, sol->getOption(D6O_SERVERID)); // server-id is missing
-    EXPECT_EQ(null, sol->getOption(D6O_IA_TA));
-    EXPECT_EQ(null, sol->getOption(D6O_IAADDR));
+    EXPECT_FALSE(sol->getOption(D6O_SERVERID)); // server-id is missing
+    EXPECT_FALSE(sol->getOption(D6O_IA_TA));
+    EXPECT_FALSE(sol->getOption(D6O_IAADDR));
 
     std::cout << sol->toText();
 
     delete sol;
+}
+
+TEST_F(Pkt6Test, packUnpack) {
+
+    Pkt6 * parent = new Pkt6(100);
+
+    parent->setType(DHCPV6_SOLICIT);
+
+    boost::shared_ptr<Option> opt1(new Option(Option::V6, 1));
+    boost::shared_ptr<Option> opt2(new Option(Option::V6, 2));
+    boost::shared_ptr<Option> opt3(new Option(Option::V6, 100));
+    // let's not use zero-length option type 3 as it is IA_NA
+
+    parent->addOption(opt1);
+    parent->addOption(opt2);
+    parent->addOption(opt3);
+
+    EXPECT_EQ(DHCPV6_SOLICIT, parent->getType());
+    int transid = parent->getTransid();
+    // transaction-id was randomized, let's remember it
+
+    // calculated length should be 16
+    EXPECT_EQ( Pkt6::DHCPV6_PKT_HDR_LEN + 3*Option::OPTION6_HDR_LEN, 
+               parent->len() );
+
+    EXPECT_TRUE( parent->pack() );
+
+    //
+    EXPECT_EQ( Pkt6::DHCPV6_PKT_HDR_LEN + 3*Option::OPTION6_HDR_LEN, 
+               parent->len() );
+
+    // let's delete options from options_ collection
+    // they still be defined in packed 
+    parent->options_.clear();
+
+    // that that removed options are indeed are gone
+    EXPECT_EQ( 4, parent->len() );
+
+    // now recreate options list
+    EXPECT_TRUE( parent->unpack() );
+
+    // transid, message-type should be the same as before
+    EXPECT_EQ(transid, parent->getTransid());
+    EXPECT_EQ(DHCPV6_SOLICIT, parent->getType());
+    
+    EXPECT_TRUE( parent->getOption(1));
+    EXPECT_TRUE( parent->getOption(2));
+    EXPECT_TRUE( parent->getOption(100));
+    EXPECT_FALSE( parent->getOption(4));
+    
+    delete parent;
 }
 
 TEST_F(Pkt6Test, addGetDelOptions) {
