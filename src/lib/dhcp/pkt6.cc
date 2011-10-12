@@ -25,58 +25,43 @@ using namespace isc::dhcp;
 
 namespace isc {
 
-/**
- * Constructor.
- *
- * @param dataLen size of buffer to be allocated for this packet.
- * @param proto protocol (usually UDP, but TCP will be supported eventually)
- */
-Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto_ proto /* = UDP */)
-    :local_addr_("::"),
+Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto proto /* = UDP */)
+    :data_len_(dataLen),
+     local_addr_("::"),
      remote_addr_("::"),
-     proto_(proto)
+     iface_(""),
+     ifindex_(-1),
+     local_port_(-1),
+     remote_port_(-1),
+     proto_(proto),
+     msg_type_(-1),
+     transid_(rand()%0xffffff)
 {
-    try {
-        data_ = boost::shared_array<uint8_t>(new uint8_t[dataLen]);
-        data_len_ = dataLen;
-    } catch (const std::exception& ex) {
-        // TODO move to LOG_FATAL()
-        // let's continue with empty pkt for now
-        std::cout << "Failed to allocate " << dataLen << " bytes."
-                  << std::endl;
-        data_len_ = 0;
-    }
-}
 
+    data_ = boost::shared_array<uint8_t>(new uint8_t[dataLen]);
+    data_len_ = dataLen;
+}
 
 Pkt6::Pkt6(uint8_t msg_type,
            unsigned int transid,
-           DHCPv6Proto_ proto /*= UDP*/)
+           DHCPv6Proto proto /*= UDP*/)
     :local_addr_("::"),
      remote_addr_("::"),
+     iface_(""),
+     ifindex_(-1),
+     local_port_(-1),
+     remote_port_(-1),
      proto_(proto),
      msg_type_(msg_type),
      transid_(transid) {
 
-    try {
-        data_ = boost::shared_array<uint8_t>(new uint8_t[4]);
-        data_len_ = 4;
-    } catch (Exception e) {
-        cout << "Packet creation failed:" << e.what() << endl;
-    }
-    data_len_ = 0;
+    data_ = boost::shared_array<uint8_t>(new uint8_t[4]);
+    data_len_ = 4;
 }
 
-/**
- * Returns calculated length of the packet.
- *
- * This function returns size of required buffer to buld this packet.
- * To use that function, options_ field must be set.
- *
- * @return number of bytes required to build this packet
- */
-unsigned short Pkt6::len() {
-    unsigned int length = 4; // DHCPv6 header
+unsigned short
+Pkt6::len() {
+    unsigned int length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
     for (Option::Option6Collection::iterator it = options_.begin();
          it != options_.end();
@@ -88,13 +73,6 @@ unsigned short Pkt6::len() {
 }
 
 
-/**
- * Builds on wire packet.
- *
- * Prepares on wire packet format.
- *
- * @return true if preparation was successful
- */
 bool
 Pkt6::pack() {
     switch (proto_) {
@@ -108,12 +86,6 @@ Pkt6::pack() {
     return (false); // never happens
 }
 
-
-/**
- * Build on wire packet (in UDP format).
- *
- * @return true if packet build was successful, false otherwise
- */
 bool
 Pkt6::packUDP() {
     unsigned short length = len();
@@ -121,14 +93,10 @@ Pkt6::packUDP() {
         cout << "Previous len=" << data_len_ << ", allocating new buffer: len="
              << length << endl;
 
-        try {
-            data_ = boost::shared_array<uint8_t>(new uint8_t[length]);
-            data_len_ = length;
-        } catch (Exception e) {
-            cout << "Failed to allocate " << length << "-byte buffer:"
-                 << e.what() << endl;
-            return (false);
-        }
+        // May throw exception if out of memory. That is rather fatal,
+        // so we don't catch this
+        data_ = boost::shared_array<uint8_t>(new uint8_t[length]);
+        data_len_ = length;
     }
 
     try {
@@ -160,14 +128,6 @@ Pkt6::packUDP() {
     return (true);
 }
 
-
-/**
- * Builds on wire packet for TCP transmission.
- *
- * @note This function is not implemented yet.
- *
- * @return
- */
 bool
 Pkt6::packTCP() {
     /// TODO Implement this function.
@@ -175,13 +135,6 @@ Pkt6::packTCP() {
               "not implemented yet.");
 }
 
-/**
- * Dispatch method that handles binary packet parsing.
- *
- * This method calls appropriate dispatch function (unpackUDP or unpackTCP)
- *
- * @return true, if parsing was successful, false otherwise
- */
 bool
 Pkt6::unpack() {
     switch (proto_) {
@@ -195,11 +148,6 @@ Pkt6::unpack() {
     return (false); // never happens
 }
 
-/**
- * This method unpacks UDP packet.
- *
- * @return true, if parsing was successful, false otherwise
- */
 bool
 Pkt6::unpackUDP() {
     if (data_len_ < 4) {
@@ -226,11 +174,6 @@ Pkt6::unpackUDP() {
     return (true);
 }
 
-/**
- * This method unpacks TDP packet.
- *
- * @return true, if parsing was successful, false otherwise
- */
 bool
 Pkt6::unpackTCP() {
     isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover) "
@@ -238,13 +181,6 @@ Pkt6::unpackTCP() {
 }
 
 
-/**
- * Returns text representation of the packet.
- *
- * This function is useful mainly for debugging.
- *
- * @return string with text representation
- */
 std::string
 Pkt6::toText() {
     stringstream tmp;
@@ -261,17 +197,6 @@ Pkt6::toText() {
     return tmp.str();
 }
 
-/**
- * Returns the first option of specified type.
- *
- * Returns the first option of specified type. Note that in DHCPv6 several
- * instances of the same option are allowed (and frequently used).
- * See getOptions().
- *
- * @param opt_type option type we are looking for
- *
- * @return pointer to found option (or NULL)
- */
 boost::shared_ptr<isc::dhcp::Option>
 Pkt6::getOption(unsigned short opt_type) {
     isc::dhcp::Option::Option6Collection::const_iterator x = options_.find(opt_type);
@@ -279,16 +204,6 @@ Pkt6::getOption(unsigned short opt_type) {
         return (*x).second;
     }
     return boost::shared_ptr<isc::dhcp::Option>(); // NULL
-}
-
-/**
- * Returns message type.
- *
- * @return message type.
- */
-uint8_t
-Pkt6::getType() {
-    return (msg_type_);
 }
 
 void
@@ -304,10 +219,6 @@ Pkt6::delOption(unsigned short type) {
         return (true); // delete successful
     }
     return (false); // can't find option to be deleted
-}
-
-Pkt6::~Pkt6() {
-    // no need to delete anything shared_ptr will take care of data_
 }
 
 };

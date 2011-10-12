@@ -29,12 +29,9 @@ namespace dhcp {
 ///
 class Option6AddrLst: public Option {
 
-
 public:
     /// a container for (IPv6) addresses
     typedef std::vector<isc::asiolink::IOAddress> AddressContainer;
-
-    const static size_t V6ADDRESS_LEN = 16;
 
     /// @brief Constructor used during option generation.
     ///

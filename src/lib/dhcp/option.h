@@ -106,7 +106,7 @@ public:
     /// @param offset offset, where start parsing option
     /// @param parse_len how many bytes should be parsed
     ///
-    /// @return offset after last parsed option
+    /// @return offset after last parsed octet
     virtual unsigned int
     unpack(boost::shared_array<uint8_t> buf,
            unsigned int buf_len,
@@ -174,7 +174,6 @@ public:
     /// @param type Type of option to be deleted.
     ///
     /// @return true if option was deleted, false if no such option existed
-    ///
     bool
     delOption(unsigned short type);
 

@@ -55,8 +55,7 @@ LibDHCP::unpackOptions6(const boost::shared_array<uint8_t> buf,
         case D6O_IA_NA:
         case D6O_IA_PD:
             // cout << "Creating Option6IA" << endl;
-            opt = boost::shared_ptr<Option>(new Option6IA(Option::V6,
-                                                          opt_type,
+            opt = boost::shared_ptr<Option>(new Option6IA(opt_type,
                                                           buf, buf_len,
                                                           offset,
                                                           opt_len));

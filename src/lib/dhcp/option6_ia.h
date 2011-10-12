@@ -23,61 +23,110 @@ namespace dhcp {
 class Option6IA: public Option {
 
 public:
-    // ctor, used for options constructed, usually during transmission
-    Option6IA(Universe u, unsigned short type, unsigned int iaid);
+    /// Length of IA_NA and IA_PD content
+    const static size_t OPTION6_IA_LEN = 12;
 
-    // ctor, used for received options
-    // boost::shared_array allows sharing a buffer, but it requires that
-    // different instances share pointer to the whole array, not point
-    // to different elements in shared array. Therefore we need to share
-    // pointer to the whole array and remember offset where data for
-    // this option begins
-    Option6IA(Universe u, unsigned short type, boost::shared_array<uint8_t> buf,
-              unsigned int buf_len,
-              unsigned int offset,
-              unsigned int len);
+    /// @brief ctor, used for options constructed, usually during transmission
+    ///
+    /// @param type option type (usually 4 for IA_NA, 25 for IA_PD)
+    /// @param iaid identity association identifier (id of IA)
+    Option6IA(unsigned short type, unsigned int iaid);
 
-    // writes option in wire-format to buf, returns pointer to first unused
-    // byte after stored option
+    /// @brief ctor, used for received options
+    ///
+    /// boost::shared_array allows sharing a buffer, but it requires that
+    /// different instances share pointer to the whole array, not point
+    /// to different elements in shared array. Therefore we need to share
+    /// pointer to the whole array and remember offset where data for
+    /// this option begins
+    ///
+    /// @param type option type (usually 4 for IA_NA, 25 for IA_PD)
+    /// @param buf buffer to be parsed
+    /// @param buf_len buffer length
+    /// @param offset offset in buffer
+    /// @param len number of bytes to parse
+    Option6IA(unsigned short type, boost::shared_array<uint8_t> buf,
+              unsigned int buf_len, unsigned int offset, unsigned int len);
+
+    /// Writes option in wire-format to buf, returns pointer to first unused
+    /// byte after stored option.
+    ///
+    /// @param buf buffer (option will be stored here)
+    /// @param buf_len (buffer length)
+    /// @param offset offset place where option should be stored
+    ///
+    /// @return offset to the first unused byte after stored option
     unsigned int
     pack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
          unsigned int offset);
 
-    // parses received buffer, returns offset to the first unused byte after
-    // parsed option
+    /// @brief Parses received buffer
+    ///
+    /// Parses received buffer and returns offset to the first unused byte after
+    /// parsed option.
+    ///
+    /// @param buf pointer to buffer
+    /// @param buf_len length of buf
+    /// @param offset offset, where start parsing option
+    /// @param parse_len how many bytes should be parsed
+    ///
+    /// @return offset after last parsed octet
     virtual unsigned int
-    unpack(boost::shared_array<uint8_t> buf,
-           unsigned int buf_len,
-           unsigned int offset,
-           unsigned int parse_len);
+    unpack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
+           unsigned int offset, unsigned int parse_len);
 
     /// Provides human readable text representation
     ///
     /// @param indent number of leading space characters
     ///
     /// @return string with text represenation
-    ///
     virtual std::string
     toText(int indent = 0);
 
+    /// Sets T1 timer.
+    ///
+    /// @param t1 t1 value to be set
     void setT1(unsigned int t1) { t1_=t1; }
+
+
+    /// Sets T2 timer.
+    ///
+    /// @param t2 t2 value to be set
     void setT2(unsigned int t2) { t2_=t2; }
 
+    /// Returns IA identifier.
+    ///
+    /// @return IAID value.
+    ///
     unsigned int getIAID() { return iaid_; }
+
+    /// Returns T1 timer.
+    ///
+    /// @return T1 value.
     unsigned int getT1()   { return t1_; }
+
+    /// Returns T2 timer.
+    ///
+    /// @return T2 value.
     unsigned int getT2()   { return t2_; }
 
     /// @brief returns complete length of option
     ///
     /// Returns length of this option, including option header and suboptions
     ///
-    /// @return length
+    /// @return length of this option
     virtual unsigned short
     len();
 
 protected:
+
+    /// keeps IA identifier
     unsigned int iaid_;
+
+    /// keeps T1 timer value
     unsigned int t1_;
+
+    /// keeps T2 timer value
     unsigned int t2_;
 };
 
