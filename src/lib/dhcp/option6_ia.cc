@@ -65,7 +65,7 @@ Option6IA::pack(boost::shared_array<uint8_t> buf,
     *(uint32_t*)ptr = htonl(t2_);
     ptr += 4;
 
-    offset = LibDHCP::packOptions6(buf, buf_len, offset+16, optionLst_);
+    offset = LibDHCP::packOptions6(buf, buf_len, offset+16, options_);
     return offset;
 }
 
@@ -84,7 +84,7 @@ Option6IA::unpack(boost::shared_array<uint8_t> buf,
     t2_ = ntohl(*(uint32_t*)&buf[offset]);
     offset +=4;
     offset = LibDHCP::unpackOptions6(buf, buf_len, offset,
-                                     parse_len - 12, optionLst_);
+                                     parse_len - 12, options_);
 
     return (offset);
 }
@@ -107,10 +107,10 @@ std::string Option6IA::toText(int indent /* = 0*/) {
         tmp << "(unknown)";
     }
     tmp << " iaid=" << iaid_ << ", t1=" << t1_ << ", t2=" << t2_
-        << " " << optionLst_.size() << " sub-options:" << endl;
+        << " " << options_.size() << " sub-options:" << endl;
 
-    for (Option6Lst::const_iterator opt=optionLst_.begin();
-         opt!=optionLst_.end();
+    for (Option6Collection::const_iterator opt=options_.begin();
+         opt!=options_.end();
          ++opt) {
         tmp << (*opt).second->toText(indent+2);
     }
@@ -122,8 +122,8 @@ unsigned short Option6IA::len() {
     unsigned short length = 4/*header*/ + 12 /* option content */; // header
 
     // length of all suboptions
-    for (Option::Option6Lst::iterator it = optionLst_.begin();
-         it != optionLst_.end();
+    for (Option::Option6Collection::iterator it = options_.begin();
+         it != options_.end();
          ++it) {
         length += (*it).second->len();
     }
