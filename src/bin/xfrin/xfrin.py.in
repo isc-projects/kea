@@ -876,7 +876,7 @@ class ZoneInfo:
         self.set_master_port(config_data.get('master_port'))
         self.set_zone_class(config_data.get('class'))
         self.set_tsig_key(config_data.get('tsig_key'))
-        # XXX: harecode the default for ixfr_disabled.  We should retrieve
+        # XXX: hardcode the default for ixfr_disabled.  We should retrieve
         # it from the 
         ixfr_disabled = config_data.get('ixfr_disabled')
         if ixfr_disabled is None:
