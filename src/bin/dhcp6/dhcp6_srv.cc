@@ -151,7 +151,7 @@ Dhcpv6Srv::processSolicit(boost::shared_ptr<Pkt6> solicit) {
         Option6IA* ia_req = dynamic_cast<Option6IA*>(tmp);
         if (ia_req) {
             boost::shared_ptr<Option6IA>
-                ia_rsp(new Option6IA(Option::V6, D6O_IA_NA, ia_req->getIAID()));
+                ia_rsp(new Option6IA(D6O_IA_NA, ia_req->getIAID()));
             ia_rsp->setT1(1500);
             ia_rsp->setT2(2600);
             boost::shared_ptr<Option6IAAddr>
