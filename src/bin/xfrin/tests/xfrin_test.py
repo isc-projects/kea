@@ -98,10 +98,15 @@ class XfrinTestTimeoutException(Exception):
 
 class MockCC():
     def get_default_value(self, identifier):
+        # The returned values should be identical to the spec file
+        # XXX: these should be retrieved from the spec file
+        # (see MyCCSession of xfrout_test.py.in)
         if identifier == "zones/master_port":
             return TEST_MASTER_PORT
         if identifier == "zones/class":
             return TEST_RRCLASS_STR
+        if identifier == "zones/use_ixfr":
+            return False
 
 class MockDataSourceClient():
     '''A simple mock data source client.
@@ -2075,6 +2080,18 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
         self._check_zones_config(config2)
+
+    def test_config_handler_zones_default(self):
+        # Checking it some default config values apply.  Using a separate
+        # test case for a fresh xfr object.
+        config = { 'zones': [
+                   { 'name': 'test.example.',
+                    'master_addr': '192.0.2.1',
+                    'master_port': 53,
+                   }
+                 ]}
+        self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
+        self._check_zones_config(config)
 
     def common_ixfr_setup(self, xfr_mode, use_ixfr):
         # This helper method explicitly sets up a zone configuration with
