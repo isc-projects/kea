@@ -32,7 +32,8 @@ Option::Option(Universe u, unsigned short type)
 
 }
 
-Option::Option(Universe u, unsigned short type, boost::shared_array<uint8_t> buf,
+Option::Option(Universe u, unsigned short type,
+               boost::shared_array<uint8_t> buf,
                unsigned int offset, unsigned int len)
     :universe_(u), type_(type), data_(buf),
      data_len_(len), offset_(offset)
@@ -69,7 +70,7 @@ Option::pack4(boost::shared_array<uint8_t> buf,
     ptr[0] = type_;
     ptr[1] = data_len_;
     ptr += 2;
-    memcpy(ptr, &data_[0], data_len_+4);
+    memcpy(ptr, &data_[0], data_len_);
 
     return offset + len();
 }
@@ -95,7 +96,7 @@ Option::pack6(boost::shared_array<uint8_t> buf,
 
     offset += 4 + data_len_; // end of this option
 
-    return LibDHCP::packOptions6(buf, buf_len, offset, optionLst_);
+    return LibDHCP::packOptions6(buf, buf_len, offset, options_);
 }
 
 unsigned int
@@ -142,25 +143,30 @@ Option::unpack6(boost::shared_array<uint8_t> buf,
     data_len_ = buf_len;
 
     return LibDHCP::unpackOptions6(buf, buf_len, offset, parse_len,
-                                   optionLst_);
+                                   options_);
 }
 
-unsigned short Option::len() {
+unsigned short
+Option::len() {
+
+    // length of the whole option is header and data stored in this option...
     int length = getHeaderLen() + data_len_;
 
-    for (Option::Option6Lst::iterator it = optionLst_.begin();
-         it != optionLst_.end();
+    // ... and sum of lengths of all suboptions
+    for (Option::Option6Collection::iterator it = options_.begin();
+         it != options_.end();
          ++it) {
         length += (*it).second->len();
     }
 
+    // note that this is not equal to lenght field. This value denotes
+    // number of bytes required to store this option. length option should
+    // contain (len()-getHeaderLen()) value.
     return (length);
 }
 
-bool Option::valid() {
-    // total length of buffer is not stored. shared_array is not very useful.
-    // we should either add buf_len field or better replace shared_array
-    // with shared_ptr to array
+bool
+Option::valid() {
     if (universe_ != V4 &&
         universe_ != V6) {
         return (false);
@@ -171,15 +177,16 @@ bool Option::valid() {
 
 void
 isc::dhcp::Option::addOption(boost::shared_ptr<isc::dhcp::Option> opt) {
-    optionLst_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(),
+    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(),
                                                             opt));
 
 }
 
 boost::shared_ptr<isc::dhcp::Option>
 Option::getOption(unsigned short opt_type) {
-    isc::dhcp::Option::Option6Lst::const_iterator x = optionLst_.find(opt_type);
-    if (x!=optionLst_.end()) {
+    isc::dhcp::Option::Option6Collection::const_iterator x =
+        options_.find(opt_type);
+    if ( x != options_.end() ) {
         return (*x).second;
     }
     return boost::shared_ptr<isc::dhcp::Option>(); // NULL
@@ -187,9 +194,9 @@ Option::getOption(unsigned short opt_type) {
 
 bool
 Option::delOption(unsigned short opt_type) {
-    isc::dhcp::Option::Option6Lst::iterator x = optionLst_.find(opt_type);
-    if (x!=optionLst_.end()) {
-        optionLst_.erase(x);
+    isc::dhcp::Option::Option6Collection::iterator x = options_.find(opt_type);
+    if ( x != options_.end() ) {
+        options_.erase(x);
         return true; // delete successful
     }
     return (false); // option not found, can't delete
@@ -213,8 +220,8 @@ std::string Option::toText(int indent /* =0 */ ) {
     }
 
     // print suboptions
-    for (Option6Lst::const_iterator opt=optionLst_.begin();
-         opt!=optionLst_.end();
+    for (Option6Collection::const_iterator opt=options_.begin();
+         opt!=options_.end();
          ++opt) {
         tmp << (*opt).second->toText(indent+2);
     }
@@ -239,13 +246,12 @@ unsigned short
 Option::getHeaderLen() {
     switch (universe_) {
     case V4:
-        return 2; // header length for v4
+        return OPTION4_HDR_LEN; // header length for v4
     case V6:
-        return 4; // header length for v6
+        return OPTION6_HDR_LEN; // header length for v6
     }
     return 0; // should not happen
 }
-
 
 Option::~Option() {
 

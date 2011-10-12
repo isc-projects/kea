@@ -108,7 +108,7 @@ TEST_F(Option6AddrLstTest, basic) {
 
     EXPECT_EQ(D6O_NAME_SERVERS, opt1->getType());
     EXPECT_EQ(20, opt1->len());
-    Option6AddrLst::AddrsContainer addrs = opt1->getAddresses();
+    Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
     ASSERT_EQ(1, addrs.size());
     IOAddress addr = addrs[0];
     EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
@@ -173,7 +173,7 @@ TEST_F(Option6AddrLstTest, constructors) {
                                                 IOAddress("::1"));
      EXPECT_EQ(1234, opt1->getType());
 
-     Option6AddrLst::AddrsContainer addrs = opt1->getAddresses();
+     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
      ASSERT_EQ(1, addrs.size() );
      EXPECT_EQ("::1", addrs[0].toText());
 
@@ -184,7 +184,7 @@ TEST_F(Option6AddrLstTest, constructors) {
      Option6AddrLst * opt2 = new Option6AddrLst(5678,
                                                 addrs);
 
-     Option6AddrLst::AddrsContainer check = opt2->getAddresses();
+     Option6AddrLst::AddressContainer check = opt2->getAddresses();
      ASSERT_EQ(2, check.size() );
      EXPECT_EQ("fe80::1234", check[0].toText());
      EXPECT_EQ("2001:db8:1::baca", check[1].toText());
@@ -198,7 +198,7 @@ TEST_F(Option6AddrLstTest, setAddress) {
                                                 IOAddress("::1"));
     opt1->setAddress(IOAddress("::2"));
 
-    Option6AddrLst::AddrsContainer addrs = opt1->getAddresses();
+    Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
     ASSERT_EQ(1, addrs.size() );
     EXPECT_EQ("::2", addrs[0].toText());
 

@@ -31,7 +31,10 @@ class Option6AddrLst: public Option {
 
 
 public:
-    typedef std::vector<isc::asiolink::IOAddress> AddrsContainer;
+    /// a container for (IPv6) addresses
+    typedef std::vector<isc::asiolink::IOAddress> AddressContainer;
+
+    const static size_t V6ADDRESS_LEN = 16;
 
     /// @brief Constructor used during option generation.
     ///
@@ -39,7 +42,7 @@ public:
     /// @param addrs vector of addresses to be stored
     ///
     Option6AddrLst(unsigned short type,
-                   AddrsContainer& addrs);
+                   const AddressContainer& addrs);
 
     /// @brief Simplified constructor for a single address
     ///
@@ -47,7 +50,7 @@ public:
     /// @param addr a single address to be stored
     ///
     Option6AddrLst(unsigned short type,
-                   isc::asiolink::IOAddress addr);
+                   const isc::asiolink::IOAddress& addr);
 
     /// @brief Constructor used for parsing received option
     ///
@@ -95,13 +98,13 @@ public:
     ///
     /// @param addr a single address to be added
     ///
-    void setAddress(isc::asiolink::IOAddress addr);
+    void setAddress(const isc::asiolink::IOAddress& addr);
 
     /// @brief Sets list of addresses.
     ///
     /// @param addrs a vector of addresses to be added
     ///
-    void setAddresses(std::vector<isc::asiolink::IOAddress>& addrs);
+    void setAddresses(const AddressContainer& addrs);
 
     /// @brief Returns vector with addresses.
     ///
@@ -111,14 +114,14 @@ public:
     ///
     /// @return vector with addresses
     ///
-    AddrsContainer
+    AddressContainer
     getAddresses() { return addrs_; };
 
     // returns data length (data length + DHCPv4/DHCPv6 option header)
     virtual unsigned short len();
 
 protected:
-    AddrsContainer addrs_;
+    AddressContainer addrs_;
 };
 
 } // isc::dhcp namespace
