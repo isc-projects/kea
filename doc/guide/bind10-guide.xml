@@ -1278,13 +1278,19 @@ TODO
      that is, they don't work for an in-memory data source.
     </simpara></note>
 
-    <para>
-      To enable IXFR, you need to
-      configure <command>b10-xfrin</command> with an explicit zone
-      configuration for the zone.
-      For example, to enable IXFR for a zone named "example.com"
-      (whose master address is assumed to be 2001:db8::53 here),
-      run the following at the <command>bindctl</command> prompt:
+    <section>
+      <title>Configuration for Incoming Zone Transfers</title>
+      <para>
+	In practice, you need to specify a list of secondary zones to
+	enable incoming zone transfers for these zones (you can still
+	trigger a zone transfer manually, without a prior configuration
+	(see below)).
+      </para>
+
+      <para>
+	For example, to enable zone transfers for a zone named "example.com"
+	(whose master address is assumed to be 2001:db8::53 here),
+	run the following at the <command>bindctl</command> prompt:
 
       <screen>&gt; <userinput>config add Xfrin/zones</userinput>
 &gt; <userinput>config set Xfrin/zones[0]/name "<option>example.com</option>"</userinput>
@@ -1292,16 +1298,22 @@ TODO
 &gt; <userinput>config commit</userinput></screen>
 
       (We assume there has been no zone configuration before).
-      Note that you do NOT have to explicitly enable IXFR in the zone
-      configuration; once it's defined, IXFR is enabled by default.
-      This also means if you specify a zone configuration for some
-      other reason but don't want to use IXFR for that zone, you need
-      to disable it explicitly:
+      </para>
+    </section>
 
+    <section>
+      <title>Enabling IXFR</title>
+      <para>
+	As noted above, <command>b10-xfrin</command> uses AXFR for
+	zone transfers by default.  To enable IXFR for zone transfers
+	for a particular zone, set the <userinput>ixfr_disabled</userinput>
+	configuration parameter to <userinput>true</userinput>.
+	In the above example of configuration sequence, you'll need
+	to add the following before performing <userinput>commit</userinput>:
       <screen>&gt; <userinput>config set Xfrin/zones[0]/ixfr_disabled true</userinput></screen>
-    </para>
+      </para>
 
-    <para>
+      <note><simpara>
       One reason why IXFR is disabled by default in the current
       release is because it does not support automatic fallback from IXFR to
       AXFR when it encounters a primary server that doesn't support
@@ -1315,7 +1327,8 @@ TODO
       make this selection automatically.
       These features will be implemented in a near future
       version, at which point we will enable IXFR by default.
-    </para>
+      </simpara></note>
+    </section>
 
 <!-- TODO:
 
@@ -1328,13 +1341,18 @@ what if a NOTIFY is sent?
 
 -->
 
-    <para>
-       To manually trigger a zone transfer to retrieve a remote zone,
-       you may use the <command>bindctl</command> utility.
-       For example, at the <command>bindctl</command> prompt run:
+    <section>
+      <title>Trigger an Incoming Zone Transfer Manually</title>
 
-       <screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
-    </para>
+      <para>
+	To manually trigger a zone transfer to retrieve a remote zone,
+	you may use the <command>bindctl</command> utility.
+	For example, at the <command>bindctl</command> prompt run:
+
+	<screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
+      </para>
+    </section>
+
 
 <!-- TODO: can that retransfer be used to identify a new zone? -->
 <!-- TODO: what if doesn't exist at that master IP? -->
