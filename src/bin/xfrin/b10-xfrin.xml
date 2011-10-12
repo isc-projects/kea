@@ -110,7 +110,7 @@ in separate zonemgr process.
       <varname>class</varname> (defaults to <quote>IN</quote>),
       <varname>master_addr</varname> (the zone master to transfer from),
       <varname>master_port</varname> (defaults to 53),
-      <varname>ixfr_disabled</varname> (defaults to true), and
+      <varname>use_ixfr</varname> (defaults to false), and
       <varname>tsig_key</varname> (optional TSIG key to use).
       The <varname>tsig_key</varname> is specified using a full string
       colon-delimited name:key:algorithm representation (e.g.
@@ -158,7 +158,7 @@ in separate zonemgr process.
       according to the SOA's REFRESH time
       to tell <command>b10-xfrin</command> that the zone needs to do
       a zone refresh.
-      This is an internal command and not exposed to the administrator. 
+      This is an internal command and not exposed to the administrator.
 <!-- not defined in spec -->
     </para>
 
@@ -208,7 +208,7 @@ add a usage example of xfrin -->
     </para></note>
 
 <!-- TODO:
- it can handle more than one XFR in now, 
+ it can handle more than one XFR in now,
 but the problem is If SQLITE3 datasource part support multiple write
 operation
 -->

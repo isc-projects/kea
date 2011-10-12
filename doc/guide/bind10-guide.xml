@@ -1304,13 +1304,13 @@ TODO
     <section>
       <title>Enabling IXFR</title>
       <para>
-	As noted above, <command>b10-xfrin</command> uses AXFR for
-	zone transfers by default.  To enable IXFR for zone transfers
-	for a particular zone, set the <userinput>ixfr_disabled</userinput>
-	configuration parameter to <userinput>true</userinput>.
-	In the above example of configuration sequence, you'll need
-	to add the following before performing <userinput>commit</userinput>:
-      <screen>&gt; <userinput>config set Xfrin/zones[0]/ixfr_disabled true</userinput></screen>
+        As noted above, <command>b10-xfrin</command> uses AXFR for
+        zone transfers by default.  To enable IXFR for zone transfers
+        for a particular zone, set the <userinput>use_ixfr</userinput>
+        configuration parameter to <userinput>true</userinput>.
+        In the above example of configuration sequence, you'll need
+        to add the following before performing <userinput>commit</userinput>:
+      <screen>&gt; <userinput>config set Xfrin/zones[0]/use_ixfr true</userinput></screen>
       </para>
 
       <note><simpara>
