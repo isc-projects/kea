@@ -1271,6 +1271,7 @@ TODO
       development release, however, it only tries AXFR by default,
       and care should be taken to enable IXFR.
     </para>
+<!-- TODO: http://bind10.isc.org/ticket/1279 -->
 
     <note><simpara>
      In the current development release of BIND 10, incoming zone
@@ -1313,6 +1314,7 @@ TODO
       <screen>&gt; <userinput>config set Xfrin/zones[0]/use_ixfr true</userinput></screen>
       </para>
 
+<!-- TODO: http://bind10.isc.org/ticket/1279 -->
       <note><simpara>
       One reason why IXFR is disabled by default in the current
       release is because it does not support automatic fallback from IXFR to
