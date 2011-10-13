@@ -76,7 +76,7 @@ TEST_F(Option6IAAddrTest, basic) {
     // 4 bytes header + 4 bytes content
     EXPECT_EQ("2001:db8:1::dead:beef", opt->getAddress().toText());
     EXPECT_EQ(1000, opt->getPreferred());
-    EXPECT_EQ(3000000000, opt->getValid());
+    EXPECT_EQ(3000000000U, opt->getValid());
 
     EXPECT_EQ(D6O_IAADDR, opt->getType());
 
