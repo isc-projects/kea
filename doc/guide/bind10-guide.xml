@@ -41,9 +41,10 @@
       </para>
       <para>
         This is the reference guide for BIND 10 version &__VERSION__;.
-	The most up-to-date version of this document, along with
-	other documents for BIND 10, can be found at <ulink
-	url="http://bind10.isc.org/docs"/>.  </para> </abstract>
+	The most up-to-date version of this document (in PDF, HTML,
+	and plain text formats), along with other documents for
+	BIND 10, can be found at <ulink url="http://bind10.isc.org/docs"/>.
+	</para> </abstract>
 
       <releaseinfo>This is the reference guide for BIND 10 version
         &__VERSION__;.</releaseinfo>
