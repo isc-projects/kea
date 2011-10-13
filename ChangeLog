@@ -1,3 +1,7 @@
+298.	[doc]		jreed
+	Shorten README. Include plain text format of the Guide.
+	(git d1897d3, git 337198f)
+
 297.	[func]		dvv
 	Implement the SPF rrtype according to RFC4408.
 	(Trac #1140, git 146934075349f94ee27f23bf9ff01711b94e369e)
