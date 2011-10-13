@@ -586,7 +586,7 @@ class BoB:
         # object path or a path in the (DY)LD_LIBRARY_PATH.  We should seek
         # a cleaner solution, but for a short term workaround we specify the
         # path here, unconditionally, and without even bothering which
-        # environment varialbe should be used.
+        # environment variable should be used.
         if not "B10_FROM_SOURCE" in os.environ:
             cur_path = os.getenv('DYLD_LIBRARY_PATH')
             cur_path = '' if cur_path is None else ':' + cur_path
