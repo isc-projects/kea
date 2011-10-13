@@ -23,7 +23,7 @@
 	how to configure it and operational notes.
 	(Trac #1212, multiple git merges)
 
-293.    [func]*		tomek
+293.	[func]*		tomek
 	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
 	multicast groups and listens to incoming DHCPv6 client messages.
 	Received messages are then echoed back to clients. This
@@ -37,12 +37,13 @@
 	Implement the DLV rrtype according to RFC4431.
 	(Trac #1144, git d267c0511a07c41cd92e3b0b9ee9bf693743a7cf)
 
-291.    [func]          naokikambe
+291.	[func]		naokikambe
 	Statistics items are specified by each module's spec file.
 	Stats module can read these through the config manager. Stats
 	module and stats httpd report statistics data and statistics
 	schema by each module via both bindctl and HTTP/XML.
-	(Trac #928,#929,#930,#1175, git 054699635affd9c9ecbe7a108d880829f3ba229e)
+	(Trac #928,#929,#930,#1175,
+	git 054699635affd9c9ecbe7a108d880829f3ba229e)
 
 290.	[func]		jinmei
 	libdns++/pydnspp: added an option parameter to the "from wire"
@@ -70,7 +71,7 @@
 	configuration.
 	(Trac #1165, git 698176eccd5d55759fe9448b2c249717c932ac31)
 
-288.    [bug]		stephen
+288.	[bug]		stephen
 	Fixed problem whereby the order in which component files appeared in
 	rdataclass.cc was system dependent, leading to problems on some
 	systems where data types were used before the header file in which
@@ -85,7 +86,7 @@
 	python files from the common directly (such as "site-packages").
 	(Trac #1101, git 0eb576518f81c3758c7dbaa2522bd8302b1836b3)
 
-286.    [func]		ocean
+286.	[func]		ocean
 	libdns++: Implement the HINFO rrtype support according to RFC1034,
 	and RFC1035.
 	(Trac #1112, git 12d62d54d33fbb1572a1aa3089b0d547d02924aa)
@@ -101,14 +102,14 @@
 	log a warning and try to do zone transfer for them.
 	(Trac #1153, git 0a39659638fc68f60b95b102968d7d0ad75443ea)
 
-283.    [bug]		zhanglikun
+283.	[bug]		zhanglikun
 	Make stats and boss processes wait for answer messages from each
 	other in block mode to avoid orphan answer messages, add an internal
 	command "getstats" to boss process for getting statistics data from
 	boss.
 	(Trac #519, git 67d8e93028e014f644868fede3570abb28e5fb43)
 
-282.    [func]		ocean
+282.	[func]		ocean
 	libdns++: Implement the NAPTR rrtype according to RFC2915,
 	RFC2168 and RFC3403.
 	(Trac #1130, git 01d8d0f13289ecdf9996d6d5d26ac0d43e30549c)
