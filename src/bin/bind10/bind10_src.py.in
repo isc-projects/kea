@@ -579,6 +579,22 @@ class BoB:
         self.start_simple("b10-xfrout", c_channel_env)
 
     def start_xfrin(self, c_channel_env):
+        # XXX: a quick-hack workaround.  xfrin will implicitly use dynamically
+        # loadable data source modules, which will be installed in $(libdir).
+        # On some OSes (including MacOS X and *BSDs) the main process (python)
+        # cannot find the modules unless they are located in a common shared
+        # object path or a path in the (DY)LD_LIBRARY_PATH.  We should seek
+        # a cleaner solution, but for a short term workaround we specify the
+        # path here, unconditionally, and without even bothering which
+        # environment varialbe should be used.
+        if not "B10_FROM_SOURCE" in os.environ:
+            cur_path = os.getenv('DYLD_LIBRARY_PATH')
+            cur_path = '' if cur_path is None else ':' + cur_path
+            c_channel_env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
+
+            cur_path = os.getenv('LD_LIBRARY_PATH')
+            cur_path = '' if cur_path is None else ':' + cur_path
+            c_channel_env['LD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
         self.start_simple("b10-xfrin", c_channel_env)
 
     def start_zonemgr(self, c_channel_env):
