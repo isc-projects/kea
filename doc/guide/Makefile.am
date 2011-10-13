@@ -1,6 +1,11 @@
 EXTRA_DIST = bind10-guide.css
-EXTRA_DIST += bind10-guide.xml bind10-guide.html
+EXTRA_DIST += bind10-guide.xml bind10-guide.html bind10-guide.txt
 EXTRA_DIST += bind10-messages.xml bind10-messages.html
+
+HTML2TXT ?= elinks -dump -no-numbering -no-references
+
+bind10-guide.txt: bind10-guide.html
+	$(HTML2TXT) $(srcdir)/bind10-guide.html > $@
 
 # This is not a "man" manual, but reuse this for now for docbook.
 if ENABLE_MAN
