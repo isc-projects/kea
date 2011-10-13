@@ -59,7 +59,7 @@
 
 289.	[func]*		jinmei
 	b10-xfrout: ACLs for xfrout can now be configured per zone basis.
-	A per zone ACl is part of a more general zone configuration.  A
+	A per zone ACL is part of a more general zone configuration.  A
 	quick example for configuring an ACL for zone "example.com" that
 	rejects any transfer request for that zone is as follows:
 	> config add Xfrout/zone_config
