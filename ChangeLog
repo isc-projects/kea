@@ -1,3 +1,5 @@
+bind10-devel-20111014 released on October 14, 2011
+
 298.	[doc]		jreed
 	Shorten README. Include plain text format of the Guide.
 	(git d1897d3, git 337198f)
