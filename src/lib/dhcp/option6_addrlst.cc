@@ -18,6 +18,7 @@
 #include "exceptions/exceptions.h"
 
 #include "asiolink/io_address.h"
+#include "util/io_utilities.h"
 #include "dhcp/libdhcp.h"
 #include "dhcp/option6_addrlst.h"
 #include "dhcp/dhcp6.h"
@@ -26,7 +27,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
-
+using namespace isc::util;
 
 Option6AddrLst::Option6AddrLst(unsigned short type,
                                const AddressContainer& addrs)
@@ -59,7 +60,7 @@ Option6AddrLst::setAddresses(const AddressContainer& addrs) {
 }
 
 unsigned int
-Option6AddrLst::pack(boost::shared_array<uint8_t> buf,
+Option6AddrLst::pack(boost::shared_array<uint8_t>& buf,
                     unsigned int buf_len,
                     unsigned int offset) {
     if (len() > buf_len) {
@@ -67,13 +68,16 @@ Option6AddrLst::pack(boost::shared_array<uint8_t> buf,
                   << ", buffer=" << buf_len << ": too small buffer.");
     }
 
-    *(uint16_t*)&buf[offset] = htons(type_);
-    offset += 2;
-    *(uint16_t*)&buf[offset] = htons(len()-4); // len() returns complete option
-    // length. len field contains length without 4-byte option header
-    offset += 2;
+    writeUint16(type_, &buf[offset]);
+    offset += sizeof(uint16_t);
 
-    for (std::vector<IOAddress>::const_iterator addr=addrs_.begin();
+    // len() returns complete option length.
+    // len field contains length without 4-byte option header
+    writeUint16(len() - OPTION6_HDR_LEN, &buf[offset]);
+    offset += sizeof(uint16_t);
+
+    // this wrapping is *ugly*. I wish there was a a
+    for (AddressContainer::const_iterator addr=addrs_.begin();
          addr!=addrs_.end();
          ++addr) {
         memcpy(&buf[offset],
@@ -86,10 +90,10 @@ Option6AddrLst::pack(boost::shared_array<uint8_t> buf,
 }
 
 unsigned int
-Option6AddrLst::unpack(boost::shared_array<uint8_t> buf,
-                  unsigned int buf_len,
-                  unsigned int offset,
-                  unsigned int option_len) {
+Option6AddrLst::unpack(const boost::shared_array<uint8_t>& buf,
+                       unsigned int buf_len,
+                       unsigned int offset,
+                       unsigned int option_len) {
     if (offset+option_len > buf_len) {
         isc_throw(OutOfRange, "Option " << type_
                   << " truncated.");

@@ -21,11 +21,13 @@
 #include "dhcp/option6_iaaddr.h"
 #include "dhcp/dhcp6.h"
 #include "asiolink/io_address.h"
+#include "util/io_utilities.h"
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 Option6IAAddr::Option6IAAddr(unsigned short type,
                              const isc::asiolink::IOAddress& addr,
@@ -43,7 +45,7 @@ Option6IAAddr::Option6IAAddr(unsigned short type,
 }
 
 unsigned int
-Option6IAAddr::pack(boost::shared_array<uint8_t> buf,
+Option6IAAddr::pack(boost::shared_array<uint8_t>& buf,
                     unsigned int buf_len,
                     unsigned int offset) {
     if (len() > buf_len) {
@@ -71,7 +73,7 @@ Option6IAAddr::pack(boost::shared_array<uint8_t> buf,
 }
 
 unsigned int
-Option6IAAddr::unpack(boost::shared_array<uint8_t> buf,
+Option6IAAddr::unpack(const boost::shared_array<uint8_t>& buf,
                   unsigned int buf_len,
                   unsigned int offset,
                   unsigned int parse_len) {
