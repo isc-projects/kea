@@ -29,7 +29,7 @@ using namespace isc::dhcp;
 
 namespace isc {
 
-// IfaceMgr is a singleton implementation
+/// IfaceMgr is a singleton implementation
 IfaceMgr* IfaceMgr::instance_ = 0;
 
 void
@@ -313,15 +313,6 @@ IfaceMgr::openSocket(const std::string& ifname,
     return (sock);
 }
 
-/**
- * joins multicast group
- *
- * @param sock socket file descriptor
- * @param ifname name of the interface (DHCPv6 uses link-scoped mc groups)
- * @param mcast multicast address to join (string)
- *
- * @return true if joined successfully, false otherwise
- */
 bool
 IfaceMgr::joinMcast(int sock, const std::string& ifname,
 const std::string & mcast) {
@@ -347,19 +338,8 @@ const std::string & mcast) {
     return (true);
 }
 
-/**
- * Sends UDP packet over IPv6.
- *
- * All parameters for actual transmission are specified in
- * Pkt6 structure itself. That includes destination address,
- * src/dst port and interface over which data will be sent.
- *
- * @param pkt A packet object that is going to be sent.
- *
- * @return True, if transmission was successful. False otherwise.
- */
 bool
-IfaceMgr::send(boost::shared_ptr<Pkt6> pkt) {
+IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     struct msghdr m;
     struct iovec v;
     int result;
@@ -431,16 +411,6 @@ IfaceMgr::send(boost::shared_ptr<Pkt6> pkt) {
     return (result);
 }
 
-
-/**
- * Attempts to receive UDP/IPv6 packet over open sockets.
- *
- * TODO Start using select() and add timeout to be able
- * to not wait infinitely, but rather do something useful
- * (e.g. remove expired leases)
- *
- * @return Object prepresenting received packet.
- */
 boost::shared_ptr<Pkt6>
 IfaceMgr::receive() {
     struct msghdr m;
