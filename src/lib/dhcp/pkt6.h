@@ -84,7 +84,7 @@ public:
     /// @param proto protocol (UDP or TCP)
     ///
     void
-    setProto(DHCPv6Proto proto = UDP);
+    setProto(DHCPv6Proto proto = UDP) { proto_ = proto; }
 
     /// @brief Returns text representation of the packet.
     ///
