@@ -19,12 +19,14 @@
 #include <iomanip>
 #include <boost/shared_array.hpp>
 #include "exceptions/exceptions.h"
+#include "util/io_utilities.h"
 
-#include "option.h"
-#include "libdhcp.h"
+#include "dhcp/option.h"
+#include "dhcp/libdhcp.h"
 
 using namespace std;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 Option::Option(Universe u, unsigned short type)
     :universe_(u), type_(type), data_len_(0) {
@@ -33,7 +35,7 @@ Option::Option(Universe u, unsigned short type)
 }
 
 Option::Option(Universe u, unsigned short type,
-               boost::shared_array<uint8_t> buf,
+               const boost::shared_array<uint8_t>& buf,
                unsigned int offset, unsigned int len)
     :universe_(u), type_(type), data_(buf),
      data_len_(len), offset_(offset)
@@ -44,7 +46,7 @@ Option::Option(Universe u, unsigned short type,
 }
 
 unsigned int
-Option::pack(boost::shared_array<uint8_t> buf,
+Option::pack(boost::shared_array<uint8_t>& buf,
              unsigned int buf_len,
              unsigned int offset) {
     switch (universe_) {
@@ -59,7 +61,7 @@ Option::pack(boost::shared_array<uint8_t> buf,
 
 
 unsigned int
-Option::pack4(boost::shared_array<uint8_t> buf,
+Option::pack4(boost::shared_array<uint8_t>& buf,
              unsigned int buf_len,
              unsigned int offset) {
     if ( offset+len() > buf_len ) {
@@ -76,7 +78,7 @@ Option::pack4(boost::shared_array<uint8_t> buf,
 }
 
 unsigned int
-Option::pack6(boost::shared_array<uint8_t> buf,
+Option::pack6(boost::shared_array<uint8_t>& buf,
              unsigned int buf_len,
              unsigned int offset) {
     if ( offset+len() > buf_len ) {
@@ -87,20 +89,22 @@ Option::pack6(boost::shared_array<uint8_t> buf,
     int length = len() - getHeaderLen();
 
     uint8_t * ptr = &buf[offset];
-    *(uint16_t*)ptr = htons(type_);
-    ptr += 2;
-    *(uint16_t*)ptr = htons(length);
-    ptr += 2;
+    writeUint16(type_, ptr);
+    ptr += sizeof(uint16_t);
+
+    writeUint16(length, ptr);
+    ptr += sizeof(uint16_t);
+
     if (data_len_)
         memcpy(ptr, &data_[offset_], data_len_);
 
-    offset += 4 + data_len_; // end of this option
+    offset += OPTION6_HDR_LEN + data_len_; // end of this option
 
     return LibDHCP::packOptions6(buf, buf_len, offset, options_);
 }
 
 unsigned int
-Option::unpack(boost::shared_array<uint8_t> buf,
+Option::unpack(const boost::shared_array<uint8_t>& buf,
                unsigned int buf_len,
                unsigned int offset,
                unsigned int parse_len) {
@@ -117,7 +121,7 @@ Option::unpack(boost::shared_array<uint8_t> buf,
 }
 
 unsigned int
-Option::unpack4(boost::shared_array<uint8_t>,
+Option::unpack4(const boost::shared_array<uint8_t>&,
                 unsigned int ,
                 unsigned int ,
                 unsigned int ) {
@@ -126,7 +130,7 @@ Option::unpack4(boost::shared_array<uint8_t>,
 }
 
 unsigned int
-Option::unpack6(boost::shared_array<uint8_t> buf,
+Option::unpack6(const boost::shared_array<uint8_t>& buf,
                 unsigned int buf_len,
                 unsigned int offset,
                 unsigned int parse_len) {

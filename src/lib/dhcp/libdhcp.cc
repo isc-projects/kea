@@ -40,10 +40,10 @@ LibDHCP::unpackOptions6(const boost::shared_array<uint8_t> buf,
     }
     unsigned int end = offset + parse_len;
 
-    while ( offset +4 <= end ) {
-        unsigned int opt_type = buf[offset]*256 + buf[offset+1];
+    while (offset +4 <= end) {
+        uint16_t opt_type = buf[offset]*256 + buf[offset+1];
         offset += 2;
-        unsigned int opt_len = buf[offset]*256 + buf[offset+1];
+        uint16_t opt_len = buf[offset]*256 + buf[offset+1];
         offset += 2;
 
         if (offset + opt_len > end ) {

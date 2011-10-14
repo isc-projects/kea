@@ -71,7 +71,7 @@ public:
     /// @return offset to the next unused char (just after stored option)
     ///
     unsigned int
-    pack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
+    pack(boost::shared_array<uint8_t>& buf, unsigned int buf_len,
          unsigned int offset);
 
     /// @brief Parses received data
@@ -84,7 +84,7 @@ public:
     /// @return offset to the next unparsed char (just after parsed option)
     ///
     virtual unsigned int
-    unpack(boost::shared_array<uint8_t> buf,
+    unpack(const boost::shared_array<uint8_t>& buf,
            unsigned int buf_len,
            unsigned int offset,
            unsigned int parse_len);
