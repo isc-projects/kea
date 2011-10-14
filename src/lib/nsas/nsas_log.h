@@ -29,15 +29,15 @@ namespace nsas {
 // The first level traces normal operations - asking the NSAS for an address,
 // and cancelling a lookup.  It also records when the NSAS calls back to the
 // resolver to resolve something.
-const int NSAS_DBG_TRACE = 10;
+const int NSAS_DBG_TRACE = DBGLVL_TRACE_BASIC;
 
 // The next level extends the normal operations and records the results of the
 // lookups.
-const int NSAS_DBG_RESULTS = 20;
+const int NSAS_DBG_RESULTS = DBGLVL_TRACE_BASIC_DATA;
 
 // Additional information on the usage of the names - the RTT values obtained
 // when queries were done.
-const int NSAS_DBG_RTT = 30;
+const int NSAS_DBG_RTT = DBGLVL_TRACE_DETAIL_DATA;
 
 
 /// \brief NSAS Logger

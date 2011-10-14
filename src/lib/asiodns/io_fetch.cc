@@ -61,17 +61,13 @@ namespace asiodns {
 
 /// Use the ASIO logger
 
-namespace {
-
 isc::log::Logger logger("asiolink");
-// Log debug verbosity
-enum {
-    DBG_IMPORTANT = 1,
-    DBG_COMMON = 20,
-    DBG_ALL = 50
-};
 
-}
+// Log debug verbosity
+
+const int DBG_IMPORTANT = DBGLVL_TRACE_BASIC;
+const int DBG_COMMON = DBGLVL_TRACE_DETAIL;
+const int DBG_ALL = DBGLVL_TRACE_DETAIL + 20;
 
 /// \brief IOFetch Data
 ///

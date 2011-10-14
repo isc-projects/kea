@@ -31,14 +31,14 @@ namespace datasrc {
 /// \brief The logger for this library
 extern isc::log::Logger logger;
 
-enum {
-    /// \brief Trace basic operations
-    DBG_TRACE_BASIC = 10,
-    /// \brief Trace data changes and lookups as well
-    DBG_TRACE_DATA = 20,
-    /// \brief Detailed even about how the lookups happen
-    DBG_TRACE_DETAILED = 50
-};
+/// \brief Trace basic operations
+const int DBG_TRACE_BASIC = DBGLVL_TRACE_BASIC;
+
+/// \brief Trace data changes and lookups as well
+const int DBG_TRACE_DATA = DBGLVL_TRACE_BASIC_DATA;
+
+/// \brief Detailed even about how the lookups happen
+const int DBG_TRACE_DETAILED = DBGLVL_TRACE_DETAIL;
 
 }
 }
