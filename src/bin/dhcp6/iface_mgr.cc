@@ -69,10 +69,10 @@ IfaceMgr::Iface::getPlainMac() const {
     ostringstream tmp;
     tmp.fill('0');
     tmp << hex;
-    for (int i=0; i<mac_len_; i++) {
+    for (int i = 0; i < mac_len_; i++) {
         tmp.width(2);
         tmp << mac_[i];
-        if (i<mac_len_-1) {
+        if (i < mac_len_-1) {
             tmp << ":";
         }
     }
