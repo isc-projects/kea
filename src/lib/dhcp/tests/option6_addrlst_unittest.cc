@@ -106,7 +106,7 @@ TEST_F(Option6AddrLstTest, basic) {
     memcpy(&buf[0], sampledata, 48);
 
     // just a single address
-    Option6AddrLst* opt1;
+    Option6AddrLst* opt1 = 0;
     EXPECT_NO_THROW(
         opt1 = new Option6AddrLst(D6O_NAME_SERVERS, buf, 128, 0, 16);
     );
@@ -126,7 +126,7 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ( 0, memcmp(expected1, &buf[100], 20) );
 
     // two addresses
-    Option6AddrLst* opt2;
+    Option6AddrLst* opt2 = 0;
     EXPECT_NO_THROW(
         opt2 = new Option6AddrLst(D6O_SIP_SERVERS_ADDR, buf, 128, 0, 32);
     );
@@ -145,7 +145,7 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ( 0, memcmp(expected2, &buf[150], 36));
 
     // three addresses
-    Option6AddrLst* opt3;
+    Option6AddrLst* opt3 = 0;
     EXPECT_NO_THROW(
         opt3 = new Option6AddrLst(D6O_NIS_SERVERS, buf, 128, 0, 48);
     );
@@ -174,7 +174,7 @@ TEST_F(Option6AddrLstTest, basic) {
 
 TEST_F(Option6AddrLstTest, constructors) {
 
-    Option6AddrLst* opt1;
+    Option6AddrLst* opt1 = 0;
     EXPECT_NO_THROW(
         opt1 = new Option6AddrLst(1234, IOAddress("::1"));
     );
@@ -188,7 +188,7 @@ TEST_F(Option6AddrLstTest, constructors) {
     addrs.push_back(IOAddress(string("fe80::1234")));
     addrs.push_back(IOAddress(string("2001:db8:1::baca")));
 
-    Option6AddrLst* opt2;
+    Option6AddrLst* opt2 = 0;
     EXPECT_NO_THROW(
         opt2 = new Option6AddrLst(5678, addrs);
     );
@@ -205,7 +205,7 @@ TEST_F(Option6AddrLstTest, constructors) {
 }
 
 TEST_F(Option6AddrLstTest, setAddress) {
-    Option6AddrLst* opt1;
+    Option6AddrLst* opt1 = 0;
     EXPECT_NO_THROW(
         opt1 = new Option6AddrLst(1234, IOAddress("::1"));
     );
