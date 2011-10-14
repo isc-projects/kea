@@ -17,6 +17,7 @@
 
 #include <list>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/noncopyable.hpp>
 #include "asiolink/io_address.h"
 #include "dhcp/pkt6.h"
@@ -116,15 +117,15 @@ public:
 
     /// @brief Sends a packet.
     ///
-    /// Sends a packet. All parameters regarding interface, destination
-    /// address are set in pkt object.
+    /// Sends a packet. All parameters for actual transmission are specified in
+    /// Pkt6 structure itself. That includes destination address, src/dst port
+    /// and interface over which data will be sent.
     ///
     /// @param pkt packet to be sent
     ///
     /// @return true if sending was successful
-    ///
     bool
-    send(boost::shared_ptr<Pkt6> pkt);
+    send(boost::shared_ptr<Pkt6>& pkt);
 
     /// @brief Tries to receive packet over open sockets.
     ///
@@ -132,8 +133,11 @@ public:
     /// If reception is successful and all information about its sender
     /// are obtained, Pkt6 object is created and returned.
     ///
-    /// @return Pkt6 object representing received packet (or NULL)
+    /// TODO Start using select() and add timeout to be able
+    /// to not wait infinitely, but rather do something useful
+    /// (e.g. remove expired leases)
     ///
+    /// @return Pkt6 object representing received packet (or NULL)
     boost::shared_ptr<Pkt6> receive();
 
     // don't use private, we need derived classes in tests
@@ -186,9 +190,11 @@ protected:
     // is bound to multicast address. And we all know what happens
     // to people who try to use multicast as source address.
 
-    /// control-buffer, used in transmission and reception
-    char * control_buf_;
+    /// length of the control_buf_ array
     int control_buf_len_;
+
+    /// control-buffer, used in transmission and reception
+    boost::scoped_array<char> control_buf_;
 
 private:
     /// Opens sockets on detected interfaces.
