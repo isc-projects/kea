@@ -79,7 +79,10 @@ IfaceMgr::Iface::getPlainMac() const {
     return (tmp.str());
 }
 
-IfaceMgr::IfaceMgr() {
+IfaceMgr::IfaceMgr()
+    :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
+     control_buf_(new char[control_buf_len_])
+{
 
     cout << "IfaceMgr initialization." << endl;
 
@@ -87,8 +90,8 @@ IfaceMgr::IfaceMgr() {
         // required for sending/receiving packets
         // let's keep it in front, just in case someone
         // wants to send anything during initialization
-        control_buf_len_ = CMSG_SPACE(sizeof(struct in6_pktinfo));
-        control_buf_ = new char[control_buf_len_];
+
+        // control_buf_ = boost::scoped_array<char>();
 
         detectIfaces();
 
@@ -107,11 +110,7 @@ IfaceMgr::IfaceMgr() {
 }
 
 IfaceMgr::~IfaceMgr() {
-    if (control_buf_) {
-        delete [] control_buf_;
-        control_buf_ = 0;
-        control_buf_len_ = 0;
-    }
+    // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;
 }
 
@@ -366,7 +365,7 @@ IfaceMgr::send(boost::shared_ptr<Pkt6> pkt) {
     int result;
     struct in6_pktinfo *pktinfo;
     struct cmsghdr *cmsg;
-    memset(control_buf_, 0, control_buf_len_);
+    memset(&control_buf_[0], 0, control_buf_len_);
 
     /*
      * Initialize our message header structure.
@@ -406,7 +405,7 @@ IfaceMgr::send(boost::shared_ptr<Pkt6> pkt) {
      * source address if we wanted, but we can safely let the
      * kernel decide what that should be.
      */
-    m.msg_control = control_buf_;
+    m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
     cmsg = CMSG_FIRSTHDR(&m);
     cmsg->cmsg_level = IPPROTO_IPV6;
@@ -468,7 +467,7 @@ IfaceMgr::receive() {
         return (boost::shared_ptr<Pkt6>()); // NULL
     }
 
-    memset(control_buf_, 0, control_buf_len_);
+    memset(&control_buf_[0], 0, control_buf_len_);
 
     memset(&from, 0, sizeof(from));
     memset(&to_addr, 0, sizeof(to_addr));
@@ -502,7 +501,7 @@ IfaceMgr::receive() {
      * information (when we initialized the interface), so we
      * should get the destination address from that.
      */
-    m.msg_control = control_buf_;
+    m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
 
     result = recvmsg(recvsock_, &m, 0);
