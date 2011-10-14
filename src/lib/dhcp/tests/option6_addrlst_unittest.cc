@@ -106,12 +106,10 @@ TEST_F(Option6AddrLstTest, basic) {
     memcpy(&buf[0], sampledata, 48);
 
     // just a single address
-    Option6AddrLst* opt1 = new Option6AddrLst(D6O_NAME_SERVERS,
-                                              buf,
-                                              128,
-                                              0,
-                                              16);
-
+    Option6AddrLst* opt1;
+    EXPECT_NO_THROW(
+        opt1 = new Option6AddrLst(D6O_NAME_SERVERS, buf, 128, 0, 16);
+    );
 
     EXPECT_EQ(D6O_NAME_SERVERS, opt1->getType());
     EXPECT_EQ(20, opt1->len());
@@ -128,11 +126,10 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ( 0, memcmp(expected1, &buf[100], 20) );
 
     // two addresses
-    Option6AddrLst* opt2 = new Option6AddrLst(D6O_SIP_SERVERS_ADDR,
-                                              buf,
-                                              128,
-                                              0,
-                                              32);
+    Option6AddrLst* opt2;
+    EXPECT_NO_THROW(
+        opt2 = new Option6AddrLst(D6O_SIP_SERVERS_ADDR, buf, 128, 0, 32);
+    );
     EXPECT_EQ(D6O_SIP_SERVERS_ADDR, opt2->getType());
     EXPECT_EQ(36, opt2->len());
     addrs = opt2->getAddresses();
@@ -147,13 +144,11 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ(150+36, offset);
     EXPECT_EQ( 0, memcmp(expected2, &buf[150], 36));
 
-
     // three addresses
-    Option6AddrLst* opt3 = new Option6AddrLst(D6O_NIS_SERVERS,
-                                              buf,
-                                              128,
-                                              0,
-                                              48);
+    Option6AddrLst* opt3;
+    EXPECT_NO_THROW(
+        opt3 = new Option6AddrLst(D6O_NIS_SERVERS, buf, 128, 0, 48);
+    );
 
     EXPECT_EQ(D6O_NIS_SERVERS, opt3->getType());
     EXPECT_EQ(52, opt3->len());
@@ -170,46 +165,59 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ(252, offset);
     EXPECT_EQ( 0, memcmp(expected3, &buf[200], 52) );
 
-    delete opt1;
-    delete opt2;
-    delete opt3;
+    EXPECT_NO_THROW(
+        delete opt1;
+        delete opt2;
+        delete opt3;
+    );
 }
 
 TEST_F(Option6AddrLstTest, constructors) {
-     Option6AddrLst * opt1 = new Option6AddrLst(1234,
-                                                IOAddress("::1"));
-     EXPECT_EQ(1234, opt1->getType());
 
-     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
-     ASSERT_EQ(1, addrs.size() );
-     EXPECT_EQ("::1", addrs[0].toText());
+    Option6AddrLst* opt1;
+    EXPECT_NO_THROW(
+        opt1 = new Option6AddrLst(1234, IOAddress("::1"));
+    );
+    EXPECT_EQ(1234, opt1->getType());
 
-     addrs.clear();
-     addrs.push_back(IOAddress(string("fe80::1234")));
-     addrs.push_back(IOAddress(string("2001:db8:1::baca")));
+    Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
+    ASSERT_EQ(1, addrs.size() );
+    EXPECT_EQ("::1", addrs[0].toText());
 
-     Option6AddrLst * opt2 = new Option6AddrLst(5678,
-                                                addrs);
+    addrs.clear();
+    addrs.push_back(IOAddress(string("fe80::1234")));
+    addrs.push_back(IOAddress(string("2001:db8:1::baca")));
 
-     Option6AddrLst::AddressContainer check = opt2->getAddresses();
-     ASSERT_EQ(2, check.size() );
-     EXPECT_EQ("fe80::1234", check[0].toText());
-     EXPECT_EQ("2001:db8:1::baca", check[1].toText());
+    Option6AddrLst* opt2;
+    EXPECT_NO_THROW(
+        opt2 = new Option6AddrLst(5678, addrs);
+    );
 
-     delete opt1;
-     delete opt2;
+    Option6AddrLst::AddressContainer check = opt2->getAddresses();
+    ASSERT_EQ(2, check.size() );
+    EXPECT_EQ("fe80::1234", check[0].toText());
+    EXPECT_EQ("2001:db8:1::baca", check[1].toText());
+
+    EXPECT_NO_THROW(
+        delete opt1;
+        delete opt2;
+    );
 }
 
 TEST_F(Option6AddrLstTest, setAddress) {
-    Option6AddrLst * opt1 = new Option6AddrLst(1234,
-                                                IOAddress("::1"));
+    Option6AddrLst* opt1;
+    EXPECT_NO_THROW(
+        opt1 = new Option6AddrLst(1234, IOAddress("::1"));
+    );
     opt1->setAddress(IOAddress("::2"));
 
     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
     ASSERT_EQ(1, addrs.size() );
     EXPECT_EQ("::2", addrs[0].toText());
 
-    delete opt1;
+    EXPECT_NO_THROW(
+        delete opt1;
+    );
 }
 
 } // namespace
