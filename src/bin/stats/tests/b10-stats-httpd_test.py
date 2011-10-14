@@ -45,7 +45,12 @@ DUMMY_DATA = {
         },
     'Auth' : {
         "queries.tcp": 2,
-        "queries.udp": 3
+        "queries.udp": 3,
+        "queries.per-zone": [{
+                "zonename": "test.example",
+                "queries.tcp": 2,
+                "queries.udp": 3
+                }]
         },
     'Stats' : {
         "report_time": "2011-03-04T11:59:19Z",
