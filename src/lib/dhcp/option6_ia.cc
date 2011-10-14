@@ -17,29 +17,31 @@
 #include <sstream>
 #include "exceptions/exceptions.h"
 
-#include "libdhcp.h"
-#include "option6_ia.h"
-#include "dhcp6.h"
+#include "dhcp/libdhcp.h"
+#include "dhcp/option6_ia.h"
+#include "dhcp/dhcp6.h"
+#include "util/io_utilities.h"
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 Option6IA::Option6IA(unsigned short type, unsigned int iaid)
     :Option(Option::V6, type), iaid_(iaid) {
 }
 
 Option6IA::Option6IA(unsigned short type,
-                   boost::shared_array<uint8_t> buf,
-                   unsigned int buf_len,
-                   unsigned int offset,
-                   unsigned int option_len)
+                     const boost::shared_array<uint8_t>& buf,
+                     unsigned int buf_len,
+                     unsigned int offset,
+                     unsigned int option_len)
     :Option(Option::V6, type) {
     unpack(buf, buf_len, offset, option_len);
 }
 
 unsigned int
-Option6IA::pack(boost::shared_array<uint8_t> buf,
+Option6IA::pack(boost::shared_array<uint8_t>& buf,
                 unsigned int buf_len,
                 unsigned int offset) {
     if (offset + len() > buf_len) {
@@ -52,12 +54,14 @@ Option6IA::pack(boost::shared_array<uint8_t> buf,
                   << len() << " is too small (at least 16 is required).");
     }
 
+    writeUint16(type_, &buf[offset]);
+    offset += sizeof(uint16_t);
+
+    writeUint16(len() - OPTION6_HDR_LEN, &buf[offset]);
+    offset += sizeof(uint16_t);
+
+    /// TODO start using writeUint32 once such function is implemented
     uint8_t* ptr = &buf[offset];
-    *(uint16_t*)ptr = htons(type_);
-    ptr += sizeof(uint16_t);
-    *(uint16_t*)ptr = htons(len() - 4); // len() returns complete option length
-    // len field contains length without 4-byte option header
-    ptr += sizeof(uint16_t);
 
     *(uint32_t*)ptr = htonl(iaid_);
     ptr += sizeof(uint32_t);
@@ -68,12 +72,12 @@ Option6IA::pack(boost::shared_array<uint8_t> buf,
     *(uint32_t*)ptr = htonl(t2_);
     ptr += sizeof(uint32_t);
 
-    offset = LibDHCP::packOptions6(buf, buf_len, offset+16, options_);
+    offset = LibDHCP::packOptions6(buf, buf_len, offset+12, options_);
     return offset;
 }
 
 unsigned int
-Option6IA::unpack(boost::shared_array<uint8_t> buf,
+Option6IA::unpack(const boost::shared_array<uint8_t>& buf,
                   unsigned int buf_len,
                   unsigned int offset,
                   unsigned int parse_len) {

@@ -52,7 +52,7 @@ public:
     /// @return a pointer to a created option object
     typedef boost::shared_ptr<Option> Factory(Option::Universe u,
                                               unsigned short type,
-                                              boost::shared_array<uint8_t> buf,
+                                              boost::shared_array<uint8_t>& buf,
                                               unsigned int offset,
                                               unsigned int len);
 
@@ -75,8 +75,8 @@ public:
     /// @param buf pointer to a buffer
     /// @param offset offset in a buffer pointing to first byte of data
     /// @param len length of the option data
-    Option(Universe u, unsigned short type, boost::shared_array<uint8_t> buf,
-           unsigned int offset,
+    Option(Universe u, unsigned short type,
+           const boost::shared_array<uint8_t>& buf, unsigned int offset,
            unsigned int len);
 
     /// @brief writes option in wire-format to buf
@@ -92,7 +92,7 @@ public:
     /// @return offset to first unused byte after stored option
     ///
     virtual unsigned int
-    pack(boost::shared_array<uint8_t> buf,
+    pack(boost::shared_array<uint8_t>& buf,
          unsigned int buf_len,
          unsigned int offset);
 
@@ -108,7 +108,7 @@ public:
     ///
     /// @return offset after last parsed octet
     virtual unsigned int
-    unpack(boost::shared_array<uint8_t> buf,
+    unpack(const boost::shared_array<uint8_t>& buf,
            unsigned int buf_len,
            unsigned int offset,
            unsigned int parse_len);
@@ -157,6 +157,12 @@ public:
     /// Some DHCPv6 options can have suboptions. This method allows adding
     /// options within options.
     ///
+    /// Note: option is passed by value. That is very convenient as it allows
+    /// downcasting from any derived classes, e.g. shared_ptr<Option6_IA> type
+    /// can be passed directly, without any casts. That would not be possible
+    /// with passing by reference. addOption() is expected to be used in
+    /// many places. Requiring casting is not feasible.
+    ///
     /// @param opt shared pointer to a suboption that is going to be added.
     void
     addOption(boost::shared_ptr<Option> opt);
@@ -192,7 +198,7 @@ protected:
     ///
     /// @return offset to the next byte after last used byte
     virtual unsigned int
-    pack4(boost::shared_array<uint8_t> buf,
+    pack4(boost::shared_array<uint8_t>& buf,
           unsigned int buf_len,
           unsigned int offset);
 
@@ -205,7 +211,7 @@ protected:
     ///
     /// @return offset to the next byte after last used byte
     virtual unsigned int
-    pack6(boost::shared_array<uint8_t> buf,
+    pack6(boost::shared_array<uint8_t>& buf,
           unsigned int buf_len,
           unsigned int offset);
 
@@ -217,7 +223,7 @@ protected:
     ///
     /// @return offset to the next byte after last parsed byte
     virtual unsigned int
-    unpack4(boost::shared_array<uint8_t> buf,
+    unpack4(const boost::shared_array<uint8_t>& buf,
             unsigned int buf_len,
             unsigned int offset,
             unsigned int parse_len);
@@ -230,7 +236,7 @@ protected:
     ///
     /// @return offset to the next byte after last parsed byte
     virtual unsigned int
-    unpack6(boost::shared_array<uint8_t> buf,
+    unpack6(const boost::shared_array<uint8_t>& buf,
             unsigned int buf_len,
             unsigned int offset,
             unsigned int parse_len);

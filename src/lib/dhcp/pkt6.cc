@@ -114,7 +114,6 @@ Pkt6::packUDP() {
                                                       4/*offset*/,
                                                       options_);
 
-
         // sanity check
         if (offset != length) {
             isc_throw(OutOfRange, "Packet build failed: expected size="

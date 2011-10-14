@@ -15,6 +15,7 @@
 #ifndef OPTION_IA_H_
 #define OPTION_IA_H_
 
+#include <stdint.h>
 #include "option.h"
 
 namespace isc {
@@ -30,7 +31,7 @@ public:
     ///
     /// @param type option type (usually 4 for IA_NA, 25 for IA_PD)
     /// @param iaid identity association identifier (id of IA)
-    Option6IA(unsigned short type, unsigned int iaid);
+    Option6IA(uint16_t type, unsigned int iaid);
 
     /// @brief ctor, used for received options
     ///
@@ -45,7 +46,7 @@ public:
     /// @param buf_len buffer length
     /// @param offset offset in buffer
     /// @param len number of bytes to parse
-    Option6IA(unsigned short type, boost::shared_array<uint8_t> buf,
+    Option6IA(uint16_t type, const boost::shared_array<uint8_t>& buf,
               unsigned int buf_len, unsigned int offset, unsigned int len);
 
     /// Writes option in wire-format to buf, returns pointer to first unused
@@ -57,7 +58,7 @@ public:
     ///
     /// @return offset to the first unused byte after stored option
     unsigned int
-    pack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
+    pack(boost::shared_array<uint8_t>& buf, unsigned int buf_len,
          unsigned int offset);
 
     /// @brief Parses received buffer
@@ -72,7 +73,7 @@ public:
     ///
     /// @return offset after last parsed octet
     virtual unsigned int
-    unpack(boost::shared_array<uint8_t> buf, unsigned int buf_len,
+    unpack(const boost::shared_array<uint8_t>& buf, unsigned int buf_len,
            unsigned int offset, unsigned int parse_len);
 
     /// Provides human readable text representation
