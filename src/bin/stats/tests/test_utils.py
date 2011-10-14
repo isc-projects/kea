@@ -232,6 +232,44 @@ class MockAuth:
         "item_default": 0,
         "item_title": "Queries UDP",
         "item_description": "A number of total query counts which all auth servers receive over UDP since they started initially"
+      },
+      {
+        "item_name": "queries.per-zone",
+        "item_type": "list",
+        "item_optional": false,
+        "item_default": [],
+        "item_title": "Queries per zone",
+        "item_description": "Queries per zone",
+        "list_item_spec": {
+          "item_name": "item",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": {},
+          "map_item_spec": [
+            {
+              "item_name": "zonename",
+              "item_type": "string",
+              "item_optional": false,
+              "item_default": ""
+            },
+            {
+              "item_name": "queries.udp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "Queries UDP per zone",
+              "item_description": "A number of UDP query counts per zone"
+            },
+            {
+              "item_name": "queries.tcp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "Queries TCP per zone",
+              "item_description": "A number of TCP query counts per zone"
+            }
+          ]
+        }
       }
     ]
   }
@@ -251,6 +289,11 @@ class MockAuth:
         self.got_command_name = ''
         self.queries_tcp = 3
         self.queries_udp = 2
+        self.queries_per_zone = [{
+                'zonename': 'test.example',
+                'queries.tcp': 5,
+                'queries.udp': 4
+                }]
 
     def run(self):
         self.mccs.start()
@@ -273,7 +316,8 @@ class MockAuth:
         if command == 'sendstats':
             params = { "owner": "Auth",
                        "data": { 'queries.tcp': self.queries_tcp,
-                                 'queries.udp': self.queries_udp } }
+                                 'queries.udp': self.queries_udp,
+                                 'queries.per-zone' : self.queries_per_zone } }
             return send_command("set", "Stats", params=params, session=self.cc_session)
         return isc.config.create_answer(1, "Unknown Command")
 

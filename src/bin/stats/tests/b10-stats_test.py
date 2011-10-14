@@ -385,10 +385,14 @@ class TestStats(unittest.TestCase):
                 1, "specified arguments are incorrect: owner: Foo, name: bar"))
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
-                0, {'queries.tcp': 0, 'queries.udp': 0}))
+                0, {'queries.tcp': 0, 'queries.udp': 0,
+                    "queries.per-zone": []}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
                 0, 0))
+        self.assertEqual(self.stats.command_show(owner='Auth', name='queries.per-zone'),
+                         isc.config.create_answer(
+                0, []))
         orig_get_timestamp = stats.get_timestamp
         orig_get_datetime = stats.get_datetime
         stats.get_timestamp = lambda : self.const_timestamp
@@ -442,9 +446,12 @@ class TestStats(unittest.TestCase):
             self.assertTrue('item_format' in item)
 
         schema = value['Auth']
-        self.assertEqual(len(schema), 2)
+        self.assertEqual(len(schema), 3)
         for item in schema:
-            self.assertTrue(len(item) == 6)
+            if item['item_type'] == 'list':
+                self.assertTrue(len(item) == 7)
+            else:
+                self.assertTrue(len(item) == 6)
             self.assertTrue('item_name' in item)
             self.assertTrue('item_type' in item)
             self.assertTrue('item_optional' in item)
@@ -509,6 +516,44 @@ class TestStats(unittest.TestCase):
                         "item_optional": False,
                         "item_title": "Queries UDP",
                         "item_type": "integer"
+                        },
+                    {
+                        "item_name": "queries.per-zone",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [],
+                        "item_title": "Queries per zone",
+                        "item_description": "Queries per zone",
+                        "list_item_spec": {
+                            "item_name": "item",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "zonename",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": ""
+                                    },
+                                {
+                                    "item_name": "queries.udp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries UDP per zone",
+                                    "item_description": "A number of UDP query counts per zone"
+                                    },
+                                {
+                                    "item_name": "queries.tcp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries TCP per zone",
+                                    "item_description": "A number of TCP query counts per zone"
+                                    }
+                                ]
+                            }
                         }]))
         self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.tcp'),
                          isc.config.create_answer(
@@ -519,6 +564,46 @@ class TestStats(unittest.TestCase):
                     "item_optional": False,
                     "item_title": "Queries TCP",
                     "item_type": "integer"
+                    }))
+        self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.per-zone'),
+                         isc.config.create_answer(
+                0, {
+                    "item_name": "queries.per-zone",
+                    "item_type": "list",
+                    "item_optional": False,
+                    "item_default": [],
+                    "item_title": "Queries per zone",
+                    "item_description": "Queries per zone",
+                    "list_item_spec": {
+                        "item_name": "item",
+                        "item_type": "map",
+                        "item_optional": False,
+                        "item_default": {},
+                        "map_item_spec": [
+                            {
+                                "item_name": "zonename",
+                                "item_type": "string",
+                                "item_optional": False,
+                                "item_default": ""
+                                },
+                            {
+                                "item_name": "queries.udp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries UDP per zone",
+                                "item_description": "A number of UDP query counts per zone"
+                                },
+                            {
+                                "item_name": "queries.tcp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries TCP per zone",
+                                "item_description": "A number of TCP query counts per zone"
+                                }
+                            ]
+                        }
                     }))
 
         self.assertEqual(self.stats.command_showschema(owner='Stats', name='bar'),
