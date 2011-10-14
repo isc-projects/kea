@@ -61,12 +61,13 @@ XSD_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsd.tpl"
 XSL_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsl.tpl"
 
 # These variables are paths part of URL.
-# eg. "http://${address}" + XXX_URL_PATH
-XML_URL_PATH = '/bind10/statistics/xml'
-XSD_URL_PATH = '/bind10/statistics/xsd'
-XSL_URL_PATH = '/bind10/statistics/xsl'
+# eg. "http://${address}" + BASE_URL_PATH + ( | /{module_name} | /{module_name}/{item_name} ) + XXX_URL_PATH
+BASE_URL_PATH = '/bind10/statistics'
+XML_URL_PATH = '/xml'
+XSD_URL_PATH = '/xsd'
+XSL_URL_PATH = '/xsl'
 # TODO: This should be considered later.
-XSD_NAMESPACE = 'http://bind10.isc.org' + XSD_URL_PATH
+XSD_NAMESPACE = 'http://bind10.isc.org' + BASE_URL_PATH + XSD_URL_PATH
 
 # Assign this process name
 isc.util.process.rename()
@@ -85,11 +86,11 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
 
     def send_head(self):
         try:
-            if self.path == XML_URL_PATH:
+            if self.path == BASE_URL_PATH + XML_URL_PATH:
                 body = self.server.xml_handler()
-            elif self.path == XSD_URL_PATH:
+            elif self.path == BASE_URL_PATH + XSD_URL_PATH:
                 body = self.server.xsd_handler()
-            elif self.path == XSL_URL_PATH:
+            elif self.path == BASE_URL_PATH + XSL_URL_PATH:
                 body = self.server.xsl_handler()
             else:
                 if self.path == '/' and 'Host' in self.headers.keys():
@@ -97,7 +98,7 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                     self.send_response(302)
                     self.send_header(
                         "Location",
-                        "http://" + self.headers.get('Host') + XML_URL_PATH)
+                        "http://" + self.headers.get('Host') + BASE_URL_PATH + XML_URL_PATH)
                     self.end_headers()
                     return None
                 else:
@@ -395,8 +396,8 @@ class StatsHttpd:
         self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
             xml_string=xml_string,
             xsd_namespace=XSD_NAMESPACE,
-            xsd_url_path=XSD_URL_PATH,
-            xsl_url_path=XSL_URL_PATH)
+            xsd_url_path=BASE_URL_PATH + XSD_URL_PATH,
+            xsl_url_path=BASE_URL_PATH + XSL_URL_PATH)
         assert self.xml_body is not None
         return self.xml_body
 
