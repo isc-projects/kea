@@ -22,6 +22,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(GTEST_LDADD)
 endif
 
-check_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = $(TESTS)
 
 EXTRA_DIST = testdata/query.txt
