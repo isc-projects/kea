@@ -1,3 +1,14 @@
+299.    [func]*         tomek
+	libdhcp: DHCP packet library was implemented. Currently it handles
+	packet reception, option parsing, option generation and output
+	packet building. Generic and specialized classes for several
+	DHCPv6 options (IA_NA, IAADDR, address-list) are available. A
+	simple code was added that leverages libdhcp. It is a skeleton
+	DHCPv6 server. It receives incoming SOLICIT and REQUEST messages
+	and responds with proper ADVERTISE and REPLY. Note that since
+	LeaseManager is not implemented, server assigns a the same
+	hardcoded lease for every client.
+
 bind10-devel-20111014 released on October 14, 2011
 
 298.	[doc]		jreed
