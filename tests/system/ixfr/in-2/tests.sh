@@ -31,7 +31,7 @@ echo "I:$SERVER_NAME updating IXFR-server to suitable start version"
 update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n4
 if [ $? -ne 0 ];
 then
-    return 1
+    exit 1
 fi
 
 # The pre-requisites for this test are the same as for the common tests, so
@@ -39,7 +39,7 @@ fi
 . ../common_tests.sh
 if [ $? -ne 0 ];
 then
-    return 1
+    exit 1
 fi
 
 # TEMPORARY: at the time of writing (October 2011) BIND 10 does not attempt
@@ -51,14 +51,14 @@ grep XFRIN_XFR_TRANSFER_STARTED nsx2/bind10.run | grep IXFR > /dev/null
 if [ $? -ne 0 ];
 then
     echo "R:$CLIENT_NAME FAIL no 'IXFR started' message in the BIND 10 log"
-    return 1
+    exit 1
 fi
 
 grep XFRIN_XFR_TRANSFER_SUCCESS nsx2/bind10.run | grep IXFR > /dev/null
 if [ $? -ne 0 ];
 then
     echo "R:$CLIENT_NAME FAIL no 'IXFR successful' message in the BIND 10 log"
-    return 1
+    exit 1
 fi
 
 # Look in the named log file to see if a TCP IXFR was requested.  Again use a
@@ -67,15 +67,15 @@ grep "transfer of" ns1/named.run | grep "sending TCP message" > /dev/null
 if [ $? -ne 0 ];
 then
     echo "R:$SERVER_NAME FAIL no 'sending TCP' message in the BIND 9 log"
-    return 1
+    exit 1
 fi
 
 grep "IXFR ended" ns1/named.run > /dev/null
 if [ $? -ne 0 ];
 then
     echo "R:$SERVER_NAME FAIL no 'IXFR ended' message in the BIND 9 log"
-    return 1
+    exit 1
 fi
 
 echo "I:exit status: 0"
-return 0
+exit 0
