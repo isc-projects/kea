@@ -218,6 +218,117 @@ class MockBob(BoB):
     def start_ccsession(self, c_channel_env):
         pass
 
+class TestBossComponents(unittest.TestCase):
+    """
+    Test the boss propagates component configuration properly to the
+    component configurator and acts sane.
+    """
+    def setUp(self):
+        self.__param = None
+        self.__called = False
+        self.__compconfig = {
+            'comp': {
+                'kind': 'needed',
+                'process': 'cat'
+            }
+        }
+
+    def __unary_hook(self, param):
+        """
+        A hook function that stores the parameter for later examination.
+        """
+        self.__param = param
+
+    def __nullary_hook(self):
+        """
+        A hook function that notes down it was called.
+        """
+        self.__called = True
+
+    def __check_core(self, config):
+        """
+        A function checking that the config contains parts for the valid
+        core component configuration.
+        """
+        self.assertIsNotNone(config)
+        for component in ['sockcreator', 'msgq', 'cfgmgr']:
+            self.assertTrue(component in config)
+            self.assertEqual(component, config[component]['special'])
+            self.assertEqual('core', config[component]['kind'])
+
+    def __check_extended(self, config):
+        """
+        This checks that the config contains the core and one more component.
+        """
+        self.__check_core(config)
+        self.assertTrue('comp' in config)
+        self.assertEqual('cat', config['comp']['process'])
+        self.assertEqual('needed', config['comp']['kind'])
+        self.assertEqual(4, len(config))
+
+    def test_correct_run(self):
+        """
+        Test the situation when we run in usual scenario, nothing fails,
+        we just start, reconfigure and then stop peacefully.
+        """
+        bob = MockBob()
+        # Start it
+        orig = bob._component_configurator.startup
+        bob._component_configurator.startup = self.__unary_hook
+        bob.start_all_processes()
+        bob._component_configurator.startup = orig
+        self.__check_core(self.__param)
+        self.assertEqual(3, len(self.__param))
+
+        # Reconfigure it
+        self.__param = None
+        orig = bob._component_configurator.reconfigure
+        bob._component_configurator.reconfigure = self.__unary_hook
+        # Otherwise it does not work
+        bob.runnable = True
+        bob.config_handler({'components': self.__compconfig})
+        self.__check_extended(self.__param)
+        currconfig = self.__param
+        # If we reconfigure it, but it does not contain the components part,
+        # nothing is called
+        bob.config_handler({})
+        self.assertEqual(self.__param, currconfig)
+        self.__param = None
+        bob._component_configurator.reconfigure = orig
+        # Check a configuration that messes up the core components is rejected.
+        compconf = dict(self.__compconfig)
+        compconf['msgq'] = { 'process': 'echo' }
+        # Is it OK to raise, or should it catch also and convert to error
+        # answer?
+        self.assertRaises(Exception, bob.config_handler,
+                          {'components': compconf})
+
+        # Stop it
+        orig = bob._component_configurator.shutdown
+        bob._component_configurator.shutdown = self.__nullary_hook
+        self.__called = False
+        # We can't call shutdown, that one relies on the stuff in main
+        bob.stop_all_processes()
+        bob._component_configurator.shutdown = orig
+        self.assertTrue(self.__called)
+
+    def test_init_config(self):
+        """
+        Test initial configuration is loaded.
+        """
+        bob = MockBob()
+        # Start it
+        bob._component_configurator.reconfigure = self.__unary_hook
+        # We need to return the original read_bind10_config
+        bob.read_bind10_config = lambda: BoB.read_bind10_config(bob)
+        # And provide a session to read the data from
+        class CC:
+            pass
+        bob.ccs = CC()
+        bob.ccs.get_full_config = lambda: {'components': self.__compconfig}
+        bob.start_all_processes()
+        self.__check_extended(self.__param)
+
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
         """

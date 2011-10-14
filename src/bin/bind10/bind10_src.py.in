@@ -264,13 +264,25 @@ class BoB:
         self.__stopping = False
         self.exitcode = 0
 
+    def __propagate_component_config(self, config):
+        comps = dict(config)
+        # Fill in the core components, so they stay alive
+        for comp in self.__core_components:
+            if comp in comps:
+                raise Exception(comp + " is core component managed by " +
+                                "bind10 boss, do not set it")
+            comps[comp] = self.__core_components[comp]
+        # Update the configuration
+        self._component_configurator.reconfigure(comps)
+
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
             return
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_NEW_CONFIGURATION,
                      new_config)
-        # TODO: Propagate the config to the configurator
+        if 'components' in new_config:
+            self.__propagate_component_config(new_config['components'])
         answer = isc.config.ccsession.create_answer(0)
         return answer
 
@@ -347,6 +359,7 @@ class BoB:
         logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
         config_data = self.ccs.get_full_config()
+        self.__propagate_component_config(config_data['components'])
         # Propagate the config to the config manager, first reconfigure
 
     def log_starting(self, process, port = None, address = None):
