@@ -67,4 +67,4 @@ run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
-check_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = $(TESTS)
