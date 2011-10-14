@@ -28,19 +28,19 @@ namespace auth {
 /// output.
 
 // Debug messages indicating normal startup are logged at this debug level.
-const int DBG_AUTH_START = 10;
+const int DBG_AUTH_START = DBGLVL_START_SHUT;
 
 // Debug level used to log setting information (such as configuration changes).
-const int DBG_AUTH_OPS = 30;
+const int DBG_AUTH_OPS = DBGLVL_COMMAND;
 
 // Trace detailed operations, including errors raised when processing invalid
 // packets.  (These are not logged at severities of WARN or higher for fear
 // that a set of deliberately invalid packets set to the authoritative server
 // could overwhelm the logging.)
-const int DBG_AUTH_DETAIL = 50;
+const int DBG_AUTH_DETAIL = DBGLVL_TRACE_BASIC;
 
 // This level is used to log the contents of packets received and sent.
-const int DBG_AUTH_MESSAGES = 70;
+const int DBG_AUTH_MESSAGES = DBGLVL_TRACE_DETAIL_DATA;
 
 /// Define the logger for the "auth" module part of b10-auth.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
