@@ -34,11 +34,9 @@ libdhcp_unittests_CXXFLAGS += -Wno-unused-variable
 endif
 libdhcp_unittests_LDADD  = $(GTEST_LDADD)
 libdhcp_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-libdhcp_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libdhcp_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 libdhcp_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 libdhcp_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-libdhcp_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
