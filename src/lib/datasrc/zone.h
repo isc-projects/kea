@@ -177,10 +177,11 @@ public:
     enum FindOptions {
         FIND_DEFAULT = 0,       ///< The default options
         FIND_GLUE_OK = 1,       ///< Allow search under a zone cut
-        FIND_DNSSEC = 2         ///< Require DNSSEC data in the answer
+        FIND_DNSSEC = 2,        ///< Require DNSSEC data in the answer
                                 ///< (RRSIG, NSEC, etc.). The implementation
                                 ///< is allowed to include it even if it is
                                 ///< not set.
+        NO_WILDCARD = 4         ///< Do not try wildcard matching.
     };
 
     ///
@@ -255,6 +256,10 @@ public:
     /// - \c FIND_DNSSEC Request that DNSSEC data (like NSEC, RRSIGs) are
     ///   returned with the answer. It is allowed for the data source to
     ///   include them even when not requested.
+    /// - \c NO_WILDCARD Do not try wildcard matching.  This option is of no
+    ///   use for normal lookups; it's intended to be used to get a DNSSEC
+    ///   proof of the non existence of any matching wildcard or non existence
+    ///   of an exact match when a wildcard match is found.
     ///
     /// A derived version of this method may involve internal resource
     /// allocation, especially for constructing the resulting RRset, and may

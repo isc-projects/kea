@@ -175,6 +175,8 @@ const char* const TEST_RECORDS[][5] = {
     {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"wild.*.foo.*.bar.example.org.", "NSEC", "3600", "",
+     "brokenns1.example.org. A NSEC"},
     {"bao.example.org.", "NSEC", "3600", "", "wild.*.foo.*.bar.example.org. NSEC"},
     {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
     {"*.dnamewild.example.org.", "DNAME", "3600", "", "dname.example.com."},
@@ -1041,8 +1043,8 @@ doFindTest(ZoneFinder& finder,
            const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
-    ZoneFinder::FindResult result =
-        finder.find(name, type, NULL, options);
+    const ZoneFinder::FindResult result = finder.find(name, type, NULL,
+                                                      options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (!expected_rdatas.empty() && result.rrset) {
         checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
@@ -1661,6 +1663,67 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                isc::dns::RRType::TXT(), isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::DELEGATION,
                this->expected_rdatas_, this->expected_sig_rdatas_);
+}
+
+TYPED_TEST(DatabaseClientTest, noWildcard) {
+    // Tests with the NO_WILDCARD flag.
+
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    // This would match *.wild.example.org, but with NO_WILDCARD should
+    // result in NXDOMAIN.
+    this->expected_rdatas_.push_back("cancel.here.wild.example.org. A "
+                                     "NSEC RRSIG");
+    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
+               this->expected_sig_rdatas_, Name("*.wild.example.org."),
+               ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
+
+    // Should be the same without FIND_DNSSEC (but in this case no RRsets
+    // will be returned)
+    doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+               this->empty_rdatas_, Name::ROOT_NAME(), // name is dummy
+               ZoneFinder::NO_WILDCARD);
+
+    // Same for wildcard empty non terminal.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("brokenns1.example.org. A NSEC");
+    doFindTest(*finder, isc::dns::Name("a.bar.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
+               this->empty_rdatas_, Name("wild.*.foo.*.bar.example.org"),
+               ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
+
+    // Search for a wildcard name with NO_WILDCARD.  There should be no
+    // difference.  This is, for example, necessary to provide non existence
+    // of matching wildcard for isnx.nonterminal.example.org.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
+    doFindTest(*finder, isc::dns::Name("*.nonterminal.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
+               this->empty_rdatas_, Name("l.example.org"),
+               ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
+
+    // On the other hand, if there's exact match for the wildcard name
+    // it should be found regardless of NO_WILDCARD.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.5");
+    this->expected_sig_rdatas_.clear();
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, isc::dns::Name("*.wild.example.org"),
+               this->qtype_, this->qtype_, this->rrttl_,
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_, Name("*.wild.example.org"),
+               ZoneFinder::NO_WILDCARD);
 }
 
 TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
