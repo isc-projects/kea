@@ -63,6 +63,10 @@ public:
     /// actually the best wildcard we have). Data sources that don't
     /// support DNSSEC don't need to distinguish them.
     ///
+    /// In case of CNAME, if the CNAME is a wildcard (i.e., its owner name
+    /// starts with the label "*"), WILDCARD_CNAME will be returned instead
+    /// of CNAME.
+    ///
     /// In case of NXRRSET related results, the returned NSEC record
     /// belongs to the domain which would provide the result if it
     /// contained the correct type (in case of NXRRSET, it is the queried
@@ -97,6 +101,7 @@ public:
         CNAME,    ///< The search encounters and returns a CNAME RR
         DNAME,    ///< The search encounters and returns a DNAME RR
         WILDCARD, ///< Succes by wildcard match, for DNSSEC
+        WILDCARD_CNAME, ///< CNAME on wildcard, search returns CNAME, for DNSSEC
         WILDCARD_NXRRSET ///< NXRRSET on wildcard, for DNSSEC
     };
 
