@@ -1626,7 +1626,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("a.cnamewild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::CNAME(),
-               this->rrttl_, ZoneFinder::CNAME,
+               this->rrttl_, ZoneFinder::WILDCARD_CNAME,
                this->expected_rdatas_, this->expected_sig_rdatas_);
 
     this->expected_rdatas_.clear();
