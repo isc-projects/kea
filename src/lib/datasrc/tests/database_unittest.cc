@@ -177,6 +177,7 @@ const char* const TEST_RECORDS[][5] = {
     {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
     {"bao.example.org.", "NSEC", "3600", "", "wild.*.foo.*.bar.example.org. NSEC"},
     {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"*.dnamewild.example.org.", "DNAME", "3600", "", "dname.example.com."},
     {"*.nswild.example.org.", "NS", "3600", "", "ns.example.com."},
     // For NSEC empty non-terminal
     {"l.example.org.", "NSEC", "3600", "", "empty.nonterminal.example.org. NSEC"},
@@ -1620,7 +1621,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                    Name("bao.example.org."), ZoneFinder::FIND_DNSSEC);
     }
 
-    // Some strange things in the wild node
+    // CNAME on a wildcard.  Maybe not so common, but not disallowed.
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("www.example.org.");
     this->expected_sig_rdatas_.clear();
@@ -1629,6 +1630,18 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                this->rrttl_, ZoneFinder::WILDCARD_CNAME,
                this->expected_rdatas_, this->expected_sig_rdatas_);
 
+    // DNAME on a wildcard.  In our implementation we ignore DNAMEs on a
+    // wildcard, but at a higher level we say the behavior is "unspecified".
+    // rfc2672bis strongly discourages the mixture of DNAME and wildcard
+    // (with SHOULD NOT).
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    doFindTest(*finder, Name("a.dnamewild.example.org."),
+               this->qtype_, this->qtype_, this->rrttl_,
+               ZoneFinder::WILDCARD_NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
+
+    // Some strange things in the wild node
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("ns.example.com.");
     doFindTest(*finder, isc::dns::Name("a.nswild.example.org."),
