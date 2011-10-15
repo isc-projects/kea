@@ -417,7 +417,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     size_t last_known(origin_label_count);
     const size_t current_label_count(name.getLabelCount());
     // This is how many labels we remove to get origin
-    size_t remove_labels(current_label_count - origin_label_count);
+    const size_t remove_labels(current_label_count - origin_label_count);
 
     // Now go trough all superdomains from origin down
     for (int i(remove_labels); i > 0; --i) {
@@ -508,13 +508,17 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     arg(accessor_->getDBName()).arg(name);
                 records_found = true;
                 get_cover = dnssec_data;
+            } else if ((options & NO_WILDCARD) != 0) {
+                // If wildcard check is disabled, terminate the search with
+                // NXDOMAIN.
+                if (dnssec_data && !records_found) {
+                    get_cover = true;
+                }
             } else {
                 // It's not empty non-terminal. So check for wildcards.
                 // We remove labels one by one and look for the wildcard there.
                 // Go up to first non-empty domain.
-
-                remove_labels = current_label_count - last_known;
-                for (size_t i(1); i <= remove_labels; ++ i) {
+                for (size_t i(1); i <= current_label_count - last_known; ++i) {
                     // Construct the name with *
                     const Name superdomain(name.split(i));
                     const string wildcard("*." + superdomain.toText());
