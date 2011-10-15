@@ -259,9 +259,16 @@ private:
  * implementation of the optional functionality.
  */
 class MockAccessor : public NopAccessor {
-    // Type of mock database "row"s
-    typedef std::map<std::string, std::vector< std::vector<std::string> > >
-        Domains;
+    // Type of mock database "row"s.  This is a map whose keys are the
+    // own names.  We internally sort them by the name comparison order.
+    struct NameCompare : public binary_function<string, string, bool> {
+        bool operator()(const string& n1, const string n2) const {
+            return (Name(n1).compare(Name(n2)).getOrder() < 0);
+        }
+    };
+    typedef std::map<std::string,
+                     std::vector< std::vector<std::string> >,
+                     NameCompare > Domains;
 
 public:
     MockAccessor() : rollbacked_(false) {
@@ -555,30 +562,36 @@ public:
     virtual std::string findPreviousName(int id, const std::string& rname)
         const
     {
-        // Hardcoded for now, but we could compute it from the data
-        // Maybe do it when it is needed some time in future?
         if (id == -1) {
             isc_throw(isc::NotImplemented, "Test not implemented behaviour");
-        } else if (id == 42) {
-            if (rname == "org.example.nonterminal.") {
-                return ("l.example.org.");
-            } else if (rname == "org.example.aa.") {
-                return ("example.org.");
-            } else if (rname == "org.example.www2." ||
-                       rname == "org.example.www1.") {
-                return ("www.example.org.");
-            } else if (rname == "org.example.badnsec2.") {
+        } else if (id == READONLY_ZONE_ID) {
+            // For some specific names we intentionally return broken or
+            // unexpected result.
+            if (rname == "org.example.badnsec2.") {
                 return ("badnsec1.example.org.");
             } else if (rname == "org.example.brokenname.") {
                 return ("brokenname...example.org.");
-            } else if (rname == "org.example.bar.*.") {
-                return ("bao.example.org.");
             } else if (rname == "org.example.notimplnsec." ||
                        rname == "org.example.wild.here.") {
                 isc_throw(isc::NotImplemented, "Not implemented in this test");
-            } else {
+            }
+
+            // For the general case, we search for the first name N in the
+            // domains that meets N >= reverse(rname) using lower_bound.
+            // The "previous name" is the name of the previous entry of N.
+            // Note that Domains are internally sorted by the Name comparison
+            // order.  Due to the API requirement we are given a reversed
+            // name (rname), so we need to reverse it again to convert it
+            // to the original name.
+            Domains::const_iterator it(readonly_records_->lower_bound(
+                                           Name(rname).reverse().toText()));
+            if (it == readonly_records_->begin()) {
                 isc_throw(isc::Unexpected, "Unexpected name");
             }
+            if (it == readonly_records_->end()) {
+                return ((*readonly_records_->rbegin()).first);
+            }
+            return ((*(--it)).first);
         } else {
             isc_throw(isc::Unexpected, "Unknown zone ID");
         }
