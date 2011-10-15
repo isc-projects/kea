@@ -1596,21 +1596,21 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
         "bar.example.org",
         NULL
     };
+    // Unless FIND_DNSSEC is specified, this is no different from other
+    // NXRRSET case.
     for (const char** name(negative_names); *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_);
-        // FIXME: What should be returned in this case? How does the
-        // DNSSEC logic handle it?
     }
 
+    // With FIND_DNSSEC, it should result in WILDCARD_EMPTY.
     const char* negative_dnssec_names[] = {
         "a.bar.example.org.",
         "foo.baz.bar.example.org.",
         "a.foo.bar.example.org.",
         NULL
     };
-
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("wild.*.foo.*.bar.example.org. NSEC");
     this->expected_sig_rdatas_.clear();
