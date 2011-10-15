@@ -553,7 +553,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                             if (cni != found.second.end() &&
                                 type != RRType::CNAME()) {
                                 result_rrset = cni->second;
-                                result_status = CNAME;
+                                result_status = WILDCARD_CNAME;
                             } else if (nsi != found.second.end()) {
                                 result_rrset = nsi->second;
                                 result_status = DELEGATION;
