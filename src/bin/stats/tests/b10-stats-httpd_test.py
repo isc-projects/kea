@@ -135,7 +135,7 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual((self.address, self.port), self.stats_httpd.http_addrs[0])
 
         # URL is '/bind10/statistics/xml'
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XML_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.getheader("Content-type"), "text/xml")
@@ -145,13 +145,13 @@ class TestHttpHandler(unittest.TestCase):
         self.assertTrue(root.tag.find('stats_data') > 0)
         for (k,v) in root.attrib.items():
             if k.find('schemaLocation') > 0:
-                self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.BASE_URL_PATH + stats_httpd.XSD_URL_PATH)
+                self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.XSD_URL_PATH)
         for mod in DUMMY_DATA:
             for (item, value) in DUMMY_DATA[mod].items():
                 self.assertIsNotNone(root.find(mod + '/' + item))
 
         # URL is '/bind10/statitics/xsd'
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XSD_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.getheader("Content-type"), "text/xml")
@@ -171,7 +171,7 @@ class TestHttpHandler(unittest.TestCase):
             self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
 
         # URL is '/bind10/statitics/xsl'
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XSL_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.getheader("Content-type"), "text/xml")
@@ -205,7 +205,7 @@ class TestHttpHandler(unittest.TestCase):
         response = self.client.getresponse()
         self.assertEqual(response.status, 302)
         self.assertEqual(response.getheader('Location'),
-                         "http://%s:%d%s" % (self.address, self.port, (stats_httpd.BASE_URL_PATH + stats_httpd.XML_URL_PATH)))
+                         "http://%s:%d%s" % (self.address, self.port, stats_httpd.XML_URL_PATH))
 
         # 404 NotFound
         self.client._http_vsn_str = 'HTTP/1.0'
@@ -226,19 +226,19 @@ class TestHttpHandler(unittest.TestCase):
         self.stats_httpd.cc_session.set_timeout(milliseconds=100)
 
         # request XML
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XML_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 500)
 
         # request XSD
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XSD_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 500)
 
         # request XSL
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XSL_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 500)
@@ -251,25 +251,25 @@ class TestHttpHandler(unittest.TestCase):
             )
 
         # request XML
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XML_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 500)
 
         # request XSD
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XSD_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 500)
 
         # request XSL
-        self.client.putrequest('GET', stats_httpd.BASE_URL_PATH + stats_httpd.XSL_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 500)
 
     def test_do_HEAD(self):
-        self.client.putrequest('HEAD', stats_httpd.BASE_URL_PATH + stats_httpd.XML_URL_PATH)
+        self.client.putrequest('HEAD', stats_httpd.XML_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 200)
@@ -591,8 +591,8 @@ class TestStatsHttpd(unittest.TestCase):
             stats_httpd.XML_TEMPLATE_LOCATION).substitute(
             xml_string='<Dummy><foo>bar</foo></Dummy>',
             xsd_namespace=stats_httpd.XSD_NAMESPACE,
-            xsd_url_path=stats_httpd.BASE_URL_PATH + stats_httpd.XSD_URL_PATH,
-            xsl_url_path=stats_httpd.BASE_URL_PATH + stats_httpd.XSL_URL_PATH)
+            xsd_url_path=stats_httpd.XSD_URL_PATH,
+            xsl_url_path=stats_httpd.XSL_URL_PATH)
         xml_body2 = self.stats_httpd.xml_handler()
         self.assertEqual(type(xml_body1), str)
         self.assertEqual(type(xml_body2), str)
