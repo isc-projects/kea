@@ -42,10 +42,19 @@ Return the RR class of the zone.\n\
 \n\
 ";
 
+// Main changes from the C++ doxygen version:
+// - Return type: use tuple instead of the dedicated FindResult type
+// - NULL->None
+// - exceptions
 const char* const ZoneFinder_find_doc = "\
-find(name, type, target=NULL, options=FIND_DEFAULT) -> (code, FindResult)\n\
+find(name, type, target=None, options=FIND_DEFAULT) -> (integer, RRset)\n\
 \n\
 Search the zone for a given pair of domain name and RR type.\n\
+\n\
+Each derived version of this method searches the underlying backend\n\
+for the data that best matches the given name and type. This method is\n\
+expected to be \"intelligent\", and identifies the best possible\n\
+answer for the search key. Specifically,\n\
 \n\
 - If the search name belongs under a zone cut, it returns the code of\n\
   DELEGATION and the NS RRset at the zone cut.\n\
@@ -62,40 +71,46 @@ Search the zone for a given pair of domain name and RR type.\n\
   and the code of SUCCESS will be returned.\n\
 - If the search name matches a delegation point of DNAME, it returns\n\
   the code of DNAME and that DNAME RR.\n\
-- If the result was synthesized by a wildcard match, it returns the\n\
-  code WILDCARD and the synthesized RRset\n\
-- If the query matched a wildcard name, but not its type, it returns the\n\
-  code WILDCARD_NXRRSET, and None\n\
-- If the target is a list, all RRsets under the domain are inserted\n\
+- If the target isn't None, all RRsets under the domain are inserted\n\
   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned\n\
   instead of normall processing. This is intended to handle ANY query.\n\
-  : this behavior is controversial as we discussed in\n\
-  https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html\n\
-  We should revisit the interface before we heavily rely on it. The\n\
-  options parameter specifies customized behavior of the search. Their\n\
-  semantics is as follows:\n\
-  (This feature is disable at this time)\n\
-- GLUE_OK Allow search under a zone cut. By default the search will\n\
-  stop once it encounters a zone cut. If this option is specified it\n\
-  remembers information about the highest zone cut and continues the\n\
-  search until it finds an exact match for the given name or it\n\
+\n\
+Note: This behavior is controversial as we discussed in\n\
+https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html We\n\
+should revisit the interface before we heavily rely on it.\n\
+\n\
+The options parameter specifies customized behavior of the search.\n\
+Their semantics is as follows (they are or bit-field):\n\
+\n\
+- FIND_GLUE_OK Allow search under a zone cut. By default the search\n\
+  will stop once it encounters a zone cut. If this option is specified\n\
+  it remembers information about the highest zone cut and continues\n\
+  the search until it finds an exact match for the given name or it\n\
   detects there is no exact match. If an exact match is found, RRsets\n\
   for that name are searched just like the normal case; otherwise, if\n\
   the search has encountered a zone cut, DELEGATION with the\n\
   information of the highest zone cut will be returned.\n\
+- FIND_DNSSEC Request that DNSSEC data (like NSEC, RRSIGs) are\n\
+  returned with the answer. It is allowed for the data source to\n\
+  include them even when not requested.\n\
+- NO_WILDCARD Do not try wildcard matching. This option is of no use\n\
+  for normal lookups; it's intended to be used to get a DNSSEC proof\n\
+  of the non existence of any matching wildcard or non existence of an\n\
+  exact match when a wildcard match is found.\n\
 \n\
-This method raises an isc.datasrc.Error exception if there is an internal\n\
-error in the datasource.\n\
+\n\
+This method raises an isc.datasrc.Error exception if there is an\n\
+internal error in the datasource.\n\
 \n\
 Parameters:\n\
   name       The domain name to be searched for.\n\
   type       The RR type to be searched for.\n\
-  target     If target is not NULL, insert all RRs under the domain\n\
+  target     If target is not None, insert all RRs under the domain\n\
              into it.\n\
   options    The search options.\n\
 \n\
-Return Value(s): A tuple of a result code an a FindResult object enclosing\n\
-the search result (see above).\n\
+Return Value(s): A tuple of a result code (integer) and an RRset object\n\
+enclosing the search result (see above).\n\
 ";
 
 const char* const ZoneFinder_find_previous_name_doc = "\

@@ -15,6 +15,7 @@
 
 import isc.log
 import isc.datasrc
+from isc.datasrc import ZoneFinder
 import isc.dns
 import unittest
 import os
@@ -190,6 +191,29 @@ class DataSrcClient(unittest.TestCase):
     def test_construct(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneFinder)
+
+    def test_findoptions(self):
+        '''A simple test to confirm no option is specified by default.
+
+        '''
+        self.assertFalse(ZoneFinder.FIND_DEFAULT & ZoneFinder.FIND_GLUE_OK)
+        self.assertFalse(ZoneFinder.FIND_DEFAULT & ZoneFinder.FIND_DNSSEC)
+        self.assertFalse(ZoneFinder.FIND_DEFAULT & ZoneFinder.NO_WILDCARD)
+
+    def test_findresults(self):
+        '''A simple test to confirm result codes are (defined and) different
+        for some combinations.
+
+        '''
+        self.assertNotEqual(ZoneFinder.SUCCESS, ZoneFinder.DELEGATION)
+        self.assertNotEqual(ZoneFinder.DELEGATION, ZoneFinder.NXDOMAIN)
+        self.assertNotEqual(ZoneFinder.NXDOMAIN, ZoneFinder.NXRRSET)
+        self.assertNotEqual(ZoneFinder.NXRRSET, ZoneFinder.CNAME)
+        self.assertNotEqual(ZoneFinder.CNAME, ZoneFinder.DNAME)
+        self.assertNotEqual(ZoneFinder.DNAME, ZoneFinder.WILDCARD)
+        self.assertNotEqual(ZoneFinder.WILDCARD, ZoneFinder.WILDCARD_CNAME)
+        self.assertNotEqual(ZoneFinder.WILDCARD_CNAME,
+                            ZoneFinder.WILDCARD_NXRRSET)
 
     def test_find(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
