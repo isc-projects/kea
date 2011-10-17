@@ -1,4 +1,4 @@
-299.    [func]*         tomek
+300.    [func]*         tomek
 	libdhcp: DHCP packet library was implemented. Currently it handles
 	packet reception, option parsing, option generation and output
 	packet building. Generic and specialized classes for several
@@ -8,6 +8,15 @@
 	and responds with proper ADVERTISE and REPLY. Note that since
 	LeaseManager is not implemented, server assigns a the same
 	hardcoded lease for every client.
+
+299.	[build]		jreed
+	Do not install the libfake_session, libtestutils, or libbench
+	libraries. They are used by tests within the source tree.
+	Convert all test-related makefiles to build test code at
+	regular make time to better work with test-driven development.
+	This reverts some of #1901. (The tests are ran using "make
+	check".)
+	(Trac #1286, git cee641fd3d12341d6bfce5a6fbd913e3aebc1e8e)
 
 bind10-devel-20111014 released on October 14, 2011
 

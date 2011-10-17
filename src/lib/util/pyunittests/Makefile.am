@@ -2,7 +2,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-check_LTLIBRARIES = pyunittests_util.la
+noinst_LTLIBRARIES = pyunittests_util.la
 
 pyunittests_util_la_SOURCES = pyunittests_util.cc
 pyunittests_util_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
