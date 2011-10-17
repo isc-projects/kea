@@ -175,8 +175,11 @@ const char* const TEST_RECORDS[][5] = {
     {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
     {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"wild.*.foo.*.bar.example.org.", "NSEC", "3600", "",
+     "brokenns1.example.org. A NSEC"},
     {"bao.example.org.", "NSEC", "3600", "", "wild.*.foo.*.bar.example.org. NSEC"},
     {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"*.dnamewild.example.org.", "DNAME", "3600", "", "dname.example.com."},
     {"*.nswild.example.org.", "NS", "3600", "", "ns.example.com."},
     // For NSEC empty non-terminal
     {"l.example.org.", "NSEC", "3600", "", "empty.nonterminal.example.org. NSEC"},
@@ -258,9 +261,16 @@ private:
  * implementation of the optional functionality.
  */
 class MockAccessor : public NopAccessor {
-    // Type of mock database "row"s
-    typedef std::map<std::string, std::vector< std::vector<std::string> > >
-        Domains;
+    // Type of mock database "row"s.  This is a map whose keys are the
+    // own names.  We internally sort them by the name comparison order.
+    struct NameCompare : public binary_function<string, string, bool> {
+        bool operator()(const string& n1, const string n2) const {
+            return (Name(n1).compare(Name(n2)).getOrder() < 0);
+        }
+    };
+    typedef std::map<std::string,
+                     std::vector< std::vector<std::string> >,
+                     NameCompare > Domains;
 
 public:
     MockAccessor() : rollbacked_(false) {
@@ -554,30 +564,36 @@ public:
     virtual std::string findPreviousName(int id, const std::string& rname)
         const
     {
-        // Hardcoded for now, but we could compute it from the data
-        // Maybe do it when it is needed some time in future?
         if (id == -1) {
             isc_throw(isc::NotImplemented, "Test not implemented behaviour");
-        } else if (id == 42) {
-            if (rname == "org.example.nonterminal.") {
-                return ("l.example.org.");
-            } else if (rname == "org.example.aa.") {
-                return ("example.org.");
-            } else if (rname == "org.example.www2." ||
-                       rname == "org.example.www1.") {
-                return ("www.example.org.");
-            } else if (rname == "org.example.badnsec2.") {
+        } else if (id == READONLY_ZONE_ID) {
+            // For some specific names we intentionally return broken or
+            // unexpected result.
+            if (rname == "org.example.badnsec2.") {
                 return ("badnsec1.example.org.");
             } else if (rname == "org.example.brokenname.") {
                 return ("brokenname...example.org.");
-            } else if (rname == "org.example.bar.*.") {
-                return ("bao.example.org.");
             } else if (rname == "org.example.notimplnsec." ||
                        rname == "org.example.wild.here.") {
                 isc_throw(isc::NotImplemented, "Not implemented in this test");
-            } else {
+            }
+
+            // For the general case, we search for the first name N in the
+            // domains that meets N >= reverse(rname) using lower_bound.
+            // The "previous name" is the name of the previous entry of N.
+            // Note that Domains are internally sorted by the Name comparison
+            // order.  Due to the API requirement we are given a reversed
+            // name (rname), so we need to reverse it again to convert it
+            // to the original name.
+            Domains::const_iterator it(readonly_records_->lower_bound(
+                                           Name(rname).reverse().toText()));
+            if (it == readonly_records_->begin()) {
                 isc_throw(isc::Unexpected, "Unexpected name");
             }
+            if (it == readonly_records_->end()) {
+                return ((*readonly_records_->rbegin()).first);
+            }
+            return ((*(--it)).first);
         } else {
             isc_throw(isc::Unexpected, "Unknown zone ID");
         }
@@ -1027,8 +1043,8 @@ doFindTest(ZoneFinder& finder,
            const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
-    ZoneFinder::FindResult result =
-        finder.find(name, type, NULL, options);
+    const ZoneFinder::FindResult result = finder.find(name, type, NULL,
+                                                      options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (!expected_rdatas.empty() && result.rrset) {
         checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
@@ -1595,21 +1611,21 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
         "bar.example.org",
         NULL
     };
+    // Unless FIND_DNSSEC is specified, this is no different from other
+    // NXRRSET case.
     for (const char** name(negative_names); *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_);
-        // FIXME: What should be returned in this case? How does the
-        // DNSSEC logic handle it?
     }
 
+    // With FIND_DNSSEC, it should result in WILDCARD_EMPTY.
     const char* negative_dnssec_names[] = {
         "a.bar.example.org.",
         "foo.baz.bar.example.org.",
         "a.foo.bar.example.org.",
         NULL
     };
-
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("wild.*.foo.*.bar.example.org. NSEC");
     this->expected_sig_rdatas_.clear();
@@ -1620,21 +1636,94 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                    Name("bao.example.org."), ZoneFinder::FIND_DNSSEC);
     }
 
-    // Some strange things in the wild node
+    // CNAME on a wildcard.  Maybe not so common, but not disallowed.
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("www.example.org.");
     this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("a.cnamewild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::CNAME(),
-               this->rrttl_, ZoneFinder::CNAME,
+               this->rrttl_, ZoneFinder::WILDCARD_CNAME,
                this->expected_rdatas_, this->expected_sig_rdatas_);
 
+    // DNAME on a wildcard.  In our implementation we ignore DNAMEs on a
+    // wildcard, but at a higher level we say the behavior is "unspecified".
+    // rfc2672bis strongly discourages the mixture of DNAME and wildcard
+    // (with SHOULD NOT).
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    doFindTest(*finder, Name("a.dnamewild.example.org."),
+               this->qtype_, this->qtype_, this->rrttl_,
+               ZoneFinder::WILDCARD_NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_);
+
+    // Some strange things in the wild node
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("ns.example.com.");
     doFindTest(*finder, isc::dns::Name("a.nswild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::DELEGATION,
                this->expected_rdatas_, this->expected_sig_rdatas_);
+}
+
+TYPED_TEST(DatabaseClientTest, noWildcard) {
+    // Tests with the NO_WILDCARD flag.
+
+    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    // This would match *.wild.example.org, but with NO_WILDCARD should
+    // result in NXDOMAIN.
+    this->expected_rdatas_.push_back("cancel.here.wild.example.org. A "
+                                     "NSEC RRSIG");
+    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
+               this->expected_sig_rdatas_, Name("*.wild.example.org."),
+               ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
+
+    // Should be the same without FIND_DNSSEC (but in this case no RRsets
+    // will be returned)
+    doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+               this->empty_rdatas_, Name::ROOT_NAME(), // name is dummy
+               ZoneFinder::NO_WILDCARD);
+
+    // Same for wildcard empty non terminal.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("brokenns1.example.org. A NSEC");
+    doFindTest(*finder, isc::dns::Name("a.bar.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
+               this->empty_rdatas_, Name("wild.*.foo.*.bar.example.org"),
+               ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
+
+    // Search for a wildcard name with NO_WILDCARD.  There should be no
+    // difference.  This is, for example, necessary to provide non existence
+    // of matching wildcard for isnx.nonterminal.example.org.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
+    doFindTest(*finder, isc::dns::Name("*.nonterminal.example.org"),
+               RRType::NSEC(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
+               this->empty_rdatas_, Name("l.example.org"),
+               ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
+
+    // On the other hand, if there's exact match for the wildcard name
+    // it should be found regardless of NO_WILDCARD.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.5");
+    this->expected_sig_rdatas_.clear();
+    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, isc::dns::Name("*.wild.example.org"),
+               this->qtype_, this->qtype_, this->rrttl_,
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_, Name("*.wild.example.org"),
+               ZoneFinder::NO_WILDCARD);
 }
 
 TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
