@@ -631,8 +631,20 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual('component', component.name())
         self.assertEqual([1, 2], component._params)
         self.assertEqual('address', component._address)
+        self.assertEqual('needed', component._kind)
         # We don't use isinstance on purpose, it would allow a descendand
         self.assertTrue(type(component) is Component)
+        plan = configurator._build_plan({}, {
+            'component': { }
+        })
+        self.assertEqual(1, len(plan))
+        self.assertEqual('start', plan[0]['command'])
+        self.assertEqual('component', plan[0]['name'])
+        component = plan[0]['component']
+        self.assertEqual('component', component.name())
+        self.assertIsNone(component._params)
+        self.assertIsNone(component._address)
+        self.assertEqual('dispensable', component._kind)
 
     def __do_switch(self, option, value):
         """
