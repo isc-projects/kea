@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
+from isc.bind10.component import Component
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -173,6 +174,13 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.command_handler("__UNKNOWN__", None),
                          isc.config.ccsession.create_answer(1, "Unknown command"))
 
+class TestComponent(Component):
+    def start_internal(self):
+        pass
+
+    def stop_internal(self, Kill=False):
+        pass
+
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
 # the BoB commands.
@@ -199,13 +207,7 @@ class MockBob(BoB):
         self.cmdctl = False
         self.c_channel_env = {}
         self.processes = { }
-        self.creator = False
-
-    def start_creator(self):
-        self.creator = True
-
-    def stop_creator(self, kill=False):
-        self.creator = False
+        isc.bind10.component.specials['sockcreator'] = TestComponent
 
     def read_bind10_config(self):
         # Configuration options are set directly
@@ -350,7 +352,6 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.msgq, core)
         self.assertEqual(bob.cfgmgr, core)
         self.assertEqual(bob.ccsession, core)
-        self.assertEqual(bob.creator, core)
         self.assertEqual(bob.auth, auth)
         self.assertEqual(bob.resolver, resolver)
         self.assertEqual(bob.xfrout, auth)
@@ -590,6 +591,8 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_started_dhcp(bob, False, False)
 
         # v6 only enabled
+        bob = MockBob()
+        self.check_preconditions(bob)
         bob.cfg_start_dhcp6 = True
         bob.cfg_start_dhcp4 = False
         bob.start_all_processes()

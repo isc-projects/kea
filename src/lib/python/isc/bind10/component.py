@@ -167,8 +167,7 @@ class SockCreator(Component):
         self.__boss = boss
 
     def start_internal(self):
-        self.__boss.curproc = 'b10-sockcreator'
-        print( LIBEXECDIR)
+        self._boss.curproc = 'b10-sockcreator'
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
                                                         os.environ['PATH'])
 
