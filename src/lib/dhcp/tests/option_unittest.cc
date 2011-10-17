@@ -265,3 +265,15 @@ TEST_F(OptionTest, addgetdel) {
 }
 
 }
+
+TEST_F(OptionTest, toText) {
+    boost::shared_array<uint8_t> buf(new uint8_t[3]);
+    buf[0] = 0;
+    buf[1] = 0xf;
+    buf[2] = 0xff;
+
+    boost::shared_ptr<Option> opt(new Option(Option::V6, 258,
+                                             buf, 0, 3));
+
+    EXPECT_EQ("type=258, len=3: 00:0f:ff", opt->toText());
+}

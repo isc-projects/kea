@@ -213,14 +213,14 @@ std::string Option::toText(int indent /* =0 */ ) {
     for (int i=0; i<indent; i++)
         tmp << " ";
 
-    tmp << "type=" << type_ << ", len=" << data_len_ << ":";
+    tmp << "type=" << type_ << ", len=" << data_len_ << ": ";
 
     for (unsigned int i=0; i<data_len_; i++) {
         if (i) {
             tmp << ":";
         }
         tmp << setfill('0') << setw(2) << hex
-            << (unsigned short)(unsigned uint8_t)data_[offset_+i];
+            << static_cast<unsigned short>(data_[offset_+i]);
     }
 
     // print suboptions
