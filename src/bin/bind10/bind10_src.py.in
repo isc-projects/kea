@@ -870,6 +870,9 @@ class BoB:
         # return the time when the next process is ready to be restarted
         return next_restart
 
+    def register_process(self, pid, info):
+        self.processes[pid] = info
+
 # global variables, needed for signal handlers
 options = None
 boss_of_bind = None
