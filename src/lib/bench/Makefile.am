@@ -6,6 +6,6 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
-lib_LTLIBRARIES = libbench.la
+noinst_LTLIBRARIES = libbench.la
 libbench_la_SOURCES = benchmark_util.h benchmark_util.cc
 EXTRA_DIST = benchmark.h
