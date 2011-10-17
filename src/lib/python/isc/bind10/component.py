@@ -14,12 +14,15 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import isc.bind10.sockcreator
+import isc.log
 from isc.log_messages.bind10_messages import *
 import time
 from bind10_config import LIBEXECDIR
 import os
 
 logger = isc.log.Logger("boss")
+DBG_TRACE_DATA = 20
+DBG_TRACE_DETAILED = 80
 
 """
 Module for managing components (abstraction of process). It allows starting
@@ -89,11 +92,13 @@ class Component:
             raise ValueError("Can't resurrect already dead component")
         if self.running():
             raise ValueError("Can't start already running component")
+        logger.info(BIND10_COMPONENT_START, self.name())
         self.__running = True
         self.__start_time = time.time()
         try:
             self.start_internal()
-        except:
+        except Exception as e:
+            logger.error(BIND10_COMPONENT_START_EXCEPTION, self.name(), e)
             self.failed()
             raise
 
@@ -129,6 +134,7 @@ class Component:
         if not self.running():
             raise ValueError("Can't stop a component which is not running")
         self.__running = False
+        logger.info(BIND10_COMPONENT_STOP, self.name())
         self.stop_internal()
 
     def stop_internal(self):
@@ -147,7 +153,6 @@ class Component:
         """
         if not self.running():
             raise ValueError("Can't fail component that isn't running")
-        self.failed_internal()
         self.__running = False
         self.failed_internal()
         # If it is a core component or the needed component failed to start
@@ -155,9 +160,11 @@ class Component:
         if self.__kind == 'core' or \
             (self.__kind == 'needed' and time.time() - 10 < self.__start_time):
             self.__dead = True
+            logger.fatal(BIND10_COMPONENT_UNSATISFIED, self.name())
             self._boss.component_shutdown(1)
         # This means we want to restart
         else:
+            logger.warn(BIND10_COMPONENT_RESTART, self.name())
             self.start()
 
     def failed_internal(self):
@@ -225,7 +232,6 @@ class SockCreator(Component):
         return self.__creator.pid()
 
 class Msgq(Component):
-<<<<<<< HEAD
     """
     The message queue. Starting is passed to boss, stopping is not supported
     and we leave the boss kill it by signal.
@@ -316,6 +322,7 @@ class Configurator:
         if self._running:
             raise ValueError("Trying to start the component configurator " +
                              "twice")
+        logger.info(BIND10_CONFIGURATOR_START)
         self.__reconfigure_internal({}, configuration)
         self._running = True
 
@@ -326,6 +333,7 @@ class Configurator:
         if not self._running:
             raise ValueError("Trying to shutdown the component " +
                              "configurator while it's not yet running")
+        logger.info(BIND10_CONFIGURATOR_STOP)
         self.__reconfigure_internal(self._old_config, {})
         self._running = False
 
@@ -337,6 +345,7 @@ class Configurator:
         if not self._running:
             raise ValueError("Trying to reconfigure the component " +
                              "configurator while it's not yet running")
+        logger.info(BIND10_CONFIGURATOR_RECONFIGURE)
         self.__reconfigure_internal(self._old_config, configuration)
 
     def _build_plan(self, old, new):
@@ -350,6 +359,7 @@ class Configurator:
         Any configuration problems are expected to be handled here, so the
         plan is not yet run.
         """
+        logger.debug(DBG_TRACE_DATA, BIND10_CONFIGURATOR_BUILD, old, new)
         plan = []
         # Handle removals of old components
         for cname in old.keys():
@@ -409,9 +419,12 @@ class Configurator:
         * start
         * stop
         """
+        logger.debug(DBG_TRACE_DATA, BIND10_CONFIGURATOR_RUN, len(plan))
         for task in plan:
             component = task['component']
             command = task['command']
+            logger.debug(DBG_TRACE_DETAILED, BIND10_CONFIGURATOR_TASK, command,
+                         component.name())
             if command == 'start':
                 component.start()
                 self._components[task['name']] = component
