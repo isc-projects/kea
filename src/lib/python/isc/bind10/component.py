@@ -115,8 +115,8 @@ class Component:
         """
         if not self.running():
             raise ValueError("Can't stop a component which is not running")
-        self.stop_internal()
         self.__running = False
+        self.stop_internal()
 
     def stop_internal(self):
         """
@@ -136,6 +136,7 @@ class Component:
             raise ValueError("Can't fail component that isn't running")
         self.failed_internal()
         self.__running = False
+        self.failed_internal()
         # If it is a core component or the needed component failed to start
         # (including it stopped really soon)
         if self.__kind == 'core' or \
@@ -178,13 +179,10 @@ class SockCreator(Component):
                                                         os.environ['PATH'])
         self._boss.register_process(self.pid(), self)
 
-    def stop_internal(self, kill=False):
+    def stop_internal(self):
         if self.__creator is None:
             return
-        if kill:
-            self.__creator.kill()
-        else:
-            self.sockcreator.terminate()
+        self.__creator.terminate()
         self.__creator = None
 
     def pid(self):
