@@ -243,16 +243,8 @@ class TestBossCmd(unittest.TestCase):
         bob = MockBob()
         bob.start_all_processes()
         answer = bob.command_handler("show_processes", None)
-        processes = [[2, 'b10-msgq'],
-                     [3, 'b10-cfgmgr'], 
-                     [4, 'b10-ccsession'],
-                     [5, 'b10-auth'],
-                     [7, 'b10-xfrout'],
-                     [8, 'b10-xfrin'], 
-                     [9, 'b10-zonemgr'],
-                     [10, 'b10-stats'], 
-                     [11, 'b10-stats-httpd'], 
-                     [12, 'b10-cmdctl']]
+        processes = [[1, 'first'],
+                     [2, 'second']]
         self.assertEqual(answer, {'result': [0, processes]})
 
 class TestParseArgs(unittest.TestCase):
