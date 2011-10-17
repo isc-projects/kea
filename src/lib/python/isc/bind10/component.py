@@ -92,7 +92,13 @@ class Component:
         This method does the actual starting of a process. If you need to
         change the way the component is started, replace this method.
         """
-        pass
+        if self._start_func is not None:
+            procinfo = self._start_func()
+        else:
+            # TODO Handle params, etc
+            procinfo = self._boss.start_simple(self._process)
+        self._procinfo = procinfo
+        self._boss.register_process(procinfo.pid, self)
 
     def stop(self):
         """
@@ -113,7 +119,7 @@ class Component:
         This is the method that does the actual stopping of a component.
         You can replace this method if you want a different way to do it.
         """
-        pass
+        self._boss.stop_process(self._process, self._address)
 
     def failed(self):
         """
