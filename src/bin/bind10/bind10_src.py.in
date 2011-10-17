@@ -230,18 +230,11 @@ class BoB:
         """
         self.cc_session = None
         self.ccs = None
-        self.cfg_start_auth = True
-        self.cfg_start_resolver = False
-        self.cfg_start_dhcp6 = False
-        self.cfg_start_dhcp4 = False
-        self.started_auth_family = False
-        self.started_resolver_family = False
         self.curproc = None
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.processes = {}
-        self.expected_shutdowns = {}
         self.runnable = False
         self.uid = setuid
         self.username = username
@@ -263,47 +256,9 @@ class BoB:
         # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
             return
-        # Now we declare few functions used only internally here. Besides the
-        # benefit of not polluting the name space, they are closures, so we
-        # don't need to pass some variables
-        def start_stop(name, started, start, stop):
-            if not'start_' + name in new_config:
-                return
-            if new_config['start_' + name]:
-                if not started:
-                    if self.uid is not None:
-                        logger.info(BIND10_START_AS_NON_ROOT, name)
-                    start()
-            else:
-                stop()
-        # These four functions are passed to start_stop (smells like functional
-        # programming little bit)
-        def resolver_on():
-            self.start_resolver(self.c_channel_env)
-            self.started_resolver_family = True
-        def resolver_off():
-            self.stop_resolver()
-            self.started_resolver_family = False
-        def auth_on():
-            self.start_auth(self.c_channel_env)
-            self.start_xfrout(self.c_channel_env)
-            self.start_xfrin(self.c_channel_env)
-            self.start_zonemgr(self.c_channel_env)
-            self.started_auth_family = True
-        def auth_off():
-            self.stop_zonemgr()
-            self.stop_xfrin()
-            self.stop_xfrout()
-            self.stop_auth()
-            self.started_auth_family = False
-
-        # The real code of the config handler function follows here
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_NEW_CONFIGURATION,
                      new_config)
-        start_stop('resolver', self.started_resolver_family, resolver_on,
-            resolver_off)
-        start_stop('auth', self.started_auth_family, auth_on, auth_off)
-
+        # TODO: Propagate the config to the configurator
         answer = isc.config.ccsession.create_answer(0)
         return answer
 
@@ -357,15 +312,6 @@ class BoB:
         self.sockcreator = isc.bind10.sockcreator.Creator("@@LIBEXECDIR@@:" +
                                                           os.environ['PATH'])
 
-    def stop_creator(self, kill=False):
-        if self.sockcreator is None:
-            return
-        if kill:
-            self.sockcreator.kill()
-        else:
-            self.sockcreator.terminate()
-        self.sockcreator = None
-
     def kill_started_processes(self):
         """
             Called as part of the exception handling when a process fails to
@@ -395,11 +341,7 @@ class BoB:
         logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
         config_data = self.ccs.get_full_config()
-        self.cfg_start_auth = config_data.get("start_auth")
-        self.cfg_start_resolver = config_data.get("start_resolver")
-
-        logger.info(BIND10_CONFIGURATION_START_AUTH, self.cfg_start_auth)
-        logger.info(BIND10_CONFIGURATION_START_RESOLVER, self.cfg_start_resolver)
+        # Propagate the config to the config manager, first reconfigure
 
     def log_starting(self, process, port = None, address = None):
         """
@@ -495,8 +437,8 @@ class BoB:
             The argument c_channel_env is unused but is supplied to keep the
             argument list the same for all start_xxx methods.
         """
-        self.log_starting("ccsession")
-        self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
+        self.log_starting("ccsession") #FIXME This is not a process, can't tell a process is starting
+        self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                       self.config_handler,
                                       self.command_handler)
         self.ccs.start()
@@ -575,24 +517,6 @@ class BoB:
         # ... and start
         return self.start_process("b10-resolver", resargs, self.c_channel_env)
 
-    def start_xfrout(self, c_channel_env):
-        self.start_simple("b10-xfrout", c_channel_env)
-
-    def start_xfrin(self, c_channel_env):
-        self.start_simple("b10-xfrin", c_channel_env)
-
-    def start_zonemgr(self, c_channel_env):
-        self.start_simple("b10-zonemgr", c_channel_env)
-
-    def start_stats(self, c_channel_env):
-        self.start_simple("b10-stats", c_channel_env)
-
-    def start_stats_httpd(self, c_channel_env):
-        self.start_simple("b10-stats-httpd", c_channel_env)
-
-    def start_dhcp6(self, c_channel_env):
-        self.start_simple("b10-dhcp6", c_channel_env)
-
     def start_cmdctl(self):
         """
             Starts the command control process
@@ -613,45 +537,11 @@ class BoB:
         # privileges right now
 
         c_channel_env = self.c_channel_env
-        self.start_msgq(c_channel_env)
-        self.start_cfgmgr(c_channel_env)
         self.start_ccsession(c_channel_env)
 
         # Extract the parameters associated with Bob.  This can only be
         # done after the CC Session is started.
         self.read_bind10_config()
-
-        # Continue starting the processes.  The authoritative server (if
-        # selected):
-        if self.cfg_start_auth:
-            self.start_auth(c_channel_env)
-
-        # ... and resolver (if selected):
-        if self.cfg_start_resolver:
-            self.start_resolver(c_channel_env)
-            self.started_resolver_family = True
-
-        # Everything after the main components can run as non-root.
-        # TODO: this is only temporary - once the privileged socket creator is
-        # fully working, nothing else will run as root.
-        if self.uid is not None:
-            posix.setuid(self.uid)
-
-        # xfrin/xfrout and the zone manager are only meaningful if the
-        # authoritative server has been started.
-        if self.cfg_start_auth:
-            self.start_xfrout(c_channel_env)
-            self.start_xfrin(c_channel_env)
-            self.start_zonemgr(c_channel_env)
-            self.started_auth_family = True
-
-        # ... and finally start the remaining processes
-        self.start_stats(c_channel_env)
-        self.start_stats_httpd(c_channel_env)
-        self.start_cmdctl(c_channel_env)
-
-        if self.cfg_start_dhcp6:
-            self.start_dhcp6(c_channel_env)
 
     def startup(self):
         """
@@ -690,20 +580,7 @@ class BoB:
 
     def stop_all_processes(self):
         """Stop all processes."""
-        cmd = { "command": ['shutdown']}
-
-        self.cc_session.group_sendmsg(cmd, 'Cmdctl', 'Cmdctl')
-        self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
-        self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
-        self.cc_session.group_sendmsg(cmd, "Resolver", "Resolver")
-        self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
-        self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
-        self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
-        self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
-        self.cc_session.group_sendmsg(cmd, "StatsHttpd", "StatsHttpd")
         self.__component_configurator.shutdown()
-        # Terminate the creator last
-        self.stop_creator()
 
     def stop_process(self, process, recipient):
         """
@@ -711,28 +588,9 @@ class BoB:
         (in logs, etc), the recipient is the address on msgq.
         """
         logger.info(BIND10_STOP_PROCESS, process)
-        # TODO: Some timeout to solve processes that don't want to die would
-        # help. We can even store it in the dict, it is used only as a set
-        self.expected_shutdowns[process] = 1
         # Ask the process to die willingly
         self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
             recipient)
-
-    # Series of stop_process wrappers
-    def stop_resolver(self):
-        self.stop_process('b10-resolver', 'Resolver')
-
-    def stop_auth(self):
-        self.stop_process('b10-auth', 'Auth')
-
-    def stop_xfrout(self):
-        self.stop_process('b10-xfrout', 'Xfrout')
-
-    def stop_xfrin(self):
-        self.stop_process('b10-xfrin', 'Xfrin')
-
-    def stop_zonemgr(self):
-        self.stop_process('b10-zonemgr', 'Zonemgr')
 
     def shutdown(self, exitcode=0):
 
@@ -745,9 +603,9 @@ class BoB:
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
-        # I have changed the delay from 0.5 to 1, but sometime it's 
+        # I have changed the delay from 0.5 to 1, but sometime it's
         # still not enough.
-        time.sleep(1)  
+        time.sleep(1)
         self.reap_children()
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
@@ -755,6 +613,7 @@ class BoB:
             logger.info(BIND10_SEND_SIGTERM, proc_info.name,
                         proc_info.pid)
             try:
+                # FIXME: This won't work. We replaced them with something else
                 proc_info.process.terminate()
             except OSError:
                 # ignore these (usually ESRCH because the child
@@ -763,7 +622,7 @@ class BoB:
         # finally, send SIGKILL (unmaskable termination) until everybody dies
         while self.processes:
             # XXX: some delay probably useful... how much is uncertain
-            time.sleep(0.1)  
+            time.sleep(0.1)
             self.reap_children()
             processes_to_stop = list(self.processes.values())
             for proc_info in processes_to_stop:
@@ -819,10 +678,6 @@ class BoB:
         still_dead = {}
         now = time.time()
         for proc_info in self.dead_processes.values():
-            if proc_info.name in self.expected_shutdowns:
-                # We don't restart, we wanted it to die
-                del self.expected_shutdowns[proc_info.name]
-                continue
             restart_time = proc_info.restart_schedule.get_restart_time(now)
             if restart_time > now:
                 if (next_restart is None) or (next_restart > restart_time):
