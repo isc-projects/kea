@@ -51,7 +51,7 @@ class BossUtils:
         # Return the original time function
         isc.bind10.component.time.time = self.__orig_time
 
-    def shutdown(self, exitcode=0):
+    def component_shutdown(self, exitcode=0):
         """
         Mock function to shut down. We just note we were asked to do so.
         """
@@ -243,11 +243,13 @@ class ComponentTests(BossUtils, unittest.TestCase):
         A start-stop test for core component. See do_start_stop.
         """
         self.__do_start_stop('core')
+
     def test_start_stop_needed(self):
         """
         A start-stop test for needed component. See do_start_stop.
         """
         self.__do_start_stop('needed')
+
     def test_start_stop_dispensable(self):
         """
         A start-stop test for dispensable component. See do_start_stop.
