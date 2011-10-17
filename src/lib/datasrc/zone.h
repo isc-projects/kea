@@ -221,6 +221,7 @@ public:
     /// for the data that best matches the given name and type.
     /// This method is expected to be "intelligent", and identifies the
     /// best possible answer for the search key.  Specifically,
+    ///
     /// - If the search name belongs under a zone cut, it returns the code
     ///   of \c DELEGATION and the NS RRset at the zone cut.
     /// - If there is no matching name, it returns the code of \c NXDOMAIN,
@@ -239,12 +240,14 @@ public:
     /// - If the target isn't NULL, all RRsets under the domain are inserted
     ///   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned
     ///   instead of normall processing. This is intended to handle ANY query.
-    ///   \note: this behavior is controversial as we discussed in
-    ///   https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html
-    ///   We should revisit the interface before we heavily rely on it.
+    ///
+    /// \note This behavior is controversial as we discussed in
+    /// https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html
+    /// We should revisit the interface before we heavily rely on it.
     ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows (they are or bit-field):
+    ///
     /// - \c FIND_GLUE_OK Allow search under a zone cut.  By default the search
     ///   will stop once it encounters a zone cut.  If this option is specified
     ///   it remembers information about the highest zone cut and continues
