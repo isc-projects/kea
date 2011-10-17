@@ -477,6 +477,11 @@ the severity system:
 When a particular severity is set, it - and all severities and/or debug
 levels above it - will be logged.
 
+To try to ensure that the information from different modules is roughly
+comparable for the same debug level, a set of standard debug levels has
+been defined for common type of debug output.  However, modules are free
+to set their own debug levels or define additional ones.
+
 Logging Sources v Logging Severities
 ------------------------------------
 When logging events, make a distinction between events related to the
