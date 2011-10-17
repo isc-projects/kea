@@ -54,6 +54,11 @@ A debug message. This indicates that the configurator is building a plan
 how to change configuration from the older one to newer one. This does no
 real work yet, it just does the planning what needs to be done.
 
+% BIND10_CONFIGURATOR_PLAN_INTERRUPTED configurator plan interrupted, only %1 of %2 done
+There was an exception during some planned task. The plan will not continue and
+only some tasks of the plan were completed. The rest is aborted. The exception
+will propagate.
+
 % BIND10_CONFIGURATOR_RECONFIGURE reconfiguring running components
 A different configuration of which components should be running is being
 installed. All components that are no longer needed will be stopped and
