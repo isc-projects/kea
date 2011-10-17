@@ -58,6 +58,12 @@ class Component:
           * 'dispensable' means the component should be running, but if it
             doesn't start or crashes for some reason, the system simply tries
             to restart it and keeps running.
+        - `address` is the address on message bus. It is used to ask it to
+            shut down at the end. If you specialize the class for a component
+            that is shut down differently, it might be None.
+        - `params` is a list of parameters to pass to the process when it
+           starts. It is currently unused and this support is left out for
+           now.
         """
         if kind not in ['core', 'needed', 'dispensable']:
             raise ValueError('Component kind can not be ' + kind)
@@ -96,6 +102,11 @@ class Component:
         This method does the actual starting of a process. If you need to
         change the way the component is started, replace this method.
         """
+        # This one is not tested. For one, it starts a real process
+        # which is out of scope of unit tests, for another, it just
+        # delegates the starting to other function in boss (if a derived
+        # class does not provide an override function), which is tested
+        # by use.
         if self._start_func is not None:
             procinfo = self._start_func()
         else:
@@ -113,6 +124,8 @@ class Component:
         If you try to stop a component that is not running, it raises
         ValueError.
         """
+        # This is not tested. It talks with the outher world, which is out
+        # of scope of unittests.
         if not self.running():
             raise ValueError("Can't stop a component which is not running")
         self.__running = False
@@ -167,12 +180,31 @@ class Component:
         return self.__running
 
     def name(self):
+        """
+        Returns human-readable name of the component. This is usually the
+        name of the executable, but it might be something different in a
+        derived class.
+        """
         return self._process
 
     def pid(self):
+        """
+        Provides a PID of a process, if the component is real running process.
+        This implementation expects it to be a real process, but derived class
+        may return None in case the component is something else.
+        """
         return self._procinfo.pid
 
+# These are specialized components. Some of them are components which need
+# special care (like the message queue or socket creator) or they need
+# some parameters constructed from Boss's command line. They are not tested
+# currently, because it is not clear what to test on them anyway and they just
+# delegate the work for the boss
 class SockCreator(Component):
+    """
+    The socket creator component. Will start and stop the socket creator
+    accordingly.
+    """
     def start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
@@ -186,9 +218,18 @@ class SockCreator(Component):
         self.__creator = None
 
     def pid(self):
+        """
+        Pid of the socket creator. It is provided differently from a usual
+        component.
+        """
         return self.__creator.pid()
 
 class Msgq(Component):
+<<<<<<< HEAD
+    """
+    The message queue. Starting is passed to boss, stopping is not supported
+    and we leave the boss kill it by signal.
+    """
     def __init__(self, process, boss, kind, address, params):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_msgq
