@@ -694,6 +694,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # Can't reconfigure nor stop yet
         self.assertRaises(ValueError, configurator.reconfigure, self.__core)
         self.assertRaises(ValueError, configurator.shutdown)
+        self.assertFalse(configurator.running())
         # Start it
         configurator.startup(self.__core)
         self.assertEqual(self.__core_log, self.log)
@@ -701,6 +702,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             self.assertTrue(core in configurator._components)
         self.assertEqual(self.__core, configurator._old_config)
         self.assertTrue(configurator._running)
+        self.assertTrue(configurator.running())
         # It can't be started twice
         self.assertRaises(ValueError, configurator.startup, self.__core)
 
@@ -727,6 +729,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual({}, configurator._components)
         self.assertEqual({}, configurator._old_config)
         self.assertFalse(configurator._running)
+        self.assertFalse(configurator.running())
         self.__check_shutdown_log()
 
         # It can't be stopped twice

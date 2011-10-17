@@ -347,6 +347,9 @@ class Configurator:
                                                         reverse=True)])
         return plan
 
+    def running(self):
+        return self._running
+
     def _run_plan(self, plan):
         """
         Run a plan, created beforehead by _build_plan.
