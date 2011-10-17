@@ -111,19 +111,19 @@ public:
     ///
     /// @return address
     isc::asiolink::IOAddress
-    getAddress() { return addr_; }
+    getAddress() const { return addr_; }
 
     /// Returns preferred lifetime of an address.
     ///
     /// @return preferred lifetime (in seconds)
     unsigned int
-    getPreferred()   { return preferred_; }
+    getPreferred() const { return preferred_; }
 
     /// Returns valid lifetime of an address.
     ///
     /// @return valid lifetime (in seconds)
     unsigned int
-    getValid()   { return valid_; }
+    getValid() const { return valid_; }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
     virtual unsigned short

@@ -99,17 +99,17 @@ public:
     ///
     /// @return IAID value.
     ///
-    unsigned int getIAID() { return iaid_; }
+    unsigned int getIAID() const { return iaid_; }
 
     /// Returns T1 timer.
     ///
     /// @return T1 value.
-    unsigned int getT1()   { return t1_; }
+    unsigned int getT1() const { return t1_; }
 
     /// Returns T2 timer.
     ///
     /// @return T2 value.
-    unsigned int getT2()   { return t2_; }
+    unsigned int getT2() const { return t2_; }
 
     /// @brief returns complete length of option
     ///
