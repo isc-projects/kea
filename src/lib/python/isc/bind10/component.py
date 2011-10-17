@@ -170,6 +170,7 @@ class SockCreator(Component):
         self._boss.curproc = 'b10-sockcreator'
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
                                                         os.environ['PATH'])
+        self.__boss.register_process(self.__creator.pid(), self)
 
     def stop_internal(self, kill=False):
         if self.__creator is None:
