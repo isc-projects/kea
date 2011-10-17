@@ -6,8 +6,10 @@
 	simple code was added that leverages libdhcp. It is a skeleton
 	DHCPv6 server. It receives incoming SOLICIT and REQUEST messages
 	and responds with proper ADVERTISE and REPLY. Note that since
-	LeaseManager is not implemented, server assigns a the same
-	hardcoded lease for every client.
+	LeaseManager is not implemented, server assigns the same
+	hardcoded lease for every client. This change removes existing
+	DHCPv6 echo server as it was only a proof of concept code.
+	(Trac #1186, git 67ea6de047d4dbd63c25fe7f03f5d5cc2452ad7d)
 
 299.	[build]		jreed
 	Do not install the libfake_session, libtestutils, or libbench
