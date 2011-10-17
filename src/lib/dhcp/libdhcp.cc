@@ -100,7 +100,7 @@ LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
             offset = (*it).second->pack(data, data_len, offset);
         }
     }
-    catch (Exception e) {
+    catch (const Exception& e) {
         cout << "Packet build failed." << endl;
         return (-1);
     }
