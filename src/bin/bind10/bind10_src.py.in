@@ -242,7 +242,7 @@ class BoB:
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
-        self.__component_configurator = isc.bind10.component.Configurator(self)
+        self._component_configurator = isc.bind10.component.Configurator(self)
         self.__core_components = {
             'sockcreator': {
                 'kind': 'core',
@@ -331,8 +331,8 @@ class BoB:
             logger.info(BIND10_KILL_PROCESS, self.processes[pid].name())
             os.kill(self.processes[pid].pid(), signal.SIGTERM)
         self.processes = {}
-        if self.__component_configurator.running():
-            self.__component_configurator.shutdown()
+        if self._component_configurator.running():
+            self._component_configurator.shutdown()
 
     def read_bind10_config(self):
         """
@@ -538,7 +538,7 @@ class BoB:
             Starts up all the processes.  Any exception generated during the
             starting of the processes is handled by the caller.
         """
-        self.__component_configurator.startup(self.__core_components)
+        self._component_configurator.startup(self.__core_components)
         # TODO: Once everything uses the socket creator, we can drop root
         # privileges right now
 
@@ -587,7 +587,7 @@ class BoB:
 
     def stop_all_processes(self):
         """Stop all processes."""
-        self.__component_configurator.shutdown()
+        self._component_configurator.shutdown()
 
     def stop_process(self, process, recipient):
         """
