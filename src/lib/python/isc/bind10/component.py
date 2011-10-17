@@ -37,7 +37,7 @@ class Component:
     it might be inherited and modified for special-purpose components,
     like the core modules with different ways of starting up.
     """
-    def __init__(self, process, boss, kind):
+    def __init__(self, process, boss, kind, address=None, params=None):
         """
         Creates the component in not running mode.
 
@@ -65,7 +65,11 @@ class Component:
         # Dead like really dead. No resurrection possible.
         self.__dead = False
         self.__kind = kind
-        self.__boss = boss
+        self._boss = boss
+        self._process = process
+        self._start_func = None
+        self._address = address
+        self._params = params
 
     def start(self):
         """
@@ -137,7 +141,7 @@ class Component:
         if self.__kind == 'core' or \
             (self.__kind == 'needed' and time.time() - 10 < self.__start_time):
             self.__dead = True
-            self.__boss.shutdown(1)
+            self._boss.shutdown(1)
         # This means we want to restart
         else:
             self.start()
@@ -162,15 +166,11 @@ class Component:
         return self.__running
 
 class SockCreator(Component):
-    def __init__(self, process, boss, kind):
-        Component.__init__(self, process, boss, kind)
-        self.__boss = boss
-
     def start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
                                                         os.environ['PATH'])
-        self.__boss.register_process(self.__creator.pid(), self)
+        self._boss.register_process(self.__creator.pid(), self)
 
     def stop_internal(self, kill=False):
         if self.__creator is None:
@@ -182,7 +182,7 @@ class SockCreator(Component):
         self.__creator = None
 
 class Msgq(Component):
-    def __init__(self, process, boss, kind):
+    def __init__(self, process, boss, kind, address, params):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_msgq
 
@@ -190,25 +190,25 @@ class Msgq(Component):
         pass # Wait for the boss to actually kill it. There's no stop command.
 
 class CfgMgr(Component):
-    def __init__(self, process, boss, kind):
+    def __init__(self, process, boss, kind, address, params):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_cfgmgr
         self._address = 'ConfigManager'
 
 class Auth(Component):
-    def __init__(self, process, boss, kind):
+    def __init__(self, process, boss, kind, address, params):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_auth
         self._address = 'Auth'
 
 class Resolver(Component):
-    def __init__(self, process, boss, kind):
+    def __init__(self, process, boss, kind, address, params):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_resolver
         self._address = 'Resolver'
 
 class CmdCtl(Component):
-    def __init__(self, process, boss, kind):
+    def __init__(self, process, boss, kind, address, params):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_cmdctl
         self._address = 'Cmdctl'
@@ -332,14 +332,15 @@ class Configurator:
                 if 'special' in params:
                     # TODO: Better error handling
                     creator = specials[params['special']]
-                component = creator(params['process'], self.__boss,
-                                    params['kind'])
+                component = creator(params.get('process', cname), self.__boss,
+                                    params['kind'], params.get('address'),
+                                    params.get('params'))
                 priority = params.get('priority', 0)
                 # We store tuples, priority first, so we can easily sort
                 plan_add.append((priority, {
                     'component': component,
                     'command': 'start',
-                    'name': cname
+                    'name': cname,
                 }))
         # Push the starts there sorted by priority
         plan.extend([command for (_, command) in sorted(plan_add,

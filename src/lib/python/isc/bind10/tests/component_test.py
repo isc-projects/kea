@@ -124,11 +124,29 @@ class ComponentTests(BossUtils, unittest.TestCase):
         The process used is some nonsense, as this isn't used in this
         kind of tests and we pretend to be the boss.
         """
-        component = Component('No process', self, kind)
+        component = Component('No process', self, kind, 'homeless', [])
         component.start_internal = self.__start
         component.stop_internal = self.__stop
         component.failed_internal = self.__fail
         return component
+
+    def test_name(self):
+        """
+        Test the name provides whatever we passed to the constructor as process.
+        """
+        component = self.__create_component('core')
+        self.assertEqual('No process', component.name())
+
+    def test_guts(self):
+        """
+        Test the correct data are stored inside the component.
+        """
+        component = self.__create_component('core')
+        self.assertEqual(self, component._boss)
+        self.assertEqual("No process", component._process)
+        self.assertEqual(None, component._start_func)
+        self.assertEqual("homeless", component._address)
+        self.assertEqual([], component._params)
 
     def __check_startup(self, component):
         """
@@ -373,14 +391,14 @@ class TestComponent(Component):
     A test component. It does not start any processes or so, it just logs
     information about what happens.
     """
-    def __init__(self, owner, name, kind):
+    def __init__(self, owner, name, kind, address=None, params=None):
         """
         Initializes the component. The owner is the test that started the
         component. The logging will happen into it.
 
         The process is used as a name for the logging.
         """
-        Component.__init__(self, name, owner, kind)
+        Component.__init__(self, name, owner, kind, address, params)
         self.__owner = owner
         self.__name = name
         self.log('init')
@@ -464,12 +482,12 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         BossUtils.tearDown(self)
         specials = self.__orig_specials
 
-    def __component_test(self, process, boss, kind):
+    def __component_test(self, process, boss, kind, address=None, params=None):
         """
         Create a test component. It will log events to us.
         """
         self.assertEqual(self, boss)
-        return TestComponent(self, process, kind)
+        return TestComponent(self, process, kind, address, params)
 
     def test_init(self):
         """
@@ -539,6 +557,9 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             self.assertTrue('component' in task)
             self.assertEqual('start', task['command'])
             self.assertEqual(name, task['name'])
+            component = task['component']
+            self.assertIsNone(component._address)
+            self.assertIsNone(component._params)
 
         # A plan to go from older state to newer one containing more components
         bigger = copy.copy(self.__core)
@@ -591,6 +612,25 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual('start', plan[1]['command'])
         self.assertEqual('another', plan[1]['name'])
         self.assertTrue('component' in plan[1])
+
+        # Some slightly insane plans, like missing process, having parameters,
+        # no special, etc
+        plan = configurator._build_plan({}, {
+            'component': {
+                'kind': 'needed',
+                'params': [1, 2],
+                'address': 'address'
+            }
+        })
+        self.assertEqual(1, len(plan))
+        self.assertEqual('start', plan[0]['command'])
+        self.assertEqual('component', plan[0]['name'])
+        component = plan[0]['component']
+        self.assertEqual('component', component.name())
+        self.assertEqual([1, 2], component._params)
+        self.assertEqual('address', component._address)
+        # We don't use isinstance on purpose, it would allow a descendand
+        self.assertTrue(type(component) is Component)
 
     def __do_switch(self, option, value):
         """
