@@ -637,12 +637,11 @@ class BoB:
         self.reap_children()
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
-        for proc_info in processes_to_stop:
-            logger.info(BIND10_SEND_SIGTERM, proc_info.name,
-                        proc_info.pid)
+        for component in processes_to_stop:
+            logger.info(BIND10_SEND_SIGTERM, component.name(),
+                        component.pid())
             try:
-                # FIXME: This won't work. We replaced them with something else
-                proc_info.process.terminate()
+                os.kill(component.pid(), signal.SIGTERM)
             except OSError:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
@@ -653,11 +652,11 @@ class BoB:
             time.sleep(0.1)
             self.reap_children()
             processes_to_stop = list(self.processes.values())
-            for proc_info in processes_to_stop:
-                logger.info(BIND10_SEND_SIGKILL, proc_info.name,
-                            proc_info.pid)
+            for component in processes_to_stop:
+                logger.info(BIND10_SEND_SIGKILL, component.name(),
+                            component.pid())
                 try:
-                    proc_info.process.kill()
+                    os.kill(component.pid(), signal.SIGKILL)
                 except OSError:
                     # ignore these (usually ESRCH because the child
                     # finally exited)
