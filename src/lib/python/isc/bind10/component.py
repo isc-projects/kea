@@ -403,7 +403,9 @@ class Configurator:
                 }))
         # Push the starts there sorted by priority
         plan.extend([command for (_, command) in sorted(plan_add,
-                                                        reverse=True)])
+                                                        reverse=True,
+                                                        key=lambda command:
+                                                            command[0])])
         return plan
 
     def running(self):

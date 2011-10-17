@@ -749,6 +749,15 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # It can't be stopped twice
         self.assertRaises(ValueError, configurator.shutdown)
 
+    def test_sort_no_prio(self):
+        """
+        There was a bug if there were two things with the same priority
+        (or without priority), it failed as it couldn't compare the dicts
+        there. This tests it doesn't crash.
+        """
+        configurator = Configurator(self)
+        configurator._build_plan({}, {"c1": {}, "c2": {}})
+
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
     isc.log.resetUnitTestRootLogger()
