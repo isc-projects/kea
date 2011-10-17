@@ -64,8 +64,8 @@ ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
 ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 
-# Constants for debug levels, to be removed when we have #1074.
-DBG_XFRIN_TRACE = 3
+# Constants for debug levels.
+DBG_XFRIN_TRACE = logger.DBGLVL_TRACE_BASIC
 
 # These two default are currently hard-coded. For config this isn't
 # necessary, but we need these defaults for optional command arguments
