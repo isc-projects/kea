@@ -264,7 +264,7 @@ class MockAccessor : public NopAccessor {
     // Type of mock database "row"s.  This is a map whose keys are the
     // own names.  We internally sort them by the name comparison order.
     struct NameCompare : public binary_function<string, string, bool> {
-        bool operator()(const string& n1, const string n2) const {
+        bool operator()(const string& n1, const string& n2) const {
             return (Name(n1).compare(Name(n2)).getOrder() < 0);
         }
     };
