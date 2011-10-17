@@ -102,7 +102,7 @@ class Component:
             # TODO Handle params, etc
             procinfo = self._boss.start_simple(self._process)
         self._procinfo = procinfo
-        self._boss.register_process(procinfo.pid, self)
+        self._boss.register_process(self.pid(), self)
 
     def stop(self):
         """
@@ -165,12 +165,18 @@ class Component:
         """
         return self.__running
 
+    def name(self):
+        return self._process
+
+    def pid(self):
+        return self._procinfo.pid
+
 class SockCreator(Component):
     def start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
                                                         os.environ['PATH'])
-        self._boss.register_process(self.__creator.pid(), self)
+        self._boss.register_process(self.pid(), self)
 
     def stop_internal(self, kill=False):
         if self.__creator is None:
@@ -180,6 +186,9 @@ class SockCreator(Component):
         else:
             self.sockcreator.terminate()
         self.__creator = None
+
+    def pid(self):
+        return self.__creator.pid()
 
 class Msgq(Component):
     def __init__(self, process, boss, kind, address, params):
