@@ -262,6 +262,9 @@ class BoB:
                 'priority': 198
             }
         }
+        self.__started = False
+        self.__stopping = False
+        self.exitcode = 0
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -588,6 +591,7 @@ class BoB:
 
         # Started successfully
         self.runnable = True
+        self.__started = True
         return None
 
     def stop_all_processes(self):
@@ -604,11 +608,23 @@ class BoB:
         self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
             recipient)
 
-    def shutdown(self, exitcode=0):
+    def component_shutdown(self, exitcode=0):
+        """
+        Stop the Boss instance from a components' request. The exitcode
+        indicates the desired exit code.
+        """
+        if self.__stopping:
+            return
+        self.exitcode = exitcode
+        if not self.__started:
+            raise Exception("Component failed during startup");
+        else:
+            self.shutdown()
 
     def shutdown(self):
         """Stop the BoB instance."""
         logger.info(BIND10_SHUTDOWN)
+        self.__stopping = True
         # first try using the BIND 10 request to stop
         try:
             self.stop_all_processes()
@@ -925,7 +941,7 @@ def main():
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.shutdown()
     unlink_pid_file(options.pid_file)
-    sys.exit(0)
+    sys.exit(boss_of_bind.exitcode)
 
 if __name__ == "__main__":
     main()

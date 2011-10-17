@@ -141,7 +141,7 @@ class Component:
         if self.__kind == 'core' or \
             (self.__kind == 'needed' and time.time() - 10 < self.__start_time):
             self.__dead = True
-            self._boss.shutdown(1)
+            self._boss.component_shutdown(1)
         # This means we want to restart
         else:
             self.start()
