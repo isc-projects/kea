@@ -431,16 +431,15 @@ class BoB:
     # raised which is caught by the caller of start_all_processes(); this kills
     # processes started up to that point before terminating the program.
 
-    def start_msgq(self, c_channel_env):
+    def start_msgq(self):
         """
             Start the message queue and connect to the command channel.
         """
         self.log_starting("b10-msgq")
-        c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
+        c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], self.c_channel_env,
                                 True, not self.verbose, uid=self.uid,
                                 username=self.username)
         c_channel.spawn()
-        self.processes[c_channel.pid] = c_channel
         self.log_started(c_channel.pid)
 
         # Now connect to the c-channel
@@ -450,13 +449,14 @@ class BoB:
             if (time.time() - cc_connect_start) > 5:
                 raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
 
-            # try to connect, and if we can't wait a short while
+            # try to connect, and if we can't, wait a short while
             try:
                 self.cc_session = isc.cc.Session(self.msgq_socket_file)
             except isc.cc.session.SessionError:
                 time.sleep(0.1)
+        return c_channel
 
-    def start_cfgmgr(self, c_channel_env):
+    def start_cfgmgr(self):
         """
             Starts the configuration manager process
         """
@@ -467,10 +467,9 @@ class BoB:
         if self.config_filename is not None:
             args.append("--config-filename=" + self.config_filename)
         bind_cfgd = ProcessInfo("b10-cfgmgr", args,
-                                c_channel_env, uid=self.uid,
+                                self.c_channel_env, uid=self.uid,
                                 username=self.username)
         bind_cfgd.spawn()
-        self.processes[bind_cfgd.pid] = bind_cfgd
         self.log_started(bind_cfgd.pid)
 
         # sleep until b10-cfgmgr is fully up and running, this is a good place
@@ -478,6 +477,7 @@ class BoB:
         # TODO: replace the sleep by a listen for ConfigManager started
         # message
         time.sleep(1)
+        return bind_cfgd
 
     def start_ccsession(self, c_channel_env):
         """
@@ -509,7 +509,7 @@ class BoB:
         self.processes[newproc.pid] = newproc
         self.log_started(newproc.pid)
 
-    def start_simple(self, name, c_channel_env, port=None, address=None):
+    def start_simple(self, name):
         """
             Most of the BIND-10 processes are started with the command:
 
@@ -526,7 +526,7 @@ class BoB:
             args += ['-v']
 
         # ... and start the process
-        self.start_process(name, args, c_channel_env, port, address)
+        self.start_process(name, args, self.c_channel_env)
 
     # The next few methods start up the rest of the BIND-10 processes.
     # Although many of these methods are little more than a call to
