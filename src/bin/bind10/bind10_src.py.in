@@ -506,8 +506,8 @@ class BoB:
         self.log_starting(name, port, address)
         newproc = ProcessInfo(name, args, c_channel_env)
         newproc.spawn()
-        self.processes[newproc.pid] = newproc
         self.log_started(newproc.pid)
+        return newproc
 
     def start_simple(self, name):
         """
@@ -526,7 +526,7 @@ class BoB:
             args += ['-v']
 
         # ... and start the process
-        self.start_process(name, args, self.c_channel_env)
+        return self.start_process(name, args, self.c_channel_env)
 
     # The next few methods start up the rest of the BIND-10 processes.
     # Although many of these methods are little more than a call to
@@ -534,7 +534,7 @@ class BoB:
     # where modifications can be made if the process start-up sequence changes
     # for a given process.
 
-    def start_auth(self, c_channel_env):
+    def start_auth(self):
         """
             Start the Authoritative server
         """
@@ -547,9 +547,9 @@ class BoB:
             authargs += ['-v']
 
         # ... and start
-        self.start_process("b10-auth", authargs, c_channel_env)
+        return self.start_process("b10-auth", authargs, self.c_channel_env)
 
-    def start_resolver(self, c_channel_env):
+    def start_resolver(self):
         """
             Start the Resolver.  At present, all these arguments and switches
             are pure speculation.  As with the auth daemon, they should be
@@ -564,7 +564,7 @@ class BoB:
             resargs += ['-v']
 
         # ... and start
-        self.start_process("b10-resolver", resargs, c_channel_env)
+        return self.start_process("b10-resolver", resargs, self.c_channel_env)
 
     def start_xfrout(self, c_channel_env):
         self.start_simple("b10-xfrout", c_channel_env)
@@ -584,14 +584,15 @@ class BoB:
     def start_dhcp6(self, c_channel_env):
         self.start_simple("b10-dhcp6", c_channel_env)
 
-    def start_cmdctl(self, c_channel_env):
+    def start_cmdctl(self):
         """
             Starts the command control process
         """
         args = ["b10-cmdctl"]
         if self.cmdctl_port is not None:
             args.append("--port=" + str(self.cmdctl_port))
-        self.start_process("b10-cmdctl", args, c_channel_env, self.cmdctl_port)
+        return self.start_process("b10-cmdctl", args, self.c_channel_env,
+                                  self.cmdctl_port)
 
     def start_all_processes(self):
         """
