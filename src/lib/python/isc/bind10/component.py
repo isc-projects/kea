@@ -13,8 +13,11 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import isc.bind10.sockcreator
 from isc.log_messages.bind10_messages import *
 import time
+from bind10_config import LIBEXECDIR
+import os
 
 logger = isc.log.Logger("boss")
 
@@ -152,7 +155,68 @@ class Component:
         """
         return self.__running
 
-specials = {}
+class SockCreator(Component):
+    def __init__(self, process, boss, kind):
+        Component.__init__(self, process, boss, kind)
+        self.__boss = boss
+
+    def start_internal(self):
+        self.__boss.curproc = 'b10-sockcreator'
+        print( LIBEXECDIR)
+        self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
+                                                        os.environ['PATH'])
+
+    def stop_internal(self, kill=False):
+        if self.__creator is None:
+            return
+        if kill:
+            self.__creator.kill()
+        else:
+            self.sockcreator.terminate()
+        self.__creator = None
+
+class Msgq(Component):
+    def __init__(self, process, boss, kind):
+        Component.__init__(self, process, boss, kind)
+        self._start_func = boss.start_msgq
+
+    def stop_internal(self):
+        pass # Wait for the boss to actually kill it. There's no stop command.
+
+class CfgMgr(Component):
+    def __init__(self, process, boss, kind):
+        Component.__init__(self, process, boss, kind)
+        self._start_func = boss.start_cfgmgr
+        self._address = 'ConfigManager'
+
+class Auth(Component):
+    def __init__(self, process, boss, kind):
+        Component.__init__(self, process, boss, kind)
+        self._start_func = boss.start_auth
+        self._address = 'Auth'
+
+class Resolver(Component):
+    def __init__(self, process, boss, kind):
+        Component.__init__(self, process, boss, kind)
+        self._start_func = boss.start_resolver
+        self._address = 'Resolver'
+
+class CmdCtl(Component):
+    def __init__(self, process, boss, kind):
+        Component.__init__(self, process, boss, kind)
+        self._start_func = boss.start_cmdctl
+        self._address = 'Cmdctl'
+
+specials = {
+    'sockcreator': SockCreator,
+    'msgq': Msgq,
+    'cfgmgr': CfgMgr,
+    # TODO: Should these be replaced by configuration in config manager only?
+    # They should not have any parameters anyway
+    'auth': Auth,
+    'resolver': Resolver,
+    'cmdctl': CmdCtl
+}
 """
 List of specially started components. Each one should be the class than can
 be created for that component.
