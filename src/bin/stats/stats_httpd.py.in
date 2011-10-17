@@ -40,10 +40,9 @@ from isc.log_messages.stats_httpd_messages import *
 isc.log.init("b10-stats-httpd")
 logger = isc.log.Logger("stats-httpd")
 
-# Some constants for debug levels, these should be removed when we
-# have #1074
-DBG_STATHTTPD_INIT = 10
-DBG_STATHTTPD_MESSAGING = 30
+# Some constants for debug levels.
+DBG_STATHTTPD_INIT = logger.DBGLVL_START_SHUT
+DBG_STATHTTPD_MESSAGING = logger.DBGLVL_COMMAND
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones

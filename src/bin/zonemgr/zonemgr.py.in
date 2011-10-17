@@ -43,10 +43,10 @@ from isc.log_messages.zonemgr_messages import *
 isc.log.init("b10-zonemgr")
 logger = isc.log.Logger("zonemgr")
 
-# Constants for debug levels, to be removed when we have #1074.
-DBG_START_SHUT = 0
-DBG_ZONEMGR_COMMAND = 10
-DBG_ZONEMGR_BASIC = 40
+# Constants for debug levels.
+DBG_START_SHUT = logger.DBGLVL_START_SHUT
+DBG_ZONEMGR_COMMAND = logger.DBGLVL_COMMAND
+DBG_ZONEMGR_BASIC = logger.DBGLVL_TRACE_BASIC
 
 isc.util.process.rename()
 
