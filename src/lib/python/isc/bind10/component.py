@@ -133,8 +133,8 @@ class Component:
         # of scope of unittests.
         if not self.running():
             raise ValueError("Can't stop a component which is not running")
-        self.__running = False
         logger.info(BIND10_COMPONENT_STOP, self.name())
+        self.__running = False
         self.stop_internal()
 
     def stop_internal(self):
@@ -334,8 +334,8 @@ class Configurator:
             raise ValueError("Trying to shutdown the component " +
                              "configurator while it's not yet running")
         logger.info(BIND10_CONFIGURATOR_STOP)
-        self.__reconfigure_internal(self._old_config, {})
         self._running = False
+        self.__reconfigure_internal(self._old_config, {})
 
     def reconfigure(self, configuration):
         """
