@@ -209,11 +209,19 @@ TEST_F(Option6AddrLstTest, setAddress) {
     EXPECT_NO_THROW(
         opt1 = new Option6AddrLst(1234, IOAddress("::1"));
     );
-    opt1->setAddress(IOAddress("::2"));
+    opt1->setAddress(IOAddress("2001:db8:1::2"));
+    /// TODO It used to be ::2 address, but io_address represents
+    /// it as ::0.0.0.2. Purpose of this test is to verify
+    /// that setAddress() works, not deal with subtleties of
+    /// io_address handling of IPv4-mapped IPv6 addresses, we
+    /// switched to a more common address. User interested
+    /// in pursuing this matter further is encouraged to look
+    /// at section 2.5.5 of RFC4291 (and possibly implement
+    /// a test for IOAddress)
 
     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
     ASSERT_EQ(1, addrs.size() );
-    EXPECT_EQ("::2", addrs[0].toText());
+    EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
 
     EXPECT_NO_THROW(
         delete opt1;
