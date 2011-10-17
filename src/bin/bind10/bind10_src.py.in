@@ -67,7 +67,6 @@ import isc.util.process
 import isc.net.parse
 import isc.log
 from isc.log_messages.bind10_messages import *
-import isc.bind10.sockcreator
 import isc.bind10.component
 
 isc.log.init("b10-boss")
@@ -143,7 +142,7 @@ class ProcessInfo:
 
     def __init__(self, name, args, env={}, dev_null_stdout=False,
                  dev_null_stderr=False, uid=None, username=None):
-        self.name = name 
+        self.name = name
         self.args = args
         self.env = env
         self.dev_null_stdout = dev_null_stdout
@@ -211,13 +210,13 @@ class CChannelConnectError(Exception): pass
 
 class BoB:
     """Boss of BIND class."""
-    
+
     def __init__(self, msgq_socket_file=None, data_path=None,
     config_filename=None, nocache=False, verbose=False, setuid=None,
     username=None, cmdctl_port=None, brittle=False):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
-        
+
             The msgq_socket_file specifies the UNIX domain socket file that the
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
@@ -243,7 +242,6 @@ class BoB:
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
-        self.sockcreator = None
         self.__component_configurator = isc.bind10.component.Configurator(self)
         self.__core_components = {
             'sockcreator': {
@@ -321,11 +319,6 @@ class BoB:
                                                             "Unknown command")
         return answer
 
-    def start_creator(self):
-        self.curproc = 'b10-sockcreator'
-        self.sockcreator = isc.bind10.sockcreator.Creator("@@LIBEXECDIR@@:" +
-                                                          os.environ['PATH'])
-
     def kill_started_processes(self):
         """
             Called as part of the exception handling when a process fails to
@@ -333,8 +326,6 @@ class BoB:
             each one.  It then clears that list.
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
-
-        self.stop_creator(True)
 
         for pid in self.processes:
             logger.info(BIND10_KILL_PROCESS, self.processes[pid].name())
@@ -619,7 +610,7 @@ class BoB:
         if not self.__started:
             raise Exception("Component failed during startup");
         else:
-            self.shutdown()
+            self.runnable = False
 
     def shutdown(self):
         """Stop the BoB instance."""
