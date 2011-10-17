@@ -68,6 +68,7 @@ import isc.net.parse
 import isc.log
 from isc.log_messages.bind10_messages import *
 import isc.bind10.sockcreator
+import isc.bind10.component
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -250,6 +251,13 @@ class BoB:
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
         self.sockcreator = None
+        self.__component_configurator = isc.bind10.component.Configurator(self)
+        self.__core_components = {
+            'sockcreator': {
+                'kind': 'core',
+                'special': 'sockcreator'
+            }
+        }
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -372,6 +380,7 @@ class BoB:
             logger.info(BIND10_KILL_PROCESS, self.processes[pid].name)
             self.processes[pid].process.kill()
         self.processes = {}
+        self.__component_configurator.shutdown()
 
     def read_bind10_config(self):
         """
@@ -599,8 +608,7 @@ class BoB:
             Starts up all the processes.  Any exception generated during the
             starting of the processes is handled by the caller.
         """
-        # The socket creator first, as it is the only thing that needs root
-        self.start_creator()
+        self.__component_configurator.startup(self.__core_components)
         # TODO: Once everything uses the socket creator, we can drop root
         # privileges right now
 
@@ -693,6 +701,7 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
         self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
         self.cc_session.group_sendmsg(cmd, "StatsHttpd", "StatsHttpd")
+        self.__component_configurator.shutdown()
         # Terminate the creator last
         self.stop_creator()
 
@@ -724,6 +733,8 @@ class BoB:
 
     def stop_zonemgr(self):
         self.stop_process('b10-zonemgr', 'Zonemgr')
+
+    def shutdown(self, exitcode=0):
 
     def shutdown(self):
         """Stop the BoB instance."""
