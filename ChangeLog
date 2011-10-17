@@ -1,4 +1,4 @@
-300.    [func]*         tomek
+300.	[func]*		tomek
 	libdhcp: DHCP packet library was implemented. Currently it handles
 	packet reception, option parsing, option generation and output
 	packet building. Generic and specialized classes for several
