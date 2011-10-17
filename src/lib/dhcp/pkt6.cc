@@ -120,7 +120,7 @@ Pkt6::packUDP() {
                       << length << ", actual len=" << offset);
         }
     }
-    catch (Exception e) {
+    catch (const Exception& e) {
         cout << "Packet build failed:" << e.what() << endl;
         return (false);
     }
