@@ -74,8 +74,8 @@ logger = isc.log.Logger("boss")
 
 # Pending system-wide debug level definitions, the ones we
 # use here are hardcoded for now
-DBG_PROCESS = 10
-DBG_COMMANDS = 30
+DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
+DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 
 # Assign this process some longer name
 isc.util.process.rename(sys.argv[0])

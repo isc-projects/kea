@@ -45,6 +45,11 @@
 /// In this way users can have some expection of what will be output when
 /// enabling debugging.  Symbols are prefixed DBGLVL so as not to clash with
 /// DBG_ symbols in the various modules.
+///
+/// N.B. If the names of debug constants are changed, or if ones are added or
+/// removed, edit the file src/lib/python/isc/log/log.cc to update the log
+/// level definitions available to Python.  The change does not need to be
+/// made if only the numeric values of constants are updated.
 
 namespace {
 
@@ -68,7 +73,7 @@ const int DBGLVL_COMMAND = 10;
 const int DBGLVL_COMMAND_DATA = 20;
 
 // The following constants are suggested values for common operations.
-// Depending on the exact nature of the code, modules may or may not used these
+// Depending on the exact nature of the code, modules may or may not use these
 // levels.
 
 /// Trace basic operations. 

@@ -28,7 +28,11 @@
 #include <string>
 #include <boost/bind.hpp>
 
+#include <util/python/pycppwrapper_util.h>
+#include <log/log_dbglevels.h>
+
 using namespace isc::log;
+using namespace isc::util::python;
 using std::string;
 using boost::bind;
 
@@ -723,7 +727,38 @@ PyInit_log(void) {
                                &logger_type))) < 0) {
         return (NULL);
     }
-    Py_INCREF(&logger_type);
 
+    // Add in the definitions of the standard debug levels.  These can then
+    // be referred to in Python through the constants log.DBGLVL_XXX.
+    // N.B. These should be kept in sync with the constants defined in
+    // log_dbglevels.h.
+    try {
+        installClassVariable(logger_type, "DBGLVL_START_SHUT",
+                             Py_BuildValue("I", DBGLVL_START_SHUT));
+        installClassVariable(logger_type, "DBGLVL_COMMAND",
+                             Py_BuildValue("I", DBGLVL_COMMAND));
+        installClassVariable(logger_type, "DBGLVL_COMMAND_DATA",
+                             Py_BuildValue("I", DBGLVL_COMMAND_DATA));
+        installClassVariable(logger_type, "DBGLVL_TRACE_BASIC",
+                             Py_BuildValue("I", DBGLVL_TRACE_BASIC));
+        installClassVariable(logger_type, "DBGLVL_TRACE_BASIC_DATA",
+                             Py_BuildValue("I", DBGLVL_TRACE_BASIC_DATA));
+        installClassVariable(logger_type, "DBGLVL_TRACE_DETAIL",
+                             Py_BuildValue("I", DBGLVL_TRACE_DETAIL));
+        installClassVariable(logger_type, "DBGLVL_TRACE_DETAIL_DATA",
+                             Py_BuildValue("I", DBGLVL_TRACE_DETAIL_DATA));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in Log initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(PyExc_SystemError, ex_what.c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Log initialization");
+        return (NULL);
+    }
+
+    Py_INCREF(&logger_type);
     return (mod);
 }
