@@ -248,7 +248,18 @@ class BoB:
         self.__core_components = {
             'sockcreator': {
                 'kind': 'core',
-                'special': 'sockcreator'
+                'special': 'sockcreator',
+                'priority': 200
+            },
+            'msgq': {
+                'kind': 'core',
+                'special': 'msgq',
+                'priority': 199
+            },
+            'cfgmgr': {
+                'kind': 'core',
+                'special': 'cfgmgr',
+                'priority': 198
             }
         }
 
@@ -323,10 +334,11 @@ class BoB:
         self.stop_creator(True)
 
         for pid in self.processes:
-            logger.info(BIND10_KILL_PROCESS, self.processes[pid].name)
-            self.processes[pid].process.kill()
+            logger.info(BIND10_KILL_PROCESS, self.processes[pid].name())
+            os.kill(self.processes[pid].pid(), signal.SIGTERM)
         self.processes = {}
-        self.__component_configurator.shutdown()
+        if self.__component_configurator.running():
+            self.__component_configurator.shutdown()
 
     def read_bind10_config(self):
         """
