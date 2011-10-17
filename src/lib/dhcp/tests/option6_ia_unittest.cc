@@ -248,7 +248,8 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     EXPECT_EQ(0xcafe, subopt->getType());
     EXPECT_EQ(4, subopt->len());
-    EXPECT_EQ(NULL, subopt->getData());
+    // there should be no data at all
+    EXPECT_EQ(static_cast<void*>(NULL), subopt->getData());
 
     subopt = ia->getOption(1); // get option 1
     ASSERT_FALSE(subopt); // should be NULL
