@@ -792,40 +792,11 @@ class BoB:
                 # XXX: should be impossible to get any other error here
                 raise
             if pid == 0: break
-            if self.sockcreator is not None and self.sockcreator.pid() == pid:
-                # This is the socket creator, started and terminated
-                # differently. This can't be restarted.
-                if self.runnable:
-                    logger.fatal(BIND10_SOCKCREATOR_CRASHED)
-                    self.sockcreator = None
-                    self.runnable = False
-            elif pid in self.processes:
+            if pid in self.processes:
                 # One of the processes we know about.  Get information on it.
-                proc_info = self.processes.pop(pid)
-                proc_info.restart_schedule.set_run_stop_time()
-                self.dead_processes[proc_info.pid] = proc_info
-
-                # Write out message, but only if in the running state:
-                # During startup and shutdown, these messages are handled
-                # elsewhere.
-                if self.runnable:
-                    if exit_status is None:
-                        logger.warn(BIND10_PROCESS_ENDED_NO_EXIT_STATUS,
-                                    proc_info.name, proc_info.pid)
-                    else:
-                        logger.warn(BIND10_PROCESS_ENDED_WITH_EXIT_STATUS,
-                                    proc_info.name, proc_info.pid,
-                                    exit_status)
-
-                    # Was it a special process?
-                    if proc_info.name == "b10-msgq":
-                        logger.fatal(BIND10_MSGQ_DAEMON_ENDED)
-                        self.runnable = False
-
-                # If we're in 'brittle' mode, we want to shutdown after
-                # any process dies.
-                if self.brittle:
-                    self.runnable = False
+                component = self.processes.pop(pid)
+                if component.running():
+                    component.failed()
             else:
                 logger.info(BIND10_UNKNOWN_CHILD_PROCESS_ENDED, pid)
 
