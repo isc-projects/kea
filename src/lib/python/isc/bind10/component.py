@@ -73,7 +73,7 @@ class Component:
         self.__running = False
         # Dead like really dead. No resurrection possible.
         self.__dead = False
-        self.__kind = kind
+        self._kind = kind
         self._boss = boss
         self._process = process
         self._start_func = None
@@ -157,8 +157,8 @@ class Component:
         self.failed_internal()
         # If it is a core component or the needed component failed to start
         # (including it stopped really soon)
-        if self.__kind == 'core' or \
-            (self.__kind == 'needed' and time.time() - 10 < self.__start_time):
+        if self._kind == 'core' or \
+            (self._kind == 'needed' and time.time() - 10 < self.__start_time):
             self.__dead = True
             logger.fatal(BIND10_COMPONENT_UNSATISFIED, self.name())
             self._boss.component_shutdown(1)
@@ -391,7 +391,8 @@ class Configurator:
                     # TODO: Better error handling
                     creator = specials[params['special']]
                 component = creator(params.get('process', cname), self.__boss,
-                                    params['kind'], params.get('address'),
+                                    params.get('kind', 'dispensable'),
+                                    params.get('address'),
                                     params.get('params'))
                 priority = params.get('priority', 0)
                 # We store tuples, priority first, so we can easily sort
