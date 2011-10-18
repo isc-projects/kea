@@ -37,4 +37,4 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/acl/libdnsacl.la
 endif
 
-check_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = $(TESTS)

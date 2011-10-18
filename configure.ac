@@ -872,6 +872,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns/python/tests/Makefile
                  src/lib/dns/benchmarks/Makefile
+                 src/lib/dhcp/Makefile
+                 src/lib/dhcp/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile

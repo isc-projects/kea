@@ -12,7 +12,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-check_PROGRAMS  = badpacket
+noinst_PROGRAMS  = badpacket
 badpacket_SOURCES  = badpacket.cc
 badpacket_SOURCES += command_options.cc command_options.h
 badpacket_SOURCES += header_flags.h
