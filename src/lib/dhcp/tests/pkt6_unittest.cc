@@ -85,7 +85,8 @@ Pkt6 *capture1() {
     return (pkt);
 }
 
-TEST_F(Pkt6Test, unpack_solicit1) {
+/// TODO Reenable this once ticket #1313 is implemented
+TEST_F(Pkt6Test, DISABLED_unpack_solicit1) {
     Pkt6 * sol = capture1();
 
     ASSERT_EQ(true, sol->unpack());

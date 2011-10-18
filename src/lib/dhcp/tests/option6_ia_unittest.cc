@@ -132,7 +132,8 @@ TEST_F(Option6IATest, simple) {
 }
 
 // test if option can build suboptions
-TEST_F(Option6IATest, suboptions_pack) {
+/// TODO Reenable once ticket #1313 is implemented
+TEST_F(Option6IATest, DISABLED_suboptions_pack) {
     boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 0;
