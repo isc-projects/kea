@@ -1619,7 +1619,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                    this->expected_rdatas_, this->expected_sig_rdatas_);
     }
 
-    // With FIND_DNSSEC, it should result in WILDCARD_EMPTY.
+    // With FIND_DNSSEC, it should result in WILDCARD_NXRRSET.
     const char* negative_dnssec_names[] = {
         "a.bar.example.org.",
         "foo.baz.bar.example.org.",
