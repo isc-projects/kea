@@ -21,7 +21,7 @@
 /// with the message is also specified.  This debug level is a number
 /// ranging from 0 to 99; the idea is that the higher the debug level, the
 /// more detailed the message.
-/// 
+///
 /// If debug messages are being logged, the logging system allows them to be
 /// filtered by debug level - only messages logged with a level equal to or
 /// less than the set debug level will be output.  (For example, if the
@@ -36,17 +36,17 @@
 /// someone diagnose a problem that they could solve without needing to dive
 /// into the code.  So it covers things like start-up steps and configuration
 /// messages.
-/// 
+///
 /// In practice, this means that levels of 30 and below are most-likely to
 /// be used by the top-level programs, and 31 and above by the various
 /// libraries.
-/// 
+///
 /// This file defines a set of standard debug levels for use across all loggers.
 /// In this way users can have some expection of what will be output when
 /// enabling debugging.  Symbols are prefixed DBGLVL so as not to clash with
 /// DBG_ symbols in the various modules.
 ///
-/// N.B. If the names of debug constants are changed, or if ones are added or
+/// \note If the names of debug constants are changed, or if ones are added or
 /// removed, edit the file src/lib/python/isc/log/log.cc to update the log
 /// level definitions available to Python.  The change does not need to be
 /// made if only the numeric values of constants are updated.
@@ -76,7 +76,7 @@ const int DBGLVL_COMMAND_DATA = 20;
 // Depending on the exact nature of the code, modules may or may not use these
 // levels.
 
-/// Trace basic operations. 
+/// Trace basic operations.
 const int DBGLVL_TRACE_BASIC = 40;
 
 /// Trace data associated with the basic operations.
