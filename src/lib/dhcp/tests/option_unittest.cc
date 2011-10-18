@@ -40,7 +40,7 @@ TEST_F(OptionTest, basic4) {
     Option* opt = new Option(Option::V4, 17);
 
     EXPECT_EQ(17, opt->getType());
-    EXPECT_EQ(NULL, opt->getData());
+    EXPECT_EQ(static_cast<uint8_t*>(NULL), opt->getData());
     EXPECT_EQ(2, opt->len()); // just v4 header
 
     EXPECT_NO_THROW(
@@ -54,7 +54,7 @@ TEST_F(OptionTest, basic6) {
     Option* opt = new Option(Option::V6, 1);
 
     EXPECT_EQ(1, opt->getType());
-    EXPECT_EQ(NULL, opt->getData());
+    EXPECT_EQ(static_cast<uint8_t*>(NULL), opt->getData());
     EXPECT_EQ(4, opt->len()); // just v6 header
 
     EXPECT_NO_THROW(
