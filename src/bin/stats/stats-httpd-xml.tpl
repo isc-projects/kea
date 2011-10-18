@@ -15,10 +15,4 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<stats:stats_data version="1.0"
-  xmlns:stats="$xsd_namespace"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="$xsd_namespace $xsd_url_path">
-  $xml_string
-</stats:stats_data>
+$xml_string
