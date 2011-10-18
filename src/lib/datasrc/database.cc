@@ -509,9 +509,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 records_found = true;
                 get_cover = dnssec_data;
             } else if ((options & NO_WILDCARD) != 0) {
-                // If wildcard check is disabled, terminate the search with
-                // NXDOMAIN (set later in this method).  If DNSSEC proof was
-                // requested we'll add the NSEC RR for the proof.
+                // If wildcard check is disabled, the search will ultimately
+                // terminate with NXDOMAIN. If DNSSEC is enabled, flag that
+                // we need to get the NSEC records to prove this.
                 if (dnssec_data) {
                     get_cover = true;
                 }
