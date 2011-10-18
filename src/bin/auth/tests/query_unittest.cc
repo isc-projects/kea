@@ -95,6 +95,10 @@ const char* const other_zone_rrs =
 const char* const nsec_nxdomain_txt =
     "noglue.example.com. 3600 IN NSEC www.example.com. A\n";
 
+// A helper function that generates a textual representation of RRSIG RDATA
+// for the given covered type.  The resulting RRSIG may not necessarily make
+// sense in terms of the DNSSEC protocol, but for our testing purposes it's
+// okay.
 string
 getCommonRRSIGText(const string& type) {
     return (type +
@@ -523,6 +527,19 @@ TEST_F(QueryTest, nxdomain) {
                           response).process());
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
                   NULL, soa_txt, NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainWithNSEC) {
+    EXPECT_NO_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
+                          response, true).process());
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 4, 0,
+                  NULL, (string(soa_txt) +
+                         string("example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("SOA") + "\n" +
+                         string(nsec_nxdomain_txt) + "\n" +
+                         string("noglue.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
 }
 
 TEST_F(QueryTest, nxrrset) {

@@ -245,9 +245,16 @@ Query::process() const {
                 getAdditional(*result.zone_finder, *db_result.rrset);
                 break;
             case ZoneFinder::NXDOMAIN:
-                // Just empty answer with SOA in authority section
                 response_.setRcode(Rcode::NXDOMAIN());
                 putSOA(*result.zone_finder);
+
+                // If DNSSEC proof is requested and we've got it, add it.
+                if (dnssec_ && db_result.rrset) {
+                    response_.addRRset(
+                        Message::SECTION_AUTHORITY,
+                        boost::const_pointer_cast<RRset>(db_result.rrset),
+                        dnssec_);
+                }
                 break;
             case ZoneFinder::NXRRSET:
                 // Just empty answer with SOA in authority section
