@@ -11,7 +11,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-lib_LTLIBRARIES = libfake_session.la
+noinst_LTLIBRARIES = libfake_session.la
 libfake_session_la_SOURCES = fake_session.h fake_session.cc
 
 TESTS =
@@ -31,4 +31,4 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 
 endif
 
-check_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = $(TESTS)

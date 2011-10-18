@@ -33,6 +33,7 @@ $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py : bind10_messages.mes
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 bind10: bind10_src.py $(PYTHON_LOGMSGPKG_DIR)/work/bind10_messages.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
+	       -e "s|@@LIBDIR@@|$(libdir)|" \
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bind10_src.py >$@
 	chmod a+x $@
 
