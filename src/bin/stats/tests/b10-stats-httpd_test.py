@@ -46,7 +46,7 @@ DUMMY_DATA = {
     'Auth' : {
         "queries.tcp": 2,
         "queries.udp": 3,
-        "queries.per-zone": [{
+        "queries.perzone": [{
                 "zonename": "test.example",
                 "queries.tcp": 2,
                 "queries.udp": 3
@@ -142,6 +142,23 @@ class TestHttpHandler(unittest.TestCase):
         self.assertTrue(int(response.getheader("Content-Length")) > 0)
         self.assertEqual(response.status, 200)
         root = xml.etree.ElementTree.parse(response).getroot()
+        self.assertTrue(root.tag.find('statistics') > 0)
+        for (k,v) in root.attrib.items():
+            if k.find('schemaLocation') > 0:
+                self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.XSD_URL_PATH)
+        for mod in DUMMY_DATA:
+            for (item, value) in DUMMY_DATA[mod].items():
+                self.assertIsNotNone(root.find(mod + '/' + item))
+
+        """
+        # URL is '/bind10/statistics/xml/Auth/queries.tcp/'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Auth/queries.tcp/')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.getheader("Content-type"), "text/xml")
+        self.assertTrue(int(response.getheader("Content-Length")) > 0)
+        self.assertEqual(response.status, 200)
+        root = xml.etree.ElementTree.parse(response).getroot()
         self.assertTrue(root.tag.find('stats_data') > 0)
         for (k,v) in root.attrib.items():
             if k.find('schemaLocation') > 0:
@@ -149,6 +166,7 @@ class TestHttpHandler(unittest.TestCase):
         for mod in DUMMY_DATA:
             for (item, value) in DUMMY_DATA[mod].items():
                 self.assertIsNotNone(root.find(mod + '/' + item))
+        """
 
         # URL is '/bind10/statitics/xsd'
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
@@ -169,6 +187,27 @@ class TestHttpHandler(unittest.TestCase):
         for elm in root.findall(xsdpath):
             self.assertIsNotNone(elm.attrib['name'])
             self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
+        """
+        # URL is '/bind10/statitics/xsd/Auth/queries.tcp/'
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Auth/queries.tcp/')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.getheader("Content-type"), "text/xml")
+        self.assertTrue(int(response.getheader("Content-Length")) > 0)
+        self.assertEqual(response.status, 200)
+        root = xml.etree.ElementTree.parse(response).getroot()
+        url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
+        tags = [ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ]
+        xsdpath = '/'.join(tags)
+        self.assertTrue(root.tag.find('schema') > 0)
+        self.assertTrue(hasattr(root, 'attrib'))
+        self.assertTrue('targetNamespace' in root.attrib)
+        self.assertEqual(root.attrib['targetNamespace'],
+                         stats_httpd.XSD_NAMESPACE)
+        for elm in root.findall(xsdpath):
+            self.assertIsNotNone(elm.attrib['name'])
+            self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
+        """
 
         # URL is '/bind10/statitics/xsl'
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
@@ -196,6 +235,35 @@ class TestHttpHandler(unittest.TestCase):
             self.assertTrue('select' in valueof.attrib)
             self.assertTrue(valueof.attrib['select'] in \
                                 [ tds[0].text+'/'+item for item in DUMMY_DATA[tds[0].text].keys() ])
+
+        """
+        # URL is '/bind10/statitics/xsl/Auth/queries.tcp/'
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Auth/queries.tcp/')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.getheader("Content-type"), "text/xml")
+        self.assertTrue(int(response.getheader("Content-Length")) > 0)
+        self.assertEqual(response.status, 200)
+        root = xml.etree.ElementTree.parse(response).getroot()
+        url_trans = '{http://www.w3.org/1999/XSL/Transform}'
+        url_xhtml = '{http://www.w3.org/1999/xhtml}'
+        xslpath = url_trans + 'template/' + url_xhtml + 'tr'
+        self.assertEqual(root.tag, url_trans + 'stylesheet')
+        for tr in root.findall(xslpath):
+            tds = tr.findall(url_xhtml + 'td')
+            self.assertIsNotNone(tds)
+            self.assertEqual(type(tds), list)
+            self.assertTrue(len(tds) > 2)
+            self.assertTrue(hasattr(tds[0], 'text'))
+            self.assertTrue(tds[0].text in DUMMY_DATA)
+            valueof = tds[2].find(url_trans + 'value-of')
+            self.assertIsNotNone(valueof)
+            self.assertTrue(hasattr(valueof, 'attrib'))
+            self.assertIsNotNone(valueof.attrib)
+            self.assertTrue('select' in valueof.attrib)
+            self.assertTrue(valueof.attrib['select'] in \
+                                [ tds[0].text+'/'+item for item in DUMMY_DATA[tds[0].text].keys() ])
+        """
 
         # 302 redirect
         self.client._http_vsn_str = 'HTTP/1.1'
@@ -493,8 +561,6 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(
             xml_string="<dummy></dummy>",
-            xsd_namespace="http://host/path/to/",
-            xsd_url_path="/path/to/",
             xsl_url_path="/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
@@ -585,26 +651,32 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_xml_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_data = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { 'Dummy' : [ {
+                'item_name' : 'foo',
+                'item_type' : 'string' } ] }
+        self.stats_httpd.get_stats_data = lambda x,y: \
             { 'Dummy' : { 'foo':'bar' } }
         xml_body1 = self.stats_httpd.open_template(
             stats_httpd.XML_TEMPLATE_LOCATION).substitute(
-            xml_string='<Dummy><foo>bar</foo></Dummy>',
-            xsd_namespace=stats_httpd.XSD_NAMESPACE,
-            xsd_url_path=stats_httpd.XSD_URL_PATH,
+            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10/statistics/xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10/statistics/xsd /bind10/statistics/xsd"><Dummy><foo>bar</foo></Dummy></bind10:statistics>',
             xsl_url_path=stats_httpd.XSL_URL_PATH)
         xml_body2 = self.stats_httpd.xml_handler()
         self.assertEqual(type(xml_body1), str)
         self.assertEqual(type(xml_body2), str)
         self.assertEqual(xml_body1, xml_body2)
-        self.stats_httpd.get_stats_data = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { 'Dummy' : [ {
+                'item_name' : 'bar',
+                'item_type' : 'string' } ] }
+        self.stats_httpd.get_stats_data = lambda x,y: \
             { 'Dummy' : {'bar':'foo'} }
         xml_body2 = self.stats_httpd.xml_handler()
         self.assertNotEqual(xml_body1, xml_body2)
 
     def test_xsd_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "foo",
@@ -629,7 +701,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(type(xsd_body1), str)
         self.assertEqual(type(xsd_body2), str)
         self.assertEqual(xsd_body1, xsd_body2)
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "bar",
@@ -645,7 +717,7 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_xsl_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "foo",
@@ -668,7 +740,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(type(xsl_body1), str)
         self.assertEqual(type(xsl_body2), str)
         self.assertEqual(xsl_body1, xsl_body2)
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "bar",
