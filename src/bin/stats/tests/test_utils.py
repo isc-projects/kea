@@ -234,14 +234,25 @@ class MockAuth:
         "item_description": "A number of total query counts which all auth servers receive over UDP since they started initially"
       },
       {
-        "item_name": "queries.per-zone",
+        "item_name": "queries.perzone",
         "item_type": "list",
         "item_optional": false,
-        "item_default": [],
+        "item_default": [
+          {
+            "zonename" : "test1.example",
+            "queries.udp" : 1,
+            "queries.tcp" : 2
+          },
+          {
+            "zonename" : "test2.example",
+            "queries.udp" : 3,
+            "queries.tcp" : 4
+          }
+        ],
         "item_title": "Queries per zone",
         "item_description": "Queries per zone",
         "list_item_spec": {
-          "item_name": "item",
+          "item_name": "zones",
           "item_type": "map",
           "item_optional": false,
           "item_default": {},
@@ -290,7 +301,7 @@ class MockAuth:
         self.queries_tcp = 3
         self.queries_udp = 2
         self.queries_per_zone = [{
-                'zonename': 'test.example',
+                'zonename': 'test1.example',
                 'queries.tcp': 5,
                 'queries.udp': 4
                 }]
