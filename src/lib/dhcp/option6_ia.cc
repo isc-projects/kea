@@ -84,6 +84,10 @@ Option6IA::unpack(const boost::shared_array<uint8_t>& buf,
     if ( parse_len < OPTION6_IA_LEN || offset + OPTION6_IA_LEN > buf_len) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
+
+    /// TODO this will cause SIGBUS on sparc if we happen to read misaligned
+    /// memory access. We need to fix this (and similar code) as part of
+    /// the ticket #1313
     iaid_ = ntohl(*(uint32_t*)&buf[offset]);
     offset += sizeof(uint32_t);
     t1_ = ntohl(*(uint32_t*)&buf[offset]);
