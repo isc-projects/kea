@@ -91,8 +91,18 @@ const char* const other_zone_rrs =
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
+// NSEC records
+const char* const nsec_nxdomain_txt =
+    "noglue.example.com. 3600 IN NSEC www.example.com. A\n";
 
-// This is a mock Zone class for testing.
+string
+getCommonRRSIGText(const string& type) {
+    return (type +
+            string(" 5 3 3600 20000101000000 20000201000000 12345 "
+                   "example.com. FAKEFAKEFAKE"));
+}
+
+// This is a mock Zone Finder class for testing.
 // It is a derived class of ZoneFinder for the convenient of tests.
 // Its find() method emulates the common behavior of protocol compliant
 // ZoneFinder classes, but simplifies some minor cases and also supports broken
@@ -118,7 +128,7 @@ public:
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
             cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
-            other_zone_rrs;
+            other_zone_rrs << nsec_nxdomain_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -160,23 +170,17 @@ private:
         // Add some signatures
         } else if (rrset->getName() == Name("example.com.") &&
                    rrset->getType() == RRType::NS()) {
-            rrset->addRRsig(RdataPtr(new generic::RRSIG("NS 5 3 3600 "
-                                                        "20000101000000 "
-                                                        "20000201000000 "
-                                                        "12345 example.com. "
-                                                        "FAKEFAKEFAKE")));
-        } else if (rrset->getType() == RRType::A()) {
-            rrset->addRRsig(RdataPtr(new generic::RRSIG("A 5 3 3600 "
-                                                        "20000101000000 "
-                                                        "20000201000000 "
-                                                        "12345 example.com. "
-                                                        "FAKEFAKEFAKE")));
-        } else if (rrset->getType() == RRType::AAAA()) {
-            rrset->addRRsig(RdataPtr(new generic::RRSIG("AAAA 5 3 3600 "
-                                                        "20000101000000 "
-                                                        "20000201000000 "
-                                                        "12345 example.com. "
-                                                        "FAKEFAKEFAKE")));
+            // For NS, we only have RRSIG for the origin name.
+            rrset->addRRsig(RdataPtr(new generic::RRSIG(
+                                         getCommonRRSIGText("NS"))));
+        } else {
+            // For others generate RRSIG unconditionally.  Technically this
+            // is wrong because we shouldn't have it for names under a zone
+            // cut.  But in our tests that doesn't matter, so we add them
+            // just for simplicity.
+            rrset->addRRsig(RdataPtr(new generic::RRSIG(
+                                         getCommonRRSIGText(rrset->getType().
+                                                            toText()))));
         }
     }
 
@@ -267,7 +271,25 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         return (FindResult(NXRRSET, RRsetPtr()));
     }
 
-    // query name isn't found in our domains.  returns NXDOMAIN.
+    // query name isn't found in our domains.  This is an NXDOMAIN case.
+    // If we need DNSSEC proof, find the "previous name" that has an NSEC RR
+    // and return NXDOMAIN with the found NSEC.  Otherwise, just return the
+    // NXDOMAIN code and NULL.  If DNSSEC proof is requested but no NSEC is
+    // found, we return NULL, too.  (For simplicity under the test conditions
+    // we don't care about pathological cases such as the name is "smaller"
+    // than the origin)
+    if ((options & FIND_DNSSEC) != 0) {
+        for (Domains::const_reverse_iterator it = domains_.rbegin();
+             it != domains_.rend();
+             ++it) {
+            RRsetStore::const_iterator nsec_it;
+            if ((*it).first < name &&
+                (nsec_it = (*it).second.find(RRType::NSEC()))
+                != (*it).second.end()) {
+                return (FindResult(NXDOMAIN, (*nsec_it).second));
+            }
+        }
+    }
     return (FindResult(NXDOMAIN, RRsetPtr()));
 }
 
@@ -433,8 +455,9 @@ TEST_F(QueryTest, exactAnyMatch) {
     EXPECT_NO_THROW(Query(memory_client, Name("noglue.example.com"),
                           RRType::ANY(), response).process());
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 2,
-                  "noglue.example.com. 3600 IN A 192.0.2.53\n",
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 3, 2,
+                  (string("noglue.example.com. 3600 IN A 192.0.2.53\n") +
+                   string(nsec_nxdomain_txt)).c_str(),
                   zone_ns_txt,
                   "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
                   "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n");
