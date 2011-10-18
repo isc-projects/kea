@@ -1,3 +1,7 @@
+301     [func]      stephen
+	Add system test for IXFR over TCP.
+	(Trac #1213, git 68ee3818bcbecebf3e6789e81ea79d551a4ff3e8)
+
 300.	[func]*		tomek
 	libdhcp: DHCP packet library was implemented. Currently it handles
 	packet reception, option parsing, option generation and output
