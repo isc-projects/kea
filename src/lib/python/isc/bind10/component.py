@@ -13,6 +13,15 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""
+Module for managing components (abstraction of process). It allows starting
+them in given order, handling when they crash (what happens depends on kind
+of component) and shutting down. It also handles the configuration of this.
+
+Dependencies between them are not yet handled. It might turn out they are
+needed, in that case they will be added sometime in future.
+"""
+
 import isc.bind10.sockcreator
 import isc.log
 from isc.log_messages.bind10_messages import *
@@ -23,15 +32,6 @@ import os
 logger = isc.log.Logger("boss")
 DBG_TRACE_DATA = 20
 DBG_TRACE_DETAILED = 80
-
-"""
-Module for managing components (abstraction of process). It allows starting
-them in given order, handling when they crash (what happens depends on kind
-of component) and shutting down. It also handles the configuration of this.
-
-Dependencies between them are not yet handled. It might turn out they are
-needed, in that case they will be added sometime in future.
-"""
 
 class Component:
     """
