@@ -108,7 +108,8 @@ TEST_F(Pkt6Test, unpack_solicit1) {
     EXPECT_FALSE(sol->getOption(D6O_IA_TA));
     EXPECT_FALSE(sol->getOption(D6O_IAADDR));
 
-    std::cout << sol->toText();
+    // let's limit verbosity of this test
+    // std::cout << sol->toText();
 
     delete sol;
 }
