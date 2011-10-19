@@ -67,7 +67,7 @@ XML_URL_PATH = '/bind10/statistics/xml'
 XSD_URL_PATH = '/bind10/statistics/xsd'
 XSL_URL_PATH = '/bind10/statistics/xsl'
 # TODO: This should be considered later.
-XSD_NAMESPACE = 'http://bind10.isc.org' + XSD_URL_PATH
+XSD_NAMESPACE = 'http://bind10.isc.org/bind10'
 
 # Assign this process name
 isc.util.process.rename()
@@ -387,7 +387,7 @@ class StatsHttpd:
             param['name'] = name
         try:
             seq = self.cc_session.group_sendmsg(
-                isc.config.ccsession.create_command('showschema'), 'Stats')
+                isc.config.ccsession.create_command('showschema', param), 'Stats')
             (answer, env) = self.cc_session.group_recvmsg(False, seq)
             if answer:
                 (rcode, value) = isc.config.ccsession.parse_answer(answer)
@@ -400,55 +400,57 @@ class StatsHttpd:
             raise StatsHttpdError("%s: %s" %
                                   (err.__class__.__name__, err))
 
-    def stats_data2xml(self, stats_spec, stats_data, xml_elem):
-        """Reads stats_data and stats_spec specified as first and
-        second arguments, and modify the xml object specified as
-        fourth argument. xml_elem must be modified and always returns
-        None."""
-        # assumed started with module_spec or started with item_spec in statistics
-        if type(stats_spec) is dict:
-            # assumed started with module_spec
-            if 'item_name' not in stats_spec \
-                    and 'item_type' not in stats_spec:
-                for module_name in stats_spec.keys():
-                    elem = xml.etree.ElementTree.Element(module_name)
-                    self.stats_data2xml(stats_spec[module_name],
-                                        stats_data[module_name], elem)
-                    xml_elem.append(elem)
-            # started with item_spec in statistics
-            else:
-                if stats_spec['item_type'] == 'map':
-                    elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
-                    self.stats_data2xml(stats_spec['map_item_spec'],
-                                        stats_data,
-                                        elem)
-                    xml_elem.append(elem)
-                elif stats_spec['item_type'] == 'list':
-                    elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
-                    for item in stats_data:
-                        self.stats_data2xml(stats_spec['list_item_spec'],
-                                            item,
-                                            elem)
-                    xml_elem.append(elem)
-                else:
-                    elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
-                    elem.text = str(stats_data)
-                    xml_elem.append(elem)
-        # assumed started with stats_spec
-        elif type(stats_spec) is list:
-            for item_spec in stats_spec:
-                #elem = xml.etree.ElementTree.Element(item_spec['item_name'])
-                self.stats_data2xml(item_spec,
-                                    stats_data[item_spec['item_name']],
-                                    xml_elem)
-                #xml_elem.append(elem)
-        else:
-            xml_elem.text = str(stats_data)
-        return None
 
     def xml_handler(self, module_name=None, item_name=None):
         """Handler which requests to Stats daemon to obtain statistics
         data and returns the body of XML document"""
+
+        def stats_data2xml(stats_spec, stats_data, xml_elem):
+            """Internal use for xml_handler. Reads stats_data and
+            stats_spec specified as first and second arguments, and
+            modify the xml object specified as third
+            argument. xml_elem must be modified and always returns
+            None."""
+            # assumed started with module_spec or started with
+            # item_spec in statistics
+            if type(stats_spec) is dict:
+                # assumed started with module_spec
+                if 'item_name' not in stats_spec \
+                        and 'item_type' not in stats_spec:
+                    for module_name in stats_spec.keys():
+                        elem = xml.etree.ElementTree.Element(module_name)
+                        stats_data2xml(stats_spec[module_name],
+                                            stats_data[module_name], elem)
+                        xml_elem.append(elem)
+                # started with item_spec in statistics
+                else:
+                    if stats_spec['item_type'] == 'map':
+                        elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
+                        stats_data2xml(stats_spec['map_item_spec'],
+                                            stats_data,
+                                            elem)
+                        xml_elem.append(elem)
+                    elif stats_spec['item_type'] == 'list':
+                        elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
+                        for item in stats_data:
+                            stats_data2xml(stats_spec['list_item_spec'],
+                                                item,
+                                                elem)
+                        xml_elem.append(elem)
+                    else:
+                        elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
+                        elem.text = str(stats_data)
+                        xml_elem.append(elem)
+            # assumed started with stats_spec
+            elif type(stats_spec) is list:
+                for item_spec in stats_spec:
+                    stats_data2xml(item_spec,
+                                        stats_data[item_spec['item_name']],
+                                        xml_elem)
+            else:
+                xml_elem.text = str(stats_data)
+            return None
+
         stats_spec = self.get_stats_spec(module_name, item_name)
         stats_data = self.get_stats_data(module_name, item_name)
         xml_elem = xml.etree.ElementTree.Element(
@@ -456,7 +458,7 @@ class StatsHttpd:
             attrib={ 'xsi:schemaLocation' : XSD_NAMESPACE + ' ' + XSD_URL_PATH,
                      'xmlns:bind10' : XSD_NAMESPACE,
                      'xmlns:xsi' : "http://www.w3.org/2001/XMLSchema-instance" })
-        self.stats_data2xml(stats_spec, stats_data, xml_elem)
+        stats_data2xml(stats_spec, stats_data, xml_elem)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
@@ -473,34 +475,99 @@ class StatsHttpd:
 
     def xsd_handler(self, module_name=None, item_name=None):
         """Handler which just returns the body of XSD document"""
-        # for XSD
-        xsd_root = xml.etree.ElementTree.Element("all") # started with "all" tag
-        for (mod, spec) in self.get_stats_spec(module_name, item_name).items():
-            if not spec: continue
-            alltag = xml.etree.ElementTree.Element("all")
-            for item in spec:
-                element = xml.etree.ElementTree.Element(
-                    "element",
-                    dict( name=item["item_name"],
-                          type=item["item_type"] if item["item_type"].lower() != 'real' else 'float',
-                          minOccurs="1",
-                          maxOccurs="1" ),
-                    )
-                annotation = xml.etree.ElementTree.Element("annotation")
-                appinfo = xml.etree.ElementTree.Element("appinfo")
-                documentation = xml.etree.ElementTree.Element("documentation")
-                appinfo.text = item["item_title"]
-                documentation.text = item["item_description"]
-                annotation.append(appinfo)
-                annotation.append(documentation)
-                element.append(annotation)
-                alltag.append(element)
 
-            complextype = xml.etree.ElementTree.Element("complexType")
-            complextype.append(alltag)
-            mod_element = xml.etree.ElementTree.Element("element", { "name" : mod })
-            mod_element.append(complextype)
-            xsd_root.append(mod_element)
+        def stats_spec2xsd(stats_spec, xsd_elem):
+            """Internal use for xsd_handler. Reads stats_spec
+            specified as first arguments, and modify the xml object
+            specified as second argument. xsd_elem must be
+            modified. Always returns None with no exceptions."""
+            # assumed module_spec or one stats_spec
+            if type(stats_spec) is dict:
+                # assumed module_spec
+                if 'item_name' not in stats_spec:
+                        alltag = xml.etree.ElementTree.Element("all")
+                        for mod in stats_spec.keys():
+                            stats_spec2xsd(stats_spec[mod], alltag)
+                        complextype = xml.etree.ElementTree.Element("complexType")
+                        complextype.append(alltag)
+                        elem = xml.etree.ElementTree.Element(
+                            "element", { "name" : mod })
+                        elem.append(complextype)
+                        xsd_elem.append(elem)
+                # assumed stats_spec
+                else:
+                    if stats_spec['item_type'] == 'map':
+                        alltag = xml.etree.ElementTree.Element("all")
+                        stats_spec2xsd(stats_spec['map_item_spec'], alltag)
+                        complextype = xml.etree.ElementTree.Element("complexType")
+                        complextype.append(alltag)
+                        elem = xml.etree.ElementTree.Element(
+                            "element", { "name" : stats_spec["item_name"] })
+                        elem.append(complextype)
+                        xsd_elem.append(elem)
+                    elif stats_spec['item_type'] == 'list':
+                        alltag = xml.etree.ElementTree.Element("all")
+                        stats_spec2xsd(stats_spec['list_item_spec'], alltag)
+                        complextype = xml.etree.ElementTree.Element("complexType")
+                        complextype.append(alltag)
+                        elem = xml.etree.ElementTree.Element(
+                            "element", { "name" : stats_spec["item_name"] })
+                        elem.append(complextype)
+                        xsd_elem.append(elem)
+                    else:
+                        elem = xml.etree.ElementTree.Element(
+                            "element",
+                            attrib={
+                                'name' : stats_spec["item_name"],
+                                'type' : stats_spec["item_type"] \
+                                    if stats_spec["item_type"].lower() != 'real' \
+                                    else 'float',
+                                'minOccurs' : "1",
+                                'maxOccurs' : "1"
+                                }
+                            )
+                        annotation = xml.etree.ElementTree.Element("annotation")
+                        appinfo = xml.etree.ElementTree.Element("appinfo")
+                        documentation = xml.etree.ElementTree.Element("documentation")
+                        if "item_title" in stats_spec:
+                            appinfo.text = stats_spec["item_title"]
+                        if "item_description" in stats_spec:
+                            documentation.text = stats_spec["item_description"]
+                        annotation.append(appinfo)
+                        annotation.append(documentation)
+                        elem.append(annotation)
+                        xsd_elem.append(elem)
+            # multiple stats_specs
+            elif type(stats_spec) is list:
+                for item_spec in stats_spec:
+                    stats_spec2xsd(item_spec, xsd_elem)
+            return None
+
+        # for XSD
+        stats_spec = self.get_stats_spec(module_name, item_name)
+        alltag = xml.etree.ElementTree.Element("all")
+        stats_spec2xsd(stats_spec, alltag)
+        complextype = xml.etree.ElementTree.Element("complexType")
+        complextype.append(alltag)
+        documentation = xml.etree.ElementTree.Element("documentation")
+        documentation.text = "A set of statistics data"
+        annotation = xml.etree.ElementTree.Element("annotation")
+        annotation.append(documentation)
+        elem = xml.etree.ElementTree.Element(
+            "element", attrib={ 'name' : 'statistics' })
+        elem.append(annotation)
+        elem.append(complextype)
+        documentation = xml.etree.ElementTree.Element("documentation")
+        documentation.text = "XML schema of the statistics data in BIND 10"
+        annotation = xml.etree.ElementTree.Element("annotation")
+        annotation.append(documentation)
+        xsd_root = xml.etree.ElementTree.Element(
+            "schema",
+            attrib={ 'xmlns' : "http://www.w3.org/2001/XMLSchema",
+                     'targetNamespace' : XSD_NAMESPACE,
+                     'xmlns:bind10' : XSD_NAMESPACE })
+        xsd_root.append(annotation)
+        xsd_root.append(elem)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
@@ -510,9 +577,7 @@ class StatsHttpd:
         xsd_string = str(xml.etree.ElementTree.tostring(xsd_root, encoding='utf-8'),
                          encoding='us-ascii')
         self.xsd_body = self.open_template(XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string=xsd_string,
-            xsd_namespace=XSD_NAMESPACE
-            )
+            xsd_string=xsd_string)
         assert self.xsd_body is not None
         return self.xsd_body
 
