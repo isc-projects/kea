@@ -134,7 +134,7 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(len(self.stats_httpd.httpd), 1)
         self.assertEqual((self.address, self.port), self.stats_httpd.http_addrs[0])
 
-        # URL is '/bind10/statistics/xml'
+        """
         self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
@@ -149,44 +149,121 @@ class TestHttpHandler(unittest.TestCase):
         for mod in DUMMY_DATA:
             for (item, value) in DUMMY_DATA[mod].items():
                 self.assertIsNotNone(root.find(mod + '/' + item))
-
-        """
-        # URL is '/bind10/statistics/xml/Auth/queries.tcp/'
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Auth/queries.tcp/')
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        self.assertTrue(root.tag.find('stats_data') > 0)
-        for (k,v) in root.attrib.items():
-            if k.find('schemaLocation') > 0:
-                self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.XSD_URL_PATH)
-        for mod in DUMMY_DATA:
-            for (item, value) in DUMMY_DATA[mod].items():
-                self.assertIsNotNone(root.find(mod + '/' + item))
         """
 
-        # URL is '/bind10/statitics/xsd'
-        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
-        tags = [ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ]
-        xsdpath = '/'.join(tags)
-        self.assertTrue(root.tag.find('schema') > 0)
-        self.assertTrue(hasattr(root, 'attrib'))
-        self.assertTrue('targetNamespace' in root.attrib)
-        self.assertEqual(root.attrib['targetNamespace'],
-                         stats_httpd.XSD_NAMESPACE)
-        for elm in root.findall(xsdpath):
-            self.assertIsNotNone(elm.attrib['name'])
-            self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
+        def check_XML_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XML_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            self.assertTrue(root.tag.find('statistics') > 0)
+            for (k,v) in root.attrib.items():
+                if k.find('schemaLocation') > 0:
+                    self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.XSD_URL_PATH)
+            if item is None and mod is None:
+                for m in DUMMY_DATA:
+                    for k in DUMMY_DATA[m].keys():
+                        self.assertIsNotNone(root.find(m + '/' + k))
+            elif item is None:
+                for k in DUMMY_DATA[mod].keys():
+                    self.assertIsNotNone(root.find(k))
+            else:
+                self.assertIsNotNone(root.find(item))
+
+        # URL is '/bind10/statistics/xml'
+        check_XML_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xml/Module'
+            check_XML_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xml/Module/Item'
+                check_XML_URL_PATH(mod=m, item=k)
+
+        def check_XSD_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XSD_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
+            tags = [ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ]
+            xsdpath = '/'.join(tags)
+            self.assertTrue(root.tag.find('schema') > 0)
+            self.assertTrue(hasattr(root, 'attrib'))
+            self.assertTrue('targetNamespace' in root.attrib)
+            self.assertEqual(root.attrib['targetNamespace'],
+                             stats_httpd.XSD_NAMESPACE)
+            for elm in root.findall(xsdpath):
+                if mod is None:
+                    self.assertIsNotNone(elm.attrib['name'])
+                    self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
+                else:
+                    self.assertIsNotNone(elm.attrib['name'])
+                    self.assertTrue(elm.attrib['name'] in DUMMY_DATA[mod])
+
+        # URL is '/bind10/statistics/xsd'
+        check_XSD_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xsd/Module'
+            check_XSD_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xsd/Module/Item'
+                check_XSD_URL_PATH(mod=m, item=k)
+
+        def check_XSL_URL_PATH(mod=None, item=None):
+            self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            url_trans = '{http://www.w3.org/1999/XSL/Transform}'
+            url_xhtml = '{http://www.w3.org/1999/xhtml}'
+            xslpath = url_trans + 'template/' + url_xhtml + 'tr'
+            self.assertEqual(root.tag, url_trans + 'stylesheet')
+            for tr in root.findall(xslpath):
+                tds = tr.findall(url_xhtml + 'td')
+                self.assertIsNotNone(tds)
+                self.assertEqual(type(tds), list)
+                self.assertTrue(len(tds) > 2)
+                self.assertTrue(hasattr(tds[0], 'text'))
+                if mod is None:
+                    self.assertTrue(tds[0].text in DUMMY_DATA)
+                else:
+                    self.assertTrue(tds[0].text in DUMMY_DATA[mod])
+                valueof = tds[2].find(url_trans + 'value-of')
+                self.assertIsNotNone(valueof)
+                self.assertTrue(hasattr(valueof, 'attrib'))
+                self.assertIsNotNone(valueof.attrib)
+                self.assertTrue('select' in valueof.attrib)
+                self.assertTrue(valueof.attrib['select'] in \
+                                [ tds[0].text+'/'+item for item in DUMMY_DATA[tds[0].text].keys() ])
+
+        # URL is '/bind10/statistics/xsl'
+        check_XSL_URL_PATH(mod=None, item=None)
+        #for m in DUMMY_DATA:
+        #    # URL is '/bind10/statistics/xsl/Module'
+        #    check_XSL_URL_PATH(mod=m)
+        #    for k in DUMMY_DATA[m].keys():
+        #        # URL is '/bind10/statistics/xsl/Module/Item'
+        #        check_XSL_URL_PATH(mod=m, item=k)
+
         """
         # URL is '/bind10/statitics/xsd/Auth/queries.tcp/'
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Auth/queries.tcp/')
@@ -210,31 +287,6 @@ class TestHttpHandler(unittest.TestCase):
         """
 
         # URL is '/bind10/statitics/xsl'
-        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        url_trans = '{http://www.w3.org/1999/XSL/Transform}'
-        url_xhtml = '{http://www.w3.org/1999/xhtml}'
-        xslpath = url_trans + 'template/' + url_xhtml + 'tr'
-        self.assertEqual(root.tag, url_trans + 'stylesheet')
-        for tr in root.findall(xslpath):
-            tds = tr.findall(url_xhtml + 'td')
-            self.assertIsNotNone(tds)
-            self.assertEqual(type(tds), list)
-            self.assertTrue(len(tds) > 2)
-            self.assertTrue(hasattr(tds[0], 'text'))
-            self.assertTrue(tds[0].text in DUMMY_DATA)
-            valueof = tds[2].find(url_trans + 'value-of')
-            self.assertIsNotNone(valueof)
-            self.assertTrue(hasattr(valueof, 'attrib'))
-            self.assertIsNotNone(valueof.attrib)
-            self.assertTrue('select' in valueof.attrib)
-            self.assertTrue(valueof.attrib['select'] in \
-                                [ tds[0].text+'/'+item for item in DUMMY_DATA[tds[0].text].keys() ])
 
         """
         # URL is '/bind10/statitics/xsl/Auth/queries.tcp/'
@@ -567,9 +619,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertTrue(lines.find(opts[n])>0)
         tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
-        opts = dict(
-            xsd_string="<dummy></dummy>",
-            xsd_namespace="http://host/path/to/")
+        opts = dict(xsd_string="<dummy></dummy>")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertTrue(lines.find(opts[n])>0)
@@ -659,7 +709,7 @@ class TestStatsHttpd(unittest.TestCase):
             { 'Dummy' : { 'foo':'bar' } }
         xml_body1 = self.stats_httpd.open_template(
             stats_httpd.XML_TEMPLATE_LOCATION).substitute(
-            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10/statistics/xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10/statistics/xsd /bind10/statistics/xsd"><Dummy><foo>bar</foo></Dummy></bind10:statistics>',
+            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 /bind10/statistics/xsd"><Dummy><foo>bar</foo></Dummy></bind10:statistics>',
             xsl_url_path=stats_httpd.XSL_URL_PATH)
         xml_body2 = self.stats_httpd.xml_handler()
         self.assertEqual(type(xml_body1), str)
@@ -689,14 +739,7 @@ class TestStatsHttpd(unittest.TestCase):
               }
         xsd_body1 = self.stats_httpd.open_template(
             stats_httpd.XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string=\
-                '<all><element name="Dummy"><complexType><all>' \
-                + '<element maxOccurs="1" minOccurs="1" name="foo" type="string">' \
-                + '<annotation><appinfo>Foo</appinfo>' \
-                + '<documentation>foo is bar</documentation>' \
-                + '</annotation></element></all>' \
-                + '</complexType></element></all>',
-            xsd_namespace=stats_httpd.XSD_NAMESPACE)
+            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element></all></complexType></element></all></complexType></element></schema>')
         xsd_body2 = self.stats_httpd.xsd_handler()
         self.assertEqual(type(xsd_body1), str)
         self.assertEqual(type(xsd_body2), str)
