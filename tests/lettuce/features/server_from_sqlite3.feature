@@ -21,9 +21,11 @@ Feature: SQLite3 backend
         When I start bind10 with configuration example.org.config
         Then wait for bind10 auth to start
         A query for www.example.org should have rcode NOERROR
+        Wait for log message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
         And wait for log message DATASRC_SQLITE_OPEN
         A query for www.example.org should have rcode REFUSED
+        Wait for log message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/example.org.sqlite3
         And wait for log message DATASRC_SQLITE_OPEN
         A query for www.example.org should have rcode NOERROR
