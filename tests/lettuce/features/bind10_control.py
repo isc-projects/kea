@@ -60,6 +60,7 @@ def set_config_command(step, name, value):
     bindctl.stdin.write("config set " + name + " " + value + "\n")
     bindctl.stdin.write("config commit\n")
     bindctl.stdin.write("quit\n")
-    bindctl.wait()
+    result = bindctl.wait()
+    assert result == 0, "bindctl exit code: " + str(result)
 
 
