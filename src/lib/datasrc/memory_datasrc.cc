@@ -780,6 +780,10 @@ public:
 
         return (result);
     }
+
+    virtual ZoneFinder& getFinder() {
+        isc_throw(NotImplemented, "Not imelemented");
+    }
 };
 
 } // End of anonymous namespace
