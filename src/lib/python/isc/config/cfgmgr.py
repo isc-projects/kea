@@ -65,7 +65,7 @@ class ConfigManagerData:
             self.db_filename = file_name
             self.data_path = os.path.dirname(file_name)
         else:
-            self.db_filename = data_path + os.sep + file_name
+            self.db_filename = os.getcwd() + os.sep + file_name
             self.data_path = data_path
 
     def read_from_file(data_path, file_name):
@@ -117,12 +117,13 @@ class ConfigManagerData:
             if file:
                 file.close();
         return config
-        
+
     def write_to_file(self, output_file_name = None):
         """Writes the current configuration data to a file. If
            output_file_name is not specified, the file used in
            read_from_file is used."""
         filename = None
+
         try:
             file = tempfile.NamedTemporaryFile(mode='w',
                                                prefix="b10-config.db.",
@@ -291,7 +292,7 @@ class ConfigManager:
             # ok, just start with an empty config
             self.config = ConfigManagerData(self.data_path,
                                             self.database_filename)
-        
+
     def write_config(self):
         """Write the current configuration to the file specificied at init()"""
         self.config.write_to_file()
@@ -445,7 +446,7 @@ class ConfigManager:
             answer = ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:
             answer = ccsession.create_answer(1, "No answer message from " + cmd[0])
-            
+
         return answer
 
     def _handle_module_spec(self, spec):
@@ -455,7 +456,7 @@ class ConfigManager:
         # todo: error checking (like keyerrors)
         answer = {}
         self.set_module_spec(spec)
-        
+
         # We should make one general 'spec update for module' that
         # passes both specification and commands at once
         spec_update = ccsession.create_command(ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
@@ -491,7 +492,7 @@ class ConfigManager:
         else:
             answer = ccsession.create_answer(1, "Unknown message format: " + str(msg))
         return answer
-        
+
     def run(self):
         """Runs the configuration manager."""
         self.running = True
