@@ -616,6 +616,8 @@ class BoB:
         args = ["b10-cmdctl"]
         if self.cmdctl_port is not None:
             args.append("--port=" + str(self.cmdctl_port))
+        if self.verbose:
+            args.append("-v")
         self.start_process("b10-cmdctl", args, c_channel_env, self.cmdctl_port)
 
     def start_all_processes(self):
