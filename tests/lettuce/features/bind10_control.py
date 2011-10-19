@@ -34,8 +34,10 @@ def wait_for_output_lines(lines, examine_past = True):
 def start_bind10(step, config_file):
     args = [ 'bind10', '-v' ]
     if config_file is not None:
+        args.append('-p')
+        args.append("configurations/")
         args.append('-c')
-        args.append("configurations/" + config_file)
+        args.append(config_file)
 
     world.bind10 = subprocess.Popen(args, 1, None, subprocess.PIPE,
                                     subprocess.PIPE, subprocess.PIPE)
