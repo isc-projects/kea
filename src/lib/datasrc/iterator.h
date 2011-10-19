@@ -16,6 +16,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <datasrc/zone.h>
+
 namespace isc {
 namespace datasrc {
 
@@ -55,6 +57,13 @@ public:
      *     gets to the end of the zone.
      */
     virtual isc::dns::ConstRRsetPtr getNextRRset() = 0;
+    /**
+     * \brief Get the finder for the zone being iterated.
+     *
+     * This returns the finder which can be used to query RRs from the zone,
+     * efective to the time when the iterator was created.
+     */
+    virtual ZoneFinder& getFinder() = 0;
 };
 
 }
