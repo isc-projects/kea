@@ -14,11 +14,14 @@ To install lettuce, if you have the python pip installation tool, simply do
 pip install lettuce
 See http://lettuce.it/intro/install.html
 
-At this moment, we have a fixed port for local tests in our setups, port 47806.
-This port must be free. (TODO: can we make this run-time discovered?)
+Most systems have the pip tool in a separate package; on Debian-based systems
+it is called python-pip. On FreeBSD the port is devel/py-pip.
 
 Running the tests
 -----------------
+
+At this moment, we have a fixed port for local tests in our setups, port 47806.
+This port must be free. (TODO: can we make this run-time discovered?)
 
 To run the tests, just run 'lettuce' in this directory.
 
