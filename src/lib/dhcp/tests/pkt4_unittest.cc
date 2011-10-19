@@ -302,6 +302,49 @@ TEST(Pkt4Test, hwAddr) {
     /// longer than 16 bytes should be stored in client-identifier option
 }
 
+TEST(Pkt4Test, msgTypes) {
+
+    struct msgType {
+        uint8_t dhcp;
+        uint8_t bootp;
+    };
+
+    msgType types[] = {
+        {DHCPDISCOVER, BOOTREQUEST},
+        {DHCPOFFER, BOOTREPLY},
+        {DHCPREQUEST, BOOTREQUEST},
+        {DHCPDECLINE, BOOTREQUEST},
+        {DHCPACK, BOOTREPLY},
+        {DHCPNAK, BOOTREPLY},
+        {DHCPRELEASE, BOOTREQUEST},
+        {DHCPINFORM, BOOTREQUEST},
+        {DHCPLEASEQUERY, BOOTREQUEST},
+        {DHCPLEASEUNASSIGNED, BOOTREPLY},
+        {DHCPLEASEUNKNOWN, BOOTREPLY},
+        {DHCPLEASEACTIVE, BOOTREPLY}
+    };
+
+    Pkt4* pkt = 0;
+    for (int i=0; i < sizeof(types)/sizeof(msgType); i++) {
+
+        pkt = new Pkt4(types[i].dhcp, 0);
+        EXPECT_EQ(types[i].dhcp, pkt->getType());
+
+        EXPECT_EQ(types[i].bootp, pkt->getOp());
+
+        delete pkt;
+        pkt = 0;
+    }
+
+    EXPECT_THROW(
+        pkt = new Pkt4(100, 0), // there's no message type 100
+        OutOfRange
+    );
+    if (pkt) {
+        delete pkt;
+    }
+}
+
 // this test verifies handling of sname field
 TEST(Pkt4Test, sname) {
 

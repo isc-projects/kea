@@ -33,7 +33,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       ifindex_(0),
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
-      op_(BOOTREPLY),
+      op_(DHCPTypeToBootpType(msg_type)),
       htype_(HTYPE_ETHER),
       hlen_(0),
       hops_(0),
@@ -74,6 +74,10 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(DHCPDISCOVER)
 {
+    if (len < DHCPV4_PKT_HDR_LEN) {
+        isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
+                  << " received, at least 236 bytes expected.");
+    }
     bufferIn_.writeData(data, len);
 }
 
@@ -104,19 +108,19 @@ Pkt4::toText() {
     tmp << "localAddr=[" << local_addr_.toText() << "]:" << local_port_
         << " remoteAddr=[" << remote_addr_.toText()
         << "]:" << remote_port_ << endl;
-    tmp << "msgtype=" << msg_type_ 
-        << ", transid=0x" << hex << transid_ << dec 
+    tmp << "msgtype=" << msg_type_
+        << ", transid=0x" << hex << transid_ << dec
         << endl;
 
     return tmp.str();
 }
 
-void 
+void
 Pkt4::setHWAddr(uint8_t hType, uint8_t hlen, const uint8_t* macAddr) {
     /// TODO Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
     if (hlen>MAX_CHADDR_LEN) {
-        isc_throw(OutOfRange, "Hardware address (len=" << hlen 
+        isc_throw(OutOfRange, "Hardware address (len=" << hlen
                   << " too long. Max " << MAX_CHADDR_LEN << " supported.");
     }
     htype_ = hType;
@@ -149,5 +153,27 @@ Pkt4::setFile(const uint8_t* file, size_t fileLen /*= MAX_FILE_LEN*/) {
     // no need to store snameLen as any empty space is filled with 0s
 }
 
+uint8_t
+Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
+    switch (dhcpType) {
+    case DHCPDISCOVER:
+    case DHCPREQUEST:
+    case DHCPDECLINE:
+    case DHCPRELEASE:
+    case DHCPINFORM:
+    case DHCPLEASEQUERY:
+        return (BOOTREQUEST);
+    case DHCPACK:
+    case DHCPNAK:
+    case DHCPOFFER:
+    case DHCPLEASEUNASSIGNED:
+    case DHCPLEASEUNKNOWN:
+    case DHCPLEASEACTIVE:
+        return (BOOTREPLY);
+    default:
+        isc_throw(OutOfRange, "Invalid message type: "
+                  << static_cast<int>(dhcpType) );
+    }
+}
 
 };
