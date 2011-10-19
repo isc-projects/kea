@@ -1,0 +1,34 @@
+BIND10 system testing with Lettuce
+or: to BDD or not to BDD
+
+In this directory, we define a set of behavioral tests for BIND 10. Currently,
+these tests are specific for BIND10, but we are keeping in mind that RFC-related
+tests could be separated, so that we can test other systems as well.
+
+Prerequisites:
+- Installed version of BIND 10 (but see below how to run it from source tree)
+- dig
+- lettuce (http://lettuce.it)
+
+To install lettuce, if you have the python pip installation tool, simply do
+pip install lettuce
+See http://lettuce.it/intro/install.html
+
+At this moment, we have a fixed port for local tests in our setups, port 47806.
+This port must be free. (TODO: can we make this run-time discovered?)
+
+Running the tests
+-----------------
+
+To run the tests, just run 'lettuce' in this directory.
+
+We have provided a script that sets up the shell environment to run the tests
+with the build tree version of bind. If your shell uses export to set
+environment variables, you can source the script setup_intree_bind10.sh, then
+run lettuce.
+
+
+Extending tests
+---------------
+
+[TODO]
