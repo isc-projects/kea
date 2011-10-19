@@ -16,6 +16,7 @@ libdhcp_la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libdhcp_la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libdhcp_la_SOURCES += dhcp6.h
 libdhcp_la_SOURCES += pkt6.cc pkt6.h
+libdhcp_la_SOURCES += pkt4.cc pkt4.h
 
 EXTRA_DIST  = README
 #EXTRA_DIST += log_messages.mes
