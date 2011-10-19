@@ -2234,6 +2234,13 @@ class TestXfrinProcess(unittest.TestCase):
         self.__rets = self.__rets[1:]
         return ret
 
+    def zone_str(self):
+        """
+        Part of pretending to be the connection. It provides the logging name
+        of zone.
+        """
+        return "example.org/IN"
+
     def publish_xfrin_news(self, zone_name, rrclass, ret):
         """
         Part of pretending to be the server as well. This just logs the
