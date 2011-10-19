@@ -19,6 +19,7 @@ import socket
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
+import xfrin
 from isc.xfrin.diff import Diff
 import isc.log
 
@@ -2177,6 +2178,121 @@ class TestMain(unittest.TestCase):
     def test_startup_generalerror(self):
         MockXfrin.check_command_hook = raise_exception
         main(MockXfrin, False)
+
+class TestXfrinProcess(unittest.TestCase):
+    """
+    Some tests for the xfrin_process function. This replaces the
+    XfrinConnection class with itself, so we can emulate whatever behavior we
+    might want.
+
+    Currently only tests for retry if IXFR fails.
+    """
+    def setUp(self):
+        """
+        Backs up the original class implementation so it can be restored
+        and places our own version in place of the constructor.
+
+        Also sets up several internal variables to watch what happens.
+        """
+        self.__old_conn = xfrin.XfrinConnection
+        xfrin.XfrinConnection = self.__get_connection
+        # This will hold a "log" of what transfers were attempted.
+        self.__transfers = []
+        # This will "log" if failures or successes happened.
+        self.__published = []
+        # How many connections were created.
+        self.__created_connections = 0
+
+    def tearDown(self):
+        """
+        This restores the original version of the class.
+        """
+        xfrin.XfrinConnection = self.__old_conn
+
+    def __get_connection(self, *args):
+        """
+        Provides a "connection". To mock the connection and see what it is
+        asked to do, we pretend to be the connection.
+        """
+        self.__created_connections += 1
+        return self
+
+    def connect_to_master(self):
+        """
+        Part of pretending to be the connection. It pretends it connected
+        correctly every time.
+        """
+        return True
+
+    def do_xfrin(self, check_soa, request_type):
+        """
+        Part of pretending to be the connection. It looks what answer should
+        be answered now and logs what request happened.
+        """
+        self.__transfers.append(request_type)
+        ret = self.__rets[0]
+        self.__rets = self.__rets[1:]
+        return ret
+
+    def publish_xfrin_news(self, zone_name, rrclass, ret):
+        """
+        Part of pretending to be the server as well. This just logs the
+        success/failure of the previous operation.
+        """
+        self.__published.append(ret)
+
+    def __do_test(self, rets, transfers, request_type):
+        """
+        Do the actual test. The request type, prepared sucesses/failures
+        and expected sequence of transfers is passed to specify what test
+        should happen.
+        """
+        self.__rets = rets
+        published = rets[-1]
+        xfrin.process_xfrin(self, XfrinRecorder(), Name("example.org."),
+                            RRClass.IN(), None, None, None, True, None,
+                            request_type)
+        self.assertEqual([], self.__rets)
+        self.assertEqual(transfers, self.__transfers)
+        # Create a connection for each attempt
+        self.assertEqual(len(transfers), self.__created_connections)
+        self.assertEqual([published], self.__published)
+
+    def test_ixfr_ok(self):
+        """
+        Everything OK the first time, over IXFR.
+        """
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+
+    def test_axfr_ok(self):
+        """
+        Everything OK the first time, over AXFR.
+        """
+        self.__do_test([XFRIN_OK], [RRType.AXFR()], RRType.AXFR())
+
+    def test_axfr_fail(self):
+        """
+        The transfer failed over AXFR. Should not be retried (we don't expect
+        to fail on AXFR, but succeed on IXFR and we didn't use IXFR in the first
+        place for some reason.
+        """
+        self.__do_test([XFRIN_FAIL], [RRType.AXFR()], RRType.AXFR())
+
+    def test_ixfr_fallback(self):
+        """
+        The transfer fails over IXFR, but suceeds over AXFR. It should fall back
+        to it and say everything is OK.
+        """
+        self.__do_test([XFRIN_FAIL, XFRIN_OK], [RRType.IXFR(), RRType.AXFR()],
+                       RRType.IXFR())
+
+    def test_ixfr_fail(self):
+        """
+        The transfer fails both over IXFR and AXFR. It should report failure
+        (only once) and should try both before giving up.
+        """
+        self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
+                       [RRType.IXFR(), RRType.AXFR()], RRType.IXFR())
 
 if __name__== "__main__":
     try:
