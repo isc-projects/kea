@@ -385,14 +385,25 @@ class TestStats(unittest.TestCase):
                 1, "specified arguments are incorrect: owner: Foo, name: bar"))
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
-                0, {'queries.tcp': 0, 'queries.udp': 0,
-                    "queries.per-zone": []}))
+                0, { 'queries.udp': 0,
+                     'queries.tcp': 0,
+                     'queries.perzone': [{ 'zonename': 'test1.example',
+                                           'queries.udp': 1,
+                                           'queries.tcp': 2 },
+                                         { 'zonename': 'test2.example',
+                                           'queries.udp': 3,
+                                           'queries.tcp': 4 }] }))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
                 0, 0))
-        self.assertEqual(self.stats.command_show(owner='Auth', name='queries.per-zone'),
+        self.assertEqual(self.stats.command_show(owner='Auth', name='queries.perzone'),
                          isc.config.create_answer(
-                0, []))
+                0, [{ 'zonename': 'test1.example',
+                      'queries.udp': 1,
+                      'queries.tcp': 2 },
+                    { 'zonename': 'test2.example',
+                      'queries.udp': 3,
+                      'queries.tcp': 4 }]))
         orig_get_timestamp = stats.get_timestamp
         orig_get_datetime = stats.get_datetime
         stats.get_timestamp = lambda : self.const_timestamp
@@ -518,14 +529,25 @@ class TestStats(unittest.TestCase):
                         "item_type": "integer"
                         },
                     {
-                        "item_name": "queries.per-zone",
+                        "item_name": "queries.perzone",
                         "item_type": "list",
                         "item_optional": False,
-                        "item_default": [],
+                        "item_default": [
+                            {
+                                "zonename" : "test1.example",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2.example",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
                         "item_title": "Queries per zone",
                         "item_description": "Queries per zone",
                         "list_item_spec": {
-                            "item_name": "item",
+                            "item_name": "zones",
                             "item_type": "map",
                             "item_optional": False,
                             "item_default": {},
@@ -565,17 +587,28 @@ class TestStats(unittest.TestCase):
                     "item_title": "Queries TCP",
                     "item_type": "integer"
                     }))
-        self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.per-zone'),
+        self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.perzone'),
                          isc.config.create_answer(
                 0, {
-                    "item_name": "queries.per-zone",
+                    "item_name": "queries.perzone",
                     "item_type": "list",
                     "item_optional": False,
-                    "item_default": [],
+                    "item_default": [
+                        {
+                            "zonename" : "test1.example",
+                            "queries.udp" : 1,
+                            "queries.tcp" : 2
+                            },
+                        {
+                            "zonename" : "test2.example",
+                            "queries.udp" : 3,
+                            "queries.tcp" : 4
+                            }
+                    ],
                     "item_title": "Queries per zone",
                     "item_description": "Queries per zone",
                     "list_item_spec": {
-                        "item_name": "item",
+                        "item_name": "zones",
                         "item_type": "map",
                         "item_optional": False,
                         "item_default": {},
