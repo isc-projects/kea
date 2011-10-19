@@ -269,6 +269,14 @@ public:
 
 protected:
 
+    /// converts DHCP message type to BOOTP op type
+    ///
+    /// @param dhcpType DHCP message type (e.g. DHCPDISCOVER)
+    ///
+    /// @return BOOTP type (BOOTREQUEST or BOOTREPLY)
+    uint8_t
+    DHCPTypeToBootpType(uint8_t dhcpType);
+
     /// local address (dst if receiving packet, src if sending packet)
     isc::asiolink::IOAddress local_addr_;
 
