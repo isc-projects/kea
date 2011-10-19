@@ -820,14 +820,25 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
 
     # Create a TCP connection for the XFR session and perform the operation.
     sock_map = {}
-    conn = XfrinConnection(sock_map, zone_name, rrclass, datasrc_client,
-                           shutdown_event, master_addrinfo, tsig_key)
-    # XXX: We still need _db_file for temporary workaround in _create_query().
-    # This should be removed when we eliminate the need for the workaround.
-    conn._db_file = db_file
-    ret = XFRIN_FAIL
-    if conn.connect_to_master():
-        ret = conn.do_xfrin(check_soa, request_type)
+    retry = True
+    while retry:
+        retry = False
+        conn = XfrinConnection(sock_map, zone_name, rrclass, datasrc_client,
+                               shutdown_event, master_addrinfo, tsig_key)
+        # XXX: We still need _db_file for temporary workaround in _create_query().
+        # This should be removed when we eliminate the need for the workaround.
+        conn._db_file = db_file
+        ret = XFRIN_FAIL
+        if conn.connect_to_master():
+            ret = conn.do_xfrin(check_soa, request_type)
+            if ret == XFRIN_FAIL and request_type == RRType.IXFR():
+                # IXFR failed for some reason. It might mean the server can't
+                # handle it, or we don't have the zone or we are out of sync or
+                # whatever else. So we retry with with AXFR, as it may succeed
+                # in manu such cases.
+                retry = True
+                request_type = RRType.AXFR()
+                logger.warn(XFRIN_XFR_TRANSFER_FALLBACK, conn.zone_str())
 
     # Publish the zone transfer result news, so zonemgr can reset the
     # zone timer, and xfrout can notify the zone's slaves if the result
