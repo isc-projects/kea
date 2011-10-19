@@ -220,7 +220,9 @@ TEST_F(Option6IATest, suboptions_unpack) {
     Option6IA* ia = 0;
     EXPECT_NO_THROW({
         ia = new Option6IA(D6O_IA_NA, buf, 128, 4, 44);
-        cout << "Parsed option:" << endl << ia->toText() << endl;
+
+        // let's limit verbosity of this test
+        // cout << "Parsed option:" << endl << ia->toText() << endl;
     });
     ASSERT_TRUE(ia);
 
