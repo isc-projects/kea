@@ -141,6 +141,7 @@ Query::process() const {
         response_.setRcode(Rcode::REFUSED());
         return;
     }
+    ZoneFinder& zfinder = *result.zone_finder;
 
     // Found a zone which is the nearest ancestor to QNAME, set the AA bit
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
@@ -149,8 +150,7 @@ Query::process() const {
         keep_doing = false;
         std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
         const ZoneFinder::FindResult db_result(
-            result.zone_finder->find(qname_, qtype_, target.get(),
-                                     dnssec_opt_));
+            zfinder.find(qname_, qtype_, target.get(), dnssec_opt_));
         switch (db_result.code) {
             case ZoneFinder::DNAME: {
                 // First, put the dname into the answer
@@ -250,9 +250,25 @@ Query::process() const {
 
                 // If DNSSEC proof is requested and we've got it, add it.
                 if (dnssec_ && db_result.rrset) {
+                    // TODO: Handle unexpected (buggy case): rrset is not NSEC
+
                     response_.addRRset(
                         Message::SECTION_AUTHORITY,
                         boost::const_pointer_cast<RRset>(db_result.rrset),
+                        dnssec_);
+                    const int qlabels = qname_.getLabelCount();
+                    const int olabels = qname_.compare(
+                        db_result.rrset->getName()).getCommonLabels();
+                    const Name wildname(Name("*").concatenate(
+                                            qname_.split(qlabels - olabels)));
+                    // TODO: check if we need NO_WILDCARD here. (we should do)
+                    const ZoneFinder::FindResult fresult =
+                        zfinder.find(wildname, RRType::NSEC(), NULL,
+                                     dnssec_opt_);
+                    // TODO: check fresult: should be NXDOMAIN, and rrset is NSEC.
+                    response_.addRRset(
+                        Message::SECTION_AUTHORITY,
+                        boost::const_pointer_cast<RRset>(fresult.rrset),
                         dnssec_);
                 }
                 break;

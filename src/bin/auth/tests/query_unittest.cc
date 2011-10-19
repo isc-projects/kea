@@ -91,7 +91,9 @@ const char* const other_zone_rrs =
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
-// NSEC records
+// NSEC records.
+const char* const nsec_apex_txt =
+    "example.com. 3600 IN NSEC cname.example.com. NS SOA NSEC RRSIG\n";
 const char* const nsec_nxdomain_txt =
     "noglue.example.com. 3600 IN NSEC www.example.com. A\n";
 
@@ -132,7 +134,7 @@ public:
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
             cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
-            other_zone_rrs << nsec_nxdomain_txt;
+            other_zone_rrs << nsec_apex_txt << nsec_nxdomain_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -472,11 +474,9 @@ TEST_F(QueryTest, apexAnyMatch) {
     // in the answer section from the additional.
     EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
                           RRType::ANY(), response).process());
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 4, 0, 3,
-                  "example.com. 3600 IN SOA . . 0 0 0 0 0\n"
-                  "example.com. 3600 IN NS glue.delegation.example.com.\n"
-                  "example.com. 3600 IN NS noglue.example.com.\n"
-                  "example.com. 3600 IN NS example.net.\n",
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 5, 0, 3,
+                  (string(soa_txt) + string(zone_ns_txt) +
+                   string(nsec_apex_txt)).c_str(),
                   NULL, ns_addrs_txt, mock_finder->getOrigin());
 }
 
@@ -530,14 +530,21 @@ TEST_F(QueryTest, nxdomain) {
 }
 
 TEST_F(QueryTest, nxdomainWithNSEC) {
+    // NXDOMAIN with DNSSEC proof.  We should have SOA, NSEC that proves
+    // NXDOMAIN and NSEC that proves nonexistence of matching wildcard,
+    // as well as their RRSIGs.
     EXPECT_NO_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
                           response, true).process());
-    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 4, 0,
+    cout << response.toText() << endl;
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_txt) +
                          string("example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_nxdomain_txt) + "\n" +
                          string("noglue.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC") + "\n" +
+                         string(nsec_apex_txt) + "\n" +
+                         string("example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
