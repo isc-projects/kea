@@ -146,4 +146,5 @@ if __name__ == '__main__':
     tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain,
                               csv_file_dir=options.csv_file_dir)
     prepare_config_commands(tool)
-    tool.run()
+    result = tool.run()
+    sys.exit(result)
