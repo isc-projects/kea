@@ -17,7 +17,7 @@
 
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:stats="$xsd_namespace">
+  xmlns:bind10="$xsd_namespace">
   <xsl:output method="html" encoding="UTF-8"
     doctype-public="-//W3C//DTD HTML 4.01 Transitional//EN"
     doctype-system=" http://www.w3.org/TR/html4/loose.dtd " />
@@ -42,14 +42,7 @@ td.title {
       </head>
       <body>
         <h1>BIND 10 Statistics</h1>
-        <table>
-          <tr>
-            <th>Owner</th>
-            <th>Title</th>
-            <th>Value</th>
-          </tr>
-          <xsl:apply-templates />
-        </table>
+        <xsl:apply-templates />
       </body>
     </html>
   </xsl:template>
