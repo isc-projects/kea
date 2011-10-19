@@ -18,8 +18,15 @@ Feature: SQLite3 backend
         A query for doesnotexist.example.org should have rcode NXDOMAIN
 
     Scenario: changing database
+        # This scenario contains a lot of 'wait for' steps
+        # If those are not present, the asynchronous nature of the application
+        # can cause some of the things we send to be handled out of order;
+        # for instance auth could still be serving the old zone when we send
+        # the new query, or already respond from the new database.
+        # Therefore we wait for specific log messages after each operation
         When I start bind10 with configuration example.org.config
         Then wait for bind10 auth to start
+        Wait for log message CMDCTL_STARTED
         A query for www.example.org should have rcode NOERROR
         Wait for log message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
