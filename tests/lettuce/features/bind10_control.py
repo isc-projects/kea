@@ -8,12 +8,24 @@ def shutdown_server():
         world.bind10.wait()
         world.bind10 = None
 
+def check_lines(output, lines):
+    for line in lines:
+        if output.find(line) != -1:
+            return line
+
 @world.absorb
-def wait_for_output_lines(lines):
+def wait_for_output_lines(lines, examine_past = True):
     assert world.bind10 is not None
+    if examine_past:
+        for output in world.bind10_output:
+            for line in lines:
+                if output.find(line) != -1:
+                    return line
     found = False
     while not found:
         output = world.bind10.stderr.readline()
+        # store any line, for examine_skipped
+        world.bind10_output.append(output)
         for line in lines:
             if output.find(line) != -1:
                 return line
