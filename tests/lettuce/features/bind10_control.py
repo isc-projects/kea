@@ -49,6 +49,10 @@ def start_bind10(step, config_file):
 def wait_for_auth(step):
     world.wait_for_output_lines(['AUTH_SERVER_STARTED'])
 
+@step(u'wait for log message (\w+)')
+def wait_for_message(step, message):
+    world.wait_for_output_lines([message], False)
+
 @step(u'stop bind10')
 def stop_the_server(step):
     world.shutdown_server()
