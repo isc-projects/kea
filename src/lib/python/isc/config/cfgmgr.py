@@ -65,7 +65,7 @@ class ConfigManagerData:
             self.db_filename = file_name
             self.data_path = os.path.dirname(file_name)
         else:
-            self.db_filename = os.getcwd() + os.sep + file_name
+            self.db_filename = data_path + os.sep + file_name
             self.data_path = data_path
 
     def read_from_file(data_path, file_name):
