@@ -23,8 +23,9 @@ copylist = [
 def initialize(feature):
     # just make sure our cleanup won't fail if we never did
     # run the bind10 instance
-    world.bind10 = None
-    world.bind10_output = []
+    world.processes = {}
+    world.processes_stdout = {}
+    world.processes_stderr = {}
     world.last_query_result = None
 
     # Some tests can modify the settings. If the tests fail half-way, or
@@ -35,7 +36,17 @@ def initialize(feature):
 
 @after.each_scenario
 def cleanup(feature):
-    world.shutdown_server()
-    world.bind10_output = []
+    # Stop any running processes we may have had around
+    for name in world.processes:
+        world.processes[name].terminate()
+        world.processes[name].wait()
+        world.processes_stdout[name] = []
+        world.processes_stderr[name] = []
 
-
+@world.absorb
+def stop_process(process_name):
+    if process_name in world.processes:
+        p = world.processes[process_name]
+        p.terminate()
+        p.wait()
+        del world.processes[process_name]
