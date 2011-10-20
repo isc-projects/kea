@@ -91,9 +91,22 @@ const char* const other_zone_rrs =
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
+// Used in NXDOMAIN proof test.  We are going to test some unusual case where
+// the best possible wildcard is below the "next domain" of the NSEC RR that
+// proves the NXDOMAIN, i.e.,
+// mx.example.com. (exist)
+// (.no.example.com. (qname, NXDOMAIN)
+// ).no.example.com. (exist)
+// *.no.example.com. (best possible wildcard, not exist)
+const char* const no_txt =
+    ").no.example.com. 3600 IN AAAA 2001:db8::53\n";
 // NSEC records.
 const char* const nsec_apex_txt =
     "example.com. 3600 IN NSEC cname.example.com. NS SOA NSEC RRSIG\n";
+const char* const nsec_mx_txt =
+    "mx.example.com. 3600 IN NSEC ).no.example.com. MX NSEC RRSIG\n";
+const char* const nsec_no_txt =
+    ").no.example.com. 3600 IN NSEC noglue.example.com. AAAA NSEC RRSIG\n";
 const char* const nsec_nxdomain_txt =
     "noglue.example.com. 3600 IN NSEC www.example.com. A\n";
 
@@ -134,7 +147,8 @@ public:
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
             cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
-            other_zone_rrs << nsec_apex_txt << nsec_nxdomain_txt;
+            other_zone_rrs << no_txt <<
+            nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nxdomain_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -483,8 +497,8 @@ TEST_F(QueryTest, apexAnyMatch) {
 TEST_F(QueryTest, mxANYMatch) {
     EXPECT_NO_THROW(Query(memory_client, Name("mx.example.com"),
                           RRType::ANY(), response).process());
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 3, 3, 4,
-                  mx_txt, zone_ns_txt,
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 4, 3, 4,
+                  (string(mx_txt) + string(nsec_mx_txt)).c_str(), zone_ns_txt,
                   (string(ns_addrs_txt) + string(www_a_txt)).c_str());
 }
 
@@ -535,7 +549,6 @@ TEST_F(QueryTest, nxdomainWithNSEC) {
     // as well as their RRSIGs.
     EXPECT_NO_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
                           response, true).process());
-    cout << response.toText() << endl;
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_txt) +
                          string("example.com. 3600 IN RRSIG ") +
@@ -545,6 +558,27 @@ TEST_F(QueryTest, nxdomainWithNSEC) {
                          getCommonRRSIGText("NSEC") + "\n" +
                          string(nsec_apex_txt) + "\n" +
                          string("example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainWithNSEC2) {
+    // See comments about no_txt.  In this case the best possible wildcard
+    // is derived from the next domain of the NSEC that proves NXDOMAIN, and
+    // the NSEC to provide the non existence of wildcard is different from
+    // the first NSEC.
+    Query(memory_client, Name("(.no.example.com"), qtype,
+          response, true).process();
+    cout << response.toText() << endl;
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
+                  NULL, (string(soa_txt) +
+                         string("example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("SOA") + "\n" +
+                         string(nsec_mx_txt) + "\n" +
+                         string("mx.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC") + "\n" +
+                         string(nsec_no_txt) + "\n" +
+                         string(").no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
