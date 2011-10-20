@@ -21,7 +21,11 @@ Running the tests
 -----------------
 
 At this moment, we have a fixed port for local tests in our setups, port 47806.
-This port must be free. (TODO: can we make this run-time discovered?)
+This port must be free. (TODO: can we make this run-time discovered?).
+Port 47805 is used for cmdctl, and must also be available.
+
+The bind10 main script, bindctl script, and dig must all be in the default
+search path of your environment.
 
 To run the tests, just run 'lettuce' in this directory.
 
