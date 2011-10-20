@@ -540,7 +540,7 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
     // ACL passed.  Reject inappropriate queries for the resolver.
     if (qtype == RRType::AXFR()) {
         if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            // Can't process AXFR request receoved over UDP
+            // Can't process AXFR request received over UDP
             LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_AXFR_UDP);
             makeErrorMessage(query_message, answer_message, buffer,
                              Rcode::FORMERR());
