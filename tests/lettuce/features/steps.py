@@ -1,5 +1,22 @@
+#
+# This file contains a number of common steps that are general and may be used
+# By a lot of feature files.
+#
+
 from lettuce import *
 import os
+
+@step('stop process (\w+)')
+def stop_a_named_process(step, process_name):
+    world.stop_process(process_name)
+
+@step('wait for (\w+) stderr message (\w+)')
+def wait_for_message(step, process_name, message):
+    world.wait_for_output_lines_stderr(process_name, [message], False)
+
+@step('wait for (\w+) stdout message (\w+)')
+def wait_for_message(step, process_name, message):
+    world.wait_for_output_lines_stdout(process_name, [message], False)
 
 @step('Given I have no database')
 def given_i_have_no_database(step):

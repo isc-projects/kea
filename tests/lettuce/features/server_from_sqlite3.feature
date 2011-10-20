@@ -7,7 +7,7 @@ Feature: SQLite3 backend
         Given I have no database
         When I start bind10 with configuration no_db_file.config
         Then wait for bind10 auth to start
-        Then stop bind10
+        Then stop process bind10
         I should see a database file
 
     Scenario: example.org queries
@@ -63,13 +63,13 @@ Feature: SQLite3 backend
 
         When I start bind10 with configuration example.org.config
         Then wait for bind10 auth to start
-        Wait for log message CMDCTL_STARTED
+        Wait for bind10 stderr message CMDCTL_STARTED
         A query for www.example.org should have rcode NOERROR
-        Wait for log message AUTH_SEND_NORMAL_RESPONSE
+        Wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
-        And wait for log message DATASRC_SQLITE_OPEN
+        And wait for bind10 stderr message DATASRC_SQLITE_OPEN
         A query for www.example.org should have rcode REFUSED
-        Wait for log message AUTH_SEND_NORMAL_RESPONSE
+        Wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/example.org.sqlite3
-        And wait for log message DATASRC_SQLITE_OPEN
+        And wait for bind10 stderr message DATASRC_SQLITE_OPEN
         A query for www.example.org should have rcode NOERROR
