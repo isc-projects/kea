@@ -88,7 +88,7 @@ Query::findAddrs(ZoneFinder& zone, const Name& qname,
 }
 
 void
-Query::putSOA(ZoneFinder& zone) const {
+Query::putSOA(ZoneFinder& zone) {
     ZoneFinder::FindResult soa_result(zone.find(zone.getOrigin(),
         RRType::SOA(), NULL, dnssec_opt_));
     if (soa_result.code != ZoneFinder::SUCCESS) {
@@ -106,7 +106,7 @@ Query::putSOA(ZoneFinder& zone) const {
 }
 
 void
-Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) const {
+Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // TODO: Handle unexpected (buggy case): rrset is not NSEC
 
     response_.addRRset( Message::SECTION_AUTHORITY,
@@ -159,7 +159,7 @@ Query::getAuthAdditional(ZoneFinder& zone) const {
 }
 
 void
-Query::process() const {
+Query::process() {
     bool keep_doing = true;
     const bool qtype_is_any = (qtype_ == RRType::ANY());
 
