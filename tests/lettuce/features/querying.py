@@ -40,7 +40,7 @@ class QueryResult(object):
                           "([0-9]+), AUTHORITY: ([0-9]+), ADDITIONAL: ([0-9]+)")
 
     def __init__(self, name, qtype, qclass, address, port):
-        args = [ 'dig', '@' + address, '-p', str(port) ]
+        args = [ 'dig', '+tries=1', '@' + address, '-p', str(port) ]
         if qtype is not None:
             args.append('-t')
             args.append(str(qtype))

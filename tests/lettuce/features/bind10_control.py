@@ -25,7 +25,8 @@ def wait_for_output_lines_stdout(process_name, lines, examine_past = True):
 
 @world.absorb
 def wait_for_output_lines_stderr(process_name, lines, examine_past = True):
-    assert process_name in world.processes
+    assert process_name in world.processes,\
+        "No process named '" + process_name + "' known"
     if examine_past:
         for output in world.processes_stderr[process_name]:
             for line in lines:
@@ -40,17 +41,24 @@ def wait_for_output_lines_stderr(process_name, lines, examine_past = True):
             if output.find(line) != -1:
                 return line
 
-@step('start bind10(?: with configuration ([\w.]+))?(?: as (\w+))?')
-def start_bind10(step, config_file, process_name):
+@step('start bind10(?: with configuration (\S+))?' +\
+      '(?: with cmdctl port (\d+))?(?: as (\S+))?')
+def start_bind10(step, config_file, cmdctl_port, process_name):
     args = [ 'bind10', '-v' ]
     if config_file is not None:
         args.append('-p')
         args.append("configurations/")
         args.append('-c')
         args.append(config_file)
+    if cmdctl_port is None:
         args.append('--cmdctl-port=47805')
+    else:
+        args.append('--cmdctl-port=' + cmdctl_port)
     if process_name is None:
         process_name = "bind10"
+    else:
+        args.append('-m')
+        args.append(process_name + '_msgq.socket')
 
     assert process_name not in world.processes,\
         "There already seems to be a process named " + process_name
@@ -65,7 +73,7 @@ def start_bind10(step, config_file, process_name):
     message = world.wait_for_output_lines_stderr(process_name,
                                                  ["BIND10_STARTUP_COMPLETE",
                                                   "BIND10_STARTUP_ERROR"])
-    assert message == "BIND10_STARTUP_COMPLETE"
+    assert message == "BIND10_STARTUP_COMPLETE", "Got: " + message
 
 @step('wait for bind10 auth (?:of (\w+) )?to start')
 def wait_for_auth(step, process_name):
