@@ -259,8 +259,15 @@ Query::process() const {
                     const int qlabels = qname_.getLabelCount();
                     const int olabels = qname_.compare(
                         db_result.rrset->getName()).getCommonLabels();
+                    // Extract NSEC's next domain
+                    RdataIteratorPtr it = db_result.rrset->getRdataIterator();
+                    const int nlabels = qname_.compare(
+                        dynamic_cast<const generic::NSEC&>(it->getCurrent()).
+                        getNextName()).getCommonLabels();
+                    const int common_labels = std::max(olabels, nlabels);
                     const Name wildname(Name("*").concatenate(
-                                            qname_.split(qlabels - olabels)));
+                                            qname_.split(qlabels -
+                                                         common_labels)));
                     // TODO: check if we need NO_WILDCARD here. (we should do)
                     const ZoneFinder::FindResult fresult =
                         zfinder.find(wildname, RRType::NSEC(), NULL,
