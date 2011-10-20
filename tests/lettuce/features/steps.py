@@ -13,6 +13,7 @@ def initialize(feature):
     # run the bind10 instance
     world.bind10 = None
     world.bind10_output = []
+    world.last_query_result = None
 
     # Some tests can modify the settings. If the tests fail half-way, or
     # don't clean up, this can leave configurations or data in a bad state,
