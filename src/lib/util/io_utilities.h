@@ -62,7 +62,7 @@ writeUint16(uint16_t value, void* buffer) {
 
 /// \brief Read Unsigned 32-Bit Integer from Buffer
 ///
-/// \param buffer Data buffer at least two bytes long of which the first two
+/// \param buffer Data buffer at least four bytes long of which the first four
 ///        bytes are assumed to represent a 32-bit integer in network-byte
 ///        order.
 ///
@@ -82,7 +82,7 @@ readUint32(const uint8_t* buffer) {
 /// \brief Write Unisgned 32-Bit Integer to Buffer
 ///
 /// \param value 32-bit value to convert
-/// \param buffer Data buffer at least two bytes long into which the 16-bit
+/// \param buffer Data buffer at least four bytes long into which the 32-bit
 ///        value is written in network-byte order.
 ///
 /// \return pointer to the next byte after stored value

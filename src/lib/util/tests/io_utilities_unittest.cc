@@ -88,12 +88,12 @@ TEST(asioutil, readUint32) {
     // make sure that we can read data, regardless of
     // the memory alignment. That' why we need to repeat
     // it 4 times.
-    for (int offset=0; offset<4; offset++) {
-        for (int i=0; i< sizeof(test32); i++) {
+    for (int offset=0; offset < 4; offset++) {
+        for (int i=0; i< sizeof(test32)/sizeof(uint32_t); i++) {
             uint32_t tmp = htonl(test32[i]);
-            memcpy(&data[offset], &tmp, sizeof(uint32_t) );
+            memcpy(&data[offset], &tmp, sizeof(uint32_t));
 
-            EXPECT_EQ( test32[i], readUint32(&data[offset]) );
+            EXPECT_EQ(test32[i], readUint32(&data[offset]));
         }
     }
 }
@@ -105,15 +105,15 @@ TEST(asioutil, writeUint32) {
     // make sure that we can write data, regardless of
     // the memory alignment. That's why we need to repeat
     // it 4 times.
-    for (int offset=0; offset<4; offset++) {
-        for (int i=0; i< sizeof(test32); i++) {
+    for (int offset=0; offset < 4; offset++) {
+        for (int i=0; i< sizeof(test32)/sizeof(uint32_t); i++) {
             uint8_t* ptr = writeUint32(test32[i], &data[offset]);
 
-            EXPECT_EQ( &data[offset]+sizeof(uint32_t), ptr );
+            EXPECT_EQ(&data[offset]+sizeof(uint32_t), ptr);
 
             uint32_t tmp = htonl(test32[i]);
 
-            EXPECT_FALSE( memcmp(&tmp, &data[offset], sizeof(uint32_t) ) );
+            EXPECT_EQ(0, memcmp(&tmp, &data[offset], sizeof(uint32_t)));
         }
     }
 }
