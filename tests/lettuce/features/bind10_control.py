@@ -1,37 +1,47 @@
 from lettuce import *
 import subprocess
 
-@world.absorb
-def shutdown_server():
-    if world.bind10 is not None:
-        world.bind10.terminate()
-        world.bind10.wait()
-        world.bind10 = None
-
 def check_lines(output, lines):
     for line in lines:
         if output.find(line) != -1:
             return line
 
 @world.absorb
-def wait_for_output_lines(lines, examine_past = True):
-    assert world.bind10 is not None
+def wait_for_output_lines_stdout(process_name, lines, examine_past = True):
+    assert process_name in world.processes
     if examine_past:
-        for output in world.bind10_output:
+        for output in world.processes_stdout[process_name]:
             for line in lines:
                 if output.find(line) != -1:
                     return line
     found = False
     while not found:
-        output = world.bind10.stderr.readline()
+        output = world.processes[process_name].stdout.readline()
         # store any line, for examine_skipped
-        world.bind10_output.append(output)
+        world.processes_stdout[process_name].append(output)
         for line in lines:
             if output.find(line) != -1:
                 return line
 
-@step('start bind10(?: with configuration ([\w.]+))?')
-def start_bind10(step, config_file):
+@world.absorb
+def wait_for_output_lines_stderr(process_name, lines, examine_past = True):
+    assert process_name in world.processes
+    if examine_past:
+        for output in world.processes_stderr[process_name]:
+            for line in lines:
+                if output.find(line) != -1:
+                    return line
+    found = False
+    while not found:
+        output = world.processes[process_name].stderr.readline()
+        # store any line, for examine_skipped
+        world.processes_stderr[process_name].append(output)
+        for line in lines:
+            if output.find(line) != -1:
+                return line
+
+@step('start bind10(?: with configuration ([\w.]+))?(?: as (\w+))?')
+def start_bind10(step, config_file, process_name):
     args = [ 'bind10', '-v' ]
     if config_file is not None:
         args.append('-p')
@@ -39,31 +49,34 @@ def start_bind10(step, config_file):
         args.append('-c')
         args.append(config_file)
         args.append('--cmdctl-port=47805')
+    if process_name is None:
+        process_name = "bind10"
 
-    world.bind10 = subprocess.Popen(args, 1, None, subprocess.PIPE,
-                                    subprocess.PIPE, subprocess.PIPE)
+    assert process_name not in world.processes,\
+        "There already seems to be a process named " + process_name
+    world.processes[process_name] = subprocess.Popen(args, 1, None,
+                                                     subprocess.PIPE,
+                                                     subprocess.PIPE,
+                                                     subprocess.PIPE)
+    world.processes_stdout[process_name] = []
+    world.processes_stderr[process_name] = []
     # check output to know when startup has been completed
     # TODO what to do on failure?
-    message = world.wait_for_output_lines(["BIND10_STARTUP_COMPLETE",
-                                           "BIND10_STARTUP_ERROR"])
+    message = world.wait_for_output_lines_stderr(process_name,
+                                                 ["BIND10_STARTUP_COMPLETE",
+                                                  "BIND10_STARTUP_ERROR"])
     assert message == "BIND10_STARTUP_COMPLETE"
 
-@step('wait for bind10 auth to start')
-def wait_for_auth(step):
-    world.wait_for_output_lines(['AUTH_SERVER_STARTED'])
+@step('wait for bind10 auth (?:of (\w+) )?to start')
+def wait_for_auth(step, process_name):
+    if process_name is None:
+        process_name = "bind10"
+    world.wait_for_output_lines_stderr(process_name, ['AUTH_SERVER_STARTED'])
 
 @step('have bind10 running(?: with configuration ([\w.]+))?')
 def have_bind10_running(step, config_file):
     step.given('start bind10 with configuration ' + config_file)
     step.given('wait for bind10 auth to start')
-
-@step('wait for log message (\w+)')
-def wait_for_message(step, message):
-    world.wait_for_output_lines([message], False)
-
-@step('stop bind10')
-def stop_the_server(step):
-    world.shutdown_server()
 
 @step('set bind10 configuration (\S+) to (.*)')
 def set_config_command(step, name, value):
