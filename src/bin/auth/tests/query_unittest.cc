@@ -106,7 +106,19 @@ const char* const nsec_apex_txt =
 const char* const nsec_mx_txt =
     "mx.example.com. 3600 IN NSEC ).no.example.com. MX NSEC RRSIG\n";
 const char* const nsec_no_txt =
-    ").no.example.com. 3600 IN NSEC noglue.example.com. AAAA NSEC RRSIG\n";
+    ").no.example.com. 3600 IN NSEC nz.no.example.com. AAAA NSEC RRSIG\n";
+
+// We'll also test the case where a single NSEC proves both NXDOMAIN and the
+// non existence of wildcard.  The following records will be used for that
+// test.
+// ).no.example.com. (exist, whose NSEC proves everything)
+// *.no.example.com. (best possible wildcard, not exist)
+// nx.no.example.com. (NXDOMAIN)
+// nz.no.example.com. (exist)
+const char* const nz_txt =
+    "nz.no.example.com. 3600 IN AAAA 2001:db8::5300\n";
+const char* const nsec_nz_txt =
+    "nz.no.example.com. 3600 IN NSEC noglue.example.com. AAAA NSEC RRSIG\n";
 const char* const nsec_nxdomain_txt =
     "noglue.example.com. 3600 IN NSEC www.example.com. A\n";
 
@@ -147,8 +159,9 @@ public:
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
             cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
-            other_zone_rrs << no_txt <<
-            nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nxdomain_txt;
+            other_zone_rrs << no_txt << nz_txt <<
+            nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
+            nsec_nxdomain_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -569,7 +582,6 @@ TEST_F(QueryTest, nxdomainWithNSEC2) {
     // the first NSEC.
     Query(memory_client, Name("(.no.example.com"), qtype,
           response, true).process();
-    cout << response.toText() << endl;
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_txt) +
                          string("example.com. 3600 IN RRSIG ") +
@@ -577,6 +589,21 @@ TEST_F(QueryTest, nxdomainWithNSEC2) {
                          string(nsec_mx_txt) + "\n" +
                          string("mx.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC") + "\n" +
+                         string(nsec_no_txt) + "\n" +
+                         string(").no.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainWithNSECDuplicate) {
+    // See comments about nz_txt.  In this case we only need one NSEC,
+    // which proves both NXDOMAIN and the non existence of wildcard.
+    Query(memory_client, Name("nx.no.example.com"), qtype,
+          response, true).process();
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 4, 0,
+                  NULL, (string(soa_txt) +
+                         string("example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_no_txt) + "\n" +
                          string(").no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),

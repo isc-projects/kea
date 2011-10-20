@@ -71,6 +71,10 @@ private:
     ///
     void putSOA(isc::datasrc::ZoneFinder& zone) const;
 
+    /// TBD
+    void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
+                          isc::dns::ConstRRsetPtr nsec) const;
+
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records).
     ///

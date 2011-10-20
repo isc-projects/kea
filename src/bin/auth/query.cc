@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <algorithm>            // for std::max
 #include <vector>
 #include <boost/foreach.hpp>
 
@@ -101,6 +102,41 @@ Query::putSOA(ZoneFinder& zone) const {
          */
         response_.addRRset(Message::SECTION_AUTHORITY,
             boost::const_pointer_cast<RRset>(soa_result.rrset), dnssec_);
+    }
+}
+
+void
+Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) const {
+    // TODO: Handle unexpected (buggy case): rrset is not NSEC
+
+    response_.addRRset( Message::SECTION_AUTHORITY,
+                        boost::const_pointer_cast<RRset>(nsec),
+                        dnssec_);
+    const int qlabels = qname_.getLabelCount();
+    const int olabels = qname_.compare(nsec->getName()).getCommonLabels();
+    // Extract NSEC's next domain
+    RdataIteratorPtr it = nsec->getRdataIterator();
+    const int nlabels = qname_.compare(
+        dynamic_cast<const generic::NSEC&>(it->getCurrent()).
+        getNextName()).getCommonLabels();
+    const int common_labels = std::max(olabels, nlabels);
+    const Name wildname(Name("*").concatenate(qname_.split(qlabels -
+                                                           common_labels)));
+    const ZoneFinder::FindResult fresult = finder.find(wildname,
+                                                       RRType::NSEC(), NULL,
+                                                       dnssec_opt_);
+
+    // TODO: check fresult: should be NXDOMAIN, and rrset is NSEC.
+
+    // Add the (no-) wildcard proof only when it's different from the NSEC
+    // that proves NXDOMAIN; sometimes they can be the same.
+    // Note: name comparison is relatively expensive.  When we are at the
+    // stage of performance optimization, we should consider optimizing this
+    // for some optimized data source implementations.
+    if (nsec->getName() != fresult.rrset->getName()) {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<RRset>(fresult.rrset),
+                           dnssec_);
     }
 }
 
@@ -250,33 +286,7 @@ Query::process() const {
 
                 // If DNSSEC proof is requested and we've got it, add it.
                 if (dnssec_ && db_result.rrset) {
-                    // TODO: Handle unexpected (buggy case): rrset is not NSEC
-
-                    response_.addRRset(
-                        Message::SECTION_AUTHORITY,
-                        boost::const_pointer_cast<RRset>(db_result.rrset),
-                        dnssec_);
-                    const int qlabels = qname_.getLabelCount();
-                    const int olabels = qname_.compare(
-                        db_result.rrset->getName()).getCommonLabels();
-                    // Extract NSEC's next domain
-                    RdataIteratorPtr it = db_result.rrset->getRdataIterator();
-                    const int nlabels = qname_.compare(
-                        dynamic_cast<const generic::NSEC&>(it->getCurrent()).
-                        getNextName()).getCommonLabels();
-                    const int common_labels = std::max(olabels, nlabels);
-                    const Name wildname(Name("*").concatenate(
-                                            qname_.split(qlabels -
-                                                         common_labels)));
-                    // TODO: check if we need NO_WILDCARD here. (we should do)
-                    const ZoneFinder::FindResult fresult =
-                        zfinder.find(wildname, RRType::NSEC(), NULL,
-                                     dnssec_opt_);
-                    // TODO: check fresult: should be NXDOMAIN, and rrset is NSEC.
-                    response_.addRRset(
-                        Message::SECTION_AUTHORITY,
-                        boost::const_pointer_cast<RRset>(fresult.rrset),
-                        dnssec_);
+                    addNXDOMAINProof(zfinder, db_result.rrset);
                 }
                 break;
             case ZoneFinder::NXRRSET:
