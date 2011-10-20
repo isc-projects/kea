@@ -54,25 +54,18 @@ Option6IA::pack(boost::shared_array<uint8_t>& buf,
                   << len() << " is too small (at least 16 is required).");
     }
 
-    writeUint16(type_, &buf[offset]);
-    offset += sizeof(uint16_t);
-
-    writeUint16(len() - OPTION6_HDR_LEN, &buf[offset]);
-    offset += sizeof(uint16_t);
-
-    /// TODO start using writeUint32 once such function is implemented
     uint8_t* ptr = &buf[offset];
 
-    *(uint32_t*)ptr = htonl(iaid_);
-    ptr += sizeof(uint32_t);
+    ptr = writeUint16(type_, ptr);
+    ptr = writeUint16(len() - OPTION6_HDR_LEN, ptr);
+    offset += OPTION6_HDR_LEN;
 
-    *(uint32_t*)ptr = htonl(t1_);
-    ptr += sizeof(uint32_t);
+    ptr = writeUint32(iaid_, ptr);
+    ptr = writeUint32(t1_, ptr);
+    ptr = writeUint32(t2_, ptr);
+    offset += OPTION6_IA_LEN;
 
-    *(uint32_t*)ptr = htonl(t2_);
-    ptr += sizeof(uint32_t);
-
-    offset = LibDHCP::packOptions6(buf, buf_len, offset+12, options_);
+    offset = LibDHCP::packOptions6(buf, buf_len, offset, options_);
     return offset;
 }
 
@@ -84,16 +77,16 @@ Option6IA::unpack(const boost::shared_array<uint8_t>& buf,
     if ( parse_len < OPTION6_IA_LEN || offset + OPTION6_IA_LEN > buf_len) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
+    
+    iaid_ = readUint32(&buf[offset]);
+    offset += sizeof(uint32_t);
 
-    /// TODO this will cause SIGBUS on sparc if we happen to read misaligned
-    /// memory access. We need to fix this (and similar code) as part of
-    /// the ticket #1313
-    iaid_ = ntohl(*(uint32_t*)&buf[offset]);
+    t1_ = readUint32(&buf[offset]);
     offset += sizeof(uint32_t);
-    t1_ = ntohl(*(uint32_t*)&buf[offset]);
+
+    t2_ = readUint32(&buf[offset]);
     offset += sizeof(uint32_t);
-    t2_ = ntohl(*(uint32_t*)&buf[offset]);
-    offset += sizeof(uint32_t);
+
     offset = LibDHCP::unpackOptions6(buf, buf_len, offset,
                                      parse_len - OPTION6_IA_LEN, options_);
 
