@@ -89,7 +89,7 @@ TEST(asioutil, readUint32) {
     // the memory alignment. That' why we need to repeat
     // it 4 times.
     for (int offset=0; offset < 4; offset++) {
-        for (int i=0; i< sizeof(test32)/sizeof(uint32_t); i++) {
+        for (int i=0; i < sizeof(test32)/sizeof(uint32_t); i++) {
             uint32_t tmp = htonl(test32[i]);
             memcpy(&data[offset], &tmp, sizeof(uint32_t));
 
@@ -106,7 +106,7 @@ TEST(asioutil, writeUint32) {
     // the memory alignment. That's why we need to repeat
     // it 4 times.
     for (int offset=0; offset < 4; offset++) {
-        for (int i=0; i< sizeof(test32)/sizeof(uint32_t); i++) {
+        for (int i=0; i < sizeof(test32)/sizeof(uint32_t); i++) {
             uint8_t* ptr = writeUint32(test32[i], &data[offset]);
 
             EXPECT_EQ(&data[offset]+sizeof(uint32_t), ptr);
