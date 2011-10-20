@@ -11,11 +11,35 @@ Feature: SQLite3 backend
         I should see a database file
 
     Scenario: example.org queries
+        # This scenario performs a number of queries and inspects the results
+        # This is not only to test, but also to show the different options
+        # we have to inspect the data
         When I start bind10 with configuration example.org.config
         Then wait for bind10 auth to start
+
         A query for www.example.com should have rcode REFUSED
+
         A query for www.example.org should have rcode NOERROR
+        The last query should have qdcount 1
+        The last query should have ancount 1
+        The last query should have nscount 3
+        The last query should have adcount 0
+        The SOA serial for example.org should be 1234
+
         A query for doesnotexist.example.org should have rcode NXDOMAIN
+        The last query should have qdcount 1
+        The last query should have ancount 0
+        The last query should have nscount 1
+        The last query should have adcount 0
+        The last query should have flags qr aa rd
+
+        A query for www.example.org type TXT should have rcode NOERROR
+        The last query should have ancount 0
+
+        A query for www.example.org class CH should have rcode REFUSED
+        A query for www.example.org to 127.0.0.1 should have rcode NOERROR
+        A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
+        A query for www.example.org type A class IN to 127.0.0.1:47806 should have rcode NOERROR
 
     Scenario: changing database
         # This scenario contains a lot of 'wait for' steps
