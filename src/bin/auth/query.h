@@ -69,11 +69,11 @@ private:
     /// Adds a SOA of the zone into the authority zone of response_.
     /// Can throw NoSOA.
     ///
-    void putSOA(isc::datasrc::ZoneFinder& zone) const;
+    void putSOA(isc::datasrc::ZoneFinder& zone);
 
     /// TBD
     void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
-                          isc::dns::ConstRRsetPtr nsec) const;
+                          isc::dns::ConstRRsetPtr nsec);
 
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records).
@@ -180,7 +180,7 @@ public:
     /// This might throw BadZone or any of its specific subclasses, but that
     /// shouldn't happen in real-life (as BadZone means wrong data, it should
     /// have been rejected upon loading).
-    void process() const;
+    void process();
 
     /// \short Bad zone data encountered.
     ///
