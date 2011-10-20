@@ -30,7 +30,7 @@ def wait_for_output_lines(lines, examine_past = True):
             if output.find(line) != -1:
                 return line
 
-@step(u'start bind10(?: with configuration ([\w.]+))?')
+@step('start bind10(?: with configuration ([\w.]+))?')
 def start_bind10(step, config_file):
     args = [ 'bind10', '-v' ]
     if config_file is not None:
@@ -47,19 +47,24 @@ def start_bind10(step, config_file):
                                            "BIND10_STARTUP_ERROR"])
     assert message == "BIND10_STARTUP_COMPLETE"
 
-@step(u'wait for bind10 auth to start')
+@step('wait for bind10 auth to start')
 def wait_for_auth(step):
     world.wait_for_output_lines(['AUTH_SERVER_STARTED'])
 
-@step(u'wait for log message (\w+)')
+@step('have bind10 running(?: with configuration ([\w.]+))?')
+def have_bind10_running(step, config_file):
+    step.given('start bind10 with configuration ' + config_file)
+    step.given('wait for bind10 auth to start')
+
+@step('wait for log message (\w+)')
 def wait_for_message(step, message):
     world.wait_for_output_lines([message], False)
 
-@step(u'stop bind10')
+@step('stop bind10')
 def stop_the_server(step):
     world.shutdown_server()
 
-@step(u'set bind10 configuration (\S+) to (.*)')
+@step('set bind10 configuration (\S+) to (.*)')
 def set_config_command(step, name, value):
     bindctl = subprocess.Popen(['bindctl'], 1, None, subprocess.PIPE,
                                subprocess.PIPE, None)

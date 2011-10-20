@@ -26,12 +26,12 @@ def cleanup(feature):
     world.shutdown_server()
     world.bind10_output = []
 
-@step(u'Given I have no database')
+@step('Given I have no database')
 def given_i_have_no_database(step):
     if os.path.exists("test.db"):
         os.remove("test.db")
 
-@step(u'I should see a database file')
+@step('I should see a database file')
 def i_should_see_a_database_file(step):
     assert os.path.exists("test.db")
     os.remove("test.db")
