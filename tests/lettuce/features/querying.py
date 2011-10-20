@@ -106,8 +106,8 @@ class QueryResult(object):
     def parse_footer(self, line):
         pass
 
-@step(u'A query for ([\w.]+) (?:type ([A-Z]+) )?(?:class ([A-Z]+) )?' +
-       '(?:to ([^:]+)(?::([0-9]+))? )?should have rcode ([\w.]+)')
+@step('A query for ([\w.]+) (?:type ([A-Z]+) )?(?:class ([A-Z]+) )?' +
+      '(?:to ([^:]+)(?::([0-9]+))? )?should have rcode ([\w.]+)')
 def query(step, query_name, qtype, qclass, addr, port, rcode):
     if qtype is None:
         qtype = "A"
@@ -121,7 +121,7 @@ def query(step, query_name, qtype, qclass, addr, port, rcode):
     assert query_result.rcode == rcode, "Got " + query_result.rcode
     world.last_query_result = query_result
 
-@step(u'The SOA serial for ([\w.]+) should be ([0-9]+)')
+@step('The SOA serial for ([\w.]+) should be ([0-9]+)')
 def query_soa(step, query_name, serial):
     query_result = QueryResult(query_name, "SOA", "IN", "127.0.0.1", "47806")
     assert "NOERROR" == query_result.rcode,\
@@ -132,7 +132,7 @@ def query_soa(step, query_name, serial):
     assert serial == soa_parts[6],\
         "Got SOA serial " + soa_parts[6] + ", expected " + serial
 
-@step(u'last query should have (\S+) (.+)')
+@step('last query should have (\S+) (.+)')
 def check_last_query(step, item, value):
     assert world.last_query_result is not None
     assert item in world.last_query_result.__dict__

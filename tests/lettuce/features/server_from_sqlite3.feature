@@ -14,11 +14,15 @@ Feature: SQLite3 backend
         # This scenario performs a number of queries and inspects the results
         # This is not only to test, but also to show the different options
         # we have to inspect the data
-        When I start bind10 with configuration example.org.config
-        Then wait for bind10 auth to start
 
+        # This is a compound statement that starts and waits for the
+        # started message
+        Given I have bind10 running with configuration example.org.config
+
+        # A simple query that is not examined further
         A query for www.example.com should have rcode REFUSED
 
+        # A query where we look at some of the result properties
         A query for www.example.org should have rcode NOERROR
         The last query should have qdcount 1
         The last query should have ancount 1
@@ -26,6 +30,7 @@ Feature: SQLite3 backend
         The last query should have adcount 0
         The SOA serial for example.org should be 1234
 
+        # Another query where we look at some of the result properties
         A query for doesnotexist.example.org should have rcode NXDOMAIN
         The last query should have qdcount 1
         The last query should have ancount 0
@@ -36,6 +41,8 @@ Feature: SQLite3 backend
         A query for www.example.org type TXT should have rcode NOERROR
         The last query should have ancount 0
 
+        # Some queries where we specify more details about what to send and
+        # where
         A query for www.example.org class CH should have rcode REFUSED
         A query for www.example.org to 127.0.0.1 should have rcode NOERROR
         A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
@@ -48,6 +55,12 @@ Feature: SQLite3 backend
         # for instance auth could still be serving the old zone when we send
         # the new query, or already respond from the new database.
         # Therefore we wait for specific log messages after each operation
+        #
+        # This scenario outlines every single step, and does not use
+        # 'steps of steps' (e.g. Given I have bind10 running)
+        # We can do that but as an example this is probably better to learn
+        # the system
+
         When I start bind10 with configuration example.org.config
         Then wait for bind10 auth to start
         Wait for log message CMDCTL_STARTED
