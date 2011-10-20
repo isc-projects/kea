@@ -38,6 +38,7 @@ def start_bind10(step, config_file):
         args.append("configurations/")
         args.append('-c')
         args.append(config_file)
+        args.append('--cmdctl-port=47805')
 
     world.bind10 = subprocess.Popen(args, 1, None, subprocess.PIPE,
                                     subprocess.PIPE, subprocess.PIPE)
@@ -66,7 +67,8 @@ def stop_the_server(step):
 
 @step('set bind10 configuration (\S+) to (.*)')
 def set_config_command(step, name, value):
-    bindctl = subprocess.Popen(['bindctl'], 1, None, subprocess.PIPE,
+    args = ['bindctl', '-p', '47805']
+    bindctl = subprocess.Popen(args, 1, None, subprocess.PIPE,
                                subprocess.PIPE, None)
     bindctl.stdin.write("config set " + name + " " + value + "\n")
     bindctl.stdin.write("config commit\n")
