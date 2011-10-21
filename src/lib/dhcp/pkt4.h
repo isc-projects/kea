@@ -16,6 +16,7 @@
 #define PKT4_H
 
 #include <iostream>
+#include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include "asiolink/io_address.h"
@@ -29,52 +30,52 @@ namespace dhcp {
 class Pkt4 {
 public:
 
-    // length of the CHADDR field in DHCPv4 message
+    /// length of the CHADDR field in DHCPv4 message
     const static size_t MAX_CHADDR_LEN = 16;
 
-    // length of the SNAME field in DHCPv4 message
+    /// length of the SNAME field in DHCPv4 message
     const static size_t MAX_SNAME_LEN = 64;
 
-    // length of the FILE field in DHCPv4 message
+    /// length of the FILE field in DHCPv4 message
     const static size_t MAX_FILE_LEN = 128;
 
-    /// specifes DHCPv4 packet header length (fixed part)
+    /// specifies DHCPv4 packet header length (fixed part)
     const static size_t DHCPV4_PKT_HDR_LEN = 236;
 
-    /// Constructor, used in replying to a message
+    /// Constructor, used in replying to a message.
     ///
     /// @param msg_type type of message (e.g. DHCPDISOVER=1)
     /// @param transid transaction-id
     Pkt4(uint8_t msg_type, uint32_t transid);
 
-    /// Constructor, used in message transmission
+    /// @brief Constructor, used in message reception.
     ///
-    /// Creates new message. Transaction-id will randomized.
+    /// Creates new message. Pkt4 will copy data to bufferIn_
+    /// buffer on creation.
     ///
     /// @param data pointer to received data
     /// @param len size of buffer to be allocated for this packet.
     Pkt4(const uint8_t* data, size_t len);
 
-    /// @brief Prepares on-wire format.
+    /// @brief Prepares on-wire format of DHCPv4 packet.
     ///
     /// Prepares on-wire format of message and all its options.
     /// Options must be stored in options_ field.
-    /// Output buffer will be stored in data_. Length
-    /// will be set in data_len_.
+    /// Output buffer will be stored in bufferOut_.
     ///
     /// @return true if packing procedure was successful
     bool
     pack();
 
-    /// @brief Parses on-wire form of UDP DHCPv6 packet.
+    /// @brief Parses on-wire form of DHCPv4 packet.
     ///
-    /// Parses received packet, stored in on-wire format in data_.
-    /// data_len_ must be set to indicate data length.
+    /// Parses received packet, stored in on-wire format in bufferIn_.
+    ///
     /// Will create a collection of option objects that will
     /// be stored in options_ container.
     ///
-    /// @return true, if build was successful
-    bool 
+    /// @return true, if parsing was successful
+    bool
     unpack();
 
     /// @brief Returns text representation of the packet.
@@ -85,10 +86,10 @@ public:
     std::string
     toText();
 
-    /// @brief Returns calculated length of the packet.
+    /// @brief Returns the size of the required buffer to build the packet.
     ///
-    /// This function returns size of required buffer to buld this packet.
-    /// To use that function, options_ field must be set.
+    /// Returns the size of the required buffer to build the packet with
+    /// the current set of packet options.
     ///
     /// @return number of bytes required to build this packet
     size_t
@@ -210,11 +211,11 @@ public:
     /// @brief Returns sname field
     ///
     /// Note: This is 64 bytes long field. It doesn't have to be
-    /// null-terminated. Do no use strlen() or similar on it.
+    /// null-terminated. Do not use strlen() or similar on it.
     ///
     /// @return sname field
-    const uint8_t*
-    getSname() { return (sname_); };
+    const std::vector<uint8_t>
+    getSname() { return (std::vector<uint8_t>(sname_, &sname_[MAX_SNAME_LEN])); };
 
     /// Sets sname field
     ///
@@ -225,11 +226,11 @@ public:
     /// @brief Returns file field
     ///
     /// Note: This is 128 bytes long field. It doesn't have to be
-    /// null-terminated. Do no use strlen() or similar on it.
+    /// null-terminated. Do not use strlen() or similar on it.
     ///
     /// @return pointer to file field
-    const uint8_t*
-    getFile() { return (file_); };
+    const std::vector<uint8_t>
+    getFile() { return (std::vector<uint8_t>(file_, &file_[MAX_FILE_LEN])); };
 
     /// Sets file field
     ///
@@ -237,7 +238,13 @@ public:
     void
     setFile(const uint8_t* file, size_t fileLen = MAX_FILE_LEN);
 
-    /// Sets hardware address
+    /// @brief Sets hardware address.
+    ///
+    /// Sets parameters of hardware address. hlen specifies
+    /// length of macAddr buffer. Content of macAddr buffer
+    /// will be copied to appropriate field.
+    ///
+    /// Note: macAddr must be a buffer of at least hlen bytes.
     ///
     /// @param hwType hardware type (will be sent in htype field)
     /// @param hlen hardware length (will be sent in hlen field)
@@ -288,10 +295,9 @@ protected:
 
     /// @brief interface index
     ///
-    /// interface index (each network interface has assigned unique ifindex
-    /// it is functional equvalent of name, but sometimes more useful, e.g.
-    /// when using crazy systems that allow spaces in interface names
-    /// e.g. windows
+    /// Each network interface has assigned unique ifindex. It is functional
+    /// equvalent of name, but sometimes more useful, e.g. when using crazy
+    /// systems that allow spaces in interface names e.g. MS Windows)
     int ifindex_;
 
     /// local UDP port
@@ -300,10 +306,13 @@ protected:
     /// remote UDP port
     int remote_port_;
 
-    /// message operation code (kept due to BOOTP format, this is NOT DHCPv4 type)
+    /// @brief message operation code
     ///
-    /// Note: This is legacy BOOTP field. There's no need to manipulate it 
-    /// directly. Its value is set based on DHCP message type.
+    /// Note: This is legacy BOOTP field. There's no need to manipulate it
+    /// directly. Its value is set based on DHCP message type. Note that
+    /// DHCPv4 protocol reuses BOOTP message format, so this field is
+    /// kept due to BOOTP format. This is NOT DHCPv4 type (DHCPv4 message
+    /// type is kept in message type option).
     uint8_t op_;
 
     /// link-layer address type
@@ -324,26 +333,26 @@ protected:
     /// flags
     uint16_t flags_;
 
-    // ciaddr field (32 bits): Client's IP address
+    /// ciaddr field (32 bits): Client's IP address
     isc::asiolink::IOAddress ciaddr_;
 
-    // yiaddr field (32 bits): Client's IP address ("your"), set by server
+    /// yiaddr field (32 bits): Client's IP address ("your"), set by server
     isc::asiolink::IOAddress yiaddr_;
 
-    // siaddr field (32 bits): next server IP address in boot process(e.g.TFTP)
+    /// siaddr field (32 bits): next server IP address in boot process(e.g.TFTP)
     isc::asiolink::IOAddress siaddr_;
 
-    // giaddr field (32 bits): Gateway IP address
+    /// giaddr field (32 bits): Gateway IP address
     isc::asiolink::IOAddress giaddr_;
 
-    // ciaddr field (32 bits): Client's IP address
-    uint8_t chaddr_[16]; 
-    
-    // sname 64 bytes
-    uint8_t sname_[64];
+    /// Hardware address field (16 bytes)
+    uint8_t chaddr_[MAX_CHADDR_LEN];
 
-    // file
-    uint8_t file_[128];
+    /// sname field (64 bytes)
+    uint8_t sname_[MAX_SNAME_LEN];
+
+    /// file field (128 bytes)
+    uint8_t file_[MAX_FILE_LEN];
 
     // end of real DHCPv4 fields
 
@@ -352,11 +361,11 @@ protected:
     /// thus OutputBuffer, not InputBuffer
     isc::util::OutputBuffer bufferIn_;
 
-    /// output buffer (used during message 
+    /// output buffer (used during message
     isc::util::OutputBuffer bufferOut_;
 
     /// message type (e.g. 1=DHCPDISCOVER)
-    /// TODO: this will eventually be replaced with DHCP Message Type 
+    /// TODO: this will eventually be replaced with DHCP Message Type
     /// option (option 53)
     uint8_t msg_type_;
 

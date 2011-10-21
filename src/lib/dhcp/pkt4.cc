@@ -26,6 +26,8 @@ using namespace isc::asiolink;
 
 namespace isc {
 
+const IOAddress DEFAULT_ADDRESS("0.0.0.0");
+
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
      :local_addr_(IOAddress("0.0.0.0")),
       remote_addr_(IOAddress("0.0.0.0")),
@@ -40,10 +42,10 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       transid_(transid),
       secs_(0),
       flags_(0),
-      ciaddr_(IOAddress("0.0.0.0")),
-      yiaddr_(IOAddress("0.0.0.0")),
-      siaddr_(IOAddress("0.0.0.0")),
-      giaddr_(IOAddress("0.0.0.0")),
+      ciaddr_(DEFAULT_ADDRESS),
+      yiaddr_(DEFAULT_ADDRESS),
+      siaddr_(DEFAULT_ADDRESS),
+      giaddr_(DEFAULT_ADDRESS),
       bufferIn_(0), // not used, this is TX packet
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(msg_type)
@@ -66,10 +68,10 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       transid_(transid_),
       secs_(0),
       flags_(0),
-      ciaddr_(IOAddress("0.0.0.0")),
-      yiaddr_(IOAddress("0.0.0.0")),
-      siaddr_(IOAddress("0.0.0.0")),
-      giaddr_(IOAddress("0.0.0.0")),
+      ciaddr_(DEFAULT_ADDRESS),
+      yiaddr_(DEFAULT_ADDRESS),
+      siaddr_(DEFAULT_ADDRESS),
+      giaddr_(DEFAULT_ADDRESS),
       bufferIn_(0), // not used, this is TX packet
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(DHCPDISCOVER)
@@ -123,6 +125,10 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen, const uint8_t* macAddr) {
         isc_throw(OutOfRange, "Hardware address (len=" << hlen
                   << " too long. Max " << MAX_CHADDR_LEN << " supported.");
     }
+    if ( (!macAddr) && (hlen > 0) ) {
+        isc_throw(OutOfRange, "Invalid HW Address specified");
+    }
+
     htype_ = hType;
     hlen_ = hlen;
     memset(chaddr_, 0, MAX_CHADDR_LEN);
@@ -150,7 +156,7 @@ Pkt4::setFile(const uint8_t* file, size_t fileLen /*= MAX_FILE_LEN*/) {
     memset(file_, 0, MAX_FILE_LEN);
     memcpy(file_, file, fileLen);
 
-    // no need to store snameLen as any empty space is filled with 0s
+    // no need to store fileLen as any empty space is filled with 0s
 }
 
 uint8_t
