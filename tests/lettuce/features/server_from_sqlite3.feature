@@ -65,13 +65,13 @@ Feature: SQLite3 backend
         Then wait for bind10 auth to start
         Wait for bind10 stderr message CMDCTL_STARTED
         A query for www.example.org should have rcode NOERROR
-        Wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+        Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
-        And wait for bind10 stderr message DATASRC_SQLITE_OPEN
+        And wait for new bind10 stderr message DATASRC_SQLITE_OPEN
         A query for www.example.org should have rcode REFUSED
-        Wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+        Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/example.org.sqlite3
-        And wait for bind10 stderr message DATASRC_SQLITE_OPEN
+        And wait for new bind10 stderr message DATASRC_SQLITE_OPEN
         A query for www.example.org should have rcode NOERROR
 
     Scenario: two bind10 instances
