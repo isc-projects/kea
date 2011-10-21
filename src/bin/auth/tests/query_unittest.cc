@@ -17,6 +17,7 @@
 #include <map>
 
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <dns/masterload.h>
 #include <dns/message.h>
@@ -153,7 +154,8 @@ public:
         has_SOA_(true),
         has_apex_NS_(true),
         rrclass_(RRClass::IN()),
-        include_rrsig_anyway_(false)
+        include_rrsig_anyway_(false),
+        nsec_name_(origin_)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
@@ -165,6 +167,11 @@ public:
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
+
+        empty_nsec_rrset_ = ConstRRsetPtr(new RRset(Name::ROOT_NAME(),
+                                                    RRClass::IN(),
+                                                    RRType::NSEC(),
+                                                    RRTTL(3600)));
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
@@ -184,9 +191,23 @@ public:
     // Turn this on if you want it to return RRSIGs regardless of FIND_GLUE_OK
     void setIncludeRRSIGAnyway(bool on) { include_rrsig_anyway_ = on; }
 
+    // Once called, this "faked" result will be returned when NSEC is expected
+    // for the specified query name.
+    void setNSECResult(const Name& nsec_name, Result code,
+                       ConstRRsetPtr rrset)
+    {
+        nsec_name_ = nsec_name;
+        nsec_result_.reset(new ZoneFinder::FindResult(code, rrset));
+    }
+
     Name findPreviousName(const Name&) const {
         isc_throw(isc::NotImplemented, "Mock doesn't support previous name");
     }
+
+public:
+    // We allow the tests to use these for convenience
+    ConstRRsetPtr delegation_rrset_;
+    ConstRRsetPtr empty_nsec_rrset_;
 
 private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
@@ -223,10 +244,12 @@ private:
     const Name dname_name_;
     bool has_SOA_;
     bool has_apex_NS_;
-    ConstRRsetPtr delegation_rrset_;
     ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
     bool include_rrsig_anyway_;
+    // The following two will be used for faked NSEC cases
+    Name nsec_name_;
+    boost::scoped_ptr<ZoneFinder::FindResult> nsec_result_;
 };
 
 ZoneFinder::FindResult
@@ -312,6 +335,12 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // we don't care about pathological cases such as the name is "smaller"
     // than the origin)
     if ((options & FIND_DNSSEC) != 0) {
+        // Emulate a broken DataSourceClient for some special names.
+        if (nsec_result_ && nsec_name_ == name) {
+            return (*nsec_result_);
+        }
+
+        // Normal case
         for (Domains::const_reverse_iterator it = domains_.rbegin();
              it != domains_.rend();
              ++it) {
@@ -608,6 +637,74 @@ TEST_F(QueryTest, nxdomainWithNSECDuplicate) {
                          string(").no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainBadNSEC1) {
+    // ZoneFinder::find() returns NXDOMAIN with non NSEC RR.
+    mock_finder->setNSECResult(Name("badnsec.example.com"),
+                               ZoneFinder::NXDOMAIN,
+                               mock_finder->delegation_rrset_);
+    EXPECT_THROW(Query(memory_client, Name("badnsec.example.com"), qtype,
+                       response, true).process(),
+                 std::bad_cast);
+}
+
+TEST_F(QueryTest, nxdomainBadNSEC2) {
+    // ZoneFinder::find() returns NXDOMAIN with an empty NSEC RR.
+    mock_finder->setNSECResult(Name("emptynsec.example.com"),
+                               ZoneFinder::NXDOMAIN,
+                               mock_finder->empty_nsec_rrset_);
+    EXPECT_THROW(Query(memory_client, Name("emptynsec.example.com"), qtype,
+                       response, true).process(),
+                 Query::BadNSEC);
+}
+
+TEST_F(QueryTest, nxdomainBadNSEC3) {
+    // "no-wildcard proof" returns SUCCESS.  it should be NXDOMAIN.
+    mock_finder->setNSECResult(Name("*.example.com"),
+                               ZoneFinder::SUCCESS,
+                               mock_finder->delegation_rrset_);
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
+                       response, true).process(),
+                 Query::BadNSEC);
+}
+
+TEST_F(QueryTest, nxdomainBadNSEC4) {
+    // "no-wildcard proof" doesn't return RRset.
+    mock_finder->setNSECResult(Name("*.example.com"),
+                               ZoneFinder::NXDOMAIN, ConstRRsetPtr());
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
+                       response, true).process(),
+                 Query::BadNSEC);
+}
+
+TEST_F(QueryTest, nxdomainBadNSEC5) {
+    // "no-wildcard proof" returns non NSEC.
+    mock_finder->setNSECResult(Name("*.example.com"),
+                               ZoneFinder::NXDOMAIN,
+                               mock_finder->delegation_rrset_);
+    // This is a bit odd, but we'll simply include the returned RRset.
+    Query(memory_client, Name("nxdomain.example.com"), qtype,
+          response, true).process();
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0,
+                  NULL, (string(soa_txt) +
+                         string("example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("SOA") + "\n" +
+                         string(nsec_nxdomain_txt) + "\n" +
+                         string("noglue.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC") + "\n" +
+                         delegation_txt).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainBadNSEC6) {
+    // "no-wildcard proof" returns empty NSEC.
+    mock_finder->setNSECResult(Name("*.example.com"),
+                               ZoneFinder::NXDOMAIN,
+                               mock_finder->empty_nsec_rrset_);
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
+                       response, true).process(),
+                 Query::BadNSEC);
 }
 
 TEST_F(QueryTest, nxrrset) {

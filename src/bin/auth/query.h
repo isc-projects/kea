@@ -214,6 +214,14 @@ public:
         {}
     };
 
+    /// TBD
+    ///
+    struct BadNSEC : public BadZone {
+        BadNSEC(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
 private:
     const isc::datasrc::DataSourceClient& datasrc_client_;
     const isc::dns::Name& qname_;
