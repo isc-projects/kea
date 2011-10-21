@@ -69,7 +69,7 @@ private:
     /// Adds a SOA of the zone into the authority zone of response_.
     /// Can throw NoSOA.
     ///
-    void putSOA(isc::datasrc::ZoneFinder& zone);
+    void addSOA(isc::datasrc::ZoneFinder& finder);
 
     /// Add NSEC RRs that prove an NXDOMAIN result.
     ///
@@ -78,7 +78,7 @@ private:
                           isc::dns::ConstRRsetPtr nsec);
 
     /// \brief Look up additional data (i.e., address records for the names
-    /// included in NS or MX records).
+    /// included in NS or MX records) and add them to the additional section.
     ///
     /// Note: Any additional data which has already been provided in the
     /// answer section (i.e., if the original query happend to be for the
@@ -91,8 +91,8 @@ private:
     /// query is to be found.
     /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
     /// processing.
-    void getAdditional(isc::datasrc::ZoneFinder& zone,
-                       const isc::dns::RRset& rrset) const;
+    void addAdditional(isc::datasrc::ZoneFinder& zone,
+                       const isc::dns::RRset& rrset);
 
     /// \brief Find address records for a specified name.
     ///
@@ -110,13 +110,13 @@ private:
     /// be found.
     /// \param qname The name in rrset RDATA.
     /// \param options The search options.
-    void findAddrs(isc::datasrc::ZoneFinder& zone,
-                   const isc::dns::Name& qname,
-                   const isc::datasrc::ZoneFinder::FindOptions options
-                   = isc::datasrc::ZoneFinder::FIND_DEFAULT) const;
+    void addAdditionalAddrs(isc::datasrc::ZoneFinder& zone,
+                            const isc::dns::Name& qname,
+                            const isc::datasrc::ZoneFinder::FindOptions options
+                            = isc::datasrc::ZoneFinder::FIND_DEFAULT);
 
     /// \brief Look up a zone's NS RRset and their address records for an
-    /// authoritative answer.
+    /// authoritative answer, and add them to the additional section.
     ///
     /// On returning an authoritative answer, insert a zone's NS into the
     /// authority section and AAAA/A RRs of each of the NS RDATA into the
@@ -131,9 +131,9 @@ private:
     /// include AAAA/A RRs under a zone cut in additional section. (BIND 9
     /// excludes under-cut RRs; NSD include them.)
     ///
-    /// \param zone The \c ZoneFinder through which the NS and additional data
-    /// for the query are to be found.
-    void getAuthAdditional(isc::datasrc::ZoneFinder& zone) const;
+    /// \param finder The \c ZoneFinder through which the NS and additional
+    /// data for the query are to be found.
+    void addAuthAdditional(isc::datasrc::ZoneFinder& finder);
 
 public:
     /// Constructor from query parameters.

@@ -32,24 +32,24 @@ namespace isc {
 namespace auth {
 
 void
-Query::getAdditional(ZoneFinder& zone, const RRset& rrset) const {
+Query::addAdditional(ZoneFinder& zone, const RRset& rrset) {
     RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         const Rdata& rdata(rdata_iterator->getCurrent());
         if (rrset.getType() == RRType::NS()) {
             // Need to perform the search in the "GLUE OK" mode.
             const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
-            findAddrs(zone, ns.getNSName(), ZoneFinder::FIND_GLUE_OK);
+            addAdditionalAddrs(zone, ns.getNSName(), ZoneFinder::FIND_GLUE_OK);
         } else if (rrset.getType() == RRType::MX()) {
             const generic::MX& mx(dynamic_cast<const generic::MX&>(rdata));
-            findAddrs(zone, mx.getMXName());
+            addAdditionalAddrs(zone, mx.getMXName());
         }
     }
 }
 
 void
-Query::findAddrs(ZoneFinder& zone, const Name& qname,
-                 const ZoneFinder::FindOptions options) const
+Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
+                          const ZoneFinder::FindOptions options)
 {
     // Out of zone name
     NameComparisonResult result = zone.getOrigin().compare(qname);
@@ -88,12 +88,12 @@ Query::findAddrs(ZoneFinder& zone, const Name& qname,
 }
 
 void
-Query::putSOA(ZoneFinder& zone) {
-    ZoneFinder::FindResult soa_result(zone.find(zone.getOrigin(),
+Query::addSOA(ZoneFinder& finder) {
+    ZoneFinder::FindResult soa_result(finder.find(finder.getOrigin(),
         RRType::SOA(), NULL, dnssec_opt_));
     if (soa_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoSOA, "There's no SOA record in zone " <<
-            zone.getOrigin().toText());
+            finder.getOrigin().toText());
     } else {
         /*
          * FIXME:
@@ -168,20 +168,20 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 }
 
 void
-Query::getAuthAdditional(ZoneFinder& zone) const {
+Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
-    ZoneFinder::FindResult ns_result = zone.find(zone.getOrigin(),
-                                                 RRType::NS(), NULL,
-                                                 dnssec_opt_);
+    ZoneFinder::FindResult ns_result = finder.find(finder.getOrigin(),
+                                                   RRType::NS(), NULL,
+                                                   dnssec_opt_);
     // zone origin name should have NS records
     if (ns_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoApexNS, "There's no apex NS records in zone " <<
-                zone.getOrigin().toText());
+                finder.getOrigin().toText());
     } else {
         response_.addRRset(Message::SECTION_AUTHORITY,
             boost::const_pointer_cast<RRset>(ns_result.rrset), dnssec_);
         // Handle additional for authority section
-        getAdditional(zone, *ns_result.rrset);
+        addAdditional(finder, *ns_result.rrset);
     }
 }
 
@@ -280,14 +280,14 @@ Query::process() {
                         response_.addRRset(Message::SECTION_ANSWER, rrset,
                                            dnssec_);
                         // Handle additional for answer section
-                        getAdditional(*result.zone_finder, *rrset.get());
+                        addAdditional(*result.zone_finder, *rrset.get());
                     }
                 } else {
                     response_.addRRset(Message::SECTION_ANSWER,
                         boost::const_pointer_cast<RRset>(db_result.rrset),
                         dnssec_);
                     // Handle additional for answer section
-                    getAdditional(*result.zone_finder, *db_result.rrset);
+                    addAdditional(*result.zone_finder, *db_result.rrset);
                 }
                 // If apex NS records haven't been provided in the answer
                 // section, insert apex NS records into the authority section
@@ -297,7 +297,7 @@ Query::process() {
                     db_result.code != ZoneFinder::SUCCESS ||
                     (qtype_ != RRType::NS() && !qtype_is_any))
                 {
-                    getAuthAdditional(*result.zone_finder);
+                    addAuthAdditional(*result.zone_finder);
                 }
                 break;
             case ZoneFinder::DELEGATION:
@@ -305,11 +305,11 @@ Query::process() {
                 response_.addRRset(Message::SECTION_AUTHORITY,
                     boost::const_pointer_cast<RRset>(db_result.rrset),
                     dnssec_);
-                getAdditional(*result.zone_finder, *db_result.rrset);
+                addAdditional(*result.zone_finder, *db_result.rrset);
                 break;
             case ZoneFinder::NXDOMAIN:
                 response_.setRcode(Rcode::NXDOMAIN());
-                putSOA(*result.zone_finder);
+                addSOA(*result.zone_finder);
 
                 // If DNSSEC proof is requested and we've got it, add it.
                 if (dnssec_ && db_result.rrset) {
@@ -318,7 +318,7 @@ Query::process() {
                 break;
             case ZoneFinder::NXRRSET:
                 // Just empty answer with SOA in authority section
-                putSOA(*result.zone_finder);
+                addSOA(*result.zone_finder);
                 break;
             default:
                 // These are new result codes (WILDCARD and WILDCARD_NXRRSET)
