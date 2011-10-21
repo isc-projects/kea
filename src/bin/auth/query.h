@@ -71,7 +71,9 @@ private:
     ///
     void putSOA(isc::datasrc::ZoneFinder& zone);
 
-    /// TBD
+    /// Add NSEC RRs that prove an NXDOMAIN result.
+    ///
+    /// This corresponds to Section 3.1.3.2 of RFC 4035.
     void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
                           isc::dns::ConstRRsetPtr nsec);
 
@@ -214,8 +216,11 @@ public:
         {}
     };
 
-    /// TBD
+    /// An invalid result is given when a valid NSEC is expected
     ///
+    // This can only happen when the underlying data source implementation or
+    /// the zone is broken.  By throwing an exception we treat such cases
+    /// as SERVFAIL.
     struct BadNSEC : public BadZone {
         BadNSEC(const char* file, size_t line, const char* what) :
             BadZone(file, line, what)

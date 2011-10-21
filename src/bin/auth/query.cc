@@ -124,6 +124,15 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     response_.addRRset( Message::SECTION_AUTHORITY,
                         boost::const_pointer_cast<RRset>(nsec), dnssec_);
 
+    // Next, identify the best possible wildcard name that would match
+    // the query name.  It's the longer common suffix with the qname
+    // between the owner or the next domain of the NSEC that proves NXDOMAIN,
+    // prefixed by the wildcard label, "*".  For example, for query name
+    // a.b.example.com, if the NXDOMAIN NSEC is
+    // b.example.com. NSEC c.example.com., the longer suffix is b.example.com.,
+    // and the best possible wildcard is *.b.example.com.  If the NXDOMAIN
+    // NSEC is a.example.com. NSEC c.b.example.com., the longer suffix
+    // is the next domain of the NSEC, and we get the same wildcard name.
     const int qlabels = qname_.getLabelCount();
     const int olabels = qname_.compare(nsec->getName()).getCommonLabels();
     const int nlabels = qname_.compare(
@@ -133,6 +142,10 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     const int common_labels = std::max(olabels, nlabels);
     const Name wildname(Name("*").concatenate(qname_.split(qlabels -
                                                            common_labels)));
+
+    // Confirm the wildcard doesn't exist (this should result in NXDOMAIN;
+    // otherwise we shouldn't have got NXDOMAIN for the original query in
+    // the first place).
     const ZoneFinder::FindResult fresult = finder.find(wildname,
                                                        RRType::NSEC(), NULL,
                                                        dnssec_opt_);
