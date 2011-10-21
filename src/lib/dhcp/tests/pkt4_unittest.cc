@@ -42,12 +42,13 @@ namespace {
 TEST(Pkt4Test, constructor) {
 
     ASSERT_EQ(236U, DHCPV4_PKT_HDR_LEN);
-    Pkt4 * pkt = 0;
+    Pkt4* pkt = 0;
 
     // minimal 
     uint8_t testData[250];
-    for (int i=0 ; i < 250; i++)
+    for (int i = 0; i < 250; i++) {
         testData[i]=i; 
+    }
 
     // positive case1. Normal received packet
     EXPECT_NO_THROW(
@@ -81,7 +82,8 @@ TEST(Pkt4Test, constructor) {
         OutOfRange
     );
     if (pkt) {
-        // test failed anyway. Exception should have been thrown
+        // test failed. Exception should have been thrown, but
+        // object was created instead. Let's clean this up
         delete pkt;
     }
 }
@@ -127,7 +129,7 @@ generateTestPacket1() {
     pkt->setHops(13); // 13 relays. Wow!
     // transaction-id is already set
     pkt->setSecs(42);
-    pkt->setFlags( 0xffffU ); // all flags set
+    pkt->setFlags(0xffffU); // all flags set
     pkt->setCiaddr(IOAddress("192.0.2.1"));
     pkt->setYiaddr(IOAddress("1.2.3.4"));
     pkt->setSiaddr(IOAddress("192.0.2.255"));
@@ -202,11 +204,11 @@ TEST(Pkt4Test, fixedFields) {
     EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_FALSE( memcmp(dummyChaddr, pkt->getChaddr(), 16) );
+    EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), 16));
 
-    EXPECT_FALSE( memcmp(dummySname, pkt->getSname(), 64) );
+    EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], 64));
 
-    EXPECT_FALSE( memcmp(dummyFile, pkt->getFile(), 128) );
+    EXPECT_EQ(0, memcmp(dummyFile, &pkt->getFile()[0], 128));
 
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
 }
@@ -248,11 +250,11 @@ TEST(Pkt4Test, fixedFieldsUnpack) {
     EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr.toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_FALSE( memcmp(expectedChaddr, pkt->getChaddr(), 16) );
+    EXPECT_EQ(0, memcmp(expectedChaddr, pkt->getChaddr(), 16));
 
-    EXPECT_FALSE( memcmp(expectedSname, pkt->getSname(), 64) );
+    EXPECT_EQ(0, memcmp(expectedSname, pkt->getSname(), 64));
 
-    EXPECT_FALSE( memcmp(expectedFile, pkt->getFile(), 128) );
+    EXPECT_EQ(0, memcmp(expectedFile, pkt->getFile(), 128));
 
     EXPECT_EQ(DHCPSOLICIT, pkt->getType());
 }
@@ -367,7 +369,7 @@ TEST(Pkt4Test, sname) {
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setSname(sname, snameLen);
 
-        EXPECT_EQ(0, memcmp(expectedSname, pkt->getSname(), Pkt4::MAX_SNAME_LEN));
+        EXPECT_EQ(0, memcmp(expectedSname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
 
 #if 0
         /// TODO Uncomment when ticket #1227 is implemented)
@@ -404,7 +406,7 @@ TEST(Pkt4Test, file) {
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setFile(file, fileLen);
 
-        EXPECT_EQ(0, memcmp(expectedFile, pkt->getFile(), Pkt4::MAX_FILE_LEN));
+        EXPECT_EQ(0, memcmp(expectedFile, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
 
 #if 0
         /// TODO Uncomment when ticket #1227 is implemented)
