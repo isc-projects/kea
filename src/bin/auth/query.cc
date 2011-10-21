@@ -121,8 +121,8 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     }
 
     // Add the NSEC proving NXDOMAIN to the authority section.
-    response_.addRRset( Message::SECTION_AUTHORITY,
-                        boost::const_pointer_cast<RRset>(nsec), dnssec_);
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<RRset>(nsec), dnssec_);
 
     // Next, identify the best possible wildcard name that would match
     // the query name.  It's the longer common suffix with the qname
