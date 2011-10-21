@@ -21,6 +21,7 @@ from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, 
 import unittest
 import sys
 import os
+import copy
 import signal
 import socket
 from isc.net.addr import IPAddr
@@ -626,6 +627,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
         #bob.cfg_start_dhcp4 = True
         #self.check_started_dhcp(bob, True, True)
 
+    def test_unchanged_environment(self):
+        # Check whether the environment has not been changed
+        self.assertEqual(original_os_environ, os.environ)
+
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
         """
@@ -799,5 +804,7 @@ class TestBrittle(unittest.TestCase):
         self.assertFalse(bob.runnable)
 
 if __name__ == '__main__':
+    # store os.environ for test_unchanged_environment
+    original_os_environ = copy.deepcopy(os.environ)
     isc.log.resetUnitTestRootLogger()
     unittest.main()
