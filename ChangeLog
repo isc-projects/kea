@@ -1,4 +1,4 @@
-301     [func]      stephen
+301.	[func]		stephen
 	Add system test for IXFR over TCP.
 	(Trac #1213, git 68ee3818bcbecebf3e6789e81ea79d551a4ff3e8)
 
