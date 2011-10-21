@@ -10,13 +10,13 @@ import os
 def stop_a_named_process(step, process_name):
     world.stop_process(process_name)
 
-@step('wait for (\w+) stderr message (\w+)')
-def wait_for_message(step, process_name, message):
-    world.wait_for_output_lines_stderr(process_name, [message], False)
+@step('wait for (new )?(\w+) stderr message (\w+)')
+def wait_for_message(step, new, process_name, message):
+    world.wait_for_output_lines_stderr(process_name, [message], new is None)
 
-@step('wait for (\w+) stdout message (\w+)')
+@step('wait for (new )?(\w+) stdout message (\w+)')
 def wait_for_message(step, process_name, message):
-    world.wait_for_output_lines_stdout(process_name, [message], False)
+    world.wait_for_output_lines_stdout(process_name, [message], new is None)
 
 @step('Given I have no database')
 def given_i_have_no_database(step):
