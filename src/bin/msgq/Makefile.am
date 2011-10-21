@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
- 
+
 pkglibexec_SCRIPTS = b10-msgq
 
 CLEANFILES = b10-msgq msgq.pyc
