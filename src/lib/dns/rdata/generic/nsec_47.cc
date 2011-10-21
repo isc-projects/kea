@@ -178,6 +178,11 @@ NSEC::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
 }
 
+const Name&
+NSEC::getNextName() const {
+    return (impl_->nextname_);
+}
+
 int
 NSEC::compare(const Rdata& other) const {
     const NSEC& other_nsec = dynamic_cast<const NSEC&>(other);

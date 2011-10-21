@@ -89,4 +89,10 @@ TEST_F(Rdata_NSEC_Test, assign) {
     EXPECT_EQ(0, rdata_nsec.compare(rdata_nsec2));
 }
 
+TEST_F(Rdata_NSEC_Test, getNextName) {
+    // The implementation is quite trivial, so we simply check it's actually
+    // defined and does work as intended in a simple case.
+    EXPECT_EQ(Name("www2.isc.org"), generic::NSEC((nsec_txt)).getNextName());
+}
+
 }
