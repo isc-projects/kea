@@ -105,19 +105,30 @@ Query::putSOA(ZoneFinder& zone) {
     }
 }
 
+// Note: unless the data source client implementation or the zone content
+// is broken, 'nsec' should be a valid NSEC RR.  Likewise, the call to
+// find() in this method should result in NXDOMAIN and an NSEC RR that proves
+// the non existent of matching wildcard.  If these assumptions aren't met
+// due to a buggy data source implementation or a broken zone, we'll let
+// underlying libdns++ modules throw an exception, which would result in
+// either an SERVFAIL response or just ignoring the query.  We at least prevent
+// a complete crash due to such broken behavior.
 void
 Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
-    // TODO: Handle unexpected (buggy case): rrset is not NSEC
+    if (nsec->getRdataCount() == 0) {
+        isc_throw(BadNSEC, "NSEC for NXDOMAIN is empty");
+        return;
+    }
 
+    // Add the NSEC proving NXDOMAIN to the authority section.
     response_.addRRset( Message::SECTION_AUTHORITY,
-                        boost::const_pointer_cast<RRset>(nsec),
-                        dnssec_);
+                        boost::const_pointer_cast<RRset>(nsec), dnssec_);
+
     const int qlabels = qname_.getLabelCount();
     const int olabels = qname_.compare(nsec->getName()).getCommonLabels();
-    // Extract NSEC's next domain
-    RdataIteratorPtr it = nsec->getRdataIterator();
     const int nlabels = qname_.compare(
-        dynamic_cast<const generic::NSEC&>(it->getCurrent()).
+        dynamic_cast<const generic::NSEC&>(nsec->getRdataIterator()->
+                                           getCurrent()).
         getNextName()).getCommonLabels();
     const int common_labels = std::max(olabels, nlabels);
     const Name wildname(Name("*").concatenate(qname_.split(qlabels -
@@ -125,8 +136,11 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     const ZoneFinder::FindResult fresult = finder.find(wildname,
                                                        RRType::NSEC(), NULL,
                                                        dnssec_opt_);
-
-    // TODO: check fresult: should be NXDOMAIN, and rrset is NSEC.
+    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
+        fresult.rrset->getRdataCount() == 0) {
+        isc_throw(BadNSEC, "Unexpected result for wildcard NXDOMAIN proof");
+        return;
+    }
 
     // Add the (no-) wildcard proof only when it's different from the NSEC
     // that proves NXDOMAIN; sometimes they can be the same.
