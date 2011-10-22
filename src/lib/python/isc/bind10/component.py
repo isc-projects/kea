@@ -23,7 +23,12 @@ DBG_TRACE_DETAILED = 80
 
 START_CMD = 'start'
 STOP_CMD = 'stop'
+
 STARTED_OK_TIME = 10
+
+STATE_DEAD = 'dead'
+STATE_STOPPED = 'stopped'
+STATE_RUNNING = 'running'
 
 """
 Module for managing components (abstraction of process). It allows starting
@@ -40,6 +45,34 @@ class Component:
     which should be reasonable for majority of ordinary components, but
     it might be inherited and modified for special-purpose components,
     like the core modules with different ways of starting up.
+
+
+    The component is in one of the three states:
+    - Stopped - it is either not started yet or it was explicitly stopped.
+      The component is created in this state (it must be asked to start
+      explicitly).
+    - Running - after start() was called, it started successfully and is
+      now running.
+    - Dead - it failed and can not be resurrected.
+
+    Init
+      |            stop()
+      |  +-----------------------+
+      |  |                       |
+      v  |  start()  success     |
+    Stopped --------+--------> Running <----------+
+                    |            |                |
+                    |failure     | failed()       |
+                    |            |                |
+                    v            |                |
+                    +<-----------+                |
+                    |                             |
+                    |  kind == dispensable or kind|== needed and failed late
+                    +-----------------------------+
+                    |
+                    | kind == core or kind == needed and it failed too soon
+                    v
+                  Dead
     """
     def __init__(self, process, boss, kind, address=None, params=None):
         """
@@ -71,9 +104,7 @@ class Component:
         """
         if kind not in ['core', 'needed', 'dispensable']:
             raise ValueError('Component kind can not be ' + kind)
-        self.__running = False
-        # Dead like really dead. No resurrection possible.
-        self.__dead = False
+        self.__state = STATE_STOPPED
         self._kind = kind
         self._boss = boss
         self._process = process
@@ -90,12 +121,12 @@ class Component:
 
         If you try to start an already running component, it raises ValueError.
         """
-        if self.__dead:
+        if self.__state == STATE_DEAD:
             raise ValueError("Can't resurrect already dead component")
         if self.running():
             raise ValueError("Can't start already running component")
         logger.info(BIND10_COMPONENT_START, self.name())
-        self.__running = True
+        self.__state = STATE_RUNNING
         self.__start_time = time.time()
         try:
             self.start_internal()
@@ -136,7 +167,7 @@ class Component:
         if not self.running():
             raise ValueError("Can't stop a component which is not running")
         logger.info(BIND10_COMPONENT_STOP, self.name())
-        self.__running = False
+        self.__state = STATE_STOPPED
         self.stop_internal()
 
     def stop_internal(self):
@@ -155,14 +186,14 @@ class Component:
         """
         if not self.running():
             raise ValueError("Can't fail component that isn't running")
-        self.__running = False
+        self.__state = STATE_STOPPED
         self.failed_internal()
         # If it is a core component or the needed component failed to start
         # (including it stopped really soon)
         if self._kind == 'core' or \
             (self._kind == 'needed' and time.time() - STARTED_OK_TIME <
              self.__start_time):
-            self.__dead = True
+            self.__state = STATE_DEAD
             logger.fatal(BIND10_COMPONENT_UNSATISFIED, self.name())
             self._boss.component_shutdown(1)
         # This means we want to restart
@@ -187,7 +218,7 @@ class Component:
         is called whenever the component really fails and there might be some
         time in between actual failure and the call.
         """
-        return self.__running
+        return self.__state == STATE_RUNNING
 
     def name(self):
         """
