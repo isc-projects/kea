@@ -34,8 +34,6 @@ class SockCreator(Component):
         self._boss.register_process(self.pid(), self)
 
     def _stop_internal(self):
-        if self.__creator is None:
-            return
         self.__creator.terminate()
         self.__creator = None
 
