@@ -58,7 +58,7 @@ class BossUtils:
         Mock function to shut down. We just note we were asked to do so.
         """
         self._shutdown = True
-        self._exitcode = None
+        self._exitcode = exitcode
 
     def _timeskip(self):
         """
@@ -199,12 +199,14 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
-        self.assertNotEqual(0, self._exitcode)
+        self.assertEqual(1, self._exitcode)
         self.assertFalse(component.running())
-        # Surely it can't be stopped again
+        # Surely it can't be stopped when already dead
         self.assertRaises(ValueError, component.stop)
         # Nor started
         self.assertRaises(ValueError, component.start)
+        # Nor it can fail again
+        self.assertRaises(ValueError, component.failed)
 
     def __check_restarted(self, component):
         """
