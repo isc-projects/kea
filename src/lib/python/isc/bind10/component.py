@@ -284,6 +284,31 @@ class Configurator:
     * `boss`: The boss we are managing for.
     * `specials`: Dict of specially started components. Each item is a class
       representing the component.
+
+    The configuration passed to it (by startup() and reconfigure()) is a
+    dictionary, each item represents one component that should be running.
+    The key is an unique identifier used to reference the component. The
+    value is a dictionary describing the component. All items in the
+    description is optional and they are as follows:
+    * `special` - Some components are started in a special way. If it is
+      present, it specifies which class from the specials parameter should
+      be used to create the component. In that case, some of the following
+      items might be irrelevant, depending on the special component choosen.
+      If it is not there, the basic Component class is used.
+    * `process` - Name of the executable to start. If it is not present,
+      it defaults to the identifier of the component.
+    * `kind` - The kind of component, either of 'core', 'needed' and
+      'dispensable'. This specifies what happens if the component fails.
+      Defaults to despensable.
+    * `address` - The address of the component on message bus. It is used
+      to shut down the component. All special components currently either
+      know their own address or don't need one and ignore it. The common
+      components should provide this.
+    * `params` - The command line parameters of the executable. Defaults
+      to no parameters. It is currently unused.
+    * `priority` - When starting the component, the components with higher
+      priority are started before the ones with lower priority. If it is
+      not present, it defaults to 0.
     """
     def __init__(self, boss, specials = {}):
         """
@@ -406,7 +431,7 @@ class Configurator:
 
     def _run_plan(self, plan):
         """
-        Run a plan, created beforehead by _build_plan.
+        Run a plan, created beforehand by _build_plan.
 
         With the start and stop commands, it also adds and removes components
         in _components.
@@ -414,6 +439,11 @@ class Configurator:
         Currently implemented commands are:
         * start
         * stop
+
+        The plan is a list of tasks, each task is a dictionary. It must contain
+        at last 'component' (a component object to work with) and 'command'
+        (the command to do). Currently, both existing commands need 'name' of
+        the component as well (the identifier from configuration).
         """
         done = 0
         try:
