@@ -34,11 +34,11 @@ class TestError(Exception):
 class BossUtils:
     """
     A class that brings some utilities for pretending we're Boss.
-    This is expected to be inherited by the testcases themself.
+    This is expected to be inherited by the testcases themselves.
     """
     def setUp(self):
         """
-        Part of setup. Should be called by descendand's setUp.
+        Part of setup. Should be called by descendant's setUp.
         """
         self._shutdown = False
         self._exitcode = None
@@ -47,7 +47,7 @@ class BossUtils:
 
     def tearDown(self):
         """
-        Clean up after tests. If the descendand implements a tearDown, it
+        Clean up after tests. If the descendant implements a tearDown, it
         should call this method internally.
         """
         # Return the original time function
@@ -228,7 +228,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
 
     def __do_start_stop(self, kind):
         """
-        This is a body of a test. It creates a componend of given kind,
+        This is a body of a test. It creates a component of given kind,
         then starts it and stops it. It checks correct functions are called
         and the component's status is correct.
 
@@ -300,7 +300,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.start()
         self.__check_started(component)
         self._timeskip()
-        # Pretend the componend died some time later
+        # Pretend the component died some time later
         component.failed()
         # Check the component is still dead
         self.__check_dead(component)
@@ -401,7 +401,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
 
     def test_bad_kind(self):
         """
-        Test the component rejects nonsensual kinds. This includes bad
+        Test the component rejects nonsensical kinds. This includes bad
         capitalization.
         """
         for kind in ['Core', 'CORE', 'nonsense', 'need ed', 'required']:
@@ -654,7 +654,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual([1, 2], component._params)
         self.assertEqual('address', component._address)
         self.assertEqual('needed', component._kind)
-        # We don't use isinstance on purpose, it would allow a descendand
+        # We don't use isinstance on purpose, it would allow a descendant
         self.assertTrue(type(component) is Component)
         plan = configurator._build_plan({}, {
             'component': { }
