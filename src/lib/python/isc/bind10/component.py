@@ -79,6 +79,7 @@ class Component:
         self._start_func = None
         self._address = address
         self._params = params
+        self._procinfo = None
 
     def start(self):
         """
@@ -199,8 +200,10 @@ class Component:
         Provides a PID of a process, if the component is real running process.
         This implementation expects it to be a real process, but derived class
         may return None in case the component is something else.
+
+        This returns None in case it is not yet running.
         """
-        return self._procinfo.pid
+        return self._procinfo.pid if self._procinfo else None
 
 # These are specialized components. Some of them are components which need
 # special care (like the message queue or socket creator) or they need
@@ -212,6 +215,10 @@ class SockCreator(Component):
     The socket creator component. Will start and stop the socket creator
     accordingly.
     """
+    def __init__(self, process, boss, kind, address=None, params=None):
+        Component.__init__(self, process, boss, kind)
+        self.__creator = None
+
     def start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
@@ -229,14 +236,14 @@ class SockCreator(Component):
         Pid of the socket creator. It is provided differently from a usual
         component.
         """
-        return self.__creator.pid()
+        return self.__creator.pid() if self.__creator else None
 
 class Msgq(Component):
     """
     The message queue. Starting is passed to boss, stopping is not supported
     and we leave the boss kill it by signal.
     """
-    def __init__(self, process, boss, kind, address, params):
+    def __init__(self, process, boss, kind, address=None, params=None):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_msgq
 
@@ -244,25 +251,25 @@ class Msgq(Component):
         pass # Wait for the boss to actually kill it. There's no stop command.
 
 class CfgMgr(Component):
-    def __init__(self, process, boss, kind, address, params):
+    def __init__(self, process, boss, kind, address=None, params=None):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_cfgmgr
         self._address = 'ConfigManager'
 
 class Auth(Component):
-    def __init__(self, process, boss, kind, address, params):
+    def __init__(self, process, boss, kind, address=None, params=None):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_auth
         self._address = 'Auth'
 
 class Resolver(Component):
-    def __init__(self, process, boss, kind, address, params):
+    def __init__(self, process, boss, kind, address=None, params=None):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_resolver
         self._address = 'Resolver'
 
 class CmdCtl(Component):
-    def __init__(self, process, boss, kind, address, params):
+    def __init__(self, process, boss, kind, address=None, params=None):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_cmdctl
         self._address = 'Cmdctl'
