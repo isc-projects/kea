@@ -13,12 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import isc.bind10.sockcreator
 import isc.log
 from isc.log_messages.bind10_messages import *
 import time
-from bind10_config import LIBEXECDIR
-import os
 
 logger = isc.log.Logger("boss")
 DBG_TRACE_DATA = 20
@@ -210,90 +207,6 @@ class Component:
         """
         return self._procinfo.pid if self._procinfo else None
 
-# These are specialized components. Some of them are components which need
-# special care (like the message queue or socket creator) or they need
-# some parameters constructed from Boss's command line. They are not tested
-# currently, because it is not clear what to test on them anyway and they just
-# delegate the work for the boss
-class SockCreator(Component):
-    """
-    The socket creator component. Will start and stop the socket creator
-    accordingly.
-    """
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self.__creator = None
-
-    def start_internal(self):
-        self._boss.curproc = 'b10-sockcreator'
-        self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
-                                                        os.environ['PATH'])
-        self._boss.register_process(self.pid(), self)
-
-    def stop_internal(self):
-        if self.__creator is None:
-            return
-        self.__creator.terminate()
-        self.__creator = None
-
-    def pid(self):
-        """
-        Pid of the socket creator. It is provided differently from a usual
-        component.
-        """
-        return self.__creator.pid() if self.__creator else None
-
-class Msgq(Component):
-    """
-    The message queue. Starting is passed to boss, stopping is not supported
-    and we leave the boss kill it by signal.
-    """
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self._start_func = boss.start_msgq
-
-    def stop_internal(self):
-        pass # Wait for the boss to actually kill it. There's no stop command.
-
-class CfgMgr(Component):
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self._start_func = boss.start_cfgmgr
-        self._address = 'ConfigManager'
-
-class Auth(Component):
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self._start_func = boss.start_auth
-        self._address = 'Auth'
-
-class Resolver(Component):
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self._start_func = boss.start_resolver
-        self._address = 'Resolver'
-
-class CmdCtl(Component):
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self._start_func = boss.start_cmdctl
-        self._address = 'Cmdctl'
-
-specials = {
-    'sockcreator': SockCreator,
-    'msgq': Msgq,
-    'cfgmgr': CfgMgr,
-    # TODO: Should these be replaced by configuration in config manager only?
-    # They should not have any parameters anyway
-    'auth': Auth,
-    'resolver': Resolver,
-    'cmdctl': CmdCtl
-}
-"""
-List of specially started components. Each one should be the class than can
-be created for that component.
-"""
-
 class Configurator:
     """
     This thing keeps track of configuration changes and starts and stops
@@ -304,8 +217,13 @@ class Configurator:
     component. There should be some kind of layer protecting users from ever
     doing so (users must not stop the config manager, message queue and stuff
     like that or the system won't start again).
+
+    The parameters are:
+    * `boss`: The boss we are managing for.
+    * `specials`: Dict of specially started components. Each item is a class
+      representing the component.
     """
-    def __init__(self, boss):
+    def __init__(self, boss, specials = {}):
         """
         Initializes the configurator, but nothing is started yet.
 
@@ -317,6 +235,7 @@ class Configurator:
         self._components = {}
         self._old_config = {}
         self._running = False
+        self.__specials = specials
 
     def __reconfigure_internal(self, old, new):
         """
@@ -401,7 +320,7 @@ class Configurator:
                 creator = Component
                 if 'special' in params:
                     # TODO: Better error handling
-                    creator = specials[params['special']]
+                    creator = self.__specials[params['special']]
                 component = creator(params.get('process', cname), self.__boss,
                                     params.get('kind', 'dispensable'),
                                     params.get('address'),
