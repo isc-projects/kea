@@ -319,8 +319,9 @@ class Configurator:
         self.__boss = boss
         # These could be __private, but as we access them from within unittest,
         # it's more comfortable to have them just _protected.
+
+        # They are tuples (configuration, component)
         self._components = {}
-        self._old_config = {}
         self._running = False
         self.__specials = specials
 
@@ -329,7 +330,6 @@ class Configurator:
         Does a switch from one configuration to another.
         """
         self._run_plan(self._build_plan(old, new))
-        self._old_config = new
 
     def startup(self, configuration):
         """
@@ -341,7 +341,7 @@ class Configurator:
             raise ValueError("Trying to start the component configurator " +
                              "twice")
         logger.info(BIND10_CONFIGURATOR_START)
-        self.__reconfigure_internal({}, configuration)
+        self.__reconfigure_internal(self._components, configuration)
         self._running = True
 
     def shutdown(self):
@@ -353,7 +353,7 @@ class Configurator:
                              "configurator while it's not yet running")
         logger.info(BIND10_CONFIGURATOR_STOP)
         self._running = False
-        self.__reconfigure_internal(self._old_config, {})
+        self.__reconfigure_internal(self._components, {})
 
     def reconfigure(self, configuration):
         """
@@ -367,7 +367,7 @@ class Configurator:
             raise ValueError("Trying to reconfigure the component " +
                              "configurator while it's not yet running")
         logger.info(BIND10_CONFIGURATOR_RECONFIGURE)
-        self.__reconfigure_internal(self._old_config, configuration)
+        self.__reconfigure_internal(self._components, configuration)
 
     def _build_plan(self, old, new):
         """
@@ -385,7 +385,7 @@ class Configurator:
         # Handle removals of old components
         for cname in old.keys():
             if cname not in new:
-                component = self._components[cname]
+                component = self._components[cname][1]
                 if component.running():
                     plan.append({
                         'command': STOP_CMD,
@@ -397,7 +397,7 @@ class Configurator:
             if cname in old:
                 for option in ['special', 'process', 'kind', 'address',
                                'params']:
-                    if new[cname].get(option) != old[cname].get(option):
+                    if new[cname].get(option) != old[cname][0].get(option):
                         raise NotImplementedError('Changing configuration of' +
                                                   ' a running component is ' +
                                                   'not yet supported. Remove' +
@@ -423,6 +423,7 @@ class Configurator:
                     'component': component,
                     'command': START_CMD,
                     'name': cname,
+                    'spec': component_spec
                 }))
         # Push the starts there sorted by priority
         plan.extend([command for (_, command) in sorted(plan_add,
@@ -452,7 +453,9 @@ class Configurator:
         The plan is a list of tasks, each task is a dictionary. It must contain
         at last 'component' (a component object to work with) and 'command'
         (the command to do). Currently, both existing commands need 'name' of
-        the component as well (the identifier from configuration).
+        the component as well (the identifier from configuration). The 'start'
+        one needs the 'spec' to be there, which is the configuration description
+        of the component.
         """
         done = 0
         try:
@@ -464,7 +467,7 @@ class Configurator:
                              command, component.name())
                 if command == START_CMD:
                     component.start()
-                    self._components[task['name']] = component
+                    self._components[task['name']] = (task['spec'], component)
                 elif command == STOP_CMD:
                     if component.running():
                         component.stop()

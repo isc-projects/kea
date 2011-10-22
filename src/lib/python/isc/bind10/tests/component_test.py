@@ -523,7 +523,6 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         configurator = Configurator(self, self.__specials)
         self.assertEqual([], self.log)
         self.assertEqual({}, configurator._components)
-        self.assertEqual({}, configurator._old_config)
         self.assertFalse(configurator.running())
 
     def test_run_plan(self):
@@ -543,22 +542,26 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             {
                 'component': stopped,
                 'command': 'start',
-                'name': 'first'
+                'name': 'first',
+                'spec': {'a': 1}
             },
             {
                 'component': started,
                 'command': 'stop',
-                'name': 'second'
+                'name': 'second',
+                'spec': {}
             },
             {
                 'component': FailComponent('third', self, 'needed'),
                 'command': 'start',
-                'name': 'third'
+                'name': 'third',
+                'spec': {}
             },
             {
                 'component': self.__component_test('fourth', self, 'core'),
                 'command': 'start',
-                'name': 'fourth'
+                'name': 'fourth',
+                'spec': {}
             }
         ]
         # Don't include the preparation into the log
@@ -567,7 +570,20 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertRaises(TestError, configurator._run_plan, plan)
         # The first two were handled, the rest not, due to the exception
         self.assertEqual([('first', 'start'), ('second', 'stop')], self.log)
-        self.assertEqual({'first': stopped}, configurator._components)
+        self.assertEqual({'first': ({'a': 1}, stopped)},
+                         configurator._components)
+
+    def __build_components(self, config):
+        """
+        Insert the components into the configuration to specify possible
+        Configurator._components.
+
+        Actually, the components are None, but we need something to be there.
+        """
+        result = {}
+        for name in config.keys():
+            result[name] = (config[name], None)
+        return result
 
     def test_build_plan(self):
         """
@@ -596,7 +612,8 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             'kind': 'needed'
         }
         self.log = []
-        plan = configurator._build_plan(self.__core, bigger)
+        plan = configurator._build_plan(self.__build_components(self.__core),
+                                        bigger)
         self.assertEqual([('additional', 'init'), ('additional', 'needed')],
                          self.log)
         self.assertEqual(1, len(plan))
@@ -609,7 +626,8 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # We run the plan so the component is wired into internal structures
         configurator._run_plan(plan)
         self.log = []
-        plan = configurator._build_plan(bigger, self.__core)
+        plan = configurator._build_plan(self.__build_components(bigger),
+                                        self.__core)
         self.assertEqual([], self.log)
         self.assertEqual([{
             'command': 'stop',
@@ -619,7 +637,8 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
 
         # We want to switch a component. So, prepare the configurator so it
         # holds one
-        configurator._run_plan(configurator._build_plan(self.__core, bigger))
+        configurator._run_plan(configurator._build_plan(
+             self.__build_components(self.__core), bigger))
         # Get a different configuration with a different component
         different = copy.copy(self.__core)
         different['another'] = {
@@ -628,7 +647,8 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             'kind': 'dispensable'
         }
         self.log = []
-        plan = configurator._build_plan(bigger, different)
+        plan = configurator._build_plan(self.__build_components(bigger),
+                                        different)
         self.assertEqual([('another', 'init'), ('another', 'dispensable')],
                          self.log)
         self.assertEqual(2, len(plan))
@@ -684,7 +704,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         }
         modifiedconfig = copy.copy(compconfig)
         modifiedconfig[option] = value
-        return configurator._build_plan({'comp': compconfig},
+        return configurator._build_plan({'comp': (compconfig, None)},
                                         {'comp': modifiedconfig})
 
     def test_change_config_plan(self):
@@ -742,7 +762,9 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual(self.__core_log, self.log)
         for core in self.__core.keys():
             self.assertTrue(core in configurator._components)
-        self.assertEqual(self.__core, configurator._old_config)
+            self.assertEqual(self.__core[core],
+                             configurator._components[core][0])
+        self.assertEqual(set(self.__core), set(configurator._components))
         self.assertTrue(configurator.running())
         # It can't be started twice
         self.assertRaises(ValueError, configurator.startup, self.__core)
@@ -751,7 +773,6 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # Reconfigure - stop everything
         configurator.reconfigure({})
         self.assertEqual({}, configurator._components)
-        self.assertEqual({}, configurator._old_config)
         self.assertTrue(configurator.running())
         self.__check_shutdown_log()
 
@@ -761,14 +782,15 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual(self.__core_log, self.log)
         for core in self.__core.keys():
             self.assertTrue(core in configurator._components)
-        self.assertEqual(self.__core, configurator._old_config)
+            self.assertEqual(self.__core[core],
+                             configurator._components[core][0])
+        self.assertEqual(set(self.__core), set(configurator._components))
         self.assertTrue(configurator.running())
 
         # Do a shutdown
         self.log = []
         configurator.shutdown()
         self.assertEqual({}, configurator._components)
-        self.assertEqual({}, configurator._old_config)
         self.assertFalse(configurator.running())
         self.__check_shutdown_log()
 
