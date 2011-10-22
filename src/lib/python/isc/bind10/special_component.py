@@ -58,27 +58,23 @@ class Msgq(Component):
 
 class CfgMgr(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
+        Component.__init__(self, process, boss, kind, 'ConfigManager')
         self._start_func = boss.start_cfgmgr
-        self._address = 'ConfigManager'
 
 class Auth(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
+        Component.__init__(self, process, boss, kind, 'Auth')
         self._start_func = boss.start_auth
-        self._address = 'Auth'
 
 class Resolver(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
+        Component.__init__(self, process, boss, kind, 'Resolver')
         self._start_func = boss.start_resolver
-        self._address = 'Resolver'
 
 class CmdCtl(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
+        Component.__init__(self, process, boss, kind, 'Cmdctl')
         self._start_func = boss.start_cmdctl
-        self._address = 'Cmdctl'
 
 def get_specials():
     """
