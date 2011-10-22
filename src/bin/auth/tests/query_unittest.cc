@@ -341,7 +341,9 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         }
 
         // Normal case
-        for (Domains::const_reverse_iterator it = domains_.rbegin();
+        // XXX: some older g++ complains about operator!= if we use
+        // const_reverse_iterator
+        for (Domains::reverse_iterator it = domains_.rbegin();
              it != domains_.rend();
              ++it) {
             RRsetStore::const_iterator nsec_it;
