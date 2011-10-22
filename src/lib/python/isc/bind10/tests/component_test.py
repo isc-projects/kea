@@ -67,6 +67,23 @@ class BossUtils:
         tm = time.time()
         isc.bind10.component.time.time = lambda: tm + 30
 
+    # Few functions that pretend to start something. Part of pretending of
+    # being boss.
+    def start_msgq(self):
+        pass
+
+    def start_cfgmgr(self):
+        pass
+
+    def start_auth(self):
+        pass
+
+    def start_resolver(self):
+        pass
+
+    def start_cmdctl(self):
+        pass
+
 class ComponentTests(BossUtils, unittest.TestCase):
     """
     Tests for the bind10.component.Component class
@@ -387,6 +404,20 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         for kind in ['Core', 'CORE', 'nonsense', 'need ed', 'required']:
             self.assertRaises(ValueError, Component, 'No process', self, kind)
+
+    def test_pid_not_running(self):
+        """
+        Test that a componet that is not yet started doesn't have a PID.
+        But it won't failed if asked for and returns None.
+        """
+        for component_type in [Component, isc.bind10.component.SockCreator,
+                               isc.bind10.component.Msgq,
+                               isc.bind10.component.CfgMgr,
+                               isc.bind10.component.Auth,
+                               isc.bind10.component.Resolver,
+                               isc.bind10.component.CmdCtl]:
+            component = component_type('none', self, 'needed')
+            self.assertIsNone(component.pid())
 
 class TestComponent(Component):
     """

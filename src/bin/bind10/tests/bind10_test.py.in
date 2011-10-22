@@ -329,6 +329,19 @@ class TestBossComponents(unittest.TestCase):
         bob.start_all_processes()
         self.__check_extended(self.__param)
 
+    def test_shutdown_no_pid(self):
+        """
+        Test the boss doesn't fail when ve don't have a PID of a component
+        (which means it's not running).
+        """
+        bob = MockBob()
+        class NoComponent:
+            def pid(self):
+                return None
+        bob.processes = {}
+        bob.register_process(1, NoComponent())
+        bob.shutdown()
+
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
         """
