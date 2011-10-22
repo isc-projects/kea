@@ -122,7 +122,7 @@ class Component:
         """
         Start the component for the first time or restart it. If you need to
         modify the way a component is started, do not replace this method,
-        but start_internal. This one does some more bookkeeping around.
+        but _start_internal. This one does some more bookkeeping around.
 
         If you try to start an already running component, it raises ValueError.
         """
@@ -134,13 +134,13 @@ class Component:
         self.__state = STATE_RUNNING
         self.__start_time = time.time()
         try:
-            self.start_internal()
+            self._start_internal()
         except Exception as e:
             logger.error(BIND10_COMPONENT_START_EXCEPTION, self.name(), e)
             self.failed()
             raise
 
-    def start_internal(self):
+    def _start_internal(self):
         """
         This method does the actual starting of a process. If you need to
         change the way the component is started, replace this method.
@@ -153,7 +153,7 @@ class Component:
         boss.start_simple is performed.
 
         If you override the method completely, you should consider overriding
-        pid and stop_internal (and possibly failed_internal and name) as well.
+        pid and _stop_internal (and possibly _failed_internal and name) as well.
         You should also register any processes started within boss.
         """
         # This one is not tested. For one, it starts a real process
@@ -172,7 +172,7 @@ class Component:
     def stop(self):
         """
         Stop the component. If you need to modify the way a component is
-        stopped, do not replace this method, but stop_internal. This one
+        stopped, do not replace this method, but _stop_internal. This one
         does some more bookkeeping.
 
         If you try to stop a component that is not running, it raises
@@ -184,15 +184,15 @@ class Component:
             raise ValueError("Can't stop a component which is not running")
         logger.info(BIND10_COMPONENT_STOP, self.name())
         self.__state = STATE_STOPPED
-        self.stop_internal()
+        self._stop_internal()
 
-    def stop_internal(self):
+    def _stop_internal(self):
         """
         This is the method that does the actual stopping of a component.
         You can replace this method if you want a different way to do it.
 
         If you're overriding this one, you probably want to replace the
-        start_internal and pid methods (and maybe failed_internal and
+        _start_internal and pid methods (and maybe _failed_internal and
         name as well).
         """
         self._boss.stop_process(self._process, self._address)
@@ -213,7 +213,7 @@ class Component:
         if not self.running():
             raise ValueError("Can't fail component that isn't running")
         self.__state = STATE_STOPPED
-        self.failed_internal()
+        self._failed_internal()
         # If it is a core component or the needed component failed to start
         # (including it stopped really soon)
         if self._kind == 'core' or \
@@ -227,7 +227,7 @@ class Component:
             logger.warn(BIND10_COMPONENT_RESTART, self.name())
             self.start()
 
-    def failed_internal(self):
+    def _failed_internal(self):
         """
         This method is called from failed. You can replace it if you need
         some specific behaviour when the component crashes. The default
@@ -265,7 +265,7 @@ class Component:
         This returns None in case it is not yet running.
 
         You probably want to override this method if you're providing custom
-        start_internal.
+        _start_internal.
         """
         return self._procinfo.pid if self._procinfo else None
 

@@ -103,28 +103,28 @@ class ComponentTests(BossUtils, unittest.TestCase):
 
     def __start(self):
         """
-        Mock function, installed into the component into start_internal.
+        Mock function, installed into the component into _start_internal.
         This only notes the component was "started".
         """
         self.__start_called = True
 
     def __stop(self):
         """
-        Mock function, installed into the component into stop_internal.
+        Mock function, installed into the component into _stop_internal.
         This only notes the component was "stopped".
         """
         self.__stop_called = True
 
     def __fail(self):
         """
-        Mock function, installed into the component into failed_internal.
+        Mock function, installed into the component into _failed_internal.
         This only notes the component called the method.
         """
         self.__failed_called = True
 
     def __fail_to_start(self):
         """
-        Mock function. It can be installed into the component's start_internal
+        Mock function. It can be installed into the component's _start_internal
         to simulate a component that fails to start by raising an exception.
         """
         orig_started = self.__start_called
@@ -144,9 +144,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         kind of tests and we pretend to be the boss.
         """
         component = Component('No process', self, kind, 'homeless', [])
-        component.start_internal = self.__start
-        component.stop_internal = self.__stop
-        component.failed_internal = self.__fail
+        component._start_internal = self.__start
+        component._stop_internal = self.__stop
+        component._failed_internal = self.__fail
         return component
 
     def test_name(self):
@@ -373,7 +373,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         component = self.__create_component('core')
         self.__check_startup(component)
-        component.start_internal = self.__fail_to_start
+        component._start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
         self.__check_dead(component)
 
@@ -384,7 +384,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         component = self.__create_component('needed')
         self.__check_startup(component)
-        component.start_internal = self.__fail_to_start
+        component._start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
         self.__check_dead(component)
 
@@ -395,7 +395,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         component = self.__create_component('dispensable')
         self.__check_startup(component)
-        component.start_internal = self.__fail_to_start
+        component._start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
         self.__check_restarted(component)
 
@@ -447,20 +447,20 @@ class TestComponent(Component):
         """
         self.__owner.log.append((self.__name, event))
 
-    def start_internal(self):
+    def _start_internal(self):
         self.log('start')
 
-    def stop_internal(self):
+    def _stop_internal(self):
         self.log('stop')
 
-    def failed_internal(self):
+    def _failed_internal(self):
         self.log('failed')
 
 class FailComponent(Component):
     """
     A mock component that fails whenever it is started.
     """
-    def start_internal(self):
+    def _start_internal(self):
         raise TestError("test error")
 
 class ConfiguratorTest(BossUtils, unittest.TestCase):
