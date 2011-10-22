@@ -27,13 +27,13 @@ class SockCreator(Component):
         Component.__init__(self, process, boss, kind)
         self.__creator = None
 
-    def start_internal(self):
+    def _start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
                                                         os.environ['PATH'])
         self._boss.register_process(self.pid(), self)
 
-    def stop_internal(self):
+    def _stop_internal(self):
         if self.__creator is None:
             return
         self.__creator.terminate()
@@ -55,7 +55,7 @@ class Msgq(Component):
         Component.__init__(self, process, boss, kind)
         self._start_func = boss.start_msgq
 
-    def stop_internal(self):
+    def _stop_internal(self):
         pass # Wait for the boss to actually kill it. There's no stop command.
 
 class CfgMgr(Component):
