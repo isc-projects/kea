@@ -29,7 +29,7 @@ import time
 logger = isc.log.Logger("boss")
 DBG_TRACE_DATA = 20
 DBG_TRACE_DETAILED = 80
-<<<<<<< HEAD
+
 START_CMD = 'start'
 STOP_CMD = 'stop'
 
@@ -358,7 +358,10 @@ class Configurator:
     def reconfigure(self, configuration):
         """
         Changes configuration from the current one to the provided. It
-        starts and stops all the components as needed.
+        starts and stops all the components as needed (eg. if there's
+        a component that was not in the original configuration, it is
+        started, any component that was in the old and is not in the
+        new one is stopped).
         """
         if not self._running:
             raise ValueError("Trying to reconfigure the component " +
@@ -403,16 +406,17 @@ class Configurator:
         plan_add = []
         for cname in new.keys():
             if cname not in old:
-                params = new[cname]
+                component_spec = new[cname]
                 creator = Component
-                if 'special' in params:
+                if 'special' in component_spec:
                     # TODO: Better error handling
-                    creator = self.__specials[params['special']]
-                component = creator(params.get('process', cname), self.__boss,
-                                    params.get('kind', 'dispensable'),
-                                    params.get('address'),
-                                    params.get('params'))
-                priority = params.get('priority', 0)
+                    creator = self.__specials[component_spec['special']]
+                component = creator(component_spec.get('process', cname),
+                                    self.__boss,
+                                    component_spec.get('kind', 'dispensable'),
+                                    component_spec.get('address'),
+                                    component_spec.get('params'))
+                priority = component_spec.get('priority', 0)
                 # We store tuples, priority first, so we can easily sort
                 plan_add.append((priority, {
                     'component': component,
@@ -427,6 +431,10 @@ class Configurator:
         return plan
 
     def running(self):
+        """
+        Returns if the configurator is running (eg. was started by startup and
+        not yet stopped by shutdown).
+        """
         return self._running
 
     def _run_plan(self, plan):
