@@ -44,7 +44,12 @@ class Component:
     This represents a single component. It has some defaults of behaviour,
     which should be reasonable for majority of ordinary components, but
     it might be inherited and modified for special-purpose components,
-    like the core modules with different ways of starting up.
+    like the core modules with different ways of starting up. Another
+    way to tweak only the start of the component (eg. by providing some
+    command line parameters) is to set _start_func function from within
+    inherited class.
+
+    The methods are marked if it is expected for them to be overridden.
 
 
     The component is in one of the three states:
@@ -139,6 +144,17 @@ class Component:
         """
         This method does the actual starting of a process. If you need to
         change the way the component is started, replace this method.
+
+        You can change the "core" of this function by setting self._start_func
+        to a function without parameters. Such function should start the
+        process and return the procinfo object describing the running process.
+
+        If you don't provide the _start_func, the usual startup by calling
+        boss.start_simple is performed.
+
+        If you override the method completely, you should consider overriding
+        pid and stop_internal (and possibly failed_internal and name) as well.
+        You should also register any processes started within boss.
         """
         # This one is not tested. For one, it starts a real process
         # which is out of scope of unit tests, for another, it just
@@ -174,6 +190,10 @@ class Component:
         """
         This is the method that does the actual stopping of a component.
         You can replace this method if you want a different way to do it.
+
+        If you're overriding this one, you probably want to replace the
+        start_internal and pid methods (and maybe failed_internal and
+        name as well).
         """
         self._boss.stop_process(self._process, self._address)
 
@@ -223,6 +243,8 @@ class Component:
         Informs if the component is currently running. It assumes the failed
         is called whenever the component really fails and there might be some
         time in between actual failure and the call.
+
+        It is not expected for this method to be overriden.
         """
         return self.__state == STATE_RUNNING
 
@@ -230,7 +252,7 @@ class Component:
         """
         Returns human-readable name of the component. This is usually the
         name of the executable, but it might be something different in a
-        derived class.
+        derived class (in case it is overriden).
         """
         return self._process
 
@@ -241,6 +263,9 @@ class Component:
         may return None in case the component is something else.
 
         This returns None in case it is not yet running.
+
+        You probably want to override this method if you're providing custom
+        start_internal.
         """
         return self._procinfo.pid if self._procinfo else None
 
