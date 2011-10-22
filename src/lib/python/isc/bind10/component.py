@@ -24,6 +24,10 @@ logger = isc.log.Logger("boss")
 DBG_TRACE_DATA = 20
 DBG_TRACE_DETAILED = 80
 
+START_CMD = 'start'
+STOP_CMD = 'stop'
+STARTED_OK_TIME = 10
+
 """
 Module for managing components (abstraction of process). It allows starting
 them in given order, handling when they crash (what happens depends on kind
@@ -159,7 +163,8 @@ class Component:
         # If it is a core component or the needed component failed to start
         # (including it stopped really soon)
         if self._kind == 'core' or \
-            (self._kind == 'needed' and time.time() - 10 < self.__start_time):
+            (self._kind == 'needed' and time.time() - STARTED_OK_TIME <
+             self.__start_time):
             self.__dead = True
             logger.fatal(BIND10_COMPONENT_UNSATISFIED, self.name())
             self._boss.component_shutdown(1)
@@ -374,7 +379,7 @@ class Configurator:
                 component = self._components[cname]
                 if component.running():
                     plan.append({
-                        'command': 'stop',
+                        'command': STOP_CMD,
                         'component': component,
                         'name': cname
                     })
@@ -405,7 +410,7 @@ class Configurator:
                 # We store tuples, priority first, so we can easily sort
                 plan_add.append((priority, {
                     'component': component,
-                    'command': 'start',
+                    'command': START_CMD,
                     'name': cname,
                 }))
         # Push the starts there sorted by priority
@@ -435,12 +440,12 @@ class Configurator:
             for task in plan:
                 component = task['component']
                 command = task['command']
-                logger.debug(DBG_TRACE_DETAILED, BIND10_CONFIGURATOR_TASK, command,
-                             component.name())
-                if command == 'start':
+                logger.debug(DBG_TRACE_DETAILED, BIND10_CONFIGURATOR_TASK,
+                             command, component.name())
+                if command == START_CMD:
                     component.start()
                     self._components[task['name']] = component
-                elif command == 'stop':
+                elif command == STOP_CMD:
                     if component.running():
                         component.stop()
                     del self._components[task['name']]
