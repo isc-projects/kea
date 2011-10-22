@@ -183,6 +183,12 @@ class Component:
 
         If you try to call failed on a component that is not running,
         a ValueError is raised.
+
+        If it is a core component or needed component and it was started only
+        recently, the component will become dead and will ask the boss to shut
+        down with error exit status. A dead component can't be started again.
+
+        Otherwise the component will try to restart.
         """
         if not self.running():
             raise ValueError("Can't fail component that isn't running")
