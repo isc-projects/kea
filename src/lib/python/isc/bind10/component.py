@@ -395,7 +395,8 @@ class Configurator:
         # Handle transitions of configuration of what is here
         for cname in new.keys():
             if cname in old:
-                for option in ['special', 'process', 'kind']:
+                for option in ['special', 'process', 'kind', 'address',
+                               'params']:
                     if new[cname].get(option) != old[cname].get(option):
                         raise NotImplementedError('Changing configuration of' +
                                                   ' a running component is ' +

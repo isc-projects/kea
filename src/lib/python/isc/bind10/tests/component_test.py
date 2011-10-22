@@ -696,6 +696,10 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
                           'not_a_test')
         self.assertRaises(NotImplementedError, self.__do_switch, 'process',
                           'different')
+        self.assertRaises(NotImplementedError, self.__do_switch, 'address',
+                          'different')
+        self.assertRaises(NotImplementedError, self.__do_switch, 'params',
+                          ['different'])
         # This does not change anything on running component, so no need to
         # raise
         self.assertEqual([], self.__do_switch('priority', 5))
