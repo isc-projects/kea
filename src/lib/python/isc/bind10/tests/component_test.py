@@ -14,14 +14,16 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-Tests for the bind10.component module
+Tests for the isc.bind10.component module and the
+isc.bind10.special_component module.
 """
 
 import unittest
 import isc.log
 import time
 import copy
-from isc.bind10.component import Component, Configurator, specials
+from isc.bind10.component import Component, Configurator
+import isc.bind10.special_component
 
 class TestError(Exception):
     """
@@ -410,12 +412,13 @@ class ComponentTests(BossUtils, unittest.TestCase):
         Test that a componet that is not yet started doesn't have a PID.
         But it won't failed if asked for and returns None.
         """
-        for component_type in [Component, isc.bind10.component.SockCreator,
-                               isc.bind10.component.Msgq,
-                               isc.bind10.component.CfgMgr,
-                               isc.bind10.component.Auth,
-                               isc.bind10.component.Resolver,
-                               isc.bind10.component.CmdCtl]:
+        for component_type in [Component,
+                               isc.bind10.special_component.SockCreator,
+                               isc.bind10.special_component.Msgq,
+                               isc.bind10.special_component.CfgMgr,
+                               isc.bind10.special_component.Auth,
+                               isc.bind10.special_component.Resolver,
+                               isc.bind10.special_component.CmdCtl]:
             component = component_type('none', self, 'needed')
             self.assertIsNone(component.pid())
 
@@ -466,15 +469,9 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
     """
     def setUp(self):
         """
-        Insert the special evaluated test components we use and prepare the
-        log. Also provide some data for the tests and prepare us to pretend
-        we're boss.
+        Prepare some test data for the tests.
         """
         BossUtils.setUp(self)
-        # We put our functions inside instead of class constructors,
-        # so we can look into what is happening more easily
-        self.__orig_specials = copy.copy(specials)
-        specials['test'] = self.__component_test
         self.log = []
         # The core "hardcoded" configuration
         self.__core = {
@@ -507,13 +504,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.__core_log_start = [('core1', 'start'), ('core3', 'start'),
                                  ('core2', 'start')]
         self.__core_log = self.__core_log_create + self.__core_log_start
-
-    def tearDown(self):
-        """
-        Clean up the special evaluated test components and other stuff.
-        """
-        BossUtils.tearDown(self)
-        specials = self.__orig_specials
+        self.__specials = { 'test': self.__component_test }
 
     def __component_test(self, process, boss, kind, address=None, params=None):
         """
@@ -527,7 +518,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         Tests the configurator can be created and it does not create
         any components yet, nor does it remember anything.
         """
-        configurator = Configurator(self)
+        configurator = Configurator(self, self.__specials)
         self.assertEqual([], self.log)
         self.assertEqual({}, configurator._components)
         self.assertEqual({}, configurator._old_config)
@@ -541,7 +532,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         Also includes one that raises, so we see it just stops there.
         """
         # Prepare the configurator and the plan
-        configurator = Configurator(self)
+        configurator = Configurator(self, self.__specials)
         started = self.__component_test('second', self, 'dispensable')
         started.start()
         stopped = self.__component_test('first', self, 'core')
@@ -581,7 +572,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         Test building the plan correctly. Not complete yet, this grows as we
         add more ways of changing the plan.
         """
-        configurator = Configurator(self)
+        configurator = Configurator(self, self.__specials)
         plan = configurator._build_plan({}, self.__core)
         # This should have created the components
         self.assertEqual(self.__core_log_create, self.log)
@@ -682,7 +673,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         Start it with some component and then switch the configuration of the
         component. This will probably raise, as it is not yet supported.
         """
-        configurator = Configurator(self)
+        configurator = Configurator(self, self.__specials)
         compconfig = {
             'special': 'test',
             'process': 'process',
@@ -735,7 +726,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
 
         It also checks the components are kept inside the configurator.
         """
-        configurator = Configurator(self)
+        configurator = Configurator(self, self.__specials)
         # Can't reconfigure nor stop yet
         self.assertRaises(ValueError, configurator.reconfigure, self.__core)
         self.assertRaises(ValueError, configurator.shutdown)
@@ -786,7 +777,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         (or without priority), it failed as it couldn't compare the dicts
         there. This tests it doesn't crash.
         """
-        configurator = Configurator(self)
+        configurator = Configurator(self, self.__specials)
         configurator._build_plan({}, {"c1": {}, "c2": {}})
 
 if __name__ == '__main__':

@@ -68,6 +68,7 @@ import isc.net.parse
 import isc.log
 from isc.log_messages.bind10_messages import *
 import isc.bind10.component
+import isc.bind10.special_component
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -242,7 +243,8 @@ class BoB:
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
-        self._component_configurator = isc.bind10.component.Configurator(self)
+        self._component_configurator = isc.bind10.component.Configurator(self,
+            isc.bind10.special_component.get_specials())
         self.__core_components = {
             'sockcreator': {
                 'kind': 'core',
