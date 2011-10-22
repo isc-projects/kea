@@ -642,6 +642,9 @@ class BoB:
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
         for component in processes_to_stop:
+            if component.pid() is None:
+                # This isn't running any more for some reason
+                continue
             logger.info(BIND10_SEND_SIGTERM, component.name(),
                         component.pid())
             try:
@@ -651,12 +654,20 @@ class BoB:
                 # finally exited)
                 pass
         # finally, send SIGKILL (unmaskable termination) until everybody dies
-        while self.processes:
+        alive = self.processes # Is there any process alive?
+        # We set alive to false at the start of each killing and reset it
+        # to true whenever we find a component that still lives.
+        while alive:
             # XXX: some delay probably useful... how much is uncertain
             time.sleep(0.1)
             self.reap_children()
             processes_to_stop = list(self.processes.values())
+            alive = False
             for component in processes_to_stop:
+                if component.pid() is None:
+                    # This isn't running any more for some reason
+                    continue
+                alive = True
                 logger.info(BIND10_SEND_SIGKILL, component.name(),
                             component.pid())
                 try:
