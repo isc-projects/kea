@@ -522,7 +522,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual([], self.log)
         self.assertEqual({}, configurator._components)
         self.assertEqual({}, configurator._old_config)
-        self.assertFalse(configurator._running)
+        self.assertFalse(configurator.running())
 
     def test_run_plan(self):
         """
@@ -741,7 +741,6 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         for core in self.__core.keys():
             self.assertTrue(core in configurator._components)
         self.assertEqual(self.__core, configurator._old_config)
-        self.assertTrue(configurator._running)
         self.assertTrue(configurator.running())
         # It can't be started twice
         self.assertRaises(ValueError, configurator.startup, self.__core)
@@ -751,7 +750,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         configurator.reconfigure({})
         self.assertEqual({}, configurator._components)
         self.assertEqual({}, configurator._old_config)
-        self.assertTrue(configurator._running)
+        self.assertTrue(configurator.running())
         self.__check_shutdown_log()
 
         # Start it again
@@ -761,14 +760,13 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         for core in self.__core.keys():
             self.assertTrue(core in configurator._components)
         self.assertEqual(self.__core, configurator._old_config)
-        self.assertTrue(configurator._running)
+        self.assertTrue(configurator.running())
 
         # Do a shutdown
         self.log = []
         configurator.shutdown()
         self.assertEqual({}, configurator._components)
         self.assertEqual({}, configurator._old_config)
-        self.assertFalse(configurator._running)
         self.assertFalse(configurator.running())
         self.__check_shutdown_log()
 
