@@ -28,7 +28,6 @@ import struct
 import errno
 import time
 import select
-import pprint
 import random
 from optparse import OptionParser, OptionValueError
 import isc.util.process
@@ -293,9 +292,6 @@ class MsgQ:
             sys.stderr.write("[b10-msgq] Routing decode error: %s\n" % err)
             return
 
-#        sys.stdout.write("\t" + pprint.pformat(routingmsg) + "\n")
-#        sys.stdout.write("\t" + pprint.pformat(data) + "\n")
-
         self.process_command(fd, sock, routingmsg, data)
 
     def process_command(self, fd, sock, routing, data):
@@ -363,7 +359,8 @@ class MsgQ:
                 # in the case the other side seems gone, kill the socket
                 # and drop the send action
                 if sockerr.errno == errno.EPIPE:
-                    print("[b10-msgq] SIGPIPE on send, dropping message")
+                    print("[b10-msgq] SIGPIPE on send, dropping message " +
+                          "and closing connection")
                     self.kill_socket(fileno, sock)
                     return
                 else:
