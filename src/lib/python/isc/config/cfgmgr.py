@@ -202,7 +202,7 @@ class ConfigManager:
 
     def notify_boss(self):
         """Notifies the Boss module that the Config Manager is running"""
-        self.cc.group_sendmsg({"running": "configmanager"}, "Boss")
+        self.cc.group_sendmsg({"running": "ConfigManager"}, "Boss")
 
     def set_module_spec(self, spec):
         """Adds a ModuleSpec"""

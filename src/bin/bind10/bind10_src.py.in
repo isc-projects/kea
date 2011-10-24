@@ -208,12 +208,14 @@ class ProcessInfo:
 
 class CChannelConnectError(Exception): pass
 
+class ProcessStartError(Exception): pass
+
 class BoB:
     """Boss of BIND class."""
     
     def __init__(self, msgq_socket_file=None, data_path=None,
     config_filename=None, nocache=False, verbose=False, setuid=None,
-    username=None, cmdctl_port=None, brittle=False):
+    username=None, cmdctl_port=None, brittle=False, pwait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -249,6 +251,7 @@ class BoB:
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
+        self.pwait_time = pwait_time
         self.sockcreator = None
 
     def config_handler(self, new_config):
@@ -435,6 +438,27 @@ class BoB:
         else:
             logger.debug(DBG_PROCESS, BIND10_STARTED_PROCESS_PID, self.curproc, pid)
 
+    def process_running(self, msg, who):
+        """
+            Some processes return a message to the Boss after they have
+            started to indicate that they are running.  The form of the
+            message is a dictionary with contents {"running:", "<process>"}.
+            This method checks the passed message and returns True if the
+            "who" process is contained in the message (so is presumably
+            running).  It returns False for all other conditions and will
+            log an error if appropriate.
+        """
+        if msg is not None:
+            try:
+                if msg["running"] == who:
+                    return True
+                else:
+                    logger.error(BIND10_STARTUP_UNEXPECTED_MESSAGE, msg)
+            except:
+                logger.error(BIND10_STARTUP_UNRECOGNISED_MESSAGE, msg)
+        
+        return False
+
     # The next few methods start the individual processes of BIND-10.  They
     # are called via start_all_processes().  If any fail, an exception is
     # raised which is caught by the caller of start_all_processes(); this kills
@@ -465,6 +489,10 @@ class BoB:
             except isc.cc.session.SessionError:
                 time.sleep(0.1)
 
+        # Subscribe to the message queue.  The only messages we expect to receive
+        # on this channel are once relating to process startup.
+        self.cc_session.group_subscribe("Boss")
+
     def start_cfgmgr(self, c_channel_env):
         """
             Starts the configuration manager process
@@ -482,11 +510,18 @@ class BoB:
         self.processes[bind_cfgd.pid] = bind_cfgd
         self.log_started(bind_cfgd.pid)
 
-        # sleep until b10-cfgmgr is fully up and running, this is a good place
-        # to have a (short) timeout on synchronized groupsend/receive
-        # TODO: replace the sleep by a listen for ConfigManager started
-        # message
-        time.sleep(1)
+        # Wait for the configuration manager to start up.  The amount of time
+        # can be set on the command line.
+        time_remaining = self.pwait_time
+        msg, env = self.cc_session.group_recvmsg()
+        while time_remaining > 0 and not self.process_running(msg, "ConfigManager"):
+            logger.debug(DBG_PROCESS, BIND10_WAIT_CFGMGR)
+            time.sleep(1)
+            time_remaining = time_remaining - 1
+            msg, env = self.cc_session.group_recvmsg()
+        
+        if not self.process_running(msg, "ConfigManager"):
+            raise ProcessStartError("Configuration manager process has not started")
 
     def start_ccsession(self, c_channel_env):
         """
@@ -946,6 +981,8 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
                       help="file to dump the PID of the BIND 10 process")
     parser.add_option("--brittle", dest="brittle", action="store_true",
                       help="debugging flag: exit if any component dies")
+    parser.add_option("-w", "--wait", dest="pwait_time", type="int",
+                      default=10, help="Time to wait for config manager to start up")
 
     (options, args) = parser.parse_args(args)
 
@@ -1048,7 +1085,8 @@ def main():
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                        options.config_file, options.nocache, options.verbose,
-                       setuid, username, options.cmdctl_port, options.brittle)
+                       setuid, username, options.cmdctl_port, options.brittle,
+                       options.pwait_time)
     startup_result = boss_of_bind.startup()
     if startup_result:
         logger.fatal(BIND10_STARTUP_ERROR, startup_result)
