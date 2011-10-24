@@ -128,7 +128,7 @@ class TestConfigManager(unittest.TestCase):
         msg = self.fake_session.get_message("Boss", None)
         self.assert_(msg)
         # this one is actually wrong, but 'current status quo'
-        self.assertEqual(msg, {"running": "configmanager"})
+        self.assertEqual(msg, {"running": "ConfigManager"})
 
     def test_set_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
