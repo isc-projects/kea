@@ -424,6 +424,16 @@ class ComponentTests(BossUtils, unittest.TestCase):
             component = component_type('none', self, 'needed')
             self.assertIsNone(component.pid())
 
+    def test_kill_unstarted(self):
+        """
+        Try to kill the component if it's not started. Should not fail.
+
+        We do not try to kill a running component, as we should not start
+        it during unit tests.
+        """
+        component = Component(self, 'component', 'needed')
+        component.kill()
+
 class TestComponent(Component):
     """
     A test component. It does not start any processes or so, it just logs
@@ -457,6 +467,9 @@ class TestComponent(Component):
 
     def _failed_internal(self):
         self.log('failed')
+
+    def kill(self):
+        self.log('killed')
 
 class FailComponent(Component):
     """

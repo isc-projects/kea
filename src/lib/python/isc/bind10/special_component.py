@@ -44,6 +44,10 @@ class SockCreator(Component):
         """
         return self.__creator.pid() if self.__creator else None
 
+    def kill(self):
+        if self.__creator:
+            self.__creator.kill()
+
 class Msgq(Component):
     """
     The message queue. Starting is passed to boss, stopping is not supported
