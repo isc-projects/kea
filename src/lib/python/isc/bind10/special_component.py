@@ -44,7 +44,8 @@ class SockCreator(Component):
         """
         return self.__creator.pid() if self.__creator else None
 
-    def kill(self):
+    def kill(self, forcefull=False):
+        # We don't really care about forcefull here
         if self.__creator:
             self.__creator.kill()
 

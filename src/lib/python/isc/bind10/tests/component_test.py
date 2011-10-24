@@ -433,6 +433,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         component = Component(self, 'component', 'needed')
         component.kill()
+        component.kill(True)
 
 class TestComponent(Component):
     """
@@ -468,7 +469,7 @@ class TestComponent(Component):
     def _failed_internal(self):
         self.log('failed')
 
-    def kill(self):
+    def kill(self, forcefull=False):
         self.log('killed')
 
 class FailComponent(Component):
