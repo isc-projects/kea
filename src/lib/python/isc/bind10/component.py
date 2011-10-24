@@ -269,16 +269,21 @@ class Component:
         """
         return self._procinfo.pid if self._procinfo else None
 
-    def kill(self):
+    def kill(self, forcefull=False):
         """
         The component should be forcefully killed. This does not change the
         internal state, it just kills the external process and expects a
         failure to be reported when the process really dies.
 
         If it isn't running, it does nothing.
+
+        If the forcefull is true, it uses SIGKILL instead of SIGTERM.
         """
         if self._procinfo:
-            self._procinfo.kill()
+            if forcefull:
+                self._procinfo.kill()
+            else:
+                self._procinfo.terminate()
 
 class Configurator:
     """
