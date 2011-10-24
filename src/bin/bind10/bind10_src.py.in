@@ -533,13 +533,16 @@ class BoB:
 
             The argument c_channel_env is unused but is supplied to keep the
             argument list the same for all start_xxx methods.
+
+            With regards to logging, note that as the CC session is not a
+            process, the log_starting/log_started methods are not used.
         """
-        self.log_starting("ccsession")
+        logger.info(BIND10_STARTING_CC)
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
                                       self.config_handler,
                                       self.command_handler)
         self.ccs.start()
-        self.log_started()
+        logger.debug(DBG_PROCESS, BIND10_STARTED_CC)
 
     # A couple of utility methods for starting processes...
 
@@ -673,7 +676,8 @@ class BoB:
         self.start_ccsession(c_channel_env)
 
         # Extract the parameters associated with Bob.  This can only be
-        # done after the CC Session is started.
+        # done after the CC Session is started.  Note that the logging
+        # configuration may override the "-v" switch set on the command line.
         self.read_bind10_config()
 
         # Continue starting the processes.  The authoritative server (if
