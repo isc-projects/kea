@@ -25,12 +25,13 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace isc {
+namespace dhcp {
 
 const IOAddress DEFAULT_ADDRESS("0.0.0.0");
 
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
-     :local_addr_(IOAddress("0.0.0.0")),
-      remote_addr_(IOAddress("0.0.0.0")),
+     :local_addr_(DEFAULT_ADDRESS),
+      remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
       ifindex_(0),
       local_port_(DHCP4_SERVER_PORT),
@@ -57,8 +58,8 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
-     :local_addr_(IOAddress("0.0.0.0")),
-      remote_addr_(IOAddress("0.0.0.0")),
+     :local_addr_(DEFAULT_ADDRESS),
+      remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
       ifindex_(-1),
       local_port_(DHCP4_SERVER_PORT),
@@ -118,21 +119,22 @@ Pkt4::toText() {
 }
 
 void
-Pkt4::setHWAddr(uint8_t hType, uint8_t hlen, const uint8_t* macAddr) {
+Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
+                const std::vector<uint8_t>& macAddr) {
     /// TODO Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
     if (hlen>MAX_CHADDR_LEN) {
         isc_throw(OutOfRange, "Hardware address (len=" << hlen
                   << " too long. Max " << MAX_CHADDR_LEN << " supported.");
     }
-    if ( (!macAddr) && (hlen > 0) ) {
+    if ( (macAddr.size() == 0) && (hlen > 0) ) {
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
     htype_ = hType;
     hlen_ = hlen;
     memset(chaddr_, 0, MAX_CHADDR_LEN);
-    memcpy(chaddr_, macAddr, hlen);
+    memcpy(chaddr_, &macAddr[0], hlen);
 }
 
 void
@@ -182,4 +184,6 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     }
 }
 
-};
+} // end of namespace isc::dhcp
+
+} // end of namespace isc

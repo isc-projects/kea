@@ -44,10 +44,10 @@ TEST(Pkt4Test, constructor) {
     ASSERT_EQ(236U, DHCPV4_PKT_HDR_LEN);
     Pkt4* pkt = 0;
 
-    // minimal 
+    // minimal
     uint8_t testData[250];
     for (int i = 0; i < 250; i++) {
-        testData[i]=i; 
+        testData[i]=i;
     }
 
     // positive case1. Normal received packet
@@ -95,14 +95,14 @@ const static uint32_t dummyTransid = 0x12345678;
 const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
 
 // a dummy MAC address, padded with 0s
-const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0, 
+const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
                                  0, 0, 0, 0, 0, 0, 0, 0 };
 
 // let's use some creative test content here (128 chars + \0)
 const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
     "adipiscing elit. Proin mollis placerat metus, at "
     "lacinia orci ornare vitae. Mauris amet.";
-    
+
 // yet another type of test content (64 chars + \0)
 const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
     "adipiscing elit posuere.";
@@ -124,8 +124,12 @@ boost::shared_ptr<Pkt4>
 generateTestPacket1() {
 
     boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDISCOVER, dummyTransid));
+
+    vector<uint8_t> vectorMacAddr(dummyMacAddr, dummyMacAddr
+                                  +sizeof(dummyMacAddr));
+
     // hwType = 6(ETHERNET), hlen = 6(MAC address len)
-    pkt->setHWAddr(6, 6, dummyMacAddr); 
+    pkt->setHWAddr(6, 6, vectorMacAddr);
     pkt->setHops(13); // 13 relays. Wow!
     // transaction-id is already set
     pkt->setSecs(42);
@@ -135,7 +139,7 @@ generateTestPacket1() {
     pkt->setSiaddr(IOAddress("192.0.2.255"));
     pkt->setGiaddr(IOAddress("255.255.255.255"));
     // chaddr already set with setHWAddr()
-    pkt->setSname(dummySname, 64); 
+    pkt->setSname(dummySname, 64);
     pkt->setFile(dummyFile, 128);
 
     return (pkt);
@@ -144,43 +148,41 @@ generateTestPacket1() {
 /// Generates test packet
 ///
 /// Allocates and generates on-wire buffer that represents
-/// test packet, with all fixed fields set to non-zero values. 
+/// test packet, with all fixed fields set to non-zero values.
 /// Content is not always reasonable.
 ///
 /// See generateTestPacket1() function that returns
 /// exactly the same packet as Pkt4 object.
 ///
 /// @return pointer to allocated Pkt4 object
-shared_array<uint8_t>
+// Returns a vector containing a DHCPv4 packet header.
+vector<uint8_t>
 generateTestPacket2() {
 
-    shared_array<uint8_t> buf(new uint8_t[Pkt4::DHCPV4_PKT_HDR_LEN]);
-
-    // that is only part of the header. It contains all "short" fields, 
-    // larger fields are constructed separately
+    // That is only part of the header. It contains all "short" fields,
+    // larger fields are constructed separately.
     uint8_t hdr[] = {
-        1, 6, 6, 13, // op, htype, hlen, hops,
+        1, 6, 6, 13,            // op, htype, hlen, hops,
         0x12, 0x34, 0x56, 0x78, // transaction-id
-        0, 42, 0xff, 0xff, // 42 secs, 0xffff flags
-        192, 0, 2, 1, // ciaddr
-        1, 2, 3, 4, // yiaddr
-        192, 0, 2, 255, // siaddr
-        255, 255, 255, 255, // giaddr
+        0, 42, 0xff, 0xff,      // 42 secs, 0xffff flags
+        192, 0, 2, 1,           // ciaddr
+        1, 2, 3, 4,             // yiaddr
+        192, 0, 2, 255,         // siaddr
+        255, 255, 255, 255,     // giaddr
     };
 
-    BOOST_STATIC_ASSERT(28 == sizeof(hdr));
+    // Initialize the vector with the header fields defined above.
+    vector<uint8_t> buf(hdr, hdr + sizeof(hdr));
 
-    size_t offset = 0;
+    // Append the large header fields.
+    copy(dummyMacAddr, dummyMacAddr + Pkt4::MAX_CHADDR_LEN, back_inserter(buf));
+    copy(dummySname, dummySname + Pkt4::MAX_SNAME_LEN, back_inserter(buf));
+    copy(dummyFile, dummyFile + Pkt4::MAX_FILE_LEN, back_inserter(buf));
 
-    memcpy(&buf[0] + offset, hdr, sizeof(hdr));
-    offset += sizeof(hdr);
-
-    memcpy(&buf[0] + offset, dummyMacAddr, 6); // chaddr is 16 bytes
-    offset += Pkt4::MAX_CHADDR_LEN;
-    memcpy(&buf[0] + offset, dummySname, 64); // sname is 64 bytes
-    offset += Pkt4::MAX_SNAME_LEN;
-    memcpy(&buf[0] + offset, dummyFile, 128);
-    offset += Pkt4::MAX_FILE_LEN;
+    // Should now have all the header, so check.  The "static_cast" is used
+    // to get round an odd bug whereby the linker appears not to find the
+    // definition of DHCPV4_PKT_HDR_LEN if it appears within an EXPECT_EQ().
+    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), buf.size());
 
     return (buf);
 }
@@ -232,7 +234,7 @@ TEST(Pkt4Test, fixedFieldsPack) {
 TEST(Pkt4Test, fixedFieldsUnpack) {
     shared_array<uint8_t> expectedFormat = generateTestPkt2();
 
-    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0], 
+    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
                                   Pkt4::DHCPV4_PKT_HDR_LEN));
 
     // ok, let's check packet values
@@ -263,8 +265,10 @@ TEST(Pkt4Test, fixedFieldsUnpack) {
 // this test is for hardware addresses (htype, hlen and chaddr fields)
 TEST(Pkt4Test, hwAddr) {
 
-    uint8_t mac[Pkt4::MAX_CHADDR_LEN];
+    vector<uint8_t> mac;
     uint8_t expectedChaddr[Pkt4::MAX_CHADDR_LEN];
+
+    mac.resize(Pkt4::MAX_CHADDR_LEN);
 
     Pkt4* pkt = 0;
     // let's test each hlen, from 0 till 16
@@ -277,23 +281,23 @@ TEST(Pkt4Test, hwAddr) {
             mac[i] = 128+i;
             expectedChaddr[i] = 128+i;
         }
-        
+
         // type and transaction doesn't matter in this test
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setHWAddr(255-macLen*10, // just weird htype
                        macLen,
                        mac);
-        EXPECT_EQ(0, memcmp(expectedChaddr, pkt->getChaddr(), 
+        EXPECT_EQ(0, memcmp(expectedChaddr, pkt->getChaddr(),
                             Pkt4::MAX_CHADDR_LEN));
 
 #if 0
         /// TODO Uncomment when ticket #1227 is implemented)
-        EXPECT_NO_THROW( 
+        EXPECT_NO_THROW(
             pkt->pack();
         );
 
         // CHADDR starts at offset 28 in DHCP packet
-        EXPECT_EQ(0, memcmp(pkt->getData()+28, expectedChaddr, 
+        EXPECT_EQ(0, memcmp(pkt->getData()+28, expectedChaddr,
                             Pkt4::MAX_CHADDR_LEN));
 #endif
 
@@ -364,7 +368,7 @@ TEST(Pkt4Test, sname) {
             sname[i] = i;
             expectedSname[i] = i;
         }
-        
+
         // type and transaction doesn't matter in this test
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setSname(sname, snameLen);
@@ -373,7 +377,7 @@ TEST(Pkt4Test, sname) {
 
 #if 0
         /// TODO Uncomment when ticket #1227 is implemented)
-        EXPECT_NO_THROW( 
+        EXPECT_NO_THROW(
             pkt->pack();
         );
 
@@ -401,7 +405,7 @@ TEST(Pkt4Test, file) {
             file[i] = i;
             expectedFile[i] = i;
         }
-        
+
         // type and transaction doesn't matter in this test
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setFile(file, fileLen);
@@ -410,7 +414,7 @@ TEST(Pkt4Test, file) {
 
 #if 0
         /// TODO Uncomment when ticket #1227 is implemented)
-        EXPECT_NO_THROW( 
+        EXPECT_NO_THROW(
             pkt->pack();
         );
 
