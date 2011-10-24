@@ -254,6 +254,10 @@ class BoB:
         self.pwait_time = pwait_time
         self.sockcreator = None
 
+        # If -v was set, enable full debug logging.
+        if self.verbose:
+            logger.set_severity("DEBUG", 99)
+
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
