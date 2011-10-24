@@ -311,6 +311,31 @@ class TestBossComponents(unittest.TestCase):
         bob._component_configurator.shutdown = orig
         self.assertTrue(self.__called)
 
+    def test_kills(self):
+        """
+        Test that the boss kills processes which don't want to stop.
+        """
+        bob = MockBob()
+        killed = []
+        class ImmortalComponent:
+            """
+            An immortal component. It does not stop when it is told so
+            (anyway it is not told so). It does not die if it is killed
+            the first time. It dies only when killed forcefully.
+            """
+            def kill(self, forcefull=False):
+                killed.append(forcefull)
+                if forcefull:
+                    bob.processes = {}
+            def pid(self):
+                return 1
+            def name(self):
+                return "Immortal"
+        bob.processes = {}
+        bob.register_process(1, ImmortalComponent())
+        bob.shutdown()
+        self.assertEqual([False, True], killed)
+
     def test_init_config(self):
         """
         Test initial configuration is loaded.
