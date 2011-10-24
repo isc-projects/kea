@@ -269,6 +269,17 @@ class Component:
         """
         return self._procinfo.pid if self._procinfo else None
 
+    def kill(self):
+        """
+        The component should be forcefully killed. This does not change the
+        internal state, it just kills the external process and expects a
+        failure to be reported when the process really dies.
+
+        If it isn't running, it does nothing.
+        """
+        if self._procinfo:
+            self._procinfo.kill()
+
 class Configurator:
     """
     This thing keeps track of configuration changes and starts and stops
