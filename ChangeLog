@@ -1,3 +1,9 @@
+302.	[defect]	jelte
+	msgq no longer crashes if the remote end is closed while msgq
+	tries to send data. It will now simply drop the message and close
+	the connection itself.
+	(Trac #1180, git 6e68b97b050e40e073f736d84b62b3e193dd870a)
+
 301.	[func]		stephen
 	Add system test for IXFR over TCP.
 	(Trac #1213, git 68ee3818bcbecebf3e6789e81ea79d551a4ff3e8)
