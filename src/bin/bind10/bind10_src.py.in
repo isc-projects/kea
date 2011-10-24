@@ -283,10 +283,12 @@ class BoB:
             return
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_NEW_CONFIGURATION,
                      new_config)
-        if 'components' in new_config:
-            self.__propagate_component_config(new_config['components'])
-        answer = isc.config.ccsession.create_answer(0)
-        return answer
+        try:
+            if 'components' in new_config:
+                self.__propagate_component_config(new_config['components'])
+            return isc.config.ccsession.create_answer(0)
+        except Exception as e:
+            return isc.config.ccsession.create_answer(1, str(e))
 
     def get_processes(self):
         pids = list(self.processes.keys())

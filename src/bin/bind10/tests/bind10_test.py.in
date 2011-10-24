@@ -298,10 +298,9 @@ class TestBossComponents(unittest.TestCase):
         # Check a configuration that messes up the core components is rejected.
         compconf = dict(self.__compconfig)
         compconf['msgq'] = { 'process': 'echo' }
-        # Is it OK to raise, or should it catch also and convert to error
-        # answer?
-        self.assertRaises(Exception, bob.config_handler,
-                          {'components': compconf})
+        result = bob.config_handler({'components': compconf})
+        # Check it rejected it
+        self.assertEqual(1, result['result'][0])
 
         # Stop it
         orig = bob._component_configurator.shutdown
