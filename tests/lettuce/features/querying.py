@@ -118,7 +118,8 @@ def query(step, query_name, qtype, qclass, addr, port, rcode):
     if port is None:
         port = 47806
     query_result = QueryResult(query_name, qtype, qclass, addr, port)
-    assert query_result.rcode == rcode, "Got " + query_result.rcode
+    assert query_result.rcode == rcode,\
+        "Expected: " + rcode + ", got " + query_result.rcode
     world.last_query_result = query_result
 
 @step('The SOA serial for ([\w.]+) should be ([0-9]+)')
