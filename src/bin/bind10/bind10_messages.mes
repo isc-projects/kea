@@ -161,6 +161,10 @@ indicated OS API function with given error.
 % BIND10_SOCKET_GET requesting socket [%1]:%2 of type %3 from the creator
 The boss forwards a request for a socket to the socket creator.
 
+% BIND10_STARTED_CC started configuration/command session
+Debug message given when BIND 10 has successfull started the object that
+handles configuration and commands.
+
 % BIND10_STARTED_PROCESS started %1
 The given process has successfully been started.
 
@@ -169,6 +173,10 @@ The given process has successfully been started, and has the given PID.
 
 % BIND10_STARTING starting BIND10: %1
 Informational message on startup that shows the full version.
+
+% BIND10_STARTING_CC starting configuration/command session
+Informational message given when BIND 10 is starting the session object
+that handles configuration and commands.
 
 % BIND10_STARTING_PROCESS starting process %1
 The boss module is starting the given process.
@@ -215,12 +223,13 @@ the message channel.
 An unknown child process has exited. The PID is printed, but no further
 action will be taken by the boss process.
 
-% BIND10_WAIT_CFGMGR waiting for configuration manager process to start
+% BIND10_WAIT_CFGMGR waiting for configuration manager process to initialize
 The configuration manager process is so critical to operation of BIND 10
 that after starting it, the Boss module will wait for it to initialize
 itself before continuing.  This debug message is produced during the
 wait and may be output zero or more times depending on how long it takes
 the configuration manager to start up.  The total length of time Boss
 will wait for the configuration manager before reporting an error is
-set with the command line --wait switch.
+set with the command line --wait switch, which has a default value of
+ten seconds.
 
