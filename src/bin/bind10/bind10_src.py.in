@@ -345,7 +345,7 @@ class BoB:
 
         for pid in self.processes:
             logger.info(BIND10_KILL_PROCESS, self.processes[pid].name())
-            os.kill(self.processes[pid].pid(), signal.SIGTERM)
+            self.processes[pid].kill()
         self.processes = {}
         if self._component_configurator.running():
             self._component_configurator.shutdown()
@@ -652,7 +652,7 @@ class BoB:
             logger.info(BIND10_SEND_SIGTERM, component.name(),
                         component.pid())
             try:
-                os.kill(component.pid(), signal.SIGTERM)
+                component.kill()
             except OSError:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
@@ -675,7 +675,7 @@ class BoB:
                 logger.info(BIND10_SEND_SIGKILL, component.name(),
                             component.pid())
                 try:
-                    os.kill(component.pid(), signal.SIGKILL)
+                    component.kill(True)
                 except OSError:
                     # ignore these (usually ESRCH because the child
                     # finally exited)
