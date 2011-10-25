@@ -302,14 +302,9 @@ class TestBossComponents(unittest.TestCase):
         # Check it rejected it
         self.assertEqual(1, result['result'][0])
 
-        # Stop it
-        orig = bob._component_configurator.shutdown
-        bob._component_configurator.shutdown = self.__nullary_hook
-        self.__called = False
         # We can't call shutdown, that one relies on the stuff in main
-        bob.stop_all_processes()
-        bob._component_configurator.shutdown = orig
-        self.assertTrue(self.__called)
+        # We check somewhere else that the shutdown is actually called
+        # from there (the test_kills).
 
     def test_kills(self):
         """
@@ -333,8 +328,18 @@ class TestBossComponents(unittest.TestCase):
                 return "Immortal"
         bob.processes = {}
         bob.register_process(1, ImmortalComponent())
+
+        # While at it, we check the configurator shutdown is actually called
+        orig = bob._component_configurator.shutdown
+        bob._component_configurator.shutdown = self.__nullary_hook
+        self.__called = False
+
         bob.shutdown()
+
         self.assertEqual([False, True], killed)
+        self.assertTrue(self.__called)
+
+        bob._component_configurator.shutdown = orig
 
     def test_init_config(self):
         """
