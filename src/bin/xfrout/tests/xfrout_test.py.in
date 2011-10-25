@@ -922,7 +922,7 @@ class TestInitialization(unittest.TestCase):
         self.setEnv("BIND10_XFROUT_SOCKET_FILE", None)
         xfrout.init_paths()
         self.assertEqual(xfrout.UNIX_SOCKET_FILE,
-                         "@@LOCALSTATEDIR@@/auth_xfrout_conn")
+                         "@@LOCALSTATEDIR@@/@PACKAGE_NAME@/auth_xfrout_connn")
 
     def testProvidedSocket(self):
         self.setEnv("B10_FROM_BUILD", None)
