@@ -406,11 +406,11 @@ class BoB:
             Start the message queue and connect to the command channel.
         """
         self.log_starting("b10-msgq")
-        c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], self.c_channel_env,
+        msgq_proc = ProcessInfo("b10-msgq", ["b10-msgq"], self.c_channel_env,
                                 True, not self.verbose, uid=self.uid,
                                 username=self.username)
-        c_channel.spawn()
-        self.log_started(c_channel.pid)
+        msgq_proc.spawn()
+        self.log_started(msgq_proc.pid)
 
         # Now connect to the c-channel
         cc_connect_start = time.time()
@@ -424,7 +424,7 @@ class BoB:
                 self.cc_session = isc.cc.Session(self.msgq_socket_file)
             except isc.cc.session.SessionError:
                 time.sleep(0.1)
-        return c_channel
+        return msgq_proc
 
     def start_cfgmgr(self):
         """
