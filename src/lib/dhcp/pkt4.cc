@@ -66,7 +66,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       remote_port_(DHCP4_CLIENT_PORT),
       /// TODO Fixed fields, uncomment in ticket #1224
       op_(BOOTREQUEST),
-      transid_(transid_),
+      transid_(0),
       secs_(0),
       flags_(0),
       ciaddr_(DEFAULT_ADDRESS),
