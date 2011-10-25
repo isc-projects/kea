@@ -44,12 +44,12 @@ import os
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + "/src/bin/bind10/bob.spec"
-    ADD_LIBEXEC_AND_LD_PATH = False
+    ADD_LIBEXEC_PATH = False
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    ADD_LIBEXEC_AND_LD_PATH = True
+    ADD_LIBEXEC_PATH = True
     
 import subprocess
 import signal
@@ -189,7 +189,7 @@ class ProcessInfo:
         # on construction (self.env).
         spawn_env = copy.deepcopy(os.environ)
         spawn_env.update(self.env)
-        if ADD_LIBEXEC_AND_LD_PATH:
+        if ADD_LIBEXEC_PATH:
             spawn_env['PATH'] = "@@LIBEXECDIR@@:" + spawn_env['PATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
@@ -359,7 +359,7 @@ class BoB:
     def start_creator(self):
         self.curproc = 'b10-sockcreator'
         creator_path = os.environ['PATH']
-        if ADD_LIBEXEC_AND_LD_PATH:
+        if ADD_LIBEXEC_PATH:
             creator_path = "@@LIBEXECDIR@@:" + creator_path
         self.sockcreator = isc.bind10.sockcreator.Creator(creator_path)
 
@@ -592,7 +592,11 @@ class BoB:
         # a cleaner solution, but for a short term workaround we specify the
         # path here, unconditionally, and without even bothering which
         # environment variable should be used.
-        if ADD_LIBEXEC_AND_LD_PATH:
+        #
+        # We reuse the ADD_LIBEXEC_PATH variable to see whether we need to
+        # do this, as the conditions that make this workaround needed are
+        # the same as for the libexec path addition
+        if ADD_LIBEXEC_PATH:
             cur_path = os.getenv('DYLD_LIBRARY_PATH')
             cur_path = '' if cur_path is None else ':' + cur_path
             c_channel_env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
