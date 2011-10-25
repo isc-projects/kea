@@ -196,6 +196,8 @@ class Component:
         name as well).
         """
         self._boss.stop_process(self._process, self._address)
+        # TODO Some way to wait for the process that doesn't want to
+        # terminate and kill it would prove nice (or add it to boss somewhere?)
 
     def failed(self):
         """
