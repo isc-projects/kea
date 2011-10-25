@@ -32,44 +32,38 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace boost;
 
-// can't compare const to value directly, as it gives strange
-// linker errors in gtest.h
-static size_t DHCPV4_PKT_HDR_LEN = Pkt4::DHCPV4_PKT_HDR_LEN;
-static size_t MAX_SNAME_LEN = Pkt4::MAX_SNAME_LEN;
-static size_t MAX_FILE_LEN = Pkt4::MAX_FILE_LEN;
-
 namespace {
 
 TEST(Pkt4Test, constructor) {
 
-    ASSERT_EQ(236U, DHCPV4_PKT_HDR_LEN);
+    ASSERT_EQ(236U, static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) );
     Pkt4* pkt = 0;
 
-    // minimal
+    // Just some dummy payload.
     uint8_t testData[250];
     for (int i = 0; i < 250; i++) {
         testData[i]=i;
     }
 
-    // positive case1. Normal received packet
+    // Positive case1. Normal received packet.
     EXPECT_NO_THROW(
-        pkt = new Pkt4(testData, 236);
+        pkt = new Pkt4(testData, Pkt4::DHCPV4_PKT_HDR_LEN);
     );
 
-    EXPECT_EQ(236, pkt->len());
+    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
 
     EXPECT_NO_THROW(
         delete pkt;
         pkt = 0;
     );
 
-    // positive case2. Normal outgoing packet
+    // Positive case2. Normal outgoing packet.
     EXPECT_NO_THROW(
         pkt = new Pkt4(DHCPDISCOVER, 0xffffffff);
     );
 
     // DHCPv4 packet must be at least 236 bytes long
-    EXPECT_EQ(DHCPV4_PKT_HDR_LEN, pkt->len());
+    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
     EXPECT_EQ(0xffffffff, pkt->getTransid());
     EXPECT_NO_THROW(
@@ -77,15 +71,16 @@ TEST(Pkt4Test, constructor) {
         pkt = 0;
     );
 
-    // negative case. Should drop truncated messages
+    // Negative case. Should drop truncated messages.
     EXPECT_THROW(
-        pkt = new Pkt4(testData, 235),
+        pkt = new Pkt4(testData, Pkt4::DHCPV4_PKT_HDR_LEN-1),
         OutOfRange
     );
     if (pkt) {
-        // test failed. Exception should have been thrown, but
-        // object was created instead. Let's clean this up
+        // Test failed. Exception should have been thrown, but
+        // object was created instead. Let's clean this up.
         delete pkt;
+        pkt = 0;
     }
 }
 
@@ -122,7 +117,7 @@ const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
 BOOST_STATIC_ASSERT(sizeof(dummyFile)  == Pkt4::MAX_FILE_LEN + 1);
 BOOST_STATIC_ASSERT(sizeof(dummySname) == Pkt4::MAX_SNAME_LEN + 1);
 
-/// Generates test packet
+/// @brief Generates test packet.
 ///
 /// Allocates and generates test packet, with all fixed
 /// fields set to non-zero values. Content is not always
@@ -143,21 +138,21 @@ generateTestPacket1() {
     // hwType = 6(ETHERNET), hlen = 6(MAC address len)
     pkt->setHWAddr(dummyHtype, dummyHlen, vectorMacAddr);
     pkt->setHops(dummyHops); // 13 relays. Wow!
-    // transaction-id is already set
+    // Transaction-id is already set.
     pkt->setSecs(dummySecs);
     pkt->setFlags(dummyFlags); // all flags set
     pkt->setCiaddr(dummyCiaddr);
     pkt->setYiaddr(dummyYiaddr);
     pkt->setSiaddr(dummySiaddr);
     pkt->setGiaddr(dummyGiaddr);
-    // chaddr already set with setHWAddr()
+    // Chaddr already set with setHWAddr().
     pkt->setSname(dummySname, 64);
     pkt->setFile(dummyFile, 128);
 
     return (pkt);
 }
 
-/// Generates test packet
+/// @brief Generates test packet.
 ///
 /// Allocates and generates on-wire buffer that represents
 /// test packet, with all fixed fields set to non-zero values.
@@ -237,13 +232,13 @@ TEST(Pkt4Test, fixedFieldsPack) {
         pkt->pack();
     );
 
-    ASSERT_EQ(DHCPV4_PKT_HDR_LEN, pkt->len());
+    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
 
     // redundant but MUCH easier for debug in gdb
     const uint8_t * exp = &expectedFormat[0];
     const uint8_t * got = static_cast<const uint8_t*>(pkt->getBuffer().getData());
 
-    EXPECT_EQ(0, memcmp(exp, got, DHCPV4_PKT_HDR_LEN));
+    EXPECT_EQ(0, memcmp(exp, got, Pkt4::DHCPV4_PKT_HDR_LEN));
 }
 
 /// TODO Uncomment when ticket #1226 is implemented
@@ -274,10 +269,10 @@ TEST(Pkt4Test, fixedFieldsUnpack) {
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
     EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), Pkt4::MAX_CHADDR_LEN));
 
-    ASSERT_EQ(MAX_SNAME_LEN, pkt->getSname().size());
+    ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_SNAME_LEN), pkt->getSname().size());
     EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
 
-    ASSERT_EQ(MAX_FILE_LEN, pkt->getFile().size());
+    ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_FILE_LEN), pkt->getFile().size());
     EXPECT_EQ(0, memcmp(dummyFile, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
 
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
@@ -410,7 +405,7 @@ TEST(Pkt4Test, file) {
     uint8_t file[Pkt4::MAX_FILE_LEN];
 
     Pkt4* pkt = 0;
-    // let's test each file length, from 0 till 128
+    // Let's test each file length, from 0 till 128.
     for (int fileLen=0; fileLen < Pkt4::MAX_FILE_LEN; fileLen++) {
         for (int i=0; i < Pkt4::MAX_FILE_LEN; i++) {
             file[i] = 0;
@@ -419,7 +414,7 @@ TEST(Pkt4Test, file) {
             file[i] = i;
         }
 
-        // type and transaction doesn't matter in this test
+        // Type and transaction doesn't matter in this test.
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setFile(file, fileLen);
 
@@ -430,7 +425,7 @@ TEST(Pkt4Test, file) {
             pkt->pack();
         );
 
-        // FILE starts at offset 108 in DHCP packet
+        // FILE starts at offset 108 in DHCP packet.
         const uint8_t* ptr =
             static_cast<const uint8_t*>(pkt->getBuffer().getData())+108;
         EXPECT_EQ(0, memcmp(ptr, file, Pkt4::MAX_FILE_LEN));
