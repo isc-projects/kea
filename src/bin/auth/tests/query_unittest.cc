@@ -123,6 +123,10 @@ const char* const nsec_nz_txt =
 const char* const nsec_nxdomain_txt =
     "noglue.example.com. 3600 IN NSEC www.example.com. A\n";
 
+// NSEC for the normal NXRRSET case
+const char* const nsec_www_txt =
+    "www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG\n";
+
 // A helper function that generates a textual representation of RRSIG RDATA
 // for the given covered type.  The resulting RRSIG may not necessarily make
 // sense in terms of the DNSSEC protocol, but for our testing purposes it's
@@ -163,7 +167,7 @@ public:
             cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
             other_zone_rrs << no_txt << nz_txt <<
             nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
-            nsec_nxdomain_txt;
+            nsec_nxdomain_txt << nsec_www_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -324,6 +328,12 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         }
 
         // Otherwise it's NXRRSET case.
+        if ((options & FIND_DNSSEC) != 0) {
+            found_rrset = found_domain->second.find(RRType::NSEC());
+            if (found_rrset != found_domain->second.end()) {
+                return (FindResult(NXRRSET, found_rrset->second));
+            }
+        }
         return (FindResult(NXRRSET, RRsetPtr()));
     }
 
@@ -716,6 +726,24 @@ TEST_F(QueryTest, nxrrset) {
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
                   NULL, soa_txt, NULL, mock_finder->getOrigin());
 }
+
+TEST_F(QueryTest, nxrrsetWithNSEC) {
+    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
+    // NXRRSET and their RRSIGs.
+    EXPECT_NO_THROW(Query(memory_client, Name("www.example.com"),
+                          RRType::TXT(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec_www_txt) + "\n" +
+                   string("www.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+// TODO: specify DNSSEC but no NSEC
+// TODO: empty non terminal NXRRSET
 
 /*
  * This tests that when there's no SOA and we need a negative answer. It should
