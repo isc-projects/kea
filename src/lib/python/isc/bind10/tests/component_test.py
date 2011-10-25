@@ -678,7 +678,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         plan = configurator._build_plan({}, {
             'component': {
                 'kind': 'needed',
-                'params': [1, 2],
+                'params': ["1", "2"],
                 'address': 'address'
             }
         })
@@ -687,7 +687,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.assertEqual('component', plan[0]['name'])
         component = plan[0]['component']
         self.assertEqual('component', component.name())
-        self.assertEqual([1, 2], component._params)
+        self.assertEqual(["1", "2"], component._params)
         self.assertEqual('address', component._address)
         self.assertEqual('needed', component._kind)
         # We don't use isinstance on purpose, it would allow a descendant
