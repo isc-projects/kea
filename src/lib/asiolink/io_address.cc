@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <unistd.h>             // for some IPC/network system calls
+#include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -70,6 +71,11 @@ IOAddress::from_bytes(short family, const uint8_t* data) {
     return IOAddress(string(addr_str));
 }
 
+IOAddress
+IOAddress::from_uint32(uint32_t v4address) {
+    return IOAddress(asio::ip::address_v4(v4address));
+}
+
 short
 IOAddress::getFamily() const {
     if (asio_address_.is_v4()) {
@@ -82,6 +88,15 @@ IOAddress::getFamily() const {
 const asio::ip::address&
 IOAddress::getAddress() const {
     return asio_address_;
+}
+
+IOAddress::operator uint32_t() const {
+    if (getAddress().is_v4()) {
+        return (getAddress().to_v4().to_ulong());
+    } else {
+        isc_throw(BadValue, "Can't convert " << toText()
+                  << " address to IPv4.");
+    }
 }
 
 } // namespace asiolink
