@@ -354,11 +354,7 @@ class BoB:
         """
             Reads the parameters associated with the BoB module itself.
 
-            At present these are the components to start although arguably this
-            information should be in the configuration for the appropriate
-            module itself. (However, this would cause difficulty in the case of
-            xfrin/xfrout and zone manager as we don't need to start those if we
-            are not running the authoritative server.)
+            This means the the list of components we should be running.
         """
         logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
