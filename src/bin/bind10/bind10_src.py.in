@@ -562,6 +562,17 @@ class BoB:
         # This will start all the other configured processes.
         self.read_bind10_config()
 
+        # FIXME: This is currently the only place we can reasonably drop
+        # root privileges. But that's wrong, as everything will run as root.
+        # If we put it before the read_bind10_config, the auth and resolver
+        # will not run as root, which means they can't get their privileged
+        # sockets.
+        #
+        # Once the socket creator is working fully (and is used), this can go
+        # directly to the function starting socket creator.
+        if self.uid is not None:
+            posix.setuid(self.uid)
+
     def startup(self):
         """
             Start the BoB instance.
