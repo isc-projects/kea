@@ -47,7 +47,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferIn_(0), // not used, this is TX packet
+      bufferIn_(NULL, 0), // not used, this is TX packet
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(msg_type)
 {
@@ -73,15 +73,15 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferIn_(0), // not used, this is TX packet
-      bufferOut_(DHCPV4_PKT_HDR_LEN),
+      bufferIn_(data, len),
+      bufferOut_(0), // not used, this is RX packet
       msg_type_(DHCPDISCOVER)
 {
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
-                  << " received, at least 236 bytes expected.");
+                  << " received, at least " << DHCPV4_PKT_HDR_LEN
+                  << "is expected");
     }
-    bufferIn_.writeData(data, len);
 }
 
 size_t
@@ -94,15 +94,51 @@ Pkt4::len() {
 
 bool
 Pkt4::pack() {
-    /// TODO: Implement this (ticket #1227)
+    bufferOut_.writeUint8(op_);
+    bufferOut_.writeUint8(htype_);
+    bufferOut_.writeUint8(hlen_);
+    bufferOut_.writeUint8(hops_);
+    bufferOut_.writeUint32(transid_);
+    bufferOut_.writeUint16(secs_);
+    bufferOut_.writeUint16(flags_);
+    bufferOut_.writeUint32(ciaddr_);
+    bufferOut_.writeUint32(yiaddr_);
+    bufferOut_.writeUint32(siaddr_);
+    bufferOut_.writeUint32(giaddr_);
+    bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
+    bufferOut_.writeData(sname_, MAX_SNAME_LEN);
+    bufferOut_.writeData(file_, MAX_FILE_LEN);
 
-    return (false);
+    /// TODO: Options should follow here (ticket #1228)
+
+    return (true);
 }
 bool
 Pkt4::unpack() {
-    /// TODO: Implement this (ticket #1226)
+    if (bufferIn_.getLength()<DHCPV4_PKT_HDR_LEN) {
+        isc_throw(OutOfRange, "Received truncated DHCPv4 packet (len="
+                  << bufferIn_.getLength() << " received, at least "
+                  << DHCPV4_PKT_HDR_LEN << "is expected");
+    }
 
-    return (false);
+    op_ = bufferIn_.readUint8();
+    htype_ = bufferIn_.readUint8();
+    hlen_ = bufferIn_.readUint8();
+    hops_ = bufferIn_.readUint8();
+    transid_ = bufferIn_.readUint32();
+    secs_ = bufferIn_.readUint16();
+    flags_ = bufferIn_.readUint16();
+    ciaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
+    yiaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
+    siaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
+    giaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
+    bufferIn_.readData(chaddr_, MAX_CHADDR_LEN);
+    bufferIn_.readData(sname_, MAX_SNAME_LEN);
+    bufferIn_.readData(file_, MAX_FILE_LEN);
+
+    /// TODO: Parse options here (ticket #1228)
+
+    return (true);
 }
 
 std::string
