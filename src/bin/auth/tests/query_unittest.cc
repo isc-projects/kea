@@ -121,11 +121,14 @@ const char* const nz_txt =
 const char* const nsec_nz_txt =
     "nz.no.example.com. 3600 IN NSEC noglue.example.com. AAAA NSEC RRSIG\n";
 const char* const nsec_nxdomain_txt =
-    "noglue.example.com. 3600 IN NSEC www.example.com. A\n";
+    "noglue.example.com. 3600 IN NSEC nonsec.example.com. A\n";
 
 // NSEC for the normal NXRRSET case
 const char* const nsec_www_txt =
     "www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG\n";
+
+// Authoritative data without NSEC
+const char* const nonsec_a_txt = "nonsec.example.com. 3600 IN A 192.0.2.0\n";
 
 // A helper function that generates a textual representation of RRSIG RDATA
 // for the given covered type.  The resulting RRSIG may not necessarily make
@@ -167,7 +170,7 @@ public:
             cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
             other_zone_rrs << no_txt << nz_txt <<
             nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
-            nsec_nxdomain_txt << nsec_www_txt;
+            nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -337,7 +340,32 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         return (FindResult(NXRRSET, RRsetPtr()));
     }
 
-    // query name isn't found in our domains.  This is an NXDOMAIN case.
+    // query name isn't found in our domains.
+    // We first check if the query name is an empty non terminal name
+    // of the zone by naive linear search.
+    Domains::const_iterator domain;
+    for (domain = domains_.begin(); domain != domains_.end(); ++domain) {
+        if (name.compare((*domain).first).getRelation() ==
+            NameComparisonResult::SUPERDOMAIN) {
+            break;
+        }
+    }
+    if (domain != domains_.end()) {
+        // The query name is in an empty non terminal node followed by 'domain'
+        // (for simplicity we ignore the pathological case of 'domain' is
+        // the origin of the zone)
+        --domain;               // reset domain to the "previous name"
+        if ((options & FIND_DNSSEC) != 0) {
+            RRsetStore::const_iterator found_rrset =
+                (*domain).second.find(RRType::NSEC());
+            if (found_rrset != (*domain).second.end()) {
+                return (FindResult(NXRRSET, found_rrset->second));
+            }
+        }
+        return (FindResult(NXRRSET, RRsetPtr()));
+    }
+
+    // This is an NXDOMAIN case.
     // If we need DNSSEC proof, find the "previous name" that has an NSEC RR
     // and return NXDOMAIN with the found NSEC.  Otherwise, just return the
     // NXDOMAIN code and NULL.  If DNSSEC proof is requested but no NSEC is
@@ -730,8 +758,8 @@ TEST_F(QueryTest, nxrrset) {
 TEST_F(QueryTest, nxrrsetWithNSEC) {
     // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
     // NXRRSET and their RRSIGs.
-    EXPECT_NO_THROW(Query(memory_client, Name("www.example.com"),
-                          RRType::TXT(), response, true).process());
+    Query(memory_client, Name("www.example.com"), RRType::TXT(), response,
+          true).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
@@ -742,8 +770,39 @@ TEST_F(QueryTest, nxrrsetWithNSEC) {
                   NULL, mock_finder->getOrigin());
 }
 
-// TODO: specify DNSSEC but no NSEC
-// TODO: empty non terminal NXRRSET
+TEST_F(QueryTest, emptyNameWithNSEC) {
+    // Empty non terminal with DNSSEC proof.  This is one of the cases of
+    // Section 3.1.3.2 of RFC4035.
+    // mx.example.com. NSEC ).no.example.com. proves no.example.com. is a
+    // non empty terminal node.  Note that it also implicitly proves there
+    // shouldn't be no closer wildcard match (because the empty name is an
+    // exact match), so we only need one NSEC.
+    // From the point of the Query::process(), this is actually no different
+    // from the other NXRRSET case, but we check that explicitly just in case.
+    Query(memory_client, Name("no.example.com"), RRType::A(), response,
+          true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec_mx_txt) + "\n" +
+                   string("mx.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxrrsetWithoutNSEC) {
+    // NXRRSET with DNSSEC proof requested, but there's no NSEC at that node.
+    // This is an unexpected event (if the zone is supposed to be properly
+    // signed with NSECs), but we accept and ignore the oddity.
+    Query(memory_client, Name("nonsec.example.com"), RRType::TXT(), response,
+          true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
 
 /*
  * This tests that when there's no SOA and we need a negative answer. It should
