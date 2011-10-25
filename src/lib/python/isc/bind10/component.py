@@ -311,7 +311,7 @@ class Configurator:
     dictionary, each item represents one component that should be running.
     The key is an unique identifier used to reference the component. The
     value is a dictionary describing the component. All items in the
-    description is optional and they are as follows:
+    description is optional unless told otherwise and they are as follows:
     * `special` - Some components are started in a special way. If it is
       present, it specifies which class from the specials parameter should
       be used to create the component. In that case, some of the following
@@ -321,7 +321,7 @@ class Configurator:
       it defaults to the identifier of the component.
     * `kind` - The kind of component, either of 'core', 'needed' and
       'dispensable'. This specifies what happens if the component fails.
-      Defaults to despensable.
+      This one is required.
     * `address` - The address of the component on message bus. It is used
       to shut down the component. All special components currently either
       know their own address or don't need one and ignore it. The common
@@ -435,8 +435,7 @@ class Configurator:
                     # TODO: Better error handling
                     creator = self.__specials[component_spec['special']]
                 component = creator(component_spec.get('process', cname),
-                                    self.__boss,
-                                    component_spec.get('kind', 'dispensable'),
+                                    self.__boss, component_spec['kind'],
                                     component_spec.get('address'),
                                     component_spec.get('params'))
                 priority = component_spec.get('priority', 0)
