@@ -693,7 +693,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # We don't use isinstance on purpose, it would allow a descendant
         self.assertTrue(type(component) is Component)
         plan = configurator._build_plan({}, {
-            'component': { }
+            'component': { 'kind': 'dispensable' }
         })
         self.assertEqual(1, len(plan))
         self.assertEqual('start', plan[0]['command'])
@@ -818,7 +818,10 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         there. This tests it doesn't crash.
         """
         configurator = Configurator(self, self.__specials)
-        configurator._build_plan({}, {"c1": {}, "c2": {}})
+        configurator._build_plan({}, {
+                                         "c1": { 'kind': 'dispensable'},
+                                         "c2": { 'kind': 'dispensable'}
+                                     })
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?

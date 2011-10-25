@@ -8,12 +8,15 @@
         "item_type": "named_set",
         "item_optional": false,
         "item_default": {
-          "b10-xfrin": { "address": "Xfrin" },
-          "b10-xfrout": { "address": "Xfrout" },
+          "b10-xfrin": { "address": "Xfrin", "kind": "dispensable" },
+          "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },
           "b10-auth": { "special": "auth", "kind": "needed" },
-          "b10-zonemgr": { "address": "Zonemgr" },
-          "b10-stats": { "address": "Stats" },
-          "b10-stats-httpd": { "address": "StatsHttpd" },
+          "b10-zonemgr": { "address": "Zonemgr", "kind": "dispensable" },
+          "b10-stats": { "address": "Stats", "kind": "dispensable" },
+          "b10-stats-httpd": {
+            "address": "StatsHttpd",
+            "kind": "dispensable"
+          },
           "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
         },
         "named_set_item_spec": {
@@ -34,7 +37,7 @@
             },
             {
               "item_name": "kind",
-              "item_optional": true,
+              "item_optional": false,
               "item_type": "string",
               "item_default": "dispensable"
             },
@@ -53,6 +56,11 @@
                 "item_type": "string",
                 "item_default": ""
               }
+            },
+            {
+              "item_name": "priority",
+              "item_optional": true,
+              "item_type": "integer"
             }
           ]
         }
