@@ -310,15 +310,18 @@ Query::process() {
             case ZoneFinder::NXDOMAIN:
                 response_.setRcode(Rcode::NXDOMAIN());
                 addSOA(*result.zone_finder);
-
-                // If DNSSEC proof is requested and we've got it, add it.
                 if (dnssec_ && db_result.rrset) {
                     addNXDOMAINProof(zfinder, db_result.rrset);
                 }
                 break;
             case ZoneFinder::NXRRSET:
-                // Just empty answer with SOA in authority section
                 addSOA(*result.zone_finder);
+                if (dnssec_ && db_result.rrset) {
+                    response_.addRRset(Message::SECTION_AUTHORITY,
+                                       boost::const_pointer_cast<RRset>(
+                                           db_result.rrset),
+                                       dnssec_);
+                }
                 break;
             default:
                 // These are new result codes (WILDCARD and WILDCARD_NXRRSET)
