@@ -609,10 +609,6 @@ class BoB:
         self.__started = True
         return None
 
-    def stop_all_processes(self):
-        """Stop all processes."""
-        self._component_configurator.shutdown()
-
     def stop_process(self, process, recipient):
         """
         Stop the given process, friendly-like. The process is the name it has
@@ -642,7 +638,7 @@ class BoB:
         self.__stopping = True
         # first try using the BIND 10 request to stop
         try:
-            self.stop_all_processes()
+            self._component_configurator.shutdown()
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
