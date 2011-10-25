@@ -245,6 +245,10 @@ class BoB:
         self.brittle = brittle
         self._component_configurator = isc.bind10.component.Configurator(self,
             isc.bind10.special_component.get_specials())
+        # The priorities here make them start in the correct order. First
+        # the socket creator (which would drop root privileges by then),
+        # then message queue and after that the config manager (which uses
+        # the config manager)
         self.__core_components = {
             'sockcreator': {
                 'kind': 'core',
