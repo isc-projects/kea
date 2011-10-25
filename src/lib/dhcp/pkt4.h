@@ -274,6 +274,18 @@ public:
     getChaddr() { return (chaddr_); };
 
 
+    /// Returns reference to output buffer
+    ///
+    /// Returned buffer will contain reasonable data only for
+    /// output (TX) packet and after pack() was called.
+    ///
+    /// RX packet or TX packet before pack() will return buffer with
+    /// zero length
+    ///
+    /// @return reference to output buffer
+    isc::util::OutputBuffer&
+    getBuffer() { return (bufferOut_); };
+
 protected:
 
     /// converts DHCP message type to BOOTP op type
@@ -359,7 +371,7 @@ protected:
     /// input buffer (used during message reception)
     /// Note that it must be modifiable as hooks can modify incoming buffer),
     /// thus OutputBuffer, not InputBuffer
-    isc::util::OutputBuffer bufferIn_;
+    isc::util::InputBuffer bufferIn_;
 
     /// output buffer (used during message
     isc::util::OutputBuffer bufferOut_;
