@@ -487,8 +487,6 @@ class BoB:
 
             ... where -v is appended if verbose is enabled.  This method
             generates the arguments from the name and starts the process.
-
-            The port and address arguments are for log messages only.
         """
         # Set up the command arguments.
         args = [name]
@@ -498,11 +496,10 @@ class BoB:
         # ... and start the process
         return self.start_process(name, args, self.c_channel_env)
 
-    # The next few methods start up the rest of the BIND-10 processes.
-    # Although many of these methods are little more than a call to
-    # start_simple, they are retained (a) for testing reasons and (b) as a place
-    # where modifications can be made if the process start-up sequence changes
-    # for a given process.
+    # The next few methods start up some of the BIND-10 processes.
+    # These are the ones that need to be passed some parameters, so
+    # using a start_simple is not enough. However, in future, we should
+    # get rid of these parameters and they could be removed then.
 
     def start_auth(self):
         """
@@ -551,15 +548,18 @@ class BoB:
             Starts up all the processes.  Any exception generated during the
             starting of the processes is handled by the caller.
         """
+        # Start the real core (sockcreator, msgq, cfgmgr)
         self._component_configurator.startup(self.__core_components)
-        # TODO: Once everything uses the socket creator, we can drop root
-        # privileges right now
 
+        # Connect to the msgq. This is not a process, so it's not handled
+        # inside the configurator.
         c_channel_env = self.c_channel_env
         self.start_ccsession(c_channel_env)
 
         # Extract the parameters associated with Bob.  This can only be
         # done after the CC Session is started.
+        #
+        # This will start all the other configured processes.
         self.read_bind10_config()
 
     def startup(self):
