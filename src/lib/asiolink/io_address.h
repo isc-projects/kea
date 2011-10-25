@@ -19,6 +19,7 @@
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
+#include <stdint.h>             // for uint32_t
 #include <asio/ip/address.hpp>
 
 #include <functional>
@@ -103,6 +104,15 @@ public:
     static IOAddress
     from_bytes(short family, const uint8_t* data);
 
+    /// \brief Creates an IPv4 address from uint32 value
+    ///
+    /// \param v4address specified IPv4 address in network
+    ///        byte order
+    ///
+    /// \return Created IOAddress that holds IPv4 address
+    static IOAddress
+    from_uint32(uint32_t v4address);
+
     /// \brief Compare addresses for equality
     ///
     /// \param other Address to compare against.
@@ -139,6 +149,14 @@ public:
         return (nequals(other));
     }
 
+    /// \brief Converts IPv4 address to uint32_t
+    ///
+    /// Will throw BadValue exception if that is not IPv4
+    /// address.
+    ///
+    /// \return uint32_t that represents IPv4 address in
+    ///         network byte order
+    operator uint32_t () const;
 
 private:
     asio::ip::address asio_address_;
