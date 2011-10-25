@@ -179,7 +179,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(component.running())
         # We can't stop or fail the component yet
         self.assertRaises(ValueError, component.stop)
-        self.assertRaises(ValueError, component.failed)
+        self.assertRaises(ValueError, component.failed, 1)
 
     def __check_started(self, component):
         """
@@ -206,7 +206,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         # Nor started
         self.assertRaises(ValueError, component.start)
         # Nor it can fail again
-        self.assertRaises(ValueError, component.failed)
+        self.assertRaises(ValueError, component.failed, 1)
 
     def __check_restarted(self, component):
         """
@@ -254,7 +254,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         # Check it can't be stopped twice
         self.assertRaises(ValueError, component.stop)
         # Or failed
-        self.assertRaises(ValueError, component.failed)
+        self.assertRaises(ValueError, component.failed, 1)
         # But it can be started again if it is stopped
         # (no more checking here, just it doesn't crash)
         component.start()
@@ -287,7 +287,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.start()
         self.__check_started(component)
         # Pretend the component died
-        component.failed()
+        component.failed(1)
         # It should bring down the whole server
         self.__check_dead(component)
 
@@ -303,7 +303,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__check_started(component)
         self._timeskip()
         # Pretend the component died some time later
-        component.failed()
+        component.failed(1)
         # Check the component is still dead
         self.__check_dead(component)
 
@@ -319,7 +319,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.start()
         self.__check_started(component)
         # Make it fail right away.
-        component.failed()
+        component.failed(1)
         self.__check_dead(component)
 
     def test_start_fail_needed_later(self):
@@ -335,7 +335,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         # Make it fail later on
         self.__start_called = False
         self._timeskip()
-        component.failed()
+        component.failed(1)
         self.__check_restarted(component)
 
     def test_start_fail_dispensable(self):
@@ -349,7 +349,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__check_started(component)
         # Make it fail right away
         self.__start_called = False
-        component.failed()
+        component.failed(1)
         self.__check_restarted(component)
 
     def test_start_fail_dispensable(self):
@@ -365,7 +365,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         # Make it fail later on
         self.__start_called = False
         self._timeskip()
-        component.failed()
+        component.failed(1)
         self.__check_restarted(component)
 
     def test_fail_core(self):
