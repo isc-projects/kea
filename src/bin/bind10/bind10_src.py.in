@@ -755,6 +755,10 @@ class BoB:
         return next_restart
 
     def register_process(self, pid, info):
+        """
+        Put another process into boss to watch over it.  When the process
+        dies, the info.failed() is called with the exit code.
+        """
         self.processes[pid] = info
 
 # global variables, needed for signal handlers
