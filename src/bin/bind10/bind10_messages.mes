@@ -216,12 +216,14 @@ All modules have been successfully started, and BIND 10 is now running.
 There was a fatal error when BIND10 was trying to start. The error is
 shown, and BIND10 will now shut down.
 
-% BIND10_START_AS_NON_ROOT starting %1 as a user, not root. This might fail.
-The given module is being started or restarted without root privileges.
-If the module needs these privileges, it may have problems starting.
-Note that this issue should be resolved by the pending 'socket-creator'
+% BIND10_START_DROP_ROOT Dropping root privileges now, changing to uid %1
+The boss of bind is switching to a user. That means all processes started
+or restarted from now on will be started as that user. Also, all the processes
+started before now are started as root, which might be something else than
+expected. This should be resolved by the pending 'socket-creator'
 process; once that has been implemented, modules should not need root
-privileges anymore. See tickets #800 and #801 for more information.
+privileges anymore and we will switch sooner. See tickets #800 and #801 for
+more information.
 
 % BIND10_STOP_PROCESS asking %1 to shut down
 The boss module is sending a shutdown command to the given module over

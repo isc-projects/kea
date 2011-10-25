@@ -572,6 +572,7 @@ class BoB:
         # directly to the function starting socket creator.
         if self.uid is not None:
             posix.setuid(self.uid)
+            logger.warn(BIND10_START_DROP_ROOT, self.uid)
 
     def startup(self):
         """
