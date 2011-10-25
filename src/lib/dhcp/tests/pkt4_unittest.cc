@@ -34,8 +34,9 @@ using namespace boost;
 
 // can't compare const to value directly, as it gives strange
 // linker errors in gtest.h
-
 static size_t DHCPV4_PKT_HDR_LEN = Pkt4::DHCPV4_PKT_HDR_LEN;
+static size_t MAX_SNAME_LEN = Pkt4::MAX_SNAME_LEN;
+static size_t MAX_FILE_LEN = Pkt4::MAX_FILE_LEN;
 
 namespace {
 
@@ -88,8 +89,19 @@ TEST(Pkt4Test, constructor) {
     }
 }
 
-// a sample transaction-id
+// a sample data
+const static uint8_t dummyOp = BOOTREQUEST;
+const static uint8_t dummyHtype = 6;
+const static uint8_t dummyHlen = 6;
+const static uint8_t dummyHops = 13;
 const static uint32_t dummyTransid = 0x12345678;
+const static uint16_t dummySecs = 42;
+const static uint16_t dummyFlags = BOOTP_BROADCAST;
+
+const static IOAddress dummyCiaddr("192.0.2.1");
+const static IOAddress dummyYiaddr("1.2.3.4");
+const static IOAddress dummySiaddr("192.0.2.255");
+const static IOAddress dummyGiaddr("255.255.255.255");
 
 // a dummy MAC address
 const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
@@ -129,15 +141,15 @@ generateTestPacket1() {
                                   +sizeof(dummyMacAddr));
 
     // hwType = 6(ETHERNET), hlen = 6(MAC address len)
-    pkt->setHWAddr(6, 6, vectorMacAddr);
-    pkt->setHops(13); // 13 relays. Wow!
+    pkt->setHWAddr(dummyHtype, dummyHlen, vectorMacAddr);
+    pkt->setHops(dummyHops); // 13 relays. Wow!
     // transaction-id is already set
-    pkt->setSecs(42);
-    pkt->setFlags(0xffffU); // all flags set
-    pkt->setCiaddr(IOAddress("192.0.2.1"));
-    pkt->setYiaddr(IOAddress("1.2.3.4"));
-    pkt->setSiaddr(IOAddress("192.0.2.255"));
-    pkt->setGiaddr(IOAddress("255.255.255.255"));
+    pkt->setSecs(dummySecs);
+    pkt->setFlags(dummyFlags); // all flags set
+    pkt->setCiaddr(dummyCiaddr);
+    pkt->setYiaddr(dummyYiaddr);
+    pkt->setSiaddr(dummySiaddr);
+    pkt->setGiaddr(dummyGiaddr);
     // chaddr already set with setHWAddr()
     pkt->setSname(dummySname, 64);
     pkt->setFile(dummyFile, 128);
@@ -164,7 +176,7 @@ generateTestPacket2() {
     uint8_t hdr[] = {
         1, 6, 6, 13,            // op, htype, hlen, hops,
         0x12, 0x34, 0x56, 0x78, // transaction-id
-        0, 42, 0xff, 0xff,      // 42 secs, 0xffff flags
+        0, 42, 0x80, 0x00,      // 42 secs, BROADCAST flags
         192, 0, 2, 1,           // ciaddr
         1, 2, 3, 4,             // yiaddr
         192, 0, 2, 255,         // siaddr
@@ -192,18 +204,18 @@ TEST(Pkt4Test, fixedFields) {
     shared_ptr<Pkt4> pkt = generateTestPacket1();
 
     // ok, let's check packet values
-    EXPECT_EQ(1, pkt->getOp());
-    EXPECT_EQ(6, pkt->getHtype());
-    EXPECT_EQ(6, pkt->getHlen());
-    EXPECT_EQ(13, pkt->getHops());
+    EXPECT_EQ(dummyOp, pkt->getOp());
+    EXPECT_EQ(dummyHtype, pkt->getHtype());
+    EXPECT_EQ(dummyHlen, pkt->getHlen());
+    EXPECT_EQ(dummyHops, pkt->getHops());
     EXPECT_EQ(dummyTransid, pkt->getTransid());
-    EXPECT_EQ(42, pkt->getSecs());
-    EXPECT_EQ(0xffff, pkt->getFlags());
+    EXPECT_EQ(dummySecs, pkt->getSecs());
+    EXPECT_EQ(dummyFlags, pkt->getFlags());
 
-    EXPECT_EQ(string("192.0.2.1"), pkt->getCiaddr().toText());
-    EXPECT_EQ(string("1.2.3.4"), pkt->getYiaddr().toText());
-    EXPECT_EQ(string("192.0.2.255"), pkt->getSiaddr().toText());
-    EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr().toText());
+    EXPECT_EQ(dummyCiaddr.toText(), pkt->getCiaddr().toText());
+    EXPECT_EQ(dummyYiaddr.toText(), pkt->getYiaddr().toText());
+    EXPECT_EQ(dummySiaddr.toText(), pkt->getSiaddr().toText());
+    EXPECT_EQ(dummyGiaddr.toText(), pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
     EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), 16));
@@ -215,52 +227,59 @@ TEST(Pkt4Test, fixedFields) {
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
 }
 
-#if 0
-/// TODO Uncomment when ticket #1227 is implemented
 TEST(Pkt4Test, fixedFieldsPack) {
     shared_ptr<Pkt4> pkt = generateTestPacket1();
-    shared_array<uint8_t> expectedFormat = generateTestPacket2();
+    vector<uint8_t> expectedFormat = generateTestPacket2();
 
     EXPECT_NO_THROW(
         pkt->pack();
     );
 
-    ASSERT_EQ(Pkt4::DHCPV4_PKT_HDR_LEN, pkt->len());
+    ASSERT_EQ(DHCPV4_PKT_HDR_LEN, pkt->len());
 
-    EXPECT_EQ(0, memcmp(&expectedFormat[0], pkt->getData(), pkt->len()));
+    // redundant but MUCH easier for debug in gdb
+    const uint8_t * exp = &expectedFormat[0];
+    const uint8_t * got = static_cast<const uint8_t*>(pkt->getBuffer().getData());
+
+    EXPECT_EQ(0, memcmp(exp, got, DHCPV4_PKT_HDR_LEN));
 }
 
 /// TODO Uncomment when ticket #1226 is implemented
 TEST(Pkt4Test, fixedFieldsUnpack) {
-    shared_array<uint8_t> expectedFormat = generateTestPkt2();
+    vector<uint8_t> expectedFormat = generateTestPacket2();
 
     shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
                                   Pkt4::DHCPV4_PKT_HDR_LEN));
 
-    // ok, let's check packet values
-    EXPECT_EQ(1, pkt->getOp());
-    EXPECT_EQ(6, pkt->getHtype());
-    EXPECT_EQ(6, pkt->getHlen());
-    EXPECT_EQ(13, pkt->getHops());
-    EXPECT_EQ(transid, pkt->getTransid());
-    EXPECT_EQ(42, pkt->getSecs());
-    EXPECT_EQ(0xffff, pkt->getFlags());
+    EXPECT_NO_THROW(
+        pkt->unpack()
+    );
 
-    EXPECT_EQ(string("192.0.2.1"), pkt->getCiaddr.toText());
-    EXPECT_EQ(string("1.2.3.4"), pkt->getYiaddr.toText());
-    EXPECT_EQ(string("192.0.2.255"), pkt->getSiaddr.toText());
-    EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr.toText());
+    // ok, let's check packet values
+    EXPECT_EQ(dummyOp, pkt->getOp());
+    EXPECT_EQ(dummyHtype, pkt->getHtype());
+    EXPECT_EQ(dummyHlen, pkt->getHlen());
+    EXPECT_EQ(dummyHops, pkt->getHops());
+    EXPECT_EQ(dummyTransid, pkt->getTransid());
+    EXPECT_EQ(dummySecs, pkt->getSecs());
+    EXPECT_EQ(dummyFlags, pkt->getFlags());
+
+    EXPECT_EQ(dummyCiaddr.toText(), pkt->getCiaddr().toText());
+    EXPECT_EQ(string("1.2.3.4"), pkt->getYiaddr().toText());
+    EXPECT_EQ(string("192.0.2.255"), pkt->getSiaddr().toText());
+    EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_EQ(0, memcmp(expectedChaddr, pkt->getChaddr(), 16));
+    EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), Pkt4::MAX_CHADDR_LEN));
 
-    EXPECT_EQ(0, memcmp(expectedSname, pkt->getSname(), 64));
+    ASSERT_EQ(MAX_SNAME_LEN, pkt->getSname().size());
+    EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
 
-    EXPECT_EQ(0, memcmp(expectedFile, pkt->getFile(), 128));
+    ASSERT_EQ(MAX_FILE_LEN, pkt->getFile().size());
+    EXPECT_EQ(0, memcmp(dummyFile, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
 
-    EXPECT_EQ(DHCPSOLICIT, pkt->getType());
+    EXPECT_EQ(DHCPDISCOVER, pkt->getType());
 }
-#endif
 
 // this test is for hardware addresses (htype, hlen and chaddr fields)
 TEST(Pkt4Test, hwAddr) {
@@ -290,16 +309,15 @@ TEST(Pkt4Test, hwAddr) {
         EXPECT_EQ(0, memcmp(expectedChaddr, pkt->getChaddr(),
                             Pkt4::MAX_CHADDR_LEN));
 
-#if 0
-        /// TODO Uncomment when ticket #1227 is implemented)
         EXPECT_NO_THROW(
             pkt->pack();
         );
 
         // CHADDR starts at offset 28 in DHCP packet
-        EXPECT_EQ(0, memcmp(pkt->getData()+28, expectedChaddr,
-                            Pkt4::MAX_CHADDR_LEN));
-#endif
+        const uint8_t* ptr =
+            static_cast<const uint8_t*>(pkt->getBuffer().getData())+28;
+
+        EXPECT_EQ(0, memcmp(ptr, expectedChaddr, Pkt4::MAX_CHADDR_LEN));
 
         delete pkt;
     }
@@ -355,35 +373,31 @@ TEST(Pkt4Test, msgTypes) {
 TEST(Pkt4Test, sname) {
 
     uint8_t sname[Pkt4::MAX_SNAME_LEN];
-    uint8_t expectedSname[Pkt4::MAX_SNAME_LEN];
 
     Pkt4* pkt = 0;
     // let's test each sname length, from 0 till 64
     for (int snameLen=0; snameLen < Pkt4::MAX_SNAME_LEN; snameLen++) {
         for (int i=0; i < Pkt4::MAX_SNAME_LEN; i++) {
             sname[i] = 0;
-            expectedSname[i] = 0;
         }
         for (int i=0; i < snameLen; i++) {
             sname[i] = i;
-            expectedSname[i] = i;
         }
 
         // type and transaction doesn't matter in this test
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setSname(sname, snameLen);
 
-        EXPECT_EQ(0, memcmp(expectedSname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
+        EXPECT_EQ(0, memcmp(sname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
 
-#if 0
-        /// TODO Uncomment when ticket #1227 is implemented)
         EXPECT_NO_THROW(
             pkt->pack();
         );
 
         // SNAME starts at offset 44 in DHCP packet
-        EXPECT_EQ(0, memcmp(pkt->getData()+44, expectedChaddr, Pkt4::MAX_SNAME_LEN));
-#endif
+        const uint8_t* ptr =
+            static_cast<const uint8_t*>(pkt->getBuffer().getData())+44;
+        EXPECT_EQ(0, memcmp(ptr, sname, Pkt4::MAX_SNAME_LEN));
 
         delete pkt;
     }
@@ -392,35 +406,32 @@ TEST(Pkt4Test, sname) {
 TEST(Pkt4Test, file) {
 
     uint8_t file[Pkt4::MAX_FILE_LEN];
-    uint8_t expectedFile[Pkt4::MAX_FILE_LEN];
 
     Pkt4* pkt = 0;
-    // let's test each file length, from 0 till 64
+    // let's test each file length, from 0 till 128
     for (int fileLen=0; fileLen < Pkt4::MAX_FILE_LEN; fileLen++) {
         for (int i=0; i < Pkt4::MAX_FILE_LEN; i++) {
             file[i] = 0;
-            expectedFile[i] = 0;
         }
         for (int i=0; i < fileLen; i++) {
             file[i] = i;
-            expectedFile[i] = i;
         }
 
         // type and transaction doesn't matter in this test
         pkt = new Pkt4(DHCPOFFER, 1234);
         pkt->setFile(file, fileLen);
 
-        EXPECT_EQ(0, memcmp(expectedFile, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
+        EXPECT_EQ(0, memcmp(file, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
 
-#if 0
-        /// TODO Uncomment when ticket #1227 is implemented)
+        //
         EXPECT_NO_THROW(
             pkt->pack();
         );
 
-        // FILE starts at offset 44 in DHCP packet
-        EXPECT_EQ(0, memcmp(pkt->getData()+44, expectedChaddr, Pkt4::MAX_FILE_LEN));
-#endif
+        // FILE starts at offset 108 in DHCP packet
+        const uint8_t* ptr =
+            static_cast<const uint8_t*>(pkt->getBuffer().getData())+108;
+        EXPECT_EQ(0, memcmp(ptr, file, Pkt4::MAX_FILE_LEN));
 
         delete pkt;
     }
