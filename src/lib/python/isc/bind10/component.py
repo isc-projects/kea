@@ -281,9 +281,9 @@ class Component:
         """
         if self._procinfo:
             if forcefull:
-                self._procinfo.kill()
+                self._procinfo.process.kill()
             else:
-                self._procinfo.terminate()
+                self._procinfo.process.terminate()
 
 class Configurator:
     """
