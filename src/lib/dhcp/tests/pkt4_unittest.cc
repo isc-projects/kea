@@ -156,6 +156,7 @@ generateTestPacket1() {
 ///
 /// @return pointer to allocated Pkt4 object
 // Returns a vector containing a DHCPv4 packet header.
+#if 0
 vector<uint8_t>
 generateTestPacket2() {
 
@@ -186,6 +187,7 @@ generateTestPacket2() {
 
     return (buf);
 }
+#endif
 
 TEST(Pkt4Test, fixedFields) {
 
