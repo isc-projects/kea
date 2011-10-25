@@ -20,6 +20,10 @@ The boss process is starting up and will now check if the message bus
 daemon is already running. If so, it will not be able to start, as it
 needs a dedicated message bus.
 
+% BIND10_COMPONENT_FAILED component %1 (pid %2) failed with %3 exit status
+The process terminated, but the bind10 boss didn't expect it to, which means
+it must have failed.
+
 % BIND10_COMPONENT_RESTART component %1 is about to restart
 The named component failed previously and we will try to restart it to provide
 as flawless service as possible, but it should be investigated what happened,

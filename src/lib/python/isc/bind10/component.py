@@ -137,7 +137,7 @@ class Component:
             self._start_internal()
         except Exception as e:
             logger.error(BIND10_COMPONENT_START_EXCEPTION, self.name(), e)
-            self.failed()
+            self.failed(None)
             raise
 
     def _start_internal(self):
@@ -199,7 +199,7 @@ class Component:
         # TODO Some way to wait for the process that doesn't want to
         # terminate and kill it would prove nice (or add it to boss somewhere?)
 
-    def failed(self):
+    def failed(self, exit_code):
         """
         Notify the component it crashed. This will be called from boss object.
 
@@ -211,7 +211,11 @@ class Component:
         down with error exit status. A dead component can't be started again.
 
         Otherwise the component will try to restart.
+
+        The exit code is used for logging. It might be None.
         """
+        logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
+                     exit_code if exit_code is not None else "unknown")
         if not self.running():
             raise ValueError("Can't fail component that isn't running")
         self.__state = STATE_STOPPED

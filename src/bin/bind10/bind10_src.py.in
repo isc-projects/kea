@@ -713,7 +713,7 @@ class BoB:
                 # Tell it it failed, but only if it matters at all (eg. it is
                 # running and we are running - if not, it should stop anyway)
                 if component.running() and self.runnable:
-                    component.failed()
+                    component.failed(exit_status)
             else:
                 logger.info(BIND10_UNKNOWN_CHILD_PROCESS_ENDED, pid)
 
