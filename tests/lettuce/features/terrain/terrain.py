@@ -21,6 +21,9 @@ copylist = [
 ["configurations/example.org.config.orig", "configurations/example.org.config"]
 ]
 
+OUTPUT_WAIT_INTERVAL = 0.5
+OUTPUT_WAIT_MAX_INTERVALS = 10
+
 # class that keeps track of one running process and the files
 # we created for it. This needs to be moved to our framework-framework
 # as it is not specifically for bind10
@@ -74,7 +77,8 @@ class RunningProcess:
                     if line.find(string) != -1:
                         full_file.close()
                         return string
-        while True:
+        wait_count = 0
+        while wait_count < OUTPUT_WAIT_MAX_INTERVALS:
             where = running_file.tell()
             line = running_file.readline()
             if line:
@@ -82,8 +86,10 @@ class RunningProcess:
                     if line.find(string) != -1:
                         return string
             else:
-                time.sleep(0.5)
+                wait_count += 1
+                time.sleep(OUTPUT_WAIT_INTERVAL)
                 running_file.seek(where)
+        assert False, "Timeout waiting for process output: " + str(strings)
 
     def wait_for_stderr_str(self, strings, only_new = True):
         return self._wait_for_output_str(self.stderr_filename, self.stderr,
