@@ -411,7 +411,8 @@ Message_getRRCount(s_Message* self, PyObject* args) {
     }
 }
 
-// TODO use direct iterators for these? (or simply lists for now?)
+// This is a helper templated class commonly used for getQuestion and
+// getSection in order to build a list of Message section items.
 template <typename ItemType, typename CreatorParamType>
 class SectionInserter {
     typedef PyObject* (*creator_t)(const CreatorParamType&);
@@ -434,6 +435,7 @@ private:
 typedef SectionInserter<ConstQuestionPtr, Question> QuestionInserter;
 typedef SectionInserter<ConstRRsetPtr, RRset> RRsetInserter;
 
+// TODO use direct iterators for these? (or simply lists for now?)
 PyObject*
 Message_getQuestion(PyObject* po_self, PyObject*) {
     const s_Message* const self = static_cast<s_Message*>(po_self);
