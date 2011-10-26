@@ -55,9 +55,9 @@ Where spaces and other non-standard characters are replaced by an underscore.
 The process name is either the standard name for said process (e.g. 'bind10'),
 or the name given to it by the test ('when i run bind10 as <name>').
 
-These files *will* be overwritten or deleted if the tests are run again, so
-if you want to inspect them after a failed test, either do so immediately or
-move the files.
+These files *will* be overwritten or deleted if the same scenarios are run
+again, so if you want to inspect them after a failed test, either do so
+immediately or move the files.
 
 Extending tests
 ---------------
