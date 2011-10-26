@@ -382,7 +382,7 @@ protected:
     uint8_t msg_type_;
 
     /// collection of options present in this message
-    isc::dhcp::Option::Option4Collection options_;
+    isc::dhcp::Option::Option6Collection options_;
 }; // Pkt4 class
 
 } // isc::dhcp namespace

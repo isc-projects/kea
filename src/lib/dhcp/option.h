@@ -20,6 +20,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
+#include <util/buffer.h>
 
 namespace isc {
 namespace dhcp {
@@ -34,10 +35,6 @@ public:
 
     /// defines option universe DHCPv4 or DHCPv6
     enum Universe { V4, V6 };
-
-    /// a collection of DHCPv4 options
-    typedef std::map<unsigned int, boost::shared_ptr<Option> >
-    Option4Collection;
 
     /// a collection of DHCPv6 options
     typedef std::multimap<unsigned int, boost::shared_ptr<Option> >
@@ -99,11 +96,13 @@ public:
     Universe
     getUniverse() { return universe_; };
 
-    /// @brief writes option in wire-format to buf
+    /// @brief Writes option in wire-format to a buffer.
     ///
     /// Writes option in wire-format to buffer, returns pointer to first unused
     /// byte after stored option (that is useful for writing options one after
-    /// another)
+    /// another). Used in DHCPv6 options.
+    ///
+    /// TODO: Migrate DHCPv6 code to pack(OutputBuffer& buf) version
     ///
     /// @param buf pointer to a buffer
     /// @param buf_len length of the buffer
@@ -115,6 +114,18 @@ public:
     pack(boost::shared_array<uint8_t>& buf,
          unsigned int buf_len,
          unsigned int offset);
+
+    /// @brief Writes option in a wire-format to a buffer.
+    ///
+    /// Method will throw if option storing fails for some reason.
+    ///
+    /// TODO Once old (DHCPv6) implementation is rewritten,
+    /// unify pack4() and pack6() and rename them to just pack().
+    ///
+    /// @param buf output buffer (option will be stored there)
+    virtual void
+    pack4(isc::util::OutputBuffer& buf);
+
 
     /// @brief Parses buffer.
     ///
@@ -270,10 +281,8 @@ protected:
     /// contains content of this data
     std::vector<uint8_t> data_;
 
-    /// length of data only. Use len() if you want to
-    /// know proper length with option header overhead
-    unsigned int data_len_;
-
+    /// TODO: Remove this field. vector<uint8_t> should be used
+    /// instead.
     /// data is a shared_pointer that points out to the
     /// whole packet. offset_ specifies where data for
     /// this option begins.

@@ -16,7 +16,8 @@
 #define LIBDHCP_H_
 
 #include <iostream>
-#include "dhcp/pkt6.h"
+#include <util/buffer.h>
+#include <dhcp/pkt6.h>
 
 namespace isc {
 namespace dhcp {
@@ -40,6 +41,22 @@ public:
     packOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
                  unsigned int offset,
                  const isc::dhcp::Option::Option6Collection& options);
+
+
+    /// @brief Stores options in a buffer.
+    ///
+    /// Stores all options defined in options containers in a on-wire
+    /// format in output buffer specified by buf.
+    ///
+    /// May throw different exceptions if option assembly fails. There
+    /// may be different reasons (option too large, option malformed,
+    /// too many options etc.)
+    ///
+    /// @param buf
+    /// @param options
+    static void
+    packOptions(isc::util::OutputBuffer& buf,
+                const isc::dhcp::Option::Option6Collection& options);
 
     ///
     /// Parses provided buffer and creates Option objects.
