@@ -18,12 +18,9 @@ def wait_for_message(step, new, process_name, message):
 def wait_for_message(step, process_name, message):
     world.processes.wait_for_stdout_str(process_name, [message], new)
 
-@step('Given I have no database')
-def given_i_have_no_database(step):
-    if os.path.exists("test.db"):
-        os.remove("test.db")
-
-@step('I should see a database file')
-def i_should_see_a_database_file(step):
-    assert os.path.exists("test.db")
-    os.remove("test.db")
+@step('the file (\S+) should (not )?exist')
+def check_existence(step, file_name, should_not_exist):
+    if should_not_exist is None:
+        assert os.path.exists(file_name), file_name + " does not exist"
+    else:
+        assert not os.path.exists(file_name), file_name + " exists"
