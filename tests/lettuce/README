@@ -30,7 +30,8 @@ The bind10 main script, bindctl script, and dig must all be in the default
 search path of your environment, and BIND 10 must not be running if you use
 the installed version when you run the tests.
 
-To run the tests, just run 'lettuce' in this directory.
+If you want to test an installed version of bind 10, just run 'lettuce' in
+this directory.
 
 We have provided a script that sets up the shell environment to run the tests
 with the build tree version of bind. If your shell uses export to set
@@ -47,8 +48,22 @@ lettuce features/<feature file>
 To run a specific scenario from a feature, use
 lettuce features/<feature file> -s <scenario number>
 
-If any scenario fails, the output from long-running processes will be stored
-in the output directory. The name of the files will be
+We have set up the tests to assume that lettuce is run from this directory,
+so even if you specify a specific feature file, you should do it from this
+directory.
+
+What to do when a test fails
+----------------------------
+
+First of all, look at the error it printed and see what step it occurred in.
+If written well, the output should explain most of what went wrong.
+
+The stacktrace that is printed is *not* of bind10, but of the testing
+framework; this helps in finding more information about what exactly the test
+tried to achieve when it failed (as well as help debug the tests themselves).
+
+Furthermore, if any scenario fails, the output from long-running processes
+will be stored in the directory output/. The name of the files will be
 <Feature name>-<Scenario name>-<Process name>.stdout and
 <Feature name>-<Scenario name>-<Process name>.stderr
 Where spaces and other non-standard characters are replaced by an underscore.
