@@ -239,4 +239,36 @@ TEST_F(BufferTest, outputBufferZeroSize) {
     });
 }
 
+TEST_F(BufferTest, readVectorAll) {
+    std::vector<uint8_t> vec;
+
+    // check that vector can read the whole buffer
+    ibuffer.readVector(vec, 5);
+
+    ASSERT_EQ(5, vec.size());
+    EXPECT_EQ(0, memcmp(&vec[0], testdata, 5));
+
+    // ibuffer is 5 bytes long. Can't read past it.
+    EXPECT_THROW(
+        ibuffer.readVector(vec, 1),
+        isc::util::InvalidBufferPosition
+    );
+}
+
+TEST_F(BufferTest, readVectorChunks) {
+    std::vector<uint8_t> vec;
+
+    // check that vector can read the whole buffer
+    ibuffer.readVector(vec, 3);
+    EXPECT_EQ(3, vec.size());
+
+    EXPECT_EQ(0, memcmp(&vec[0], testdata, 3));
+
+    EXPECT_NO_THROW(
+        ibuffer.readVector(vec, 2)
+    );
+
+    EXPECT_EQ(0, memcmp(&vec[0], testdata+3, 2));
+}
+
 }
