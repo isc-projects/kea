@@ -15,14 +15,12 @@
 #include <config.h>
 #include <iostream>
 #include <sstream>
-
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
-
-#include "io_address.h"
-#include "dhcp/dhcp6.h"
-#include "dhcp/option.h"
-#include "dhcp/option6_addrlst.h"
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <dhcp/option6_addrlst.h>
 
 using namespace std;
 using namespace isc;
@@ -38,10 +36,10 @@ public:
 
 TEST_F(Option6AddrLstTest, basic) {
 
-    // limiting tests to just a 2001:db8::/32 as is *wrong*.
+    // Limiting tests to just a 2001:db8::/32 as is *wrong*.
     // Good tests check corner cases as well.
     // ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff checks
-    // for integer overflow
+    // for integer overflow.
     // ff02::face:b00c checks if multicast addresses
     // can be represented properly.
 

@@ -264,7 +264,7 @@ public:
     uint8_t
     getHlen() { return (hlen_); };
 
-    /// @brief Returns chaddr field
+    /// @brief Returns chaddr field.
     ///
     /// Note: This is 16 bytes long field. It doesn't have to be
     /// null-terminated. Do no use strlen() or similar on it.
@@ -274,7 +274,7 @@ public:
     getChaddr() { return (chaddr_); };
 
 
-    /// Returns reference to output buffer
+    /// @brief Returns reference to output buffer.
     ///
     /// Returned buffer will contain reasonable data only for
     /// output (TX) packet and after pack() was called.
@@ -285,6 +285,22 @@ public:
     /// @return reference to output buffer
     isc::util::OutputBuffer&
     getBuffer() { return (bufferOut_); };
+
+    /// @brief Add an option.
+    ///
+    /// Throws BadValue if option with that type is already present.
+    ///
+    /// @param opt option to be added
+    void
+    addOption(boost::shared_ptr<Option> opt);
+
+    /// @brief Returns an option of specified type.
+    ///
+    /// @return returns option of requested type (or NULL)
+    ///         if no such option is present
+
+    boost::shared_ptr<Option>
+    getOption(uint8_t opt_type);
 
 protected:
 
