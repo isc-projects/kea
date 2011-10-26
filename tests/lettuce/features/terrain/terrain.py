@@ -14,6 +14,14 @@ import shutil
 import re
 import time
 
+# In order to make sure we start all tests with a 'clean' environment,
+# We perform a number of initialization steps, like restoring configuration
+# files, and removing generated data files.
+
+# This approach may not scale; if so we should probably provide specific
+# initialization steps for scenarios. But until that is shown to be a problem,
+# It will keep the scenarios cleaner.
+
 # This is a list of files that are freshly copied before each scenario
 # The first element is the original, the second is the target that will be
 # used by the tests that need them
@@ -21,12 +29,20 @@ copylist = [
 ["configurations/example.org.config.orig", "configurations/example.org.config"]
 ]
 
+# This is a list of files that, if present, will be removed before a scenario
+removelist = [
+"data/test_nonexistent_db.sqlite3"
+]
+
+# When waiting for output data of a running process, use OUTPUT_WAIT_INTERVAL
+# as the interval in which to check again if it has not been found yet.
+# If we have waited OUTPUT_WAIT_MAX_INTERVALS times, we will abort with an
+# error (so as not to hang indefinitely)
 OUTPUT_WAIT_INTERVAL = 0.5
-OUTPUT_WAIT_MAX_INTERVALS = 10
+OUTPUT_WAIT_MAX_INTERVALS = 20
 
 # class that keeps track of one running process and the files
-# we created for it. This needs to be moved to our framework-framework
-# as it is not specifically for bind10
+# we created for it.
 class RunningProcess:
     def __init__(self, step, process_name, args):
         # set it to none first so destructor won't error if initializer did
@@ -49,7 +65,7 @@ class RunningProcess:
 
     def mangle_filename(self, filebase, extension):
         filebase = re.sub("\s+", "_", filebase)
-        filebase = re.sub("[^a-zA-Z.\-_]", "", filebase)
+        filebase = re.sub("[^a-zA-Z0-9.\-_]", "", filebase)
         return filebase + "." + extension
 
     def _check_output_dir(self):
@@ -182,6 +198,10 @@ def initialize(scenario):
     for item in copylist:
         shutil.copy(item[0], item[1])
 
+    for item in removelist:
+        if os.path.exists(item):
+            os.remove(item)
+
 @after.each_scenario
 def cleanup(scenario):
     # Keep output files if the scenario failed
@@ -189,3 +209,4 @@ def cleanup(scenario):
         world.processes.keep_files()
     # Stop any running processes we may have had around
     world.processes.stop_all_processes()
+    

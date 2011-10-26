@@ -39,7 +39,8 @@ def start_bind10(step, config_file, cmdctl_port, process_name):
 def wait_for_auth(step, process_name):
     if process_name is None:
         process_name = "bind10"
-    world.processes.wait_for_stderr_str(process_name, ['AUTH_SERVER_STARTED'])
+    world.processes.wait_for_stderr_str(process_name, ['AUTH_SERVER_STARTED'],
+                                        False)
 
 @step('have bind10 running(?: with configuration ([\w.]+))?')
 def have_bind10_running(step, config_file):
