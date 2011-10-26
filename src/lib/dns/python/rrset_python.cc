@@ -63,7 +63,7 @@ PyObject* RRset_toText(s_RRset* self);
 PyObject* RRset_str(PyObject* self);
 PyObject* RRset_toWire(s_RRset* self, PyObject* args);
 PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
-PyObject* RRset_getRdata(s_RRset* self);
+PyObject* RRset_getRdata(PyObject* po_self, PyObject*);
 PyObject* RRset_removeRRsig(s_RRset* self);
 
 // TODO: iterator?
@@ -94,7 +94,7 @@ PyMethodDef RRset_methods[] = {
       "returned" },
     { "add_rdata", reinterpret_cast<PyCFunction>(RRset_addRdata), METH_VARARGS,
       "Adds the rdata for one RR to the RRset.\nTakes an Rdata object as an argument" },
-    { "get_rdata", reinterpret_cast<PyCFunction>(RRset_getRdata), METH_NOARGS,
+    { "get_rdata", RRset_getRdata, METH_NOARGS,
       "Returns a List containing all Rdata elements" },
     { "remove_rrsig", reinterpret_cast<PyCFunction>(RRset_removeRRsig), METH_NOARGS,
       "Clears the list of RRsigs for this RRset" },
@@ -291,22 +291,26 @@ RRset_addRdata(s_RRset* self, PyObject* args) {
 }
 
 PyObject*
-RRset_getRdata(s_RRset* self) {
-    PyObject* list = PyList_New(0);
-
-    RdataIteratorPtr it = self->cppobj->getRdataIterator();
+RRset_getRdata(PyObject* po_self, PyObject*) {
+    const s_RRset* const self = static_cast<s_RRset*>(po_self);
 
     try {
-        for (; !it->isLast(); it->next()) {
-            const rdata::Rdata *rd = &it->getCurrent();
-            if (PyList_Append(list,
-                    createRdataObject(createRdata(self->cppobj->getType(),
-                                      self->cppobj->getClass(), *rd))) == -1) {
-                Py_DECREF(list);
-                return (NULL);
+        PyObjectContainer list_container(PyList_New(0));
+
+        for (RdataIteratorPtr it = self->cppobj->getRdataIterator();
+             !it->isLast(); it->next()) {
+            if (PyList_Append(list_container.get(),
+                              PyObjectContainer(
+                                  createRdataObject(
+                                      createRdata(self->cppobj->getType(),
+                                                  self->cppobj->getClass(),
+                                                  it->getCurrent()))).get())
+                == -1) {
+                isc_throw(PyCPPWrapperException, "PyList_Append failed, "
+                          "probably due to short memory");
             }
         }
-        return (list);
+        return (list_container.release());
     } catch (const exception& ex) {
         const string ex_what =
             "Unexpected failure getting rrset Rdata: " +
@@ -316,7 +320,6 @@ RRset_getRdata(s_RRset* self) {
         PyErr_SetString(PyExc_SystemError,
                         "Unexpected failure getting rrset Rdata");
     }
-    Py_DECREF(list);
     return (NULL);
 }
 
