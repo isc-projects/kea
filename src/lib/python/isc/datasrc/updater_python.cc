@@ -274,6 +274,7 @@ createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source,
         zoneupdater_type.tp_alloc(&zoneupdater_type, 0));
     if (py_zi != NULL) {
         py_zi->cppobj = source;
+        py_zi->base_obj = base_obj;
     }
     if (base_obj != NULL) {
         Py_INCREF(base_obj);
