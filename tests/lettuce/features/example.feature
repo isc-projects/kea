@@ -1,4 +1,4 @@
-Feature: SQLite3 backend
+Feature: Example feature
     This is an example Feature set. Is is mainly intended to show
     our use of the lettuce tool and our own framework for it
     The first scenario is to show what a simple test would look like, and
