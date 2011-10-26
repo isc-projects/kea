@@ -232,13 +232,6 @@ Option::valid() {
     return (true);
 }
 
-void
-isc::dhcp::Option::addOption(boost::shared_ptr<isc::dhcp::Option> opt) {
-    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(),
-                                                            opt));
-
-}
-
 boost::shared_ptr<isc::dhcp::Option>
 Option::getOption(unsigned short opt_type) {
     isc::dhcp::Option::Option6Collection::const_iterator x =
@@ -304,6 +297,18 @@ Option::getHeaderLen() {
         return OPTION6_HDR_LEN; // header length for v6
     }
     return 0; // should not happen
+}
+
+void
+Option::addOption(boost::shared_ptr<Option> opt) {
+    if (universe_ == V4) {
+        // check for uniqueness (DHCPv4 options must be unique)
+        if (getOption(opt->getType())) {
+            isc_throw(BadValue, "Option " << opt->getType()
+                      << " already present in this message.");
+        }
+    }
+    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
 }
 
 Option::~Option() {

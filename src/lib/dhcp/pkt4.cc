@@ -88,7 +88,13 @@ size_t
 Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
-    /// TODO: Include options here (ticket #1228)
+    // ... and sum of lengths of all options
+    for (Option::Option6Collection::const_iterator it = options_.begin();
+         it != options_.end();
+         ++it) {
+        length += (*it).second->len();
+    }
+
     return (length);
 }
 
@@ -109,7 +115,7 @@ Pkt4::pack() {
     bufferOut_.writeData(sname_, MAX_SNAME_LEN);
     bufferOut_.writeData(file_, MAX_FILE_LEN);
 
-    /// TODO: Options should follow here (ticket #1228)
+    LibDHCP::packOptions(bufferOut_, options_);
 
     return (true);
 }
@@ -136,7 +142,11 @@ Pkt4::unpack() {
     bufferIn_.readData(sname_, MAX_SNAME_LEN);
     bufferIn_.readData(file_, MAX_FILE_LEN);
 
-    /// TODO: Parse options here (ticket #1228)
+    size_t opts_len = bufferIn_.getLength() - bufferIn_.getPosition();
+    vector<uint8_t> optsBuffer;
+    // fist use of readVector
+    bufferIn_.readVector(optsBuffer, opts_len);
+    LibDHCP::unpackOptions4(optsBuffer, options_);
 
     return (true);
 }
@@ -219,6 +229,26 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
                   << static_cast<int>(dhcpType) );
     }
 }
+
+void
+Pkt4::addOption(boost::shared_ptr<Option> opt) {
+    // check for uniqueness (DHCPv4 options must be unique)
+    if (getOption(opt->getType())) {
+        isc_throw(BadValue, "Option " << opt->getType()
+                  << " already present in this message.");
+    }
+    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+}
+
+boost::shared_ptr<isc::dhcp::Option>
+Pkt4::getOption(uint8_t type) {
+    Option::Option6Collection::const_iterator x = options_.find(type);
+    if (x!=options_.end()) {
+        return (*x).second;
+    }
+    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
+}
+
 
 } // end of namespace isc::dhcp
 
