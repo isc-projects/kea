@@ -35,7 +35,7 @@ public:
 };
 
 // v4 is not really implemented yet. A simple test will do for now
-TEST_F(OptionTest, basic4) {
+TEST_F(OptionTest, v4_basic) {
 
     Option* opt = new Option(Option::V4, 17);
 
@@ -48,8 +48,23 @@ TEST_F(OptionTest, basic4) {
     );
 }
 
+TEST_F(OptionTest, v4_data) {
+    // TODO
+    ASSERT_TRUE(false);
+}
+
+TEST_F(OptionTest, v4_addgetdel) {
+    // TODO
+    ASSERT_TRUE(false);
+}
+
+TEST_F(OptionTest, v4_toText) {
+    // TODO
+    ASSERT_TRUE(false);
+}
+
 // tests simple constructor
-TEST_F(OptionTest, basic6) {
+TEST_F(OptionTest, v6_basic) {
 
     Option* opt = new Option(Option::V6, 1);
 
@@ -64,7 +79,7 @@ TEST_F(OptionTest, basic6) {
 
 // tests contructor used in pkt reception
 // option contains actual data
-TEST_F(OptionTest, data1) {
+TEST_F(OptionTest, v6_data1) {
     boost::shared_array<uint8_t> buf(new uint8_t[32]);
     for (int i = 0; i < 32; i++)
         buf[i] = 100+i;
@@ -96,7 +111,7 @@ TEST_F(OptionTest, data1) {
 
 // another text that tests the same thing, just
 // with different input parameters
-TEST_F(OptionTest, data2) {
+TEST_F(OptionTest, v6_data2) {
 
     boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
     for (int i = 0; i < 128; i++)
@@ -144,7 +159,7 @@ TEST_F(OptionTest, data2) {
 //  |
 //  +----opt3
 //
-TEST_F(OptionTest, suboptions1) {
+TEST_F(OptionTest, v6_suboptions1) {
     boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 100+i;
@@ -184,13 +199,13 @@ TEST_F(OptionTest, suboptions1) {
     );
 }
 
-// check that an option can contain 2 suboptions:
+// check that an option can contain nested suboptions:
 // opt1
 //  +----opt2
 //        |
 //        +----opt3
 //
-TEST_F(OptionTest, suboptions2) {
+TEST_F(OptionTest, v6_suboptions2) {
     boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 100+i;
@@ -226,7 +241,7 @@ TEST_F(OptionTest, suboptions2) {
     );
 }
 
-TEST_F(OptionTest, addgetdel) {
+TEST_F(OptionTest, v6_addgetdel) {
     boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 100+i;
@@ -266,7 +281,7 @@ TEST_F(OptionTest, addgetdel) {
 
 }
 
-TEST_F(OptionTest, toText) {
+TEST_F(OptionTest, v6_toText) {
     boost::shared_array<uint8_t> buf(new uint8_t[3]);
     buf[0] = 0;
     buf[1] = 0xf;

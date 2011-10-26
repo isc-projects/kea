@@ -41,7 +41,7 @@ static const uint8_t packed[] = {
     1,  1, 0, 1, 114 // opt5 (5 bytes)
 };
 
-TEST_F(LibDhcpTest, packOptions6) {
+TEST(LibDhcpTest, packOptions6) {
     boost::shared_array<uint8_t> buf(new uint8_t[512]);
     isc::dhcp::Option::Option6Collection opts; // list of options
 
@@ -70,7 +70,7 @@ TEST_F(LibDhcpTest, packOptions6) {
     EXPECT_EQ(0, memcmp(&buf[100], packed, 35) );
 }
 
-TEST_F(LibDhcpTest, unpackOptions6) {
+TEST(LibDhcpTest, unpackOptions6) {
 
     // just couple of random options
     // Option is used as a simple option implementation
@@ -132,6 +132,16 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     x = options.find(32000);
     EXPECT_TRUE(x == options.end()); // option 32000 not found
+}
+
+TEST(LibDhcpTest, packOptions4) {
+    // TODO
+    ASSERT_TRUE(false);
+}
+
+TEST(LibDhcpTest, unpackOptions4) {
+    // TODO
+    ASSERT_TRUE(false);
 }
 
 }

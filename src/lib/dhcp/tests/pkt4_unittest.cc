@@ -433,4 +433,19 @@ TEST(Pkt4Test, file) {
 
 }
 
+TEST(Pkt4Test, options) {
+    // TODO
+    ASSERT_TRUE(false);
+}
+
+TEST(Pkt4Test, packOptions) {
+    // TODO
+    ASSERT_TRUE(false);
+}
+
+TEST(Pkt4Test, unpackOptions) {
+    // TODO
+    ASSERT_TRUE(false);
+}
+
 } // end of anonymous namespace
