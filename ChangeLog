@@ -1,3 +1,9 @@
+304.	[bug]	jelte
+	The run_bind10.sh test script now no longer runs processes from
+	an installed version of BIND 10, but will correctly use the
+	build tree paths.
+	(Trac #1246, git 1d43b46ab58077daaaf5cae3c6aa3e0eb76eb5d8)
+
 303.	[bug]		jinmei
 	Changed the installation path for the UNIX domain file used
 	for the communication between b10-auth and b10-xfrout to a
@@ -7,7 +13,7 @@
 	if the old file somehow remains, it can now be safely removed.
 	(Trac #869, git 96e22f4284307b1d5f15e03837559711bb4f580c)
 
-302.	[defect]	jelte
+302.	[bug]	jelte
 	msgq no longer crashes if the remote end is closed while msgq
 	tries to send data. It will now simply drop the message and close
 	the connection itself.
