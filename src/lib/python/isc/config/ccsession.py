@@ -143,7 +143,9 @@ class ModuleCCSession(ConfigData):
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
        
-    def __init__(self, spec_file_name, config_handler, command_handler, cc_session=None, handle_logging_config=True):
+    def __init__(self, spec_file_name, config_handler, command_handler,
+                 cc_session=None, handle_logging_config=True,
+                 socket_file = None):
         """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
            for that once the ModuleCCSession has been initialized.
@@ -165,6 +167,12 @@ class ModuleCCSession(ConfigData):
            logger manager when the logging configuration gets updated.
            The module does not need to do anything except intializing
            its loggers, and provide log messages. Defaults to true.
+
+           socket_file: If cc_session was none, this optional argument
+           specifies which socket file to use to connect to msgq. It
+           will be overridden by the environment variable
+           MSGQ_SOCKET_FILE. If none, and no environment variable is
+           set, it will use the system default.
         """
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         ConfigData.__init__(self, module_spec)
@@ -175,7 +183,7 @@ class ModuleCCSession(ConfigData):
         self.set_command_handler(command_handler)
 
         if not cc_session:
-            self._session = Session()
+            self._session = Session(socket_file)
         else:
             self._session = cc_session
         self._session.group_subscribe(self._module_name, "*")

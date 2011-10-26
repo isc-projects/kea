@@ -503,7 +503,8 @@ class BoB:
         self.log_starting("ccsession")
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
                                       self.config_handler,
-                                      self.command_handler)
+                                      self.command_handler,
+                                      socket_file = self.msgq_socket_file)
         self.ccs.start()
         self.log_started()
 
