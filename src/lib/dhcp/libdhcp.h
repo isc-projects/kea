@@ -58,6 +58,9 @@ public:
     packOptions(isc::util::OutputBuffer& buf,
                 const isc::dhcp::Option::Option6Collection& options);
 
+    static void
+    unpackOptions4(const std::vector<uint8_t>& buf,
+                   isc::dhcp::Option::Option6Collection& options);
     ///
     /// Parses provided buffer and creates Option objects.
     ///
