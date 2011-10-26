@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
+#include <exceptions/exceptions.h>
 
 #include "dhcp/dhcp6.h"
 #include "dhcp/option.h"
@@ -37,18 +38,52 @@ public:
 // v4 is not really implemented yet. A simple test will do for now
 TEST_F(OptionTest, v4_basic) {
 
-    Option* opt = new Option(Option::V4, 17);
+    Option* opt = 0;
+    EXPECT_NO_THROW(
+        opt = new Option(Option::V4, 17);
+    );
 
+    EXPECT_EQ(Option::V4, opt->getUniverse());
     EXPECT_EQ(17, opt->getType());
-    EXPECT_EQ(static_cast<uint8_t*>(NULL), opt->getData());
+    EXPECT_EQ(0, opt->getData().size());
     EXPECT_EQ(2, opt->len()); // just v4 header
 
     EXPECT_NO_THROW(
         delete opt;
     );
+    opt = 0;
+
+    // V4 options have type 0...255
+    EXPECT_THROW(
+        opt = new Option(Option::V4, 256),
+        BadValue
+    );
+    if (opt) {
+        delete opt;
+        opt = 0;
+    }
 }
 
+const uint8_t dummyPayload[] =
+{ 1, 2, 3, 4};
+
 TEST_F(OptionTest, v4_data) {
+
+    vector<uint8_t> data(dummyPayload, dummyPayload + sizeof(dummyPayload));
+
+    Option* opt = 0;
+    ASSERT_NO_THROW(
+        opt= new Option(Option::V4,
+                        123, // type
+                        data);
+    );
+
+    EXPECT_EQ(123, opt->getType());
+    vector<uint8_t> optData = opt->getData();
+    ASSERT_EQ(optData.size(), data.size());
+
+    EXPECT_EQ(optData, data);
+
     // TODO
     ASSERT_TRUE(false);
 }
@@ -68,8 +103,9 @@ TEST_F(OptionTest, v6_basic) {
 
     Option* opt = new Option(Option::V6, 1);
 
+    EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(1, opt->getType());
-    EXPECT_EQ(static_cast<uint8_t*>(NULL), opt->getData());
+    EXPECT_EQ(0, opt->getData().size());
     EXPECT_EQ(4, opt->len()); // just v6 header
 
     EXPECT_NO_THROW(
@@ -88,9 +124,10 @@ TEST_F(OptionTest, v6_data1) {
                              3, // offset
                              7); // 7 bytes of data
     EXPECT_EQ(333, opt->getType());
-    ASSERT_EQ(&buf[3], opt->getData());
+
     ASSERT_EQ(11, opt->len());
-    EXPECT_EQ(0, memcmp(&buf[3], opt->getData(), 7) );
+    ASSERT_EQ(11, opt->getData().size());
+    EXPECT_EQ(0, memcmp(&buf[3], &opt->getData()[0], 7) );
 
     int offset = opt->pack(buf, 32, 20);
     EXPECT_EQ(31, offset);

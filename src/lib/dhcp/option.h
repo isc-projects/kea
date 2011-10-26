@@ -17,6 +17,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 
@@ -79,6 +80,24 @@ public:
     Option(Universe u, unsigned short type,
            const boost::shared_array<uint8_t>& buf, unsigned int offset,
            unsigned int len);
+
+    /// @brief Constructor, used for received options.
+    ///
+    /// This constructor takes vector<uint8_t>& which is used in cases
+    /// when content of the option will be copied and stored within
+    /// option object. V4 Options follow that approach already.
+    /// TODO Migrate V6 options to that approach.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @param type option type (0-255 for V4 and 0-65535 for V6)
+    /// @param data content of the option
+    Option(Universe u, unsigned short type, std::vector<uint8_t>& data);
+
+    /// @brief returns option universe (V4 or V6)
+    ///
+    /// @return universe type
+    Universe
+    getUniverse() { return universe_; };
 
     /// @brief writes option in wire-format to buf
     ///
@@ -150,7 +169,7 @@ public:
     /// Returns pointer to actual data.
     ///
     /// @return pointer to actual data (or NULL if there is no data)
-    virtual uint8_t*
+    virtual const std::vector<uint8_t>&
     getData();
 
     /// Adds a sub-option.
@@ -248,8 +267,8 @@ protected:
     /// option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     unsigned short type_;
 
-    /// shared pointer to a buffer (usually a part of packet)
-    boost::shared_array<uint8_t> data_;
+    /// contains content of this data
+    std::vector<uint8_t> data_;
 
     /// length of data only. Use len() if you want to
     /// know proper length with option header overhead
