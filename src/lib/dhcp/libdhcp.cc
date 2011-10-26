@@ -84,6 +84,37 @@ LibDHCP::unpackOptions6(const boost::shared_array<uint8_t> buf,
     return (offset);
 }
 
+void
+LibDHCP::unpackOptions4(const std::vector<uint8_t>& buf,
+                        isc::dhcp::Option::Option6Collection& options) {
+    size_t offset = 0;
+
+    // 2 - header of DHCPv4 option
+    while (offset + 2 <= buf.size()) {
+        uint8_t opt_type = buf[offset++];
+        uint8_t opt_len =  buf[offset++];
+        if (offset + opt_len > buf.size() ) {
+            isc_throw(OutOfRange, "Option parse failed. Tried to parse "
+                      << offset + opt_len << " bytes from " << buf.size()
+                      << "-byte long buffer.");
+        }
+
+        boost::shared_ptr<Option> opt;
+        switch(opt_type) {
+        default:
+            /// TODO: Is this intermediate object really necessary here?
+            vector<uint8_t> tmpVec(&buf[offset], &buf[offset] + opt_len);
+            opt = boost::shared_ptr<Option>(new Option(Option::V4,
+                                                       opt_type,
+                                                       tmpVec));
+        }
+
+        options.insert(pair<int, boost::shared_ptr<Option> >(opt_type, opt));
+        offset += opt_len;
+    }
+}
+
+
 unsigned int
 LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
                       unsigned int data_len,
