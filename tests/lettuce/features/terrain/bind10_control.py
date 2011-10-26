@@ -29,7 +29,6 @@ def start_bind10(step, config_file, cmdctl_port, process_name):
     world.processes.add_process(step, process_name, args)
 
     # check output to know when startup has been completed
-    # TODO what to do on failure?
     message = world.processes.wait_for_stderr_str(process_name,
                                                   ["BIND10_STARTUP_COMPLETE",
                                                    "BIND10_STARTUP_ERROR"])
