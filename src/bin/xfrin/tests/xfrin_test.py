@@ -16,6 +16,7 @@
 import unittest
 import shutil
 import socket
+import sys
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
@@ -216,8 +217,8 @@ class MockXfrin(Xfrin):
                                  request_type, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
-    def __init__(self, sock_map, zone_name, rrclass, shutdown_event,
-                 master_addr):
+    def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
+                 shutdown_event, master_addr, tsig_key=None):
         super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
                          shutdown_event, master_addr)
         self.query_data = b''
@@ -300,7 +301,7 @@ class TestXfrinState(unittest.TestCase):
     def setUp(self):
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
-                                        TEST_RRCLASS, threading.Event(),
+                                        TEST_RRCLASS, None, threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
         self.begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
                                RRTTL(3600))
@@ -585,7 +586,7 @@ class TestXfrinConnection(unittest.TestCase):
             os.remove(TEST_DB_FILE)
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
-                                        TEST_RRCLASS, threading.Event(),
+                                        TEST_RRCLASS, None, threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
         self.soa_response_params = {
             'questions': [example_soa_question],
@@ -720,13 +721,13 @@ class TestAXFR(TestXfrinConnection):
         # to confirm an AF_INET6 socket has been created.  A naive application
         # tends to assume it's IPv4 only and hardcode AF_INET.  This test
         # uncovers such a bug.
-        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS,
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS, None,
                                 threading.Event(), TEST_MASTER_IPV6_ADDRINFO)
         c.bind(('::', 0))
         c.close()
 
     def test_init_chclass(self):
-        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(),
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(), None,
                                 threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
         axfrmsg = c._create_query(RRType.AXFR())
         self.assertEqual(axfrmsg.get_question()[0].get_class(),
@@ -1678,6 +1679,52 @@ class TestXfrinRecorder(unittest.TestCase):
         self.assertEqual(self.recorder.xfrin_in_progress(TEST_ZONE_NAME), True)
         self.recorder.decrement(TEST_ZONE_NAME)
         self.assertEqual(self.recorder.xfrin_in_progress(TEST_ZONE_NAME), False)
+
+class TestXfrinProcess(unittest.TestCase):
+    def setUp(self):
+        self.unlocked = False
+
+    def tearDown(self):
+        self.assertTrue(self.unlocked)
+
+    def increment(self, zone_name):
+        '''Fake method of xfrin_recorder.increment.
+
+        '''
+        pass
+
+    def decrement(self, zone_name):
+        '''Fake method of xfrin_recorder.decrement.
+
+        '''
+        self.unlocked = True
+
+    def publish_xfrin_news(self, zone_name, rrclass, ret):
+        '''Fake method of serve.publish_xfrin_news
+
+        '''
+        pass
+
+    def create_xfrinconn(self, sock_map, zone_name, rrclass, datasrc_client,
+                         shutdown_event, master_addrinfo, tsig_key):
+        conn = MockXfrinConnection(sock_map, zone_name, rrclass,
+                                   datasrc_client, shutdown_event,
+                                   master_addrinfo, tsig_key)
+
+        # An awkward check that would specifically identify an old bug
+        # where initialziation of XfrinConnection._tsig_ctx_creator caused
+        # self reference and subsequently led to reference leak.
+        orig_ref = sys.getrefcount(conn)
+        conn._tsig_ctx_creator = None
+        self.assertEqual(orig_ref, sys.getrefcount(conn))
+
+        return conn
+
+    def test_process_xfrin_normal(self):
+        process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
+                      (socket.AF_INET, socket.SOCK_STREAM,
+                       TEST_MASTER_IPV4_ADDRESS), False, None, RRType.AXFR(),
+                      self.create_xfrinconn)
 
 class TestXfrin(unittest.TestCase):
     def setUp(self):
