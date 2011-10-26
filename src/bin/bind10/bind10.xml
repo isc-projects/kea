@@ -50,6 +50,7 @@
       <arg><option>-p <replaceable>data_path</replaceable></option></arg>
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
+      <arg><option>-w <replaceable>wait_time</replaceable></option></arg>
       <arg><option>--brittle</option></arg>
       <arg><option>--cmdctl-port</option> <replaceable>port</replaceable></arg>
       <arg><option>--config-file</option> <replaceable>config-filename</replaceable></arg>
@@ -60,6 +61,7 @@
       <arg><option>--pretty-name <replaceable>name</replaceable></option></arg>
       <arg><option>--user <replaceable>user</replaceable></option></arg>
       <arg><option>--verbose</option></arg>
+      <arg><option>--wait <replaceable>wait_time</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -208,6 +210,18 @@ The default is the basename of ARG 0.
 	  <para>Display more about what is going on for
 	  <command>bind10</command> and its child processes.</para>
 <!-- TODO: not true about all children yet -->
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-w</option> <replaceable>wait_time</replaceable>, <option>--wait</option> <replaceable>wait_time</replaceable></term>
+        <listitem>
+          <para>Sets the amount of time that BIND 10 will wait for
+          the configuration manager (a key component of BIND 10) to
+          initialize itself before abandoning the start up and
+          terminating with an error.  The wait_time is specified in
+          seconds and has a default value of 10.
+          </para>
         </listitem>
       </varlistentry>
 

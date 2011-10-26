@@ -215,7 +215,7 @@ class BoB:
     
     def __init__(self, msgq_socket_file=None, data_path=None,
     config_filename=None, nocache=False, verbose=False, setuid=None,
-    username=None, cmdctl_port=None, brittle=False, pwait_time=10):
+    username=None, cmdctl_port=None, brittle=False, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -223,11 +223,18 @@ class BoB:
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
 
-            Data path and config filename are passed trough to config manager
+            Data path and config filename are passed through to config manager
             (if provided) and specify the config file to be used.
 
             The cmdctl_port is passed to cmdctl and specify on which port it
             should listen.
+
+            brittle is a debug option that controls whether the Boss shuts down
+            after any process dies.
+
+            wait_time controls the amount of time (in seconds) that Boss waits
+            for selected processes to initialize before continuing with the
+            initialization.  Currently this is only the configuration manager.
         """
         self.cc_session = None
         self.ccs = None
@@ -251,7 +258,7 @@ class BoB:
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
-        self.pwait_time = pwait_time
+        self.wait_time = wait_time
         self.sockcreator = None
 
         # If -v was set, enable full debug logging.
@@ -514,9 +521,9 @@ class BoB:
         self.processes[bind_cfgd.pid] = bind_cfgd
         self.log_started(bind_cfgd.pid)
 
-        # Wait for the configuration manager to start up.  The amount of time
-        # can be set on the command line.
-        time_remaining = self.pwait_time
+        # Wait for the configuration manager to start up as subsequent initialization
+        # cannot proceed without it.  The time to wait can be set on the command line.
+        time_remaining = self.wait_time
         msg, env = self.cc_session.group_recvmsg()
         while time_remaining > 0 and not self.process_running(msg, "ConfigManager"):
             logger.debug(DBG_PROCESS, BIND10_WAIT_CFGMGR)
@@ -989,8 +996,8 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
                       help="file to dump the PID of the BIND 10 process")
     parser.add_option("--brittle", dest="brittle", action="store_true",
                       help="debugging flag: exit if any component dies")
-    parser.add_option("-w", "--wait", dest="pwait_time", type="int",
-                      default=10, help="Time to wait for config manager to start up")
+    parser.add_option("-w", "--wait", dest="wait_time", type="int",
+                      default=10, help="Time (in seconds) to wait for config manager to start up")
 
     (options, args) = parser.parse_args(args)
 
@@ -1094,7 +1101,7 @@ def main():
     boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                        options.config_file, options.nocache, options.verbose,
                        setuid, username, options.cmdctl_port, options.brittle,
-                       options.pwait_time)
+                       options.wait_time)
     startup_result = boss_of_bind.startup()
     if startup_result:
         logger.fatal(BIND10_STARTUP_ERROR, startup_result)
