@@ -12,14 +12,17 @@ import re
 # the result will be stored in last_query_result, which can then be inspected
 # more closely, for instance with the step
 #
-# last query should have <property> <value>
+# "the last query response should have <property> <value>"
 #
+# Also see example.feature for some examples
 
 #
 # define a class to easily access different parts
 # We may consider using our full library for this, but for now
 # simply store several parts of the response as text values in
-# this structure
+# this structure.
+# (this actually has the advantage of not relying on our own libraries
+# to test our own, well, libraries)
 #
 # The following attributes are 'parsed' from the response, all as strings,
 # and end up as direct attributes of the QueryResult object:
