@@ -89,7 +89,7 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (Option::Option6Collection::const_iterator it = options_.begin();
+    for (Option::OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -242,7 +242,7 @@ Pkt4::addOption(boost::shared_ptr<Option> opt) {
 
 boost::shared_ptr<isc::dhcp::Option>
 Pkt4::getOption(uint8_t type) {
-    Option::Option6Collection::const_iterator x = options_.find(type);
+    Option::OptionCollection::const_iterator x = options_.find(type);
     if (x!=options_.end()) {
         return (*x).second;
     }
