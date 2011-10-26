@@ -14,16 +14,17 @@
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
-#include "dhcp/libdhcp.h"
+#include <util/buffer.h>
+#include <dhcp/libdhcp.h>
 #include "config.h"
-#include "dhcp6.h"
-
-#include "option.h"
-#include "option6_ia.h"
-#include "option6_iaaddr.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
 
 using namespace std;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 // static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
@@ -89,7 +90,7 @@ LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
                       unsigned int offset,
                       const isc::dhcp::Option::Option6Collection& options) {
     try {
-        for (isc::dhcp::Option::Option6Collection::const_iterator it = options.begin();
+        for (Option::Option6Collection::const_iterator it = options.begin();
              it != options.end();
              ++it) {
             unsigned short opt_len = (*it).second->len();
@@ -97,7 +98,7 @@ LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
                 isc_throw(OutOfRange, "Failed to build option " <<
                           (*it).first << ": out of buffer");
             }
-            offset = (*it).second->pack(data, data_len, offset);
+            offset = it->second->pack(data, data_len, offset);
         }
     }
     catch (const Exception& e) {
@@ -106,6 +107,17 @@ LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
     }
     return (offset);
 }
+
+void
+LibDHCP::packOptions(isc::util::OutputBuffer& buf,
+                     const Option::Option6Collection& options) {
+    for (Option::Option6Collection::const_iterator it = options.begin();
+         it != options.end();
+         ++it) {
+        it->second->pack4(buf);
+    }
+}
+
 
 bool
 LibDHCP::OptionFactoryRegister(Option::Universe u,
