@@ -17,6 +17,7 @@
 # Tests for the message part of the pydnspp module
 #
 
+import sys
 import unittest
 import os
 from pydnspp import *
@@ -229,6 +230,14 @@ class MessageTest(unittest.TestCase):
         self.r.add_rrset(Message.SECTION_ANSWER, self.rrset_a)
         self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ANSWER)))
         self.assertEqual(2, self.r.get_rr_count(Message.SECTION_ANSWER))
+
+        # We always make a new deep copy in get_section(), so the reference
+        # count of the returned list and its each item should be 1; otherwise
+        # they would leak.
+        self.assertEqual(1, sys.getrefcount(self.r.get_section(
+                    Message.SECTION_ANSWER)))
+        self.assertEqual(1, sys.getrefcount(self.r.get_section(
+                    Message.SECTION_ANSWER)[0]))
 
         self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_AUTHORITY)))
         self.assertEqual(0, self.r.get_rr_count(Message.SECTION_AUTHORITY))
