@@ -412,53 +412,15 @@ Message_getRRCount(s_Message* self, PyObject* args) {
 }
 
 // TODO use direct iterators for these? (or simply lists for now?)
-PyObject*
-Message_getQuestion(s_Message* self) {
-    QuestionIterator qi, qi_end;
-    try {
-        qi = self->cppobj->beginQuestion();
-        qi_end = self->cppobj->endQuestion();
-    } catch (const InvalidMessageSection& ex) {
-        PyErr_SetString(po_InvalidMessageSection, ex.what());
-        return (NULL);
-    } catch (...) {
-        PyErr_SetString(po_IscException,
-                        "Unexpected exception in getting section iterators");
-        return (NULL);
-    }
-
-    PyObject* list = PyList_New(0);
-    if (list == NULL) {
-        return (NULL);
-    }
-
-    try {
-        for (; qi != qi_end; ++qi) {
-            if (PyList_Append(list, createQuestionObject(**qi)) == -1) {
-                Py_DECREF(list);
-                return (NULL);
-            }
-        }
-        return (list);
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure getting Question section: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure getting Question section");
-    }
-    Py_DECREF(list);
-    return (NULL);
-}
-
-class RRsetInserter {
+template <typename ItemType, typename CreatorParamType>
+class SectionInserter {
+    typedef PyObject* (*creator_t)(const CreatorParamType&);
 public:
-    RRsetInserter(PyObject* pylist) : pylist_(pylist) {}
-    void operator()(ConstRRsetPtr rrset) {
-        if (PyList_Append(pylist_,
-                          PyObjectContainer(createRRsetObject(*rrset)).get())
+    SectionInserter(PyObject* pylist, creator_t creator) :
+        pylist_(pylist), creator_(creator)
+    {}
+    void operator()(ItemType item) {
+        if (PyList_Append(pylist_, PyObjectContainer(creator_(*item)).get())
             == -1) {
             isc_throw(PyCPPWrapperException, "PyList_Append failed, "
                       "probably due to short memory");
@@ -466,7 +428,33 @@ public:
     }
 private:
     PyObject* pylist_;
+    creator_t creator_;
 };
+
+typedef SectionInserter<ConstQuestionPtr, Question> QuestionInserter;
+typedef SectionInserter<ConstRRsetPtr, RRset> RRsetInserter;
+
+PyObject*
+Message_getQuestion(s_Message* self) {
+    try {
+        PyObjectContainer list_container(PyList_New(0));
+        for_each(self->cppobj->beginQuestion(),
+                 self->cppobj->endQuestion(),
+                 QuestionInserter(list_container.get(), createQuestionObject));
+        return (list_container.release());
+    } catch (const InvalidMessageSection& ex) {
+        PyErr_SetString(po_InvalidMessageSection, ex.what());
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure in Message.get_question: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Message.get_question");
+    }
+    return (NULL);
+}
 
 PyObject*
 Message_getSection(s_Message* self, PyObject* args) {
@@ -484,7 +472,7 @@ Message_getSection(s_Message* self, PyObject* args) {
             static_cast<Message::Section>(section);
         for_each(self->cppobj->beginSection(msgsection),
                  self->cppobj->endSection(msgsection),
-                 RRsetInserter(list_container.get()));
+                 RRsetInserter(list_container.get(), createRRsetObject));
         return (list_container.release());
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
