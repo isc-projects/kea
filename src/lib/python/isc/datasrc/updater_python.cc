@@ -270,16 +270,16 @@ PyObject*
 createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source,
                         PyObject* base_obj)
 {
-    s_ZoneUpdater* py_zi = static_cast<s_ZoneUpdater*>(
+    s_ZoneUpdater* py_zu = static_cast<s_ZoneUpdater*>(
         zoneupdater_type.tp_alloc(&zoneupdater_type, 0));
-    if (py_zi != NULL) {
-        py_zi->cppobj = source;
-        py_zi->base_obj = base_obj;
+    if (py_zu != NULL) {
+        py_zu->cppobj = source;
+        py_zu->base_obj = base_obj;
+        if (base_obj != NULL) {
+            Py_INCREF(base_obj);
+        }
     }
-    if (base_obj != NULL) {
-        Py_INCREF(base_obj);
-    }
-    return (py_zi);
+    return (py_zu);
 }
 
 } // namespace python
