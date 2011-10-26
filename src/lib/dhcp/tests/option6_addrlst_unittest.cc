@@ -111,6 +111,8 @@ TEST_F(Option6AddrLstTest, basic) {
         opt1 = new Option6AddrLst(D6O_NAME_SERVERS, buf, 128, 0, 16);
     );
 
+    EXPECT_EQ(Option::V6, opt1->getUniverse());
+
     EXPECT_EQ(D6O_NAME_SERVERS, opt1->getType());
     EXPECT_EQ(20, opt1->len());
     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
@@ -178,6 +180,7 @@ TEST_F(Option6AddrLstTest, constructors) {
     EXPECT_NO_THROW(
         opt1 = new Option6AddrLst(1234, IOAddress("::1"));
     );
+    EXPECT_EQ(Option::V6, opt1->getUniverse());
     EXPECT_EQ(1234, opt1->getType());
 
     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
