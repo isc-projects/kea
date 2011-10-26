@@ -33,7 +33,7 @@ unsigned int
 LibDHCP::unpackOptions6(const boost::shared_array<uint8_t> buf,
                         unsigned int buf_len,
                         unsigned int offset, unsigned int parse_len,
-                        isc::dhcp::Option::Option6Collection& options) {
+                        isc::dhcp::Option::OptionCollection& options) {
     if (offset + parse_len > buf_len) {
         isc_throw(OutOfRange, "Option parse failed. Tried to parse "
                   << parse_len << " bytes at offset " << offset
@@ -86,7 +86,7 @@ LibDHCP::unpackOptions6(const boost::shared_array<uint8_t> buf,
 
 void
 LibDHCP::unpackOptions4(const std::vector<uint8_t>& buf,
-                        isc::dhcp::Option::Option6Collection& options) {
+                        isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
 
     // 2 - header of DHCPv4 option
@@ -119,9 +119,9 @@ unsigned int
 LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
                       unsigned int data_len,
                       unsigned int offset,
-                      const isc::dhcp::Option::Option6Collection& options) {
+                      const isc::dhcp::Option::OptionCollection& options) {
     try {
-        for (Option::Option6Collection::const_iterator it = options.begin();
+        for (Option::OptionCollection::const_iterator it = options.begin();
              it != options.end();
              ++it) {
             unsigned short opt_len = (*it).second->len();
@@ -141,8 +141,8 @@ LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
 
 void
 LibDHCP::packOptions(isc::util::OutputBuffer& buf,
-                     const Option::Option6Collection& options) {
-    for (Option::Option6Collection::const_iterator it = options.begin();
+                     const Option::OptionCollection& options) {
+    for (Option::OptionCollection::const_iterator it = options.begin();
          it != options.end();
          ++it) {
         it->second->pack4(buf);

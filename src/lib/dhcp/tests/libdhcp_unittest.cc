@@ -43,7 +43,7 @@ static const uint8_t packed[] = {
 
 TEST(LibDhcpTest, packOptions6) {
     boost::shared_array<uint8_t> buf(new uint8_t[512]);
-    isc::dhcp::Option::Option6Collection opts; // list of options
+    isc::dhcp::Option::OptionCollection opts; // list of options
 
     // generate content for options
     for (int i = 0; i < 64; i++) {
@@ -76,7 +76,7 @@ TEST(LibDhcpTest, unpackOptions6) {
     // Option is used as a simple option implementation
     // More advanced uses are validated in tests dedicated for
     // specific derived classes.
-    isc::dhcp::Option::Option6Collection options; // list of options
+    isc::dhcp::Option::OptionCollection options; // list of options
 
     // we can't use packed directly, as shared_array would try to
     // free it eventually
@@ -91,7 +91,7 @@ TEST(LibDhcpTest, unpackOptions6) {
     EXPECT_EQ(35, offset); // parsed first 35 bytes (offset 0..34)
     EXPECT_EQ(options.size(), 5); // there should be 5 options
 
-    isc::dhcp::Option::Option6Collection::const_iterator x = options.find(12);
+    isc::dhcp::Option::OptionCollection::const_iterator x = options.find(12);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
     EXPECT_EQ(12, x->second->getType());  // this should be option 12
     ASSERT_EQ(9, x->second->len()); // it should be of length 9
@@ -159,7 +159,7 @@ TEST(LibDhcpTest, packOptions4) {
     boost::shared_ptr<Option> opt4(new Option(Option::V4,254, payload[3]));
     boost::shared_ptr<Option> opt5(new Option(Option::V4,128, payload[4]));
 
-    isc::dhcp::Option::Option6Collection opts; // list of options
+    isc::dhcp::Option::OptionCollection opts; // list of options
     opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt1));
     opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt2));
     opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt3));
@@ -180,13 +180,13 @@ TEST(LibDhcpTest, packOptions4) {
 TEST(LibDhcpTest, unpackOptions4) {
 
     vector<uint8_t> packed(v4Opts, v4Opts + sizeof(v4Opts));
-    isc::dhcp::Option::Option6Collection options; // list of options
+    isc::dhcp::Option::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
         LibDHCP::unpackOptions4(packed, options);
     );
 
-    isc::dhcp::Option::Option6Collection::const_iterator x = options.find(12);
+    isc::dhcp::Option::OptionCollection::const_iterator x = options.find(12);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
     EXPECT_EQ(12, x->second->getType());  // this should be option 12
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3

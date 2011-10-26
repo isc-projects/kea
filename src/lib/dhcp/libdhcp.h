@@ -40,7 +40,7 @@ public:
     static unsigned int
     packOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
                  unsigned int offset,
-                 const isc::dhcp::Option::Option6Collection& options);
+                 const isc::dhcp::Option::OptionCollection& options);
 
 
     /// @brief Stores options in a buffer.
@@ -56,11 +56,11 @@ public:
     /// @param options
     static void
     packOptions(isc::util::OutputBuffer& buf,
-                const isc::dhcp::Option::Option6Collection& options);
+                const isc::dhcp::Option::OptionCollection& options);
 
     static void
     unpackOptions4(const std::vector<uint8_t>& buf,
-                   isc::dhcp::Option::Option6Collection& options);
+                   isc::dhcp::Option::OptionCollection& options);
     ///
     /// Parses provided buffer and creates Option objects.
     ///
@@ -77,7 +77,7 @@ public:
     static unsigned int
     unpackOptions6(const boost::shared_array<uint8_t> buf, unsigned int buf_len,
                    unsigned int offset, unsigned int parse_len,
-                   isc::dhcp::Option::Option6Collection& options_);
+                   isc::dhcp::Option::OptionCollection& options_);
 
     ///
     /// Registers factory method that produces options of specific option types.
