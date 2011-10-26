@@ -34,6 +34,7 @@ class RunningProcess:
         self.step = step
         self.process_name = process_name
         self.remove_files_on_exit = True
+        self._check_output_dir()
         self._create_filenames()
         self._start_process(args)
 
@@ -51,11 +52,24 @@ class RunningProcess:
         filebase = re.sub("[^a-zA-Z.\-_]", "", filebase)
         return filebase + "." + extension
 
+    def _check_output_dir(self):
+        # We may want to make this overridable by the user, perhaps
+        # through an environment variable. Since we currently expect
+        # lettuce to be run from our lettuce dir, we shall just use
+        # the relative path 'output/'
+        self._output_dir = os.getcwd() + os.sep + "output"
+        if not os.path.exists(self._output_dir):
+            os.mkdir(self._output_dir)
+        assert os.path.isdir(self._output_dir),\
+            self._output_dir + " is not a directory."
+
     def _create_filenames(self):
         filebase = self.step.scenario.feature.name + "-" +\
                    self.step.scenario.name + "-" + self.process_name
-        self.stderr_filename = self.mangle_filename(filebase, "stderr")
-        self.stdout_filename = self.mangle_filename(filebase, "stdout")
+        self.stderr_filename = self._output_dir + os.sep +\
+                               self.mangle_filename(filebase, "stderr")
+        self.stdout_filename = self._output_dir + os.sep +\
+                               self.mangle_filename(filebase, "stdout")
 
     def stop_process(self):
         if self.process is not None:
@@ -155,7 +169,7 @@ class RunningProcesses:
                                                                 only_new)
 
 @before.each_scenario
-def initialize(feature):
+def initialize(scenario):
     # Keep track of running processes
     world.processes = RunningProcesses()
 
@@ -169,6 +183,9 @@ def initialize(feature):
         shutil.copy(item[0], item[1])
 
 @after.each_scenario
-def cleanup(feature):
+def cleanup(scenario):
+    # Keep output files if the scenario failed
+    if not scenario.passed:
+        world.processes.keep_files()
     # Stop any running processes we may have had around
     world.processes.stop_all_processes()
