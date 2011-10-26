@@ -37,13 +37,26 @@ Option::Option(Universe u, unsigned short type)
 Option::Option(Universe u, unsigned short type,
                const boost::shared_array<uint8_t>& buf,
                unsigned int offset, unsigned int len)
-    :universe_(u), type_(type), data_(buf),
+    :universe_(u), type_(type),
      data_len_(len), offset_(offset)
-      {
+{
+    if (u==V4 && (type>255)) {
+        isc_throw(BadValue, "Can't create V4 option of type "
+                  << type << ", V4 options are in range 0..255");
+    }
+
+    uint8_t* ptr = &buf[offset];
+    data_ = std::vector<uint8_t>(ptr, ptr+len);
 
     // sanity checks
     // TODO: universe must be in V4 and V6
 }
+
+Option::Option(Universe u, unsigned short type, std::vector<uint8_t>& data)
+    :universe_(u), type_(type), data_(data) {
+
+}
+
 
 unsigned int
 Option::pack(boost::shared_array<uint8_t>& buf,
@@ -72,7 +85,7 @@ Option::pack4(boost::shared_array<uint8_t>& buf,
     ptr[0] = type_;
     ptr[1] = data_len_;
     ptr += 2;
-    memcpy(ptr, &data_[0], data_len_);
+    memcpy(ptr, &data_[0], data_.size());
 
     return offset + len();
 }
@@ -93,7 +106,7 @@ Option::pack6(boost::shared_array<uint8_t>& buf,
     ptr = writeUint16(len() - getHeaderLen(), ptr);
 
     if (data_len_)
-        memcpy(ptr, &data_[offset_], data_len_);
+        memcpy(ptr, &data_[0], data_.size());
 
     // end of fixed part of this option
     offset += OPTION6_HDR_LEN + data_len_;
@@ -140,12 +153,16 @@ Option::unpack6(const boost::shared_array<uint8_t>& buf,
                   << "): too small buffer.");
     }
 
-    data_ = buf;
+    uint8_t* ptr = &buf[offset];
+    data_ = std::vector<uint8_t>(ptr, ptr+parse_len);
+
     offset_ = offset;
     data_len_ = buf_len;
 
-    return LibDHCP::unpackOptions6(buf, buf_len, offset, parse_len,
-                                   options_);
+    return (offset+parse_len);
+
+    //return LibDHCP::unpackOptions6(buf, buf_len, offset, parse_len,
+    //                               options_);
 }
 
 unsigned short
@@ -218,7 +235,7 @@ std::string Option::toText(int indent /* =0 */ ) {
             tmp << ":";
         }
         tmp << setfill('0') << setw(2) << hex
-            << static_cast<unsigned short>(data_[offset_+i]);
+            << static_cast<unsigned short>(data_[i]);
     }
 
     // print suboptions
@@ -235,13 +252,9 @@ Option::getType() {
     return type_;
 }
 
-uint8_t*
+const std::vector<uint8_t>&
 Option::getData() {
-    if (data_len_) {
-        return (&data_[offset_]);
-    } else {
-        return (NULL);
-    }
+    return (data_);
 }
 
 unsigned short

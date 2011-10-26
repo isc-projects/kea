@@ -95,31 +95,31 @@ TEST(LibDhcpTest, unpackOptions6) {
     ASSERT_FALSE(x == options.end()); // option 1 should exist
     EXPECT_EQ(12, x->second->getType());  // this should be option 12
     ASSERT_EQ(9, x->second->len()); // it should be of length 9
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+4, 5)); // data len=5
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+4, 5)); // data len=5
 
     x = options.find(13);
     ASSERT_FALSE(x == options.end()); // option 13 should exist
     EXPECT_EQ(13, x->second->getType());  // this should be option 13
     ASSERT_EQ(7, x->second->len()); // it should be of length 7
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+13, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+13, 3)); // data len=3
 
     x = options.find(14);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
     EXPECT_EQ(14, x->second->getType());  // this should be option 14
     ASSERT_EQ(6, x->second->len()); // it should be of length 6
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+20, 2)); // data len=2
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+20, 2)); // data len=2
 
     x = options.find(256);
     ASSERT_FALSE(x == options.end()); // option 256 should exist
     EXPECT_EQ(256, x->second->getType());  // this should be option 256
     ASSERT_EQ(8, x->second->len()); // it should be of length 7
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+26, 4)); // data len=4
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+26, 4)); // data len=4
 
     x = options.find(257);
     ASSERT_FALSE(x == options.end()); // option 257 should exist
     EXPECT_EQ(257, x->second->getType());  // this should be option 257
     ASSERT_EQ(5, x->second->len()); // it should be of length 5
-    EXPECT_EQ(0, memcmp(x->second->getData(), packed+34, 1)); // data len=1
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+34, 1)); // data len=1
 
     x = options.find(0);
     EXPECT_TRUE(x == options.end()); // option 0 not found
