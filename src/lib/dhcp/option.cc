@@ -210,7 +210,7 @@ Option::len() {
     int length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
-    for (Option::Option6Collection::iterator it = options_.begin();
+    for (Option::OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -234,7 +234,7 @@ Option::valid() {
 
 boost::shared_ptr<isc::dhcp::Option>
 Option::getOption(unsigned short opt_type) {
-    isc::dhcp::Option::Option6Collection::const_iterator x =
+    isc::dhcp::Option::OptionCollection::const_iterator x =
         options_.find(opt_type);
     if ( x != options_.end() ) {
         return (*x).second;
@@ -244,7 +244,7 @@ Option::getOption(unsigned short opt_type) {
 
 bool
 Option::delOption(unsigned short opt_type) {
-    isc::dhcp::Option::Option6Collection::iterator x = options_.find(opt_type);
+    isc::dhcp::Option::OptionCollection::iterator x = options_.find(opt_type);
     if ( x != options_.end() ) {
         options_.erase(x);
         return true; // delete successful
@@ -270,7 +270,7 @@ std::string Option::toText(int indent /* =0 */ ) {
     }
 
     // print suboptions
-    for (Option6Collection::const_iterator opt=options_.begin();
+    for (OptionCollection::const_iterator opt=options_.begin();
          opt!=options_.end();
          ++opt) {
         tmp << (*opt).second->toText(indent+2);

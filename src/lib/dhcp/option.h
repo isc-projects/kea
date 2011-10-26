@@ -38,7 +38,7 @@ public:
 
     /// a collection of DHCPv6 options
     typedef std::multimap<unsigned int, boost::shared_ptr<Option> >
-    Option6Collection;
+    OptionCollection;
 
     /// @brief a factory function prototype
     ///
@@ -289,7 +289,7 @@ protected:
     unsigned int offset_;
 
     /// collection for storing suboptions
-    Option6Collection options_;
+    OptionCollection options_;
 
     /// TODO: probably 2 different containers have to be used for v4 (unique
     /// options) and v6 (options with the same type can repeat)
