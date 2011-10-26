@@ -66,8 +66,8 @@ PyObject* Message_setEDNS(s_Message* self, PyObject* args);
 PyObject* Message_getTSIGRecord(s_Message* self);
 PyObject* Message_getRRCount(s_Message* self, PyObject* args);
 // use direct iterators for these? (or simply lists for now?)
-PyObject* Message_getQuestion(s_Message* self);
-PyObject* Message_getSection(s_Message* self, PyObject* args);
+PyObject* Message_getQuestion(PyObject* self, PyObject*);
+PyObject* Message_getSection(PyObject* self, PyObject* args);
 //static PyObject* Message_beginQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_endQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
@@ -129,10 +129,10 @@ PyMethodDef Message_methods[] = {
     },
     { "get_rr_count", reinterpret_cast<PyCFunction>(Message_getRRCount), METH_VARARGS,
       "Returns the number of RRs contained in the given section." },
-    { "get_question", reinterpret_cast<PyCFunction>(Message_getQuestion), METH_NOARGS,
+    { "get_question", Message_getQuestion, METH_NOARGS,
       "Returns a list of all Question objects in the message "
       "(should be either 0 or 1)" },
-    { "get_section", reinterpret_cast<PyCFunction>(Message_getSection), METH_VARARGS,
+    { "get_section", Message_getSection, METH_VARARGS,
       "Returns a list of all RRset objects in the given section of the message\n"
       "The argument must be of type Section" },
     { "add_question", reinterpret_cast<PyCFunction>(Message_addQuestion), METH_VARARGS,
@@ -435,7 +435,9 @@ typedef SectionInserter<ConstQuestionPtr, Question> QuestionInserter;
 typedef SectionInserter<ConstRRsetPtr, RRset> RRsetInserter;
 
 PyObject*
-Message_getQuestion(s_Message* self) {
+Message_getQuestion(PyObject* po_self, PyObject*) {
+    const s_Message* const self = static_cast<s_Message*>(po_self);
+
     try {
         PyObjectContainer list_container(PyList_New(0));
         for_each(self->cppobj->beginQuestion(),
@@ -457,7 +459,9 @@ Message_getQuestion(s_Message* self) {
 }
 
 PyObject*
-Message_getSection(s_Message* self, PyObject* args) {
+Message_getSection(PyObject* po_self, PyObject* args) {
+    const s_Message* const self = static_cast<s_Message*>(po_self);
+
     unsigned int section;
     if (!PyArg_ParseTuple(args, "I", &section)) {
         PyErr_Clear();
