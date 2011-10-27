@@ -53,7 +53,7 @@ if ($server && !-d "$test/$server") {
 my $topdir = abs_path("$test/..");
 my $testdir = abs_path("$test");
 my $RUN_BIND10 = $ENV{'RUN_BIND10'};
-my $NAMED = $ENV{'NAMED'};
+my $NAMED = $ENV{'BIND9_NAMED'};
 my $LWRESD = $ENV{'LWRESD'};
 my $DIG = $ENV{'DIG'};
 my $PERL = $ENV{'PERL'};
@@ -182,7 +182,7 @@ sub start_server {
 		exit 1;
 	}
 
-	#               print "I:starting server $server\n";
+	print "I:starting server $server\n";
 
 	chdir "$testdir/$server";
 
