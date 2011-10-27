@@ -19,8 +19,8 @@
 # Run a system test.
 #
 
-SYSTEMTESTTOP=.
-. $SYSTEMTESTTOP/conf.sh
+SYSTEMTOP=@abs_top_builddir@/tests/system
+. $SYSTEMTOP/conf.sh
 
 stopservers=true
 
@@ -87,7 +87,7 @@ then
 fi
 
 # Start name servers running
-$PERL start.pl $test || exit 1
+$PERL $SYSTEMTOP/start.pl $test || exit 1
 
 # Run the tests
 ( cd $test ; sh tests.sh )
@@ -102,7 +102,7 @@ else
 fi
 
 # Shutdown
-$PERL stop.pl $test
+$PERL $SYSTEMTOP/stop.pl $test
 
 status=`expr $status + $?`
 

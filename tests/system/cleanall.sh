@@ -27,7 +27,7 @@ find . -type f \( \
 
 status=0
 
-for d in ./.* ./*
+for d in ./.* ./* ./*/*
 do
    case $d in ./.|./..) continue ;; esac
    test -d $d || continue

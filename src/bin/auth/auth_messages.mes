@@ -260,4 +260,3 @@ NOTIFY request will not be honored.
 % AUTH_INVALID_STATISTICS_DATA invalid specification of statistics data specified
 An error was encountered when the authoritiative server specified
 statistics data which is invalid for the auth specification file.
-

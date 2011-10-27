@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110809, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20111021, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -770,6 +770,8 @@ fi
 #
 AC_PATH_PROGS(PERL, perl5 perl)
 AC_SUBST(PERL)
+AC_PATH_PROGS(AWK, gawk awk)
+AC_SUBST(AWK)
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
@@ -870,6 +872,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns/python/tests/Makefile
                  src/lib/dns/benchmarks/Makefile
+                 src/lib/dhcp/Makefile
+                 src/lib/dhcp/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
@@ -965,9 +969,22 @@ AC_OUTPUT([doc/version.ent
            src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
+           tests/system/run.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
            tests/system/bindctl/nsx1/b10-config.db.template
+           tests/system/ixfr/db.example.n0
+           tests/system/ixfr/db.example.n2
+           tests/system/ixfr/db.example.n2.refresh
+           tests/system/ixfr/db.example.n4
+           tests/system/ixfr/db.example.n6
+           tests/system/ixfr/ixfr_init.sh
+           tests/system/ixfr/b10-config.db
+           tests/system/ixfr/common_tests.sh
+           tests/system/ixfr/in-1/setup.sh
+           tests/system/ixfr/in-2/setup.sh
+           tests/system/ixfr/in-3/setup.sh
+           tests/system/ixfr/in-4/setup.sh
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -996,6 +1013,13 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x tests/system/conf.sh
+           chmod +x tests/system/run.sh
+           chmod +x tests/system/ixfr/ixfr_init.sh
+           chmod +x tests/system/ixfr/common_tests.sh
+           chmod +x tests/system/ixfr/in-1/setup.sh
+           chmod +x tests/system/ixfr/in-2/setup.sh
+           chmod +x tests/system/ixfr/in-3/setup.sh
+           chmod +x tests/system/ixfr/in-4/setup.sh
           ])
 AC_OUTPUT
 

@@ -12,33 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-#include <iostream>
-#include <sstream>
-
-#include <arpa/inet.h>
 #include <gtest/gtest.h>
 
+#include <log/logger_support.h>
 
-#include "dhcp6/pkt6.h"
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    isc::log::initLogger();
 
-using namespace std;
-using namespace isc;
+    int result = RUN_ALL_TESTS();
 
-namespace {
-// empty class for now, but may be extended once Addr6 becomes bigger
-class Pkt6Test : public ::testing::Test {
-public:
-    Pkt6Test() {
-    }
-};
-
-TEST_F(Pkt6Test, constructor) {
-    Pkt6 * pkt1 = new Pkt6(17);
-    
-    ASSERT_EQ(pkt1->data_len_, 17);
-
-    delete pkt1;
-}
-
+    return (result);
 }
