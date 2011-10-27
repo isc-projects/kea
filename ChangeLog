@@ -1,4 +1,13 @@
-304.	[bug]	jelte
+305.	[bug]		jinmei
+	Python isc.dns, isc.datasrc, xfrin, xfrout: fixed reference leak
+	in Message.get_question(), Message.get_section(),
+	RRset.get_rdata(), and DataSourceClient.get_updater().
+	The leak caused severe memory leak in b10-xfrin, and (although no
+	one reported it) should have caused less visible leak in
+	b10-xfrout.  b10-xfrin had its own leak, which was also fixed.
+	(Trac #1028, git a72886e643864bb6f86ab47b115a55e0c7f7fcad)
+
+304.	[bug]		jelte
 	The run_bind10.sh test script now no longer runs processes from
 	an installed version of BIND 10, but will correctly use the
 	build tree paths.
@@ -13,7 +22,7 @@
 	if the old file somehow remains, it can now be safely removed.
 	(Trac #869, git 96e22f4284307b1d5f15e03837559711bb4f580c)
 
-302.	[bug]	jelte
+302.	[bug]		jelte
 	msgq no longer crashes if the remote end is closed while msgq
 	tries to send data. It will now simply drop the message and close
 	the connection itself.
