@@ -19,10 +19,12 @@ CLEANFILES = *.gcno *.gcda spec_config.h
 man_MANS = b10-dhcp6.8
 EXTRA_DIST = $(man_MANS) dhcp6.spec interfaces.txt
 
-#if ENABLE_MAN
-#b10-dhcp6.8: b10-dhcp6.xml
-#	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-dhcp6.xml
-#endif
+if ENABLE_MAN
+
+b10-dhcp6.8: b10-dhcp6.xml
+	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-dhcp6.xml
+
+endif
 
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
