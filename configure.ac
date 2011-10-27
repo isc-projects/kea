@@ -447,41 +447,66 @@ if test "${botan_path}" != "yes" ; then
         AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
     fi
 else
-        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
-fi
-
-if test -x "${BOTAN_CONFIG}" ; then
-    BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
-    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
-    # this is not always the case.  As a heuristics workaround we add
-    # -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
-    # (but using include instead of lib) below.
-    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
-	    BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
-    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
-    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
-	    BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
-    # See python_rpath for some info on why we do this
-    if test $rpath_available = yes; then
-        BOTAN_RPATH=
-        for flag in ${BOTAN_LDFLAGS}; do
-                BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+    # First see if pkg-config knows of it.
+    # Unfortunately, the botan.pc files have their minor version in them
+    # too, so we need to try them one by one
+    BOTAN_CONFIG=""
+    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+    if test "$PKG_CONFIG" != "" ; then
+        BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
+        for version in $BOTAN_VERSIONS; do
+            AC_MSG_CHECKING([Checking botan version with pkg-config $version])
+            
+            if [ $PKG_CONFIG --exists ${version} ]; then
+                AC_MSG_RESULT([found])
+                BOTAN_CONFIG="$PKG_CONFIG ${version}"
+                #AC_SUBST(
+                
+                break
+            else
+                AC_MSG_RESULT([not found])
+            fi
         done
-	AC_SUBST(BOTAN_RPATH)
-
-	# According to the libtool manual, it should be sufficient if we
-	# specify the "-R libdir" in our wrapper library of botan (no other
-	# programs will need libbotan directly); "libdir" should be added to
-	# the program's binary image.  But we've seen in our build environments
-	# that (some versions of?) libtool doesn't propagate -R as documented,
-	# and it caused a linker error at run time.  To work around this, we
-	# also add the rpath to the global LDFLAGS.
-        LDFLAGS="$BOTAN_RPATH $LDFLAGS"
     fi
-
-    AC_SUBST(BOTAN_LDFLAGS)
-    AC_SUBST(BOTAN_INCLUDES)
+    # If we had no pkg-config, or it didn't know about botan, use botan-config
+    if test "$BOTAN_CONFIG" = "" ; then
+        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
+    fi
 fi
+
+BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+
+# We expect botan-config --libs to contain -L<path_to_libbotan>, but
+# this is not always the case.  As a heuristics workaround we add
+# -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
+# (but using include instead of lib) below.
+if [ $BOTAN_CONFIG --prefix >& /dev/null ] ; then
+    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
+        BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
+    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+        BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+fi
+# See python_rpath for some info on why we do this
+if test $rpath_available = yes; then
+    BOTAN_RPATH=
+    for flag in ${BOTAN_LDFLAGS}; do
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+    done
+AC_SUBST(BOTAN_RPATH)
+
+# According to the libtool manual, it should be sufficient if we
+# specify the "-R libdir" in our wrapper library of botan (no other
+# programs will need libbotan directly); "libdir" should be added to
+# the program's binary image.  But we've seen in our build environments
+# that (some versions of?) libtool doesn't propagate -R as documented,
+# and it caused a linker error at run time.  To work around this, we
+# also add the rpath to the global LDFLAGS.
+    LDFLAGS="$BOTAN_RPATH $LDFLAGS"
+fi
+
+AC_SUBST(BOTAN_LDFLAGS)
+AC_SUBST(BOTAN_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
