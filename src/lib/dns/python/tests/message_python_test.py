@@ -17,6 +17,7 @@
 # Tests for the message part of the pydnspp module
 #
 
+import sys
 import unittest
 import os
 from pydnspp import *
@@ -230,6 +231,14 @@ class MessageTest(unittest.TestCase):
         self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ANSWER)))
         self.assertEqual(2, self.r.get_rr_count(Message.SECTION_ANSWER))
 
+        # We always make a new deep copy in get_section(), so the reference
+        # count of the returned list and its each item should be 1; otherwise
+        # they would leak.
+        self.assertEqual(1, sys.getrefcount(self.r.get_section(
+                    Message.SECTION_ANSWER)))
+        self.assertEqual(1, sys.getrefcount(self.r.get_section(
+                    Message.SECTION_ANSWER)[0]))
+
         self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_AUTHORITY)))
         self.assertEqual(0, self.r.get_rr_count(Message.SECTION_AUTHORITY))
         self.r.add_rrset(Message.SECTION_AUTHORITY, self.rrset_a)
@@ -242,7 +251,7 @@ class MessageTest(unittest.TestCase):
         self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ADDITIONAL)))
         self.assertEqual(2, self.r.get_rr_count(Message.SECTION_ADDITIONAL))
 
-    def test_add_question(self):
+    def test_add_and_get_question(self):
         self.assertRaises(TypeError, self.r.add_question, "wrong", "wrong")
         q = Question(Name("example.com"), RRClass("IN"), RRType("A"))
         qs = [q]
@@ -251,6 +260,12 @@ class MessageTest(unittest.TestCase):
         self.r.add_question(q)
         self.assertTrue(compare_rrset_list(qs, self.r.get_question()))
         self.assertEqual(1, self.r.get_rr_count(Message.SECTION_QUESTION))
+
+        # We always make a new deep copy in get_section(), so the reference
+        # count of the returned list and its each item should be 1; otherwise
+        # they would leak.
+        self.assertEqual(1, sys.getrefcount(self.r.get_question()))
+        self.assertEqual(1, sys.getrefcount(self.r.get_question()[0]))
 
     def test_add_rrset(self):
         self.assertRaises(TypeError, self.r.add_rrset, "wrong")

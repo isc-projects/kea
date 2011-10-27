@@ -17,6 +17,7 @@
 # Tests for the rrtype part of the pydnspp module
 #
 
+import sys
 import unittest
 import os
 from pydnspp import *
@@ -110,6 +111,12 @@ class TestModuleSpec(unittest.TestCase):
                 ]
         self.assertEqual(rdata, self.rrset_a.get_rdata())
         self.assertEqual([], self.rrset_a_empty.get_rdata())
+
+        # We always make a new deep copy in get_rdata(), so the reference
+        # count of the returned list and its each item should be 1; otherwise
+        # they would leak.
+        self.assertEqual(1, sys.getrefcount(self.rrset_a.get_rdata()))
+        self.assertEqual(1, sys.getrefcount(self.rrset_a.get_rdata()[0]))
         
 if __name__ == '__main__':
     unittest.main()
