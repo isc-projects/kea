@@ -74,7 +74,49 @@ These files *will* be overwritten or deleted if the same scenarios are run
 again, so if you want to inspect them after a failed test, either do so
 immediately or move the files.
 
-Extending tests
----------------
+Adding and extending tests
+--------------------------
 
-[TODO]
+If you want to add tests, it is advisable to first go through the examples to
+see what is possible, and read the documentation on http://www.lettuce.it
+
+There is also a README.tutorial file here.
+
+We have a couple of conventions to keep things manageable.
+
+Configuration files go into the configurations/ directory.
+Data files go into the data/ directory.
+Step definition go into the features/terrain/ directory (the name terrain is 
+chosen for the same reason Lettuce chose terrain.py, this is the place the 
+tests 'live' in).
+Feature definitions go directly into the features/ directory.
+
+These directories are currently not divided further; we may want to consider 
+this as the set grows. Due to a (current?) limitation of Lettuce, for 
+feature files this is currently not possible; the python files containing 
+steps and terrain must be below or at the same level of the feature files.
+
+Long-running processes should be started through the world.RunningProcesses
+instance. If you want to add a process (e.g. bind9), create start, stop and
+control steps in terrain/<base_name>_control.py, and let it use the
+RunningProcesses API (defined in terrain.py). See bind10_control.py for an
+example.
+
+For sending queries and checking the results, steps have been defined in
+terrain/querying.py. These use dig and store the results split up into text
+strings. This is intentionally not parsed through our own library (as that way
+we might run into a 'symmetric bug'). If you need something more advanced from
+query results, define it here.
+
+Some very general steps are defined in terrain/steps.py.
+Initialization code, cleanup code, and helper classes are defined in
+terrain/terrain.py.
+
+If you need to add steps that are very particular to one test, create a new 
+file with a name relevant for that test in terrain. We may want to consider 
+creating a specific subdirectory for these, but at this moment it is unclear 
+whether we need to.
+
+We should try to keep steps as general as possible, while not making them to
+complex and error-prone.
+
