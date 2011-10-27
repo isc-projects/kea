@@ -16,6 +16,7 @@
 import unittest
 import shutil
 import socket
+import sys
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
@@ -216,8 +217,8 @@ class MockXfrin(Xfrin):
                                  request_type, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
-    def __init__(self, sock_map, zone_name, rrclass, shutdown_event,
-                 master_addr):
+    def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
+                 shutdown_event, master_addr, tsig_key=None):
         super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
                          shutdown_event, master_addr)
         self.query_data = b''
@@ -300,8 +301,9 @@ class TestXfrinState(unittest.TestCase):
     def setUp(self):
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
-                                        TEST_RRCLASS, threading.Event(),
+                                        TEST_RRCLASS, None, threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
+        self.conn.init_socket()
         self.begin_soa = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
                                RRTTL(3600))
         self.begin_soa.add_rdata(Rdata(RRType.SOA(), TEST_RRCLASS,
@@ -585,8 +587,9 @@ class TestXfrinConnection(unittest.TestCase):
             os.remove(TEST_DB_FILE)
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
-                                        TEST_RRCLASS, threading.Event(),
+                                        TEST_RRCLASS, None, threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
+        self.conn.init_socket()
         self.soa_response_params = {
             'questions': [example_soa_question],
             'bad_qid': False,
@@ -720,14 +723,16 @@ class TestAXFR(TestXfrinConnection):
         # to confirm an AF_INET6 socket has been created.  A naive application
         # tends to assume it's IPv4 only and hardcode AF_INET.  This test
         # uncovers such a bug.
-        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS,
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, TEST_RRCLASS, None,
                                 threading.Event(), TEST_MASTER_IPV6_ADDRINFO)
+        c.init_socket()
         c.bind(('::', 0))
         c.close()
 
     def test_init_chclass(self):
-        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(),
+        c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH(), None,
                                 threading.Event(), TEST_MASTER_IPV4_ADDRINFO)
+        c.init_socket()
         axfrmsg = c._create_query(RRType.AXFR())
         self.assertEqual(axfrmsg.get_question()[0].get_class(),
                          RRClass.CH())
@@ -1678,6 +1683,110 @@ class TestXfrinRecorder(unittest.TestCase):
         self.assertEqual(self.recorder.xfrin_in_progress(TEST_ZONE_NAME), True)
         self.recorder.decrement(TEST_ZONE_NAME)
         self.assertEqual(self.recorder.xfrin_in_progress(TEST_ZONE_NAME), False)
+
+class TestXfrinProcess(unittest.TestCase):
+    def setUp(self):
+        self.unlocked = False
+        self.conn_closed = False
+        self.do_raise_on_close = False
+        self.do_raise_on_connect = False
+        self.do_raise_on_publish = False
+        self.master = (socket.AF_INET, socket.SOCK_STREAM,
+                       (TEST_MASTER_IPV4_ADDRESS, TEST_MASTER_PORT))
+
+    def tearDown(self):
+        # whatever happens the lock acquired in xfrin_recorder.increment
+        # must always be released.  We checked the condition for all test
+        # cases.
+        self.assertTrue(self.unlocked)
+
+        # Same for the connection
+        self.assertTrue(self.conn_closed)
+
+    def increment(self, zone_name):
+        '''Fake method of xfrin_recorder.increment.
+
+        '''
+        self.unlocked = False
+
+    def decrement(self, zone_name):
+        '''Fake method of xfrin_recorder.decrement.
+
+        '''
+        self.unlocked = True
+
+    def publish_xfrin_news(self, zone_name, rrclass, ret):
+        '''Fake method of serve.publish_xfrin_news
+
+        '''
+        if self.do_raise_on_publish:
+            raise XfrinTestException('Emulated exception in publish')
+
+    def connect_to_master(self, conn):
+        self.sock_fd = conn.fileno()
+        if self.do_raise_on_connect:
+            raise XfrinTestException('Emulated exception in connect')
+        return True
+
+    def conn_close(self, conn):
+        self.conn_closed = True
+        XfrinConnection.close(conn)
+        if self.do_raise_on_close:
+            raise XfrinTestException('Emulated exception in connect')
+
+    def create_xfrinconn(self, sock_map, zone_name, rrclass, datasrc_client,
+                         shutdown_event, master_addrinfo, tsig_key):
+        conn = MockXfrinConnection(sock_map, zone_name, rrclass,
+                                   datasrc_client, shutdown_event,
+                                   master_addrinfo, tsig_key)
+
+        # An awkward check that would specifically identify an old bug
+        # where initialziation of XfrinConnection._tsig_ctx_creator caused
+        # self reference and subsequently led to reference leak.
+        orig_ref = sys.getrefcount(conn)
+        conn._tsig_ctx_creator = None
+        self.assertEqual(orig_ref, sys.getrefcount(conn))
+
+        # Replace some methods for connect with our internal ones for the
+        # convenience of tests
+        conn.connect_to_master = lambda : self.connect_to_master(conn)
+        conn.do_xfrin = lambda x, y : XFRIN_OK
+        conn.close = lambda : self.conn_close(conn)
+
+        return conn
+
+    def test_process_xfrin_normal(self):
+        # Normal, successful case.  We only check that things are cleaned up
+        # at the tearDown time.
+        process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
+                      self.master,  False, None, RRType.AXFR(),
+                      self.create_xfrinconn)
+
+    def test_process_xfrin_exception_on_connect(self):
+        # connect_to_master() will raise an exception.  Things must still be
+        # cleaned up.
+        self.do_raise_on_connect = True
+        process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
+                      self.master,  False, None, RRType.AXFR(),
+                      self.create_xfrinconn)
+
+    def test_process_xfrin_exception_on_close(self):
+        # connect() will result in exception, and even the cleanup close()
+        # will fail with an exception.  This should be quite likely a bug,
+        # but we deal with that case.
+        self.do_raise_on_connect = True
+        self.do_raise_on_close = True
+        process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
+                      self.master,  False, None, RRType.AXFR(),
+                      self.create_xfrinconn)
+
+    def test_process_xfrin_exception_on_publish(self):
+        # xfr succeeds but notifying the zonemgr fails with exception.
+        # everything must still be cleaned up.
+        self.do_raise_on_publish = True
+        process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
+                      self.master,  False, None, RRType.AXFR(),
+                      self.create_xfrinconn)
 
 class TestXfrin(unittest.TestCase):
     def setUp(self):
