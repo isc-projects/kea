@@ -204,9 +204,9 @@ createZoneIteratorObject(isc::datasrc::ZoneIteratorPtr source,
     if (py_zi != NULL) {
         py_zi->cppobj = source;
         py_zi->base_obj = base_obj;
-    }
-    if (base_obj != NULL) {
-        Py_INCREF(base_obj);
+        if (base_obj != NULL) {
+            Py_INCREF(base_obj);
+        }
     }
     return (py_zi);
 }
