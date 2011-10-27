@@ -31,14 +31,13 @@ namespace cache {
 /// \brief The logger for this library
 extern isc::log::Logger logger;
 
-enum {
-    /// \brief Trace basic operations
-    DBG_TRACE_BASIC = 10,
-    /// \brief Trace data operations
-    DBG_TRACE_DATA = 40,
-};
+/// \brief Trace basic operations
+const int DBG_TRACE_BASIC = DBGLVL_TRACE_BASIC;
 
-}
-}
+/// \brief Trace data operations
+const int DBG_TRACE_DATA = DBGLVL_TRACE_BASIC_DATA;
+
+} // namespace cache
+} // namespace isc
 
 #endif

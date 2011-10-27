@@ -132,6 +132,8 @@ initModulePart_ZoneFinder(PyObject* mod) {
                              Py_BuildValue("I", ZoneFinder::WILDCARD));
         installClassVariable(zonefinder_type, "WILDCARD_NXRRSET",
                              Py_BuildValue("I", ZoneFinder::WILDCARD_NXRRSET));
+        installClassVariable(zonefinder_type, "WILDCARD_CNAME",
+                             Py_BuildValue("I", ZoneFinder::WILDCARD_CNAME));
 
         installClassVariable(zonefinder_type, "FIND_DEFAULT",
                              Py_BuildValue("I", ZoneFinder::FIND_DEFAULT));
@@ -139,6 +141,8 @@ initModulePart_ZoneFinder(PyObject* mod) {
                              Py_BuildValue("I", ZoneFinder::FIND_GLUE_OK));
         installClassVariable(zonefinder_type, "FIND_DNSSEC",
                              Py_BuildValue("I", ZoneFinder::FIND_DNSSEC));
+        installClassVariable(zonefinder_type, "NO_WILDCARD",
+                             Py_BuildValue("I", ZoneFinder::NO_WILDCARD));
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in ZoneFinder initialization: " +

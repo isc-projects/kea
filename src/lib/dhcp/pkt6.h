@@ -19,7 +19,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include "asiolink/io_address.h"
-#include "option.h"
+#include "dhcp/option.h"
 
 namespace isc {
 

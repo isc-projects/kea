@@ -16,6 +16,7 @@
 import socket
 import struct
 import os
+import copy
 import subprocess
 from isc.log_messages.bind10_messages import *
 from libutil_io_python import recv_fd
@@ -207,7 +208,7 @@ class Creator(Parser):
         # stdin as well as stdout, so we dup it before passing it there.
         remote2 = socket.fromfd(remote.fileno(), socket.AF_UNIX,
                                 socket.SOCK_STREAM)
-        env = os.environ
+        env = copy.deepcopy(os.environ)
         env['PATH'] = path
         self.__process = subprocess.Popen(['b10-sockcreator'], env=env,
                                           stdin=remote.fileno(),

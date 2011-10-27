@@ -132,8 +132,7 @@ TEST_F(Option6IATest, simple) {
 }
 
 // test if option can build suboptions
-/// TODO Reenable once ticket #1313 is implemented
-TEST_F(Option6IATest, DISABLED_suboptions_pack) {
+TEST_F(Option6IATest, suboptions_pack) {
     boost::shared_array<uint8_t> buf(new uint8_t[128]);
     for (int i=0; i<128; i++)
         buf[i] = 0;
@@ -221,7 +220,9 @@ TEST_F(Option6IATest, suboptions_unpack) {
     Option6IA* ia = 0;
     EXPECT_NO_THROW({
         ia = new Option6IA(D6O_IA_NA, buf, 128, 4, 44);
-        cout << "Parsed option:" << endl << ia->toText() << endl;
+
+        // let's limit verbosity of this test
+        // cout << "Parsed option:" << endl << ia->toText() << endl;
     });
     ASSERT_TRUE(ia);
 

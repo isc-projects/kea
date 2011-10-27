@@ -85,8 +85,7 @@ Pkt6 *capture1() {
     return (pkt);
 }
 
-/// TODO Reenable this once ticket #1313 is implemented
-TEST_F(Pkt6Test, DISABLED_unpack_solicit1) {
+TEST_F(Pkt6Test, unpack_solicit1) {
     Pkt6 * sol = capture1();
 
     ASSERT_EQ(true, sol->unpack());
@@ -109,7 +108,8 @@ TEST_F(Pkt6Test, DISABLED_unpack_solicit1) {
     EXPECT_FALSE(sol->getOption(D6O_IA_TA));
     EXPECT_FALSE(sol->getOption(D6O_IAADDR));
 
-    std::cout << sol->toText();
+    // let's limit verbosity of this test
+    // std::cout << sol->toText();
 
     delete sol;
 }
