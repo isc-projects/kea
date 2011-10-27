@@ -12,22 +12,25 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
+
 #include <auth/common.h>
 #include <auth/spec_config.h>
 #include <stdlib.h>
 
 using std::string;
 
-string getXfroutSocketPath() {
+string
+getXfroutSocketPath() {
     if (getenv("B10_FROM_BUILD") != NULL) {
-        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
+        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR") != NULL) {
             return (string(getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) +
                     "/auth_xfrout_conn");
         } else {
             return (string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn");
         }
     } else {
-        if (getenv("BIND10_XFROUT_SOCKET_FILE")) {
+        if (getenv("BIND10_XFROUT_SOCKET_FILE") != NULL) {
             return (getenv("BIND10_XFROUT_SOCKET_FILE"));
         } else {
             return (UNIX_SOCKET_FILE);

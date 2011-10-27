@@ -3,7 +3,8 @@
         "zones": [{
             "master_addr": "10.53.0.1",
             "master_port": 53210,
-            "name": "example."
+            "name": "example.",
+            "use_ixfr": true
         }]
     },
     "Auth": {
