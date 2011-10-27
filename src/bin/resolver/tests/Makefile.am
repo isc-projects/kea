@@ -60,4 +60,4 @@ run_unittests_CXXFLAGS += -Wno-unused-parameter
 endif
 endif
 
-check_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = $(TESTS)

@@ -26,8 +26,11 @@
 #include <iostream>
 
 #include <exceptions/exceptions.h>
+#if 0
+// TODO cc is not used yet. It should be eventually
 #include <cc/session.h>
 #include <config/ccsession.h>
+#endif
 
 #include <util/buffer.h>
 #include <log/dummylog.h>
@@ -37,12 +40,9 @@
 
 using namespace std;
 using namespace isc::util;
-using namespace isc::data;
-using namespace isc::cc;
-using namespace isc::config;
-using namespace isc::util;
 
 using namespace isc;
+using namespace isc::dhcp;
 
 namespace {
 
@@ -97,8 +97,6 @@ main(int argc, char* argv[]) {
             specfile = string(DHCP6_SPECFILE_LOCATION);
         }
 
-        // auth_server = new AuthSrv(cache, xfrout_client);
-        // auth_server->setVerbose(verbose_mode);
         cout << "[b10-dhcp6] Initiating DHCPv6 operation." << endl;
 
         Dhcpv6Srv* srv = new Dhcpv6Srv();

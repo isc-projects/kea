@@ -1,7 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = b10-stats_test.py b10-stats-httpd_test.py
 EXTRA_DIST = $(PYTESTS) test_utils.py
-CLEANFILES = test_utils.pyc
+CLEANFILES = test_utils.pyc msgq_socket_test
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -22,6 +22,7 @@ endif
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/stats:$(abs_top_builddir)/src/bin/stats/tests:$(abs_top_builddir)/src/bin/msgq:$(abs_top_builddir)/src/lib/python/isc/config \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
+	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
 	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/tests/testdata \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

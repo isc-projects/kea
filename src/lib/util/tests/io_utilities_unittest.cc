@@ -19,6 +19,7 @@
 
 #include <cstddef>
 
+#include <arpa/inet.h>
 #include <gtest/gtest.h>
 
 #include <util/buffer.h>
@@ -69,5 +70,50 @@ TEST(asioutil, writeUint16) {
         const uint8_t* ref = static_cast<const uint8_t*>(buffer.getData());
         EXPECT_EQ(ref[0], test[0]);
         EXPECT_EQ(ref[1], test[1]);
+    }
+}
+
+// test data shared amount readUint32 and writeUint32 tests
+const static uint32_t test32[] = {
+    0,
+    1,
+    2000,
+    0x80000000,
+    0xffffffff
+};
+
+TEST(asioutil, readUint32) {
+    uint8_t data[8];
+
+    // make sure that we can read data, regardless of
+    // the memory alignment. That' why we need to repeat
+    // it 4 times.
+    for (int offset=0; offset < 4; offset++) {
+        for (int i=0; i < sizeof(test32)/sizeof(uint32_t); i++) {
+            uint32_t tmp = htonl(test32[i]);
+            memcpy(&data[offset], &tmp, sizeof(uint32_t));
+
+            EXPECT_EQ(test32[i], readUint32(&data[offset]));
+        }
+    }
+}
+
+
+TEST(asioutil, writeUint32) {
+    uint8_t data[8];
+
+    // make sure that we can write data, regardless of
+    // the memory alignment. That's why we need to repeat
+    // it 4 times.
+    for (int offset=0; offset < 4; offset++) {
+        for (int i=0; i < sizeof(test32)/sizeof(uint32_t); i++) {
+            uint8_t* ptr = writeUint32(test32[i], &data[offset]);
+
+            EXPECT_EQ(&data[offset]+sizeof(uint32_t), ptr);
+
+            uint32_t tmp = htonl(test32[i]);
+
+            EXPECT_EQ(0, memcmp(&tmp, &data[offset], sizeof(uint32_t)));
+        }
     }
 }

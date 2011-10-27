@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2001, 2002  Internet Software Consortium.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+. @abs_top_builddir@/tests/system/conf.sh
+
+# Clean up from last time
+sh clean.sh
+
+# Set up the initial version of the IXFR server - load the n-4 version of the
+# zone.  The configuration file enables IXFR and disabled notifies.
+cp -f $IXFR_TOP/named_nonotify.conf ns1/named.conf
+cp -f $IXFR_TOP/db.example.n4 ns1/db.example
+
+# Set up the IXFR client - load the same version of the zone.
+cp -f $IXFR_TOP/b10-config.db nsx2/b10-config.db
+${B10_LOADZONE} -o . -d $IXFR_TOP/zone.sqlite3 $IXFR_TOP/db.example.n4

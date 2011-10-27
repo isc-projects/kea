@@ -35,23 +35,36 @@ if [ -z $BIND9_TOP ]; then
 fi
 
 # Find the top of the source and test trees.
-TOP=@abs_top_srcdir@
-TEST_TOP=@abs_builddir@
+export TOP=@abs_top_srcdir@
+export TEST_TOP=@abs_builddir@
 
-RUN_BIND10=$TOP/src/bin/bind10/run_bind10.sh
-RUN_BINDCTL=$TOP/src/bin/bindctl/run_bindctl.sh
-BINDCTL_CSV_DIR=@abs_srcdir@/common/
-B10_LOADZONE=$TOP/src/bin/loadzone/run_loadzone.sh
-BIND9_NAMED=$BIND9_TOP/bin/named/named
-DIG=$BIND9_TOP/bin/dig/dig
+# Programs
+export RUN_BIND10=$TOP/src/bin/bind10/run_bind10.sh
+export RUN_BINDCTL=$TOP/src/bin/bindctl/run_bindctl.sh
+export BINDCTL_CSV_DIR=@abs_srcdir@/common/
+export B10_LOADZONE=$TOP/src/bin/loadzone/run_loadzone.sh
+export BIND9_NAMED=$BIND9_TOP/bin/named/named
+export DIG=$BIND9_TOP/bin/dig/dig
+export RNDC=$BIND9_TOP/bin/rndc/rndc
+
 # Test tools borrowed from BIND 9's system test (without change).
-TESTSOCK=$BIND9_TOP/bin/tests/system/testsock.pl
-DIGCOMP=$BIND9_TOP/bin/tests/system/digcomp.pl
+export TESTSOCK=$BIND9_TOP/bin/tests/system/testsock.pl
+export DIGCOMP=$BIND9_TOP/bin/tests/system/digcomp.pl
 
-SUBDIRS="bindctl glue"
-#SUBDIRS="dnssec masterfile xfer"
+export SUBDIRS="bindctl glue ixfr/in-2"
+# Add appropriate subdirectories to the above statement as the tests become
+# available.
+#SUBDIRS="dnssec masterfile ixfr/in-1 ixfr/in-2 ixfr/in-4"
 
-# PERL will be an empty string if no perl interpreter was found.
-PERL=@PERL@
+# PERL will be an empty string if no perl interpreter was found.  A similar
+# comment applies to AWK.
+export PERL=@PERL@
+export AWK=@AWK@
 
-export RUN_BIND10 BIND9_NAMED DIG SUBDIRS PERL TESTSOCK
+# Other constants
+export RNDC_PORT=9953
+export DNS_PORT=53210
+
+export TESTS_TOP=$TOP/tests
+export SYSTEM_TOP=$TESTS_TOP/system
+export IXFR_TOP=$SYSTEM_TOP/ixfr

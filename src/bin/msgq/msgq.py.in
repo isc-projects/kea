@@ -28,7 +28,6 @@ import struct
 import errno
 import time
 import select
-import pprint
 import random
 from optparse import OptionParser, OptionValueError
 import isc.util.process
@@ -96,10 +95,10 @@ class MsgQ:
                                "@PACKAGE_NAME@",
                                "msgq_socket").replace("${prefix}",
                                                       "@prefix@")
-    
+
     def __init__(self, socket_file=None, verbose=False):
         """Initialize the MsgQ master.
-        
+
         The socket_file specifies the path to the UNIX domain socket
         that the msgq process listens on. If it is None, the
         environment variable BIND10_MSGQ_SOCKET_FILE is used. If that
@@ -135,7 +134,7 @@ class MsgQ:
             self.poller = select.poll()
         except AttributeError:
             self.kqueue = select.kqueue()
-    
+
     def add_kqueue_socket(self, socket, write_filter=False):
         """Add a kquque filter for a socket.  By default the read
         filter is used; if write_filter is set to True, the write
@@ -167,7 +166,7 @@ class MsgQ:
                              self.socket_file)
 
         self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        
+
         if os.path.exists(self.socket_file):
             os.remove(self.socket_file)
         try:
@@ -196,7 +195,7 @@ class MsgQ:
 
         if self.verbose:
             sys.stdout.write("[b10-msgq] Listening\n")
-        
+
         self.runnable = True
 
     def process_accept(self):
@@ -293,9 +292,6 @@ class MsgQ:
             sys.stderr.write("[b10-msgq] Routing decode error: %s\n" % err)
             return
 
-#        sys.stdout.write("\t" + pprint.pformat(routingmsg) + "\n")
-#        sys.stdout.write("\t" + pprint.pformat(data) + "\n")
-
         self.process_command(fd, sock, routingmsg, data)
 
     def process_command(self, fd, sock, routing, data):
@@ -357,7 +353,18 @@ class MsgQ:
         if fileno in self.sendbuffs:
             amount_sent = 0
         else:
-            amount_sent = self.__send_data(sock, msg)
+            try:
+                amount_sent = self.__send_data(sock, msg)
+            except socket.error as sockerr:
+                # in the case the other side seems gone, kill the socket
+                # and drop the send action
+                if sockerr.errno == errno.EPIPE:
+                    print("[b10-msgq] SIGPIPE on send, dropping message " +
+                          "and closing connection")
+                    self.kill_socket(fileno, sock)
+                    return
+                else:
+                    raise
 
         # Still something to send
         if amount_sent < len(msg):
@@ -448,12 +455,12 @@ class MsgQ:
 
     def run(self):
         """Process messages.  Forever.  Mostly."""
-        
+
         if self.poller:
             self.run_poller()
         else:
             self.run_kqueue()
-    
+
     def run_poller(self):
         while True:
             try:
@@ -511,7 +518,7 @@ def signal_handler(signal, frame):
 
 if __name__ == "__main__":
     def check_port(option, opt_str, value, parser):
-        """Function to insure that the port we are passed is actually 
+        """Function to insure that the port we are passed is actually
         a valid port number. Used by OptionParser() on startup."""
         intval = int(value)
         if (intval < 0) or (intval > 65535):

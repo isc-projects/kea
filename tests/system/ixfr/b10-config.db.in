@@ -1,0 +1,23 @@
+{"version": 2,
+    "Xfrin": {
+        "zones": [{
+            "master_addr": "10.53.0.1",
+            "master_port": 53210,
+            "name": "example.",
+            "use_ixfr": true
+        }]
+    },
+    "Auth": {
+        "listen_on": [{
+            "address": "10.53.0.2",
+            "port": 53210
+        }],
+        "database_file": "@abs_builddir@/zone.sqlite3"
+    },
+    "Zonemgr": {
+        "secondary_zones": [{
+            "name": "example.",
+            "class": "IN"
+        }]
+    }
+}

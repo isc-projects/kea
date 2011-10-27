@@ -44,10 +44,12 @@ import os
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + "/src/bin/bind10/bob.spec"
+    ADD_LIBEXEC_PATH = False
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    ADD_LIBEXEC_PATH = True
     
 import subprocess
 import signal
@@ -61,6 +63,7 @@ from optparse import OptionParser, OptionValueError
 import io
 import pwd
 import posix
+import copy
 
 import isc.cc
 import isc.util.process
@@ -184,9 +187,9 @@ class ProcessInfo:
         # Environment variables for the child process will be a copy of those
         # of the boss process with any additional specific variables given
         # on construction (self.env).
-        spawn_env = os.environ
+        spawn_env = copy.deepcopy(os.environ)
         spawn_env.update(self.env)
-        if 'B10_FROM_SOURCE' not in os.environ:
+        if ADD_LIBEXEC_PATH:
             spawn_env['PATH'] = "@@LIBEXECDIR@@:" + spawn_env['PATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
@@ -355,8 +358,10 @@ class BoB:
 
     def start_creator(self):
         self.curproc = 'b10-sockcreator'
-        self.sockcreator = isc.bind10.sockcreator.Creator("@@LIBEXECDIR@@:" +
-                                                          os.environ['PATH'])
+        creator_path = os.environ['PATH']
+        if ADD_LIBEXEC_PATH:
+            creator_path = "@@LIBEXECDIR@@:" + creator_path
+        self.sockcreator = isc.bind10.sockcreator.Creator(creator_path)
 
     def stop_creator(self, kill=False):
         if self.sockcreator is None:
@@ -498,7 +503,8 @@ class BoB:
         self.log_starting("ccsession")
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
                                       self.config_handler,
-                                      self.command_handler)
+                                      self.command_handler,
+                                      socket_file = self.msgq_socket_file)
         self.ccs.start()
         self.log_started()
 
@@ -587,7 +593,11 @@ class BoB:
         # a cleaner solution, but for a short term workaround we specify the
         # path here, unconditionally, and without even bothering which
         # environment variable should be used.
-        if not "B10_FROM_SOURCE" in os.environ:
+        #
+        # We reuse the ADD_LIBEXEC_PATH variable to see whether we need to
+        # do this, as the conditions that make this workaround needed are
+        # the same as for the libexec path addition
+        if ADD_LIBEXEC_PATH:
             cur_path = os.getenv('DYLD_LIBRARY_PATH')
             cur_path = '' if cur_path is None else ':' + cur_path
             c_channel_env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
