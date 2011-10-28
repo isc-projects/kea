@@ -160,7 +160,6 @@ class TestHttpHandler(unittest.TestCase):
                     self.assertIsNotNone(root.find(k))
             else:
                 self.assertIsNotNone(root.find(item))
-
         # URL is '/bind10/statistics/xml'
         check_XML_URL_PATH(mod=None, item=None)
         for m in DUMMY_DATA:
@@ -223,25 +222,30 @@ class TestHttpHandler(unittest.TestCase):
             root = xml.etree.ElementTree.parse(response).getroot()
             url_trans = '{http://www.w3.org/1999/XSL/Transform}'
             url_xhtml = '{http://www.w3.org/1999/xhtml}'
-            xslpath = url_trans + 'template/' + url_xhtml + 'tr'
             self.assertEqual(root.tag, url_trans + 'stylesheet')
-            for tr in root.findall(xslpath):
-                tds = tr.findall(url_xhtml + 'td')
-                self.assertIsNotNone(tds)
-                self.assertEqual(type(tds), list)
-                self.assertTrue(len(tds) > 2)
-                self.assertTrue(hasattr(tds[0], 'text'))
-                if mod is None:
-                    self.assertTrue(tds[0].text in DUMMY_DATA)
-                else:
-                    self.assertTrue(tds[0].text in DUMMY_DATA[mod])
-                valueof = tds[2].find(url_trans + 'value-of')
-                self.assertIsNotNone(valueof)
-                self.assertTrue(hasattr(valueof, 'attrib'))
-                self.assertIsNotNone(valueof.attrib)
-                self.assertTrue('select' in valueof.attrib)
-                self.assertTrue(valueof.attrib['select'] in \
-                                [ tds[0].text+'/'+item for item in DUMMY_DATA[tds[0].text].keys() ])
+            if item is None and mod is None:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                for fe in root.findall(xslpath):
+                    self.assertTrue(fe.attrib['select'] in DUMMY_DATA)
+                    for vo in fe.findall(url_xhtml + 'tr/' \
+                                             + url_xhtml + 'td/' \
+                                             + url_xhtml + 'table/' \
+                                             + url_xhtml + 'tr/' \
+                                             + url_xhtml + 'td/' \
+                                             + url_trans + 'value-of/'):
+                        self.assertTrue(vo.attrib['select'] in DUMMY_DATA[fe.attrib['select']])
+            elif item is None:
+                xslpath = url_trans + 'template/' \
+                    + url_xhtml + 'table/' + url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                    + url_trans + 'value-of'
+                for vo in root.findall(xslpath):
+                    self.assertTrue(vo.attrib['select'] in DUMMY_DATA[mod])
+            else:
+                xslpath = url_trans + 'template/' \
+                    + url_xhtml + 'table/' + url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                    + url_trans + 'value-of'
+                for vo in root.findall(xslpath):
+                    self.assertEqual(vo.attrib['select'], item)
 
         # URL is '/bind10/statistics/xsl'
         check_XSL_URL_PATH(mod=None, item=None)
