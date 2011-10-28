@@ -67,41 +67,20 @@ public:
 // during running tests is required.
 TEST_F(IfaceMgrTest, loDetect) {
 
-    unlink("interfaces.txt");
-
-    ofstream interfaces("interfaces.txt", ios::ate);
-    interfaces << "lo ::1";
-    interfaces.close();
-
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
-    IOAddress loAddr("::1");
-    IOAddress mcastAddr("ff02::1:2");
-
-    // bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket("lo", mcastAddr, 10547);
-    // this fails on BSD (there's no lo interface there)
-
-    // poor man's interface dection
+    // poor man's interface detection
     // it will go away as soon as proper interface detection
     // is implemented
-    if (socket1>0) {
+    if (if_nametoindex("lo")>0) {
         cout << "This is Linux, using lo as loopback." << endl;
-        close(socket1);
+        sprintf(LOOPBACK, "lo");
+    } else if (if_nametoindex("lo0")>0) {
+        cout << "This is BSD, using lo0 as loopback." << endl;
+        sprintf(LOOPBACK, "lo0");
     } else {
-        // this fails on Linux and succeeds on BSD
-        socket1 = ifacemgr->openSocket("lo0", mcastAddr, 10547);
-        if (socket1>0) {
-            sprintf(LOOPBACK, "lo0");
-            cout << "This is BSD, using lo0 as loopback." << endl;
-            close(socket1);
-        } else {
-            cout << "Failed to detect loopback interface. Neither "
-                 << "lo or lo0 worked. I give up." << endl;
-            ASSERT_TRUE(false);
-        }
+        cout << "Failed to detect loopback interface. Neither "
+             << "lo or lo0 worked. I give up." << endl;
+        ASSERT_TRUE(false);
     }
-
-    delete ifacemgr;
 }
 
 // uncomment this test to create packet writer. It will
