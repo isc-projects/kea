@@ -358,7 +358,7 @@ class BoB:
         """
             Reads the parameters associated with the BoB module itself.
 
-            This means the the list of components we should be running.
+            This means the list of components we should be running.
         """
         logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
@@ -502,7 +502,7 @@ class BoB:
 
     # The next few methods start up some of the BIND-10 processes.
     # These are the ones that need to be passed some parameters, so
-    # using a start_simple is not enough. However, in future, we should
+    # using start_simple is not enough. However, in future, we should
     # get rid of these parameters and they could be removed then.
 
     def start_auth(self):
