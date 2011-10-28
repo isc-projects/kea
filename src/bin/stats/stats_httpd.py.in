@@ -485,15 +485,15 @@ class StatsHttpd:
             if type(stats_spec) is dict:
                 # assumed module_spec
                 if 'item_name' not in stats_spec:
-                    alltag = xml.etree.ElementTree.Element("all")
                     for mod in stats_spec.keys():
+                        elem = xml.etree.ElementTree.Element(
+                            "element", { "name" : mod })
+                        complextype = xml.etree.ElementTree.Element("complexType")
+                        alltag = xml.etree.ElementTree.Element("all")
                         stats_spec2xsd(stats_spec[mod], alltag)
-                    complextype = xml.etree.ElementTree.Element("complexType")
-                    complextype.append(alltag)
-                    elem = xml.etree.ElementTree.Element(
-                        "element", { "name" : mod })
-                    elem.append(complextype)
-                    xsd_elem.append(elem)
+                        complextype.append(alltag)
+                        elem.append(complextype)
+                        xsd_elem.append(elem)
                 # assumed stats_spec
                 else:
                     if stats_spec['item_type'] == 'map':
@@ -617,22 +617,22 @@ class StatsHttpd:
                     xsl_elem.append(table)
                 # assumed stats_spec
                 else:
-                    #tr = xml.etree.ElementTree.Element("tr")
+                    tr = xml.etree.ElementTree.Element("tr")
                     td = xml.etree.ElementTree.Element("td")
                     td.text = stats_spec["item_name"]
-                    xsl_elem.append(td)
-                    td = xml.etree.ElementTree.Element("td")
+                    tr.append(td)
                     if stats_spec['item_type'] == 'map':
-                        stats_spec2xsl(stats_spec['map_item_spec'], td)
+                        stats_spec2xsl(stats_spec['map_item_spec'], tr)
                     elif stats_spec['item_type'] == 'list':
-                        stats_spec2xsl(stats_spec['list_item_spec'], td)
+                        stats_spec2xsl(stats_spec['list_item_spec'], tr)
                     else:
+                        td = xml.etree.ElementTree.Element("td")
                         xsl_valueof = xml.etree.ElementTree.Element(
                             "xsl:value-of",
                             attrib={'select': stats_spec["item_name"]})
                         td.append(xsl_valueof)
-                    #tr.append(td)
-                    xsl_elem.append(td)
+                        tr.append(td)
+                    xsl_elem.append(tr)
             # multiple stats_specs
             elif type(stats_spec) is list:
                 table = xml.etree.ElementTree.Element("table")
@@ -644,10 +644,8 @@ class StatsHttpd:
                 th.text = "Values"
                 tr.append(th)
                 table.append(tr)
-                tr = xml.etree.ElementTree.Element("tr")
                 for item_spec in stats_spec:
-                    stats_spec2xsl(item_spec, tr)
-                table.append(tr)
+                    stats_spec2xsl(item_spec, table)
                 xsl_elem.append(table)
             return None
 
@@ -656,7 +654,10 @@ class StatsHttpd:
         xsd_root = xml.etree.ElementTree.Element( # started with xml:template tag
             "xsl:template",
             attrib={'match': "bind10:statistics"})
-        stats_spec2xsl(stats_spec, xsd_root)
+        if module_name is not None and item_name is not None:
+            stats_spec2xsl([ stats_spec ] , xsd_root)
+        else:
+            stats_spec2xsl(stats_spec, xsd_root)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
