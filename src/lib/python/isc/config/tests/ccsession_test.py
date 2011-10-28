@@ -794,6 +794,11 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertEqual({ 'new': {'first': 3, 'second': "foo" }}, value)
         self.assertEqual(status, uccs.LOCAL)
 
+        # make sure using a bad name still fails
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.set_value,
+                          "/Spec32/named_set_item2/doesnotexist/first", 3)
+
+
     def test_commit(self):
         fake_conn = fakeUIConn()
         uccs = self.create_uccs2(fake_conn)
