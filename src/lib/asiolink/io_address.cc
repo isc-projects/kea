@@ -50,6 +50,11 @@ IOAddress::IOAddress(const ip::address& asio_address) :
     asio_address_(asio_address)
 {}
 
+IOAddress::IOAddress(uint32_t v4address):
+    asio_address_(asio::ip::address_v4(v4address)) {
+
+}
+
 string
 IOAddress::toText() const {
     return (asio_address_.to_string());
@@ -69,11 +74,6 @@ IOAddress::from_bytes(short family, const uint8_t* data) {
     char addr_str[INET6_ADDRSTRLEN];
     inet_ntop(family, data, addr_str, INET6_ADDRSTRLEN);
     return IOAddress(string(addr_str));
-}
-
-IOAddress
-IOAddress::from_uint32(uint32_t v4address) {
-    return IOAddress(asio::ip::address_v4(v4address));
 }
 
 short
