@@ -128,10 +128,10 @@ Pkt4::unpack() {
     transid_ = bufferIn_.readUint32();
     secs_ = bufferIn_.readUint16();
     flags_ = bufferIn_.readUint16();
-    ciaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
-    yiaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
-    siaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
-    giaddr_ = IOAddress::from_uint32(bufferIn_.readUint32());
+    ciaddr_ = IOAddress(bufferIn_.readUint32());
+    yiaddr_ = IOAddress(bufferIn_.readUint32());
+    siaddr_ = IOAddress(bufferIn_.readUint32());
+    giaddr_ = IOAddress(bufferIn_.readUint32());
     bufferIn_.readData(chaddr_, MAX_CHADDR_LEN);
     bufferIn_.readData(sname_, MAX_SNAME_LEN);
     bufferIn_.readData(file_, MAX_FILE_LEN);
