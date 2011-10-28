@@ -1,3 +1,11 @@
+306.	[bug]		Stephen
+	Boss process now waits for the configuration manager to initialize
+	itself before continuing with startup.  This fixes a race condition
+	whereby the Boss could start the configuration manager and then
+	immediately start components that depended on that component being
+	fully initialized.
+	(Trac #1271, git 607cbae949553adac7e2a684fa25bda804658f61)
+
 305.	[bug]		jinmei
 	Python isc.dns, isc.datasrc, xfrin, xfrout: fixed reference leak
 	in Message.get_question(), Message.get_section(),
