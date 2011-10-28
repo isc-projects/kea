@@ -64,8 +64,8 @@ ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
 ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 
-# Constants for debug levels, to be removed when we have #1074.
-DBG_XFRIN_TRACE = 3
+# Constants for debug levels.
+DBG_XFRIN_TRACE = logger.DBGLVL_TRACE_BASIC
 
 # These two default are currently hard-coded. For config this isn't
 # necessary, but we need these defaults for optional command arguments
@@ -323,6 +323,7 @@ class XfrinFirstData(XfrinState):
                  conn.zone_str())
             # We are now going to add RRs to the new zone.  We need create
             # a Diff object.  It will be used throughtout the XFR session.
+            # DISABLE FOR DEBUG
             conn._diff = Diff(conn._datasrc_client, conn._zone_name, True)
             self.set_xfrstate(conn, XfrinAXFR())
         return False
@@ -468,21 +469,27 @@ class XfrinConnection(asyncore.dispatcher):
         # Data source handler
         self._datasrc_client = datasrc_client
 
-        self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._sock_map = sock_map
         self._soa_rr_count = 0
         self._idle_timeout = idle_timeout
-        self.setblocking(1)
         self._shutdown_event = shutdown_event
-        self._master_address = master_addrinfo[2]
+        self._master_addrinfo = master_addrinfo
         self._tsig_key = tsig_key
         self._tsig_ctx = None
         # tsig_ctx_creator is introduced to allow tests to use a mock class for
         # easier tests (in normal case we always use the default)
-        self._tsig_ctx_creator = self.__create_tsig_ctx
+        self._tsig_ctx_creator = lambda key : TSIGContext(key)
 
-    def __create_tsig_ctx(self, key):
-        return TSIGContext(key)
+    def init_socket(self):
+        '''Initialize the underlyig socket.
+
+        This is essentially a part of __init__() and is expected to be
+        called immediately after the constructor.  It's separated from
+        the constructor because otherwise we might not be able to close
+        it if the constructor raises an exception after opening the socket.
+        '''
+        self.create_socket(self._master_addrinfo[0], self._master_addrinfo[1])
+        self.setblocking(1)
 
     def __set_xfrstate(self, new_state):
         self.__state = new_state
@@ -498,10 +505,11 @@ class XfrinConnection(asyncore.dispatcher):
         '''Connect to master in TCP.'''
 
         try:
-            self.connect(self._master_address)
+            self.connect(self._master_addrinfo[2])
             return True
         except socket.error as e:
-            logger.error(XFRIN_CONNECT_MASTER, self._master_address, str(e))
+            logger.error(XFRIN_CONNECT_MASTER, self._master_addrinfo[2],
+                         str(e))
             return False
 
     def _get_zone_soa(self):
@@ -697,7 +705,6 @@ class XfrinConnection(asyncore.dispatcher):
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
             self._diff = None
-            self.close()
 
         return ret
 
@@ -729,33 +736,6 @@ class XfrinConnection(asyncore.dispatcher):
 
         if msg.get_rr_count(Message.SECTION_QUESTION) > 1:
             raise XfrinException('query section count greater than 1')
-
-    def _handle_answer_section(self, answer_section):
-        '''Return a generator for the reponse in one tcp package to a zone transfer.'''
-
-        for rrset in answer_section:
-            rrset_name = rrset.get_name().to_text()
-            rrset_ttl = int(rrset.get_ttl().to_text())
-            rrset_class = rrset.get_class().to_text()
-            rrset_type = rrset.get_type().to_text()
-
-            for rdata in rrset.get_rdata():
-                # Count the soa record count
-                if rrset.get_type() == RRType.SOA():
-                    self._soa_rr_count += 1
-
-                    # XXX: the current DNS message parser can't preserve the
-                    # RR order or separete the beginning and ending SOA RRs.
-                    # As a short term workaround, we simply ignore the second
-                    # SOA, and ignore the erroneous case where the transfer
-                    # session doesn't end with an SOA.
-                    if (self._soa_rr_count == 2):
-                        # Avoid inserting soa record twice
-                        break
-
-                rdata_text = rdata.to_text()
-                yield (rrset_name, rrset_ttl, rrset_class, rrset_type,
-                       rdata_text)
 
     def _handle_xfrin_responses(self):
         read_next_msg = True
@@ -794,47 +774,82 @@ class XfrinConnection(asyncore.dispatcher):
 
         return False
 
-    def log_info(self, msg, type='info'):
-        # Overwrite the log function, log nothing
-        pass
-
-def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
-                  shutdown_event, master_addrinfo, check_soa, tsig_key,
-                  request_type):
-    xfrin_recorder.increment(zone_name)
-
-    # Create a data source client used in this XFR session.  Right now we
-    # still assume an sqlite3-based data source, and use both the old and new
-    # data source APIs.  We also need to use a mock client for tests.
-    # For a temporary workaround to deal with these situations, we skip the
-    # creation when the given file is none (the test case).  Eventually
-    # this code will be much cleaner.
-    datasrc_client = None
-    if db_file is not None:
-        # temporary hardcoded sqlite initialization. Once we decide on
-        # the config specification, we need to update this (TODO)
-        # this may depend on #1207, or any followup ticket created for #1207
-        datasrc_type = "sqlite3"
-        datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
-        datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
-
-    # Create a TCP connection for the XFR session and perform the operation.
-    sock_map = {}
-    conn = XfrinConnection(sock_map, zone_name, rrclass, datasrc_client,
-                           shutdown_event, master_addrinfo, tsig_key)
-    # XXX: We still need _db_file for temporary workaround in _create_query().
-    # This should be removed when we eliminate the need for the workaround.
-    conn._db_file = db_file
+def __process_xfrin(server, zone_name, rrclass, db_file,
+                    shutdown_event, master_addrinfo, check_soa, tsig_key,
+                    request_type, conn_class=XfrinConnection):
+    conn = None
+    exception = None
     ret = XFRIN_FAIL
-    if conn.connect_to_master():
-        ret = conn.do_xfrin(check_soa, request_type)
+    try:
+        # Create a data source client used in this XFR session.  Right now we
+        # still assume an sqlite3-based data source, and use both the old and
+        # new data source APIs.  We also need to use a mock client for tests.
+        # For a temporary workaround to deal with these situations, we skip the
+        # creation when the given file is none (the test case).  Eventually
+        # this code will be much cleaner.
+        datasrc_client = None
+        if db_file is not None:
+            # temporary hardcoded sqlite initialization. Once we decide on
+            # the config specification, we need to update this (TODO)
+            # this may depend on #1207, or any followup ticket created for #1207
+            datasrc_type = "sqlite3"
+            datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
+            datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
+
+        # Create a TCP connection for the XFR session and perform the operation
+        sock_map = {}
+        conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
+                          shutdown_event, master_addrinfo, tsig_key)
+        conn.init_socket()
+        # XXX: We still need _db_file for temporary workaround in _create_query().
+        # This should be removed when we eliminate the need for the workaround.
+        conn._db_file = db_file
+        if conn.connect_to_master():
+            ret = conn.do_xfrin(check_soa, request_type)
+    except Exception as ex:
+        # If exception happens, just remember it here so that we can re-raise
+        # after cleaning up things.  We don't log it here because we want
+        # eliminate smallest possibility of having an exception in logging
+        # itself.
+        exception = ex
+
+    # asyncore.dispatcher requires explicit close() unless its lifetime
+    # from born to destruction is closed within asyncore.loop, which is not
+    # the case for us.  We always close() here, whether or not do_xfrin
+    # succeeds, and even when we see an unexpected exception.
+    if conn is not None:
+        conn.close()
 
     # Publish the zone transfer result news, so zonemgr can reset the
     # zone timer, and xfrout can notify the zone's slaves if the result
     # is success.
     server.publish_xfrin_news(zone_name, rrclass, ret)
+
+    if exception is not None:
+        raise exception
+
+def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
+                  shutdown_event, master_addrinfo, check_soa, tsig_key,
+                  request_type, conn_class=XfrinConnection):
+    # Even if it should be rare, the main process of xfrin session can
+    # raise an exception.  In order to make sure the lock in xfrin_recorder
+    # is released in any cases, we delegate the main part to the helper
+    # function in the try block, catch any exceptions, then release the lock.
+    xfrin_recorder.increment(zone_name)
+    exception = None
+    try:
+        __process_xfrin(server, zone_name, rrclass, db_file,
+                        shutdown_event, master_addrinfo, check_soa, tsig_key,
+                        request_type, conn_class)
+    except Exception as ex:
+        # don't log it until we complete decrement().
+        exception = ex
     xfrin_recorder.decrement(zone_name)
 
+    if exception is not None:
+        typestr = "AXFR" if request_type == RRType.AXFR() else "IXFR"
+        logger.error(XFRIN_XFR_PROCESS_FAILURE, typestr, zone_name.to_text(),
+                     str(rrclass), str(exception))
 
 class XfrinRecorder:
     def __init__(self):
