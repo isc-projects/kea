@@ -515,7 +515,7 @@ class MultiConfigData:
             return value, self.CURRENT
         if default:
             value = self.get_default_value(identifier)
-            if value != None:
+            if value is not None:
                 return value, self.DEFAULT
         return None, self.NONE
 
@@ -650,9 +650,13 @@ class MultiConfigData:
             cur_value, status = self.get_value(cur_id_part + id)
             # Check if the value was there in the first place
             if status == MultiConfigData.NONE and cur_id_part != "/":
-                raise isc.cc.data.DataNotFoundError(id_part +
-                                                    " not found in " +
-                                                    cur_id_part)
+                # In case the element we are inspecting did not have any value set, was optional, *and* had no default, we do not want to error when trying to set it
+                if not 'item_default' in spec_part and 'item_optional' in spec_part and spec_part['item_optional']:
+                    pass
+                else:
+                    raise isc.cc.data.DataNotFoundError(id_part +
+                                                        " not found in " +
+                                                        cur_id_part)
             if list_indices is not None:
                 # And check if we don't set something outside of any
                 # list

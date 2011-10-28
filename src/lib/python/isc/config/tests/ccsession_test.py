@@ -773,6 +773,27 @@ class TestUIModuleCCSession(unittest.TestCase):
                           uccs.remove_value, "/Spec32/named_set_item",
                           "no_such_item")
 
+    def test_set_value_named_set(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs_named_set(fake_conn)
+        value, status = uccs.get_value("/Spec32/named_set_item2")
+        self.assertEqual({}, value)
+        self.assertEqual(status, uccs.DEFAULT)
+
+        # Try setting a value that is optional but has no default
+        uccs.add_value("/Spec32/named_set_item2", "new")
+        uccs.set_value("/Spec32/named_set_item2/new/first", 3)
+
+        value, status = uccs.get_value("/Spec32/named_set_item2")
+        self.assertEqual({ 'new': {'first': 3 }}, value)
+        self.assertEqual(status, uccs.LOCAL)
+
+        uccs.set_value("/Spec32/named_set_item2/new/second", "foo")
+
+        value, status = uccs.get_value("/Spec32/named_set_item2")
+        self.assertEqual({ 'new': {'first': 3, 'second': "foo" }}, value)
+        self.assertEqual(status, uccs.LOCAL)
+
     def test_commit(self):
         fake_conn = fakeUIConn()
         uccs = self.create_uccs2(fake_conn)

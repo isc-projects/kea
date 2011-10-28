@@ -627,7 +627,7 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list(None, False)
         self.assertEqual(['Spec32'], config_items)
         config_items = self.mcd.get_config_item_list(None, True)
-        self.assertEqual(['Spec32/named_set_item'], config_items)
+        self.assertEqual(['Spec32/named_set_item', 'Spec32/named_set_item2'], config_items)
         self.mcd.set_value('Spec32/named_set_item', { "aaaa": 4, "aabb": 5, "bbbb": 6})
         config_items = self.mcd.get_config_item_list("/Spec32/named_set_item", True)
         self.assertEqual(['Spec32/named_set_item/aaaa',
