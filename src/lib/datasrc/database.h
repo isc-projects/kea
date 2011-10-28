@@ -382,12 +382,12 @@ public:
     virtual void deleteRecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]) = 0;
 
-    /// Commit updates to the zone.
+    /// Commit a transaction.
     ///
-    /// This method completes a transaction of making updates to the zone
-    /// in the context started by startUpdateZone.
+    /// This method completes a transaction started by \c startTransaction
+    /// or \c startUpdateZone.
     ///
-    /// A successful call to \c startUpdateZone() must have preceded to
+    /// A successful call to one of the "start" methods must have preceded to
     /// this call; otherwise a \c DataSourceError exception will be thrown.
     /// Once this method successfully completes, the transaction isn't
     /// considered to exist any more.  So a new transaction can now be
@@ -403,17 +403,16 @@ public:
     ///
     /// \exception DataSourceError Call without a transaction, duplicate call
     /// to the method or internal database error.
-    virtual void commitUpdateZone() = 0;
+    virtual void commit() = 0;
 
-    /// Rollback updates to the zone made so far.
+    /// Rollback any changes in a transaction made so far.
     ///
-    /// This method rollbacks a transaction of making updates to the zone
-    /// in the context started by startUpdateZone.  When it succeeds
-    /// (it normally should, but see below), the underlying database should
-    /// be reverted to the point before performing the corresponding
-    /// \c startUpdateZone().
+    /// This method rollbacks a transaction started by \c startTransaction or
+    /// \c startUpdateZone.  When it succeeds (it normally should, but see
+    /// below), the underlying database should be reverted to the point
+    /// before performing the corresponding "start" method.
     ///
-    /// A successful call to \c startUpdateZone() must have preceded to
+    /// A successful call to one of the "start" method must have preceded to
     /// this call; otherwise a \c DataSourceError exception will be thrown.
     /// Once this method successfully completes, the transaction isn't
     /// considered to exist any more.  So a new transaction can now be
@@ -430,7 +429,7 @@ public:
     ///
     /// \exception DataSourceError Call without a transaction, duplicate call
     /// to the method or internal database error.
-    virtual void rollbackUpdateZone() = 0;
+    virtual void rollback() = 0;
 
     /// Clone the accessor with the same configuration.
     ///
