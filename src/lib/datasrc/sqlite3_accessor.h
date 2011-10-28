@@ -139,7 +139,7 @@ public:
     /// attempt and/or increase timeout before giving up the COMMIT, even
     /// if it still doesn't guarantee 100% success.  Right now this
     /// implementation throws a \c DataSourceError exception in such a case.
-    virtual void commitUpdateZone();
+    virtual void commit();
 
     /// \note In SQLite3 rollback can fail if there's another unfinished
     /// statement is performed for the same database structure.
@@ -147,7 +147,7 @@ public:
     /// guaranteed to be prevented at the API level.  If it ever happens, this
     /// method throws a \c DataSourceError exception.  It should be
     /// considered a bug of the higher level application program.
-    virtual void rollbackUpdateZone();
+    virtual void rollback();
 
     virtual void addRecordToZone(
         const std::string (&columns)[ADD_COLUMN_COUNT]);
