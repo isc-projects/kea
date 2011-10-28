@@ -226,7 +226,12 @@ class TestHttpHandler(unittest.TestCase):
                 check_XSD_URL_PATH(mod=m, item=k)
 
         def check_XSL_URL_PATH(mod=None, item=None):
-            self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
+            url_path = stats_httpd.XSL_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
             self.client.endheaders()
             response = self.client.getresponse()
             self.assertEqual(response.getheader("Content-type"), "text/xml")
@@ -257,12 +262,12 @@ class TestHttpHandler(unittest.TestCase):
 
         # URL is '/bind10/statistics/xsl'
         check_XSL_URL_PATH(mod=None, item=None)
-        #for m in DUMMY_DATA:
-        #    # URL is '/bind10/statistics/xsl/Module'
-        #    check_XSL_URL_PATH(mod=m)
-        #    for k in DUMMY_DATA[m].keys():
-        #        # URL is '/bind10/statistics/xsl/Module/Item'
-        #        check_XSL_URL_PATH(mod=m, item=k)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xsl/Module'
+            check_XSL_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xsl/Module/Item'
+                check_XSL_URL_PATH(mod=m, item=k)
 
         """
         # URL is '/bind10/statitics/xsd/Auth/queries.tcp/'
