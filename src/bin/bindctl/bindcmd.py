@@ -109,6 +109,18 @@ class BindCmdInterpreter(Cmd):
         else:
             self.csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir + \
                 os.sep + '.bind10' + os.sep
+        self._update_readline_word_boundary()
+
+    def _update_readline_word_boundary(self):
+        # This is a fix for the problem described in
+        # http://bind10.isc.org/ticket/1345
+        # If '-' is seen as a word-boundary, the final completion-step
+        # (as handled by the cmd module, and hence outside our reach) can
+        # mistakenly add data twice, resulting in wrong completion results
+        # The solution is to remove it.
+        delims = readline.get_completer_delims( )
+        delims = delims.replace('-', '')
+        readline.set_completer_delims(delims)
 
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
@@ -507,13 +519,11 @@ class BindCmdInterpreter(Cmd):
                 hints = []
 
             self.hint = hints
-            #self._append_space_to_hint()
 
         if state < len(self.hint):
             return self.hint[state]
         else:
             return None
-            
 
     def _get_module_startswith(self, text):       
         return [module
