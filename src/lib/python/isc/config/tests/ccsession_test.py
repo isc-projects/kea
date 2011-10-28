@@ -756,6 +756,17 @@ class TestUIModuleCCSession(unittest.TestCase):
         uccs = self.create_uccs_named_set(fake_conn)
         value, status = uccs.get_value("/Spec32/named_set_item")
         self.assertEqual({'a': 1, 'b': 2}, value)
+
+        # make sure that removing from default actually removes it
+        uccs.remove_value("/Spec32/named_set_item", "a")
+        value, status = uccs.get_value("/Spec32/named_set_item")
+        self.assertEqual({'b': 2}, value)
+        self.assertEqual(uccs.LOCAL, status)
+
+        # ok, put it back now
+        uccs.add_value("/Spec32/named_set_item", "a")
+        uccs.set_value("/Spec32/named_set_item/a", 1)
+
         uccs.add_value("/Spec32/named_set_item", "foo")
         value, status = uccs.get_value("/Spec32/named_set_item")
         self.assertEqual({'a': 1, 'b': 2, 'foo': 3}, value)
