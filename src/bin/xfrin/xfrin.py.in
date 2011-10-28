@@ -820,6 +820,11 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
 
     # Create a TCP connection for the XFR session and perform the operation.
     sock_map = {}
+    # In case we were asked to do IXFR and that one fails, we try again with
+    # AXFR. But only if we could actually connect to the server.
+    #
+    # So we start with retry as True, which is set to false on each attempt.
+    # In the case of connected but failed IXFR, we set it to true once again.
     retry = True
     while retry:
         retry = False
@@ -835,7 +840,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                 # IXFR failed for some reason. It might mean the server can't
                 # handle it, or we don't have the zone or we are out of sync or
                 # whatever else. So we retry with with AXFR, as it may succeed
-                # in manu such cases.
+                # in many such cases.
                 retry = True
                 request_type = RRType.AXFR()
                 logger.warn(XFRIN_XFR_TRANSFER_FALLBACK, conn.zone_str())
