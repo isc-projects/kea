@@ -85,7 +85,7 @@ def init_paths():
         if "BIND10_XFROUT_SOCKET_FILE" in os.environ:
             UNIX_SOCKET_FILE = os.environ["BIND10_XFROUT_SOCKET_FILE"]
         else:
-            UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
+            UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/@PACKAGE_NAME@/auth_xfrout_conn"
 
 init_paths()
 
