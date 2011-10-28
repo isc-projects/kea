@@ -32,9 +32,8 @@ from isc.log_messages.stats_messages import *
 isc.log.init("b10-stats")
 logger = isc.log.Logger("stats")
 
-# Some constants for debug levels, these should be removed when we
-# have #1074
-DBG_STATS_MESSAGING = 30
+# Some constants for debug levels.
+DBG_STATS_MESSAGING = logger.DBGLVL_COMMAND
 
 # This is for boot_time of Stats
 _BASETIME = gmtime()

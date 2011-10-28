@@ -268,16 +268,16 @@ PyTypeObject zonefinder_type = {
 
 PyObject*
 createZoneFinderObject(isc::datasrc::ZoneFinderPtr source, PyObject* base_obj) {
-    s_ZoneFinder* py_zi = static_cast<s_ZoneFinder*>(
+    s_ZoneFinder* py_zf = static_cast<s_ZoneFinder*>(
         zonefinder_type.tp_alloc(&zonefinder_type, 0));
-    if (py_zi != NULL) {
-        py_zi->cppobj = source;
-        py_zi->base_obj = base_obj;
+    if (py_zf != NULL) {
+        py_zf->cppobj = source;
+        py_zf->base_obj = base_obj;
+        if (base_obj != NULL) {
+            Py_INCREF(base_obj);
+        }
     }
-    if (base_obj != NULL) {
-        Py_INCREF(base_obj);
-    }
-    return (py_zi);
+    return (py_zf);
 }
 
 } // namespace python
