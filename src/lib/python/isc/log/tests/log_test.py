@@ -159,5 +159,15 @@ class Logger(unittest.TestCase):
         # Bad type
         self.assertRaises(TypeError, logger.debug, "42", "hello")
 
+    def test_dbglevel_constants(self):
+        """
+            Just check a constant to make sure it is defined and is the
+            correct value.  (The constant chosen has a non-zero value to
+            ensure that the code has both define the constant and set its
+            value correctly.)
+        """
+        logger = isc.log.Logger("child")
+        self.assertEqual(logger.DBGLVL_COMMAND, 10)
+
 if __name__ == '__main__':
     unittest.main()

@@ -86,19 +86,17 @@ Option::pack6(boost::shared_array<uint8_t>& buf,
                   type_ << ",len=" << len() << ": too small buffer.");
     }
 
-    int length = len() - getHeaderLen();
-
     uint8_t * ptr = &buf[offset];
-    writeUint16(type_, ptr);
-    ptr += sizeof(uint16_t);
 
-    writeUint16(length, ptr);
-    ptr += sizeof(uint16_t);
+    ptr = writeUint16(type_, ptr);
+
+    ptr = writeUint16(len() - getHeaderLen(), ptr);
 
     if (data_len_)
         memcpy(ptr, &data_[offset_], data_len_);
 
-    offset += OPTION6_HDR_LEN + data_len_; // end of this option
+    // end of fixed part of this option
+    offset += OPTION6_HDR_LEN + data_len_;
 
     return LibDHCP::packOptions6(buf, buf_len, offset, options_);
 }

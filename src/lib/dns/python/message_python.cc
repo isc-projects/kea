@@ -16,6 +16,7 @@
 #include <Python.h>
 
 #include <exceptions/exceptions.h>
+#include <util/python/pycppwrapper_util.h>
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/tsig.h>
@@ -38,6 +39,7 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
 // Import pydoc text
 #include "message_python_inc.cc"
@@ -64,8 +66,8 @@ PyObject* Message_setEDNS(s_Message* self, PyObject* args);
 PyObject* Message_getTSIGRecord(s_Message* self);
 PyObject* Message_getRRCount(s_Message* self, PyObject* args);
 // use direct iterators for these? (or simply lists for now?)
-PyObject* Message_getQuestion(s_Message* self);
-PyObject* Message_getSection(s_Message* self, PyObject* args);
+PyObject* Message_getQuestion(PyObject* self, PyObject*);
+PyObject* Message_getSection(PyObject* self, PyObject* args);
 //static PyObject* Message_beginQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_endQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
@@ -127,10 +129,10 @@ PyMethodDef Message_methods[] = {
     },
     { "get_rr_count", reinterpret_cast<PyCFunction>(Message_getRRCount), METH_VARARGS,
       "Returns the number of RRs contained in the given section." },
-    { "get_question", reinterpret_cast<PyCFunction>(Message_getQuestion), METH_NOARGS,
+    { "get_question", Message_getQuestion, METH_NOARGS,
       "Returns a list of all Question objects in the message "
       "(should be either 0 or 1)" },
-    { "get_section", reinterpret_cast<PyCFunction>(Message_getSection), METH_VARARGS,
+    { "get_section", Message_getSection, METH_VARARGS,
       "Returns a list of all RRset objects in the given section of the message\n"
       "The argument must be of type Section" },
     { "add_question", reinterpret_cast<PyCFunction>(Message_addQuestion), METH_VARARGS,
@@ -409,50 +411,59 @@ Message_getRRCount(s_Message* self, PyObject* args) {
     }
 }
 
+// This is a helper templated class commonly used for getQuestion and
+// getSection in order to build a list of Message section items.
+template <typename ItemType, typename CreatorParamType>
+class SectionInserter {
+    typedef PyObject* (*creator_t)(const CreatorParamType&);
+public:
+    SectionInserter(PyObject* pylist, creator_t creator) :
+        pylist_(pylist), creator_(creator)
+    {}
+    void operator()(ItemType item) {
+        if (PyList_Append(pylist_, PyObjectContainer(creator_(*item)).get())
+            == -1) {
+            isc_throw(PyCPPWrapperException, "PyList_Append failed, "
+                      "probably due to short memory");
+        }
+    }
+private:
+    PyObject* pylist_;
+    creator_t creator_;
+};
+
+typedef SectionInserter<ConstQuestionPtr, Question> QuestionInserter;
+typedef SectionInserter<ConstRRsetPtr, RRset> RRsetInserter;
+
 // TODO use direct iterators for these? (or simply lists for now?)
 PyObject*
-Message_getQuestion(s_Message* self) {
-    QuestionIterator qi, qi_end;
+Message_getQuestion(PyObject* po_self, PyObject*) {
+    const s_Message* const self = static_cast<s_Message*>(po_self);
+
     try {
-        qi = self->cppobj->beginQuestion();
-        qi_end = self->cppobj->endQuestion();
+        PyObjectContainer list_container(PyList_New(0));
+        for_each(self->cppobj->beginQuestion(),
+                 self->cppobj->endQuestion(),
+                 QuestionInserter(list_container.get(), createQuestionObject));
+        return (list_container.release());
     } catch (const InvalidMessageSection& ex) {
         PyErr_SetString(po_InvalidMessageSection, ex.what());
-        return (NULL);
-    } catch (...) {
-        PyErr_SetString(po_IscException,
-                        "Unexpected exception in getting section iterators");
-        return (NULL);
-    }
-
-    PyObject* list = PyList_New(0);
-    if (list == NULL) {
-        return (NULL);
-    }
-
-    try {
-        for (; qi != qi_end; ++qi) {
-            if (PyList_Append(list, createQuestionObject(**qi)) == -1) {
-                Py_DECREF(list);
-                return (NULL);
-            }
-        }
-        return (list);
     } catch (const exception& ex) {
         const string ex_what =
-            "Unexpected failure getting Question section: " +
+            "Unexpected failure in Message.get_question: " +
             string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
         PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure getting Question section");
+                        "Unexpected failure in Message.get_question");
     }
-    Py_DECREF(list);
     return (NULL);
 }
 
 PyObject*
-Message_getSection(s_Message* self, PyObject* args) {
+Message_getSection(PyObject* po_self, PyObject* args) {
+    const s_Message* const self = static_cast<s_Message*>(po_self);
+
     unsigned int section;
     if (!PyArg_ParseTuple(args, "I", &section)) {
         PyErr_Clear();
@@ -460,46 +471,28 @@ Message_getSection(s_Message* self, PyObject* args) {
                         "no valid type in get_section argument");
         return (NULL);
     }
-    RRsetIterator rrsi, rrsi_end;
+
     try {
-        rrsi = self->cppobj->beginSection(
-            static_cast<Message::Section>(section));
-        rrsi_end = self->cppobj->endSection(
-            static_cast<Message::Section>(section));
+        PyObjectContainer list_container(PyList_New(0));
+        const Message::Section msgsection =
+            static_cast<Message::Section>(section);
+        for_each(self->cppobj->beginSection(msgsection),
+                 self->cppobj->endSection(msgsection),
+                 RRsetInserter(list_container.get(), createRRsetObject));
+        return (list_container.release());
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
-        return (NULL);
     } catch (const InvalidMessageSection& ex) {
         PyErr_SetString(po_InvalidMessageSection, ex.what());
-        return (NULL);
-    } catch (...) {
-        PyErr_SetString(po_IscException,
-                        "Unexpected exception in getting section iterators");
-        return (NULL);
-    }
-
-    PyObject* list = PyList_New(0);
-    if (list == NULL) {
-        return (NULL);
-    }
-    try {
-        for (; rrsi != rrsi_end; ++rrsi) {
-            if (PyList_Append(list, createRRsetObject(**rrsi)) == -1) {
-                    Py_DECREF(list);
-                    return (NULL);
-            }
-        }
-        return (list);
     } catch (const exception& ex) {
         const string ex_what =
-            "Unexpected failure creating Question object: " +
+            "Unexpected failure in Message.get_section: " +
             string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
         PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure creating Question object");
+                        "Unexpected failure in Message.get_section");
     }
-    Py_DECREF(list);
     return (NULL);
 }
 

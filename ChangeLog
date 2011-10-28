@@ -1,4 +1,34 @@
-301     [func]      stephen
+305.	[bug]		jinmei
+	Python isc.dns, isc.datasrc, xfrin, xfrout: fixed reference leak
+	in Message.get_question(), Message.get_section(),
+	RRset.get_rdata(), and DataSourceClient.get_updater().
+	The leak caused severe memory leak in b10-xfrin, and (although no
+	one reported it) should have caused less visible leak in
+	b10-xfrout.  b10-xfrin had its own leak, which was also fixed.
+	(Trac #1028, git a72886e643864bb6f86ab47b115a55e0c7f7fcad)
+
+304.	[bug]		jelte
+	The run_bind10.sh test script now no longer runs processes from
+	an installed version of BIND 10, but will correctly use the
+	build tree paths.
+	(Trac #1246, git 1d43b46ab58077daaaf5cae3c6aa3e0eb76eb5d8)
+
+303.	[bug]		jinmei
+	Changed the installation path for the UNIX domain file used
+	for the communication between b10-auth and b10-xfrout to a
+	"@PACKAGE@" subdirectory (e.g. from /usr/local/var to
+	/usr/local/var/bind10-devel).  This should be transparent change
+	because this file is automatically created and cleaned up, but
+	if the old file somehow remains, it can now be safely removed.
+	(Trac #869, git 96e22f4284307b1d5f15e03837559711bb4f580c)
+
+302.	[bug]		jelte
+	msgq no longer crashes if the remote end is closed while msgq
+	tries to send data. It will now simply drop the message and close
+	the connection itself.
+	(Trac #1180, git 6e68b97b050e40e073f736d84b62b3e193dd870a)
+
+301.	[func]		stephen
 	Add system test for IXFR over TCP.
 	(Trac #1213, git 68ee3818bcbecebf3e6789e81ea79d551a4ff3e8)
 

@@ -28,20 +28,19 @@
 namespace isc {
 namespace cc {
 
-enum {
-    /// \brief Trace basic operation
-    DBG_TRACE_BASIC = 10,
-    /// \brief Trace even details
-    ///
-    /// This includes messages being sent and received, waiting for messages
-    /// and alike.
-    DBG_TRACE_DETAILED = 80
-};
+/// Trace basic operation
+const int DBG_TRACE_BASIC = DBGLVL_TRACE_BASIC;
 
-/// \brief Logger for this library
+/// This includes messages being sent and received, waiting for messages
+/// and alike.
+const int DBG_TRACE_DETAILED = DBGLVL_TRACE_DETAIL;
+
+// Declaration of the logger.
 extern isc::log::Logger logger;
 
-}
-}
+} // namespace cc
+} // namespace isc
+
+/// \brief Logger for this library
 
 #endif
