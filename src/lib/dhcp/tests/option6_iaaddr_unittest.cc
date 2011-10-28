@@ -35,11 +35,12 @@ public:
 };
 
 /// TODO reenable this once ticket #1313 is implemented.
-TEST_F(Option6IAAddrTest, DISABLED_basic) {
+TEST_F(Option6IAAddrTest, basic) {
 
     boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
     for (int i = 0; i < 128; i++)
         simple_buf[i] = 0;
+
     simple_buf[0] = 0x20;
     simple_buf[1] = 0x01;
     simple_buf[2] = 0x0d;

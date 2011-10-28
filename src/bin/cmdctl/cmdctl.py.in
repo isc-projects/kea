@@ -49,16 +49,11 @@ from hashlib import sha1
 from isc.util import socketserver_mixin
 from isc.log_messages.cmdctl_messages import *
 
-# TODO: these debug-levels are hard-coded here; we are planning on
-# creating a general set of debug levels, see ticket #1074. When done,
-# we should remove these values and use the general ones in the
-# logger.debug calls
-
-# Debug level for communication with BIND10
-DBG_CMDCTL_MESSAGING = 30
-
 isc.log.init("b10-cmdctl")
 logger = isc.log.Logger("cmdctl")
+
+# Debug level for communication with BIND10
+DBG_CMDCTL_MESSAGING = logger.DBGLVL_COMMAND
 
 try:
     import threading

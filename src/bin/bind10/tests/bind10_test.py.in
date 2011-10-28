@@ -21,6 +21,7 @@ from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, 
 import unittest
 import sys
 import os
+import copy
 import signal
 import socket
 from isc.net.addr import IPAddr
@@ -360,6 +361,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
     of processes and that the right processes are started and stopped
     according to changes in configuration.
     """
+    def check_environment_unchanged(self):
+        # Check whether the environment has not been changed
+        self.assertEqual(original_os_environ, os.environ)
+
     def check_started(self, bob, core, auth, resolver):
         """
         Check that the right sets of services are started. The ones that
@@ -379,6 +384,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.stats, core)
         self.assertEqual(bob.stats_httpd, core)
         self.assertEqual(bob.cmdctl, core)
+        self.check_environment_unchanged()
 
     def check_preconditions(self, bob):
         self.check_started(bob, False, False, False)
@@ -389,6 +395,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         should be started. Some processes still need to be running.
         """
         self.check_started(bob, True, False, False)
+        self.check_environment_unchanged()
 
     def check_started_both(self, bob):
         """
@@ -396,18 +403,21 @@ class TestStartStopProcessesBob(unittest.TestCase):
         (auth and resolver) are enabled.
         """
         self.check_started(bob, True, True, True)
+        self.check_environment_unchanged()
 
     def check_started_auth(self, bob):
         """
         Check the set of processes needed to run auth only is started.
         """
         self.check_started(bob, True, True, False)
+        self.check_environment_unchanged()
 
     def check_started_resolver(self, bob):
         """
         Check the set of processes needed to run resolver only is started.
         """
         self.check_started(bob, True, False, True)
+        self.check_environment_unchanged()
 
     def check_started_dhcp(self, bob, v4, v6):
         """
@@ -426,6 +436,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         # there should be exactly one DHCPv6 daemon (if v6==True)
         self.assertEqual(v4==True, v4found==1)
         self.assertEqual(v6==True, v6found==1)
+        self.check_environment_unchanged()
 
     # Checks the processes started when starting neither auth nor resolver
     # is specified.
@@ -799,5 +810,7 @@ class TestBrittle(unittest.TestCase):
         self.assertFalse(bob.runnable)
 
 if __name__ == '__main__':
+    # store os.environ for test_unchanged_environment
+    original_os_environ = copy.deepcopy(os.environ)
     isc.log.resetUnitTestRootLogger()
     unittest.main()

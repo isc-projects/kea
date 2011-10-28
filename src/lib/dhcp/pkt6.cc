@@ -124,7 +124,8 @@ Pkt6::packUDP() {
         cout << "Packet build failed:" << e.what() << endl;
         return (false);
     }
-    cout << "Packet built, len=" << len() << endl;
+    // Limited verbosity of this method
+    // cout << "Packet built, len=" << len() << endl;
     return (true);
 }
 

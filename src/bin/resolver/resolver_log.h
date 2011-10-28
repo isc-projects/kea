@@ -23,20 +23,20 @@
 /// Defines the levels used to output debug messages in the resolver.  Note that
 /// higher numbers equate to more verbose (and detailed) output.
 
-// Initialization
-const int RESOLVER_DBG_INIT = 10;
+// Initialization and shutdown of the resolver.
+const int RESOLVER_DBG_INIT = DBGLVL_START_SHUT;
 
 // Configuration messages
-const int RESOLVER_DBG_CONFIG = 30;
+const int RESOLVER_DBG_CONFIG = DBGLVL_COMMAND;
 
 // Trace sending and receiving of messages
-const int RESOLVER_DBG_IO = 50;
+const int RESOLVER_DBG_IO = DBGLVL_TRACE_BASIC;
 
 // Trace processing of messages
-const int RESOLVER_DBG_PROCESS = 70;
+const int RESOLVER_DBG_PROCESS = DBGLVL_TRACE_DETAIL;
 
 // Detailed message information
-const int RESOLVER_DBG_DETAIL = 90;
+const int RESOLVER_DBG_DETAIL = DBGLVL_TRACE_DETAIL_DATA;
 
 
 /// \brief Resolver Logger

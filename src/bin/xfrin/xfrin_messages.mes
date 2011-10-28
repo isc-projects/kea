@@ -35,6 +35,21 @@ such that the remote server doesn't support IXFR, we don't have the SOA record
 (or the zone at all), we are out of sync, etc. In many of these situations,
 AXFR could still work. Therefore we try that one in case it helps.
 
+% XFRIN_XFR_PROCESS_FAILURE %1 transfer of zone %2/%3 failed: %4
+An XFR session failed outside the main protocol handling.  This
+includes an error at the data source level at the initialization
+phase, unexpected failure in the network connection setup to the
+master server, or even more unexpected failure due to unlikely events
+such as memory allocation failure.  Details of the error are shown in
+the log message.  In general, these errors are not really expected
+ones, and indicate an installation error or a program bug.  The
+session handler thread tries to clean up all intermediate resources
+even on these errors, but it may be incomplete.  So, if this log
+message continuously appears, system resource consumption should be
+checked, and you may even want to disable the corresponding transfers.
+You may also want to file a bug report if this message appears so
+often.
+
 % XFRIN_XFR_TRANSFER_STARTED %1 transfer of zone %2 started
 A connection to the master server has been made, the serial value in
 the SOA record has been checked, and a zone transfer has been started.

@@ -15,10 +15,12 @@
 
 import isc.log
 import isc.datasrc
+from isc.datasrc import ZoneFinder
 import isc.dns
 import unittest
 import os
 import shutil
+import sys
 import json
 
 TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
@@ -190,6 +192,29 @@ class DataSrcClient(unittest.TestCase):
     def test_construct(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneFinder)
+
+    def test_findoptions(self):
+        '''A simple test to confirm no option is specified by default.
+
+        '''
+        self.assertFalse(ZoneFinder.FIND_DEFAULT & ZoneFinder.FIND_GLUE_OK)
+        self.assertFalse(ZoneFinder.FIND_DEFAULT & ZoneFinder.FIND_DNSSEC)
+        self.assertFalse(ZoneFinder.FIND_DEFAULT & ZoneFinder.NO_WILDCARD)
+
+    def test_findresults(self):
+        '''A simple test to confirm result codes are (defined and) different
+        for some combinations.
+
+        '''
+        self.assertNotEqual(ZoneFinder.SUCCESS, ZoneFinder.DELEGATION)
+        self.assertNotEqual(ZoneFinder.DELEGATION, ZoneFinder.NXDOMAIN)
+        self.assertNotEqual(ZoneFinder.NXDOMAIN, ZoneFinder.NXRRSET)
+        self.assertNotEqual(ZoneFinder.NXRRSET, ZoneFinder.CNAME)
+        self.assertNotEqual(ZoneFinder.CNAME, ZoneFinder.DNAME)
+        self.assertNotEqual(ZoneFinder.DNAME, ZoneFinder.WILDCARD)
+        self.assertNotEqual(ZoneFinder.WILDCARD, ZoneFinder.WILDCARD_CNAME)
+        self.assertNotEqual(ZoneFinder.WILDCARD_CNAME,
+                            ZoneFinder.WILDCARD_NXRRSET)
 
     def test_find(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
@@ -469,6 +494,23 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(None,
                          dsc.get_updater(isc.dns.Name("notexistent.example"),
                                          True))
+
+    def test_client_reference(self):
+        # Temporarily create various objects using factory methods of the
+        # client.  The created objects won't be stored anywhere and
+        # immediately released.  The creation shouldn't affect the reference
+        # to the base client.
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        orig_ref = sys.getrefcount(dsc)
+
+        dsc.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(orig_ref, sys.getrefcount(dsc))
+
+        dsc.get_iterator(isc.dns.Name("example.com."))
+        self.assertEqual(orig_ref, sys.getrefcount(dsc))
+
+        dsc.get_updater(isc.dns.Name("example.com"), True)
+        self.assertEqual(orig_ref, sys.getrefcount(dsc))
 
 if __name__ == "__main__":
     isc.log.init("bind10")
