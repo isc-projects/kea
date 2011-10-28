@@ -550,7 +550,7 @@ TEST_F(SQLite3Update, emptyUpdate) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
     zone_id = accessor->startUpdateZone("example.com.", false).second;
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
@@ -561,7 +561,7 @@ TEST_F(SQLite3Update, flushZone) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
     zone_id = accessor->startUpdateZone("example.com.", true).second;
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 }
 
@@ -575,7 +575,7 @@ TEST_F(SQLite3Update, readWhileUpdate) {
 
     // Once the changes are committed, the other accessor will see the new
     // data.
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
                  empty_stored);
 }
@@ -585,7 +585,7 @@ TEST_F(SQLite3Update, rollback) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Rollback will revert the change made by startUpdateZone(, true).
-    accessor->rollbackUpdateZone();
+    accessor->rollback();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
@@ -599,7 +599,7 @@ TEST_F(SQLite3Update, rollbackFailure) {
     EXPECT_TRUE(iterator->getNext(columns));
 
     accessor->startUpdateZone("example.com.", true);
-    EXPECT_THROW(accessor->rollbackUpdateZone(), DataSourceError);
+    EXPECT_THROW(accessor->rollback(), DataSourceError);
 }
 
 TEST_F(SQLite3Update, commitConflict) {
@@ -612,8 +612,8 @@ TEST_F(SQLite3Update, commitConflict) {
     // which will prevent commit.
     zone_id = accessor->startUpdateZone("example.com.", true).second;
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
-    EXPECT_THROW(accessor->commitUpdateZone(), DataSourceError);
-    accessor->rollbackUpdateZone();   // rollback should still succeed
+    EXPECT_THROW(accessor->commit(), DataSourceError);
+    accessor->rollback();   // rollback should still succeed
 
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
@@ -631,9 +631,9 @@ TEST_F(SQLite3Update, updateConflict) {
 
     // Once we rollback the other attempt of change, we should be able to
     // start and commit the transaction using the main accessor.
-    another_accessor->rollbackUpdateZone();
+    another_accessor->rollback();
     accessor->startUpdateZone("example.com.", true);
-    accessor->commitUpdateZone();
+    accessor->commit();
 }
 
 TEST_F(SQLite3Update, duplicateUpdate) {
@@ -643,11 +643,11 @@ TEST_F(SQLite3Update, duplicateUpdate) {
 }
 
 TEST_F(SQLite3Update, commitWithoutTransaction) {
-    EXPECT_THROW(accessor->commitUpdateZone(), DataSourceError);
+    EXPECT_THROW(accessor->commit(), DataSourceError);
 }
 
 TEST_F(SQLite3Update, rollbackWithoutTransaction) {
-    EXPECT_THROW(accessor->rollbackUpdateZone(), DataSourceError);
+    EXPECT_THROW(accessor->rollback(), DataSourceError);
 }
 
 TEST_F(SQLite3Update, addRecord) {
@@ -664,7 +664,7 @@ TEST_F(SQLite3Update, addRecord) {
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 
     // Commit the change, and confirm the new data is still there.
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 }
 
@@ -678,7 +678,7 @@ TEST_F(SQLite3Update, addThenRollback) {
     expected_stored.push_back(new_data);
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 
-    accessor->rollbackUpdateZone();
+    accessor->rollback();
     checkRecords(*accessor, zone_id, "newdata.example.com.", empty_stored);
 }
 
@@ -717,7 +717,7 @@ TEST_F(SQLite3Update, deleteRecord) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Commit the change, and confirm the deleted data still isn't there.
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 }
 
@@ -730,7 +730,7 @@ TEST_F(SQLite3Update, deleteThenRollback) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Rollback the change, and confirm the data still exists.
-    accessor->rollbackUpdateZone();
+    accessor->rollback();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 

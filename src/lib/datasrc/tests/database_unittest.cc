@@ -223,8 +223,8 @@ public:
         // return dummy value.  unused anyway.
         return (pair<bool, int>(true, 0));
     }
-    virtual void commitUpdateZone() {}
-    virtual void rollbackUpdateZone() {}
+    virtual void commit() {}
+    virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
 
@@ -486,10 +486,10 @@ public:
 
         return (pair<bool, int>(true, WRITABLE_ZONE_ID));
     }
-    virtual void commitUpdateZone() {
+    virtual void commit() {
         *readonly_records_ = *update_records_;
     }
-    virtual void rollbackUpdateZone() {
+    virtual void rollback() {
         // Special hook: if something with a name of "throw.example.org"
         // has been added, trigger an imaginary unexpected event with an
         // exception.
@@ -860,7 +860,7 @@ public:
 
             addRecordToZone(columns);
         }
-        commitUpdateZone();
+        commit();
     }
 };
 
