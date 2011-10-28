@@ -775,7 +775,7 @@ TEST_F(QueryTest, emptyNameWithNSEC) {
     // Section 3.1.3.2 of RFC4035.
     // mx.example.com. NSEC ).no.example.com. proves no.example.com. is a
     // non empty terminal node.  Note that it also implicitly proves there
-    // shouldn't be no closer wildcard match (because the empty name is an
+    // should be no closer wildcard match (because the empty name is an
     // exact match), so we only need one NSEC.
     // From the point of the Query::process(), this is actually no different
     // from the other NXRRSET case, but we check that explicitly just in case.
