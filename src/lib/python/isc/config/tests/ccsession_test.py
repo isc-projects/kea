@@ -765,9 +765,13 @@ class TestUIModuleCCSession(unittest.TestCase):
         value, status = uccs.get_value("/Spec32/named_set_item")
         self.assertEqual({'b': 2}, value)
 
+        uccs.set_value("/Spec32/named_set_item/c", 5)
+        value, status = uccs.get_value("/Spec32/named_set_item")
+        self.assertEqual({"b": 2, "c": 5}, value)
+
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           uccs.set_value,
-                          "/Spec32/named_set_item/no_such_item",
+                          "/Spec32/named_set_item/no_such_item/a",
                           4)
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           uccs.remove_value, "/Spec32/named_set_item",
@@ -781,22 +785,28 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertEqual(status, uccs.DEFAULT)
 
         # Try setting a value that is optional but has no default
-        uccs.add_value("/Spec32/named_set_item2", "new")
-        uccs.set_value("/Spec32/named_set_item2/new/first", 3)
+        uccs.add_value("/Spec32/named_set_item2", "new1")
+        uccs.set_value("/Spec32/named_set_item2/new1/first", 3)
+        # Different method to add a new element
+        uccs.set_value("/Spec32/named_set_item2/new2", { "second": 4 })
 
         value, status = uccs.get_value("/Spec32/named_set_item2")
-        self.assertEqual({ 'new': {'first': 3 }}, value)
+        self.assertEqual({ "new1": {"first": 3 }, "new2": {"second": 4}},
+                         value)
         self.assertEqual(status, uccs.LOCAL)
 
-        uccs.set_value("/Spec32/named_set_item2/new/second", "foo")
+        uccs.set_value("/Spec32/named_set_item2/new1/second", "foo")
 
         value, status = uccs.get_value("/Spec32/named_set_item2")
-        self.assertEqual({ 'new': {'first': 3, 'second': "foo" }}, value)
+        self.assertEqual({ "new1": {"first": 3, "second": "foo" },
+                           "new2": {"second": 4}},
+                         value)
         self.assertEqual(status, uccs.LOCAL)
 
         # make sure using a bad name still fails
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.set_value,
                           "/Spec32/named_set_item2/doesnotexist/first", 3)
+
 
 
     def test_commit(self):

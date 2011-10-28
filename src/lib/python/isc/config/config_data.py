@@ -649,22 +649,14 @@ class MultiConfigData:
             id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
             cur_value, status = self.get_value(cur_id_part + id)
             # Check if the value was there in the first place
-            if status == MultiConfigData.NONE and cur_id_part != "/":
-                # In case the element we are setting did not have any 
-                # value set, was optional, *and* had no default, we do not 
-                # want to error when trying to set it
-                # (this only goes for the 'final' element, if higher-level
-                # ones do not appear to exist, it is a failure, hence the
-                # final comparison)
-                if not 'item_default' in spec_part and\
-                   'item_optional' in spec_part and\
-                   spec_part['item_optional'] and\
-                   cur_id_part + id == identifier:
-                    pass
-                else:
-                    raise isc.cc.data.DataNotFoundError(id_part +
-                                                        " not found in " +
-                                                        cur_id_part)
+            # If we are at the final element, we do not care whether we found
+            # it, since if we have reached this point and it did not exist,
+            # it was apparently an optional value without a default.
+            if status == MultiConfigData.NONE and cur_id_part != "/" and\
+               cur_id_part + id != identifier:
+                raise isc.cc.data.DataNotFoundError(id_part +
+                                                    " not found in " +
+                                                    cur_id_part)
             if list_indices is not None:
                 # And check if we don't set something outside of any
                 # list
