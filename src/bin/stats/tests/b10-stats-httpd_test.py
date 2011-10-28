@@ -134,23 +134,6 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(len(self.stats_httpd.httpd), 1)
         self.assertEqual((self.address, self.port), self.stats_httpd.http_addrs[0])
 
-        """
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        self.assertTrue(root.tag.find('statistics') > 0)
-        for (k,v) in root.attrib.items():
-            if k.find('schemaLocation') > 0:
-                self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.XSD_URL_PATH)
-        for mod in DUMMY_DATA:
-            for (item, value) in DUMMY_DATA[mod].items():
-                self.assertIsNotNone(root.find(mod + '/' + item))
-        """
-
         def check_XML_URL_PATH(mod=None, item=None):
             url_path = stats_httpd.XML_URL_PATH
             if mod is not None:
@@ -268,59 +251,6 @@ class TestHttpHandler(unittest.TestCase):
             for k in DUMMY_DATA[m].keys():
                 # URL is '/bind10/statistics/xsl/Module/Item'
                 check_XSL_URL_PATH(mod=m, item=k)
-
-        """
-        # URL is '/bind10/statitics/xsd/Auth/queries.tcp/'
-        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Auth/queries.tcp/')
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
-        tags = [ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ]
-        xsdpath = '/'.join(tags)
-        self.assertTrue(root.tag.find('schema') > 0)
-        self.assertTrue(hasattr(root, 'attrib'))
-        self.assertTrue('targetNamespace' in root.attrib)
-        self.assertEqual(root.attrib['targetNamespace'],
-                         stats_httpd.XSD_NAMESPACE)
-        for elm in root.findall(xsdpath):
-            self.assertIsNotNone(elm.attrib['name'])
-            self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
-        """
-
-        # URL is '/bind10/statitics/xsl'
-
-        """
-        # URL is '/bind10/statitics/xsl/Auth/queries.tcp/'
-        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Auth/queries.tcp/')
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        url_trans = '{http://www.w3.org/1999/XSL/Transform}'
-        url_xhtml = '{http://www.w3.org/1999/xhtml}'
-        xslpath = url_trans + 'template/' + url_xhtml + 'tr'
-        self.assertEqual(root.tag, url_trans + 'stylesheet')
-        for tr in root.findall(xslpath):
-            tds = tr.findall(url_xhtml + 'td')
-            self.assertIsNotNone(tds)
-            self.assertEqual(type(tds), list)
-            self.assertTrue(len(tds) > 2)
-            self.assertTrue(hasattr(tds[0], 'text'))
-            self.assertTrue(tds[0].text in DUMMY_DATA)
-            valueof = tds[2].find(url_trans + 'value-of')
-            self.assertIsNotNone(valueof)
-            self.assertTrue(hasattr(valueof, 'attrib'))
-            self.assertIsNotNone(valueof.attrib)
-            self.assertTrue('select' in valueof.attrib)
-            self.assertTrue(valueof.attrib['select'] in \
-                                [ tds[0].text+'/'+item for item in DUMMY_DATA[tds[0].text].keys() ])
-        """
 
         # 302 redirect
         self.client._http_vsn_str = 'HTTP/1.1'
