@@ -218,12 +218,28 @@ class MockBob(BoB):
         self.stats = False
         self.stats_httpd = False
         self.cmdctl = False
+        self.dhcp6 = False
+        self.dhcp4 = False
         self.c_channel_env = {}
         self.processes = { }
         self.creator = False
 
+        class MockSockCreator(isc.bind10.component.Component):
+            def __init__(self, process, boss, kind, address=None, params=None):
+                isc.bind10.component.Component.__init__(self, process, boss,
+                                                        kind, 'SockCreator')
+                self._start_func = boss.start_creator
+
+        specials = isc.bind10.special_component.get_specials()
+        specials['sockcreator'] = MockSockCreator
+        self._component_configurator = \
+            isc.bind10.component.Configurator(self, specials)
+
     def start_creator(self):
         self.creator = True
+        procinfo = ProcessInfo('b10-sockcreator', ['/bin/false'])
+        procinfo.pid = 1
+        return procinfo
 
     def stop_creator(self, kill=False):
         self.creator = False
@@ -232,70 +248,103 @@ class MockBob(BoB):
         # Configuration options are set directly
         pass
 
-    def start_msgq(self, c_channel_env):
+    def start_msgq(self):
         self.msgq = True
-        self.processes[2] = ProcessInfo('b10-msgq', ['/bin/false'])
-        self.processes[2].pid = 2
-
-    def start_cfgmgr(self, c_channel_env):
-        self.cfgmgr = True
-        self.processes[3] = ProcessInfo('b10-cfgmgr', ['/bin/false'])
-        self.processes[3].pid = 3
+        procinfo = ProcessInfo('b10-msgq', ['/bin/false'])
+        procinfo.pid = 2
+        return procinfo
 
     def start_ccsession(self, c_channel_env):
+        # this is not a process, don't have to do anything with procinfo
         self.ccsession = True
-        self.processes[4] = ProcessInfo('b10-ccsession', ['/bin/false'])
-        self.processes[4].pid = 4
 
-    def start_auth(self, c_channel_env):
+    def start_cfgmgr(self):
+        self.cfgmgr = True
+        procinfo = ProcessInfo('b10-cfgmgr', ['/bin/false'])
+        procinfo.pid = 3
+        return procinfo
+
+    def start_auth(self):
         self.auth = True
-        self.processes[5] = ProcessInfo('b10-auth', ['/bin/false'])
-        self.processes[5].pid = 5
+        procinfo = ProcessInfo('b10-auth', ['/bin/false'])
+        procinfo.pid = 5
+        return procinfo
 
-    def start_resolver(self, c_channel_env):
+    def start_resolver(self):
         self.resolver = True
-        self.processes[6] = ProcessInfo('b10-resolver', ['/bin/false'])
-        self.processes[6].pid = 6
+        procinfo = ProcessInfo('b10-resolver', ['/bin/false'])
+        procinfo.pid = 6
+        return procinfo
 
-    def start_xfrout(self, c_channel_env):
+    def start_simple(self, name):
+        procmap = { 'b10-xfrout': self.start_xfrout,
+                    'b10-xfrin': self.start_xfrin,
+                    'b10-zonemgr': self.start_zonemgr,
+                    'b10-stats': self.start_stats,
+                    'b10-stats-httpd': self.start_stats_httpd,
+                    'b10-cmdctl': self.start_cmdctl,
+                    'b10-dhcp6': self.start_dhcp6,
+                    'b10-dhcp4': self.start_dhcp4 }
+        return procmap[name]()
+
+    def start_xfrout(self):
         self.xfrout = True
-        self.processes[7] = ProcessInfo('b10-xfrout', ['/bin/false'])
-        self.processes[7].pid = 7
+        procinfo = ProcessInfo('b10-xfrout', ['/bin/false'])
+        procinfo.pid = 7
+        return procinfo
 
-    def start_xfrin(self, c_channel_env):
+    def start_xfrin(self):
         self.xfrin = True
-        self.processes[8] = ProcessInfo('b10-xfrin', ['/bin/false'])
-        self.processes[8].pid = 8
+        procinfo = ProcessInfo('b10-xfrin', ['/bin/false'])
+        procinfo.pid = 8
+        return procinfo
 
-    def start_zonemgr(self, c_channel_env):
+    def start_zonemgr(self):
         self.zonemgr = True
-        self.processes[9] = ProcessInfo('b10-zonemgr', ['/bin/false'])
-        self.processes[9].pid = 9
+        procinfo = ProcessInfo('b10-zonemgr', ['/bin/false'])
+        procinfo.pid = 9
+        return procinfo
 
-    def start_stats(self, c_channel_env):
+    def start_stats(self):
         self.stats = True
-        self.processes[10] = ProcessInfo('b10-stats', ['/bin/false'])
-        self.processes[10].pid = 10
+        procinfo = ProcessInfo('b10-stats', ['/bin/false'])
+        procinfo.pid = 10
+        return procinfo
 
-    def start_stats_httpd(self, c_channel_env):
+    def start_stats_httpd(self):
         self.stats_httpd = True
-        self.processes[11] = ProcessInfo('b10-stats-httpd', ['/bin/false'])
-        self.processes[11].pid = 11
+        procinfo = ProcessInfo('b10-stats-httpd', ['/bin/false'])
+        procinfo.pid = 11
+        return procinfo
 
-    def start_cmdctl(self, c_channel_env):
+    def start_cmdctl(self):
         self.cmdctl = True
-        self.processes[12] = ProcessInfo('b10-cmdctl', ['/bin/false'])
-        self.processes[12].pid = 12
+        procinfo = ProcessInfo('b10-cmdctl', ['/bin/false'])
+        procinfo.pid = 12
+        return procinfo
 
-    def start_dhcp6(self, c_channel_env):
-        self.dhcp6 = True
-        self.processes[13] = ProcessInfo('b10-dhcp6', ['/bin/false'])
-        self.processes[13]
+    def start_dhcp6(self):
+        self.stats = True
+        procinfo = ProcessInfo('b10-dhcp6', ['/bin/false'])
+        procinfo.pid = 13
+        return procinfo
 
-    def start_dhcp4(self, c_channel_env):
-        self.dhcp4 = True
-        self.processes[14] = ProcessInfo('b10-dhcp4', ['/bin/false'])
-        self.processes[14]
+    def start_dhcp4(self):
+        self.stats = True
+        procinfo = ProcessInfo('b10-dhcp4', ['/bin/false'])
+        procinfo.pid = 14
+        return procinfo
+
+    def stop_process(self, process, recipient):
+        procmap = { 'b10-auth': self.stop_auth,
+                    'b10-resolver': self.stop_resolver,
+                    'b10-xfrout': self.stop_xfrout,
+                    'b10-xfrin': self.stop_xfrin,
+                    'b10-zonemgr': self.stop_zonemgr,
+                    'b10-stats': self.stop_stats,
+                    'b10-stats-httpd': self.stop_stats_httpd,
+                    'b10-cmdctl': self.stop_cmdctl }
+        procmap[process]()
 
     # We don't really use all of these stop_ methods. But it might turn out
     # someone would add some stop_ method to BoB and we want that one overriden
@@ -309,11 +358,6 @@ class MockBob(BoB):
         if self.cfgmgr:
             del self.processes[3]
         self.cfgmgr = False
-
-    def stop_ccsession(self):
-        if self.ccssession:
-            del self.processes[4]
-        self.ccsession = False
 
     def stop_auth(self):
         if self.auth:
@@ -620,6 +664,15 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.start_all_processes()
         self.check_started_dhcp(bob, False, False)
 
+    def test_start_dhcp_v6only(self):
+        # Create BoB and ensure correct initialization
+        bob = MockBob()
+        self.check_preconditions(bob)
+
+        # don't care about DNS stuff
+        bob.cfg_start_auth = False
+        bob.cfg_start_resolver = False
+
         # v6 only enabled
         bob.cfg_start_dhcp6 = True
         bob.cfg_start_dhcp4 = False
@@ -661,9 +714,9 @@ class TestBossCmd(unittest.TestCase):
         bob = MockBob()
         bob.start_all_processes()
         answer = bob.command_handler("show_processes", None)
-        processes = [[2, 'b10-msgq'],
+        processes = [[1, 'b10-sockcreator'],
+                     [2, 'b10-msgq'],
                      [3, 'b10-cfgmgr'], 
-                     [4, 'b10-ccsession'],
                      [5, 'b10-auth'],
                      [7, 'b10-xfrout'],
                      [8, 'b10-xfrin'], 
