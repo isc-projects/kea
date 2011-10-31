@@ -154,9 +154,13 @@ const char* const TEST_RECORDS[][5] = {
 
     // Put some data into apex (including NS) so we can check our NS
     // doesn't break anything
+    {"example.org.", "SOA", "3600", "", "ns1.example.org. admin.example.org. "
+     "1234 3600 1800 2419200 7200" },
     {"example.org.", "NS", "3600", "", "ns.example.com."},
     {"example.org.", "A", "3600", "", "192.0.2.1"},
     {"example.org.", "NSEC", "3600", "", "acnamesig1.example.org. NS A NSEC RRSIG"},
+    {"example.org.", "RRSIG", "3600", "", "SOA 5 3 3600 20000101000000 "
+              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
               "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
@@ -464,7 +468,11 @@ public:
                         new MockNameIteratorContext(*this, id, name,
                                                     subdomains)));
         } else {
-            isc_throw(isc::Unexpected, "Unknown zone ID");
+            // This iterator is bogus, but for the cases tested below that's
+            // sufficient.
+            return (IteratorContextPtr(
+                        new MockNameIteratorContext(*this, READONLY_ZONE_ID,
+                                                    name, subdomains)));
         }
     }
 
@@ -1029,6 +1037,17 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
                                          rdatas[i]));
     }
     isc::testutils::rrsetCheck(expected_rrset, rrset);
+}
+
+TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
+    vector<string> soa_data;
+    soa_data.push_back("ns1.example.org. admin.example.org. "
+                       "1234 3600 1800 2419200 7200");
+
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    checkRRset(it->getSOA(), this->zname_, this->qclass_, RRType::SOA(),
+               this->rrttl_, soa_data);
 }
 
 void
