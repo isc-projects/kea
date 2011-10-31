@@ -459,22 +459,22 @@ class Configurator:
         plan_add = []
         for cname in new.keys():
             if cname not in old:
-                component_spec = new[cname]
+                component_config = new[cname]
                 creator = Component
-                if 'special' in component_spec:
+                if 'special' in component_config:
                     # TODO: Better error handling
-                    creator = self.__specials[component_spec['special']]
-                component = creator(component_spec.get('process', cname),
-                                    self.__boss, component_spec['kind'],
-                                    component_spec.get('address'),
-                                    component_spec.get('params'))
-                priority = component_spec.get('priority', 0)
+                    creator = self.__specials[component_config['special']]
+                component = creator(component_config.get('process', cname),
+                                    self.__boss, component_config['kind'],
+                                    component_config.get('address'),
+                                    component_config.get('params'))
+                priority = component_config.get('priority', 0)
                 # We store tuples, priority first, so we can easily sort
                 plan_add.append((priority, {
                     'component': component,
                     'command': START_CMD,
                     'name': cname,
-                    'spec': component_spec
+                    'config': component_config
                 }))
         # Push the starts there sorted by priority
         plan.extend([command for (_, command) in sorted(plan_add,
@@ -505,7 +505,7 @@ class Configurator:
         at last 'component' (a component object to work with) and 'command'
         (the command to do). Currently, both existing commands need 'name' of
         the component as well (the identifier from configuration). The 'start'
-        one needs the 'spec' to be there, which is the configuration description
+        one needs the 'config' to be there, which is the configuration description
         of the component.
         """
         done = 0
@@ -518,7 +518,8 @@ class Configurator:
                              command, component.name())
                 if command == START_CMD:
                     component.start()
-                    self._components[task['name']] = (task['spec'], component)
+                    self._components[task['name']] = (task['config'],
+                                                      component)
                 elif command == STOP_CMD:
                     if component.running():
                         component.stop()
