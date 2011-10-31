@@ -460,8 +460,6 @@ else
             if [ $PKG_CONFIG --exists ${version} ]; then
                 AC_MSG_RESULT([found])
                 BOTAN_CONFIG="$PKG_CONFIG ${version}"
-                #AC_SUBST(
-                
                 break
             else
                 AC_MSG_RESULT([not found])
