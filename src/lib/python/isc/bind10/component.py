@@ -20,6 +20,11 @@ of component) and shutting down. It also handles the configuration of this.
 
 Dependencies between them are not yet handled. It might turn out they are
 needed, in that case they will be added sometime in future.
+
+This framework allows for a single process to be started multiple times (by
+specifying multiple components with the same configuration). However, the rest
+of the system might not handle such situation well, so until it is made so,
+it would be better to start each process at most once.
 """
 
 import isc.log
