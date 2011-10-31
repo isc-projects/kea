@@ -768,4 +768,80 @@ TEST_F(SQLite3Update, invalidDelete) {
     // An attempt of delete before an explicit start of transaction
     EXPECT_THROW(accessor->deleteRecordInZone(del_params), DataSourceError);
 }
+
+TEST_F(SQLite3Update, emptyTransaction) {
+    // A generic transaction without doing anything inside it.  Just check
+    // it doesn't throw or break the database.
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+    accessor->startTransaction();
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+    accessor->commit();
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, duplicateTransaction) {
+    accessor->startTransaction();
+    EXPECT_THROW(accessor->startTransaction(), DataSourceError);
+}
+
+TEST_F(SQLite3Update, transactionInUpdate) {
+    accessor->startUpdateZone("example.com.", true);
+    EXPECT_THROW(accessor->startTransaction(), DataSourceError);
+}
+
+TEST_F(SQLite3Update, updateInTransaction) {
+    accessor->startTransaction();
+    EXPECT_THROW(accessor->startUpdateZone("example.com.", true),
+                 DataSourceError);
+}
+
+TEST_F(SQLite3Update, updateWithTransaction) {
+    // Start a read-only transaction, wherein we execute two reads.
+    // Meanwhile we start a write (update) transaction.  The commit attempt
+    // for the write transaction will due to the lock held by the read
+    // transaction.  The database should be intact.
+    another_accessor->startTransaction();
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+
+    ASSERT_TRUE(accessor->startUpdateZone("example.com.", true).first);
+    EXPECT_THROW(accessor->commit(), DataSourceError);
+
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+    another_accessor->commit(); // this shouldn't throw
+}
+
+TEST_F(SQLite3Update, updateWithoutTransaction) {
+    // Similar to the previous test, but reads are not protected in a
+    // transaction.  So the write transaction will succeed and flush the DB,
+    // and the result of the second read is different from the first.
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+
+    ASSERT_TRUE(accessor->startUpdateZone("example.com.", true).first);
+    accessor->commit();
+
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 empty_stored);
+}
+
+TEST_F(SQLite3Update, concurrentTransactions) {
+    // Two read-only transactions coexist (unlike the read vs write)
+    // Start one transaction.
+    accessor->startTransaction();
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+
+    // Start a new one.
+    another_accessor->startTransaction();
+
+    // The second transaction doesn't affect the first or vice versa.
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+
+    // Commit should be successful for both transactions.
+    accessor->commit();
+    another_accessor->commit();
+}
 } // end anonymous namespace
