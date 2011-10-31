@@ -131,6 +131,8 @@ public:
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
                                                  bool replace);
 
+    virtual void startTransaction();
+
     /// \note we are quite impatient here: it's quite possible that the COMMIT
     /// fails due to other process performing SELECT on the same database
     /// (consider the case where COMMIT is done by xfrin or dynamic update

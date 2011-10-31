@@ -541,9 +541,13 @@ SQLite3Accessor::getAllRecords(int id) const {
 
 pair<bool, int>
 SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
-    if (dbparameters_->in_transaction || dbparameters_->updating_zone) {
+    if (dbparameters_->updating_zone) {
         isc_throw(DataSourceError,
                   "duplicate zone update on SQLite3 data source");
+    }
+    if (dbparameters_->in_transaction) {
+        isc_throw(DataSourceError,
+                  "zone update attempt in another SQLite3 transaction");
     }
 
     const pair<bool, int> zone_info(getZone(zone_name));
@@ -552,7 +556,7 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     }
 
     StatementProcessor(*dbparameters_, BEGIN,
-                       "start an SQLite3 transaction").exec();
+                       "start an SQLite3 update transaction").exec();
 
     if (replace) {
         try {
@@ -584,6 +588,18 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     dbparameters_->updated_zone_id = zone_info.second;
 
     return (zone_info);
+}
+
+void
+SQLite3Accessor::startTransaction() {
+    if (dbparameters_->in_transaction) {
+        isc_throw(DataSourceError,
+                  "duplicate transaction on SQLite3 data source");
+    }
+
+    StatementProcessor(*dbparameters_, BEGIN,
+                       "start an SQLite3 transaction").exec();
+    dbparameters_->in_transaction = true;
 }
 
 void

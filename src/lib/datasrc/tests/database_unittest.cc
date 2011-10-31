@@ -223,6 +223,7 @@ public:
         // return dummy value.  unused anyway.
         return (pair<bool, int>(true, 0));
     }
+    virtual void startTransaction() {}
     virtual void commit() {}
     virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
