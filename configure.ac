@@ -481,7 +481,7 @@ BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 # this is not always the case.  As a heuristics workaround we add
 # -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
 # (but using include instead of lib) below.
-if [ $BOTAN_CONFIG --prefix >& /dev/null ] ; then
+if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
     echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
         BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
     echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
