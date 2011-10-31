@@ -704,14 +704,21 @@ namespace {
  */
 class DatabaseIterator : public ZoneIterator {
 public:
-    DatabaseIterator(const DatabaseAccessor::IteratorContextPtr& context,
-             const RRClass& rrclass) :
+    DatabaseIterator(shared_ptr<DatabaseAccessor> /*accessor*/,
+                     ConstRRsetPtr soa,
+                     const DatabaseAccessor::IteratorContextPtr& context,
+                     const RRClass& rrclass) :
         context_(context),
         class_(rrclass),
+        soa_(soa),
         ready_(true)
     {
         // Prepare data for the next time
         getData();
+    }
+
+    virtual ConstRRsetPtr getSOA() const {
+        return (soa_);
     }
 
     virtual isc::dns::ConstRRsetPtr getNextRRset() {
@@ -764,6 +771,8 @@ private:
     const DatabaseAccessor::IteratorContextPtr context_;
     // Class of the zone
     RRClass class_;
+    // SOA of the zone, if any (it should normally exist)
+    ConstRRsetPtr soa_;
     // Status
     bool ready_, data_ready_;
     // Data of the next row
@@ -782,6 +791,12 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
                   " can not be iterated, because it doesn't exist "
                   "in this data source");
     }
+
+    // Find the SOA of the zone (may or may not succeed).  Note that
+    // this must be done before starting the iteration context.
+    ConstRRsetPtr soa = DatabaseClient::Finder(accessor_, zone.second, name).
+        find(name, RRType::SOA(), NULL).rrset;
+
     // Request the context
     DatabaseAccessor::IteratorContextPtr
         context(accessor_->getAllRecords(zone.second));
@@ -797,7 +812,8 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     // it each time)
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
-    return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
+    return (ZoneIteratorPtr(new DatabaseIterator(accessor_, soa, context,
+                                                 RRClass::IN())));
 }
 
 //

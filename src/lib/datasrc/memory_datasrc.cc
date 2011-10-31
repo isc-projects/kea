@@ -781,7 +781,7 @@ public:
         return (result);
     }
 
-    virtual ZoneFinder& getFinder() {
+    virtual ConstRRsetPtr getSOA() const {
         isc_throw(NotImplemented, "Not imelemented");
     }
 };
