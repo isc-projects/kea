@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __DATASRC_ZONE_ITERATOR_H
+#define __DATASRC_ZONE_ITERATOR_H 1
+
 #include <dns/rrset.h>
 
 #include <boost/noncopyable.hpp>
@@ -57,14 +60,17 @@ public:
      *     gets to the end of the zone.
      */
     virtual isc::dns::ConstRRsetPtr getNextRRset() = 0;
+
     /**
-     * \brief Get the finder for the zone being iterated.
-     *
-     * This returns the finder which can be used to query RRs from the zone,
-     * efective to the time when the iterator was created.
+     * \brief TBD
      */
-    virtual ZoneFinder& getFinder() = 0;
+    virtual isc::dns::ConstRRsetPtr getSOA() const = 0;
 };
 
 }
 }
+#endif  // __DATASRC_ZONE_ITERATOR_H
+
+// Local Variables:
+// mode: c++
+// End:
