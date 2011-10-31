@@ -212,10 +212,19 @@ class Creator(Parser):
         env['PATH'] = path
         self.__process = subprocess.Popen(['b10-sockcreator'], env=env,
                                           stdin=remote.fileno(),
-                                          stdout=remote2.fileno())
+                                          stdout=remote2.fileno(),
+                                          preexec_fn=self.__preexec_work)
         remote.close()
         remote2.close()
         Parser.__init__(self, WrappedSocket(local))
+
+    def __preexec_work(self):
+        """Function used before running a program that needs to run as a
+        different user."""
+        # Put us into a separate process group so we don't get
+        # SIGINT signals on Ctrl-C (the boss will shut everthing down by
+        # other means).
+        os.setpgrp()
 
     def pid(self):
         return self.__process.pid
