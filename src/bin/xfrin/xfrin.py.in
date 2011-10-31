@@ -775,15 +775,15 @@ class XfrinConnection(asyncore.dispatcher):
         return False
 
 def __process_xfrin(server, zone_name, rrclass, db_file,
-                    shutdown_event, master_addrinfo, check_soa, tsig_key,
-                    request_type, conn_class=XfrinConnection):
+                  shutdown_event, master_addrinfo, check_soa, tsig_key,
+                  request_type, conn_class):
     conn = None
     exception = None
     ret = XFRIN_FAIL
     try:
         # Create a data source client used in this XFR session.  Right now we
-        # still assume an sqlite3-based data source, and use both the old and
-        # new data source APIs.  We also need to use a mock client for tests.
+        # still assume an sqlite3-based data source, and use both the old and new
+        # data source APIs.  We also need to use a mock client for tests.
         # For a temporary workaround to deal with these situations, we skip the
         # creation when the given file is none (the test case).  Eventually
         # this code will be much cleaner.
@@ -796,16 +796,36 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
             datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
             datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
 
-        # Create a TCP connection for the XFR session and perform the operation
+        # Create a TCP connection for the XFR session and perform the operation.
         sock_map = {}
-        conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
-                          shutdown_event, master_addrinfo, tsig_key)
-        conn.init_socket()
-        # XXX: We still need _db_file for temporary workaround in _create_query().
-        # This should be removed when we eliminate the need for the workaround.
-        conn._db_file = db_file
-        if conn.connect_to_master():
-            ret = conn.do_xfrin(check_soa, request_type)
+        # In case we were asked to do IXFR and that one fails, we try again with
+        # AXFR. But only if we could actually connect to the server.
+        #
+        # So we start with retry as True, which is set to false on each attempt.
+        # In the case of connected but failed IXFR, we set it to true once again.
+        retry = True
+        while retry:
+            retry = False
+            conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
+                              shutdown_event, master_addrinfo, tsig_key)
+            conn.init_socket()
+            # XXX: We still need _db_file for temporary workaround in _create_query().
+            # This should be removed when we eliminate the need for the workaround.
+            conn._db_file = db_file
+            ret = XFRIN_FAIL
+            if conn.connect_to_master():
+                ret = conn.do_xfrin(check_soa, request_type)
+                if ret == XFRIN_FAIL and request_type == RRType.IXFR():
+                    # IXFR failed for some reason. It might mean the server can't
+                    # handle it, or we don't have the zone or we are out of sync or
+                    # whatever else. So we retry with with AXFR, as it may succeed
+                    # in many such cases.
+                    retry = True
+                    request_type = RRType.AXFR()
+                    logger.warn(XFRIN_XFR_TRANSFER_FALLBACK, conn.zone_str())
+                    conn.close()
+                    conn = None
+
     except Exception as ex:
         # If exception happens, just remember it here so that we can re-raise
         # after cleaning up things.  We don't log it here because we want
