@@ -120,12 +120,20 @@ class Component:
         if kind not in ['core', 'needed', 'dispensable']:
             raise ValueError('Component kind can not be ' + kind)
         self.__state = STATE_STOPPED
+        # These should be read-only
         self._kind = kind
         self._boss = boss
         self._process = process
+        # This can be overwritten/set by the child classes
         self._start_func = None
         self._address = address
         self._params = params
+        # These should be considered private. It is protected to
+        # allow tests in and for really rare ocassions, but a care
+        # should be taken to understand the Component code.
+        #
+        # It should not be accessed when the component wasn't run
+        # yet.
         self._procinfo = None
 
     def start(self):
@@ -163,8 +171,10 @@ class Component:
         boss.start_simple is performed.
 
         If you override the method completely, you should consider overriding
-        pid and _stop_internal (and possibly _failed_internal and name) as well.
-        You should also register any processes started within boss.
+        pid, _stop_internal (and possibly _failed_internal and name) and kill
+        as well. You should also register any processes started within boss.
+        (In fact, you could set the _procinfo variable and use the provided
+        ones, but then you are OK with providing _start_func anyway).
         """
         # This one is not tested. For one, it starts a real process
         # which is out of scope of unit tests, for another, it just
@@ -202,7 +212,7 @@ class Component:
         You can replace this method if you want a different way to do it.
 
         If you're overriding this one, you probably want to replace the
-        _start_internal and pid methods (and maybe _failed_internal and
+        _start_internal, kill and pid methods (and maybe _failed_internal and
         name as well).
 
         Also, note that it is a bad idea to raise exceptions from here.
@@ -287,8 +297,13 @@ class Component:
 
         You probably want to override this method if you're providing custom
         _start_internal.
+
+        Note that some components preserve the pid after a call to stop or
+        failed. This is because the components need to preserve it in order
+        to be able to kill the process if it failed to stop properly. Therefore
+        you should not rely on the pid being None if the component is stopped.
         """
-        return self._procinfo.pid if self._procinfo else None
+        return self._procinfo.pid if self._procinfo is not None else None
 
     def kill(self, forcefull=False):
         """
@@ -300,7 +315,7 @@ class Component:
 
         If the forcefull is true, it uses SIGKILL instead of SIGTERM.
         """
-        if self._procinfo:
+        if self._procinfo is not None:
             if forcefull:
                 self._procinfo.process.kill()
             else:
