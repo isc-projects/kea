@@ -330,7 +330,8 @@ class Configurator:
     Note that this will allow you to stop (by invoking reconfigure) a core
     component. There should be some kind of layer protecting users from ever
     doing so (users must not stop the config manager, message queue and stuff
-    like that or the system won't start again).
+    like that or the system won't start again). However, if a user specifies
+    b10-auth as core, it is safe to stop that one.
 
     The parameters are:
     * `boss`: The boss we are managing for.
@@ -399,6 +400,11 @@ class Configurator:
     def shutdown(self):
         """
         Shuts everything down.
+
+        It is not expected that anyone would want to shutdown and then start
+        the configurator again, so we don't explicitly make sure that would
+        work. However, we are not avare of anything that would make it not
+        work either.
         """
         if not self._running:
             raise ValueError("Trying to shutdown the component " +
