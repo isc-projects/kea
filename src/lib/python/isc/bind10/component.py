@@ -454,7 +454,7 @@ class Configurator:
                                                   ' a running component is ' +
                                                   'not yet supported. Remove' +
                                                   ' and re-add ' + cname +
-                                                  'to get the same effect')
+                                                  ' to get the same effect')
         # Handle introduction of new components
         plan_add = []
         for cname in new.keys():
