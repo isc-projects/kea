@@ -8,6 +8,7 @@ python_PYTHON = __init__.py master.py sqlite3_ds.py
 # new data
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += $(SQLITE_CFLAGS)
 
 python_LTLIBRARIES = datasrc.la
