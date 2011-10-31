@@ -83,6 +83,11 @@ class Component:
                     | kind == core or kind == needed and it failed too soon
                     v
                   Dead
+
+    Note that there are still situations which are not handled properly here.
+    We don't recognize a component that is starting up, but not ready yet, one
+    that is already shutting down, impossible to stop, etc. We need to add more
+    states in future to handle it properly.
     """
     def __init__(self, process, boss, kind, address=None, params=None):
         """
@@ -199,6 +204,11 @@ class Component:
         If you're overriding this one, you probably want to replace the
         _start_internal and pid methods (and maybe _failed_internal and
         name as well).
+
+        Also, note that it is a bad idea to raise exceptions from here.
+        Under such circumstance, the component will be considered stopped,
+        and the exception propagated, but we can't be sure it really is
+        dead.
         """
         self._boss.stop_process(self._process, self._address)
         # TODO Some way to wait for the process that doesn't want to
