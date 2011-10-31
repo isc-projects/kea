@@ -557,25 +557,25 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
                 'component': stopped,
                 'command': 'start',
                 'name': 'first',
-                'spec': {'a': 1}
+                'config': {'a': 1}
             },
             {
                 'component': started,
                 'command': 'stop',
                 'name': 'second',
-                'spec': {}
+                'config': {}
             },
             {
                 'component': FailComponent('third', self, 'needed'),
                 'command': 'start',
                 'name': 'third',
-                'spec': {}
+                'config': {}
             },
             {
                 'component': self.__component_test('fourth', self, 'core'),
                 'command': 'start',
                 'name': 'fourth',
-                'spec': {}
+                'config': {}
             }
         ]
         # Don't include the preparation into the log
