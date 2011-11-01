@@ -168,6 +168,16 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 }
 
 void
+Query::addWildcardProof(ZoneFinder& finder) {
+    const ZoneFinder::FindResult fresult =
+        finder.find(qname_, RRType::NSEC(), NULL,
+                    dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<RRset>(fresult.rrset),
+                       dnssec_);
+}
+
+void
 Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
     ZoneFinder::FindResult ns_result = finder.find(finder.getOrigin(),
@@ -273,6 +283,7 @@ Query::process() {
                     dnssec_);
                 break;
             case ZoneFinder::SUCCESS:
+            case ZoneFinder::WILDCARD:
                 if (qtype_is_any) {
                     // If quety type is ANY, insert all RRs under the domain
                     // into answer section.
@@ -298,6 +309,12 @@ Query::process() {
                     (qtype_ != RRType::NS() && !qtype_is_any))
                 {
                     addAuthAdditional(*result.zone_finder);
+                }
+
+                // If the answer is a result of wildcard substitution,
+                // add a proof that there's no closer name.
+                if (dnssec_ && db_result.code == ZoneFinder::WILDCARD) {
+                    addWildcardProof(*result.zone_finder);
                 }
                 break;
             case ZoneFinder::DELEGATION:
