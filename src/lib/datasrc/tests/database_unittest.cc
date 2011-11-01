@@ -381,30 +381,36 @@ private:
             switch (step ++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "example.org";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
+                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
+                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
+                    return (true);
+                case 1:
+                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
                     data[DatabaseAccessor::TTL_COLUMN] = "3600";
                     data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
                         "1234 3600 1800 2419200 7200";
                     return (true);
-                case 1:
+                case 2:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "A";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
                     data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
                     return (true);
-                case 2:
+                case 3:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "A";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
                     data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
                     return (true);
-                case 3:
+                case 4:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
                     data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::1";
                     return (true);
-                case 4:
+                case 5:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
@@ -413,7 +419,7 @@ private:
                 default:
                     ADD_FAILURE() <<
                         "Request past the end of iterator context";
-                case 5:
+                case 6:
                     return (false);
             }
         }
@@ -969,66 +975,6 @@ TEST_F(MockDatabaseClientTest, emptyIterator) {
     EXPECT_THROW(it->getNextRRset(), isc::Unexpected);
 }
 
-// Iterate through a zone
-TYPED_TEST(DatabaseClientTest, iterator) {
-    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
-    ConstRRsetPtr rrset(it->getNextRRset());
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-
-    // The rest of the checks work only for the mock accessor.
-    if (!this->is_mock_) {
-        return;
-    }
-
-    EXPECT_EQ(Name("example.org"), rrset->getName());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    EXPECT_EQ(RRType::SOA(), rrset->getType());
-    EXPECT_EQ(RRTTL(3600), rrset->getTTL());
-    RdataIteratorPtr rit(rrset->getRdataIterator());
-    ASSERT_FALSE(rit->isLast());
-    rit->next();
-    EXPECT_TRUE(rit->isLast());
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    EXPECT_EQ(Name("x.example.org"), rrset->getName());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRTTL(300), rrset->getTTL());
-    rit = rrset->getRdataIterator();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("192.0.2.1", rit->getCurrent().toText());
-    rit->next();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("192.0.2.2", rit->getCurrent().toText());
-    rit->next();
-    EXPECT_TRUE(rit->isLast());
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    EXPECT_EQ(Name("x.example.org"), rrset->getName());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    EXPECT_EQ(RRType::AAAA(), rrset->getType());
-    EXPECT_EQ(RRTTL(300), rrset->getTTL());
-    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
-    rit = rrset->getRdataIterator();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("2001:db8::1", rit->getCurrent().toText());
-    rit->next();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("2001:db8::2", rit->getCurrent().toText());
-    rit->next();
-    EXPECT_TRUE(rit->isLast());
-}
-
-// This has inconsistent TTL in the set (the rest, like nonsense in
-// the data is handled in rdata itself).  Works for the mock accessor only.
-TEST_F(MockDatabaseClientTest, badIterator) {
-    // It should not throw, but get the lowest one of them
-    ZoneIteratorPtr it(this->client_->getIterator(Name("bad.example.org")));
-    EXPECT_EQ(it->getNextRRset()->getTTL(), isc::dns::RRTTL(300));
-}
-
 // checks if the given rrset matches the
 // given name, class, type and rdatas
 void
@@ -1046,6 +992,55 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
                                          rdatas[i]));
     }
     isc::testutils::rrsetCheck(expected_rrset, rrset);
+}
+
+// Iterate through a zone
+TYPED_TEST(DatabaseClientTest, iterator) {
+    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
+    ConstRRsetPtr rrset(it->getNextRRset());
+    ASSERT_NE(ConstRRsetPtr(), rrset);
+
+    // The first name should be the zone origin.
+    EXPECT_EQ(this->zname_, rrset->getName());
+
+    // The rest of the checks work only for the mock accessor.
+    if (!this->is_mock_) {
+        return;
+    }
+
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::A(),
+               this->rrttl_, this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns1.example.org. admin.example.org. "
+                                     "1234 3600 1800 2419200 7200");
+    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::SOA(),
+               this->rrttl_, this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
+    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::A(),
+               RRTTL(300), this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::1");
+    this->expected_rdatas_.push_back("2001:db8::2");
+    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::AAAA(),
+               RRTTL(300), this->expected_rdatas_);
+}
+
+// This has inconsistent TTL in the set (the rest, like nonsense in
+// the data is handled in rdata itself).  Works for the mock accessor only.
+TEST_F(MockDatabaseClientTest, badIterator) {
+    // It should not throw, but get the lowest one of them
+    ZoneIteratorPtr it(this->client_->getIterator(Name("bad.example.org")));
+    EXPECT_EQ(it->getNextRRset()->getTTL(), isc::dns::RRTTL(300));
 }
 
 TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
