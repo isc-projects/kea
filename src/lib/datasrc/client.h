@@ -215,11 +215,16 @@ public:
     ///
     /// \param name The name of zone apex to be traversed. It doesn't do
     ///     nearest match as findZone.
+    /// \param individual_rrs If true, the iterator will return each RR found
+    ///        in the data as a separate RRset, instead of combining them into
+    ///        RRsets.
     /// \return Pointer to the iterator.
-    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const {
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
+                                        bool individual_rrs = false) const {
         // This is here to both document the parameter in doxygen (therefore it
         // needs a name) and avoid unused parameter warning.
         static_cast<void>(name);
+        static_cast<void>(individual_rrs);
 
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support iteration");
