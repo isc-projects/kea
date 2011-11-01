@@ -120,7 +120,12 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                     self.send_error(404)
                     return None
         except StatsHttpdError as err:
-            self.send_error(500)
+            # Couldn't find neither specified module name nor
+            # specified item name
+            if str(err).startswith('Stats module: specified arguments are incorrect:'):
+                self.send_error(404)
+            else:
+                self.send_error(500)
             logger.error(STATHTTPD_SERVER_ERROR, err)
             return None
         else:
