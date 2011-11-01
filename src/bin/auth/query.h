@@ -77,6 +77,9 @@ private:
     void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
                           isc::dns::ConstRRsetPtr nsec);
 
+    /// TBD
+    void addWildcardProof(isc::datasrc::ZoneFinder& finder);
+
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records) and add them to the additional section.
     ///
