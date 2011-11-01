@@ -721,6 +721,7 @@ class BoB:
             component_config['b10-resolver'] = { 'kind': 'needed',
                                                  'special': 'resolver' }
             self.started_resolver_family = True
+            self.__propagate_component_config(component_config)
 
         # Everything after the main components can run as non-root.
         # TODO: this is only temporary - once the privileged socket creator is
