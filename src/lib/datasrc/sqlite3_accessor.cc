@@ -73,7 +73,7 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
     "AND rdtype=?3 AND rdata=?4",
     "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
-    "WHERE zone_id = ?1 ORDER BY name, rdtype",
+    "WHERE zone_id = ?1 ORDER BY rname, rdtype",
     /*
      * This one looks for previous name with NSEC record. It is done by
      * using the reversed name. The NSEC is checked because we need to
