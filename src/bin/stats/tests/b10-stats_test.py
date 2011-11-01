@@ -556,7 +556,9 @@ class TestStats(unittest.TestCase):
                                     "item_name": "zonename",
                                     "item_type": "string",
                                     "item_optional": False,
-                                    "item_default": ""
+                                    "item_default": "",
+                                    "item_title": "Zonename",
+                                    "item_description": "Zonename"
                                     },
                                 {
                                     "item_name": "queries.udp",
@@ -617,7 +619,9 @@ class TestStats(unittest.TestCase):
                                 "item_name": "zonename",
                                 "item_type": "string",
                                 "item_optional": False,
-                                "item_default": ""
+                                "item_default": "",
+                                "item_title": "Zonename",
+                                "item_description": "Zonename"
                                 },
                             {
                                 "item_name": "queries.udp",
