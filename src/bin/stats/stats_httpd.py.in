@@ -500,16 +500,24 @@ class StatsHttpd:
                         complextype = xml.etree.ElementTree.Element("complexType")
                         complextype.append(alltag)
                         elem = xml.etree.ElementTree.Element(
-                            "element", { "name" : stats_spec["item_name"] })
+                            "element", attrib={ "name" : stats_spec["item_name"],
+                                                "minOccurs": "0" \
+                                                    if stats_spec["item_optional"] \
+                                                    else "1",
+                                                "maxOccurs": "unbounded" })
                         elem.append(complextype)
                         xsd_elem.append(elem)
                     elif stats_spec['item_type'] == 'list':
-                        alltag = xml.etree.ElementTree.Element("all")
+                        alltag = xml.etree.ElementTree.Element("sequence")
                         stats_spec2xsd(stats_spec['list_item_spec'], alltag)
                         complextype = xml.etree.ElementTree.Element("complexType")
                         complextype.append(alltag)
                         elem = xml.etree.ElementTree.Element(
-                            "element", { "name" : stats_spec["item_name"] })
+                            "element", attrib={ "name" : stats_spec["item_name"],
+                                                "minOccurs": "0" \
+                                                    if stats_spec["item_optional"] \
+                                                    else "1",
+                                                "maxOccurs": "1" })
                         elem.append(complextype)
                         xsd_elem.append(elem)
                     else:
@@ -520,7 +528,9 @@ class StatsHttpd:
                                 'type' : stats_spec["item_type"] \
                                     if stats_spec["item_type"].lower() != 'real' \
                                     else 'float',
-                                'minOccurs' : "1",
+                                'minOccurs' : "0" \
+                                    if stats_spec["item_optional"] \
+                                    else "1",
                                 'maxOccurs' : "1"
                                 }
                             )
@@ -621,7 +631,6 @@ class StatsHttpd:
                     xsl_elem.append(table)
                 # assumed stats_spec
                 else:
-                    tr = xml.etree.ElementTree.Element("tr")
                     td = xml.etree.ElementTree.Element(
                         "td",
                         attrib={ "class" : "title",
@@ -630,23 +639,34 @@ class StatsHttpd:
                                      else "" })
                     a = xml.etree.ElementTree.Element(
                         "a", attrib={ "href": urllib.parse.quote(path + "/" + stats_spec["item_name"]) })
-                    a.text = stats_spec["item_name"]
+                    a.text = stats_spec[ "item_title" if "item_title" in stats_spec else "item_name" ]
                     td.append(a)
-                    tr.append(td)
+                    xsl_elem.append(td)
+                    td = xml.etree.ElementTree.Element("td")
                     if stats_spec['item_type'] == 'map':
-                        stats_spec2xsl(stats_spec['map_item_spec'], tr,
+                        stats_spec2xsl(stats_spec['map_item_spec'], td,
                                        path + "/" + stats_spec["item_name"])
                     elif stats_spec['item_type'] == 'list':
+                        table = xml.etree.ElementTree.Element("table")
+                        tr = xml.etree.ElementTree.Element("tr")
+                        th = xml.etree.ElementTree.Element("th")
+                        th.text = "Item Names"
+                        tr.append(th)
+                        th = xml.etree.ElementTree.Element("th")
+                        th.text = "Item Values"
+                        tr.append(th)
+                        table.append(tr)
+                        tr = xml.etree.ElementTree.Element("tr")
                         stats_spec2xsl(stats_spec['list_item_spec'], tr,
                                        path + "/" + stats_spec["item_name"])
+                        table.append(tr)
+                        td.append(table)
                     else:
-                        td = xml.etree.ElementTree.Element("td")
                         xsl_valueof = xml.etree.ElementTree.Element(
                             "xsl:value-of",
                             attrib={'select': stats_spec["item_name"]})
                         td.append(xsl_valueof)
-                        tr.append(td)
-                    xsl_elem.append(tr)
+                    xsl_elem.append(td)
             # multiple stats_specs
             elif type(stats_spec) is list:
                 table = xml.etree.ElementTree.Element("table")
@@ -659,7 +679,9 @@ class StatsHttpd:
                 tr.append(th)
                 table.append(tr)
                 for item_spec in stats_spec:
-                    stats_spec2xsl(item_spec, table, path)
+                    tr = xml.etree.ElementTree.Element("tr")
+                    stats_spec2xsl(item_spec, tr, path)
+                    table.append(tr)
                 xsl_elem.append(table)
             return None
 
