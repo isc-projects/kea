@@ -817,7 +817,7 @@ ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name) const {
     ZoneIteratorPtr iterator = ZoneIteratorPtr(new DatabaseIterator(
                                                    accessor_->clone(), name,
-                                                   RRClass::IN()));
+                                                   rrclass_));
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
 
