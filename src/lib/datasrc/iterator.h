@@ -62,7 +62,36 @@ public:
     virtual isc::dns::ConstRRsetPtr getNextRRset() = 0;
 
     /**
-     * \brief TBD
+     * \brief Return the SOA record of the zone in the iterator context.
+     *
+     * This method returns the zone's SOA record (if any, and a valid zone
+     * should have it) in the form of an RRset object.  This SOA is identical
+     * to that (again, if any) contained in the sequence of RRsets returned
+     * by the iterator.  In that sense this method is redundant, but is
+     * provided as a convenient utility for the application of the
+     * iterator; the application may need to know the SOA serial or the
+     * SOA RR itself for the purpose of protocol handling or skipping the
+     * expensive iteration processing.
+     *
+     * If the zone doesn't have an SOA (which is broken, but some data source
+     * may allow that situation), this method returns NULL.  Also, in the
+     * normal and valid case, the SOA should have exactly one RDATA, but
+     * this API is not guaranteed it as some data source may accept such an
+     * abnormal condition.  It's up to the caller whether to check the number
+     * of RDATA and how to react to the unexpected case.
+     *
+     * Each concrete derived method must ensure that the SOA returned by this
+     * method is identical to the zone's SOA returned via the iteration.
+     * For example, even if another thread or process updates the SOA while
+     * the iterator is working, the result of this method must not be
+     * affected by the update.  For database based data sources, this can
+     * be done by making the entire iterator operation as a single database
+     * transaction, but the actual implementation can differ.
+     *
+     * \exception None
+     *
+     * \return A shared pointer to an SOA RRset that would be returned
+     * from the iteration.  It will be NULL if the zone doesn't have an SOA.
      */
     virtual isc::dns::ConstRRsetPtr getSOA() const = 0;
 };
