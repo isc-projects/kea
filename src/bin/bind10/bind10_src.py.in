@@ -246,8 +246,6 @@ class BoB:
         self.cfg_start_resolver = False
         self.cfg_start_dhcp6 = False
         self.cfg_start_dhcp4 = False
-        self.started_auth_family = False
-        self.started_resolver_family = False
         self.curproc = None
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
@@ -313,28 +311,20 @@ class BoB:
         # Now we declare few functions used only internally here. Besides the
         # benefit of not polluting the name space, they are closures, so we
         # don't need to pass some variables
-        def start_stop(name, started, start, stop):
-            if not'start_' + name in new_config:
-                return
-            if new_config['start_' + name]:
-                if not started:
-                    if self.uid is not None:
-                        logger.info(BIND10_START_AS_NON_ROOT, name)
+        def start_stop(name, start, stop):
+            if 'start_' + name in new_config:
+                if new_config['start_' + name]:
                     start()
-            else:
-                stop()
+                else:
+                    stop()
         # These four functions are passed to start_stop (smells like functional
         # programming little bit)
         def resolver_on():
             self.component_config['b10-resolver'] = { 'kind': 'needed',
                                                       'special': 'resolver' }
-            self.__propagate_component_config(self.component_config)
-            self.started_resolver_family = True
         def resolver_off():
             if 'b10-resolver' in self.component_config:
                 del self.component_config['b10-resolver']
-            self.__propagate_component_config(self.component_config)
-            self.started_resolver_family = False
         def auth_on():
             self.component_config['b10-auth'] = { 'kind': 'needed',
                                                   'special': 'auth' }
@@ -344,8 +334,6 @@ class BoB:
                                                    'special': 'xfrin' }
             self.component_config['b10-zonemgr'] = { 'kind': 'dispensable',
                                                      'address': 'Zonemgr' }
-            self.__propagate_component_config(self.component_config)
-            self.started_auth_family = True
         def auth_off():
             if 'b10-zonemgr' in self.component_config:
                 del self.component_config['b10-zonemgr']
@@ -355,15 +343,13 @@ class BoB:
                 del self.component_config['b10-xfrout']
             if 'b10-auth' in self.component_config:
                 del self.component_config['b10-auth']
-            self.__propagate_component_config(self.component_config)
-            self.started_auth_family = False
 
         # The real code of the config handler function follows here
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_NEW_CONFIGURATION,
                      new_config)
-        start_stop('resolver', self.started_resolver_family, resolver_on,
-                   resolver_off)
-        start_stop('auth', self.started_auth_family, auth_on, auth_off)
+        start_stop('resolver', resolver_on, resolver_off)
+        start_stop('auth', auth_on, auth_off)
+        self.__propagate_component_config(self.component_config)
 
         answer = isc.config.ccsession.create_answer(0)
         return answer
@@ -652,6 +638,8 @@ class BoB:
         """
             Start the Authoritative server
         """
+        if self.uid is not None and self.__started:
+            logger.warn(BIND10_START_AS_NON_ROOT_AUTH)
         authargs = ['b10-auth']
         if self.nocache:
             authargs += ['-n']
@@ -669,6 +657,8 @@ class BoB:
             are pure speculation.  As with the auth daemon, they should be
             read from the configuration database.
         """
+        if self.uid is not None and self.__started:
+            logger.warn(BIND10_START_AS_NON_ROOT_RESOLVER)
         self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future
         resargs = ['b10-resolver']
@@ -751,7 +741,6 @@ class BoB:
         if self.cfg_start_resolver:
             component_config['b10-resolver'] = { 'kind': 'needed',
                                                  'special': 'resolver' }
-            self.started_resolver_family = True
             self.__propagate_component_config(component_config)
 
         # Everything after the main components can run as non-root.
@@ -770,7 +759,6 @@ class BoB:
             component_config['b10-zonemgr'] = { 'kind': 'dispensable',
                                               'address': 'Zonemgr' }
             self.__propagate_component_config(component_config)
-            self.started_auth_family = True
 
         # ... and finally start the remaining processes
         component_config['b10-stats'] = { 'kind': 'dispensable',
