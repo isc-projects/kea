@@ -266,13 +266,56 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(response.getheader('Location'),
                          "http://%s:%d%s" % (self.address, self.port, stats_httpd.XML_URL_PATH))
 
-        # 404 NotFound
+        # 404 NotFound (random path)
         self.client._http_vsn_str = 'HTTP/1.0'
         self.client.putrequest('GET', '/path/to/foo/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
 
+        # 404 NotFound (nonexistent module name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xml/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xsd/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xsl/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 404 NotFound (nonexistent item name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xml/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xsd/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xsl/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
 
     def test_do_GET_failed1(self):
         # checks status
