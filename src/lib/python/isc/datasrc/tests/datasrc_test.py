@@ -189,6 +189,20 @@ class DataSrcClient(unittest.TestCase):
 
         self.assertRaises(TypeError, dsc.get_iterator, "asdf")
 
+    def test_iterator_soa(self):
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
+        iterator = dsc.get_iterator(isc.dns.Name("sql1.example.com."))
+        expected_soa = isc.dns.RRset(isc.dns.Name("sql1.example.com."),
+                                     isc.dns.RRClass.IN(),
+                                     isc.dns.RRType.SOA(),
+                                     isc.dns.RRTTL(3600))
+        expected_soa.add_rdata(isc.dns.Rdata(isc.dns.RRType.SOA(),
+                                             isc.dns.RRClass.IN(),
+                                             "master.example.com. " +
+                                             "admin.example.com. 678 " +
+                                             "3600 1800 2419200 7200"))
+        self.assertTrue(rrsets_equal(expected_soa, iterator.get_soa()))
+
     def test_construct(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneFinder)
@@ -511,6 +525,17 @@ class DataSrcUpdater(unittest.TestCase):
 
         dsc.get_updater(isc.dns.Name("example.com"), True)
         self.assertEqual(orig_ref, sys.getrefcount(dsc))
+
+    def test_iterate_over_empty_zone(self):
+        # empty the test zone first
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        updater = dsc.get_updater(isc.dns.Name("example.com"), True)
+        updater.commit()
+
+        # Check the iterator behavior for the empty zone.
+        iterator = dsc.get_iterator(isc.dns.Name("example.com."))
+        self.assertEqual(None, iterator.get_soa())
+        self.assertEqual(None, iterator.get_next_rrset())
 
 if __name__ == "__main__":
     isc.log.init("bind10")
