@@ -579,7 +579,7 @@ class StatsHttpd:
     def xsl_handler(self, module_name=None, item_name=None):
         """Handler which just returns the body of XSL document"""
 
-        def stats_spec2xsl(stats_spec, xsl_elem):
+        def stats_spec2xsl(stats_spec, xsl_elem, path='.'):
             """Internal use for xsl_handler. Reads stats_spec
             specified as first arguments, and modify the xml object
             specified as second argument. xsl_elem must be
@@ -602,10 +602,14 @@ class StatsHttpd:
                             "xsl:for-each", attrib={ "select" : mod })
                         tr = xml.etree.ElementTree.Element("tr")
                         td = xml.etree.ElementTree.Element("td")
-                        td.text = mod
+                        a = xml.etree.ElementTree.Element(
+                            "a", attrib={ "href": urllib.parse.quote(path + "/" + mod) })
+                        a.text = mod
+                        td.append(a)
                         tr.append(td)
                         td = xml.etree.ElementTree.Element("td")
-                        stats_spec2xsl(stats_spec[mod], td)
+                        stats_spec2xsl(stats_spec[mod], td,
+                                       path + "/" + mod)
                         tr.append(td)
                         foreach.append(tr)
                         table.append(foreach)
@@ -615,14 +619,21 @@ class StatsHttpd:
                     tr = xml.etree.ElementTree.Element("tr")
                     td = xml.etree.ElementTree.Element(
                         "td",
-                        { "class" : "title",
-                          "title" : stats_spec["item_description"] })
-                    td.text = stats_spec["item_name"]
+                        attrib={ "class" : "title",
+                                 "title" : stats_spec["item_description"] \
+                                     if "item_description" in stats_spec \
+                                     else "" })
+                    a = xml.etree.ElementTree.Element(
+                        "a", attrib={ "href": urllib.parse.quote(path + "/" + stats_spec["item_name"]) })
+                    a.text = stats_spec["item_name"]
+                    td.append(a)
                     tr.append(td)
                     if stats_spec['item_type'] == 'map':
-                        stats_spec2xsl(stats_spec['map_item_spec'], tr)
+                        stats_spec2xsl(stats_spec['map_item_spec'], tr,
+                                       path + "/" + stats_spec["item_name"])
                     elif stats_spec['item_type'] == 'list':
-                        stats_spec2xsl(stats_spec['list_item_spec'], tr)
+                        stats_spec2xsl(stats_spec['list_item_spec'], tr,
+                                       path + "/" + stats_spec["item_name"])
                     else:
                         td = xml.etree.ElementTree.Element("td")
                         xsl_valueof = xml.etree.ElementTree.Element(
@@ -643,7 +654,7 @@ class StatsHttpd:
                 tr.append(th)
                 table.append(tr)
                 for item_spec in stats_spec:
-                    stats_spec2xsl(item_spec, table)
+                    stats_spec2xsl(item_spec, table, path)
                 xsl_elem.append(table)
             return None
 
@@ -653,7 +664,9 @@ class StatsHttpd:
             "xsl:template",
             attrib={'match': "bind10:statistics"})
         if module_name is not None and item_name is not None:
-            stats_spec2xsl([ stats_spec ] , xsd_root)
+            stats_spec2xsl([ stats_spec ], xsd_root, './' + module_name)
+        elif module_name is not None:
+            stats_spec2xsl(stats_spec, xsd_root, './' + module_name)
         else:
             stats_spec2xsl(stats_spec, xsd_root)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
