@@ -704,10 +704,11 @@ namespace {
  */
 class DatabaseIterator : public ZoneIterator {
 public:
-    DatabaseIterator(shared_ptr<DatabaseAccessor> /*accessor*/,
+    DatabaseIterator(shared_ptr<DatabaseAccessor> accessor,
                      ConstRRsetPtr soa,
                      const DatabaseAccessor::IteratorContextPtr& context,
                      const RRClass& rrclass) :
+        accessor_(accessor),
         context_(context),
         class_(rrclass),
         soa_(soa),
@@ -715,6 +716,12 @@ public:
     {
         // Prepare data for the next time
         getData();
+    }
+
+    virtual ~DatabaseIterator() {
+        if (ready_) {
+            accessor_->commit();
+        }
     }
 
     virtual ConstRRsetPtr getSOA() const {
@@ -727,14 +734,15 @@ public:
         }
         if (!data_ready_) {
             // At the end of zone
+            accessor_->commit();
             ready_ = false;
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_ITERATE_END);
             return (ConstRRsetPtr());
         }
-        string name_str(name_), rtype_str(rtype_), ttl(ttl_);
-        Name name(name_str);
-        RRType rtype(rtype_str);
+        const string name_str(name_), rtype_str(rtype_), ttl(ttl_);
+        const Name name(name_str);
+        const RRType rtype(rtype_str);
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
         while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
             if (ttl_ != ttl) {
@@ -767,6 +775,8 @@ private:
         rdata_ = data[DatabaseAccessor::RDATA_COLUMN];
     }
 
+    // The dedicated accessor
+    shared_ptr<DatabaseAccessor> accessor_;
     // The context
     const DatabaseAccessor::IteratorContextPtr context_;
     // Class of the zone
@@ -783,8 +793,9 @@ private:
 
 ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name) const {
+    shared_ptr<DatabaseAccessor> iterator_accessor(accessor_->clone());
     // Get the zone
-    std::pair<bool, int> zone(accessor_->getZone(name.toText()));
+    std::pair<bool, int> zone(iterator_accessor->getZone(name.toText()));
     if (!zone.first) {
         // No such zone, can't continue
         isc_throw(DataSourceError, "Zone " + name.toText() +
@@ -792,16 +803,16 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
                   "in this data source");
     }
 
-    accessor_->startTransaction();
+    iterator_accessor->startTransaction();
 
     // Find the SOA of the zone (may or may not succeed).  Note that
     // this must be done before starting the iteration context.
-    ConstRRsetPtr soa = DatabaseClient::Finder(accessor_, zone.second, name).
+    ConstRRsetPtr soa = DatabaseClient::Finder(iterator_accessor, zone.second, name).
         find(name, RRType::SOA(), NULL).rrset;
 
     // Request the context
     DatabaseAccessor::IteratorContextPtr
-        context(accessor_->getAllRecords(zone.second));
+        context(iterator_accessor->getAllRecords(zone.second));
     // It must not return NULL, that's a bug of the implementation
     if (context == DatabaseAccessor::IteratorContextPtr()) {
         isc_throw(isc::Unexpected, "Iterator context null at " +
@@ -814,7 +825,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     // it each time)
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
-    return (ZoneIteratorPtr(new DatabaseIterator(accessor_, soa, context,
+    return (ZoneIteratorPtr(new DatabaseIterator(iterator_accessor, soa, context,
                                                  RRClass::IN())));
 }
 
