@@ -130,18 +130,6 @@ TEST_F(SQLite3AccessorTest, iterator) {
     std::string data[DatabaseAccessor::COLUMN_COUNT];
     // Get and check the first and only record
     EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("dname.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("dname.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("dname2.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("dname2.foo.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("MX", data[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
     EXPECT_EQ("10 mail.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
@@ -174,22 +162,34 @@ TEST_F(SQLite3AccessorTest, iterator) {
     EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 
     EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("dname.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("dname.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("dname2.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("dname2.foo.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
     EXPECT_EQ("192.0.2.10", data[DatabaseAccessor::RDATA_COLUMN]);
     EXPECT_EQ("mail.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 
     EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("192.0.2.101", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
     EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
     EXPECT_EQ("sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("192.0.2.101", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 
     EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
