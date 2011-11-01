@@ -249,12 +249,12 @@ class BoB:
         self.started_auth_family = False
         self.started_resolver_family = False
         self.curproc = None
+        # XXX: Not used now, waits for reintroduction of restarts.
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.component_config = {}
         self.processes = {}
-        self.expected_shutdowns = {}
         self.runnable = False
         self.uid = setuid
         self.username = username
@@ -433,8 +433,8 @@ class BoB:
         self.stop_creator(True)
 
         for pid in self.processes:
-            logger.info(BIND10_KILL_PROCESS, self.processes[pid].name)
-            self.processes[pid].process.kill()
+            logger.info(BIND10_KILL_PROCESS, self.processes[pid].name())
+            self.processes[pid].kill(True)
         self.processes = {}
 
     def read_bind10_config(self):
@@ -608,8 +608,6 @@ class BoB:
         self.log_starting(name, port, address)
         newproc = ProcessInfo(name, args, c_channel_env)
         newproc.spawn()
-        # This is now done in register_process()
-        #self.processes[newproc.pid] = newproc
         self.log_started(newproc.pid)
         return newproc
 
@@ -618,10 +616,7 @@ class BoB:
         Put another process into boss to watch over it.  When the process
         dies, the info.failed() is called with the exit code.
         """
-        self.processes[pid] = info._procinfo
-        if info._procinfo is None:
-            # XXX: a short term hack.  This is the sockcreator.
-            self.sockcreator = info._SockCreator__creator
+        self.processes[pid] = info
 
     def start_simple(self, name):
         """
@@ -830,10 +825,6 @@ class BoB:
         (in logs, etc), the recipient is the address on msgq.
         """
         logger.info(BIND10_STOP_PROCESS, process)
-        # TODO: Some timeout to solve processes that don't want to die would
-        # help. We can even store it in the dict, it is used only as a set
-        self.expected_shutdowns[process] = 1
-        # Ask the process to die willingly
         self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
             recipient)
 
@@ -885,12 +876,11 @@ class BoB:
         time.sleep(1)
         self.reap_children()
         # next try sending a SIGTERM
-        processes_to_stop = list(self.processes.values())
-        for proc_info in processes_to_stop:
-            logger.info(BIND10_SEND_SIGTERM, proc_info.name,
-                        proc_info.pid)
+        components_to_stop = list(self.processes.values())
+        for component in components_to_stop:
+            logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
             try:
-                proc_info.process.terminate()
+                component.kill()
             except OSError:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
@@ -900,12 +890,12 @@ class BoB:
             # XXX: some delay probably useful... how much is uncertain
             time.sleep(0.1)  
             self.reap_children()
-            processes_to_stop = list(self.processes.values())
-            for proc_info in processes_to_stop:
-                logger.info(BIND10_SEND_SIGKILL, proc_info.name,
-                            proc_info.pid)
+            components_to_stop = list(self.processes.values())
+            for component in components_to_stop:
+                logger.info(BIND10_SEND_SIGKILL, component.name(),
+                            component.pid())
                 try:
-                    proc_info.process.kill()
+                    component.kill(True)
                 except OSError:
                     # ignore these (usually ESRCH because the child
                     # finally exited)
@@ -927,43 +917,14 @@ class BoB:
                 # XXX: should be impossible to get any other error here
                 raise
             if pid == 0: break
-            if self.sockcreator is not None and self.sockcreator.pid() == pid:
-                # This is the socket creator, started and terminated
-                # differently. This can't be restarted.
-                if self.runnable:
-                    logger.fatal(BIND10_SOCKCREATOR_CRASHED)
-                    self.sockcreator = None
-                    self.runnable = False
-                # This was inserted in self.processes by register_process.
-                # Now need to remove it.
-                del self.processes[pid]
-            elif pid in self.processes:
+            if pid in self.processes:
                 # One of the processes we know about.  Get information on it.
-                proc_info = self.processes.pop(pid)
-                proc_info.restart_schedule.set_run_stop_time()
-                self.dead_processes[proc_info.pid] = proc_info
-
-                # Write out message, but only if in the running state:
-                # During startup and shutdown, these messages are handled
-                # elsewhere.
-                if self.runnable:
-                    if exit_status is None:
-                        logger.warn(BIND10_PROCESS_ENDED_NO_EXIT_STATUS,
-                                    proc_info.name, proc_info.pid)
-                    else:
-                        logger.warn(BIND10_PROCESS_ENDED_WITH_EXIT_STATUS,
-                                    proc_info.name, proc_info.pid,
-                                    exit_status)
-
-                    # Was it a special process?
-                    if proc_info.name == "b10-msgq":
-                        logger.fatal(BIND10_MSGQ_DAEMON_ENDED)
-                        self.runnable = False
-
-                # If we're in 'brittle' mode, we want to shutdown after
-                # any process dies.
-                if self.brittle:
-                    self.runnable = False
+                component = self.processes.pop(pid)
+                if component.running() and self.runnable:
+                    # Tell it it failed. But only if it matters (we are
+                    # not shutting down and the component considers itself
+                    # to be running.
+                    component.failed(exit_status);
             else:
                 logger.info(BIND10_UNKNOWN_CHILD_PROCESS_ENDED, pid)
 
@@ -986,10 +947,6 @@ class BoB:
         still_dead = {}
         now = time.time()
         for proc_info in self.dead_processes.values():
-            if proc_info.name in self.expected_shutdowns:
-                # We don't restart, we wanted it to die
-                del self.expected_shutdowns[proc_info.name]
-                continue
             restart_time = proc_info.restart_schedule.get_restart_time(now)
             if restart_time > now:
                 if (next_restart is None) or (next_restart > restart_time):
@@ -1191,6 +1148,10 @@ def main():
     while boss_of_bind.runnable:
         # clean up any processes that exited
         boss_of_bind.reap_children()
+        # XXX: As we don't put anything into the processes to be restarted,
+        # this is really a complicated NOP. But we will try to reintroduce
+        # delayed restarts, so it stays here for now, until we find out if
+        # it's useful.
         next_restart = boss_of_bind.restart_processes()
         if next_restart is None:
             wait_time = None
