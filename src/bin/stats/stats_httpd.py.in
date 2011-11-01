@@ -586,7 +586,9 @@ class StatsHttpd:
             """Internal use for xsl_handler. Reads stats_spec
             specified as first arguments, and modify the xml object
             specified as second argument. xsl_elem must be
-            modified. Always returns None with no exceptions."""
+            modified. The third argument is a base path used for
+            making anchor tag in XSL. Always returns None with no
+            exceptions."""
             # assumed module_spec or one stats_spec
             if type(stats_spec) is dict:
                 # assumed module_spec
