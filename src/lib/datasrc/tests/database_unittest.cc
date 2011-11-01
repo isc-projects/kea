@@ -220,7 +220,8 @@ public:
     }
 
     virtual shared_ptr<DatabaseAccessor> clone() {
-        return (shared_ptr<DatabaseAccessor>()); // bogus data, but unused
+        // This accessor is stateless, so we can simply return a new instance.
+        return (shared_ptr<DatabaseAccessor>(new NopAccessor));
     }
 
     virtual std::pair<bool, int> startUpdateZone(const std::string&, bool) {
@@ -298,7 +299,7 @@ public:
         // Currently we only use this transaction for simple read-only
         // operations.  So we just make a local copy of the data (we don't
         // care about what happens after commit() or rollback()).
-        readonly_records_copy_ = readonly_records_master_;
+        readonly_records_copy_ = *readonly_records_;
         readonly_records_ = &readonly_records_copy_;
     }
 
@@ -1077,7 +1078,18 @@ TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
     isc::testutils::rrsetCheck(it->getSOA(), rrset);
 }
 
-TYPED_TEST(DatabaseClientTest, getSOAThenUpdate) {
+TYPED_TEST(DatabaseClientTest, noSOAFromIterator) {
+    // First, empty the zone.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
+
+    // Then getSOA() should return NULL.
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    EXPECT_FALSE(it->getSOA());
+}
+
+TYPED_TEST(DatabaseClientTest, iterateThenUpdate) {
     ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
     ASSERT_TRUE(it);
 
@@ -1088,6 +1100,10 @@ TYPED_TEST(DatabaseClientTest, getSOAThenUpdate) {
     try {
         this->updater_ = this->client_->getUpdater(this->zname_, true);
         this->updater_->commit();
+
+        // Confirm at least it doesn't contain any SOA
+        EXPECT_EQ(ZoneFinder::NXDOMAIN,
+                  this->getFinder()->find(this->zname_, RRType::SOA()).code);
     } catch (const DataSourceError&) {}
 
     ConstRRsetPtr rrset;
@@ -1098,6 +1114,36 @@ TYPED_TEST(DatabaseClientTest, getSOAThenUpdate) {
     ASSERT_TRUE(rrset);
     // It should be identical to the result of getSOA().
     isc::testutils::rrsetCheck(it->getSOA(), rrset);
+}
+
+TYPED_TEST(DatabaseClientTest, updateThenIterateThenUpdate) {
+    // First clear the zone.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
+
+    // Then iterate over it.  It should immediately reach the end, at which
+    // point the transaction should be committed.
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    EXPECT_FALSE(it->getNextRRset());
+
+    // So another update attempt should succeed, too.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
+}
+
+TYPED_TEST(DatabaseClientTest, updateAfterDelteIterator) {
+    // Similar to the previous case, but we delete the iterator in the
+    // middle of zone.  The transaction should be canceled (actually no
+    // different from commit though) at that point.
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    EXPECT_TRUE(it->getNextRRset());
+    it.reset();
+
+    // So another update attempt should succeed.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
 }
 
 void
