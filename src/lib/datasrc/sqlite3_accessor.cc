@@ -437,7 +437,6 @@ public:
         accessor_(accessor),
         statement_(NULL),
         name_(name)
-
     {
         // We create the statement now and then just keep getting data from it
         statement_ = prepare(accessor->dbparameters_->db_,

@@ -397,10 +397,22 @@ private:
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
                     data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::2";
                     return (true);
+                case 5:
+                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
+                    data[DatabaseAccessor::TTL_COLUMN] = "300";
+                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
+                    return (true);
+                case 6:
+                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
+                    data[DatabaseAccessor::TTL_COLUMN] = "600";
+                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
+                    return (true);
                 default:
                     ADD_FAILURE() <<
                         "Request past the end of iterator context";
-                case 5:
+                case 7:
                     return (false);
             }
         }
@@ -992,7 +1004,6 @@ TYPED_TEST(DatabaseClientTest, iterator) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
     EXPECT_EQ(RRType::AAAA(), rrset->getType());
     EXPECT_EQ(RRTTL(300), rrset->getTTL());
-    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
     rit = rrset->getRdataIterator();
     ASSERT_FALSE(rit->isLast());
     EXPECT_EQ("2001:db8::1", rit->getCurrent().toText());
@@ -1001,6 +1012,23 @@ TYPED_TEST(DatabaseClientTest, iterator) {
     EXPECT_EQ("2001:db8::2", rit->getCurrent().toText());
     rit->next();
     EXPECT_TRUE(rit->isLast());
+
+    rrset = it->getNextRRset();
+    ASSERT_NE(ConstRRsetPtr(), rrset);
+    EXPECT_EQ(Name("ttldiff.example.org"), rrset->getName());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRTTL(300), rrset->getTTL());
+    rit = rrset->getRdataIterator();
+    ASSERT_FALSE(rit->isLast());
+    EXPECT_EQ("192.0.2.1", rit->getCurrent().toText());
+    rit->next();
+    ASSERT_FALSE(rit->isLast());
+    EXPECT_EQ("192.0.2.2", rit->getCurrent().toText());
+    rit->next();
+    EXPECT_TRUE(rit->isLast());
+
+    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
 }
 
 // This has inconsistent TTL in the set (the rest, like nonsense in
@@ -1066,6 +1094,57 @@ doFindTest(ZoneFinder& finder,
     } else {
         ADD_FAILURE() << "Missing result";
     }
+}
+
+// When asking for an RRset where RRs somehow have different TTLs, it should 
+// convert to the lowest one.
+TEST_F(MockDatabaseClientTest, ttldiff) {
+    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
+    // Walk through the full iterator, we should see 1 rrset with name
+    // ttldiff1.example.org., and two rdatas. Same for ttldiff2
+    Name name("ttldiff.example.org.");
+    bool found = false;
+    //bool found2 = false;
+    ConstRRsetPtr rrset = it->getNextRRset();
+    while(rrset != ConstRRsetPtr()) {
+        if (rrset->getName() == name) {
+            ASSERT_FALSE(found);
+            ASSERT_EQ(2, rrset->getRdataCount());
+            ASSERT_EQ(RRTTL(300), rrset->getTTL());
+            found = true;
+        }
+        rrset = it->getNextRRset();
+    }
+    ASSERT_TRUE(found);
+}
+
+// Unless we ask for individual RRs in our iterator request. In that case
+// every RR should go into its own 'rrset'
+TEST_F(MockDatabaseClientTest, ttldiff_individual) {
+    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org"), true));
+
+    // Walk through the full iterator, we should see 1 rrset with name
+    // ttldiff1.example.org., and two rdatas. Same for ttldiff2
+    Name name("ttldiff.example.org.");
+    int found1 = false;
+    int found2 = false;
+    ConstRRsetPtr rrset = it->getNextRRset();
+    while(rrset != ConstRRsetPtr()) {
+        if (rrset->getName() == name) {
+            ASSERT_EQ(1, rrset->getRdataCount());
+            // We should find 1 'rrset' with TTL 300 and one with TTL 600
+            if (rrset->getTTL() == RRTTL(300)) {
+                ASSERT_FALSE(found1);
+                found1 = true;
+            } else if (rrset->getTTL() == RRTTL(600)) {
+                ASSERT_FALSE(found2);
+                found2 = true;
+            }
+        }
+        rrset = it->getNextRRset();
+    }
+    ASSERT_TRUE(found1);
+    ASSERT_TRUE(found2);
 }
 
 TYPED_TEST(DatabaseClientTest, find) {
