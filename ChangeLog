@@ -1,3 +1,11 @@
+308.	[build]		jelte
+	The configure script will now use pkg-config for finding
+	information about the Botan library. If pkg-config is unavailable,
+	or unaware of Botan, it will fall back to botan-config. It will
+	also use botan-config when a specific botan library directory is
+	given using the '--with-botan=' flag
+	(Trac #1194, git dc491833cf75ac1481ba1475795b0f266545013d)
+
 307.	[func]      vorner
 	When zone transfer in fails with IXFR, it is retried with AXFR
 	automatically.
