@@ -77,7 +77,9 @@ private:
     void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
                           isc::dns::ConstRRsetPtr nsec);
 
-    /// TBD
+    /// Add NSEC RRs that prove a wildcard answer is the best one.
+    ///
+    /// This corresponds to Section 3.1.3.3 of RFC 4035.
     void addWildcardProof(isc::datasrc::ZoneFinder& finder);
 
     /// \brief Look up additional data (i.e., address records for the names
