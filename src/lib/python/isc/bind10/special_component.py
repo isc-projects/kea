@@ -81,6 +81,11 @@ class CmdCtl(Component):
         Component.__init__(self, process, boss, kind, 'Cmdctl')
         self._start_func = boss.start_cmdctl
 
+class XfrIn(Component):
+    def __init__(self, process, boss, kind, address=None, params=None):
+        Component.__init__(self, process, boss, kind, 'Xfrin')
+        self._start_func = boss.start_xfrin
+
 def get_specials():
     """
     List of specially started components. Each one should be the class than can
@@ -94,5 +99,7 @@ def get_specials():
         # They should not have any parameters anyway
         'auth': Auth,
         'resolver': Resolver,
-        'cmdctl': CmdCtl
+        'cmdctl': CmdCtl,
+        # FIXME: Temporary workaround before #1292 is done
+        'xfrin': XfrIn
     }
