@@ -420,33 +420,28 @@ class StatsHttpd:
                     for module_name in stats_spec.keys():
                         elem = xml.etree.ElementTree.Element(module_name)
                         stats_data2xml(stats_spec[module_name],
-                                            stats_data[module_name], elem)
+                                       stats_data[module_name], elem)
                         xml_elem.append(elem)
                 # started with item_spec in statistics
                 else:
+                    elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
                     if stats_spec['item_type'] == 'map':
-                        elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
                         stats_data2xml(stats_spec['map_item_spec'],
-                                            stats_data,
-                                            elem)
-                        xml_elem.append(elem)
+                                       stats_data,
+                                       elem)
                     elif stats_spec['item_type'] == 'list':
-                        elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
                         for item in stats_data:
                             stats_data2xml(stats_spec['list_item_spec'],
-                                                item,
-                                                elem)
-                        xml_elem.append(elem)
+                                           item, elem)
                     else:
-                        elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
                         elem.text = str(stats_data)
-                        xml_elem.append(elem)
+                    xml_elem.append(elem)
             # assumed started with stats_spec
             elif type(stats_spec) is list:
                 for item_spec in stats_spec:
                     stats_data2xml(item_spec,
-                                        stats_data[item_spec['item_name']],
-                                        xml_elem)
+                                   stats_data[item_spec['item_name']],
+                                   xml_elem)
             else:
                 xml_elem.text = str(stats_data)
             return None
