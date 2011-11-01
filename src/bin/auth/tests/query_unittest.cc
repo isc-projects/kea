@@ -99,7 +99,7 @@ const char* const nsec_wild_txt =
 const char* const cnamewild_txt =
     "*.cnamewild.example.com. 3600 IN CNAME www.example.org.\n";
 const char* const nsec_cnamewild_txt = "*.cnamewild.example.com. "
-    "3600 IN NSEC delegation.example.com. A NSEC RRSIG\n";
+    "3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG\n";
 // Used in NXDOMAIN proof test.  We are going to test some unusual case where
 // the best possible wildcard is below the "next domain" of the NSEC RR that
 // proves the NXDOMAIN, i.e.,
@@ -404,6 +404,17 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             RRsetStore::const_iterator found_rrset = domain->second.find(type);
             assert(found_rrset != domain->second.end());
             return (FindResult(WILDCARD,
+                               substituteWild(*found_rrset->second, name)));
+        }
+        const Name cnamewild_suffix("cnamewild.example.com");
+        if (name.compare(cnamewild_suffix).getRelation() ==
+            NameComparisonResult::SUBDOMAIN) {
+            domain = domains_.find(Name("*").concatenate(cnamewild_suffix));
+            assert(domain != domains_.end());
+            RRsetStore::const_iterator found_rrset =
+                domain->second.find(RRType::CNAME());
+            assert(found_rrset != domain->second.end());
+            return (FindResult(WILDCARD_CNAME,
                                substituteWild(*found_rrset->second, name)));
         }
     }
@@ -865,6 +876,52 @@ TEST_F(QueryTest, wildcardNSEC) {
                    getCommonRRSIGText("NSEC") + "\n").c_str(),
                   NULL, // we are not interested in additionals in this test
                   mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, CNAMEwildNSEC) {
+    // Similar to the previous case, but the matching wildcard record is
+    // CNAME.
+    Query(memory_client, Name("www.cnamewild.example.com"), RRType::A(),
+          response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
+                  (string(cnamewild_txt).replace(0, 1, "www") +
+                   string("www.cnamewild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("CNAME") + "\n").c_str(),
+                  (string(nsec_cnamewild_txt) +
+                   string("*.cnamewild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC") + "\n").c_str(),
+                  NULL, // we are not interested in additionals in this test
+                  mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, badWildcardProof1) {
+    // Unexpected case in wildcard proof: ZoneFinder::find() returns SUCCESS
+    // when NXDOMAIN is expected.
+    mock_finder->setNSECResult(Name("www.wild.example.com"),
+                               ZoneFinder::SUCCESS,
+                               mock_finder->delegation_rrset_);
+    EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
+                       RRType::A(), response, true).process(),
+                 Query::BadNSEC);
+}
+
+TEST_F(QueryTest, badWildcardProof2) {
+    // "wildcard proof" doesn't return RRset.
+    mock_finder->setNSECResult(Name("www.wild.example.com"),
+                               ZoneFinder::NXDOMAIN, ConstRRsetPtr());
+    EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
+                       RRType::A(), response, true).process(),
+                 Query::BadNSEC);
+}
+
+TEST_F(QueryTest, badWildcardProof3) {
+    // "wildcard proof" returns empty NSEC.
+    mock_finder->setNSECResult(Name("www.wild.example.com"),
+                               ZoneFinder::NXDOMAIN,
+                               mock_finder->empty_nsec_rrset_);
+    EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
+                       RRType::A(), response, true).process(),
+                 Query::BadNSEC);
 }
 
 /*
