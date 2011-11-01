@@ -294,6 +294,14 @@ public:
         return (cloned_accessor);
     }
 
+    virtual void startTransaction() {
+        // Currently we only use this transaction for simple read-only
+        // operations.  So we just make a local copy of the data (we don't
+        // care about what happens after commit() or rollback()).
+        readonly_records_copy_ = readonly_records_master_;
+        readonly_records_ = &readonly_records_copy_;
+    }
+
 private:
     class MockNameIteratorContext : public IteratorContext {
     public:
@@ -627,12 +635,14 @@ private:
     // The following member variables are storage and/or update work space
     // of the test zone.  The "master"s are the real objects that contain
     // the data, and they are shared among all accessors cloned from
-    // an initially created one.  The pointer members allow the sharing.
+    // an initially created one.  The "copy" data will be used for read-only
+    // transaction.  The pointer members allow the sharing.
     // "readonly" is for normal lookups.  "update" is the workspace for
     // updates.  When update starts it will be initialized either as an
     // empty set (when replacing the entire zone) or as a copy of the
     // "readonly" one.  "empty" is a sentinel to produce negative results.
     Domains readonly_records_master_;
+    Domains readonly_records_copy_;
     Domains* readonly_records_;
     Domains update_records_master_;
     Domains* update_records_;
@@ -1057,6 +1067,29 @@ TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
     // RDATA that would trigger an exception in getNextRRset(), we should
     // reach the SOA as the sequence should be sorted and the SOA is at
     // the origin name (which has no bogus data).
+    ConstRRsetPtr rrset;
+    while ((rrset = it->getNextRRset()) != ConstRRsetPtr() &&
+           rrset->getType() != RRType::SOA()) {
+        ;
+    }
+    ASSERT_TRUE(rrset);
+    // It should be identical to the result of getSOA().
+    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+}
+
+TYPED_TEST(DatabaseClientTest, getSOAThenUpdate) {
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+
+    // Try to empty the zone after getting the iterator.  Depending on the
+    // underlying data source, it may result in an exception due to the
+    // transaction for the iterator.  In either case the integrity of the
+    // iterator result should be reserved.
+    try {
+        this->updater_ = this->client_->getUpdater(this->zname_, true);
+        this->updater_->commit();
+    } catch (const DataSourceError&) {}
+
     ConstRRsetPtr rrset;
     while ((rrset = it->getNextRRset()) != ConstRRsetPtr() &&
            rrset->getType() != RRType::SOA()) {

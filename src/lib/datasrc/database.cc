@@ -792,6 +792,8 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
                   "in this data source");
     }
 
+    accessor_->startTransaction();
+
     // Find the SOA of the zone (may or may not succeed).  Note that
     // this must be done before starting the iteration context.
     ConstRRsetPtr soa = DatabaseClient::Finder(accessor_, zone.second, name).
