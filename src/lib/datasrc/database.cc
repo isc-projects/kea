@@ -705,15 +705,37 @@ namespace {
 class DatabaseIterator : public ZoneIterator {
 public:
     DatabaseIterator(shared_ptr<DatabaseAccessor> accessor,
-                     ConstRRsetPtr soa,
-                     const DatabaseAccessor::IteratorContextPtr& context,
+                     const Name& zone_name,
                      const RRClass& rrclass) :
         accessor_(accessor),
-        context_(context),
         class_(rrclass),
-        soa_(soa),
         ready_(true)
     {
+        // Get the zone
+        const pair<bool, int> zone(accessor_->getZone(zone_name.toText()));
+        if (!zone.first) {
+            // No such zone, can't continue
+            isc_throw(DataSourceError, "Zone " + zone_name.toText() +
+                      " can not be iterated, because it doesn't exist "
+                      "in this data source");
+        }
+
+        // Start a separate transaction.
+        accessor_->startTransaction();
+
+        // Find the SOA of the zone (may or may not succeed).  Note that
+        // this must be done before starting the iteration context.
+        soa_ = DatabaseClient::Finder(accessor_, zone.second, zone_name).
+            find(zone_name, RRType::SOA(), NULL).rrset;
+
+        // Request the context
+        context_ = accessor_->getAllRecords(zone.second);
+        // It must not return NULL, that's a bug of the implementation
+        if (!context_) {
+            isc_throw(isc::Unexpected, "Iterator context null at " +
+                      zone_name.toText());
+        }
+
         // Prepare data for the next time
         getData();
     }
@@ -778,9 +800,9 @@ private:
     // The dedicated accessor
     shared_ptr<DatabaseAccessor> accessor_;
     // The context
-    const DatabaseAccessor::IteratorContextPtr context_;
+    DatabaseAccessor::IteratorContextPtr context_;
     // Class of the zone
-    RRClass class_;
+    const RRClass class_;
     // SOA of the zone, if any (it should normally exist)
     ConstRRsetPtr soa_;
     // Status
@@ -793,40 +815,13 @@ private:
 
 ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name) const {
-    shared_ptr<DatabaseAccessor> iterator_accessor(accessor_->clone());
-    // Get the zone
-    std::pair<bool, int> zone(iterator_accessor->getZone(name.toText()));
-    if (!zone.first) {
-        // No such zone, can't continue
-        isc_throw(DataSourceError, "Zone " + name.toText() +
-                  " can not be iterated, because it doesn't exist "
-                  "in this data source");
-    }
-
-    iterator_accessor->startTransaction();
-
-    // Find the SOA of the zone (may or may not succeed).  Note that
-    // this must be done before starting the iteration context.
-    ConstRRsetPtr soa = DatabaseClient::Finder(iterator_accessor, zone.second, name).
-        find(name, RRType::SOA(), NULL).rrset;
-
-    // Request the context
-    DatabaseAccessor::IteratorContextPtr
-        context(iterator_accessor->getAllRecords(zone.second));
-    // It must not return NULL, that's a bug of the implementation
-    if (context == DatabaseAccessor::IteratorContextPtr()) {
-        isc_throw(isc::Unexpected, "Iterator context null at " +
-                  name.toText());
-    }
-    // Create the iterator and return it
-    // TODO: Once #1062 is merged with this, we need to get the
-    // actual zone class from the connection, as the DatabaseClient
-    // doesn't know it and the iterator needs it (so it wouldn't query
-    // it each time)
+    ZoneIteratorPtr iterator = ZoneIteratorPtr(new DatabaseIterator(
+                                                   accessor_->clone(), name,
+                                                   RRClass::IN()));
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
-    return (ZoneIteratorPtr(new DatabaseIterator(iterator_accessor, soa, context,
-                                                 RRClass::IN())));
+
+    return (iterator);
 }
 
 //
