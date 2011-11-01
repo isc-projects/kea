@@ -594,7 +594,7 @@ class StatsHttpd:
                     th.text = "Module Names"
                     tr.append(th)
                     th = xml.etree.ElementTree.Element("th")
-                    th.text = "Items"
+                    th.text = "Module Items"
                     tr.append(th)
                     table.append(tr)
                     for mod in stats_spec.keys():
@@ -613,7 +613,10 @@ class StatsHttpd:
                 # assumed stats_spec
                 else:
                     tr = xml.etree.ElementTree.Element("tr")
-                    td = xml.etree.ElementTree.Element("td")
+                    td = xml.etree.ElementTree.Element(
+                        "td",
+                        { "class" : "title",
+                          "title" : stats_spec["item_description"] })
                     td.text = stats_spec["item_name"]
                     tr.append(td)
                     if stats_spec['item_type'] == 'map':
@@ -636,7 +639,7 @@ class StatsHttpd:
                 th.text = "Item Names"
                 tr.append(th)
                 th = xml.etree.ElementTree.Element("th")
-                th.text = "Values"
+                th.text = "Item Values"
                 tr.append(th)
                 table.append(tr)
                 for item_spec in stats_spec:
