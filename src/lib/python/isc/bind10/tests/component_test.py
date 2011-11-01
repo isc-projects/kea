@@ -86,6 +86,9 @@ class BossUtils:
     def start_cmdctl(self):
         pass
 
+    def start_xfrin(self):
+        pass
+
 class ComponentTests(BossUtils, unittest.TestCase):
     """
     Tests for the bind10.component.Component class
@@ -420,7 +423,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
                                isc.bind10.special_component.CfgMgr,
                                isc.bind10.special_component.Auth,
                                isc.bind10.special_component.Resolver,
-                               isc.bind10.special_component.CmdCtl]:
+                               isc.bind10.special_component.CmdCtl,
+                               isc.bind10.special_component.XfrIn]:
             component = component_type('none', self, 'needed')
             self.assertIsNone(component.pid())
 
