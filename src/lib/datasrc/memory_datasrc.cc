@@ -730,10 +730,13 @@ private:
     const DomainTree& tree_;
     const DomainNode* node_;
     bool ready_;
+    bool individual_rrs_;
 public:
-    MemoryIterator(const DomainTree& tree, const Name& origin) :
+    MemoryIterator(const DomainTree& tree, const Name& origin,
+                   bool individual_rrs) :
         tree_(tree),
-        ready_(true)
+        ready_(true),
+        individual_rrs_(individual_rrs)
     {
         // Find the first node (origin) and preserve the node chain for future
         // searches
@@ -785,7 +788,7 @@ public:
 } // End of anonymous namespace
 
 ZoneIteratorPtr
-InMemoryClient::getIterator(const Name& name) const {
+InMemoryClient::getIterator(const Name& name, bool individual_rrs) const {
     ZoneTable::FindResult result(impl_->zone_table.findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
@@ -803,7 +806,8 @@ InMemoryClient::getIterator(const Name& name) const {
         isc_throw(Unexpected, "The zone at " + name.toText() +
                   " is not InMemoryZoneFinder");
     }
-    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name)));
+    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name,
+                                               individual_rrs)));
 }
 
 ZoneUpdaterPtr

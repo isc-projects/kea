@@ -272,7 +272,8 @@ public:
     virtual FindResult findZone(const isc::dns::Name& name) const;
 
     /// \brief Implementation of the getIterator method
-    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
+                                        bool individual_rrs = false) const;
 
     /// In-memory data source is read-only, so this derived method will
     /// result in a NotImplemented exception.

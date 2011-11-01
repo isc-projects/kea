@@ -705,10 +705,11 @@ namespace {
 class DatabaseIterator : public ZoneIterator {
 public:
     DatabaseIterator(const DatabaseAccessor::IteratorContextPtr& context,
-             const RRClass& rrclass) :
+             const RRClass& rrclass, bool individual_rrs) :
         context_(context),
         class_(rrclass),
-        ready_(true)
+        ready_(true),
+        individual_rrs_(individual_rrs)
     {
         // Prepare data for the next time
         getData();
@@ -740,6 +741,9 @@ public:
             }
             rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
             getData();
+            if (individual_rrs_) {
+                break;
+            }
         }
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
             arg(rrset->getName()).arg(rrset->getType());
@@ -764,12 +768,16 @@ private:
     bool ready_, data_ready_;
     // Data of the next row
     string name_, rtype_, rdata_, ttl_;
+    // Whether to return individual RRsets
+    bool individual_rrs_;
 };
 
 }
 
 ZoneIteratorPtr
-DatabaseClient::getIterator(const isc::dns::Name& name) const {
+DatabaseClient::getIterator(const isc::dns::Name& name,
+                            bool individual_rrs) const
+{
     // Get the zone
     std::pair<bool, int> zone(accessor_->getZone(name.toText()));
     if (!zone.first) {
@@ -793,7 +801,8 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     // it each time)
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
-    return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
+    return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN(),
+                                                 individual_rrs)));
 }
 
 //
