@@ -53,7 +53,7 @@ iteration processing.\n\
 If the zone doesn't have an SOA (which is broken, but some data source\n\
 may allow that situation), this method returns None. Also, in the\n\
 normal and valid case, the SOA should have exactly one RDATA, but this\n\
-API is not guaranteed it as some data source may accept such an\n\
+API does not guarantee it as some data source may accept such an\n\
 abnormal condition. It's up to the caller whether to check the number\n\
 of RDATA and how to react to the unexpected case.\n\
 \n\
