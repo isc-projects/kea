@@ -76,7 +76,7 @@ public:
      * If the zone doesn't have an SOA (which is broken, but some data source
      * may allow that situation), this method returns NULL.  Also, in the
      * normal and valid case, the SOA should have exactly one RDATA, but
-     * this API is not guaranteed it as some data source may accept such an
+     * this API does not guarantee it as some data source may accept such an
      * abnormal condition.  It's up to the caller whether to check the number
      * of RDATA and how to react to the unexpected case.
      *
