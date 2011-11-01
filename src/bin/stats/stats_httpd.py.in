@@ -447,8 +447,6 @@ class StatsHttpd:
                     stats_data2xml(item_spec,
                                    stats_data[item_spec['item_name']],
                                    xml_elem)
-            else:
-                xml_elem.text = str(stats_data)
             return None
 
         stats_spec = self.get_stats_spec(module_name, item_name)
