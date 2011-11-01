@@ -712,7 +712,7 @@ class TestStatsHttpd(unittest.TestCase):
               }
         xsl_body1 = self.stats_httpd.open_template(
             stats_httpd.XSL_TEMPLATE_LOCATION).substitute(
-            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Names</th><th>Items</th></tr><xsl:for-each select="Dummy"><tr><td>Dummy</td><td><table><tr><th>Item Names</th><th>Values</th></tr><tr><td>foo</td><td><xsl:value-of select="foo" /></td></tr></table></td></tr></xsl:for-each></table></xsl:template>',
+            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Names</th><th>Module Items</th></tr><xsl:for-each select="Dummy"><tr><td><a href="./Dummy">Dummy</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="foo is bar"><a href="./Dummy/foo">foo</a></td><td><xsl:value-of select="foo" /></td></tr></table></td></tr></xsl:for-each></table></xsl:template>',
             xsd_namespace=stats_httpd.XSD_NAMESPACE)
         xsl_body2 = self.stats_httpd.xsl_handler()
         self.assertEqual(type(xsl_body1), str)
