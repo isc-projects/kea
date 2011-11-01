@@ -56,7 +56,6 @@ class Component:
 
     The methods are marked if it is expected for them to be overridden.
 
-
     The component is in one of the three states:
     - Stopped - it is either not started yet or it was explicitly stopped.
       The component is created in this state (it must be asked to start
@@ -175,6 +174,13 @@ class Component:
         as well. You should also register any processes started within boss.
         (In fact, you could set the _procinfo variable and use the provided
         ones, but then you are OK with providing _start_func anyway).
+
+        The ability to override this method presents some flexibility. It
+        allows processes started in a strange way, as well as components that
+        have no processes at all or components with multiple processes (in case
+        of multiple processes, care should be taken to make their
+        started/stopped state in sync and all the processes that can fail
+        should be registered).
         """
         # This one is not tested. For one, it starts a real process
         # which is out of scope of unit tests, for another, it just
