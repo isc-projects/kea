@@ -365,16 +365,24 @@ private:
     class MockIteratorContext : public IteratorContext {
     private:
         int step;
+        const Domains& domains_;
     public:
-        MockIteratorContext() :
-            step(0)
+        MockIteratorContext(const Domains& domains) :
+            step(0), domains_(domains)
         { }
         virtual bool getNext(string (&data)[COLUMN_COUNT]) {
+            // A special case: if the given set of domains is already empty,
+            // we always return false.
+            if (domains_.empty()) {
+                return (false);
+            }
+
+            // Return faked data for tests
             switch (step ++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
+                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
                     data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
                         "1234 3600 1800 2419200 7200";
                     return (true);
@@ -448,7 +456,8 @@ private:
 public:
     virtual IteratorContextPtr getAllRecords(int id) const {
         if (id == READONLY_ZONE_ID) {
-            return (IteratorContextPtr(new MockIteratorContext()));
+            return (IteratorContextPtr(new MockIteratorContext(
+                                           *readonly_records_)));
         } else if (id == 13) {
             return (IteratorContextPtr());
         } else if (id == 0) {
@@ -974,7 +983,7 @@ TYPED_TEST(DatabaseClientTest, iterator) {
     EXPECT_EQ(Name("example.org"), rrset->getName());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
     EXPECT_EQ(RRType::SOA(), rrset->getType());
-    EXPECT_EQ(RRTTL(300), rrset->getTTL());
+    EXPECT_EQ(RRTTL(3600), rrset->getTTL());
     RdataIteratorPtr rit(rrset->getRdataIterator());
     ASSERT_FALSE(rit->isLast());
     rit->next();
@@ -1048,6 +1057,19 @@ TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
     ASSERT_TRUE(it);
     checkRRset(it->getSOA(), this->zname_, this->qclass_, RRType::SOA(),
                this->rrttl_, soa_data);
+
+    // Iterate over the zone until we find an SOA.  Although there's a broken
+    // RDATA that would trigger an exception in getNextRRset(), we should
+    // reach the SOA as the sequence should be sorted and the SOA is at
+    // the origin name (which has no bogus data).
+    ConstRRsetPtr rrset;
+    while ((rrset = it->getNextRRset()) != ConstRRsetPtr() &&
+           rrset->getType() != RRType::SOA()) {
+        ;
+    }
+    ASSERT_TRUE(rrset);
+    // It should be identical to the result of getSOA().
+    isc::testutils::rrsetCheck(it->getSOA(), rrset);
 }
 
 void
