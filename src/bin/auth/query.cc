@@ -169,9 +169,17 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 
 void
 Query::addWildcardProof(ZoneFinder& finder) {
+    // The query name shouldn't exist in the zone if there were no wildcard
+    // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
+    // in NXDOMAIN and an NSEC RR that proves it should be returned.
     const ZoneFinder::FindResult fresult =
         finder.find(qname_, RRType::NSEC(), NULL,
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
+        fresult.rrset->getRdataCount() == 0) {
+        isc_throw(BadNSEC, "Unexpected result for wildcard proof");
+        return;
+    }
     response_.addRRset(Message::SECTION_AUTHORITY,
                        boost::const_pointer_cast<RRset>(fresult.rrset),
                        dnssec_);
@@ -269,6 +277,7 @@ Query::process() {
                 break;
             }
             case ZoneFinder::CNAME:
+            case ZoneFinder::WILDCARD_CNAME:
                 /*
                  * We don't do chaining yet. Therefore handling a CNAME is
                  * mostly the same as handling SUCCESS, but we didn't get
@@ -281,6 +290,12 @@ Query::process() {
                 response_.addRRset(Message::SECTION_ANSWER,
                     boost::const_pointer_cast<RRset>(db_result.rrset),
                     dnssec_);
+
+                // If the answer is a result of wildcard substitution,
+                // add a proof that there's no closer name.
+                if (dnssec_ && db_result.code == ZoneFinder::WILDCARD_CNAME) {
+                    addWildcardProof(*result.zone_finder);
+                }
                 break;
             case ZoneFinder::SUCCESS:
             case ZoneFinder::WILDCARD:
