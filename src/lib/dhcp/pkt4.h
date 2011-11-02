@@ -105,7 +105,7 @@ public:
     ///
     /// @return hops field
     uint8_t
-    getHops() { return (hops_); };
+    getHops() const { return (hops_); };
 
     // Note: There's no need to manipulate OP field directly,
     // thus no setOp() method. See op_ comment.
@@ -114,7 +114,7 @@ public:
     ///
     /// @return op field
     uint8_t
-    getOp() { return (op_); };
+    getOp() const { return (op_); };
 
     /// Sets secs field
     ///
@@ -126,7 +126,7 @@ public:
     ///
     /// @return secs field
     uint16_t
-    getSecs() { return (secs_); };
+    getSecs() const { return (secs_); };
 
     /// Sets flags field
     ///
@@ -138,14 +138,14 @@ public:
     ///
     /// @return flags field
     uint16_t
-    getFlags() { return (flags_); };
+    getFlags() const { return (flags_); };
 
 
     /// Returns ciaddr field
     ///
     /// @return ciaddr field
-    isc::asiolink::IOAddress&
-    getCiaddr() { return (ciaddr_); };
+    const isc::asiolink::IOAddress&
+    getCiaddr() const { return (ciaddr_); };
 
     /// Sets ciaddr field
     ///
@@ -157,8 +157,8 @@ public:
     /// Returns siaddr field
     ///
     /// @return siaddr field
-    isc::asiolink::IOAddress&
-    getSiaddr() { return (siaddr_); };
+    const isc::asiolink::IOAddress&
+    getSiaddr() const { return (siaddr_); };
 
     /// Sets siaddr field
     ///
@@ -170,8 +170,8 @@ public:
     /// Returns yiaddr field
     ///
     /// @return yiaddr field
-    isc::asiolink::IOAddress&
-    getYiaddr() { return (yiaddr_); };
+    const isc::asiolink::IOAddress&
+    getYiaddr() const { return (yiaddr_); };
 
     /// Sets yiaddr field
     ///
@@ -183,8 +183,8 @@ public:
     /// Returns giaddr field
     ///
     /// @return giaddr field
-    isc::asiolink::IOAddress&
-    getGiaddr() { return (giaddr_); };
+    const isc::asiolink::IOAddress&
+    getGiaddr() const { return (giaddr_); };
 
     /// Sets giaddr field
     ///
@@ -195,13 +195,13 @@ public:
     /// Returns value of transaction-id field
     ///
     /// @return transaction-id
-    uint32_t getTransid() { return (transid_); };
+    uint32_t getTransid() const { return (transid_); };
 
     /// Returns message type (e.g. 1 = DHCPDISCOVER)
     ///
     /// @return message type
     uint8_t
-    getType() { return (msg_type_); }
+    getType() const { return (msg_type_); }
 
     /// Sets message type (e.g. 1 = DHCPDISCOVER)
     ///
@@ -215,7 +215,7 @@ public:
     ///
     /// @return sname field
     const std::vector<uint8_t>
-    getSname() { return (std::vector<uint8_t>(sname_, &sname_[MAX_SNAME_LEN])); };
+    getSname() const { return (std::vector<uint8_t>(sname_, &sname_[MAX_SNAME_LEN])); };
 
     /// Sets sname field
     ///
@@ -230,7 +230,7 @@ public:
     ///
     /// @return pointer to file field
     const std::vector<uint8_t>
-    getFile() { return (std::vector<uint8_t>(file_, &file_[MAX_FILE_LEN])); };
+    getFile() const { return (std::vector<uint8_t>(file_, &file_[MAX_FILE_LEN])); };
 
     /// Sets file field
     ///
@@ -256,13 +256,13 @@ public:
     ///
     /// @return hardware type
     uint8_t
-    getHtype() { return (htype_); };
+    getHtype() const { return (htype_); };
 
     /// Returns hlen field
     ///
     /// @return hardware address length
     uint8_t
-    getHlen() { return (hlen_); };
+    getHlen() const { return (hlen_); };
 
     /// @brief Returns chaddr field.
     ///
@@ -271,20 +271,21 @@ public:
     ///
     /// @return pointer to hardware address
     const uint8_t*
-    getChaddr() { return (chaddr_); };
+    getChaddr() const { return (chaddr_); };
 
 
     /// @brief Returns reference to output buffer.
     ///
     /// Returned buffer will contain reasonable data only for
-    /// output (TX) packet and after pack() was called.
+    /// output (TX) packet and after pack() was called. This buffer
+    /// is only valid till Pkt4 object is valid.
     ///
     /// RX packet or TX packet before pack() will return buffer with
     /// zero length
     ///
     /// @return reference to output buffer
-    isc::util::OutputBuffer&
-    getBuffer() { return (bufferOut_); };
+    const isc::util::OutputBuffer&
+    getBuffer() const { return (bufferOut_); };
 
     /// @brief Add an option.
     ///

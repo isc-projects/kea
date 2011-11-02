@@ -86,18 +86,18 @@ TEST(Pkt4Test, constructor) {
 }
 
 // a sample data
-const static uint8_t dummyOp = BOOTREQUEST;
-const static uint8_t dummyHtype = 6;
-const static uint8_t dummyHlen = 6;
-const static uint8_t dummyHops = 13;
-const static uint32_t dummyTransid = 0x12345678;
-const static uint16_t dummySecs = 42;
-const static uint16_t dummyFlags = BOOTP_BROADCAST;
+const uint8_t dummyOp = BOOTREQUEST;
+const uint8_t dummyHtype = 6;
+const uint8_t dummyHlen = 6;
+const uint8_t dummyHops = 13;
+const uint32_t dummyTransid = 0x12345678;
+const uint16_t dummySecs = 42;
+const uint16_t dummyFlags = BOOTP_BROADCAST;
 
-const static IOAddress dummyCiaddr("192.0.2.1");
-const static IOAddress dummyYiaddr("1.2.3.4");
-const static IOAddress dummySiaddr("192.0.2.255");
-const static IOAddress dummyGiaddr("255.255.255.255");
+const IOAddress dummyCiaddr("192.0.2.1");
+const IOAddress dummyYiaddr("1.2.3.4");
+const IOAddress dummySiaddr("192.0.2.255");
+const IOAddress dummyGiaddr("255.255.255.255");
 
 // a dummy MAC address
 const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
@@ -234,8 +234,8 @@ TEST(Pkt4Test, fixedFieldsPack) {
     ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
 
     // redundant but MUCH easier for debug in gdb
-    const uint8_t * exp = &expectedFormat[0];
-    const uint8_t * got = static_cast<const uint8_t*>(pkt->getBuffer().getData());
+    const uint8_t* exp = &expectedFormat[0];
+    const uint8_t* got = static_cast<const uint8_t*>(pkt->getBuffer().getData());
 
     EXPECT_EQ(0, memcmp(exp, got, Pkt4::DHCPV4_PKT_HDR_LEN));
 }
@@ -287,14 +287,14 @@ TEST(Pkt4Test, hwAddr) {
 
     Pkt4* pkt = 0;
     // let's test each hlen, from 0 till 16
-    for (int macLen=0; macLen < Pkt4::MAX_CHADDR_LEN; macLen++) {
-        for (int i=0; i < Pkt4::MAX_CHADDR_LEN; i++) {
+    for (int macLen = 0; macLen < Pkt4::MAX_CHADDR_LEN; macLen++) {
+        for (int i = 0; i < Pkt4::MAX_CHADDR_LEN; i++) {
             mac[i] = 0;
             expectedChaddr[i] = 0;
         }
-        for (int i=0; i < macLen; i++) {
-            mac[i] = 128+i;
-            expectedChaddr[i] = 128+i;
+        for (int i = 0; i < macLen; i++) {
+            mac[i] = 128 + i;
+            expectedChaddr[i] = 128 + i;
         }
 
         // type and transaction doesn't matter in this test
@@ -345,7 +345,7 @@ TEST(Pkt4Test, msgTypes) {
     };
 
     Pkt4* pkt = 0;
-    for (int i=0; i < sizeof(types)/sizeof(msgType); i++) {
+    for (int i = 0; i < sizeof(types) / sizeof(msgType); i++) {
 
         pkt = new Pkt4(types[i].dhcp, 0);
         EXPECT_EQ(types[i].dhcp, pkt->getType());
@@ -373,10 +373,10 @@ TEST(Pkt4Test, sname) {
     Pkt4* pkt = 0;
     // let's test each sname length, from 0 till 64
     for (int snameLen=0; snameLen < Pkt4::MAX_SNAME_LEN; snameLen++) {
-        for (int i=0; i < Pkt4::MAX_SNAME_LEN; i++) {
+        for (int i = 0; i < Pkt4::MAX_SNAME_LEN; i++) {
             sname[i] = 0;
         }
-        for (int i=0; i < snameLen; i++) {
+        for (int i = 0; i < snameLen; i++) {
             sname[i] = i;
         }
 
@@ -405,11 +405,11 @@ TEST(Pkt4Test, file) {
 
     Pkt4* pkt = 0;
     // Let's test each file length, from 0 till 128.
-    for (int fileLen=0; fileLen < Pkt4::MAX_FILE_LEN; fileLen++) {
-        for (int i=0; i < Pkt4::MAX_FILE_LEN; i++) {
+    for (int fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; fileLen++) {
+        for (int i = 0; i < Pkt4::MAX_FILE_LEN; i++) {
             file[i] = 0;
         }
-        for (int i=0; i < fileLen; i++) {
+        for (int i = 0; i < fileLen; i++) {
             file[i] = i;
         }
 

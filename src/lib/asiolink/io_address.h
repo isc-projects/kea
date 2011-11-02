@@ -72,6 +72,15 @@ public:
     IOAddress(const asio::ip::address& asio_address);
     //@}
 
+    /// @brief Constructor for ip::address_v4 object.
+    ///
+    /// This constructor is intented to be used when constructing
+    /// IPv4 address out of uint32_t type. Passed value must be in
+    /// network byte order
+    ///
+    /// @param v4address IPv4 address represnted by uint32_t
+    IOAddress(uint32_t v4address);
+
     /// \brief Convert the address to a string.
     ///
     /// This method is basically expected to be exception free, but
@@ -103,15 +112,6 @@ public:
     /// \return Created IOAddress object
     static IOAddress
     from_bytes(short family, const uint8_t* data);
-
-    /// \brief Creates an IPv4 address from uint32 value
-    ///
-    /// \param v4address specified IPv4 address in network
-    ///        byte order
-    ///
-    /// \return Created IOAddress that holds IPv4 address
-    static IOAddress
-    from_uint32(uint32_t v4address);
 
     /// \brief Compare addresses for equality
     ///
