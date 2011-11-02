@@ -69,7 +69,7 @@ TEST_F(OptionTest, v4_basic) {
 const uint8_t dummyPayload[] =
 { 1, 2, 3, 4};
 
-TEST_F(OptionTest, v4_data) {
+TEST_F(OptionTest, v4_data1) {
 
     vector<uint8_t> data(dummyPayload, dummyPayload + sizeof(dummyPayload));
 
@@ -88,6 +88,66 @@ TEST_F(OptionTest, v4_data) {
     vector<uint8_t> optData = opt->getData();
     ASSERT_EQ(optData.size(), data.size());
     EXPECT_EQ(optData, data);
+    EXPECT_EQ(2, opt->getHeaderLen());
+    EXPECT_EQ(6, opt->len());
+
+    // now store that option into a buffer
+    OutputBuffer buf(100);
+    EXPECT_NO_THROW(
+        opt->pack4(buf);
+    );
+
+    // check content of that buffer
+
+    // 2 byte header + 4 bytes data
+    ASSERT_EQ(6, buf.getLength());
+
+    // that's how this option is supposed to look like
+    uint8_t exp[] = { 123, 4, 1, 2, 3, 4 };
+
+    /// TODO: use vector<uint8_t> getData() when it will be implemented
+    EXPECT_EQ(0, memcmp(exp, buf.getData(), 6));
+
+    // check that we can destroy that option
+    EXPECT_NO_THROW(
+        delete opt;
+    );
+}
+
+// this is almost the same test as v4_data1, but it uses
+// different constructor
+TEST_F(OptionTest, v4_data2) {
+
+    vector<uint8_t> data(dummyPayload, dummyPayload + sizeof(dummyPayload));
+
+    vector<uint8_t> expData = data;
+
+    // Add fake data in front and end. Main purpose of this test is to check
+    // that only subset of the whole vector can be used for creating option.
+    data.insert(data.begin(), 56);
+    data.push_back(67);
+
+    // Data contains extra garbage at beginning and at the end. It should be
+    // ignored, as we pass interators to proper data. Only subset (limited by
+    // iterators) of the vector should be used.
+    // expData contains expected content (just valid data, without garbage).
+
+    Option* opt = 0;
+
+    // Create DHCPv4 option of type 123 that contains
+    // 4 bytes (sizeof(dummyPayload).
+    ASSERT_NO_THROW(
+        opt= new Option(Option::V4,
+                        123, // type
+                        data.begin() + 1,
+                        data.end() - 1);
+    );
+
+    // check that content is reported properly
+    EXPECT_EQ(123, opt->getType());
+    vector<uint8_t> optData = opt->getData();
+    ASSERT_EQ(optData.size(), expData.size());
+    EXPECT_EQ(optData, expData);
     EXPECT_EQ(2, opt->getHeaderLen());
     EXPECT_EQ(6, opt->len());
 

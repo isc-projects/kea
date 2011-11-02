@@ -283,6 +283,9 @@ TEST(Pkt4Test, hwAddr) {
     vector<uint8_t> mac;
     uint8_t expectedChaddr[Pkt4::MAX_CHADDR_LEN];
 
+    // We resize vector to specified length. It is more natural for fixed-length
+    // field, than clear it (shrink size to 0) and push_back each element
+    // (growing length back to MAX_CHADDR_LEN).
     mac.resize(Pkt4::MAX_CHADDR_LEN);
 
     Pkt4* pkt = 0;
@@ -447,10 +450,9 @@ TEST(Pkt4Test, options) {
 
     vector<uint8_t> payload[5];
     for (int i = 0; i < 5; i++) {
-        payload[i].resize(3);
-        payload[i][0] = i*10;
-        payload[i][1] = i*10+1;
-        payload[i][2] = i*10+2;
+        payload[i].push_back(i*10);
+        payload[i].push_back(i*10+1);
+        payload[i].push_back(i*10+2);
     }
 
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
@@ -483,7 +485,7 @@ TEST(Pkt4Test, options) {
         pkt->pack();
     );
 
-    OutputBuffer& buf = pkt->getBuffer();
+    const OutputBuffer& buf = pkt->getBuffer();
     // check that all options are stored, they should take sizeof(v4Opts)
     ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(v4Opts),
               buf.getLength());
