@@ -31,7 +31,7 @@ using namespace isc::util;
 Option::Option(Universe u, unsigned short type)
     :universe_(u), type_(type) {
 
-    if (u==V4 && (type>255)) {
+    if ((u == V4) && (type > 255)) {
         isc_throw(BadValue, "Can't create V4 option of type "
                   << type << ", V4 options are in range 0..255");
     }
@@ -43,13 +43,13 @@ Option::Option(Universe u, unsigned short type,
     :universe_(u), type_(type),
      offset_(offset)
 {
-    if (u==V4 && (type>255)) {
+    if ( (u == V4) && (type > 255)) {
         isc_throw(BadValue, "Can't create V4 option of type "
                   << type << ", V4 options are in range 0..255");
     }
 
     uint8_t* ptr = &buf[offset];
-    data_ = std::vector<uint8_t>(ptr, ptr+len);
+    data_ = std::vector<uint8_t>(ptr, ptr + len);
 
     // sanity checks
     // TODO: universe must be in V4 and V6
@@ -57,12 +57,29 @@ Option::Option(Universe u, unsigned short type,
 
 Option::Option(Universe u, unsigned short type, std::vector<uint8_t>& data)
     :universe_(u), type_(type), data_(data) {
-    if (u==V4 && data.size() > 255) {
+    if ( (u == V4) && (data.size() > 255) ) {
         isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
                   << "At most 255 bytes are supported.");
         /// TODO Larger options can be stored as separate instances
         /// of DHCPv4 options. Clients MUST concatenate them.
         /// Fortunately, there are no such large options used today.
+    }
+    if ( (u == V4) && (type > 255) ) {
+        isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big."
+                  << "For DHCPv4 allowed type range is 0..255");
+    }
+}
+
+Option::Option(Universe u, uint16_t type, vector<uint8_t>::const_iterator first,
+               vector<uint8_t>::const_iterator last)
+    :universe_(u), type_(type) {
+    if ( (u == V4) && (type > 255) ) {
+        isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big."
+                  << "For DHCPv4 allowed type range is 0..255");
+    }
+    data_ = std::vector<uint8_t>(first, last);
+    if ( (u == V4) && (data_.size() > 255) ) {
+        isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big.");
     }
 }
 
@@ -82,7 +99,7 @@ void
 Option::pack4(isc::util::OutputBuffer& buf) {
     switch (universe_) {
     case V4: {
-        if (data_.size()>255) {
+        if (data_.size() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
                       << "At most 255 bytes are supported.");
             /// TODO Larger options can be stored as separate instances
@@ -114,7 +131,7 @@ unsigned int
 Option::pack4(boost::shared_array<uint8_t>& buf,
              unsigned int buf_len,
              unsigned int offset) {
-    if ( offset+len() > buf_len ) {
+    if (offset + len() > buf_len) {
         isc_throw(OutOfRange, "Failed to pack v4 option=" <<
                   type_ << ",len=" << len() << ": too small buffer.");
     }
@@ -131,7 +148,7 @@ unsigned int
 Option::pack6(boost::shared_array<uint8_t>& buf,
              unsigned int buf_len,
              unsigned int offset) {
-    if ( offset+len() > buf_len ) {
+    if (offset+len() > buf_len) {
         isc_throw(OutOfRange, "Failed to pack v6 option=" <<
                   type_ << ",len=" << len() << ": too small buffer.");
     }
@@ -142,7 +159,7 @@ Option::pack6(boost::shared_array<uint8_t>& buf,
 
     ptr = writeUint16(len() - getHeaderLen(), ptr);
 
-    if (data_.size())
+    if (! data_.empty())
         memcpy(ptr, &data_[0], data_.size());
 
     // end of fixed part of this option
@@ -191,7 +208,7 @@ Option::unpack6(const boost::shared_array<uint8_t>& buf,
     }
 
     uint8_t* ptr = &buf[offset];
-    data_ = std::vector<uint8_t>(ptr, ptr+parse_len);
+    data_ = std::vector<uint8_t>(ptr, ptr + parse_len);
 
     offset_ = offset;
 
@@ -256,12 +273,12 @@ Option::delOption(unsigned short opt_type) {
 std::string Option::toText(int indent /* =0 */ ) {
     std::stringstream tmp;
 
-    for (int i=0; i<indent; i++)
+    for (int i = 0; i < indent; i++)
         tmp << " ";
 
     tmp << "type=" << type_ << ", len=" << len()-getHeaderLen() << ": ";
 
-    for (unsigned int i=0; i<data_.size(); i++) {
+    for (unsigned int i = 0; i < data_.size(); i++) {
         if (i) {
             tmp << ":";
         }
@@ -270,8 +287,8 @@ std::string Option::toText(int indent /* =0 */ ) {
     }
 
     // print suboptions
-    for (OptionCollection::const_iterator opt=options_.begin();
-         opt!=options_.end();
+    for (OptionCollection::const_iterator opt = options_.begin();
+         opt != options_.end();
          ++opt) {
         tmp << (*opt).second->toText(indent+2);
     }
