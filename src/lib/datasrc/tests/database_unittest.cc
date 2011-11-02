@@ -279,7 +279,7 @@ class MockAccessor : public NopAccessor {
                      NameCompare > Domains;
 
 public:
-    MockAccessor() : rollbacked_(false) {
+    MockAccessor() : rollbacked_(false), did_transaction_(false) {
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
         empty_records_ = &empty_records_master_;
@@ -299,8 +299,18 @@ public:
         // Currently we only use this transaction for simple read-only
         // operations.  So we just make a local copy of the data (we don't
         // care about what happens after commit() or rollback()).
+        // Obviously as a consequence, if a test case tries to make multiple
+        // transactions on a single mock accessor it will fail.
+
+        // Check any attempt of multiple transactions
+        if (did_transaction_) {
+            isc_throw(isc::Unexpected, "MockAccessor::startTransaction() "
+                      "called multiple times - likely a bug in the test");
+        }
+
         readonly_records_copy_ = *readonly_records_;
         readonly_records_ = &readonly_records_copy_;
+        did_transaction_ = true;
     }
 
 private:
@@ -650,8 +660,6 @@ private:
     const Domains empty_records_master_;
     const Domains* empty_records_;
 
-    // used as temporary storage during the building of the fake data
-
     // used as temporary storage after searchForRecord() and during
     // getNextRecord() calls, as well as during the building of the
     // fake data
@@ -666,6 +674,9 @@ private:
 
     // Remember the mock accessor that was last cloned
     boost::shared_ptr<MockAccessor> latest_clone_;
+
+    // Internal flag for duplicate check
+    bool did_transaction_;
 
     const Domains& getMockRecords(int zone_id) const {
         if (zone_id == READONLY_ZONE_ID) {
