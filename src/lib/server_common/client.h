@@ -140,7 +140,7 @@ private:
 ///
 /// \param os A \c std::ostream object on which the insertion operation is
 /// performed.
-/// \param edns A reference to an \c Client object output by the operation.
+/// \param client A reference to a \c Client object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const Client& client);

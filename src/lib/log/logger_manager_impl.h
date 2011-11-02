@@ -60,7 +60,7 @@ public:
     /// that all non-root loggers (if they exist) are set to NOT_SET, and the
     /// root logger reset to logging informational messages.
     ///
-    /// \param root_name BIND 10 name of the root logger
+    /// \return root_name BIND 10 name of the root logger
     static void processInit();
 
     /// \brief Process Specification
