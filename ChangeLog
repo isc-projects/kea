@@ -1,3 +1,9 @@
+311.	[bug]		jelte
+	Fixed a bug in bindctl where tab-completion for names that
+	contain a hyphen resulted in unexpected behaviour, such as
+	appending the already-typed part again.
+	(Trac #1345, git f80ab7879cc29f875c40dde6b44e3796ac98d6da)
+
 310.	[bug]		jelte
 	Fixed a bug where bindctl could not set a value that is optional
 	and has no default, resulting in the error that the setting
