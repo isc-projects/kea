@@ -315,19 +315,8 @@ class Component(BaseComponent):
         - `process` is the name of the process to start.
         - `boss` the boss object to plug into. The component needs to plug
           into it to know when it failed, etc.
-        - `kind` is the kind of component. It may be one of:
-          * 'core' means the system can't run without it and it can't be
-            safely restarted. If it does not start, the system is brought
-            down. If it crashes, the system is turned off as well (with
-            non-zero exit status).
-          * 'needed' means the system is able to restart the component,
-            but it is vital part of the service (like auth server). If
-            it fails to start or crashes in less than 10s after the first
-            startup, the system is brought down. If it crashes later on,
-            it is restarted.
-          * 'dispensable' means the component should be running, but if it
-            doesn't start or crashes for some reason, the system simply tries
-            to restart it and keeps running.
+        - `kind` is the kind of component. Refer to the documentation of
+          BaseComponent for details.
         - `address` is the address on message bus. It is used to ask it to
             shut down at the end. If you specialize the class for a component
             that is shut down differently, it might be None.
