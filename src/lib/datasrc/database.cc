@@ -783,9 +783,6 @@ public:
         return (rrset);
     }
 
-    virtual ZoneFinder& getFinder() {
-        isc_throw(NotImplemented, "Not implemented");
-    }
 private:
     // Load next row of data
     void getData() {
