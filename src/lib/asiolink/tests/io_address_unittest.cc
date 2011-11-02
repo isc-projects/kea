@@ -95,7 +95,7 @@ TEST(IOAddressTest, uint32) {
     EXPECT_EQ(expected, tmp);
 
     // now let's try opposite conversion
-    IOAddress addr3 = IOAddress::from_uint32(expected);
+    IOAddress addr3 = IOAddress(expected);
 
     EXPECT_EQ(addr3.toText(), "192.0.2.5");
 }
