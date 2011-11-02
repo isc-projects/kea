@@ -15,6 +15,7 @@ CLEANFILES = *.gcno *.gcda
 noinst_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.cc
 perfdhcp_SOURCES += packetdisp.c
+perfdhcp_SOURCES += externals.cc
 perfdhcp_SOURCES += perfdhcp.h
 perfdhcp_SOURCES += dhcp.h dhcp6.h
 perfdhcp_SOURCES += cloptions.cc
