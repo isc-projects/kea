@@ -72,8 +72,8 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
     }
 
     if (v4 && v6) {
-	fprintf(stderr, "Must not give -4 and -6 together.\n");
-	return 2;
+        fprintf(stderr, "Must not give -4 and -6 together.\n");
+        return 2;
     }
     switch (argc) {
     case 0:
@@ -173,3 +173,30 @@ The exit status is:\n\
   not successfully completed.\n",
 		    progName, usage);
 }
+
+// Null functions to get the tests compiling.
+
+
+int parse(int, char**) {
+    // Argument names not given to prevent compiler warning about unused
+    // variables;
+    return (-1);
+}
+
+const char* getAddress() {
+    return (NULL);
+}
+
+uint16_t getPort() {
+    return (0);
+}
+
+uint32_t getTimeout() {
+    return (0);
+}
+
+const char* getQname() {
+    return (NULL);
+}
+
+

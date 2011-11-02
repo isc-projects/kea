@@ -58,14 +58,6 @@ void gen_solicit(struct dhcpv6_packet *dhcp_pkt, const struct duid *client_id);
 void dhcp_send(int v6, const unsigned char *msg, int send_fd, const struct
 	sockaddr *r_addr, const struct sockaddr_storage *send_laddr);
 
-int v6 = 0;
-int initialOnly = 0;
-const char *localName = NULL;
-unsigned rate = 0;
-unsigned numRequest = 0;
-const char *server = NULL;
-const char *diagSelector = "";
-
 static const struct dkdesc diagLetters[] = {
     { 's', DK_SOCK },
     { 'm', DK_MSG },
