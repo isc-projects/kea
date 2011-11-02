@@ -89,7 +89,7 @@ None\n\
 ";
 
 const char* const DataSourceClient_getIterator_doc = "\
-get_iterator(name) -> ZoneIterator\n\
+get_iterator(name, individual_rrs=False) -> ZoneIterator\n\
 \n\
 Returns an iterator to the given zone.\n\
 \n\
@@ -111,6 +111,8 @@ anything else.\n\
 Parameters:\n\
   isc.dns.Name The name of zone apex to be traversed. It doesn't do\n\
                nearest match as find_zone.\n\
+  individual_rrs If this is True (default is False), each RR will be\n\
+                 as a separate RRset\n\
 \n\
 Return Value(s): Pointer to the iterator.\n\
 ";

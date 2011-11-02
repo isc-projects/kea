@@ -83,11 +83,19 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
 PyObject*
 DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
-    PyObject *name_obj;
-    if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
+    PyObject* name_obj;
+    PyObject* individual_rrs_obj = NULL;
+    if (PyArg_ParseTuple(args, "O!|O", &name_type, &name_obj,
+                         &individual_rrs_obj)) {
         try {
+            bool individual_rrs = false;
+            if (individual_rrs_obj != NULL &&
+                PyObject_IsTrue(individual_rrs_obj)) {
+                individual_rrs = true;
+            }
             return (createZoneIteratorObject(
-                self->cppobj->getInstance().getIterator(PyName_ToName(name_obj)),
+                self->cppobj->getInstance().getIterator(PyName_ToName(name_obj),
+                                                        individual_rrs),
                 po_self));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),
