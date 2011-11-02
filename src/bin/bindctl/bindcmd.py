@@ -46,6 +46,16 @@ except ImportError:
 # if we have readline support, use that, otherwise use normal stdio
 try:
     import readline
+    # This is a fix for the problem described in
+    # http://bind10.isc.org/ticket/1345
+    # If '-' is seen as a word-boundary, the final completion-step
+    # (as handled by the cmd module, and hence outside our reach) can
+    # mistakenly add data twice, resulting in wrong completion results
+    # The solution is to remove it.
+    delims = readline.get_completer_delims()
+    delims = delims.replace('-', '')
+    readline.set_completer_delims(delims)
+
     my_readline = readline.get_line_buffer
 except ImportError:
     my_readline = sys.stdin.readline
@@ -109,18 +119,6 @@ class BindCmdInterpreter(Cmd):
         else:
             self.csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir + \
                 os.sep + '.bind10' + os.sep
-        self._update_readline_word_boundary()
-
-    def _update_readline_word_boundary(self):
-        # This is a fix for the problem described in
-        # http://bind10.isc.org/ticket/1345
-        # If '-' is seen as a word-boundary, the final completion-step
-        # (as handled by the cmd module, and hence outside our reach) can
-        # mistakenly add data twice, resulting in wrong completion results
-        # The solution is to remove it.
-        delims = readline.get_completer_delims()
-        delims = delims.replace('-', '')
-        readline.set_completer_delims(delims)
 
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
