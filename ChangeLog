@@ -1,3 +1,10 @@
+310.	[bug]		jelte
+	Fixed a bug where bindctl could not set a value that is optional
+	and has no default, resulting in the error that the setting
+	itself was unknown. bindctl now correctly sees the setting and
+	is able to set it.
+	(Trac #1344, git 0e776c32330aee466073771600390ce74b959b38)
+
 309.	[bug]		jelte
 	Fixed a bug in bindctl where the removal of elements from a set
 	with default values was not stored, unless the set had been
