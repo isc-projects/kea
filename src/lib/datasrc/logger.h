@@ -18,7 +18,7 @@
 #include <log/macros.h>
 #include <datasrc/datasrc_messages.h>
 
-/// \file logger.h
+/// \file datasrc/logger.h
 /// \brief Data Source library global logger
 ///
 /// This holds the logger for the data source library. It is a private header

@@ -478,7 +478,7 @@ public:
 
     /// \brief Return the current \c Rdata corresponding to the rdata cursor.
     ///
-    /// \return A reference to an \c rdata::::Rdata object corresponding
+    /// \return A reference to an \c rdata::Rdata object corresponding
     /// to the rdata cursor.
     virtual const rdata::Rdata& getCurrent() const = 0;
 

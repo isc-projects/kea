@@ -169,7 +169,7 @@ public:
     /// Deactivates the current formatter. In case the formatter is not active,
     /// only produces another inactive formatter.
     ///
-    /// \param arg The argument to place into the placeholder.
+    /// \param value The argument to place into the placeholder.
     template<class Arg> Formatter& arg(const Arg& value) {
         if (logger_) {
             try {
