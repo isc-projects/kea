@@ -1120,8 +1120,8 @@ TEST_F(MockDatabaseClientTest, ttldiff) {
 
 // Unless we ask for individual RRs in our iterator request. In that case
 // every RR should go into its own 'rrset'
-TEST_F(MockDatabaseClientTest, ttldiff_individual) {
-    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org"), true));
+TEST_F(MockDatabaseClientTest, ttldiff_no_adjust_ttl) {
+    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org"), false));
 
     // Walk through the full iterator, we should see 1 rrset with name
     // ttldiff1.example.org., and two rdatas. Same for ttldiff2
@@ -1139,6 +1139,9 @@ TEST_F(MockDatabaseClientTest, ttldiff_individual) {
             } else if (rrset->getTTL() == RRTTL(600)) {
                 ASSERT_FALSE(found2);
                 found2 = true;
+            } else {
+                FAIL() << "Found unexpected TTL: " <<
+                          rrset->getTTL().toText();
             }
         }
         rrset = it->getNextRRset();

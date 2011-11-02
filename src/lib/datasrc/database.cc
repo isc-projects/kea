@@ -705,11 +705,11 @@ namespace {
 class DatabaseIterator : public ZoneIterator {
 public:
     DatabaseIterator(const DatabaseAccessor::IteratorContextPtr& context,
-             const RRClass& rrclass, bool individual_rrs) :
+             const RRClass& rrclass, bool adjust_ttl) :
         context_(context),
         class_(rrclass),
         ready_(true),
-        individual_rrs_(individual_rrs)
+        adjust_ttl_(adjust_ttl)
     {
         // Prepare data for the next time
         getData();
@@ -731,19 +731,20 @@ public:
         RRType rtype(rtype_str);
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
         while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
-            if (ttl_ != ttl) {
-                if (ttl < ttl_) {
-                    ttl_ = ttl;
-                    rrset->setTTL(RRTTL(ttl));
+            if (adjust_ttl_) {
+                if (ttl_ != ttl) {
+                    if (ttl < ttl_) {
+                        ttl_ = ttl;
+                        rrset->setTTL(RRTTL(ttl));
+                    }
+                    LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
+                        arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
                 }
-                LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
-                    arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
+            } else if (ttl_ != ttl) {
+                break;
             }
             rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
             getData();
-            if (individual_rrs_) {
-                break;
-            }
         }
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
             arg(rrset->getName()).arg(rrset->getType());
@@ -768,15 +769,16 @@ private:
     bool ready_, data_ready_;
     // Data of the next row
     string name_, rtype_, rdata_, ttl_;
-    // Whether to return individual RRsets
-    bool individual_rrs_;
+    // Whether to modify differing TTL values, or treat a different TTL as
+    // a different RRset
+    bool adjust_ttl_;
 };
 
 }
 
 ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name,
-                            bool individual_rrs) const
+                            bool adjust_ttl) const
 {
     // Get the zone
     std::pair<bool, int> zone(accessor_->getZone(name.toText()));
@@ -802,7 +804,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
     return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN(),
-                                                 individual_rrs)));
+                                                 adjust_ttl)));
 }
 
 //
