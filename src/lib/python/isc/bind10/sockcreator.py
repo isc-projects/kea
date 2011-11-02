@@ -233,4 +233,3 @@ class Creator(Parser):
         logger.warn(BIND10_SOCKCREATOR_KILL)
         if self.__process is not None:
             self.__process.kill()
-            self.__process = None
