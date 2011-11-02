@@ -1132,7 +1132,7 @@ TYPED_TEST(DatabaseClientTest, updateThenIterateThenUpdate) {
     this->updater_->commit();
 }
 
-TYPED_TEST(DatabaseClientTest, updateAfterDelteIterator) {
+TYPED_TEST(DatabaseClientTest, updateAfterDeleteIterator) {
     // Similar to the previous case, but we delete the iterator in the
     // middle of zone.  The transaction should be canceled (actually no
     // different from commit though) at that point.
