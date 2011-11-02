@@ -13,18 +13,18 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from isc.bind10.component import Component
+from isc.bind10.component import Component, BaseComponent
 import isc.bind10.sockcreator
 from bind10_config import LIBEXECDIR
 import os
 
-class SockCreator(Component):
+class SockCreator(BaseComponent):
     """
     The socket creator component. Will start and stop the socket creator
     accordingly.
     """
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
+        BaseComponent.__init__(self, boss, kind)
         self.__creator = None
 
     def _start_internal(self):
@@ -36,6 +36,9 @@ class SockCreator(Component):
     def _stop_internal(self):
         self.__creator.terminate()
         self.__creator = None
+
+    def name(self):
+        return "Socket creator"
 
     def pid(self):
         """
@@ -55,36 +58,37 @@ class Msgq(Component):
     and we leave the boss kill it by signal.
     """
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self._start_func = boss.start_msgq
+        Component.__init__(self, process, boss, kind, None, None,
+                           boss.start_msgq)
 
     def _stop_internal(self):
         pass # Wait for the boss to actually kill it. There's no stop command.
+             # This is a hackish way, though
 
 class CfgMgr(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'ConfigManager')
-        self._start_func = boss.start_cfgmgr
+        Component.__init__(self, process, boss, kind, 'ConfigManager',
+                           None, boss.start_cfgmgr)
 
 class Auth(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Auth')
-        self._start_func = boss.start_auth
+        Component.__init__(self, process, boss, kind, 'Auth', None,
+                           boss.start_auth)
 
 class Resolver(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Resolver')
-        self._start_func = boss.start_resolver
+        Component.__init__(self, process, boss, kind, 'Resolver', None,
+                           boss.start_resolver)
 
 class CmdCtl(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Cmdctl')
-        self._start_func = boss.start_cmdctl
+        Component.__init__(self, process, boss, kind, 'Cmdctl', None,
+                           boss.start_cmdctl)
 
 class XfrIn(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Xfrin')
-        self._start_func = boss.start_xfrin
+        Component.__init__(self, process, boss, kind, 'Xfrin', None,
+                           boss.start_xfrin)
 
 def get_specials():
     """

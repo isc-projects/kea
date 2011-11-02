@@ -22,7 +22,7 @@ import unittest
 import isc.log
 import time
 import copy
-from isc.bind10.component import Component, Configurator
+from isc.bind10.component import Component, Configurator, BaseComponent
 import isc.bind10.special_component
 
 class TestError(Exception):
@@ -439,7 +439,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.kill()
         component.kill(True)
 
-class TestComponent(Component):
+class TestComponent(BaseComponent):
     """
     A test component. It does not start any processes or so, it just logs
     information about what happens.
@@ -451,11 +451,13 @@ class TestComponent(Component):
 
         The process is used as a name for the logging.
         """
-        Component.__init__(self, name, owner, kind, address, params)
+        BaseComponent.__init__(self, owner, kind)
         self.__owner = owner
         self.__name = name
         self.log('init')
         self.log(kind)
+        self._address = address
+        self._params = params
 
     def log(self, event):
         """
@@ -476,10 +478,13 @@ class TestComponent(Component):
     def kill(self, forcefull=False):
         self.log('killed')
 
-class FailComponent(Component):
+class FailComponent(BaseComponent):
     """
     A mock component that fails whenever it is started.
     """
+    def __init__(self, name, boss, kind, address=None, params=None):
+        BaseComponent.__init__(self, boss, kind)
+
     def _start_internal(self):
         raise TestError("test error")
 
