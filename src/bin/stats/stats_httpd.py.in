@@ -631,22 +631,7 @@ class StatsHttpd:
                     xsl_elem.append(table)
                 # assumed stats_spec
                 else:
-                    td = xml.etree.ElementTree.Element(
-                        "td",
-                        attrib={ "class" : "title",
-                                 "title" : stats_spec["item_description"] \
-                                     if "item_description" in stats_spec \
-                                     else "" })
-                    a = xml.etree.ElementTree.Element(
-                        "a", attrib={ "href": urllib.parse.quote(path + "/" + stats_spec["item_name"]) })
-                    a.text = stats_spec[ "item_title" if "item_title" in stats_spec else "item_name" ]
-                    td.append(a)
-                    xsl_elem.append(td)
-                    td = xml.etree.ElementTree.Element("td")
                     if stats_spec['item_type'] == 'map':
-                        stats_spec2xsl(stats_spec['map_item_spec'], td,
-                                       path + "/" + stats_spec["item_name"])
-                    elif stats_spec['item_type'] == 'list':
                         table = xml.etree.ElementTree.Element("table")
                         tr = xml.etree.ElementTree.Element("tr")
                         th = xml.etree.ElementTree.Element("th")
@@ -656,17 +641,33 @@ class StatsHttpd:
                         th.text = "Item Values"
                         tr.append(th)
                         table.append(tr)
+                        foreach = xml.etree.ElementTree.Element(
+                            "xsl:for-each", attrib={ "select" : stats_spec['item_name'] })
                         tr = xml.etree.ElementTree.Element("tr")
-                        stats_spec2xsl(stats_spec['list_item_spec'], tr,
+                        td = xml.etree.ElementTree.Element(
+                            "td",
+                            attrib={ "class" : "title",
+                                     "title" : stats_spec["item_description"] \
+                                         if "item_description" in stats_spec \
+                                         else "" })
+                        td.text = stats_spec[ "item_title" if "item_title" in stats_spec else "item_name" ]
+                        tr.append(td)
+                        td = xml.etree.ElementTree.Element("td")
+                        stats_spec2xsl(stats_spec['map_item_spec'], td,
                                        path + "/" + stats_spec["item_name"])
-                        table.append(tr)
-                        td.append(table)
+                        tr.append(td)
+                        foreach.append(tr)
+                        table.append(foreach)
+                        xsl_elem.append(table)
+                    elif stats_spec['item_type'] == 'list':
+                        stats_spec2xsl(stats_spec['list_item_spec'], xsl_elem,
+                                       path + "/" + stats_spec["item_name"])
                     else:
                         xsl_valueof = xml.etree.ElementTree.Element(
                             "xsl:value-of",
                             attrib={'select': stats_spec["item_name"]})
-                        td.append(xsl_valueof)
-                    xsl_elem.append(td)
+                        xsl_elem.append(xsl_valueof)
+
             # multiple stats_specs
             elif type(stats_spec) is list:
                 table = xml.etree.ElementTree.Element("table")
@@ -680,8 +681,27 @@ class StatsHttpd:
                 table.append(tr)
                 for item_spec in stats_spec:
                     tr = xml.etree.ElementTree.Element("tr")
-                    stats_spec2xsl(item_spec, tr, path)
-                    table.append(tr)
+                    td = xml.etree.ElementTree.Element(
+                        "td",
+                        attrib={ "class" : "title",
+                                 "title" : item_spec["item_description"] \
+                                     if "item_description" in item_spec \
+                                     else "" })
+                    a = xml.etree.ElementTree.Element(
+                        "a", attrib={ "href": urllib.parse.quote(path + "/" + item_spec["item_name"]) })
+                    a.text = item_spec[ "item_title" if "item_title" in item_spec else "item_name" ]
+                    td.append(a)
+                    tr.append(td)
+                    td = xml.etree.ElementTree.Element("td")
+                    stats_spec2xsl(item_spec, td, path)
+                    tr.append(td)
+                    if item_spec['item_type'] == 'list':
+                        foreach = xml.etree.ElementTree.Element(
+                            "xsl:for-each", attrib={ "select" : item_spec['item_name'] })
+                        foreach.append(tr)
+                        table.append(foreach)
+                    else:
+                        table.append(tr)
                 xsl_elem.append(table)
             return None
 
