@@ -103,6 +103,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__start_called = False
         self.__stop_called = False
         self.__failed_called = False
+        self.__registered_processes = {}
 
     def __start(self):
         """
@@ -435,9 +436,39 @@ class ComponentTests(BossUtils, unittest.TestCase):
         We do not try to kill a running component, as we should not start
         it during unit tests.
         """
-        component = Component(self, 'component', 'needed')
+        component = Component('component', self, 'needed')
         component.kill()
         component.kill(True)
+
+    def register_process(self, pid, process):
+        """
+        Part of pretending to be a boss
+        """
+        self.__registered_processes[pid] = process
+
+    def test_component_attributes(self):
+        """
+        Test the default attributes of Component (not BaseComponent) and
+        some of the methods we might be allowed to call.
+        """
+        class TestProcInfo:
+            def __init__(self):
+                self.pid = 42
+        component = Component('component', self, 'needed', 'Address',
+                              ['hello'], TestProcInfo)
+        self.assertEqual('component', component._process)
+        self.assertEqual('component', component.name())
+        self.assertIsNone(component._procinfo)
+        self.assertIsNone(component.pid())
+        self.assertEqual(['hello'], component._params)
+        self.assertEqual('Address', component._address)
+        self.assertFalse(component.running())
+        self.assertEqual({}, self.__registered_processes)
+        component.start()
+        self.assertTrue(component.running())
+        self.assertIsInstance(component._procinfo, TestProcInfo)
+        self.assertEqual(42, component.pid())
+        self.assertEqual(component, self.__registered_processes.get(42))
 
 class TestComponent(BaseComponent):
     """
