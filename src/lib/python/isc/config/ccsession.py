@@ -543,6 +543,7 @@ class UIModuleCCSession(MultiConfigData):
                 cur_map = {}
             if value in cur_map:
                 del cur_map[value]
+                self.set_value(identifier, cur_map)
             else:
                 raise isc.cc.data.DataNotFoundError(value + " not found in named_set " + str(identifier))
 
