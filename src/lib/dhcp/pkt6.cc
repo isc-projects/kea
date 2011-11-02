@@ -88,6 +88,13 @@ Pkt6::pack() {
 
 bool
 Pkt6::packUDP() {
+
+    // TODO: Once OutputBuffer is used here, some thing like this
+    // will be used. Yikes! That's ugly.
+    // bufferOut_.writeData(ciaddr_.getAddress().to_v6().to_bytes().data(), 16);
+    // It is better to implement a method in IOAddress that extracts
+    // vector<uint8_t>
+
     unsigned short length = len();
     if (data_len_ < length) {
         cout << "Previous len=" << data_len_ << ", allocating new buffer: len="

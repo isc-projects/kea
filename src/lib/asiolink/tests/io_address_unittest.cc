@@ -83,3 +83,19 @@ TEST(IOAddressTest, from_bytes) {
     });
     EXPECT_EQ(addr.toText(), IOAddress("192.0.2.3").toText());
 }
+
+TEST(IOAddressTest, uint32) {
+    IOAddress addr1("192.0.2.5");
+
+    // operator uint_32() is used here
+    uint32_t tmp = addr1;
+
+    uint32_t expected = (192U << 24) +  (0U << 16) + (2U << 8) + 5U;
+
+    EXPECT_EQ(expected, tmp);
+
+    // now let's try opposite conversion
+    IOAddress addr3 = IOAddress(expected);
+
+    EXPECT_EQ(addr3.toText(), "192.0.2.5");
+}
