@@ -1,3 +1,9 @@
+309.	[bug]		jelte
+	Fixed a bug in bindctl where the removal of elements from a set
+	with default values was not stored, unless the set had been
+	modified in another way already.
+	(Trac #1343, git 25c802dd1c30580b94345e83eeb6a168ab329a33)
+
 308.	[build]		jelte
 	The configure script will now use pkg-config for finding
 	information about the Botan library. If pkg-config is unavailable,
