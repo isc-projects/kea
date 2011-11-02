@@ -684,25 +684,165 @@ class TestStatsHttpd(unittest.TestCase):
     def test_xml_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.stats_httpd.get_stats_spec = lambda x,y: \
-            { 'Dummy' : [ {
-                'item_name' : 'foo',
-                'item_type' : 'string' } ] }
+            { "Dummy" :
+                  [{
+                        "item_name": "foo",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "bar",
+                        "item_description": "foo is bar",
+                        "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
+                        }]
+              }
         self.stats_httpd.get_stats_data = lambda x,y: \
-            { 'Dummy' : { 'foo':'bar' } }
+            { 'Dummy' : { 'foo':'bar',
+                          'foo2': [
+                            {
+                                "foo2-1-1" : "bar1",
+                                "foo2-1-2" : 10,
+                                "foo2-1-3" : 9
+                                },
+                            {
+                                "foo2-1-1" : "bar2",
+                                "foo2-1-2" : 8,
+                                "foo2-1-3" : 7
+                                }
+                            ] } }
         xml_body1 = self.stats_httpd.open_template(
             stats_httpd.XML_TEMPLATE_LOCATION).substitute(
-            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 /bind10/statistics/xsd"><Dummy><foo>bar</foo></Dummy></bind10:statistics>',
+            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 /bind10/statistics/xsd"><Dummy><foo>bar</foo><foo2><foo2-1><foo2-1-1>bar1</foo2-1-1><foo2-1-2>10</foo2-1-2><foo2-1-3>9</foo2-1-3></foo2-1><foo2-1><foo2-1-1>bar2</foo2-1-1><foo2-1-2>8</foo2-1-2><foo2-1-3>7</foo2-1-3></foo2-1></foo2></Dummy></bind10:statistics>',
             xsl_url_path=stats_httpd.XSL_URL_PATH)
         xml_body2 = self.stats_httpd.xml_handler()
         self.assertEqual(type(xml_body1), str)
         self.assertEqual(type(xml_body2), str)
         self.assertEqual(xml_body1, xml_body2)
         self.stats_httpd.get_stats_spec = lambda x,y: \
-            { 'Dummy' : [ {
-                'item_name' : 'bar',
-                'item_type' : 'string' } ] }
+            { "Dummy" :
+                  [{
+                        "item_name": "bar",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "foo",
+                        "item_description": "bar foo",
+                        "item_title": "Bar"
+                        },
+                   {
+                        "item_name": "bar2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Bar foo",
+                        "item_description": "Bar foo",
+                        "list_item_spec": {
+                            "item_name": "bar2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "bar2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Bar2 1 1",
+                                    "item_description": "Bar foo"
+                                    },
+                                {
+                                    "item_name": "bar2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Bar2 1 2",
+                                    "item_description": "Bar foo"
+                                    },
+                                {
+                                    "item_name": "bar2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Bar2 1 3",
+                                    "item_description": "Bar foo"
+                                    }
+                                ]
+                            }
+                        }]
+              }
         self.stats_httpd.get_stats_data = lambda x,y: \
-            { 'Dummy' : {'bar':'foo'} }
+            { 'Dummy' : { 'bar':'foo',
+                          'bar2': [
+                            {
+                                "bar2-1-1" : "foo1",
+                                "bar2-1-2" : 10,
+                                "bar2-1-3" : 9
+                                },
+                            {
+                                "bar2-1-1" : "foo2",
+                                "bar2-1-2" : 8,
+                                "bar2-1-3" : 7
+                                }
+                            ] } }
         xml_body2 = self.stats_httpd.xml_handler()
         self.assertNotEqual(xml_body1, xml_body2)
 
@@ -717,11 +857,62 @@ class TestStatsHttpd(unittest.TestCase):
                         "item_default": "bar",
                         "item_description": "foo is bar",
                         "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
                         }]
               }
         xsd_body1 = self.stats_httpd.open_template(
             stats_httpd.XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element></all></complexType></element></all></complexType></element></schema>')
+            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2"><complexType><sequence><element maxOccurs="unbounded" minOccurs="1" name="foo2-1"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo2-1-1" type="string"><annotation><appinfo>Foo2 1 1</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-2" type="integer"><annotation><appinfo>Foo2 1 2</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-3" type="integer"><annotation><appinfo>Foo2 1 3</appinfo><documentation>Foo bar</documentation></annotation></element></all></complexType></element></sequence></complexType></element></all></complexType></element></all></complexType></element></schema>')
         xsd_body2 = self.stats_httpd.xsd_handler()
         self.assertEqual(type(xsd_body1), str)
         self.assertEqual(type(xsd_body2), str)
@@ -735,6 +926,57 @@ class TestStatsHttpd(unittest.TestCase):
                         "item_default": "foo",
                         "item_description": "bar is foo",
                         "item_title": "bar"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
                         }]
               }
         xsd_body2 = self.stats_httpd.xsd_handler()
@@ -749,13 +991,64 @@ class TestStatsHttpd(unittest.TestCase):
                         "item_type": "string",
                         "item_optional": False,
                         "item_default": "bar",
-                        "item_description": "foo is bar",
+                        "item_description": "foo bar",
                         "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
                         }]
               }
         xsl_body1 = self.stats_httpd.open_template(
             stats_httpd.XSL_TEMPLATE_LOCATION).substitute(
-            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Names</th><th>Module Items</th></tr><xsl:for-each select="Dummy"><tr><td><a href="./Dummy">Dummy</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="foo is bar"><a href="./Dummy/foo">Foo</a></td><td><xsl:value-of select="foo" /></td></tr></table></td></tr></xsl:for-each></table></xsl:template>',
+            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Names</th><th>Module Items</th></tr><xsl:for-each select="Dummy"><tr><td><a href="./Dummy">Dummy</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="foo bar"><a href="./Dummy/foo">Foo</a></td><td><xsl:value-of select="foo" /></td></tr><xsl:for-each select="foo2"><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2">Foo bar</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><xsl:for-each select="foo2-1"><tr><td class="title" title="">foo2-1</td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2/foo2-1/foo2-1-1">Foo2 1 1</a></td><td><xsl:value-of select="foo2-1-1" /></td></tr><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2/foo2-1/foo2-1-2">Foo2 1 2</a></td><td><xsl:value-of select="foo2-1-2" /></td></tr><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2/foo2-1/foo2-1-3">Foo2 1 3</a></td><td><xsl:value-of select="foo2-1-3" /></td></tr></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></xsl:template>',
             xsd_namespace=stats_httpd.XSD_NAMESPACE)
         xsl_body2 = self.stats_httpd.xsl_handler()
         self.assertEqual(type(xsl_body1), str)
