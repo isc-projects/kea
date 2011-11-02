@@ -201,6 +201,9 @@ class WrappedSocket:
 class Creator(Parser):
     """
     This starts the socket creator and allows asking for the sockets.
+
+    Note: __process shouldn't be reset once created.  See the note
+    of the SockCreator class for details.
     """
     def __init__(self, path):
         (local, remote) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
