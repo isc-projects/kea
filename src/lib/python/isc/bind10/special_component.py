@@ -35,7 +35,6 @@ class SockCreator(Component):
 
     def _stop_internal(self):
         self.__creator.terminate()
-        self.__creator = None
 
     def pid(self):
         """
