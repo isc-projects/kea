@@ -62,8 +62,21 @@ class Msgq(Component):
                            boss.start_msgq)
 
     def _stop_internal(self):
-        pass # Wait for the boss to actually kill it. There's no stop command.
-             # This is a hackish way, though
+        """
+        We can't really stop the message queue, as many processes may need
+        it for their shutdown and it doesn't have a shutdown command anyway.
+        But as it is stateless, it's OK to kill it.
+
+        So we disable this method (as the only time it could be called is
+        during shutdown) and wait for the boss to kill it in the next shutdown
+        step.
+
+        This actually breaks the recommendation at Component we shouldn't
+        override its methods one by one. This is a special case, because
+        we don't provide a different implementation, we completely disable
+        the method by providing an empty one. This can't hurt the internals.
+        """
+        pass
 
 class CfgMgr(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
