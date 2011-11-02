@@ -118,7 +118,7 @@ class BindCmdInterpreter(Cmd):
         # (as handled by the cmd module, and hence outside our reach) can
         # mistakenly add data twice, resulting in wrong completion results
         # The solution is to remove it.
-        delims = readline.get_completer_delims( )
+        delims = readline.get_completer_delims()
         delims = delims.replace('-', '')
         readline.set_completer_delims(delims)
 
