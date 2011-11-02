@@ -92,12 +92,18 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             req_path = os.path.normpath(req_path)
             path_dirs = req_path.split('/')
             path_dirs = [ d for d in filter(None, path_dirs) ]
+            req_path = '/'+"/".join(path_dirs)
+            # The too long path is to be NotFound
+            # in case of /bind10/statistics/xxx/YYY/zzz/aaa
+            if len(path_dirs) > 5:
+                self.send_error(404)
+                return None
             module_name = None
             item_name = None
-            # in case of /bind10/statistics/xxx/YYY/zzz/
+            # in case of /bind10/statistics/xxx/YYY/zzz
             if len(path_dirs) >= 5:
                 item_name = path_dirs[4]
-            # in case of /bind10/statistics/xxx/YYY/
+            # in case of /bind10/statistics/xxx/YYY
             if len(path_dirs) >= 4:
                 module_name = path_dirs[3]
             if req_path.startswith(XML_URL_PATH):
@@ -592,7 +598,7 @@ class StatsHttpd:
     def xsl_handler(self, module_name=None, item_name=None):
         """Handler which just returns the body of XSL document"""
 
-        def stats_spec2xsl(stats_spec, xsl_elem, path='.'):
+        def stats_spec2xsl(stats_spec, xsl_elem, path=XML_URL_PATH):
             """Internal use for xsl_handler. Reads stats_spec
             specified as first arguments, and modify the xml object
             specified as second argument. xsl_elem must be
@@ -687,10 +693,15 @@ class StatsHttpd:
                                  "title" : item_spec["item_description"] \
                                      if "item_description" in item_spec \
                                      else "" })
-                    a = xml.etree.ElementTree.Element(
-                        "a", attrib={ "href": urllib.parse.quote(path + "/" + item_spec["item_name"]) })
-                    a.text = item_spec[ "item_title" if "item_title" in item_spec else "item_name" ]
-                    td.append(a)
+                    # if the path length is equal to or shorter than
+                    # XML_URL_PATH + /Module/Item, add the anchor tag.
+                    if len(path.split('/')) <= len((XML_URL_PATH + '/Module/Item').split('/')):
+                        a = xml.etree.ElementTree.Element(
+                            "a", attrib={ "href": urllib.parse.quote(path + "/" + item_spec["item_name"]) })
+                        a.text = item_spec[ "item_title" if "item_title" in item_spec else "item_name" ]
+                        td.append(a)
+                    else:
+                        td.text = item_spec[ "item_title" if "item_title" in item_spec else "item_name" ]
                     tr.append(td)
                     td = xml.etree.ElementTree.Element("td")
                     stats_spec2xsl(item_spec, td, path)
@@ -711,9 +722,9 @@ class StatsHttpd:
             "xsl:template",
             attrib={'match': "bind10:statistics"})
         if module_name is not None and item_name is not None:
-            stats_spec2xsl([ stats_spec ], xsd_root, './' + module_name)
+            stats_spec2xsl([ stats_spec ], xsd_root, XML_URL_PATH + '/' + module_name)
         elif module_name is not None:
-            stats_spec2xsl(stats_spec, xsd_root, './' + module_name)
+            stats_spec2xsl(stats_spec, xsd_root, XML_URL_PATH + '/' + module_name)
         else:
             stats_spec2xsl(stats_spec, xsd_root)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
