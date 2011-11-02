@@ -221,12 +221,8 @@ public:
             isc_throw(InvalidBufferPosition, "read beyond end of buffer");
         }
 
-        if (data.size() < len)
-            data.resize(len);
-
-        const uint8_t* ptr = &data_[position_];
-        data = std::vector<uint8_t>(ptr, ptr + len);
-        position_ += len;
+        data.resize(len);
+        readData(&data[0], len);
     }
 
 private:
