@@ -515,7 +515,7 @@ class MultiConfigData:
             return value, self.CURRENT
         if default:
             value = self.get_default_value(identifier)
-            if value != None:
+            if value is not None:
                 return value, self.DEFAULT
         return None, self.NONE
 
@@ -649,7 +649,11 @@ class MultiConfigData:
             id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
             cur_value, status = self.get_value(cur_id_part + id)
             # Check if the value was there in the first place
-            if status == MultiConfigData.NONE and cur_id_part != "/":
+            # If we are at the final element, we do not care whether we found
+            # it, since if we have reached this point and it did not exist,
+            # it was apparently an optional value without a default.
+            if status == MultiConfigData.NONE and cur_id_part != "/" and\
+               cur_id_part + id != identifier:
                 raise isc.cc.data.DataNotFoundError(id_part +
                                                     " not found in " +
                                                     cur_id_part)
