@@ -90,6 +90,31 @@ public:
     /// @param data content of the option
     Option(Universe u, unsigned short type, std::vector<uint8_t>& data);
 
+
+    /// @brief Constructor, used for received options.
+    ///
+    /// This contructor is similar to the previous one, but it does not take
+    /// the whole vector<uint8_t>, but rather subset of it.
+    ///
+    /// TODO: This can be templated to use different containers, not just
+    /// vector. Prototype should look like this:
+    /// template<typename InputIterator> Option(Universe u, uint16_t type,
+    /// InputIterator first, InputIterator last);
+    ///
+    /// vector<int8_t> myData;
+    /// Example usage: new Option(V4, 123, myData.begin()+1, myData.end()-1)
+    /// This will create DHCPv4 option of type 123 that contains data from
+    /// trimmed (first and last byte removed) myData vector.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @param type option type (0-255 for V4 and 0-65535 for V6)
+    /// @param first iterator to the first element that should be copied
+    /// @param last iterator to the next element after the last one
+    ///        to be copied.
+    Option(Universe u, uint16_t type,
+           std::vector<uint8_t>::const_iterator first,
+           std::vector<uint8_t>::const_iterator last);
+
     /// @brief returns option universe (V4 or V6)
     ///
     /// @return universe type

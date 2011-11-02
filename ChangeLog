@@ -1,3 +1,11 @@
+ 304.	[func]		tomek
+	libdhcp: Support for DHCPv4 packet manipulation is now implemented.
+	All fixed fields are now supported. Generic support for DHCPv4
+	options is available (both parsing and assembly). There is no code
+	that uses this new functionality yet, so it is not usable directly
+	at this time. This code will be used by upcoming b10-dhcp4 daemon.
+	(Trac #1228, git TBD)
+
 303.	[bug]		jinmei
 	Changed the installation path for the UNIX domain file used
 	for the communication between b10-auth and b10-xfrout to a

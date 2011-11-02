@@ -102,18 +102,15 @@ LibDHCP::unpackOptions4(const std::vector<uint8_t>& buf,
         boost::shared_ptr<Option> opt;
         switch(opt_type) {
         default:
-            /// TODO: Is this intermediate object really necessary here?
-            vector<uint8_t> tmpVec(&buf[offset], &buf[offset] + opt_len);
-            opt = boost::shared_ptr<Option>(new Option(Option::V4,
-                                                       opt_type,
-                                                       tmpVec));
+            opt = boost::shared_ptr<Option>(new Option(Option::V4, opt_type,
+                                                       buf.begin()+offset,
+                                                       buf.begin()+offset+opt_len));
         }
 
         options.insert(pair<int, boost::shared_ptr<Option> >(opt_type, opt));
         offset += opt_len;
     }
 }
-
 
 unsigned int
 LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
