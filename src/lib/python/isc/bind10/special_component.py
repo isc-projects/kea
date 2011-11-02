@@ -22,6 +22,11 @@ class SockCreator(Component):
     """
     The socket creator component. Will start and stop the socket creator
     accordingly.
+
+    Note: _creator shouldn't be reset explicitly once created.  The
+    underlying Popen object would then wait() the child process internally,
+    which breaks the assumption of the boss, who is expecting to see
+    the process die in waitpid().
     """
     def __init__(self, process, boss, kind, address=None, params=None):
         Component.__init__(self, process, boss, kind)
