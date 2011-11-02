@@ -356,10 +356,9 @@ Query::process() {
                 }
                 break;
             default:
-                // These are new result codes (WILDCARD and WILDCARD_NXRRSET)
-                // They should not happen from the in-memory and the database
-                // backend isn't used yet.
-                // TODO: Implement before letting the database backends in
+                // This is basically a bug of the data source implementation,
+                // but could also happen in the middle of development where
+                // we try to add a new result code.
                 isc_throw(isc::NotImplemented, "Unknown result code");
                 break;
         }
