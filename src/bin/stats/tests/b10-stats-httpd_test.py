@@ -283,6 +283,13 @@ class TestHttpHandler(unittest.TestCase):
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
 
+        # 404 NotFound (too long path)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xml/Boss/boot_time/a')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
         # 404 NotFound (nonexistent module name)
         self.client._http_vsn_str = 'HTTP/1.0'
         self.client.putrequest('GET', '/bind10/statistics/xml/Foo')
@@ -1048,7 +1055,7 @@ class TestStatsHttpd(unittest.TestCase):
               }
         xsl_body1 = self.stats_httpd.open_template(
             stats_httpd.XSL_TEMPLATE_LOCATION).substitute(
-            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Names</th><th>Module Items</th></tr><xsl:for-each select="Dummy"><tr><td><a href="./Dummy">Dummy</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="foo bar"><a href="./Dummy/foo">Foo</a></td><td><xsl:value-of select="foo" /></td></tr><xsl:for-each select="foo2"><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2">Foo bar</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><xsl:for-each select="foo2-1"><tr><td class="title" title="">foo2-1</td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2/foo2-1/foo2-1-1">Foo2 1 1</a></td><td><xsl:value-of select="foo2-1-1" /></td></tr><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2/foo2-1/foo2-1-2">Foo2 1 2</a></td><td><xsl:value-of select="foo2-1-2" /></td></tr><tr><td class="title" title="Foo bar"><a href="./Dummy/foo2/foo2-1/foo2-1-3">Foo2 1 3</a></td><td><xsl:value-of select="foo2-1-3" /></td></tr></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></xsl:template>',
+            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Names</th><th>Module Items</th></tr><xsl:for-each select="Dummy"><tr><td><a href="' + stats_httpd.XML_URL_PATH + '/Dummy">Dummy</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo">Foo</a></td><td><xsl:value-of select="foo" /></td></tr><xsl:for-each select="foo2"><tr><td class="title" title="Foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo2">Foo bar</a></td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><xsl:for-each select="foo2-1"><tr><td class="title" title="">foo2-1</td><td><table><tr><th>Item Names</th><th>Item Values</th></tr><tr><td class="title" title="Foo bar">Foo2 1 1</td><td><xsl:value-of select="foo2-1-1" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 2</td><td><xsl:value-of select="foo2-1-2" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 3</td><td><xsl:value-of select="foo2-1-3" /></td></tr></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></xsl:template>',
             xsd_namespace=stats_httpd.XSD_NAMESPACE)
         xsl_body2 = self.stats_httpd.xsl_handler()
         self.assertEqual(type(xsl_body1), str)
