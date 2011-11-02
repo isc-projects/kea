@@ -618,8 +618,9 @@ class BoB:
         Put another process into boss to watch over it.  When the process
         dies, the info.failed() is called with the exit code.
         """
-        self.processes[pid] = info._procinfo
-        if info._procinfo is None:
+        if '_procinfo' in dir(info):
+            self.processes[pid] = info._procinfo
+        else:
             # XXX: a short term hack.  This is the sockcreator.
             self.sockcreator = info._SockCreator__creator
 
@@ -934,9 +935,6 @@ class BoB:
                     logger.fatal(BIND10_SOCKCREATOR_CRASHED)
                     self.sockcreator = None
                     self.runnable = False
-                # This was inserted in self.processes by register_process.
-                # Now need to remove it.
-                del self.processes[pid]
             elif pid in self.processes:
                 # One of the processes we know about.  Get information on it.
                 proc_info = self.processes.pop(pid)
