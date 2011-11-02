@@ -183,7 +183,7 @@ generateTestPacket2() {
     vector<uint8_t> buf(hdr, hdr + sizeof(hdr));
 
     // Append the large header fields.
-    copy(dummyMacAddr, dummyMacAddr + Pkt4::MAX_CHADDR_LEN, back_inserter(buf));
+    copy(dummyChaddr, dummyChaddr + Pkt4::MAX_CHADDR_LEN, back_inserter(buf));
     copy(dummySname, dummySname + Pkt4::MAX_SNAME_LEN, back_inserter(buf));
     copy(dummyFile, dummyFile + Pkt4::MAX_FILE_LEN, back_inserter(buf));
 
