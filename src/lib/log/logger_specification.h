@@ -103,7 +103,7 @@ public:
 
     /// \brief Add output option.
     ///
-    /// \param Option to add to the list.
+    /// \param option Option to add to the list.
     void addOutputOption(const OutputOption& option) {
         options_.push_back(option);
     }

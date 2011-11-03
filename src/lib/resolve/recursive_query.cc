@@ -84,6 +84,7 @@ questionText(const isc::dns::Question& question) {
 /// It is not public function, therefore it's not in header. But it's not
 /// in anonymous namespace, so we can call it from unittests.
 /// \param name The name we want to delegate to.
+/// \param rrclass The class.
 /// \param cache The place too look for known delegations.
 std::string
 deepestDelegation(Name name, RRClass rrclass,

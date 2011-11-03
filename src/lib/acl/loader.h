@@ -125,7 +125,7 @@ BasicAction defaultActionLoader(data::ConstElementPtr action);
  *
  * The rest of the element are matches. The left side is the name of the
  * match type (for example match for source IP address or match for message
- * size). The <parameter> is whatever is needed to describe the match and
+ * size). The parameter is whatever is needed to describe the match and
  * depends on the match type, the loader passes it verbatim to creator
  * of that match type.
  *
@@ -148,7 +148,7 @@ public:
     /**
      * \brief Constructor.
      *
-     * \param default_action The default action for created ACLs.
+     * \param defaultAction The default action for created ACLs.
      * \param actionLoader is the loader which will be used to convert actions
      *     from their JSON representation. The default value is suitable for
      *     the BasicAction enum. If you did not specify the second
@@ -202,7 +202,7 @@ public:
          *     parameters might look like, they are not checked in any way.
          *     Therefore it's up to the creator (or the check being created)
          *     to validate the data and throw if it is bad.
-         * \param Current loader calling this creator. This can be used
+         * \param loader Current loader calling this creator. This can be used
          *     to load subexpressions in case of compound check.
          */
         virtual boost::shared_ptr<Check<Context> > create(
