@@ -18,7 +18,7 @@
 #include <log/macros.h>
 #include <cache/cache_messages.h>
 
-/// \file logger.h
+/// \file cache/logger.h
 /// \brief Cache library global logger
 ///
 /// This holds the logger for the cache library. It is a private header
