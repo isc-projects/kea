@@ -22,6 +22,7 @@
 #include <dns/rrclass.h>
 
 #include <gtest/gtest.h>
+#include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <fstream>
 #include <sqlite3.h>
@@ -29,6 +30,7 @@
 using namespace std;
 using namespace isc::datasrc;
 using boost::shared_ptr;
+using boost::lexical_cast;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
 using isc::dns::RRClass;
@@ -214,8 +216,7 @@ TEST(SQLite3Open, getDBNameExampleROOT) {
     EXPECT_EQ(SQLITE_DBNAME_EXAMPLE_ROOT, accessor.getDBName());
 }
 
-// Simple function to cound the number of records for
-// any name
+// Simple function to match records
 void
 checkRecordRow(const std::string columns[],
                const std::string& field0,
@@ -518,6 +519,7 @@ protected:
     std::string get_columns[DatabaseAccessor::COLUMN_COUNT];
     std::string add_columns[DatabaseAccessor::ADD_COLUMN_COUNT];
     std::string del_params[DatabaseAccessor::DEL_PARAM_COUNT];
+    std::string diff_params[DatabaseAccessor::DIFF_PARAM_COUNT];
 
     vector<const char* const*> expected_stored; // placeholder for checkRecords
     vector<const char* const*> empty_stored; // indicate no corresponding data
@@ -843,5 +845,65 @@ TEST_F(SQLite3Update, concurrentTransactions) {
     // Commit should be successful for both transactions.
     accessor->commit();
     another_accessor->commit();
+}
+
+//
+// Commonly(?) used data for diff related tests.  The last entry is
+// a textual representation of "version".
+//
+const char* const DIFF_ADD_TEXT = "0";
+const char* const DIFF_DELETE_TEXT = "1";
+const char* const diff_begin_data[] = {
+    "example.com.", "SOA", "3600",
+    "ns.example.com. admin.example.com. 1234 3600 1800 2419200 7200",
+    "1234", DIFF_DELETE_TEXT
+};
+const char* const diff_end_data[] = {
+    "example.com.", "SOA", "3600",
+    "ns.example.com. admin.example.com. 1300 3600 1800 2419200 7200",
+    "1300", DIFF_ADD_TEXT
+};
+
+DatabaseAccessor::DiffOperation
+textToOp(const char* const text_op) {
+    return (static_cast<DatabaseAccessor::DiffOperation>(
+                lexical_cast<int>(text_op)));
+                
+}
+
+TEST_F(SQLite3Update, addRecordDiff) {
+    uint32_t version;
+    DatabaseAccessor::DiffOperation operation;
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    version = lexical_cast<uint32_t>(
+        diff_begin_data[DatabaseAccessor::DIFF_PARAM_COUNT]);
+    operation =
+        textToOp(diff_begin_data[DatabaseAccessor::DIFF_PARAM_COUNT + 1]);
+    accessor->addRecordDiff(zone_id, version, operation, diff_params);
+
+    copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    version = lexical_cast<uint32_t>(
+        diff_end_data[DatabaseAccessor::DIFF_PARAM_COUNT]);
+    operation =
+        textToOp(diff_end_data[DatabaseAccessor::DIFF_PARAM_COUNT + 1]);
+    accessor->addRecordDiff(zone_id, version, operation, diff_params); 
+
+    accessor->commit();
+
+    vector<vector<string> > committed_diffs = accessor->getRecordDiff(zone_id);
+    expected_stored.clear();
+    expected_stored.push_back(diff_begin_data);
+    expected_stored.push_back(diff_end_data);
+    vector<vector<string> >::const_iterator it;
+    vector<const char* const*>::const_iterator eit = expected_stored.begin();
+    for (it = committed_diffs.begin(); it != committed_diffs.end(); ++it, ++eit) {
+        for (int i = 0; i < (*it).size(); ++i) {
+            EXPECT_EQ((*eit)[i], (*it)[i]);
+        }
+    }
 }
 } // end anonymous namespace
