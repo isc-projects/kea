@@ -848,8 +848,10 @@ TEST_F(SQLite3Update, concurrentTransactions) {
 }
 
 //
-// Commonly(?) used data for diff related tests.  The last entry is
-// a textual representation of "version".
+// Commonly used data for diff related tests.  The last two entries are
+// a textual representation of "version" and a textual representation of
+// diff operation (either DIFF_ADD_TEXT or DIFF_DELETE_TEXT).  We use this
+// format for the convenience of generating test data and checking the results.
 //
 const char* const DIFF_ADD_TEXT = "0";
 const char* const DIFF_DELETE_TEXT = "1";
@@ -864,46 +866,55 @@ const char* const diff_end_data[] = {
     "1300", DIFF_ADD_TEXT
 };
 
+// The following two are helper functions to convert textual test data
+// to integral zone ID and diff operation.
+int
+getVersion(const char* const diff_data[]) {
+    return (lexical_cast<int>(diff_data[DatabaseAccessor::DIFF_PARAM_COUNT]));
+}
+
 DatabaseAccessor::DiffOperation
-textToOp(const char* const text_op) {
+getOperation(const char* const diff_data[]) {
     return (static_cast<DatabaseAccessor::DiffOperation>(
-                lexical_cast<int>(text_op)));
-                
+                lexical_cast<int>(
+                    diff_data[DatabaseAccessor::DIFF_PARAM_COUNT + 1])));
+}
+
+// Common checker function that compares expected and actual sequence of
+// diffs.
+void
+checkDiffs(const vector<const char* const*>& expected,
+           const vector<vector<string> >& actual)
+{
+    EXPECT_EQ(expected.size(), actual.size());
+    const size_t n_diffs = std::min(expected.size(), actual.size());
+    for (size_t i = 0; i < n_diffs; ++i) {
+        for (int j = 0; j < actual[i].size(); ++j) {
+            EXPECT_EQ(expected[i][j], actual[i][j]);
+        }
+    }
 }
 
 TEST_F(SQLite3Update, addRecordDiff) {
-    uint32_t version;
-    DatabaseAccessor::DiffOperation operation;
+    // A simple case of adding diffs: just changing the SOA, and confirm
+    // the diffs are stored as expected.
     zone_id = accessor->startUpdateZone("example.com.", false).second;
 
     copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
          diff_params);
-    version = lexical_cast<uint32_t>(
-        diff_begin_data[DatabaseAccessor::DIFF_PARAM_COUNT]);
-    operation =
-        textToOp(diff_begin_data[DatabaseAccessor::DIFF_PARAM_COUNT + 1]);
-    accessor->addRecordDiff(zone_id, version, operation, diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
+                            getOperation(diff_begin_data), diff_params);
 
     copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
          diff_params);
-    version = lexical_cast<uint32_t>(
-        diff_end_data[DatabaseAccessor::DIFF_PARAM_COUNT]);
-    operation =
-        textToOp(diff_end_data[DatabaseAccessor::DIFF_PARAM_COUNT + 1]);
-    accessor->addRecordDiff(zone_id, version, operation, diff_params); 
+    accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
+                            getOperation(diff_end_data), diff_params); 
 
     accessor->commit();
 
-    vector<vector<string> > committed_diffs = accessor->getRecordDiff(zone_id);
     expected_stored.clear();
     expected_stored.push_back(diff_begin_data);
     expected_stored.push_back(diff_end_data);
-    vector<vector<string> >::const_iterator it;
-    vector<const char* const*>::const_iterator eit = expected_stored.begin();
-    for (it = committed_diffs.begin(); it != committed_diffs.end(); ++it, ++eit) {
-        for (int i = 0; i < (*it).size(); ++i) {
-            EXPECT_EQ((*eit)[i], (*it)[i]);
-        }
-    }
+    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
 }
 } // end anonymous namespace
