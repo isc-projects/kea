@@ -132,10 +132,35 @@ ZoneIterator_next(PyObject* self) {
     }
 }
 
+PyObject*
+ZoneIterator_getSOA(PyObject* po_self, PyObject*) {
+    s_ZoneIterator* self = static_cast<s_ZoneIterator*>(po_self);
+    try {
+        isc::dns::ConstRRsetPtr rrset = self->cppobj->getSOA();
+        if (!rrset) {
+            Py_RETURN_NONE;
+        }
+        return (createRRsetObject(*rrset));
+    } catch (const isc::Exception& isce) {
+        // isc::Unexpected is thrown when we call getNextRRset() when we are
+        // already done iterating ('iterating past end')
+        // We could also simply return None again
+        PyErr_SetString(getDataSourceException("Error"), isce.what());
+        return (NULL);
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
+        return (NULL);
+    }
+}
+
 PyMethodDef ZoneIterator_methods[] = {
-    { "get_next_rrset",
-      reinterpret_cast<PyCFunction>(ZoneIterator_getNextRRset), METH_NOARGS,
+    { "get_next_rrset", ZoneIterator_getNextRRset, METH_NOARGS,
       ZoneIterator_getNextRRset_doc },
+    { "get_soa", ZoneIterator_getSOA, METH_NOARGS, ZoneIterator_getSOA_doc },
     { NULL, NULL, 0, NULL }
 };
 

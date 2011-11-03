@@ -154,9 +154,13 @@ const char* const TEST_RECORDS[][5] = {
 
     // Put some data into apex (including NS) so we can check our NS
     // doesn't break anything
+    {"example.org.", "SOA", "3600", "", "ns1.example.org. admin.example.org. "
+     "1234 3600 1800 2419200 7200" },
     {"example.org.", "NS", "3600", "", "ns.example.com."},
     {"example.org.", "A", "3600", "", "192.0.2.1"},
     {"example.org.", "NSEC", "3600", "", "acnamesig1.example.org. NS A NSEC RRSIG"},
+    {"example.org.", "RRSIG", "3600", "", "SOA 5 3 3600 20000101000000 "
+              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
               "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
@@ -216,15 +220,17 @@ public:
     }
 
     virtual shared_ptr<DatabaseAccessor> clone() {
-        return (shared_ptr<DatabaseAccessor>()); // bogus data, but unused
+        // This accessor is stateless, so we can simply return a new instance.
+        return (shared_ptr<DatabaseAccessor>(new NopAccessor));
     }
 
     virtual std::pair<bool, int> startUpdateZone(const std::string&, bool) {
         // return dummy value.  unused anyway.
         return (pair<bool, int>(true, 0));
     }
-    virtual void commitUpdateZone() {}
-    virtual void rollbackUpdateZone() {}
+    virtual void startTransaction() {}
+    virtual void commit() {}
+    virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
 
@@ -273,7 +279,7 @@ class MockAccessor : public NopAccessor {
                      NameCompare > Domains;
 
 public:
-    MockAccessor() : rollbacked_(false) {
+    MockAccessor() : rollbacked_(false), did_transaction_(false) {
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
         empty_records_ = &empty_records_master_;
@@ -287,6 +293,24 @@ public:
         cloned_accessor->empty_records_ = &empty_records_master_;
         latest_clone_ = cloned_accessor;
         return (cloned_accessor);
+    }
+
+    virtual void startTransaction() {
+        // Currently we only use this transaction for simple read-only
+        // operations.  So we just make a local copy of the data (we don't
+        // care about what happens after commit() or rollback()).
+        // Obviously as a consequence, if a test case tries to make multiple
+        // transactions on a single mock accessor it will fail.
+
+        // Check any attempt of multiple transactions
+        if (did_transaction_) {
+            isc_throw(isc::Unexpected, "MockAccessor::startTransaction() "
+                      "called multiple times - likely a bug in the test");
+        }
+
+        readonly_records_copy_ = *readonly_records_;
+        readonly_records_ = &readonly_records_copy_;
+        did_transaction_ = true;
     }
 
 private:
@@ -360,38 +384,52 @@ private:
     class MockIteratorContext : public IteratorContext {
     private:
         int step;
+        const Domains& domains_;
     public:
-        MockIteratorContext() :
-            step(0)
+        MockIteratorContext(const Domains& domains) :
+            step(0), domains_(domains)
         { }
         virtual bool getNext(string (&data)[COLUMN_COUNT]) {
+            // A special case: if the given set of domains is already empty,
+            // we always return false.
+            if (domains_.empty()) {
+                return (false);
+            }
+
+            // Return faked data for tests
             switch (step ++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
-                        "1234 3600 1800 2419200 7200";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
+                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
+                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
                     return (true);
                 case 1:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
+                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
+                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
+                    data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
+                        "1234 3600 1800 2419200 7200";
                     return (true);
                 case 2:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "A";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
+                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
                     return (true);
                 case 3:
+                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
+                    data[DatabaseAccessor::TTL_COLUMN] = "300";
+                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
+                    return (true);
+                case 4:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
                     data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::1";
                     return (true);
-                case 4:
+                case 5:
                     data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
@@ -400,7 +438,7 @@ private:
                 default:
                     ADD_FAILURE() <<
                         "Request past the end of iterator context";
-                case 5:
+                case 6:
                     return (false);
             }
         }
@@ -443,7 +481,8 @@ private:
 public:
     virtual IteratorContextPtr getAllRecords(int id) const {
         if (id == READONLY_ZONE_ID) {
-            return (IteratorContextPtr(new MockIteratorContext()));
+            return (IteratorContextPtr(new MockIteratorContext(
+                                           *readonly_records_)));
         } else if (id == 13) {
             return (IteratorContextPtr());
         } else if (id == 0) {
@@ -463,7 +502,11 @@ public:
                         new MockNameIteratorContext(*this, id, name,
                                                     subdomains)));
         } else {
-            isc_throw(isc::Unexpected, "Unknown zone ID");
+            // This iterator is bogus, but for the cases tested below that's
+            // sufficient.
+            return (IteratorContextPtr(
+                        new MockNameIteratorContext(*this, READONLY_ZONE_ID,
+                                                    name, subdomains)));
         }
     }
 
@@ -486,10 +529,10 @@ public:
 
         return (pair<bool, int>(true, WRITABLE_ZONE_ID));
     }
-    virtual void commitUpdateZone() {
+    virtual void commit() {
         *readonly_records_ = *update_records_;
     }
-    virtual void rollbackUpdateZone() {
+    virtual void rollback() {
         // Special hook: if something with a name of "throw.example.org"
         // has been added, trigger an imaginary unexpected event with an
         // exception.
@@ -603,19 +646,19 @@ private:
     // The following member variables are storage and/or update work space
     // of the test zone.  The "master"s are the real objects that contain
     // the data, and they are shared among all accessors cloned from
-    // an initially created one.  The pointer members allow the sharing.
+    // an initially created one.  The "copy" data will be used for read-only
+    // transaction.  The pointer members allow the sharing.
     // "readonly" is for normal lookups.  "update" is the workspace for
     // updates.  When update starts it will be initialized either as an
     // empty set (when replacing the entire zone) or as a copy of the
     // "readonly" one.  "empty" is a sentinel to produce negative results.
     Domains readonly_records_master_;
+    Domains readonly_records_copy_;
     Domains* readonly_records_;
     Domains update_records_master_;
     Domains* update_records_;
     const Domains empty_records_master_;
     const Domains* empty_records_;
-
-    // used as temporary storage during the building of the fake data
 
     // used as temporary storage after searchForRecord() and during
     // getNextRecord() calls, as well as during the building of the
@@ -631,6 +674,9 @@ private:
 
     // Remember the mock accessor that was last cloned
     boost::shared_ptr<MockAccessor> latest_clone_;
+
+    // Internal flag for duplicate check
+    bool did_transaction_;
 
     const Domains& getMockRecords(int zone_id) const {
         if (zone_id == READONLY_ZONE_ID) {
@@ -860,7 +906,7 @@ public:
 
             addRecordToZone(columns);
         }
-        commitUpdateZone();
+        commit();
     }
 };
 
@@ -951,66 +997,6 @@ TEST_F(MockDatabaseClientTest, emptyIterator) {
     EXPECT_THROW(it->getNextRRset(), isc::Unexpected);
 }
 
-// Iterate through a zone
-TYPED_TEST(DatabaseClientTest, iterator) {
-    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
-    ConstRRsetPtr rrset(it->getNextRRset());
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-
-    // The rest of the checks work only for the mock accessor.
-    if (!this->is_mock_) {
-        return;
-    }
-
-    EXPECT_EQ(Name("example.org"), rrset->getName());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    EXPECT_EQ(RRType::SOA(), rrset->getType());
-    EXPECT_EQ(RRTTL(300), rrset->getTTL());
-    RdataIteratorPtr rit(rrset->getRdataIterator());
-    ASSERT_FALSE(rit->isLast());
-    rit->next();
-    EXPECT_TRUE(rit->isLast());
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    EXPECT_EQ(Name("x.example.org"), rrset->getName());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRTTL(300), rrset->getTTL());
-    rit = rrset->getRdataIterator();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("192.0.2.1", rit->getCurrent().toText());
-    rit->next();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("192.0.2.2", rit->getCurrent().toText());
-    rit->next();
-    EXPECT_TRUE(rit->isLast());
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    EXPECT_EQ(Name("x.example.org"), rrset->getName());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    EXPECT_EQ(RRType::AAAA(), rrset->getType());
-    EXPECT_EQ(RRTTL(300), rrset->getTTL());
-    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
-    rit = rrset->getRdataIterator();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("2001:db8::1", rit->getCurrent().toText());
-    rit->next();
-    ASSERT_FALSE(rit->isLast());
-    EXPECT_EQ("2001:db8::2", rit->getCurrent().toText());
-    rit->next();
-    EXPECT_TRUE(rit->isLast());
-}
-
-// This has inconsistent TTL in the set (the rest, like nonsense in
-// the data is handled in rdata itself).  Works for the mock accessor only.
-TEST_F(MockDatabaseClientTest, badIterator) {
-    // It should not throw, but get the lowest one of them
-    ZoneIteratorPtr it(this->client_->getIterator(Name("bad.example.org")));
-    EXPECT_EQ(it->getNextRRset()->getTTL(), isc::dns::RRTTL(300));
-}
-
 // checks if the given rrset matches the
 // given name, class, type and rdatas
 void
@@ -1028,6 +1014,147 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
                                          rdatas[i]));
     }
     isc::testutils::rrsetCheck(expected_rrset, rrset);
+}
+
+// Iterate through a zone
+TYPED_TEST(DatabaseClientTest, iterator) {
+    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
+    ConstRRsetPtr rrset(it->getNextRRset());
+    ASSERT_NE(ConstRRsetPtr(), rrset);
+
+    // The first name should be the zone origin.
+    EXPECT_EQ(this->zname_, rrset->getName());
+
+    // The rest of the checks work only for the mock accessor.
+    if (!this->is_mock_) {
+        return;
+    }
+
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::A(),
+               this->rrttl_, this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns1.example.org. admin.example.org. "
+                                     "1234 3600 1800 2419200 7200");
+    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::SOA(),
+               this->rrttl_, this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    this->expected_rdatas_.push_back("192.0.2.2");
+    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::A(),
+               RRTTL(300), this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::1");
+    this->expected_rdatas_.push_back("2001:db8::2");
+    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::AAAA(),
+               RRTTL(300), this->expected_rdatas_);
+}
+
+// This has inconsistent TTL in the set (the rest, like nonsense in
+// the data is handled in rdata itself).  Works for the mock accessor only.
+TEST_F(MockDatabaseClientTest, badIterator) {
+    // It should not throw, but get the lowest one of them
+    ZoneIteratorPtr it(this->client_->getIterator(Name("bad.example.org")));
+    EXPECT_EQ(it->getNextRRset()->getTTL(), isc::dns::RRTTL(300));
+}
+
+TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
+    vector<string> soa_data;
+    soa_data.push_back("ns1.example.org. admin.example.org. "
+                       "1234 3600 1800 2419200 7200");
+
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    checkRRset(it->getSOA(), this->zname_, this->qclass_, RRType::SOA(),
+               this->rrttl_, soa_data);
+
+    // Iterate over the zone until we find an SOA.  Although there's a broken
+    // RDATA that would trigger an exception in getNextRRset(), we should
+    // reach the SOA as the sequence should be sorted and the SOA is at
+    // the origin name (which has no bogus data).
+    ConstRRsetPtr rrset;
+    while ((rrset = it->getNextRRset()) != ConstRRsetPtr() &&
+           rrset->getType() != RRType::SOA()) {
+        ;
+    }
+    ASSERT_TRUE(rrset);
+    // It should be identical to the result of getSOA().
+    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+}
+
+TYPED_TEST(DatabaseClientTest, noSOAFromIterator) {
+    // First, empty the zone.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
+
+    // Then getSOA() should return NULL.
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    EXPECT_FALSE(it->getSOA());
+}
+
+TYPED_TEST(DatabaseClientTest, iterateThenUpdate) {
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+
+    // Try to empty the zone after getting the iterator.  Depending on the
+    // underlying data source, it may result in an exception due to the
+    // transaction for the iterator.  In either case the integrity of the
+    // iterator result should be reserved.
+    try {
+        this->updater_ = this->client_->getUpdater(this->zname_, true);
+        this->updater_->commit();
+
+        // Confirm at least it doesn't contain any SOA
+        EXPECT_EQ(ZoneFinder::NXDOMAIN,
+                  this->getFinder()->find(this->zname_, RRType::SOA()).code);
+    } catch (const DataSourceError&) {}
+
+    ConstRRsetPtr rrset;
+    while ((rrset = it->getNextRRset()) != ConstRRsetPtr() &&
+           rrset->getType() != RRType::SOA()) {
+        ;
+    }
+    ASSERT_TRUE(rrset);
+    // It should be identical to the result of getSOA().
+    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+}
+
+TYPED_TEST(DatabaseClientTest, updateThenIterateThenUpdate) {
+    // First clear the zone.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
+
+    // Then iterate over it.  It should immediately reach the end, at which
+    // point the transaction should be committed.
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    EXPECT_FALSE(it->getNextRRset());
+
+    // So another update attempt should succeed, too.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
+}
+
+TYPED_TEST(DatabaseClientTest, updateAfterDeleteIterator) {
+    // Similar to the previous case, but we delete the iterator in the
+    // middle of zone.  The transaction should be canceled (actually no
+    // different from commit though) at that point.
+    ZoneIteratorPtr it(this->client_->getIterator(this->zname_));
+    ASSERT_TRUE(it);
+    EXPECT_TRUE(it->getNextRRset());
+    it.reset();
+
+    // So another update attempt should succeed.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->commit();
 }
 
 void

@@ -73,7 +73,7 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
     "AND rdtype=?3 AND rdata=?4",
     "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
-    "WHERE zone_id = ?1 ORDER BY name, rdtype",
+    "WHERE zone_id = ?1 ORDER BY rname, rdtype",
     /*
      * This one looks for previous name with NSEC record. It is done by
      * using the reversed name. The NSEC is checked because we need to
@@ -86,7 +86,8 @@ const char* const text_statements[NUM_STATEMENTS] = {
 
 struct SQLite3Parameters {
     SQLite3Parameters() :
-        db_(NULL), version_(-1), updating_zone(false), updated_zone_id(-1)
+        db_(NULL), version_(-1), in_transaction(false), updating_zone(false),
+        updated_zone_id(-1)
     {
         for (int i = 0; i < NUM_STATEMENTS; ++i) {
             statements_[i] = NULL;
@@ -96,8 +97,9 @@ struct SQLite3Parameters {
     sqlite3* db_;
     int version_;
     sqlite3_stmt* statements_[NUM_STATEMENTS];
-    bool updating_zone;         // whether or not updating the zone
-    int updated_zone_id;        // valid only when updating_zone is true
+    bool in_transaction; // whether or not a transaction has been started
+    bool updating_zone;          // whether or not updating the zone
+    int updated_zone_id;        // valid only when in_transaction is true
 };
 
 // This is a helper class to encapsulate the code logic of executing
@@ -543,6 +545,10 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
         isc_throw(DataSourceError,
                   "duplicate zone update on SQLite3 data source");
     }
+    if (dbparameters_->in_transaction) {
+        isc_throw(DataSourceError,
+                  "zone update attempt in another SQLite3 transaction");
+    }
 
     const pair<bool, int> zone_info(getZone(zone_name));
     if (!zone_info.first) {
@@ -550,7 +556,7 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     }
 
     StatementProcessor(*dbparameters_, BEGIN,
-                       "start an SQLite3 transaction").exec();
+                       "start an SQLite3 update transaction").exec();
 
     if (replace) {
         try {
@@ -577,6 +583,7 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
         }
     }
 
+    dbparameters_->in_transaction = true;
     dbparameters_->updating_zone = true;
     dbparameters_->updated_zone_id = zone_info.second;
 
@@ -584,28 +591,40 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
 }
 
 void
-SQLite3Accessor::commitUpdateZone() {
-    if (!dbparameters_->updating_zone) {
-        isc_throw(DataSourceError, "committing zone update on SQLite3 "
+SQLite3Accessor::startTransaction() {
+    if (dbparameters_->in_transaction) {
+        isc_throw(DataSourceError,
+                  "duplicate transaction on SQLite3 data source");
+    }
+
+    StatementProcessor(*dbparameters_, BEGIN,
+                       "start an SQLite3 transaction").exec();
+    dbparameters_->in_transaction = true;
+}
+
+void
+SQLite3Accessor::commit() {
+    if (!dbparameters_->in_transaction) {
+        isc_throw(DataSourceError, "performing commit on SQLite3 "
                   "data source without transaction");
     }
 
     StatementProcessor(*dbparameters_, COMMIT,
                        "commit an SQLite3 transaction").exec();
-    dbparameters_->updating_zone = false;
+    dbparameters_->in_transaction = false;
     dbparameters_->updated_zone_id = -1;
 }
 
 void
-SQLite3Accessor::rollbackUpdateZone() {
-    if (!dbparameters_->updating_zone) {
-        isc_throw(DataSourceError, "rolling back zone update on SQLite3 "
+SQLite3Accessor::rollback() {
+    if (!dbparameters_->in_transaction) {
+        isc_throw(DataSourceError, "performing rollback on SQLite3 "
                   "data source without transaction");
     }
 
     StatementProcessor(*dbparameters_, ROLLBACK,
                        "rollback an SQLite3 transaction").exec();
-    dbparameters_->updating_zone = false;
+    dbparameters_->in_transaction = false;
     dbparameters_->updated_zone_id = -1;
 }
 
