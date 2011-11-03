@@ -200,7 +200,7 @@ class RunningProcess:
 
     def wait_for_stderr_str(self, strings, only_new = True):
         """
-        Wait for one of the given strings in this processes stderr output.
+        Wait for one of the given strings in this process's stderr output.
         Parameters:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
@@ -214,7 +214,7 @@ class RunningProcess:
 
     def wait_for_stdout_str(self, strings, only_new = True):
         """
-        Wait for one of the given strings in this processes stdout output.
+        Wait for one of the given strings in this process's stdout output.
         Parameters:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
@@ -292,7 +292,7 @@ class RunningProcesses:
 
     def wait_for_stderr_str(self, process_name, strings, only_new = True):
         """
-        Wait for one of the given strings in the given processes stderr output.
+        Wait for one of the given strings in the given process's stderr output.
         Parameters:
         process_name: The name of the process to check the stderr output of.
         strings: Array of strings to look for.
@@ -310,7 +310,7 @@ class RunningProcesses:
 
     def wait_for_stdout_str(self, process_name, strings, only_new = True):
         """
-        Wait for one of the given strings in the given processes stdout output.
+        Wait for one of the given strings in the given process's stdout output.
         Parameters:
         process_name: The name of the process to check the stdout output of.
         strings: Array of strings to look for.
