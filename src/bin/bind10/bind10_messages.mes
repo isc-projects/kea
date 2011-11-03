@@ -113,27 +113,10 @@ old process was not shut down correctly, and needs to be killed, or
 another instance of BIND10, with the same msgq domain socket, is
 running, which needs to be stopped.
 
-% BIND10_MSGQ_DAEMON_ENDED b10-msgq process died, shutting down
-The message bus daemon has died. This is a fatal error, since it may
-leave the system in an inconsistent state. BIND10 will now shut down.
-
 % BIND10_MSGQ_DISAPPEARED msgq channel disappeared
 While listening on the message bus channel for messages, it suddenly
 disappeared. The msgq daemon may have died. This might lead to an
 inconsistent state of the system, and BIND 10 will now shut down.
-
-% BIND10_PROCESS_ENDED_NO_EXIT_STATUS process %1 (PID %2) died: exit status not available
-The given process ended unexpectedly, but no exit status is
-available. See BIND10_PROCESS_ENDED_WITH_EXIT_STATUS for a longer
-description.
-
-% BIND10_PROCESS_ENDED_WITH_EXIT_STATUS process %1 (PID %2) terminated, exit status = %3
-The given process ended unexpectedly with the given exit status.
-Depending on which module it was, it may simply be restarted, or it
-may be a problem that will cause the boss module to shut down too.
-The latter happens if it was the message bus daemon, which, if it has
-died suddenly, may leave the system in an inconsistent state. BIND10
-will also shut down now if it has been run with --brittle.
 
 % BIND10_READING_BOSS_CONFIGURATION reading boss configuration
 The boss process is starting up, and will now process the initial
@@ -186,11 +169,6 @@ which failed is unknown (not one of 'S' for socket or 'B' for bind).
 % BIND10_SOCKCREATOR_BAD_RESPONSE unknown response for socket request: %1
 The boss requested a socket from the creator, but the answer is unknown. This
 looks like a programmer error.
-
-% BIND10_SOCKCREATOR_CRASHED the socket creator crashed
-The socket creator terminated unexpectedly. It is not possible to restart it
-(because the boss already gave up root privileges), so the system is going
-to terminate.
 
 % BIND10_SOCKCREATOR_EOF eof while expecting data from socket creator
 There should be more data from the socket creator, but it closed the socket.
