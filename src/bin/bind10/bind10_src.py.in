@@ -611,12 +611,12 @@ class BoB:
         self.log_started(newproc.pid)
         return newproc
 
-    def register_process(self, pid, info):
+    def register_process(self, pid, component):
         """
         Put another process into boss to watch over it.  When the process
-        dies, the info.failed() is called with the exit code.
+        dies, the component.failed() is called with the exit code.
         """
-        self.processes[pid] = info
+        self.processes[pid] = component
 
     def start_simple(self, name):
         """
