@@ -244,20 +244,6 @@ public:
     ~Option();
 
 protected:
-
-    /// Builds raw (over-wire) buffer of this option, including all
-    /// defined suboptions. Version for building DHCPv4 options.
-    ///
-    /// @param buf output buffer (built options will be stored here)
-    /// @param buf_len buffer length (used for buffer overflow checks)
-    /// @param offset offset from start of the buf buffer
-    ///
-    /// @return offset to the next byte after last used byte
-    virtual unsigned int
-    pack4(boost::shared_array<uint8_t>& buf,
-          unsigned int buf_len,
-          unsigned int offset);
-
     /// Builds raw (over-wire) buffer of this option, including all
     /// defined suboptions. Version for building DHCPv4 options.
     ///
