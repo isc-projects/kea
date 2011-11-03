@@ -1,6 +1,17 @@
-from lettuce import *
-import subprocess
-import re
+# Copyright (C) 2011  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 # This script provides querying functionality
 # The most important step is
@@ -16,6 +27,10 @@ import re
 #
 # Also see example.feature for some examples
 
+from lettuce import *
+import subprocess
+import re
+
 #
 # define a class to easily access different parts
 # We may consider using our full library for this, but for now
@@ -27,7 +42,8 @@ import re
 # The following attributes are 'parsed' from the response, all as strings,
 # and end up as direct attributes of the QueryResult object:
 # opcode, rcode, id, flags, qdcount, ancount, nscount, adcount
-# (flags is one string with all flags)
+# (flags is one string with all flags, in the order they appear in the
+# response packet.)
 #
 # this will set 'rcode' as the result code, we 'define' one additional
 # rcode, "NO_ANSWER", if the dig process returned an error code itself
@@ -43,7 +59,19 @@ class QueryResult(object):
                           "([0-9]+), AUTHORITY: ([0-9]+), ADDITIONAL: ([0-9]+)")
 
     def __init__(self, name, qtype, qclass, address, port):
-        args = [ 'dig', '+tries=1', '@' + address, '-p', str(port) ]
+        """
+        Constructor. This fires of a query using dig.
+        Parameters:
+        name: The domain name to query
+        qtype: The RR type to query. Defaults to A if it is None.
+        qclass: The RR class to query. Defaults to IN if it is None.
+        address: The IP adress to send the query to.
+        port: The port number to send the query to.
+        All parameters must be either strings or have the correct string
+        representation.
+        Only one query attempt will be made.
+        """
+        args = [ 'dig', '+tries=1', '@' + str(address), '-p', str(port) ]
         if qtype is not None:
             args.append('-t')
             args.append(str(qtype))
@@ -68,8 +96,9 @@ class QueryResult(object):
                 self.line_handler(out)
 
     def _check_next_header(self, line):
-        """Returns true if we found a next header, and sets the internal
-           line handler to the appropriate value.
+        """
+        Returns true if we found a next header, and sets the internal
+        line handler to the appropriate value.
         """
         if line == ";; ANSWER SECTION:\n":
             self.line_handler = self.parse_answer
@@ -84,6 +113,11 @@ class QueryResult(object):
         return True
 
     def parse_header(self, line):
+        """
+        Parse the header lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
         if not self._check_next_header(line):
             status_match = self.status_re.search(line)
             flags_match = self.flags_re.search(line)
@@ -98,31 +132,69 @@ class QueryResult(object):
                 self.adcount = flags_match.group(5)
 
     def parse_question(self, line):
+        """
+        Parse the question section lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
         if not self._check_next_header(line):
             if line != "\n":
                 self.question_section.append(line.strip())
 
     def parse_answer(self, line):
+        """
+        Parse the answer section lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
         if not self._check_next_header(line):
             if line != "\n":
                 self.answer_section.append(line.strip())
 
     def parse_authority(self, line):
+        """
+        Parse the authority section lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
         if not self._check_next_header(line):
             if line != "\n":
                 self.authority_section.append(line.strip())
 
-    def parse_authority(self, line):
+    def parse_additional(self, line):
+        """
+        Parse the additional section lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
         if not self._check_next_header(line):
             if line != "\n":
                 self.additional_section.append(line.strip())
 
     def parse_footer(self, line):
+        """
+        Parse the footer lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
         pass
 
 @step('A query for ([\w.]+) (?:type ([A-Z]+) )?(?:class ([A-Z]+) )?' +
       '(?:to ([^:]+)(?::([0-9]+))? )?should have rcode ([\w.]+)')
 def query(step, query_name, qtype, qclass, addr, port, rcode):
+    """
+    Run a query, check the rcode of the response, and store the query
+    result in world.last_query_result.
+    Parameters:
+    query_name ('query for <name>'): The domain name to query.
+    qtype ('type <type>', optional): The RR type to query. Defaults to A.
+    qclass ('class <class>', optional): The RR class to query. Defaults to IN.
+    addr ('to <address>', optional): The IP address of the nameserver to query.
+                           Defaults to 127.0.0.1.
+    port (':<port>', optional): The port number of the nameserver to query.
+                      Defaults to 47806.
+    rcode ('should have rcode <rcode>'): The expected rcode of the answer.
+    """
     if qtype is None:
         qtype = "A"
     if qclass is None:
@@ -138,6 +210,15 @@ def query(step, query_name, qtype, qclass, addr, port, rcode):
 
 @step('The SOA serial for ([\w.]+) should be ([0-9]+)')
 def query_soa(step, query_name, serial):
+    """
+    Convenience function to check the SOA SERIAL value of the given zone at
+    the nameserver at the default address (127.0.0.1:47806).
+    Parameters:
+    query_name ('for <name>'): The zone to find the SOA record for.
+    serial ('should be <number>'): The expected value of the SOA SERIAL.
+    If the rcode is not NOERROR, or the answer section does not contain the
+    SOA record, this step fails.
+    """
     query_result = QueryResult(query_name, "SOA", "IN", "127.0.0.1", "47806")
     assert "NOERROR" == query_result.rcode,\
         "Got " + query_result.rcode + ", expected NOERROR"
@@ -149,6 +230,16 @@ def query_soa(step, query_name, serial):
 
 @step('last query response should have (\S+) (.+)')
 def check_last_query(step, item, value):
+    """
+    Check a specific value in the reponse from the last successful query sent.
+    Parameters:
+    item: The item to check the value of
+    value: The expected value.
+    This performs a very simple direct string comparison of the QueryResult
+    member with the given item name and the given value.
+    Fails if the item is unknown, or if its value does not match the expected
+    value.
+    """
     assert world.last_query_result is not None
     assert item in world.last_query_result.__dict__
     lq_val = world.last_query_result.__dict__[item]
@@ -157,6 +248,17 @@ def check_last_query(step, item, value):
 
 @step('([a-zA-Z]+) section of the last query response should be')
 def check_last_query_section(step, section):
+    """
+    Check the entire contents of the given section of the response of the last
+    query.
+    Parameters:
+    section ('<section> section'): The name of the section (QUESTION, ANSWER,
+                                   AUTHORITY or ADDITIONAL).
+    The expected response is taken from the multiline part of the step in the
+    scenario. Differing whitespace is ignored, but currently the order is
+    significant.
+    Fails if they do not match.
+    """
     response_string = None
     if section.lower() == 'question':
         response_string = "\n".join(world.last_query_result.question_section)
