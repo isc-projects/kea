@@ -18,7 +18,7 @@ Feature: Example feature
         # that we are sure this file does not exist, see
         # features/terrain/terrain.py
         
-        # Standard check to test (non-)existance of a file
+        # Standard check to test (non-)existence of a file
         # This file is actually automatically
         The file data/test_nonexistent_db.sqlite3 should not exist
 
@@ -85,6 +85,8 @@ Feature: Example feature
         The last query response should have ancount 0
         The last query response should have nscount 1
         The last query response should have adcount 0
+        # When checking flags, we must pass them exactly as they appear in
+        # the output of dig.
         The last query response should have flags qr aa rd
 
         A query for www.example.org type TXT should have rcode NOERROR

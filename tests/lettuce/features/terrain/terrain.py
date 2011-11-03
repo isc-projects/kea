@@ -1,3 +1,18 @@
+# Copyright (C) 2011  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 #
 # This is the 'terrain' in which the lettuce lives. By convention, this is
 # where global setup and teardown is defined.
@@ -7,6 +22,7 @@
 #
 # We also use it to provide scenario invariants, such as resetting data.
 #
+
 from lettuce import *
 import subprocess
 import os.path
@@ -46,6 +62,15 @@ OUTPUT_WAIT_MAX_INTERVALS = 20
 class RunningProcess:
     def __init__(self, step, process_name, args):
         # set it to none first so destructor won't error if initializer did
+        """
+        Initialize the long-running process structure, and start the process.
+        Parameters:
+        step: The scenario step it was called from. This is used for
+              determining the output files for redirection of stdout
+              and stderr.
+        process_name: The name to refer to this running process later.
+        args: Array of arguments to pass to Popen().
+        """
         self.process = None
         self.step = step
         self.process_name = process_name
@@ -55,6 +80,12 @@ class RunningProcess:
         self._start_process(args)
 
     def _start_process(self, args):
+        """
+        Start the process.
+        Parameters:
+        args:
+        Array of arguments to pass to Popen().
+        """
         stderr_write = open(self.stderr_filename, "w")
         stdout_write = open(self.stdout_filename, "w")
         self.process = subprocess.Popen(args, 1, None, subprocess.PIPE,
@@ -64,6 +95,16 @@ class RunningProcess:
         self.stdout = open(self.stdout_filename, "r")
 
     def mangle_filename(self, filebase, extension):
+        """
+        Remove whitespace and non-default characters from a base string,
+        and return the substituted value. Whitespace is replaced by an
+        underscore. Any other character that is not an ASCII letter, a
+        number, a dot, or a hyphen or underscore is removed.
+        Parameter:
+        filebase: The string to perform the substitution and removal on
+        extension: An extension to append to the result value
+        Returns the modified filebase with the given extension
+        """
         filebase = re.sub("\s+", "_", filebase)
         filebase = re.sub("[^a-zA-Z0-9.\-_]", "", filebase)
         return filebase + "." + extension
@@ -73,6 +114,12 @@ class RunningProcess:
         # through an environment variable. Since we currently expect
         # lettuce to be run from our lettuce dir, we shall just use
         # the relative path 'output/'
+        """
+        Make sure the output directory for stdout/stderr redirection
+        exists.
+        Fails if it exists but is not a directory, or if it does not
+        and we are unable to create it.
+        """
         self._output_dir = os.getcwd() + os.sep + "output"
         if not os.path.exists(self._output_dir):
             os.mkdir(self._output_dir)
@@ -80,6 +127,11 @@ class RunningProcess:
             self._output_dir + " is not a directory."
 
     def _create_filenames(self):
+        """
+        Derive the filenames for stdout/stderr redirection from the
+        feature, scenario, and process name. The base will be
+        "<Feature>-<Scenario>-<process name>.[stdout|stderr]"
+        """
         filebase = self.step.scenario.feature.name + "-" +\
                    self.step.scenario.name + "-" + self.process_name
         self.stderr_filename = self._output_dir + os.sep +\
@@ -88,6 +140,11 @@ class RunningProcess:
                                self.mangle_filename(filebase, "stdout")
 
     def stop_process(self):
+        """
+        Stop this process by calling terminate(). Blocks until process has
+        exited. If remove_files_on_exit is True, redirected output files
+        are removed.
+        """
         if self.process is not None:
             self.process.terminate()
             self.process.wait()
@@ -96,10 +153,30 @@ class RunningProcess:
             self._remove_files()
 
     def _remove_files(self):
+        """
+        Remove the files created for redirection of stdout/stderr output.
+        """
         os.remove(self.stderr_filename)
         os.remove(self.stdout_filename)
 
     def _wait_for_output_str(self, filename, running_file, strings, only_new):
+        """
+        Wait for a line of output in this process. This will (if only_new is
+        False) first check all previous output from the process, and if not
+        found, check all output since the last time this method was called.
+        For each line in the output, the given strings array is checked. If
+        any output lines checked contains one of the strings in the strings
+        array, that string (not the line!) is returned.
+        Parameters:
+        filename: The filename to read previous output from, if applicable.
+        running_file: The open file to read new output from.
+        strings: Array of strings to look for.
+        only_new: If true, only check output since last time this method was
+                  called. If false, first check earlier output.
+        Returns the matched string.
+        Fails if none of the strings was read after 10 seconds
+        (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
+        """
         if not only_new:
             full_file = open(filename, "r")
             for line in full_file:
@@ -122,10 +199,30 @@ class RunningProcess:
         assert False, "Timeout waiting for process output: " + str(strings)
 
     def wait_for_stderr_str(self, strings, only_new = True):
+        """
+        Wait for one of the given strings in this processes stderr output.
+        Parameters:
+        strings: Array of strings to look for.
+        only_new: If true, only check output since last time this method was
+                  called. If false, first check earlier output.
+        Returns the matched string.
+        Fails if none of the strings was read after 10 seconds
+        (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
+        """
         return self._wait_for_output_str(self.stderr_filename, self.stderr,
                                          strings, only_new)
 
     def wait_for_stdout_str(self, strings, only_new = True):
+        """
+        Wait for one of the given strings in this processes stdout output.
+        Parameters:
+        strings: Array of strings to look for.
+        only_new: If true, only check output since last time this method was
+                  called. If false, first check earlier output.
+        Returns the matched string.
+        Fails if none of the strings was read after 10 seconds
+        (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
+        """
         return self._wait_for_output_str(self.stdout_filename, self.stdout,
                                          strings, only_new)
 
@@ -134,51 +231,96 @@ class RunningProcess:
 # one-shot programs like dig or bindctl are started and closed separately
 class RunningProcesses:
     def __init__(self):
+        """
+        Initialize with no running processes.
+        """
         self.processes = {}
     
     def add_process(self, step, process_name, args):
+        """
+        Start a process with the given arguments, and store it under the given
+        name.
+        Parameters:
+        step: The scenario step it was called from. This is used for
+              determining the output files for redirection of stdout
+              and stderr.
+        process_name: The name to refer to this running process later.
+        args: Array of arguments to pass to Popen().
+        Fails if a process with the given name is already running.
+        """
         assert process_name not in self.processes,\
             "Process " + name + " already running"
         self.processes[process_name] = RunningProcess(step, process_name, args)
 
     def get_process(self, process_name):
+        """
+        Return the Process with the given process name.
+        Parameters:
+        process_name: The name of the process to return.
+        Fails if the process is not running.
+        """
         assert process_name in self.processes,\
             "Process " + name + " unknown"
         return self.processes[process_name]
 
     def stop_process(self, process_name):
+        """
+        Stop the Process with the given process name.
+        Parameters:
+        process_name: The name of the process to return.
+        Fails if the process is not running.
+        """
         assert process_name in self.processes,\
             "Process " + name + " unknown"
         self.processes[process_name].stop_process()
         del self.processes[process_name]
         
     def stop_all_processes(self):
+        """
+        Stop all running processes.
+        """
         for process in self.processes.values():
             process.stop_process()
     
     def keep_files(self):
+        """
+        Keep the redirection files for stdout/stderr output of all processes
+        instead of removing them when they are stopped later.
+        """
         for process in self.processes.values():
             process.remove_files_on_exit = False
 
     def wait_for_stderr_str(self, process_name, strings, only_new = True):
-        """Wait for any of the given strings in the given processes stderr 
-        output. If only_new is True, it will only look at the lines that are 
-        printed to stderr since the last time this method was called. If 
-        False, it will also look at the previously printed lines. This will 
-        block until one of the strings is found. TODO: we may want to put in 
-        a timeout for this... Returns the string that is found"""
+        """
+        Wait for one of the given strings in the given processes stderr output.
+        Parameters:
+        process_name: The name of the process to check the stderr output of.
+        strings: Array of strings to look for.
+        only_new: If true, only check output since last time this method was
+                  called. If false, first check earlier output.
+        Returns the matched string.
+        Fails if none of the strings was read after 10 seconds
+        (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
+        Fails if the process is unknown.
+        """
         assert process_name in self.processes,\
            "Process " + process_name + " unknown"
         return self.processes[process_name].wait_for_stderr_str(strings,
                                                                 only_new)
 
     def wait_for_stdout_str(self, process_name, strings, only_new = True):
-        """Wait for any of the given strings in the given processes stderr 
-        output. If only_new is True, it will only look at the lines that are 
-        printed to stderr since the last time this method was called. If 
-        False, it will also look at the previously printed lines. This will 
-        block until one of the strings is found. TODO: we may want to put in 
-        a timeout for this... Returns the string that is found"""
+        """
+        Wait for one of the given strings in the given processes stdout output.
+        Parameters:
+        process_name: The name of the process to check the stdout output of.
+        strings: Array of strings to look for.
+        only_new: If true, only check output since last time this method was
+                  called. If false, first check earlier output.
+        Returns the matched string.
+        Fails if none of the strings was read after 10 seconds
+        (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
+        Fails if the process is unknown.
+        """
         assert process_name in self.processes,\
            "Process " + process_name + " unknown"
         return self.processes[process_name].wait_for_stdout_str(strings,
@@ -186,6 +328,9 @@ class RunningProcesses:
 
 @before.each_scenario
 def initialize(scenario):
+    """
+    Global initialization for each scenario.
+    """
     # Keep track of running processes
     world.processes = RunningProcesses()
 
@@ -204,6 +349,9 @@ def initialize(scenario):
 
 @after.each_scenario
 def cleanup(scenario):
+    """
+    Global cleanup for each scenario.
+    """
     # Keep output files if the scenario failed
     if not scenario.passed:
         world.processes.keep_files()
