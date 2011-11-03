@@ -52,6 +52,8 @@ public:
     virtual ~MessageCache();
 
     /// \brief Look up message in cache.
+    /// \param qname Name of the domain for which the message is being sought.
+    /// \param qtype Type of the RR for which the message is being sought.
     /// \param message generated response message if the message entry
     ///        can be found.
     ///

@@ -59,8 +59,6 @@ public:
     /// This resets the hierachy of loggers back to their defaults.  This means
     /// that all non-root loggers (if they exist) are set to NOT_SET, and the
     /// root logger reset to logging informational messages.
-    ///
-    /// \param root_name BIND 10 name of the root logger
     static void processInit();
 
     /// \brief Process Specification

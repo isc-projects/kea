@@ -71,8 +71,8 @@ struct RequestContext {
     ///
     /// \exception None
     ///
-    /// \parameter remote_address_param The remote IP address
-    /// \parameter tsig_param A valid pointer to the TSIG record included in
+    /// \param remote_address_param The remote IP address
+    /// \param tsig_param A valid pointer to the TSIG record included in
     /// the request or NULL if the request doesn't contain a TSIG.
     RequestContext(const IPAddress& remote_address_param,
                    const isc::dns::TSIGRecord* tsig_param) :

@@ -18,7 +18,7 @@
 #include <cc/cc_messages.h>
 #include <log/macros.h>
 
-/// \file logger.h
+/// \file cc/logger.h
 /// \brief Command Channel library global logger
 ///
 /// This holds the logger for the CC library. It is a private header
