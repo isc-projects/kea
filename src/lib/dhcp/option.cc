@@ -128,23 +128,6 @@ Option::pack4(isc::util::OutputBuffer& buf) {
 }
 
 unsigned int
-Option::pack4(boost::shared_array<uint8_t>& buf,
-             unsigned int buf_len,
-             unsigned int offset) {
-    if (offset + len() > buf_len) {
-        isc_throw(OutOfRange, "Failed to pack v4 option=" <<
-                  type_ << ",len=" << len() << ": too small buffer.");
-    }
-    uint8_t *ptr = &buf[offset];
-    ptr[0] = type_;
-    ptr[1] = len() - getHeaderLen();
-    ptr += 2;
-    memcpy(ptr, &data_[0], data_.size());
-
-    return offset + len();
-}
-
-unsigned int
 Option::pack6(boost::shared_array<uint8_t>& buf,
              unsigned int buf_len,
              unsigned int offset) {
