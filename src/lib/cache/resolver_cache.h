@@ -89,7 +89,8 @@ public:
     ResolverClassCache(const isc::dns::RRClass& cache_class);
 
     /// \brief Construct Function.
-    /// \param cache_info TODO
+    /// \param cache_info Cache size information for each message/rrsets of
+    ///        different classes.
     ResolverClassCache(const CacheSizeInfo& cache_info);
 
     /// \name Lookup Interfaces

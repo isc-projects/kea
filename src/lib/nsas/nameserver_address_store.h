@@ -94,8 +94,8 @@ public:
     ///
     /// \param zone Name of zone.
     /// \param class_code Class of the zone.
-    /// \param callback Callback object that would be called
-    /// \param family TODO, check above family too
+    /// \param callback Callback object that would be called.
+    /// \param family Address family for which lookup is being cancelled.
     void cancel(const std::string& zone, const dns::RRClass& class_code,
                 const boost::shared_ptr<AddressRequestCallback>& callback,
                 AddressFamily family = ANY_OK);
