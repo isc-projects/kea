@@ -157,6 +157,14 @@ public:
     virtual void deleteRecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]);
 
+    virtual void addRecordDiff(
+        int zone_id, uint32_t serial, DiffOperation operation,
+        const std::string (&params)[DIFF_PARAM_COUNT]);
+
+    // A short term method for tests until we implement more complete
+    // API to retrieve diffs.
+    std::vector<std::vector<std::string> > getRecordDiff(int zone_id);
+
     /// The SQLite3 implementation of this method returns a string starting
     /// with a fixed prefix of "sqlite3_" followed by the DB file name
     /// removing any path name.  For example, for the DB file
