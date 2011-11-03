@@ -943,7 +943,16 @@ class BoB:
 
             The values returned can be safely passed into select() as the 
             timeout value.
+
         """
+        # TODO: This is an artefact of previous way of handling processes. The
+        # restart queue is currently empty at all times, so this returns None
+        # every time it is called (thought is a relict that is obviously wrong,
+        # it is called and it doesn't hurt).
+        #
+        # It is preserved for archeological reasons for the time when we return
+        # the delayed restarts, most of it might be useful then (or, if it is
+        # found useless, removed).
         next_restart = None
         # if we're shutting down, then don't restart
         if not self.runnable:
