@@ -260,13 +260,14 @@ public:
     /// \c commitUpdateZone()); if it's false, the existing records will be
     /// intact unless explicitly deleted by \c deleteRecordInZone().
     ///
-    /// A single \c DatabaseAccessor instance can perform at most one update
+    /// A single \c DatabaseAccessor instance can perform at most one
     /// transaction; a duplicate call to this method before
-    /// \c commitUpdateZone() or \c rollbackUpdateZone() will result in
-    /// a \c DataSourceError exception.  If multiple update attempts need
-    /// to be performed concurrently (and if the underlying database allows
-    /// such operation), separate \c DatabaseAccessor instance must be
-    /// created.
+    /// \c commitUpdateZone() or \c rollbackUpdateZone(), or a call to this
+    /// method within another transaction started by \c startTransaction()
+    /// will result in a \c DataSourceError exception.
+    /// If multiple update attempts need to be performed concurrently (and
+    /// if the underlying database allows such operation), separate
+    /// \c DatabaseAccessor instance must be created.
     ///
     /// \note The underlying database may not allow concurrent updates to
     /// the same database instance even if different "connections" (or
@@ -295,8 +296,9 @@ public:
     /// \c getZone(); for example, a specific implementation may use a
     /// completely new zone ID when \c replace is true.
     ///
-    /// \exception DataSourceError Duplicate call to this method, or some
-    /// internal database related error.
+    /// \exception DataSourceError Duplicate call to this method, call to
+    /// this method within another transaction, or some internal database
+    /// related error.
     ///
     /// \param zone_name A string representation of the zone name to be updated
     /// \param replace Whether to replace the entire zone (see above)
@@ -382,12 +384,32 @@ public:
     virtual void deleteRecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]) = 0;
 
-    /// Commit updates to the zone.
+    /// Start a general transaction.
     ///
-    /// This method completes a transaction of making updates to the zone
-    /// in the context started by startUpdateZone.
+    /// Each derived class version of this method starts a database
+    /// transaction in a way specific to the database details.  Any subsequent
+    /// operations on the accessor are guaranteed to be not susceptible to
+    /// any update attempts made during the transaction.  The transaction
+    /// must be terminated by either \c commit() or \c rollback().
     ///
-    /// A successful call to \c startUpdateZone() must have preceded to
+    /// In practice, this transaction is intended to be used to perform
+    /// a set of atomic reads and work as a read-only lock.  So, in many
+    /// cases \c commit() and \c rollback() will have the same effect.
+    ///
+    /// This transaction cannot coexist with an update transaction started
+    /// by \c startUpdateZone().  Such an attempt will result in
+    /// \c DataSourceError.
+    ///
+    /// \exception DataSourceError An attempt of nested transaction, or some
+    /// internal database related error.
+    virtual void startTransaction() = 0;
+
+    /// Commit a transaction.
+    ///
+    /// This method completes a transaction started by \c startTransaction
+    /// or \c startUpdateZone.
+    ///
+    /// A successful call to one of the "start" methods must have preceded to
     /// this call; otherwise a \c DataSourceError exception will be thrown.
     /// Once this method successfully completes, the transaction isn't
     /// considered to exist any more.  So a new transaction can now be
@@ -403,17 +425,16 @@ public:
     ///
     /// \exception DataSourceError Call without a transaction, duplicate call
     /// to the method or internal database error.
-    virtual void commitUpdateZone() = 0;
+    virtual void commit() = 0;
 
-    /// Rollback updates to the zone made so far.
+    /// Rollback any changes in a transaction made so far.
     ///
-    /// This method rollbacks a transaction of making updates to the zone
-    /// in the context started by startUpdateZone.  When it succeeds
-    /// (it normally should, but see below), the underlying database should
-    /// be reverted to the point before performing the corresponding
-    /// \c startUpdateZone().
+    /// This method rollbacks a transaction started by \c startTransaction or
+    /// \c startUpdateZone.  When it succeeds (it normally should, but see
+    /// below), the underlying database should be reverted to the point
+    /// before performing the corresponding "start" method.
     ///
-    /// A successful call to \c startUpdateZone() must have preceded to
+    /// A successful call to one of the "start" method must have preceded to
     /// this call; otherwise a \c DataSourceError exception will be thrown.
     /// Once this method successfully completes, the transaction isn't
     /// considered to exist any more.  So a new transaction can now be
@@ -430,7 +451,7 @@ public:
     ///
     /// \exception DataSourceError Call without a transaction, duplicate call
     /// to the method or internal database error.
-    virtual void rollbackUpdateZone() = 0;
+    virtual void rollback() = 0;
 
     /// Clone the accessor with the same configuration.
     ///
