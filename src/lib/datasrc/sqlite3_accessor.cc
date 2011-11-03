@@ -101,12 +101,45 @@ struct SQLite3Parameters {
         }
     }
 
+    // This method returns the specified ID of SQLITE3 statement.  If it's
+    // not yet prepared it internally creates a new one.  This way we can
+    // avoid preparing unnecessary statements and minimize the overhead.
+    sqlite3_stmt*
+    getStatement(int id) {
+        assert(id < NUM_STATEMENTS);
+        if (statements_[id] == NULL) {
+            assert(db_ != NULL);
+            sqlite3_stmt* prepared = NULL;
+            if (sqlite3_prepare_v2(db_, text_statements[id], -1, &prepared,
+                                   NULL) != SQLITE_OK) {
+                isc_throw(SQLite3Error, "Could not prepare SQLite statement: "
+                          << text_statements[id] <<
+                          ": " << sqlite3_errmsg(db_));
+            }
+            statements_[id] = prepared;
+        }
+        return (statements_[id]);
+    }
+
+    void
+    finalizeStatements() {
+        for (int i = 0; i < NUM_STATEMENTS; ++i) {
+            if (statements_[i] != NULL) {
+                sqlite3_finalize(statements_[i]);
+                statements_[i] = NULL;
+            }
+        }
+    }
+
     sqlite3* db_;
     int version_;
-    sqlite3_stmt* statements_[NUM_STATEMENTS];
     bool in_transaction; // whether or not a transaction has been started
     bool updating_zone;          // whether or not updating the zone
     int updated_zone_id;        // valid only when in_transaction is true
+private:
+    // statements_ are private and must be accessed via getStatement() outside
+    // of this structure.
+    sqlite3_stmt* statements_[NUM_STATEMENTS];
 };
 
 // This is a helper class to encapsulate the code logic of executing
@@ -123,18 +156,19 @@ public:
     // DataSourceError exception.
     StatementProcessor(SQLite3Parameters& dbparameters, StatementID stmt_id,
                        const char* desc) :
-        dbparameters_(dbparameters), stmt_id_(stmt_id), desc_(desc)
+        dbparameters_(dbparameters), stmt_(dbparameters.getStatement(stmt_id)),
+        desc_(desc)
     {
-        sqlite3_clear_bindings(dbparameters_.statements_[stmt_id_]);
+        sqlite3_clear_bindings(stmt_);
     }
 
     ~StatementProcessor() {
-        sqlite3_reset(dbparameters_.statements_[stmt_id_]);
+        sqlite3_reset(stmt_);
     }
 
     void exec() {
-        if (sqlite3_step(dbparameters_.statements_[stmt_id_]) != SQLITE_DONE) {
-            sqlite3_reset(dbparameters_.statements_[stmt_id_]);
+        if (sqlite3_step(stmt_) != SQLITE_DONE) {
+            sqlite3_reset(stmt_);
             isc_throw(DataSourceError, "failed to " << desc_ << ": " <<
                       sqlite3_errmsg(dbparameters_.db_));
         }
@@ -142,7 +176,7 @@ public:
 
 private:
     SQLite3Parameters& dbparameters_;
-    const StatementID stmt_id_;
+    sqlite3_stmt* stmt_;
     const char* const desc_;
 };
 
@@ -177,10 +211,6 @@ namespace {
 class Initializer {
 public:
     ~Initializer() {
-        for (int i = 0; i < NUM_STATEMENTS; ++i) {
-            sqlite3_finalize(params_.statements_[i]);
-        }
-
         if (params_.db_ != NULL) {
             sqlite3_close(params_.db_);
         }
@@ -316,10 +346,6 @@ checkAndSetupSchema(Initializer* initializer) {
         schema_version = create_database(db);
     }
     initializer->params_.version_ = schema_version;
-
-    for (int i = 0; i < NUM_STATEMENTS; ++i) {
-        initializer->params_.statements_[i] = prepare(db, text_statements[i]);
-    }
 }
 
 }
@@ -357,12 +383,7 @@ SQLite3Accessor::close(void) {
                   "SQLite data source is being closed before open");
     }
 
-    // XXX: sqlite3_finalize() could fail.  What should we do in that case?
-    for (int i = 0; i < NUM_STATEMENTS; ++i) {
-        sqlite3_finalize(dbparameters_->statements_[i]);
-        dbparameters_->statements_[i] = NULL;
-    }
-
+    dbparameters_->finalizeStatements();
     sqlite3_close(dbparameters_->db_);
     dbparameters_->db_ = NULL;
 }
@@ -370,7 +391,7 @@ SQLite3Accessor::close(void) {
 std::pair<bool, int>
 SQLite3Accessor::getZone(const std::string& name) const {
     int rc;
-    sqlite3_stmt* const stmt = dbparameters_->statements_[ZONE];
+    sqlite3_stmt* const stmt = dbparameters_->getStatement(ZONE);
 
     // Take the statement (simple SELECT id FROM zones WHERE...)
     // and prepare it (bind the parameters to it)
@@ -534,7 +555,7 @@ private:
 
     const IteratorType iterator_type_;
     boost::shared_ptr<const SQLite3Accessor> accessor_;
-    sqlite3_stmt *statement_;
+    sqlite3_stmt* statement_;
     const std::string name_;
 };
 
@@ -575,10 +596,9 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
             StatementProcessor delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
                                             "delete zone records");
 
-            sqlite3_clear_bindings(
-                dbparameters_->statements_[DEL_ZONE_RECORDS]);
-            if (sqlite3_bind_int(dbparameters_->statements_[DEL_ZONE_RECORDS],
-                                 1, zone_info.second) != SQLITE_OK) {
+            sqlite3_stmt* stmt = dbparameters_->getStatement(DEL_ZONE_RECORDS);
+            sqlite3_clear_bindings(stmt);
+            if (sqlite3_bind_int(stmt, 1, zone_info.second) != SQLITE_OK) {
                 isc_throw(DataSourceError,
                           "failed to bind SQLite3 parameter: " <<
                           sqlite3_errmsg(dbparameters_->db_));
@@ -647,7 +667,7 @@ void
 doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
          COLUMNS_TYPE update_params, const char* exec_desc)
 {
-    sqlite3_stmt* const stmt = dbparams.statements_[stmt_id];
+    sqlite3_stmt* const stmt = dbparams.getStatement(stmt_id);
     StatementProcessor executer(dbparams, stmt_id, exec_desc);
 
     int param_id = 0;
@@ -708,7 +728,7 @@ SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
                   << dbparameters_->updated_zone_id);
     }
 
-    sqlite3_stmt* const stmt = dbparameters_->statements_[ADD_RECORD_DIFF];
+    sqlite3_stmt* const stmt = dbparameters_->getStatement(ADD_RECORD_DIFF);
     StatementProcessor executer(*dbparameters_, ADD_RECORD_DIFF,
                                 "add record diff");
     int param_id = 0;
@@ -739,7 +759,7 @@ SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
 
 vector<vector<string> >
 SQLite3Accessor::getRecordDiff(int zone_id) {
-    sqlite3_stmt* const stmt = dbparameters_->statements_[GET_RECORD_DIFF];
+    sqlite3_stmt* const stmt = dbparameters_->getStatement(GET_RECORD_DIFF);
     sqlite3_bind_int(stmt, 1, zone_id);
 
     vector<vector<string> > result;
@@ -761,30 +781,30 @@ std::string
 SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     const
 {
-    sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS]);
-    sqlite3_clear_bindings(dbparameters_->statements_[FIND_PREVIOUS]);
+    sqlite3_stmt* const stmt = dbparameters_->getStatement(FIND_PREVIOUS);
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
 
-    if (sqlite3_bind_int(dbparameters_->statements_[FIND_PREVIOUS], 1,
-                         zone_id) != SQLITE_OK) {
+    if (sqlite3_bind_int(stmt, 1, zone_id) != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
                   " to SQL statement (find previous): " <<
                   sqlite3_errmsg(dbparameters_->db_));
     }
-    if (sqlite3_bind_text(dbparameters_->statements_[FIND_PREVIOUS], 2,
-                          rname.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+    if (sqlite3_bind_text(stmt, 2, rname.c_str(), -1, SQLITE_STATIC) !=
+        SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind name " << rname <<
                   " to SQL statement (find previous): " <<
                   sqlite3_errmsg(dbparameters_->db_));
     }
 
     std::string result;
-    const int rc = sqlite3_step(dbparameters_->statements_[FIND_PREVIOUS]);
+    const int rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
         // We found it
-        result = convertToPlainChar(sqlite3_column_text(dbparameters_->
-            statements_[FIND_PREVIOUS], 0), dbparameters_->db_);
+        result = convertToPlainChar(sqlite3_column_text(stmt, 0),
+                                    dbparameters_->db_);
     }
-    sqlite3_reset(dbparameters_->statements_[FIND_PREVIOUS]);
+    sqlite3_reset(stmt);
 
     if (rc == SQLITE_DONE) {
         // No NSEC records here, this DB doesn't support DNSSEC or
