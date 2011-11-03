@@ -254,6 +254,11 @@ class BoB:
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.component_config = {}
+        # This is not named "components" on purpose, as there doesn't have
+        # to be one-to-one correspondence between processes and components
+        # (A component can have multiple processes, therefore taking multiple
+        # places in the dict, or no processes at all). This tracks the real,
+        # running processes.
         self.processes = {}
         self.runnable = False
         self.uid = setuid
