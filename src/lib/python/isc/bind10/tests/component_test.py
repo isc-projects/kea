@@ -466,7 +466,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertEqual({}, self.__registered_processes)
         component.start()
         self.assertTrue(component.running())
-        self.assertIsInstance(component._procinfo, TestProcInfo)
+        # Some versions of unittest miss assertIsInstance
+        self.assertTrue(isinstance(component._procinfo, TestProcInfo))
         self.assertEqual(42, component.pid())
         self.assertEqual(component, self.__registered_processes.get(42))
 
