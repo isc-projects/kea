@@ -113,6 +113,20 @@ public:
         DEL_PARAM_COUNT = 3 ///< Number of parameters
     };
 
+    /// TBD
+    enum DiffOperation {
+        DIFF_ADD = 0,
+        DIFF_DELETE = 1
+    };
+
+    enum DiffRecordParams {
+        DIFF_NAME = 0,
+        DIFF_TYPE = 1,
+        DIFF_TTL = 2,
+        DIFF_RDATA = 3,
+        DIFF_PARAM_COUNT = 4
+    };
+
     /**
      * \brief Destructor
      *
@@ -452,6 +466,14 @@ public:
     /// \exception DataSourceError Call without a transaction, duplicate call
     /// to the method or internal database error.
     virtual void rollback() = 0;
+
+    /// TBD
+    /// Must be in a transaction.  (should that be started by startUpdateZone,
+    /// or can that be any transaction? => probably yes in future, so include
+    /// zone_id in param, but for now assume using it with startUpdateZone)
+    virtual void addRecordDiff(
+        int zone_id, uint32_t serial, DiffOperation operation,
+        const std::string (&params)[DIFF_PARAM_COUNT]) = 0;
 
     /// Clone the accessor with the same configuration.
     ///

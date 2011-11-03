@@ -52,7 +52,9 @@ enum StatementID {
     DEL_RECORD = 8,
     ITERATE = 9,
     FIND_PREVIOUS = 10,
-    NUM_STATEMENTS = 11
+    ADD_RECORD_DIFF = 11,
+    GET_RECORD_DIFF = 12,       // This is temporary for testing "add diff"
+    NUM_STATEMENTS = 13
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -81,7 +83,12 @@ const char* const text_statements[NUM_STATEMENTS] = {
      */
     "SELECT name FROM records " // FIND_PREVIOUS
     "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-    "rname < $2 ORDER BY rname DESC LIMIT 1"
+    "rname < $2 ORDER BY rname DESC LIMIT 1",
+    "INSERT INTO diffs "        // ADD_RECORD_DIFF
+    "(zone_id, version, operation, name, rrtype, ttl, rdata) "
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"
+    , "SELECT name, rrtype, ttl, rdata, version, operation " // GET_RECORD_DIFF
+    "FROM diffs WHERE zone_id = ?1 ORDER BY id, operation"
 };
 
 struct SQLite3Parameters {
@@ -206,6 +213,11 @@ const char* const SCHEMA_LIST[] = {
     "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
     "rdata STRING NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
+    "CREATE TABLE diffs (id INTEGER PRIMARY KEY, "
+    "zone_id INTEGER NOT NULL, version INTEGER NOT NULL, "
+    "operation INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
+    "rrtype STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
+    "rdata STRING NOT NULL)",
     NULL
 };
 
@@ -214,7 +226,7 @@ prepare(sqlite3* const db, const char* const statement) {
     sqlite3_stmt* prepared = NULL;
     if (sqlite3_prepare_v2(db, statement, -1, &prepared, NULL) != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not prepare SQLite statement: " <<
-                  statement);
+                  statement << ": " << sqlite3_errmsg(db));
     }
     return (prepared);
 }
@@ -679,6 +691,62 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
     }
     doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
         *dbparameters_, DEL_RECORD, params, "delete record from zone");
+}
+
+void
+SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
+                               DiffOperation operation,
+                               const std::string (&params)[DIFF_PARAM_COUNT])
+{
+    // TBD condition check
+
+    sqlite3_stmt* const stmt = dbparameters_->statements_[ADD_RECORD_DIFF];
+    StatementProcessor executer(*dbparameters_, ADD_RECORD_DIFF,
+                                "add record diff");
+    int param_id = 0;
+    if (sqlite3_bind_int(stmt, ++param_id, zone_id)
+        != SQLITE_OK) {
+        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+    if (sqlite3_bind_int64(stmt, ++param_id, serial)
+        != SQLITE_OK) {
+        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+    if (sqlite3_bind_int(stmt, ++param_id, operation)
+        != SQLITE_OK) {
+        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+    for (int i = 0; i < DIFF_PARAM_COUNT; ++i) {
+        if (sqlite3_bind_text(stmt, ++param_id, params[i].c_str(),
+                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_->db_));
+        }
+    }
+    executer.exec();
+}
+
+vector<vector<string> >
+SQLite3Accessor::getRecordDiff(int zone_id) {
+    sqlite3_stmt* const stmt = dbparameters_->statements_[GET_RECORD_DIFF];
+    sqlite3_bind_int(stmt, 1, zone_id);
+
+    vector<vector<string> > result;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        vector<string> row_result;
+        for (int i = 0; i < 6; ++i) {
+            row_result.push_back(convertToPlainChar(sqlite3_column_text(stmt,
+                                                                        i),
+                                                    dbparameters_->db_));
+        }
+        result.push_back(row_result);
+    }
+    sqlite3_reset(stmt);
+
+    return (result);
 }
 
 std::string
