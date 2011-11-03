@@ -44,6 +44,7 @@ std::string SQLITE_DBNAME_EXAMPLE_ROOT = "sqlite3_test-root.sqlite3";
 std::string SQLITE_DBFILE_BROKENDB = TEST_DATA_DIR "/brokendb.sqlite3";
 std::string SQLITE_DBFILE_MEMORY = ":memory:";
 std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
+std::string SQLITE_DBFILE_DIFFS = TEST_DATA_DIR "/diffs.sqlite3";
 
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
@@ -202,6 +203,24 @@ TEST_F(SQLite3AccessorTest, iterator) {
 
     // And make sure calling it again won't cause problems.
     EXPECT_FALSE(context->getNext(data));
+}
+
+// This tests the difference iterator context
+
+// Test that at attempt to create a difference iterator for a serial that
+// does not exist throws an exception.
+
+TEST_F(SQLite3AccessorTest, diffIteratorNoVersion) {
+
+    // Our test zone is conveniently small, but not empty
+    initAccessor(SQLITE_DBFILE_DIFFS, "IN");
+
+    const std::pair<bool, int> zone_info(accessor->getZone("example.org."));
+    ASSERT_TRUE(zone_info.first);
+
+    // Get the iterator context.  Difference of version 1 does not exist.
+    EXPECT_THROW(accessor->getDiffs(zone_info.second, 1U, 1234U),
+                 NoSuchSerial);
 }
 
 TEST(SQLite3Open, getDBNameExample2) {
