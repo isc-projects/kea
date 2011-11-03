@@ -929,6 +929,38 @@ TEST_F(SQLite3Update, addRecordDiff) {
     checkDiffs(expected_stored, another_accessor->getRecordDiff(zone_id));
 }
 
+TEST_F(SQLite3Update, addRecordOfLargeSerial) {
+    // This is essentially the same as the previous test, but using a
+    // very large "version" (SOA serial), which is actually the possible
+    // largest value to confirm the internal code doesn't have an overflow bug
+    // or other failure due to the larger value.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+
+    const char* const begin_data[] = {
+        "example.com.", "SOA", "3600",
+        "ns.example.com. admin.example.com. 4294967295 3600 1800 2419200 7200",
+        "4294967295", DIFF_DELETE_TEXT
+    };
+
+    copy(begin_data, begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    // For "serial" parameter, we intentionally hardcode the value rather
+    // than converting it from the data.
+    accessor->addRecordDiff(zone_id, 0xffffffff, getOperation(diff_begin_data),
+                            diff_params);
+    copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
+                            getOperation(diff_end_data), diff_params);
+
+    accessor->commit();
+
+    expected_stored.clear();
+    expected_stored.push_back(begin_data);
+    expected_stored.push_back(diff_end_data);
+    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+}
+
 TEST_F(SQLite3Update, addDiffWithoutUpdate) {
     // Right now we require startUpdateZone() prior to performing
     // addRecordDiff.
