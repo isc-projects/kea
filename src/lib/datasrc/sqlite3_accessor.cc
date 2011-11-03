@@ -526,6 +526,9 @@ private:
     const std::string name_;
 };
 
+
+// Methods to retrieve the various iterators
+
 DatabaseAccessor::IteratorContextPtr
 SQLite3Accessor::getRecords(const std::string& name, int id,
                             bool subdomains) const
@@ -538,6 +541,39 @@ DatabaseAccessor::IteratorContextPtr
 SQLite3Accessor::getAllRecords(int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }
+
+
+/// \brief Difference Iterator
+///
+///
+
+class SQLite3Accessor::DiffContext : public DatabaseAccessor::IteratorContext {
+public:
+
+    // Construct an iterator for difference records.
+    DiffContext(const boost::shared_ptr<const SQLite3Accessor>&, int,
+                uint32_t, uint32_t)
+    {
+    }
+
+    virtual ~DiffContext() {}
+
+    virtual bool getNext(std::string (&data)[COLUMN_COUNT]) {
+        static_cast<void>(data[0]);
+        return (false);
+    }
+
+};
+
+// ... and return the iterator
+
+DatabaseAccessor::IteratorContextPtr
+SQLite3Accessor::getDiffs(int id, uint32_t start, uint32_t end) const {
+    return (IteratorContextPtr(new DiffContext(shared_from_this(), id, start,
+                               end)));
+}
+
+
 
 pair<bool, int>
 SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {

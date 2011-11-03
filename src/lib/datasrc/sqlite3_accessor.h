@@ -46,6 +46,18 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/**
+ * \brief No such serial number when obtaining difference iterator
+ *
+ * Thrown if either the start or end version requested for the difference
+ * iterator doe nsot exist.
+ */
+class NoSuchSerial : public Exception {
+public:
+    NoSuchSerial(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 struct SQLite3Parameters;
 
 /**
@@ -128,6 +140,27 @@ public:
      */
     virtual IteratorContextPtr getAllRecords(int id) const;
 
+    /** \brief Creates an iterator context for a set of differences.
+     *
+     * Implements the getDiffs() method from DatabaseAccessor
+     *
+     * \exception NoSuchSerial if either of the versions do not exist in
+     *            the difference table.
+     * \exception SQLite3Error if there is an sqlite3 error when performing
+     *            the query
+     *
+     * \param id The ID of the zone, returned from getZone().
+     * \param start The SOA serial number of the version of the zone from
+     *        which the difference sequence should start.
+     * \param end The SOA serial number of the version of the zone at which
+     *        the difference sequence should end.
+     *
+     * \return Iterator containing difference records.
+     */
+    virtual IteratorContextPtr getDiffs(int id, uint32_t start, uint32_t end) const;
+                                        
+
+
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
                                                  bool replace);
 
@@ -175,14 +208,20 @@ private:
     const std::string filename_;
     /// \brief The class for which the queries are done
     const std::string class_;
+    /// \brief Database name
+    const std::string database_name_;
+
     /// \brief Opens the database
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
-    /// \brief SQLite3 implementation of IteratorContext
+
+    /// \brief SQLite3 implementation of IteratorContext for all records
     class Context;
     friend class Context;
-    const std::string database_name_;
+    /// \brief SQLite3 implementation of IteratorContext for differences
+    class DiffContext;
+    friend class DiffContext;
 };
 
 /// \brief Creates an instance of the SQlite3 datasource client
