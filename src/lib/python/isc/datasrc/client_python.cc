@@ -89,9 +89,17 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
                          &adjust_ttl_obj)) {
         try {
             bool adjust_ttl = true;
-            if (adjust_ttl_obj != NULL &&
-                PyObject_Not(adjust_ttl_obj)) {
-                adjust_ttl = false;
+            if (adjust_ttl_obj != NULL) {
+                // store result in local var so we can explicitely check for
+                // -1 error return value
+                int adjust_ttl_no = PyObject_Not(adjust_ttl_obj);
+                if (adjust_ttl_no == 1) {
+                    adjust_ttl = false;
+                } else if (adjust_ttl_no == -1) {
+                    PyErr_SetString(getDataSourceException("Error"),
+                                    "Error getting value of adjust_ttl");
+                    return (NULL);
+                }
             }
             return (createZoneIteratorObject(
                 self->cppobj->getInstance().getIterator(PyName_ToName(name_obj),
