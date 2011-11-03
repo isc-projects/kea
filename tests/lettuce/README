@@ -112,6 +112,11 @@ Some very general steps are defined in terrain/steps.py.
 Initialization code, cleanup code, and helper classes are defined in
 terrain/terrain.py.
 
+To find the right steps, case insensitive matching is used. Parameters taken
+from the steps are case-sensitive though. So a step defined as
+'do foo with value (bar)' will be matched when using
+'Do Foo with value xyz', but xyz will be taken as given.
+
 If you need to add steps that are very particular to one test, create a new 
 file with a name relevant for that test in terrain. We may want to consider 
 creating a specific subdirectory for these, but at this moment it is unclear 

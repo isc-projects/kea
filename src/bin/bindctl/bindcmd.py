@@ -123,7 +123,7 @@ class BindCmdInterpreter(Cmd):
         '''Parse commands from user and send them to cmdctl. '''
         try:
             if not self.login_to_cmdctl():
-                return
+                return 1
 
             self.cmdloop()
             print('\nExit from bindctl')
