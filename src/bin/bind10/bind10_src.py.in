@@ -850,22 +850,6 @@ class BoB:
         else:
             self.runnable = False
 
-    # Series of stop_process wrappers
-    def stop_resolver(self):
-        self.stop_process('b10-resolver', 'Resolver')
-
-    def stop_auth(self):
-        self.stop_process('b10-auth', 'Auth')
-
-    def stop_xfrout(self):
-        self.stop_process('b10-xfrout', 'Xfrout')
-
-    def stop_xfrin(self):
-        self.stop_process('b10-xfrin', 'Xfrin')
-
-    def stop_zonemgr(self):
-        self.stop_process('b10-zonemgr', 'Zonemgr')
-
     def shutdown(self):
         """Stop the BoB instance."""
         logger.info(BIND10_SHUTDOWN)
