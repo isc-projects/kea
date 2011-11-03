@@ -249,6 +249,56 @@ public:
      */
     virtual IteratorContextPtr getAllRecords(int id) const = 0;
 
+    /**
+     * \brief Creates an iterator context for a set of differences.
+     *
+     * Returns an IteratorContextPtr that contains all difference records for
+     * the given zone between two versions of a zone.
+     *
+     * The difference records are the set of records that would appear in an
+     * IXFR serving a request for the difference between two versions of a zone.
+     * The records are returned in the same order as they would be in the IXFR.
+     * This means that if the the difference between versions of a zone with SOA
+     * serial numbers of "start" and "end" is required, and the zone contains
+     * the differences between serial number "start" to serial number
+     * "intermediate" and from serial number "intermediate" to serial number
+     * "end", the returned records will be (in order):
+     *
+     * \li SOA for serial "start"
+     * \li Records removed from the zone between versions "start" and
+     *     "intermediate" of the zone.  The order of these is not guaranteed.
+     * \li SOA for serial "intermediate"
+     * \li Records added to the zone between versions "start" and
+     *     "intermediate" of the zone.  The order of these is not guaranteed.
+     * \li SOA for serial "intermediate"
+     * \li Records removed from the zone between versions "intermediate" and
+     *     "end" of the zone.  The order of these is not guaranteed.
+     * \li SOA for serial "end"
+     * \li Records added to the zone between versions "intermediate" and "end"
+     *     of the zone. The order of these is not guaranteed.
+     *
+     * Note that there is no requirement that "start" be less than "end". Owing
+     * to serial number arithmetic, it is entirely possible that a later version
+     * of a zone will have a smaller SOA serial number than an earlier version.
+     *
+     * Each call to getNext() on the returned iterator should copy all
+     * column fields of the array that is passed, as defined in the
+     * RecordColumns enum.
+     *
+     * \exception any Since any implementation can be used, the caller should
+     *                expect any exception to be thrown.
+     *
+     * \param id The ID of the zone, returned from getZone().
+     * \param start The SOA serial number of the version of the zone from
+     *        which the difference sequence should start.
+     * \param end The SOA serial number of the version of the zone at which
+     *        the difference sequence should end.
+     *
+     * \return Newly created iterator context. Must not be NULL.
+     */
+    virtual IteratorContextPtr getDiffs(int id, uint32_t start, uint32_t end)
+                                        const = 0;
+
     /// Start a transaction for updating a zone.
     ///
     /// Each derived class version of this method starts a database
