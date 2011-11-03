@@ -698,7 +698,15 @@ SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
                                DiffOperation operation,
                                const std::string (&params)[DIFF_PARAM_COUNT])
 {
-    // TBD condition check
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "adding record diff without update "
+                  "transaction on " << getDBName());
+    }
+    if (zone_id != dbparameters_->updated_zone_id) {
+        isc_throw(DataSourceError, "bad zone ID for adding record diff on "
+                  << getDBName() << ": " << zone_id << ", must be "
+                  << dbparameters_->updated_zone_id);
+    }
 
     sqlite3_stmt* const stmt = dbparameters_->statements_[ADD_RECORD_DIFF];
     StatementProcessor executer(*dbparameters_, ADD_RECORD_DIFF,
