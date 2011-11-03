@@ -82,8 +82,6 @@ class IOEndpoint;
 /// derived class for testing purposes rather than providing factory methods
 /// (i.e., getDummy variants below).
 ///
-/// TODO: Check if IOAsioSocket class is still needed
-///
 /// \param C Template parameter identifying type of the callback object.
 
 template <typename C>
