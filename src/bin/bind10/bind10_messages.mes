@@ -118,6 +118,11 @@ While listening on the message bus channel for messages, it suddenly
 disappeared. The msgq daemon may have died. This might lead to an
 inconsistent state of the system, and BIND 10 will now shut down.
 
+% BIND10_PROCESS_ENDED process %2 of %1 ended with status %3
+This indicates a process started previously terminated. The process id
+and component owning the process are indicated, as well as the exit code.
+This doesn't distinguish if the process was supposed to terminate or not.
+
 % BIND10_READING_BOSS_CONFIGURATION reading boss configuration
 The boss process is starting up, and will now process the initial
 configuration, as received from the configuration manager.

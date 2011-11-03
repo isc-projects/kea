@@ -37,6 +37,7 @@ class SockCreator(Component):
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
                                                         os.environ['PATH'])
         self._boss.register_process(self.pid(), self)
+        self._boss.log_started(self.pid())
 
     def _stop_internal(self):
         self.__creator.terminate()
