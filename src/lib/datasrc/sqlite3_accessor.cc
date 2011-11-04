@@ -16,7 +16,6 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include <boost/foreach.hpp>
 
@@ -58,7 +57,7 @@ enum StatementID {
     COUNT_DIFF_RECS = 13,
     LOW_DIFF_ID = 14,
     HIGH_DIFF_ID = 15,
-    DIFFS = 16,
+    DIFF_RECS = 16,
     NUM_STATEMENTS = 17
 };
 
@@ -105,7 +104,10 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "SELECT id FROM diffs "     // HIGH_DIFF_ID
         "WHERE zone_id=?1 AND version=?2 and OPERATION=1 "
         "ORDER BY id DESC LIMIT 1",
-    "SELECT name, rrtype, ttl, rdata FROM diffs "   // DIFFS
+
+    // In the next statement, note the redundant ID.  This is to ensure
+    // that the columns match the column IDs passed to the iterator
+    "SELECT rrtype, ttl, id, rdata, name FROM diffs "   // DIFF_RECS
         "WHERE zone_id=?1 AND id>=?2 and id<=?3"
 };
 
@@ -607,26 +609,78 @@ public:
 
     /// \brief Constructor
     ///
+    /// Constructs the iterator for the difference sequence.  It is
+    /// passed two parameters, the first and last versions in the difference
+    /// sequence.  Note that because of serial number rollover, it may well
+    /// be that the start serial number is greater than the end one.
+    ///
     /// \param zone_id ID of the zone (in the zone table)
+    /// \param start Serial number of first version in difference sequence
+    /// \param end Serial number of last version in difference sequence
+    ///
+    /// \exception any A number of exceptions can be expected
     DiffContext(const boost::shared_ptr<const SQLite3Accessor>& accessor,
                 int zone_id, uint32_t start, uint32_t end) :
-        accessor_(accessor)
+        accessor_(accessor),
+        last_status_(SQLITE_ROW)
     {
         try {
             int low_id = findIndex(LOW_DIFF_ID, zone_id, start);
             int high_id = findIndex(HIGH_DIFF_ID, zone_id, end);
-            std::cout << "Low index is " << low_id << ", high index is " << high_id << "\n";
+
+            // Prepare the statement that will return data values
+            clearBindings(DIFF_RECS);
+            bindInt(DIFF_RECS, 1, zone_id);
+            bindInt(DIFF_RECS, 2, low_id);
+            bindInt(DIFF_RECS, 3, high_id);
+
+            // last_status_ has been initialized to pretend that the last
+            // getNext() returned a record.
+
         } catch (...) {
             accessor_->dbparameters_->finalizeStatements();
             throw;
         }
     }
 
-    virtual ~DiffContext() {}
+    /// \brief Destructor
+    virtual ~DiffContext()
+    {}
 
-    virtual bool getNext(std::string (&data)[COLUMN_COUNT]) {
-        static_cast<void>(data[0]);
-        return (false);
+    /// \brief Get Next Diff Record
+    ///
+    /// Returns the next difference record in the difference sequence.
+    ///
+    /// \param data Array of std::strings COLUMN_COUNT long.  The results
+    ///        are returned in this.
+    ///
+    /// \return bool true if data is returned, false if not.
+    ///
+    /// \exceptions any Varied
+    bool getNext(std::string (&data)[COLUMN_COUNT]) {
+
+        // Get a pointer to the statement for brevity (does not transfer
+        // resources)
+        sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(DIFF_RECS);
+
+        // If there is a row to get, get it.
+        if (last_status_ != SQLITE_DONE) {
+            const int rc(sqlite3_step(stmt));
+            if (rc == SQLITE_ROW) {
+                // Copy the data across to the output array
+                copyColumn(DIFF_RECS, data, TYPE_COLUMN);
+                copyColumn(DIFF_RECS, data, TTL_COLUMN);
+                copyColumn(DIFF_RECS, data, NAME_COLUMN);
+                copyColumn(DIFF_RECS, data, RDATA_COLUMN);
+            } else if (rc != SQLITE_DONE) {
+                accessor_->dbparameters_->finalizeStatements();
+                isc_throw(DataSourceError,
+                          "Unexpected failure in sqlite3_step: " <<
+                          sqlite3_errmsg(accessor_->dbparameters_->db_));
+            }
+            last_status_ = rc;
+        }
+        return (last_status_ == SQLITE_ROW);
     }
 
 private:
@@ -727,15 +781,10 @@ private:
     /// \return int ID of the row in the difss table corresponding to the
     ///         statement.
     ///
+    /// \exception TooLittleData Internal error, no result returned when one
+    ///            was expected.
     /// \exception NoSuchSerial Serial number not found.
-    ///
-    /// TODO: NoSuchSerial will be thrown if no records are found.  This is
-    /// most likely due to there being no match for the serial number, but it
-    /// could also be 
-    /// might also occur if there are no difference records for the zone in
-    /// the table.  We can check for this, but only at the cost of
-    /// no difference records in the table.  We can disambiguate these cases,
-    /// but only by 
+    /// \exception NoDiffsData No data for this zone found in diffs table
     int findIndex(StatementID stindex, int zone_id, uint32_t serial) {
 
         // Set up the statement
@@ -772,8 +821,29 @@ private:
         return (result);
     }
 
+    /// \brief Copy Column to Output
+    ///
+    /// Copies the textual data in the result set to the specified column
+    /// in the output.
+    ///
+    /// \param stindex Index of prepared statement used to access data
+    /// \param data Array of columns passed to getNext
+    /// \param column Column of output to copy
+    void copyColumn(StatementID stindex, std::string (&data)[COLUMN_COUNT],
+                    int column) {
+
+        // Get a pointer to the statement for brevity (does not transfer
+        // resources)
+        sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(stindex);
+        data[column] = convertToPlainChar(sqlite3_column_text(stmt,
+                                                              column),
+                                          accessor_->dbparameters_->db_);
+    }
     
+    // Attributes
+
     boost::shared_ptr<const SQLite3Accessor> accessor_; // Accessor object
+    int last_status_;   // Last status received from sqlite3_step
 };
 
 // ... and return the iterator
