@@ -232,7 +232,7 @@ TEST_F(SQLite3AccessorTest, diffIteratorNoRecords) {
     // Check that valid versions - but for the wrong zone which does not hold
     // any records - throws the correct exception.
     EXPECT_THROW(accessor->getDiffs(zone_info.second + 42, 1231, 1234),
-                 NoSuchSerial);
+                 NoDiffRecs);
 
 }
 
@@ -254,8 +254,8 @@ TEST_F(SQLite3AccessorTest, validSequence) {
     // Check the records
     EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("SOA", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("ns1.example.org. admin.example.org. 1230, 3600 1800 2419200 7200",
+    EXPECT_EQ("1800", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("ns1.example.org. admin.example.org. 1230 3600 1800 2419200 7200",
         data[DatabaseAccessor::RDATA_COLUMN]);
     EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 }
