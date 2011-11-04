@@ -183,20 +183,56 @@ class TestHttpHandler(unittest.TestCase):
             self.assertEqual(response.status, 200)
             root = xml.etree.ElementTree.parse(response).getroot()
             url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
-            tags = [ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ]
-            xsdpath = '/'.join(tags)
             self.assertTrue(root.tag.find('schema') > 0)
             self.assertTrue(hasattr(root, 'attrib'))
             self.assertTrue('targetNamespace' in root.attrib)
             self.assertEqual(root.attrib['targetNamespace'],
                              stats_httpd.XSD_NAMESPACE)
-            for elm in root.findall(xsdpath):
-                if mod is None:
-                    self.assertIsNotNone(elm.attrib['name'])
-                    self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
-                else:
-                    self.assertIsNotNone(elm.attrib['name'])
-                    self.assertTrue(elm.attrib['name'] in DUMMY_DATA[mod])
+            if mod is None and item is None:
+                for (mod, itm) in DUMMY_DATA.items():
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                    mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                    self.assertTrue(mod in mod_elm)
+                    for (it, val) in itm.items():
+                        xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                        itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
+                        self.assertTrue(it in itm_elm)
+                        if type(val) is list:
+                            xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                            itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[it].findall(xsdpath) ])
+                            self.assertTrue('zones' in itm_elm2)
+                            for i in val:
+                                for k in i.keys():
+                                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                                    self.assertTrue(
+                                        k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
+            elif item is None:
+                for (it, val) in DUMMY_DATA[mod].items():
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                    itm_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                    self.assertTrue(it in itm_elm)
+                    if type(val) is list:
+                        xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                        itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[it].findall(xsdpath) ])
+                        self.assertTrue('zones' in itm_elm2)
+                        for i in val:
+                            for k in i.keys():
+                                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                                self.assertTrue(
+                                    k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
+            else:
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                itm_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                self.assertTrue(item in itm_elm)
+                if type(DUMMY_DATA[mod][item]) is list:
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                    itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[item].findall(xsdpath) ])
+                    self.assertTrue('zones' in itm_elm2)
+                    for i in DUMMY_DATA[mod][item]:
+                        for k in i.keys():
+                            xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                            self.assertTrue(
+                                k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
 
         # URL is '/bind10/statistics/xsd'
         check_XSD_URL_PATH(mod=None, item=None)
