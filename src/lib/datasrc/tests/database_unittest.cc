@@ -252,7 +252,7 @@ public:
                   "This database datasource can't be iterated");
     }
 
-    virtual IteratorContextPtr getDiffs(int, int, int) const {
+    virtual IteratorContextPtr getDiffs(int, uint32_t, uint32_t) const {
         isc_throw(isc::NotImplemented,
                   "This database datasource can't be iterated");
     }
