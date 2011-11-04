@@ -4,9 +4,6 @@ extern "C" {
 
 #include <stdarg.h>
 
-extern unsigned dk_diag_mask;
-
-#define dk_set(diag_req) ((diag_req) & dk_diag_mask)
 #define DK_ALL (~0)
 
 struct dkdesc {
@@ -17,6 +14,7 @@ struct dkdesc {
 void dkprintf(unsigned diag_req, const char format[], ...);
 void vdkprintf(unsigned diag_req, const char format[], va_list ap);
 int dk_setup(const char *diag_str, const struct dkdesc *diags);
+int dk_set(unsigned diag_req);
 
 #ifdef __cplusplus
 }

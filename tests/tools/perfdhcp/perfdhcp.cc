@@ -67,12 +67,26 @@ static const struct dkdesc diagLetters[] = {
 };
 
 int
-main(int argc, char *argv[])
+main(int argc, const char *argv[])
 {
     int ret;
+    int v6;
+    // int initialOnly;
+    const char *localName = NULL;
+    // unsigned rate;
+    // unsigned numRequest;
+    const char *server;
+    const char *diagSelector = "";
+    confdata_t confdata;
 
-    if ((ret = procArgs(argc, argv)) != 1)
+    if ((ret = procArgs(argc, argv, &confdata, &server)) != 1)
 	exit(ret);
+
+    v6 = confdata.map['6']->num > 0;
+    if (confdata.map['l']->num > 0)
+        localName = confdata.map['l']->values[0]->value.string;
+    if (confdata.map['x']->num > 0)
+        diagSelector = confdata.map['x']->values[0]->value.string;
 
     srand(time(NULL));
     if (v6)
