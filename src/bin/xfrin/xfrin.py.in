@@ -137,7 +137,7 @@ def format_addrinfo(addrinfo):
        sockets, and unknown address families, it returns a basic string
        conversion of the third element of the passed tuple.
        Parameters:
-       addrinfo: an 3-tuple consisting of address family, socket type, and,
+       addrinfo: a 3-tuple consisting of address family, socket type, and,
                  depending on the family, either a 2-tuple with the address
                  and port, or a filename
     """
@@ -1111,7 +1111,7 @@ class Xfrin:
                         master_addr_str = format_addrinfo(master_addr)
                         errmsg = "Got notification for " + zone_str\
                                + "from unknown address: " + notify_addr_str;
-                        logger.INFO(XFRIN_NOTIFY_UNKNOWN_MASTER, zone_str,
+                        logger.info(XFRIN_NOTIFY_UNKNOWN_MASTER, zone_str,
                                     notify_addr_str, master_addr_str)
                         answer = create_answer(1, errmsg)
 
