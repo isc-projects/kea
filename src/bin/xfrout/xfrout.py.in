@@ -128,6 +128,7 @@ class XfroutSession():
         self._acl = default_acl
         self._zone_config = zone_config
         self.ClientClass = client_class # parameterize this for testing
+        self._soa = None # will be set in _check_xfrout_available or in tests
         self.handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -368,11 +369,9 @@ class XfroutSession():
         count_since_last_tsig_sign = TSIG_SIGN_EVERY_NTH
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
-        soa_record = sqlite3_ds.get_zone_soa(zone_name, self._server.get_db_file())
-        rrset_soa = self._create_rrset_from_db_record(soa_record)
-        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        msg.add_rrset(Message.SECTION_ANSWER, self._soa)
 
-        message_upper_len = get_rrset_len(rrset_soa) + self._tsig_len
+        message_upper_len = get_rrset_len(self._soa) + self._tsig_len
 
         for rr_data in sqlite3_ds.get_zone_datas(zone_name, self._server.get_db_file()):
             if  self._server._shutdown_event.is_set(): # Check if xfrout is shutdown
@@ -410,7 +409,8 @@ class XfroutSession():
             else:
                 message_upper_len = rrset_len
 
-        self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len,
+        self._send_message_with_last_soa(msg, sock_fd, self._soa,
+                                         message_upper_len,
                                          count_since_last_tsig_sign)
 
 class UnixSockServer(socketserver_mixin.NoPollMixIn,
