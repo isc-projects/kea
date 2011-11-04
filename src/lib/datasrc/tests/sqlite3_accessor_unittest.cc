@@ -220,9 +220,17 @@ TEST_F(SQLite3AccessorTest, diffIteratorNoVersion) {
     const std::pair<bool, int> zone_info(accessor->getZone("example.org."));
     ASSERT_TRUE(zone_info.first);
 
-    // Get the iterator context.  Difference of version 1 does not exist.
-    EXPECT_THROW(accessor->getDiffs(zone_info.second, 1U, 1234U),
+    // Get the iterator context.  Difference of version 1 does not exist, so
+    // this should throw an exception.
+    EXPECT_THROW(accessor->getDiffs(zone_info.second, 1, 1234),
+                 isc::datasrc::NoSuchSerial);
+
+    // Check that an invalid high version number also throws an exception.
+    EXPECT_THROW(accessor->getDiffs(zone_info.second, 1231, 2234),
                  NoSuchSerial);
+
+
+    // Get the iterator context
 }
 
 TEST(SQLite3Open, getDBNameExample2) {

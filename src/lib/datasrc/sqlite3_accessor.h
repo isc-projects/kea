@@ -157,7 +157,7 @@ public:
      *
      * \return Iterator containing difference records.
      */
-    virtual IteratorContextPtr getDiffs(int id, uint32_t start, uint32_t end) const;
+    virtual IteratorContextPtr getDiffs(int id, int start, int end) const;
                                         
 
 
