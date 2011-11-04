@@ -291,10 +291,6 @@ class TestXfroutSession(unittest.TestCase):
                          self.xfrsess._get_transfer_acl(Name('EXAMPLE.COM'),
                                                         RRClass.IN()))
 
-    def test_get_query_zone_name(self):
-        msg = self.getmsg()
-        self.assertEqual(self.xfrsess._get_query_zone_name(msg), "example.com.")
-
     def test_send_data(self):
         self.xfrsess._send_data(self.sock, self.mdata)
         senddata = self.sock.readsent()

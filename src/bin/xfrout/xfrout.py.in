@@ -98,6 +98,16 @@ TSIG_SIGN_EVERY_NTH = 96
 
 XFROUT_MAX_MESSAGE_SIZE = 65535
 
+# borrowed from xfrin.py @ #1298.  We should eventually unify it.
+def format_zone_str(zone_name, zone_class):
+    """Helper function to format a zone name and class as a string of
+       the form '<name>/<class>'.
+       Parameters:
+       zone_name (isc.dns.Name) name to format
+       zone_class (isc.dns.RRClass) class to format
+    """
+    return zone_name.to_text() + '/' + str(zone_class)
+
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
     bytes = bytearray()
@@ -197,14 +207,6 @@ class XfroutSession():
             return self._zone_config[config_key]['transfer_acl']
         return self._acl
 
-    def _get_query_zone_name(self, msg):
-        question = msg.get_question()[0]
-        return question.get_name().to_text()
-
-    def _get_query_zone_class(self, msg):
-        question = msg.get_question()[0]
-        return question.get_class().to_text()
-
     def _send_data(self, sock_fd, data):
         size = len(data)
         total_count = 0
@@ -295,29 +297,26 @@ class XfroutSession():
             return self._reply_query_with_error_rcode(msg, sock_fd,
                                                       Rcode.FORMERR())
 
-        zone_name = msg.get_question()[0].get_name()
-        zone_class_str = self._get_query_zone_class(msg)
-        # TODO: should we not also include class in the check?
-        rcode_ = self._check_xfrout_available(zone_name)
+        question = msg.get_question()[0]
+        zone_name = question.get_name()
+        zone_class = question.get_class()
+        zone_str = format_zone_str(zone_name, zone_class) # for logging
 
+        # TODO: we should also include class in the check
+        rcode_ = self._check_xfrout_available(zone_name)
         if rcode_ != Rcode.NOERROR():
-            logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_name.to_text(),
-                        zone_class_str, rcode_.to_text())
+            logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_str, rcode_)
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
-            logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_name.to_text(),
-                        zone_class_str)
+            logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_str)
             self._reply_xfrout_query(msg, sock_fd, zone_name.to_text())
         except Exception as err:
-            logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_name.to_text(),
-                         zone_class_str, str(err))
+            logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_str, err)
             pass
-        logger.info(XFROUT_AXFR_TRANSFER_DONE, zone_name.to_text(), zone_class_str)
+        logger.info(XFROUT_AXFR_TRANSFER_DONE, zone_str)
 
         self._server.decrease_transfers_counter()
-        return
-
 
     def _clear_message(self, msg):
         qid = msg.get_qid()
