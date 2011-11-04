@@ -699,7 +699,7 @@ class TestBossCmd(unittest.TestCase):
         answer = bob.command_handler("ping", None)
         self.assertEqual(answer, {'result': [0, 'pong']})
 
-    def test_show_processes(self):
+    def test_show_processes_empty(self):
         """
         Confirm getting a list of processes works.
         """
@@ -707,7 +707,7 @@ class TestBossCmd(unittest.TestCase):
         answer = bob.command_handler("show_processes", None)
         self.assertEqual(answer, {'result': [0, []]})
 
-    def test_show_processes_started(self):
+    def test_show_processes(self):
         """
         Confirm getting a list of processes works.
         """
