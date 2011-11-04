@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <boost/foreach.hpp>
 
@@ -54,10 +55,11 @@ enum StatementID {
     FIND_PREVIOUS = 10,
     ADD_RECORD_DIFF = 11,
     GET_RECORD_DIFF = 12,       // This is temporary for testing "add diff"
-    LOW_DIFF_ID = 13,
-    HIGH_DIFF_ID = 14,
-    DIFFS = 15,
-    NUM_STATEMENTS = 16
+    COUNT_DIFF_RECS = 13,
+    LOW_DIFF_ID = 14,
+    HIGH_DIFF_ID = 15,
+    DIFFS = 16,
+    NUM_STATEMENTS = 17
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -95,6 +97,8 @@ const char* const text_statements[NUM_STATEMENTS] = {
 
     // Two statements to select the lowest ID and highest ID in a set of
     // differences.
+    "SELECT COUNT(id) FROM diffs "  // COUNT_DIFF_RECS
+        "WHERE zone_id=?1",
     "SELECT id FROM diffs "     // LOW_DIFF_ID
         "WHERE zone_id=?1 AND version=?2 and OPERATION=0 "
         "ORDER BY id ASC LIMIT 1",
@@ -595,19 +599,22 @@ SQLite3Accessor::getAllRecords(int id) const {
 
 /// \brief Difference Iterator
 ///
-///
+/// This iterator is used to search through the differences table for the
+/// resouce records making up an IXFR between two versions of a zone.
 
 class SQLite3Accessor::DiffContext : public DatabaseAccessor::IteratorContext {
 public:
 
-    // Construct an iterator for difference records.
+    /// \brief Constructor
+    ///
+    /// \param zone_id ID of the zone (in the zone table)
     DiffContext(const boost::shared_ptr<const SQLite3Accessor>& accessor,
-                int id, int start, int end) :
+                int zone_id, uint32_t start, uint32_t end) :
         accessor_(accessor)
     {
         try {
-            int low_id = findIndex(LOW_DIFF_ID, id, start);
-            int high_id = findIndex(HIGH_DIFF_ID, id, end);
+            int low_id = findIndex(LOW_DIFF_ID, zone_id, start);
+            int high_id = findIndex(HIGH_DIFF_ID, zone_id, end);
             std::cout << "Low index is " << low_id << ", high index is " << high_id << "\n";
         } catch (...) {
             accessor_->dbparameters_->finalizeStatements();
@@ -633,7 +640,7 @@ private:
     void clearBindings(int stindex) {
         if (sqlite3_clear_bindings(
             accessor_->dbparameters_->getStatement(stindex)) != SQLITE_OK) {
-            isc_throw(SQLite3Error, "Could not clear SQL statement bindings in '" <<
+            isc_throw(SQLite3Error, "Could not clear statement bindings in '" <<
                       text_statements[stindex] << "': " << 
                       sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
@@ -647,14 +654,65 @@ private:
     /// \param varindex Index of variable to which to bind
     /// \param value Value of variable to bind
     /// \exception SQLite3Error on an error
-    void bindInt(int stindex, int varindex, int value) {
-        if (sqlite3_bind_int(accessor_->dbparameters_->getStatement(stindex),
+    void bindInt(int stindex, int varindex, sqlite3_int64 value) {
+        if (sqlite3_bind_int64(accessor_->dbparameters_->getStatement(stindex),
                              varindex, value) != SQLITE_OK) {
             isc_throw(SQLite3Error, "Could not bind value to parameter " <<
                       varindex << " in statement '" <<
                       text_statements[stindex] << "': " << 
                       sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
+    }
+
+    ///\brief Get Single Value
+    ///
+    /// Executes a prepared statement (which has parameters bound to it)
+    /// for which the result of a single value is expected.
+    ///
+    /// \param stindex Index of prepared statement in statement table.
+    ///
+    /// \return Value of SELECT.
+    ///
+    /// \exception TooMuchData Multiple rows returned when one expected
+    /// \exception TooLittleData Zero rows returned when one expected
+    /// \exception DataSourceError SQLite3-related error
+    int getSingleValue(StatementID stindex) {
+
+        // Get a pointer to the statement for brevity (does not transfer
+        // resources)
+        sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(stindex);
+
+        // Execute the data.  Should be just one result
+        int rc = sqlite3_step(stmt);
+        int result = -1;
+        if (rc == SQLITE_ROW) {
+
+            // Got some data, extract the value
+            result = sqlite3_column_int(stmt, 0);
+            int rc = sqlite3_step(stmt);
+            if (rc == SQLITE_DONE) {
+
+                // All OK, exit with the value.
+                return (result);
+
+            } else if (rc == SQLITE_ROW) {
+                isc_throw(TooMuchData, "request to return one value from "
+                          "diffs table returned multiple values");
+            }
+        } else if (rc == SQLITE_DONE) {
+
+            // No data in the table.  A bare exception with no explanation is
+            // thrown, as it will be replaced by a more informative one by
+            // the caller.
+            isc_throw(TooLittleData, "");
+        }
+
+        // We get here on an error.
+        isc_throw(DataSourceError, "could not get data from diffs table: " <<
+                  sqlite3_errmsg(accessor_->dbparameters_->db_));
+
+        // Keep the compiler happy with a return value.
+        return (result);
     }
 
     /// \brief Find index
@@ -669,7 +727,15 @@ private:
     /// \return int ID of the row in the difss table corresponding to the
     ///         statement.
     ///
-    /// \exception NoSuchSerial Serial number not found
+    /// \exception NoSuchSerial Serial number not found.
+    ///
+    /// TODO: NoSuchSerial will be thrown if no records are found.  This is
+    /// most likely due to there being no match for the serial number, but it
+    /// could also be 
+    /// might also occur if there are no difference records for the zone in
+    /// the table.  We can check for this, but only at the cost of
+    /// no difference records in the table.  We can disambiguate these cases,
+    /// but only by 
     int findIndex(StatementID stindex, int zone_id, uint32_t serial) {
 
         // Set up the statement
@@ -677,40 +743,32 @@ private:
         bindInt(stindex, 1, zone_id);
         bindInt(stindex, 2, serial);
 
-        // Get a pointer to the statement for brevity (does not transfer
-        // resources)
-        sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(stindex);
-
-        // Execute the data.  Should be just one result
-        int rc = sqlite3_step(stmt);
+        // Execute the statement
         int result = -1;
-        if (rc == SQLITE_ROW) {
+        try {
+            result = getSingleValue(stindex);
 
-            // Got some data, extract the value
-            result = sqlite3_column_int(stmt, 1);
-            int rc = sqlite3_step(stmt);
-            if (rc == SQLITE_DONE) {
+        } catch (TooLittleData) {
 
-                // All OK, exit with the value.
-                return (result);
+            // Why is there too little data?  Could be there is no data in
+            // the table for the zone, or there is but there is no data for
+            // that particular serial number.  Do another query to find out.
+            clearBindings(COUNT_DIFF_RECS);
+            bindInt(COUNT_DIFF_RECS, 1, zone_id);
 
-            } else if (rc == SQLITE_ROW) {
-                isc_throw(DataSourceError, "request to return one value from "
-                          "diffs table for serial " << serial << " (zone ID " <<
-                          zone_id << ") returned multiple values");
+            // If this throws an exception, let it propagate - there is
+            // definitely an error.
+            result = getSingleValue(COUNT_DIFF_RECS);
+            if (result == 0) {
+                isc_throw(NoDiffRecs, "no data in differences table for "
+                          "zone ID " << zone_id);
+            } else {
+                isc_throw(NoSuchSerial, "no data in differences table for "
+                          "zone ID " << zone_id << ", serial number " <<
+                          serial);
             }
-        } else if (rc == SQLITE_DONE) {
-
-            // No data in the table for this zone and version.  Note that.
-            isc_throw(NoSuchSerial, "no data on serial number " << serial <<
-                      " for zone ID " << zone_id);
         }
 
-        // We get here on an error.
-        isc_throw(DataSourceError, "could not get data from diffs table: " <<
-                  sqlite3_errmsg(accessor_->dbparameters_->db_));
-
-        // Keep the compiler happy with a return value.
         return (result);
     }
 
@@ -721,7 +779,7 @@ private:
 // ... and return the iterator
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Accessor::getDiffs(int id, int start, int end) const {
+SQLite3Accessor::getDiffs(int id, uint32_t start, uint32_t end) const {
     return (IteratorContextPtr(new DiffContext(shared_from_this(), id, start,
                                end)));
 }

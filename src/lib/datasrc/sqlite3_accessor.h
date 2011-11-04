@@ -47,10 +47,46 @@ public:
 };
 
 /**
+ * \brief Too Much Data
+ *
+ * Thrown if a query expecting a certain number of rows back returned too
+ * many rows.
+ */
+class TooMuchData : public Exception {
+public:
+    TooMuchData(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/**
+ * \brief Too Little Data
+ *
+ * Thrown if a query expecting a certain number of rows back returned too
+ * few rows (including none).
+ */
+class TooLittleData : public Exception {
+public:
+    TooLittleData(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/**
+ * \brief No difference records
+ *
+ * Thrown if there are no difference records in the table for the requested
+ * zone.
+ */
+class NoDiffRecs : public Exception {
+public:
+    NoDiffRecs(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/**
  * \brief No such serial number when obtaining difference iterator
  *
  * Thrown if either the start or end version requested for the difference
- * iterator doe nsot exist.
+ * iterator does not exist.
  */
 class NoSuchSerial : public Exception {
 public:
@@ -157,7 +193,8 @@ public:
      *
      * \return Iterator containing difference records.
      */
-    virtual IteratorContextPtr getDiffs(int id, int start, int end) const;
+    virtual IteratorContextPtr
+    getDiffs(int id, uint32_t start, uint32_t end) const;
                                         
 
 
