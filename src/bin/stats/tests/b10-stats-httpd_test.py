@@ -155,11 +155,22 @@ class TestHttpHandler(unittest.TestCase):
                 for m in DUMMY_DATA:
                     for k in DUMMY_DATA[m].keys():
                         self.assertIsNotNone(root.find(m + '/' + k))
+                        itm = root.find(m + '/' + k)
+                        if type(DUMMY_DATA[m][k]) is list:
+                            for v in DUMMY_DATA[m][k]:
+                                for i in v:
+                                    self.assertIsNotNone(itm.find('zones/' + i))
             elif item is None:
                 for k in DUMMY_DATA[mod].keys():
                     self.assertIsNotNone(root.find(k))
+                    itm = root.find(k)
+                    if type(DUMMY_DATA[mod][k]) is list:
+                        for v in DUMMY_DATA[mod][k]:
+                            for i in v:
+                                self.assertIsNotNone(itm.find('zones/' + i))
             else:
                 self.assertIsNotNone(root.find(item))
+
         # URL is '/bind10/statistics/xml'
         check_XML_URL_PATH(mod=None, item=None)
         for m in DUMMY_DATA:
