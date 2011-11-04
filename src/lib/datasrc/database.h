@@ -319,8 +319,7 @@ public:
      *
      * \return Newly created iterator context. Must not be NULL.
      */
-    virtual IteratorContextPtr getDiffs(int id, uint32_t start, uint32_t end)
-                                        const = 0;
+    virtual IteratorContextPtr getDiffs(int id, int start, int end) const = 0;
 
     /// Start a transaction for updating a zone.
     ///

@@ -98,7 +98,7 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "SELECT id FROM diffs "     // LOW_DIFF_ID
         "WHERE zone_id=?1 AND version=?2 and OPERATION=0 "
         "ORDER BY id ASC LIMIT 1",
-    "SELECT id FROM diffs "     // LOW_DIFF_ID
+    "SELECT id FROM diffs "     // HIGH_DIFF_ID
         "WHERE zone_id=?1 AND version=?2 and OPERATION=1 "
         "ORDER BY id DESC LIMIT 1",
     "SELECT name, rrtype, ttl, rdata FROM diffs "   // DIFFS
@@ -605,9 +605,14 @@ public:
                 int id, int start, int end) :
         accessor_(accessor)
     {
-        int low_id = findIndex(LOW_DIFF_ID, id, start);
-        int high_id = findIndex(HIGH_DIFF_ID, id, end);
-        std::cout << "Low index is " << low_id << ", high index is " << high_id << "\n";
+        try {
+            int low_id = findIndex(LOW_DIFF_ID, id, start);
+            int high_id = findIndex(HIGH_DIFF_ID, id, end);
+            std::cout << "Low index is " << low_id << ", high index is " << high_id << "\n";
+        } catch (...) {
+            accessor_->dbparameters_->finalizeStatements();
+            throw;
+        }
     }
 
     virtual ~DiffContext() {}
@@ -686,9 +691,9 @@ private:
             int rc = sqlite3_step(stmt);
             if (rc == SQLITE_DONE) {
 
-                // That was the only data, OK to return. Tidy up as we go,
-                // ignoring any error return.
-                rc = sqlite3_reset(stmt);
+                // All OK, exit with the value.
+                return (result);
+
             } else if (rc == SQLITE_ROW) {
                 isc_throw(DataSourceError, "request to return one value from "
                           "diffs table for serial " << serial << " (zone ID " <<
@@ -701,11 +706,11 @@ private:
                       " for zone ID " << zone_id);
         }
 
-        if (rc != SQLITE_OK) {
-            isc_throw(DataSourceError, "could not get data from diffs table: " <<
-                      sqlite3_errmsg(accessor_->dbparameters_->db_));
-        }
+        // We get here on an error.
+        isc_throw(DataSourceError, "could not get data from diffs table: " <<
+                  sqlite3_errmsg(accessor_->dbparameters_->db_));
 
+        // Keep the compiler happy with a return value.
         return (result);
     }
 
@@ -716,7 +721,7 @@ private:
 // ... and return the iterator
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Accessor::getDiffs(int id, uint32_t start, uint32_t end) const {
+SQLite3Accessor::getDiffs(int id, int start, int end) const {
     return (IteratorContextPtr(new DiffContext(shared_from_this(), id, start,
                                end)));
 }
