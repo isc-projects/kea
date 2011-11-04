@@ -113,9 +113,11 @@ public:
         DEL_PARAM_COUNT = 3 ///< Number of parameters
     };
 
-    /// Operation mode when adding a record diff.
-    ///
-    /// This is used as the "operation" parameter value of addRecordDiff().
+    /**
+     * Operation mode when adding a record diff.
+     *
+     * This is used as the "operation" parameter value of addRecordDiff().
+     */
     enum DiffOperation {
         DIFF_ADD = 0,           ///< This diff is for adding an RR
         DIFF_DELETE = 1         ///< This diff is for deleting an RR
