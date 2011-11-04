@@ -229,8 +229,30 @@ TEST_F(SQLite3AccessorTest, diffIteratorNoVersion) {
     EXPECT_THROW(accessor->getDiffs(zone_info.second, 1231, 2234),
                  NoSuchSerial);
 
+}
 
+// Try to iterate through a valid set of differences
+TEST_F(SQLite3AccessorTest, validSequence) {
+
+    // Our test zone is conveniently small, but not empty
+    initAccessor(SQLITE_DBFILE_DIFFS, "IN");
+
+    const std::pair<bool, int> zone_info(accessor->getZone("example.org."));
+    ASSERT_TRUE(zone_info.first);
     // Get the iterator context
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor->getDiffs(zone_info.second, 1230, 1232));
+    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context);
+
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+
+    // Check the records
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("SOA", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("ns1.example.org. admin.example.org. 1230, 3600 1800 2419200 7200",
+        data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 }
 
 TEST(SQLite3Open, getDBNameExample2) {
