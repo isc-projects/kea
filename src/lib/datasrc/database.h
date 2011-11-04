@@ -85,7 +85,7 @@ public:
      * Definitions of the fields to be passed to addRecordToZone().
      *
      * Each derived implementation of addRecordToZone() should expect
-     * the "columns" vector to be filled with the values as described in this
+     * the "columns" array to be filled with the values as described in this
      * enumeration, in this order.
      */
     enum AddRecordColumns {
@@ -103,7 +103,7 @@ public:
      * Definitions of the fields to be passed to deleteRecordInZone().
      *
      * Each derived implementation of deleteRecordInZone() should expect
-     * the "params" vector to be filled with the values as described in this
+     * the "params" array to be filled with the values as described in this
      * enumeration, in this order.
      */
     enum DeleteRecordParams {
@@ -113,18 +113,27 @@ public:
         DEL_PARAM_COUNT = 3 ///< Number of parameters
     };
 
-    /// TBD
+    /// Operation mode when adding a record diff.
+    ///
+    /// This is used as the "operation" parameter value of addRecordDiff().
     enum DiffOperation {
-        DIFF_ADD = 0,
-        DIFF_DELETE = 1
+        DIFF_ADD = 0,           ///< This diff is for adding an RR
+        DIFF_DELETE = 1         ///< This diff is for deleting an RR
     };
 
+    /**
+     * Definitions of the fields to be passed to addRecordDiff().
+     *
+     * Each derived implementation of addRecordDiff() should expect
+     * the "params" array to be filled with the values as described in this
+     * enumeration, in this order.
+     */
     enum DiffRecordParams {
-        DIFF_NAME = 0,
-        DIFF_TYPE = 1,
-        DIFF_TTL = 2,
-        DIFF_RDATA = 3,
-        DIFF_PARAM_COUNT = 4
+        DIFF_NAME = 0, ///< The owner name of the record (a domain name)
+        DIFF_TYPE = 1, ///< The RRType of the record (A/NS/TXT etc.)
+        DIFF_TTL = 2,  ///< The TTL of the record (in numeric form)
+        DIFF_RDATA = 3, ///< Full text representation of the record's RDATA
+        DIFF_PARAM_COUNT = 4    ///< Number of parameters
     };
 
     /**
@@ -467,10 +476,72 @@ public:
     /// to the method or internal database error.
     virtual void rollback() = 0;
 
-    /// TBD
-    /// Must be in a transaction.  (should that be started by startUpdateZone,
-    /// or can that be any transaction? => probably yes in future, so include
-    /// zone_id in param, but for now assume using it with startUpdateZone)
+    /// Install a single RR diff in difference sequences for zone update.
+    ///
+    /// This method inserts parameters of an update operation for a single RR
+    /// (either adding or deleting one) in the underlying database.
+    /// (These parameters would normally be a separate database table, but
+    /// actual realization can differ in specific implementations).
+    /// The information given via this method generally corresponds to either
+    /// a single call to \c addRecordToZone() or \c deleteRecordInZone(),
+    /// and this method is expected to be called immediately after (or before)
+    /// a call to either of those methods.
+    ///
+    /// Note, however, that this method passes more detailed information
+    /// than those update methods: it passes "serial", even if the diff
+    /// is not for the SOA RR; it passes TTL for a diff that deletes an RR
+    /// while in \c deleteRecordInZone() it's omitted.  This is because
+    /// the stored diffs are expected to be retrieved in the form that
+    /// \c getRecordDiffs() is expected to meet.  This means if the caller
+    /// wants to use this method with other update operations, it must
+    /// ensure the additional information is ready when this method is called.
+    ///
+    /// \note \c getRecordDiffs() is not yet implemented.
+    ///
+    /// The caller of this method must ensure that the added diffs via
+    /// this method in a single transaction form an IXFR-style difference
+    /// sequences: Each difference sequence is a sequence of RRs:
+    /// an older version of SOA (to be deleted), zero or more other deleted
+    /// RRs, the post-transaction SOA (to be added), and zero or more other
+    /// added RRs.  So, for example, the first call to this method in a
+    /// transaction must always be deleting an SOA.  Also, the \c serial
+    /// parameter must be equal to the value of the serial field of the
+    /// SOA that was last added or deleted (if the call is to add or delete
+    /// an SOA RR, \c serial must be identical to the serial of that SOA).
+    /// The underlying derived class implementation may or may not check
+    /// this condition, but if the caller doesn't meet the condition
+    /// a subsequent call to \c getRecordDiffs() will not work as expected.
+    ///
+    /// Any call to this method must be in a transaction, and, for now,
+    /// it must be a transaction triggered by \c startUpdateZone() (that is,
+    /// it cannot be a transaction started by \c startTransaction()).
+    /// All calls to this method are considered to be part of an atomic
+    /// transaction: Until \c commit() is performed, the added diffs are
+    /// not visible outside the transaction; if \c rollback() is performed,
+    /// all added diffs are canceled; and the added sequences are not
+    /// affected by any concurrent attempt of adding diffs (conflict resolution
+    /// is up to the database implementation).
+    ///
+    /// Also for now, all diffs are assumed to be for the zone that is
+    /// being updated in the context of \c startUpdateZone().  So the
+    /// \c zone_id parameter must be identical to the zone ID returned by
+    /// \c startUpdateZone().
+    ///
+    /// In a future version we may loosen this condition so that diffs can be
+    /// added in a generic transaction and may not even have to belong to
+    /// a single zone.  For this possible extension \c zone_id parameter is
+    /// included even if it's redundant under the current restriction.
+    ///
+    /// \exception DataSourceError Invalid call without starting a transaction,
+    /// zone ID doesn't match the zone being updated, or other internal
+    /// database error.
+    /// \exception Other The concrete derived method may throw other
+    /// data source specific exceptions.
+    ///
+    /// \param zone_id The zone for the diff to be added.
+    /// \param serial The SOA serial to which the diff belongs.
+    /// \param operation Either \c DIFF_ADD or \c DIFF_DELETE.
+    /// \param params An array of strings that defines a record for the diff.
     virtual void addRecordDiff(
         int zone_id, uint32_t serial, DiffOperation operation,
         const std::string (&params)[DIFF_PARAM_COUNT]) = 0;
