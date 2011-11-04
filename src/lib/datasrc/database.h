@@ -534,9 +534,15 @@ public:
     /// a single zone.  For this possible extension \c zone_id parameter is
     /// included even if it's redundant under the current restriction.
     ///
+    /// The support for adding (or retrieving) diffs is optional; if it's
+    /// not supported in a specific data source, this method for the
+    /// corresponding derived class will throw an \c NotImplemented exception.
+    ///
     /// \exception DataSourceError Invalid call without starting a transaction,
     /// zone ID doesn't match the zone being updated, or other internal
     /// database error.
+    /// \exception NotImplemented Adding diffs is not supported in the
+    /// data source.
     /// \exception Other The concrete derived method may throw other
     /// data source specific exceptions.
     ///
