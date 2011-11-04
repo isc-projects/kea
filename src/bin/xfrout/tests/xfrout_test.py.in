@@ -82,6 +82,8 @@ class Dbserver:
         self._shutdown_event = threading.Event()
     def get_db_file(self):
         return None
+    def increase_transfers_counter(self):
+        return True
     def decrease_transfers_counter(self):
         pass
 

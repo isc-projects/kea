@@ -264,6 +264,12 @@ class XfroutSession():
            TODO, Get zone's configuration from cfgmgr or some other place
            eg. check allow_transfer setting,
         '''
+
+        # Reject the attempt if we are too busy.  Check this first to avoid
+        # unnecessary resource consumption even if we discard it soon.
+        if not self._server.increase_transfers_counter():
+            return Rcode.REFUSED()
+
         # If the current name server does not have authority for the
         # zone, xfrout can't serve for it, return rcode NOTAUTH.
         if not self._zone_exist(zone_name):
@@ -276,8 +282,6 @@ class XfroutSession():
             return Rcode.SERVFAIL()
 
         #TODO, check allow_transfer
-        if not self._server.increase_transfers_counter():
-            return Rcode.REFUSED()
 
         return Rcode.NOERROR()
 
@@ -535,6 +539,9 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
 
     def finish_request(self, sock_fd, request_data):
         '''Finish one request by instantiating RequestHandlerClass.
+
+        This is an entry point of a separate thread spawned in
+        UnixSockServer.process_request().
 
         This method creates a XfroutSession object.
         '''
