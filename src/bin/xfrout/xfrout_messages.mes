@@ -15,7 +15,7 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrout messages python module.
 
-% XFROUT_AXFR_TRANSFER_DONE transfer of %1/%2 complete
+% XFROUT_AXFR_TRANSFER_DONE transfer of %1 complete
 The transfer of the given zone has been completed successfully, or was
 aborted due to a shutdown event.
 
@@ -25,7 +25,7 @@ an AXFR query. The error message of the exception is included in the
 log message, but this error most likely points to incomplete exception
 handling in the code.
 
-% XFROUT_AXFR_TRANSFER_FAILED transfer of %1/%2 failed, rcode: %3
+% XFROUT_AXFR_TRANSFER_FAILED transfer of %1 failed, rcode: %2
 A transfer out for the given zone failed. An error response is sent
 to the client. The given rcode is the rcode that is set in the error
 response. This is either NOTAUTH (we are not authoritative for the
@@ -36,7 +36,7 @@ Xfrout/max_transfers_out, has been reached).
 # Still a TODO, but when implemented, REFUSED can also mean
 # the client is not allowed to transfer the zone
 
-% XFROUT_AXFR_TRANSFER_STARTED transfer of zone %1/%2 has started
+% XFROUT_AXFR_TRANSFER_STARTED transfer of zone %1 has started
 A transfer out of the given zone has started.
 
 % XFROUT_BAD_TSIG_KEY_STRING bad TSIG key string: %1
