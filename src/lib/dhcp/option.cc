@@ -43,46 +43,46 @@ Option::Option(Universe u, unsigned short type,
     :universe_(u), type_(type),
      offset_(offset)
 {
-    if ( (u == V4) && (type > 255)) {
-        isc_throw(BadValue, "Can't create V4 option of type "
-                  << type << ", V4 options are in range 0..255");
-    }
-
     uint8_t* ptr = &buf[offset];
     data_ = std::vector<uint8_t>(ptr, ptr + len);
 
-    // sanity checks
-    // TODO: universe must be in V4 and V6
+    check();
 }
 
 Option::Option(Universe u, unsigned short type, std::vector<uint8_t>& data)
     :universe_(u), type_(type), data_(data) {
-    if ( (u == V4) && (data.size() > 255) ) {
-        isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
-                  << "At most 255 bytes are supported.");
-        /// TODO Larger options can be stored as separate instances
-        /// of DHCPv4 options. Clients MUST concatenate them.
-        /// Fortunately, there are no such large options used today.
-    }
-    if ( (u == V4) && (type > 255) ) {
-        isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big."
-                  << "For DHCPv4 allowed type range is 0..255");
-    }
+    check();
 }
 
 Option::Option(Universe u, uint16_t type, vector<uint8_t>::const_iterator first,
                vector<uint8_t>::const_iterator last)
-    :universe_(u), type_(type) {
-    if ( (u == V4) && (type > 255) ) {
-        isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big."
-                  << "For DHCPv4 allowed type range is 0..255");
-    }
-    data_ = std::vector<uint8_t>(first, last);
-    if ( (u == V4) && (data_.size() > 255) ) {
-        isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big.");
-    }
+    :universe_(u), type_(type), data_(std::vector<uint8_t>(first,last)) {
+    check();
 }
 
+void
+Option::check() {
+    if ( (universe_ != V4) && (universe_ != V6) ) {
+        isc_throw(BadValue, "Invalid universe type specified."
+                  << "Only V4 and V6 are allowed.");
+    }
+
+    if (universe_ == V4) {
+
+        if (type_ > 255) {
+            isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big."
+                      << "For DHCPv4 allowed type range is 0..255");
+        } else if (data_.size() > 255) {
+            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big.");
+            /// TODO Larger options can be stored as separate instances
+            /// of DHCPv4 options. Clients MUST concatenate them.
+            /// Fortunately, there are no such large options used today.
+        }
+    }
+
+    // no need to check anything for DHCPv6. It allows full range (0-64k) of
+    // both types and data size.
+}
 
 unsigned int
 Option::pack(boost::shared_array<uint8_t>& buf,
@@ -153,7 +153,7 @@ Option::pack6(boost::shared_array<uint8_t>& buf,
                   type_ << ",len=" << len() << ": too small buffer.");
     }
 
-    uint8_t * ptr = &buf[offset];
+    uint8_t* ptr = &buf[offset];
 
     ptr = writeUint16(type_, ptr);
 
