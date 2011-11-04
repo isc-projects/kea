@@ -70,7 +70,7 @@ was killed.
 There was a problem sending a message to the zone manager. This most
 likely means that the msgq daemon has quit or was killed.
 
-% XFRIN_NOTIFY_UNKNOWN_MASTER got notification to retransfer zone %1 from %2, expected %3
+% XFRIN_NOTIFY_UNKNOWN_MASTER got notification to retransfer zone %1 from %2/%3, expected %4/%5
 The system received a notify for the given zone, but the address it came
 from does not match the master address in the Xfrin configuration. The notify
 is ignored. This may indicate that the configuration for the master is wrong,
