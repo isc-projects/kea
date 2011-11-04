@@ -165,8 +165,13 @@ public:
         const std::string (&params)[DIFF_PARAM_COUNT]);
 
     // A short term method for tests until we implement more complete
-    // API to retrieve diffs.  It returns all records of the diffs table
-    // whose zone_id column is identical to the given value.
+    // API to retrieve diffs (#1330).  It returns all records of the diffs
+    // table whose zone_id column is identical to the given value.
+    // Since this is a short term workaround, it ignores some corner cases
+    // (such as an SQLite3 execution failure) and is not very efficient,
+    // in favor of brevity.  Once #1330 is completed, this method must be
+    // removed, and the tests using this method must be rewritten using the
+    // official API.
     std::vector<std::vector<std::string> > getRecordDiff(int zone_id);
 
     /// The SQLite3 implementation of this method returns a string starting
