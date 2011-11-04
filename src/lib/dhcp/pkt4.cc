@@ -117,6 +117,10 @@ Pkt4::pack() {
 
     LibDHCP::packOptions(bufferOut_, options_);
 
+    // add END option that indicates end of options
+    // (End option is very simple, just a 255 octet)
+    bufferOut_.writeUint8(DHO_END);
+
     return (true);
 }
 bool
