@@ -1,6 +1,5 @@
-#ifdef __cplusplus
-extern "C" {
-#endif 
+#ifndef PROCCONF_H
+#define PROCCONF_H
 
 #include <limits.h>	/* for UINT_MAX */
 
@@ -25,6 +24,11 @@ typedef enum {
     CF_NONE, CF_ARGS, CF_FILE
 } cf_source;
 
+/*
+ * This is to be OR'd into a confvar_t outind to indicate that an index
+ * number that is given is not to be interpreted as a command line option
+ * character.
+ */
 #define CF_NOTFLAG (UINT_MAX & ~(UINT_MAX >> 1))
 
 /*
@@ -35,7 +39,7 @@ typedef enum {
  */
 typedef struct {
     unsigned outind;	/* Single-character option, or option output index */
-    char *varname;	/* Long name, for config file and eventually long option */
+    char *varname;	/* Long name, for config file and long option */
     cf_type type;	/* Option type */
     const void *addr;	/* Address of variable associated with this option */
     int value;		/* Value to assign to switch options */
@@ -68,13 +72,12 @@ typedef struct {
 
 typedef struct {
     cf_option *optVals;	/* All option values */
-    cf_option **map;	/* Option values indexed by option-char / option-index */
+    cf_option **map;	/* Option values indexed by option-char/option-index */
 } confdata_t;
 
 const char *
-procOpts(int *argc, char **argv[], const confvar_t optConf[], confdata_t *confdata, const char confFile[], const char name[],
+procOpts(int *argc, const char **argv[], const confvar_t optConf[],
+	confdata_t *confdata, const char confFile[], const char name[],
 	const char usage[]);
 
-#ifdef __cplusplus
-}
 #endif

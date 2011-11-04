@@ -54,3 +54,9 @@ vdkprintf(unsigned diag_req, const char format[], va_list ap)
     if (diag_req & dk_diag_mask)
 	vfprintf(stderr, format, ap);
 }
+
+int
+dk_set(unsigned diag_req)
+{
+    return diag_req & dk_diag_mask;
+}
