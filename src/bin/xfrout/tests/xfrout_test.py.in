@@ -21,7 +21,7 @@ import os
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from isc.cc.session import *
 import isc.config
-from pydnspp import *
+from isc.dns import *
 from xfrout import *
 import xfrout
 import isc.log
@@ -81,7 +81,7 @@ class Dbserver:
     def __init__(self):
         self._shutdown_event = threading.Event()
     def get_db_file(self):
-        return None
+        return 'test.sqlite3'
     def increase_transfers_counter(self):
         return True
     def decrease_transfers_counter(self):
@@ -511,46 +511,34 @@ class TestXfroutSession(unittest.TestCase):
         rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
         self.assertEqual(82, get_rrset_len(rrset_soa))
 
-    def test_zone_has_soa(self):
-        global sqlite3_ds
-        def mydb1(zone, file):
-            return True
-        sqlite3_ds.get_zone_soa = mydb1
-        self.assertTrue(self.xfrsess._zone_has_soa(""))
-        def mydb2(zone, file):
-            return False
-        sqlite3_ds.get_zone_soa = mydb2
-        self.assertFalse(self.xfrsess._zone_has_soa(""))
-
-    def test_zone_exist(self):
-        global sqlite3_ds
-        def zone_exist(zone, file):
-            return zone
-        sqlite3_ds.zone_exist = zone_exist
-        self.assertTrue(self.xfrsess._zone_exist(True))
-        self.assertFalse(self.xfrsess._zone_exist(False))
-
     def test_check_xfrout_available(self):
-        def zone_exist(zone):
-            return zone
-        def zone_has_soa(zone):
-            return (not zone)
-        self.xfrsess._zone_exist = zone_exist
-        self.xfrsess._zone_has_soa = zone_has_soa
-        self.assertEqual(self.xfrsess._check_xfrout_available(False).to_text(), "NOTAUTH")
-        self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "SERVFAIL")
+        class MockDataSrcClient:
+            def __init__(self, type, config): pass
 
-        def zone_empty(zone):
-            return zone
-        self.xfrsess._zone_has_soa = zone_empty
-        def false_func():
-            return False
-        self.xfrsess._server.increase_transfers_counter = false_func
-        self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "REFUSED")
-        def true_func():
-            return True
-        self.xfrsess._server.increase_transfers_counter = true_func
-        self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "NOERROR")
+            def get_iterator(self, zone_name):
+                if zone_name == Name('notauth.example.com'):
+                    raise isc.datasrc.Error('no such zone')
+                self._zone_name = zone_name
+                return self
+
+            def get_soa(self):  # emulate ZoneIterator.get_soa()
+                if self._zone_name == Name('nosoa.example.com'):
+                    return None
+                # returning True on success is wrong, but works for this test.
+                return True
+
+        self.xfrsess.ClientClass = MockDataSrcClient
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('notauth.example.com')), Rcode.NOTAUTH())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('nosoa.example.com')), Rcode.SERVFAIL())
+
+        self.xfrsess._server.increase_transfers_counter = lambda : False
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('example.com')), Rcode.REFUSED())
+        self.xfrsess._server.increase_transfers_counter = lambda : True
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('example.com')), Rcode.NOERROR())
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
