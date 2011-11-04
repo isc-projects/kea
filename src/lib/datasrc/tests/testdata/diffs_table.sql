@@ -45,14 +45,14 @@ CREATE TABLE diffs (id INTEGER PRIMARY KEY AUTOINCREMENT,
 -- Update one record in the zone.
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 4294967280,  0, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 4294967280 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 4294967280 3600 1800 2419200 7200");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 4294967280, 0, "www.example.org.", "A", 3600, "192.0.2.31");
 
 -- Records added in version 1230 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1230, 1, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1230 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1230 3600 1800 2419200 7200");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1230, 1, "www.example.org.", "A", 3600, "192.0.2.21");
 
@@ -60,37 +60,37 @@ INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
 -- Records removed from version 1230 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1230, 0, "example.org.", "SOA", 1800,
-           "ns1.example.org. admin.example.org. 1230 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1230 3600 1800 2419200 7200");
 
 -- Records added in version 1231 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1231, 1, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1231 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1231 3600 1800 2419200 7200");
 
 
 -- Change 1231 to 1232: Remove one record, don't add anything.
 -- Records removed from version 1231 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1231, 0, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1231 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1231 3600 1800 2419200 7200");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1231, 0, "unused.example.org.", "A", 3600, "192.0.2.102");
 
 -- Records added in version 1232 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1232, 1, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1232 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1232 3600 1800 2419200 7200");
 
 -- Change 1232 to 1233: Add two, don't remove anything.
 -- Records removed from version 1232 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1232, 0, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1232 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1232 3600 1800 2419200 7200");
 
 -- Records added in version 1233 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1233, 1, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1233 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1233 3600 1800 2419200 7200");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1233, 1, "sub.example.org.", "NS", 3600, "ns.sub.example.org.");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
@@ -101,7 +101,7 @@ INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
 -- Records removed from version 1233 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1233, 0, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1233 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1233 3600 1800 2419200 7200");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1233, 0, "www.example.org.", "A", 3600, "192.0.2.21");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
@@ -110,7 +110,7 @@ INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
 -- Records added in version 1234 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1234, 1, "example.org.", "SOA", 3600,
-           "ns1.example.org. admin.example.org. 1234 3600 1800 2419200, 7200");
+           "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1234, 1, "www.example.org.", "A", 3600, "192.0.2.1");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
