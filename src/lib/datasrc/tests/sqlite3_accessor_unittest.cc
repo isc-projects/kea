@@ -212,7 +212,7 @@ TEST_F(SQLite3AccessorTest, iterator) {
 // Test that at attempt to create a difference iterator for a serial that
 // does not exist throws an exception.
 
-TEST_F(SQLite3AccessorTest, diffIteratorNoVersion) {
+TEST_F(SQLite3AccessorTest, diffIteratorNoRecords) {
 
     // Our test zone is conveniently small, but not empty
     initAccessor(SQLITE_DBFILE_DIFFS, "IN");
@@ -227,6 +227,11 @@ TEST_F(SQLite3AccessorTest, diffIteratorNoVersion) {
 
     // Check that an invalid high version number also throws an exception.
     EXPECT_THROW(accessor->getDiffs(zone_info.second, 1231, 2234),
+                 NoSuchSerial);
+
+    // Check that valid versions - but for the wrong zone which does not hold
+    // any records - throws the correct exception.
+    EXPECT_THROW(accessor->getDiffs(zone_info.second + 42, 1231, 1234),
                  NoSuchSerial);
 
 }
