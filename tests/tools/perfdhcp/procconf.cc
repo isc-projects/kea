@@ -60,15 +60,18 @@ pc_malloc(size_t size)
 }
 
 static void
-opterror(const char *expected, const char *value, const confvar_t *varDesc, const char filename[], const char *detail)
+opterror(const char *expected, const char *value, const confvar_t *varDesc,
+	const char filename[], const char *detail)
 {
     if (detail == NULL)
 	detail = "";
     if (filename == NULL)
-	error(USAGE_ERROR, "Invalid value given for option -%c: expected %s, got: %s%s",
+	error(USAGE_ERROR,
+		"Invalid value given for option -%c: expected %s, got: %s%s",
 		varDesc->outind, expected, value, detail);
     else
-	error(USAGE_ERROR, "Invalid value given in configuration file \"%s\" for option %s: expected %s, got: %s%s",
+	error(USAGE_ERROR, "Invalid value given in configuration file \"%s\""
+		" for option %s: expected %s, got: %s%s",
 		filename, varDesc->varname, expected, value, detail);
 }
 
@@ -136,7 +139,8 @@ addOptVal(const cf_source source, const char *value, const confvar_t *varDesc,
 	errno = 0;
 	data.value.intval = strtol(value, &ptr, 0);
 	if (errno == ERANGE) {
-	    opterror("an integer", value, varDesc, filename, " (out of range)");
+	    opterror("an integer", value, varDesc, filename,
+		    " (out of range)");
 	    return -1;
 	}
 	err = *value == '\0' || *ptr != '\0';
@@ -149,7 +153,8 @@ addOptVal(const cf_source source, const char *value, const confvar_t *varDesc,
 	    break;
 	case CF_NON_NEG_INT:
 	    if (err || data.value.intval < 0) {
-		opterror("a non-negative integer", value, varDesc, filename, NULL);
+		opterror("a non-negative integer", value, varDesc, filename,
+			NULL);
 		return -1;
 	    }
 	    data.value.nnint = data.value.intval;
@@ -191,7 +196,8 @@ addOptVal(const cf_source source, const char *value, const confvar_t *varDesc,
 	    break;
 	case CF_NON_NEG_FLOAT:
 	    if (err || data.value.floatval < 0) {
-		opterror("a non-negative number", value, varDesc, filename, NULL);
+		opterror("a non-negative number", value, varDesc, filename,
+			NULL);
 		return -1;
 	    }
 	    break;
@@ -211,7 +217,8 @@ addOptVal(const cf_source source, const char *value, const confvar_t *varDesc,
     case CF_SWITCH:
     case CF_NOCONF:
     case CF_SDEBUG:
-	if (source == CF_FILE && *value != '1')	/* option not turned on; ignore */
+	/* If option not turned on, ignore */
+	if (source == CF_FILE && *value != '1')
 	    return 0;
 	data.value.switchval = varDesc->value;
 	value = "1";	/* for debugging */
@@ -247,15 +254,18 @@ addOptVal(const cf_source source, const char *value, const confvar_t *varDesc,
     *last = ret_data;
     if (debugLevel >= VERBOSE_DEBUG)
 	fprintf(stderr, "Option %c (%s) gets value \"%s\" from %s%s\n",
-		0 < varDesc->outind && varDesc->outind < 256 ? varDesc->outind : '-',
+		0 < varDesc->outind && varDesc->outind < 256 ?
+		varDesc->outind : '-',
 		varDesc->varname == NULL ? "-" : varDesc->varname, value,
-		source == CF_ARGS ? "command line" : "config file", seen ? " (already seen)" : "");
+		source == CF_ARGS ? "command line" : "config file", seen ?
+			" (already seen)" : "");
     return 1;
 }
 
 /*
- * This currently depends on defread().  A CDDL version of the def* library exists:
- * http://www.opensource.apple.com/source/autofs/autofs-207/automountlib/deflt.c
+ * This currently depends on defread().
+ * A CDDL version of the def* library exists:
+ *http://www.opensource.apple.com/source/autofs/autofs-207/automountlib/deflt.c
  * But, this should really be rewritten to not use defread().
  */
 #ifdef DEFREAD
@@ -276,8 +286,8 @@ addOptVal(const cf_source source, const char *value, const confvar_t *varDesc,
  * -1 is returned.
  */
 static int
-procConfFile(const char filename[], const confvar_t optConf[], confval *first[], confval *last[])
-{
+procConfFile(const char filename[], const confvar_t optConf[],
+	confval *first[], confval *last[]) {
     int count;
     char *home;
     int ind;
@@ -321,7 +331,8 @@ procConfFile(const char filename[], const confvar_t optConf[], confval *first[],
 		error(INTERNAL_ERROR, "Out of memory");
 		return -1;
 	    }
-	    switch ((ret = addOptVal(CF_FILE, s, &optConf[ind], &first[ind], &last[ind], filename))) {
+	    switch ((ret = addOptVal(CF_FILE, s, &optConf[ind], &first[ind],
+		    &last[ind], filename))) {
 	    case 1:
 		count++;
 		break;
@@ -352,7 +363,8 @@ procConfFile(const char filename[], const confvar_t optConf[], confval *first[],
  * -1 is returned.
  */
 static int
-procCmdLineArgs(int *argc, char **argv[], const confvar_t optConf[], confval **first, confval **last)
+procCmdLineArgs(int *argc, const char **argv[], const confvar_t optConf[],
+	confval **first, confval **last)
 {
     char *p;
     extern char *optarg;	/* For getopt */
@@ -364,6 +376,7 @@ procCmdLineArgs(int *argc, char **argv[], const confvar_t optConf[], confval **f
     unsigned confNum;
     int count = 0;
 
+    optind = 1;
     p = optstr;
     *(p++) = ':';
     for (confNum = 0; optConf[confNum].type != CF_ENDLIST; confNum++) {
@@ -383,7 +396,7 @@ procCmdLineArgs(int *argc, char **argv[], const confvar_t optConf[], confval **f
 	}
     }
     *p = '\0';
-    while ((optchar = getopt(*argc, *argv, optstr)) != -1) {
+    while ((optchar = getopt(*argc, const_cast<char **>(*argv), optstr)) != -1) {
 	int ind;
 	int ret;
 
@@ -396,7 +409,8 @@ procCmdLineArgs(int *argc, char **argv[], const confvar_t optConf[], confval **f
 	    return -1;
 	}
 	ind = optCharToConf[optchar];
-	switch (ret = addOptVal(CF_ARGS, optarg, &optConf[ind], &first[ind], &last[ind], NULL)) {
+	switch (ret = addOptVal(CF_ARGS, optarg, &optConf[ind], &first[ind],
+		&last[ind], NULL)) {
 	case 1:
 	    count++;
 	    break;
@@ -411,14 +425,42 @@ procCmdLineArgs(int *argc, char **argv[], const confvar_t optConf[], confval **f
     return count;
 }
 
+/*
+ * Input variables:
+ * argc, argv: Command line data.
+ * optConf[]: Option description structures.
+ * confFile[]: Configuration file, or NULL if none provided.
+ * name: Name of program, for messages.
+ * usage: Usage message.  If non-null, on error a message is printed to stderr
+ *    and the program exits.
+ *
+ * Output variables:
+ * The processed option values are stored in confdata.
+ * A pointer to the start of the values for each option is stored in
+ * confdata->optVals[].values at the same offset as the option appears in
+ * confdata[].
+ * For any option for option characters/indexes have been used,
+ * confdata->map[index] is set to the same data.
+ * After processing, argc will have been adjusted to be the number of
+ * non-option arguments and argv will have been adjusted to start with the
+ * first non-option argument.
+ * 
+ * Return value:
+ * On success, NULL.
+ * On error, a message describing the problem.
+ */
 const char *
-procOpts(int *argc, char **argv[], const confvar_t optConf[], confdata_t *confdata,
-	const char confFile[], const char name[], const char usage[])
+procOpts(int *argc, const char **argv[], const confvar_t optConf[],
+	confdata_t *confdata, const char confFile[], const char name[],
+	const char usage[])
 {
+    /* Number of configuration options given in optConf */
     unsigned numConf;
-    confval **first, **last;	/* first & last records in the linked list maintained for each option */
-    unsigned maxOptIndex = 0;
-    int count;		/* number of option instances found */
+    /* First & last records in the linked list maintained for each option */
+    confval **first, **last;
+    unsigned maxOptIndex = 0;	/* The highest option index number seen */
+    /* number of option instances + assignments given */
+    int numOptsFound;
     unsigned optNum;
     unsigned i;
     confval **valuePointers;
@@ -432,12 +474,14 @@ procOpts(int *argc, char **argv[], const confvar_t optConf[], confdata_t *confda
 	    maxOptIndex = outind & ~CF_NOTFLAG;
     }
     if ((first = (confval **)pc_malloc(sizeof(confval *) * numConf)) == NULL ||
-	    (last = (confval **)pc_malloc(sizeof(confval *) * numConf)) == NULL)
+	    (last =
+	    (confval **)pc_malloc(sizeof(confval *) * numConf)) == NULL)
 	return errmsg;
     memset(first, '\0', sizeof(confval *) * numConf);
     memset(last, '\0', sizeof(confval *) * numConf);
 
-    if ((count = procCmdLineArgs(argc, argv, optConf, first, last)) < 0)
+    if ((numOptsFound =
+	    procCmdLineArgs(argc, argv, optConf, first, last)) < 0)
 	return errmsg;
     if (readConf && confFile != NULL) {
 #ifdef DEFREAD
@@ -446,7 +490,7 @@ procOpts(int *argc, char **argv[], const confvar_t optConf[], confdata_t *confda
 	if ((ret = procConfFile(confFile, optConf, first, last)) < 0)
 	    return errmsg;
 	else
-	    count += ret;
+	    nummOptsFound += ret;
 #else
 	error(INTERNAL_ERROR, "Built without defread!");
 	return errmsg;
@@ -459,18 +503,24 @@ procOpts(int *argc, char **argv[], const confvar_t optConf[], confdata_t *confda
      * All options have been read & initial processing done.
      * An array of pointers is now generated for the options.
      */
-    if ((valuePointers = (confval **)pc_malloc(sizeof(confval *) * count)) == NULL ||
-	(confdata->optVals = (cf_option *)pc_malloc(sizeof(cf_option) * numConf)) == NULL)
+    if ((valuePointers =
+	    (confval **)pc_malloc(sizeof(confval *) * numOptsFound)) == NULL ||
+	    (confdata->optVals =
+	    (cf_option *)pc_malloc(sizeof(cf_option) * numConf)) == NULL)
 	return errmsg;
+    /* If option index numbers are used, allocate a map for them */
     if (maxOptIndex != 0) {
-	if ((confdata->map = (cf_option **)pc_malloc(sizeof(cf_option) * (maxOptIndex+1))) == NULL)
+	if ((confdata->map =
+		(cf_option **)pc_malloc(sizeof(cf_option) * (maxOptIndex+1)))
+		== NULL)
 	    return errmsg;
 	memset(confdata->map, '\0', sizeof(confval *) * (maxOptIndex+1));
     }
 
     /*
      * Store the linked lists of option values into arrays.
-     * Pointers to all option instances are stored in valuePointers.
+     * Pointers to all option instances are stored in valuePointers,
+     * with the values for each particular option being contiguous.
      */
     i = 0;
     for (optNum = 0; optNum < numConf; optNum++) {
@@ -488,7 +538,8 @@ procOpts(int *argc, char **argv[], const confvar_t optConf[], confdata_t *confda
 	if (debugLevel > 5)
 	    fprintf(stderr, "Option %c (%s) got %d values\n",
 		    outind == 0 ? '-' : outind,
-		    optConf[optNum].varname == NULL ? "-" : optConf[optNum].varname,         
+		    optConf[optNum].varname == NULL ? "-" :
+		    optConf[optNum].varname,         
 		    confdata->optVals[optNum].num);
     }
     free(first);
