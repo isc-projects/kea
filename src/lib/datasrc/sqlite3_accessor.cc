@@ -52,7 +52,10 @@ enum StatementID {
     DEL_RECORD = 8,
     ITERATE = 9,
     FIND_PREVIOUS = 10,
-    NUM_STATEMENTS = 11
+    LOW_DIFF_ID = 11,
+    HIGH_DIFF_ID = 12,
+    DIFFS = 13,
+    NUM_STATEMENTS = 14
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -60,28 +63,39 @@ const char* const text_statements[NUM_STATEMENTS] = {
     // specifically chosen to match the enum values in RecordColumns
     "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2", // ZONE
     "SELECT rdtype, ttl, sigtype, rdata FROM records "     // ANY
-    "WHERE zone_id=?1 AND name=?2",
+        "WHERE zone_id=?1 AND name=?2",
     "SELECT rdtype, ttl, sigtype, rdata " // ANY_SUB
-    "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)",
+        "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)",
     "BEGIN",                    // BEGIN
     "COMMIT",                   // COMMIT
     "ROLLBACK",                 // ROLLBACK
     "DELETE FROM records WHERE zone_id=?1", // DEL_ZONE_RECORDS
     "INSERT INTO records "      // ADD_RECORD
-    "(zone_id, name, rname, ttl, rdtype, sigtype, rdata) "
-    "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        "(zone_id, name, rname, ttl, rdtype, sigtype, rdata) "
+        "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
     "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
-    "AND rdtype=?3 AND rdata=?4",
+        "AND rdtype=?3 AND rdata=?4",
     "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
-    "WHERE zone_id = ?1 ORDER BY rname, rdtype",
+        "WHERE zone_id = ?1 ORDER BY rname, rdtype",
     /*
      * This one looks for previous name with NSEC record. It is done by
      * using the reversed name. The NSEC is checked because we need to
      * skip glue data, which don't have the NSEC.
      */
     "SELECT name FROM records " // FIND_PREVIOUS
-    "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-    "rname < $2 ORDER BY rname DESC LIMIT 1"
+        "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
+        "rname < $2 ORDER BY rname DESC LIMIT 1",
+    // Two statements to select the lowest ID and highest ID in a set of
+    // differences.
+    "SELECT id FROM diffs "     // LOW_DIFF_ID
+        "WHERE zone_id=?1 AND version=?2 and OPERATION=0 "
+        "ORDER BY id ASC LIMIT 1",
+    "SELECT id FROM diffs "     // LOW_DIFF_ID
+        "WHERE zone_id=?1 AND version=?2 and OPERATION=1 "
+        "ORDER BY id DESC LIMIT 1",
+    "SELECT name, rrtype, ttl, rdata FROM diffs "   // DIFFS
+        "WHERE zone_id=?1 AND id>=?2 and id<=?3"
+
 };
 
 struct SQLite3Parameters {
@@ -194,18 +208,26 @@ const char* const SCHEMA_LIST[] = {
     "dnssec BOOLEAN NOT NULL DEFAULT 0)",
     "CREATE INDEX zones_byname ON zones (name)",
     "CREATE TABLE records (id INTEGER PRIMARY KEY, "
-    "zone_id INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
-    "rname STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
-    "rdtype STRING NOT NULL COLLATE NOCASE, sigtype STRING COLLATE NOCASE, "
-    "rdata STRING NOT NULL)",
+        "zone_id INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
+        "rname STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
+        "rdtype STRING NOT NULL COLLATE NOCASE, sigtype STRING COLLATE NOCASE, "
+        "rdata STRING NOT NULL)",
     "CREATE INDEX records_byname ON records (name)",
     "CREATE INDEX records_byrname ON records (rname)",
     "CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, zone_id INTEGER NOT NULL, "
-    "hash STRING NOT NULL COLLATE NOCASE, "
-    "owner STRING NOT NULL COLLATE NOCASE, "
-    "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
-    "rdata STRING NOT NULL)",
+        "hash STRING NOT NULL COLLATE NOCASE, "
+        "owner STRING NOT NULL COLLATE NOCASE, "
+        "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
+        "rdata STRING NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
+    "CREATE TABLE diffs (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "zone_id INTEGER NOT NULL, "
+        "version INTEGER NOT NULL, "
+        "operation INTEGER NOT NULL, "
+        "name STRING NOT NULL COLLATE NOCASE, "
+        "rrtype STRING NOT NULL COLLATE NOCASE, "
+        "ttl INTEGER NOT NULL, "
+        "rdata STRING NOT NULL)",
     NULL
 };
 
@@ -551,9 +573,13 @@ class SQLite3Accessor::DiffContext : public DatabaseAccessor::IteratorContext {
 public:
 
     // Construct an iterator for difference records.
-    DiffContext(const boost::shared_ptr<const SQLite3Accessor>&, int,
-                uint32_t, uint32_t)
+    DiffContext(const boost::shared_ptr<const SQLite3Accessor>& accessor,
+                int id, int start, int end) :
+        accessor_(accessor)
     {
+        int low_id = findIndex(LOW_DIFF_ID, id, start);
+        int high_id = findIndex(HIGH_DIFF_ID, id, end);
+        std::cout << "Low index is " << low_id << ", high index is " << high_id << "\n";
     }
 
     virtual ~DiffContext() {}
@@ -563,6 +589,99 @@ public:
         return (false);
     }
 
+private:
+
+    /// \brief Clear Statement Bindings
+    ///
+    /// Clears the bindings of variables in a prepared statement and resets
+    /// them to null.
+    ///
+    /// \param stindex Index of prepared statement to which to bind
+    void clearBindings(int stindex) {
+        if (sqlite3_clear_bindings(accessor_->dbparameters_->statements_[stindex])
+            != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not clear SQL statement bindings in '" <<
+                      text_statements[stindex] << "': " << 
+                      sqlite3_errmsg(accessor_->dbparameters_->db_));
+        }
+    }
+            
+    /// \brief Bind Int
+    ///
+    /// Binds an integer to a specific variable in a prepared statement.
+    ///
+    /// \param stindex Index of prepared statement to which to bind
+    /// \param varindex Index of variable to which to bind
+    /// \param value Value of variable to bind
+    /// \exception SQLite3Error on an error
+    void bindInt(int stindex, int varindex, int value) {
+        if (sqlite3_bind_int(accessor_->dbparameters_->statements_[stindex],
+                             varindex, value) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind value to parameter " <<
+                      varindex << " in statement '" <<
+                      text_statements[stindex] << "': " << 
+                      sqlite3_errmsg(accessor_->dbparameters_->db_));
+        }
+    }
+
+    /// \brief Find index
+    ///
+    /// Executes the prepared statement locating the high or low index in
+    /// the diffs table and returns that index.
+    ///
+    /// \param stmt_id Index of the prepared statement to execute
+    /// \param zone_id ID of the zone for which the index is being sought
+    /// \param serial Zone serial number for which an index is being sought.
+    ///
+    /// \return int ID of the row in the difss table corresponding to the
+    ///         statement.
+    ///
+    /// \exception NoSuchSerial Serial number not found
+    int findIndex(StatementID stindex, int zone_id, uint32_t serial) {
+
+        // Set up the statement
+        clearBindings(stindex);
+        bindInt(stindex, 1, zone_id);
+        bindInt(stindex, 2, serial);
+
+        // Get a pointer to the statement for brevity (does not transfer resources)
+        sqlite3_stmt* stmt = accessor_->dbparameters_->statements_[stindex];
+
+        // Execute the data.  Should be just one result
+        int rc = sqlite3_step(stmt);
+        int result = -1;
+        if (rc == SQLITE_ROW) {
+
+            // Got some data, extract the value
+            result = sqlite3_column_int(stmt, 1);
+            int rc = sqlite3_step(stmt);
+            if (rc == SQLITE_DONE) {
+
+                // That was the only data, OK to return. Tidy up as we go,
+                // ignoring any error return.
+                rc = sqlite3_reset(stmt);
+            } else if (rc == SQLITE_ROW) {
+                isc_throw(DataSourceError, "request to return one value from "
+                          "diffs table for serial " << serial << " (zone ID " <<
+                          zone_id << ") returned multiple values");
+            }
+        } else if (rc == SQLITE_DONE) {
+
+            // No data in the table for this zone and version.  Note that.
+            isc_throw(NoSuchSerial, "no data on serial number " << serial <<
+                      " for zone ID " << zone_id);
+        }
+
+        if (rc != SQLITE_OK) {
+            isc_throw(DataSourceError, "could not get data from diffs table: " <<
+                      sqlite3_errmsg(accessor_->dbparameters_->db_));
+        }
+
+        return (result);
+    }
+
+    
+    boost::shared_ptr<const SQLite3Accessor> accessor_; // Accessor object
 };
 
 // ... and return the iterator
