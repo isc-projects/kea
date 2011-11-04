@@ -90,7 +90,6 @@ public:
     /// @param data content of the option
     Option(Universe u, unsigned short type, std::vector<uint8_t>& data);
 
-
     /// @brief Constructor, used for received options.
     ///
     /// This contructor is similar to the previous one, but it does not take
@@ -136,8 +135,7 @@ public:
     /// @return offset to first unused byte after stored option
     ///
     virtual unsigned int
-    pack(boost::shared_array<uint8_t>& buf,
-         unsigned int buf_len,
+    pack(boost::shared_array<uint8_t>& buf, unsigned int buf_len,
          unsigned int offset);
 
     /// @brief Writes option in a wire-format to a buffer.
@@ -296,6 +294,13 @@ protected:
             unsigned int buf_len,
             unsigned int offset,
             unsigned int parse_len);
+
+    /// @brief A private method used for option correctness.
+    ///
+    /// It is used in constructors. In there are any problems detected
+    /// (like specifying type > 255 for DHCPv4 option), it will throw
+    /// BadValue or OutOfRange exceptions.
+    void check();
 
     /// option universe (V4 or V6)
     Universe universe_;
