@@ -22,7 +22,7 @@ import isc.cc
 import threading
 import struct
 import signal
-from isc.datasrc import DataSourceClient, ZoneFinder
+from isc.datasrc import DataSourceClient
 from socketserver import *
 import os
 from isc.config.ccsession import *
