@@ -22,6 +22,7 @@ import socket
 from isc.datasrc import sqlite3_ds
 from isc.notify import notify_out, SOCK_DATA
 import isc.log
+from isc.dns import *
 
 # our fake socket, where we can read and insert messages
 class MockSocket():
@@ -341,7 +342,8 @@ class TestNotifyOut(unittest.TestCase):
             yield item
 
     def test_get_notify_slaves_from_ns(self):
-        records = self._notify._get_notify_slaves_from_ns('example.net.')
+        records = self._notify._get_notify_slaves_from_ns(Name('example.net.'),
+                                                          RRClass.IN())
         self.assertEqual(6, len(records))
         self.assertEqual('8:8::8:8', records[5])
         self.assertEqual('7.7.7.7', records[4])
@@ -350,7 +352,8 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual('4:4::4:4', records[1])
         self.assertEqual('3.3.3.3', records[0])
 
-        records = self._notify._get_notify_slaves_from_ns('example.com.')
+        records = self._notify._get_notify_slaves_from_ns(Name('example.com.'),
+                                                          RRClass.IN())
         self.assertEqual(3, len(records))
         self.assertEqual('5:5::5:5', records[2])
         self.assertEqual('4:4::4:4', records[1])
@@ -417,6 +420,5 @@ class TestNotifyOut(unittest.TestCase):
 
 if __name__== "__main__":
     isc.log.init("bind10")
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
-
-
