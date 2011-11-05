@@ -255,9 +255,9 @@ class XfroutSession():
 
         # Identify the data source for the requested zone and see if it has
         # SOA while initializing objects used for request processing later.
-        # We should eventually generalize this so that choose the appropriate
-        # data source from (possible) multiple candidates.  We should
-        # eventually take into account the RR class here.
+        # We should eventually generalize this so that we can choose the
+        # appropriate data source from (possible) multiple candidates.
+        # We should eventually take into account the RR class here.
         # For now, we  hardcode a particular type (SQLite3-based), and only
         # consider that one.
         datasrc_config = '{ \"database_file\": \"' + \
@@ -270,8 +270,8 @@ class XfroutSession():
             # zone, xfrout can't serve for it, return rcode NOTAUTH.
             # Note: this exception can happen for other reasons.  We should
             # update get_iterator() API so that we can distinguish "no such
-            # zone" and other cases.  For now we consider all these cases
-            # as NOTAUTH.
+            # zone" and other cases (#1373).  For now we consider all these
+            # cases as NOTAUTH.
             return Rcode.NOTAUTH()
 
         # If we are an authoritative name server for the zone, but fail
