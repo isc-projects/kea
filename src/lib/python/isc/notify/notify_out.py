@@ -52,6 +52,14 @@ _BAD_REPLY_PACKET = 5
 
 SOCK_DATA = b's'
 
+class NotifyOutDataSourceError(Exception):
+    """An exception raised when data source error happens within notify out.
+
+    This exception is expected to be caught within the notify_out module.
+
+    """
+    pass
+
 class ZoneNotifyInfo:
     '''This class keeps track of notify-out information for one zone.'''
 
@@ -423,8 +431,9 @@ class NotifyOut:
                         self._nonblock_event.set()
 
     def _send_notify_message_udp(self, zone_notify_info, addrinfo):
-        msg, qid = self._create_notify_message(zone_notify_info.zone_name,
-                                               zone_notify_info.zone_class)
+        msg, qid = self._create_notify_message(
+            Name(zone_notify_info.zone_name),
+            RRClass(zone_notify_info.zone_class))
         render = MessageRenderer()
         render.set_length_limit(512)
         msg.to_wire(render)
@@ -445,17 +454,6 @@ class NotifyOut:
 
         return True
 
-    def _create_rrset_from_db_record(self, record, zone_class):
-        '''Create one rrset from one record of datasource, if the schema of record is changed,
-        This function should be updated first. TODO, the function is copied from xfrout, there
-        should be library for creating one rrset. '''
-        rrtype_ = RRType(record[sqlite3_ds.RR_TYPE_INDEX])
-        rdata_ = Rdata(rrtype_, RRClass(zone_class), " ".join(record[sqlite3_ds.RR_RDATA_INDEX:]))
-        rrset_ = RRset(Name(record[sqlite3_ds.RR_NAME_INDEX]), RRClass(zone_class), \
-                       rrtype_, RRTTL( int(record[sqlite3_ds.RR_TTL_INDEX])))
-        rrset_.add_rdata(rdata_)
-        return rrset_
-
     def _create_notify_message(self, zone_name, zone_class):
         msg = Message(Message.RENDER)
         qid = random.randint(0, 0xFFFF)
@@ -463,13 +461,30 @@ class NotifyOut:
         msg.set_opcode(Opcode.NOTIFY())
         msg.set_rcode(Rcode.NOERROR())
         msg.set_header_flag(Message.HEADERFLAG_AA)
-        question = Question(Name(zone_name), RRClass(zone_class), RRType('SOA'))
-        msg.add_question(question)
-        # Add soa record to answer section
-        soa_record = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file)
-        rrset_soa = self._create_rrset_from_db_record(soa_record[0], zone_class)
-        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        msg.add_question(Question(zone_name, zone_class, RRType.SOA()))
+        msg.add_rrset(Message.SECTION_ANSWER, self._get_zone_soa(zone_name,
+                                                                 zone_class))
         return msg, qid
+
+    def _get_zone_soa(self, zone_name, zone_class):
+        datasrc_config = '{ \"database_file\": \"' + self._db_file + '\"}'
+        result, finder = DataSourceClient('sqlite3',
+                                          datasrc_config).find_zone(zone_name)
+        if result is not DataSourceClient.SUCCESS:
+            raise NotifyOutDataSourceError('_get_zone_soa: Zone ' +
+                                           zone_name.to_text() + '/' +
+                                           zone_class.to_text() + ' not found')
+
+        result, soa_rrset = finder.find(zone_name, RRType.SOA(), None,
+                                        finder.FIND_DEFAULT)
+        if result is not finder.SUCCESS or soa_rrset is None or \
+                soa_rrset.get_rdata_count() != 1:
+            raise NotifyOutDataSourceError('_get_zone_soa: Zone ' +
+                                           zone_name.to_text() + '/' +
+                                           zone_class.to_text() +
+                                           ' is broken: no valid SOA found')
+
+        return soa_rrset
 
     def _handle_notify_reply(self, zone_notify_info, msg_data, from_addr):
         '''Parse the notify reply message.
