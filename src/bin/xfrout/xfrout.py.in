@@ -310,7 +310,7 @@ class XfroutSession():
 
         try:
             logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_str)
-            self._reply_xfrout_query(msg, sock_fd, zone_name.to_text())
+            self._reply_xfrout_query(msg, sock_fd)
         except Exception as err:
             logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_str, err)
             pass
@@ -353,7 +353,7 @@ class XfroutSession():
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
 
-    def _reply_xfrout_query(self, msg, sock_fd, zone_name):
+    def _reply_xfrout_query(self, msg, sock_fd):
         #TODO, there should be a better way to insert rrset.
         count_since_last_tsig_sign = TSIG_SIGN_EVERY_NTH
         msg.make_response()
@@ -389,7 +389,7 @@ class XfroutSession():
 
             count_since_last_tsig_sign += 1
             msg = self._clear_message(msg)
-            # Add the RR to the new message
+            # Add the RRset to the new message
             msg.add_rrset(Message.SECTION_ANSWER, rrset)
 
             # Reserve tsig space for signed packet
