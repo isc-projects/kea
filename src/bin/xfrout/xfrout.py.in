@@ -22,7 +22,6 @@ import isc.cc
 import threading
 import struct
 import signal
-from isc.datasrc import sqlite3_ds # should be obsoleted
 from isc.datasrc import DataSourceClient, ZoneFinder
 from socketserver import *
 import os
@@ -332,16 +331,6 @@ class XfroutSession():
         msg.set_header_flag(Message.HEADERFLAG_QR)
         return msg
 
-    def _create_rrset_from_db_record(self, record):
-        '''Create one rrset from one record of datasource, if the schema of record is changed,
-        This function should be updated first.
-        '''
-        rrtype_ = RRType(record[5])
-        rdata_ = Rdata(rrtype_, RRClass("IN"), " ".join(record[7:]))
-        rrset_ = RRset(Name(record[2]), RRClass("IN"), rrtype_, RRTTL( int(record[4])))
-        rrset_.add_rdata(rdata_)
-        return rrset_
-
     def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len,
                                     count_since_last_tsig_sign):
         '''Add the SOA record to the end of message. If it can't be
@@ -373,22 +362,21 @@ class XfroutSession():
 
         message_upper_len = get_rrset_len(self._soa) + self._tsig_len
 
-        for rr_data in sqlite3_ds.get_zone_datas(zone_name, self._server.get_db_file()):
-            if  self._server._shutdown_event.is_set(): # Check if xfrout is shutdown
+        for rrset in self._iterator:
+            # Check if xfrout is shutdown
+            if  self._server._shutdown_event.is_set():
                 logger.info(XFROUT_STOPPING)
                 return
-            # TODO: RRType.SOA() ?
-            if RRType(rr_data[5]) == RRType("SOA"): #ignore soa record
-                continue
 
-            rrset_ = self._create_rrset_from_db_record(rr_data)
+            if rrset.get_type() == RRType.SOA():
+                continue
 
             # We calculate the maximum size of the RRset (i.e. the
             # size without compression) and use that to see if we
             # may have reached the limit
-            rrset_len = get_rrset_len(rrset_)
+            rrset_len = get_rrset_len(rrset)
             if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
-                msg.add_rrset(Message.SECTION_ANSWER, rrset_)
+                msg.add_rrset(Message.SECTION_ANSWER, rrset)
                 message_upper_len += rrset_len
                 continue
 
@@ -401,7 +389,8 @@ class XfroutSession():
 
             count_since_last_tsig_sign += 1
             msg = self._clear_message(msg)
-            msg.add_rrset(Message.SECTION_ANSWER, rrset_) # Add the rrset to the new message
+            # Add the RR to the new message
+            msg.add_rrset(Message.SECTION_ANSWER, rrset)
 
             # Reserve tsig space for signed packet
             if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
