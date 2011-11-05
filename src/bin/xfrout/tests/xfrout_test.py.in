@@ -575,34 +575,23 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(self.sock.readsent(), b"success")
 
     def test_reply_xfrout_query_noerror(self):
-        global sqlite3_ds
-        def get_zone_datas(zone, file):
-            return [(4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None,
-                    'master.example.com. admin.example.com. ' +
-                    '1234 3600 1800 2419200 7200')]
-
-        sqlite3_ds.get_zone_datas = get_zone_datas
         self.xfrsess._soa = self.soa_rrset
+        self.xfrsess._iterator = [self.soa_rrset]
         self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock, "example.com.")
         reply_msg = self.sock.read_msg()
         self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 2)
 
     def test_reply_xfrout_query_noerror_with_tsig(self):
-        rrset_data = (4, 3, 'a.example.com.', 'com.example.', 3600, 'A', None, '192.168.1.1')
-        global sqlite3_ds
+        rrset = RRset(Name('a.example.com'), RRClass.IN(), RRType.A(),
+                      RRTTL(3600))
+        rrset.add_rdata(Rdata(RRType.A(), RRClass.IN(), '192.0.2.1'))
         global xfrout
-
-        def get_zone_datas(zone, file):
-            zone_rrsets = []
-            for i in range(0, 100):
-                zone_rrsets.insert(i, rrset_data)
-            return zone_rrsets
 
         def get_rrset_len(rrset):
             return 65520
 
-        sqlite3_ds.get_zone_datas = get_zone_datas
         self.xfrsess._soa = self.soa_rrset
+        self.xfrsess._iterator = [rrset for i in range(0, 100)]
         xfrout.get_rrset_len = get_rrset_len
 
         self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
