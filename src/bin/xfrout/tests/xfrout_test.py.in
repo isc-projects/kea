@@ -567,7 +567,7 @@ class TestXfroutSession(unittest.TestCase):
             return Rcode.NOERROR()
         self.xfrsess._check_xfrout_available = noerror
 
-        def myreply(msg, sock, zonename):
+        def myreply(msg, sock):
             self.sock.send(b"success")
 
         self.xfrsess._reply_xfrout_query = myreply
@@ -577,7 +577,7 @@ class TestXfroutSession(unittest.TestCase):
     def test_reply_xfrout_query_noerror(self):
         self.xfrsess._soa = self.soa_rrset
         self.xfrsess._iterator = [self.soa_rrset]
-        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock, "example.com.")
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
         reply_msg = self.sock.read_msg()
         self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 2)
 
@@ -595,7 +595,7 @@ class TestXfroutSession(unittest.TestCase):
         xfrout.get_rrset_len = get_rrset_len
 
         self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
-        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock, "example.com.")
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
 
         # tsig signed first package
         reply_msg = self.sock.read_msg()
