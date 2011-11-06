@@ -106,6 +106,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__registered_processes = {}
         self.__stop_process_params = None
         self.__start_simple_params = None
+        # Pretending to be boss
+        self.uid = None
+        self.__uid_set = None
 
     def __start(self):
         """
@@ -427,7 +430,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
                                isc.bind10.special_component.Auth,
                                isc.bind10.special_component.Resolver,
                                isc.bind10.special_component.CmdCtl,
-                               isc.bind10.special_component.XfrIn]:
+                               isc.bind10.special_component.XfrIn,
+                               isc.bind10.special_component.SetUID]:
             component = component_type('none', self, 'needed')
             self.assertIsNone(component.pid())
 
@@ -526,6 +530,31 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.kill(True)
         self.assertTrue(process.killed)
         self.assertFalse(process.terminated)
+
+    def setuid(self, uid):
+        self.__uid_set = uid
+
+    def test_setuid(self):
+        """
+        Some tests around the SetUID pseudo-component.
+        """
+        component = isc.bind10.special_component.SetUID(None, self, 'needed',
+                                                        None)
+        orig_setuid = isc.bind10.special_component.posix.setuid
+        isc.bind10.special_component.posix.setuid = self.setuid
+        component.start()
+        # No uid set in boss, nothing called.
+        self.assertIsNone(self.__uid_set)
+        # Doesn't do anything, but doesn't crash
+        component.stop()
+        component.kill()
+        component.kill(True)
+        self.uid = 42
+        component = isc.bind10.special_component.SetUID(None, self, 'needed',
+                                                        None)
+        component.start()
+        # This time, it get's called
+        self.assertEqual(42, self.__uid_set)
 
 class TestComponent(BaseComponent):
     """
