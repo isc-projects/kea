@@ -13,12 +13,12 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from isc.bind10.component import Component
+from isc.bind10.component import Component, BaseComponent
 import isc.bind10.sockcreator
 from bind10_config import LIBEXECDIR
 import os
 
-class SockCreator(Component):
+class SockCreator(BaseComponent):
     """
     The socket creator component. Will start and stop the socket creator
     accordingly.
@@ -29,7 +29,7 @@ class SockCreator(Component):
     the process die in waitpid().
     """
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
+        BaseComponent.__init__(self, boss, kind)
         self.__creator = None
 
     def _start_internal(self):
@@ -41,6 +41,9 @@ class SockCreator(Component):
 
     def _stop_internal(self):
         self.__creator.terminate()
+
+    def name(self):
+        return "Socket creator"
 
     def pid(self):
         """
@@ -60,36 +63,50 @@ class Msgq(Component):
     and we leave the boss kill it by signal.
     """
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind)
-        self._start_func = boss.start_msgq
+        Component.__init__(self, process, boss, kind, None, None,
+                           boss.start_msgq)
 
     def _stop_internal(self):
-        pass # Wait for the boss to actually kill it. There's no stop command.
+        """
+        We can't really stop the message queue, as many processes may need
+        it for their shutdown and it doesn't have a shutdown command anyway.
+        But as it is stateless, it's OK to kill it.
+
+        So we disable this method (as the only time it could be called is
+        during shutdown) and wait for the boss to kill it in the next shutdown
+        step.
+
+        This actually breaks the recommendation at Component we shouldn't
+        override its methods one by one. This is a special case, because
+        we don't provide a different implementation, we completely disable
+        the method by providing an empty one. This can't hurt the internals.
+        """
+        pass
 
 class CfgMgr(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'ConfigManager')
-        self._start_func = boss.start_cfgmgr
+        Component.__init__(self, process, boss, kind, 'ConfigManager',
+                           None, boss.start_cfgmgr)
 
 class Auth(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Auth')
-        self._start_func = boss.start_auth
+        Component.__init__(self, process, boss, kind, 'Auth', None,
+                           boss.start_auth)
 
 class Resolver(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Resolver')
-        self._start_func = boss.start_resolver
+        Component.__init__(self, process, boss, kind, 'Resolver', None,
+                           boss.start_resolver)
 
 class CmdCtl(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Cmdctl')
-        self._start_func = boss.start_cmdctl
+        Component.__init__(self, process, boss, kind, 'Cmdctl', None,
+                           boss.start_cmdctl)
 
 class XfrIn(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Xfrin')
-        self._start_func = boss.start_xfrin
+        Component.__init__(self, process, boss, kind, 'Xfrin', None,
+                           boss.start_xfrin)
 
 def get_specials():
     """
