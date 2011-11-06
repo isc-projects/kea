@@ -562,6 +562,9 @@ class BoB:
         """
         Put another process into boss to watch over it.  When the process
         dies, the component.failed() is called with the exit code.
+
+        It is expected the info is a isc.bind10.component.BaseComponent
+        subclass (or anything having the same interface).
         """
         self.processes[pid] = component
 

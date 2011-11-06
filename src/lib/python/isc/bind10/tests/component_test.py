@@ -22,7 +22,7 @@ import unittest
 import isc.log
 import time
 import copy
-from isc.bind10.component import Component, Configurator
+from isc.bind10.component import Component, Configurator, BaseComponent
 import isc.bind10.special_component
 
 class TestError(Exception):
@@ -103,6 +103,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__start_called = False
         self.__stop_called = False
         self.__failed_called = False
+        self.__registered_processes = {}
+        self.__stop_process_params = None
+        self.__start_simple_params = None
 
     def __start(self):
         """
@@ -435,11 +438,96 @@ class ComponentTests(BossUtils, unittest.TestCase):
         We do not try to kill a running component, as we should not start
         it during unit tests.
         """
-        component = Component(self, 'component', 'needed')
+        component = Component('component', self, 'needed')
         component.kill()
         component.kill(True)
 
-class TestComponent(Component):
+    def register_process(self, pid, process):
+        """
+        Part of pretending to be a boss
+        """
+        self.__registered_processes[pid] = process
+
+    def test_component_attributes(self):
+        """
+        Test the default attributes of Component (not BaseComponent) and
+        some of the methods we might be allowed to call.
+        """
+        class TestProcInfo:
+            def __init__(self):
+                self.pid = 42
+        component = Component('component', self, 'needed', 'Address',
+                              ['hello'], TestProcInfo)
+        self.assertEqual('component', component._process)
+        self.assertEqual('component', component.name())
+        self.assertIsNone(component._procinfo)
+        self.assertIsNone(component.pid())
+        self.assertEqual(['hello'], component._params)
+        self.assertEqual('Address', component._address)
+        self.assertFalse(component.running())
+        self.assertEqual({}, self.__registered_processes)
+        component.start()
+        self.assertTrue(component.running())
+        # Some versions of unittest miss assertIsInstance
+        self.assertTrue(isinstance(component._procinfo, TestProcInfo))
+        self.assertEqual(42, component.pid())
+        self.assertEqual(component, self.__registered_processes.get(42))
+
+    def stop_process(self, process, address):
+        """
+        Part of pretending to be boss.
+        """
+        self.__stop_process_params = (process, address)
+
+    def start_simple(self, process):
+        """
+        Part of pretending to be boss.
+        """
+        self.__start_simple_params = process
+
+    def test_component_start_stop_internal(self):
+        """
+        Test the behavior of _stop_internal and _start_internal.
+        """
+        component = Component('component', self, 'needed', 'Address')
+        component.start()
+        self.assertTrue(component.running())
+        self.assertEqual('component', self.__start_simple_params)
+        component.stop()
+        self.assertFalse(component.running())
+        self.assertEqual(('component', 'Address'), self.__stop_process_params)
+
+    def test_component_kill(self):
+        """
+        Check the kill is propagated. The case when component wasn't started
+        yet is already tested elsewhere.
+        """
+        class Process:
+            def __init__(self):
+                self.killed = False
+                self.terminated = False
+            def kill(self):
+                self.killed = True
+            def terminate(self):
+                self.terminated = True
+        process = Process()
+        class ProcInfo:
+            def __init__(self):
+                self.process = process
+                self.pid = 42
+        component = Component('component', self, 'needed', 'Address',
+                              [], ProcInfo)
+        component.start()
+        self.assertTrue(component.running())
+        component.kill()
+        self.assertTrue(process.terminated)
+        self.assertFalse(process.killed)
+        process.terminated = False
+        component.kill(True)
+        self.assertTrue(process.killed)
+        self.assertFalse(process.terminated)
+
+class TestComponent(BaseComponent):
     """
     A test component. It does not start any processes or so, it just logs
     information about what happens.
@@ -451,11 +539,13 @@ class TestComponent(Component):
 
         The process is used as a name for the logging.
         """
-        Component.__init__(self, name, owner, kind, address, params)
+        BaseComponent.__init__(self, owner, kind)
         self.__owner = owner
         self.__name = name
         self.log('init')
         self.log(kind)
+        self._address = address
+        self._params = params
 
     def log(self, event):
         """
@@ -476,10 +566,13 @@ class TestComponent(Component):
     def kill(self, forcefull=False):
         self.log('killed')
 
-class FailComponent(Component):
+class FailComponent(BaseComponent):
     """
     A mock component that fails whenever it is started.
     """
+    def __init__(self, name, boss, kind, address=None, params=None):
+        BaseComponent.__init__(self, boss, kind)
+
     def _start_internal(self):
         raise TestError("test error")
 

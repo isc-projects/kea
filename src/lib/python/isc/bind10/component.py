@@ -44,17 +44,12 @@ STATE_DEAD = 'dead'
 STATE_STOPPED = 'stopped'
 STATE_RUNNING = 'running'
 
-class Component:
+class BaseComponent:
     """
-    This represents a single component. It has some defaults of behaviour,
-    which should be reasonable for majority of ordinary components, but
-    it might be inherited and modified for special-purpose components,
-    like the core modules with different ways of starting up. Another
-    way to tweak only the start of the component (eg. by providing some
-    command line parameters) is to set _start_func function from within
-    inherited class.
-
-    The methods are marked if it is expected for them to be overridden.
+    This represents a single component. This one is an abstract base class.
+    There are some methods which should be left untouched, but there are
+    others which define the interface only and should be overriden in
+    concrete implementations.
 
     The component is in one of the three states:
     - Stopped - it is either not started yet or it was explicitly stopped.
@@ -88,12 +83,11 @@ class Component:
     that is already shutting down, impossible to stop, etc. We need to add more
     states in future to handle it properly.
     """
-    def __init__(self, process, boss, kind, address=None, params=None):
+    def __init__(self, boss, kind):
         """
         Creates the component in not running mode.
 
         The parameters are:
-        - `process` is the name of the process to start.
         - `boss` the boss object to plug into. The component needs to plug
           into it to know when it failed, etc.
         - `kind` is the kind of component. It may be one of:
@@ -109,37 +103,42 @@ class Component:
           * 'dispensable' means the component should be running, but if it
             doesn't start or crashes for some reason, the system simply tries
             to restart it and keeps running.
-        - `address` is the address on message bus. It is used to ask it to
-            shut down at the end. If you specialize the class for a component
-            that is shut down differently, it might be None.
-        - `params` is a list of parameters to pass to the process when it
-           starts. It is currently unused and this support is left out for
-           now.
+
+        Note that the __init__ method of child class should have these
+        parameters:
+
+        __init__(self, process, boss, kind, address=None, params=None)
+
+        The extra parameters are:
+        - `process` - which program should be started.
+        - `address` - the address on message buss, used to talk to the
+           component.
+        - `params` - parameters to the program.
+
+        The methods you should not override are:
+        - start
+        - stop
+        - failed
+        - running
+
+        You should override:
+        - _start_internal
+        - _stop_internal
+        - _failed_internal (if you like, the empty default might be suitable)
+        - name
+        - pid
+        - kill
         """
         if kind not in ['core', 'needed', 'dispensable']:
             raise ValueError('Component kind can not be ' + kind)
         self.__state = STATE_STOPPED
-        # These should be read-only
         self._kind = kind
         self._boss = boss
-        self._process = process
-        # This can be overwritten/set by the child classes
-        self._start_func = None
-        self._address = address
-        self._params = params
-        # These should be considered private. It is protected to
-        # allow tests in and for really rare ocassions, but a care
-        # should be taken to understand the Component code.
-        #
-        # It should not be accessed when the component wasn't run
-        # yet.
-        self._procinfo = None
 
     def start(self):
         """
-        Start the component for the first time or restart it. If you need to
-        modify the way a component is started, do not replace this method,
-        but _start_internal. This one does some more bookkeeping around.
+        Start the component for the first time or restart it. It runs
+        _start_internal to actually start the component.
 
         If you try to start an already running component, it raises ValueError.
         """
@@ -157,49 +156,10 @@ class Component:
             self.failed(None)
             raise
 
-    def _start_internal(self):
-        """
-        This method does the actual starting of a process. If you need to
-        change the way the component is started, replace this method.
-
-        You can change the "core" of this function by setting self._start_func
-        to a function without parameters. Such function should start the
-        process and return the procinfo object describing the running process.
-
-        If you don't provide the _start_func, the usual startup by calling
-        boss.start_simple is performed.
-
-        If you override the method completely, you should consider overriding
-        pid, _stop_internal (and possibly _failed_internal and name) and kill
-        as well. You should also register any processes started within boss.
-        (In fact, you could set the _procinfo variable and use the provided
-        ones, but then you are OK with providing _start_func anyway).
-
-        The ability to override this method presents some flexibility. It
-        allows processes started in a strange way, as well as components that
-        have no processes at all or components with multiple processes (in case
-        of multiple processes, care should be taken to make their
-        started/stopped state in sync and all the processes that can fail
-        should be registered).
-        """
-        # This one is not tested. For one, it starts a real process
-        # which is out of scope of unit tests, for another, it just
-        # delegates the starting to other function in boss (if a derived
-        # class does not provide an override function), which is tested
-        # by use.
-        if self._start_func is not None:
-            procinfo = self._start_func()
-        else:
-            # TODO Handle params, etc
-            procinfo = self._boss.start_simple(self._process)
-        self._procinfo = procinfo
-        self._boss.register_process(self.pid(), self)
-
     def stop(self):
         """
-        Stop the component. If you need to modify the way a component is
-        stopped, do not replace this method, but _stop_internal. This one
-        does some more bookkeeping.
+        Stop the component. It calls _stop_internal to do the actual
+        stopping.
 
         If you try to stop a component that is not running, it raises
         ValueError.
@@ -211,24 +171,6 @@ class Component:
         logger.info(BIND10_COMPONENT_STOP, self.name())
         self.__state = STATE_STOPPED
         self._stop_internal()
-
-    def _stop_internal(self):
-        """
-        This is the method that does the actual stopping of a component.
-        You can replace this method if you want a different way to do it.
-
-        If you're overriding this one, you probably want to replace the
-        _start_internal, kill and pid methods (and maybe _failed_internal and
-        name as well).
-
-        Also, note that it is a bad idea to raise exceptions from here.
-        Under such circumstance, the component will be considered stopped,
-        and the exception propagated, but we can't be sure it really is
-        dead.
-        """
-        self._boss.stop_process(self._process, self._address)
-        # TODO Some way to wait for the process that doesn't want to
-        # terminate and kill it would prove nice (or add it to boss somewhere?)
 
     def failed(self, exit_code):
         """
@@ -244,6 +186,8 @@ class Component:
         Otherwise the component will try to restart.
 
         The exit code is used for logging. It might be None.
+
+        It calles _failed_internal internally.
         """
         logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
                      exit_code if exit_code is not None else "unknown")
@@ -264,6 +208,47 @@ class Component:
             logger.warn(BIND10_COMPONENT_RESTART, self.name())
             self.start()
 
+    def running(self):
+        """
+        Informs if the component is currently running. It assumes the failed
+        is called whenever the component really fails and there might be some
+        time in between actual failure and the call, so this might be
+        inaccurate (it corresponds to the thing the object thinks is true, not
+        to the real "external" state).
+
+        It is not expected for this method to be overriden.
+        """
+        return self.__state == STATE_RUNNING
+
+    def _start_internal(self):
+        """
+        This method does the actual starting of a process. You need to override
+        this method to do the actual starting.
+
+        The ability to override this method presents some flexibility. It
+        allows processes started in a strange way, as well as components that
+        have no processes at all or components with multiple processes (in case
+        of multiple processes, care should be taken to make their
+        started/stopped state in sync and all the processes that can fail
+        should be registered).
+
+        You should register all the processes created by calling
+        self._boss.register_process.
+        """
+        pass
+
+    def _stop_internal(self):
+        """
+        This is the method that does the actual stopping of a component.
+        You need to provide it in a concrete implementation.
+
+        Also, note that it is a bad idea to raise exceptions from here.
+        Under such circumstance, the component will be considered stopped,
+        and the exception propagated, but we can't be sure it really is
+        dead.
+        """
+        pass
+
     def _failed_internal(self):
         """
         This method is called from failed. You can replace it if you need
@@ -275,52 +260,118 @@ class Component:
         """
         pass
 
-    def running(self):
-        """
-        Informs if the component is currently running. It assumes the failed
-        is called whenever the component really fails and there might be some
-        time in between actual failure and the call.
-
-        It is not expected for this method to be overriden.
-        """
-        return self.__state == STATE_RUNNING
-
     def name(self):
         """
-        Returns human-readable name of the component. This is usually the
-        name of the executable, but it might be something different in a
-        derived class (in case it is overriden).
+        Provides human readable name of the component, for logging and similar
+        purposes.
+
+        You need to provide this method in a concrete implementation.
         """
-        return self._process
+        pass
 
     def pid(self):
         """
         Provides a PID of a process, if the component is real running process.
-        This implementation expects it to be a real process, but derived class
-        may return None in case the component is something else.
+        This may return None in cases when there's no process involved with the
+        component or in case the component is not started yet.
 
-        This returns None in case it is not yet running.
+        However, it is expected the component preserves the pid after it was
+        stopped, to ensure we can log it when we ask it to be killed (in case
+        the process refused to stop willingly).
 
-        You probably want to override this method if you're providing custom
-        _start_internal.
-
-        Note that some components preserve the pid after a call to stop or
-        failed. This is because the components need to preserve it in order
-        to be able to kill the process if it failed to stop properly. Therefore
-        you should not rely on the pid being None if the component is stopped.
+        You need to provide this method in a concrete implementation.
         """
-        return self._procinfo.pid if self._procinfo is not None else None
+        pass
 
     def kill(self, forcefull=False):
         """
-        The component should be forcefully killed. This does not change the
-        internal state, it just kills the external process and expects a
-        failure to be reported when the process really dies.
+        Kills the component.
 
-        If it isn't running, it does nothing.
+        If forcefull is true, it should do it in more direct and aggressive way
+        (for example by using SIGKILL or some equivalent). If it is false, more
+        peaceful way should be used (SIGTERM or equivalent).
 
-        If the forcefull is true, it uses SIGKILL instead of SIGTERM.
+        You need to provide this method in a concrete implementation.
         """
+        pass
+
+class Component(BaseComponent):
+    """
+    The most common implementation of a component. It can be used either
+    directly, and it will just start the process without anything special,
+    or slightly customised by passing a start_func hook to the __init__
+    to change the way it starts.
+
+    If such customisation isn't enough, you should inherit BaseComponent
+    directly. It is not recommended to override methods of this class
+    on one-by-one basis.
+    """
+    def __init__(self, process, boss, kind, address=None, params=None,
+                 start_func=None):
+        """
+        Creates the component in not running mode.
+
+        The parameters are:
+        - `process` is the name of the process to start.
+        - `boss` the boss object to plug into. The component needs to plug
+          into it to know when it failed, etc.
+        - `kind` is the kind of component. Refer to the documentation of
+          BaseComponent for details.
+        - `address` is the address on message bus. It is used to ask it to
+            shut down at the end. If you specialize the class for a component
+            that is shut down differently, it might be None.
+        - `params` is a list of parameters to pass to the process when it
+           starts. It is currently unused and this support is left out for
+           now.
+        - `start_func` is a function called when it is started. It is supposed
+           to start up the process and return a ProcInfo object describing it.
+           There's a sensible default if not provided, which just launches
+           the program without any special care.
+        """
+        BaseComponent.__init__(self, boss, kind)
+        self._process = process
+        self._start_func = start_func
+        self._address = address
+        self._params = params
+        self._procinfo = None
+
+    def _start_internal(self):
+        """
+        You can change the "core" of this function by setting self._start_func
+        to a function without parameters. Such function should start the
+        process and return the procinfo object describing the running process.
+
+        If you don't provide the _start_func, the usual startup by calling
+        boss.start_simple is performed.
+        """
+        # This one is not tested. For one, it starts a real process
+        # which is out of scope of unit tests, for another, it just
+        # delegates the starting to other function in boss (if a derived
+        # class does not provide an override function), which is tested
+        # by use.
+        if self._start_func is not None:
+            procinfo = self._start_func()
+        else:
+            # TODO Handle params, etc
+            procinfo = self._boss.start_simple(self._process)
+        self._procinfo = procinfo
+        self._boss.register_process(self.pid(), self)
+
+    def _stop_internal(self):
+        self._boss.stop_process(self._process, self._address)
+        # TODO Some way to wait for the process that doesn't want to
+        # terminate and kill it would prove nice (or add it to boss somewhere?)
+
+    def name(self):
+        """
+        Returns the name, derived from the process name.
+        """
+        return self._process
+
+    def pid(self):
+        return self._procinfo.pid if self._procinfo is not None else None
+
+    def kill(self, forcefull=False):
         if self._procinfo is not None:
             if forcefull:
                 self._procinfo.process.kill()
