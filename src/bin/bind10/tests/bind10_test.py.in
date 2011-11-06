@@ -323,13 +323,13 @@ class MockBob(BoB):
         return procinfo
 
     def start_dhcp6(self):
-        self.stats = True
+        self.dhcp6 = True
         procinfo = ProcessInfo('b10-dhcp6', ['/bin/false'])
         procinfo.pid = 13
         return procinfo
 
     def start_dhcp4(self):
-        self.stats = True
+        self.dhcp4 = True
         procinfo = ProcessInfo('b10-dhcp4', ['/bin/false'])
         procinfo.pid = 14
         return procinfo
@@ -464,70 +464,28 @@ class TestStartStopProcessesBob(unittest.TestCase):
         """
         Check if proper combinations of DHCPv4 and DHCpv6 can be started
         """
-        v4found = 'b10-dhcp4' in bob.component_config
-        v6found = 'b10-dhcp6' in bob.component_config
-
-        # there should be exactly one DHCPv4 daemon (if v4==True)
-        # there should be exactly one DHCPv6 daemon (if v6==True)
-        self.assertEqual(v4==True, v4found==1)
-        self.assertEqual(v6==True, v6found==1)
+        self.assertEqual(v4, bob.dhcp4)
+        self.assertEqual(v6, bob.dhcp6)
         self.check_environment_unchanged()
 
-    # Checks the processes started when starting neither auth nor resolver
-    # is specified.
-    def test_start_none(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
-
-        # Start processes and check what was started
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = False
-
-        bob.start_all_processes()
-        self.check_started_none(bob)
-
-    # Checks the processes started when starting only the auth process
-    def test_start_auth(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
-
-        # Start processes and check what was started
-        bob.cfg_start_auth = True
-        bob.cfg_start_resolver = False
-
-        bob.start_all_processes()
-
-        self.check_started_auth(bob)
-
-    # Checks the processes started when starting only the resolver process
-    def test_start_resolver(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
-
-        # Start processes and check what was started
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = True
-
-        bob.start_all_processes()
-
-        self.check_started_resolver(bob)
-
-    # Checks the processes started when starting both auth and resolver process
-    def test_start_both(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
-
-        # Start processes and check what was started
-        bob.cfg_start_auth = True
-        bob.cfg_start_resolver = True
-
-        bob.start_all_processes()
-
-        self.check_started_both(bob)
+    def construct_config(self, start_auth, start_resolver):
+        # The things that are common, not turned on an off
+        config = {}
+        config['b10-stats'] = { 'kind': 'dispensable', 'address': 'Stats' }
+        config['b10-stats-httpd'] = { 'kind': 'dispensable',
+                                      'address': 'StatsHttpd' }
+        config['b10-cmdctl'] = { 'kind': 'needed', 'special': 'cmdctl' }
+        if start_auth:
+            config['b10-auth'] = { 'kind': 'needed', 'special': 'auth' }
+            config['b10-xfrout'] = { 'kind': 'dispensable',
+                                     'address': 'Xfrout' }
+            config['b10-xfrin'] = { 'kind': 'dispensable', 'special': 'xfrin' }
+            config['b10-zonemgr'] = { 'kind': 'dispensable',
+                                      'address': 'Zonemgr' }
+        if start_resolver:
+            config['b10-resolver'] = { 'kind': 'needed',
+                                       'special': 'resolver' }
+        return {'components': config}
 
     def test_config_start(self):
         """
@@ -539,17 +497,14 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob = MockBob()
         self.check_preconditions(bob)
 
-        # Start processes (nothing much should be started, as in
-        # test_start_none)
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = False
-
         bob.start_all_processes()
         bob.runnable = True
+        bob._BoB_started = True
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Enable both at once
-        bob.config_handler({'start_auth': True, 'start_resolver': True})
+        bob.config_handler(self.construct_config(True, True))
         self.check_started_both(bob)
 
         # Not touched by empty change
@@ -557,11 +512,11 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_started_both(bob)
 
         # Not touched by change to the same configuration
-        bob.config_handler({'start_auth': True, 'start_resolver': True})
+        bob.config_handler(self.construct_config(True, True))
         self.check_started_both(bob)
 
         # Turn them both off again
-        bob.config_handler({'start_auth': False, 'start_resolver': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Not touched by empty change
@@ -569,31 +524,31 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_started_none(bob)
 
         # Not touched by change to the same configuration
-        bob.config_handler({'start_auth': False, 'start_resolver': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Start and stop auth separately
-        bob.config_handler({'start_auth': True})
+        bob.config_handler(self.construct_config(True, False))
         self.check_started_auth(bob)
 
-        bob.config_handler({'start_auth': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Start and stop resolver separately
-        bob.config_handler({'start_resolver': True})
+        bob.config_handler(self.construct_config(False, True))
         self.check_started_resolver(bob)
 
-        bob.config_handler({'start_resolver': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Alternate
-        bob.config_handler({'start_auth': True})
+        bob.config_handler(self.construct_config(True, False))
         self.check_started_auth(bob)
 
-        bob.config_handler({'start_auth': False, 'start_resolver': True})
+        bob.config_handler(self.construct_config(False, True))
         self.check_started_resolver(bob)
 
-        bob.config_handler({'start_auth': True, 'start_resolver': False})
+        bob.config_handler(self.construct_config(True, False))
         self.check_started_auth(bob)
 
     def test_config_start_once(self):
@@ -604,12 +559,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob = MockBob()
         self.check_preconditions(bob)
 
-        # Start processes (both)
-        bob.cfg_start_auth = True
-        bob.cfg_start_resolver = True
-
         bob.start_all_processes()
+        bob._BoB_started = True
         bob.runnable = True
+        bob.config_handler(self.construct_config(True, True))
         self.check_started_both(bob)
 
         bob.start_auth = lambda: self.fail("Started auth again")
@@ -619,8 +572,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.start_resolver = lambda: self.fail("Started resolver again")
 
         # Send again we want to start them. Should not do it, as they are.
-        bob.config_handler({'start_auth': True})
-        bob.config_handler({'start_resolver': True})
+        bob.config_handler(self.construct_config(True, True))
 
     def test_config_not_started_early(self):
         """
@@ -645,29 +597,24 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob = MockBob()
         self.check_preconditions(bob)
 
-        # don't care about DNS stuff
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = False
-
-        # v4 and v6 disabled
-        bob.cfg_start_dhcp6 = False
-        bob.cfg_start_dhcp4 = False
         bob.start_all_processes()
+        bob._BoB_started = True
+        bob.runnable = True
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_dhcp(bob, False, False)
 
     def test_start_dhcp_v6only(self):
         # Create BoB and ensure correct initialization
         bob = MockBob()
         self.check_preconditions(bob)
-
-        # don't care about DNS stuff
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = False
-
         # v6 only enabled
-        bob.cfg_start_dhcp6 = True
-        bob.cfg_start_dhcp4 = False
         bob.start_all_processes()
+        bob.runnable = True
+        bob._BoB_started = True
+        config = self.construct_config(False, False)
+        config['components']['b10-dhcp6'] = { 'kind': 'needed',
+                                              'address': 'Dhcp6' }
+        bob.config_handler(config)
         self.check_started_dhcp(bob, False, True)
 
         # uncomment when dhcpv4 becomes implemented
