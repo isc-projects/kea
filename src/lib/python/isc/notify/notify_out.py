@@ -256,7 +256,7 @@ class NotifyOut:
         but not correct, it can't handle the delegation slaves, or the CNAME
         and DNAME logic.
         TODO. the function should be provided by one library.'''
-        datasrc_config = '{ \"database_file\": \"' + self._db_file + '\"}'
+        datasrc_config = '{ "database_file": "' + self._db_file + '"}'
         result, finder = DataSourceClient('sqlite3',
                                           datasrc_config).find_zone(zone_name)
         if result is not DataSourceClient.SUCCESS:
@@ -467,7 +467,7 @@ class NotifyOut:
         return msg, qid
 
     def _get_zone_soa(self, zone_name, zone_class):
-        datasrc_config = '{ \"database_file\": \"' + self._db_file + '\"}'
+        datasrc_config = '{ "database_file": "' + self._db_file + '"}'
         result, finder = DataSourceClient('sqlite3',
                                           datasrc_config).find_zone(zone_name)
         if result is not DataSourceClient.SUCCESS:

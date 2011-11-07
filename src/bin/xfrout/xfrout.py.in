@@ -260,12 +260,12 @@ class XfroutSession():
         # We should eventually take into account the RR class here.
         # For now, we  hardcode a particular type (SQLite3-based), and only
         # consider that one.
-        datasrc_config = '{ \"database_file\": \"' + \
-            self._server.get_db_file() + '\"}'
+        datasrc_config = '{ "database_file": "' + \
+            self._server.get_db_file() + '"}'
         self._datasrc_client = self.ClientClass('sqlite3', datasrc_config)
         try:
             self._iterator = self._datasrc_client.get_iterator(zone_name)
-        except isc.datasrc.Error as error:
+        except isc.datasrc.Error:
             # If the current name server does not have authority for the
             # zone, xfrout can't serve for it, return rcode NOTAUTH.
             # Note: this exception can happen for other reasons.  We should
