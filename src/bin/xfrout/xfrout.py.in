@@ -278,7 +278,7 @@ class XfroutSession():
         # to find the zone's SOA record in datasource, xfrout can't
         # provide zone transfer for it.
         self._soa = self._iterator.get_soa()
-        if self._soa is None:
+        if self._soa is None or self._soa.get_rdata_count() != 1:
             return Rcode.SERVFAIL()
 
         #TODO, check allow_transfer
