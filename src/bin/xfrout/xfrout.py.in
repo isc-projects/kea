@@ -169,23 +169,29 @@ class XfroutSession():
 
         # TSIG related checks
         rcode = self._check_request_tsig(msg, mdata)
+        if rcode != Rcode.NOERROR():
+            return rcode, msg
 
-        if rcode == Rcode.NOERROR():
-            # ACL checks
-            zone_name = msg.get_question()[0].get_name()
-            zone_class = msg.get_question()[0].get_class()
-            acl = self._get_transfer_acl(zone_name, zone_class)
-            acl_result = acl.execute(
-                isc.acl.dns.RequestContext(self._remote,
-                                           msg.get_tsig_record()))
-            if acl_result == DROP:
-                logger.info(XFROUT_QUERY_DROPPED, zone_name, zone_class,
-                            self._remote[0], self._remote[1])
-                return None, None
-            elif acl_result == REJECT:
-                logger.info(XFROUT_QUERY_REJECTED, zone_name, zone_class,
-                            self._remote[0], self._remote[1])
-                return Rcode.REFUSED(), msg
+        # Make sure the question is valid.  This should be ensured by
+        # the auth server, but since it's far from our xfrout itself,
+        # we check it by ourselves.
+        if msg.get_rr_count(Message.SECTION_QUESTION) != 1:
+            return Rcode.FORMERR(), msg
+
+        # ACL checks
+        zone_name = msg.get_question()[0].get_name()
+        zone_class = msg.get_question()[0].get_class()
+        acl = self._get_transfer_acl(zone_name, zone_class)
+        acl_result = acl.execute(
+            isc.acl.dns.RequestContext(self._remote, msg.get_tsig_record()))
+        if acl_result == DROP:
+            logger.info(XFROUT_QUERY_DROPPED, zone_name, zone_class,
+                        self._remote[0], self._remote[1])
+            return None, None
+        elif acl_result == REJECT:
+            logger.info(XFROUT_QUERY_REJECTED, zone_name, zone_class,
+                        self._remote[0], self._remote[1])
+            return Rcode.REFUSED(), msg
 
         return rcode, msg
 
