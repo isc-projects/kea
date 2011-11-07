@@ -149,7 +149,7 @@ def format_addrinfo(addrinfo):
         else:
             return str(addrinfo[2])
     except IndexError:
-        raise TypeError("addrinfo argument to format_addrinfo() does not"
+        raise TypeError("addrinfo argument to format_addrinfo() does not "
                         "appear to be consisting of (family, socktype, (addr, port))")
 
 def get_soa_serial(soa_rdata):
