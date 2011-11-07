@@ -286,7 +286,7 @@ Name_toText(s_Name* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "|O", &omit_final_dot_obj)) {
         bool omit_final_dot = false;
         if (omit_final_dot_obj != NULL) {
-            if (PyBool_Check(omit_final_dot_obj)) {
+            if (PyBool_Check(omit_final_dot_obj) != 0) {
                 omit_final_dot = (omit_final_dot_obj == Py_True);
             } else {
                 PyErr_SetString(PyExc_TypeError,
