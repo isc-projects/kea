@@ -385,8 +385,6 @@ class BoB:
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
 
-        self.stop_creator(True)
-
         for pid in self.processes:
             logger.info(BIND10_KILL_PROCESS, self.processes[pid].name())
             self.processes[pid].kill(True)
