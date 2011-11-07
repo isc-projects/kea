@@ -1,6 +1,6 @@
 xxx.	[func]		kambe
-	b10-stats-httpd was updated. In addition of the access of all
-	statistics items of all module, the specified item or the items of the
+	b10-stats-httpd was updated. In addition of the access to all
+	statistics items of all modules, the specified item or the items of the
 	specified module name can be accessed. For example, the URI requested
 	by using the feature is showed as "/bind10/statistics/xml/Auth" or
 	"/bind10/statistics/xml/Auth/queries.tcp". The list of all possible
