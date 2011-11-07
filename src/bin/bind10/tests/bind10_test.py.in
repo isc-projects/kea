@@ -241,9 +241,6 @@ class MockBob(BoB):
         procinfo.pid = 1
         return procinfo
 
-    def stop_creator(self, kill=False):
-        self.creator = False
-
     def read_bind10_config(self):
         # Configuration options are set directly
         pass
