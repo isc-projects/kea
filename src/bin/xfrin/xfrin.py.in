@@ -1102,7 +1102,8 @@ class Xfrin:
                 else:
                     master_addr = zone_info.get_master_addr_info()
                     request_type = RRType.AXFR()
-                    if notify_addr == master_addr:
+                    if notify_addr[0] == master_addr[0] and\
+                       notify_addr[2] == master_addr[2]:
                         ret = self.xfrin_start(zone_name,
                                                rrclass,
                                                self._get_db_file(),
