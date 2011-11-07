@@ -527,14 +527,27 @@ class TestXfroutSession(unittest.TestCase):
             def get_soa(self):  # emulate ZoneIterator.get_soa()
                 if self._zone_name == Name('nosoa.example.com'):
                     return None
-                # returning True on success is wrong, but works for this test.
-                return True
+                soa_rrset = RRset(Name('multisoa.example.com'), RRClass.IN(),
+                                  RRType.SOA(), RRTTL(3600))
+                soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                          'master.example.com. ' +
+                                          'admin.example.com. 1234 ' +
+                                          '3600 1800 2419200 7200'))
+                if self._zone_name == Name('multisoa.example.com'):
+                    soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                                   'master.example.com. ' +
+                                                   'admin.example.com. 1300 ' +
+                                                   '3600 1800 2419200 7200'))
+                    return soa_rrset
+                return soa_rrset
 
         self.xfrsess.ClientClass = MockDataSrcClient
         self.assertEqual(self.xfrsess._check_xfrout_available(
                 Name('notauth.example.com')), Rcode.NOTAUTH())
         self.assertEqual(self.xfrsess._check_xfrout_available(
                 Name('nosoa.example.com')), Rcode.SERVFAIL())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('multisoa.example.com')), Rcode.SERVFAIL())
 
         self.xfrsess._server.increase_transfers_counter = lambda : False
         self.assertEqual(self.xfrsess._check_xfrout_available(
