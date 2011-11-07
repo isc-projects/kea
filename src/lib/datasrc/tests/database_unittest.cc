@@ -233,6 +233,8 @@ public:
     virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void addRecordDiff(int, uint32_t, DiffOperation,
+                               const std::string (&)[DIFF_PARAM_COUNT]) {}
 
     virtual const std::string& getDBName() const {
         return (database_name_);
