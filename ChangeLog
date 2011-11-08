@@ -1,3 +1,11 @@
+312.	[func]		jelte
+	Added an initial framework for doing system tests using the 
+	cucumber-based BDD tool Lettuce. A number of general steps are included, 
+	for instance running bind10 with specific configurations, sending 
+	queries, and inspecting query answers. A few very basic tests are 
+	included as well.
+	(Trac #1290, git 6b75c128bcdcefd85c18ccb6def59e9acedd4437)
+
 311.	[bug]		jelte
 	Fixed a bug in bindctl where tab-completion for names that
 	contain a hyphen resulted in unexpected behaviour, such as
