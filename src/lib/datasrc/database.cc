@@ -827,10 +827,11 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
 class DatabaseUpdater : public ZoneUpdater {
 public:
     DatabaseUpdater(shared_ptr<DatabaseAccessor> accessor, int zone_id,
-            const Name& zone_name, const RRClass& zone_class) :
+            const Name& zone_name, const RRClass& zone_class,
+            bool journaling) :
         committed_(false), accessor_(accessor), zone_id_(zone_id),
         db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
-        zone_class_(zone_class),
+        zone_class_(zone_class), journaling_(journaling),
         finder_(new DatabaseClient::Finder(accessor_, zone_id_, zone_name))
     {
         logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
@@ -872,6 +873,7 @@ private:
     const string db_name_;
     const string zone_name_;
     const RRClass zone_class_;
+    const bool journaling_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
 };
 
@@ -976,7 +978,7 @@ DatabaseUpdater::commit() {
 // The updater factory
 ZoneUpdaterPtr
 DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
-                           bool) const
+                           bool journaling) const
 {
     // TODO: Handle journaling (pass it to the updater)
     shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
@@ -987,7 +989,7 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
     }
 
     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
-                                               name, rrclass_)));
+                                               name, rrclass_, journaling)));
 }
 }
 }
