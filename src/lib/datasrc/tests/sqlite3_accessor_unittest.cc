@@ -230,9 +230,9 @@ TEST_F(SQLite3AccessorTest, diffIteratorNoRecords) {
                  NoSuchSerial);
 
     // Check that valid versions - but for the wrong zone which does not hold
-    // any records - throws the correct exception.
+    // any records - also throws this exception.
     EXPECT_THROW(accessor->getDiffs(zone_info.second + 42, 1231, 1234),
-                 NoDiffRecs);
+                 NoSuchSerial);
 
 }
 
