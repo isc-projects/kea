@@ -126,8 +126,8 @@ name. The first two should be self-evident, and the process name is an
 optional name we give it, should we want to address it in the rest of the
 tests. This is most useful if we want to start multiple instances. In the
 next step (the wait for auth to start), I added a 'of <instance>'. So if we 
-define the bind10 'as my_bind10', we can specify that one here as 'of my
-bind10'.
+define the bind10 'as b10_second_instance', we can specify that one here as 
+'of b10_second_instance'.
 
 --
         When I start bind10 with configuration second.config

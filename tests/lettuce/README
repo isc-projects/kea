@@ -26,9 +26,9 @@ Port 47805 is used for cmdctl, and must also be available.
 (note, we will need to extend this to a range, or if possible, we will need to
 do some on-the-fly available port finding)
 
-The bind10 main script, bindctl script, and dig must all be in the default
-search path of your environment, and BIND 10 must not be running if you use
-the installed version when you run the tests.
+The bind10 main program, bindctl, and dig must all be in the default search 
+path of your environment, and BIND 10 must not be running if you use the 
+installed version when you run the tests.
 
 If you want to test an installed version of bind 10, just run 'lettuce' in
 this directory.
