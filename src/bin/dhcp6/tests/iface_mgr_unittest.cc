@@ -48,13 +48,19 @@ public:
                    int port) {
         return IfaceMgr::openSocket(ifname, addr, port);
     }
-
 };
 
 // dummy class for now, but this will be expanded when needed
 class IfaceMgrTest : public ::testing::Test {
 public:
     IfaceMgrTest() {
+    }
+
+    void createLoInterfacesTxt() {
+        unlink(INTERFACE_FILE);
+        fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
+        fakeifaces << LOOPBACK << " ::1";
+        fakeifaces.close();
     }
 };
 
@@ -246,9 +252,11 @@ TEST_F(IfaceMgrTest, detectIfaces) {
 // (lo in Linux, lo0 in BSD systems)
 // Fix for this is available on 1186 branch, will reenable
 // this test once 1186 is merged
-TEST_F(IfaceMgrTest, DISABLED_sockets) {
+TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
+
+    createLoInterfacesTxt();
 
     NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
 
@@ -283,7 +291,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets) {
 
 // TODO: disabled due to other naming on various systems
 // (lo in Linux, lo0 in BSD systems)
-TEST_F(IfaceMgrTest, DISABLED_socketsMcast) {
+TEST_F(IfaceMgrTest, sockets6Mcast) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
@@ -316,7 +324,7 @@ TEST_F(IfaceMgrTest, DISABLED_socketsMcast) {
 // (lo in Linux, lo0 in BSD systems)
 // Fix for this is available on 1186 branch, will reenable
 // this test once 1186 is merged
-TEST_F(IfaceMgrTest, DISABLED_sendReceive6) {
+TEST_F(IfaceMgrTest, sendReceive6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 

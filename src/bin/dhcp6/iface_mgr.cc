@@ -95,9 +95,6 @@ IfaceMgr::IfaceMgr()
 
         detectIfaces();
 
-        if (!openSockets()) {
-            isc_throw(Unexpected, "Failed to open/bind sockets.");
-        }
     } catch (const std::exception& ex) {
         cout << "IfaceMgr creation failed:" << ex.what() << endl;
 
@@ -154,7 +151,7 @@ IfaceMgr::detectIfaces() {
     }
 }
 
-bool
+void
 IfaceMgr::openSockets() {
     int sock;
 
@@ -171,8 +168,8 @@ IfaceMgr::openSockets() {
             sock = openSocket(iface->getName(), *addr,
                               DHCP6_SERVER_PORT);
             if (sock<0) {
-                cout << "Failed to open unicast socket." << endl;
-                return (false);
+                isc_throw(Unexpected, "Failed to open unicast socket on "
+                          << " interface " << iface->getFullName());
             }
             sendsock_ = sock;
 
@@ -180,15 +177,14 @@ IfaceMgr::openSockets() {
                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                               DHCP6_SERVER_PORT);
             if (sock<0) {
-                cout << "Failed to open multicast socket." << endl;
+                isc_throw(Unexpected, "Failed to open multicast socket on "
+                          << " interface " << iface->getFullName());
                 close(sendsock_);
-                return (false);
+                sendsock_ = 0;
             }
             recvsock_ = sock;
         }
     }
-
-    return (true);
 }
 
 void
@@ -252,13 +248,13 @@ IfaceMgr::openSocket(const std::string& ifname,
     }
 }
 
-int
+uint16_t
 IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
     isc_throw(NotImplemented, "Sorry. Try again in 2 weeks");
     cout << iface.getFullName() << addr.toText() << port; // just to disable unused warning
 }
 
-int
+uint16_t
 IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
     struct sockaddr_in6 addr6;
 
