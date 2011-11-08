@@ -31,14 +31,14 @@ from bindctl_main import set_bindctl_options
 from bindctl import cmdparse
 from bindctl import bindcmd
 from bindctl.moduleinfo import *
-from bindctl.exception import *    
+from bindctl.exception import *
 try:
     from collections import OrderedDict
 except ImportError:
     from mycollections import OrderedDict
 
 class TestCmdLex(unittest.TestCase):
-    
+
     def my_assert_raise(self, exception_type, cmd_line):
         self.assertRaises(exception_type, cmdparse.BindCmdParse, cmd_line)
 
@@ -48,13 +48,13 @@ class TestCmdLex(unittest.TestCase):
         assert cmd.module == "zone"
         assert cmd.command == "add"
         self.assertEqual(len(cmd.params), 0)
-        
-    
+
+
     def testCommandWithParameters(self):
         lines = {"zone add zone_name = cnnic.cn, file = cnnic.cn.file master=1.1.1.1",
                  "zone add zone_name = \"cnnic.cn\", file ='cnnic.cn.file' master=1.1.1.1  ",
                  "zone add zone_name = 'cnnic.cn\", file ='cnnic.cn.file' master=1.1.1.1, " }
-        
+
         for cmd_line in lines:
             cmd = cmdparse.BindCmdParse(cmd_line)
             assert cmd.module == "zone"
@@ -75,7 +75,7 @@ class TestCmdLex(unittest.TestCase):
         cmd = cmdparse.BindCmdParse('zone cmd name = 1\"\'34**&2 ,value=  44\"\'\"')
         self.assertEqual(cmd.params['name'], '1\"\'34**&2')
         self.assertEqual(cmd.params['value'], '44\"\'\"')
-            
+
         cmd = cmdparse.BindCmdParse('zone cmd name =  1\'34**&2value=44\"\'\" value = \"==============\'')
         self.assertEqual(cmd.params['name'], '1\'34**&2value=44\"\'\"')
         self.assertEqual(cmd.params['value'], '==============')
@@ -83,34 +83,34 @@ class TestCmdLex(unittest.TestCase):
         cmd = cmdparse.BindCmdParse('zone cmd name =    \"1234, 567890 \" value ==&*/')
         self.assertEqual(cmd.params['name'], '1234, 567890 ')
         self.assertEqual(cmd.params['value'], '=&*/')
-            
+
     def testCommandWithListParam(self):
         cmd = cmdparse.BindCmdParse("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
-        assert cmd.params["master"] == '1.1.1.1, 2.2.2.2'            
-        
+        assert cmd.params["master"] == '1.1.1.1, 2.2.2.2'
+
     def testCommandWithHelpParam(self):
         cmd = cmdparse.BindCmdParse("zone add help")
         assert cmd.params["help"] == "help"
-        
+
         cmd = cmdparse.BindCmdParse("zone add help *&)&)*&&$#$^%")
         assert cmd.params["help"] == "help"
         self.assertEqual(len(cmd.params), 1)
-        
+
 
     def testCmdModuleNameFormatError(self):
         self.my_assert_raise(CmdModuleNameFormatError, "zone=good")
-        self.my_assert_raise(CmdModuleNameFormatError, "zo/ne")        
-        self.my_assert_raise(CmdModuleNameFormatError, "")        
+        self.my_assert_raise(CmdModuleNameFormatError, "zo/ne")
+        self.my_assert_raise(CmdModuleNameFormatError, "")
         self.my_assert_raise(CmdModuleNameFormatError, "=zone")
-        self.my_assert_raise(CmdModuleNameFormatError, "zone,")        
-        
-        
+        self.my_assert_raise(CmdModuleNameFormatError, "zone,")
+
+
     def testCmdMissCommandNameFormatError(self):
         self.my_assert_raise(CmdMissCommandNameFormatError, "zone")
         self.my_assert_raise(CmdMissCommandNameFormatError, "zone ")
         self.my_assert_raise(CmdMissCommandNameFormatError, "help ")
-        
-             
+
+
     def testCmdCommandNameFormatError(self):
         self.my_assert_raise(CmdCommandNameFormatError, "zone =d")
         self.my_assert_raise(CmdCommandNameFormatError, "zone z=d")
@@ -119,11 +119,11 @@ class TestCmdLex(unittest.TestCase):
         self.my_assert_raise(CmdCommandNameFormatError, "zone zdd/ \"")
 
 class TestCmdSyntax(unittest.TestCase):
-    
+
     def _create_bindcmd(self):
         """Create one bindcmd"""
-        
-        tool = bindcmd.BindCmdInterpreter()        
+
+        tool = bindcmd.BindCmdInterpreter()
         string_spec = { 'item_type' : 'string',
                        'item_optional' : False,
                        'item_default' : ''}
@@ -135,40 +135,40 @@ class TestCmdSyntax(unittest.TestCase):
         load_cmd = CommandInfo(name = "load")
         load_cmd.add_param(zone_file_param)
         load_cmd.add_param(zone_name)
-        
-        param_master = ParamInfo(name = "master", optional = True, param_spec = string_spec)                                 
-        param_master = ParamInfo(name = "port", optional = True, param_spec = int_spec)                                 
-        param_allow_update = ParamInfo(name = "allow_update", optional = True, param_spec = string_spec)                                           
+
+        param_master = ParamInfo(name = "master", optional = True, param_spec = string_spec)
+        param_master = ParamInfo(name = "port", optional = True, param_spec = int_spec)
+        param_allow_update = ParamInfo(name = "allow_update", optional = True, param_spec = string_spec)
         set_cmd = CommandInfo(name = "set")
         set_cmd.add_param(param_master)
         set_cmd.add_param(param_allow_update)
         set_cmd.add_param(zone_name)
-        
-        reload_all_cmd = CommandInfo(name = "reload_all")        
-        
-        zone_module = ModuleInfo(name = "zone")                             
+
+        reload_all_cmd = CommandInfo(name = "reload_all")
+
+        zone_module = ModuleInfo(name = "zone")
         zone_module.add_command(load_cmd)
         zone_module.add_command(set_cmd)
         zone_module.add_command(reload_all_cmd)
-        
+
         tool.add_module_info(zone_module)
         return tool
-        
-        
+
+
     def setUp(self):
         self.bindcmd = self._create_bindcmd()
-        
-        
+
+
     def no_assert_raise(self, cmd_line):
         cmd = cmdparse.BindCmdParse(cmd_line)
-        self.bindcmd._validate_cmd(cmd) 
-        
-        
+        self.bindcmd._validate_cmd(cmd)
+
+
     def my_assert_raise(self, exception_type, cmd_line):
         cmd = cmdparse.BindCmdParse(cmd_line)
-        self.assertRaises(exception_type, self.bindcmd._validate_cmd, cmd)  
-        
-        
+        self.assertRaises(exception_type, self.bindcmd._validate_cmd, cmd)
+
+
     def testValidateSuccess(self):
         self.no_assert_raise("zone load zone_file='cn' zone_name='cn'")
         self.no_assert_raise("zone load zone_file='cn', zone_name='cn', ")
@@ -178,27 +178,27 @@ class TestCmdSyntax(unittest.TestCase):
         self.no_assert_raise("zone set allow_update='1.1.1.1' zone_name='cn'")
         self.no_assert_raise("zone set zone_name='cn'")
         self.my_assert_raise(isc.cc.data.DataTypeError, "zone set zone_name ='cn', port='cn'")
-        self.no_assert_raise("zone reload_all")        
-        
-    
+        self.no_assert_raise("zone reload_all")
+
+
     def testCmdUnknownModuleSyntaxError(self):
         self.my_assert_raise(CmdUnknownModuleSyntaxError, "zoned d")
         self.my_assert_raise(CmdUnknownModuleSyntaxError, "dd dd  ")
-        
-              
+
+
     def testCmdUnknownCmdSyntaxError(self):
         self.my_assert_raise(CmdUnknownCmdSyntaxError, "zone dd")
-        
+
     def testCmdMissParamSyntaxError(self):
         self.my_assert_raise(CmdMissParamSyntaxError, "zone load zone_file='cn'")
         self.my_assert_raise(CmdMissParamSyntaxError, "zone load zone_name='cn'")
         self.my_assert_raise(CmdMissParamSyntaxError, "zone set allow_update='1.1.1.1'")
         self.my_assert_raise(CmdMissParamSyntaxError, "zone set ")
-        
+
     def testCmdUnknownParamSyntaxError(self):
         self.my_assert_raise(CmdUnknownParamSyntaxError, "zone load zone_d='cn'")
-        self.my_assert_raise(CmdUnknownParamSyntaxError, "zone reload_all zone_name = 'cn'")  
-       
+        self.my_assert_raise(CmdUnknownParamSyntaxError, "zone reload_all zone_name = 'cn'")
+
 class TestModuleInfo(unittest.TestCase):
 
     def test_get_param_name_by_position(self):
@@ -212,36 +212,36 @@ class TestModuleInfo(unittest.TestCase):
         self.assertEqual('sex', cmd.get_param_name_by_position(2, 3))
         self.assertEqual('data', cmd.get_param_name_by_position(2, 4))
         self.assertEqual('data', cmd.get_param_name_by_position(2, 4))
-        
+
         self.assertRaises(KeyError, cmd.get_param_name_by_position, 4, 4)
 
 
-    
+
 class TestNameSequence(unittest.TestCase):
     """
     Test if the module/command/parameters is saved in the order creation
     """
-    
+
     def _create_bindcmd(self):
-        """Create one bindcmd"""     
-        
+        """Create one bindcmd"""
+
         self._cmd = CommandInfo(name = "load")
         self.module = ModuleInfo(name = "zone")
-        self.tool = bindcmd.BindCmdInterpreter()        
+        self.tool = bindcmd.BindCmdInterpreter()
         for random_str in self.random_names:
             self._cmd.add_param(ParamInfo(name = random_str))
             self.module.add_command(CommandInfo(name = random_str))
-            self.tool.add_module_info(ModuleInfo(name = random_str))  
-        
+            self.tool.add_module_info(ModuleInfo(name = random_str))
+
     def setUp(self):
         self.random_names = ['1erdfeDDWsd', '3fe', '2009erd', 'Fe231', 'tere142', 'rei8WD']
         self._create_bindcmd()
-        
-    def testSequence(self):        
+
+    def testSequence(self):
         param_names = self._cmd.get_param_names()
         cmd_names = self.module.get_command_names()
         module_names = self.tool.get_module_names()
-        
+
         i = 0
         while i < len(self.random_names):
             assert self.random_names[i] == param_names[i+1]
@@ -342,7 +342,7 @@ class TestConfigCommands(unittest.TestCase):
         # validate log message for socket.err
         socket_err_output = io.StringIO()
         sys.stdout = socket_err_output
-        self.assertRaises(None, self.tool.run())
+        self.assertEqual(1, self.tool.run())
         self.assertEqual("Failed to send request, the connection is closed\n",
                          socket_err_output.getvalue())
         socket_err_output.close()
@@ -350,7 +350,7 @@ class TestConfigCommands(unittest.TestCase):
         # validate log message for http.client.CannotSendRequest
         cannot_send_output = io.StringIO()
         sys.stdout = cannot_send_output
-        self.assertRaises(None, self.tool.run())
+        self.assertEqual(1, self.tool.run())
         self.assertEqual("Can not send request, the connection is busy\n",
                          cannot_send_output.getvalue())
         cannot_send_output.close()
@@ -472,4 +472,4 @@ class TestCommandLineOptions(unittest.TestCase):
 
 if __name__== "__main__":
     unittest.main()
-    
+
