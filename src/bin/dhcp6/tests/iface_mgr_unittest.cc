@@ -42,12 +42,6 @@ public:
     IfaceCollection & getIfacesLst() { return ifaces_; }
     void setSendSock(int sock) { sendsock_ = sock; }
     void setRecvSock(int sock) { recvsock_ = sock; }
-
-    int openSocket(const std::string& ifname,
-                   const isc::asiolink::IOAddress& addr,
-                   int port) {
-        return IfaceMgr::openSocket(ifname, addr, port);
-    }
 };
 
 // dummy class for now, but this will be expanded when needed
