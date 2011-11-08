@@ -161,6 +161,21 @@ public:
 
     boost::shared_ptr<Pkt4> receive4();
 
+    ///
+    /// Opens UDP/IP socket and binds it to address, interface and port.
+    ///
+    /// Specific type of socket (UDP/IPv4 or UDP/IPv6) depends on passed addr
+    /// family.
+    ///
+    /// @param ifname name of the interface
+    /// @param addr address to be bound.
+    /// @param port UDP port.
+    ///
+    /// @return socket descriptor, if socket creation, binding and multicast
+    /// group join were all successful. -1 otherwise.
+    uint16_t openSocket(const std::string& ifname,
+                        const isc::asiolink::IOAddress& addr, int port);
+
     /// Opens sockets on detected interfaces.
     void openSockets();
 
@@ -190,19 +205,6 @@ protected:
     /// IPv6 address is read from intefaces.txt file.
     void
     detectIfaces();
-
-    ///
-    /// Opens UDP/IP socket and binds it to address, interface and port.
-    ///
-    /// @param ifname name of the interface
-    /// @param addr address to be bound.
-    /// @param port UDP port.
-    ///
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful. -1 otherwise.
-    int openSocket(const std::string& ifname,
-                   const isc::asiolink::IOAddress& addr,
-                   int port);
 
     // TODO: having 2 maps (ifindex->iface and ifname->iface would)
     //      probably be better for performance reasons
