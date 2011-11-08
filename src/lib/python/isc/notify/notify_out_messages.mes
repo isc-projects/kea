@@ -102,4 +102,3 @@ doesn't have an NS RR.  Notify message won't be sent to such a zone.
 This is a warning issued when the notify_out module finds a zone that
 doesn't have an SOA RR or has multiple SOA RRs.  Notify message won't
 be sent to such a zone.
-
