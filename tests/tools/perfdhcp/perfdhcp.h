@@ -1,6 +1,6 @@
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 #define FLEXIBLE_ARRAY_MEMBER 500
 #define ADDR_NAME_BUFSIZE (NI_MAXHOST + 30)
@@ -23,8 +23,8 @@ struct v6_option {
 
 typedef char aaddr_buf[ADDR_NAME_BUFSIZE];
 
-char *addrtoa(int addr_fam, const struct in_addr *addr, aaddr_buf buf);
-void print_dhcp_packet(int v6, const void *pkt, size_t len);
+char* addrtoa(int addr_fam, const struct in_addr* addr, aaddr_buf buf);
+void print_dhcp_packet(int v6, const void* pkt, size_t len);
 
 const char progName[] = "dhcpperf";
 

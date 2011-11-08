@@ -21,26 +21,25 @@
 unsigned dk_diag_mask;
 
 int
-dk_setup(const char *diag_str, const struct dkdesc *diags)
-{
+dk_setup(const char* diag_str, const struct dkdesc* diags) {
     dk_diag_mask = 0;
     int i;
 
     for (; *diag_str != '\0'; diag_str++)
-	for (i = 0; diags[i].keyletter != '\0'; i++) {
-	    if (diags[i].keyletter == *diag_str) {
-		dk_diag_mask |= diags[i].mask;
-		break;
-	    }
-	    if (diags[i].keyletter == '\0')
-		return 0;
-	}
+        for (i = 0; diags[i].keyletter != '\0'; i++) {
+            if (diags[i].keyletter == *diag_str) {
+                dk_diag_mask |= diags[i].mask;
+                break;
+            }
+            if (diags[i].keyletter == '\0') {
+                return 0;
+            }
+        }
     return 1;
 }
 
 void
-dkprintf(unsigned diag_req, const char format[], ...)
-{
+dkprintf(unsigned diag_req, const char format[], ...) {
     va_list ap;
 
     va_start(ap,format);
@@ -49,14 +48,13 @@ dkprintf(unsigned diag_req, const char format[], ...)
 }
 
 void
-vdkprintf(unsigned diag_req, const char format[], va_list ap)
-{
-    if (diag_req & dk_diag_mask)
-	vfprintf(stderr, format, ap);
+vdkprintf(unsigned diag_req, const char format[], va_list ap) {
+    if (diag_req & dk_diag_mask) {
+        vfprintf(stderr, format, ap);
+    }
 }
 
 int
-dk_set(unsigned diag_req)
-{
+dk_set(unsigned diag_req) {
     return diag_req & dk_diag_mask;
 }
