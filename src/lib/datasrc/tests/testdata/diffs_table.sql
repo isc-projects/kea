@@ -29,7 +29,8 @@
 -- the ".quit" on the command line then  getting executed to exit SQLite3.
 
 -- Create the diffs table
-CREATE TABLE diffs (id INTEGER PRIMARY KEY AUTOINCREMENT,
+DROP TABLE diffs;
+CREATE TABLE diffs (id INTEGER PRIMARY KEY,
                     zone_id INTEGER NOT NULL,
                     version INTEGER NOT NULL,
                     operation INTEGER NOT NULL,
@@ -51,7 +52,7 @@ INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
 
 -- Records added in version 1230 of the zone
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
-    VALUES(1, 1230, 1, "example.org.", "SOA", 3600,
+    VALUES(1, 1230, 1, "example.org.", "SOA", 1800,
            "ns1.example.org. admin.example.org. 1230 3600 1800 2419200 7200");
 INSERT INTO diffs(zone_id, version, operation, name, rrtype, ttl, rdata)
     VALUES(1, 1230, 1, "www.example.org.", "A", 3600, "192.0.2.21");
