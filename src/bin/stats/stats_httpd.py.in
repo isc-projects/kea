@@ -436,8 +436,14 @@ class StatsHttpd:
 
 
     def xml_handler(self, module_name=None, item_name=None):
-        """Handler which requests to Stats daemon to obtain statistics
-        data and returns the body of XML document"""
+        """Requests the specified statistics data and specification by
+        using the functions get_stats_data and get_stats_spec
+        respectively and loads the XML template file and returns the
+        string of the XML document.The first argument is the module
+        name which owns the statistics data, the second argument is
+        one name of the statistics items which the the module
+        owns. The second argument cannot be specified when the first
+        argument is not specified."""
 
         def stats_data2xml(stats_spec, stats_data, xml_elem):
             """Internal use for xml_handler. Reads stats_data and
@@ -507,7 +513,13 @@ class StatsHttpd:
         return self.xml_body
 
     def xsd_handler(self, module_name=None, item_name=None):
-        """Handler which just returns the body of XSD document"""
+        """Requests the specified statistics specification by using
+        the function get_stats_spec respectively and loads the XSD
+        template file and returns the string of the XSD document.The
+        first argument is the module name which owns the statistics
+        data, the second argument is one name of the statistics items
+        which the the module owns. The second argument cannot be
+        specified when the first argument is not specified."""
 
         def stats_spec2xsd(stats_spec, xsd_elem):
             """Internal use for xsd_handler. Reads stats_spec
@@ -625,7 +637,13 @@ class StatsHttpd:
         return self.xsd_body
 
     def xsl_handler(self, module_name=None, item_name=None):
-        """Handler which just returns the body of XSL document"""
+        """Requests the specified statistics specification by using
+        the function get_stats_spec respectively and loads the XSL
+        template file and returns the string of the XSL document.The
+        first argument is the module name which owns the statistics
+        data, the second argument is one name of the statistics items
+        which the the module owns. The second argument cannot be
+        specified when the first argument is not specified."""
 
         def stats_spec2xsl(stats_spec, xsl_elem, path=XML_URL_PATH):
             """Internal use for xsl_handler. Reads stats_spec
