@@ -141,8 +141,10 @@ struct SQLite3Parameters {
     void
     finalizeStatements() {
         for (int i = 0; i < NUM_STATEMENTS; ++i) {
-            sqlite3_finalize(statements_[i]);
-            statements_[i] = NULL;
+            if (statements_[i] != NULL) {
+                sqlite3_finalize(statements_[i]);
+                statements_[i] = NULL;
+            }
         }
     }
 
@@ -628,8 +630,8 @@ public:
             bindInt(DIFF_RECS, 1, zone_id);
             bindInt(DIFF_RECS, 2, low_id);
             bindInt(DIFF_RECS, 3, high_id);
-        } catch (...) {
 
+        } catch (...) {
             // Something wrong, clear up everything.
             accessor_->dbparameters_->finalizeStatements();
             throw;
@@ -656,8 +658,9 @@ public:
             // Last call (if any) didn't reach end of result set, so we
             // can read another row from it.
             //
-            // Get a pointer to the statement for brevity (does not transfer
-            // resources)
+            // Get a pointer to the statement for brevity (this does not transfer
+            // ownership of the statement to this class, so there is no need to
+            // tidy up after we have finished using it).
             sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(DIFF_RECS);
 
             const int rc(sqlite3_step(stmt));
@@ -680,9 +683,10 @@ public:
 
 private:
 
-    /// \brief Clear Statement Bindings
+    /// \brief Reset prepared statement
     ///
-    /// Resets the statement and clears any bindings attached to it.
+    /// Sets up the statement so that new parameters can be attached to it and
+    /// that it can be used to query for another difference sequence.
     ///
     /// \param stindex Index of prepared statement to which to bind
     void reset(int stindex) {
@@ -825,7 +829,6 @@ private:
     // Attributes
 
     boost::shared_ptr<const SQLite3Accessor> accessor_; // Accessor object
-    sqlite3_stmt*   stmt_;      // Prepared statement for this iterator
     int last_status_;           // Last status received from sqlite3_step
 };
 
