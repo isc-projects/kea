@@ -2179,26 +2179,33 @@ class TestFormatting(unittest.TestCase):
         # (family, sockettype, (address, port))
         # of which sockettype is ignored
         self.assertEqual("192.0.2.1:53",
-                         format_addrinfo((socket.AF_INET, None,
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
                                           ("192.0.2.1", 53))))
         self.assertEqual("192.0.2.2:53",
-                         format_addrinfo((socket.AF_INET, None,
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
                                           ("192.0.2.2", 53))))
         self.assertEqual("192.0.2.1:54",
-                         format_addrinfo((socket.AF_INET, None,
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
                                           ("192.0.2.1", 54))))
-        self.assertEqual("[::1]:53",
-                         format_addrinfo((socket.AF_INET6, None,
-                                          ("::1", 53))))
-        self.assertEqual("[::2]:53",
-                         format_addrinfo((socket.AF_INET6, None,
-                                          ("::2", 53))))
-        self.assertEqual("[::1]:54",
-                         format_addrinfo((socket.AF_INET6, None,
-                                          ("::1", 54))))
+        self.assertEqual("[2001:db8::1]:53",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::1", 53))))
+        self.assertEqual("[2001:db8::2]:53",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::2", 53))))
+        self.assertEqual("[2001:db8::1]:54",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::1", 54))))
         self.assertEqual("/some/file",
-                         format_addrinfo((socket.AF_UNIX, None,
+                         format_addrinfo((socket.AF_UNIX, socket.SOCK_STREAM,
                                           "/some/file")))
+        # second element of passed tuple should be ignored
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, None,
+                                          ("192.0.2.1", 53))))
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, "Just some string",
+                                          ("192.0.2.1", 53))))
         self.assertRaises(TypeError, format_addrinfo, 1)
         self.assertRaises(TypeError, format_addrinfo,
                                      (socket.AF_INET, "asdf"))
