@@ -482,7 +482,6 @@ class StatsHttpd:
                     stats_data2xml(item_spec,
                                    stats_data[item_spec['item_name']],
                                    xml_elem)
-            return None
 
         stats_spec = self.get_stats_spec(module_name, item_name)
         stats_data = self.get_stats_data(module_name, item_name)
@@ -596,7 +595,6 @@ class StatsHttpd:
             elif type(stats_spec) is list:
                 for item_spec in stats_spec:
                     stats_spec2xsd(item_spec, xsd_elem)
-            return None
 
         # for XSD
         stats_spec = self.get_stats_spec(module_name, item_name)
@@ -761,7 +759,6 @@ class StatsHttpd:
                     else:
                         table.append(tr)
                 xsl_elem.append(table)
-            return None
 
         # for XSL
         stats_spec = self.get_stats_spec(module_name, item_name)
