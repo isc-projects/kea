@@ -128,21 +128,46 @@ class XfroutSession():
         self._zone_config = zone_config
         self.ClientClass = client_class # parameterize this for testing
         self._soa = None # will be set in _check_xfrout_available or in tests
-        self.handle()
+        self._handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
         return TSIGContext(tsig_record.get_name(), tsig_record.get_rdata().get_algorithm(),
                            tsig_key_ring)
 
-    def handle(self):
-        ''' Handle a xfrout query, send xfrout response '''
-        try:
-            self.dns_xfrout_start(self._sock_fd, self._request_data)
-            #TODO, avoid catching all exceptions
-        except Exception as e:
-            logger.error(XFROUT_HANDLE_QUERY_ERROR, e)
-            pass
+    def _handle(self):
+        ''' Handle a xfrout query, send xfrout response(s).
 
+        This is separated from the constructor so that we can override
+        it from tests.
+
+        '''
+        # Check the xfrout quota.  We do both increase/decrease in this
+        # method so it's clear we always release it once acuired.
+        quota_ok = self._server.increase_transfers_counter()
+        ex = None
+        try:
+            self.dns_xfrout_start(self._sock_fd, self._request_data, quota_ok)
+        except Exception as e:
+            # To avoid resource leak we need catch all possible exceptions
+            # We log it later to exclude the case where even logger raises
+            # an exception.
+            ex = e
+
+        # Release any critical resources
+        if quota_ok:
+            self._server.decrease_transfers_counter()
+        self._close_socket()
+
+        if ex is not None:
+            logger.error(XFROUT_HANDLE_QUERY_ERROR, ex)
+
+    def _close_socket(self):
+        '''Simply close the socket via the given FD.
+
+        This is a dedicated subroutine of handle() and is sepsarated from it
+        for the convenience of tests.
+
+        '''
         os.close(self._sock_fd)
 
     def _check_request_tsig(self, msg, request_data):
@@ -252,12 +277,8 @@ class XfroutSession():
         '''Check if xfr request can be responsed.
            TODO, Get zone's configuration from cfgmgr or some other place
            eg. check allow_transfer setting,
-        '''
 
-        # Reject the attempt if we are too busy.  Check this first to avoid
-        # unnecessary resource consumption even if we discard it soon.
-        if not self._server.increase_transfers_counter():
-            return Rcode.REFUSED()
+        '''
 
         # Identify the data source for the requested zone and see if it has
         # SOA while initializing objects used for request processing later.
@@ -292,7 +313,7 @@ class XfroutSession():
         return Rcode.NOERROR()
 
 
-    def dns_xfrout_start(self, sock_fd, msg_query):
+    def dns_xfrout_start(self, sock_fd, msg_query, quota_ok=True):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
         if rcode_ is None: # Dropped by ACL
@@ -302,6 +323,9 @@ class XfroutSession():
         elif rcode_ != Rcode.NOERROR():
             return self._reply_query_with_error_rcode(msg, sock_fd,
                                                       Rcode.FORMERR())
+        elif not quota_ok:
+            return self._reply_query_with_error_rcode(msg, sock_fd,
+                                                      Rcode.REFUSED())
 
         question = msg.get_question()[0]
         zone_name = question.get_name()
@@ -321,8 +345,6 @@ class XfroutSession():
             logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_str, err)
             pass
         logger.info(XFROUT_AXFR_TRANSFER_DONE, zone_str)
-
-        self._server.decrease_transfers_counter()
 
     def _clear_message(self, msg):
         qid = msg.get_qid()

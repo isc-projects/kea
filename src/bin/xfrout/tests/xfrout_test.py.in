@@ -64,10 +64,40 @@ class MySocket():
     def clear_send(self):
         del self.sendqueue[:]
 
-# We subclass the Session class we're testing here, only
-# to override the handle() and _send_data() method
+class MockDataSrcClient:
+    def __init__(self, type, config):
+        pass
+
+    def get_iterator(self, zone_name):
+        if zone_name == Name('notauth.example.com'):
+            raise isc.datasrc.Error('no such zone')
+        self._zone_name = zone_name
+        return self
+
+    def get_soa(self):  # emulate ZoneIterator.get_soa()
+        if self._zone_name == Name('nosoa.example.com'):
+            return None
+        soa_rrset = RRset(Name('multisoa.example.com'), RRClass.IN(),
+                          RRType.SOA(), RRTTL(3600))
+        soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                  'master.example.com. ' +
+                                  'admin.example.com. 1234 ' +
+                                  '3600 1800 2419200 7200'))
+        if self._zone_name == Name('multisoa.example.com'):
+            soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                      'master.example.com. ' +
+                                      'admin.example.com. 1300 ' +
+                                      '3600 1800 2419200 7200'))
+            return soa_rrset
+        return soa_rrset
+
+# We subclass the Session class we're testing here, only overriding a few
+# methods
 class MyXfroutSession(XfroutSession):
-    def handle(self):
+    def _handle(self):
+        pass
+
+    def _close_socket(self):
         pass
 
     def _send_data(self, sock, data):
@@ -80,12 +110,14 @@ class MyXfroutSession(XfroutSession):
 class Dbserver:
     def __init__(self):
         self._shutdown_event = threading.Event()
+        self.transfer_counter = 0
     def get_db_file(self):
         return 'test.sqlite3'
     def increase_transfers_counter(self):
+        self.transfer_counter += 1
         return True
     def decrease_transfers_counter(self):
-        pass
+        self.transfer_counter -= 1
 
 class TestXfroutSession(unittest.TestCase):
     def getmsg(self):
@@ -138,6 +170,45 @@ class TestXfroutSession(unittest.TestCase):
                                        'master.Example.com. ' +
                                        'admin.exAmple.com. ' +
                                        '1234 3600 1800 2419200 7200'))
+
+    def tearDown(self):
+        # transfer_counter must be always be reset no matter happens within
+        # the XfroutSession object.  We check the condition here.
+        self.assertEqual(0, self.xfrsess._server.transfer_counter)
+
+    def test_quota_error(self):
+        '''Emulating the server being too busy.
+
+        '''
+        self.xfrsess._request_data = self.mdata
+        self.xfrsess._server.increase_transfers_counter = lambda : False
+        XfroutSession._handle(self.xfrsess)
+        self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.REFUSED())
+
+    def test_quota_ok(self):
+        '''The default case in terms of the xfrout quota.
+
+        '''
+        # set up a bogus request, which should result in FORMERR. (it only
+        # has to be something that is different from the previous case)
+        self.xfrsess._request_data = \
+            self.create_request_data(with_question=False)
+        # Replace the data source client to avoid datasrc related exceptions
+        self.xfrsess.ClientClass = MockDataSrcClient
+        XfroutSession._handle(self.xfrsess)
+        self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.FORMERR())
+
+    def test_exception_from_session(self):
+        '''Test the case where the main processing raises an exception.
+
+        We just check it doesn't any unexpected disruption and (in teraDown)
+        transfer_counter is correctly reset to 0.
+
+        '''
+        def dns_xfrout_start(fd, msg, quota):
+            raise ValueError('fake exception')
+        self.xfrsess.dns_xfrout_start = dns_xfrout_start
+        XfroutSession._handle(self.xfrsess)
 
     def test_parse_query_message(self):
         [get_rcode, get_msg] = self.xfrsess._parse_query_message(self.mdata)
@@ -520,32 +591,6 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(82, get_rrset_len(self.soa_rrset))
 
     def test_check_xfrout_available(self):
-        class MockDataSrcClient:
-            def __init__(self, type, config): pass
-
-            def get_iterator(self, zone_name):
-                if zone_name == Name('notauth.example.com'):
-                    raise isc.datasrc.Error('no such zone')
-                self._zone_name = zone_name
-                return self
-
-            def get_soa(self):  # emulate ZoneIterator.get_soa()
-                if self._zone_name == Name('nosoa.example.com'):
-                    return None
-                soa_rrset = RRset(Name('multisoa.example.com'), RRClass.IN(),
-                                  RRType.SOA(), RRTTL(3600))
-                soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                          'master.example.com. ' +
-                                          'admin.example.com. 1234 ' +
-                                          '3600 1800 2419200 7200'))
-                if self._zone_name == Name('multisoa.example.com'):
-                    soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                                   'master.example.com. ' +
-                                                   'admin.example.com. 1300 ' +
-                                                   '3600 1800 2419200 7200'))
-                    return soa_rrset
-                return soa_rrset
-
         self.xfrsess.ClientClass = MockDataSrcClient
         self.assertEqual(self.xfrsess._check_xfrout_available(
                 Name('notauth.example.com')), Rcode.NOTAUTH())
@@ -553,13 +598,6 @@ class TestXfroutSession(unittest.TestCase):
                 Name('nosoa.example.com')), Rcode.SERVFAIL())
         self.assertEqual(self.xfrsess._check_xfrout_available(
                 Name('multisoa.example.com')), Rcode.SERVFAIL())
-
-        self.xfrsess._server.increase_transfers_counter = lambda : False
-        self.assertEqual(self.xfrsess._check_xfrout_available(
-                Name('example.com')), Rcode.REFUSED())
-        self.xfrsess._server.increase_transfers_counter = lambda : True
-        self.assertEqual(self.xfrsess._check_xfrout_available(
-                Name('example.com')), Rcode.NOERROR())
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
