@@ -107,6 +107,28 @@ def format_zone_str(zone_name, zone_class):
     """
     return zone_name.to_text() + '/' + str(zone_class)
 
+# borrowed from xfrin.py @ #1298.
+def format_addrinfo(addrinfo):
+    """Helper function to format the addrinfo as a string of the form
+       <addr>:<port> (for IPv4) or [<addr>]:port (for IPv6). For unix domain
+       sockets, and unknown address families, it returns a basic string
+       conversion of the third element of the passed tuple.
+       Parameters:
+       addrinfo: a 3-tuple consisting of address family, socket type, and,
+                 depending on the family, either a 2-tuple with the address
+                 and port, or a filename
+    """
+    try:
+        if addrinfo[0] == socket.AF_INET:
+            return str(addrinfo[2][0]) + ":" + str(addrinfo[2][1])
+        elif addrinfo[0] == socket.AF_INET6:
+            return "[" + str(addrinfo[2][0]) + "]:" + str(addrinfo[2][1])
+        else:
+            return str(addrinfo[2])
+    except IndexError:
+        raise TypeError("addrinfo argument to format_addrinfo() does not "
+                        "appear to be consisting of (family, socktype, (addr, port))")
+
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
     bytes = bytearray()
@@ -124,6 +146,7 @@ class XfroutSession():
         self._tsig_ctx = None
         self._tsig_len = 0
         self._remote = remote
+        self._request_type = 'AXFR' # could be IXFR when we support it
         self._acl = default_acl
         self._zone_config = zone_config
         self.ClientClass = client_class # parameterize this for testing
@@ -208,14 +231,16 @@ class XfroutSession():
         zone_class = msg.get_question()[0].get_class()
         acl = self._get_transfer_acl(zone_name, zone_class)
         acl_result = acl.execute(
-            isc.acl.dns.RequestContext(self._remote, msg.get_tsig_record()))
+            isc.acl.dns.RequestContext(self._remote[2], msg.get_tsig_record()))
         if acl_result == DROP:
-            logger.info(XFROUT_QUERY_DROPPED, zone_name, zone_class,
-                        self._remote[0], self._remote[1])
+            logger.info(XFROUT_QUERY_DROPPED, self._request_type,
+                        format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class))
             return None, None
         elif acl_result == REJECT:
-            logger.info(XFROUT_QUERY_REJECTED, zone_name, zone_class,
-                        self._remote[0], self._remote[1])
+            logger.info(XFROUT_QUERY_REJECTED, self._request_type,
+                        format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class))
             return Rcode.REFUSED(), msg
 
         return rcode, msg
@@ -308,8 +333,6 @@ class XfroutSession():
         if self._soa is None or self._soa.get_rdata_count() != 1:
             return Rcode.SERVFAIL()
 
-        #TODO, check allow_transfer
-
         return Rcode.NOERROR()
 
 
@@ -324,6 +347,9 @@ class XfroutSession():
             return self._reply_query_with_error_rcode(msg, sock_fd,
                                                       Rcode.FORMERR())
         elif not quota_ok:
+            logger.warn(XFROUT_QUERY_QUOTA_EXCCEEDED, self._request_type,
+                        format_addrinfo(self._remote),
+                        self._server._max_transfers_out)
             return self._reply_query_with_error_rcode(msg, sock_fd,
                                                       Rcode.REFUSED())
 
@@ -335,16 +361,20 @@ class XfroutSession():
         # TODO: we should also include class in the check
         rcode_ = self._check_xfrout_available(zone_name)
         if rcode_ != Rcode.NOERROR():
-            logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_str, rcode_)
+            logger.info(XFROUT_AXFR_TRANSFER_FAILED, self._request_type,
+                        format_addrinfo(self._remote), zone_str, rcode_)
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
-            logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_str)
+            logger.info(XFROUT_AXFR_TRANSFER_STARTED, self._request_type,
+                        format_addrinfo(self._remote), zone_str)
             self._reply_xfrout_query(msg, sock_fd)
         except Exception as err:
-            logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_str, err)
+            logger.error(XFROUT_AXFR_TRANSFER_ERROR, self._request_type,
+                    format_addrinfo(self._remote), zone_str, err)
             pass
-        logger.info(XFROUT_AXFR_TRANSFER_DONE, zone_str)
+        logger.info(XFROUT_AXFR_TRANSFER_DONE, self._request_type,
+                    format_addrinfo(self._remote), zone_str)
 
     def _clear_message(self, msg):
         qid = msg.get_qid()
@@ -536,9 +566,12 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         t.start()
 
     def _guess_remote(self, sock_fd):
-        """
-           Guess remote address and port of the socket. The sock_fd must be a
-           socket
+        """Guess remote address and port of the socket.
+
+        The sock_fd must be a file descriptor of a socket.
+        This method retuns a 3-tuple consisting of address family,
+        socket type, and a 2-tuple with the address (string) and port (int).
+
         """
         # This uses a trick. If the socket is IPv4 in reality and we pretend
         # it to be IPv6, it returns IPv4 address anyway. This doesn't seem
@@ -550,7 +583,16 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             # To make it work even on hosts without IPv6 support
             # (Any idea how to simulate this in test?)
             sock = socket.fromfd(sock_fd, socket.AF_INET, socket.SOCK_STREAM)
-        return sock.getpeername()
+        peer = sock.getpeername()
+
+        # Identify the correct socket family.  Due to the above "trick",
+        # we cannot simply use sock.family.
+        family = socket.AF_INET6
+        try:
+            socket.inet_pton(socket.AF_INET6, peer[0])
+        except socket.error:
+            family = socket.AF_INET
+        return (family, socket.SOCK_STREAM, peer)
 
     def finish_request(self, sock_fd, request_data):
         '''Finish one request by instantiating RequestHandlerClass.
