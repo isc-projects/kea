@@ -19,8 +19,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/noncopyable.hpp>
-#include "asiolink/io_address.h"
-#include "dhcp/pkt6.h"
+#include <asiolink/io_address.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
 
 namespace isc {
 
@@ -34,7 +35,7 @@ namespace dhcp {
 class IfaceMgr : public boost::noncopyable {
 public:
     /// type that defines list of addresses
-    typedef std::list<isc::asiolink::IOAddress> Addr6Lst;
+    typedef std::list<isc::asiolink::IOAddress> AddressCollection;
 
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
@@ -54,6 +55,21 @@ public:
         /// returns link-layer address a plain text
         std::string getPlainMac() const;
 
+        uint16_t getIndex() const { return ifindex_; }
+
+        std::string getName() const {
+            return name_;
+        };
+
+        const AddressCollection& getAddresses() const { return addrs_; }
+
+        void addAddress(const isc::asiolink::IOAddress& addr) {
+            addrs_.push_back(addr);
+        }
+
+        bool delAddress(const isc::asiolink::IOAddress& addr);
+
+    protected:
         /// network interface name
         std::string name_;
 
@@ -61,7 +77,7 @@ public:
         int ifindex_;
 
         /// list of assigned addresses
-        Addr6Lst addrs_;
+        AddressCollection addrs_;
 
         /// link-layer address
         uint8_t mac_[MAX_MAC_LEN];
@@ -81,7 +97,7 @@ public:
     //      also hide it (make it public make tests easier for now)
 
     /// type that holds a list of interfaces
-    typedef std::list<Iface> IfaceLst;
+    typedef std::list<Iface> IfaceCollection;
 
     /// IfaceMgr is a singleton class. This method returns reference
     /// to its sole instance.
@@ -127,6 +143,9 @@ public:
     bool
     send(boost::shared_ptr<Pkt6>& pkt);
 
+    bool
+    send(boost::shared_ptr<Pkt4>& pkt);
+
     /// @brief Tries to receive packet over open sockets.
     ///
     /// Attempts to receive a single packet of any of the open sockets.
@@ -138,7 +157,11 @@ public:
     /// (e.g. remove expired leases)
     ///
     /// @return Pkt6 object representing received packet (or NULL)
-    boost::shared_ptr<Pkt6> receive();
+    boost::shared_ptr<Pkt6>
+    receive6();
+
+    boost::shared_ptr<Pkt4>
+    receive4();
 
     // don't use private, we need derived classes in tests
 protected:
@@ -151,6 +174,15 @@ protected:
 
     ~IfaceMgr();
 
+    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+
+    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+
+
+    void addInterface(const Iface& iface) {
+        ifaces_.push_back(iface);
+    }
+
     /// @brief Detects network interfaces.
     ///
     /// This method will eventually detect available interfaces. For now
@@ -160,7 +192,7 @@ protected:
     detectIfaces();
 
     ///
-    /// Opens UDP/IPv6 socket and binds it to address, interface and port.
+    /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
     /// @param ifname name of the interface
     /// @param addr address to be bound.
@@ -176,7 +208,7 @@ protected:
     //      probably be better for performance reasons
 
     /// List of available interfaces
-    IfaceLst ifaces_;
+    IfaceCollection ifaces_;
 
     /// a pointer to a sole instance of this class (a singleton)
     static IfaceMgr * instance_;
@@ -221,6 +253,7 @@ private:
     bool
     joinMcast(int sock, const std::string& ifname,
               const std::string& mcast);
+
 };
 
 }; // namespace isc::dhcp

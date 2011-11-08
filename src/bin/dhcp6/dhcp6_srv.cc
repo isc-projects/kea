@@ -49,7 +49,7 @@ Dhcpv6Srv::run() {
         boost::shared_ptr<Pkt6> query; // client's message
         boost::shared_ptr<Pkt6> rsp;   // server's response
 
-        query = IfaceMgr::instance().receive();
+        query = IfaceMgr::instance().receive6();
 
         if (query) {
             if (!query->unpack()) {
