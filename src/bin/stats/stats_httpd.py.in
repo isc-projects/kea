@@ -369,7 +369,15 @@ class StatsHttpd:
 
     def get_stats_data(self, owner=None, name=None):
         """Requests statistics data to the Stats daemon and returns
-        the data which obtains from it. args are owner and name."""
+        the data which obtains from it. The first argument is the
+        module name which owns the statistics data, the second
+        argument is one name of the statistics items which the the
+        module owns. The second argument cannot be specified when the
+        first argument is not specified. It returns the statistics
+        data of the specified module or item. When the session timeout
+        or the session error is occurred, it raises
+        StatsHttpdError. When the stats daemon returns none-zero
+        value, it raises StatsHttpdDataError."""
         param = {}
         if owner is None and name is None:
             param = None
@@ -395,7 +403,15 @@ class StatsHttpd:
 
     def get_stats_spec(self, owner=None, name=None):
         """Requests statistics data to the Stats daemon and returns
-        the data which obtains from it. args are owner and name."""
+        the data which obtains from it. The first argument is the
+        module name which owns the statistics data, the second
+        argument is one name of the statistics items which the the
+        module owns. The second argument cannot be specified when the
+        first argument is not specified. It returns the statistics
+        specification of the specified module or item. When the
+        session timeout or the session error is occurred, it raises
+        StatsHttpdError. When the stats daemon returns none-zero
+        value, it raises StatsHttpdDataError."""
         param = {}
         if owner is None and name is None:
             param = None
