@@ -1,9 +1,18 @@
+313.	[func]		jinmei
+	datasrc: Added C++ API for adding zone differences to database
+	based data sources.  It's intended to be used for the support for
+	IXFR-in and dynamic update (so they can subsequently be retrieved
+	for IXFR-out).  The addRecordDiff method of the DatabaseAccessor
+	defines the interface, and a concrete implementation for SQLite3
+	was provided.
+	(Trac #1329, git 1aa233fab1d74dc776899df61181806679d14013)
+
 312.	[func]		jelte
 	Added an initial framework for doing system tests using the 
-	cucumber-based BDD tool Lettuce. A number of general steps are included, 
-	for instance running bind10 with specific configurations, sending 
-	queries, and inspecting query answers. A few very basic tests are 
-	included as well.
+	cucumber-based BDD tool Lettuce. A number of general steps are
+	included,  for instance running bind10 with specific
+	configurations, sending queries, and inspecting query answers. A
+	few very basic tests are included as well.
 	(Trac #1290, git 6b75c128bcdcefd85c18ccb6def59e9acedd4437)
 
 311.	[bug]		jelte
