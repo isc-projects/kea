@@ -229,7 +229,7 @@ IfaceMgr::getIface(const std::string& ifname) {
     return (NULL); // not found
 }
 
-int
+uint16_t
 IfaceMgr::openSocket(const std::string& ifname,
                      const IOAddress& addr,
                      int port) {
