@@ -146,12 +146,23 @@ class TestHttpHandler(unittest.TestCase):
             self.assertEqual(response.getheader("Content-type"), "text/xml")
             self.assertTrue(int(response.getheader("Content-Length")) > 0)
             self.assertEqual(response.status, 200)
+            xml_doctype = response.readline().decode()
+            xsl_doctype = response.readline().decode()
+            self.assertTrue(len(xml_doctype) > 0)
+            self.assertTrue(len(xsl_doctype) > 0)
             root = xml.etree.ElementTree.parse(response).getroot()
             self.assertTrue(root.tag.find('statistics') > 0)
-            for (k,v) in root.attrib.items():
-                if k.find('schemaLocation') > 0:
-                    self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.XSD_URL_PATH)
+            schema_loc = '{http://www.w3.org/2001/XMLSchema-instance}schemaLocation'
             if item is None and mod is None:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith(
+                        '<?xml-stylesheet type="text/xsl" href="' + 
+                        stats_httpd.XSL_URL_PATH
+                        + '"?>'))
                 for m in DUMMY_DATA:
                     for k in DUMMY_DATA[m].keys():
                         self.assertIsNotNone(root.find(m + '/' + k))
@@ -161,6 +172,15 @@ class TestHttpHandler(unittest.TestCase):
                                 for i in v:
                                     self.assertIsNotNone(itm.find('zones/' + i))
             elif item is None:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH + '/' + mod)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith( 
+                                 '<?xml-stylesheet type="text/xsl" href="'
+                                 + stats_httpd.XSL_URL_PATH + '/' + mod
+                                 + '"?>'))
                 for k in DUMMY_DATA[mod].keys():
                     self.assertIsNotNone(root.find(k))
                     itm = root.find(k)
@@ -169,6 +189,15 @@ class TestHttpHandler(unittest.TestCase):
                             for i in v:
                                 self.assertIsNotNone(itm.find('zones/' + i))
             else:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH + '/' + mod + '/' + item)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith( 
+                                 '<?xml-stylesheet type="text/xsl" href="'
+                                 + stats_httpd.XSL_URL_PATH + '/' + mod + '/' + item
+                                 + '"?>'))
                 self.assertIsNotNone(root.find(item))
 
         # URL is '/bind10/statistics/xml'
