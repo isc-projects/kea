@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <gtest/gtest.h>
 
@@ -37,6 +38,7 @@ using namespace std;
 // for some systems.
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
+using boost::lexical_cast;
 using namespace isc::dns;
 
 namespace {
@@ -262,6 +264,40 @@ public:
 private:
     const std::string database_name_;
 
+};
+
+/**
+ * Single journal entry in the mock database.
+ *
+ * All the members there are public for simplicity, as it only stores data.
+ * We use the implicit constructor and operator. The members can't be const
+ * because of the assignment operator (used in the vectors).
+ */
+struct JournalEntry {
+    JournalEntry(int id, uint32_t serial,
+                 DatabaseAccessor::DiffOperation operation,
+                 const std::string (&data)[DatabaseAccessor::DIFF_PARAM_COUNT])
+        : id_(id), serial_(serial), operation_(operation), data_(data)
+    {}
+    JournalEntry(int id, uint32_t serial,
+                 DatabaseAccessor::DiffOperation operation,
+                 const std::string& name, const std::string& type,
+                 const std::string& ttl, const std::string& rdata):
+        id_(id), serial_(serial), operation_(operation)
+    {
+        data_[DatabaseAccessor::DIFF_NAME] = name;
+        data_[DatabaseAccessor::DIFF_TYPE] = type;
+        data_[DatabaseAccessor::DIFF_TTL] = ttl;
+        data_[DatabaseAccessor::DIFF_RDATA] = rdata;
+    }
+    int id_;
+    uint32_t serial_;
+    DatabaseAccessor::DiffOperation operation_;
+    std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
+    bool operator==(const JournalEntry& other) const {
+        return (id_ == other.id_ && serial_ == other.serial_ &&
+                operation_ == other.operation_ && data_ == other.data_);
+    }
 };
 
 /*
@@ -646,6 +682,30 @@ public:
             isc_throw(isc::Unexpected, "Unknown zone ID");
         }
     }
+    virtual void addRecordDiff(int id, uint32_t serial,
+                               DiffOperation operation,
+                               const std::string (&data)[DIFF_PARAM_COUNT])
+    {
+        if (id == 13) { // The null zone doesn't support journaling
+            isc_throw(isc::NotImplemented, "Test not implemented behaviour");
+        } else if (id == -1) { // Bad zone throws
+            isc_throw(DataSourceError, "Test error");
+        } else {
+            journal_entries_.push_back(JournalEntry(id, serial, operation,
+                                                    data));
+        }
+    }
+
+    // Check the journal is as expected and clear the journal
+    void checkJournal(const std::vector<JournalEntry> &expected) {
+        std::vector<JournalEntry> journal;
+        // Clean the journal, but keep local copy to check
+        journal.swap(journal_entries_);
+        ASSERT_EQ(expected.size(), journal.size());
+        for (size_t i(0); i < expected.size(); ++ i) {
+            EXPECT_TRUE(expected[i] == journal[i]);
+        }
+    }
 
 private:
     // The following member variables are storage and/or update work space
@@ -664,6 +724,9 @@ private:
     Domains* update_records_;
     const Domains empty_records_master_;
     const Domains* empty_records_;
+
+    // The journal data
+    std::vector<JournalEntry> journal_entries_;
 
     // used as temporary storage after searchForRecord() and during
     // getNextRecord() calls, as well as during the building of the
@@ -782,6 +845,10 @@ public:
         rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
         rrset_->addRdata(rdata::createRdata(rrset_->getType(),
                                             rrset_->getClass(), "192.0.2.2"));
+        soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+        soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                         "ns1.example.org. admin.example.org. "
+                                         "1234 3600 1800 2419200 7200"));
 
         // And its RRSIG.  Also different from the configured one.
         rrsigset_.reset(new RRset(qname_, qclass_, RRType::RRSIG(),
@@ -883,6 +950,7 @@ public:
     const RRTTL rrttl_;         // commonly used RR TTL
     RRsetPtr rrset_;            // for adding/deleting an RRset
     RRsetPtr rrsigset_;         // for adding/deleting an RRset
+    RRsetPtr soa_;              // for adding/deleting an RRset
 
     // update related objects to be tested
     ZoneUpdaterPtr updater_;
@@ -2625,6 +2693,182 @@ TEST_F(MockDatabaseClientTest, badName) {
 
     EXPECT_THROW(finder->findPreviousName(Name("brokenname.example.org.")),
                  DataSourceError);
+}
+
+/*
+ * Test correct use of the updater with a journal.
+ */
+TEST_F(MockDatabaseClientTest, journal) {
+    updater_ = client_->getUpdater(zname_, false, true);
+    updater_->deleteRRset(*soa_);
+    updater_->deleteRRset(*rrset_);
+    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+    soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                      "ns1.example.org. admin.example.org. "
+                                      "1234 3600 1800 2419201 7200"));
+    updater_->addRRset(*soa_);
+    updater_->addRRset(*rrset_);
+    ASSERT_NO_THROW(updater_->commit());
+    std::vector<JournalEntry> expected;
+    // For some reason, the example.org is called read only zone here.
+    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1234 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    "example.org.", "A", "3600",
+                                    "192.0.2.2"));
+    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419201,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1234 3600 1800 2419201 7200"));
+    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    "example.org.", "A", "3600",
+                                    "192.0.2.2"));
+    current_accessor_->checkJournal(expected);
+}
+
+/*
+ * Push multiple delete-add sequences. Checks it is allowed and all is
+ * saved.
+ */
+TEST_F(MockDatabaseClientTest, journalMultiple) {
+    std::vector<JournalEntry> expected;
+    updater_ = client_->getUpdater(zname_, false, true);
+    std::string soa_rdata = "ns1.example.org. admin.example.org. "
+        "1234 3600 1800 2419200 7200";
+    for (size_t i(1); i < 100; ++ i) {
+        // Remove the old SOA
+        updater_->deleteRRset(*soa_);
+        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200 + i - 1,
+                                        DatabaseAccessor::DIFF_DELETE,
+                                        "example.org.", "SOA", "3600",
+                                        soa_rdata));
+        // Create a new SOA
+        soa_rdata = "ns1.example.org. admin.example.org. 1234 3600 1800 " +
+            lexical_cast<std::string>(2419200 + i) + " 7200";
+        soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+        soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                          soa_rdata));
+        // Add the new SOA
+        updater_->addRRset(*soa_);
+        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200 + i,
+                                        DatabaseAccessor::DIFF_DELETE,
+                                        "example.org.", "SOA", "3600",
+                                        soa_rdata));
+    }
+    ASSERT_NO_THROW(updater_->commit());
+    // Check the journal contains everything.
+    current_accessor_->checkJournal(expected);
+}
+
+/*
+ * Test passing a forbidden sequence to it and expect it to throw.
+ *
+ * Note that we implicitly test in different testcases (these for add and
+ * delete) that if the journaling is false, it doesn't expect the order.
+ */
+TEST_F(MockDatabaseClientTest, journalBadSequence) {
+    std::vector<JournalEntry> expected;
+    {
+        SCOPED_TRACE("Delete A before SOA");
+        updater_ = client_->getUpdater(zname_, false, true);
+        EXPECT_THROW(updater_->deleteRRset(*rrset_), isc::BadValue);
+        // Make sure the journal is empty now
+        current_accessor_->checkJournal(expected);
+    }
+
+    {
+        SCOPED_TRACE("Add before delete");
+        updater_ = client_->getUpdater(zname_, false, true);
+        EXPECT_THROW(updater_->addRRset(*soa_), isc::BadValue);
+        // Make sure the journal is empty now
+        current_accessor_->checkJournal(expected);
+    }
+
+    {
+        SCOPED_TRACE("Add A before SOA");
+        updater_ = client_->getUpdater(zname_, false, true);
+        // So far OK
+        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        // But we miss the add SOA here
+        EXPECT_THROW(updater_->addRRset(*rrset_), isc::BadValue);
+        // Make sure the journal contains only the first one
+        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+                                        DatabaseAccessor::DIFF_DELETE,
+                                        "example.org.", "SOA", "3600",
+                                        "ns1.example.org. admin.example.org. "
+                                        "1234 3600 1800 2419200 7200"));
+        current_accessor_->checkJournal(expected);
+    }
+
+    {
+        SCOPED_TRACE("Commit before add");
+        updater_ = client_->getUpdater(zname_, false, true);
+        // So far OK
+        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        // Commit at the wrong time
+        EXPECT_THROW(updater_->commit(), isc::BadValue);
+        current_accessor_->checkJournal(expected);
+    }
+
+    {
+        SCOPED_TRACE("Delete two SOAs");
+        // So far OK
+        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        // Delete the SOA again
+        EXPECT_THROW(updater_->addRRset(*soa_), isc::BadValue);
+        current_accessor_->checkJournal(expected);
+    }
+
+    {
+        SCOPED_TRACE("Add two SOAs");
+        // So far OK
+        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        // Still OK
+        EXPECT_NO_THROW(updater_->addRRset(*soa_));
+        // But this one is added again
+        EXPECT_THROW(updater_->addRRset(*soa_), isc::BadValue);
+        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+                                        DatabaseAccessor::DIFF_ADD,
+                                        "example.org.", "SOA", "3600",
+                                        "ns1.example.org. admin.example.org. "
+                                        "1234 3600 1800 2419200 7200"));
+        current_accessor_->checkJournal(expected);
+    }
+}
+
+/*
+ * Test it rejects to store journals when we request it together with
+ * erasing the whole zone.
+ */
+TEST_F(MockDatabaseClientTest, journalOnErase) {
+    EXPECT_THROW(client_->getUpdater(zname_, true, true), isc::BadValue);
+}
+
+/*
+ * Check that the exception isn't raised when the journal is not implemented.
+ */
+TEST_F(MockDatabaseClientTest, journalNotImplemented) {
+    updater_ = client_->getUpdater(Name("null.example.org"), false, true);
+    EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+    soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                      "ns1.example.org. admin.example.org. "
+                                      "1234 3600 1800 2419201 7200"));
+    EXPECT_NO_THROW(updater_->addRRset(*soa_));
+}
+
+/*
+ * Test that different exceptions are propagated.
+ */
+TEST_F(MockDatabaseClientTest, journalException) {
+    updater_ = client_->getUpdater(Name("bad.example.org"), false, true);
+    EXPECT_THROW(updater_->deleteRRset(*soa_), DataSourceError);
 }
 
 }
