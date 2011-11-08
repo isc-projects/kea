@@ -139,8 +139,8 @@ IfaceMgr::detectIfaces() {
 
         Iface iface(ifaceName, if_nametoindex( ifaceName.c_str() ) );
         IOAddress addr(linkLocal);
-        iface.addrs_.push_back(addr);
-        ifaces_.push_back(iface);
+        iface.addAddress(addr);
+        addInterface(iface);
         interfaces.close();
     } catch (const std::exception& ex) {
         // TODO: deallocate whatever memory we used
@@ -158,15 +158,17 @@ bool
 IfaceMgr::openSockets() {
     int sock;
 
-    for (IfaceLst::iterator iface=ifaces_.begin();
+    for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
 
-        for (Addr6Lst::iterator addr=iface->addrs_.begin();
-             addr!=iface->addrs_.end();
+        AddressCollection addrs = iface->getAddresses();
+
+        for (AddressCollection::iterator addr= addrs.begin();
+             addr != addrs.end();
              ++addr) {
 
-            sock = openSocket(iface->name_, *addr,
+            sock = openSocket(iface->getName(), *addr,
                               DHCP6_SERVER_PORT);
             if (sock<0) {
                 cout << "Failed to open unicast socket." << endl;
@@ -174,7 +176,7 @@ IfaceMgr::openSockets() {
             }
             sendsock_ = sock;
 
-            sock = openSocket(iface->name_,
+            sock = openSocket(iface->getName(),
                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                               DHCP6_SERVER_PORT);
             if (sock<0) {
@@ -191,13 +193,15 @@ IfaceMgr::openSockets() {
 
 void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
-    for (IfaceLst::const_iterator iface=ifaces_.begin();
+    for (IfaceCollection::const_iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
         out << "Detected interface " << iface->getFullName() << endl;
-        out << "  " << iface->addrs_.size() << " addr(s):" << endl;
-        for (Addr6Lst::const_iterator addr=iface->addrs_.begin();
-             addr != iface->addrs_.end();
+        out << "  " << iface->getAddresses().size() << " addr(s):" << endl;
+        const AddressCollection addrs = iface->getAddresses();
+
+        for (AddressCollection::const_iterator addr = addrs.begin();
+             addr != addrs.end();
              ++addr) {
             out << "  " << addr->toText() << endl;
         }
@@ -207,10 +211,10 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
 
 IfaceMgr::Iface*
 IfaceMgr::getIface(int ifindex) {
-    for (IfaceLst::iterator iface=ifaces_.begin();
+    for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
-        if (iface->ifindex_ == ifindex)
+        if (iface->getIndex() == ifindex)
             return (&(*iface));
     }
 
@@ -219,10 +223,10 @@ IfaceMgr::getIface(int ifindex) {
 
 IfaceMgr::Iface*
 IfaceMgr::getIface(const std::string& ifname) {
-    for (IfaceLst::iterator iface=ifaces_.begin();
+    for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
-        if (iface->name_ == ifname)
+        if (iface->getName() == ifname)
             return (&(*iface));
     }
 
@@ -233,15 +237,38 @@ int
 IfaceMgr::openSocket(const std::string& ifname,
                      const IOAddress& addr,
                      int port) {
+    Iface* iface = getIface(ifname);
+    if (!iface) {
+        isc_throw(BadValue, "There is no " << ifname << " interface present.");
+    }
+    switch (addr.getFamily()) {
+    case AF_INET:
+        return openSocket4(*iface, addr, port);
+    case AF_INET6:
+        return openSocket6(*iface, addr, port);
+    default:
+        isc_throw(BadValue, "Failed to detect family of address: "
+                  << addr.toText());
+    }
+}
+
+int
+IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
+    isc_throw(NotImplemented, "Sorry. Try again in 2 weeks");
+    cout << iface.getFullName() << addr.toText() << port; // just to disable unused warning
+}
+
+int
+IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
     struct sockaddr_in6 addr6;
 
-    cout << "Creating socket on " << ifname << "/" << addr.toText()
+    cout << "Creating socket on " << iface.getFullName()
          << "/port=" << port << endl;
 
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
     addr6.sin6_port = htons(port);
-    addr6.sin6_scope_id = if_nametoindex(ifname.c_str());
+    addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
 
     memcpy(&addr6.sin6_addr,
            addr.getAddress().to_v6().to_bytes().data(),
@@ -300,15 +327,17 @@ IfaceMgr::openSocket(const std::string& ifname,
         // are link and site-scoped, so there is no sense to join those groups
         // with global addresses.
 
-        if ( !joinMcast( sock, ifname,
+        if ( !joinMcast( sock, iface.getName(),
                          string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
             close(sock);
             return (-1);
         }
     }
 
-    cout << "Created socket " << sock << " on " << ifname << "/" <<
+    cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
         addr.toText() << "/port=" << port << endl;
+
+    // TODO: Add socket to iface interface
 
     return (sock);
 }
@@ -411,8 +440,14 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     return (result);
 }
 
+boost::shared_ptr<Pkt4>
+IfaceMgr::receive4() {
+    // TODO: To be implemented
+    return (boost::shared_ptr<Pkt4>()); // NULL
+}
+
 boost::shared_ptr<Pkt6>
-IfaceMgr::receive() {
+IfaceMgr::receive6() {
     struct msghdr m;
     struct iovec v;
     int result;
@@ -520,7 +555,7 @@ IfaceMgr::receive() {
 
     Iface* received = getIface(pkt->ifindex_);
     if (received) {
-        pkt->iface_ = received->name_;
+        pkt->iface_ = received->getName();
     } else {
         cout << "Received packet over unknown interface (ifindex="
              << pkt->ifindex_ << ")." << endl;
