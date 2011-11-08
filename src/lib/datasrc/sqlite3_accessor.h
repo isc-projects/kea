@@ -71,22 +71,10 @@ public:
 };
 
 /**
- * \brief No difference records
- *
- * Thrown if there are no difference records in the table for the requested
- * zone.
- */
-class NoDiffRecs : public Exception {
-public:
-    NoDiffRecs(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/**
  * \brief No such serial number when obtaining difference iterator
  *
- * Thrown if either the start or end version requested for the difference
- * iterator does not exist.
+ * Thrown if either the zone/start version or zone/end version combination
+ * does not exist in the differences table.
  */
 class NoSuchSerial : public Exception {
 public:

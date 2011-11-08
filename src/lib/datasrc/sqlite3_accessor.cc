@@ -54,11 +54,10 @@ enum StatementID {
     FIND_PREVIOUS = 10,
     ADD_RECORD_DIFF = 11,
     GET_RECORD_DIFF = 12,       // This is temporary for testing "add diff"
-    COUNT_DIFF_RECS = 13,
-    LOW_DIFF_ID = 14,
-    HIGH_DIFF_ID = 15,
-    DIFF_RECS = 16,
-    NUM_STATEMENTS = 17
+    LOW_DIFF_ID = 13,
+    HIGH_DIFF_ID = 14,
+    DIFF_RECS = 15,
+    NUM_STATEMENTS = 16
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -96,8 +95,6 @@ const char* const text_statements[NUM_STATEMENTS] = {
 
     // Two statements to select the lowest ID and highest ID in a set of
     // differences.
-    "SELECT COUNT(id) FROM diffs "  // COUNT_DIFF_RECS
-        "WHERE zone_id=?1",
     "SELECT id FROM diffs "     // LOW_DIFF_ID
         "WHERE zone_id=?1 AND version=?2 and OPERATION=0 "
         "ORDER BY id ASC LIMIT 1",
@@ -799,23 +796,11 @@ private:
 
         } catch (TooLittleData) {
 
-            // Why is there too little data?  Could be there is no data in
-            // the table for the zone, or there is but there is no data for
-            // that particular serial number.  Do another query to find out.
-            clearBindings(COUNT_DIFF_RECS);
-            bindInt(COUNT_DIFF_RECS, 1, zone_id);
-
-            // If this throws an exception, let it propagate - there is
-            // definitely an error.
-            result = getSingleValue(COUNT_DIFF_RECS);
-            if (result == 0) {
-                isc_throw(NoDiffRecs, "no data in differences table for "
-                          "zone ID " << zone_id);
-            } else {
-                isc_throw(NoSuchSerial, "no data in differences table for "
-                          "zone ID " << zone_id << ", serial number " <<
-                          serial);
-            }
+            // No data returned but the SQL query succeeded.  Only possibility
+            // is that there is no entry in the differences table for the given
+            // zone and version.
+            isc_throw(NoSuchSerial, "No entry in differences table for " <<
+                      " zone ID " << zone_id << ", serial number " << serial);
         }
 
         return (result);
