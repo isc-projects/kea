@@ -27,7 +27,14 @@ static void printOption(int v6, unsigned optnum, size_t len, const unsigned char
 static void print_dhcpv4_packet(const struct dhcp_packet *pkt, size_t len);
 static void print_dhcpv6_packet(const struct dhcpv6_packet *pkt, size_t len);
 
-typedef enum { T_UNK, T_STRING, T_PERIOD, T_IPADDR, T_MTYPE, T_STATUS } opt_type;
+typedef enum {
+    T_UNK,
+    T_STRING,
+    T_PERIOD,
+    T_IPADDR,
+    T_MTYPE,
+    T_STATUS
+} opt_type;
 
 struct dhcp_option_desc {
     char *name;

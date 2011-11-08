@@ -19,7 +19,7 @@
 #include "perfdhcp.h"
 #include "cloptions.h"
 
-static void printHelp(const char *progName, const char *usage);
+static void printHelp(const char* progName, const char* usage);
 
 /*
  * Return value:
@@ -28,43 +28,43 @@ static void printHelp(const char *progName, const char *usage);
  * 1 if argument processing was successful and the program should continue.
  */
 int
-procArgs(int argc, const char *argv[], confdata_t *confdata,
-	const char **server)
-{
+procArgs(int argc, const char* argv[], confdata_t* confdata,
+         const char** server) {
     char usage[] =
-"Usage:\n\
+        "Usage:\n\
 perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
          [-d<drop-time>] [-D<max-drop>] [-l<local-addr|interface>] [-i]\n\
          [-x<diagnostic-selector>] [server]\n";
     int v4 = 0;
     int v6 = 0;
-    char *maxDropOpt;
-    const char *localName;
+    const char* localName = NULL;
+    const char* msg;
+
+    char* maxDropOpt;
     double dropTime;
     double testPeriod;
-    const char *msg;
 
     /* Names of configuration variables, for defaults file processor */
     confvar_t optConf[] = {
-	{ 'h', NULL,		CF_SWITCH,	NULL,		0 },
-	{ 'v', NULL,		CF_SWITCH,	NULL,		0 },
-	{ '4', NULL,		CF_SWITCH,	&v4,		1 },
-	{ '6', NULL,		CF_SWITCH,	&v6,		1 },
-	{ 'i', NULL,		CF_SWITCH,	NULL,		1 },
-	{ 'l', NULL,		CF_NE_STRING,	&localName,	0 },
-	{ 'r', NULL,		CF_POS_INT,	NULL,		0 },
-	{ 'x', NULL,		CF_STRING,	NULL,		0 },
-	{ 'd', NULL,		CF_POS_FLOAT,	&dropTime,	0 },
-	{ 'D', NULL,		CF_STRING,	&maxDropOpt,	0 },
-	{ 'n', NULL,		CF_POS_INT,	NULL,		0 },
-	{ 'p', NULL,		CF_POS_FLOAT,	&testPeriod,	0 },
-        { '\0', NULL,           CF_ENDLIST,	NULL,		0 }
+        { 'h', NULL,        CF_SWITCH,  NULL,       0 },
+        { 'v', NULL,        CF_SWITCH,  NULL,       0 },
+        { '4', NULL,        CF_SWITCH,  &v4,        1 },
+        { '6', NULL,        CF_SWITCH,  &v6,        1 },
+        { 'i', NULL,        CF_SWITCH,  NULL,       1 },
+        { 'l', NULL,        CF_NE_STRING,   &localName, 0 },
+        { 'r', NULL,        CF_POS_INT, NULL,       0 },
+        { 'x', NULL,        CF_STRING,  NULL,       0 },
+        { 'd', NULL,        CF_POS_FLOAT,   &dropTime,  0 },
+        { 'D', NULL,        CF_NE_STRING,   &maxDropOpt,    0 },
+        { 'n', NULL,        CF_POS_INT, NULL,       0 },
+        { 'p', NULL,        CF_POS_FLOAT,   &testPeriod,    0 },
+        { '\0', NULL,           CF_ENDLIST, NULL,       0 }
     };
 
     /* Process command line options and config file */
     msg = procOpts(&argc, &argv, optConf, confdata, NULL, progName, NULL);
     if (msg != NULL) {
-        fprintf(stderr, "%s\n", msg);
+        fprintf(stderr, "%s: %s\n", progName, msg);
         return 2;
     }
 
@@ -78,37 +78,37 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
     }
 
     if (v4 && v6) {
-        fprintf(stderr, "Must not give -4 and -6 together.\n");
+        fprintf(stderr, "%s: Must not give -4 and -6 together.\n", progName);
         return 2;
     }
     switch (argc) {
     case 0:
-	if (v6 && localName != NULL)
-	    *server = "all";
-	else {
-	    if (v6)
-		fprintf(stderr, "Use -l to specify an interface name.\n\%s\n",
-			usage);
-	    else
-		fprintf(stderr, "Must specify a DHCP server.\n\%s\n", usage);
-	    return 2;
-	}
-	break;
+        if (v6 && localName != NULL) {
+            *server = "all";
+        } else {
+            if (v6)
+                fprintf(stderr, "%s: Use -l to specify an interface name.\n\%s\n",
+                        progName, usage);
+            else {
+                fprintf(stderr, "%s: Must specify a DHCP server.\n\%s\n", progName, usage);
+            }
+            return 2;
+        }
+        break;
     case 1:
-	*server = argv[0];
-	break;
+        *server = argv[0];
+        break;
     default:
-	fprintf(stderr, "Too many arguments.\n\%s\n", usage);
-	return 2;
+        fprintf(stderr, "%s: Too many arguments.\n\%s\n", progName, usage);
+        return 2;
     }
     return 1;
 }
 
 static void
-printHelp(const char *progName, const char *usage)
-{
+printHelp(const char* progName, const char* usage) {
     printf(
-"%s: Execute a performance test against a DHCP server.\n\
+        "%s: Execute a performance test against a DHCP server.\n\
 %s\n\
 The [server] argument is the name/address of the DHCP server to contact. \n\
 For DHCPv4 operation, exchanges are initiated by transmitting a DHCP\n\
@@ -180,5 +180,5 @@ The exit status is:\n\
 2 if an error is found in the command line arguments.\n\
 3 if there are no general failures in operation, but one or more exchanges\n\
   are not successfully completed.\n",
-		    progName, usage);
+        progName, usage);
 }
