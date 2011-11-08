@@ -630,12 +630,10 @@ class BoB:
         # ... and start
         self.start_process("b10-resolver", resargs, c_channel_env)
 
-    def start_xfrout(self, c_channel_env):
-        self.start_simple("b10-xfrout", c_channel_env)
-
-    def start_xfrin(self, c_channel_env):
-        # XXX: a quick-hack workaround.  xfrin will implicitly use dynamically
-        # loadable data source modules, which will be installed in $(libdir).
+    def __ld_path_hack(self, env):
+        # XXX: a quick-hack workaround.  xfrin/out will implicitly use
+        # dynamically loadable data source modules, which will be installed in
+        # $(libdir).
         # On some OSes (including MacOS X and *BSDs) the main process (python)
         # cannot find the modules unless they are located in a common shared
         # object path or a path in the (DY)LD_LIBRARY_PATH.  We should seek
@@ -649,11 +647,18 @@ class BoB:
         if ADD_LIBEXEC_PATH:
             cur_path = os.getenv('DYLD_LIBRARY_PATH')
             cur_path = '' if cur_path is None else ':' + cur_path
-            c_channel_env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
+            env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
 
             cur_path = os.getenv('LD_LIBRARY_PATH')
             cur_path = '' if cur_path is None else ':' + cur_path
-            c_channel_env['LD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
+            env['LD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
+
+    def start_xfrout(self, c_channel_env):
+        self.__ld_path_hack(c_channel_env)
+        self.start_simple("b10-xfrout", c_channel_env)
+
+    def start_xfrin(self, c_channel_env):
+        self.__ld_path_hack(c_channel_env)
         self.start_simple("b10-xfrin", c_channel_env)
 
     def start_zonemgr(self, c_channel_env):
