@@ -42,7 +42,7 @@
 	given using the '--with-botan=' flag
 	(Trac #1194, git dc491833cf75ac1481ba1475795b0f266545013d)
 
-307.	[func]      vorner
+307.	[func]		vorner
 	When zone transfer in fails with IXFR, it is retried with AXFR
 	automatically.
 	(Trac #1279, git cd3588c9020d0310f949bfd053c4d3a4bd84ef88)
