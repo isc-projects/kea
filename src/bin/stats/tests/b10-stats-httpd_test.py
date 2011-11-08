@@ -307,70 +307,70 @@ class TestHttpHandler(unittest.TestCase):
                     for (k, v) in itms.items():
                         if type(v) is list:
                             xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
-                                + url_xhtml + 'table/' + url_trans + 'for-each/'
+                                + url_xhtml + 'table/' + url_trans + 'for-each'
                             itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
                             self.assertTrue(k in itm_fe)
                             for itms in v:
                                 xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
-                                    + url_xhtml + 'table/' + url_trans + 'for-each/'
+                                    + url_xhtml + 'table/' + url_trans + 'for-each'
                                 itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
                                 self.assertTrue('zones' in itm_fe)
                                 for (k, v) in itms.items():
                                     xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                                         + url_xhtml + 'table/' + url_xhtml + 'tr/' \
-                                        + url_xhtml + 'td/' + url_trans + 'value-of/'
+                                        + url_xhtml + 'td/' + url_trans + 'value-of'
                                     itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
                                     self.assertTrue(k in itm_vo)
                         else:
                             xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                                 + url_xhtml + 'table/' + url_xhtml + 'tr/' \
-                                + url_xhtml + 'td/' + url_trans + 'value-of/'
+                                + url_xhtml + 'td/' + url_trans + 'value-of'
                             itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
                             self.assertTrue(k in itm_vo)
             elif item is None:
                 for (k, v) in DUMMY_DATA[mod].items():
                     if type(v) is list:
                         xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                            + url_trans + 'for-each/'
+                            + url_trans + 'for-each'
                         itm_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
                         self.assertTrue(k in itm_fe)
                         for itms in v:
                             xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
-                                + url_xhtml + 'table/' + url_trans + 'for-each/'
+                                + url_xhtml + 'table/' + url_trans + 'for-each'
                             itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
                             self.assertTrue('zones' in itm_fe)
                             for (k, v) in itms.items():
                                 xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                                     + url_xhtml + 'table/' + url_xhtml + 'tr/' \
-                                    + url_xhtml + 'td/' + url_trans + 'value-of/'
+                                    + url_xhtml + 'td/' + url_trans + 'value-of'
                                 itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
                                 self.assertTrue(k in itm_vo)
                     else:
                         xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                            + url_xhtml + 'tr/' + url_xhtml + 'td/' + url_trans + 'value-of/'
+                            + url_xhtml + 'tr/' + url_xhtml + 'td/' + url_trans + 'value-of'
                         itm_vo = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
                         self.assertTrue(k in itm_vo)
             else:
                 (k, v) = (item, DUMMY_DATA[mod][item])
                 if type(v) is list:
                     xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                        + url_trans + 'for-each/'
+                        + url_trans + 'for-each'
                     itm_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
                     self.assertTrue(k in itm_fe)
                     for itms in v:
                         xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
-                            + url_xhtml + 'table/' + url_trans + 'for-each/'
+                            + url_xhtml + 'table/' + url_trans + 'for-each'
                         itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
                         self.assertTrue('zones' in itm_fe)
                         for (k, v) in itms.items():
                             xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                                 + url_xhtml + 'table/' + url_xhtml + 'tr/' \
-                                + url_xhtml + 'td/' + url_trans + 'value-of/'
+                                + url_xhtml + 'td/' + url_trans + 'value-of'
                             itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
                             self.assertTrue(k in itm_vo)
                 else:
                     xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                        + url_xhtml + 'tr/' + url_xhtml + 'td/' + url_trans + 'value-of/'
+                        + url_xhtml + 'tr/' + url_xhtml + 'td/' + url_trans + 'value-of'
                     itm_vo = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
                     self.assertTrue(k in itm_vo)
 
