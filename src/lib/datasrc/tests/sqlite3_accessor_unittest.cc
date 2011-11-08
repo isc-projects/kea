@@ -117,6 +117,26 @@ TEST_F(SQLite3AccessorTest, noClass) {
     EXPECT_FALSE(accessor->getZone("example.com.").first);
 }
 
+// Simple check to test that the sequence is valid.  It gets the next record
+// from the iterator, checks that it is not null, then checks the data.
+void checkRR(DatabaseAccessor::IteratorContextPtr& context,
+     std::string name, std::string ttl, std::string type, std::string rdata) {
+
+    // Mark where we are in the text
+    SCOPED_TRACE(name + " " + ttl + " " + type + " " + rdata);
+
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+
+    // Get next record
+    EXPECT_TRUE(context->getNext(data));
+
+    // ... and check expected values
+    EXPECT_EQ(name, data[DatabaseAccessor::NAME_COLUMN]);
+    EXPECT_EQ(ttl, data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ(type, data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ(rdata, data[DatabaseAccessor::RDATA_COLUMN]);
+}
+
 // This tests the iterator context
 TEST_F(SQLite3AccessorTest, iterator) {
     // Our test zone is conveniently small, but not empty
@@ -131,74 +151,21 @@ TEST_F(SQLite3AccessorTest, iterator) {
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context);
 
     std::string data[DatabaseAccessor::COLUMN_COUNT];
-    // Get and check the first and only record
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("MX", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("10 mail.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("ns1.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("ns2.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("ns3.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("SOA", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("ns1.example.org. admin.example.org. "
-              "1234 3600 1800 2419200 7200",
-              data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("dname.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("dname.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("dname2.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("dname2.foo.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("192.0.2.10", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("mail.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("192.0.2.101", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("192.0.2.1", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("www.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+    checkRR(context, "example.org.", "3600", "MX", "10 mail.example.org.");
+    checkRR(context, "example.org.", "3600", "NS", "ns1.example.org.");
+    checkRR(context, "example.org.", "3600", "NS", "ns2.example.org.");
+    checkRR(context, "example.org.", "3600", "NS", "ns3.example.org.");
+    checkRR(context, "example.org.", "3600", "SOA",
+            "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200");
+    checkRR(context, "dname.example.org.", "3600", "DNAME",
+            "dname.example.info.");
+    checkRR(context, "dname2.foo.example.org.", "3600", "DNAME",
+            "dname2.example.info.");
+    checkRR(context, "mail.example.org.", "3600", "A", "192.0.2.10");
+    checkRR(context, "sub.example.org.", "3600", "NS", "ns.sub.example.org.");
+    checkRR(context, "ns.sub.example.org.", "3600", "A", "192.0.2.101");
+    checkRR(context, "www.example.org.", "3600", "A", "192.0.2.1");
 
     // Check there's no other
     EXPECT_FALSE(context->getNext(data));
@@ -209,9 +176,8 @@ TEST_F(SQLite3AccessorTest, iterator) {
 
 // This tests the difference iterator context
 
-// Test that at attempt to create a difference iterator for a serial that
-// does not exist throws an exception.
-
+// Test that at attempt to create a difference iterator for a serial number
+// that does not exist throws an exception.
 TEST_F(SQLite3AccessorTest, diffIteratorNoRecords) {
 
     // Our test zone is conveniently small, but not empty
@@ -236,36 +202,15 @@ TEST_F(SQLite3AccessorTest, diffIteratorNoRecords) {
 
 }
 
-// Simple check to test that the sequence is valid.  It gets the next record
-// from the iterator, checks that it is not null, then checks the data.
-void checkRR(DatabaseAccessor::IteratorContextPtr& context,
-     std::string name, std::string ttl, std::string type, std::string rdata) {
-
-    // Mark where we are in the text
-    SCOPED_TRACE(name + " " + ttl + " " + type + " " + rdata);
-
-    std::string data[DatabaseAccessor::COLUMN_COUNT];
-
-    // Get next record
-    EXPECT_TRUE(context->getNext(data));
-
-    // ... and check expected values
-    EXPECT_EQ(name, data[DatabaseAccessor::NAME_COLUMN]);
-    EXPECT_EQ(ttl, data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ(type, data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ(rdata, data[DatabaseAccessor::RDATA_COLUMN]);
-}
-
-
-// Try to iterate through a valid set of differences
+// Try to iterate through a valid sets of differences
 TEST_F(SQLite3AccessorTest, diffIteratorSequences) {
     std::string data[DatabaseAccessor::COLUMN_COUNT];
 
     // Our test zone is conveniently small, but not empty
     initAccessor(SQLITE_DBFILE_DIFFS, "IN");
-
     const std::pair<bool, int> zone_info(accessor->getZone("example.org."));
     ASSERT_TRUE(zone_info.first);
+
 
     // Check the difference sequence 1230-1231 (two adjacent differences)
     // Get the iterator context
@@ -283,6 +228,7 @@ TEST_F(SQLite3AccessorTest, diffIteratorSequences) {
     // cause problems.
     EXPECT_FALSE(context1->getNext(data));
     EXPECT_FALSE(context1->getNext(data));
+
 
     // Check that the difference sequence 1231-1233 (two separate difference
     // sequences) is OK.
@@ -305,11 +251,11 @@ TEST_F(SQLite3AccessorTest, diffIteratorSequences) {
     checkRR(context2, "sub.example.org.", "3600", "NS", "ns.sub.example.org.");
     checkRR(context2, "ns.sub.example.org.", "3600", "A", "192.0.2.101");
 
-
     // Check there's no other and that calling it again after no records doesn't
     // cause problems.
     EXPECT_FALSE(context2->getNext(data));
     EXPECT_FALSE(context2->getNext(data));
+
 
     // Check that the difference sequence 4294967280 to 1230 (serial number
     // rollover) is OK
@@ -328,8 +274,9 @@ TEST_F(SQLite3AccessorTest, diffIteratorSequences) {
     EXPECT_FALSE(context3->getNext(data));
     EXPECT_FALSE(context3->getNext(data));
 
-    // Finally, check that if the start and end versions are present, but that
-    // they are given in the wrong order, the result is an empty difference set.
+
+    // Check the difference sequence 1233-1231 (versions in wrong order).  This
+    // should give an empty difference set.
     DatabaseAccessor::IteratorContextPtr
         context4(accessor->getDiffs(zone_info.second, 1233, 1231));
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context2);
