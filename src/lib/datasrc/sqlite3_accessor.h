@@ -82,6 +82,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+
 struct SQLite3Parameters;
 
 /**
