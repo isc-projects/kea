@@ -278,11 +278,16 @@ public:
     ///
     /// \param name The zone name to be updated
     /// \param replace Whether to delete existing RRs before making updates
+    /// \param journaling The zone updater should store a journal of the
+    ///     changes (such journal can be used, for example, by IXFR-out).
+    ///     This is a hint only (the updater might be unable to store or
+    ///     not store the journal).
     ///
     /// \return A pointer to the updater; it will be NULL if the specified
     /// zone isn't found.
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
-                                      bool replace) const = 0;
+                                      bool replace, bool journaling = false)
+        const = 0;
 };
 }
 }

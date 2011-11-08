@@ -811,7 +811,7 @@ InMemoryClient::getIterator(const Name& name) const {
 }
 
 ZoneUpdaterPtr
-InMemoryClient::getUpdater(const isc::dns::Name&, bool) const {
+InMemoryClient::getUpdater(const isc::dns::Name&, bool, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
 

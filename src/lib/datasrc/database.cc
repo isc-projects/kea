@@ -975,7 +975,10 @@ DatabaseUpdater::commit() {
 
 // The updater factory
 ZoneUpdaterPtr
-DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
+DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
+                           bool) const
+{
+    // TODO: Handle journaling (pass it to the updater)
     shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
     const std::pair<bool, int> zone(update_accessor->startUpdateZone(
                                         name.toText(), replace));
