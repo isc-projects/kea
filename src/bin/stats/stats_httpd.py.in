@@ -457,9 +457,15 @@ class StatsHttpd:
 
         stats_spec = self.get_stats_spec(module_name, item_name)
         stats_data = self.get_stats_data(module_name, item_name)
+        # make the path xxx/module/item if specified respectively
+        path_info = ''
+        if module_name is not None and item_name is not None:
+            path_info = '/' + module_name + '/' + item_name
+        elif module_name is not None:
+            path_info = '/' + module_name
         xml_elem = xml.etree.ElementTree.Element(
             'bind10:statistics',
-            attrib={ 'xsi:schemaLocation' : XSD_NAMESPACE + ' ' + XSD_URL_PATH,
+            attrib={ 'xsi:schemaLocation' : XSD_NAMESPACE + ' ' + XSD_URL_PATH + path_info,
                      'xmlns:bind10' : XSD_NAMESPACE,
                      'xmlns:xsi' : "http://www.w3.org/2001/XMLSchema-instance" })
         stats_data2xml(stats_spec, stats_data, xml_elem)
@@ -473,7 +479,7 @@ class StatsHttpd:
                          encoding='us-ascii')
         self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
             xml_string=xml_string,
-            xsl_url_path=XSL_URL_PATH)
+            xsl_url_path=XSL_URL_PATH + path_info)
         assert self.xml_body is not None
         return self.xml_body
 
