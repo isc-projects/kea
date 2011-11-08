@@ -86,10 +86,10 @@ public:
         int mac_len_;
 
         /// socket used to sending data
-        int sendsock_;
+        uint16_t sendsock_;
 
         /// socket used for receiving data
-        int recvsock_;
+        uint16_t recvsock_;
     };
 
     // TODO performance improvement: we may change this into
@@ -157,11 +157,12 @@ public:
     /// (e.g. remove expired leases)
     ///
     /// @return Pkt6 object representing received packet (or NULL)
-    boost::shared_ptr<Pkt6>
-    receive6();
+    boost::shared_ptr<Pkt6> receive6();
 
-    boost::shared_ptr<Pkt4>
-    receive4();
+    boost::shared_ptr<Pkt4> receive4();
+
+    /// Opens sockets on detected interfaces.
+    void openSockets();
 
     // don't use private, we need derived classes in tests
 protected:
@@ -174,10 +175,9 @@ protected:
 
     ~IfaceMgr();
 
-    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+    uint16_t openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
 
-    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
-
+    uint16_t openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
 
     void addInterface(const Iface& iface) {
         ifaces_.push_back(iface);
@@ -229,9 +229,6 @@ protected:
     boost::scoped_array<char> control_buf_;
 
 private:
-    /// Opens sockets on detected interfaces.
-    bool
-    openSockets();
 
     /// creates a single instance of this class (a singleton implementation)
     static void
