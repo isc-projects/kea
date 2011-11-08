@@ -236,28 +236,106 @@ TEST_F(SQLite3AccessorTest, diffIteratorNoRecords) {
 
 }
 
+// Simple check to test that the sequence is valid.  It gets the next record
+// from the iterator, checks that it is not null, then checks the data.
+void checkRR(DatabaseAccessor::IteratorContextPtr& context,
+     std::string name, std::string ttl, std::string type, std::string rdata) {
+
+    // Mark where we are in the text
+    SCOPED_TRACE(name + " " + ttl + " " + type + " " + rdata);
+
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+
+    // Get next record
+    EXPECT_TRUE(context->getNext(data));
+
+    // ... and check expected values
+    EXPECT_EQ(name, data[DatabaseAccessor::NAME_COLUMN]);
+    EXPECT_EQ(ttl, data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ(type, data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ(rdata, data[DatabaseAccessor::RDATA_COLUMN]);
+}
+
+
 // Try to iterate through a valid set of differences
-TEST_F(SQLite3AccessorTest, validSequence) {
+TEST_F(SQLite3AccessorTest, diffIteratorSequences) {
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
 
     // Our test zone is conveniently small, but not empty
     initAccessor(SQLITE_DBFILE_DIFFS, "IN");
 
     const std::pair<bool, int> zone_info(accessor->getZone("example.org."));
     ASSERT_TRUE(zone_info.first);
+
+    // Check the difference sequence 1230-1231 (two adjacent differences)
     // Get the iterator context
     DatabaseAccessor::IteratorContextPtr
-        context(accessor->getDiffs(zone_info.second, 1230, 1232));
-    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context);
+        context1(accessor->getDiffs(zone_info.second, 1230, 1231));
+    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context1);
 
-    std::string data[DatabaseAccessor::COLUMN_COUNT];
+    // Change: 1230-1231
+    checkRR(context1, "example.org.", "1800", "SOA",
+            "ns1.example.org. admin.example.org. 1230 3600 1800 2419200 7200");
+    checkRR(context1, "example.org.", "3600", "SOA",
+            "ns1.example.org. admin.example.org. 1231 3600 1800 2419200 7200");
 
-    // Check the records
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("SOA", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("1800", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("ns1.example.org. admin.example.org. 1230 3600 1800 2419200 7200",
-        data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+    // Check there's no other and that calling it again after no records doesn't
+    // cause problems.
+    EXPECT_FALSE(context1->getNext(data));
+    EXPECT_FALSE(context1->getNext(data));
+
+    // Check that the difference sequence 1231-1233 (two separate difference
+    // sequences) is OK.
+    DatabaseAccessor::IteratorContextPtr
+        context2(accessor->getDiffs(zone_info.second, 1231, 1233));
+    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context2);
+
+    // Change 1231-1232
+    checkRR(context2, "example.org.", "3600", "SOA",
+            "ns1.example.org. admin.example.org. 1231 3600 1800 2419200 7200");
+    checkRR(context2, "unused.example.org.", "3600", "A", "192.0.2.102");
+    checkRR(context2, "example.org.", "3600", "SOA",
+            "ns1.example.org. admin.example.org. 1232 3600 1800 2419200 7200");
+
+    // Change: 1232-1233
+    checkRR(context2, "example.org.", "3600", "SOA",
+            "ns1.example.org. admin.example.org. 1232 3600 1800 2419200 7200");
+    checkRR(context2, "example.org.", "3600", "SOA",
+            "ns1.example.org. admin.example.org. 1233 3600 1800 2419200 7200");
+    checkRR(context2, "sub.example.org.", "3600", "NS", "ns.sub.example.org.");
+    checkRR(context2, "ns.sub.example.org.", "3600", "A", "192.0.2.101");
+
+
+    // Check there's no other and that calling it again after no records doesn't
+    // cause problems.
+    EXPECT_FALSE(context2->getNext(data));
+    EXPECT_FALSE(context2->getNext(data));
+
+    // Check that the difference sequence 4294967280 to 1230 (serial number
+    // rollover) is OK
+    DatabaseAccessor::IteratorContextPtr
+        context3(accessor->getDiffs(zone_info.second, 4294967280U, 1230));
+    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context3);
+
+    // Change 4294967280 to 1230.
+    checkRR(context3, "example.org.", "3600", "SOA",
+            "ns1.example.org. admin.example.org. 4294967280 3600 1800 2419200 7200");
+    checkRR(context3, "www.example.org.", "3600", "A", "192.0.2.31");
+    checkRR(context3, "example.org.", "1800", "SOA",
+            "ns1.example.org. admin.example.org. 1230 3600 1800 2419200 7200");
+    checkRR(context3, "www.example.org.", "3600", "A", "192.0.2.21");
+
+    EXPECT_FALSE(context3->getNext(data));
+    EXPECT_FALSE(context3->getNext(data));
+
+    // Finally, check that if the start and end versions are present, but that
+    // they are given in the wrong order, the result is an empty difference set.
+    DatabaseAccessor::IteratorContextPtr
+        context4(accessor->getDiffs(zone_info.second, 1233, 1231));
+    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context2);
+
+    EXPECT_FALSE(context4->getNext(data));
+    EXPECT_FALSE(context4->getNext(data));
 }
 
 TEST(SQLite3Open, getDBNameExample2) {

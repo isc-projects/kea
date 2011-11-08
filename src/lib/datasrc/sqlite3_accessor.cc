@@ -141,10 +141,8 @@ struct SQLite3Parameters {
     void
     finalizeStatements() {
         for (int i = 0; i < NUM_STATEMENTS; ++i) {
-            if (statements_[i] != NULL) {
-                sqlite3_finalize(statements_[i]);
-                statements_[i] = NULL;
-            }
+            sqlite3_finalize(statements_[i]);
+            statements_[i] = NULL;
         }
     }
 
@@ -626,15 +624,13 @@ public:
             int high_id = findIndex(HIGH_DIFF_ID, zone_id, end);
 
             // Prepare the statement that will return data values
-            clearBindings(DIFF_RECS);
+            reset(DIFF_RECS);
             bindInt(DIFF_RECS, 1, zone_id);
             bindInt(DIFF_RECS, 2, low_id);
             bindInt(DIFF_RECS, 3, high_id);
-
-            // last_status_ has been initialized to pretend that the last
-            // getNext() returned a record.
-
         } catch (...) {
+
+            // Something wrong, clear up everything.
             accessor_->dbparameters_->finalizeStatements();
             throw;
         }
@@ -656,12 +652,14 @@ public:
     /// \exceptions any Varied
     bool getNext(std::string (&data)[COLUMN_COUNT]) {
 
-        // Get a pointer to the statement for brevity (does not transfer
-        // resources)
-        sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(DIFF_RECS);
-
-        // If there is a row to get, get it.
         if (last_status_ != SQLITE_DONE) {
+            // Last call (if any) didn't reach end of result set, so we
+            // can read another row from it.
+            //
+            // Get a pointer to the statement for brevity (does not transfer
+            // resources)
+            sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(DIFF_RECS);
+
             const int rc(sqlite3_step(stmt));
             if (rc == SQLITE_ROW) {
                 // Copy the data across to the output array
@@ -669,8 +667,8 @@ public:
                 copyColumn(DIFF_RECS, data, TTL_COLUMN);
                 copyColumn(DIFF_RECS, data, NAME_COLUMN);
                 copyColumn(DIFF_RECS, data, RDATA_COLUMN);
+
             } else if (rc != SQLITE_DONE) {
-                accessor_->dbparameters_->finalizeStatements();
                 isc_throw(DataSourceError,
                           "Unexpected failure in sqlite3_step: " <<
                           sqlite3_errmsg(accessor_->dbparameters_->db_));
@@ -684,13 +682,12 @@ private:
 
     /// \brief Clear Statement Bindings
     ///
-    /// Clears the bindings of variables in a prepared statement and resets
-    /// them to null.
+    /// Resets the statement and clears any bindings attached to it.
     ///
     /// \param stindex Index of prepared statement to which to bind
-    void clearBindings(int stindex) {
-        if (sqlite3_clear_bindings(
-            accessor_->dbparameters_->getStatement(stindex)) != SQLITE_OK) {
+    void reset(int stindex) {
+        sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(stindex);
+        if ((sqlite3_reset(stmt) != SQLITE_OK) || (sqlite3_clear_bindings(stmt) != SQLITE_OK)) {
             isc_throw(SQLite3Error, "Could not clear statement bindings in '" <<
                       text_statements[stindex] << "': " << 
                       sqlite3_errmsg(accessor_->dbparameters_->db_));
@@ -785,7 +782,7 @@ private:
     int findIndex(StatementID stindex, int zone_id, uint32_t serial) {
 
         // Set up the statement
-        clearBindings(stindex);
+        reset(stindex);
         bindInt(stindex, 1, zone_id);
         bindInt(stindex, 2, serial);
 
@@ -828,7 +825,8 @@ private:
     // Attributes
 
     boost::shared_ptr<const SQLite3Accessor> accessor_; // Accessor object
-    int last_status_;   // Last status received from sqlite3_step
+    sqlite3_stmt*   stmt_;      // Prepared statement for this iterator
+    int last_status_;           // Last status received from sqlite3_step
 };
 
 // ... and return the iterator
