@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <gtest/gtest.h>
 
@@ -33,7 +33,10 @@
 
 using namespace isc::datasrc;
 using namespace std;
-using namespace boost;
+// don't import the entire boost namespace.  It will unexpectedly hide uint32_t
+// for some systems.
+using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 using namespace isc::dns;
 
 namespace {
