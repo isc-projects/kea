@@ -283,7 +283,8 @@ public:
     /// to update via its updater (this may or may not be a good idea and
     /// is subject to further discussions).
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
-                                      bool replace) const;
+                                      bool replace, bool journaling = false)
+        const;
 
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class
