@@ -451,6 +451,23 @@ class TestHttpHandler(unittest.TestCase):
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
 
+        # 404 NotFound (existent module but nonexistent item name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xml/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xsd/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/xsl/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
     def test_do_GET_failed1(self):
         # checks status
         self.assertEqual(send_command("status", "Stats"),
