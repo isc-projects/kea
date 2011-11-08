@@ -52,6 +52,16 @@ _BAD_REPLY_PACKET = 5
 
 SOCK_DATA = b's'
 
+# borrowed from xfrin.py @ #1298.  We should eventually unify it.
+def format_zone_str(zone_name, zone_class):
+    """Helper function to format a zone name and class as a string of
+       the form '<name>/<class>'.
+       Parameters:
+       zone_name (isc.dns.Name) name to format
+       zone_class (isc.dns.RRClass) class to format
+    """
+    return zone_name.to_text() + '/' + str(zone_class)
+
 class NotifyOutDataSourceError(Exception):
     """An exception raised when data source error happens within notify out.
 
@@ -255,23 +265,37 @@ class NotifyOut:
         Note: this is the simplest way to get the address of slaves,
         but not correct, it can't handle the delegation slaves, or the CNAME
         and DNAME logic.
-        TODO. the function should be provided by one library.'''
+        TODO. the function should be provided by one library.
+
+        '''
+        # Prepare data source client.  This should eventually be moved to
+        # an earlier stage of initialization and also support multiple
+        # data sources.
         datasrc_config = '{ "database_file": "' + self._db_file + '"}'
-        result, finder = DataSourceClient('sqlite3',
-                                          datasrc_config).find_zone(zone_name)
+        try:
+            result, finder = DataSourceClient('sqlite3',
+                                              datasrc_config).find_zone(
+                zone_name)
+        except isc.datasrc.Error as ex:
+            logger.error(NOTIFY_OUT_DATASRC_ACCESS_FAILURE, ex)
+            return []
         if result is not DataSourceClient.SUCCESS:
+            logger.error(NOTIFY_OUT_DATASRC_ZONE_NOT_FOUND,
+                         format_zone_str(zone_name, zone_class))
             return []
 
         result, ns_rrset = finder.find(zone_name, RRType.NS(), None,
                                        finder.FIND_DEFAULT)
         if result is not finder.SUCCESS or ns_rrset is None:
-            # TODO: Log it.
+            logger.warn(NOTIFY_OUT_ZONE_NO_NS,
+                        format_zone_str(zone_name, zone_class))
             return []
         result, soa_rrset = finder.find(zone_name, RRType.SOA(), None,
-                                       finder.FIND_DEFAULT)
+                                        finder.FIND_DEFAULT)
         if result is not finder.SUCCESS or soa_rrset is None or \
                 soa_rrset.get_rdata_count() != 1:
-            # TODO: Log it.
+            logger.warn(NOTIFY_OUT_ZONE_BAD_SOA,
+                        format_zone_str(zone_name, zone_class))
             return []           # broken zone anyway, stop here.
         soa_mname = Name(soa_rrset.get_rdata()[0].to_text().split(' ')[0])
 
