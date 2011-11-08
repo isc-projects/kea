@@ -460,9 +460,9 @@ class TestStats(unittest.TestCase):
         self.assertEqual(len(schema), 3)
         for item in schema:
             if item['item_type'] == 'list':
-                self.assertTrue(len(item) == 7)
+                self.assertEqual(len(item), 7)
             else:
-                self.assertTrue(len(item) == 6)
+                self.assertEqual(len(item), 6)
             self.assertTrue('item_name' in item)
             self.assertTrue('item_type' in item)
             self.assertTrue('item_optional' in item)
