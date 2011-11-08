@@ -12,13 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "dhcp/dhcp6.h"
-#include "dhcp/pkt6.h"
-#include "dhcp6/iface_mgr.h"
-#include "dhcp6/dhcp6_srv.h"
-#include "dhcp/option6_ia.h"
-#include "dhcp/option6_iaaddr.h"
-#include "asiolink/io_address.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/pkt6.h>
+#include <dhcp6/iface_mgr.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -31,6 +32,12 @@ Dhcpv6Srv::Dhcpv6Srv() {
     // first call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
     IfaceMgr::instance();
+
+    try {
+        IfaceMgr::instance().openSockets();
+    } catch (const Exception& e) {
+
+    }
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
