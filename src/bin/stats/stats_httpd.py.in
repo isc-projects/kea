@@ -125,13 +125,14 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                     # Couldn't find HOST
                     self.send_error(404)
                     return None
-        except StatsHttpdError as err:
+        except StatsHttpdDataError as err:
             # Couldn't find neither specified module name nor
             # specified item name
-            if str(err).startswith('Stats module: specified arguments are incorrect:'):
-                self.send_error(404)
-            else:
-                self.send_error(500)
+            self.send_error(404)
+            logger.error(STATHTTPD_SERVER_ERROR, err)
+            return None
+        except StatsHttpdError as err:
+            self.send_error(500)
             logger.error(STATHTTPD_SERVER_ERROR, err)
             return None
         else:
@@ -169,6 +170,12 @@ class StatsHttpdError(Exception):
     """Exception class for StatsHttpd class. It is intended to be
     thrown from the the StatsHttpd object to the HttpHandler object or
     main routine."""
+    pass
+
+class StatsHttpdDataError(Exception):
+    """Exception class for StatsHttpd class. The reason seems to be
+    due to the data. It is intended to be thrown from the the
+    StatsHttpd object to the HttpHandler object or main routine."""
     pass
 
 class StatsHttpd:
@@ -384,7 +391,7 @@ class StatsHttpd:
             if rcode == 0:
                 return value
             else:
-                raise StatsHttpdError("Stats module: %s" % str(value))
+                raise StatsHttpdDataError("Stats module: %s" % str(value))
 
     def get_stats_spec(self, owner=None, name=None):
         """Requests statistics data to the Stats daemon and returns
@@ -405,7 +412,7 @@ class StatsHttpd:
                 if rcode == 0:
                     return value
                 else:
-                    raise StatsHttpdError("Stats module: %s" % str(value))
+                    raise StatsHttpdDataError("Stats module: %s" % str(value))
         except (isc.cc.session.SessionTimeout,
                 isc.cc.session.SessionError) as err:
             raise StatsHttpdError("%s: %s" %
