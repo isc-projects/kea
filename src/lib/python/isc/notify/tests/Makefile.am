@@ -1,6 +1,11 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = notify_out_test.py
 EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST += testdata/test.sqlite3 testdata/brokentest.sqlite3
+# The rest of the files are actually not necessary, but added for reference
+EXTRA_DIST += testdata/example.com testdata/example.net
+EXTRA_DIST += testdata/nons.example testdata/nosoa.example
+EXTRA_DIST += testdata/multisoa.example
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -20,5 +25,6 @@ endif
 	echo Running test: $$pytest ; \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(LIBRARY_PATH_PLACEHOLDER) \
+	TESTDATASRCDIR=$(abs_top_srcdir)/src/lib/python/isc/notify/tests/testdata/ \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
