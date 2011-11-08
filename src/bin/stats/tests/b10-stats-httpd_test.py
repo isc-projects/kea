@@ -483,26 +483,26 @@ class TestHttpHandler(unittest.TestCase):
         # failure case(Stats replies an error)
         self.stats.mccs.set_command_handler(
             lambda cmd, args: \
-                isc.config.ccsession.create_answer(1, "I have an error.")
+                isc.config.ccsession.create_answer(1, "specified arguments are incorrect: I have an error.")
             )
 
         # request XML
         self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 500)
+        self.assertEqual(response.status, 404)
 
         # request XSD
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 500)
+        self.assertEqual(response.status, 404)
 
         # request XSL
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 500)
+        self.assertEqual(response.status, 404)
 
     def test_do_HEAD(self):
         self.client.putrequest('HEAD', stats_httpd.XML_URL_PATH)
@@ -547,10 +547,16 @@ class TestHttpServer(unittest.TestCase):
 class TestStatsHttpdError(unittest.TestCase):
     """Tests for StatsHttpdError exception"""
 
-    def test_raises(self):
+    def test_raises1(self):
         try:
             raise stats_httpd.StatsHttpdError('Nothing')
         except stats_httpd.StatsHttpdError as err:
+            self.assertEqual(str(err), 'Nothing')
+
+    def test_raises2(self):
+        try:
+            raise stats_httpd.StatsHttpdDataError('Nothing')
+        except stats_httpd.StatsHttpdDataError as err:
             self.assertEqual(str(err), 'Nothing')
 
 class TestStatsHttpd(unittest.TestCase):
