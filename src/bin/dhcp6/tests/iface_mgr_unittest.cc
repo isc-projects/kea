@@ -20,9 +20,10 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include "io_address.h"
-#include "dhcp/pkt6.h"
-#include "dhcp6/iface_mgr.h"
+#include <asiolink/io_address.h>
+#include <dhcp/pkt6.h>
+#include <dhcp6/iface_mgr.h>
+#include <dhcp/dhcp4.h>
 
 using namespace std;
 using namespace isc;
@@ -242,10 +243,6 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     delete ifacemgr;
 }
 
-// TODO: disabled due to other naming on various systems
-// (lo in Linux, lo0 in BSD systems)
-// Fix for this is available on 1186 branch, will reenable
-// this test once 1186 is merged
 TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
@@ -285,7 +282,7 @@ TEST_F(IfaceMgrTest, sockets6) {
 
 // TODO: disabled due to other naming on various systems
 // (lo in Linux, lo0 in BSD systems)
-TEST_F(IfaceMgrTest, sockets6Mcast) {
+TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
@@ -326,12 +323,15 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     fakeifaces << LOOPBACK << " ::1";
     fakeifaces.close();
 
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("::1");
-    int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
-    int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
+    int socket1 = 0, socket2 = 0;
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
+        socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
+    );
 
     ifacemgr->setSendSock(socket2);
     ifacemgr->setRecvSock(socket1);
@@ -363,6 +363,27 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     EXPECT_EQ(sendPkt->remote_addr_.toText(), rcvPkt->remote_addr_.toText());
     EXPECT_EQ(rcvPkt->remote_port_, 10546);
+
+    delete ifacemgr;
+}
+
+TEST_F(IfaceMgrTest, socket4) {
+
+    createLoInterfacesTxt();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    // let's assume that every supported OS have lo interface
+    IOAddress loAddr("127.0.0.1");
+    // use unprivileged port (it's convenient for running tests as non-root)
+    int socket1 = 0;
+
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+    );
+
+    EXPECT_GT(socket1, 0);
+
+    close(socket1);
 
     delete ifacemgr;
 }
