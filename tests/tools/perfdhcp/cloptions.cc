@@ -46,53 +46,56 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
 
     /* Names of configuration variables, for defaults file processor */
     confvar_t optConf[] = {
-        { 'h', NULL,        CF_SWITCH,  NULL,       0 },
-        { 'v', NULL,        CF_SWITCH,  NULL,       0 },
-        { '4', NULL,        CF_SWITCH,  &v4,        1 },
-        { '6', NULL,        CF_SWITCH,  &v6,        1 },
-        { 'i', NULL,        CF_SWITCH,  NULL,       1 },
-        { 'l', NULL,        CF_NE_STRING,   &localName, 0 },
-        { 'r', NULL,        CF_POS_INT, NULL,       0 },
-        { 'x', NULL,        CF_STRING,  NULL,       0 },
-        { 'd', NULL,        CF_POS_FLOAT,   &dropTime,  0 },
-        { 'D', NULL,        CF_NE_STRING,   &maxDropOpt,    0 },
-        { 'n', NULL,        CF_POS_INT, NULL,       0 },
-        { 'p', NULL,        CF_POS_FLOAT,   &testPeriod,    0 },
-        { '\0', NULL,           CF_ENDLIST, NULL,       0 }
+        { 'h', NULL,        CF_SWITCH,    NULL,        0 },
+        { 'v', NULL,        CF_SWITCH,    NULL,        0 },
+        { '4', NULL,        CF_SWITCH,    &v4,         1 },
+        { '6', NULL,        CF_SWITCH,    &v6,         1 },
+        { 'i', NULL,        CF_SWITCH,    NULL,        1 },
+        { 'l', NULL,        CF_NE_STRING, &localName,  0 },
+        { 'r', NULL,        CF_POS_INT,   NULL,        0 },
+        { 'x', NULL,        CF_STRING,    NULL,        0 },
+        { 'd', NULL,        CF_POS_FLOAT, &dropTime,   0 },
+        { 'D', NULL,        CF_NE_STRING, &maxDropOpt, 0 },
+        { 'n', NULL,        CF_POS_INT,   NULL,        0 },
+        { 'p', NULL,        CF_POS_FLOAT, &testPeriod, 0 },
+        { '\0', NULL,       CF_ENDLIST,   NULL,        0 }
     };
 
     /* Process command line options and config file */
-    msg = procOpts(&argc, &argv, optConf, confdata, NULL, progName, NULL);
+    msg = procOpts(&argc, &argv, optConf, confdata, progName, NULL);
     if (msg != NULL) {
         fprintf(stderr, "%s: %s\n", progName, msg);
-        return 2;
+        return(2);
     }
 
     if (confdata->map['h']->num > 0) {
         printHelp(progName, usage);
-        return 0;
+        return(0);
     }
     if (confdata->map['v']->num > 0) {
         printf("dhcpperf v1.0 2011-10-30\n");
-        return 0;
+        return(0);
     }
 
     if (v4 && v6) {
         fprintf(stderr, "%s: Must not give -4 and -6 together.\n", progName);
-        return 2;
+        return(2);
     }
     switch (argc) {
     case 0:
         if (v6 && localName != NULL) {
             *server = "all";
         } else {
-            if (v6)
-                fprintf(stderr, "%s: Use -l to specify an interface name.\n\%s\n",
+            if (v6) {
+                fprintf(stderr,
+                        "%s: Use -l to specify an interface name.\n\%s\n",
                         progName, usage);
-            else {
-                fprintf(stderr, "%s: Must specify a DHCP server.\n\%s\n", progName, usage);
             }
-            return 2;
+            else {
+                fprintf(stderr, "%s: Must specify a DHCP server.\n\%s\n",
+                        progName, usage);
+            }
+            return(2);
         }
         break;
     case 1:
@@ -100,9 +103,9 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
         break;
     default:
         fprintf(stderr, "%s: Too many arguments.\n\%s\n", progName, usage);
-        return 2;
+        return(2);
     }
-    return 1;
+    return(1);
 }
 
 static void
