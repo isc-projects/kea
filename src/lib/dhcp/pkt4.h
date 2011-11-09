@@ -264,7 +264,7 @@ public:
     uint8_t
     getHlen() const { return (hlen_); };
 
-    /// @brief Returns chaddr field
+    /// @brief Returns chaddr field.
     ///
     /// Note: This is 16 bytes long field. It doesn't have to be
     /// null-terminated. Do no use strlen() or similar on it.
@@ -274,7 +274,7 @@ public:
     getChaddr() const { return (chaddr_); };
 
 
-    /// Returns reference to output buffer
+    /// @brief Returns reference to output buffer.
     ///
     /// Returned buffer will contain reasonable data only for
     /// output (TX) packet and after pack() was called. This buffer
@@ -286,6 +286,22 @@ public:
     /// @return reference to output buffer
     const isc::util::OutputBuffer&
     getBuffer() const { return (bufferOut_); };
+
+    /// @brief Add an option.
+    ///
+    /// Throws BadValue if option with that type is already present.
+    ///
+    /// @param opt option to be added
+    void
+    addOption(boost::shared_ptr<Option> opt);
+
+    /// @brief Returns an option of specified type.
+    ///
+    /// @return returns option of requested type (or NULL)
+    ///         if no such option is present
+
+    boost::shared_ptr<Option>
+    getOption(uint8_t opt_type);
 
 protected:
 
@@ -383,7 +399,7 @@ protected:
     uint8_t msg_type_;
 
     /// collection of options present in this message
-    isc::dhcp::Option::Option4Collection options_;
+    isc::dhcp::Option::OptionCollection options_;
 }; // Pkt4 class
 
 } // isc::dhcp namespace
