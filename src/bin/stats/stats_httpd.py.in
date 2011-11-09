@@ -129,7 +129,7 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             # Couldn't find neither specified module name nor
             # specified item name
             self.send_error(404)
-            logger.error(STATHTTPD_SERVER_ERROR, err)
+            logger.error(STATHTTPD_SERVER_DATAERROR, err)
             return None
         except StatsHttpdError as err:
             self.send_error(500)
