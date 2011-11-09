@@ -67,6 +67,7 @@ TEST_F(Option6IATest, basic) {
                                    0,
                                    12);
 
+    EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_IA_NA, opt->getType());
     EXPECT_EQ(0xa1a2a3a4, opt->getIAID());
     EXPECT_EQ(0x81020304, opt->getT1());
@@ -121,6 +122,7 @@ TEST_F(Option6IATest, simple) {
     ia->setT1(2345);
     ia->setT2(3456);
 
+    EXPECT_EQ(Option::V6, ia->getUniverse());
     EXPECT_EQ(D6O_IA_NA, ia->getType());
     EXPECT_EQ(1234, ia->getIAID());
     EXPECT_EQ(2345, ia->getT1());
@@ -251,7 +253,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
     EXPECT_EQ(0xcafe, subopt->getType());
     EXPECT_EQ(4, subopt->len());
     // there should be no data at all
-    EXPECT_EQ(static_cast<void*>(NULL), subopt->getData());
+    EXPECT_EQ(0, subopt->getData().size());
 
     subopt = ia->getOption(1); // get option 1
     ASSERT_FALSE(subopt); // should be NULL
