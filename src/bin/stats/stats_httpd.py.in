@@ -670,10 +670,10 @@ class StatsHttpd:
                     table = xml.etree.ElementTree.Element("table")
                     tr = xml.etree.ElementTree.Element("tr")
                     th = xml.etree.ElementTree.Element("th")
-                    th.text = "Module Names"
+                    th.text = "Module Name"
                     tr.append(th)
                     th = xml.etree.ElementTree.Element("th")
-                    th.text = "Module Items"
+                    th.text = "Module Item"
                     tr.append(th)
                     table.append(tr)
                     for mod in stats_spec.keys():
@@ -699,10 +699,10 @@ class StatsHttpd:
                         table = xml.etree.ElementTree.Element("table")
                         tr = xml.etree.ElementTree.Element("tr")
                         th = xml.etree.ElementTree.Element("th")
-                        th.text = "Item Names"
+                        th.text = "Item Name"
                         tr.append(th)
                         th = xml.etree.ElementTree.Element("th")
-                        th.text = "Item Values"
+                        th.text = "Item Value"
                         tr.append(th)
                         table.append(tr)
                         foreach = xml.etree.ElementTree.Element(
@@ -737,10 +737,10 @@ class StatsHttpd:
                 table = xml.etree.ElementTree.Element("table")
                 tr = xml.etree.ElementTree.Element("tr")
                 th = xml.etree.ElementTree.Element("th")
-                th.text = "Item Names"
+                th.text = "Item Name"
                 tr.append(th)
                 th = xml.etree.ElementTree.Element("th")
-                th.text = "Item Values"
+                th.text = "Item Value"
                 tr.append(th)
                 table.append(tr)
                 for item_spec in stats_spec:
