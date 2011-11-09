@@ -503,6 +503,8 @@ class StatsHttpd:
         # cases transparently, we first make sure tostring() returns
         # bytes by specifying utf-8 and then convert the result to a
         # plain string (code below assume it).
+        # FIXME: Non-ASCII characters might be lost here. Consider how
+        # the whole system should handle non-ASCII characters.
         xml_string = str(xml.etree.ElementTree.tostring(xml_elem, encoding='utf-8'),
                          encoding='us-ascii')
         self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
@@ -627,6 +629,8 @@ class StatsHttpd:
         # cases transparently, we first make sure tostring() returns
         # bytes by specifying utf-8 and then convert the result to a
         # plain string (code below assume it).
+        # FIXME: Non-ASCII characters might be lost here. Consider how
+        # the whole system should handle non-ASCII characters.
         xsd_string = str(xml.etree.ElementTree.tostring(xsd_root, encoding='utf-8'),
                          encoding='us-ascii')
         self.xsd_body = self.open_template(XSD_TEMPLATE_LOCATION).substitute(
@@ -777,6 +781,8 @@ class StatsHttpd:
         # cases transparently, we first make sure tostring() returns
         # bytes by specifying utf-8 and then convert the result to a
         # plain string (code below assume it).
+        # FIXME: Non-ASCII characters might be lost here. Consider how
+        # the whole system should handle non-ASCII characters.
         xsl_string = str(xml.etree.ElementTree.tostring(xsd_root, encoding='utf-8'),
                          encoding='us-ascii')
         self.xsl_body = self.open_template(XSL_TEMPLATE_LOCATION).substitute(
