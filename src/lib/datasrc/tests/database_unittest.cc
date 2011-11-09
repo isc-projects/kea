@@ -732,7 +732,7 @@ public:
     }
 
     // Check the journal is as expected and clear the journal
-    void checkJournal(const std::vector<JournalEntry> &expected) {
+    void checkJournal(const std::vector<JournalEntry> &expected) const {
         std::vector<JournalEntry> journal;
         // Clean the journal, but keep local copy to check
         journal.swap(*journal_entries_);
@@ -963,6 +963,14 @@ public:
             const MockAccessor* mock_accessor =
                 dynamic_cast<const MockAccessor*>(current_accessor_);
             update_accessor_ = mock_accessor->getLatestClone();
+        }
+    }
+
+    void checkJournal(const vector<JournalEntry>& expected) {
+        if (is_mock_) {
+            const MockAccessor* mock_accessor =
+                dynamic_cast<const MockAccessor*>(current_accessor_);
+            mock_accessor->checkJournal(expected);
         }
     }
 
@@ -2798,17 +2806,20 @@ TEST_F(MockDatabaseClientTest, badName) {
 /*
  * Test correct use of the updater with a journal.
  */
-TEST_F(MockDatabaseClientTest, journal) {
-    updater_ = client_->getUpdater(zname_, false, true);
-    updater_->deleteRRset(*soa_);
-    updater_->deleteRRset(*rrset_);
-    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
-    soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
-                                      "ns1.example.org. admin.example.org. "
-                                      "1235 3600 1800 2419200 7200"));
-    updater_->addRRset(*soa_);
-    updater_->addRRset(*rrset_);
-    ASSERT_NO_THROW(updater_->commit());
+TYPED_TEST(DatabaseClientTest, journal) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+    this->updater_->deleteRRset(*this->soa_);
+    this->updater_->deleteRRset(*this->rrset_);
+    this->soa_.reset(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    this->soa_->addRdata(rdata::createRdata(this->soa_->getType(),
+                                            this->soa_->getClass(),
+                                            "ns1.example.org. "
+                                            "admin.example.org. "
+                                            "1235 3600 1800 2419200 7200"));
+    this->updater_->addRRset(*this->soa_);
+    this->updater_->addRRset(*this->rrset_);
+    ASSERT_NO_THROW(this->updater_->commit());
     std::vector<JournalEntry> expected;
     expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
                                     DatabaseAccessor::DIFF_DELETE,
@@ -2828,21 +2839,21 @@ TEST_F(MockDatabaseClientTest, journal) {
                                     DatabaseAccessor::DIFF_ADD,
                                     "www.example.org.", "A", "3600",
                                     "192.0.2.2"));
-    current_accessor_->checkJournal(expected);
+    this->checkJournal(expected);
 }
 
 /*
  * Push multiple delete-add sequences. Checks it is allowed and all is
  * saved.
  */
-TEST_F(MockDatabaseClientTest, journalMultiple) {
+TYPED_TEST(DatabaseClientTest, journalMultiple) {
     std::vector<JournalEntry> expected;
-    updater_ = client_->getUpdater(zname_, false, true);
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
     std::string soa_rdata = "ns1.example.org. admin.example.org. "
         "1234 3600 1800 2419200 7200";
     for (size_t i(1); i < 100; ++ i) {
         // Remove the old SOA
-        updater_->deleteRRset(*soa_);
+        this->updater_->deleteRRset(*this->soa_);
         expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234 + i - 1,
                                         DatabaseAccessor::DIFF_DELETE,
                                         "example.org.", "SOA", "3600",
@@ -2850,19 +2861,21 @@ TEST_F(MockDatabaseClientTest, journalMultiple) {
         // Create a new SOA
         soa_rdata = "ns1.example.org. admin.example.org. " +
             lexical_cast<std::string>(1234 + i) + " 3600 1800 2419200 7200";
-        soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
-        soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
-                                          soa_rdata));
+        this->soa_.reset(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                                   this->rrttl_));
+        this->soa_->addRdata(rdata::createRdata(this->soa_->getType(),
+                                                this->soa_->getClass(),
+                                                soa_rdata));
         // Add the new SOA
-        updater_->addRRset(*soa_);
+        this->updater_->addRRset(*this->soa_);
         expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234 + i,
                                         DatabaseAccessor::DIFF_ADD,
                                         "example.org.", "SOA", "3600",
                                         soa_rdata));
     }
-    ASSERT_NO_THROW(updater_->commit());
+    ASSERT_NO_THROW(this->updater_->commit());
     // Check the journal contains everything.
-    current_accessor_->checkJournal(expected);
+    this->checkJournal(expected);
 }
 
 /*
@@ -2871,75 +2884,76 @@ TEST_F(MockDatabaseClientTest, journalMultiple) {
  * Note that we implicitly test in different testcases (these for add and
  * delete) that if the journaling is false, it doesn't expect the order.
  */
-TEST_F(MockDatabaseClientTest, journalBadSequence) {
+TYPED_TEST(DatabaseClientTest, journalBadSequence) {
     std::vector<JournalEntry> expected;
     {
         SCOPED_TRACE("Delete A before SOA");
-        updater_ = client_->getUpdater(zname_, false, true);
-        EXPECT_THROW(updater_->deleteRRset(*rrset_), isc::BadValue);
+        this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+        EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_),
+                     isc::BadValue);
         // Make sure the journal is empty now
-        current_accessor_->checkJournal(expected);
+        this->checkJournal(expected);
     }
 
     {
         SCOPED_TRACE("Add before delete");
-        updater_ = client_->getUpdater(zname_, false, true);
-        EXPECT_THROW(updater_->addRRset(*soa_), isc::BadValue);
+        this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+        EXPECT_THROW(this->updater_->addRRset(*this->soa_), isc::BadValue);
         // Make sure the journal is empty now
-        current_accessor_->checkJournal(expected);
+        this->checkJournal(expected);
     }
 
     {
         SCOPED_TRACE("Add A before SOA");
-        updater_ = client_->getUpdater(zname_, false, true);
+        this->updater_ = this->client_->getUpdater(this->zname_, false, true);
         // So far OK
-        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        EXPECT_NO_THROW(this->updater_->deleteRRset(*this->soa_));
         // But we miss the add SOA here
-        EXPECT_THROW(updater_->addRRset(*rrset_), isc::BadValue);
+        EXPECT_THROW(this->updater_->addRRset(*this->rrset_), isc::BadValue);
         // Make sure the journal contains only the first one
         expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
                                         DatabaseAccessor::DIFF_DELETE,
                                         "example.org.", "SOA", "3600",
                                         "ns1.example.org. admin.example.org. "
                                         "1234 3600 1800 2419200 7200"));
-        current_accessor_->checkJournal(expected);
+        this->checkJournal(expected);
     }
 
     {
         SCOPED_TRACE("Commit before add");
-        updater_ = client_->getUpdater(zname_, false, true);
+        this->updater_ = this->client_->getUpdater(this->zname_, false, true);
         // So far OK
-        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        EXPECT_NO_THROW(this->updater_->deleteRRset(*this->soa_));
         // Commit at the wrong time
-        EXPECT_THROW(updater_->commit(), isc::Unexpected);
-        current_accessor_->checkJournal(expected);
+        EXPECT_THROW(this->updater_->commit(), isc::Unexpected);
+        this->checkJournal(expected);
     }
 
     {
         SCOPED_TRACE("Delete two SOAs");
-        updater_ = client_->getUpdater(zname_, false, true);
+        this->updater_ = this->client_->getUpdater(this->zname_, false, true);
         // So far OK
-        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        EXPECT_NO_THROW(this->updater_->deleteRRset(*this->soa_));
         // Delete the SOA again
-        EXPECT_THROW(updater_->deleteRRset(*soa_), isc::BadValue);
-        current_accessor_->checkJournal(expected);
+        EXPECT_THROW(this->updater_->deleteRRset(*this->soa_), isc::BadValue);
+        this->checkJournal(expected);
     }
 
     {
         SCOPED_TRACE("Add two SOAs");
-        updater_ = client_->getUpdater(zname_, false, true);
+        this->updater_ = this->client_->getUpdater(this->zname_, false, true);
         // So far OK
-        EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+        EXPECT_NO_THROW(this->updater_->deleteRRset(*this->soa_));
         // Still OK
-        EXPECT_NO_THROW(updater_->addRRset(*soa_));
+        EXPECT_NO_THROW(this->updater_->addRRset(*this->soa_));
         // But this one is added again
-        EXPECT_THROW(updater_->addRRset(*soa_), isc::BadValue);
+        EXPECT_THROW(this->updater_->addRRset(*this->soa_), isc::BadValue);
         expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
                                         DatabaseAccessor::DIFF_ADD,
                                         "example.org.", "SOA", "3600",
                                         "ns1.example.org. admin.example.org. "
                                         "1234 3600 1800 2419200 7200"));
-        current_accessor_->checkJournal(expected);
+        this->checkJournal(expected);
     }
 }
 
@@ -2947,8 +2961,9 @@ TEST_F(MockDatabaseClientTest, journalBadSequence) {
  * Test it rejects to store journals when we request it together with
  * erasing the whole zone.
  */
-TEST_F(MockDatabaseClientTest, journalOnErase) {
-    EXPECT_THROW(client_->getUpdater(zname_, true, true), isc::BadValue);
+TYPED_TEST(DatabaseClientTest, journalOnErase) {
+    EXPECT_THROW(this->client_->getUpdater(this->zname_, true, true),
+                 isc::BadValue);
 }
 
 /*
@@ -2979,7 +2994,6 @@ TYPED_TEST(DatabaseClientTest, getJournalReader) {
 
     EXPECT_THROW(this->client_->getJournalReader(Name("nosuchzone"), 0, 1),
                  DataSourceError);
-                 
 }
 
 }
