@@ -778,9 +778,7 @@ class StatsHttpd:
         xsd_root = xml.etree.ElementTree.Element( # started with xml:template tag
             "xsl:template",
             attrib={'match': "bind10:statistics"})
-        if module_name is not None and item_name is not None:
-            stats_spec2xsl([ stats_spec ], xsd_root, XML_URL_PATH + '/' + module_name)
-        elif module_name is not None:
+        if module_name is not None:
             stats_spec2xsl(stats_spec, xsd_root, XML_URL_PATH + '/' + module_name)
         else:
             stats_spec2xsl(stats_spec, xsd_root)
