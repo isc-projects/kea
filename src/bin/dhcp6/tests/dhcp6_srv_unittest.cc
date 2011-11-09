@@ -131,14 +131,14 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     EXPECT_EQ(clientid->getType(), tmp->getType() );
     ASSERT_EQ(clientid->len(), tmp->len() );
 
-    EXPECT_EQ( clientid->getData(), tmp->getData() );
+    EXPECT_TRUE( clientid->getData() == tmp->getData() );
 
     // check that server included its server-id
     tmp = reply->getOption(D6O_SERVERID);
     EXPECT_EQ(tmp->getType(), srv->getServerID()->getType() );
     ASSERT_EQ(tmp->len(),  srv->getServerID()->len() );
 
-    EXPECT_EQ(tmp->getData(), srv->getServerID()->getData());
+    EXPECT_TRUE(tmp->getData() == srv->getServerID()->getData());
 
     // more checks to be implemented
     delete srv;
