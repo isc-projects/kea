@@ -180,7 +180,7 @@ public:
     /// TODO Need to implement getOptions() as well
 
     /// collection of options present in this message
-    isc::dhcp::Option::Option6Collection options_;
+    isc::dhcp::Option::OptionCollection options_;
 
 protected:
     /// Builds on wire packet for TCP transmission.
