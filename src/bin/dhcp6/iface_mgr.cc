@@ -250,17 +250,75 @@ IfaceMgr::openSocket(const std::string& ifname,
 
 uint16_t
 IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
-    isc_throw(NotImplemented, "Sorry. Try again in 2 weeks");
-    cout << iface.getFullName() << addr.toText() << port; // just to disable unused warning
+
+    cout << "Creating UDP4 socket on " << iface.getFullName()
+         << " " << addr.toText() << "/port=" << port << endl;
+
+    struct sockaddr_in addr4;
+    memset(&addr4, 0, sizeof(sockaddr));
+    addr4.sin_family = AF_INET;
+    addr4.sin_port = htons(port);
+    memcpy(&addr4.sin_addr, addr.getAddress().to_v4().to_bytes().data(),
+           sizeof(addr4.sin_addr));
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        isc_throw(Unexpected, "Failed to create UDP6 socket.");
+    }
+
+    if (bind(sock, (struct sockaddr *)&addr4, sizeof(addr4)) < 0) {
+        close(sock);
+        isc_throw(Unexpected, "Failed to bind socket " << sock << " to " << addr.toText()
+                  << "/port=" << port);
+    }
+
+#if defined(SO_BINDTODEVICE)
+#if 0
+    /// For some reason that doesn't work. It's not a big deal as this is
+    /// Linux only feature. We can use IP_PKTINFO to check that we received
+    /// packet over proper interface.
+
+    // Bind this socket to this interface.
+    const char* ifname = iface.getName().c_str();
+    int len = strlen(ifname);
+    if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
+                   ifname, len) < 0) {
+        isc_throw(Unexpected, "setsockopt: SO_BINDTODEVICE failed.");
+    }
+#endif
+#endif
+
+    int flag = 1;
+#ifdef IP_RECVPKTINFO
+    if (setsockopt(sock, IPPROTO_IP, IP_RECVPKTINFO,
+                   &flag, sizeof(flag)) != 0) {
+        close(sock);
+        isc_throw(Unexpected, "setsockopt: IP_RECVPKTINFO failed.")
+    }
+#else
+    /* RFC2292 - an old way */
+    if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO,
+                   &flag, sizeof(flag)) != 0) {
+        close(sock);
+        isc_throw(Unexpected, "setsockopt: IP_PKTINFO: failed.");
+    }
+#endif
+
+
+    cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
+        addr.toText() << "/port=" << port << endl;
+
+    // TODO: Add socket to iface interface
+    return (sock);
 }
 
 uint16_t
 IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
+
+    cout << "Creating UDP6 socket on " << iface.getFullName()
+         << " " << addr.toText() << "/port=" << port << endl;
+
     struct sockaddr_in6 addr6;
-
-    cout << "Creating socket on " << iface.getFullName()
-         << "/port=" << port << endl;
-
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
     addr6.sin6_port = htons(port);
@@ -278,8 +336,7 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
     // make a socket
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock < 0) {
-        cout << "Failed to create UDP6 socket." << endl;
-        return (-1);
+        isc_throw(Unexpected, "Failed to create UDP6 socket.");
     }
 
     /* Set the REUSEADDR option so that we don't fail to start if
@@ -287,32 +344,28 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
     int flag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
-        cout << "Can't set SO_REUSEADDR option on dhcpv6 socket." << endl;
         close(sock);
-        return (-1);
+        isc_throw(Unexpected, "Can't set SO_REUSEADDR option on dhcpv6 socket.");
     }
 
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
-        cout << "Failed to bind socket " << sock << " to " << addr.toText()
-             << "/port=" << port << endl;
         close(sock);
-        return (-1);
+        isc_throw(Unexpected, "Failed to bind socket " << sock << " to " << addr.toText()
+                  << "/port=" << port);
     }
 #ifdef IPV6_RECVPKTINFO
     /* RFC3542 - a new way */
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
                    &flag, sizeof(flag)) != 0) {
-        cout << "setsockopt: IPV6_RECVPKTINFO failed." << endl;
         close(sock);
-        return (-1);
+        isc_throw(Unexpected, "setsockopt: IPV6_RECVPKTINFO failed.");
     }
 #else
     /* RFC2292 - an old way */
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO,
                    &flag, sizeof(flag)) != 0) {
-        cout << "setsockopt: IPV6_PKTINFO: failed." << endl;
         close(sock);
-        return (-1);
+        isc_throw(Unexpected, "setsockopt: IPV6_PKTINFO: failed.");
     }
 #endif
 
@@ -326,7 +379,8 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
         if ( !joinMcast( sock, iface.getName(),
                          string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
             close(sock);
-            return (-1);
+            isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
+                      << " multicast group.");
         }
     }
 
