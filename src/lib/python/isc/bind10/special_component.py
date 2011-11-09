@@ -22,6 +22,11 @@ class SockCreator(BaseComponent):
     """
     The socket creator component. Will start and stop the socket creator
     accordingly.
+
+    Note: _creator shouldn't be reset explicitly once created.  The
+    underlying Popen object would then wait() the child process internally,
+    which breaks the assumption of the boss, who is expecting to see
+    the process die in waitpid().
     """
     def __init__(self, process, boss, kind, address=None, params=None):
         BaseComponent.__init__(self, boss, kind)
@@ -32,10 +37,10 @@ class SockCreator(BaseComponent):
         self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
                                                         os.environ['PATH'])
         self._boss.register_process(self.pid(), self)
+        self._boss.log_started(self.pid())
 
     def _stop_internal(self):
         self.__creator.terminate()
-        self.__creator = None
 
     def name(self):
         return "Socket creator"
