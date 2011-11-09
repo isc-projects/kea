@@ -552,6 +552,8 @@ public:
     ///
     /// \exception DataSourceError Duplicate call of the method,
     /// internal data source error
+    /// \exception isc::BadValue Journaling is enabled and the update is not
+    ///    complete IXFR sequence.
     virtual void commit() = 0;
 };
 
