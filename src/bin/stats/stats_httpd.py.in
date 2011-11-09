@@ -445,6 +445,9 @@ class StatsHttpd:
         owns. The second argument cannot be specified when the first
         argument is not specified."""
 
+        # TODO: Separate the following recursive function by type of
+        # the parameter. Because we should be sure what type there is
+        # when we call it recursively.
         def stats_data2xml(stats_spec, stats_data, xml_elem):
             """Internal use for xml_handler. Reads stats_data and
             stats_spec specified as first and second arguments, and
@@ -522,6 +525,9 @@ class StatsHttpd:
         which the the module owns. The second argument cannot be
         specified when the first argument is not specified."""
 
+        # TODO: Separate the following recursive function by type of
+        # the parameter. Because we should be sure what type there is
+        # when we call it recursively.
         def stats_spec2xsd(stats_spec, xsd_elem):
             """Internal use for xsd_handler. Reads stats_spec
             specified as first arguments, and modify the xml object
@@ -647,6 +653,9 @@ class StatsHttpd:
         which the the module owns. The second argument cannot be
         specified when the first argument is not specified."""
 
+        # TODO: Separate the following recursive function by type of
+        # the parameter. Because we should be sure what type there is
+        # when we call it recursively.
         def stats_spec2xsl(stats_spec, xsl_elem, path=XML_URL_PATH):
             """Internal use for xsl_handler. Reads stats_spec
             specified as first arguments, and modify the xml object
