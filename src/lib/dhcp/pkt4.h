@@ -299,9 +299,20 @@ public:
     ///
     /// @return returns option of requested type (or NULL)
     ///         if no such option is present
-
     boost::shared_ptr<Option>
     getOption(uint8_t opt_type);
+
+
+    /// @brief set interface over which packet should be sent
+    ///
+    /// @param interface defines outbound interface
+    void setIface(const std::string& interface){ iface_ = interface; }
+
+    /// @brief gets interface over which packet was received or
+    ///        will be transmitted
+    ///
+    /// @return name of the interface
+    std::string getIface() const { return iface_; }
 
 protected:
 

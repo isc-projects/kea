@@ -40,34 +40,105 @@ public:
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
+    /// Holds information about socket.
+    struct SocketInfo {
+        uint16_t sockfd_; /// socket descriptor
+        isc::asiolink::IOAddress addr_; /// bound address
+        uint16_t port_;   /// socket port
+        uint16_t family_; /// IPv4 or IPv6
+        SocketInfo(uint16_t sockfd, const isc::asiolink::IOAddress& addr,
+                   uint16_t port)
+        :sockfd_(sockfd), addr_(addr), port_(port), family_(addr.getFamily()) { }
+    };
+
+    /// type that holds a list of socket informations
+    typedef std::list<SocketInfo> SocketCollection;
+
     /// @brief represents a single network interface
     ///
     /// Iface structure represents network interface with all useful
     /// information, like name, interface index, MAC address and
     /// list of assigned addresses
     struct Iface {
-        /// constructor
+        /// @brief Iface constructor.
+        ///
+        /// Creates Iface object that represents network interface.
+        ///
+        /// @param name name of the interface
+        /// @param ifindex interface index (unique integer identifier)
         Iface(const std::string& name, int ifindex);
 
-        /// returns full interface name in format ifname/ifindex
+        /// @brief Returns full interface name as "ifname/ifindex" string.
+        ///
+        /// @return string with interface name
         std::string getFullName() const;
 
-        /// returns link-layer address a plain text
+        /// @brief Returns link-layer address a plain text.
+        ///
+        /// @return MAC address as a plain text (string)
         std::string getPlainMac() const;
 
+        /// @brief Returns interface index.
+        ///
+        /// @return interface index
         uint16_t getIndex() const { return ifindex_; }
 
-        std::string getName() const {
-            return name_;
-        };
+        /// @brief Returns interface name.
+        ///
+        /// @return interface name
+        std::string getName() const { return name_; };
 
+        /// @brief Returns all interfaces available on an interface.
+        ///
+        /// Care should be taken to not use this collection after Iface object
+        /// ceases to exist. That is easy in most cases as Iface objects are
+        /// created by IfaceMgr that is a singleton an is expected to be
+        /// available at all time. We may revisit this if we ever decide to
+        /// implement dynamic interface detection, but such fancy feature would
+        /// mostly be useful for clients with wifi/vpn/virtual interfaces.
+        ///
+        /// @return collection of addresses
         const AddressCollection& getAddresses() const { return addrs_; }
 
+        /// @brief Adds an address to an interface.
+        ///
+        /// This only adds an address to collection, it does not physically
+        /// configure address on actual network interface.
+        ///
+        /// @param addr address to be added
         void addAddress(const isc::asiolink::IOAddress& addr) {
             addrs_.push_back(addr);
         }
 
+        /// @brief Deletes an address from an interface.
+        ///
+        /// This only deletes address from collection, it does not physically
+        /// remove address configuration from actual network interface.
+        ///
+        /// @param addr address to be removed.
+        ///
+        /// @return true if removal was successful (address was in collection),
+        ///         false otherwise
         bool delAddress(const isc::asiolink::IOAddress& addr);
+
+        /// @brief Adds socket descriptor to an interface.
+        ///
+        /// @param socket SocketInfo structure that describes socket.
+        void addSocket(const SocketInfo& sock)
+            { sockets_.push_back(sock); }
+
+        /// @brief Closes socket.
+        ///
+        /// Closes socket and removes corresponding SocketInfo structure
+        /// from an interface.
+        ///
+        /// @param socket descriptor to be closed/removed.
+        /// @return true if there was such socket, false otherwise
+        bool delSocket(uint16_t sockfd);
+
+        /// socket used to sending data
+        /// TODO: this should be protected
+        SocketCollection sockets_;
 
     protected:
         /// network interface name
@@ -84,12 +155,6 @@ public:
 
         /// length of link-layer address (usually 6)
         int mac_len_;
-
-        /// socket used to sending data
-        uint16_t sendsock_;
-
-        /// socket used for receiving data
-        uint16_t recvsock_;
     };
 
     // TODO performance improvement: we may change this into
@@ -124,6 +189,32 @@ public:
     ///
     Iface*
     getIface(const std::string& ifname);
+
+    /// @brief Return most suitable socket for transmitting specified IPv6 packet.
+    ///
+    /// This method takes Pkt6 (see overloaded implementation that takes
+    /// Pkt4) and chooses appropriate socket to send it. This method
+    /// may throw BadValue if specified packet does not have outbound
+    /// interface specified, no such interface exists, or specified
+    /// interface does not have any appropriate sockets open.
+    ///
+    /// @param pkt a packet to be transmitted
+    ///
+    /// @return a socket descriptor
+    uint16_t getSocket(const isc::dhcp::Pkt6& pkt);
+
+    /// @brief Return most suitable socket for transmitting specified IPv6 packet.
+    ///
+    /// This method takes Pkt4 (see overloaded implementation that takes
+    /// Pkt6) and chooses appropriate socket to send it. This method
+    /// may throw BadValue if specified packet does not have outbound
+    /// interface specified, no such interface exists, or specified
+    /// interface does not have any appropriate sockets open.
+    ///
+    /// @param pkt a packet to be transmitted
+    ///
+    /// @return a socket descriptor
+    uint16_t getSocket(const isc::dhcp::Pkt4& pkt);
 
     /// debugging method that prints out all available interfaces
     ///
@@ -218,8 +309,9 @@ protected:
     // TODO: Also keep this interface on Iface once interface detection
     // is implemented. We may need it e.g. to close all sockets on
     // specific interface
-    int recvsock_; // TODO: should be fd_set eventually, but we have only
-    int sendsock_; // 2 sockets for now. Will do for until next release
+    //int recvsock_; // TODO: should be fd_set eventually, but we have only
+    //int sendsock_; // 2 sockets for now. Will do for until next release
+
     // we can't use the same socket, as receiving socket
     // is bound to multicast address. And we all know what happens
     // to people who try to use multicast as source address.
