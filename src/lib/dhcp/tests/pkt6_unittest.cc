@@ -18,10 +18,10 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include "io_address.h"
-#include "dhcp/option.h"
-#include "dhcp/pkt6.h"
-#include "dhcp/dhcp6.h"
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
+#include <dhcp/pkt6.h>
+#include <dhcp/dhcp6.h>
 
 using namespace std;
 using namespace isc;
