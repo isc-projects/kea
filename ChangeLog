@@ -1,3 +1,11 @@
+ 315.	[func]		tomek
+	libdhcp: Support for DHCPv4 packet manipulation is now implemented.
+	All fixed fields are now supported. Generic support for DHCPv4
+	options is available (both parsing and assembly). There is no code
+	that uses this new functionality yet, so it is not usable directly
+	at this time. This code will be used by upcoming b10-dhcp4 daemon.
+	(Trac #1228, git 31d5a4f66b18cca838ca1182b9f13034066427a7)
+
 314.	[bug]		jelte
 	b10-xfrin would previously initiate incoming transfers upon 
 	receiving NOTIFY messages from any address (if the zone was 

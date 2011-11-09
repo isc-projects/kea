@@ -108,7 +108,7 @@ std::string Option6IAAddr::toText(int indent /* =0 */) {
         << ", preferred-lft=" << preferred_  << ", valid-lft="
         << valid_ << endl;
 
-    for (Option6Collection::const_iterator opt=options_.begin();
+    for (OptionCollection::const_iterator opt=options_.begin();
          opt!=options_.end();
          ++opt) {
         tmp << (*opt).second->toText(indent+2);
@@ -123,7 +123,7 @@ unsigned short Option6IAAddr::len() {
     // length of all suboptions
     // TODO implement:
     // protected: unsigned short Option::lenHelper(int header_size);
-    for (Option::Option6Collection::iterator it = options_.begin();
+    for (Option::OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
