@@ -295,8 +295,12 @@ struct JournalEntry {
     DatabaseAccessor::DiffOperation operation_;
     std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
     bool operator==(const JournalEntry& other) const {
+        bool data_equal(true);
+        for (size_t i(0); i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
+            data_equal = data_equal && (data_[i] == other.data_[i]);
+        }
         return (id_ == other.id_ && serial_ == other.serial_ &&
-                operation_ == other.operation_ && data_ == other.data_);
+                operation_ == other.operation_ && data_equal);
     }
 };
 
@@ -324,6 +328,7 @@ public:
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
         empty_records_ = &empty_records_master_;
+        journal_entries_ = &journal_entries_master_;
         fillData();
     }
 
@@ -332,6 +337,7 @@ public:
         cloned_accessor->readonly_records_ = &readonly_records_master_;
         cloned_accessor->update_records_ = &update_records_master_;
         cloned_accessor->empty_records_ = &empty_records_master_;
+        cloned_accessor->journal_entries_ = &journal_entries_master_;
         latest_clone_ = cloned_accessor;
         return (cloned_accessor);
     }
@@ -568,7 +574,13 @@ public:
             *update_records_ = *readonly_records_;
         }
 
-        return (pair<bool, int>(true, WRITABLE_ZONE_ID));
+        if (zone_name == "bad.example.org.") {
+            return (pair<bool, int>(true, -1));
+        } else if (zone_name == "null.example.org.") {
+            return (pair<bool, int>(true, 13));
+        } else {
+            return (pair<bool, int>(true, WRITABLE_ZONE_ID));
+        }
     }
     virtual void commit() {
         *readonly_records_ = *update_records_;
@@ -691,7 +703,7 @@ public:
         } else if (id == -1) { // Bad zone throws
             isc_throw(DataSourceError, "Test error");
         } else {
-            journal_entries_.push_back(JournalEntry(id, serial, operation,
+            journal_entries_->push_back(JournalEntry(id, serial, operation,
                                                     data));
         }
     }
@@ -700,7 +712,7 @@ public:
     void checkJournal(const std::vector<JournalEntry> &expected) {
         std::vector<JournalEntry> journal;
         // Clean the journal, but keep local copy to check
-        journal.swap(journal_entries_);
+        journal.swap(*journal_entries_);
         ASSERT_EQ(expected.size(), journal.size());
         for (size_t i(0); i < expected.size(); ++ i) {
             EXPECT_TRUE(expected[i] == journal[i]);
@@ -726,7 +738,8 @@ private:
     const Domains* empty_records_;
 
     // The journal data
-    std::vector<JournalEntry> journal_entries_;
+    std::vector<JournalEntry> journal_entries_master_;
+    std::vector<JournalEntry>* journal_entries_;
 
     // used as temporary storage after searchForRecord() and during
     // getNextRecord() calls, as well as during the building of the
@@ -2705,29 +2718,28 @@ TEST_F(MockDatabaseClientTest, journal) {
     soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
     soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
                                       "ns1.example.org. admin.example.org. "
-                                      "1234 3600 1800 2419201 7200"));
+                                      "1235 3600 1800 2419200 7200"));
     updater_->addRRset(*soa_);
     updater_->addRRset(*rrset_);
     ASSERT_NO_THROW(updater_->commit());
     std::vector<JournalEntry> expected;
-    // For some reason, the example.org is called read only zone here.
-    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
                                     DatabaseAccessor::DIFF_DELETE,
                                     "example.org.", "SOA", "3600",
                                     "ns1.example.org. admin.example.org. "
                                     "1234 3600 1800 2419200 7200"));
-    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
                                     DatabaseAccessor::DIFF_DELETE,
-                                    "example.org.", "A", "3600",
+                                    "www.example.org.", "A", "3600",
                                     "192.0.2.2"));
-    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419201,
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
                                     DatabaseAccessor::DIFF_ADD,
                                     "example.org.", "SOA", "3600",
                                     "ns1.example.org. admin.example.org. "
-                                    "1234 3600 1800 2419201 7200"));
-    expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+                                    "1235 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
                                     DatabaseAccessor::DIFF_ADD,
-                                    "example.org.", "A", "3600",
+                                    "www.example.org.", "A", "3600",
                                     "192.0.2.2"));
     current_accessor_->checkJournal(expected);
 }
@@ -2744,20 +2756,20 @@ TEST_F(MockDatabaseClientTest, journalMultiple) {
     for (size_t i(1); i < 100; ++ i) {
         // Remove the old SOA
         updater_->deleteRRset(*soa_);
-        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200 + i - 1,
+        expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234 + i - 1,
                                         DatabaseAccessor::DIFF_DELETE,
                                         "example.org.", "SOA", "3600",
                                         soa_rdata));
         // Create a new SOA
-        soa_rdata = "ns1.example.org. admin.example.org. 1234 3600 1800 " +
-            lexical_cast<std::string>(2419200 + i) + " 7200";
+        soa_rdata = "ns1.example.org. admin.example.org. " +
+            lexical_cast<std::string>(1234 + i) + " 3600 1800 2419200 7200";
         soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
         soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
                                           soa_rdata));
         // Add the new SOA
         updater_->addRRset(*soa_);
-        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200 + i,
-                                        DatabaseAccessor::DIFF_DELETE,
+        expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234 + i,
+                                        DatabaseAccessor::DIFF_ADD,
                                         "example.org.", "SOA", "3600",
                                         soa_rdata));
     }
@@ -2798,7 +2810,7 @@ TEST_F(MockDatabaseClientTest, journalBadSequence) {
         // But we miss the add SOA here
         EXPECT_THROW(updater_->addRRset(*rrset_), isc::BadValue);
         // Make sure the journal contains only the first one
-        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+        expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
                                         DatabaseAccessor::DIFF_DELETE,
                                         "example.org.", "SOA", "3600",
                                         "ns1.example.org. admin.example.org. "
@@ -2812,28 +2824,30 @@ TEST_F(MockDatabaseClientTest, journalBadSequence) {
         // So far OK
         EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
         // Commit at the wrong time
-        EXPECT_THROW(updater_->commit(), isc::BadValue);
+        EXPECT_THROW(updater_->commit(), isc::Unexpected);
         current_accessor_->checkJournal(expected);
     }
 
     {
         SCOPED_TRACE("Delete two SOAs");
+        updater_ = client_->getUpdater(zname_, false, true);
         // So far OK
         EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
         // Delete the SOA again
-        EXPECT_THROW(updater_->addRRset(*soa_), isc::BadValue);
+        EXPECT_THROW(updater_->deleteRRset(*soa_), isc::BadValue);
         current_accessor_->checkJournal(expected);
     }
 
     {
         SCOPED_TRACE("Add two SOAs");
+        updater_ = client_->getUpdater(zname_, false, true);
         // So far OK
         EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
         // Still OK
         EXPECT_NO_THROW(updater_->addRRset(*soa_));
         // But this one is added again
         EXPECT_THROW(updater_->addRRset(*soa_), isc::BadValue);
-        expected.push_back(JournalEntry(READONLY_ZONE_ID, 2419200,
+        expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
                                         DatabaseAccessor::DIFF_ADD,
                                         "example.org.", "SOA", "3600",
                                         "ns1.example.org. admin.example.org. "
