@@ -244,7 +244,7 @@ class MockBob(BoB):
     def stop_creator(self, kill=False):
         self.creator = False
 
-    def read_bind10_config(self):
+    def _read_bind10_config(self):
         # Configuration options are set directly
         pass
 
@@ -945,7 +945,7 @@ class TestBossComponents(unittest.TestCase):
         # Start it
         bob._component_configurator.reconfigure = self.__unary_hook
         # We need to return the original read_bind10_config
-        bob.read_bind10_config = lambda: BoB.read_bind10_config(bob)
+        bob._read_bind10_config = lambda: BoB._read_bind10_config(bob)
         # And provide a session to read the data from
         class CC:
             pass
