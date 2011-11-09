@@ -309,6 +309,10 @@ public:
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
                                       bool replace, bool journaling = false)
         const = 0;
+
+    virtual ZoneJournalReaderPtr
+    getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
+                     uint32_t end_serial) const = 0;
 };
 }
 }

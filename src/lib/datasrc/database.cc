@@ -1089,5 +1089,32 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
                                                name, rrclass_, journaling)));
 }
+
+//
+// Zone journal reader using some database system as the underlying data
+//  source.
+//
+class DatabaseJournalReader : public ZoneJournalReader {
+public:
+    DatabaseJournalReader() {}
+    virtual ~DatabaseJournalReader() {}
+    virtual ConstRRsetPtr getNextDiff() {
+        return (ConstRRsetPtr());
+    }
+};
+
+// The JournalReader factory
+ZoneJournalReaderPtr
+DatabaseClient::getJournalReader(const isc::dns::Name& zone,
+                                 uint32_t, uint32_t) const
+{
+    const pair<bool, int> zoneinfo(accessor_->getZone(zone.toText()));
+    if (!zoneinfo.first) {
+        // No such zone, can't continue
+        isc_throw(DataSourceError, "Zone " << zone << "/" << rrclass_ <<
+                  " doesn't exist in database: " + accessor_->getDBName());
+    }
+    return (ZoneJournalReaderPtr(new DatabaseJournalReader()));
+}
 }
 }
