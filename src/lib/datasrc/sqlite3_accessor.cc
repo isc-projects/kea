@@ -658,10 +658,11 @@ public:
             // Last call (if any) didn't reach end of result set, so we
             // can read another row from it.
             //
-            // Get a pointer to the statement for brevity (this does not transfer
-            // ownership of the statement to this class, so there is no need to
-            // tidy up after we have finished using it).
-            sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(DIFF_RECS);
+            // Get a pointer to the statement for brevity (this does not
+            // transfer ownership of the statement to this class, so there is
+            // no need to tidy up after we have finished using it).
+            sqlite3_stmt* stmt =
+                accessor_->dbparameters_->getStatement(DIFF_RECS);
 
             const int rc(sqlite3_step(stmt));
             if (rc == SQLITE_ROW) {
@@ -691,13 +692,14 @@ private:
     /// \param stindex Index of prepared statement to which to bind
     void reset(int stindex) {
         sqlite3_stmt* stmt = accessor_->dbparameters_->getStatement(stindex);
-        if ((sqlite3_reset(stmt) != SQLITE_OK) || (sqlite3_clear_bindings(stmt) != SQLITE_OK)) {
+        if ((sqlite3_reset(stmt) != SQLITE_OK) ||
+            (sqlite3_clear_bindings(stmt) != SQLITE_OK)) {
             isc_throw(SQLite3Error, "Could not clear statement bindings in '" <<
-                      text_statements[stindex] << "': " << 
+                      text_statements[stindex] << "': " <<
                       sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
     }
-            
+
     /// \brief Bind Int
     ///
     /// Binds an integer to a specific variable in a prepared statement.
@@ -711,7 +713,7 @@ private:
                              varindex, value) != SQLITE_OK) {
             isc_throw(SQLite3Error, "Could not bind value to parameter " <<
                       varindex << " in statement '" <<
-                      text_statements[stindex] << "': " << 
+                      text_statements[stindex] << "': " <<
                       sqlite3_errmsg(accessor_->dbparameters_->db_));
         }
     }
@@ -825,7 +827,7 @@ private:
                                                               column),
                                           accessor_->dbparameters_->db_);
     }
-    
+
     // Attributes
 
     boost::shared_ptr<const SQLite3Accessor> accessor_; // Accessor object

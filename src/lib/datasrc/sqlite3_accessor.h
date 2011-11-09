@@ -184,7 +184,6 @@ public:
      */
     virtual IteratorContextPtr
     getDiffs(int id, uint32_t start, uint32_t end) const;
-                                        
 
 
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
