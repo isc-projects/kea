@@ -277,8 +277,14 @@ struct JournalEntry {
     JournalEntry(int id, uint32_t serial,
                  DatabaseAccessor::DiffOperation operation,
                  const std::string (&data)[DatabaseAccessor::DIFF_PARAM_COUNT])
-        : id_(id), serial_(serial), operation_(operation), data_(data)
-    {}
+        : id_(id), serial_(serial), operation_(operation)
+    {
+        data_[DatabaseAccessor::DIFF_NAME] = data[DatabaseAccessor::DIFF_NAME];
+        data_[DatabaseAccessor::DIFF_TYPE] = data[DatabaseAccessor::DIFF_TYPE];
+        data_[DatabaseAccessor::DIFF_TTL] = data[DatabaseAccessor::DIFF_TTL];
+        data_[DatabaseAccessor::DIFF_RDATA] =
+            data[DatabaseAccessor::DIFF_RDATA];
+    }
     JournalEntry(int id, uint32_t serial,
                  DatabaseAccessor::DiffOperation operation,
                  const std::string& name, const std::string& type,
