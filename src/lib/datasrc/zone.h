@@ -560,6 +560,25 @@ public:
 /// \brief A pointer-like type pointing to a \c ZoneUpdater object.
 typedef boost::shared_ptr<ZoneUpdater> ZoneUpdaterPtr;
 
+/// The base class to retrieve differences between two versions of a zone.
+class ZoneJournalReader {
+protected:
+    /// The default constructor.
+    ///
+    /// This is intentionally defined as protected to ensure that this base
+    /// class is never instantiated directly.
+    ZoneJournalReader() {}
+
+public:
+    /// The destructor
+    virtual ~ZoneJournalReader() {}
+
+    virtual isc::dns::ConstRRsetPtr getNextDiff() = 0;
+};
+
+/// \brief A pointer-like type pointing to a \c ZoneUpdater object.
+typedef boost::shared_ptr<ZoneJournalReader> ZoneJournalReaderPtr;
+
 } // end of datasrc
 } // end of isc
 

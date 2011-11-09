@@ -2972,4 +2972,14 @@ TEST_F(MockDatabaseClientTest, journalException) {
     EXPECT_THROW(updater_->deleteRRset(*soa_), DataSourceError);
 }
 
+TYPED_TEST(DatabaseClientTest, getJournalReader) {
+    ZoneJournalReaderPtr jnl_reader(this->client_->getJournalReader(
+                                        this->zname_, 0, 1));
+    EXPECT_FALSE(jnl_reader->getNextDiff());
+
+    EXPECT_THROW(this->client_->getJournalReader(Name("nosuchzone"), 0, 1),
+                 DataSourceError);
+                 
+}
+
 }
