@@ -32,10 +32,10 @@ dk_setup(const char* diag_str, const struct dkdesc* diags) {
                 break;
             }
             if (diags[i].keyletter == '\0') {
-                return 0;
+                return(0);
             }
         }
-    return 1;
+    return(1);
 }
 
 void
@@ -56,5 +56,5 @@ vdkprintf(unsigned diag_req, const char format[], va_list ap) {
 
 int
 dk_set(unsigned diag_req) {
-    return diag_req & dk_diag_mask;
+    return(diag_req & dk_diag_mask);
 }
