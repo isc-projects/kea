@@ -392,11 +392,15 @@ class BoB:
             self.processes[pid].kill(True)
         self.processes = {}
 
-    def read_bind10_config(self):
+    def _read_bind10_config(self):
         """
             Reads the parameters associated with the BoB module itself.
 
             This means the list of components we should start now.
+
+            This could easily be combined into start_all_processes, but
+            it stays because of historical reasons and because the tests
+            replace the method sometimes.
         """
         logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
@@ -673,13 +677,12 @@ class BoB:
 
         # Connect to the msgq. This is not a process, so it's not handled
         # inside the configurator.
-        c_channel_env = self.c_channel_env
-        self.start_ccsession(c_channel_env)
+        self.start_ccsession(self.c_channel_env)
 
         # Extract the parameters associated with Bob.  This can only be
         # done after the CC Session is started.  Note that the logging
         # configuration may override the "-v" switch set on the command line.
-        self.read_bind10_config()
+        self._read_bind10_config()
 
         # TODO: Return the dropping of privileges
 
