@@ -487,6 +487,39 @@ class TestStartStopProcessesBob(unittest.TestCase):
                                        'special': 'resolver' }
         return {'components': config}
 
+    def config_start_init(self, start_auth, start_resolver):
+        """
+        Test the configuration is loaded at the startup.
+        """
+        bob = MockBob()
+        config = self.construct_config(start_auth, start_resolver)
+        class CC:
+            def get_full_config(self):
+                return config
+        # Provide the fake CC with data
+        bob.ccs = CC()
+        # And make sure it's not overwritten
+        def start_ccsession():
+            bob.ccsession = True
+        bob.start_ccsession = lambda _: start_ccsession()
+        # We need to return the original _read_bind10_config
+        bob._read_bind10_config = lambda: BoB._read_bind10_config(bob)
+        bob.start_all_processes()
+        self.check_started(bob, True, start_auth, start_resolver)
+        self.check_environment_unchanged()
+
+    def test_start_none(self):
+        self.config_start_init(False, False)
+
+    def test_start_resolver(self):
+        self.config_start_init(False, True)
+
+    def test_start_auth(self):
+        self.config_start_init(True, False)
+
+    def test_start_both(self):
+        self.config_start_init(True, True)
+
     def test_config_start(self):
         """
         Test that the configuration starts and stops processes according
