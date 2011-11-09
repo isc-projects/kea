@@ -41,8 +41,6 @@ class NakedIfaceMgr: public IfaceMgr {
 public:
     NakedIfaceMgr() { }
     IfaceCollection & getIfacesLst() { return ifaces_; }
-    void setSendSock(int sock) { sendsock_ = sock; }
-    void setRecvSock(int sock) { recvsock_ = sock; }
 };
 
 // dummy class for now, but this will be expanded when needed
@@ -253,9 +251,14 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     IOAddress loAddr("::1");
 
+    Pkt6 pkt6(128);
+    pkt6.iface_ = LOOPBACK;
+
     // bind multicast socket to port 10547
     int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
     EXPECT_GT(socket1, 0); // socket > 0
+
+    EXPECT_EQ(socket1, ifacemgr->getSocket(pkt6));
 
     // bind unicast socket to port 10548
     int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10548);
@@ -311,17 +314,11 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     delete ifacemgr;
 }
 
-// TODO: disabled due to other naming on various systems
-// (lo in Linux, lo0 in BSD systems)
-// Fix for this is available on 1186 branch, will reenable
-// this test once 1186 is merged
 TEST_F(IfaceMgrTest, sendReceive6) {
+
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
-
-    fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
-    fakeifaces << LOOPBACK << " ::1";
-    fakeifaces.close();
+    createLoInterfacesTxt();
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
@@ -332,9 +329,6 @@ TEST_F(IfaceMgrTest, sendReceive6) {
         socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
         socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
     );
-
-    ifacemgr->setSendSock(socket2);
-    ifacemgr->setRecvSock(socket1);
 
     boost::shared_ptr<Pkt6> sendPkt(new Pkt6(128) );
 
@@ -362,7 +356,12 @@ TEST_F(IfaceMgrTest, sendReceive6) {
                         rcvPkt->data_len_) );
 
     EXPECT_EQ(sendPkt->remote_addr_.toText(), rcvPkt->remote_addr_.toText());
-    EXPECT_EQ(rcvPkt->remote_port_, 10546);
+
+    // since we opened 2 sockets on the same interface and none of them is multicast,
+    // none is preferred over the other for sending data, so we really should not
+    // assume the one or the other will always be choosen for sending data. Therefore
+    // we should accept both values as source ports.
+    EXPECT_TRUE( (rcvPkt->remote_port_ == 10546) || (rcvPkt->remote_port_ == 10547) );
 
     delete ifacemgr;
 }
@@ -382,6 +381,11 @@ TEST_F(IfaceMgrTest, socket4) {
     );
 
     EXPECT_GT(socket1, 0);
+
+    Pkt4 pkt(DHCPDISCOVER, 1234);
+    pkt.setIface(LOOPBACK);
+
+    EXPECT_EQ(socket1, ifacemgr->getSocket(pkt));
 
     close(socket1);
 

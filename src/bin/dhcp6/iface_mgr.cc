@@ -18,9 +18,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "dhcp/dhcp6.h"
-#include "dhcp6/iface_mgr.h"
-#include "exceptions/exceptions.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp6/iface_mgr.h>
+#include <exceptions/exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -77,6 +77,19 @@ IfaceMgr::Iface::getPlainMac() const {
         }
     }
     return (tmp.str());
+}
+
+bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
+    list<SocketInfo>::iterator sock = sockets_.begin();
+    while (sock!=sockets_.end()) {
+        if (sock->sockfd_ == sockfd) {
+            close(sockfd);
+            sockets_.erase(sock);
+            return (true); //socket found
+        }
+        ++sock;
+    }
+    return (false); // socket not found
 }
 
 IfaceMgr::IfaceMgr()
@@ -153,7 +166,7 @@ IfaceMgr::detectIfaces() {
 
 void
 IfaceMgr::openSockets() {
-    int sock;
+    int sock1, sock2;
 
     for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
@@ -165,24 +178,28 @@ IfaceMgr::openSockets() {
              addr != addrs.end();
              ++addr) {
 
-            sock = openSocket(iface->getName(), *addr,
-                              DHCP6_SERVER_PORT);
-            if (sock<0) {
+            sock1 = openSocket(iface->getName(), *addr, DHCP6_SERVER_PORT);
+            if (sock1<0) {
                 isc_throw(Unexpected, "Failed to open unicast socket on "
                           << " interface " << iface->getFullName());
             }
-            sendsock_ = sock;
 
-            sock = openSocket(iface->getName(),
-                              IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                              DHCP6_SERVER_PORT);
-            if (sock<0) {
+            if ( !joinMcast(sock1, iface->getName(),
+                             string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
+                close(sock1);
+                isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
+                          << " multicast group.");
+            }
+
+            // this doesn't work too well on NetBSD
+            sock2 = openSocket(iface->getName(),
+                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+                               DHCP6_SERVER_PORT);
+            if (sock2<0) {
                 isc_throw(Unexpected, "Failed to open multicast socket on "
                           << " interface " << iface->getFullName());
-                close(sendsock_);
-                sendsock_ = 0;
+                iface->delSocket(sock1); // delete previously opened socket
             }
-            recvsock_ = sock;
         }
     }
 }
@@ -308,7 +325,9 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
     cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
         addr.toText() << "/port=" << port << endl;
 
-    // TODO: Add socket to iface interface
+    SocketInfo info(sock, addr, port);
+    iface.addSocket(info);
+
     return (sock);
 }
 
@@ -370,7 +389,6 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
 #endif
 
     // multicast stuff
-
     if (addr.getAddress().to_v6().is_multicast()) {
         // both mcast (ALL_DHCP_RELAY_AGENTS_AND_SERVERS and ALL_DHCP_SERVERS)
         // are link and site-scoped, so there is no sense to join those groups
@@ -387,7 +405,8 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
     cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
         addr.toText() << "/port=" << port << endl;
 
-    // TODO: Add socket to iface interface
+    SocketInfo info(sock, addr, port);
+    iface.addSocket(info);
 
     return (sock);
 }
@@ -424,6 +443,13 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     int result;
     struct in6_pktinfo *pktinfo;
     struct cmsghdr *cmsg;
+
+    Iface* iface = getIface(pkt->iface_);
+    if (!iface) {
+        isc_throw(BadValue, "Unable to send Pkt6. Invalid interface ("
+                  << pkt->iface_ << ") specified.");
+    }
+
     memset(&control_buf_[0], 0, control_buf_len_);
 
     /*
@@ -475,14 +501,12 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     pktinfo->ipi6_ifindex = pkt->ifindex_;
     m.msg_controllen = cmsg->cmsg_len;
 
-    result = sendmsg(sendsock_, &m, 0);
+    result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
         cout << "Send packet failed." << endl;
     }
-    cout << "Sent " << result << " bytes." << endl;
-
-    cout << "Sent " << pkt->data_len_ << " bytes over "
-         << pkt->iface_ << "/" << pkt->ifindex_ << " interface: "
+    cout << "Sent " << pkt->data_len_ << " bytes over socket " << getSocket(*pkt)
+         << " on " << iface->getFullName() << " interface: "
          << " dst=" << pkt->remote_addr_.toText()
          << ", src=" << pkt->local_addr_.toText()
          << endl;
@@ -559,7 +583,34 @@ IfaceMgr::receive6() {
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
 
-    result = recvmsg(recvsock_, &m, 0);
+    /// TODO: Need to move to select() and pool over
+    /// all available sockets. For now, we just take the
+    /// first interface and use first socket from it.
+    IfaceCollection::const_iterator iface = ifaces_.begin();
+    if (iface == ifaces_.end()) {
+        isc_throw(Unexpected, "No interfaces detected. Can't receive anything.");
+    }
+    SocketCollection::const_iterator s = iface->sockets_.begin();
+    const SocketInfo* candidate = 0;
+    while (s != iface->sockets_.end()) {
+        if (s->addr_.getAddress().to_v6().is_multicast()) {
+            candidate = &(*s);
+            break;
+        }
+        if (!candidate) {
+            candidate = &(*s); // it's not multicast, but it's better than none
+        }
+        ++s;
+    }
+    if (!candidate) {
+        isc_throw(Unexpected, "Interface " << iface->getFullName()
+                  << " does not have any sockets open.");
+    }
+
+    cout << "Trying to receive over socket " << candidate->sockfd_ << " bound to "
+         << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
+         << iface->getFullName() << endl;
+    result = recvmsg(candidate->sockfd_, &m, 0);
 
     if (result >= 0) {
         /*
@@ -623,5 +674,61 @@ IfaceMgr::receive6() {
 
     return (pkt);
 }
+
+uint16_t
+IfaceMgr::getSocket(isc::dhcp::Pkt6 const& pkt) {
+    Iface* iface = getIface(pkt.iface_);
+    if (!iface) {
+        isc_throw(BadValue, "Tried to find socket for non-existent interface "
+                  << pkt.iface_);
+    }
+
+    SocketCollection::const_iterator s;
+    for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
+        if (s->family_ != AF_INET6) {
+            // don't use IPv4 sockets
+            continue;
+        }
+        if (s->addr_.getAddress().to_v6().is_multicast()) {
+            // don't use IPv6 sockets bound to multicast address
+            continue;
+        }
+        /// TODO: Add more checks here later. If remote address is
+        /// not link-local, we can't use link local bound socket
+        /// to send data.
+
+        return (s->sockfd_);
+    }
+
+    isc_throw(Unexpected, "Interface " << iface->getFullName()
+              << " does not have any suitable IPv6 sockets open.");
+}
+
+uint16_t
+IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
+    Iface* iface = getIface(pkt.getIface());
+    if (!iface) {
+        isc_throw(BadValue, "Tried to find socket for non-existent interface "
+                  << pkt.getIface());
+    }
+
+    SocketCollection::const_iterator s;
+    for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
+        if (s->family_ != AF_INET) {
+            // don't use IPv4 sockets
+            continue;
+        }
+        /// TODO: Add more checks here later. If remote address is
+        /// not link-local, we can't use link local bound socket
+        /// to send data.
+
+        return (s->sockfd_);
+    }
+
+    isc_throw(Unexpected, "Interface " << iface->getFullName()
+              << " does not have any suitable IPv4 sockets open.");
+}
+
+
 
 }
