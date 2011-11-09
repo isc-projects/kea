@@ -931,6 +931,11 @@ public:
                                       bool replace,
                                       bool journaling = false) const;
 
+    /// TBD
+    virtual ZoneJournalReaderPtr
+    getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
+                     uint32_t end_serial) const;
+
 private:
     /// \brief The RR class that this client handles.
     const isc::dns::RRClass rrclass_;

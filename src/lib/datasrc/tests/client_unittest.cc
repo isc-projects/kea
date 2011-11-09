@@ -37,6 +37,10 @@ public:
     {
         return (ZoneUpdaterPtr());
     }
+    virtual ZoneJournalReaderPtr
+    getJournalReader(const isc::dns::Name&, uint32_t, uint32_t) const {
+        return (ZoneJournalReaderPtr());
+    }
 };
 
 class ClientTest : public ::testing::Test {
