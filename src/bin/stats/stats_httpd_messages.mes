@@ -55,6 +55,12 @@ response will be sent back, and the specific error is printed. This
 is an error condition that likely points to a module that is not
 responding correctly to statistic requests.
 
+% STATHTTPD_SERVER_DATAERROR HTTP server data error: %1
+An internal error occurred while handling an HTTP request. An HTTP 404
+response will be sent back, and the specific error is printed. This
+is an error condition that likely points the specified data
+corresponding to the requested URI is incorrect.
+
 % STATHTTPD_SERVER_INIT_ERROR HTTP server initialization error: %1
 There was a problem initializing the HTTP server in the stats-httpd
 module upon receiving its configuration data. The most likely cause
