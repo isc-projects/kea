@@ -182,8 +182,9 @@ class TestHttpHandler(unittest.TestCase):
                                  + stats_httpd.XSL_URL_PATH + '/' + mod
                                  + '"?>'))
                 for k in DUMMY_DATA[mod].keys():
-                    self.assertIsNotNone(root.find(k))
-                    itm = root.find(k)
+                    self.assertIsNotNone(root.find(mod + '/' + k))
+                    itm = root.find(mod + '/' + k)
+                    self.assertIsNotNone(itm)
                     if type(DUMMY_DATA[mod][k]) is list:
                         for v in DUMMY_DATA[mod][k]:
                             for i in v:
@@ -198,7 +199,7 @@ class TestHttpHandler(unittest.TestCase):
                                  '<?xml-stylesheet type="text/xsl" href="'
                                  + stats_httpd.XSL_URL_PATH + '/' + mod + '/' + item
                                  + '"?>'))
-                self.assertIsNotNone(root.find(item))
+                self.assertIsNotNone(root.find(mod + '/' + item))
 
         # URL is '/bind10/statistics/xml'
         check_XML_URL_PATH(mod=None, item=None)
@@ -247,9 +248,12 @@ class TestHttpHandler(unittest.TestCase):
                                     self.assertTrue(
                                         k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
             elif item is None:
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                self.assertTrue(mod in mod_elm)
                 for (it, val) in DUMMY_DATA[mod].items():
-                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
-                    itm_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                    itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
                     self.assertTrue(it in itm_elm)
                     if type(val) is list:
                         xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
@@ -262,7 +266,10 @@ class TestHttpHandler(unittest.TestCase):
                                     k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
             else:
                 xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
-                itm_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                self.assertTrue(mod in mod_elm)
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
                 self.assertTrue(item in itm_elm)
                 if type(DUMMY_DATA[mod][item]) is list:
                     xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
@@ -328,11 +335,14 @@ class TestHttpHandler(unittest.TestCase):
                             itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
                             self.assertTrue(k in itm_vo)
             elif item is None:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                self.assertTrue(mod in mod_fe)
                 for (k, v) in DUMMY_DATA[mod].items():
                     if type(v) is list:
-                        xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                            + url_trans + 'for-each'
-                        itm_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_trans + 'for-each'
+                        itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
                         self.assertTrue(k in itm_fe)
                         for itms in v:
                             xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
@@ -346,21 +356,24 @@ class TestHttpHandler(unittest.TestCase):
                                 itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
                                 self.assertTrue(k in itm_vo)
                     else:
-                        xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                            + url_xhtml + 'tr/' + url_xhtml + 'td/' + url_trans + 'value-of'
-                        itm_vo = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                            + url_xhtml + 'td/' + url_trans + 'value-of'
+                        itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
                         self.assertTrue(k in itm_vo)
             else:
-                (k, v) = (item, DUMMY_DATA[mod][item])
-                if type(v) is list:
-                    xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                        + url_trans + 'for-each'
-                    itm_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
-                    self.assertTrue(k in itm_fe)
-                    for itms in v:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                self.assertTrue(mod in mod_fe)
+                if type(DUMMY_DATA[mod][item]) is list:
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_trans + 'for-each'
+                    itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
+                    self.assertTrue(item in itm_fe)
+                    for itms in DUMMY_DATA[mod][item]:
                         xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                             + url_xhtml + 'table/' + url_trans + 'for-each'
-                        itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
+                        itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[item].findall(xslpath) ])
                         self.assertTrue('zones' in itm_fe)
                         for (k, v) in itms.items():
                             xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
@@ -369,10 +382,11 @@ class TestHttpHandler(unittest.TestCase):
                             itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
                             self.assertTrue(k in itm_vo)
                 else:
-                    xslpath = url_trans + 'template/' + url_xhtml + 'table/' \
-                        + url_xhtml + 'tr/' + url_xhtml + 'td/' + url_trans + 'value-of'
-                    itm_vo = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
-                    self.assertTrue(k in itm_vo)
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                        + url_xhtml + 'td/' + url_trans + 'value-of'
+                    itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
+                    self.assertTrue(item in itm_vo)
 
         # URL is '/bind10/statistics/xsl'
         check_XSL_URL_PATH(mod=None, item=None)

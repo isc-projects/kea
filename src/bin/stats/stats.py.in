@@ -246,12 +246,12 @@ class Stats:
         self.update_statistics_data()
         if owner and name:
             try:
-                return self.statistics_data[owner][name]
+                return {owner:{name:self.statistics_data[owner][name]}}
             except KeyError:
                 pass
         elif owner:
             try:
-                return self.statistics_data[owner]
+                return {owner: self.statistics_data[owner]}
             except KeyError:
                 pass
         elif name:
@@ -360,9 +360,9 @@ class Stats:
         if owner:
             try:
                 if name:
-                    return isc.config.create_answer(0, schema_byname[owner][name])
+                    return isc.config.create_answer(0, {owner:[schema_byname[owner][name]]})
                 else:
-                    return isc.config.create_answer(0, schema[owner])
+                    return isc.config.create_answer(0, {owner:schema[owner]})
             except KeyError:
                 pass
         else:
