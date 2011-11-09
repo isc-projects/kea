@@ -1,3 +1,13 @@
+314.	[bug]		jelte
+	b10-xfrin would previously initiate incoming transfers upon 
+	receiving NOTIFY messages from any address (if the zone was 
+	known to b10-xfrin, and using the configured address). It now 
+	only starts a transfer if the source address from the NOTIFY 
+	packet matches the configured master address and port. This was 
+	really already fixed in release bind10-devel-20111014, but there 
+	were some deferred cleanups to add.
+	(Trac #1298, git 1177bfe30e17a76bea6b6447e14ae9be9e1ca8c2)
+
 313.	[func]		jinmei
 	datasrc: Added C++ API for adding zone differences to database
 	based data sources.  It's intended to be used for the support for
