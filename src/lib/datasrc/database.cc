@@ -832,6 +832,7 @@ public:
         committed_(false), accessor_(accessor), zone_id_(zone_id),
         db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
         zone_class_(zone_class), journaling_(journaling),
+        diff_phase_(NOT_STARTED),
         finder_(new DatabaseClient::Finder(accessor_, zone_id_, zone_name))
     {
         logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
@@ -874,6 +875,14 @@ private:
     const string zone_name_;
     const RRClass zone_class_;
     const bool journaling_;
+    // For the journals
+    enum DiffPhase {
+        NOT_STARTED,
+        DELETE,
+        ADD
+    };
+    DiffPhase diff_phase_;
+    uint32_t serial_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
 };
 
@@ -893,6 +902,19 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
                   << zone_name_ << "/" << zone_class_ << ": "
                   << rrset.toText());
     }
+    if (rrset.getType() == RRType::SOA() && diff_phase_ == ADD &&
+        journaling_) {
+        isc_throw(isc::BadValue, "Another SOA added inside an add sequence");
+    }
+    if (rrset.getType() != RRType::SOA() && diff_phase_ != ADD &&
+        journaling_) {
+        isc_throw(isc::BadValue, "Adding sequence not started by SOA");
+    }
+    if (rrset.getType() == RRType::SOA() && diff_phase_ != DELETE &&
+        journaling_) {
+        isc_throw(isc::BadValue,
+                  "Adding sequence can follow only after delete");
+    }
 
     RdataIteratorPtr it = rrset.getRdataIterator();
     if (it->isLast()) {
@@ -907,6 +929,21 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
         rrset.getName().reverse().toText();
     columns[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
     columns[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
+    string journal[DatabaseAccessor::DIFF_PARAM_COUNT];
+    if (journaling_) {
+        journal[DatabaseAccessor::DIFF_NAME] =
+            columns[DatabaseAccessor::ADD_NAME];
+        journal[DatabaseAccessor::DIFF_TYPE] =
+            columns[DatabaseAccessor::ADD_TYPE];
+        journal[DatabaseAccessor::DIFF_TTL] =
+            columns[DatabaseAccessor::ADD_TTL];
+        diff_phase_ = ADD;
+        if (rrset.getType() == RRType::SOA()) {
+            serial_ =
+                dynamic_cast<const rdata::generic::SOA&>(it->getCurrent()).
+                getSerial();
+        }
+    }
     for (; !it->isLast(); it->next()) {
         if (rrset.getType() == RRType::RRSIG()) {
             // XXX: the current interface (based on the current sqlite3
@@ -920,6 +957,16 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
                 rrsig_rdata.typeCovered().toText();
         }
         columns[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        if (journaling_) {
+            journal[DatabaseAccessor::DIFF_RDATA] =
+                columns[DatabaseAccessor::ADD_RDATA];
+            try {
+                accessor_->addRecordDiff(zone_id_, serial_,
+                                         DatabaseAccessor::DIFF_ADD, journal);
+            }
+            // We ignore not implemented
+            catch (const isc::NotImplemented&) {}
+        }
         accessor_->addRecordToZone(columns);
     }
 }
@@ -940,6 +987,15 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
                   << zone_name_ << "/" << zone_class_ << ": "
                   << rrset.toText());
     }
+    if (rrset.getType() == RRType::SOA() && diff_phase_ == DELETE &&
+        journaling_) {
+        isc_throw(isc::BadValue,
+                  "Another SOA delete inside a delete sequence");
+    }
+    if (rrset.getType() != RRType::SOA() && diff_phase_ != DELETE &&
+        journaling_) {
+        isc_throw(isc::BadValue, "Delete sequence not started by SOA");
+    }
 
     RdataIteratorPtr it = rrset.getRdataIterator();
     if (it->isLast()) {
@@ -951,8 +1007,33 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
     string params[DatabaseAccessor::DEL_PARAM_COUNT]; // initialized with ""
     params[DatabaseAccessor::DEL_NAME] = rrset.getName().toText();
     params[DatabaseAccessor::DEL_TYPE] = rrset.getType().toText();
+    string journal[DatabaseAccessor::DIFF_PARAM_COUNT];
+    if (journaling_) {
+        journal[DatabaseAccessor::DIFF_NAME] =
+            params[DatabaseAccessor::DEL_NAME];
+        journal[DatabaseAccessor::DIFF_TYPE] =
+            params[DatabaseAccessor::DEL_TYPE];
+        journal[DatabaseAccessor::DIFF_TTL] = rrset.getTTL().toText();
+        diff_phase_ = DELETE;
+        if (rrset.getType() == RRType::SOA()) {
+            serial_ =
+                dynamic_cast<const rdata::generic::SOA&>(it->getCurrent()).
+                getSerial();
+        }
+    }
     for (; !it->isLast(); it->next()) {
         params[DatabaseAccessor::DEL_RDATA] = it->getCurrent().toText();
+        if (journaling_) {
+            journal[DatabaseAccessor::DIFF_RDATA] =
+                params[DatabaseAccessor::DEL_RDATA];
+            try {
+                accessor_->addRecordDiff(zone_id_, serial_,
+                                         DatabaseAccessor::DIFF_DELETE,
+                                         journal);
+            }
+            // Don't fail if the backend can't store them
+            catch(const isc::NotImplemented&) {}
+        }
         accessor_->deleteRecordInZone(params);
     }
 }
@@ -963,6 +1044,9 @@ DatabaseUpdater::commit() {
         isc_throw(DataSourceError, "Duplicate commit attempt for "
                   << zone_name_ << "/" << zone_class_ << " on "
                   << db_name_);
+    }
+    if (journaling_ && diff_phase_ == DELETE) {
+        isc_throw(isc::Unexpected, "Update sequence not complete");
     }
     accessor_->commit();
     committed_ = true; // make sure the destructor won't trigger rollback
@@ -980,7 +1064,10 @@ ZoneUpdaterPtr
 DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
                            bool journaling) const
 {
-    // TODO: Handle journaling (pass it to the updater)
+    if (replace && journaling) {
+        isc_throw(isc::BadValue, "Can't store journal and replace the whole "
+                  "zone at the same time");
+    }
     shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
     const std::pair<bool, int> zone(update_accessor->startUpdateZone(
                                         name.toText(), replace));
