@@ -130,7 +130,7 @@ class SetUID(BaseComponent):
             posix.setuid(self.uid)
 
     def _stop_internal(self): pass
-    def kill(self, forefull=False): pass
+    def kill(self, forcefull=False): pass
 
     def name(self):
         return "Set UID"
