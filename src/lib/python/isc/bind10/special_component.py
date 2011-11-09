@@ -18,6 +18,10 @@ import isc.bind10.sockcreator
 from bind10_config import LIBEXECDIR
 import os
 import posix
+import isc.log
+from isc.log_messages.bind10_messages import *
+
+logger = isc.log.Logger("boss")
 
 class SockCreator(BaseComponent):
     """
@@ -122,7 +126,7 @@ class SetUID(BaseComponent):
 
     def _start_internal(self):
         if self.uid is not None:
-            # TODO: log
+            logger.info(BIND10_SETUID, self.uid)
             posix.setuid(self.uid)
 
     def _stop_internal(self): pass

@@ -149,6 +149,9 @@ The boss module is sending a SIGKILL signal to the given process.
 % BIND10_SEND_SIGTERM sending SIGTERM to %1 (PID %2)
 The boss module is sending a SIGTERM signal to the given process.
 
+% BIND10_SETUID setting UID to %1
+The boss switches the user it runs as to the given UID.
+
 % BIND10_SHUTDOWN stopping the server
 The boss process received a command or signal telling it to shut down.
 It will send a shutdown command to each process. The processes that do
