@@ -50,9 +50,7 @@ if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Stopping b10-auth and checking that ($n)"
-echo 'config add Boss/components x
-config remove Boss/components b10-auth
-config remove Boss/components x
+echo 'config remove Boss/components b10-auth
 config commit
 quit
 ' | $RUN_BINDCTL \
