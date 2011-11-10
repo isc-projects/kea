@@ -26,17 +26,24 @@
  * Input varibles:
  * argc, argv: Command line data.
  *
- * Output variables:
- * confdata; Processed command line data.
- * server: The server to contact.  This will always be set, either to the given
- *     value or to "all" (see usage).
- *
  * Return value:
  * 0 if the command has been satisfied and the program should exit 0.
  * 2 for usage error, in which case an error message will have been printed.
  * 1 if argument processing was successful and the program should continue.
  */
-int procArgs(int argc, const char* argv[], confdata_t* confdata,
-             const char** server);
+int procArgs(int argc, const char* argv[]);
+
+/*
+ * These functions return values set by command line options
+ */
+int getv6(void);                // DHCPv6 operation (-6)
+int getinitialOnly(void);       // Do only initial exchange (-i)
+unsigned getrate(void);         // Request rate (-r)
+unsigned getnumRequest(void);   // Number of requests (-n)
+double getdropTime(void);       // Response timeout (-d)
+double gettestPeriod(void);     // Test period (-p)
+const char* getserver(void);    // Server to contact
+const char* getlocalName(void); // Local host/interface (-l)
+const char* getmaxDrop(void);   // Max dropped responses (-D)
 
 #endif

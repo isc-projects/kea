@@ -18,8 +18,20 @@
 #include "procconf.h"
 #include "perfdhcp.h"
 #include "cloptions.h"
+#include "dkdebug.h"
 
 static void printHelp(const char* progName, const char* usage);
+static void initialize(void);
+
+static int v6 = 0;                      // DHCPv6 operation (-6)
+static int initialOnly = 0;             // Do only initial exchange (-i)
+static unsigned rate = 0;               // Request rate (-r)
+static unsigned numRequest = 0;         // Number of requests (-n)
+static double dropTime = 0.0;           // Response timeout (-d)
+static double testPeriod = 0.0;         // Test period (-p)
+static const char* server;              // Server to contact
+static const char* maxDropOpt = NULL;   // Max dropped responses (-D)
+static const char* localName = NULL;    // Local host/interface (-l)
 
 /*
  * Return value:
@@ -28,53 +40,68 @@ static void printHelp(const char* progName, const char* usage);
  * 1 if argument processing was successful and the program should continue.
  */
 int
-procArgs(int argc, const char* argv[], confdata_t* confdata,
-         const char** server) {
+procArgs(int argc, const char* argv[]) {
     char usage[] =
         "Usage:\n\
 perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
          [-d<drop-time>] [-D<max-drop>] [-l<local-addr|interface>] [-i]\n\
          [-x<diagnostic-selector>] [server]\n";
-    int v4 = 0;
-    int v6 = 0;
-    const char* localName = NULL;
-    const char* msg;
+    int v4 = 0;                 /* DHCPv4 operation explicitly requested */
+    const char* msg;            /* Failure message from procOpts() */
+    int help = 0;               /* Help requested */
+    int version = 0;            /* Version requested */
+    const char* diagStr = NULL; /* Diagnostics requested (-x) */
 
-    char* maxDropOpt;
-    double dropTime;
-    double testPeriod;
-
-    /* Names of configuration variables, for defaults file processor */
+    /* option descriptions */
     confvar_t optConf[] = {
-        { 'h', NULL,        CF_SWITCH,    NULL,        0 },
-        { 'v', NULL,        CF_SWITCH,    NULL,        0 },
-        { '4', NULL,        CF_SWITCH,    &v4,         1 },
-        { '6', NULL,        CF_SWITCH,    &v6,         1 },
-        { 'i', NULL,        CF_SWITCH,    NULL,        1 },
-        { 'l', NULL,        CF_NE_STRING, &localName,  0 },
-        { 'r', NULL,        CF_POS_INT,   NULL,        0 },
-        { 'x', NULL,        CF_STRING,    NULL,        0 },
-        { 'd', NULL,        CF_POS_FLOAT, &dropTime,   0 },
-        { 'D', NULL,        CF_NE_STRING, &maxDropOpt, 0 },
-        { 'n', NULL,        CF_POS_INT,   NULL,        0 },
-        { 'p', NULL,        CF_POS_FLOAT, &testPeriod, 0 },
-        { '\0', NULL,       CF_ENDLIST,   NULL,        0 }
+        { 'h', NULL,        CF_SWITCH,    &help,        1 },
+        { 'v', NULL,        CF_SWITCH,    &version,     1 },
+        { '4', NULL,        CF_SWITCH,    &v4,          1 },
+        { '6', NULL,        CF_SWITCH,    &v6,          1 },
+        { 'i', NULL,        CF_SWITCH,    &initialOnly, 1 },
+        { 'l', NULL,        CF_NE_STRING, &localName,   0 },
+        { 'r', NULL,        CF_POS_INT,   &rate,        0 },
+        { 'n', NULL,        CF_POS_INT,   &numRequest,  0 },
+        { 'd', NULL,        CF_POS_FLOAT, &dropTime,    0 },
+        { 'p', NULL,        CF_POS_FLOAT, &testPeriod,  0 },
+        { 'D', NULL,        CF_NE_STRING, &maxDropOpt,  0 },
+        { 'x', NULL,        CF_STRING,    &diagStr,     0 },
+        { '\0', NULL,       CF_ENDLIST,   NULL,         0 }
     };
 
-    /* Process command line options and config file */
-    msg = procOpts(&argc, &argv, optConf, confdata, progName, NULL);
+    /* diagnostic map */
+    const struct dkdesc diagLetters[] = {
+        { 's', DK_SOCK },
+        { 'm', DK_MSG },
+        { 'p', DK_PACKET },
+        { 'a', DK_ALL },
+        { '\0', 0 }
+    };
+
+    initialize();
+    /* Process command line options */
+    msg = procOpts(&argc, &argv, optConf, NULL, progName, NULL);
     if (msg != NULL) {
         fprintf(stderr, "%s: %s\n", progName, msg);
         return(2);
     }
 
-    if (confdata->map['h']->num > 0) {
+    if (help) {
         printHelp(progName, usage);
         return(0);
     }
-    if (confdata->map['v']->num > 0) {
+    if (version) {
         printf("dhcpperf v1.0 2011-10-30\n");
         return(0);
+    }
+    if (diagStr != NULL) {
+        char c;
+        if ((c = dk_setup(diagStr, diagLetters)) != '\0') {
+            fprintf(stderr,
+                    "%s: Invalid selector character given with -x: '%c'\n",
+                    progName, c);
+            return(2);
+        }
     }
 
     if (v4 && v6) {
@@ -84,7 +111,7 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
     switch (argc) {
     case 0:
         if (v6 && localName != NULL) {
-            *server = "all";
+            server = "all";
         } else {
             if (v6) {
                 fprintf(stderr,
@@ -99,13 +126,29 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
         }
         break;
     case 1:
-        *server = argv[0];
+        server = argv[0];
         break;
     default:
         fprintf(stderr, "%s: Too many arguments.\n\%s\n", progName, usage);
         return(2);
     }
     return(1);
+}
+
+/*
+ * Initialize values set by procArgs().
+ * Initialized though they are static to allow for repeated calls for testing.
+ */
+static void
+initialize(void) {
+    v6 = 0;
+    initialOnly = 0;
+    rate = 0;
+    numRequest = 0;
+    dropTime = 0.0;
+    testPeriod = 0.0;
+    maxDropOpt = NULL;
+    localName = NULL;
 }
 
 static void
@@ -152,8 +195,8 @@ Options:\n\
     generated.\n\
 -v: Report the version number of this program.\n\
 -x<diagnostic-selector>: Include extended diagnostics in the output.\n\
-    <diagnostic-selector> is a string of single-keywords specifying the\n\
-    operations for which verbose output is desired.  The selector keyletters\n\
+    <diagnostic-selector> is a string of characters, each specifying an\n\
+    operation for which verbose output is desired.  The selector characters\n\
     are:\n\
     [TO BE ADDED]\n\
 \n\
@@ -184,4 +227,49 @@ The exit status is:\n\
 3 if there are no general failures in operation, but one or more exchanges\n\
   are not successfully completed.\n",
         progName, usage);
+}
+
+int
+getv6(void) {
+    return v6;
+}
+
+int
+getinitialOnly(void) {
+    return initialOnly;
+}
+
+unsigned
+getrate(void) {
+    return rate;
+}
+
+unsigned
+getnumRequest(void) {
+    return numRequest;
+}
+
+double
+getdropTime(void) {
+    return dropTime;
+}
+
+double
+gettestPeriod(void) {
+    return testPeriod;
+}
+
+const char *
+getserver(void) {
+    return server;
+}
+
+const char *
+getlocalName(void) {
+    return localName;
+}
+
+const char *
+getmaxDrop(void) {
+    return maxDropOpt;
 }

@@ -20,22 +20,23 @@
 
 unsigned dk_diag_mask;
 
-int
+char
 dk_setup(const char* diag_str, const struct dkdesc* diags) {
     dk_diag_mask = 0;
     int i;
 
-    for (; *diag_str != '\0'; diag_str++)
+    for (; *diag_str != '\0'; diag_str++) {
         for (i = 0; diags[i].keyletter != '\0'; i++) {
             if (diags[i].keyletter == *diag_str) {
                 dk_diag_mask |= diags[i].mask;
                 break;
             }
-            if (diags[i].keyletter == '\0') {
-                return(0);
-            }
         }
-    return(1);
+        if (diags[i].keyletter == '\0') {
+            return(*diag_str);
+        }
+    }
+    return('\0');
 }
 
 void
@@ -56,5 +57,5 @@ vdkprintf(unsigned diag_req, const char format[], va_list ap) {
 
 int
 dk_set(unsigned diag_req) {
-    return(diag_req & dk_diag_mask);
+    return((diag_req & dk_diag_mask) != 0);
 }

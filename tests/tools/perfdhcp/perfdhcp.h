@@ -21,6 +21,10 @@
 extern "C" {
 #endif
 
+#define DK_SOCK 1
+#define DK_MSG 2
+#define DK_PACKET 4
+
 const char progName[] = "dhcpperf";
 
 #ifdef __cplusplus
