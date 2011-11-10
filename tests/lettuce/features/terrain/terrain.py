@@ -249,7 +249,7 @@ class RunningProcesses:
         Fails if a process with the given name is already running.
         """
         assert process_name not in self.processes,\
-            "Process " + name + " already running"
+            "Process " + process_name + " already running"
         self.processes[process_name] = RunningProcess(step, process_name, args)
 
     def get_process(self, process_name):
