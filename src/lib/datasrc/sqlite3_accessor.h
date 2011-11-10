@@ -131,6 +131,8 @@ public:
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
                                                  bool replace);
 
+    virtual void startTransaction();
+
     /// \note we are quite impatient here: it's quite possible that the COMMIT
     /// fails due to other process performing SELECT on the same database
     /// (consider the case where COMMIT is done by xfrin or dynamic update
@@ -139,7 +141,7 @@ public:
     /// attempt and/or increase timeout before giving up the COMMIT, even
     /// if it still doesn't guarantee 100% success.  Right now this
     /// implementation throws a \c DataSourceError exception in such a case.
-    virtual void commitUpdateZone();
+    virtual void commit();
 
     /// \note In SQLite3 rollback can fail if there's another unfinished
     /// statement is performed for the same database structure.
@@ -147,13 +149,30 @@ public:
     /// guaranteed to be prevented at the API level.  If it ever happens, this
     /// method throws a \c DataSourceError exception.  It should be
     /// considered a bug of the higher level application program.
-    virtual void rollbackUpdateZone();
+    virtual void rollback();
 
     virtual void addRecordToZone(
         const std::string (&columns)[ADD_COLUMN_COUNT]);
 
     virtual void deleteRecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]);
+
+    /// This derived version of the method prepares an SQLite3 statement
+    /// for adding the diff first time it's called, and if it fails throws
+    // an \c SQLite3Error exception.
+    virtual void addRecordDiff(
+        int zone_id, uint32_t serial, DiffOperation operation,
+        const std::string (&params)[DIFF_PARAM_COUNT]);
+
+    // A short term method for tests until we implement more complete
+    // API to retrieve diffs (#1330).  It returns all records of the diffs
+    // table whose zone_id column is identical to the given value.
+    // Since this is a short term workaround, it ignores some corner cases
+    // (such as an SQLite3 execution failure) and is not very efficient,
+    // in favor of brevity.  Once #1330 is completed, this method must be
+    // removed, and the tests using this method must be rewritten using the
+    // official API.
+    std::vector<std::vector<std::string> > getRecordDiff(int zone_id);
 
     /// The SQLite3 implementation of this method returns a string starting
     /// with a fixed prefix of "sqlite3_" followed by the DB file name

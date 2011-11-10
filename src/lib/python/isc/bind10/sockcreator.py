@@ -18,6 +18,7 @@ import struct
 import os
 import copy
 import subprocess
+import copy
 from isc.log_messages.bind10_messages import *
 from libutil_io_python import recv_fd
 

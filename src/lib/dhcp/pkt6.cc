@@ -63,7 +63,7 @@ unsigned short
 Pkt6::len() {
     unsigned int length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (Option::Option6Collection::iterator it = options_.begin();
+    for (Option::OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -88,6 +88,13 @@ Pkt6::pack() {
 
 bool
 Pkt6::packUDP() {
+
+    // TODO: Once OutputBuffer is used here, some thing like this
+    // will be used. Yikes! That's ugly.
+    // bufferOut_.writeData(ciaddr_.getAddress().to_v6().to_bytes().data(), 16);
+    // It is better to implement a method in IOAddress that extracts
+    // vector<uint8_t>
+
     unsigned short length = len();
     if (data_len_ < length) {
         cout << "Previous len=" << data_len_ << ", allocating new buffer: len="
@@ -190,7 +197,7 @@ Pkt6::toText() {
         << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << msg_type_ << ", transid=0x" << hex << transid_
         << dec << endl;
-    for (isc::dhcp::Option::Option6Collection::iterator opt=options_.begin();
+    for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << opt->second->toText() << std::endl;
@@ -200,7 +207,7 @@ Pkt6::toText() {
 
 boost::shared_ptr<isc::dhcp::Option>
 Pkt6::getOption(unsigned short opt_type) {
-    isc::dhcp::Option::Option6Collection::const_iterator x = options_.find(opt_type);
+    isc::dhcp::Option::OptionCollection::const_iterator x = options_.find(opt_type);
     if (x!=options_.end()) {
         return (*x).second;
     }
@@ -214,7 +221,7 @@ Pkt6::addOption(boost::shared_ptr<Option> opt) {
 
 bool
 Pkt6::delOption(unsigned short type) {
-    isc::dhcp::Option::Option6Collection::iterator x = options_.find(type);
+    isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
     if (x!=options_.end()) {
         options_.erase(x);
         return (true); // delete successful

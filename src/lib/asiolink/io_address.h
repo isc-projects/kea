@@ -19,6 +19,7 @@
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
+#include <stdint.h>             // for uint32_t
 #include <asio/ip/address.hpp>
 
 #include <functional>
@@ -70,6 +71,15 @@ public:
     /// \param asio_address The ASIO \c ip::address to be converted.
     IOAddress(const asio::ip::address& asio_address);
     //@}
+
+    /// @brief Constructor for ip::address_v4 object.
+    ///
+    /// This constructor is intented to be used when constructing
+    /// IPv4 address out of uint32_t type. Passed value must be in
+    /// network byte order
+    ///
+    /// @param v4address IPv4 address represnted by uint32_t
+    IOAddress(uint32_t v4address);
 
     /// \brief Convert the address to a string.
     ///
@@ -139,6 +149,14 @@ public:
         return (nequals(other));
     }
 
+    /// \brief Converts IPv4 address to uint32_t
+    ///
+    /// Will throw BadValue exception if that is not IPv4
+    /// address.
+    ///
+    /// \return uint32_t that represents IPv4 address in
+    ///         network byte order
+    operator uint32_t () const;
 
 private:
     asio::ip::address asio_address_;

@@ -20,6 +20,7 @@ import sys
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
+import xfrin
 from isc.xfrin.diff import Diff
 import isc.log
 
@@ -2021,6 +2022,19 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.command_handler("notify",
                                                   self.args)['result'][0], 1)
 
+        # also try a different port in the actual command
+        zones = { 'zones': [
+                  { 'name': TEST_ZONE_NAME_STR,
+                    'master_addr': TEST_MASTER_IPV6_ADDRESS,
+                    'master_port': str(int(TEST_MASTER_PORT) + 1)
+                  }
+                ]}
+        self.xfr.config_handler(zones)
+        # the command should now fail
+        self.assertEqual(self.xfr.command_handler("notify",
+                                                  self.args)['result'][0], 1)
+
+
     def test_command_handler_notify_known_zone(self):
         # try it with a known zone
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
@@ -2035,21 +2049,6 @@ class TestXfrin(unittest.TestCase):
         self.xfr.config_handler(zones)
         self.assertEqual(self.xfr.command_handler("notify",
                                                   self.args)['result'][0], 0)
-
-        # Note: The rest of the tests won't pass due to the change in #1298
-        # We should probably simply remove the test cases, but for now we
-        # just comment them out.  (Note also that the comment about 'not
-        # from the config' is now wrong, because we used the matching address.)
-        #
-        # and see if we used the address from the command, and not from
-        # the config
-        # This is actually NOT the address given in the command, which
-        # would at this point not make sense, see the TODO in
-        # xfrin.py.in Xfrin.command_handler())
-#         self.assertEqual(TEST_MASTER_IPV4_ADDRESS,
-#                          self.xfr.xfrin_started_master_addr)
-#         self.assertEqual(int(TEST_MASTER_PORT),
-#                          self.xfr.xfrin_started_master_port)
 
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
@@ -2286,6 +2285,184 @@ class TestMain(unittest.TestCase):
     def test_startup_generalerror(self):
         MockXfrin.check_command_hook = raise_exception
         main(MockXfrin, False)
+
+class TestXfrinProcess(unittest.TestCase):
+    """
+    Some tests for the xfrin_process function. This replaces the
+    XfrinConnection class with itself, so we can emulate whatever behavior we
+    might want.
+
+    Currently only tests for retry if IXFR fails.
+    """
+    def setUp(self):
+        """
+        Backs up the original class implementation so it can be restored
+        and places our own version in place of the constructor.
+
+        Also sets up several internal variables to watch what happens.
+        """
+        # This will hold a "log" of what transfers were attempted.
+        self.__transfers = []
+        # This will "log" if failures or successes happened.
+        self.__published = []
+        # How many connections were created.
+        self.__created_connections = 0
+
+    def __get_connection(self, *args):
+        """
+        Provides a "connection". To mock the connection and see what it is
+        asked to do, we pretend to be the connection.
+        """
+        self.__created_connections += 1
+        return self
+
+    def connect_to_master(self):
+        """
+        Part of pretending to be the connection. It pretends it connected
+        correctly every time.
+        """
+        return True
+
+    def do_xfrin(self, check_soa, request_type):
+        """
+        Part of pretending to be the connection. It looks what answer should
+        be answered now and logs what request happened.
+        """
+        self.__transfers.append(request_type)
+        ret = self.__rets[0]
+        self.__rets = self.__rets[1:]
+        return ret
+
+    def zone_str(self):
+        """
+        Part of pretending to be the connection. It provides the logging name
+        of zone.
+        """
+        return "example.org/IN"
+
+    def publish_xfrin_news(self, zone_name, rrclass, ret):
+        """
+        Part of pretending to be the server as well. This just logs the
+        success/failure of the previous operation.
+        """
+        self.__published.append(ret)
+
+    def close(self):
+        """
+        Part of pretending to be the connection.
+        """
+        pass
+
+    def init_socket(self):
+        """
+        Part of pretending to be the connection.
+        """
+        pass
+
+    def __do_test(self, rets, transfers, request_type):
+        """
+        Do the actual test. The request type, prepared sucesses/failures
+        and expected sequence of transfers is passed to specify what test
+        should happen.
+        """
+        self.__rets = rets
+        published = rets[-1]
+        xfrin.process_xfrin(self, XfrinRecorder(), Name("example.org."),
+                            RRClass.IN(), None, None, None, True, None,
+                            request_type, self.__get_connection)
+        self.assertEqual([], self.__rets)
+        self.assertEqual(transfers, self.__transfers)
+        # Create a connection for each attempt
+        self.assertEqual(len(transfers), self.__created_connections)
+        self.assertEqual([published], self.__published)
+
+    def test_ixfr_ok(self):
+        """
+        Everything OK the first time, over IXFR.
+        """
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+
+    def test_axfr_ok(self):
+        """
+        Everything OK the first time, over AXFR.
+        """
+        self.__do_test([XFRIN_OK], [RRType.AXFR()], RRType.AXFR())
+
+    def test_axfr_fail(self):
+        """
+        The transfer failed over AXFR. Should not be retried (we don't expect
+        to fail on AXFR, but succeed on IXFR and we didn't use IXFR in the first
+        place for some reason.
+        """
+        self.__do_test([XFRIN_FAIL], [RRType.AXFR()], RRType.AXFR())
+
+    def test_ixfr_fallback(self):
+        """
+        The transfer fails over IXFR, but suceeds over AXFR. It should fall back
+        to it and say everything is OK.
+        """
+        self.__do_test([XFRIN_FAIL, XFRIN_OK], [RRType.IXFR(), RRType.AXFR()],
+                       RRType.IXFR())
+
+    def test_ixfr_fail(self):
+        """
+        The transfer fails both over IXFR and AXFR. It should report failure
+        (only once) and should try both before giving up.
+        """
+        self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
+                       [RRType.IXFR(), RRType.AXFR()], RRType.IXFR())
+class TestFormatting(unittest.TestCase):
+    # If the formatting functions are moved to a more general library
+    # (ticket #1379), these tests should be moved with them.
+    def test_format_zone_str(self):
+        self.assertEqual("example.com/IN",
+                         format_zone_str(isc.dns.Name("example.com"),
+                         isc.dns.RRClass("IN")))
+        self.assertEqual("example.com/CH",
+                         format_zone_str(isc.dns.Name("example.com"),
+                         isc.dns.RRClass("CH")))
+        self.assertEqual("example.org/IN",
+                         format_zone_str(isc.dns.Name("example.org"),
+                         isc.dns.RRClass("IN")))
+    
+    def test_format_addrinfo(self):
+        # This test may need to be updated if the input type is changed,
+        # right now it is a nested tuple:
+        # (family, sockettype, (address, port))
+        # of which sockettype is ignored
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
+                                          ("192.0.2.1", 53))))
+        self.assertEqual("192.0.2.2:53",
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
+                                          ("192.0.2.2", 53))))
+        self.assertEqual("192.0.2.1:54",
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
+                                          ("192.0.2.1", 54))))
+        self.assertEqual("[2001:db8::1]:53",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::1", 53))))
+        self.assertEqual("[2001:db8::2]:53",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::2", 53))))
+        self.assertEqual("[2001:db8::1]:54",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::1", 54))))
+        self.assertEqual("/some/file",
+                         format_addrinfo((socket.AF_UNIX, socket.SOCK_STREAM,
+                                          "/some/file")))
+        # second element of passed tuple should be ignored
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, None,
+                                          ("192.0.2.1", 53))))
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, "Just some string",
+                                          ("192.0.2.1", 53))))
+        self.assertRaises(TypeError, format_addrinfo, 1)
+        self.assertRaises(TypeError, format_addrinfo,
+                                     (socket.AF_INET, "asdf"))
+        self.assertRaises(TypeError, format_addrinfo,
+                                     (socket.AF_INET, "asdf", ()))
 
 if __name__== "__main__":
     try:
