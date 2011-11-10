@@ -17,6 +17,11 @@ from isc.bind10.component import Component, BaseComponent
 import isc.bind10.sockcreator
 from bind10_config import LIBEXECDIR
 import os
+import posix
+import isc.log
+from isc.log_messages.bind10_messages import *
+
+logger = isc.log.Logger("boss")
 
 class SockCreator(BaseComponent):
     """
@@ -108,6 +113,31 @@ class XfrIn(Component):
         Component.__init__(self, process, boss, kind, 'Xfrin', None,
                            boss.start_xfrin)
 
+class SetUID(BaseComponent):
+    """
+    This is a pseudo-component which drops root privileges when started
+    and sets the uid stored in boss.
+
+    This component does nothing when stopped.
+    """
+    def __init__(self, process, boss, kind, address=None, params=None):
+        BaseComponent.__init__(self, boss, kind)
+        self.uid = boss.uid
+
+    def _start_internal(self):
+        if self.uid is not None:
+            logger.info(BIND10_SETUID, self.uid)
+            posix.setuid(self.uid)
+
+    def _stop_internal(self): pass
+    def kill(self, forcefull=False): pass
+
+    def name(self):
+        return "Set UID"
+
+    def pid(self):
+        return None
+
 def get_specials():
     """
     List of specially started components. Each one should be the class than can
@@ -123,5 +153,7 @@ def get_specials():
         'resolver': Resolver,
         'cmdctl': CmdCtl,
         # FIXME: Temporary workaround before #1292 is done
-        'xfrin': XfrIn
+        'xfrin': XfrIn,
+        # TODO: Remove when not needed, workaround before sockcreator works
+        'setuid': SetUID
     }
