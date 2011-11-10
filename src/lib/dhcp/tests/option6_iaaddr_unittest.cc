@@ -75,6 +75,8 @@ TEST_F(Option6IAAddrTest, basic) {
 
     EXPECT_EQ(78, offset);
 
+    EXPECT_EQ(Option::V6, opt->getUniverse());
+
     // 4 bytes header + 4 bytes content
     EXPECT_EQ("2001:db8:1::dead:beef", opt->getAddress().toText());
     EXPECT_EQ(1000, opt->getPreferred());

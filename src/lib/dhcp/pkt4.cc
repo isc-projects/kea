@@ -47,7 +47,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferIn_(0), // not used, this is TX packet
+      bufferIn_(NULL, 0), // not used, this is TX packet
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(msg_type)
 {
@@ -73,36 +73,82 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferIn_(0), // not used, this is TX packet
-      bufferOut_(DHCPV4_PKT_HDR_LEN),
+      bufferIn_(data, len),
+      bufferOut_(0), // not used, this is RX packet
       msg_type_(DHCPDISCOVER)
 {
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
-                  << " received, at least 236 bytes expected.");
+                  << " received, at least " << DHCPV4_PKT_HDR_LEN
+                  << "is expected");
     }
-    bufferIn_.writeData(data, len);
 }
 
 size_t
 Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
-    /// TODO: Include options here (ticket #1228)
+    // ... and sum of lengths of all options
+    for (Option::OptionCollection::const_iterator it = options_.begin();
+         it != options_.end();
+         ++it) {
+        length += (*it).second->len();
+    }
+
     return (length);
 }
 
 bool
 Pkt4::pack() {
-    /// TODO: Implement this (ticket #1227)
+    bufferOut_.writeUint8(op_);
+    bufferOut_.writeUint8(htype_);
+    bufferOut_.writeUint8(hlen_);
+    bufferOut_.writeUint8(hops_);
+    bufferOut_.writeUint32(transid_);
+    bufferOut_.writeUint16(secs_);
+    bufferOut_.writeUint16(flags_);
+    bufferOut_.writeUint32(ciaddr_);
+    bufferOut_.writeUint32(yiaddr_);
+    bufferOut_.writeUint32(siaddr_);
+    bufferOut_.writeUint32(giaddr_);
+    bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
+    bufferOut_.writeData(sname_, MAX_SNAME_LEN);
+    bufferOut_.writeData(file_, MAX_FILE_LEN);
 
-    return (false);
+    LibDHCP::packOptions(bufferOut_, options_);
+
+    return (true);
 }
 bool
 Pkt4::unpack() {
-    /// TODO: Implement this (ticket #1226)
+    if (bufferIn_.getLength()<DHCPV4_PKT_HDR_LEN) {
+        isc_throw(OutOfRange, "Received truncated DHCPv4 packet (len="
+                  << bufferIn_.getLength() << " received, at least "
+                  << DHCPV4_PKT_HDR_LEN << "is expected");
+    }
 
-    return (false);
+    op_ = bufferIn_.readUint8();
+    htype_ = bufferIn_.readUint8();
+    hlen_ = bufferIn_.readUint8();
+    hops_ = bufferIn_.readUint8();
+    transid_ = bufferIn_.readUint32();
+    secs_ = bufferIn_.readUint16();
+    flags_ = bufferIn_.readUint16();
+    ciaddr_ = IOAddress(bufferIn_.readUint32());
+    yiaddr_ = IOAddress(bufferIn_.readUint32());
+    siaddr_ = IOAddress(bufferIn_.readUint32());
+    giaddr_ = IOAddress(bufferIn_.readUint32());
+    bufferIn_.readData(chaddr_, MAX_CHADDR_LEN);
+    bufferIn_.readData(sname_, MAX_SNAME_LEN);
+    bufferIn_.readData(file_, MAX_FILE_LEN);
+
+    size_t opts_len = bufferIn_.getLength() - bufferIn_.getPosition();
+    vector<uint8_t> optsBuffer;
+    // fist use of readVector
+    bufferIn_.readVector(optsBuffer, opts_len);
+    LibDHCP::unpackOptions4(optsBuffer, options_);
+
+    return (true);
 }
 
 std::string
@@ -183,6 +229,26 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
                   << static_cast<int>(dhcpType) );
     }
 }
+
+void
+Pkt4::addOption(boost::shared_ptr<Option> opt) {
+    // check for uniqueness (DHCPv4 options must be unique)
+    if (getOption(opt->getType())) {
+        isc_throw(BadValue, "Option " << opt->getType()
+                  << " already present in this message.");
+    }
+    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+}
+
+boost::shared_ptr<isc::dhcp::Option>
+Pkt4::getOption(uint8_t type) {
+    Option::OptionCollection::const_iterator x = options_.find(type);
+    if (x!=options_.end()) {
+        return (*x).second;
+    }
+    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
+}
+
 
 } // end of namespace isc::dhcp
 

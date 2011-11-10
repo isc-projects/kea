@@ -22,6 +22,7 @@
 #include <dns/rrclass.h>
 
 #include <gtest/gtest.h>
+#include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <fstream>
 #include <sqlite3.h>
@@ -29,6 +30,7 @@
 using namespace std;
 using namespace isc::datasrc;
 using boost::shared_ptr;
+using boost::lexical_cast;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
 using isc::dns::RRClass;
@@ -130,18 +132,6 @@ TEST_F(SQLite3AccessorTest, iterator) {
     std::string data[DatabaseAccessor::COLUMN_COUNT];
     // Get and check the first and only record
     EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("dname.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("dname.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("dname2.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("dname2.foo.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("MX", data[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
     EXPECT_EQ("10 mail.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
@@ -174,22 +164,34 @@ TEST_F(SQLite3AccessorTest, iterator) {
     EXPECT_EQ("example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 
     EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("dname.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("dname.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("DNAME", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("dname2.example.info.", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("dname2.foo.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
     EXPECT_EQ("192.0.2.10", data[DatabaseAccessor::RDATA_COLUMN]);
     EXPECT_EQ("mail.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 
     EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ("192.0.2.101", data[DatabaseAccessor::RDATA_COLUMN]);
-    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
-
-    EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("NS", data[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
     EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::RDATA_COLUMN]);
     EXPECT_EQ("sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
+
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", data[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ("192.0.2.101", data[DatabaseAccessor::RDATA_COLUMN]);
+    EXPECT_EQ("ns.sub.example.org.", data[DatabaseAccessor::NAME_COLUMN]);
 
     EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("A", data[DatabaseAccessor::TYPE_COLUMN]);
@@ -214,8 +216,7 @@ TEST(SQLite3Open, getDBNameExampleROOT) {
     EXPECT_EQ(SQLITE_DBNAME_EXAMPLE_ROOT, accessor.getDBName());
 }
 
-// Simple function to cound the number of records for
-// any name
+// Simple function to match records
 void
 checkRecordRow(const std::string columns[],
                const std::string& field0,
@@ -518,6 +519,7 @@ protected:
     std::string get_columns[DatabaseAccessor::COLUMN_COUNT];
     std::string add_columns[DatabaseAccessor::ADD_COLUMN_COUNT];
     std::string del_params[DatabaseAccessor::DEL_PARAM_COUNT];
+    std::string diff_params[DatabaseAccessor::DIFF_PARAM_COUNT];
 
     vector<const char* const*> expected_stored; // placeholder for checkRecords
     vector<const char* const*> empty_stored; // indicate no corresponding data
@@ -550,7 +552,7 @@ TEST_F(SQLite3Update, emptyUpdate) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
     zone_id = accessor->startUpdateZone("example.com.", false).second;
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
@@ -561,7 +563,7 @@ TEST_F(SQLite3Update, flushZone) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
     zone_id = accessor->startUpdateZone("example.com.", true).second;
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 }
 
@@ -575,7 +577,7 @@ TEST_F(SQLite3Update, readWhileUpdate) {
 
     // Once the changes are committed, the other accessor will see the new
     // data.
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
                  empty_stored);
 }
@@ -585,7 +587,7 @@ TEST_F(SQLite3Update, rollback) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Rollback will revert the change made by startUpdateZone(, true).
-    accessor->rollbackUpdateZone();
+    accessor->rollback();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
@@ -599,7 +601,7 @@ TEST_F(SQLite3Update, rollbackFailure) {
     EXPECT_TRUE(iterator->getNext(columns));
 
     accessor->startUpdateZone("example.com.", true);
-    EXPECT_THROW(accessor->rollbackUpdateZone(), DataSourceError);
+    EXPECT_THROW(accessor->rollback(), DataSourceError);
 }
 
 TEST_F(SQLite3Update, commitConflict) {
@@ -612,8 +614,8 @@ TEST_F(SQLite3Update, commitConflict) {
     // which will prevent commit.
     zone_id = accessor->startUpdateZone("example.com.", true).second;
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
-    EXPECT_THROW(accessor->commitUpdateZone(), DataSourceError);
-    accessor->rollbackUpdateZone();   // rollback should still succeed
+    EXPECT_THROW(accessor->commit(), DataSourceError);
+    accessor->rollback();   // rollback should still succeed
 
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
@@ -631,9 +633,9 @@ TEST_F(SQLite3Update, updateConflict) {
 
     // Once we rollback the other attempt of change, we should be able to
     // start and commit the transaction using the main accessor.
-    another_accessor->rollbackUpdateZone();
+    another_accessor->rollback();
     accessor->startUpdateZone("example.com.", true);
-    accessor->commitUpdateZone();
+    accessor->commit();
 }
 
 TEST_F(SQLite3Update, duplicateUpdate) {
@@ -643,11 +645,11 @@ TEST_F(SQLite3Update, duplicateUpdate) {
 }
 
 TEST_F(SQLite3Update, commitWithoutTransaction) {
-    EXPECT_THROW(accessor->commitUpdateZone(), DataSourceError);
+    EXPECT_THROW(accessor->commit(), DataSourceError);
 }
 
 TEST_F(SQLite3Update, rollbackWithoutTransaction) {
-    EXPECT_THROW(accessor->rollbackUpdateZone(), DataSourceError);
+    EXPECT_THROW(accessor->rollback(), DataSourceError);
 }
 
 TEST_F(SQLite3Update, addRecord) {
@@ -664,7 +666,7 @@ TEST_F(SQLite3Update, addRecord) {
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 
     // Commit the change, and confirm the new data is still there.
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 }
 
@@ -678,7 +680,7 @@ TEST_F(SQLite3Update, addThenRollback) {
     expected_stored.push_back(new_data);
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 
-    accessor->rollbackUpdateZone();
+    accessor->rollback();
     checkRecords(*accessor, zone_id, "newdata.example.com.", empty_stored);
 }
 
@@ -717,7 +719,7 @@ TEST_F(SQLite3Update, deleteRecord) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Commit the change, and confirm the deleted data still isn't there.
-    accessor->commitUpdateZone();
+    accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 }
 
@@ -730,7 +732,7 @@ TEST_F(SQLite3Update, deleteThenRollback) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 
     // Rollback the change, and confirm the data still exists.
-    accessor->rollbackUpdateZone();
+    accessor->rollback();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
@@ -767,5 +769,347 @@ TEST_F(SQLite3Update, deleteNonexistent) {
 TEST_F(SQLite3Update, invalidDelete) {
     // An attempt of delete before an explicit start of transaction
     EXPECT_THROW(accessor->deleteRecordInZone(del_params), DataSourceError);
+}
+
+TEST_F(SQLite3Update, emptyTransaction) {
+    // A generic transaction without doing anything inside it.  Just check
+    // it doesn't throw or break the database.
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+    accessor->startTransaction();
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+    accessor->commit();
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+}
+
+TEST_F(SQLite3Update, duplicateTransaction) {
+    accessor->startTransaction();
+    EXPECT_THROW(accessor->startTransaction(), DataSourceError);
+}
+
+TEST_F(SQLite3Update, transactionInUpdate) {
+    accessor->startUpdateZone("example.com.", true);
+    EXPECT_THROW(accessor->startTransaction(), DataSourceError);
+}
+
+TEST_F(SQLite3Update, updateInTransaction) {
+    accessor->startTransaction();
+    EXPECT_THROW(accessor->startUpdateZone("example.com.", true),
+                 DataSourceError);
+}
+
+TEST_F(SQLite3Update, updateWithTransaction) {
+    // Start a read-only transaction, wherein we execute two reads.
+    // Meanwhile we start a write (update) transaction.  The commit attempt
+    // for the write transaction will due to the lock held by the read
+    // transaction.  The database should be intact.
+    another_accessor->startTransaction();
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+
+    ASSERT_TRUE(accessor->startUpdateZone("example.com.", true).first);
+    EXPECT_THROW(accessor->commit(), DataSourceError);
+
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+    another_accessor->commit(); // this shouldn't throw
+}
+
+TEST_F(SQLite3Update, updateWithoutTransaction) {
+    // Similar to the previous test, but reads are not protected in a
+    // transaction.  So the write transaction will succeed and flush the DB,
+    // and the result of the second read is different from the first.
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+
+    ASSERT_TRUE(accessor->startUpdateZone("example.com.", true).first);
+    accessor->commit();
+
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 empty_stored);
+}
+
+TEST_F(SQLite3Update, concurrentTransactions) {
+    // Two read-only transactions coexist (unlike the read vs write)
+    // Start one transaction.
+    accessor->startTransaction();
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+
+    // Start a new one.
+    another_accessor->startTransaction();
+
+    // The second transaction doesn't affect the first or vice versa.
+    checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
+    checkRecords(*another_accessor, zone_id, "foo.bar.example.com.",
+                 expected_stored);
+
+    // Commit should be successful for both transactions.
+    accessor->commit();
+    another_accessor->commit();
+}
+
+//
+// Commonly used data for diff related tests.  The last two entries are
+// a textual representation of "version" and a textual representation of
+// diff operation (either DIFF_ADD_TEXT or DIFF_DELETE_TEXT).  We use this
+// format for the convenience of generating test data and checking the results.
+//
+const char* const DIFF_ADD_TEXT = "0";
+const char* const DIFF_DELETE_TEXT = "1";
+const char* const diff_begin_data[] = {
+    "example.com.", "SOA", "3600",
+    "ns.example.com. admin.example.com. 1234 3600 1800 2419200 7200",
+    "1234", DIFF_DELETE_TEXT
+};
+const char* const diff_del_a_data[] = {
+    "dns01.example.com.", "A", "3600", "192.0.2.1", "1234", DIFF_DELETE_TEXT
+};
+const char* const diff_end_data[] = {
+    "example.com.", "SOA", "3600",
+    "ns.example.com. admin.example.com. 1300 3600 1800 2419200 7200",
+    "1300", DIFF_ADD_TEXT
+};
+const char* const diff_add_a_data[] = {
+    "dns01.example.com.", "A", "3600", "192.0.2.10", "1234", DIFF_ADD_TEXT
+};
+
+// The following two are helper functions to convert textual test data
+// to integral zone ID and diff operation.
+int
+getVersion(const char* const diff_data[]) {
+    return (lexical_cast<int>(diff_data[DatabaseAccessor::DIFF_PARAM_COUNT]));
+}
+
+DatabaseAccessor::DiffOperation
+getOperation(const char* const diff_data[]) {
+    return (static_cast<DatabaseAccessor::DiffOperation>(
+                lexical_cast<int>(
+                    diff_data[DatabaseAccessor::DIFF_PARAM_COUNT + 1])));
+}
+
+// Common checker function that compares expected and actual sequence of
+// diffs.
+void
+checkDiffs(const vector<const char* const*>& expected,
+           const vector<vector<string> >& actual)
+{
+    EXPECT_EQ(expected.size(), actual.size());
+    const size_t n_diffs = std::min(expected.size(), actual.size());
+    for (size_t i = 0; i < n_diffs; ++i) {
+        for (int j = 0; j < actual[i].size(); ++j) {
+            EXPECT_EQ(expected[i][j], actual[i][j]);
+        }
+    }
+}
+
+TEST_F(SQLite3Update, addRecordDiff) {
+    // A simple case of adding diffs: just changing the SOA, and confirm
+    // the diffs are stored as expected.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
+                            getOperation(diff_begin_data), diff_params);
+
+    copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
+                            getOperation(diff_end_data), diff_params);
+
+    // Until the diffs are committed, they are not visible to other accessors.
+    EXPECT_TRUE(another_accessor->getRecordDiff(zone_id).empty());
+
+    accessor->commit();
+
+    expected_stored.clear();
+    expected_stored.push_back(diff_begin_data);
+    expected_stored.push_back(diff_end_data);
+    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    // Now it should be visible to others, too.
+    checkDiffs(expected_stored, another_accessor->getRecordDiff(zone_id));
+}
+
+TEST_F(SQLite3Update, addRecordOfLargeSerial) {
+    // This is essentially the same as the previous test, but using a
+    // very large "version" (SOA serial), which is actually the possible
+    // largest value to confirm the internal code doesn't have an overflow bug
+    // or other failure due to the larger value.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+
+    const char* const begin_data[] = {
+        "example.com.", "SOA", "3600",
+        "ns.example.com. admin.example.com. 4294967295 3600 1800 2419200 7200",
+        "4294967295", DIFF_DELETE_TEXT
+    };
+
+    copy(begin_data, begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    // For "serial" parameter, we intentionally hardcode the value rather
+    // than converting it from the data.
+    accessor->addRecordDiff(zone_id, 0xffffffff, getOperation(diff_begin_data),
+                            diff_params);
+    copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
+                            getOperation(diff_end_data), diff_params);
+
+    accessor->commit();
+
+    expected_stored.clear();
+    expected_stored.push_back(begin_data);
+    expected_stored.push_back(diff_end_data);
+    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+}
+
+TEST_F(SQLite3Update, addDiffWithoutUpdate) {
+    // Right now we require startUpdateZone() prior to performing
+    // addRecordDiff.
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    EXPECT_THROW(accessor->addRecordDiff(0, getVersion(diff_begin_data),
+                                         getOperation(diff_begin_data),
+                                         diff_params),
+                 DataSourceError);
+
+    // For now, we don't allow adding diffs in a general transaction either.
+    accessor->startTransaction();
+    EXPECT_THROW(accessor->addRecordDiff(0, getVersion(diff_begin_data),
+                                         getOperation(diff_begin_data),
+                                         diff_params),
+                 DataSourceError);
+}
+
+TEST_F(SQLite3Update, addDiffWithBadZoneID) {
+    // For now, we require zone ID passed to addRecordDiff be equal to
+    // that for the zone being updated.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    EXPECT_THROW(accessor->addRecordDiff(zone_id + 1,
+                                         getVersion(diff_begin_data),
+                                         getOperation(diff_begin_data),
+                                         diff_params),
+                 DataSourceError);
+}
+
+TEST_F(SQLite3Update, addDiffRollback) {
+    // Rollback tentatively added diffs.  This is no different from the
+    // update case, but we test it explicitly just in case.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
+                            getOperation(diff_begin_data), diff_params);
+    accessor->rollback();
+
+    EXPECT_TRUE(accessor->getRecordDiff(zone_id).empty());
+}
+
+TEST_F(SQLite3Update, addDiffInBadOrder) {
+    // At this level, the API is naive, and doesn't care if the diff sequence
+    // is a valid IXFR order.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+
+    // Add diff of 'end', then 'begin'
+    copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
+                            getOperation(diff_end_data), diff_params);
+
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
+                            getOperation(diff_begin_data), diff_params);
+
+    accessor->commit();
+
+    expected_stored.clear();
+    expected_stored.push_back(diff_end_data);
+    expected_stored.push_back(diff_begin_data);
+    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+}
+
+TEST_F(SQLite3Update, addDiffWithUpdate) {
+    // A more realistic example: add corresponding diffs while updating zone.
+    // Implementation wise, there should be no reason this could fail if
+    // the basic tests so far pass.  But we check it in case we miss something.
+
+    const char* const old_a_record[] = {
+        "dns01.example.com.", "A", "192.0.2.1"
+    };
+    const char* const new_a_record[] = {
+        "dns01.example.com.", "com.example.dns01.", "3600", "A", "",
+        "192.0.2.10"
+    };
+    const char* const old_soa_record[] = {
+        "example.com.", "SOA",
+        "ns.example.com. admin.example.com. 1234 3600 1800 2419200 7200",
+    };
+    const char* const new_soa_record[] = {
+        "dns01.example.com.", "com.example.dns01.", "3600", "A", "",
+        "ns.example.com. admin.example.com. 1300 3600 1800 2419200 7200",
+    };
+
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+
+    // Delete SOA (and add that diff)
+    copy(old_soa_record, old_soa_record + DatabaseAccessor::DEL_PARAM_COUNT,
+         del_params);
+    accessor->deleteRecordInZone(del_params);
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
+                            getOperation(diff_begin_data), diff_params);
+
+    // Delete A
+    copy(old_a_record, old_a_record + DatabaseAccessor::DEL_PARAM_COUNT,
+         del_params);
+    accessor->deleteRecordInZone(del_params);
+    copy(diff_del_a_data, diff_del_a_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_del_a_data),
+                            getOperation(diff_del_a_data), diff_params);
+
+    // Add SOA
+    copy(new_soa_record, new_soa_record + DatabaseAccessor::ADD_COLUMN_COUNT,
+         add_columns);
+    accessor->addRecordToZone(add_columns);
+    copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
+                            getOperation(diff_end_data), diff_params);
+
+    // Add A
+    copy(new_a_record, new_a_record + DatabaseAccessor::ADD_COLUMN_COUNT,
+         add_columns);
+    accessor->addRecordToZone(add_columns);
+    copy(diff_add_a_data, diff_add_a_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    accessor->addRecordDiff(zone_id, getVersion(diff_add_a_data),
+                            getOperation(diff_add_a_data), diff_params);
+
+    accessor->commit();
+
+    expected_stored.clear();
+    expected_stored.push_back(diff_begin_data);
+    expected_stored.push_back(diff_del_a_data);
+    expected_stored.push_back(diff_end_data);
+    expected_stored.push_back(diff_add_a_data);
+
+    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+}
+
+TEST_F(SQLite3Update, addDiffWithNoTable) {
+    // An attempt of adding diffs to an old version of database that doesn't
+    // have a diffs table.  This will fail in preparing the statement.
+    initAccessor(SQLITE_DBFILE_EXAMPLE + ".nodiffs", "IN");
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
+         diff_params);
+    EXPECT_THROW(accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
+                                         getOperation(diff_begin_data),
+                                         diff_params),
+                 SQLite3Error);
 }
 } // end anonymous namespace

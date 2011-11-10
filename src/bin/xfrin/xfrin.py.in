@@ -122,6 +122,36 @@ def _check_zone_class(zone_class_str):
     except InvalidRRClass as irce:
         raise XfrinZoneInfoException("bad zone class: " + zone_class_str + " (" + str(irce) + ")")
 
+def format_zone_str(zone_name, zone_class):
+    """Helper function to format a zone name and class as a string of
+       the form '<name>/<class>'.
+       Parameters:
+       zone_name (isc.dns.Name) name to format
+       zone_class (isc.dns.RRClass) class to format
+    """
+    return zone_name.to_text(True) + '/' + str(zone_class)
+
+def format_addrinfo(addrinfo):
+    """Helper function to format the addrinfo as a string of the form
+       <addr>:<port> (for IPv4) or [<addr>]:port (for IPv6). For unix domain
+       sockets, and unknown address families, it returns a basic string
+       conversion of the third element of the passed tuple.
+       Parameters:
+       addrinfo: a 3-tuple consisting of address family, socket type, and,
+                 depending on the family, either a 2-tuple with the address
+                 and port, or a filename
+    """
+    try:
+        if addrinfo[0] == socket.AF_INET:
+            return str(addrinfo[2][0]) + ":" + str(addrinfo[2][1])
+        elif addrinfo[0] == socket.AF_INET6:
+            return "[" + str(addrinfo[2][0]) + "]:" + str(addrinfo[2][1])
+        else:
+            return str(addrinfo[2])
+    except IndexError:
+        raise TypeError("addrinfo argument to format_addrinfo() does not "
+                        "appear to be consisting of (family, socktype, (addr, port))")
+
 def get_soa_serial(soa_rdata):
     '''Extract the serial field of an SOA RDATA and returns it as an intger.
 
@@ -498,8 +528,8 @@ class XfrinConnection(asyncore.dispatcher):
         return self.__state
 
     def zone_str(self):
-        '''A convenient function for logging to include zone name and class'''
-        return self._zone_name.to_text() + '/' + str(self._rrclass)
+        '''A convenience function for logging to include zone name and class'''
+        return format_zone_str(self._zone_name, self._rrclass)
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
@@ -775,15 +805,15 @@ class XfrinConnection(asyncore.dispatcher):
         return False
 
 def __process_xfrin(server, zone_name, rrclass, db_file,
-                    shutdown_event, master_addrinfo, check_soa, tsig_key,
-                    request_type, conn_class=XfrinConnection):
+                  shutdown_event, master_addrinfo, check_soa, tsig_key,
+                  request_type, conn_class):
     conn = None
     exception = None
     ret = XFRIN_FAIL
     try:
         # Create a data source client used in this XFR session.  Right now we
-        # still assume an sqlite3-based data source, and use both the old and
-        # new data source APIs.  We also need to use a mock client for tests.
+        # still assume an sqlite3-based data source, and use both the old and new
+        # data source APIs.  We also need to use a mock client for tests.
         # For a temporary workaround to deal with these situations, we skip the
         # creation when the given file is none (the test case).  Eventually
         # this code will be much cleaner.
@@ -796,16 +826,36 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
             datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
             datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
 
-        # Create a TCP connection for the XFR session and perform the operation
+        # Create a TCP connection for the XFR session and perform the operation.
         sock_map = {}
-        conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
-                          shutdown_event, master_addrinfo, tsig_key)
-        conn.init_socket()
-        # XXX: We still need _db_file for temporary workaround in _create_query().
-        # This should be removed when we eliminate the need for the workaround.
-        conn._db_file = db_file
-        if conn.connect_to_master():
-            ret = conn.do_xfrin(check_soa, request_type)
+        # In case we were asked to do IXFR and that one fails, we try again with
+        # AXFR. But only if we could actually connect to the server.
+        #
+        # So we start with retry as True, which is set to false on each attempt.
+        # In the case of connected but failed IXFR, we set it to true once again.
+        retry = True
+        while retry:
+            retry = False
+            conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
+                              shutdown_event, master_addrinfo, tsig_key)
+            conn.init_socket()
+            # XXX: We still need _db_file for temporary workaround in _create_query().
+            # This should be removed when we eliminate the need for the workaround.
+            conn._db_file = db_file
+            ret = XFRIN_FAIL
+            if conn.connect_to_master():
+                ret = conn.do_xfrin(check_soa, request_type)
+                if ret == XFRIN_FAIL and request_type == RRType.IXFR():
+                    # IXFR failed for some reason. It might mean the server can't
+                    # handle it, or we don't have the zone or we are out of sync or
+                    # whatever else. So we retry with with AXFR, as it may succeed
+                    # in many such cases.
+                    retry = True
+                    request_type = RRType.AXFR()
+                    logger.warn(XFRIN_XFR_TRANSFER_FALLBACK, conn.zone_str())
+                    conn.close()
+                    conn = None
+
     except Exception as ex:
         # If exception happens, just remember it here so that we can re-raise
         # after cleaning up things.  We don't log it here because we want
@@ -1074,20 +1124,22 @@ class Xfrin:
                 # a security hole. Once we add the ability to have multiple master addresses,
                 # we should check if it matches one of them, and then use it.)
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
+                zone_str = format_zone_str(zone_name, rrclass)
                 zone_info = self._get_zone_info(zone_name, rrclass)
                 notify_addr = self._parse_master_and_port(args, zone_name,
                                                           rrclass)
                 if zone_info is None:
                     # TODO what to do? no info known about zone. defaults?
-                    errmsg = "Got notification to retransfer unknown zone " + zone_name.to_text()
-                    logger.error(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_name.to_text())
+                    errmsg = "Got notification to retransfer unknown zone " + zone_str
+                    logger.info(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_str)
                     answer = create_answer(1, errmsg)
                 else:
                     request_type = RRType.AXFR()
                     if zone_info.use_ixfr:
                         request_type = RRType.IXFR()
                     master_addr = zone_info.get_master_addr_info()
-                    if notify_addr == master_addr:
+                    if notify_addr[0] == master_addr[0] and\
+                       notify_addr[2] == master_addr[2]:
                         ret = self.xfrin_start(zone_name,
                                                rrclass,
                                                self._get_db_file(),
@@ -1096,11 +1148,12 @@ class Xfrin:
                                                True)
                         answer = create_answer(ret[0], ret[1])
                     else:
-                        errmsg = "Got notification for " + zone_name.to_text()\
-                               + "from unknown address: " + notify_addr[2][0];
-                        logger.error(XFRIN_NOTIFY_UNKNOWN_MASTER,
-                                     zone_name.to_text(), notify_addr[2][0],
-                                     master_addr[2][0])
+                        notify_addr_str = format_addrinfo(notify_addr)
+                        master_addr_str = format_addrinfo(master_addr)
+                        errmsg = "Got notification for " + zone_str\
+                               + "from unknown address: " + notify_addr_str;
+                        logger.info(XFRIN_NOTIFY_UNKNOWN_MASTER, zone_str,
+                                    notify_addr_str, master_addr_str)
                         answer = create_answer(1, errmsg)
 
             elif command == 'retransfer' or command == 'refresh':

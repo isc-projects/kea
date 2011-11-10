@@ -22,15 +22,14 @@
 # server; the server should not respond to the request, so the client should
 # then send an AXFR request and receive the latest copy of the zone.
 
+# TODO It seems bind9 still allows IXFR even when provide-ixfr on;
+
 . ../ixfr_init.sh
 status=$?
 
 # Store the SOA serial number of the BIND 10 client for later use.
 old_client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
 echo "I:SOA serial of IXFR client $CLIENT_NAME is $old_client_serial"
-
-# TODO: Need to alter configuration of BIND 10 server such that it accepts
-# NOTIFYs from and sends IXFR requests to the BIND 9 master.
 
 # If required, get the IXFR server to notify the IXFR client of the new zone.
 # Do this by allowing notifies and then triggering a re-notification of the
@@ -48,8 +47,20 @@ status=`expr $status + $?`
 compare_soa $SERVER_NAME $SERVER_IP $CLIENT_NAME $CLIENT_IP
 status=`expr $status + $?`
 
-# TODO: Check the BIND 10 log, looking for the IXFR messages that indicate that
-# it has initiated an IXFR and then an AXFR.
+# Check the log there's the IXFR and fallback
+grep XFRIN_XFR_TRANSFER_STARTED nsx2/bind10.run | grep IXFR
+if [ $? -ne 0 ];
+then
+    echo "R:$CLIENT_NAME FAIL no 'IXFR started' message in the BIND 10 log"
+    exit 1
+fi
+
+grep XFRIN_XFR_TRANSFER_FALLBACK nsx2/bind10.run
+if [ $? -ne 0 ];
+then
+    echo "R:$CLIENT_NAME FAIL no fallback message in BIND10 log"
+    exit 1
+fi
 
 echo "I:exit status: $status"
 exit $status

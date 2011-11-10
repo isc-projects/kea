@@ -18,7 +18,7 @@
 #include <log/macros.h>
 #include <server_common/server_common_messages.h>
 
-/// \file logger.h
+/// \file server_common/logger.h
 /// \brief Server Common library global logger
 ///
 /// This holds the logger for the server common library. It is a private header
