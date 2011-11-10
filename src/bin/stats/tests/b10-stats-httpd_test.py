@@ -1030,6 +1030,15 @@ class TestStatsHttpd(unittest.TestCase):
                         "item_title": "Foo"
                         },
                    {
+                        "item_name": "hoo_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "2011-01-01T01:01:01Z",
+                        "item_description": "hoo time",
+                        "item_title": "Hoo Time",
+                        "item_format": "date-time"
+                        },
+                   {
                         "item_name": "foo2",
                         "item_type": "list",
                         "item_optional": False,
@@ -1083,7 +1092,7 @@ class TestStatsHttpd(unittest.TestCase):
               }
         xsd_body1 = self.stats_httpd.open_template(
             stats_httpd.XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2"><complexType><sequence><element maxOccurs="unbounded" minOccurs="1" name="foo2-1"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo2-1-1" type="string"><annotation><appinfo>Foo2 1 1</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-2" type="integer"><annotation><appinfo>Foo2 1 2</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-3" type="integer"><annotation><appinfo>Foo2 1 3</appinfo><documentation>Foo bar</documentation></annotation></element></all></complexType></element></sequence></complexType></element></all></complexType></element></all></complexType></element></schema>')
+            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="hoo_time" type="dateTime"><annotation><appinfo>Hoo Time</appinfo><documentation>hoo time</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2"><complexType><sequence><element maxOccurs="unbounded" minOccurs="1" name="foo2-1"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo2-1-1" type="string"><annotation><appinfo>Foo2 1 1</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-2" type="integer"><annotation><appinfo>Foo2 1 2</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-3" type="integer"><annotation><appinfo>Foo2 1 3</appinfo><documentation>Foo bar</documentation></annotation></element></all></complexType></element></sequence></complexType></element></all></complexType></element></all></complexType></element></schema>')
         xsd_body2 = self.stats_httpd.xsd_handler()
         self.assertEqual(type(xsd_body1), str)
         self.assertEqual(type(xsd_body2), str)
@@ -1097,6 +1106,15 @@ class TestStatsHttpd(unittest.TestCase):
                         "item_default": "foo",
                         "item_description": "bar is foo",
                         "item_title": "bar"
+                        },
+                   {
+                        "item_name": "boo_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "2012-02-02T02:02:02Z",
+                        "item_description": "boo time",
+                        "item_title": "Boo Time",
+                        "item_format": "date-time"
                         },
                    {
                         "item_name": "foo2",

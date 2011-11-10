@@ -575,13 +575,25 @@ class StatsHttpd:
                         elem.append(complextype)
                         xsd_elem.append(elem)
                     else:
+                        # determine the datatype of XSD
+                        # TODO: Should consider other item_format types
+                        datatype = stats_spec["item_type"] \
+                            if stats_spec["item_type"].lower() != 'real' \
+                            else 'float'
+                        if "item_format" in stats_spec:
+                            item_format = stats_spec["item_format"]
+                            if datatype.lower() == 'string' \
+                                    and item_format.lower() == 'date-time':
+                                 datatype = 'dateTime'
+                            elif datatype.lower() == 'string' \
+                                    and (item_format.lower() == 'date' \
+                                             or item_format.lower() == 'time'):
+                                 datatype = item_format.lower()
                         elem = xml.etree.ElementTree.Element(
                             "element",
                             attrib={
                                 'name' : stats_spec["item_name"],
-                                'type' : stats_spec["item_type"] \
-                                    if stats_spec["item_type"].lower() != 'real' \
-                                    else 'float',
+                                'type' : datatype,
                                 'minOccurs' : "0" \
                                     if stats_spec["item_optional"] \
                                     else "1",
