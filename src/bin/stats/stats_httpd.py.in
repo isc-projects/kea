@@ -103,14 +103,14 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             # in case of /bind10/statistics/xxx/YYY/zzz
             if len(path_dirs) >= 5:
                 item_name = path_dirs[4]
-            # in case of /bind10/statistics/xxx/YYY
+            # in case of /bind10/statistics/xxx/YYY ...
             if len(path_dirs) >= 4:
                 module_name = path_dirs[3]
-            if req_path.startswith(XML_URL_PATH):
+            if req_path == '/'.join([XML_URL_PATH] + path_dirs[3:5]):
                 body = self.server.xml_handler(module_name, item_name)
-            elif req_path.startswith(XSD_URL_PATH):
+            elif req_path == '/'.join([XSD_URL_PATH] + path_dirs[3:5]):
                 body = self.server.xsd_handler(module_name, item_name)
-            elif req_path.startswith(XSL_URL_PATH):
+            elif req_path == '/'.join([XSL_URL_PATH] + path_dirs[3:5]):
                 body = self.server.xsl_handler(module_name, item_name)
             else:
                 if req_path == '/' and 'Host' in self.headers.keys():
