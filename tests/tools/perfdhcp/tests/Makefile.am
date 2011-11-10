@@ -3,6 +3,7 @@ SUBDIRS = .
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS += -g
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -17,6 +18,7 @@ run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += cloptions_unittest.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/cloptions.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/procconf.cc
+run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/dkdebug.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)

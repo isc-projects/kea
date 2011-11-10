@@ -120,4 +120,9 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
          confdata_t* confdata, const char name[],
          const char usage[]);
 
+/*
+ * Free the malloced data stored in confdata elements by ProcOpts()
+ */
+void confdataFree(confdata_t *confdata);
+
 #endif
