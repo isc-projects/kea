@@ -526,7 +526,7 @@ public:
     /// source message to the same section of this message
     ///
     /// \param section the section to append
-    /// \param target The source Message
+    /// \param source The source Message
     void appendSection(const Section section, const Message& source);
 
     /// \brief Prepare for making a response from a request.
@@ -668,7 +668,7 @@ typedef boost::shared_ptr<const Message> ConstMessagePtr;
 ///
 /// \param os A \c std::ostream object on which the insertion operation is
 /// performed.
-/// \param record A \c Message object output by the operation.
+/// \param message A \c Message object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const Message& message);

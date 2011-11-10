@@ -168,6 +168,24 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 }
 
 void
+Query::addWildcardProof(ZoneFinder& finder) {
+    // The query name shouldn't exist in the zone if there were no wildcard
+    // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
+    // in NXDOMAIN and an NSEC RR that proves it should be returned.
+    const ZoneFinder::FindResult fresult =
+        finder.find(qname_, RRType::NSEC(), NULL,
+                    dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
+        fresult.rrset->getRdataCount() == 0) {
+        isc_throw(BadNSEC, "Unexpected result for wildcard proof");
+        return;
+    }
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<RRset>(fresult.rrset),
+                       dnssec_);
+}
+
+void
 Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
     ZoneFinder::FindResult ns_result = finder.find(finder.getOrigin(),
@@ -259,6 +277,7 @@ Query::process() {
                 break;
             }
             case ZoneFinder::CNAME:
+            case ZoneFinder::WILDCARD_CNAME:
                 /*
                  * We don't do chaining yet. Therefore handling a CNAME is
                  * mostly the same as handling SUCCESS, but we didn't get
@@ -271,8 +290,15 @@ Query::process() {
                 response_.addRRset(Message::SECTION_ANSWER,
                     boost::const_pointer_cast<RRset>(db_result.rrset),
                     dnssec_);
+
+                // If the answer is a result of wildcard substitution,
+                // add a proof that there's no closer name.
+                if (dnssec_ && db_result.code == ZoneFinder::WILDCARD_CNAME) {
+                    addWildcardProof(*result.zone_finder);
+                }
                 break;
             case ZoneFinder::SUCCESS:
+            case ZoneFinder::WILDCARD:
                 if (qtype_is_any) {
                     // If quety type is ANY, insert all RRs under the domain
                     // into answer section.
@@ -299,6 +325,12 @@ Query::process() {
                 {
                     addAuthAdditional(*result.zone_finder);
                 }
+
+                // If the answer is a result of wildcard substitution,
+                // add a proof that there's no closer name.
+                if (dnssec_ && db_result.code == ZoneFinder::WILDCARD) {
+                    addWildcardProof(*result.zone_finder);
+                }
                 break;
             case ZoneFinder::DELEGATION:
                 response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
@@ -324,10 +356,9 @@ Query::process() {
                 }
                 break;
             default:
-                // These are new result codes (WILDCARD and WILDCARD_NXRRSET)
-                // They should not happen from the in-memory and the database
-                // backend isn't used yet.
-                // TODO: Implement before letting the database backends in
+                // This is basically a bug of the data source implementation,
+                // but could also happen in the middle of development where
+                // we try to add a new result code.
                 isc_throw(isc::NotImplemented, "Unknown result code");
                 break;
         }

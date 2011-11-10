@@ -1,3 +1,70 @@
+ 315.	[func]		tomek
+	libdhcp: Support for DHCPv4 packet manipulation is now implemented.
+	All fixed fields are now supported. Generic support for DHCPv4
+	options is available (both parsing and assembly). There is no code
+	that uses this new functionality yet, so it is not usable directly
+	at this time. This code will be used by upcoming b10-dhcp4 daemon.
+	(Trac #1228, git 31d5a4f66b18cca838ca1182b9f13034066427a7)
+
+314.	[bug]		jelte
+	b10-xfrin would previously initiate incoming transfers upon 
+	receiving NOTIFY messages from any address (if the zone was 
+	known to b10-xfrin, and using the configured address). It now 
+	only starts a transfer if the source address from the NOTIFY 
+	packet matches the configured master address and port. This was 
+	really already fixed in release bind10-devel-20111014, but there 
+	were some deferred cleanups to add.
+	(Trac #1298, git 1177bfe30e17a76bea6b6447e14ae9be9e1ca8c2)
+
+313.	[func]		jinmei
+	datasrc: Added C++ API for adding zone differences to database
+	based data sources.  It's intended to be used for the support for
+	IXFR-in and dynamic update (so they can subsequently be retrieved
+	for IXFR-out).  The addRecordDiff method of the DatabaseAccessor
+	defines the interface, and a concrete implementation for SQLite3
+	was provided.
+	(Trac #1329, git 1aa233fab1d74dc776899df61181806679d14013)
+
+312.	[func]		jelte
+	Added an initial framework for doing system tests using the 
+	cucumber-based BDD tool Lettuce. A number of general steps are
+	included,  for instance running bind10 with specific
+	configurations, sending queries, and inspecting query answers. A
+	few very basic tests are included as well.
+	(Trac #1290, git 6b75c128bcdcefd85c18ccb6def59e9acedd4437)
+
+311.	[bug]		jelte
+	Fixed a bug in bindctl where tab-completion for names that
+	contain a hyphen resulted in unexpected behaviour, such as
+	appending the already-typed part again.
+	(Trac #1345, git f80ab7879cc29f875c40dde6b44e3796ac98d6da)
+
+310.	[bug]		jelte
+	Fixed a bug where bindctl could not set a value that is optional
+	and has no default, resulting in the error that the setting
+	itself was unknown. bindctl now correctly sees the setting and
+	is able to set it.
+	(Trac #1344, git 0e776c32330aee466073771600390ce74b959b38)
+
+309.	[bug]		jelte
+	Fixed a bug in bindctl where the removal of elements from a set
+	with default values was not stored, unless the set had been
+	modified in another way already.
+	(Trac #1343, git 25c802dd1c30580b94345e83eeb6a168ab329a33)
+
+308.	[build]		jelte
+	The configure script will now use pkg-config for finding
+	information about the Botan library. If pkg-config is unavailable,
+	or unaware of Botan, it will fall back to botan-config. It will
+	also use botan-config when a specific botan library directory is
+	given using the '--with-botan=' flag
+	(Trac #1194, git dc491833cf75ac1481ba1475795b0f266545013d)
+
+307.	[func]		vorner
+	When zone transfer in fails with IXFR, it is retried with AXFR
+	automatically.
+	(Trac #1279, git cd3588c9020d0310f949bfd053c4d3a4bd84ef88)
+
 306.	[bug]		Stephen
 	Boss process now waits for the configuration manager to initialize
 	itself before continuing with startup.  This fixes a race condition
