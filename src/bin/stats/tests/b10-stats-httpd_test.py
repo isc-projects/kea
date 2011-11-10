@@ -450,61 +450,83 @@ class TestHttpHandler(unittest.TestCase):
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + 'Auth') # with no slash
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 200 ok
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '#foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '?foo=bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
 
         # 404 NotFound (too long path)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xml/Boss/boot_time/a')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Boss/boot_time/a')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
 
         # 404 NotFound (nonexistent module name)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xml/Foo')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Foo')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xsd/Foo')
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xsl/Foo')
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
 
         # 404 NotFound (nonexistent item name)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xml/Foo/bar')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Foo/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xsd/Foo/bar')
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xsl/Foo/bar')
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
 
         # 404 NotFound (existent module but nonexistent item name)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xml/Auth/bar')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Auth/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xsd/Auth/bar')
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Auth/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', '/bind10/statistics/xsl/Auth/bar')
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Auth/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
@@ -959,7 +981,7 @@ class TestStatsHttpd(unittest.TestCase):
                             ] } }
         xml_body1 = self.stats_httpd.open_template(
             stats_httpd.XML_TEMPLATE_LOCATION).substitute(
-            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 /bind10/statistics/xsd"><Dummy><foo>bar</foo><foo2><foo2-1><foo2-1-1>bar1</foo2-1-1><foo2-1-2>10</foo2-1-2><foo2-1-3>9</foo2-1-3></foo2-1><foo2-1><foo2-1-1>bar2</foo2-1-1><foo2-1-2>8</foo2-1-2><foo2-1-3>7</foo2-1-3></foo2-1></foo2></Dummy></bind10:statistics>',
+            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 ' + stats_httpd.XSD_URL_PATH + '"><Dummy><foo>bar</foo><foo2><foo2-1><foo2-1-1>bar1</foo2-1-1><foo2-1-2>10</foo2-1-2><foo2-1-3>9</foo2-1-3></foo2-1><foo2-1><foo2-1-1>bar2</foo2-1-1><foo2-1-2>8</foo2-1-2><foo2-1-3>7</foo2-1-3></foo2-1></foo2></Dummy></bind10:statistics>',
             xsl_url_path=stats_httpd.XSL_URL_PATH)
         xml_body2 = self.stats_httpd.xml_handler()
         self.assertEqual(type(xml_body1), str)
