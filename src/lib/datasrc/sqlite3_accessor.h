@@ -17,6 +17,7 @@
 #define __DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
+#include <datasrc/data_source.h>
 
 #include <exceptions/exceptions.h>
 
@@ -40,10 +41,10 @@ namespace datasrc {
  * It might mean corrupt database file, invalid request or that something is
  * rotten in the library.
  */
-class SQLite3Error : public Exception {
+class SQLite3Error : public DataSourceError {
 public:
     SQLite3Error(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        DataSourceError(file, line, what) {}
 };
 
 /**
@@ -52,10 +53,10 @@ public:
  * Thrown if a query expecting a certain number of rows back returned too
  * many rows.
  */
-class TooMuchData : public Exception {
+class TooMuchData : public DataSourceError {
 public:
     TooMuchData(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        DataSourceError(file, line, what) {}
 };
 
 /**
@@ -64,10 +65,10 @@ public:
  * Thrown if a query expecting a certain number of rows back returned too
  * few rows (including none).
  */
-class TooLittleData : public Exception {
+class TooLittleData : public DataSourceError {
 public:
     TooLittleData(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        DataSourceError(file, line, what) {}
 };
 
 /**
@@ -76,10 +77,10 @@ public:
  * Thrown if either the zone/start version or zone/end version combination
  * does not exist in the differences table.
  */
-class NoSuchSerial : public Exception {
+class NoSuchSerial : public DataSourceError {
 public:
     NoSuchSerial(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        DataSourceError(file, line, what) {}
 };
 
 
