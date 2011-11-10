@@ -23,6 +23,7 @@
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
+#include <datasrc/database.h>
 #include <util/filename.h>
 
 using namespace std;
@@ -96,16 +97,17 @@ const char* const text_statements[NUM_STATEMENTS] = {
     // Two statements to select the lowest ID and highest ID in a set of
     // differences.
     "SELECT id FROM diffs "     // LOW_DIFF_ID
-        "WHERE zone_id=?1 AND version=?2 and OPERATION=0 "
+        "WHERE zone_id=?1 AND version=?2 and OPERATION=?3 "
         "ORDER BY id ASC LIMIT 1",
     "SELECT id FROM diffs "     // HIGH_DIFF_ID
-        "WHERE zone_id=?1 AND version=?2 and OPERATION=1 "
+        "WHERE zone_id=?1 AND version=?2 and OPERATION=?3 "
         "ORDER BY id DESC LIMIT 1",
 
     // In the next statement, note the redundant ID.  This is to ensure
     // that the columns match the column IDs passed to the iterator
     "SELECT rrtype, ttl, id, rdata, name FROM diffs "   // DIFF_RECS
-        "WHERE zone_id=?1 AND id>=?2 and id<=?3"
+        "WHERE zone_id=?1 AND id>=?2 and id<=?3 "
+        "ORDER BY id ASC"
 };
 
 struct SQLite3Parameters {
@@ -622,8 +624,8 @@ public:
         last_status_(SQLITE_ROW)
     {
         try {
-            int low_id = findIndex(LOW_DIFF_ID, zone_id, start);
-            int high_id = findIndex(HIGH_DIFF_ID, zone_id, end);
+            int low_id = findIndex(LOW_DIFF_ID, zone_id, start, DIFF_DELETE);
+            int high_id = findIndex(HIGH_DIFF_ID, zone_id, end, DIFF_ADD);
 
             // Prepare the statement that will return data values
             reset(DIFF_RECS);
@@ -743,7 +745,7 @@ private:
 
             // Got some data, extract the value
             result = sqlite3_column_int(stmt, 0);
-            int rc = sqlite3_step(stmt);
+            rc = sqlite3_step(stmt);
             if (rc == SQLITE_DONE) {
 
                 // All OK, exit with the value.
@@ -777,6 +779,7 @@ private:
     /// \param stmt_id Index of the prepared statement to execute
     /// \param zone_id ID of the zone for which the index is being sought
     /// \param serial Zone serial number for which an index is being sought.
+    /// \param diff Code to delete record additions or deletions
     ///
     /// \return int ID of the row in the difss table corresponding to the
     ///         statement.
@@ -785,19 +788,20 @@ private:
     ///            was expected.
     /// \exception NoSuchSerial Serial number not found.
     /// \exception NoDiffsData No data for this zone found in diffs table
-    int findIndex(StatementID stindex, int zone_id, uint32_t serial) {
+    int findIndex(StatementID stindex, int zone_id, uint32_t serial, int diff) {
 
         // Set up the statement
         reset(stindex);
         bindInt(stindex, 1, zone_id);
         bindInt(stindex, 2, serial);
+        bindInt(stindex, 3, diff);
 
         // Execute the statement
         int result = -1;
         try {
             result = getSingleValue(stindex);
 
-        } catch (TooLittleData) {
+        } catch (const TooLittleData&) {
 
             // No data returned but the SQL query succeeded.  Only possibility
             // is that there is no entry in the differences table for the given
