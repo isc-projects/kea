@@ -529,7 +529,6 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
         bob.start_all_components()
         bob.runnable = True
-        bob._BoB_started = True
         bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
@@ -591,7 +590,6 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
         bob.start_all_components()
 
-        bob._BoB_started = True
         bob.runnable = True
         bob.config_handler(self.construct_config(True, True))
         self.check_started_both(bob)
@@ -629,8 +627,6 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_preconditions(bob)
 
         bob.start_all_components()
-        bob._BoB_started = True
-        bob.runnable = True
         bob.config_handler(self.construct_config(False, False))
         self.check_started_dhcp(bob, False, False)
 
@@ -963,7 +959,6 @@ class TestBossComponents(unittest.TestCase):
         self.assertRaises(Exception, bob.component_shutdown, 1)
         self.assertEqual(1, bob.exitcode)
         bob._BoB__started = True
-        bob.runnable = True
         bob.component_shutdown(2)
         self.assertEqual(2, bob.exitcode)
         self.assertFalse(bob.runnable)
