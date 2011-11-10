@@ -18,8 +18,10 @@ import subprocess
 import re
 
 @step('start bind10(?: with configuration (\S+))?' +\
-      '(?: with cmdctl port (\d+))?(?: as (\S+))?')
-def start_bind10(step, config_file, cmdctl_port, process_name):
+      '(?: with cmdctl port (\d+))?' +\
+      '(?: with msgq socket file (\S+))?' +\
+      '(?: as (\S+))?')
+def start_bind10(step, config_file, cmdctl_port, msgq_sockfile, process_name):
     """
     Start BIND 10 with the given optional config file, cmdctl port, and
     store the running process in world with the given process name.
@@ -29,6 +31,8 @@ def start_bind10(step, config_file, cmdctl_port, process_name):
                 directory.
     cmdctl_port ('with cmdctl port <portnr>', optional): The port on which
                 b10-cmdctl listens for bindctl commands. Defaults to 47805.
+    msgq_sockfile ('with msgq socket file', optional): The msgq socket file
+                that will be used for internal communication
     process_name ('as <name>', optional). This is the name that can be used
                  in the following steps of the scenario to refer to this
                  BIND 10 instance. Defaults to 'bind10'.
@@ -75,15 +79,24 @@ def wait_for_auth(step, process_name):
     world.processes.wait_for_stderr_str(process_name, ['AUTH_SERVER_STARTED'],
                                         False)
 
-@step('have bind10 running(?: with configuration ([\w.]+))?')
-def have_bind10_running(step, config_file):
+@step('have bind10 running(?: with configuration ([\S]+))?' +\
+      '(?: with cmdctl port (\d+))?' +\
+      '(?: as ([\S]+))?')
+def have_bind10_running(step, config_file, cmdctl_port, process_name):
     """
     Compound convenience step for running bind10, which consists of
     start_bind10 and wait_for_auth.
     Currently only supports the 'with configuration' option.
     """
-    step.given('start bind10 with configuration ' + config_file)
-    step.given('wait for bind10 auth to start')
+    start_step = 'start bind10 with configuration ' + config_file
+    wait_step = 'wait for bind10 auth to start'
+    if cmdctl_port is not None:
+        start_step += ' with cmdctl port ' + str(cmdctl_port)
+    if process_name is not None:
+        start_step += ' as ' + process_name
+        wait_step = 'wait for bind10 auth of ' + process_name + ' to start'
+    step.given(start_step)
+    step.given(wait_step)
 
 @step('set bind10 configuration (\S+) to (.*)(?: with cmdctl port (\d+))?')
 def set_config_command(step, name, value, cmdctl_port):
@@ -103,6 +116,27 @@ def set_config_command(step, name, value, cmdctl_port):
                                subprocess.PIPE, None)
     bindctl.stdin.write("config set " + name + " " + value + "\n")
     bindctl.stdin.write("config commit\n")
+    bindctl.stdin.write("quit\n")
+    result = bindctl.wait()
+    assert result == 0, "bindctl exit code: " + str(result)
+
+@step('send bind10 the command (.+)(?: with cmdctl port (\d+))?')
+def send_command(step, command, cmdctl_port):
+    """
+    Run bindctl, set the given configuration to the given value, and commit it.
+    Parameters:
+    name ('configuration <name>'): Identifier of the configuration to set
+    value ('to <value>'): value to set it to.
+    cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
+                the command to. Defaults to 47805.
+    Fails if cmdctl does not exit with status code 0.
+    """
+    if cmdctl_port is None:
+        cmdctl_port = '47805'
+    args = ['bindctl', '-p', cmdctl_port]
+    bindctl = subprocess.Popen(args, 1, None, subprocess.PIPE,
+                               subprocess.PIPE, None)
+    bindctl.stdin.write(command + "\n")
     bindctl.stdin.write("quit\n")
     result = bindctl.wait()
     assert result == 0, "bindctl exit code: " + str(result)
