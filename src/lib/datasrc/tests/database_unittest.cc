@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <stdlib.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -901,6 +903,24 @@ public:
      * times per test.
      */
     void createClient() {
+        // To make sure we always have empty diffs table at the beginning of
+        // each test, we re-install the writable data source here.
+        // Note: this is SQLite3 specific and a waste (though otherwise
+        // harmless) for other types of data sources.  If and when we support
+        // more types of data sources in this test framework, we should
+        // probably move this to some specialized templated method specific
+        // to SQLite3 (or for even a longer term we should add an API to
+        // purge the diffs table).
+        const char* const install_cmd = INSTALL_PROG " " TEST_DATA_DIR
+            "/rwtest.sqlite3 " TEST_DATA_BUILDDIR
+            "/rwtest.sqlite3.copied";
+        if (system(install_cmd) != 0) {
+            // any exception will do, this is failure in test setup, but nice
+            // to show the command that fails, and shouldn't be caught
+            isc_throw(isc::Exception,
+                      "Error setting up; command failed: " << install_cmd);
+        }
+
         current_accessor_ = new ACCESSOR_TYPE();
         is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_) != NULL);
         client_.reset(new DatabaseClient(qclass_,
@@ -2883,6 +2903,8 @@ TYPED_TEST(DatabaseClientTest, journalMultiple) {
  *
  * Note that we implicitly test in different testcases (these for add and
  * delete) that if the journaling is false, it doesn't expect the order.
+ *
+ * In this test we don't check with the real databases.
  */
 TYPED_TEST(DatabaseClientTest, journalBadSequence) {
     std::vector<JournalEntry> expected;
