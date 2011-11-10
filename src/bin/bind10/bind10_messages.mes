@@ -20,14 +20,6 @@ The boss process is starting up and will now check if the message bus
 daemon is already running. If so, it will not be able to start, as it
 needs a dedicated message bus.
 
-% BIND10_CONFIGURATION_START_AUTH start authoritative server: %1
-This message shows whether or not the authoritative server should be
-started according to the configuration.
-
-% BIND10_CONFIGURATION_START_RESOLVER start resolver: %1
-This message shows whether or not the resolver should be
-started according to the configuration.
-
 % BIND10_INVALID_STATISTICS_DATA invalid specification of statistics data specified
 An error was encountered when the boss module specified
 statistics data which is invalid for the boss specification file.
