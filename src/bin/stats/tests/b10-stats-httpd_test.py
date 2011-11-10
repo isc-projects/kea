@@ -317,6 +317,10 @@ class TestHttpHandler(unittest.TestCase):
                                 + url_xhtml + 'table/' + url_trans + 'for-each'
                             itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
                             self.assertTrue(k in itm_fe)
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'a'
+                            itm_a = [ x.attrib['href'] for x in itm_fe[k].findall(xslpath) ]
+                            self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
                             for itms in v:
                                 xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                                     + url_xhtml + 'table/' + url_trans + 'for-each'
@@ -334,6 +338,11 @@ class TestHttpHandler(unittest.TestCase):
                                 + url_xhtml + 'td/' + url_trans + 'value-of'
                             itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
                             self.assertTrue(k in itm_vo)
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                + url_xhtml + 'td/' + url_xhtml + 'a'
+                            itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                            self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
             elif item is None:
                 xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
                 mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
@@ -344,6 +353,10 @@ class TestHttpHandler(unittest.TestCase):
                             + url_xhtml + 'table/' + url_trans + 'for-each'
                         itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
                         self.assertTrue(k in itm_fe)
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'a'
+                        itm_a = [ x.attrib['href'] for x in itm_fe[k].findall(xslpath) ]
+                        self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
                         for itms in v:
                             xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                                 + url_xhtml + 'table/' + url_trans + 'for-each'
@@ -361,6 +374,11 @@ class TestHttpHandler(unittest.TestCase):
                             + url_xhtml + 'td/' + url_trans + 'value-of'
                         itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
                         self.assertTrue(k in itm_vo)
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                            + url_xhtml + 'td/' + url_xhtml + 'a'
+                        itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                        self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
             else:
                 xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
                 mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
@@ -370,6 +388,10 @@ class TestHttpHandler(unittest.TestCase):
                         + url_xhtml + 'table/' + url_trans + 'for-each'
                     itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
                     self.assertTrue(item in itm_fe)
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'a'
+                    itm_a = [ x.attrib['href'] for x in itm_fe[item].findall(xslpath) ]
+                    self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + item in itm_a)
                     for itms in DUMMY_DATA[mod][item]:
                         xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
                             + url_xhtml + 'table/' + url_trans + 'for-each'
@@ -387,6 +409,11 @@ class TestHttpHandler(unittest.TestCase):
                         + url_xhtml + 'td/' + url_trans + 'value-of'
                     itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
                     self.assertTrue(item in itm_vo)
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                        + url_xhtml + 'td/' + url_xhtml + 'a'
+                    itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                    self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + item in itm_a)
 
         # URL is '/bind10/statistics/xsl'
         check_XSL_URL_PATH(mod=None, item=None)
