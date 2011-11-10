@@ -79,6 +79,17 @@ IfaceMgr::Iface::getPlainMac() const {
     return (tmp.str());
 }
 
+bool IfaceMgr::Iface::delAddress(const isc::asiolink::IOAddress& addr) {
+    for (AddressCollection::iterator a = addrs_.begin();
+         a!=addrs_.end(); ++a) {
+        if (*a==addr) {
+            addrs_.erase(a);
+            return (true);
+        }
+    }
+    return (false);
+}
+
 bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
     list<SocketInfo>::iterator sock = sockets_.begin();
     while (sock!=sockets_.end()) {

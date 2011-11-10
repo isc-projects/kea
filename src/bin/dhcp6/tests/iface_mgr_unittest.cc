@@ -392,4 +392,133 @@ TEST_F(IfaceMgrTest, socket4) {
     delete ifacemgr;
 }
 
+// Test the Iface structure itself
+TEST_F(IfaceMgrTest, iface) {
+    IfaceMgr::Iface* iface = 0;
+    EXPECT_NO_THROW(
+        iface = new IfaceMgr::Iface("eth0",1);
+    );
+
+    EXPECT_EQ("eth0", iface->getName());
+    EXPECT_EQ(1, iface->getIndex());
+    EXPECT_EQ("eth0/1", iface->getFullName());
+
+    // Let's make a copy of this address collection.
+    IfaceMgr::AddressCollection addrs = iface->getAddresses();
+
+    EXPECT_EQ(0, addrs.size());
+
+    IOAddress addr1("192.0.2.6");
+    iface->addAddress(addr1);
+
+    addrs = iface->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("192.0.2.6", addrs.at(0).toText());
+
+    // No such address, should return false.
+    EXPECT_FALSE(iface->delAddress(IOAddress("192.0.8.9")));
+
+    // This address is present, delete it!
+    EXPECT_TRUE(iface->delAddress(IOAddress("192.0.2.6")));
+
+    // Not really necessary, previous reference still points to the same
+    // collection. Let's do it anyway, as test code may serve as example
+    // usage code as well.
+    addrs = iface->getAddresses();
+
+    EXPECT_EQ(0, addrs.size());
+
+    EXPECT_NO_THROW(
+        delete iface;
+    );
+}
+
+TEST_F(IfaceMgrTest, socketInfo) {
+
+    // check that socketinfo for IPv4 socket is functional
+    IfaceMgr::SocketInfo sock1(7, IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7);
+    EXPECT_EQ(7, sock1.sockfd_);
+    EXPECT_EQ("192.0.2.56", sock1.addr_.toText());
+    EXPECT_EQ(AF_INET, sock1.family_);
+    EXPECT_EQ(DHCP4_SERVER_PORT + 7, sock1.port_);
+
+    // check that socketinfo for IPv6 socket is functional
+    IfaceMgr::SocketInfo sock2(9, IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9);
+    EXPECT_EQ(9, sock2.sockfd_);
+    EXPECT_EQ("2001:db8:1::56", sock2.addr_.toText());
+    EXPECT_EQ(AF_INET6, sock2.family_);
+    EXPECT_EQ(DHCP4_SERVER_PORT + 9, sock2.port_);
+
+    // now let's test if IfaceMgr handles socket info properly
+    createLoInterfacesTxt();
+    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    IfaceMgr::Iface* loopback = ifacemgr->getIface(LOOPBACK);
+    ASSERT_TRUE(loopback);
+    loopback->addSocket(sock1);
+    loopback->addSocket(sock2);
+
+    Pkt6 pkt6(100);
+
+    // pkt6 dos not have interface set yet
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt6),
+        BadValue
+    );
+
+    // try to send over non-existing interface
+    pkt6.iface_ = "nosuchinterface45";
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt6),
+        BadValue
+    );
+
+    // this will work
+    pkt6.iface_ = LOOPBACK;
+    EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
+
+    bool deleted = false;
+    EXPECT_NO_THROW(
+        deleted = ifacemgr->getIface(LOOPBACK)->delSocket(9);
+    );
+    EXPECT_EQ(true, deleted);
+
+    // it should throw again, there's no usable socket anymore
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt6),
+        Unexpected
+    );
+
+    // repeat for pkt4
+    Pkt4 pkt4(DHCPDISCOVER, 1);
+
+    // pkt4 does not have interface set yet.
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt4),
+        BadValue
+    );
+
+    // Try to send over non-existing interface.
+    pkt4.setIface("nosuchinterface45");
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt4),
+        BadValue
+    );
+
+    // Socket info is set, packet has well defined interface. It should work.
+    pkt4.setIface(LOOPBACK);
+    EXPECT_EQ(7, ifacemgr->getSocket(pkt4));
+
+    EXPECT_NO_THROW(
+        ifacemgr->getIface(LOOPBACK)->delSocket(7);
+    );
+
+    // It should throw again, there's no usable socket anymore.
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt4),
+        Unexpected
+    );
+
+    delete ifacemgr;
+}
+
 }
