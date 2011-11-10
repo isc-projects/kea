@@ -106,7 +106,8 @@ opterror(const char* expected, const char* value, const confvar_t* varDesc,
  * varDesc is the description structure for this option.
  *
  * Output variables:
- * The option value is stored in the option list pointed to by first.
+ * The option data is stored in a malloced confval structure, which is appended
+ * to the option list pointed to by first.  The 'next' element is set to NULL.
  * last is used to track the last record in each option list, so option values
  * can be appended easily.
  *
@@ -136,7 +137,7 @@ addOptVal(const char* value, const confvar_t* varDesc,
         }
         data.value.charval = *value;
         if (addr != NULL) {
-            *(char*) addr = *value;
+            *(char*)addr = *value;
         }
         break;
     case CF_STRING:
@@ -147,7 +148,7 @@ addOptVal(const char* value, const confvar_t* varDesc,
         }
         data.value.string = value;
         if (addr != NULL) {
-            *(const char**) addr = value;
+            *(const char**)addr = value;
         }
         break;
     case CF_INT:
@@ -189,7 +190,7 @@ addOptVal(const char* value, const confvar_t* varDesc,
             ;
         }
         if (addr != NULL) {
-            *(int*) addr = data.value.intval;
+            *(int*)addr = data.value.intval;
         }
         break;
     case CF_FLOAT:
@@ -228,14 +229,14 @@ addOptVal(const char* value, const confvar_t* varDesc,
             ;
         }
         if (addr != NULL) {
-            *(double*) addr = data.value.floatval;
+            *(double*)addr = data.value.floatval;
         }
         break;
     case CF_SWITCH:
         data.value.switchval = varDesc->value;
         value = "1";    /* for debugging */
         if (addr != NULL) {
-            *(int*) addr = varDesc->value;
+            *(int*)addr = varDesc->value;
         }
         break;
     case CF_ENDLIST:
@@ -282,7 +283,7 @@ procCmdLineArgs(int* argc, const char** argv[], const confvar_t optConf[],
     char optstr[514];       /* List of option chars, for getopt */
     unsigned optCharToConf[256];        /* Map option char/num to confvar */
     int optchar;            /* value returned by getopt() */
-    unsigned confNum;       /* to iterate over confvars */
+    int confNum;       /* to iterate over confvars */
     int count = 0;          /* number of options processed */
 
     p = optstr;
@@ -290,7 +291,7 @@ procCmdLineArgs(int* argc, const char** argv[], const confvar_t optConf[],
     for (confNum = 0; optConf[confNum].type != CF_ENDLIST; confNum++) {
         unsigned outind = optConf[confNum].outind;
         if (outind < 256 && isprint(outind)) {
-            *(p++) = (char) outind;
+            *(p++) = (char)outind;
             switch (optConf[confNum].type) {
             case CF_SWITCH:
                 break;
@@ -304,7 +305,8 @@ procCmdLineArgs(int* argc, const char** argv[], const confvar_t optConf[],
 
     *p = '\0';
     optind = 1;
-    while ((optchar = getopt(*argc, const_cast<char**>(*argv), optstr)) != -1) {
+    while ((optchar = getopt(*argc, const_cast<char**>(*argv), optstr)) != -1)
+    {
         int ind;
         int ret;
 
@@ -341,15 +343,23 @@ procCmdLineArgs(int* argc, const char** argv[], const confvar_t optConf[],
  *    and the program exits.
  *
  * Output variables:
- * The processed option values are stored in confdata.
+ * Option values are stored at the value given by any confvar that has a
+ * non-null address. 
+ * If confdatda is not null, the processed option values are stored in
+ * confdata.
  * A pointer to the start of the values for each option is stored in
  * confdata->optVals[].values at the same offset as the option appears in
  * confdata[].
- * For any option for option characters/indexes have been used,
+ * For any option for option characters/indexes that have been used,
  * confdata->map[index] is set to the same data.
  * After processing, argc will have been adjusted to be the number of
  * non-option arguments and argv will have been adjusted to start with the
  * first non-option argument.
+ * The malloced data structures returned in confdata are:
+ *   optVals
+ *   optVals[0].values
+ *   If any option characters/indexes are used, map.  If not used, this will be
+ *     a null pointer.
  *
  * Return value:
  * On success, NULL.
@@ -366,8 +376,8 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
     unsigned maxOptIndex = 0;   /* The highest option index number seen */
     /* number of option instances + assignments given */
     int numOptsFound;
-    unsigned optNum;    /* to iterate through the possible options */
-    unsigned i; /* index into the global list of option value structures */
+    int optNum;    /* to iterate through the possible options */
+    int i;         /* index into the global list of option value structures */
     confval** valuePointers;    /* global list of value structures */
 
     pc_name = name;
@@ -379,6 +389,10 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
             maxOptIndex = outind & ~CF_NOTFLAG;
         }
     }
+    if (numConf == 0) {
+        error(INTERNAL_ERROR, "Empty confvar list");
+        return(errmsg);
+    }
     if ((first = (confval**)pc_malloc(sizeof(confval*) * numConf)) == NULL ||
             (last =
                  (confval**)pc_malloc(sizeof(confval*) * numConf)) == NULL) {
@@ -387,28 +401,36 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
     memset(first, '\0', sizeof(confval*) * numConf);
     memset(last, '\0', sizeof(confval*) * numConf);
 
-    if ((numOptsFound =
-                procCmdLineArgs(argc, argv, optConf, first, last)) < 0) {
+    numOptsFound = procCmdLineArgs(argc, argv, optConf, first, last);
+    free(last);
+    last = NULL;
+
+    if (numOptsFound < 0)
+    {
+        free(first);
         return(errmsg);
     }
-
-    free(last);
+    if (confdata == NULL) {
+        free(first);
+        return NULL;
+    }
 
     /*
      * All options have been read & initial processing done.
      * An array of pointers is now generated for the options.
      */
     if ((valuePointers =
-                (confval**)pc_malloc(sizeof(confval*) * numOptsFound)) == NULL ||
+            (confval**)pc_malloc(sizeof(confval*) * numOptsFound)) == NULL ||
             (confdata->optVals =
-                 (cf_option*)pc_malloc(sizeof(cf_option) * numConf)) == NULL) {
+            (cf_option*)pc_malloc(sizeof(cf_option) * numConf)) == NULL) {
         return(errmsg);
     }
-    /* If option index numbers are used, allocate a map for them */
-    if (maxOptIndex != 0) {
-        if ((confdata->map =
-                    (cf_option**)pc_malloc(sizeof(cf_option) * (maxOptIndex+1)))
-                == NULL) {
+    /* If option characters / indexes are used, allocate a map for them */
+    if (maxOptIndex == 0) {
+	confdata->map = NULL;
+    } else {
+        if ((confdata->map = (cf_option**)pc_malloc(sizeof(cf_option) *
+             (maxOptIndex+1))) == NULL) {
             return(errmsg);
         }
         memset(confdata->map, '\0', sizeof(confval*) * (maxOptIndex+1));
@@ -436,4 +458,18 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
     }
     free(first);
     return(NULL);
+}
+
+/*
+ * Free the malloced data stored in confdata elements by ProcOpts()
+ */
+void
+confdataFree(confdata_t *confdata) {
+    if (confdata->map != NULL) {
+        free(confdata->map);
+        confdata->map = NULL;
+    }
+    free(confdata->optVals[0].values);
+    free(confdata->optVals);
+    confdata->optVals = NULL;
 }
