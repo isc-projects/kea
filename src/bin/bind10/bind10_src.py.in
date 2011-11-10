@@ -311,51 +311,14 @@ class BoB:
         # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
             return
-        # Now we declare few functions used only internally here. Besides the
-        # benefit of not polluting the name space, they are closures, so we
-        # don't need to pass some variables
-        def start_stop(name, start, stop):
-            if 'start_' + name in new_config:
-                if new_config['start_' + name]:
-                    start()
-                else:
-                    stop()
-        # These four functions are passed to start_stop (smells like functional
-        # programming little bit)
-        def resolver_on():
-            self.component_config['b10-resolver'] = { 'kind': 'needed',
-                                                      'special': 'resolver' }
-        def resolver_off():
-            if 'b10-resolver' in self.component_config:
-                del self.component_config['b10-resolver']
-        def auth_on():
-            self.component_config['b10-auth'] = { 'kind': 'needed',
-                                                  'special': 'auth' }
-            self.component_config['b10-xfrout'] = { 'kind': 'dispensable',
-                                                    'address': 'Xfrout' }
-            self.component_config['b10-xfrin'] = { 'kind': 'dispensable',
-                                                   'special': 'xfrin' }
-            self.component_config['b10-zonemgr'] = { 'kind': 'dispensable',
-                                                     'address': 'Zonemgr' }
-        def auth_off():
-            if 'b10-zonemgr' in self.component_config:
-                del self.component_config['b10-zonemgr']
-            if 'b10-xfrin' in self.component_config:
-                del self.component_config['b10-xfrin']
-            if 'b10-xfrout' in self.component_config:
-                del self.component_config['b10-xfrout']
-            if 'b10-auth' in self.component_config:
-                del self.component_config['b10-auth']
-
-        # The real code of the config handler function follows here
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_NEW_CONFIGURATION,
                      new_config)
-        start_stop('resolver', resolver_on, resolver_off)
-        start_stop('auth', auth_on, auth_off)
-        self.__propagate_component_config(self.component_config)
-
-        answer = isc.config.ccsession.create_answer(0)
-        return answer
+        try:
+            if 'components' in new_config:
+                self.__propagate_component_config(new_config['components'])
+            return isc.config.ccsession.create_answer(0)
+        except Exception as e:
+            return isc.config.ccsession.create_answer(1, str(e))
 
     def get_processes(self):
         pids = list(self.components.keys())
@@ -424,24 +387,20 @@ class BoB:
             self.components[pid].kill(True)
         self.components = {}
 
-    def read_bind10_config(self):
+    def _read_bind10_config(self):
         """
             Reads the parameters associated with the BoB module itself.
 
-            At present these are the components to start although arguably this
-            information should be in the configuration for the appropriate
-            module itself. (However, this would cause difficulty in the case of
-            xfrin/xfrout and zone manager as we don't need to start those if we
-            are not running the authoritative server.)
+            This means the list of components we should start now.
+
+            This could easily be combined into start_all_processes, but
+            it stays because of historical reasons and because the tests
+            replace the method sometimes.
         """
         logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
         config_data = self.ccs.get_full_config()
-        self.cfg_start_auth = config_data.get("start_auth")
-        self.cfg_start_resolver = config_data.get("start_resolver")
-
-        logger.info(BIND10_CONFIGURATION_START_AUTH, self.cfg_start_auth)
-        logger.info(BIND10_CONFIGURATION_START_RESOLVER, self.cfg_start_resolver)
+        self.__propagate_component_config(config_data['components'])
 
     def log_starting(self, process, port = None, address = None):
         """
@@ -720,60 +679,14 @@ class BoB:
 
         # Connect to the msgq. This is not a process, so it's not handled
         # inside the configurator.
-        c_channel_env = self.c_channel_env
-        self.start_ccsession(c_channel_env)
+        self.start_ccsession(self.c_channel_env)
 
         # Extract the parameters associated with Bob.  This can only be
         # done after the CC Session is started.  Note that the logging
         # configuration may override the "-v" switch set on the command line.
-        self.read_bind10_config()
+        self._read_bind10_config()
 
-        # Continue starting the components.  The authoritative server (if
-        # selected):
-        component_config = {}
-        if self.cfg_start_auth:
-            component_config['b10-auth'] = { 'kind': 'needed',
-                                             'special': 'auth' }
-            self.__propagate_component_config(component_config)
-
-        # ... and resolver (if selected):
-        if self.cfg_start_resolver:
-            component_config['b10-resolver'] = { 'kind': 'needed',
-                                                 'special': 'resolver' }
-            self.__propagate_component_config(component_config)
-
-        # Everything after the main components can run as non-root.
-        # TODO: this is only temporary - once the privileged socket creator is
-        # fully working, nothing else will run as root.
-        if self.uid is not None:
-            posix.setuid(self.uid)
-
-        # xfrin/xfrout and the zone manager are only meaningful if the
-        # authoritative server has been started.
-        if self.cfg_start_auth:
-            component_config['b10-xfrout'] = { 'kind': 'dispensable',
-                                               'address': 'Xfrout' }
-            component_config['b10-xfrin'] = { 'kind': 'dispensable',
-                                              'special': 'xfrin' }
-            component_config['b10-zonemgr'] = { 'kind': 'dispensable',
-                                              'address': 'Zonemgr' }
-            self.__propagate_component_config(component_config)
-
-        # ... and finally start the remaining components
-        component_config['b10-stats'] = { 'kind': 'dispensable',
-                                          'address': 'Stats' }
-        component_config['b10-stats-httpd'] = { 'kind': 'dispensable',
-                                                'address': 'StatsHttpd' }
-        component_config['b10-cmdctl'] = { 'kind': 'needed',
-                                           'special': 'cmdctl' }
-
-        if self.cfg_start_dhcp6:
-            component_config['b10-dhcp6'] = { 'kind': 'dispensable',
-                                              'address': 'DHCP6' }
-
-        self.__propagate_component_config(component_config)
-
-        self.component_config = component_config
+        # TODO: Return the dropping of privileges
 
     def startup(self):
         """
@@ -837,22 +750,6 @@ class BoB:
             raise Exception("Component failed during startup");
         else:
             self.runnable = False
-
-    # Series of stop_process wrappers
-    def stop_resolver(self):
-        self.stop_process('b10-resolver', 'Resolver')
-
-    def stop_auth(self):
-        self.stop_process('b10-auth', 'Auth')
-
-    def stop_xfrout(self):
-        self.stop_process('b10-xfrout', 'Xfrout')
-
-    def stop_xfrin(self):
-        self.stop_process('b10-xfrin', 'Xfrin')
-
-    def stop_zonemgr(self):
-        self.stop_process('b10-zonemgr', 'Zonemgr')
 
     def shutdown(self):
         """Stop the BoB instance."""
