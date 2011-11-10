@@ -35,7 +35,7 @@ namespace dhcp {
 class IfaceMgr : public boost::noncopyable {
 public:
     /// type that defines list of addresses
-    typedef std::list<isc::asiolink::IOAddress> AddressCollection;
+    typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
 
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
