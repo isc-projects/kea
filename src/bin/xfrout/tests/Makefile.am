@@ -2,6 +2,10 @@ PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = xfrout_test.py
 noinst_SCRIPTS = $(PYTESTS)
 
+EXTRA_DIST = testdata/test.sqlite3
+# This one is actually not necessary, but added for reference
+EXTRA_DIST += testdata/example.com
+
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
 LIBRARY_PATH_PLACEHOLDER =
@@ -24,5 +28,6 @@ endif
 	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/xfrout:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/util/io/.libs \
+	TESTDATASRCDIR=$(abs_srcdir)/testdata/ \
 	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done
