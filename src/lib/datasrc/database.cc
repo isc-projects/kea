@@ -955,7 +955,7 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
         diff_phase_ = ADD;
         if (rrset.getType() == RRType::SOA()) {
             serial_ =
-                dynamic_cast<const rdata::generic::SOA&>(it->getCurrent()).
+                dynamic_cast<const generic::SOA&>(it->getCurrent()).
                 getSerial();
         }
     }
@@ -1004,7 +1004,7 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
         diff_phase_ = DELETE;
         if (rrset.getType() == RRType::SOA()) {
             serial_ =
-                dynamic_cast<const rdata::generic::SOA&>(it->getCurrent()).
+                dynamic_cast<const generic::SOA&>(it->getCurrent()).
                 getSerial();
         }
     }
@@ -1027,7 +1027,7 @@ DatabaseUpdater::commit() {
                   << db_name_);
     }
     if (journaling_ && diff_phase_ == DELETE) {
-        isc_throw(isc::Unexpected, "Update sequence not complete");
+        isc_throw(isc::BatValue, "Update sequence not complete");
     }
     accessor_->commit();
     committed_ = true; // make sure the destructor won't trigger rollback

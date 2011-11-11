@@ -301,12 +301,14 @@ struct JournalEntry {
     DatabaseAccessor::DiffOperation operation_;
     std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
     bool operator==(const JournalEntry& other) const {
-        bool data_equal(true);
         for (size_t i(0); i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
-            data_equal = data_equal && (data_[i] == other.data_[i]);
+            if (data_[i] != other.data_[i]) {
+                return false;
+            }
         }
+        // No need to check data here, checked above
         return (id_ == other.id_ && serial_ == other.serial_ &&
-                operation_ == other.operation_ && data_equal);
+                operation_ == other.operation_);
     }
 };
 
