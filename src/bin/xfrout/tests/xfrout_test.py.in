@@ -77,8 +77,8 @@ class MockDataSrcClient:
     def get_soa(self):  # emulate ZoneIterator.get_soa()
         if self._zone_name == Name('nosoa.example.com'):
             return None
-        soa_rrset = RRset(Name('multisoa.example.com'), RRClass.IN(),
-                          RRType.SOA(), RRTTL(3600))
+        soa_rrset = RRset(self._zone_name, RRClass.IN(), RRType.SOA(),
+                          RRTTL(3600))
         soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
                                   'master.example.com. ' +
                                   'admin.example.com. 1234 ' +
@@ -88,7 +88,6 @@ class MockDataSrcClient:
                                       'master.example.com. ' +
                                       'admin.example.com. 1300 ' +
                                       '3600 1800 2419200 7200'))
-            return soa_rrset
         return soa_rrset
 
 class MyCCSession(isc.config.ConfigData):
