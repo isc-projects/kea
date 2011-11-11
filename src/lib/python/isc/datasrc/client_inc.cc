@@ -89,7 +89,7 @@ None\n\
 ";
 
 const char* const DataSourceClient_getIterator_doc = "\
-get_iterator(name, adjust_ttl=True) -> ZoneIterator\n\
+get_iterator(name, separate_rrs=False) -> ZoneIterator\n\
 \n\
 Returns an iterator to the given zone.\n\
 \n\
@@ -111,11 +111,12 @@ anything else.\n\
 Parameters:\n\
   isc.dns.Name The name of zone apex to be traversed. It doesn't do\n\
                nearest match as find_zone.\n\
-  adjust_ttl   If True, the iterator will treat RRs with the same\n\
-               name and type but different TTL values to be of the\n\
-               same RRset, and will adjust the TTL to the lowest\n\
-               value found. If false, it will consider the RR to\n\
-               belong to a different RRset.\n\
+  separate_rrs If true, the iterator will return each RR as a\n\
+               new RRset object. If false, the iterator will\n\
+               combine consecutive RRs with the name and type\n\
+               into 1 RRset. The capitalization of the RRset will\n\
+               be that of the first RR read, and TTLs will be\n\
+               adjusted to the lowest one found.\n\
 \n\
 Return Value(s): Pointer to the iterator.\n\
 ";

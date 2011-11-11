@@ -84,26 +84,26 @@ PyObject*
 DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject* name_obj;
-    PyObject* adjust_ttl_obj = NULL;
+    PyObject* separate_rrs_obj = NULL;
     if (PyArg_ParseTuple(args, "O!|O", &name_type, &name_obj,
-                         &adjust_ttl_obj)) {
+                         &separate_rrs_obj)) {
         try {
-            bool adjust_ttl = true;
-            if (adjust_ttl_obj != NULL) {
+            bool separate_rrs = false;
+            if (separate_rrs_obj != NULL) {
                 // store result in local var so we can explicitely check for
                 // -1 error return value
-                int adjust_ttl_no = PyObject_Not(adjust_ttl_obj);
-                if (adjust_ttl_no == 1) {
-                    adjust_ttl = false;
-                } else if (adjust_ttl_no == -1) {
+                int separate_rrs_true = PyObject_IsTrue(separate_rrs_obj);
+                if (separate_rrs_true == 1) {
+                    separate_rrs = true;
+                } else if (separate_rrs_true == -1) {
                     PyErr_SetString(getDataSourceException("Error"),
-                                    "Error getting value of adjust_ttl");
+                                    "Error getting value of separate_rrs");
                     return (NULL);
                 }
             }
             return (createZoneIteratorObject(
                 self->cppobj->getInstance().getIterator(PyName_ToName(name_obj),
-                                                        adjust_ttl),
+                                                        separate_rrs),
                 po_self));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),

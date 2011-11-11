@@ -707,11 +707,11 @@ public:
     DatabaseIterator(shared_ptr<DatabaseAccessor> accessor,
                      const Name& zone_name,
                      const RRClass& rrclass,
-                     bool adjust_ttl) :
+                     bool separate_rrs) :
         accessor_(accessor),
         class_(rrclass),
         ready_(true),
-        adjust_ttl_(adjust_ttl)
+        separate_rrs_(separate_rrs)
     {
         // Get the zone
         const pair<bool, int> zone(accessor_->getZone(zone_name.toText()));
@@ -769,20 +769,19 @@ public:
         const RRType rtype(rtype_str);
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
         while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
-            if (adjust_ttl_) {
-                if (ttl_ != ttl) {
-                    if (ttl < ttl_) {
-                        ttl_ = ttl;
-                        rrset->setTTL(RRTTL(ttl));
-                    }
-                    LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
-                        arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
+            if (ttl_ != ttl) {
+                if (ttl < ttl_) {
+                    ttl_ = ttl;
+                    rrset->setTTL(RRTTL(ttl));
                 }
-            } else if (ttl_ != ttl) {
-                break;
+                LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
+                    arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
             }
             rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
             getData();
+            if (separate_rrs_) {
+                break;
+            }
         }
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
             arg(rrset->getName()).arg(rrset->getType());
@@ -814,18 +813,18 @@ private:
     string name_, rtype_, rdata_, ttl_;
     // Whether to modify differing TTL values, or treat a different TTL as
     // a different RRset
-    bool adjust_ttl_;
+    bool separate_rrs_;
 };
 
 }
 
 ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name,
-                            bool adjust_ttl) const
+                            bool separate_rrs) const
 {
     ZoneIteratorPtr iterator = ZoneIteratorPtr(new DatabaseIterator(
                                                    accessor_->clone(), name,
-                                                   rrclass_, adjust_ttl));
+                                                   rrclass_, separate_rrs));
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
 
