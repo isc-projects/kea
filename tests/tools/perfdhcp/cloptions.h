@@ -36,14 +36,14 @@ int procArgs(int argc, const char* argv[]);
 /*
  * These functions return values set by command line options
  */
-int getv6(void);                // DHCPv6 operation (-6)
-int getinitialOnly(void);       // Do only initial exchange (-i)
-unsigned getrate(void);         // Request rate (-r)
-unsigned getnumRequest(void);   // Number of requests (-n)
-double getdropTime(void);       // Response timeout (-d)
-double gettestPeriod(void);     // Test period (-p)
-const char* getserver(void);    // Server to contact
-const char* getlocalName(void); // Local host/interface (-l)
-const char* getmaxDrop(void);   // Max dropped responses (-D)
+int isV6(void);                // DHCPv6 operation (-6)
+int getInitialOnly(void);       // Do only initial exchange (-i)
+unsigned getRate(void);         // Request rate (-r)
+unsigned getNumRequest(void);   // Number of requests (-n)
+double getDropTime(void);       // Response timeout (-d)
+double getTestPeriod(void);     // Test period (-p)
+const char* getServer(void);    // Server to contact
+const char* getLocalName(void); // Local host/interface (-l)
+const char* getMaxDrop(void);   // Max dropped responses (-D)
 
 #endif

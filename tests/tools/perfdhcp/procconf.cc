@@ -65,10 +65,11 @@ error(const int errtype, const char* format, ...) {
 /*
  * Allocate memory, with error checking.
  * On allocation failure, error() is called; see its description.
+ * The memory is zeroed before being returned.
  */
 static void*
 pc_malloc(size_t size) {
-    void* ret = malloc(size);
+    void* ret = calloc(1, size);
     if (ret == NULL) {
         error(INTERNAL_ERROR, "Out of memory");
     }
@@ -107,9 +108,12 @@ opterror(const char* expected, const char* value, const confvar_t* varDesc,
  *
  * Output variables:
  * The option data is stored in a malloced confval structure, which is appended
- * to the option list pointed to by first.  The 'next' element is set to NULL.
- * last is used to track the last record in each option list, so option values
- * can be appended easily.
+ * to the option list.  The first element of the list is pointed to by first.
+ * first should be NULL if the list contains no elements; in this case it is
+ * set to point to the new structure.  Otherwise the structure is appended to
+ * the element pointed to by last (it is updated to point to that structure).
+ * The 'next' element of the new structure is set to NULL; this is the list
+ * termination indicator when traversing it.
  *
  * Return value:
  * 0 if option was ignored.
@@ -275,7 +279,7 @@ addOptVal(const char* value, const confvar_t* varDesc,
  */
 static int
 procCmdLineArgs(int* argc, const char** argv[], const confvar_t optConf[],
-                confval** first, confval** last) {
+                confval** perOptRecordsFirst, confval** perOptRecordsLast) {
     char* p;
     extern char* optarg;    /* For getopt */
     extern int optind;      /* For getopt */
@@ -318,8 +322,9 @@ procCmdLineArgs(int* argc, const char** argv[], const confvar_t optConf[],
             return(-1);
         }
         ind = optCharToConf[optchar];
-        switch (ret = addOptVal(optarg, &optConf[ind], &first[ind],
-                                &last[ind])) {
+        switch (ret = addOptVal(optarg, &optConf[ind],
+                                &perOptRecordsFirst[ind],
+                                &perOptRecordsLast[ind])) {
         case 1:
             count++;
             break;
@@ -369,10 +374,17 @@ const char*
 procOpts(int* argc, const char** argv[], const confvar_t optConf[],
          confdata_t* confdata, const char name[],
          const char usage[]) {
+    /*
+     * First & last records in the linked lists maintained for each option.
+     * These will point to arrays indexed by option number, giving one pointer
+     * (each) per option, used to maintain/return the list of values seen for
+     * that option (see the description of first & last in addOptVal()
+     */
+    confval** perOptRecordsFirst;
+    confval** perOptRecordsLast;
+
     /* Number of configuration options given in optConf */
     unsigned numConf;
-    /* First & last records in the linked list maintained for each option */
-    confval** first, **last;
     unsigned maxOptIndex = 0;   /* The highest option index number seen */
     /* number of option instances + assignments given */
     int numOptsFound;
@@ -393,25 +405,24 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
         error(INTERNAL_ERROR, "Empty confvar list");
         return(errmsg);
     }
-    if ((first = (confval**)pc_malloc(sizeof(confval*) * numConf)) == NULL ||
-            (last =
-                 (confval**)pc_malloc(sizeof(confval*) * numConf)) == NULL) {
+    if ((perOptRecordsFirst = (confval**)pc_malloc(sizeof(confval*) * numConf))
+            == NULL || (perOptRecordsLast =
+            (confval**)pc_malloc(sizeof(confval*) * numConf)) == NULL) {
         return(errmsg);
     }
-    memset(first, '\0', sizeof(confval*) * numConf);
-    memset(last, '\0', sizeof(confval*) * numConf);
 
-    numOptsFound = procCmdLineArgs(argc, argv, optConf, first, last);
-    free(last);
-    last = NULL;
+    numOptsFound = procCmdLineArgs(argc, argv, optConf, perOptRecordsFirst,
+                                   perOptRecordsLast);
+    free(perOptRecordsLast);
+    perOptRecordsLast = NULL;
 
     if (numOptsFound < 0)
     {
-        free(first);
+        free(perOptRecordsFirst);
         return(errmsg);
     }
     if (confdata == NULL) {
-        free(first);
+        free(perOptRecordsFirst);
         return NULL;
     }
 
@@ -433,7 +444,6 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
              (maxOptIndex+1))) == NULL) {
             return(errmsg);
         }
-        memset(confdata->map, '\0', sizeof(confval*) * (maxOptIndex+1));
     }
 
     /*
@@ -451,12 +461,13 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
         if (outind != 0) {
             confdata->map[outind & ~CF_NOTFLAG] = &confdata->optVals[optNum];
         }
-        for (optval = first[optNum]; optval != NULL; optval = optval->next) {
+        for (optval = perOptRecordsFirst[optNum]; optval != NULL;
+                 optval = optval->next) {
             confdata->optVals[optNum].num++;
             valuePointers[i++] = optval;
         }
     }
-    free(first);
+    free(perOptRecordsFirst);
     return(NULL);
 }
 

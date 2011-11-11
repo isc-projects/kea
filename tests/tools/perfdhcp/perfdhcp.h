@@ -21,11 +21,18 @@
 extern "C" {
 #endif
 
-#define DK_SOCK 1
-#define DK_MSG 2
-#define DK_PACKET 4
+extern const char progName[];
 
-const char progName[] = "dhcpperf";
+/*
+ * The masks associated with keyletters, used in dkdesc structures for setup
+ * and passed in the diag_req argument to the output/test functions to
+ * determine which diagnostics they are enabled for.
+ */
+enum {
+    DK_SOCK   = 1,
+    DK_MSG    = 2,
+    DK_PACKET = 4
+};
 
 #ifdef __cplusplus
 }
