@@ -27,6 +27,7 @@ import xfrout
 import isc.log
 import isc.acl.dns
 
+TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 
 # our fake socket, where we can read and insert messages
@@ -55,10 +56,10 @@ class MySocket():
         self.sendqueue = self.sendqueue[size:]
         return result
 
-    def read_msg(self):
+    def read_msg(self, parse_options=Message.PARSE_DEFAULT):
         sent_data = self.readsent()
         get_msg = Message(Message.PARSE)
-        get_msg.from_wire(bytes(sent_data[2:]))
+        get_msg.from_wire(bytes(sent_data[2:]), parse_options)
         return get_msg
 
     def clear_send(self):
@@ -135,7 +136,13 @@ class Dbserver:
     def decrease_transfers_counter(self):
         self.transfer_counter -= 1
 
-class TestXfroutSession(unittest.TestCase):
+class TestXfroutSessionBase(unittest.TestCase):
+    '''Base classs for tests related to xfrout sessions
+
+    This class defines common setup/teadown and utility methods.  Actual
+    tests are delegated to subclasses.
+
+    '''
     def getmsg(self):
         msg = Message(Message.PARSE)
         msg.from_wire(self.mdata)
@@ -188,12 +195,17 @@ class TestXfroutSession(unittest.TestCase):
                                        'master.Example.com. ' +
                                        'admin.exAmple.com. ' +
                                        '1234 3600 1800 2419200 7200'))
+        # some test replaces a module-wide function.  We should ensure the
+        # original is used elsewhere.
+        self.orig_get_rrset_len = xfrout.get_rrset_len
 
     def tearDown(self):
+        xfrout.get_rrset_len = self.orig_get_rrset_len
         # transfer_counter must be always be reset no matter happens within
         # the XfroutSession object.  We check the condition here.
         self.assertEqual(0, self.xfrsess._server.transfer_counter)
 
+class TestXfroutSession(TestXfroutSessionBase):
     def test_quota_error(self):
         '''Emulating the server being too busy.
 
@@ -701,6 +713,35 @@ class TestXfroutSession(unittest.TestCase):
 
         # and it should not have sent anything else
         self.assertEqual(0, len(self.sock.sendqueue))
+
+
+class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
+    '''Tests for XFR-out sessions using an SQLite3 DB.
+
+    These are provided mainly to confirm the implementation actually works
+    in an environment closer to actual operational environments.  So we
+    only check a few common cases; other details are tested using mock
+    data sources.
+
+    '''
+    def setUp(self):
+        super().setUp()
+        self.xfrsess._request_data = self.mdata
+        self.xfrsess._server.get_db_file = lambda : TESTDATA_SRCDIR + \
+            'test.sqlite3'
+
+    def test_axfr_normal_session(self):
+        XfroutSession._handle(self.xfrsess)
+        response = self.sock.read_msg(Message.PRESERVE_ORDER);
+        self.assertEqual(Rcode.NOERROR(), response.get_rcode())
+        # This zone contains two A RRs for the same name with different TTLs.
+        # These TTLs should be preseved in the AXFR stream.
+        actual_ttls = []
+        for rr in response.get_section(Message.SECTION_ANSWER):
+            if rr.get_type() == RRType.A() and \
+                    not rr.get_ttl() in actual_ttls:
+                actual_ttls.append(rr.get_ttl().get_value())
+        self.assertEqual([3600, 7200], sorted(actual_ttls))
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
