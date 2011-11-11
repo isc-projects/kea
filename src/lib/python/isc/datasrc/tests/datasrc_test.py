@@ -82,7 +82,6 @@ class DataSrcClient(unittest.TestCase):
                           isc.datasrc.DataSourceClient, "memory",
                           "{ \"foo\": 1 }")
 
-    @unittest.skip("This test may fail depending on sqlite3 library behavior")
     def test_iterate(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
