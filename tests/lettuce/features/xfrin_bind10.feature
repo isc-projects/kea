@@ -6,5 +6,5 @@ Feature: Xfrin
     And I have bind10 running with configuration xfrin/retransfer_slave.conf
     A query for www.example.org should have rcode REFUSED
     When I send bind10 the command Xfrin retransfer example.org IN 127.0.0.1 47807
-    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_SUCCESS
+    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     A query for www.example.org should have rcode NOERROR
