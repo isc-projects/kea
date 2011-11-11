@@ -1246,8 +1246,8 @@ TEST_F(MockDatabaseClientTest, ttldiff) {
 
 // Unless we ask for individual RRs in our iterator request. In that case
 // every RR should go into its own 'rrset'
-TEST_F(MockDatabaseClientTest, ttldiff_no_adjust_ttl) {
-    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org"), false));
+TEST_F(MockDatabaseClientTest, ttldiff_separate_rrsets) {
+    ZoneIteratorPtr it(this->client_->getIterator(Name("example.org"), true));
 
     // Walk through the full iterator, we should see 1 rrset with name
     // ttldiff1.example.org., and two rdatas. Same for ttldiff2
