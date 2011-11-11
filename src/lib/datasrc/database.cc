@@ -1095,26 +1095,57 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
 //  source.
 //
 class DatabaseJournalReader : public ZoneJournalReader {
+private:
+    // A shortcut typedef to keep the code concise.
+    typedef DatabaseAccessor Accessor;
 public:
-    DatabaseJournalReader() {}
+    DatabaseJournalReader(shared_ptr<Accessor> accessor, const Name& zone,
+                          const RRClass& rrclass, uint32_t begin,
+                          uint32_t end) :
+        accessor_(accessor), rrclass_(rrclass)
+    {
+        const pair<bool, int> zoneinfo(accessor_->getZone(zone.toText()));
+        if (!zoneinfo.first) {
+            // No such zone, can't continue
+            isc_throw(DataSourceError, "Zone " << zone << "/"
+                      << rrclass << " doesn't exist in database: " <<
+                      accessor_->getDBName());
+        }
+        context_ = accessor_->getDiffs(zoneinfo.second, begin, end);
+    }
     virtual ~DatabaseJournalReader() {}
     virtual ConstRRsetPtr getNextDiff() {
-        return (ConstRRsetPtr());
+        // TBD: check read after completion
+
+        string data[Accessor::COLUMN_COUNT];
+        if (!context_->getNext(data)) {
+            return (ConstRRsetPtr());
+        }
+
+        RRsetPtr rrset(new RRset(Name(data[Accessor::NAME_COLUMN]), rrclass_,
+                                 RRType(data[Accessor::TYPE_COLUMN]),
+                                 RRTTL(data[Accessor::TTL_COLUMN])));
+        rrset->addRdata(rdata::createRdata(rrset->getType(), rrclass_,
+                                           data[Accessor::RDATA_COLUMN]));
+        return (rrset);
     }
+
+private:
+    shared_ptr<Accessor> accessor_;
+    const RRClass rrclass_;
+    Accessor::IteratorContextPtr context_;
 };
 
 // The JournalReader factory
 ZoneJournalReaderPtr
 DatabaseClient::getJournalReader(const isc::dns::Name& zone,
-                                 uint32_t, uint32_t) const
+                                 uint32_t begin_serial,
+                                 uint32_t end_serial) const
 {
-    const pair<bool, int> zoneinfo(accessor_->getZone(zone.toText()));
-    if (!zoneinfo.first) {
-        // No such zone, can't continue
-        isc_throw(DataSourceError, "Zone " << zone << "/" << rrclass_ <<
-                  " doesn't exist in database: " + accessor_->getDBName());
-    }
-    return (ZoneJournalReaderPtr(new DatabaseJournalReader()));
+    return (ZoneJournalReaderPtr(new DatabaseJournalReader(accessor_, zone,
+                                                           rrclass_,
+                                                           begin_serial,
+                                                           end_serial)));
 }
 }
 }
