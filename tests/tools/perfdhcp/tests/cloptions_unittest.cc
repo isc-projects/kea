@@ -81,13 +81,13 @@ void checkFlag(const char* optflag, int (*retfunc)(void)) {
 
 void checkStrOpt(const char* optflag, const char *(*retfunc)(void)) {
     if (checkOptionValid(optflag, "bar")) {
-        EXPECT_EQ("bar", (*retfunc)());
+        EXPECT_STREQ("bar", (*retfunc)());
     }
 }
 
 void checkNEStrOpt(const char* optflag, const char *(*retfunc)(void)) {
     if (checkOptionValid(optflag, "bar")) {
-        EXPECT_EQ("bar", (*retfunc)());
+        EXPECT_STREQ("bar", (*retfunc)());
     }
     checkOptionInvalid(optflag, "");
 }
@@ -99,19 +99,19 @@ void checkFlagHandled(const char* optflag) {
 // Command line option tests
 
 TEST(CommandOptionsTest, numreq) {
-    checkPosIntOpt("-n", getnumRequest);
+    checkPosIntOpt("-n", getNumRequest);
 }
 
 TEST(CommandOptionsTest, rate) {
-    checkPosIntOpt("-r", getrate);
+    checkPosIntOpt("-r", getRate);
 }
 
 TEST(CommandOptionsTest, droptime) {
-    checkPosFloatOpt("-d", getdropTime);
+    checkPosFloatOpt("-d", getDropTime);
 }
 
 TEST(CommandOptionsTest, period) {
-    checkPosFloatOpt("-p", gettestPeriod);
+    checkPosFloatOpt("-p", getTestPeriod);
 }
 
 TEST(CommandOptionsTest, help) {
@@ -124,20 +124,20 @@ TEST(CommandOptionsTest, version) {
 
 TEST(CommandOptionsTest, v4) {
     if (checkOptionValid("-4", NULL)) {
-        EXPECT_EQ(0, getv6());
+        EXPECT_EQ(0, isV6());
     }
 }
 
 TEST(CommandOptionsTest, v6) {
-    checkFlag("-6", getv6);
+    checkFlag("-6", isV6);
 }
 
 TEST(CommandOptionsTest, initial) {
-    checkFlag("-i", getinitialOnly);
+    checkFlag("-i", getInitialOnly);
 }
 
 TEST(CommandOptionsTest, localname) {
-    checkNEStrOpt("-l", getlocalName);
+    checkNEStrOpt("-l", getLocalName);
 }
 
 TEST(CommandOptionsTest, diagnostics) {
@@ -150,7 +150,7 @@ TEST(CommandOptionsTest, diagnostics) {
 }
 
 TEST(CommandOptionsTest, maxdrop) {
-    checkNEStrOpt("-D", getmaxDrop);
+    checkNEStrOpt("-D", getMaxDrop);
 }
 
 /*
@@ -169,24 +169,24 @@ TEST(CommandOptionsTest, v4v6) {
 
 TEST(CommandOptionsTest, ilr6) {
     if (checkOption(1, "-6i", "-leth0", "-r", "50", NULL)) {
-        EXPECT_EQ("eth0", getlocalName());
-        EXPECT_EQ(50, getrate());
-        EXPECT_EQ(1, getv6());
-        EXPECT_EQ(1, getinitialOnly());
+        EXPECT_STREQ("eth0", getLocalName());
+        EXPECT_EQ(50, getRate());
+        EXPECT_EQ(1, isV6());
+        EXPECT_EQ(1, getInitialOnly());
     }
 }
 
 TEST(CommandOptionsTest, ind) {
     if (checkOption(1, "-i", "-n10", "-d", "5", NULL)) {
-        EXPECT_EQ(1, getinitialOnly());
-        EXPECT_EQ(10, getnumRequest());
-        EXPECT_EQ(5, getdropTime());
+        EXPECT_EQ(1, getInitialOnly());
+        EXPECT_EQ(10, getNumRequest());
+        EXPECT_EQ(5, getDropTime());
     }
 }
 
 TEST(CommandOptionsTest, px) {
     if (checkOption(1, "-p", "5.5", "-x", "a", NULL)) {
-        EXPECT_EQ(5.5, gettestPeriod());
+        EXPECT_EQ(5.5, getTestPeriod());
         EXPECT_EQ(1, dk_set(DK_SOCK));
         EXPECT_EQ(1, dk_set(DK_MSG));
         EXPECT_EQ(1, dk_set(DK_PACKET));

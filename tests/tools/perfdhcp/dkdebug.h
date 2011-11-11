@@ -30,8 +30,7 @@ extern "C" {
 
 #include <stdarg.h>
 
-/* Use as the mask in a dkdesc structure to enable all diagnostics */
-#define DK_ALL (~0)
+#define DK_ALL (~0),   /* Select all diagnostics */
 
 /*
  * Elements of this type are used to map the available diagnostic keyletters to
