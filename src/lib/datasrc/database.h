@@ -928,7 +928,8 @@ public:
     /// accessor.  The returned updater will be able to work separately from
     /// the original client.
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
-                                      bool replace) const;
+                                      bool replace,
+                                      bool journaling = false) const;
 
 private:
     /// \brief The RR class that this client handles.
