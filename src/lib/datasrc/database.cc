@@ -868,6 +868,9 @@ public:
     virtual void commit();
 
 private:
+    // A short cut typedef only for making the code shorter.
+    typedef DatabaseAccessor Accessor;
+
     bool committed_;
     shared_ptr<DatabaseAccessor> accessor_;
     const int zone_id_;
@@ -884,59 +887,71 @@ private:
     DiffPhase diff_phase_;
     uint32_t serial_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
+
+    // This is a set of validation checks commonly used for addRRset() and
+    // deleteRRset to minimize duplicate code logic and to make the main
+    // code concise.
+    void validateAddOrDelete(const char* const op_str, const RRset& rrset,
+                             DiffPhase prev_phase,
+                             DiffPhase current_phase) const;
 };
 
 void
-DatabaseUpdater::addRRset(const RRset& rrset) {
+DatabaseUpdater::validateAddOrDelete(const char* const op_str,
+                                     const RRset& rrset,
+                                     DiffPhase prev_phase,
+                                     DiffPhase current_phase) const
+{
     if (committed_) {
-        isc_throw(DataSourceError, "Add attempt after commit to zone: "
+        isc_throw(DataSourceError, op_str << " attempt after commit to zone: "
                   << zone_name_ << "/" << zone_class_);
     }
-    if (rrset.getClass() != zone_class_) {
-        isc_throw(DataSourceError, "An RRset of a different class is being "
-                  << "added to " << zone_name_ << "/" << zone_class_ << ": "
-                  << rrset.toText());
-    }
-    if (rrset.getRRsig()) {
-        isc_throw(DataSourceError, "An RRset with RRSIG is being added to "
-                  << zone_name_ << "/" << zone_class_ << ": "
-                  << rrset.toText());
-    }
-    if (rrset.getType() == RRType::SOA() && diff_phase_ == ADD &&
-        journaling_) {
-        isc_throw(isc::BadValue, "Another SOA added inside an add sequence");
-    }
-    if (rrset.getType() != RRType::SOA() && diff_phase_ != ADD &&
-        journaling_) {
-        isc_throw(isc::BadValue, "Adding sequence not started by SOA");
-    }
-    if (rrset.getType() == RRType::SOA() && diff_phase_ != DELETE &&
-        journaling_) {
-        isc_throw(isc::BadValue,
-                  "Adding sequence can follow only after delete");
-    }
-
-    RdataIteratorPtr it = rrset.getRdataIterator();
-    if (it->isLast()) {
-        isc_throw(DataSourceError, "An empty RRset is being added for "
+    if (rrset.getRdataCount() == 0) {
+        isc_throw(DataSourceError, op_str << " attempt with an empty RRset: "
                   << rrset.getName() << "/" << zone_class_ << "/"
                   << rrset.getType());
     }
-
-    string columns[DatabaseAccessor::ADD_COLUMN_COUNT]; // initialized with ""
-    columns[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
-    columns[DatabaseAccessor::ADD_REV_NAME] =
-        rrset.getName().reverse().toText();
-    columns[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
-    columns[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
-    string journal[DatabaseAccessor::DIFF_PARAM_COUNT];
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, op_str << " attempt for a different class "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, op_str << " attempt for RRset with RRSIG "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
     if (journaling_) {
-        journal[DatabaseAccessor::DIFF_NAME] =
-            columns[DatabaseAccessor::ADD_NAME];
-        journal[DatabaseAccessor::DIFF_TYPE] =
-            columns[DatabaseAccessor::ADD_TYPE];
-        journal[DatabaseAccessor::DIFF_TTL] =
-            columns[DatabaseAccessor::ADD_TTL];
+        const RRType rrtype(rrset.getType());
+        if (rrtype == RRType::SOA() && diff_phase_ != prev_phase) {
+            isc_throw(isc::BadValue, op_str << " attempt in an invalid "
+                      << "diff phase: " << diff_phase_ << ", rrset: " <<
+                      rrset.toText());
+        }
+        if (rrtype != RRType::SOA() && diff_phase_ != current_phase) {
+            isc_throw(isc::BadValue, "diff state change by non SOA: "
+                      << rrset.toText());
+        }
+    }
+}
+
+void
+DatabaseUpdater::addRRset(const RRset& rrset) {
+    validateAddOrDelete("add", rrset, DELETE, ADD);
+
+    // It's guaranteed rrset has at least one RDATA at this point.
+    RdataIteratorPtr it = rrset.getRdataIterator();
+
+    string columns[Accessor::ADD_COLUMN_COUNT]; // initialized with ""
+    columns[Accessor::ADD_NAME] = rrset.getName().toText();
+    columns[Accessor::ADD_REV_NAME] = rrset.getName().reverse().toText();
+    columns[Accessor::ADD_TTL] = rrset.getTTL().toText();
+    columns[Accessor::ADD_TYPE] = rrset.getType().toText();
+    string journal[Accessor::DIFF_PARAM_COUNT];
+    if (journaling_) {
+        journal[Accessor::DIFF_NAME] = columns[Accessor::ADD_NAME];
+        journal[Accessor::DIFF_TYPE] = columns[Accessor::ADD_TYPE];
+        journal[Accessor::DIFF_TTL] = columns[Accessor::ADD_TTL];
         diff_phase_ = ADD;
         if (rrset.getType() == RRType::SOA()) {
             serial_ =
@@ -953,16 +968,15 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
             // the interface, but until then we have to conform to the schema.
             const generic::RRSIG& rrsig_rdata =
                 dynamic_cast<const generic::RRSIG&>(it->getCurrent());
-            columns[DatabaseAccessor::ADD_SIGTYPE] =
+            columns[Accessor::ADD_SIGTYPE] =
                 rrsig_rdata.typeCovered().toText();
         }
-        columns[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        columns[Accessor::ADD_RDATA] = it->getCurrent().toText();
         if (journaling_) {
-            journal[DatabaseAccessor::DIFF_RDATA] =
-                columns[DatabaseAccessor::ADD_RDATA];
+            journal[Accessor::DIFF_RDATA] = columns[Accessor::ADD_RDATA];
             try {
                 accessor_->addRecordDiff(zone_id_, serial_,
-                                         DatabaseAccessor::DIFF_ADD, journal);
+                                         Accessor::DIFF_ADD, journal);
             }
             // We ignore not implemented
             catch (const isc::NotImplemented&) {}
@@ -973,47 +987,24 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
 
 void
 DatabaseUpdater::deleteRRset(const RRset& rrset) {
-    if (committed_) {
-        isc_throw(DataSourceError, "Delete attempt after commit on zone: "
-                  << zone_name_ << "/" << zone_class_);
+    // If this is the first operation, pretend we are starting a new delete
+    // sequence after adds.  This will simplify the validation below.
+    if (diff_phase_ == NOT_STARTED) {
+        diff_phase_ = ADD;
     }
-    if (rrset.getClass() != zone_class_) {
-        isc_throw(DataSourceError, "An RRset of a different class is being "
-                  << "deleted from " << zone_name_ << "/" << zone_class_
-                  << ": " << rrset.toText());
-    }
-    if (rrset.getRRsig()) {
-        isc_throw(DataSourceError, "An RRset with RRSIG is being deleted from "
-                  << zone_name_ << "/" << zone_class_ << ": "
-                  << rrset.toText());
-    }
-    if (rrset.getType() == RRType::SOA() && diff_phase_ == DELETE &&
-        journaling_) {
-        isc_throw(isc::BadValue,
-                  "Another SOA delete inside a delete sequence");
-    }
-    if (rrset.getType() != RRType::SOA() && diff_phase_ != DELETE &&
-        journaling_) {
-        isc_throw(isc::BadValue, "Delete sequence not started by SOA");
-    }
+
+    validateAddOrDelete("delete", rrset, ADD, DELETE);
 
     RdataIteratorPtr it = rrset.getRdataIterator();
-    if (it->isLast()) {
-        isc_throw(DataSourceError, "An empty RRset is being deleted for "
-                  << rrset.getName() << "/" << zone_class_ << "/"
-                  << rrset.getType());
-    }
 
-    string params[DatabaseAccessor::DEL_PARAM_COUNT]; // initialized with ""
-    params[DatabaseAccessor::DEL_NAME] = rrset.getName().toText();
-    params[DatabaseAccessor::DEL_TYPE] = rrset.getType().toText();
-    string journal[DatabaseAccessor::DIFF_PARAM_COUNT];
+    string params[Accessor::DEL_PARAM_COUNT]; // initialized with ""
+    params[Accessor::DEL_NAME] = rrset.getName().toText();
+    params[Accessor::DEL_TYPE] = rrset.getType().toText();
+    string journal[Accessor::DIFF_PARAM_COUNT];
     if (journaling_) {
-        journal[DatabaseAccessor::DIFF_NAME] =
-            params[DatabaseAccessor::DEL_NAME];
-        journal[DatabaseAccessor::DIFF_TYPE] =
-            params[DatabaseAccessor::DEL_TYPE];
-        journal[DatabaseAccessor::DIFF_TTL] = rrset.getTTL().toText();
+        journal[Accessor::DIFF_NAME] = params[Accessor::DEL_NAME];
+        journal[Accessor::DIFF_TYPE] = params[Accessor::DEL_TYPE];
+        journal[Accessor::DIFF_TTL] = rrset.getTTL().toText();
         diff_phase_ = DELETE;
         if (rrset.getType() == RRType::SOA()) {
             serial_ =
@@ -1022,14 +1013,12 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
         }
     }
     for (; !it->isLast(); it->next()) {
-        params[DatabaseAccessor::DEL_RDATA] = it->getCurrent().toText();
+        params[Accessor::DEL_RDATA] = it->getCurrent().toText();
         if (journaling_) {
-            journal[DatabaseAccessor::DIFF_RDATA] =
-                params[DatabaseAccessor::DEL_RDATA];
+            journal[Accessor::DIFF_RDATA] = params[Accessor::DEL_RDATA];
             try {
                 accessor_->addRecordDiff(zone_id_, serial_,
-                                         DatabaseAccessor::DIFF_DELETE,
-                                         journal);
+                                         Accessor::DIFF_DELETE, journal);
             }
             // Don't fail if the backend can't store them
             catch(const isc::NotImplemented&) {}
