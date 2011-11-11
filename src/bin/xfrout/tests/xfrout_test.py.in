@@ -219,7 +219,7 @@ class TestXfroutSession(unittest.TestCase):
     def test_exception_from_session(self):
         '''Test the case where the main processing raises an exception.
 
-        We just check it doesn't any unexpected disruption and (in teraDown)
+        We just check it doesn't any unexpected disruption and (in tearDown)
         transfer_counter is correctly reset to 0.
 
         '''
