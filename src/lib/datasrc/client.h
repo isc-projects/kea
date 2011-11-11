@@ -270,11 +270,12 @@ public:
     /// However, the parameter is a hint only. It might be unable to store
     /// them and they would be silently discarded. Or it might need to
     /// store them no matter what (for example a git-based data source would
-    /// store journal implicitly). When the \c journaling is true, it might
-    /// require that the following update be formatted as IXFR transfer
+    /// store journal implicitly). When the \c journaling is true, it
+    /// requires that the following update be formatted as IXFR transfer
     /// (SOA to be removed, bunch of RRs to be removed, SOA to be added,
-    /// bunch of RRs to be added, and possibly repeated). If it is false, it
-    /// must not require so.
+    /// bunch of RRs to be added, and possibly repeated). However, it is not
+    /// required that the updater checks that. If it is false, it must not
+    /// require so and must accept any order of changes.
     ///
     /// We don't support erasing the whole zone (by replace being true) and
     /// saving a journal at the same time. In such situation, BadValue is
