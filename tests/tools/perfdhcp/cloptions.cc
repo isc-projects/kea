@@ -23,13 +23,18 @@
 static void printHelp(const char* progName, const char* usage);
 static void initialize(void);
 
+// The current version information
+static const char* version = "dhcpperf v1.0 2011-10-30";
+
+const char progName[] = "dhcpperf";
+
 static int v6 = 0;                      // DHCPv6 operation (-6)
 static int initialOnly = 0;             // Do only initial exchange (-i)
 static unsigned rate = 0;               // Request rate (-r)
 static unsigned numRequest = 0;         // Number of requests (-n)
 static double dropTime = 0.0;           // Response timeout (-d)
 static double testPeriod = 0.0;         // Test period (-p)
-static const char* server;              // Server to contact
+static const char* server = NULL;       // Server to contact
 static const char* maxDropOpt = NULL;   // Max dropped responses (-D)
 static const char* localName = NULL;    // Local host/interface (-l)
 
@@ -49,13 +54,13 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
     int v4 = 0;                 /* DHCPv4 operation explicitly requested */
     const char* msg;            /* Failure message from procOpts() */
     int help = 0;               /* Help requested */
-    int version = 0;            /* Version requested */
+    int versionReq = 0;         /* Version requested */
     const char* diagStr = NULL; /* Diagnostics requested (-x) */
 
     /* option descriptions */
     confvar_t optConf[] = {
         { 'h', NULL,        CF_SWITCH,    &help,        1 },
-        { 'v', NULL,        CF_SWITCH,    &version,     1 },
+        { 'v', NULL,        CF_SWITCH,    &versionReq,  1 },
         { '4', NULL,        CF_SWITCH,    &v4,          1 },
         { '6', NULL,        CF_SWITCH,    &v6,          1 },
         { 'i', NULL,        CF_SWITCH,    &initialOnly, 1 },
@@ -90,8 +95,8 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
         printHelp(progName, usage);
         return(0);
     }
-    if (version) {
-        printf("dhcpperf v1.0 2011-10-30\n");
+    if (versionReq) {
+        printf("%s\n", version);
         return(0);
     }
     if (diagStr != NULL) {
@@ -149,6 +154,7 @@ initialize(void) {
     testPeriod = 0.0;
     maxDropOpt = NULL;
     localName = NULL;
+    server = NULL;
 }
 
 static void
@@ -230,46 +236,46 @@ The exit status is:\n\
 }
 
 int
-getv6(void) {
+isV6(void) {
     return v6;
 }
 
 int
-getinitialOnly(void) {
+getInitialOnly(void) {
     return initialOnly;
 }
 
 unsigned
-getrate(void) {
+getRate(void) {
     return rate;
 }
 
 unsigned
-getnumRequest(void) {
+getNumRequest(void) {
     return numRequest;
 }
 
 double
-getdropTime(void) {
+getDropTime(void) {
     return dropTime;
 }
 
 double
-gettestPeriod(void) {
+getTestPeriod(void) {
     return testPeriod;
 }
 
 const char *
-getserver(void) {
+getServer(void) {
     return server;
 }
 
 const char *
-getlocalName(void) {
+getLocalName(void) {
     return localName;
 }
 
 const char *
-getmaxDrop(void) {
+getMaxDrop(void) {
     return maxDropOpt;
 }
