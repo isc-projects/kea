@@ -439,8 +439,8 @@ public:
     /// \c DataSourceError exception.
     ///
     /// If journaling was requested when getting this updater, it might reject
-    /// to add the RRset if the squence doesn't look like and IXFR. In such
-    /// case isc::BadValue is thrown.
+    /// to add the RRset if the squence doesn't look like and IXFR (see
+    /// DataSourceClient::getUpdater). In such case isc::BadValue is thrown.
     ///
     /// \todo As noted above we may have to revisit the design details as we
     /// gain experiences:
@@ -510,8 +510,8 @@ public:
     /// \c DataSourceError exception.
     ///
     /// If journaling was requested when getting this updater, it might reject
-    /// to add the RRset if the squence doesn't look like and IXFR. In such
-    /// case isc::BadValue is thrown.
+    /// to add the RRset if the squence doesn't look like and IXFR (see
+    /// DataSourceClient::getUpdater). In such case isc::BadValue is thrown.
     ///
     /// \todo As noted above we may have to revisit the design details as we
     /// gain experiences:
