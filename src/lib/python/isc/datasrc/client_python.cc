@@ -83,11 +83,27 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
 PyObject*
 DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
-    PyObject *name_obj;
-    if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
+    PyObject* name_obj;
+    PyObject* adjust_ttl_obj = NULL;
+    if (PyArg_ParseTuple(args, "O!|O", &name_type, &name_obj,
+                         &adjust_ttl_obj)) {
         try {
+            bool adjust_ttl = true;
+            if (adjust_ttl_obj != NULL) {
+                // store result in local var so we can explicitely check for
+                // -1 error return value
+                int adjust_ttl_no = PyObject_Not(adjust_ttl_obj);
+                if (adjust_ttl_no == 1) {
+                    adjust_ttl = false;
+                } else if (adjust_ttl_no == -1) {
+                    PyErr_SetString(getDataSourceException("Error"),
+                                    "Error getting value of adjust_ttl");
+                    return (NULL);
+                }
+            }
             return (createZoneIteratorObject(
-                self->cppobj->getInstance().getIterator(PyName_ToName(name_obj)),
+                self->cppobj->getInstance().getIterator(PyName_ToName(name_obj),
+                                                        adjust_ttl),
                 po_self));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),

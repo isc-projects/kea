@@ -17,8 +17,10 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
+#include <util/buffer.h>
 
 namespace isc {
 namespace dhcp {
@@ -34,13 +36,9 @@ public:
     /// defines option universe DHCPv4 or DHCPv6
     enum Universe { V4, V6 };
 
-    /// a collection of DHCPv4 options
-    typedef std::map<unsigned int, boost::shared_ptr<Option> >
-    Option4Collection;
-
     /// a collection of DHCPv6 options
     typedef std::multimap<unsigned int, boost::shared_ptr<Option> >
-    Option6Collection;
+    OptionCollection;
 
     /// @brief a factory function prototype
     ///
@@ -80,11 +78,55 @@ public:
            const boost::shared_array<uint8_t>& buf, unsigned int offset,
            unsigned int len);
 
-    /// @brief writes option in wire-format to buf
+    /// @brief Constructor, used for received options.
+    ///
+    /// This constructor takes vector<uint8_t>& which is used in cases
+    /// when content of the option will be copied and stored within
+    /// option object. V4 Options follow that approach already.
+    /// TODO Migrate V6 options to that approach.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @param type option type (0-255 for V4 and 0-65535 for V6)
+    /// @param data content of the option
+    Option(Universe u, unsigned short type, std::vector<uint8_t>& data);
+
+    /// @brief Constructor, used for received options.
+    ///
+    /// This contructor is similar to the previous one, but it does not take
+    /// the whole vector<uint8_t>, but rather subset of it.
+    ///
+    /// TODO: This can be templated to use different containers, not just
+    /// vector. Prototype should look like this:
+    /// template<typename InputIterator> Option(Universe u, uint16_t type,
+    /// InputIterator first, InputIterator last);
+    ///
+    /// vector<int8_t> myData;
+    /// Example usage: new Option(V4, 123, myData.begin()+1, myData.end()-1)
+    /// This will create DHCPv4 option of type 123 that contains data from
+    /// trimmed (first and last byte removed) myData vector.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @param type option type (0-255 for V4 and 0-65535 for V6)
+    /// @param first iterator to the first element that should be copied
+    /// @param last iterator to the next element after the last one
+    ///        to be copied.
+    Option(Universe u, uint16_t type,
+           std::vector<uint8_t>::const_iterator first,
+           std::vector<uint8_t>::const_iterator last);
+
+    /// @brief returns option universe (V4 or V6)
+    ///
+    /// @return universe type
+    Universe
+    getUniverse() { return universe_; };
+
+    /// @brief Writes option in wire-format to a buffer.
     ///
     /// Writes option in wire-format to buffer, returns pointer to first unused
     /// byte after stored option (that is useful for writing options one after
-    /// another)
+    /// another). Used in DHCPv6 options.
+    ///
+    /// TODO: Migrate DHCPv6 code to pack(OutputBuffer& buf) version
     ///
     /// @param buf pointer to a buffer
     /// @param buf_len length of the buffer
@@ -93,9 +135,20 @@ public:
     /// @return offset to first unused byte after stored option
     ///
     virtual unsigned int
-    pack(boost::shared_array<uint8_t>& buf,
-         unsigned int buf_len,
+    pack(boost::shared_array<uint8_t>& buf, unsigned int buf_len,
          unsigned int offset);
+
+    /// @brief Writes option in a wire-format to a buffer.
+    ///
+    /// Method will throw if option storing fails for some reason.
+    ///
+    /// TODO Once old (DHCPv6) implementation is rewritten,
+    /// unify pack4() and pack6() and rename them to just pack().
+    ///
+    /// @param buf output buffer (option will be stored there)
+    virtual void
+    pack4(isc::util::OutputBuffer& buf);
+
 
     /// @brief Parses buffer.
     ///
@@ -150,7 +203,7 @@ public:
     /// Returns pointer to actual data.
     ///
     /// @return pointer to actual data (or NULL if there is no data)
-    virtual uint8_t*
+    virtual const std::vector<uint8_t>&
     getData();
 
     /// Adds a sub-option.
@@ -242,26 +295,31 @@ protected:
             unsigned int offset,
             unsigned int parse_len);
 
+    /// @brief A private method used for option correctness.
+    ///
+    /// It is used in constructors. In there are any problems detected
+    /// (like specifying type > 255 for DHCPv4 option), it will throw
+    /// BadValue or OutOfRange exceptions.
+    void check();
+
     /// option universe (V4 or V6)
     Universe universe_;
 
     /// option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     unsigned short type_;
 
-    /// shared pointer to a buffer (usually a part of packet)
-    boost::shared_array<uint8_t> data_;
+    /// contains content of this data
+    std::vector<uint8_t> data_;
 
-    /// length of data only. Use len() if you want to
-    /// know proper length with option header overhead
-    unsigned int data_len_;
-
+    /// TODO: Remove this field. vector<uint8_t> should be used
+    /// instead.
     /// data is a shared_pointer that points out to the
     /// whole packet. offset_ specifies where data for
     /// this option begins.
     unsigned int offset_;
 
     /// collection for storing suboptions
-    Option6Collection options_;
+    OptionCollection options_;
 
     /// TODO: probably 2 different containers have to be used for v4 (unique
     /// options) and v6 (options with the same type can repeat)

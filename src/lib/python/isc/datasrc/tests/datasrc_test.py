@@ -63,7 +63,7 @@ def check_for_rrset(expected_rrsets, rrset):
 
 class DataSrcClient(unittest.TestCase):
 
-    def test_constructors(self):
+    def test_(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneIterator)
 
@@ -82,12 +82,13 @@ class DataSrcClient(unittest.TestCase):
                           isc.datasrc.DataSourceClient, "memory",
                           "{ \"foo\": 1 }")
 
+    @unittest.skip("This test may fail depending on sqlite3 library behavior")
     def test_iterate(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
         # for RRSIGS, the TTL's are currently modified. This test should
         # start failing when we fix that.
-        rrs = dsc.get_iterator(isc.dns.Name("sql1.example.com."))
+        rrs = dsc.get_iterator(isc.dns.Name("sql1.example.com."), False)
 
         # we do not know the order in which they are returned by the iterator
         # but we do want to check them, so we put all records into one list
@@ -137,6 +138,13 @@ class DataSrcClient(unittest.TestCase):
                   ])
         # For RRSIGS, we can't add the fake data through the API, so we
         # simply pass no rdata at all (which is skipped by the check later)
+        
+        # Since we passed adjust_ttl = False to get_iterator, we get several
+        # sets of RRSIGs, one for each TTL
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(7200), None)
         add_rrset(expected_rrset_list, name, rrclass,
                   isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
         add_rrset(expected_rrset_list, name, rrclass,
@@ -158,6 +166,8 @@ class DataSrcClient(unittest.TestCase):
                   ])
         add_rrset(expected_rrset_list, name, rrclass,
                   isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(7200), None)
 
         # rrs is an iterator, but also has direct get_next_rrset(), use
         # the latter one here
@@ -172,17 +182,35 @@ class DataSrcClient(unittest.TestCase):
         # Now check there are none left
         self.assertEqual(0, len(expected_rrset_list),
                          "RRset(s) not returned by iterator: " +
-                         str([rrset.to_text() for rrset in expected_rrset_list ]
+                         str([rrset.get_name().to_text() + '/' +
+                              rrset.get_type().to_text() for rrset in
+                              expected_rrset_list ]
                         ))
 
         # TODO should we catch this (iterating past end) and just return None
         # instead of failing?
         self.assertRaises(isc.datasrc.Error, rrs.get_next_rrset)
 
+        # Without the adjust_ttl argument, it should return 55 RRsets
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
         rrets = dsc.get_iterator(isc.dns.Name("example.com"))
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
         self.assertEqual(55, len(list(rrets)))
+
+        # same test, but now with explicit True argument for adjust_ttl
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
+        rrets = dsc.get_iterator(isc.dns.Name("example.com"), True)
+        # there are more than 80 RRs in this zone... let's just count them
+        # (already did a full check of the smaller zone above)
+        self.assertEqual(55, len(list(rrets)))
+
+        # Count should be 71 if we request individual rrsets for differing ttls
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
+        rrets = dsc.get_iterator(isc.dns.Name("example.com"), False)
+        # there are more than 80 RRs in this zone... let's just count them
+        # (already did a full check of the smaller zone above)
+        self.assertEqual(71, len(list(rrets)))
         # TODO should we catch this (iterating past end) and just return None
         # instead of failing?
         self.assertRaises(isc.datasrc.Error, rrs.get_next_rrset)
@@ -539,4 +567,5 @@ class DataSrcUpdater(unittest.TestCase):
 
 if __name__ == "__main__":
     isc.log.init("bind10")
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
