@@ -33,6 +33,7 @@
 #include <testutils/dnsmessage_test.h>
 
 #include <map>
+#include <vector>
 
 using namespace isc::datasrc;
 using namespace std;
@@ -261,7 +262,7 @@ public:
 
     virtual IteratorContextPtr getDiffs(int, uint32_t, uint32_t) const {
         isc_throw(isc::NotImplemented,
-                  "This database datasource can't be iterated");
+                  "This database datasource doesn't support diffs");
     }
 
     virtual std::string findPreviousName(int, const std::string&) const {
@@ -550,6 +551,29 @@ private:
             }
         }
     };
+    class MockDiffIteratorContext : public IteratorContext {
+        const vector<JournalEntry> diffs_;
+        vector<JournalEntry>::const_iterator it_;
+    public:
+        MockDiffIteratorContext(const vector<JournalEntry>& diffs) :
+            diffs_(diffs), it_(diffs_.begin())
+        {}
+        virtual bool getNext(string (&data)[COLUMN_COUNT]) {
+            if (it_ == diffs_.end()) {
+                return (false);
+            }
+            data[DatabaseAccessor::NAME_COLUMN] =
+                (*it_).data_[DatabaseAccessor::DIFF_NAME];
+            data[DatabaseAccessor::TYPE_COLUMN] =
+                (*it_).data_[DatabaseAccessor::DIFF_TYPE];
+            data[DatabaseAccessor::TTL_COLUMN] =
+                (*it_).data_[DatabaseAccessor::DIFF_TTL];
+            data[DatabaseAccessor::RDATA_COLUMN] =
+                (*it_).data_[DatabaseAccessor::DIFF_RDATA];
+            ++it_;
+            return (true);
+        }
+    };
 public:
     virtual IteratorContextPtr getAllRecords(int id) const {
         if (id == READONLY_ZONE_ID) {
@@ -731,6 +755,26 @@ public:
             journal_entries_->push_back(JournalEntry(id, serial, operation,
                                                     data));
         }
+    }
+
+    virtual IteratorContextPtr getDiffs(int id, uint32_t start,
+                                        uint32_t end) const
+    {
+        vector<JournalEntry> selected_jnl;
+
+        for (vector<JournalEntry>::const_iterator it =
+                 journal_entries_->begin();
+             it != journal_entries_->end(); ++it)
+        {
+            // For simplicity we don't take into account serial number
+            // arithmetic; compare serials as bare unsigned integers.
+            if (id != READONLY_ZONE_ID || (*it).serial_ < start ||
+                (*it).serial_ > end) {
+                continue;
+            }
+            selected_jnl.push_back(*it);
+        }
+        return (IteratorContextPtr(new MockDiffIteratorContext(selected_jnl)));
     }
 
     // Check the journal is as expected and clear the journal
@@ -3009,11 +3053,36 @@ TEST_F(MockDatabaseClientTest, journalException) {
     EXPECT_THROW(updater_->deleteRRset(*soa_), DataSourceError);
 }
 
-TYPED_TEST(DatabaseClientTest, getJournalReader) {
-    ZoneJournalReaderPtr jnl_reader(this->client_->getJournalReader(
-                                        this->zname_, 0, 1));
-    EXPECT_FALSE(jnl_reader->getNextDiff());
+//
+// Tests for the ZoneJournalReader
+//
 
+TYPED_TEST(DatabaseClientTest, journalReader) {
+    // Check a simple, normal scenario: making an update from one SOA to
+    // another, and retrieve the corresponding diffs.
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+    this->updater_->deleteRRset(*this->soa_);
+    RRsetPtr soa_end(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    soa_end->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+                                         "ns1.example.org. admin.example.org. "
+                                         "1235 3600 1800 2419200 7200"));
+    this->updater_->addRRset(*soa_end);
+    this->updater_->commit();
+
+    ZoneJournalReaderPtr jnl_reader(this->client_->getJournalReader(
+                                        this->zname_, 1234, 1235));
+    ConstRRsetPtr rrset = jnl_reader->getNextDiff();
+    ASSERT_TRUE(rrset);
+    isc::testutils::rrsetCheck(this->soa_, rrset);
+    rrset = jnl_reader->getNextDiff();
+    ASSERT_TRUE(rrset);
+    isc::testutils::rrsetCheck(soa_end, rrset);
+    rrset = jnl_reader->getNextDiff();
+    ASSERT_FALSE(rrset);
+}
+
+TYPED_TEST(DatabaseClientTest, journalReaderForNXZone) {
     EXPECT_THROW(this->client_->getJournalReader(Name("nosuchzone"), 0, 1),
                  DataSourceError);
 }
