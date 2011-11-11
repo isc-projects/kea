@@ -440,7 +440,7 @@ public:
     ///
     /// If journaling was requested when getting this updater, it might reject
     /// to add the RRset if the squence doesn't look like and IXFR. In such
-    /// such case isc::BadValue is thrown.
+    /// case isc::BadValue is thrown.
     ///
     /// \todo As noted above we may have to revisit the design details as we
     /// gain experiences:
@@ -511,7 +511,7 @@ public:
     ///
     /// If journaling was requested when getting this updater, it might reject
     /// to add the RRset if the squence doesn't look like and IXFR. In such
-    /// such case isc::BadValue is thrown.
+    /// case isc::BadValue is thrown.
     ///
     /// \todo As noted above we may have to revisit the design details as we
     /// gain experiences:

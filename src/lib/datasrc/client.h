@@ -271,7 +271,7 @@ public:
     /// them and they would be silently discarded. Or it might need to
     /// store them no matter what (for example a git-based data source would
     /// store journal implicitly). When the \c journaling is true, it might
-    /// require that the following update be formated as IXFR transfer
+    /// require that the following update be formatted as IXFR transfer
     /// (SOA to be removed, bunch of RRs to be removed, SOA to be added,
     /// bunch of RRs to be added, and possibly repeated). If it is false, it
     /// must not require so.
