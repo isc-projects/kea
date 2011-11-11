@@ -1027,7 +1027,7 @@ DatabaseUpdater::commit() {
                   << db_name_);
     }
     if (journaling_ && diff_phase_ == DELETE) {
-        isc_throw(isc::BatValue, "Update sequence not complete");
+        isc_throw(isc::BadValue, "Update sequence not complete");
     }
     accessor_->commit();
     committed_ = true; // make sure the destructor won't trigger rollback
