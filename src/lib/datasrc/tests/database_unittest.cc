@@ -2871,16 +2871,16 @@ TEST_F(MockDatabaseClientTest, journalOnErase) {
 }
 
 /*
- * Check that the exception isn't raised when the journal is not implemented.
+ * Check that exception is propagated when the journal is not implemented.
  */
 TEST_F(MockDatabaseClientTest, journalNotImplemented) {
     updater_ = client_->getUpdater(Name("null.example.org"), false, true);
-    EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
+    EXPECT_THROW(updater_->deleteRRset(*soa_), isc::NotImplemented);
     soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
     soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
                                       "ns1.example.org. admin.example.org. "
                                       "1234 3600 1800 2419201 7200"));
-    EXPECT_NO_THROW(updater_->addRRset(*soa_));
+    EXPECT_THROW(updater_->addRRset(*soa_), isc::NotImplemented);
 }
 
 /*
