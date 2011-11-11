@@ -68,7 +68,7 @@ class MockDataSrcClient:
     def __init__(self, type, config):
         pass
 
-    def get_iterator(self, zone_name):
+    def get_iterator(self, zone_name, adjust_ttl=False):
         if zone_name == Name('notauth.example.com'):
             raise isc.datasrc.Error('no such zone')
         self._zone_name = zone_name
