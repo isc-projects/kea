@@ -618,6 +618,8 @@ class TestXfroutSession(unittest.TestCase):
     def test_check_xfrout_available(self):
         self.xfrsess.ClientClass = MockDataSrcClient
         self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('example.com')), Rcode.NOERROR())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
                 Name('notauth.example.com')), Rcode.NOTAUTH())
         self.assertEqual(self.xfrsess._check_xfrout_available(
                 Name('nosoa.example.com')), Rcode.SERVFAIL())
