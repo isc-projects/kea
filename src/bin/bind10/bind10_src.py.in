@@ -70,7 +70,8 @@ import isc.util.process
 import isc.net.parse
 import isc.log
 from isc.log_messages.bind10_messages import *
-import isc.bind10.sockcreator
+import isc.bind10.component
+import isc.bind10.special_component
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -245,14 +246,17 @@ class BoB:
         self.cfg_start_resolver = False
         self.cfg_start_dhcp6 = False
         self.cfg_start_dhcp4 = False
-        self.started_auth_family = False
-        self.started_resolver_family = False
         self.curproc = None
+        # XXX: Not used now, waits for reintroduction of restarts.
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
-        self.processes = {}
-        self.expected_shutdowns = {}
+        self.component_config = {}
+        # Some time in future, it may happen that a single component has
+        # multple processes. If so happens, name "components" may be
+        # inapropriate. But as the code isn't probably completely ready
+        # for it, we leave it at components for now.
+        self.components = {}
         self.runnable = False
         self.uid = setuid
         self.username = username
@@ -262,66 +266,66 @@ class BoB:
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
         self.wait_time = wait_time
-        self.sockcreator = None
+        self._component_configurator = isc.bind10.component.Configurator(self,
+            isc.bind10.special_component.get_specials())
+        # The priorities here make them start in the correct order. First
+        # the socket creator (which would drop root privileges by then),
+        # then message queue and after that the config manager (which uses
+        # the config manager)
+        self.__core_components = {
+            'sockcreator': {
+                'kind': 'core',
+                'special': 'sockcreator',
+                'priority': 200
+            },
+            'msgq': {
+                'kind': 'core',
+                'special': 'msgq',
+                'priority': 199
+            },
+            'cfgmgr': {
+                'kind': 'core',
+                'special': 'cfgmgr',
+                'priority': 198
+            }
+        }
+        self.__started = False
+        self.exitcode = 0
 
         # If -v was set, enable full debug logging.
         if self.verbose:
             logger.set_severity("DEBUG", 99)
 
+    def __propagate_component_config(self, config):
+        comps = dict(config)
+        # Fill in the core components, so they stay alive
+        for comp in self.__core_components:
+            if comp in comps:
+                raise Exception(comp + " is core component managed by " +
+                                "bind10 boss, do not set it")
+            comps[comp] = self.__core_components[comp]
+        # Update the configuration
+        self._component_configurator.reconfigure(comps)
+
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
             return
-        # Now we declare few functions used only internally here. Besides the
-        # benefit of not polluting the name space, they are closures, so we
-        # don't need to pass some variables
-        def start_stop(name, started, start, stop):
-            if not'start_' + name in new_config:
-                return
-            if new_config['start_' + name]:
-                if not started:
-                    if self.uid is not None:
-                        logger.info(BIND10_START_AS_NON_ROOT, name)
-                    start()
-            else:
-                stop()
-        # These four functions are passed to start_stop (smells like functional
-        # programming little bit)
-        def resolver_on():
-            self.start_resolver(self.c_channel_env)
-            self.started_resolver_family = True
-        def resolver_off():
-            self.stop_resolver()
-            self.started_resolver_family = False
-        def auth_on():
-            self.start_auth(self.c_channel_env)
-            self.start_xfrout(self.c_channel_env)
-            self.start_xfrin(self.c_channel_env)
-            self.start_zonemgr(self.c_channel_env)
-            self.started_auth_family = True
-        def auth_off():
-            self.stop_zonemgr()
-            self.stop_xfrin()
-            self.stop_xfrout()
-            self.stop_auth()
-            self.started_auth_family = False
-
-        # The real code of the config handler function follows here
         logger.debug(DBG_COMMANDS, BIND10_RECEIVED_NEW_CONFIGURATION,
                      new_config)
-        start_stop('resolver', self.started_resolver_family, resolver_on,
-            resolver_off)
-        start_stop('auth', self.started_auth_family, auth_on, auth_off)
-
-        answer = isc.config.ccsession.create_answer(0)
-        return answer
+        try:
+            if 'components' in new_config:
+                self.__propagate_component_config(new_config['components'])
+            return isc.config.ccsession.create_answer(0)
+        except Exception as e:
+            return isc.config.ccsession.create_answer(1, str(e))
 
     def get_processes(self):
-        pids = list(self.processes.keys())
+        pids = list(self.components.keys())
         pids.sort()
         process_list = [ ]
         for pid in pids:
-            process_list.append([pid, self.processes[pid].name])
+            process_list.append([pid, self.components[pid].name()])
         return process_list
 
     def _get_stats_data(self):
@@ -370,23 +374,7 @@ class BoB:
                                                             "Unknown command")
         return answer
 
-    def start_creator(self):
-        self.curproc = 'b10-sockcreator'
-        creator_path = os.environ['PATH']
-        if ADD_LIBEXEC_PATH:
-            creator_path = "@@LIBEXECDIR@@:" + creator_path
-        self.sockcreator = isc.bind10.sockcreator.Creator(creator_path)
-
-    def stop_creator(self, kill=False):
-        if self.sockcreator is None:
-            return
-        if kill:
-            self.sockcreator.kill()
-        else:
-            self.sockcreator.terminate()
-        self.sockcreator = None
-
-    def kill_started_processes(self):
+    def kill_started_components(self):
         """
             Called as part of the exception handling when a process fails to
             start, this runs through the list of started processes, killing
@@ -394,31 +382,25 @@ class BoB:
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
 
-        self.stop_creator(True)
+        for pid in self.components:
+            logger.info(BIND10_KILL_PROCESS, self.components[pid].name())
+            self.components[pid].kill(True)
+        self.components = {}
 
-        for pid in self.processes:
-            logger.info(BIND10_KILL_PROCESS, self.processes[pid].name)
-            self.processes[pid].process.kill()
-        self.processes = {}
-
-    def read_bind10_config(self):
+    def _read_bind10_config(self):
         """
             Reads the parameters associated with the BoB module itself.
 
-            At present these are the components to start although arguably this
-            information should be in the configuration for the appropriate
-            module itself. (However, this would cause difficulty in the case of
-            xfrin/xfrout and zone manager as we don't need to start those if we
-            are not running the authoritative server.)
+            This means the list of components we should start now.
+
+            This could easily be combined into start_all_processes, but
+            it stays because of historical reasons and because the tests
+            replace the method sometimes.
         """
         logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
         config_data = self.ccs.get_full_config()
-        self.cfg_start_auth = config_data.get("start_auth")
-        self.cfg_start_resolver = config_data.get("start_resolver")
-
-        logger.info(BIND10_CONFIGURATION_START_AUTH, self.cfg_start_auth)
-        logger.info(BIND10_CONFIGURATION_START_RESOLVER, self.cfg_start_resolver)
+        self.__propagate_component_config(config_data['components'])
 
     def log_starting(self, process, port = None, address = None):
         """
@@ -480,17 +462,16 @@ class BoB:
     # raised which is caught by the caller of start_all_processes(); this kills
     # processes started up to that point before terminating the program.
 
-    def start_msgq(self, c_channel_env):
+    def start_msgq(self):
         """
             Start the message queue and connect to the command channel.
         """
         self.log_starting("b10-msgq")
-        c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
+        msgq_proc = ProcessInfo("b10-msgq", ["b10-msgq"], self.c_channel_env,
                                 True, not self.verbose, uid=self.uid,
                                 username=self.username)
-        c_channel.spawn()
-        self.processes[c_channel.pid] = c_channel
-        self.log_started(c_channel.pid)
+        msgq_proc.spawn()
+        self.log_started(msgq_proc.pid)
 
         # Now connect to the c-channel
         cc_connect_start = time.time()
@@ -509,7 +490,9 @@ class BoB:
         # on this channel are once relating to process startup.
         self.cc_session.group_subscribe("Boss")
 
-    def start_cfgmgr(self, c_channel_env):
+        return msgq_proc
+
+    def start_cfgmgr(self):
         """
             Starts the configuration manager process
         """
@@ -520,10 +503,9 @@ class BoB:
         if self.config_filename is not None:
             args.append("--config-filename=" + self.config_filename)
         bind_cfgd = ProcessInfo("b10-cfgmgr", args,
-                                c_channel_env, uid=self.uid,
+                                self.c_channel_env, uid=self.uid,
                                 username=self.username)
         bind_cfgd.spawn()
-        self.processes[bind_cfgd.pid] = bind_cfgd
         self.log_started(bind_cfgd.pid)
 
         # Wait for the configuration manager to start up as subsequent initialization
@@ -538,6 +520,8 @@ class BoB:
         
         if not self.process_running(msg, "ConfigManager"):
             raise ProcessStartError("Configuration manager process has not started")
+
+        return bind_cfgd
 
     def start_ccsession(self, c_channel_env):
         """
@@ -570,10 +554,20 @@ class BoB:
         self.log_starting(name, port, address)
         newproc = ProcessInfo(name, args, c_channel_env)
         newproc.spawn()
-        self.processes[newproc.pid] = newproc
         self.log_started(newproc.pid)
+        return newproc
 
-    def start_simple(self, name, c_channel_env, port=None, address=None):
+    def register_process(self, pid, component):
+        """
+        Put another process into boss to watch over it.  When the process
+        dies, the component.failed() is called with the exit code.
+
+        It is expected the info is a isc.bind10.component.BaseComponent
+        subclass (or anything having the same interface).
+        """
+        self.components[pid] = component
+
+    def start_simple(self, name):
         """
             Most of the BIND-10 processes are started with the command:
 
@@ -590,7 +584,7 @@ class BoB:
             args += ['-v']
 
         # ... and start the process
-        self.start_process(name, args, c_channel_env, port, address)
+        return self.start_process(name, args, self.c_channel_env)
 
     # The next few methods start up the rest of the BIND-10 processes.
     # Although many of these methods are little more than a call to
@@ -598,10 +592,12 @@ class BoB:
     # where modifications can be made if the process start-up sequence changes
     # for a given process.
 
-    def start_auth(self, c_channel_env):
+    def start_auth(self):
         """
             Start the Authoritative server
         """
+        if self.uid is not None and self.__started:
+            logger.warn(BIND10_START_AS_NON_ROOT_AUTH)
         authargs = ['b10-auth']
         if self.nocache:
             authargs += ['-n']
@@ -611,14 +607,16 @@ class BoB:
             authargs += ['-v']
 
         # ... and start
-        self.start_process("b10-auth", authargs, c_channel_env)
+        return self.start_process("b10-auth", authargs, self.c_channel_env)
 
-    def start_resolver(self, c_channel_env):
+    def start_resolver(self):
         """
             Start the Resolver.  At present, all these arguments and switches
             are pure speculation.  As with the auth daemon, they should be
             read from the configuration database.
         """
+        if self.uid is not None and self.__started:
+            logger.warn(BIND10_START_AS_NON_ROOT_RESOLVER)
         self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future
         resargs = ['b10-resolver']
@@ -628,12 +626,21 @@ class BoB:
             resargs += ['-v']
 
         # ... and start
-        self.start_process("b10-resolver", resargs, c_channel_env)
+        return self.start_process("b10-resolver", resargs, self.c_channel_env)
 
-    def start_xfrout(self, c_channel_env):
-        self.start_simple("b10-xfrout", c_channel_env)
+    def start_cmdctl(self):
+        """
+            Starts the command control process
+        """
+        args = ["b10-cmdctl"]
+        if self.cmdctl_port is not None:
+            args.append("--port=" + str(self.cmdctl_port))
+        if self.verbose:
+            args.append("-v")
+        return self.start_process("b10-cmdctl", args, self.c_channel_env,
+                                  self.cmdctl_port)
 
-    def start_xfrin(self, c_channel_env):
+    def start_xfrin(self):
         # XXX: a quick-hack workaround.  xfrin will implicitly use dynamically
         # loadable data source modules, which will be installed in $(libdir).
         # On some OSes (including MacOS X and *BSDs) the main process (python)
@@ -646,6 +653,9 @@ class BoB:
         # We reuse the ADD_LIBEXEC_PATH variable to see whether we need to
         # do this, as the conditions that make this workaround needed are
         # the same as for the libexec path addition
+        # TODO: Once #1292 is finished, remove this method and the special
+        # component, use it as normal component.
+        c_channel_env = dict(self.c_channel_env)
         if ADD_LIBEXEC_PATH:
             cur_path = os.getenv('DYLD_LIBRARY_PATH')
             cur_path = '' if cur_path is None else ':' + cur_path
@@ -654,82 +664,31 @@ class BoB:
             cur_path = os.getenv('LD_LIBRARY_PATH')
             cur_path = '' if cur_path is None else ':' + cur_path
             c_channel_env['LD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
-        self.start_simple("b10-xfrin", c_channel_env)
-
-    def start_zonemgr(self, c_channel_env):
-        self.start_simple("b10-zonemgr", c_channel_env)
-
-    def start_stats(self, c_channel_env):
-        self.start_simple("b10-stats", c_channel_env)
-
-    def start_stats_httpd(self, c_channel_env):
-        self.start_simple("b10-stats-httpd", c_channel_env)
-
-    def start_dhcp6(self, c_channel_env):
-        self.start_simple("b10-dhcp6", c_channel_env)
-
-    def start_cmdctl(self, c_channel_env):
-        """
-            Starts the command control process
-        """
-        args = ["b10-cmdctl"]
-        if self.cmdctl_port is not None:
-            args.append("--port=" + str(self.cmdctl_port))
+        # Set up the command arguments.
+        args = ['b10-xfrin']
         if self.verbose:
-            args.append("-v")
-        self.start_process("b10-cmdctl", args, c_channel_env, self.cmdctl_port)
+            args += ['-v']
 
-    def start_all_processes(self):
-        """
-            Starts up all the processes.  Any exception generated during the
-            starting of the processes is handled by the caller.
-        """
-        # The socket creator first, as it is the only thing that needs root
-        self.start_creator()
-        # TODO: Once everything uses the socket creator, we can drop root
-        # privileges right now
+        return self.start_process("b10-xfrin", args, c_channel_env)
 
-        c_channel_env = self.c_channel_env
-        self.start_msgq(c_channel_env)
-        self.start_cfgmgr(c_channel_env)
-        self.start_ccsession(c_channel_env)
+    def start_all_components(self):
+        """
+            Starts up all the components.  Any exception generated during the
+            starting of the components is handled by the caller.
+        """
+        # Start the real core (sockcreator, msgq, cfgmgr)
+        self._component_configurator.startup(self.__core_components)
+
+        # Connect to the msgq. This is not a process, so it's not handled
+        # inside the configurator.
+        self.start_ccsession(self.c_channel_env)
 
         # Extract the parameters associated with Bob.  This can only be
         # done after the CC Session is started.  Note that the logging
         # configuration may override the "-v" switch set on the command line.
-        self.read_bind10_config()
+        self._read_bind10_config()
 
-        # Continue starting the processes.  The authoritative server (if
-        # selected):
-        if self.cfg_start_auth:
-            self.start_auth(c_channel_env)
-
-        # ... and resolver (if selected):
-        if self.cfg_start_resolver:
-            self.start_resolver(c_channel_env)
-            self.started_resolver_family = True
-
-        # Everything after the main components can run as non-root.
-        # TODO: this is only temporary - once the privileged socket creator is
-        # fully working, nothing else will run as root.
-        if self.uid is not None:
-            posix.setuid(self.uid)
-
-        # xfrin/xfrout and the zone manager are only meaningful if the
-        # authoritative server has been started.
-        if self.cfg_start_auth:
-            self.start_xfrout(c_channel_env)
-            self.start_xfrin(c_channel_env)
-            self.start_zonemgr(c_channel_env)
-            self.started_auth_family = True
-
-        # ... and finally start the remaining processes
-        self.start_stats(c_channel_env)
-        self.start_stats_httpd(c_channel_env)
-        self.start_cmdctl(c_channel_env)
-
-        if self.cfg_start_dhcp6:
-            self.start_dhcp6(c_channel_env)
+        # TODO: Return the dropping of privileges
 
     def startup(self):
         """
@@ -753,34 +712,19 @@ class BoB:
             # this is the case we want, where the msgq is not running
             pass
 
-        # Start all processes.  If any one fails to start, kill all started
-        # processes and exit with an error indication.
+        # Start all components.  If any one fails to start, kill all started
+        # components and exit with an error indication.
         try:
             self.c_channel_env = c_channel_env
-            self.start_all_processes()
+            self.start_all_components()
         except Exception as e:
-            self.kill_started_processes()
+            self.kill_started_components()
             return "Unable to start " + self.curproc + ": " + str(e)
 
         # Started successfully
         self.runnable = True
+        self.__started = True
         return None
-
-    def stop_all_processes(self):
-        """Stop all processes."""
-        cmd = { "command": ['shutdown']}
-
-        self.cc_session.group_sendmsg(cmd, 'Cmdctl', 'Cmdctl')
-        self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
-        self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
-        self.cc_session.group_sendmsg(cmd, "Resolver", "Resolver")
-        self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
-        self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
-        self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
-        self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
-        self.cc_session.group_sendmsg(cmd, "StatsHttpd", "StatsHttpd")
-        # Terminate the creator last
-        self.stop_creator()
 
     def stop_process(self, process, recipient):
         """
@@ -788,64 +732,61 @@ class BoB:
         (in logs, etc), the recipient is the address on msgq.
         """
         logger.info(BIND10_STOP_PROCESS, process)
-        # TODO: Some timeout to solve processes that don't want to die would
-        # help. We can even store it in the dict, it is used only as a set
-        self.expected_shutdowns[process] = 1
-        # Ask the process to die willingly
         self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
             recipient)
 
-    # Series of stop_process wrappers
-    def stop_resolver(self):
-        self.stop_process('b10-resolver', 'Resolver')
+    def component_shutdown(self, exitcode=0):
+        """
+        Stop the Boss instance from a components' request. The exitcode
+        indicates the desired exit code.
 
-    def stop_auth(self):
-        self.stop_process('b10-auth', 'Auth')
+        If we did not start yet, it raises an exception, which is meant
+        to propagate through the component and configurator to the startup
+        routine and abort the startup imediatelly. If it is started up already,
+        we just mark it so we terminate soon.
 
-    def stop_xfrout(self):
-        self.stop_process('b10-xfrout', 'Xfrout')
-
-    def stop_xfrin(self):
-        self.stop_process('b10-xfrin', 'Xfrin')
-
-    def stop_zonemgr(self):
-        self.stop_process('b10-zonemgr', 'Zonemgr')
+        It does set the exit code in both cases.
+        """
+        self.exitcode = exitcode
+        if not self.__started:
+            raise Exception("Component failed during startup");
+        else:
+            self.runnable = False
 
     def shutdown(self):
         """Stop the BoB instance."""
         logger.info(BIND10_SHUTDOWN)
         # first try using the BIND 10 request to stop
         try:
-            self.stop_all_processes()
+            self._component_configurator.shutdown()
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
         # I have changed the delay from 0.5 to 1, but sometime it's 
         # still not enough.
-        time.sleep(1)  
+        time.sleep(1)
         self.reap_children()
         # next try sending a SIGTERM
-        processes_to_stop = list(self.processes.values())
-        for proc_info in processes_to_stop:
-            logger.info(BIND10_SEND_SIGTERM, proc_info.name,
-                        proc_info.pid)
+        components_to_stop = list(self.components.values())
+        for component in components_to_stop:
+            logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
             try:
-                proc_info.process.terminate()
+                component.kill()
             except OSError:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
                 pass
         # finally, send SIGKILL (unmaskable termination) until everybody dies
-        while self.processes:
+        while self.components:
             # XXX: some delay probably useful... how much is uncertain
             time.sleep(0.1)  
             self.reap_children()
-            processes_to_stop = list(self.processes.values())
-            for proc_info in processes_to_stop:
-                logger.info(BIND10_SEND_SIGKILL, proc_info.name,
-                            proc_info.pid)
+            components_to_stop = list(self.components.values())
+            for component in components_to_stop:
+                logger.info(BIND10_SEND_SIGKILL, component.name(),
+                            component.pid())
                 try:
-                    proc_info.process.kill()
+                    component.kill(True)
                 except OSError:
                     # ignore these (usually ESRCH because the child
                     # finally exited)
@@ -867,40 +808,16 @@ class BoB:
                 # XXX: should be impossible to get any other error here
                 raise
             if pid == 0: break
-            if self.sockcreator is not None and self.sockcreator.pid() == pid:
-                # This is the socket creator, started and terminated
-                # differently. This can't be restarted.
-                if self.runnable:
-                    logger.fatal(BIND10_SOCKCREATOR_CRASHED)
-                    self.sockcreator = None
-                    self.runnable = False
-            elif pid in self.processes:
-                # One of the processes we know about.  Get information on it.
-                proc_info = self.processes.pop(pid)
-                proc_info.restart_schedule.set_run_stop_time()
-                self.dead_processes[proc_info.pid] = proc_info
-
-                # Write out message, but only if in the running state:
-                # During startup and shutdown, these messages are handled
-                # elsewhere.
-                if self.runnable:
-                    if exit_status is None:
-                        logger.warn(BIND10_PROCESS_ENDED_NO_EXIT_STATUS,
-                                    proc_info.name, proc_info.pid)
-                    else:
-                        logger.warn(BIND10_PROCESS_ENDED_WITH_EXIT_STATUS,
-                                    proc_info.name, proc_info.pid,
-                                    exit_status)
-
-                    # Was it a special process?
-                    if proc_info.name == "b10-msgq":
-                        logger.fatal(BIND10_MSGQ_DAEMON_ENDED)
-                        self.runnable = False
-
-                # If we're in 'brittle' mode, we want to shutdown after
-                # any process dies.
-                if self.brittle:
-                    self.runnable = False
+            if pid in self.components:
+                # One of the components we know about.  Get information on it.
+                component = self.components.pop(pid)
+                logger.info(BIND10_PROCESS_ENDED, component.name(), pid,
+                            exit_status)
+                if component.running() and self.runnable:
+                    # Tell it it failed. But only if it matters (we are
+                    # not shutting down and the component considers itself
+                    # to be running.
+                    component.failed(exit_status);
             else:
                 logger.info(BIND10_UNKNOWN_CHILD_PROCESS_ENDED, pid)
 
@@ -914,7 +831,16 @@ class BoB:
 
             The values returned can be safely passed into select() as the 
             timeout value.
+
         """
+        # TODO: This is an artefact of previous way of handling processes. The
+        # restart queue is currently empty at all times, so this returns None
+        # every time it is called (thought is a relict that is obviously wrong,
+        # it is called and it doesn't hurt).
+        #
+        # It is preserved for archeological reasons for the time when we return
+        # the delayed restarts, most of it might be useful then (or, if it is
+        # found useless, removed).
         next_restart = None
         # if we're shutting down, then don't restart
         if not self.runnable:
@@ -923,10 +849,6 @@ class BoB:
         still_dead = {}
         now = time.time()
         for proc_info in self.dead_processes.values():
-            if proc_info.name in self.expected_shutdowns:
-                # We don't restart, we wanted it to die
-                del self.expected_shutdowns[proc_info.name]
-                continue
             restart_time = proc_info.restart_schedule.get_restart_time(now)
             if restart_time > now:
                 if (next_restart is None) or (next_restart > restart_time):
@@ -936,7 +858,7 @@ class BoB:
                 logger.info(BIND10_RESURRECTING_PROCESS, proc_info.name)
                 try:
                     proc_info.respawn()
-                    self.processes[proc_info.pid] = proc_info
+                    self.components[proc_info.pid] = proc_info
                     logger.info(BIND10_RESURRECTED_PROCESS, proc_info.name, proc_info.pid)
                 except:
                     still_dead[proc_info.pid] = proc_info
@@ -1128,6 +1050,10 @@ def main():
     while boss_of_bind.runnable:
         # clean up any processes that exited
         boss_of_bind.reap_children()
+        # XXX: As we don't put anything into the processes to be restarted,
+        # this is really a complicated NOP. But we will try to reintroduce
+        # delayed restarts, so it stays here for now, until we find out if
+        # it's useful.
         next_restart = boss_of_bind.restart_processes()
         if next_restart is None:
             wait_time = None
