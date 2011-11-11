@@ -729,10 +729,14 @@ private:
     Domain::const_iterator dom_iterator_;
     const DomainTree& tree_;
     const DomainNode* node_;
+    // Only used when separate_rrs_ is true
+    RdataIteratorPtr rdata_iterator_;
+    bool separate_rrs_;
     bool ready_;
 public:
-    MemoryIterator(const DomainTree& tree, const Name& origin) :
+    MemoryIterator(const DomainTree& tree, const Name& origin, bool separate_rrs) :
         tree_(tree),
+        separate_rrs_(separate_rrs),
         ready_(true)
     {
         // Find the first node (origin) and preserve the node chain for future
@@ -747,6 +751,12 @@ public:
         // Initialize the iterator if there's somewhere to point to
         if (node_ != NULL && node_->getData() != DomainPtr()) {
             dom_iterator_ = node_->getData()->begin();
+            if (separate_rrs_) {
+                std::cout << "[XX] SET RDATA ITERATOR A" << std::endl;
+                if (dom_iterator_->second != NULL) {
+                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+                }
+            }
         }
     }
 
@@ -766,6 +776,10 @@ public:
             // if the map is empty or not
             if (node_ != NULL && node_->getData() != NULL) {
                 dom_iterator_ = node_->getData()->begin();
+                // New RRset, so get a new rdata iterator
+                if (separate_rrs_) {
+                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+                }
             }
         }
         if (node_ == NULL) {
@@ -773,12 +787,35 @@ public:
             ready_ = false;
             return (ConstRRsetPtr());
         }
-        // The iterator points to the next yet unused RRset now
-        ConstRRsetPtr result(dom_iterator_->second);
-        // This one is used, move it to the next time for next call
-        ++dom_iterator_;
 
-        return (result);
+        if (separate_rrs_) {
+            // For separate rrs, reconstruct a new RRset with just the
+            // 'current' rdata
+            RRsetPtr result(new RRset(dom_iterator_->second->getName(),
+                                      dom_iterator_->second->getClass(),
+                                      dom_iterator_->second->getType(),
+                                      dom_iterator_->second->getTTL()));
+            result->addRdata(rdata_iterator_->getCurrent());
+            rdata_iterator_->next();
+            if (rdata_iterator_->isLast()) {
+                // all used up, next.
+                ++dom_iterator_;
+                // New RRset, so get a new rdata iterator, but only if this
+                // was not the final RRset in the chain
+                if (dom_iterator_ != node_->getData()->end()) {
+                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+                }
+            }
+            return (result);
+        } else {
+            // The iterator points to the next yet unused RRset now
+            ConstRRsetPtr result(dom_iterator_->second);
+
+            // This one is used, move it to the next time for next call
+            ++dom_iterator_;
+
+            return (result);
+        }
     }
 
     virtual ConstRRsetPtr getSOA() const {
@@ -789,7 +826,7 @@ public:
 } // End of anonymous namespace
 
 ZoneIteratorPtr
-InMemoryClient::getIterator(const Name& name, bool) const {
+InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
     // note: adjust_ttl argument is ignored, as the RRsets are already
     // individually stored, and hence cannot have different TTLs anymore at
     // this point
@@ -811,7 +848,8 @@ InMemoryClient::getIterator(const Name& name, bool) const {
         isc_throw(Unexpected, "The zone at " + name.toText() +
                   " is not InMemoryZoneFinder");
     }
-    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name)));
+    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name,
+                                               separate_rrs)));
 }
 
 ZoneUpdaterPtr
