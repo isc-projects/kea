@@ -1,3 +1,8 @@
+316.	[func]*		vorner
+	The configuration of what parts of the system run is more flexible now.
+	Everything that should run must have an entry in Boss/components.
+    (Trac213, git 08e1873a3593b4fa06754654d22d99771aa388a6)
+
  315.	[func]		tomek
 	libdhcp: Support for DHCPv4 packet manipulation is now implemented.
 	All fixed fields are now supported. Generic support for DHCPv4
