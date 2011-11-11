@@ -974,12 +974,8 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
         columns[Accessor::ADD_RDATA] = it->getCurrent().toText();
         if (journaling_) {
             journal[Accessor::DIFF_RDATA] = columns[Accessor::ADD_RDATA];
-            try {
-                accessor_->addRecordDiff(zone_id_, serial_,
-                                         Accessor::DIFF_ADD, journal);
-            }
-            // We ignore not implemented
-            catch (const isc::NotImplemented&) {}
+            accessor_->addRecordDiff(zone_id_, serial_, Accessor::DIFF_ADD,
+                                     journal);
         }
         accessor_->addRecordToZone(columns);
     }
@@ -1016,12 +1012,8 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
         params[Accessor::DEL_RDATA] = it->getCurrent().toText();
         if (journaling_) {
             journal[Accessor::DIFF_RDATA] = params[Accessor::DEL_RDATA];
-            try {
-                accessor_->addRecordDiff(zone_id_, serial_,
-                                         Accessor::DIFF_DELETE, journal);
-            }
-            // Don't fail if the backend can't store them
-            catch(const isc::NotImplemented&) {}
+            accessor_->addRecordDiff(zone_id_, serial_, Accessor::DIFF_DELETE,
+                                     journal);
         }
         accessor_->deleteRecordInZone(params);
     }
