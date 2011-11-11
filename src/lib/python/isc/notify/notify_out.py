@@ -491,6 +491,11 @@ class NotifyOut:
         return msg, qid
 
     def _get_zone_soa(self, zone_name, zone_class):
+        # We create (and soon drop) the data source client here because
+        # clients should be thread specific.  We could let the main thread
+        # loop (_dispatcher) create and retain the client in order to avoid
+        # the overhead when we generalize the interface (and we may also
+        # revisit the design of notify_out more substantially anyway).
         datasrc_config = '{ "database_file": "' + self._db_file + '"}'
         result, finder = DataSourceClient('sqlite3',
                                           datasrc_config).find_zone(zone_name)
