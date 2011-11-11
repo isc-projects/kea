@@ -752,7 +752,6 @@ public:
         if (node_ != NULL && node_->getData() != DomainPtr()) {
             dom_iterator_ = node_->getData()->begin();
             if (separate_rrs_) {
-                std::cout << "[XX] SET RDATA ITERATOR A" << std::endl;
                 if (dom_iterator_->second != NULL) {
                     rdata_iterator_ = dom_iterator_->second->getRdataIterator();
                 }
@@ -827,10 +826,6 @@ public:
 
 ZoneIteratorPtr
 InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
-    // note: adjust_ttl argument is ignored, as the RRsets are already
-    // individually stored, and hence cannot have different TTLs anymore at
-    // this point
-
     ZoneTable::FindResult result(impl_->zone_table.findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
