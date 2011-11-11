@@ -61,10 +61,10 @@ def start_bind10(step, config_file, cmdctl_port, msgq_sockfile, process_name):
     world.processes.add_process(step, process_name, args)
 
     # check output to know when startup has been completed
-    message = world.processes.wait_for_stderr_str(process_name,
-                                                  ["BIND10_STARTUP_COMPLETE",
-                                                   "BIND10_STARTUP_ERROR"])
-    assert message == "BIND10_STARTUP_COMPLETE", "Got: " + str(message)
+    (message, line) = world.processes.wait_for_stderr_str(process_name,
+                                                     ["BIND10_STARTUP_COMPLETE",
+                                                      "BIND10_STARTUP_ERROR"])
+    assert message == "BIND10_STARTUP_COMPLETE", "Got: " + str(line)
 
 @step('wait for bind10 auth (?:of (\w+) )?to start')
 def wait_for_auth(step, process_name):
