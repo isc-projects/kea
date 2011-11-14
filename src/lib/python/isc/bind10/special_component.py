@@ -159,6 +159,7 @@ def get_specials():
         'cmdctl': CmdCtl,
         # FIXME: Temporary workaround before #1292 is done
         'xfrin': XfrIn,
+        'xfrout': XfrOut,
         # TODO: Remove when not needed, workaround before sockcreator works
         'setuid': SetUID
     }
