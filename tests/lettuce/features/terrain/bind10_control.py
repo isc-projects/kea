@@ -123,10 +123,9 @@ def set_config_command(step, name, value, cmdctl_port):
 @step('send bind10 the command (.+)(?: with cmdctl port (\d+))?')
 def send_command(step, command, cmdctl_port):
     """
-    Run bindctl, set the given configuration to the given value, and commit it.
+    Run bindctl, send the given command, and exit bindctl.
     Parameters:
-    name ('configuration <name>'): Identifier of the configuration to set
-    value ('to <value>'): value to set it to.
+    command ('the command <command>'): The command to send.
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
                 the command to. Defaults to 47805.
     Fails if cmdctl does not exit with status code 0.
