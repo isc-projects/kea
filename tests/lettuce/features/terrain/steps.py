@@ -30,8 +30,8 @@ def stop_a_named_process(step, process_name):
     """
     world.processes.stop_process(process_name)
 
-@step('wait for (new )?(\w+) stderr message (\w+)')
-def wait_for_message(step, new, process_name, message):
+@step('wait for (new )?(\w+) stderr message (\w+)(?: not (\w+))?')
+def wait_for_message(step, new, process_name, message, not_message):
     """
     Block until the given message is printed to the given process's stderr
     output.
@@ -40,12 +40,18 @@ def wait_for_message(step, new, process_name, message):
                              this step was used for this process.
     process_name ('<name> stderr'): Name of the process to check the output of.
     message ('message <message>'): Output (part) to wait for.
+    not_message ('not <message>'): Output (part) to wait for, and fail
     Fails if the message is not found after 10 seconds.
     """
-    world.processes.wait_for_stderr_str(process_name, [message], new)
+    strings = [message]
+    if not_message is not None:
+        strings.append(not_message)
+    (found, line) = world.processes.wait_for_stderr_str(process_name, strings, new)
+    if not_message is not None:
+        assert found != not_message, line
 
-@step('wait for (new )?(\w+) stdout message (\w+)')
-def wait_for_message(step, process_name, message):
+@step('wait for (new )?(\w+) stdout message (\w+)(?: not (\w+))?')
+def wait_for_message(step, process_name, message, not_message):
     """
     Block until the given message is printed to the given process's stdout
     output.
@@ -53,10 +59,16 @@ def wait_for_message(step, process_name, message):
     new: (' new', optional): Only check the output printed since last time
                              this step was used for this process.
     process_name ('<name> stderr'): Name of the process to check the output of.
-    message ('message <message>'): Output (part) to wait for.
+    message ('message <message>'): Output (part) to wait for, and succeed.
+    not_message ('not <message>'): Output (part) to wait for, and fail
     Fails if the message is not found after 10 seconds.
     """
-    world.processes.wait_for_stdout_str(process_name, [message], new)
+    strings = [message]
+    if not_message is not None:
+        strings.append(not_message)
+    (found, line) = world.processes.wait_for_stdout_str(process_name, strings, new)
+    if not_message is not None:
+        assert found != not_message, line
 
 @step('the file (\S+) should (not )?exist')
 def check_existence(step, file_name, should_not_exist):
