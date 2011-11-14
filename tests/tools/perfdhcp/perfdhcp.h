@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-extern const char progName[];
+#define PROGNAME "perfdhcp"
 
 /*
  * The masks associated with keyletters, used in dkdesc structures for setup
