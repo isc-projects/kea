@@ -173,7 +173,8 @@ class RunningProcess:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
-        Returns the matched string.
+        Returns a tuple containing the matched string, and the complete line
+        it was found in.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
         """
@@ -183,7 +184,7 @@ class RunningProcess:
                 for string in strings:
                     if line.find(string) != -1:
                         full_file.close()
-                        return string
+                        return (string, line)
         wait_count = 0
         while wait_count < OUTPUT_WAIT_MAX_INTERVALS:
             where = running_file.tell()
@@ -191,7 +192,7 @@ class RunningProcess:
             if line:
                 for string in strings:
                     if line.find(string) != -1:
-                        return string
+                        return (string, line)
             else:
                 wait_count += 1
                 time.sleep(OUTPUT_WAIT_INTERVAL)
@@ -205,7 +206,8 @@ class RunningProcess:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
-        Returns the matched string.
+        Returns a tuple containing the matched string, and the complete line
+        it was found in.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
         """
@@ -219,7 +221,8 @@ class RunningProcess:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
-        Returns the matched string.
+        Returns a tuple containing the matched string, and the complete line
+        it was found in.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
         """
@@ -249,7 +252,7 @@ class RunningProcesses:
         Fails if a process with the given name is already running.
         """
         assert process_name not in self.processes,\
-            "Process " + name + " already running"
+            "Process " + process_name + " already running"
         self.processes[process_name] = RunningProcess(step, process_name, args)
 
     def get_process(self, process_name):
