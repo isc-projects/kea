@@ -274,8 +274,7 @@ class MockBob(BoB):
         return procinfo
 
     def start_simple(self, name):
-        procmap = { 'b10-xfrout': self.start_xfrout,
-                    'b10-zonemgr': self.start_zonemgr,
+        procmap = { 'b10-zonemgr': self.start_zonemgr,
                     'b10-stats': self.start_stats,
                     'b10-stats-httpd': self.start_stats_httpd,
                     'b10-cmdctl': self.start_cmdctl,
