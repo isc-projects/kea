@@ -22,7 +22,7 @@
  * The set of diagnostic bits set by dk_setup(), and used by the other
  * functions to test offered diagnostics against.
  */
-unsigned dk_diag_mask = 0;
+static unsigned dk_diag_mask = 0;
 
 char
 dk_setup(const char* diag_str, const struct dkdesc* diags) {
