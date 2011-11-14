@@ -71,18 +71,6 @@ public:
         DataSourceError(file, line, what) {}
 };
 
-/**
- * \brief No such serial number when obtaining difference iterator
- *
- * Thrown if either the zone/start version or zone/end version combination
- * does not exist in the differences table.
- */
-class NoSuchSerial : public DataSourceError {
-public:
-    NoSuchSerial(const char* file, size_t line, const char* what) :
-        DataSourceError(file, line, what) {}
-};
-
 
 struct SQLite3Parameters;
 
