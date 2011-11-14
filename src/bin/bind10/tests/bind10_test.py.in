@@ -474,7 +474,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         if start_auth:
             config['b10-auth'] = { 'kind': 'needed', 'special': 'auth' }
             config['b10-xfrout'] = { 'kind': 'dispensable',
-                                     'address': 'Xfrout' }
+                                     'special': 'xfrout' }
             config['b10-xfrin'] = { 'kind': 'dispensable', 'special': 'xfrin' }
             config['b10-zonemgr'] = { 'kind': 'dispensable',
                                       'address': 'Zonemgr' }
