@@ -24,9 +24,7 @@ static void printHelp(const char* progName, const char* usage);
 static void initialize(void);
 
 // The current version information
-static const char* version = "dhcpperf v1.0 2011-10-30";
-
-const char progName[] = "dhcpperf";
+const char* VERSION = "perfdhcp v1.0 2011-10-30";
 
 static int v6 = 0;                      // DHCPv6 operation (-6)
 static int initialOnly = 0;             // Do only initial exchange (-i)
@@ -85,18 +83,18 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
 
     initialize();
     /* Process command line options */
-    msg = procOpts(&argc, &argv, optConf, NULL, progName, NULL);
+    msg = procOpts(&argc, &argv, optConf, NULL, PROGNAME, NULL);
     if (msg != NULL) {
-        fprintf(stderr, "%s: %s\n", progName, msg);
+        fprintf(stderr, "%s: %s\n", PROGNAME, msg);
         return(2);
     }
 
     if (help) {
-        printHelp(progName, usage);
+        printHelp(PROGNAME, usage);
         return(0);
     }
     if (versionReq) {
-        printf("%s\n", version);
+        printf("%s\n", VERSION);
         return(0);
     }
     if (diagStr != NULL) {
@@ -104,13 +102,13 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
         if ((c = dk_setup(diagStr, diagLetters)) != '\0') {
             fprintf(stderr,
                     "%s: Invalid selector character given with -x: '%c'\n",
-                    progName, c);
+                    PROGNAME, c);
             return(2);
         }
     }
 
     if (v4 && v6) {
-        fprintf(stderr, "%s: Must not give -4 and -6 together.\n", progName);
+        fprintf(stderr, "%s: Must not give -4 and -6 together.\n", PROGNAME);
         return(2);
     }
     switch (argc) {
@@ -121,11 +119,11 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
             if (v6) {
                 fprintf(stderr,
                         "%s: Use -l to specify an interface name.\n\%s\n",
-                        progName, usage);
+                        PROGNAME, usage);
             }
             else {
                 fprintf(stderr, "%s: Must specify a DHCP server.\n\%s\n",
-                        progName, usage);
+                        PROGNAME, usage);
             }
             return(2);
         }
@@ -134,7 +132,7 @@ perfdhcp [-hv] [-4|-6] [-r<rate>] [-n<num-request>] [-p<test-period>]\n\
         server = argv[0];
         break;
     default:
-        fprintf(stderr, "%s: Too many arguments.\n\%s\n", progName, usage);
+        fprintf(stderr, "%s: Too many arguments.\n\%s\n", PROGNAME, usage);
         return(2);
     }
     return(1);
