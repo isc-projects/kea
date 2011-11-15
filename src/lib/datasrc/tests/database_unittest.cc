@@ -779,7 +779,8 @@ public:
             // serial number arithmetic; we prefer brevity for testing.
             // Skip until we see the starting serial.  Once we started
             // recording this condition is ignored (to support wrap-around
-            // case)
+            // case).  Also, it ignores the RR type; it only checks the
+            // versions.
             if ((*it).serial_ < start && selected_jnl.empty()) {
                 continue;
             }
