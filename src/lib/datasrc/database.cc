@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <datasrc/database.h>
@@ -1137,15 +1138,26 @@ private:
 };
 
 // The JournalReader factory
-ZoneJournalReaderPtr
+pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
 DatabaseClient::getJournalReader(const isc::dns::Name& zone,
                                  uint32_t begin_serial,
                                  uint32_t end_serial) const
 {
-    return (ZoneJournalReaderPtr(new DatabaseJournalReader(accessor_, zone,
+    try {
+        const pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> ret(
+            ZoneJournalReader::SUCCESS,
+            ZoneJournalReaderPtr(new DatabaseJournalReader(accessor_, zone,
                                                            rrclass_,
                                                            begin_serial,
                                                            end_serial)));
+        return (ret);
+    } catch (const NoSuchSerial&) {
+        return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
+                    ZoneJournalReader::NO_SUCH_SERIAL,
+                    ZoneJournalReaderPtr()));
+    } catch (...) {
+        throw;
+    }
 }
 }
 }

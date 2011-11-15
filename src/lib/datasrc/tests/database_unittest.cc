@@ -766,14 +766,33 @@ public:
                  journal_entries_->begin();
              it != journal_entries_->end(); ++it)
         {
-            // For simplicity we don't take into account serial number
-            // arithmetic; compare serials as bare unsigned integers.
-            if (id != READONLY_ZONE_ID || (*it).serial_ < start ||
-                (*it).serial_ > end) {
+            // For simplicity we assume this method is called for the
+            // "readonly" zone possibly after making updates on the "writable"
+            // copy and committing them.
+            if (id != READONLY_ZONE_ID) {
+                continue;
+            }
+
+            // Note: the following logic is not 100% accurate in terms of
+            // serial number arithmetic; we prefer brevity for testing.
+            // Skip until we see the starting serial.  Once we started
+            // recording this condition is ignored (to support wrap-around
+            // case)
+            if ((*it).serial_ < start && selected_jnl.empty()) {
                 continue;
             }
             selected_jnl.push_back(*it);
+            if ((*it).serial_ > end) { // gone over the end serial. we're done.
+                break;
+            }
         }
+
+        // Check if we've found the requested range.  If not, throw.
+        if (selected_jnl.empty() || selected_jnl.front().serial_ != start ||
+            selected_jnl.back().serial_ != end) {
+            isc_throw(NoSuchSerial, "requested diff range is not found");
+        }
+
         return (IteratorContextPtr(new MockDiffIteratorContext(selected_jnl)));
     }
 
@@ -3071,7 +3090,7 @@ TYPED_TEST(DatabaseClientTest, journalReader) {
     this->updater_->commit();
 
     ZoneJournalReaderPtr jnl_reader(this->client_->getJournalReader(
-                                        this->zname_, 1234, 1235));
+                                        this->zname_, 1234, 1235).second);
     ConstRRsetPtr rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
     isc::testutils::rrsetCheck(this->soa_, rrset);
@@ -3080,6 +3099,65 @@ TYPED_TEST(DatabaseClientTest, journalReader) {
     isc::testutils::rrsetCheck(soa_end, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_FALSE(rrset);
+}
+
+TYPED_TEST(DatabaseClientTest, readLargeJournal) {
+    // Similar to journalMultiple, but check that at a higher level.
+
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+
+    vector<ConstRRsetPtr> expected;
+    for (size_t i = 0; i < 100; ++i) {
+        // Create the old SOA and remove it, and record it in the expected list
+        RRsetPtr rrset1(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                                  this->rrttl_));
+        string soa_rdata = "ns1.example.org. admin.example.org. " +
+            lexical_cast<std::string>(1234 + i) + " 3600 1800 2419200 7200";
+        rrset1->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+                                            soa_rdata));
+        this->updater_->deleteRRset(*rrset1);
+        expected.push_back(rrset1);
+
+        // Create a new SOA, add it, and record it.
+        RRsetPtr rrset2(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                                  this->rrttl_));
+        soa_rdata = "ns1.example.org. admin.example.org. " +
+            lexical_cast<std::string>(1234 + i + 1) +
+            " 3600 1800 2419200 7200";
+        rrset2->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+                                            soa_rdata));
+        this->updater_->addRRset(*rrset2);
+        expected.push_back(rrset2);
+    }
+    this->updater_->commit();
+
+    ZoneJournalReaderPtr jnl_reader(this->client_->getJournalReader(
+                                        this->zname_, 1234, 1334).second);
+    ConstRRsetPtr actual;
+    int i = 0;
+    while ((actual = jnl_reader->getNextDiff()) != NULL) {
+        isc::testutils::rrsetCheck(expected.at(i++), actual);
+    }
+    EXPECT_EQ(expected.size(), i); // we should have eaten all expected data
+}
+
+TYPED_TEST(DatabaseClientTest, readJournalForNoRange) {
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+    this->updater_->deleteRRset(*this->soa_);
+    RRsetPtr soa_end(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    soa_end->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+                                         "ns1.example.org. admin.example.org. "
+                                         "1300 3600 1800 2419200 7200"));
+    this->updater_->addRRset(*soa_end);
+    this->updater_->commit();
+
+    // The specified range does not exist in the diff storage.  The factory
+    // method should result in NO_SUCH_SERIAL
+    pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
+        this->client_->getJournalReader(this->zname_, 1234, 1235);
+    EXPECT_EQ(ZoneJournalReader::NO_SUCH_SERIAL, result.first);
+    EXPECT_FALSE(result.second);
 }
 
 TYPED_TEST(DatabaseClientTest, journalReaderForNXZone) {

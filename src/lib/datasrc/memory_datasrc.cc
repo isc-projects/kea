@@ -819,7 +819,7 @@ InMemoryClient::getUpdater(const isc::dns::Name&, bool, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
 
-ZoneJournalReaderPtr
+pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
 InMemoryClient::getJournalReader(const isc::dns::Name&, uint32_t,
                                  uint32_t) const
 {

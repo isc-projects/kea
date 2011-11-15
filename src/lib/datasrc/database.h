@@ -23,6 +23,8 @@
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
 
+#include <datasrc/data_source.h>
+#include <datasrc/client.h>
 #include <datasrc/client.h>
 
 #include <dns/name.h>
@@ -33,6 +35,19 @@
 
 namespace isc {
 namespace datasrc {
+
+/**
+ * \brief No such serial number when obtaining difference iterator
+ *
+ * This exception can be thrown from \c DatabaseAccessor::getDiffs().
+ * It's thrown if either the zone/start version or zone/end version
+ * combination does not exist in the differences table.
+ */
+class NoSuchSerial : public DataSourceError {
+public:
+    NoSuchSerial(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
 
 /**
  * \brief Abstraction of lowlevel database with DNS data
@@ -932,7 +947,7 @@ public:
                                       bool journaling = false) const;
 
     /// TBD
-    virtual ZoneJournalReaderPtr
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const;
 

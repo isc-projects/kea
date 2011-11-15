@@ -15,6 +15,8 @@
 #ifndef __DATA_SOURCE_CLIENT_H
 #define __DATA_SOURCE_CLIENT_H 1
 
+#include <utility>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -310,7 +312,7 @@ public:
                                       bool replace, bool journaling = false)
         const = 0;
 
-    virtual ZoneJournalReaderPtr
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const = 0;
 };
