@@ -1142,7 +1142,8 @@ DatabaseClient::getJournalReader(const isc::dns::Name& zone,
                                  uint32_t begin_serial,
                                  uint32_t end_serial) const
 {
-    const pair<bool, int> zoneinfo(accessor_->getZone(zone.toText()));
+    shared_ptr<DatabaseAccessor> jnl_accessor(accessor_->clone());
+    const pair<bool, int> zoneinfo(jnl_accessor->getZone(zone.toText()));
     if (!zoneinfo.first) {
         return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
                     ZoneJournalReader::NO_SUCH_ZONE,
@@ -1152,7 +1153,7 @@ DatabaseClient::getJournalReader(const isc::dns::Name& zone,
     try {
         const pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> ret(
             ZoneJournalReader::SUCCESS,
-            ZoneJournalReaderPtr(new DatabaseJournalReader(accessor_,
+            ZoneJournalReaderPtr(new DatabaseJournalReader(jnl_accessor,
                                                            zoneinfo.second,
                                                            rrclass_,
                                                            begin_serial,
