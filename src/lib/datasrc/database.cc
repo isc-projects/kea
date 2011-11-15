@@ -1121,12 +1121,19 @@ public:
             return (ConstRRsetPtr());
         }
 
-        RRsetPtr rrset(new RRset(Name(data[Accessor::NAME_COLUMN]), rrclass_,
-                                 RRType(data[Accessor::TYPE_COLUMN]),
-                                 RRTTL(data[Accessor::TTL_COLUMN])));
-        rrset->addRdata(rdata::createRdata(rrset->getType(), rrclass_,
-                                           data[Accessor::RDATA_COLUMN]));
-        return (rrset);
+        try {
+            RRsetPtr rrset(new RRset(Name(data[Accessor::NAME_COLUMN]),
+                                     rrclass_,
+                                     RRType(data[Accessor::TYPE_COLUMN]),
+                                     RRTTL(data[Accessor::TTL_COLUMN])));
+            rrset->addRdata(rdata::createRdata(rrset->getType(), rrclass_,
+                                               data[Accessor::RDATA_COLUMN]));
+            return (rrset);
+        } catch (const Exception& ex) {
+            // TBD: log it.
+            isc_throw(DataSourceError, "Failed to create RRset from diff on "
+                      << accessor_->getDBName());
+        }
     }
 
 private:

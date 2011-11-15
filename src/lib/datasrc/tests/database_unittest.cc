@@ -755,7 +755,7 @@ public:
             isc_throw(DataSourceError, "Test error");
         } else {
             journal_entries_->push_back(JournalEntry(id, serial, operation,
-                                                    data));
+                                                     data));
         }
     }
 
@@ -783,10 +783,10 @@ public:
             if ((*it).serial_ < start && selected_jnl.empty()) {
                 continue;
             }
-            selected_jnl.push_back(*it);
             if ((*it).serial_ > end) { // gone over the end serial. we're done.
                 break;
             }
+            selected_jnl.push_back(*it);
         }
 
         // Check if we've found the requested range.  If not, throw.
@@ -3172,6 +3172,48 @@ TYPED_TEST(DatabaseClientTest, journalReaderForNXZone) {
         this->client_->getJournalReader(Name("nosuchzone"), 0, 1);
     EXPECT_EQ(ZoneJournalReader::NO_SUCH_ZONE, result.first);
     EXPECT_FALSE(result.second);
+}
+
+// A helper function for journalWithBadData.  It installs a simple diff
+// from one serial (of 'begin') to another ('begin' + 1), tweaking a specified
+// field of data with some invalid value.
+void
+installBadDiff(MockAccessor& accessor, uint32_t begin,
+               DatabaseAccessor::DiffRecordParams modify_param,
+               const char* const data)
+{
+    string data1[] = {"example.org.", "SOA", "3600", "ns. root. 1 1 1 1 1"};
+    string data2[] = {"example.org.", "SOA", "3600", "ns. root. 2 1 1 1 1"};
+    data1[modify_param] = data;
+    accessor.addRecordDiff(READONLY_ZONE_ID, begin,
+                           DatabaseAccessor::DIFF_DELETE, data1);
+    accessor.addRecordDiff(READONLY_ZONE_ID, begin + 1,
+                           DatabaseAccessor::DIFF_ADD, data2);
+}
+
+TEST_F(MockDatabaseClientTest, journalWithBadData) {
+    MockAccessor& mock_accessor =
+        dynamic_cast<MockAccessor&>(*current_accessor_);
+
+    // One of the fields from the data source is broken as an RR parameter.
+    // The journal reader should still be constructed, but getNextDiff()
+    // should result in exception.
+    installBadDiff(mock_accessor, 1, DatabaseAccessor::DIFF_NAME,
+                   "example..org");
+    installBadDiff(mock_accessor, 3, DatabaseAccessor::DIFF_TYPE,
+                   "bad-rrtype");
+    installBadDiff(mock_accessor, 5, DatabaseAccessor::DIFF_TTL,
+                   "bad-ttl");
+    installBadDiff(mock_accessor, 7, DatabaseAccessor::DIFF_RDATA,
+                   "bad rdata");
+    EXPECT_THROW(this->client_->getJournalReader(this->zname_, 1, 2).
+                 second->getNextDiff(), DataSourceError);
+    EXPECT_THROW(this->client_->getJournalReader(this->zname_, 3, 4).
+                 second->getNextDiff(), DataSourceError);
+    EXPECT_THROW(this->client_->getJournalReader(this->zname_, 5, 6).
+                 second->getNextDiff(), DataSourceError);
+    EXPECT_THROW(this->client_->getJournalReader(this->zname_, 7, 8).
+                 second->getNextDiff(), DataSourceError);
 }
 
 }
