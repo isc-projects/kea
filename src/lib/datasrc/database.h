@@ -944,7 +944,11 @@ public:
                                       bool replace,
                                       bool journaling = false) const;
 
-    /// TBD
+
+    /// This implementation internally clones the accessor from the one
+    /// used in the client for retrieving diffs and iterating over them.
+    /// The returned reader object will be able to work separately from
+    /// the original client.
     virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const;
