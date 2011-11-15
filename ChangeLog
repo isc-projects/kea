@@ -484,7 +484,7 @@ bind10-devel-20110705 released on July 05, 2011
 	(Trac #542, git 1aa773d84cd6431aa1483eb34a7f4204949a610f)
 
 243.	[func]*		feng
-	Add optional hmac algorithm SHA224/384/812.
+	Add optional hmac algorithm SHA224/384/512.
 	(Trac #782, git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1)
 
 bind10-devel-20110519 released on May 19, 2011
