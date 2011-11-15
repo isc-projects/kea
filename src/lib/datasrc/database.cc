@@ -1186,7 +1186,7 @@ DatabaseClient::getJournalReader(const isc::dns::Name& zone,
         return (ret);
     } catch (const NoSuchSerial&) {
         return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
-                    ZoneJournalReader::NO_SUCH_SERIAL,
+                    ZoneJournalReader::NO_SUCH_VERSION,
                     ZoneJournalReaderPtr()));
     }
 }
