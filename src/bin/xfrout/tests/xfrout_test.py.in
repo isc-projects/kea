@@ -656,6 +656,13 @@ class TestXfroutSession(TestXfroutSessionBase):
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NOTAUTH")
 
+    def test_dns_xfrout_start_datasrc_servfail(self):
+        def internal_raise(x, y):
+            raise isc.datasrc.Error('exception for the sake of test')
+        self.xfrsess.ClientClass = internal_raise
+        self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
+        self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.SERVFAIL())
+
     def test_dns_xfrout_start_noerror(self):
         self.xfrsess._get_query_zone_name = self.default
         def noerror(form):

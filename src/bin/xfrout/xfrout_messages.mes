@@ -25,6 +25,13 @@ an AXFR query. The error message of the exception is included in the
 log message, but this error most likely points to incomplete exception
 handling in the code.
 
+% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
+Pre-response check for an incomding XFR request failed unexpectedly.
+The most likely cause of this is that some low level error in the data
+source, but it may also be other general (more unlikely) errors such
+as memory shortage.  Some detail of the error is also included in the
+message.  The xfrout server tries to return a SERVFAIL response in this case.
+
 % XFROUT_AXFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4
 A transfer out for the given zone failed. An error response is sent
 to the client. The given rcode is the rcode that is set in the error
