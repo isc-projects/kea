@@ -562,6 +562,14 @@ typedef boost::shared_ptr<ZoneUpdater> ZoneUpdaterPtr;
 
 /// The base class to retrieve differences between two versions of a zone.
 class ZoneJournalReader {
+public:
+    /// TBD: describe this
+    enum Result {
+        SUCCESS,
+        NO_SUCH_ZONE,
+        NO_SUCH_SERIAL
+    };
+
 protected:
     /// The default constructor.
     ///

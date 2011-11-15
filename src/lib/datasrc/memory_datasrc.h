@@ -287,7 +287,7 @@ public:
                                       bool replace, bool journaling = false)
         const;
 
-    virtual ZoneJournalReaderPtr
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const;
 
