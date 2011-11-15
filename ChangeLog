@@ -1,4 +1,4 @@
-xxx.	[func]		kambe
+xxx.	[func]		naokikambe
 	b10-stats-httpd was updated. In addition of the access to all
 	statistics items of all modules, the specified item or the items of the
 	specified module name can be accessed. For example, the URI requested
