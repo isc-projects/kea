@@ -363,7 +363,12 @@ class XfroutSession():
         zone_str = format_zone_str(zone_name, zone_class) # for logging
 
         # TODO: we should also include class in the check
-        rcode_ = self._check_xfrout_available(zone_name)
+        try:
+            rcode_ = self._check_xfrout_available(zone_name)
+        except Exception as ex:
+            logger.error(XFROUT_XFR_TRANSFER_CHECK_ERROR, self._request_type,
+                         format_addrinfo(self._remote), zone_str, ex)
+            rcode_ = Rcode.SERVFAIL()
         if rcode_ != Rcode.NOERROR():
             logger.info(XFROUT_AXFR_TRANSFER_FAILED, self._request_type,
                         format_addrinfo(self._remote), zone_str, rcode_)
