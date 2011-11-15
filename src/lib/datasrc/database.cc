@@ -1103,16 +1103,21 @@ public:
     DatabaseJournalReader(shared_ptr<Accessor> accessor, int zone_id,
                           const RRClass& rrclass, uint32_t begin,
                           uint32_t end) :
-        accessor_(accessor), rrclass_(rrclass)
+        accessor_(accessor), rrclass_(rrclass), finished_(false)
     {
         context_ = accessor_->getDiffs(zone_id, begin, end);
     }
     virtual ~DatabaseJournalReader() {}
     virtual ConstRRsetPtr getNextDiff() {
-        // TBD: check read after completion
+        if (finished_) {
+            isc_throw(InvalidOperation,
+                      "Diff read attempt past the end of sequence on "
+                      << accessor_->getDBName());
+        }
 
         string data[Accessor::COLUMN_COUNT];
         if (!context_->getNext(data)) {
+            finished_ = true;
             return (ConstRRsetPtr());
         }
 
@@ -1128,6 +1133,7 @@ private:
     shared_ptr<Accessor> accessor_;
     const RRClass rrclass_;
     Accessor::IteratorContextPtr context_;
+    bool finished_;
 };
 
 // The JournalReader factory
