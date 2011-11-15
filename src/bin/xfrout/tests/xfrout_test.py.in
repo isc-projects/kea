@@ -21,12 +21,13 @@ import os
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from isc.cc.session import *
 import isc.config
-from pydnspp import *
+from isc.dns import *
 from xfrout import *
 import xfrout
 import isc.log
 import isc.acl.dns
 
+TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 
 # our fake socket, where we can read and insert messages
@@ -55,19 +56,64 @@ class MySocket():
         self.sendqueue = self.sendqueue[size:]
         return result
 
-    def read_msg(self):
+    def read_msg(self, parse_options=Message.PARSE_DEFAULT):
         sent_data = self.readsent()
         get_msg = Message(Message.PARSE)
-        get_msg.from_wire(bytes(sent_data[2:]))
+        get_msg.from_wire(bytes(sent_data[2:]), parse_options)
         return get_msg
 
     def clear_send(self):
         del self.sendqueue[:]
 
-# We subclass the Session class we're testing here, only
-# to override the handle() and _send_data() method
+class MockDataSrcClient:
+    def __init__(self, type, config):
+        pass
+
+    def get_iterator(self, zone_name, adjust_ttl=False):
+        if zone_name == Name('notauth.example.com'):
+            raise isc.datasrc.Error('no such zone')
+        self._zone_name = zone_name
+        return self
+
+    def get_soa(self):  # emulate ZoneIterator.get_soa()
+        if self._zone_name == Name('nosoa.example.com'):
+            return None
+        soa_rrset = RRset(self._zone_name, RRClass.IN(), RRType.SOA(),
+                          RRTTL(3600))
+        soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                  'master.example.com. ' +
+                                  'admin.example.com. 1234 ' +
+                                  '3600 1800 2419200 7200'))
+        if self._zone_name == Name('multisoa.example.com'):
+            soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                      'master.example.com. ' +
+                                      'admin.example.com. 1300 ' +
+                                      '3600 1800 2419200 7200'))
+        return soa_rrset
+
+class MyCCSession(isc.config.ConfigData):
+    def __init__(self):
+        module_spec = isc.config.module_spec_from_file(
+            xfrout.SPECFILE_LOCATION)
+        ConfigData.__init__(self, module_spec)
+
+    def get_remote_config_value(self, module_name, identifier):
+        if module_name == "Auth" and identifier == "database_file":
+            return "initdb.file", False
+        else:
+            return "unknown", False
+
+# This constant dictionary stores all default configuration parameters
+# defined in the xfrout spec file.
+DEFAULT_CONFIG = MyCCSession().get_full_config()
+
+# We subclass the Session class we're testing here, only overriding a few
+# methods
 class MyXfroutSession(XfroutSession):
-    def handle(self):
+    def _handle(self):
+        pass
+
+    def _close_socket(self):
         pass
 
     def _send_data(self, sock, data):
@@ -80,12 +126,23 @@ class MyXfroutSession(XfroutSession):
 class Dbserver:
     def __init__(self):
         self._shutdown_event = threading.Event()
+        self.transfer_counter = 0
+        self._max_transfers_out = DEFAULT_CONFIG['transfers_out']
     def get_db_file(self):
-        return None
+        return 'test.sqlite3'
+    def increase_transfers_counter(self):
+        self.transfer_counter += 1
+        return True
     def decrease_transfers_counter(self):
-        pass
+        self.transfer_counter -= 1
 
-class TestXfroutSession(unittest.TestCase):
+class TestXfroutSessionBase(unittest.TestCase):
+    '''Base classs for tests related to xfrout sessions
+
+    This class defines common setup/teadown and utility methods.  Actual
+    tests are delegated to subclasses.
+
+    '''
     def getmsg(self):
         msg = Message(Message.PARSE)
         msg.from_wire(self.mdata)
@@ -102,15 +159,15 @@ class TestXfroutSession(unittest.TestCase):
     def message_has_tsig(self, msg):
         return msg.get_tsig_record() is not None
 
-    def create_request_data(self, with_tsig=False):
+    def create_request_data(self, with_question=True, with_tsig=False):
         msg = Message(Message.RENDER)
         query_id = 0x1035
         msg.set_qid(query_id)
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
-        query_question = Question(Name("example.com"), RRClass.IN(),
-                                  RRType.AXFR())
-        msg.add_question(query_question)
+        if with_question:
+            msg.add_question(Question(Name("example.com"), RRClass.IN(),
+                                      RRType.AXFR()))
 
         renderer = MessageRenderer()
         if with_tsig:
@@ -124,20 +181,76 @@ class TestXfroutSession(unittest.TestCase):
     def setUp(self):
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(),
-                                       TSIGKeyRing(), ('127.0.0.1', 12345),
+                                       TSIGKeyRing(),
+                                       (socket.AF_INET, socket.SOCK_STREAM,
+                                        ('127.0.0.1', 12345)),
                                        # When not testing ACLs, simply accept
                                        isc.acl.dns.REQUEST_LOADER.load(
                                            [{"action": "ACCEPT"}]),
                                        {})
-        self.mdata = self.create_request_data(False)
-        self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
+        self.mdata = self.create_request_data()
+        self.soa_rrset = RRset(Name('example.com'), RRClass.IN(), RRType.SOA(),
+                               RRTTL(3600))
+        self.soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                       'master.Example.com. ' +
+                                       'admin.exAmple.com. ' +
+                                       '1234 3600 1800 2419200 7200'))
+        # some test replaces a module-wide function.  We should ensure the
+        # original is used elsewhere.
+        self.orig_get_rrset_len = xfrout.get_rrset_len
+
+    def tearDown(self):
+        xfrout.get_rrset_len = self.orig_get_rrset_len
+        # transfer_counter must be always be reset no matter happens within
+        # the XfroutSession object.  We check the condition here.
+        self.assertEqual(0, self.xfrsess._server.transfer_counter)
+
+class TestXfroutSession(TestXfroutSessionBase):
+    def test_quota_error(self):
+        '''Emulating the server being too busy.
+
+        '''
+        self.xfrsess._request_data = self.mdata
+        self.xfrsess._server.increase_transfers_counter = lambda : False
+        XfroutSession._handle(self.xfrsess)
+        self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.REFUSED())
+
+    def test_quota_ok(self):
+        '''The default case in terms of the xfrout quota.
+
+        '''
+        # set up a bogus request, which should result in FORMERR. (it only
+        # has to be something that is different from the previous case)
+        self.xfrsess._request_data = \
+            self.create_request_data(with_question=False)
+        # Replace the data source client to avoid datasrc related exceptions
+        self.xfrsess.ClientClass = MockDataSrcClient
+        XfroutSession._handle(self.xfrsess)
+        self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.FORMERR())
+
+    def test_exception_from_session(self):
+        '''Test the case where the main processing raises an exception.
+
+        We just check it doesn't any unexpected disruption and (in tearDown)
+        transfer_counter is correctly reset to 0.
+
+        '''
+        def dns_xfrout_start(fd, msg, quota):
+            raise ValueError('fake exception')
+        self.xfrsess.dns_xfrout_start = dns_xfrout_start
+        XfroutSession._handle(self.xfrsess)
 
     def test_parse_query_message(self):
         [get_rcode, get_msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(get_rcode.to_text(), "NOERROR")
 
+        # Broken request: no question
+        request_data = self.create_request_data(with_question=False)
+        rcode, msg = self.xfrsess._parse_query_message(request_data)
+        self.assertEqual(Rcode.FORMERR(), rcode)
+
         # tsig signed query message
-        request_data = self.create_request_data(True)
+        request_data = self.create_request_data(with_tsig=True)
         # BADKEY
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "NOTAUTH")
@@ -165,20 +278,23 @@ class TestXfroutSession(unittest.TestCase):
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "NOERROR")
         # This should be dropped completely, therefore returning None
-        self.xfrsess._remote = ('192.0.2.1', 12345)
+        self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
+                                ('192.0.2.1', 12345))
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(None, rcode)
         # This should be refused, therefore REFUSED
-        self.xfrsess._remote = ('192.0.2.2', 12345)
+        self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
+                                ('192.0.2.2', 12345))
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
 
         # TSIG signed request
-        request_data = self.create_request_data(True)
+        request_data = self.create_request_data(with_tsig=True)
 
         # If the TSIG check fails, it should not check ACL
         # (If it checked ACL as well, it would just drop the request)
-        self.xfrsess._remote = ('192.0.2.1', 12345)
+        self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
+                                ('192.0.2.1', 12345))
         self.xfrsess._tsig_key_ring = TSIGKeyRing()
         rcode, msg = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "NOTAUTH")
@@ -216,19 +332,23 @@ class TestXfroutSession(unittest.TestCase):
                 {"action": "REJECT"}
         ]))
         # both matches
-        self.xfrsess._remote = ('192.0.2.1', 12345)
+        self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
+                                ('192.0.2.1', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "NOERROR")
         # TSIG matches, but address doesn't
-        self.xfrsess._remote = ('192.0.2.2', 12345)
+        self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
+                                ('192.0.2.2', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # Address matches, but TSIG doesn't (not included)
-        self.xfrsess._remote = ('192.0.2.1', 12345)
+        self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
+                                ('192.0.2.1', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # Neither address nor TSIG matches
-        self.xfrsess._remote = ('192.0.2.2', 12345)
+        self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
+                                ('192.0.2.2', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
 
@@ -289,10 +409,6 @@ class TestXfroutSession(unittest.TestCase):
                          self.xfrsess._get_transfer_acl(Name('EXAMPLE.COM'),
                                                         RRClass.IN()))
 
-    def test_get_query_zone_name(self):
-        msg = self.getmsg()
-        self.assertEqual(self.xfrsess._get_query_zone_name(msg), "example.com.")
-
     def test_send_data(self):
         self.xfrsess._send_data(self.sock, self.mdata)
         senddata = self.sock.readsent()
@@ -315,10 +431,13 @@ class TestXfroutSession(unittest.TestCase):
     def test_send_message(self):
         msg = self.getmsg()
         msg.make_response()
-        # soa record data with different cases
-        soa_record = (4, 3, 'Example.com.', 'com.Example.', 3600, 'SOA', None, 'master.Example.com. admin.exAmple.com. 1234 3600 1800 2419200 7200')
-        rrset_soa = self.xfrsess._create_rrset_from_db_record(soa_record)
-        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        # SOA record data with different cases
+        soa_rrset = RRset(Name('Example.com.'), RRClass.IN(), RRType.SOA(),
+                               RRTTL(3600))
+        soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                  'master.Example.com. admin.exAmple.com. ' +
+                                  '1234 3600 1800 2419200 7200'))
+        msg.add_rrset(Message.SECTION_ANSWER, soa_rrset)
         self.xfrsess._send_message(self.sock, msg)
         send_out_data = self.sock.readsent()[2:]
 
@@ -347,23 +466,15 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(msg.get_rcode(), rcode)
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_AA))
 
-    def test_create_rrset_from_db_record(self):
-        rrset = self.xfrsess._create_rrset_from_db_record(self.soa_record)
-        self.assertEqual(rrset.get_name().to_text(), "example.com.")
-        self.assertEqual(rrset.get_class(), RRClass("IN"))
-        self.assertEqual(rrset.get_type().to_text(), "SOA")
-        rdata = rrset.get_rdata()
-        self.assertEqual(rdata[0].to_text(), self.soa_record[7])
-
     def test_send_message_with_last_soa(self):
-        rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
         msg = self.getmsg()
         msg.make_response()
 
         # packet number less than TSIG_SIGN_EVERY_NTH
         packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa,
-                                                 0, packet_neet_not_sign)
+        self.xfrsess._send_message_with_last_soa(msg, self.sock,
+                                                 self.soa_rrset, 0,
+                                                 packet_neet_not_sign)
         get_msg = self.sock.read_msg()
         # tsig context is not exist
         self.assertFalse(self.message_has_tsig(get_msg))
@@ -378,12 +489,13 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "SOA")
         rdata = answer.get_rdata()
-        self.assertEqual(rdata[0].to_text(), self.soa_record[7])
+        self.assertEqual(rdata[0], self.soa_rrset.get_rdata()[0])
 
         # msg is the TSIG_SIGN_EVERY_NTH one
         # sending the message with last soa together
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa,
-                                                 0, TSIG_SIGN_EVERY_NTH)
+        self.xfrsess._send_message_with_last_soa(msg, self.sock,
+                                                 self.soa_rrset, 0,
+                                                 TSIG_SIGN_EVERY_NTH)
         get_msg = self.sock.read_msg()
         # tsig context is not exist
         self.assertFalse(self.message_has_tsig(get_msg))
@@ -392,7 +504,6 @@ class TestXfroutSession(unittest.TestCase):
         # create tsig context
         self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
 
-        rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
         msg = self.getmsg()
         msg.make_response()
 
@@ -400,8 +511,9 @@ class TestXfroutSession(unittest.TestCase):
         packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
         # msg is not the TSIG_SIGN_EVERY_NTH one
         # sending the message with last soa together
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa,
-                                                 0, packet_neet_not_sign)
+        self.xfrsess._send_message_with_last_soa(msg, self.sock,
+                                                 self.soa_rrset, 0,
+                                                 packet_neet_not_sign)
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
 
@@ -411,22 +523,23 @@ class TestXfroutSession(unittest.TestCase):
 
         # msg is the TSIG_SIGN_EVERY_NTH one
         # sending the message with last soa together
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa,
-                                                 0, TSIG_SIGN_EVERY_NTH)
+        self.xfrsess._send_message_with_last_soa(msg, self.sock,
+                                                 self.soa_rrset, 0,
+                                                 TSIG_SIGN_EVERY_NTH)
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
 
     def test_trigger_send_message_with_last_soa(self):
         rrset_a = RRset(Name("example.com"), RRClass.IN(), RRType.A(), RRTTL(3600))
         rrset_a.add_rdata(Rdata(RRType.A(), RRClass.IN(), "192.0.2.1"))
-        rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
 
         msg = self.getmsg()
         msg.make_response()
         msg.add_rrset(Message.SECTION_ANSWER, rrset_a)
 
         # length larger than MAX-len(rrset)
-        length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - get_rrset_len(rrset_soa) + 1
+        length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - \
+            get_rrset_len(self.soa_rrset) + 1
         # packet number less than TSIG_SIGN_EVERY_NTH
         packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
 
@@ -434,7 +547,9 @@ class TestXfroutSession(unittest.TestCase):
         # this should have triggered the sending of two messages
         # (1 with the rrset we added manually, and 1 that triggered
         # the sending in _with_last_soa)
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa, length_need_split,
+        self.xfrsess._send_message_with_last_soa(msg, self.sock,
+                                                 self.soa_rrset,
+                                                 length_need_split,
                                                  packet_neet_not_sign)
         get_msg = self.sock.read_msg()
         self.assertFalse(self.message_has_tsig(get_msg))
@@ -461,20 +576,20 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "SOA")
         rdata = answer.get_rdata()
-        self.assertEqual(rdata[0].to_text(), self.soa_record[7])
+        self.assertEqual(rdata[0], self.soa_rrset.get_rdata()[0])
 
         # and it should not have sent anything else
         self.assertEqual(0, len(self.sock.sendqueue))
 
     def test_trigger_send_message_with_last_soa_with_tsig(self):
         self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
-        rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
         msg = self.getmsg()
         msg.make_response()
-        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        msg.add_rrset(Message.SECTION_ANSWER, self.soa_rrset)
 
         # length larger than MAX-len(rrset)
-        length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - get_rrset_len(rrset_soa) + 1
+        length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - \
+            get_rrset_len(self.soa_rrset) + 1
         # packet number less than TSIG_SIGN_EVERY_NTH
         packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
 
@@ -482,7 +597,9 @@ class TestXfroutSession(unittest.TestCase):
         # this should have triggered the sending of two messages
         # (1 with the rrset we added manually, and 1 that triggered
         # the sending in _with_last_soa)
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa, length_need_split,
+        self.xfrsess._send_message_with_last_soa(msg, self.sock,
+                                                 self.soa_rrset,
+                                                 length_need_split,
                                                  packet_neet_not_sign)
         get_msg = self.sock.read_msg()
         # msg is not the TSIG_SIGN_EVERY_NTH one, it shouldn't be tsig signed
@@ -495,7 +612,9 @@ class TestXfroutSession(unittest.TestCase):
 
 
         # msg is the TSIG_SIGN_EVERY_NTH one, it should be tsig signed
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa, length_need_split,
+        self.xfrsess._send_message_with_last_soa(msg, self.sock,
+                                                 self.soa_rrset,
+                                                 length_need_split,
                                                  xfrout.TSIG_SIGN_EVERY_NTH)
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
@@ -506,49 +625,18 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(0, len(self.sock.sendqueue))
 
     def test_get_rrset_len(self):
-        rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
-        self.assertEqual(82, get_rrset_len(rrset_soa))
-
-    def test_zone_has_soa(self):
-        global sqlite3_ds
-        def mydb1(zone, file):
-            return True
-        sqlite3_ds.get_zone_soa = mydb1
-        self.assertTrue(self.xfrsess._zone_has_soa(""))
-        def mydb2(zone, file):
-            return False
-        sqlite3_ds.get_zone_soa = mydb2
-        self.assertFalse(self.xfrsess._zone_has_soa(""))
-
-    def test_zone_exist(self):
-        global sqlite3_ds
-        def zone_exist(zone, file):
-            return zone
-        sqlite3_ds.zone_exist = zone_exist
-        self.assertTrue(self.xfrsess._zone_exist(True))
-        self.assertFalse(self.xfrsess._zone_exist(False))
+        self.assertEqual(82, get_rrset_len(self.soa_rrset))
 
     def test_check_xfrout_available(self):
-        def zone_exist(zone):
-            return zone
-        def zone_has_soa(zone):
-            return (not zone)
-        self.xfrsess._zone_exist = zone_exist
-        self.xfrsess._zone_has_soa = zone_has_soa
-        self.assertEqual(self.xfrsess._check_xfrout_available(False).to_text(), "NOTAUTH")
-        self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "SERVFAIL")
-
-        def zone_empty(zone):
-            return zone
-        self.xfrsess._zone_has_soa = zone_empty
-        def false_func():
-            return False
-        self.xfrsess._server.increase_transfers_counter = false_func
-        self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "REFUSED")
-        def true_func():
-            return True
-        self.xfrsess._server.increase_transfers_counter = true_func
-        self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "NOERROR")
+        self.xfrsess.ClientClass = MockDataSrcClient
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('example.com')), Rcode.NOERROR())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('notauth.example.com')), Rcode.NOTAUTH())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('nosoa.example.com')), Rcode.SERVFAIL())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                Name('multisoa.example.com')), Rcode.SERVFAIL())
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
@@ -560,7 +648,6 @@ class TestXfroutSession(unittest.TestCase):
         return "example.com"
 
     def test_dns_xfrout_start_notauth(self):
-        self.xfrsess._get_query_zone_name = self.default
         def notauth(formpara):
             return Rcode.NOTAUTH()
         self.xfrsess._check_xfrout_available = notauth
@@ -568,13 +655,19 @@ class TestXfroutSession(unittest.TestCase):
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NOTAUTH")
 
+    def test_dns_xfrout_start_datasrc_servfail(self):
+        def internal_raise(x, y):
+            raise isc.datasrc.Error('exception for the sake of test')
+        self.xfrsess.ClientClass = internal_raise
+        self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
+        self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.SERVFAIL())
+
     def test_dns_xfrout_start_noerror(self):
-        self.xfrsess._get_query_zone_name = self.default
         def noerror(form):
             return Rcode.NOERROR()
         self.xfrsess._check_xfrout_available = noerror
 
-        def myreply(msg, sock, zonename):
+        def myreply(msg, sock):
             self.sock.send(b"success")
 
         self.xfrsess._reply_xfrout_query = myreply
@@ -582,41 +675,27 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(self.sock.readsent(), b"success")
 
     def test_reply_xfrout_query_noerror(self):
-        global sqlite3_ds
-        def get_zone_soa(zonename, file):
-            return self.soa_record
-
-        def get_zone_datas(zone, file):
-            return [self.soa_record]
-
-        sqlite3_ds.get_zone_soa = get_zone_soa
-        sqlite3_ds.get_zone_datas = get_zone_datas
-        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock, "example.com.")
+        self.xfrsess._soa = self.soa_rrset
+        self.xfrsess._iterator = [self.soa_rrset]
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
         reply_msg = self.sock.read_msg()
         self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 2)
 
     def test_reply_xfrout_query_noerror_with_tsig(self):
-        rrset_data = (4, 3, 'a.example.com.', 'com.example.', 3600, 'A', None, '192.168.1.1')
-        global sqlite3_ds
+        rrset = RRset(Name('a.example.com'), RRClass.IN(), RRType.A(),
+                      RRTTL(3600))
+        rrset.add_rdata(Rdata(RRType.A(), RRClass.IN(), '192.0.2.1'))
         global xfrout
-        def get_zone_soa(zonename, file):
-            return self.soa_record
-
-        def get_zone_datas(zone, file):
-            zone_rrsets = []
-            for i in range(0, 100):
-                zone_rrsets.insert(i, rrset_data)
-            return zone_rrsets
 
         def get_rrset_len(rrset):
             return 65520
 
-        sqlite3_ds.get_zone_soa = get_zone_soa
-        sqlite3_ds.get_zone_datas = get_zone_datas
+        self.xfrsess._soa = self.soa_rrset
+        self.xfrsess._iterator = [rrset for i in range(0, 100)]
         xfrout.get_rrset_len = get_rrset_len
 
         self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
-        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock, "example.com.")
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
 
         # tsig signed first package
         reply_msg = self.sock.read_msg()
@@ -640,18 +719,34 @@ class TestXfroutSession(unittest.TestCase):
         # and it should not have sent anything else
         self.assertEqual(0, len(self.sock.sendqueue))
 
-class MyCCSession(isc.config.ConfigData):
-    def __init__(self):
-        module_spec = isc.config.module_spec_from_file(
-            xfrout.SPECFILE_LOCATION)
-        ConfigData.__init__(self, module_spec)
 
-    def get_remote_config_value(self, module_name, identifier):
-        if module_name == "Auth" and identifier == "database_file":
-            return "initdb.file", False
-        else:
-            return "unknown", False
+class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
+    '''Tests for XFR-out sessions using an SQLite3 DB.
 
+    These are provided mainly to confirm the implementation actually works
+    in an environment closer to actual operational environments.  So we
+    only check a few common cases; other details are tested using mock
+    data sources.
+
+    '''
+    def setUp(self):
+        super().setUp()
+        self.xfrsess._request_data = self.mdata
+        self.xfrsess._server.get_db_file = lambda : TESTDATA_SRCDIR + \
+            'test.sqlite3'
+
+    def test_axfr_normal_session(self):
+        XfroutSession._handle(self.xfrsess)
+        response = self.sock.read_msg(Message.PRESERVE_ORDER);
+        self.assertEqual(Rcode.NOERROR(), response.get_rcode())
+        # This zone contains two A RRs for the same name with different TTLs.
+        # These TTLs should be preseved in the AXFR stream.
+        actual_ttls = []
+        for rr in response.get_section(Message.SECTION_ANSWER):
+            if rr.get_type() == RRType.A() and \
+                    not rr.get_ttl() in actual_ttls:
+                actual_ttls.append(rr.get_ttl().get_value())
+        self.assertEqual([3600, 7200], sorted(actual_ttls))
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
@@ -670,23 +765,27 @@ class TestUnixSockServer(unittest.TestCase):
            file descriptor. This is needed, because we get only that one
            from auth."""
         # We test with UDP, as it can be "connected" without other
-        # endpoint
+        # endpoint.  Note that in the current implementation _guess_remote()
+        # unconditionally returns SOCK_STREAM.
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.connect(('127.0.0.1', 12345))
-        self.assertEqual(('127.0.0.1', 12345),
+        self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
+                          ('127.0.0.1', 12345)),
                          self.unix._guess_remote(sock.fileno()))
         if socket.has_ipv6:
             # Don't check IPv6 address on hosts not supporting them
             sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             sock.connect(('::1', 12345))
-            self.assertEqual(('::1', 12345, 0, 0),
+            self.assertEqual((socket.AF_INET6, socket.SOCK_STREAM,
+                              ('::1', 12345, 0, 0)),
                              self.unix._guess_remote(sock.fileno()))
             # Try when pretending there's no IPv6 support
             # (No need to pretend when there's really no IPv6)
             xfrout.socket.has_ipv6 = False
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.connect(('127.0.0.1', 12345))
-            self.assertEqual(('127.0.0.1', 12345),
+            self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
+                              ('127.0.0.1', 12345)),
                              self.unix._guess_remote(sock.fileno()))
             # Return it back
             xfrout.socket.has_ipv6 = True
