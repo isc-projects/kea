@@ -648,7 +648,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         return "example.com"
 
     def test_dns_xfrout_start_notauth(self):
-        self.xfrsess._get_query_zone_name = self.default
         def notauth(formpara):
             return Rcode.NOTAUTH()
         self.xfrsess._check_xfrout_available = notauth
@@ -664,7 +663,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.SERVFAIL())
 
     def test_dns_xfrout_start_noerror(self):
-        self.xfrsess._get_query_zone_name = self.default
         def noerror(form):
             return Rcode.NOERROR()
         self.xfrsess._check_xfrout_available = noerror
