@@ -19,6 +19,8 @@
 
 #include <gtest/gtest.h>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
@@ -3108,6 +3110,10 @@ TYPED_TEST(DatabaseClientTest, journalReader) {
     isc::testutils::rrsetCheck(soa_end, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_FALSE(rrset);
+
+    // Once it reaches the end of the sequence, further read attempt will
+    // result in exception.
+    EXPECT_THROW(jnl_reader->getNextDiff(), isc::InvalidOperation);
 }
 
 TYPED_TEST(DatabaseClientTest, readLargeJournal) {
