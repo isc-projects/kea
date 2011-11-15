@@ -3161,10 +3161,10 @@ TYPED_TEST(DatabaseClientTest, readJournalForNoRange) {
     makeSimpleDiff(*this->client_, this->zname_, this->qclass_, this->soa_);
 
     // The specified range does not exist in the diff storage.  The factory
-    // method should result in NO_SUCH_SERIAL
+    // method should result in NO_SUCH_VERSION
     pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
         this->client_->getJournalReader(this->zname_, 1200, 1235);
-    EXPECT_EQ(ZoneJournalReader::NO_SUCH_SERIAL, result.first);
+    EXPECT_EQ(ZoneJournalReader::NO_SUCH_VERSION, result.first);
     EXPECT_FALSE(result.second);
 }
 
