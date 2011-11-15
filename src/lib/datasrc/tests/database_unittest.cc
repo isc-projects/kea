@@ -3076,19 +3076,28 @@ TEST_F(MockDatabaseClientTest, journalException) {
 // Tests for the ZoneJournalReader
 //
 
-TYPED_TEST(DatabaseClientTest, journalReader) {
-    // Check a simple, normal scenario: making an update from one SOA to
-    // another, and retrieve the corresponding diffs.
-    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
-    this->updater_->deleteRRset(*this->soa_);
-    RRsetPtr soa_end(new RRset(this->zname_, this->qclass_, RRType::SOA(),
-                               this->rrttl_));
-    soa_end->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+// Install a simple, commonly used diff sequence: making an update from one
+// SOA to another.  Return the end SOA RRset for the convenience of the caller.
+ConstRRsetPtr
+makeSimpleDiff(DataSourceClient& client, const Name& zname,
+               const RRClass& rrclass, ConstRRsetPtr begin_soa)
+{
+    ZoneUpdaterPtr updater = client.getUpdater(zname, false, true);
+    updater->deleteRRset(*begin_soa);
+    RRsetPtr soa_end(new RRset(zname, rrclass, RRType::SOA(), RRTTL(3600)));
+    soa_end->addRdata(rdata::createRdata(RRType::SOA(), rrclass,
                                          "ns1.example.org. admin.example.org. "
                                          "1235 3600 1800 2419200 7200"));
-    this->updater_->addRRset(*soa_end);
-    this->updater_->commit();
+    updater->addRRset(*soa_end);
+    updater->commit();
 
+    return (soa_end);
+}
+
+TYPED_TEST(DatabaseClientTest, journalReader) {
+    // Check the simple case made by makeSimpleDiff.
+    ConstRRsetPtr soa_end = makeSimpleDiff(*this->client_, this->zname_,
+                                           this->qclass_, this->soa_);
     ZoneJournalReaderPtr jnl_reader(this->client_->getJournalReader(
                                         this->zname_, 1234, 1235).second);
     ConstRRsetPtr rrset = jnl_reader->getNextDiff();
@@ -3142,27 +3151,21 @@ TYPED_TEST(DatabaseClientTest, readLargeJournal) {
 }
 
 TYPED_TEST(DatabaseClientTest, readJournalForNoRange) {
-    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
-    this->updater_->deleteRRset(*this->soa_);
-    RRsetPtr soa_end(new RRset(this->zname_, this->qclass_, RRType::SOA(),
-                               this->rrttl_));
-    soa_end->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
-                                         "ns1.example.org. admin.example.org. "
-                                         "1300 3600 1800 2419200 7200"));
-    this->updater_->addRRset(*soa_end);
-    this->updater_->commit();
+    makeSimpleDiff(*this->client_, this->zname_, this->qclass_, this->soa_);
 
     // The specified range does not exist in the diff storage.  The factory
     // method should result in NO_SUCH_SERIAL
     pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
-        this->client_->getJournalReader(this->zname_, 1234, 1235);
+        this->client_->getJournalReader(this->zname_, 1200, 1235);
     EXPECT_EQ(ZoneJournalReader::NO_SUCH_SERIAL, result.first);
     EXPECT_FALSE(result.second);
 }
 
 TYPED_TEST(DatabaseClientTest, journalReaderForNXZone) {
-    EXPECT_THROW(this->client_->getJournalReader(Name("nosuchzone"), 0, 1),
-                 DataSourceError);
+    pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
+        this->client_->getJournalReader(Name("nosuchzone"), 0, 1);
+    EXPECT_EQ(ZoneJournalReader::NO_SUCH_ZONE, result.first);
+    EXPECT_FALSE(result.second);
 }
 
 }

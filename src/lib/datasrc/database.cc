@@ -1100,19 +1100,12 @@ private:
     // A shortcut typedef to keep the code concise.
     typedef DatabaseAccessor Accessor;
 public:
-    DatabaseJournalReader(shared_ptr<Accessor> accessor, const Name& zone,
+    DatabaseJournalReader(shared_ptr<Accessor> accessor, int zone_id,
                           const RRClass& rrclass, uint32_t begin,
                           uint32_t end) :
         accessor_(accessor), rrclass_(rrclass)
     {
-        const pair<bool, int> zoneinfo(accessor_->getZone(zone.toText()));
-        if (!zoneinfo.first) {
-            // No such zone, can't continue
-            isc_throw(DataSourceError, "Zone " << zone << "/"
-                      << rrclass << " doesn't exist in database: " <<
-                      accessor_->getDBName());
-        }
-        context_ = accessor_->getDiffs(zoneinfo.second, begin, end);
+        context_ = accessor_->getDiffs(zone_id, begin, end);
     }
     virtual ~DatabaseJournalReader() {}
     virtual ConstRRsetPtr getNextDiff() {
@@ -1143,10 +1136,18 @@ DatabaseClient::getJournalReader(const isc::dns::Name& zone,
                                  uint32_t begin_serial,
                                  uint32_t end_serial) const
 {
+    const pair<bool, int> zoneinfo(accessor_->getZone(zone.toText()));
+    if (!zoneinfo.first) {
+        return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
+                    ZoneJournalReader::NO_SUCH_ZONE,
+                    ZoneJournalReaderPtr()));
+    }
+
     try {
         const pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> ret(
             ZoneJournalReader::SUCCESS,
-            ZoneJournalReaderPtr(new DatabaseJournalReader(accessor_, zone,
+            ZoneJournalReaderPtr(new DatabaseJournalReader(accessor_,
+                                                           zoneinfo.second,
                                                            rrclass_,
                                                            begin_serial,
                                                            end_serial)));
