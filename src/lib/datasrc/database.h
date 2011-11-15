@@ -559,11 +559,9 @@ public:
     /// is not for the SOA RR; it passes TTL for a diff that deletes an RR
     /// while in \c deleteRecordInZone() it's omitted.  This is because
     /// the stored diffs are expected to be retrieved in the form that
-    /// \c getRecordDiffs() is expected to meet.  This means if the caller
+    /// \c getDiffs() is expected to meet.  This means if the caller
     /// wants to use this method with other update operations, it must
     /// ensure the additional information is ready when this method is called.
-    ///
-    /// \note \c getRecordDiffs() is not yet implemented.
     ///
     /// The caller of this method must ensure that the added diffs via
     /// this method in a single transaction form an IXFR-style difference
@@ -577,7 +575,7 @@ public:
     /// an SOA RR, \c serial must be identical to the serial of that SOA).
     /// The underlying derived class implementation may or may not check
     /// this condition, but if the caller doesn't meet the condition
-    /// a subsequent call to \c getRecordDiffs() will not work as expected.
+    /// a subsequent call to \c getDiffs() will not work as expected.
     ///
     /// Any call to this method must be in a transaction, and, for now,
     /// it must be a transaction triggered by \c startUpdateZone() (that is,
