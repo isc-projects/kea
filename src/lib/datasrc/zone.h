@@ -438,7 +438,7 @@ public:
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
     ///
-    /// If journaling was requested when getting this updater, it might reject
+    /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see
     /// DataSourceClient::getUpdater). In such case isc::BadValue is thrown.
     ///
@@ -509,7 +509,7 @@ public:
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
     ///
-    /// If journaling was requested when getting this updater, it might reject
+    /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see
     /// DataSourceClient::getUpdater). In such case isc::BadValue is thrown.
     ///
