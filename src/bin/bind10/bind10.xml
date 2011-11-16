@@ -51,7 +51,6 @@
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
       <arg><option>-w <replaceable>wait_time</replaceable></option></arg>
-      <arg><option>--brittle</option></arg>
       <arg><option>--cmdctl-port</option> <replaceable>port</replaceable></arg>
       <arg><option>--config-file</option> <replaceable>config-filename</replaceable></arg>
       <arg><option>--data-path</option> <replaceable>directory</replaceable></arg>
@@ -89,20 +88,6 @@
     <para>The arguments are as follows:</para>
 
     <variablelist>
-
-      <varlistentry>
-        <term>
-          <option>--brittle</option>
-        </term>
-        <listitem>
-          <para>
-	    Shutdown if any of the child processes of
-	    <command>bind10</command> exit.  This is intended to
-	    help developers debug the server, and should not be
-	    used in production.
-          </para>
-        </listitem>
-      </varlistentry>
 
       <varlistentry>
         <term>
