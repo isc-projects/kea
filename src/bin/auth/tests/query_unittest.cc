@@ -402,9 +402,17 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             domain = domains_.find(Name("*").concatenate(wild_suffix));
             assert(domain != domains_.end());
             RRsetStore::const_iterator found_rrset = domain->second.find(type);
-            assert(found_rrset != domain->second.end());
-            return (FindResult(WILDCARD,
+            if (found_rrset != domain->second.end()) {
+				return (FindResult(WILDCARD,
                                substituteWild(*found_rrset->second, name)));
+			} else {
+				found_rrset = domain->second.find(RRType::NSEC());
+				assert(found_rrset != domain->second.end());
+				Name newName = Name("*").concatenate(wild_suffix);
+				return (FindResult(WILDCARD_NXRRSET,
+							   substituteWild(*found_rrset->second,newName)));
+			}
+
         }
         const Name cnamewild_suffix("cnamewild.example.com");
         if (name.compare(cnamewild_suffix).getRelation() ==
