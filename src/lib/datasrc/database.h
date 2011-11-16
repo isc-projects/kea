@@ -113,9 +113,11 @@ public:
         DEL_PARAM_COUNT = 3 ///< Number of parameters
     };
 
-    /// Operation mode when adding a record diff.
-    ///
-    /// This is used as the "operation" parameter value of addRecordDiff().
+    /**
+     * Operation mode when adding a record diff.
+     *
+     * This is used as the "operation" parameter value of addRecordDiff().
+     */
     enum DiffOperation {
         DIFF_ADD = 0,           ///< This diff is for adding an RR
         DIFF_DELETE = 1         ///< This diff is for deleting an RR
@@ -582,9 +584,15 @@ public:
     /// a single zone.  For this possible extension \c zone_id parameter is
     /// included even if it's redundant under the current restriction.
     ///
+    /// The support for adding (or retrieving) diffs is optional; if it's
+    /// not supported in a specific data source, this method for the
+    /// corresponding derived class will throw an \c NotImplemented exception.
+    ///
     /// \exception DataSourceError Invalid call without starting a transaction,
     /// zone ID doesn't match the zone being updated, or other internal
     /// database error.
+    /// \exception NotImplemented Adding diffs is not supported in the
+    /// data source.
     /// \exception Other The concrete derived method may throw other
     /// data source specific exceptions.
     ///
@@ -905,16 +913,23 @@ public:
      * \exception Anything else the underlying DatabaseConnection might
      *     want to throw.
      * \param name The origin of the zone to iterate.
+     * \param adjust_ttl If true, the iterator will treat RRs with the same
+     *                   name and type but different TTL values to be of the
+     *                   same RRset, and will adjust the TTL to the lowest
+     *                   value found. If false, it will consider the RR to
+     *                   belong to a different RRset.
      * \return Shared pointer to the iterator (it will never be NULL)
      */
-    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
+                                        bool adjust_ttl = true) const;
 
     /// This implementation internally clones the accessor from the one
     /// used in the client and starts a separate transaction using the cloned
     /// accessor.  The returned updater will be able to work separately from
     /// the original client.
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
-                                      bool replace) const;
+                                      bool replace,
+                                      bool journaling = false) const;
 
 private:
     /// \brief The RR class that this client handles.

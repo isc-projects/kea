@@ -2022,6 +2022,19 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.command_handler("notify",
                                                   self.args)['result'][0], 1)
 
+        # also try a different port in the actual command
+        zones = { 'zones': [
+                  { 'name': TEST_ZONE_NAME_STR,
+                    'master_addr': TEST_MASTER_IPV6_ADDRESS,
+                    'master_port': str(int(TEST_MASTER_PORT) + 1)
+                  }
+                ]}
+        self.xfr.config_handler(zones)
+        # the command should now fail
+        self.assertEqual(self.xfr.command_handler("notify",
+                                                  self.args)['result'][0], 1)
+
+
     def test_command_handler_notify_known_zone(self):
         # try it with a known zone
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
@@ -2036,21 +2049,6 @@ class TestXfrin(unittest.TestCase):
         self.xfr.config_handler(zones)
         self.assertEqual(self.xfr.command_handler("notify",
                                                   self.args)['result'][0], 0)
-
-        # Note: The rest of the tests won't pass due to the change in #1298
-        # We should probably simply remove the test cases, but for now we
-        # just comment them out.  (Note also that the comment about 'not
-        # from the config' is now wrong, because we used the matching address.)
-        #
-        # and see if we used the address from the command, and not from
-        # the config
-        # This is actually NOT the address given in the command, which
-        # would at this point not make sense, see the TODO in
-        # xfrin.py.in Xfrin.command_handler())
-#         self.assertEqual(TEST_MASTER_IPV4_ADDRESS,
-#                          self.xfr.xfrin_started_master_addr)
-#         self.assertEqual(int(TEST_MASTER_PORT),
-#                          self.xfr.xfrin_started_master_port)
 
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
@@ -2413,6 +2411,58 @@ class TestXfrinProcess(unittest.TestCase):
         """
         self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
                        [RRType.IXFR(), RRType.AXFR()], RRType.IXFR())
+class TestFormatting(unittest.TestCase):
+    # If the formatting functions are moved to a more general library
+    # (ticket #1379), these tests should be moved with them.
+    def test_format_zone_str(self):
+        self.assertEqual("example.com/IN",
+                         format_zone_str(isc.dns.Name("example.com"),
+                         isc.dns.RRClass("IN")))
+        self.assertEqual("example.com/CH",
+                         format_zone_str(isc.dns.Name("example.com"),
+                         isc.dns.RRClass("CH")))
+        self.assertEqual("example.org/IN",
+                         format_zone_str(isc.dns.Name("example.org"),
+                         isc.dns.RRClass("IN")))
+    
+    def test_format_addrinfo(self):
+        # This test may need to be updated if the input type is changed,
+        # right now it is a nested tuple:
+        # (family, sockettype, (address, port))
+        # of which sockettype is ignored
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
+                                          ("192.0.2.1", 53))))
+        self.assertEqual("192.0.2.2:53",
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
+                                          ("192.0.2.2", 53))))
+        self.assertEqual("192.0.2.1:54",
+                         format_addrinfo((socket.AF_INET, socket.SOCK_STREAM,
+                                          ("192.0.2.1", 54))))
+        self.assertEqual("[2001:db8::1]:53",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::1", 53))))
+        self.assertEqual("[2001:db8::2]:53",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::2", 53))))
+        self.assertEqual("[2001:db8::1]:54",
+                         format_addrinfo((socket.AF_INET6, socket.SOCK_STREAM,
+                                          ("2001:db8::1", 54))))
+        self.assertEqual("/some/file",
+                         format_addrinfo((socket.AF_UNIX, socket.SOCK_STREAM,
+                                          "/some/file")))
+        # second element of passed tuple should be ignored
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, None,
+                                          ("192.0.2.1", 53))))
+        self.assertEqual("192.0.2.1:53",
+                         format_addrinfo((socket.AF_INET, "Just some string",
+                                          ("192.0.2.1", 53))))
+        self.assertRaises(TypeError, format_addrinfo, 1)
+        self.assertRaises(TypeError, format_addrinfo,
+                                     (socket.AF_INET, "asdf"))
+        self.assertRaises(TypeError, format_addrinfo,
+                                     (socket.AF_INET, "asdf", ()))
 
 if __name__== "__main__":
     try:

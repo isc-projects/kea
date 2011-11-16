@@ -113,7 +113,7 @@ std::string Option6IA::toText(int indent /* = 0*/) {
     tmp << " iaid=" << iaid_ << ", t1=" << t1_ << ", t2=" << t2_
         << " " << options_.size() << " sub-options:" << endl;
 
-    for (Option6Collection::const_iterator opt=options_.begin();
+    for (OptionCollection::const_iterator opt=options_.begin();
          opt!=options_.end();
          ++opt) {
         tmp << (*opt).second->toText(indent+2);
@@ -127,7 +127,7 @@ unsigned short Option6IA::len() {
         OPTION6_IA_LEN  /* option content (12) */;
 
     // length of all suboptions
-    for (Option::Option6Collection::iterator it = options_.begin();
+    for (Option::OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
