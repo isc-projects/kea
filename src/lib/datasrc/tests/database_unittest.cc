@@ -1072,7 +1072,9 @@ public:
             ASSERT_TRUE(jnl_reader);
             ConstRRsetPtr rrset;
             vector<JournalEntry>::const_iterator it = expected.begin();
-            while ((rrset = jnl_reader->getNextDiff()) != NULL) {
+            for (rrset = jnl_reader->getNextDiff();
+                 rrset && it != expected.end();
+                 rrset = jnl_reader->getNextDiff(), ++it) {
                 typedef DatabaseAccessor Accessor;
                 RRsetPtr expected_rrset(
                     new RRset(Name((*it).data_[Accessor::DIFF_NAME]),
@@ -1084,10 +1086,6 @@ public:
                                        expected_rrset->getClass(),
                                        (*it).data_[Accessor::DIFF_RDATA]));
                 isc::testutils::rrsetCheck(expected_rrset, rrset);
-                ++it;
-                if (it == expected.end()) {
-                    break;
-                }
             }
             // We should have examined all entries of both expected and
             // actual data.
