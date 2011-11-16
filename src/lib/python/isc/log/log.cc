@@ -514,8 +514,6 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         }
 
         // Extract the fixed arguments
-        PyObjectContainer msgid_container(PySequence_GetItem(args, start - 1));
-        string mid(objectToStr(msgid_container.get(), false));
         long dbg(0);
         if (dbgLevel) {
             PyObjectContainer dbg_container(PySequence_GetItem(args, 0));
@@ -528,6 +526,8 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         // We create the logging message right now. If we fail to convert a
         // parameter to string, at least the part that we already did will
         // be output
+        PyObjectContainer msgid_container(PySequence_GetItem(args, start - 1));
+        const string mid(objectToStr(msgid_container.get(), false));
         Logger::Formatter formatter(function(dbg, mid.c_str()));
 
         // Now process the rest of parameters, convert each to string and put
