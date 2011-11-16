@@ -789,7 +789,11 @@ public:
 } // End of anonymous namespace
 
 ZoneIteratorPtr
-InMemoryClient::getIterator(const Name& name) const {
+InMemoryClient::getIterator(const Name& name, bool) const {
+    // note: adjust_ttl argument is ignored, as the RRsets are already
+    // individually stored, and hence cannot have different TTLs anymore at
+    // this point
+
     ZoneTable::FindResult result(impl_->zone_table.findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
@@ -811,7 +815,7 @@ InMemoryClient::getIterator(const Name& name) const {
 }
 
 ZoneUpdaterPtr
-InMemoryClient::getUpdater(const isc::dns::Name&, bool) const {
+InMemoryClient::getUpdater(const isc::dns::Name&, bool, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
 

@@ -4,16 +4,71 @@
     "module_description": "Master process",
     "config_data": [
       {
-        "item_name": "start_auth",
-        "item_type": "boolean",
+        "item_name": "components",
+        "item_type": "named_set",
         "item_optional": false,
-        "item_default": true
-      },
-      {
-        "item_name": "start_resolver",
-        "item_type": "boolean",
-        "item_optional": false,
-        "item_default": false
+        "item_default": {
+          "b10-auth": { "special": "auth", "kind": "needed", "priority": 10 },
+          "setuid": {
+            "special": "setuid",
+            "priority": 5,
+            "kind": "dispensable"
+          },
+          "b10-xfrin": { "special": "xfrin", "kind": "dispensable" },
+          "b10-xfrout": { "special": "xfrout", "kind": "dispensable" },
+          "b10-zonemgr": { "address": "Zonemgr", "kind": "dispensable" },
+          "b10-stats": { "address": "Stats", "kind": "dispensable" },
+          "b10-stats-httpd": {
+            "address": "StatsHttpd",
+            "kind": "dispensable"
+          },
+          "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
+        },
+        "named_set_item_spec": {
+          "item_name": "component",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": { },
+          "map_item_spec": [
+            {
+              "item_name": "special",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "process",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "kind",
+              "item_optional": false,
+              "item_type": "string",
+              "item_default": "dispensable"
+            },
+            {
+              "item_name": "address",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "params",
+              "item_optional": true,
+              "item_type": "list",
+              "list_item_spec": {
+                "item_name": "param",
+                "item_optional": false,
+                "item_type": "string",
+                "item_default": ""
+              }
+            },
+            {
+              "item_name": "priority",
+              "item_optional": true,
+              "item_type": "integer"
+            }
+          ]
+        }
       }
     ],
     "commands": [

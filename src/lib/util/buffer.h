@@ -207,6 +207,24 @@ public:
     }
     //@}
 
+    /// @brief Read specified number of bytes as a vector.
+    ///
+    /// If specified buffer is too short, it will be expanded
+    /// using vector::resize() method.
+    ///
+    /// @param Reference to a buffer (data will be stored there).
+    /// @param Size specified number of bytes to read in a vector.
+    ///
+    void readVector(std::vector<uint8_t>& data, size_t len)
+    {
+        if (position_ + len > len_) {
+            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
+        }
+
+        data.resize(len);
+        readData(&data[0], len);
+    }
+
 private:
     size_t position_;
 
@@ -519,6 +537,6 @@ typedef boost::shared_ptr<OutputBuffer> OutputBufferPtr;
 } // namespace isc
 #endif  // __BUFFER_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

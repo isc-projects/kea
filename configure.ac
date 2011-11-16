@@ -107,6 +107,12 @@ case "$host" in
 	SET_ENV_LIBRARY_PATH=yes
 	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
 	;;
+*-freebsd*)
+	SET_ENV_LIBRARY_PATH=yes
+	;;
+*-netbsd*)
+	SET_ENV_LIBRARY_PATH=yes
+	;;
 esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
@@ -991,6 +997,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/util/python/mkpywrapper.py
            src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
+           tests/lettuce/setup_intree_bind10.sh
            tests/system/conf.sh
            tests/system/run.sh
            tests/system/glue/setup.sh
