@@ -1057,6 +1057,42 @@ public:
             const MockAccessor* mock_accessor =
                 dynamic_cast<const MockAccessor*>(current_accessor_);
             mock_accessor->checkJournal(expected);
+        } else {
+            // For other generic databases, retrieve the diff using the
+            // reader class and compare the resulting sequence of RRset.
+            // For simplicity we only consider the case where the expected
+            // sequence is not empty.
+            ASSERT_FALSE(expected.empty());
+            const Name zone_name(expected.front().
+                                 data_[DatabaseAccessor::DIFF_NAME]);
+            ZoneJournalReaderPtr jnl_reader =
+                client_->getJournalReader(zone_name,
+                                          expected.front().serial_,
+                                          expected.back().serial_).second;
+            ASSERT_TRUE(jnl_reader);
+            ConstRRsetPtr rrset;
+            vector<JournalEntry>::const_iterator it = expected.begin();
+            while ((rrset = jnl_reader->getNextDiff()) != NULL) {
+                typedef DatabaseAccessor Accessor;
+                RRsetPtr expected_rrset(
+                    new RRset(Name((*it).data_[Accessor::DIFF_NAME]),
+                              qclass_,
+                              RRType((*it).data_[Accessor::DIFF_TYPE]),
+                              RRTTL((*it).data_[Accessor::DIFF_TTL])));
+                expected_rrset->addRdata(
+                    rdata::createRdata(expected_rrset->getType(),
+                                       expected_rrset->getClass(),
+                                       (*it).data_[Accessor::DIFF_RDATA]));
+                isc::testutils::rrsetCheck(expected_rrset, rrset);
+                ++it;
+                if (it == expected.end()) {
+                    break;
+                }
+            }
+            // We should have examined all entries of both expected and
+            // actual data.
+            EXPECT_TRUE(it == expected.end());
+            ASSERT_FALSE(rrset);
         }
     }
 
@@ -2970,9 +3006,10 @@ TYPED_TEST(DatabaseClientTest, journalMultiple) {
  * Note that we implicitly test in different testcases (these for add and
  * delete) that if the journaling is false, it doesn't expect the order.
  *
- * In this test we don't check with the real databases.
+ * In this test we don't check with the real databases as this case shouldn't
+ * contain backend specific behavior.
  */
-TYPED_TEST(DatabaseClientTest, journalBadSequence) {
+TEST_F(MockDatabaseClientTest, journalBadSequence) {
     std::vector<JournalEntry> expected;
     {
         SCOPED_TRACE("Delete A before SOA");
