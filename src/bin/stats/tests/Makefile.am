@@ -1,7 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = b10-stats_test.py b10-stats-httpd_test.py
 EXTRA_DIST = $(PYTESTS) test_utils.py
-CLEANFILES = test_utils.pyc msgq_socket_test
+CLEANFILES = test_utils.pyc
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.

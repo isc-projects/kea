@@ -1,3 +1,14 @@
+xxx.	[func]		naokikambe
+	b10-stats-httpd was updated. In addition of the access to all
+	statistics items of all modules, the specified item or the items of the
+	specified module name can be accessed. For example, the URI requested
+	by using the feature is showed as "/bind10/statistics/xml/Auth" or
+	"/bind10/statistics/xml/Auth/queries.tcp". The list of all possible
+	module names and all possible item names can be showed in the root
+	document, whose URI is "/bind10/statistics/xml". This change is not
+	only for the XML documents but also is for the XSD and XSL documents.
+	(Trac #917, git TBD)
+
 318.    [func]      stephen
 	Add C++ API for accessing zone difference information in database-based
 	data sources.
