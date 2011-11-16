@@ -751,10 +751,8 @@ public:
         // Initialize the iterator if there's somewhere to point to
         if (node_ != NULL && node_->getData() != DomainPtr()) {
             dom_iterator_ = node_->getData()->begin();
-            if (separate_rrs_) {
-                if (dom_iterator_->second != NULL) {
-                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
-                }
+            if (separate_rrs_ && dom_iterator_ != node_->getData()->end()) {
+                rdata_iterator_ = dom_iterator_->second->getRdataIterator();
             }
         }
     }
