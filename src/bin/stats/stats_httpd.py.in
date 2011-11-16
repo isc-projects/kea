@@ -93,11 +93,6 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             path_dirs = req_path.split('/')
             path_dirs = [ d for d in filter(None, path_dirs) ]
             req_path = '/'+"/".join(path_dirs)
-            # The too long path is to be NotFound
-            # in case of /bind10/statistics/xxx/YYY/zzz/aaa
-            if len(path_dirs) > 5:
-                self.send_error(404)
-                return None
             module_name = None
             item_name = None
             # in case of /bind10/statistics/xxx/YYY/zzz
