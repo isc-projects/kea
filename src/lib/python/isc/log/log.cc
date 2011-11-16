@@ -470,35 +470,18 @@ Logger_isDebugEnabled(LoggerWrapper* self, PyObject* args) {
 
 string
 objectToStr(PyObject* object, bool convert) {
-    PyObject* cleanup(NULL);
+    PyObjectContainer objstr_container;
     if (convert) {
-        object = cleanup = PyObject_Str(object);
-        if (object == NULL) {
-            throw InternalError();
-        }
-    }
-    const char* value;
-    PyObject* tuple(Py_BuildValue("(O)", object));
-    if (tuple == NULL) {
-        if (cleanup != NULL) {
-            Py_DECREF(cleanup);
-        }
-        throw InternalError();
+        objstr_container.reset(PyObject_Str(object));
+        object = objstr_container.get();
     }
 
-    if (!PyArg_ParseTuple(tuple, "s", &value)) {
-        Py_DECREF(tuple);
-        if (cleanup != NULL) {
-            Py_DECREF(cleanup);
-        }
+    PyObjectContainer tuple_container(Py_BuildValue("(O)", object));
+    const char* value;
+    if (!PyArg_ParseTuple(tuple_container.get(), "s", &value)) {
         throw InternalError();
     }
-    string result(value);
-    Py_DECREF(tuple);
-    if (cleanup != NULL) {
-        Py_DECREF(cleanup);
-    }
-    return (result);
+    return (string(value));
 }
 
 // Generic function to output the logging message. Called by the real functions.
