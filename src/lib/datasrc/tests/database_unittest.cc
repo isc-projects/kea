@@ -3136,8 +3136,11 @@ TYPED_TEST(DatabaseClientTest, journalReader) {
     // Check the simple case made by makeSimpleDiff.
     ConstRRsetPtr soa_end = makeSimpleDiff(*this->client_, this->zname_,
                                            this->qclass_, this->soa_);
-    ZoneJournalReaderPtr jnl_reader(this->client_->getJournalReader(
-                                        this->zname_, 1234, 1235).second);
+    pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
+        this->client_->getJournalReader(this->zname_, 1234, 1235);
+    EXPECT_EQ(ZoneJournalReader::SUCCESS, result.first);
+    ZoneJournalReaderPtr jnl_reader = result.second;
+    ASSERT_TRUE(jnl_reader);
     ConstRRsetPtr rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
     isc::testutils::rrsetCheck(this->soa_, rrset);
