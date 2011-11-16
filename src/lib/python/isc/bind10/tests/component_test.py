@@ -221,11 +221,6 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         Check the component restarted successfully.
 
-        Currently, it is implemented as starting it again right away. This will
-        change, it will register itself into the restart schedule in boss. But
-        as the integration with boss is not clear yet, we don't know how
-        exactly that will happen.
-
         Reset the self.__start_called to False before calling the function when
         the component should fail.
         """
@@ -236,6 +231,16 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(component.running())
         # Check it can't be started again
         self.assertRaises(ValueError, component.start)
+
+    def __check_not_restarted(self, component):
+        """
+        Check the component has not (yet) restarted successfully.
+        """
+        self.assertFalse(self._shutdown)
+        self.assertTrue(self.__start_called)
+        self.assertFalse(self.__stop_called)
+        self.assertTrue(self.__failed_called)
+        self.assertFalse(component.running())
 
     def __do_start_stop(self, kind):
         """
@@ -345,6 +350,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__start_called = False
         self._timeskip()
         component.failed(1)
+        # tell it to see if it must restart and do so, with our vision of time
+        component.restart(time.time())
         self.__check_restarted(component)
 
     def test_start_fail_dispensable(self):
@@ -375,6 +382,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__start_called = False
         self._timeskip()
         component.failed(1)
+        # tell it to see if it must restart and do so, with our vision of time
+        component.restart(time.time())
         self.__check_restarted(component)
 
     def test_fail_core(self):
@@ -402,12 +411,20 @@ class ComponentTests(BossUtils, unittest.TestCase):
     def test_fail_dispensable(self):
         """
         Failure to start a dispensable component. The exception should get
-        through, but it should be restarted.
+        through, but it should be restarted after a time skip.
         """
         component = self.__create_component('dispensable')
         self.__check_startup(component)
         component._start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
+        # tell it to see if it must restart and do so, with our vision of time
+        component.restart(time.time())
+        # should not have restarted yet
+        self.__check_not_restarted(component)
+        self._timeskip()
+        # tell it to see if it must restart and do so, with our vision of time
+        component.restart(time.time())
+        # should have restarted now
         self.__check_restarted(component)
 
     def test_bad_kind(self):
