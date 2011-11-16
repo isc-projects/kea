@@ -355,6 +355,15 @@ Query::process() {
                                        dnssec_);
                 }
                 break;
+			case ZoneFinder::WILDCARD_NXRRSET:
+				addSOA(*result.zone_finder);
+				if(dnssec_ && db_result.rrset) {
+				   response_.addRRset(Message::SECTION_AUTHORITY,
+				   					  boost::const_pointer_cast<RRset>(
+									       db_result.rrset),
+									  dnssec_);
+				}
+				break;
             default:
                 // This is basically a bug of the data source implementation,
                 // but could also happen in the middle of development where

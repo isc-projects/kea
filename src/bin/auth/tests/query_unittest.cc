@@ -924,6 +924,21 @@ TEST_F(QueryTest, badWildcardProof3) {
                  Query::BadNSEC);
 }
 
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC1) {
+    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
+    // NXRRSET and their RRSIGs.
+    Query(memory_client, Name("www.wild.example.com"), RRType::TXT(), response,
+          true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec_wild_txt) + 
+                   string("*.wild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC")+"\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
 /*
  * This tests that when there's no SOA and we need a negative answer. It should
  * throw in that case.
