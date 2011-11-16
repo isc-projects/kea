@@ -325,7 +325,7 @@ public:
     /// Note that the SOA serials are compared by the semantics of the serial
     /// number arithmetic.  So, for example, \c begin_serial can be larger than
     /// \c end_serial as bare unsigned integers.  The underlying data source
-    /// implementation is assumed to keep truck of sufficient history to
+    /// implementation is assumed to keep track of sufficient history to
     /// identify (if exist) the corresponding difference between the specified
     /// versions.
     ///
