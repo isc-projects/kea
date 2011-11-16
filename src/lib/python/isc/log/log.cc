@@ -689,21 +689,21 @@ PyInit_log(void) {
         return (NULL);
     }
 
-    if (PyType_Ready(&logger_type) < 0) {
-        return (NULL);
-    }
-
-    if (PyModule_AddObject(mod, "Logger",
-                           static_cast<PyObject*>(static_cast<void*>(
-                               &logger_type))) < 0) {
-        return (NULL);
-    }
-
-    // Add in the definitions of the standard debug levels.  These can then
-    // be referred to in Python through the constants log.DBGLVL_XXX.
+    // Finalize logger class and add in the definitions of the standard debug
+    // levels.  These can then be referred to in Python through the constants
+    // log.DBGLVL_XXX.
     // N.B. These should be kept in sync with the constants defined in
     // log_dbglevels.h.
     try {
+        if (PyType_Ready(&logger_type) < 0) {
+            throw InternalError();
+        }
+        void* p = &logger_type;
+        if (PyModule_AddObject(mod, "Logger",
+                               static_cast<PyObject*>(p)) < 0) {
+            throw InternalError();
+        }
+
         installClassVariable(logger_type, "DBGLVL_START_SHUT",
                              Py_BuildValue("I", DBGLVL_START_SHUT));
         installClassVariable(logger_type, "DBGLVL_COMMAND",
@@ -718,15 +718,20 @@ PyInit_log(void) {
                              Py_BuildValue("I", DBGLVL_TRACE_DETAIL));
         installClassVariable(logger_type, "DBGLVL_TRACE_DETAIL_DATA",
                              Py_BuildValue("I", DBGLVL_TRACE_DETAIL_DATA));
+    } catch (const InternalError&) {
+        Py_DECREF(mod);
+        return (NULL);
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in Log initialization: " +
             std::string(ex.what());
         PyErr_SetString(PyExc_SystemError, ex_what.c_str());
+        Py_DECREF(mod);
         return (NULL);
     } catch (...) {
         PyErr_SetString(PyExc_SystemError,
                         "Unexpected failure in Log initialization");
+        Py_DECREF(mod);
         return (NULL);
     }
 
