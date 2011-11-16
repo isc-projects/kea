@@ -215,11 +215,18 @@ public:
     ///
     /// \param name The name of zone apex to be traversed. It doesn't do
     ///     nearest match as findZone.
+    /// \param adjust_ttl If true, the iterator will treat RRs with the same
+    ///                   name and type but different TTL values to be of the
+    ///                   same RRset, and will adjust the TTL to the lowest
+    ///                   value found. If false, it will consider the RR to
+    ///                   belong to a different RRset.
     /// \return Pointer to the iterator.
-    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const {
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
+                                        bool adjust_ttl = true) const {
         // This is here to both document the parameter in doxygen (therefore it
         // needs a name) and avoid unused parameter warning.
         static_cast<void>(name);
+        static_cast<void>(adjust_ttl);
 
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support iteration");
@@ -265,6 +272,22 @@ public:
     /// In such cases this method will result in an \c isc::NotImplemented
     /// exception unconditionally or when \c replace is false).
     ///
+    /// If \c journaling is true, the data source should store a journal
+    /// of changes. These can be used later on by, for example, IXFR-out.
+    /// However, the parameter is a hint only. It might be unable to store
+    /// them and they would be silently discarded. Or it might need to
+    /// store them no matter what (for example a git-based data source would
+    /// store journal implicitly). When the \c journaling is true, it
+    /// requires that the following update be formatted as IXFR transfer
+    /// (SOA to be removed, bunch of RRs to be removed, SOA to be added,
+    /// bunch of RRs to be added, and possibly repeated). However, it is not
+    /// required that the updater checks that. If it is false, it must not
+    /// require so and must accept any order of changes.
+    ///
+    /// We don't support erasing the whole zone (by replace being true) and
+    /// saving a journal at the same time. In such situation, BadValue is
+    /// thrown.
+    ///
     /// \note To avoid throwing the exception accidentally with a lazy
     /// implementation, we still keep this method pure virtual without
     /// an implementation.  All derived classes must explicitly define this
@@ -275,14 +298,18 @@ public:
     /// \exception DataSourceError Internal error in the underlying data
     /// source.
     /// \exception std::bad_alloc Resource allocation failure.
+    /// \exception BadValue if both replace and journaling are true.
     ///
     /// \param name The zone name to be updated
     /// \param replace Whether to delete existing RRs before making updates
+    /// \param journaling The zone updater should store a journal of the
+    ///     changes.
     ///
     /// \return A pointer to the updater; it will be NULL if the specified
     /// zone isn't found.
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
-                                      bool replace) const = 0;
+                                      bool replace, bool journaling = false)
+        const = 0;
 };
 }
 }

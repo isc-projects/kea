@@ -438,6 +438,10 @@ public:
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
     ///
+    /// If journaling was requested when getting this updater, it will reject
+    /// to add the RRset if the squence doesn't look like and IXFR (see
+    /// DataSourceClient::getUpdater). In such case isc::BadValue is thrown.
+    ///
     /// \todo As noted above we may have to revisit the design details as we
     /// gain experiences:
     ///
@@ -454,6 +458,8 @@ public:
     ///
     /// \exception DataSourceError Called after \c commit(), RRset is invalid
     /// (see above), internal data source error
+    /// \exception isc::BadValue Journaling is enabled and the current RRset
+    ///   doesn't fit into the IXFR sequence (see above).
     /// \exception std::bad_alloc Resource allocation failure
     ///
     /// \param rrset The RRset to be added
@@ -503,6 +509,10 @@ public:
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
     ///
+    /// If journaling was requested when getting this updater, it will reject
+    /// to add the RRset if the squence doesn't look like and IXFR (see
+    /// DataSourceClient::getUpdater). In such case isc::BadValue is thrown.
+    ///
     /// \todo As noted above we may have to revisit the design details as we
     /// gain experiences:
     ///
@@ -520,6 +530,8 @@ public:
     ///
     /// \exception DataSourceError Called after \c commit(), RRset is invalid
     /// (see above), internal data source error
+    /// \exception isc::BadValue Journaling is enabled and the current RRset
+    ///   doesn't fit into the IXFR sequence (see above).
     /// \exception std::bad_alloc Resource allocation failure
     ///
     /// \param rrset The RRset to be deleted
@@ -540,6 +552,8 @@ public:
     ///
     /// \exception DataSourceError Duplicate call of the method,
     /// internal data source error
+    /// \exception isc::BadValue Journaling is enabled and the update is not
+    ///    complete IXFR sequence.
     virtual void commit() = 0;
 };
 
