@@ -257,6 +257,7 @@ class BoB:
         # inapropriate. But as the code isn't probably completely ready
         # for it, we leave it at components for now.
         self.components = {}
+        self.components_to_restart = []
         self.runnable = False
         self.uid = setuid
         self.username = username
@@ -817,7 +818,11 @@ class BoB:
                     # Tell it it failed. But only if it matters (we are
                     # not shutting down and the component considers itself
                     # to be running.
-                    component.failed(exit_status);
+                    component_restarted = component.failed(exit_status);
+                    # if the process wants to be restarted, but not just yet,
+                    # it returns False
+                    if not component_restarted:
+                        self.components_to_restart.append(component)
             else:
                 logger.info(BIND10_UNKNOWN_CHILD_PROCESS_ENDED, pid)
 
@@ -833,39 +838,17 @@ class BoB:
             timeout value.
 
         """
-        # TODO: This is an artefact of previous way of handling processes. The
-        # restart queue is currently empty at all times, so this returns None
-        # every time it is called (thought is a relict that is obviously wrong,
-        # it is called and it doesn't hurt).
-        #
-        # It is preserved for archeological reasons for the time when we return
-        # the delayed restarts, most of it might be useful then (or, if it is
-        # found useless, removed).
-        next_restart = None
-        # if we're shutting down, then don't restart
-        if not self.runnable:
-            return 0
-        # otherwise look through each dead process and try to restart
-        still_dead = {}
-        now = time.time()
-        for proc_info in self.dead_processes.values():
-            restart_time = proc_info.restart_schedule.get_restart_time(now)
-            if restart_time > now:
-                if (next_restart is None) or (next_restart > restart_time):
-                    next_restart = restart_time
-                still_dead[proc_info.pid] = proc_info
-            else:
-                logger.info(BIND10_RESURRECTING_PROCESS, proc_info.name)
-                try:
-                    proc_info.respawn()
-                    self.components[proc_info.pid] = proc_info
-                    logger.info(BIND10_RESURRECTED_PROCESS, proc_info.name, proc_info.pid)
-                except:
-                    still_dead[proc_info.pid] = proc_info
-        # remember any processes that refuse to be resurrected
-        self.dead_processes = still_dead
-        # return the time when the next process is ready to be restarted
-        return next_restart
+        still_dead = []
+        next_restart_time = None
+        for component in self.components_to_restart:
+            if not component.restart():
+                still_dead.append(component)
+                if next_restart_time is None or\
+                   next_restart_time > component.get_restart_time():
+                    next_restart_time = component.get_restart_time()
+        self.components_to_restart = still_dead
+
+        return next_restart_time
 
 # global variables, needed for signal handlers
 options = None
