@@ -154,6 +154,7 @@ class BaseComponent:
         logger.info(BIND10_COMPONENT_START, self.name())
         self.__state = STATE_RUNNING
         self.__start_time = time.time()
+        self._restart_time = None
         try:
             self._start_internal()
         except Exception as e:
@@ -233,11 +234,12 @@ class BaseComponent:
         """Returns the time at which this component should be restarted."""
         return self._restart_at
 
-    def restart(self):
-        """Restarts the component if the restart time if smaller than 'now'
-           Returns True if the component is restarted, False if not"""
-        now = time.time()
-        if self.get_restart_time() < now:
+    def restart(self, now = time.time()):
+        """Restarts the component if it has a restart_time and if the value
+           of the restart_time is smaller than 'now'.
+           Returns True if the component is restarted, False if not."""
+        if self.get_restart_time() is not None and\
+           self.get_restart_time() < now:
             self.start()
             return True
         else:
