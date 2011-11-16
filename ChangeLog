@@ -1,3 +1,8 @@
+318.    [func]      stephen
+	Add C++ API for accessing zone difference information in database-based
+	data sources.
+	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
+
 317.    [func]      vorner
 	datasrc: the getUpdater method of DataSourceClient supports an optional
 	'journaling' parameter to indicate the generated updater to store diffs.
