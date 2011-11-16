@@ -41,9 +41,8 @@ public:
     }
     virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
     getJournalReader(const isc::dns::Name&, uint32_t, uint32_t) const {
-        isc_throw(isc::NotImplemented, "Journaling isn't supported for "
+        isc_throw(isc::NotImplemented, "Journaling isn't supported "
                   "in Nop data source");
-        //return (ZoneJournalReaderPtr());
     }
 };
 
