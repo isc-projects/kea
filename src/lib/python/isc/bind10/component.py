@@ -83,7 +83,7 @@ class BaseComponent:
     that is already shutting down, impossible to stop, etc. We need to add more
     states in future to handle it properly.
     """
-    def __init__(self, boss, kind):
+    def __init__(self, boss, kind, restart_delay = 10):
         """
         Creates the component in not running mode.
 
@@ -103,6 +103,10 @@ class BaseComponent:
           * 'dispensable' means the component should be running, but if it
             doesn't start or crashes for some reason, the system simply tries
             to restart it and keeps running.
+        - `restart_delay`: when a component dies, and it has been running
+           for less time (in seconds) than this value, it is not immediately
+           restarted, but the Boss process waits until the delay has passed.
+           If it has been running for longer, it is immediately restarted.
 
         Note that the __init__ method of child class should have these
         parameters:
@@ -134,6 +138,7 @@ class BaseComponent:
         self.__state = STATE_STOPPED
         self._kind = kind
         self._boss = boss
+        self._restart_delay = restart_delay
 
     def start(self):
         """
@@ -188,6 +193,11 @@ class BaseComponent:
         The exit code is used for logging. It might be None.
 
         It calls _failed_internal internally.
+
+        Returns True if the process was immediately restarted, returns
+                False is the process was not restarted, either because
+                it is considered a core or needed component, or because
+                the component is to be restarted later.
         """
         logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
                      exit_code if exit_code is not None else "unknown")
@@ -203,10 +213,35 @@ class BaseComponent:
             self.__state = STATE_DEAD
             logger.fatal(BIND10_COMPONENT_UNSATISFIED, self.name())
             self._boss.component_shutdown(1)
+            return False
         # This means we want to restart
         else:
-            logger.warn(BIND10_COMPONENT_RESTART, self.name())
+            # if we were only running for a short time, don't restart
+            # but return a time we want to restart at
+            self.set_restart_time()
+            return self.restart()
+
+    def set_restart_time(self):
+        """Calculates and sets the time this component should be restarted.
+           Currently, it uses a very basic algorithm; start time + restart
+           delay in seconds. This algorithm may be improved upon in the
+           future.
+        """
+        self._restart_at = self.__start_time + self._restart_delay
+
+    def get_restart_time(self):
+        """Returns the time at which this component should be restarted."""
+        return self._restart_at
+
+    def restart(self):
+        """Restarts the component if the restart time if smaller than 'now'
+           Returns True if the component is restarted, False if not"""
+        now = time.time()
+        if self.get_restart_time() < now:
             self.start()
+            return True
+        else:
+            return False
 
     def running(self):
         """
