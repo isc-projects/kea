@@ -106,6 +106,12 @@ SOA::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeData(numdata_, sizeof(numdata_));
 }
 
+uint32_t
+SOA::getSerial() const {
+    InputBuffer b(numdata_, sizeof(numdata_));
+    return (b.readUint32());
+}
+
 string
 SOA::toText() const {
     InputBuffer b(numdata_, sizeof(numdata_));
