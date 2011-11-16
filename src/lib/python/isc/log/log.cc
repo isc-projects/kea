@@ -483,7 +483,14 @@ string
 objectToStr(PyObject* object, bool convert) {
     PyObjectContainer objstr_container;
     if (convert) {
-        objstr_container.reset(PyObject_Str(object));
+        PyObject* text_obj = PyObject_Str(object);
+        if (text_obj == NULL) {
+            // PyObject_Str could fail for various reasons, including because
+            // the object cannot be converted to a string.  We exit with
+            // InternalError to preserve the PyErr set in PyObject_Str.
+            throw InternalError();
+        }
+        objstr_container.reset(text_obj);
         object = objstr_container.get();
     }
 
