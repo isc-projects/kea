@@ -502,21 +502,17 @@ objectToStr(PyObject* object, bool convert) {
 }
 
 // Generic function to output the logging message. Called by the real functions.
-template<class Function>
+template <class Function>
 PyObject*
 Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
     try {
-        Py_ssize_t number(PyObject_Length(args));
+        const Py_ssize_t number(PyObject_Length(args));
         if (number < 0) {
             return (NULL);
         }
 
         // Which argument is the first to format?
-        size_t start(1);
-        if (dbgLevel) {
-            start ++;
-        }
-
+        const size_t start = dbgLevel ? 2 : 1;
         if (number < start) {
             return (PyErr_Format(PyExc_TypeError, "Too few arguments to "
                                  "logging call, at least %zu needed and %zd "
@@ -524,20 +520,12 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         }
 
         // Extract the fixed arguments
-        PyObject *midO(PySequence_GetItem(args, start - 1));
-        if (midO == NULL) {
-            return (NULL);
-        }
-        string mid(objectToStr(midO, false));
-        Py_DECREF(midO);
+        PyObjectContainer msgid_container(PySequence_GetItem(args, start - 1));
+        string mid(objectToStr(msgid_container.get(), false));
         long dbg(0);
         if (dbgLevel) {
-            PyObject *dbgO(PySequence_GetItem(args, 0));
-            if (dbgO == NULL) {
-                return (NULL);
-            }
-            dbg = PyLong_AsLong(dbgO);
-            Py_DECREF(dbgO);
+            PyObjectContainer dbg_container(PySequence_GetItem(args, 0));
+            dbg = PyLong_AsLong(dbg_container.get());
             if (PyErr_Occurred()) {
                 return (NULL);
             }
@@ -551,12 +539,9 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         // Now process the rest of parameters, convert each to string and put
         // into the formatter. It will print itself in the end.
         for (size_t i(start); i < number; ++ i) {
-            PyObject* param(PySequence_GetItem(args, i));
-            if (param == NULL) {
-                return (NULL);
-            }
-            formatter = formatter.arg(objectToStr(param, true));
-            Py_DECREF(param);
+            PyObjectContainer param_container(PySequence_GetItem(args, i));
+            formatter = formatter.arg(objectToStr(param_container.get(),
+                                                  true));
         }
         Py_RETURN_NONE;
     }
