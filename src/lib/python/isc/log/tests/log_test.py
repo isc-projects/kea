@@ -17,6 +17,7 @@
 import isc.log
 import unittest
 import json
+import sys
 import bind10_config
 from isc.config.ccsession import path_search
 
@@ -168,6 +169,28 @@ class Logger(unittest.TestCase):
         """
         logger = isc.log.Logger("child")
         self.assertEqual(logger.DBGLVL_COMMAND, 10)
+
+    def test_param_reference(self):
+        """
+        Check whether passing a parameter to a logger causes a reference leak.
+        """
+        MSG = isc.log.create_message('TEST_MESSAGE', '%1')
+        class LogParam:
+            def __str__(self):
+                return 'LogParam'
+        logger = isc.log.Logger("child")
+        param = LogParam()
+        orig_msgrefcnt = sys.getrefcount(param)
+        orig_idrefcnt = sys.getrefcount(MSG)
+        logger.info(MSG, param);
+        self.assertEqual(sys.getrefcount(MSG), orig_idrefcnt)
+        self.assertEqual(sys.getrefcount(param), orig_msgrefcnt)
+
+        # intentionally pass an invalid type for debug level.  It will
+        # result in TypeError.  The passed object still shouldn't leak a
+        # reference.
+        self.assertRaises(TypeError, logger.debug, param, MSG, param)
+        self.assertEqual(sys.getrefcount(param), orig_msgrefcnt)
 
 if __name__ == '__main__':
     unittest.main()

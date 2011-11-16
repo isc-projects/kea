@@ -529,6 +529,7 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
             return (NULL);
         }
         string mid(objectToStr(midO, false));
+        Py_DECREF(midO);
         long dbg(0);
         if (dbgLevel) {
             PyObject *dbgO(PySequence_GetItem(args, 0));
@@ -536,6 +537,7 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
                 return (NULL);
             }
             dbg = PyLong_AsLong(dbgO);
+            Py_DECREF(dbgO);
             if (PyErr_Occurred()) {
                 return (NULL);
             }
@@ -554,6 +556,7 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
                 return (NULL);
             }
             formatter = formatter.arg(objectToStr(param, true));
+            Py_DECREF(param);
         }
         Py_RETURN_NONE;
     }
