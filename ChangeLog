@@ -1,3 +1,9 @@
+317.    [func]      vorner
+	datasrc: the getUpdater method of DataSourceClient supports an optional
+	'journaling' parameter to indicate the generated updater to store diffs.
+	The database based derived class implements this extension.
+	(Trac #1331, git 713160c9bed3d991a00b2ea5e7e3e7714d79625d)
+
 316.	[func]*		vorner
 	The configuration of what parts of the system run is more flexible now.
 	Everything that should run must have an entry in Boss/components.
