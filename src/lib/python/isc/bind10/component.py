@@ -241,10 +241,16 @@ class BaseComponent:
         """Returns the time at which this component should be restarted."""
         return self._restart_at
 
-    def restart(self, now = time.time()):
+    def restart(self, now = None):
         """Restarts the component if it has a restart_time and if the value
            of the restart_time is smaller than 'now'.
+
+           If the parameter 'now' is given, its value will be used instead
+           of calling time.time().
+
            Returns True if the component is restarted, False if not."""
+        if now is None:
+            now = time.time()
         if self.get_restart_time() is not None and\
            self.get_restart_time() < now:
             self.start()

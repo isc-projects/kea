@@ -301,7 +301,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.start()
         self.__check_started(component)
         # Pretend the component died
-        component.failed(1)
+        restarted = component.failed(1)
+        # Since it is a core component, it should not be restarted
+        self.assertFalse(restarted)
         # It should bring down the whole server
         self.__check_dead(component)
 
@@ -317,7 +319,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__check_started(component)
         self._timeskip()
         # Pretend the component died some time later
-        component.failed(1)
+        restarted = component.failed(1)
+        # Should not be restarted
+        self.assertFalse(restarted)
         # Check the component is still dead
         self.__check_dead(component)
 
@@ -333,7 +337,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.start()
         self.__check_started(component)
         # Make it fail right away.
-        component.failed(1)
+        restarted = component.failed(1)
+        # Should not have restarted
+        self.assertFalse(restarted)
         self.__check_dead(component)
 
     def test_start_fail_needed_later(self):
@@ -349,41 +355,65 @@ class ComponentTests(BossUtils, unittest.TestCase):
         # Make it fail later on
         self.__start_called = False
         self._timeskip()
-        component.failed(1)
-        # tell it to see if it must restart and do so, with our vision of time
-        component.restart(time.time())
+        restarted = component.failed(1)
+        # Should have restarted
+        self.assertTrue(restarted)
         self.__check_restarted(component)
 
     def test_start_fail_dispensable(self):
         """
-        Start and then fail a dispensable component. Should just get restarted.
+        Start and then fail a dispensable component. Should not get restarted.
         """
         # Just ordinary startup
-        component = self.__create_component('needed')
+        component = self.__create_component('dispensable')
         self.__check_startup(component)
         component.start()
         self.__check_started(component)
         # Make it fail right away
-        self.__start_called = False
-        component.failed(1)
-        self.__check_restarted(component)
+        restarted = component.failed(1)
+        # Should signal that it did not restart
+        self.assertFalse(restarted)
+        self.__check_not_restarted(component)
 
-    def test_start_fail_dispensable(self):
+    def test_start_fail_dispensable_later(self):
         """
         Start and then later on fail a dispensable component. Should just get
         restarted.
         """
         # Just ordinary startup
-        component = self.__create_component('needed')
+        component = self.__create_component('dispensable')
         self.__check_startup(component)
         component.start()
         self.__check_started(component)
         # Make it fail later on
-        self.__start_called = False
         self._timeskip()
-        component.failed(1)
-        # tell it to see if it must restart and do so, with our vision of time
-        component.restart(time.time())
+        restarted = component.failed(1)
+        # should signal that it restarted
+        self.assertTrue(restarted)
+        # and check if it really did
+        self.__check_restarted(component)
+
+    def test_start_fail_dispensable_restart_later(self):
+        """
+        Start and then fail a dispensable component, wait a bit and try to
+        restart. Should get restarted after the wait.
+        """
+        # Just ordinary startup
+        component = self.__create_component('dispensable')
+        self.__check_startup(component)
+        component.start()
+        self.__check_started(component)
+        # Make it fail immediately
+        restarted = component.failed(1)
+        # should signal that it did not restart
+        self.assertFalse(restarted)
+        self.__check_not_restarted(component)
+        self._timeskip()
+        # try to restart again
+        restarted = component.restart()
+        # should signal that it restarted
+        self.assertTrue(restarted)
+        # and check if it really did
         self.__check_restarted(component)
 
     def test_fail_core(self):
@@ -417,15 +447,49 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__check_startup(component)
         component._start_internal = self.__fail_to_start
         self.assertRaises(TestError, component.start)
-        # tell it to see if it must restart and do so, with our vision of time
-        component.restart(time.time())
+        # tell it to see if it must restart
+        restarted = component.restart()
         # should not have restarted yet
+        self.assertFalse(restarted)
         self.__check_not_restarted(component)
         self._timeskip()
         # tell it to see if it must restart and do so, with our vision of time
-        component.restart(time.time())
+        restarted = component.restart()
         # should have restarted now
+        self.assertTrue(restarted)
         self.__check_restarted(component)
+
+    def test_component_start_time(self):
+        """
+        Check that original start time is set initially, and remains the same
+        after a restart, while the internal __start_time does change
+        """
+        # Just ordinary startup
+        component = self.__create_component('dispensable')
+        self.__check_startup(component)
+        self.assertIsNone(component._original_start_time)
+        component.start()
+        self.__check_started(component)
+
+        self.assertIsNotNone(component._original_start_time)
+        self.assertIsNotNone(component._BaseComponent__start_time)
+        original_start_time = component._original_start_time
+        start_time = component._BaseComponent__start_time
+        # Not restarted yet, so they should be the same
+        self.assertEqual(original_start_time, start_time)
+
+        self._timeskip()
+        # Make it fail
+        restarted = component.failed(1)
+        # should signal that it restarted
+        self.assertTrue(restarted)
+        # and check if it really did
+        self.__check_restarted(component)
+
+        # original start time should not have changed
+        self.assertEqual(original_start_time, component._original_start_time)
+        # but actual start time should
+        self.assertNotEqual(start_time, component._BaseComponent__start_time)
 
     def test_bad_kind(self):
         """
