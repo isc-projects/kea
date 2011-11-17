@@ -121,7 +121,7 @@ Return Value(s): Pointer to the iterator.\n\
 ";
 
 const char* const DataSourceClient_getUpdater_doc = "\
-get_updater(name, replace) -> ZoneUpdater\n\
+get_updater(name, replace, journaling=False) -> ZoneUpdater\n\
 \n\
 Return an updater to make updates to a specific zone.\n\
 \n\
@@ -162,6 +162,22 @@ A data source can be \"read only\" or can prohibit partial updates. In\n\
 such cases this method will result in an isc.datasrc.NotImplemented exception\n\
 unconditionally or when replace is false).\n\
 \n\
+If journaling is True, the data source should store a journal of\n\
+changes. These can be used later on by, for example, IXFR-out.\n\
+However, the parameter is a hint only. It might be unable to store\n\
+them and they would be silently discarded. Or it might need to store\n\
+them no matter what (for example a git-based data source would store\n\
+journal implicitly). When the journaling is True, it requires that the\n\
+following update be formatted as IXFR transfer (SOA to be removed,\n\
+bunch of RRs to be removed, SOA to be added, bunch of RRs to be added,\n\
+and possibly repeated). However, it is not required that the updater\n\
+checks that. If it is False, it must not require so and must accept\n\
+any order of changes.\n\
+\n\
+We don't support erasing the whole zone (by replace being True) and\n\
+saving a journal at the same time. In such situation, isc.datasrc.Error\n\
+is thrown.\n\
+\n\
 Exceptions:\n\
   isc.datasrc. NotImplemented The underlying data source does not support\n\
                updates.\n\
@@ -170,6 +186,7 @@ Exceptions:\n\
 Parameters:\n\
   name       The zone name to be updated\n\
   replace    Whether to delete existing RRs before making updates\n\
+  journaling The zone updater should store a journal of the changes.\n\
 \n\
 ";
 } // unnamed namespace
