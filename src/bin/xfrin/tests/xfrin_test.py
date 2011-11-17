@@ -170,7 +170,7 @@ class MockDataSourceClient():
             return (ZoneFinder.SUCCESS, dup_soa_rrset)
         raise ValueError('Unexpected input to mock finder: bug in test case?')
 
-    def get_updater(self, zone_name, replace):
+    def get_updater(self, zone_name, replace, journaling=False):
         return self
 
     def add_rrset(self, rrset):
