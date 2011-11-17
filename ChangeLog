@@ -9,12 +9,12 @@
 	only for the XML documents but also is for the XSD and XSL documents.
 	(Trac #917, git b34bf286c064d44746ec0b79e38a6177d01e6956)
 
-318.    [func]      stephen
+318.    [func]		stephen
 	Add C++ API for accessing zone difference information in database-based
 	data sources.
 	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
 
-317.    [func]      vorner
+317.    [func]		vorner
 	datasrc: the getUpdater method of DataSourceClient supports an optional
 	'journaling' parameter to indicate the generated updater to store diffs.
 	The database based derived class implements this extension.
