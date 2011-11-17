@@ -129,14 +129,17 @@ PyObject*
 DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name_obj;
-    PyObject *replace_obj;
-    if (PyArg_ParseTuple(args, "O!O", &name_type, &name_obj, &replace_obj) &&
-        PyBool_Check(replace_obj)) {
-        bool replace = (replace_obj != Py_False);
+    PyObject *replace_obj = NULL;
+    PyObject *journaling_obj = Py_False;
+    if (PyArg_ParseTuple(args, "O!O|O", &name_type, &name_obj,
+                         &replace_obj, &journaling_obj) &&
+        PyBool_Check(replace_obj) && PyBool_Check(journaling_obj)) {
+        const bool replace = (replace_obj != Py_False);
+        const bool journaling = (journaling_obj == Py_True);
         try {
             ZoneUpdaterPtr updater =
                 self->cppobj->getInstance().getUpdater(PyName_ToName(name_obj),
-                                                       replace);
+                                                       replace, journaling);
             if (!updater) {
                 return (Py_None);
             }
@@ -157,6 +160,15 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
             return (NULL);
         }
     } else {
+        // PyBool_Check doesn't set the error, so we have to set it ourselves.
+        if (replace_obj != NULL && !PyBool_Check(replace_obj)) {
+            PyErr_SetString(PyExc_TypeError, "'replace' for "
+                            "DataSourceClient.get_updater must be boolean");
+        }
+        if (!PyBool_Check(journaling_obj)) {
+            PyErr_SetString(PyExc_TypeError, "'journaling' for "
+                            "DataSourceClient.get_updater must be boolean");
+        }
         return (NULL);
     }
 }
