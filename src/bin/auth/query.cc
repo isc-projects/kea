@@ -186,6 +186,41 @@ Query::addWildcardProof(ZoneFinder& finder) {
 }
 
 void
+Query::addWildcardNxrrsetProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
+    // The query name shouldn't exist in the zone if there were no wildcard
+    // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
+    // in NXDOMAIN and an NSEC RR that proves it should be returned.
+    if (nsec->getRdataCount() == 0) {
+	    isc_throw(BadNSEC, "NSEC for NXRRSET is empty");
+	    return;
+	}
+	
+	const ZoneFinder::FindResult fresult =
+        finder.find(qname_, RRType::NSEC(), NULL,
+                    dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
+        fresult.rrset->getRdataCount() == 0) {
+        isc_throw(BadNSEC, "Unexpected result for no match QNAME proof");
+        return;
+    }
+   
+    if (nsec->getName() == fresult.rrset->getName()) {
+		// one NSEC RR proves wildcard_nxrrset and no matched QNAME.
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<RRset>(fresult.rrset),
+                           dnssec_);
+    } else {
+    	// add NSEC RR that proves wildcard_nxrrset.
+		response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<RRset>(nsec), dnssec_);
+		// add NSEC RR that proves no matched QNAME.
+		response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<RRset>(fresult.rrset),
+                       dnssec_);
+	}
+}
+
+void
 Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
     ZoneFinder::FindResult ns_result = finder.find(finder.getOrigin(),
@@ -356,12 +391,9 @@ Query::process() {
                 }
                 break;
 			case ZoneFinder::WILDCARD_NXRRSET:
-				addSOA(*result.zone_finder);
-				if(dnssec_ && db_result.rrset) {
-				   response_.addRRset(Message::SECTION_AUTHORITY,
-				   					  boost::const_pointer_cast<RRset>(
-									       db_result.rrset),
-									  dnssec_);
+                addSOA(*result.zone_finder);
+                if (dnssec_ && db_result.rrset) {
+					addWildcardNxrrsetProof(zfinder,db_result.rrset);
 				}
 				break;
             default:

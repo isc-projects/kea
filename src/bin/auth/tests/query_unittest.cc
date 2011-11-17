@@ -116,7 +116,6 @@ const char* const nsec_mx_txt =
     "mx.example.com. 3600 IN NSEC ).no.example.com. MX NSEC RRSIG\n";
 const char* const nsec_no_txt =
     ").no.example.com. 3600 IN NSEC nz.no.example.com. AAAA NSEC RRSIG\n";
-
 // We'll also test the case where a single NSEC proves both NXDOMAIN and the
 // non existence of wildcard.  The following records will be used for that
 // test.
@@ -181,7 +180,7 @@ public:
             nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt <<
             wild_txt << nsec_wild_txt << cnamewild_txt << nsec_cnamewild_txt;
 
-        masterLoad(zone_stream, origin_, rrclass_,
+		masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
 
         empty_nsec_rrset_ = ConstRRsetPtr(new RRset(Name::ROOT_NAME(),
@@ -932,7 +931,7 @@ TEST_F(QueryTest, badWildcardProof3) {
                  Query::BadNSEC);
 }
 
-TEST_F(QueryTest, wildcardNxrrsetWithNSEC1) {
+TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
     // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
     // NXRRSET and their RRSIGs.
     Query(memory_client, Name("www.wild.example.com"), RRType::TXT(), response,

@@ -82,6 +82,12 @@ private:
     /// This corresponds to Section 3.1.3.3 of RFC 4035.
     void addWildcardProof(isc::datasrc::ZoneFinder& finder);
 
+    /// Add NSEC RRs that prove an WILDCARD_NXRRSET result.
+    ///
+    /// This corresponds to Section 3.1.3.4 of RFC 4035.
+    void addWildcardNxrrsetProof(isc::datasrc::ZoneFinder& finder,
+                          isc::dns::ConstRRsetPtr nsec);
+
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records) and add them to the additional section.
     ///
