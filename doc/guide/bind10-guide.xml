@@ -773,7 +773,7 @@ Debian and Ubuntu:
         (currently there's also one component which doesn't represent
         a process). If you didn't want to transfer out at all (your server
         is a slave only), you would just remove the corresponding component
-        from the set, like this and the process would be stopped imediatelly
+        from the set, like this and the process would be stopped immediately
         (and not started on the next startup):
       <screen>&gt; <userinput>config del Boss/components b10-xfrout</userinput>
 &gt; <userinput>config commit</userinput></screen>
@@ -822,9 +822,9 @@ Debian and Ubuntu:
         If it is set to "dispensable" (the default unless you set something
         else), it will get started again if it fails. If it is set to
         "needed" and it fails at startup, the whole bind10 shuts down and exits
-        with error exit code. But if it failes some time later, it is just
+        with error exit code. But if it fails some time later, it is just
         started again. If you set it to "core", you indicate that the system
-        is not useable without the component and if such component fails, the
+        is not usable without the component and if such component fails, the
         system shuts down no matter when the failure happened. This is the
         behaviour of the core components (the ones you can't turn off), but
         you can declare any other components as core as well if you wish
