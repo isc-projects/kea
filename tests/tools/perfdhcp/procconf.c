@@ -15,7 +15,6 @@
  */
 
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -309,7 +308,7 @@ procCmdLineArgs(int* argc, const char** argv[], const confvar_t optConf[],
 
     *p = '\0';
     optind = 1;
-    while ((optchar = getopt(*argc, const_cast<char**>(*argv), optstr)) != -1)
+    while ((optchar = getopt(*argc, *argv, optstr)) != -1)
     {
         int ind;
         int ret;

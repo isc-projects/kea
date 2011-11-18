@@ -21,8 +21,6 @@
 extern "C" {
 #endif
 
-#define PROGNAME "perfdhcp"
-
 /*
  * The masks associated with keyletters, used in dkdesc structures for setup
  * and passed in the diag_req argument to the output/test functions to
