@@ -840,7 +840,7 @@ Debian and Ubuntu:
       <para>
         There are other parameters we didn't use in our example.
         One of them is "address". It is the address used by the component
-        on the b10-msgq message buss. The special components already know
+        on the b10-msgq message bus. The special components already know
         their address, but the usual ones don't. The address is by convention
         the thing after b10-, with the first letter capital (eg. b10-stats
         would have Stats as its address).
