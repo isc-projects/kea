@@ -1,3 +1,12 @@
+323.	[bug]		jinmei
+	b10-xfrout incorrectly skipped adding TSIG RRs to some
+	intermediate responses (when TSIG is to be used for the
+	responses).  While RFC2845 optionally allows to skip intermediate
+	TSIGs (as long as the digest for the skipped part was included
+	in a later TSIG), the underlying TSIG API doesn't support this
+	mode of signing.
+	(Trac #1370, git 76fb414ea5257b639ba58ee336fae9a68998b30d)
+
 322.	[func]		jinmei
 	datasrc: Added C++ API for retrieving difference of two versions
 	of a zone.  A new ZoneJournalReader class was introduced for this
