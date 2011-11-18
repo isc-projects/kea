@@ -727,14 +727,17 @@ Debian and Ubuntu:
       but more importantly to ask about their own settings, and
       about other modules. The <command>b10-sockcreator</command> will
       allocate sockets for the rest of the system.
-      The <command>bind10</command> master process will also start up
+    </para>
+
+    <para>
+      In its default configuration, the <command>bind10</command>
+      master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
       system, <command>b10-auth</command> for authoritative DNS service,
       <command>b10-stats</command> for statistics collection,
       <command>b10-xfrin</command> for inbound DNS zone transfers,
       <command>b10-xfrout</command> for outbound DNS zone transfers,
-      and <command>b10-zonemgr</command> for secondary service in the
-      default configuration.
+      and <command>b10-zonemgr</command> for secondary service.
     </para>
 
     <section id="start">
