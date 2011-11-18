@@ -1,3 +1,9 @@
+324.	[bug]		jinmei
+	Fixed reference leak in the isc.log Python module.  Most of all
+	BIND 10 Python programs had memory leak (even though the pace of
+	leak may be slow) due to this bug.
+	(Trac #1359, git 164d651a0e4c1059c71f56b52ea87ac72b7f6c77)
+
 323.	[bug]		jinmei
 	b10-xfrout incorrectly skipped adding TSIG RRs to some
 	intermediate responses (when TSIG is to be used for the
