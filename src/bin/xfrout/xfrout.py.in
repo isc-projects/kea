@@ -316,11 +316,11 @@ class XfroutSession():
             self._server.get_db_file() + '"}'
         self._datasrc_client = self.ClientClass('sqlite3', datasrc_config)
         try:
-            # Note that we disable 'adjust_ttl'.  In xfr-out we need to
+            # Note that we enable 'separate_rrs'.  In xfr-out we need to
             # preserve as many things as possible (even if it's half broken)
             # stored in the zone.
             self._iterator = self._datasrc_client.get_iterator(zone_name,
-                                                               False)
+                                                               True)
         except isc.datasrc.Error:
             # If the current name server does not have authority for the
             # zone, xfrout can't serve for it, return rcode NOTAUTH.
