@@ -694,6 +694,11 @@ class JournalRead(unittest.TestCase):
         self.reader = None
 
     def tearDown(self):
+        # Some test leaves the reader in the middle of sequence, holding
+        # the lock.  Since the unittest framework keeps each test object
+        # until the end of the entire tests, we need to make sure the reader
+        # is released at the end of each test.  The client shouldn't do harm
+        # but we clean it up, too, just in case.
         self.dsc = None
         self.reader = None
 
