@@ -15,6 +15,8 @@
 #ifndef __DATA_SOURCE_CLIENT_H
 #define __DATA_SOURCE_CLIENT_H 1
 
+#include <utility>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -215,18 +217,19 @@ public:
     ///
     /// \param name The name of zone apex to be traversed. It doesn't do
     ///     nearest match as findZone.
-    /// \param adjust_ttl If true, the iterator will treat RRs with the same
-    ///                   name and type but different TTL values to be of the
-    ///                   same RRset, and will adjust the TTL to the lowest
-    ///                   value found. If false, it will consider the RR to
-    ///                   belong to a different RRset.
+    /// \param separate_rrs If true, the iterator will return each RR as a
+    ///                     new RRset object. If false, the iterator will
+    ///                     combine consecutive RRs with the name and type
+    ///                     into 1 RRset. The capitalization of the RRset will
+    ///                     be that of the first RR read, and TTLs will be
+    ///                     adjusted to the lowest one found.
     /// \return Pointer to the iterator.
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool adjust_ttl = true) const {
+                                        bool separate_rrs = false) const {
         // This is here to both document the parameter in doxygen (therefore it
         // needs a name) and avoid unused parameter warning.
         static_cast<void>(name);
-        static_cast<void>(adjust_ttl);
+        static_cast<void>(separate_rrs);
 
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support iteration");
@@ -310,6 +313,55 @@ public:
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
                                       bool replace, bool journaling = false)
         const = 0;
+
+    /// Return a journal reader to retrieve differences of a zone.
+    ///
+    /// A derived version of this method creates a concrete
+    /// \c ZoneJournalReader object specific to the underlying data source
+    /// for the specified name of zone and differences between the versions
+    /// specified by the beginning and ending serials of the corresponding
+    /// SOA RRs.
+    /// The RR class of the zone is the one that the client is expected to
+    /// handle (see the detailed description of this class).
+    ///
+    /// Note that the SOA serials are compared by the semantics of the serial
+    /// number arithmetic.  So, for example, \c begin_serial can be larger than
+    /// \c end_serial as bare unsigned integers.  The underlying data source
+    /// implementation is assumed to keep track of sufficient history to
+    /// identify (if exist) the corresponding difference between the specified
+    /// versions.
+    ///
+    /// This method returns the result as a pair of a result code and
+    /// a pointer to a \c ZoneJournalReader object.  On success, the result
+    /// code is \c SUCCESS and the pointer must be non NULL; otherwise
+    /// the result code is something other than \c SUCCESS and the pinter
+    /// must be NULL.
+    ///
+    /// If the specified zone is not found in the data source, the result
+    /// code is \c NO_SUCH_ZONE.
+    /// Otherwise, if specified range of difference for the zone is not found
+    /// in the data source, the result code is \c NO_SUCH_VERSION.
+    ///
+    /// Handling differences is an optional feature of data source.
+    /// If the underlying data source does not support difference handling,
+    /// this method for that type of data source can throw an exception of
+    /// class \c NotImplemented.
+    ///
+    /// \exception NotImplemented The data source does not support differences.
+    /// \exception DataSourceError Other operational errors at the data source
+    /// level.
+    ///
+    /// \param zone The name of the zone for which the difference should be
+    /// retrieved.
+    /// \param begin_serial The SOA serial of the beginning version of the
+    /// differences.
+    /// \param end_serial The SOA serial of the ending version of the
+    /// differences.
+    ///
+    /// \return A pair of result code and a pointer to \c ZoneJournalReader.
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
+                     uint32_t end_serial) const = 0;
 };
 }
 }
