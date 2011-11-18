@@ -630,3 +630,31 @@ database module are shown in the log message.
 Debug information.  A set of updates to a zone has been successfully
 committed to the corresponding database backend.  The zone name,
 its class and the database name are printed.
+
+% DATASRC_DATABASE_JOURNALREADER_START %1/%2 on %3 from %4 to %5
+This is a debug message indicating that the program starts reading
+a zone's difference sequences from a database-based data source.  The
+zone's name and class, database name, and the start and end serials
+are shown in the message.
+
+% DATASRC_DATABASE_JOURNALREADER_NEXT %1/%2 in %3/%4 on %5
+This is a debug message indicating that the program retrieves one
+difference in difference sequences of a zone and successfully converts
+it to an RRset.  The zone's name and class, database name, and the
+name and RR type of the retrieved diff are shown in the message.
+
+% DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
+This is a debug message indicating that the program (successfully)
+reaches the end of sequences of a zone's differences.  The zone's name
+and class, database name, and the start and end serials are shown in
+the message.
+
+% DATASRC_DATABASE_JOURNALREADR_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
+This is an error message indicating that a zone's diff is broken and
+the data source library failed to convert it to a valid RRset.  The
+most likely cause of this is that someone has manually modified the
+zone's diff in the database and inserted invalid data as a result.
+The zone's name and class, database name, and the start and end
+serials, and an additional detail of the error are shown in the
+message.  The administrator should examine the diff in the database
+to find any invalid data and fix it.
