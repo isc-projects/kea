@@ -12,10 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Enable this if you use s# variants with PyArg_ParseTuple(), see
-// http://docs.python.org/py3k/c-api/arg.html#strings-and-buffers
-//#define PY_SSIZE_T_CLEAN
-
 // Python.h needs to be placed at the head of the program file, see:
 // http://docs.python.org/py3k/extending/extending.html#a-simple-example
 #include <Python.h>
