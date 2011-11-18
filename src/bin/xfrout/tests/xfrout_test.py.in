@@ -123,7 +123,8 @@ class MockDataSrcClient:
             soa_rrset = self.__create_soa()
             soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
             return (ZoneFinder.SUCCESS, soa_rrset)
-        raise ValueError('Unexpected input to mock finder: bug in test case?')
+        else:
+            return (ZoneFinder.SUCCESS, self.__create_soa())
 
     def get_iterator(self, zone_name, adjust_ttl=False):
         if zone_name == Name('notauth.example.com'):
@@ -140,8 +141,10 @@ class MockDataSrcClient:
         return soa_rrset
 
     def get_journal_reader(self, zone_name, begin_serial, end_serial):
+        if zone_name == Name('notauth2.example.com'):
+            return isc.datasrc.ZoneJournalReader.NO_SUCH_ZONE, None
         if begin_serial == IXFR_NG_VERSION:
-            return isc.datasrc.ZoneJournalReader.NO_SUCH_VERSION, self
+            return isc.datasrc.ZoneJournalReader.NO_SUCH_VERSION, None
         return isc.datasrc.ZoneJournalReader.SUCCESS, self
 
 class MyCCSession(isc.config.ConfigData):
@@ -710,6 +713,10 @@ class TestXfroutSession(TestXfroutSessionBase):
         # Failure cases
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('notauth.example.com')), Rcode.NOTAUTH())
+        # this is a strange case: zone's SOA will be found but the journal
+        # reader won't be created due to 'no such zone'.
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), Name('notauth2.example.com')), Rcode.NOTAUTH())
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('nosoa.example.com')), Rcode.SERVFAIL())
         self.assertEqual(self.xfrsess._xfrout_setup(
