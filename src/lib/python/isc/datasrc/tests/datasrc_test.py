@@ -83,13 +83,12 @@ class DataSrcClient(unittest.TestCase):
                           isc.datasrc.DataSourceClient, "memory",
                           "{ \"foo\": 1 }")
 
-    @unittest.skip("This test may fail depending on sqlite3 library behavior")
     def test_iterate(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
         # for RRSIGS, the TTL's are currently modified. This test should
         # start failing when we fix that.
-        rrs = dsc.get_iterator(isc.dns.Name("sql1.example.com."), False)
+        rrs = dsc.get_iterator(isc.dns.Name("sql1.example.com."), True)
 
         # we do not know the order in which they are returned by the iterator
         # but we do want to check them, so we put all records into one list
@@ -116,7 +115,11 @@ class DataSrcClient(unittest.TestCase):
                      "256 3 5 AwEAAdYdRhBAEY67R/8G1N5AjGF6asIiNh/pNGeQ8xDQP13J"+
                      "N2lo+sNqWcmpYNhuVqRbLB+mamsU1XcCICSBvAlSmfz/ZUdafX23knAr"+
                      "TlALxMmspcfdpqun3Yr3YYnztuj06rV7RqmveYckWvAUXVYMSMQZfJ30"+
-                     "5fs0dE/xLztL/CzZ",
+                     "5fs0dE/xLztL/CzZ"
+                  ])
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.DNSKEY(), isc.dns.RRTTL(3600),
+                  [
                      "257 3 5 AwEAAbaKDSa9XEFTsjSYpUTHRotTS9Tz3krfDucugW5UokGQ"+
                      "KC26QlyHXlPTZkC+aRFUs/dicJX2kopndLcnlNAPWiKnKtrsFSCnIJDB"+
                      "ZIyvcKq+9RXmV3HK3bUdHnQZ88IZWBRmWKfZ6wnzHo53kdYKAemTErkz"+
@@ -128,8 +131,16 @@ class DataSrcClient(unittest.TestCase):
         add_rrset(expected_rrset_list, name, rrclass,
                   isc.dns.RRType.NS(), isc.dns.RRTTL(3600),
                   [
-                    "dns01.example.com.",
-                    "dns02.example.com.",
+                    "dns01.example.com."
+                  ])
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.NS(), isc.dns.RRTTL(3600),
+                  [
+                    "dns02.example.com."
+                  ])
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.NS(), isc.dns.RRTTL(3600),
+                  [
                     "dns03.example.com."
                   ])
         add_rrset(expected_rrset_list, name, rrclass,
@@ -140,14 +151,18 @@ class DataSrcClient(unittest.TestCase):
         # For RRSIGS, we can't add the fake data through the API, so we
         # simply pass no rdata at all (which is skipped by the check later)
         
-        # Since we passed adjust_ttl = False to get_iterator, we get several
+        # Since we passed separate_rrs = True to get_iterator, we get several
         # sets of RRSIGs, one for each TTL
         add_rrset(expected_rrset_list, name, rrclass,
                   isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
         add_rrset(expected_rrset_list, name, rrclass,
-                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(7200), None)
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
         add_rrset(expected_rrset_list, name, rrclass,
                   isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(3600), None)
+        add_rrset(expected_rrset_list, name, rrclass,
+                  isc.dns.RRType.RRSIG(), isc.dns.RRTTL(7200), None)
         add_rrset(expected_rrset_list, name, rrclass,
                   isc.dns.RRType.SOA(), isc.dns.RRTTL(3600),
                   [
@@ -192,26 +207,26 @@ class DataSrcClient(unittest.TestCase):
         # instead of failing?
         self.assertRaises(isc.datasrc.Error, rrs.get_next_rrset)
 
-        # Without the adjust_ttl argument, it should return 55 RRsets
+        # Without the separate_rrs argument, it should return 55 RRsets
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
         rrets = dsc.get_iterator(isc.dns.Name("example.com"))
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
         self.assertEqual(55, len(list(rrets)))
 
-        # same test, but now with explicit True argument for adjust_ttl
+        # same test, but now with explicit False argument for separate_rrs
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
-        rrets = dsc.get_iterator(isc.dns.Name("example.com"), True)
+        rrets = dsc.get_iterator(isc.dns.Name("example.com"), False)
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
         self.assertEqual(55, len(list(rrets)))
 
         # Count should be 71 if we request individual rrsets for differing ttls
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
-        rrets = dsc.get_iterator(isc.dns.Name("example.com"), False)
+        rrets = dsc.get_iterator(isc.dns.Name("example.com"), True)
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
-        self.assertEqual(71, len(list(rrets)))
+        self.assertEqual(84, len(list(rrets)))
         # TODO should we catch this (iterating past end) and just return None
         # instead of failing?
         self.assertRaises(isc.datasrc.Error, rrs.get_next_rrset)
