@@ -425,6 +425,60 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
     xfrout.enableDisconnect();
 }
 
+TEST_F(AuthSrvTest, IXFRConnectFail) {
+    EXPECT_FALSE(xfrout.isConnected()); // check prerequisite
+    xfrout.disableConnect();
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+    EXPECT_FALSE(xfrout.isConnected());
+}
+
+TEST_F(AuthSrvTest, IXFRSendFail) {
+    // first send a valid query, making the connection with the xfr process
+    // open.
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(xfrout.isConnected());
+
+    xfrout.disableSend();
+    parse_message->clear(Message::PARSE);
+    response_obuffer->clear();
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+
+    // The connection should have been closed due to the send failure.
+    EXPECT_FALSE(xfrout.isConnected());
+}
+
+TEST_F(AuthSrvTest, IXFRDisconnectFail) {
+    // In our usage disconnect() shouldn't fail.  So we'll see the exception
+    // should it be thrown.
+    xfrout.disableSend();
+    xfrout.disableDisconnect();
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    EXPECT_THROW(server.processMessage(*io_message, parse_message,
+                                       response_obuffer, &dnsserv),
+                 XfroutError);
+    EXPECT_TRUE(xfrout.isConnected());
+    // XXX: we need to re-enable disconnect.  otherwise an exception would be
+    // thrown via the destructor of the server.
+    xfrout.enableDisconnect();
+}
+
 TEST_F(AuthSrvTest, notify) {
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
                          Name("example.com"), RRClass::IN(), RRType::SOA());
@@ -735,6 +789,20 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    // On success, the AXFR query has been passed to a separate process,
+    // so we shouldn't have to respond.
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    // After processing TCP AXFR query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+}
+
+// Submit TCP IXFR query and check query counter
+TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
     // so we shouldn't have to respond.

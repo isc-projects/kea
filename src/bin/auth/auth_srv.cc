@@ -91,9 +91,9 @@ public:
     bool processNormalQuery(const IOMessage& io_message, MessagePtr message,
                             OutputBufferPtr buffer,
                             auto_ptr<TSIGContext> tsig_context);
-    bool processAxfrQuery(const IOMessage& io_message, MessagePtr message,
-                          OutputBufferPtr buffer,
-                          auto_ptr<TSIGContext> tsig_context);
+    bool processXfrQuery(const IOMessage& io_message, MessagePtr message,
+                         OutputBufferPtr buffer,
+                         auto_ptr<TSIGContext> tsig_context);
     bool processNotify(const IOMessage& io_message, MessagePtr message,
                        OutputBufferPtr buffer,
                        auto_ptr<TSIGContext> tsig_context);
@@ -472,10 +472,11 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         ConstQuestionPtr question = *message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
-            sendAnswer = impl_->processAxfrQuery(io_message, message, buffer,
+            sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
                                                  tsig_context);
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(message, buffer, Rcode::NOTIMP(), tsig_context);
+            sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
+                                                 tsig_context);
         } else {
             sendAnswer = impl_->processNormalQuery(io_message, message, buffer,
                                                    tsig_context);
@@ -543,9 +544,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
 }
 
 bool
-AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
-                              OutputBufferPtr buffer,
-                              auto_ptr<TSIGContext> tsig_context)
+AuthSrvImpl::processXfrQuery(const IOMessage& io_message, MessagePtr message,
+                             OutputBufferPtr buffer,
+                             auto_ptr<TSIGContext> tsig_context)
 {
     // Increment query counter.
     incCounter(io_message.getSocket().getProtocol());
