@@ -159,15 +159,32 @@ class TestXfroutSessionBase(unittest.TestCase):
     def message_has_tsig(self, msg):
         return msg.get_tsig_record() is not None
 
-    def create_request_data(self, with_question=True, with_tsig=False):
+    def create_request_data(self, with_question=True, with_tsig=False,
+                            ixfr=None):
+        '''Create a commonly used XFR request data.
+
+        By default the request type is AXFR; if 'ixfr' is an integer,
+        the request type will be IXFR and an SOA with the serial being
+        the value of the parameter will be included in the authority
+        section.
+
+        '''
         msg = Message(Message.RENDER)
         query_id = 0x1035
         msg.set_qid(query_id)
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
+        req_type = RRType.AXFR() if ixfr is None else RRType.IXFR()
         if with_question:
             msg.add_question(Question(Name("example.com"), RRClass.IN(),
-                                      RRType.AXFR()))
+                                      req_type))
+        if req_type == RRType.IXFR():
+            soa = RRset(Name('example.com'), RRClass.IN(), RRType.SOA(),
+                        RRTTL(0))
+            # In the RDATA only the serial matters.
+            soa.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                'm r ' + str(ixfr) + ' 1 1 1 1'))
+            msg.add_rrset(Message.SECTION_AUTHORITY, soa)
 
         renderer = MessageRenderer()
         if with_tsig:
@@ -241,8 +258,16 @@ class TestXfroutSession(TestXfroutSessionBase):
         XfroutSession._handle(self.xfrsess)
 
     def test_parse_query_message(self):
+        # Valid AXFR
         [get_rcode, get_msg] = self.xfrsess._parse_query_message(self.mdata)
+        self.assertEqual(RRType.AXFR(), self.xfrsess._request_type)
         self.assertEqual(get_rcode.to_text(), "NOERROR")
+
+        # Valid IXFR
+        request_data = self.create_request_data(ixfr=2011111801)
+        rcode, msg = self.xfrsess._parse_query_message(request_data)
+        self.assertEqual(RRType.IXFR(), self.xfrsess._request_type)
+        self.assertEqual(Rcode.NOERROR(), rcode)
 
         # Broken request: no question
         request_data = self.create_request_data(with_question=False)
