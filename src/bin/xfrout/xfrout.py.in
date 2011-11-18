@@ -382,12 +382,17 @@ class XfroutSession():
         if rcode != Rcode.NOERROR():
             return rcode
         code, self._jnl_reader = self._datasrc_client.get_journal_reader(
-            remote_soa.get_name(), get_soa_serial(remote_soa.get_rdata()[0]),
+            zone_name, get_soa_serial(remote_soa.get_rdata()[0]),
             get_soa_serial(self._soa.get_rdata()[0]))
         if code == ZoneJournalReader.NO_SUCH_VERSION:
             # fallback to AXFR-style IXFR
-            self._jnl_reader = None # clear it just in case
             return self.__setup_axfr(zone_name)
+        if code == ZoneJournalReader.NO_SUCH_ZONE:
+            # this is quite unexpected as we know zone's SOA exists.
+            # It might be a bug or the data source is somehow broken,
+            # but it can still happen if someone has removed the zone
+            # between these two operations.  We treat it as NOTAUTH.
+            return Rcode.NOTAUTH()
 
         return Rcode.NOERROR()
 
