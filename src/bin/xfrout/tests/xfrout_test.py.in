@@ -177,7 +177,7 @@ class TestXfroutSessionBase(unittest.TestCase):
         if with_soa:
             soa_rrset = RRset(Name('example.com'), RRClass.IN(), RRType.SOA(),
                               RRTTL(0))
-            soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(), 
+            soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
                                 '. . 1 0 0 0 0'))
             msg.add_rrset(Message.SECTION_AUTHORITY, soa_rrset)
 
@@ -260,12 +260,12 @@ class TestXfroutSession(TestXfroutSessionBase):
         request_data = self.create_request_data(with_question=False)
         rcode, msg = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(Rcode.FORMERR(), rcode)
-        
+
         # Broken request: IXFR without SOA
         request_data = self.create_request_data(ixfr=True)
         rcode, msg = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(Rcode.FORMERR(), rcode)
-        
+
         # NOERROR
         request_data = self.create_request_data(ixfr=True, with_soa=True)
         rcode, msg = self.xfrsess._parse_query_message(request_data)
