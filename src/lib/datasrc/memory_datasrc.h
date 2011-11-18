@@ -287,6 +287,10 @@ public:
                                       bool replace, bool journaling = false)
         const;
 
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
+                     uint32_t end_serial) const;
+
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class
     // directly any more (it should be handled through DataSourceClient)?
