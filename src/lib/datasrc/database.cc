@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <datasrc/database.h>
@@ -1068,6 +1069,106 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
 
     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
                                                name, rrclass_, journaling)));
+}
+
+//
+// Zone journal reader using some database system as the underlying data
+//  source.
+//
+class DatabaseJournalReader : public ZoneJournalReader {
+private:
+    // A shortcut typedef to keep the code concise.
+    typedef DatabaseAccessor Accessor;
+public:
+    DatabaseJournalReader(shared_ptr<Accessor> accessor, const Name& zone,
+                          int zone_id, const RRClass& rrclass, uint32_t begin,
+                          uint32_t end) :
+        accessor_(accessor), zone_(zone), rrclass_(rrclass),
+        begin_(begin), end_(end), finished_(false)
+    {
+        context_ = accessor_->getDiffs(zone_id, begin, end);
+    }
+    virtual ~DatabaseJournalReader() {}
+    virtual ConstRRsetPtr getNextDiff() {
+        if (finished_) {
+            isc_throw(InvalidOperation,
+                      "Diff read attempt past the end of sequence on "
+                      << accessor_->getDBName());
+        }
+
+        string data[Accessor::COLUMN_COUNT];
+        if (!context_->getNext(data)) {
+            finished_ = true;
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_JOURNALREADER_END).
+                arg(zone_).arg(rrclass_).arg(accessor_->getDBName()).
+                arg(begin_).arg(end_);
+            return (ConstRRsetPtr());
+        }
+
+        try {
+            RRsetPtr rrset(new RRset(Name(data[Accessor::NAME_COLUMN]),
+                                     rrclass_,
+                                     RRType(data[Accessor::TYPE_COLUMN]),
+                                     RRTTL(data[Accessor::TTL_COLUMN])));
+            rrset->addRdata(rdata::createRdata(rrset->getType(), rrclass_,
+                                               data[Accessor::RDATA_COLUMN]));
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                      DATASRC_DATABASE_JOURNALREADER_NEXT).
+                arg(rrset->getName()).arg(rrset->getType()).
+                arg(zone_).arg(rrclass_).arg(accessor_->getDBName());
+            return (rrset);
+        } catch (const Exception& ex) {
+            LOG_ERROR(logger, DATASRC_DATABASE_JOURNALREADR_BADDATA).
+                arg(zone_).arg(rrclass_).arg(accessor_->getDBName()).
+                arg(begin_).arg(end_).arg(ex.what());
+            isc_throw(DataSourceError, "Failed to create RRset from diff on "
+                      << accessor_->getDBName());
+        }
+    }
+
+private:
+    shared_ptr<Accessor> accessor_;
+    const Name zone_;
+    const RRClass rrclass_;
+    Accessor::IteratorContextPtr context_;
+    const uint32_t begin_;
+    const uint32_t end_;
+    bool finished_;
+};
+
+// The JournalReader factory
+pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+DatabaseClient::getJournalReader(const isc::dns::Name& zone,
+                                 uint32_t begin_serial,
+                                 uint32_t end_serial) const
+{
+    shared_ptr<DatabaseAccessor> jnl_accessor(accessor_->clone());
+    const pair<bool, int> zoneinfo(jnl_accessor->getZone(zone.toText()));
+    if (!zoneinfo.first) {
+        return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
+                    ZoneJournalReader::NO_SUCH_ZONE,
+                    ZoneJournalReaderPtr()));
+    }
+
+    try {
+        const pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> ret(
+            ZoneJournalReader::SUCCESS,
+            ZoneJournalReaderPtr(new DatabaseJournalReader(jnl_accessor,
+                                                           zone,
+                                                           zoneinfo.second,
+                                                           rrclass_,
+                                                           begin_serial,
+                                                           end_serial)));
+        LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                  DATASRC_DATABASE_JOURNALREADER_START).arg(zone).arg(rrclass_).
+            arg(jnl_accessor->getDBName()).arg(begin_serial).arg(end_serial);
+        return (ret);
+    } catch (const NoSuchSerial&) {
+        return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
+                    ZoneJournalReader::NO_SUCH_VERSION,
+                    ZoneJournalReaderPtr()));
+    }
 }
 }
 }
