@@ -1,3 +1,12 @@
+325.	[func]		jinmei
+	Python isc.datasrc: added interfaces for difference management:
+	DataSourceClient.get_updater() now has the 'journaling' parameter
+	to enable storing diffs to the data source, and a new class
+	ZoneJournalReader was introduced to retrieve them, which can be
+	created by the new DataSourceClient.get_journal_reader() method.
+	(Trac #1333, git 3e19362bc1ba7dc67a87768e2b172c48b32417f5,
+	git 39def1d39c9543fc485eceaa5d390062edb97676)
+
 324.	[bug]		jinmei
 	Fixed reference leak in the isc.log Python module.  Most of all
 	BIND 10 Python programs had memory leak (even though the pace of
