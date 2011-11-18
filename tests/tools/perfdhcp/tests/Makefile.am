@@ -15,9 +15,9 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += cloptions_unittest.cc
-run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/cloptions.cc
-run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/procconf.cc
-run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/dkdebug.cc
+run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/cloptions.c
+run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/procconf.c
+run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/dkdebug.c
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)

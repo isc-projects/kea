@@ -25,6 +25,7 @@ static void initialize(void);
 
 // The current version information
 const char* VERSION = "perfdhcp v1.0 2011-10-30";
+static const char* PROGNAME = "perfdhcp";
 
 static int v6 = 0;                      // DHCPv6 operation (-6)
 static int initialOnly = 0;             // Do only initial exchange (-i)

@@ -22,6 +22,10 @@
 #ifndef PROCCONF_H
 #define PROCCONF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <limits.h> /* for UINT_MAX */
 
 /*
@@ -124,5 +128,9 @@ procOpts(int* argc, const char** argv[], const confvar_t optConf[],
  * Free the malloced data stored in confdata elements by ProcOpts()
  */
 void confdataFree(confdata_t *confdata);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
