@@ -30,8 +30,7 @@
 #include "datasrc.h"
 #include "journal_reader_python.h"
 
-// NOTYET
-//#include "journal_reader_inc.cc"
+#include "journal_reader_inc.cc"
 
 using namespace isc::util::python;
 using namespace isc::dns::python;
@@ -124,7 +123,7 @@ ZoneJournalReader_next(PyObject* self) {
 
 PyMethodDef ZoneJournalReader_methods[] = {
     { "get_next_diff", ZoneJournalReader_getNextDiff, METH_NOARGS,
-      ""/*ZoneJournalReader_getNextDiff_doc*/ },
+      ZoneJournalReader_getNextDiff_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -155,7 +154,7 @@ PyTypeObject journal_reader_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "", /*ZoneJournalReader_doc*/
+    ZoneJournalReader_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
