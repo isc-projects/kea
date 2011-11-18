@@ -27,6 +27,7 @@
 #include "finder_python.h"
 #include "iterator_python.h"
 #include "updater_python.h"
+#include "journal_reader_python.h"
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
@@ -192,6 +193,41 @@ initModulePart_ZoneUpdater(PyObject* mod) {
     return (true);
 }
 
+bool
+initModulePart_ZoneJournalReader(PyObject* mod) {
+    if (PyType_Ready(&journal_reader_type) < 0) {
+        return (false);
+    }
+    void* p = &journal_reader_type;
+    if (PyModule_AddObject(mod, "ZoneJournalReader",
+                           static_cast<PyObject*>(p)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&journal_reader_type);
+
+    try {
+        installClassVariable(journal_reader_type, "SUCCESS",
+                             Py_BuildValue("I", ZoneJournalReader::SUCCESS));
+        installClassVariable(journal_reader_type, "NO_SUCH_ZONE",
+                             Py_BuildValue("I",
+                                           ZoneJournalReader::NO_SUCH_ZONE));
+        installClassVariable(journal_reader_type, "NO_SUCH_VERSION",
+                             Py_BuildValue("I",
+                                           ZoneJournalReader::NO_SUCH_VERSION));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in ZoneJournalReader initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+            "Unexpected failure in ZoneJournalReader initialization");
+        return (false);
+    }
+
+    return (true);
+}
 
 PyObject* po_DataSourceError;
 PyObject* po_NotImplemented;
@@ -235,6 +271,11 @@ PyInit_datasrc(void) {
     }
 
     if (!initModulePart_ZoneUpdater(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+
+    if (!initModulePart_ZoneJournalReader(mod)) {
         Py_DECREF(mod);
         return (NULL);
     }
