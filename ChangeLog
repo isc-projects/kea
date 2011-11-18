@@ -7,9 +7,9 @@
 	(Trac #1376, git 1219d81b49e51adece77dc57b5902fa1c6be1407)
 
 320.	[func]*		vorner
-	The --brittle switch was removed from the bind10 executable. It didn't
-	work after the #213 change and the same effect can be accomplished by
-	declaring all components as core.
+	The --brittle switch was removed from the bind10 executable.
+	It didn't work after change #316 (Trac #213) and the same
+	effect can be accomplished by declaring all components as core.
 	(Trac #1340, git f9224368908dd7ba16875b0d36329cf1161193f0)
 
 319.	[func]		naokikambe
