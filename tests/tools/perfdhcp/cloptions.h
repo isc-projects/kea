@@ -17,6 +17,10 @@
 #ifndef CLOPTIONS_H
 #define CLOPTIONS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include "procconf.h"
 
@@ -45,5 +49,9 @@ double getTestPeriod(void);     // Test period (-p)
 const char* getServer(void);    // Server to contact
 const char* getLocalName(void); // Local host/interface (-l)
 const char* getMaxDrop(void);   // Max dropped responses (-D)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
