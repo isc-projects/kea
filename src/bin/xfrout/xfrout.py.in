@@ -153,7 +153,7 @@ class XfroutSession():
         self._acl = default_acl
         self._zone_config = zone_config
         self.ClientClass = client_class # parameterize this for testing
-        self._soa = None # will be set in _check_xfrout_available or in tests
+        self._soa = None # will be set in _xfrout_setup or in tests
         self._handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -391,10 +391,13 @@ class XfroutSession():
 
         return Rcode.NOERROR()
 
-    def _check_xfrout_available(self, request_msg, zone_name):
-        '''Check if xfr request can be responsed.
-           TODO, Get zone's configuration from cfgmgr or some other place
-           eg. check allow_transfer setting,
+    def _xfrout_setup(self, request_msg, zone_name):
+        '''Setup a context for xfr responses according to the request type.
+
+        This method identifies the most appropriate data source for the
+        request and set up a zone iterator or journal reader depending on
+        whether the request is AXFR or IXFR.  If it identifies any protocol
+        level error it returns an RCODE other than NOERROR.
 
         '''
 
@@ -438,7 +441,7 @@ class XfroutSession():
 
         # TODO: we should also include class in the check
         try:
-            rcode_ = self._check_xfrout_available(msg, zone_name)
+            rcode_ = self._xfrout_setup(msg, zone_name)
         except Exception as ex:
             logger.error(XFROUT_XFR_TRANSFER_CHECK_ERROR, self._request_typestr,
                          format_addrinfo(self._remote), zone_str, ex)
