@@ -1,3 +1,9 @@
+320.	[func]*		vorner
+	The --brittle switch was removed from the bind10 executable. It didn't
+	work after the #213 change and the same effect can be accomplished by
+	declaring all components as core.
+	(Trac #1340, git f9224368908dd7ba16875b0d36329cf1161193f0)
+
 319.	[func]		naokikambe
 	b10-stats-httpd was updated. In addition of the access to all
 	statistics items of all modules, the specified item or the items of the
