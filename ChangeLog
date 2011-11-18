@@ -1,3 +1,48 @@
+325.	[func]		jinmei
+	Python isc.datasrc: added interfaces for difference management:
+	DataSourceClient.get_updater() now has the 'journaling' parameter
+	to enable storing diffs to the data source, and a new class
+	ZoneJournalReader was introduced to retrieve them, which can be
+	created by the new DataSourceClient.get_journal_reader() method.
+	(Trac #1333, git 3e19362bc1ba7dc67a87768e2b172c48b32417f5,
+	git 39def1d39c9543fc485eceaa5d390062edb97676)
+
+324.	[bug]		jinmei
+	Fixed reference leak in the isc.log Python module.  Most of all
+	BIND 10 Python programs had memory leak (even though the pace of
+	leak may be slow) due to this bug.
+	(Trac #1359, git 164d651a0e4c1059c71f56b52ea87ac72b7f6c77)
+
+323.	[bug]		jinmei
+	b10-xfrout incorrectly skipped adding TSIG RRs to some
+	intermediate responses (when TSIG is to be used for the
+	responses).  While RFC2845 optionally allows to skip intermediate
+	TSIGs (as long as the digest for the skipped part was included
+	in a later TSIG), the underlying TSIG API doesn't support this
+	mode of signing.
+	(Trac #1370, git 76fb414ea5257b639ba58ee336fae9a68998b30d)
+
+322.	[func]		jinmei
+	datasrc: Added C++ API for retrieving difference of two versions
+	of a zone.  A new ZoneJournalReader class was introduced for this
+	purpose, and a corresponding factory method was added to
+	DataSourceClient.
+	(Trac #1332, git c1138d13b2692fa3a4f2ae1454052c866d24e654)
+
+321.	[func]*		jinmei
+	b10-xfrin now installs IXFR differences into the underlying data
+	source (if it supports journaling) so that the stored differences
+	can be used for subsequent IXFR-out transactions.
+	Note: this is a backward incompatibility change for older sqlite3
+	database files.  They need to be upgraded to have a "diffs" table.
+	(Trac #1376, git 1219d81b49e51adece77dc57b5902fa1c6be1407)
+
+320.	[func]*		vorner
+	The --brittle switch was removed from the bind10 executable.
+	It didn't work after change #316 (Trac #213) and the same
+	effect can be accomplished by declaring all components as core.
+	(Trac #1340, git f9224368908dd7ba16875b0d36329cf1161193f0)
+
 319.	[func]		naokikambe
 	b10-stats-httpd was updated. In addition of the access to all
 	statistics items of all modules, the specified item or the items of the
@@ -9,12 +54,12 @@
 	only for the XML documents but also is for the XSD and XSL documents.
 	(Trac #917, git b34bf286c064d44746ec0b79e38a6177d01e6956)
 
-318.    [func]      stephen
+318.    [func]		stephen
 	Add C++ API for accessing zone difference information in database-based
 	data sources.
 	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
 
-317.    [func]      vorner
+317.    [func]		vorner
 	datasrc: the getUpdater method of DataSourceClient supports an optional
 	'journaling' parameter to indicate the generated updater to store diffs.
 	The database based derived class implements this extension.

@@ -92,9 +92,6 @@ init_paths()
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
 VERBOSE_MODE = False
-# tsig sign every N axfr packets.
-TSIG_SIGN_EVERY_NTH = 96
-
 XFROUT_MAX_MESSAGE_SIZE = 65535
 
 # borrowed from xfrin.py @ #1298.  We should eventually unify it.
@@ -316,11 +313,11 @@ class XfroutSession():
             self._server.get_db_file() + '"}'
         self._datasrc_client = self.ClientClass('sqlite3', datasrc_config)
         try:
-            # Note that we disable 'adjust_ttl'.  In xfr-out we need to
+            # Note that we enable 'separate_rrs'.  In xfr-out we need to
             # preserve as many things as possible (even if it's half broken)
             # stored in the zone.
             self._iterator = self._datasrc_client.get_iterator(zone_name,
-                                                               False)
+                                                               True)
         except isc.datasrc.Error:
             # If the current name server does not have authority for the
             # zone, xfrout can't serve for it, return rcode NOTAUTH.
@@ -398,21 +395,14 @@ class XfroutSession():
         msg.set_header_flag(Message.HEADERFLAG_QR)
         return msg
 
-    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len,
-                                    count_since_last_tsig_sign):
+    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa,
+                                    message_upper_len):
         '''Add the SOA record to the end of message. If it can't be
         added, a new message should be created to send out the last soa .
         '''
-        rrset_len = get_rrset_len(rrset_soa)
-
-        if (count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH and
-            message_upper_len + rrset_len >= XFROUT_MAX_MESSAGE_SIZE):
-            # If tsig context exist, sign the packet with serial number TSIG_SIGN_EVERY_NTH
+        if (message_upper_len + self._tsig_len + get_rrset_len(rrset_soa) >=
+            XFROUT_MAX_MESSAGE_SIZE):
             self._send_message(sock_fd, msg, self._tsig_ctx)
-            msg = self._clear_message(msg)
-        elif (count_since_last_tsig_sign != TSIG_SIGN_EVERY_NTH and
-              message_upper_len + rrset_len + self._tsig_len >= XFROUT_MAX_MESSAGE_SIZE):
-            self._send_message(sock_fd, msg)
             msg = self._clear_message(msg)
 
         # If tsig context exist, sign the last packet
@@ -422,7 +412,6 @@ class XfroutSession():
 
     def _reply_xfrout_query(self, msg, sock_fd):
         #TODO, there should be a better way to insert rrset.
-        count_since_last_tsig_sign = TSIG_SIGN_EVERY_NTH
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
         msg.add_rrset(Message.SECTION_ANSWER, self._soa)
@@ -447,27 +436,17 @@ class XfroutSession():
                 message_upper_len += rrset_len
                 continue
 
-            # If tsig context exist, sign every N packets
-            if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
-                count_since_last_tsig_sign = 0
-                self._send_message(sock_fd, msg, self._tsig_ctx)
-            else:
-                self._send_message(sock_fd, msg)
+            self._send_message(sock_fd, msg, self._tsig_ctx)
 
-            count_since_last_tsig_sign += 1
             msg = self._clear_message(msg)
             # Add the RRset to the new message
             msg.add_rrset(Message.SECTION_ANSWER, rrset)
 
             # Reserve tsig space for signed packet
-            if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
-                message_upper_len = rrset_len + self._tsig_len
-            else:
-                message_upper_len = rrset_len
+            message_upper_len = rrset_len + self._tsig_len
 
         self._send_message_with_last_soa(msg, sock_fd, self._soa,
-                                         message_upper_len,
-                                         count_since_last_tsig_sign)
+                                         message_upper_len)
 
 class UnixSockServer(socketserver_mixin.NoPollMixIn,
                      ThreadingUnixStreamServer):

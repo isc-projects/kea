@@ -23,6 +23,8 @@
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
 
+#include <datasrc/data_source.h>
+#include <datasrc/client.h>
 #include <datasrc/client.h>
 
 #include <dns/name.h>
@@ -544,11 +546,9 @@ public:
     /// is not for the SOA RR; it passes TTL for a diff that deletes an RR
     /// while in \c deleteRecordInZone() it's omitted.  This is because
     /// the stored diffs are expected to be retrieved in the form that
-    /// \c getRecordDiffs() is expected to meet.  This means if the caller
+    /// \c getDiffs() is expected to meet.  This means if the caller
     /// wants to use this method with other update operations, it must
     /// ensure the additional information is ready when this method is called.
-    ///
-    /// \note \c getRecordDiffs() is not yet implemented.
     ///
     /// The caller of this method must ensure that the added diffs via
     /// this method in a single transaction form an IXFR-style difference
@@ -562,7 +562,7 @@ public:
     /// an SOA RR, \c serial must be identical to the serial of that SOA).
     /// The underlying derived class implementation may or may not check
     /// this condition, but if the caller doesn't meet the condition
-    /// a subsequent call to \c getRecordDiffs() will not work as expected.
+    /// a subsequent call to \c getDiffs() will not work as expected.
     ///
     /// Any call to this method must be in a transaction, and, for now,
     /// it must be a transaction triggered by \c startUpdateZone() (that is,
@@ -913,15 +913,16 @@ public:
      * \exception Anything else the underlying DatabaseConnection might
      *     want to throw.
      * \param name The origin of the zone to iterate.
-     * \param adjust_ttl If true, the iterator will treat RRs with the same
-     *                   name and type but different TTL values to be of the
-     *                   same RRset, and will adjust the TTL to the lowest
-     *                   value found. If false, it will consider the RR to
-     *                   belong to a different RRset.
+     * \param separate_rrs If true, the iterator will return each RR as a
+     *                     new RRset object. If false, the iterator will
+     *                     combine consecutive RRs with the name and type
+     *                     into 1 RRset. The capitalization of the RRset will
+     *                     be that of the first RR read, and TTLs will be
+     *                     adjusted to the lowest one found.
      * \return Shared pointer to the iterator (it will never be NULL)
      */
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool adjust_ttl = true) const;
+                                        bool separate_rrs = false) const;
 
     /// This implementation internally clones the accessor from the one
     /// used in the client and starts a separate transaction using the cloned
@@ -930,6 +931,15 @@ public:
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
                                       bool replace,
                                       bool journaling = false) const;
+
+
+    /// This implementation internally clones the accessor from the one
+    /// used in the client for retrieving diffs and iterating over them.
+    /// The returned reader object will be able to work separately from
+    /// the original client.
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
+                     uint32_t end_serial) const;
 
 private:
     /// \brief The RR class that this client handles.
