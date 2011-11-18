@@ -214,7 +214,7 @@ PyMethodDef DataSourceClient_methods[] = {
     { "get_updater", DataSourceClient_getUpdater,
       METH_VARARGS, DataSourceClient_getUpdater_doc },
     { "get_journal_reader", DataSourceClient_getJournalReader,
-      METH_VARARGS, ""/*DataSourceClient_getUpdater_doc*/ },
+      METH_VARARGS, DataSourceClient_getJournalReader_doc },
     { NULL, NULL, 0, NULL }
 };
 
