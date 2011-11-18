@@ -15,37 +15,6 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrout messages python module.
 
-% XFROUT_AXFR_TRANSFER_DONE %1 client %2: transfer of %3 complete
-The transfer of the given zone has been completed successfully, or was
-aborted due to a shutdown event.
-
-% XFROUT_AXFR_TRANSFER_ERROR %1 client %2: error transferring zone %3: %4
-An uncaught exception was encountered while sending the response to
-an AXFR query. The error message of the exception is included in the
-log message, but this error most likely points to incomplete exception
-handling in the code.
-
-% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
-Pre-response check for an incomding XFR request failed unexpectedly.
-The most likely cause of this is that some low level error in the data
-source, but it may also be other general (more unlikely) errors such
-as memory shortage.  Some detail of the error is also included in the
-message.  The xfrout server tries to return a SERVFAIL response in this case.
-
-% XFROUT_AXFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4
-A transfer out for the given zone failed. An error response is sent
-to the client. The given rcode is the rcode that is set in the error
-response. This is either NOTAUTH (we are not authoritative for the
-zone), SERVFAIL (our internal database is missing the SOA record for
-the zone), or REFUSED (the limit of simultaneous outgoing AXFR
-transfers, as specified by the configuration value
-Xfrout/max_transfers_out, has been reached).
-# Still a TODO, but when implemented, REFUSED can also mean
-# the client is not allowed to transfer the zone
-
-% XFROUT_AXFR_TRANSFER_STARTED %1 client %2: transfer of zone %3 has started
-A transfer out of the given zone has started.
-
 % XFROUT_BAD_TSIG_KEY_STRING bad TSIG key string: %1
 The TSIG key string as read from the configuration does not represent
 a valid TSIG key.
@@ -86,6 +55,9 @@ by xfrout could not be found. This suggests that either some libraries
 are missing on the system, or the PYTHONPATH variable is not correct.
 The specific place where this library needs to be depends on your
 system and your specific installation.
+
+% XFROUT_IXFR_TRANSFER_STARTED %1 client %2: IXFR transfer of zone %3 has started
+An incremental transfer out of the given zone has started.
 
 % XFROUT_NEW_CONFIG Update xfrout configuration
 New configuration settings have been sent from the configuration
@@ -178,3 +150,33 @@ on, but the file is in use. The most likely cause is that another
 xfrout daemon process is still running. This xfrout daemon (the one
 printing this message) will not start.
 
+% XFROUT_XFR_TRANSFER_DONE %1 client %2: transfer of %3 complete
+The transfer of the given zone has been completed successfully, or was
+aborted due to a shutdown event.
+
+% XFROUT_XFR_TRANSFER_ERROR %1 client %2: error transferring zone %3: %4
+An uncaught exception was encountered while sending the response to
+an AXFR query. The error message of the exception is included in the
+log message, but this error most likely points to incomplete exception
+handling in the code.
+
+% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
+Pre-response check for an incomding XFR request failed unexpectedly.
+The most likely cause of this is that some low level error in the data
+source, but it may also be other general (more unlikely) errors such
+as memory shortage.  Some detail of the error is also included in the
+message.  The xfrout server tries to return a SERVFAIL response in this case.
+
+% XFROUT_XFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4
+A transfer out for the given zone failed. An error response is sent
+to the client. The given rcode is the rcode that is set in the error
+response. This is either NOTAUTH (we are not authoritative for the
+zone), SERVFAIL (our internal database is missing the SOA record for
+the zone), or REFUSED (the limit of simultaneous outgoing AXFR
+transfers, as specified by the configuration value
+Xfrout/max_transfers_out, has been reached).
+# Still a TODO, but when implemented, REFUSED can also mean
+# the client is not allowed to transfer the zone
+
+% XFROUT_XFR_TRANSFER_STARTED %1 client %2: transfer of zone %3 has started
+A transfer out of the given zone has started.
