@@ -273,7 +273,7 @@ public:
 
     /// \brief Implementation of the getIterator method
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool adjust_ttl = true) const;
+                                        bool separate_rrs = false) const;
 
     /// In-memory data source is read-only, so this derived method will
     /// result in a NotImplemented exception.
