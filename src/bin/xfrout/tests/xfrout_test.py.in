@@ -673,46 +673,46 @@ class TestXfroutSession(TestXfroutSessionBase):
     def test_get_rrset_len(self):
         self.assertEqual(82, get_rrset_len(self.soa_rrset))
 
-    def test_check_xfrout_axfr_available(self):
+    def test_xfrout_axfr_setup(self):
         self.xfrsess.ClientClass = MockDataSrcClient
         # Successful case.  A zone iterator should be set up.
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('example.com')), Rcode.NOERROR())
         self.assertNotEqual(None, self.xfrsess._iterator)
 
         # Failure cases
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('notauth.example.com')), Rcode.NOTAUTH())
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('nosoa.example.com')), Rcode.SERVFAIL())
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('multisoa.example.com')), Rcode.SERVFAIL())
 
-    def test_check_xfrout_ixfr_available(self):
+    def test_xfrout_ixfr_setup(self):
         self.xfrsess.ClientClass = MockDataSrcClient
         self.set_request_type(RRType.IXFR())
 
         # Successful case of pure IXFR.  A zone journal reader should be set
         # up.
         self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION)
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), TEST_ZONE_NAME), Rcode.NOERROR())
         self.assertNotEqual(None, self.xfrsess._jnl_reader)
 
         # Successful case, but as a result of falling back to AXFR-style
         # IXFR.  A zone iterator should be set up instead of a journal reader.
         self.mdata = self.create_request_data(ixfr=IXFR_NG_VERSION)
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), TEST_ZONE_NAME), Rcode.NOERROR())
         self.assertNotEqual(None, self.xfrsess._iterator)
         self.assertEqual(None, self.xfrsess._jnl_reader)
 
         # Failure cases
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('notauth.example.com')), Rcode.NOTAUTH())
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('nosoa.example.com')), Rcode.SERVFAIL())
-        self.assertEqual(self.xfrsess._check_xfrout_available(
+        self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), Name('multisoa.example.com')), Rcode.SERVFAIL())
 
     def test_dns_xfrout_start_formerror(self):
@@ -727,7 +727,7 @@ class TestXfroutSession(TestXfroutSessionBase):
     def test_dns_xfrout_start_notauth(self):
         def notauth(msg, name):
             return Rcode.NOTAUTH()
-        self.xfrsess._check_xfrout_available = notauth
+        self.xfrsess._xfrout_setup = notauth
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NOTAUTH")
@@ -742,7 +742,7 @@ class TestXfroutSession(TestXfroutSessionBase):
     def test_dns_xfrout_start_noerror(self):
         def noerror(msg, name):
             return Rcode.NOERROR()
-        self.xfrsess._check_xfrout_available = noerror
+        self.xfrsess._xfrout_setup = noerror
 
         def myreply(msg, sock):
             self.sock.send(b"success")
