@@ -215,18 +215,19 @@ public:
     ///
     /// \param name The name of zone apex to be traversed. It doesn't do
     ///     nearest match as findZone.
-    /// \param adjust_ttl If true, the iterator will treat RRs with the same
-    ///                   name and type but different TTL values to be of the
-    ///                   same RRset, and will adjust the TTL to the lowest
-    ///                   value found. If false, it will consider the RR to
-    ///                   belong to a different RRset.
+    /// \param separate_rrs If true, the iterator will return each RR as a
+    ///                     new RRset object. If false, the iterator will
+    ///                     combine consecutive RRs with the name and type
+    ///                     into 1 RRset. The capitalization of the RRset will
+    ///                     be that of the first RR read, and TTLs will be
+    ///                     adjusted to the lowest one found.
     /// \return Pointer to the iterator.
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool adjust_ttl = true) const {
+                                        bool separate_rrs = false) const {
         // This is here to both document the parameter in doxygen (therefore it
         // needs a name) and avoid unused parameter warning.
         static_cast<void>(name);
-        static_cast<void>(adjust_ttl);
+        static_cast<void>(separate_rrs);
 
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support iteration");
