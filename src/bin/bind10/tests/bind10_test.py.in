@@ -740,15 +740,6 @@ class TestParseArgs(unittest.TestCase):
         options = parse_args(['--cmdctl-port=1234'], TestOptParser)
         self.assertEqual(1234, options.cmdctl_port)
 
-    def test_brittle(self):
-        """
-        Test we can use the "brittle" flag.
-        """
-        options = parse_args([], TestOptParser)
-        self.assertFalse(options.brittle)
-        options = parse_args(['--brittle'], TestOptParser)
-        self.assertTrue(options.brittle)
-
 class TestPIDFile(unittest.TestCase):
     def setUp(self):
         self.pid_file = '@builddir@' + os.sep + 'bind10.pid'
@@ -795,37 +786,6 @@ class TestPIDFile(unittest.TestCase):
         # the attempt to open file will fail, which should result in exception.
         self.assertRaises(IOError, dump_pid,
                           'nonexistent_dir' + os.sep + 'bind10.pid')
-
-# TODO: Do we want brittle mode? Probably yes. So we need to re-enable to after that.
-@unittest.skip("Brittle mode temporarily broken")
-class TestBrittle(unittest.TestCase):
-    def test_brittle_disabled(self):
-        bob = MockBob()
-        bob.start_all_components()
-        bob.runnable = True
-
-        bob.reap_children()
-        self.assertTrue(bob.runnable)
-
-    def simulated_exit(self):
-        ret_val = self.exit_info
-        self.exit_info = (0, 0)
-        return ret_val
-
-    def test_brittle_enabled(self):
-        bob = MockBob()
-        bob.start_all_components()
-        bob.runnable = True
-
-        bob.brittle = True
-        self.exit_info = (5, 0)
-        bob._get_process_exit_status = self.simulated_exit
-
-        old_stdout = sys.stdout
-        sys.stdout = open("/dev/null", "w")
-        bob.reap_children()
-        sys.stdout = old_stdout
-        self.assertFalse(bob.runnable)
 
 class TestBossComponents(unittest.TestCase):
     """
