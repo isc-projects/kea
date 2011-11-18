@@ -1,3 +1,10 @@
+322.	[func]		jinmei
+	datasrc: Added C++ API for retrieving difference of two versions
+	of a zone.  A new ZoneJournalReader class was introduced for this
+	purpose, and a corresponding factory method was added to
+	DataSourceClient.
+	(Trac #1332, git c1138d13b2692fa3a4f2ae1454052c866d24e654)
+
 321.	[func]*		jinmei
 	b10-xfrin now installs IXFR differences into the underlying data
 	source (if it supports journaling) so that the stored differences
