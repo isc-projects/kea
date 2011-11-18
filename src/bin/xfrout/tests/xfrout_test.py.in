@@ -36,6 +36,8 @@ TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 TEST_ZONE_NAME_STR = "example.com."
 TEST_ZONE_NAME = Name(TEST_ZONE_NAME_STR)
 TEST_RRCLASS = RRClass.IN()
+IXFR_OK_VERSION = 2011111802
+IXFR_NG_VERSION = 2011112800
 
 # SOA intended to be used for the new SOA as a result of transfer.
 soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
@@ -83,6 +85,15 @@ class MockDataSrcClient:
     def __init__(self, type, config):
         pass
 
+    def __create_soa(self):
+        soa_rrset = RRset(self._zone_name, RRClass.IN(), RRType.SOA(),
+                          RRTTL(3600))
+        soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                                  'master.example.com. ' +
+                                  'admin.example.com. 1234 ' +
+                                  '3600 1800 2419200 7200'))
+        return soa_rrset
+
     def find_zone(self, zone_name):
         '''Mock version of find_zone().
 
@@ -91,9 +102,10 @@ class MockDataSrcClient:
         or PARTIALMATCH.
 
         '''
-        if zone_name == TEST_ZONE_NAME:
-            return (isc.datasrc.DataSourceClient.SUCCESS, self)
-        raise ValueError('Unexpected input to mock client: bug in test case?')
+        self._zone_name = zone_name
+        if zone_name == Name('notauth.example.com'):
+            return (isc.datasrc.DataSourceClient.NOTFOUND, None)
+        return (isc.datasrc.DataSourceClient.SUCCESS, self)
 
     def find(self, name, rrtype, target, options):
         '''Mock ZoneFinder.find().
@@ -104,6 +116,12 @@ class MockDataSrcClient:
 
         '''
         if name == TEST_ZONE_NAME and rrtype == RRType.SOA():
+            return (ZoneFinder.SUCCESS, self.__create_soa())
+        elif name == Name('nosoa.example.com') and rrtype == RRType.SOA():
+            return (ZoneFinder.NXDOMAIN, None)
+        elif name == Name('multisoa.example.com') and rrtype == RRType.SOA():
+            soa_rrset = self.__create_soa()
+            soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
             return (ZoneFinder.SUCCESS, soa_rrset)
         raise ValueError('Unexpected input to mock finder: bug in test case?')
 
@@ -116,20 +134,14 @@ class MockDataSrcClient:
     def get_soa(self):  # emulate ZoneIterator.get_soa()
         if self._zone_name == Name('nosoa.example.com'):
             return None
-        soa_rrset = RRset(self._zone_name, RRClass.IN(), RRType.SOA(),
-                          RRTTL(3600))
-        soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                  'master.example.com. ' +
-                                  'admin.example.com. 1234 ' +
-                                  '3600 1800 2419200 7200'))
+        soa_rrset = self.__create_soa()
         if self._zone_name == Name('multisoa.example.com'):
-            soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                      'master.example.com. ' +
-                                      'admin.example.com. 1300 ' +
-                                      '3600 1800 2419200 7200'))
+            soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
         return soa_rrset
 
     def get_journal_reader(self, zone_name, begin_serial, end_serial):
+        if begin_serial == IXFR_NG_VERSION:
+            return isc.datasrc.ZoneJournalReader.NO_SUCH_VERSION, self
         return isc.datasrc.ZoneJournalReader.SUCCESS, self
 
 class MyCCSession(isc.config.ConfigData):
@@ -663,8 +675,12 @@ class TestXfroutSession(TestXfroutSessionBase):
 
     def test_check_xfrout_axfr_available(self):
         self.xfrsess.ClientClass = MockDataSrcClient
+        # Successful case.  A zone iterator should be set up.
         self.assertEqual(self.xfrsess._check_xfrout_available(
                 self.getmsg(), Name('example.com')), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._iterator)
+
+        # Failure cases
         self.assertEqual(self.xfrsess._check_xfrout_available(
                 self.getmsg(), Name('notauth.example.com')), Rcode.NOTAUTH())
         self.assertEqual(self.xfrsess._check_xfrout_available(
@@ -675,10 +691,29 @@ class TestXfroutSession(TestXfroutSessionBase):
     def test_check_xfrout_ixfr_available(self):
         self.xfrsess.ClientClass = MockDataSrcClient
         self.set_request_type(RRType.IXFR())
-        self.mdata = self.create_request_data(ixfr=2011111802)
-        request_msg = self.getmsg()
+
+        # Successful case of pure IXFR.  A zone journal reader should be set
+        # up.
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION)
         self.assertEqual(self.xfrsess._check_xfrout_available(
-                self.getmsg(), Name('example.com')), Rcode.NOERROR())
+                self.getmsg(), TEST_ZONE_NAME), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._jnl_reader)
+
+        # Successful case, but as a result of falling back to AXFR-style
+        # IXFR.  A zone iterator should be set up instead of a journal reader.
+        self.mdata = self.create_request_data(ixfr=IXFR_NG_VERSION)
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                self.getmsg(), TEST_ZONE_NAME), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._iterator)
+        self.assertEqual(None, self.xfrsess._jnl_reader)
+
+        # Failure cases
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                self.getmsg(), Name('notauth.example.com')), Rcode.NOTAUTH())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                self.getmsg(), Name('nosoa.example.com')), Rcode.SERVFAIL())
+        self.assertEqual(self.xfrsess._check_xfrout_available(
+                self.getmsg(), Name('multisoa.example.com')), Rcode.SERVFAIL())
 
     def test_dns_xfrout_start_formerror(self):
         # formerror

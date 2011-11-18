@@ -22,7 +22,7 @@ import isc.cc
 import threading
 import struct
 import signal
-from isc.datasrc import DataSourceClient, ZoneFinder
+from isc.datasrc import DataSourceClient, ZoneFinder, ZoneJournalReader
 from socketserver import *
 import os
 from isc.config.ccsession import *
@@ -237,8 +237,8 @@ class XfroutSession():
         elif self._request_type == RRType.IXFR():
             self._request_typestr = 'IXFR'
         else:
-            # Likewise, this should be impossible.
-            raise Runtimeerror('Unexpected XFR type: ' + \
+            # Likewise, this should be impossible.  (TBD: to be tested)
+            raise RuntimeError('Unexpected XFR type: ' + \
                                    str(self._request_type))
 
         # ACL checks
@@ -314,19 +314,82 @@ class XfroutSession():
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
     def _get_zone_soa(self, zone_name):
+        '''Retrieve the SOA RR of the given zone.
+
+        It returns a pair of RCODE and the SOA (in the form of RRset).
+        On success RCODE is NOERROR and returned SOA is not None;
+        on failure RCODE indicates the appropriate code in the context of
+        xfr processing, and the returned SOA is None.
+
+        '''
         result, finder = self._datasrc_client.find_zone(zone_name)
         if result != DataSourceClient.SUCCESS:
-            return None         # XXX
-        result, soa_rrset = finder.find(zone_name, RRType.SOA(),
-                                        None, ZoneFinder.FIND_DEFAULT)
+            return (Rcode.NOTAUTH(), None)
+        result, soa_rrset = finder.find(zone_name, RRType.SOA(), None,
+                                        ZoneFinder.FIND_DEFAULT)
         if result != ZoneFinder.SUCCESS:
-            return None
+            return (Rcode.SERVFAIL(), None)
         # Especially for database-based zones, a working zone may be in
         # a broken state where it has more than one SOA RR.  We proactively
         # check the condition and abort the xfr attempt if we identify it.
         if soa_rrset.get_rdata_count() != 1:
-            return None
-        return soa_rrset
+            return (Rcode.SERVFAIL(), None)
+        return (Rcode.NOERROR(), soa_rrset)
+
+    def __setup_axfr(self, zone_name):
+        '''Setup a zone iterator for AXFR or AXFR-style IXFR.
+
+        '''
+        try:
+            # Note that we disable 'adjust_ttl'.  In xfr-out we need to
+            # preserve as many things as possible (even if it's half
+            # broken) stored in the zone.
+            self._iterator = self._datasrc_client.get_iterator(zone_name,
+                                                               False)
+        except isc.datasrc.Error:
+            # If the current name server does not have authority for the
+            # zone, xfrout can't serve for it, return rcode NOTAUTH.
+            # Note: this exception can happen for other reasons.  We should
+            # update get_iterator() API so that we can distinguish "no such
+            # zone" and other cases (#1373).  For now we consider all these
+            # cases as NOTAUTH.
+            return Rcode.NOTAUTH()
+
+        # If we are an authoritative name server for the zone, but fail
+        # to find the zone's SOA record in datasource, xfrout can't
+        # provide zone transfer for it.
+        self._soa = self._iterator.get_soa()
+        if self._soa is None or self._soa.get_rdata_count() != 1:
+            return Rcode.SERVFAIL()
+
+        return Rcode.NOERROR()
+
+    def __setup_ixfr(self, request_msg, zone_name):
+        '''Setup a zone journal reader for IXFR.
+
+        If the underlying data source does not know the requested range
+        of zone differences it automatically falls back to AXFR-style
+        IXFR by setting up a zone iterator instead of a journal reader.
+
+        '''
+        # TODO: more error case handling
+        remote_soa = None
+        for auth_rrset in request_msg.get_section(Message.SECTION_AUTHORITY):
+            if auth_rrset.get_type() != RRType.SOA():
+                continue
+            remote_soa = auth_rrset
+        rcode, self._soa = self._get_zone_soa(zone_name)
+        if rcode != Rcode.NOERROR():
+            return rcode
+        code, self._jnl_reader = self._datasrc_client.get_journal_reader(
+            remote_soa.get_name(), get_soa_serial(remote_soa.get_rdata()[0]),
+            get_soa_serial(self._soa.get_rdata()[0]))
+        if code == ZoneJournalReader.NO_SUCH_VERSION:
+            # fallback to AXFR-style IXFR
+            self._jnl_reader = None # clear it just in case
+            return self.__setup_axfr(zone_name)
+
+        return Rcode.NOERROR()
 
     def _check_xfrout_available(self, request_msg, zone_name):
         '''Check if xfr request can be responsed.
@@ -340,51 +403,16 @@ class XfroutSession():
         # We should eventually generalize this so that we can choose the
         # appropriate data source from (possible) multiple candidates.
         # We should eventually take into account the RR class here.
-        # For now, we  hardcode a particular type (SQLite3-based), and only
+        # For now, we hardcode a particular type (SQLite3-based), and only
         # consider that one.
         datasrc_config = '{ "database_file": "' + \
             self._server.get_db_file() + '"}'
         self._datasrc_client = self.ClientClass('sqlite3', datasrc_config)
 
         if self._request_type == RRType.AXFR():
-            try:
-                # Note that we disable 'adjust_ttl'.  In xfr-out we need to
-                # preserve as many things as possible (even if it's half
-                # broken) stored in the zone.
-                self._iterator = self._datasrc_client.get_iterator(zone_name,
-                                                                   False)
-            except isc.datasrc.Error:
-                # If the current name server does not have authority for the
-                # zone, xfrout can't serve for it, return rcode NOTAUTH.
-                # Note: this exception can happen for other reasons.  We should
-                # update get_iterator() API so that we can distinguish "no such
-                # zone" and other cases (#1373).  For now we consider all these
-                # cases as NOTAUTH.
-                return Rcode.NOTAUTH()
-
-            self._soa = self._iterator.get_soa()
+            return self.__setup_axfr(zone_name)
         else:
-            # TODO: error case handling
-            remote_soa = None
-            for auth_rrset in \
-                    request_msg.get_section(Message.SECTION_AUTHORITY):
-                if auth_rrset.get_type() != RRType.SOA():
-                    continue
-                remote_soa = auth_rrset
-            self._soa = self._get_zone_soa(remote_soa.get_name())
-            code, self._jnl_reader = self._datasrc_client.get_journal_reader(
-                remote_soa.get_name(),
-                get_soa_serial(remote_soa.get_rdata()[0]),
-                get_soa_serial(self._soa.get_rdata()[0]))
-
-        # If we are an authoritative name server for the zone, but fail
-        # to find the zone's SOA record in datasource, xfrout can't
-        # provide zone transfer for it.
-        if self._soa is None or self._soa.get_rdata_count() != 1:
-            return Rcode.SERVFAIL()
-
-        return Rcode.NOERROR()
-
+            return self.__setup_ixfr(request_msg, zone_name)
 
     def dns_xfrout_start(self, sock_fd, msg_query, quota_ok=True):
         rcode_, msg = self._parse_query_message(msg_query)
@@ -457,7 +485,6 @@ class XfroutSession():
         # If tsig context exist, sign the last packet
         msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         self._send_message(sock_fd, msg, self._tsig_ctx)
-
 
     def _reply_xfrout_query(self, msg, sock_fd):
         #TODO, there should be a better way to insert rrset.
