@@ -1,3 +1,11 @@
+321.	[func]*		jinmei
+	b10-xfrin now installs IXFR differences into the underlying data
+	source (if it supports journaling) so that the stored differences
+	can be used for subsequent IXFR-out transactions.
+	Note: this is a backward incompatibility change for older sqlite3
+	database files.  They need to be upgraded to have a "diffs" table.
+	(Trac #1376, git 1219d81b49e51adece77dc57b5902fa1c6be1407)
+
 320.	[func]*		vorner
 	The --brittle switch was removed from the bind10 executable. It didn't
 	work after the #213 change and the same effect can be accomplished by
