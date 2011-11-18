@@ -779,6 +779,10 @@ class JournalRead(unittest.TestCase):
         self.assertRaises(TypeError, self.dsc.get_journal_reader,
                           self.zname, 0, 'must be int')
 
+    def test_journal_reader_direct_construct(self):
+        # ZoneJournalReader can only be constructed via a factory
+        self.assertRaises(TypeError, ZoneJournalReader)
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
