@@ -470,34 +470,28 @@ class TestXfroutSession(TestXfroutSessionBase):
         msg = self.getmsg()
         msg.make_response()
 
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 packet_neet_not_sign)
+                                                 self.soa_rrset, 0)
         get_msg = self.sock.read_msg()
-        # tsig context is not exist
+        # tsig context does not exist
         self.assertFalse(self.message_has_tsig(get_msg))
 
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
 
-        #answer_rrset_iter = section_iter(get_msg, section.ANSWER())
-        answer = get_msg.get_section(Message.SECTION_ANSWER)[0]#answer_rrset_iter.get_rrset()
+        answer = get_msg.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(answer.get_name().to_text(), "example.com.")
         self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "SOA")
         rdata = answer.get_rdata()
         self.assertEqual(rdata[0], self.soa_rrset.get_rdata()[0])
 
-        # msg is the TSIG_SIGN_EVERY_NTH one
-        # sending the message with last soa together
+        # Sending the message with last soa together
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 TSIG_SIGN_EVERY_NTH)
+                                                 self.soa_rrset, 0)
         get_msg = self.sock.read_msg()
-        # tsig context is not exist
+        # tsig context does not exist
         self.assertFalse(self.message_has_tsig(get_msg))
 
     def test_send_message_with_last_soa_with_tsig(self):
@@ -507,27 +501,15 @@ class TestXfroutSession(TestXfroutSessionBase):
         msg = self.getmsg()
         msg.make_response()
 
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
-        # msg is not the TSIG_SIGN_EVERY_NTH one
-        # sending the message with last soa together
+        # Sending the message with last soa together
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 packet_neet_not_sign)
+                                                 self.soa_rrset, 0)
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
 
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
-
-        # msg is the TSIG_SIGN_EVERY_NTH one
-        # sending the message with last soa together
-        self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 TSIG_SIGN_EVERY_NTH)
-        get_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(get_msg))
 
     def test_trigger_send_message_with_last_soa(self):
         rrset_a = RRset(Name("example.com"), RRClass.IN(), RRType.A(), RRTTL(3600))
@@ -540,8 +522,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         # length larger than MAX-len(rrset)
         length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - \
             get_rrset_len(self.soa_rrset) + 1
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
 
         # give the function a value that is larger than MAX-len(rrset)
         # this should have triggered the sending of two messages
@@ -549,8 +529,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         # the sending in _with_last_soa)
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
                                                  self.soa_rrset,
-                                                 length_need_split,
-                                                 packet_neet_not_sign)
+                                                 length_need_split)
         get_msg = self.sock.read_msg()
         self.assertFalse(self.message_has_tsig(get_msg))
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
@@ -570,7 +549,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
 
-        #answer_rrset_iter = section_iter(get_msg, Message.SECTION_ANSWER)
         answer = get_msg.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(answer.get_name().to_text(), "example.com.")
         self.assertEqual(answer.get_class(), RRClass("IN"))
@@ -590,8 +568,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         # length larger than MAX-len(rrset)
         length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - \
             get_rrset_len(self.soa_rrset) + 1
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
 
         # give the function a value that is larger than MAX-len(rrset)
         # this should have triggered the sending of two messages
@@ -599,26 +575,10 @@ class TestXfroutSession(TestXfroutSessionBase):
         # the sending in _with_last_soa)
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
                                                  self.soa_rrset,
-                                                 length_need_split,
-                                                 packet_neet_not_sign)
-        get_msg = self.sock.read_msg()
-        # msg is not the TSIG_SIGN_EVERY_NTH one, it shouldn't be tsig signed
-        self.assertFalse(self.message_has_tsig(get_msg))
-        # the last packet should be tsig signed
+                                                 length_need_split)
+        # Both messages should have TSIG RRs
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
-        # and it should not have sent anything else
-        self.assertEqual(0, len(self.sock.sendqueue))
-
-
-        # msg is the TSIG_SIGN_EVERY_NTH one, it should be tsig signed
-        self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset,
-                                                 length_need_split,
-                                                 xfrout.TSIG_SIGN_EVERY_NTH)
-        get_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(get_msg))
-        # the last packet should be tsig signed
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
         # and it should not have sent anything else
@@ -697,28 +657,17 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
         self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
 
-        # tsig signed first package
-        reply_msg = self.sock.read_msg()
-        self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 1)
-        self.assertTrue(self.message_has_tsig(reply_msg))
-        # (TSIG_SIGN_EVERY_NTH - 1) packets have no tsig
-        for i in range(0, xfrout.TSIG_SIGN_EVERY_NTH - 1):
+        # All messages must have TSIG as we don't support the feature of
+        # skipping intermediate TSIG records (with bulk signing).
+        for i in range(0, 102): # 102 = all 100 RRs from iterator and 2 SOAs
             reply_msg = self.sock.read_msg()
-            self.assertFalse(self.message_has_tsig(reply_msg))
-        # TSIG_SIGN_EVERY_NTH packet has tsig
-        reply_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(reply_msg))
-
-        for i in range(0, 100 - TSIG_SIGN_EVERY_NTH):
-            reply_msg = self.sock.read_msg()
-            self.assertFalse(self.message_has_tsig(reply_msg))
-        # tsig signed last package
-        reply_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(reply_msg))
+            # With the hack of get_rrset_len() above, every message must have
+            # exactly one RR in the answer section.
+            self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 1)
+            self.assertTrue(self.message_has_tsig(reply_msg))
 
         # and it should not have sent anything else
         self.assertEqual(0, len(self.sock.sendqueue))
-
 
 class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
     '''Tests for XFR-out sessions using an SQLite3 DB.
