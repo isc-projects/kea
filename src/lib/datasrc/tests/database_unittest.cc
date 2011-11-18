@@ -3050,8 +3050,8 @@ TEST_F(MockDatabaseClientTest, journalBadSequence) {
         // So far OK
         EXPECT_NO_THROW(this->updater_->deleteRRset(*this->soa_));
         // Commit at the wrong time
-        EXPECT_THROW(this->updater_->commit(), isc::Unexpected);
-        this->checkJournal(expected);
+        EXPECT_THROW(updater_->commit(), isc::BadValue);
+        current_accessor_->checkJournal(expected);
     }
 
     {
