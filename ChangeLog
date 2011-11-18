@@ -1,7 +1,15 @@
+321.	[func]*		jinmei
+	b10-xfrin now installs IXFR differences into the underlying data
+	source (if it supports journaling) so that the stored differences
+	can be used for subsequent IXFR-out transactions.
+	Note: this is a backward incompatibility change for older sqlite3
+	database files.  They need to be upgraded to have a "diffs" table.
+	(Trac #1376, git 1219d81b49e51adece77dc57b5902fa1c6be1407)
+
 320.	[func]*		vorner
-	The --brittle switch was removed from the bind10 executable. It didn't
-	work after the #213 change and the same effect can be accomplished by
-	declaring all components as core.
+	The --brittle switch was removed from the bind10 executable.
+	It didn't work after change #316 (Trac #213) and the same
+	effect can be accomplished by declaring all components as core.
 	(Trac #1340, git f9224368908dd7ba16875b0d36329cf1161193f0)
 
 319.	[func]		naokikambe
@@ -15,12 +23,12 @@
 	only for the XML documents but also is for the XSD and XSL documents.
 	(Trac #917, git b34bf286c064d44746ec0b79e38a6177d01e6956)
 
-318.    [func]      stephen
+318.    [func]		stephen
 	Add C++ API for accessing zone difference information in database-based
 	data sources.
 	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
 
-317.    [func]      vorner
+317.    [func]		vorner
 	datasrc: the getUpdater method of DataSourceClient supports an optional
 	'journaling' parameter to indicate the generated updater to store diffs.
 	The database based derived class implements this extension.

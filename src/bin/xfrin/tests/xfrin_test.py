@@ -14,8 +14,10 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
+import re
 import shutil
 import socket
+import sqlite3
 import sys
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
@@ -170,7 +172,8 @@ class MockDataSourceClient():
             return (ZoneFinder.SUCCESS, dup_soa_rrset)
         raise ValueError('Unexpected input to mock finder: bug in test case?')
 
-    def get_updater(self, zone_name, replace):
+    def get_updater(self, zone_name, replace, journaling=False):
+        self._journaling_enabled = journaling
         return self
 
     def add_rrset(self, rrset):
@@ -1132,6 +1135,7 @@ class TestAXFR(TestXfrinConnection):
     def test_do_xfrin(self):
         self.conn.response_generator = self._create_normal_response_data
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        self.assertFalse(self.conn._datasrc_client._journaling_enabled)
 
     def test_do_xfrin_with_tsig(self):
         # use TSIG with a mock context.  we fake all verify results to
@@ -1283,6 +1287,7 @@ class TestIXFRResponse(TestXfrinConnection):
             answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
         self.conn._handle_xfrin_responses()
         self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertTrue(self.conn._datasrc_client._journaling_enabled)
         self.assertEqual([], self.conn._datasrc_client.diffs)
         check_diffs(self.assertEqual,
                     [[('delete', begin_soa_rrset), ('add', soa_rrset)]],
@@ -1387,6 +1392,8 @@ class TestIXFRResponse(TestXfrinConnection):
             answers=[soa_rrset, ns_rr, a_rr, soa_rrset])
         self.conn._handle_xfrin_responses()
         self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        # In the case AXFR-style IXFR, journaling must have been disabled.
+        self.assertFalse(self.conn._datasrc_client._journaling_enabled)
         self.assertEqual([], self.conn._datasrc_client.diffs)
         # The SOA should be added exactly once, and in our implementation
         # it should be added at the end of the sequence.
@@ -1539,6 +1546,19 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         self.assertEqual(1230, self.get_zone_serial())
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
         self.assertEqual(1234, self.get_zone_serial())
+
+        # Also confirm the corresponding diffs are stored in the diffs table
+        conn = sqlite3.connect(self.sqlite3db_obj)
+        cur = conn.cursor()
+        cur.execute('SELECT name, rrtype, ttl, rdata FROM diffs ORDER BY id')
+        soa_rdata_base = 'master.example.com. admin.example.com. ' + \
+            'SERIAL 3600 1800 2419200 7200'
+        self.assertEqual(cur.fetchall(),
+                         [(TEST_ZONE_NAME_STR, 'SOA', 3600,
+                           re.sub('SERIAL', str(1230), soa_rdata_base)),
+                          (TEST_ZONE_NAME_STR, 'SOA', 3600,
+                           re.sub('SERIAL', str(1234), soa_rdata_base))])
+        conn.close()
 
     def test_do_ixfrin_sqlite3_fail(self):
         '''Similar to the previous test, but xfrin fails due to error.

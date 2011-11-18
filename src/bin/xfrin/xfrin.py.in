@@ -367,7 +367,10 @@ class XfrinIXFRDeleteSOA(XfrinState):
                                  ' RR is given in IXFRDeleteSOA state')
         # This is the beginning state of one difference sequence (changes
         # for one SOA update).  We need to create a new Diff object now.
-        conn._diff = Diff(conn._datasrc_client, conn._zone_name)
+        # Note also that we (unconditionally) enable journaling here.  The
+        # Diff constructor may internally disable it, however, if the
+        # underlying data source doesn't support journaling.
+        conn._diff = Diff(conn._datasrc_client, conn._zone_name, False, True)
         conn._diff.delete_data(rr)
         self.set_xfrstate(conn, XfrinIXFRDelete())
         return True

@@ -15,6 +15,7 @@
 
 import isc.log
 import unittest
+import isc.datasrc
 from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata
 from isc.xfrin.diff import Diff, NoSuchZone
 
@@ -127,7 +128,7 @@ class DiffTest(unittest.TestCase):
         """
         return self.__rrclass
 
-    def get_updater(self, zone_name, replace):
+    def get_updater(self, zone_name, replace, journaling=False):
         """
         This one pretends this is the data source client and serves
         getting an updater.
@@ -138,11 +139,20 @@ class DiffTest(unittest.TestCase):
         # The diff should not delete the old data.
         self.assertEqual(self.__should_replace, replace)
         self.__updater_requested = True
-        # Pretend this zone doesn't exist
         if zone_name == Name('none.example.org.'):
+            # Pretend this zone doesn't exist
             return None
+
+        # If journaling is enabled, record the fact; for a special zone
+        # pretend that we don't support journaling.
+        if journaling:
+            if zone_name == Name('nodiff.example.org'):
+                raise isc.datasrc.NotImplemented('journaling not supported')
+            self.__journaling_enabled = True
         else:
-            return self
+            self.__journaling_enabled = False
+
+        return self
 
     def test_create(self):
         """
@@ -152,6 +162,8 @@ class DiffTest(unittest.TestCase):
         diff = Diff(self, Name('example.org.'))
         self.assertTrue(self.__updater_requested)
         self.assertEqual([], diff.get_buffer())
+        # By default journaling is disabled
+        self.assertFalse(self.__journaling_enabled)
 
     def test_create_nonexist(self):
         """
@@ -160,6 +172,14 @@ class DiffTest(unittest.TestCase):
         """
         self.assertRaises(NoSuchZone, Diff, self, Name('none.example.org.'))
         self.assertTrue(self.__updater_requested)
+
+    def test_create_withjournal(self):
+        Diff(self, Name('example.org'), False, True)
+        self.assertTrue(self.__journaling_enabled)
+
+    def test_create_nojournal(self):
+        Diff(self, Name('nodiff.example.org'), False, True)
+        self.assertFalse(self.__journaling_enabled)
 
     def __data_common(self, diff, method, operation):
         """
