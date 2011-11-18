@@ -884,7 +884,7 @@ Debian and Ubuntu:
         to start the <command>b10-auth</command> or <command>b10-resolver</command>
         as root (until the socket creator is finished). So we need to specify
         the time when the switch from root do the given user happens and that's
-        whath the setuid component is for. The switch is done at the time the
+        what the setuid component is for. The switch is done at the time the
         setuid component would be started, if it was a process. The default
         configuration contains the setuid component with priority 5, b10-auth
         has 10 to be started before the switch and everything else is without
