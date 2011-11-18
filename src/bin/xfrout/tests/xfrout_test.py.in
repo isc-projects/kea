@@ -159,15 +159,27 @@ class TestXfroutSessionBase(unittest.TestCase):
     def message_has_tsig(self, msg):
         return msg.get_tsig_record() is not None
 
-    def create_request_data(self, with_question=True, with_tsig=False):
+    def create_request_data(self, with_question=True, with_tsig=False,
+                            ixfr=False, with_soa=False):
         msg = Message(Message.RENDER)
         query_id = 0x1035
         msg.set_qid(query_id)
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
         if with_question:
-            msg.add_question(Question(Name("example.com"), RRClass.IN(),
-                                      RRType.AXFR()))
+            if ixfr:
+                msg.add_question(Question(Name("example.com"), RRClass.IN(),
+                                          RRType.IXFR()))
+            else:
+                msg.add_question(Question(Name("example.com"), RRClass.IN(),
+                                          RRType.AXFR()))
+
+        if with_soa:
+            soa_rrset = RRset(Name('example.com'), RRClass.IN(), RRType.SOA(),
+                              RRTTL(0))
+            soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(), 
+                                '. . 1 0 0 0 0'))
+            msg.add_rrset(Message.SECTION_AUTHORITY, soa_rrset)
 
         renderer = MessageRenderer()
         if with_tsig:
@@ -248,6 +260,16 @@ class TestXfroutSession(TestXfroutSessionBase):
         request_data = self.create_request_data(with_question=False)
         rcode, msg = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(Rcode.FORMERR(), rcode)
+        
+        # Broken request: IXFR without SOA
+        request_data = self.create_request_data(ixfr=True)
+        rcode, msg = self.xfrsess._parse_query_message(request_data)
+        self.assertEqual(Rcode.FORMERR(), rcode)
+        
+        # NOERROR
+        request_data = self.create_request_data(ixfr=True, with_soa=True)
+        rcode, msg = self.xfrsess._parse_query_message(request_data)
+        self.assertEqual(rcode.to_text(), "NOERROR")
 
         # tsig signed query message
         request_data = self.create_request_data(with_tsig=True)

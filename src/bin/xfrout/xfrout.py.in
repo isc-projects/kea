@@ -224,6 +224,22 @@ class XfroutSession():
         # the auth server, but since it's far from our xfrout itself,
         # we check it by ourselves.
         if msg.get_rr_count(Message.SECTION_QUESTION) != 1:
+            # TODO: Log?
+            return Rcode.FORMERR(), msg
+
+        request_type = msg.get_question()[0].get_type()
+
+        # If it is an IXFR query, there should be a SOA in the authority
+        # section too
+        if request_type == RRType.IXFR():
+            if msg.get_rr_count(Message.SECTION_AUTHORITY) != 1:
+                # TODO: Log?
+                return Rcode.FORMERR(), msg
+            self._request_type = 'IXFR'
+        elif request_type == RRType.AXFR():
+            self._request_type = 'AXFR'
+        else:
+            # TODO: Log?
             return Rcode.FORMERR(), msg
 
         # ACL checks
@@ -370,19 +386,19 @@ class XfroutSession():
                          format_addrinfo(self._remote), zone_str, ex)
             rcode_ = Rcode.SERVFAIL()
         if rcode_ != Rcode.NOERROR():
-            logger.info(XFROUT_AXFR_TRANSFER_FAILED, self._request_type,
+            logger.info(XFROUT_XFR_TRANSFER_FAILED, self._request_type,
                         format_addrinfo(self._remote), zone_str, rcode_)
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
-            logger.info(XFROUT_AXFR_TRANSFER_STARTED, self._request_type,
+            logger.info(XFROUT_XFR_TRANSFER_STARTED, self._request_type,
                         format_addrinfo(self._remote), zone_str)
             self._reply_xfrout_query(msg, sock_fd)
         except Exception as err:
-            logger.error(XFROUT_AXFR_TRANSFER_ERROR, self._request_type,
+            logger.error(XFROUT_XFR_TRANSFER_ERROR, self._request_type,
                     format_addrinfo(self._remote), zone_str, err)
             pass
-        logger.info(XFROUT_AXFR_TRANSFER_DONE, self._request_type,
+        logger.info(XFROUT_XFR_TRANSFER_DONE, self._request_type,
                     format_addrinfo(self._remote), zone_str)
 
     def _clear_message(self, msg):
