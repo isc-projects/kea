@@ -239,10 +239,6 @@ class BoB:
         """
         self.cc_session = None
         self.ccs = None
-        self.cfg_start_auth = True
-        self.cfg_start_resolver = False
-        self.cfg_start_dhcp6 = False
-        self.cfg_start_dhcp4 = False
         self.curproc = None
         # XXX: Not used now, waits for reintroduction of restarts.
         self.dead_processes = {}
