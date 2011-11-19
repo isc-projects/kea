@@ -143,6 +143,8 @@ class MockDataSrcClient:
     def get_journal_reader(self, zone_name, begin_serial, end_serial):
         if zone_name == Name('notauth2.example.com'):
             return isc.datasrc.ZoneJournalReader.NO_SUCH_ZONE, None
+        if zone_name == Name('nojournal.example.com'):
+            raise isc.datasrc.NotImplemented('journaling not supported')
         if begin_serial == IXFR_NG_VERSION:
             return isc.datasrc.ZoneJournalReader.NO_SUCH_VERSION, None
         return isc.datasrc.ZoneJournalReader.SUCCESS, self
@@ -709,6 +711,11 @@ class TestXfroutSession(TestXfroutSessionBase):
                 self.getmsg(), TEST_ZONE_NAME), Rcode.NOERROR())
         self.assertNotEqual(None, self.xfrsess._iterator)
         self.assertEqual(None, self.xfrsess._jnl_reader)
+
+        # The data source doesn't support journaling.  Should fallback to AXFR.
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), Name('nojournal.example.com')), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._iterator)
 
         # Failure cases
         self.assertEqual(self.xfrsess._xfrout_setup(
