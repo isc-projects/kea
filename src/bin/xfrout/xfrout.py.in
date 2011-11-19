@@ -381,11 +381,18 @@ class XfroutSession():
         rcode, self._soa = self._get_zone_soa(zone_name)
         if rcode != Rcode.NOERROR():
             return rcode
-        code, self._jnl_reader = self._datasrc_client.get_journal_reader(
-            zone_name, get_soa_serial(remote_soa.get_rdata()[0]),
-            get_soa_serial(self._soa.get_rdata()[0]))
+        try:
+            code, self._jnl_reader = self._datasrc_client.get_journal_reader(
+                zone_name, get_soa_serial(remote_soa.get_rdata()[0]),
+                get_soa_serial(self._soa.get_rdata()[0]))
+        except isc.datasrc.NotImplemented as ex:
+            # The underlying data source doesn't support journaling.
+            # Fallback to AXFR-style IXFR.
+            # TBD: log it.
+            return self.__setup_axfr(zone_name)
         if code == ZoneJournalReader.NO_SUCH_VERSION:
             # fallback to AXFR-style IXFR
+            # TBD: log it.
             return self.__setup_axfr(zone_name)
         if code == ZoneJournalReader.NO_SUCH_ZONE:
             # this is quite unexpected as we know zone's SOA exists.
