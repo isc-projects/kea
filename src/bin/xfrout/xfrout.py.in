@@ -375,9 +375,14 @@ class XfroutSession():
         # TODO: more error case handling
         remote_soa = None
         for auth_rrset in request_msg.get_section(Message.SECTION_AUTHORITY):
+            if auth_rrset.get_name() != zone_name:
+                continue
             if auth_rrset.get_type() != RRType.SOA():
                 continue
             remote_soa = auth_rrset
+        if remote_soa is None:
+            # TBD: log it.
+            return Rcode.FORMERR()
         rcode, self._soa = self._get_zone_soa(zone_name)
         if rcode != Rcode.NOERROR():
             return rcode
