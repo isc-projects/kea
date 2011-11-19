@@ -406,7 +406,6 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // hardcoded specific cases, ignoring other details such as canceling
     // due to the existence of closer name.
     if ((options & NO_WILDCARD) == 0) {
-        //const Name wild_suffix("wild.example.com");
 		const Name wild_suffix(name.split(1));
 		if (name.equals(Name("www.wild.example.com"))||
 		   name.equals(Name("www1.uwild.example.com"))) {
