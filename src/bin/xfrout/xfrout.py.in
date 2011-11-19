@@ -372,7 +372,6 @@ class XfroutSession():
         IXFR by setting up a zone iterator instead of a journal reader.
 
         '''
-        # TODO: more error case handling
         # Check the authority section.  Look for a SOA record with
         # the same name and class as the question.
         remote_soa = None
@@ -383,6 +382,9 @@ class XfroutSession():
                     auth_rrset.get_type() != RRType.SOA() or \
                     auth_rrset.get_class() != zone_class:
                 continue
+            if auth_rrset.get_rdata_count() != 1:
+                # TBD: log it.
+                return Rcode.FORMERR()
             remote_soa = auth_rrset
         if remote_soa is None:
             # TBD: log it.
