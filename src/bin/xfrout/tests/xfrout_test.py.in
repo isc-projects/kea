@@ -42,7 +42,7 @@ IXFR_NG_VERSION = 2011112800
 # SOA intended to be used for the new SOA as a result of transfer.
 soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
                   'master.example.com. admin.example.com ' +
-                  '1234 3600 1800 2419200 7200')
+                  '2011112001 3600 1800 2419200 7200')
 soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(), RRTTL(3600))
 soa_rrset.add_rdata(soa_rdata)
 
@@ -88,10 +88,7 @@ class MockDataSrcClient:
     def __create_soa(self):
         soa_rrset = RRset(self._zone_name, RRClass.IN(), RRType.SOA(),
                           RRTTL(3600))
-        soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                  'master.example.com. ' +
-                                  'admin.example.com. 1234 ' +
-                                  '3600 1800 2419200 7200'))
+        soa_rrset.add_rdata(soa_rdata)
         return soa_rrset
 
     def find_zone(self, zone_name):
@@ -284,12 +281,9 @@ class TestXfroutSessionBase(unittest.TestCase):
                                        {})
         self.set_request_type(RRType.AXFR()) # test AXFR by default
         self.mdata = self.create_request_data()
-        self.soa_rrset = RRset(Name('example.com'), RRClass.IN(), RRType.SOA(),
+        self.soa_rrset = RRset(TEST_ZONE_NAME, RRClass.IN(), RRType.SOA(),
                                RRTTL(3600))
-        self.soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                       'master.Example.com. ' +
-                                       'admin.exAmple.com. ' +
-                                       '1234 3600 1800 2419200 7200'))
+        self.soa_rrset.add_rdata(soa_rdata)
         # some test replaces a module-wide function.  We should ensure the
         # original is used elsewhere.
         self.orig_get_rrset_len = xfrout.get_rrset_len
@@ -542,7 +536,7 @@ class TestXfroutSession(TestXfroutSessionBase):
                                RRTTL(3600))
         soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
                                   'master.Example.com. admin.exAmple.com. ' +
-                                  '1234 3600 1800 2419200 7200'))
+                                  '2011112001 3600 1800 2419200 7200'))
         msg.add_rrset(Message.SECTION_ANSWER, soa_rrset)
         self.xfrsess._send_message(self.sock, msg)
         send_out_data = self.sock.readsent()[2:]
