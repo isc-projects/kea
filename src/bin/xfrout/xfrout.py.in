@@ -391,6 +391,7 @@ class XfroutSession():
             logger.info(XFROUT_IXFR_NO_SOA, format_addrinfo(self._remote))
             return Rcode.FORMERR()
 
+        # Retrieve the local SOA
         rcode, self._soa = self._get_zone_soa(zone_name)
         if rcode != Rcode.NOERROR():
             return rcode
