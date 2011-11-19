@@ -364,7 +364,7 @@ class XfroutSession():
 
         return Rcode.NOERROR()
 
-    def __ixfr_setup(self, request_msg, zone_name):
+    def __ixfr_setup(self, request_msg, zone_name, zone_class):
         '''Setup a zone journal reader for IXFR.
 
         If the underlying data source does not know the requested range
@@ -373,16 +373,21 @@ class XfroutSession():
 
         '''
         # TODO: more error case handling
+        # Check the authority section.  Look for a SOA record with
+        # the same name and class as the question.
         remote_soa = None
         for auth_rrset in request_msg.get_section(Message.SECTION_AUTHORITY):
-            if auth_rrset.get_name() != zone_name:
-                continue
-            if auth_rrset.get_type() != RRType.SOA():
+            # Ignore data whose owner name is not the zone apex, and
+            # ignore non-SOA or different class of records.
+            if auth_rrset.get_name() != zone_name or \
+                    auth_rrset.get_type() != RRType.SOA() or \
+                    auth_rrset.get_class() != zone_class:
                 continue
             remote_soa = auth_rrset
         if remote_soa is None:
             # TBD: log it.
             return Rcode.FORMERR()
+
         rcode, self._soa = self._get_zone_soa(zone_name)
         if rcode != Rcode.NOERROR():
             return rcode
@@ -408,7 +413,7 @@ class XfroutSession():
 
         return Rcode.NOERROR()
 
-    def _xfrout_setup(self, request_msg, zone_name):
+    def _xfrout_setup(self, request_msg, zone_name, zone_class):
         '''Setup a context for xfr responses according to the request type.
 
         This method identifies the most appropriate data source for the
@@ -432,7 +437,7 @@ class XfroutSession():
         if self._request_type == RRType.AXFR():
             return self.__axfr_setup(zone_name)
         else:
-            return self.__ixfr_setup(request_msg, zone_name)
+            return self.__ixfr_setup(request_msg, zone_name, zone_class)
 
     def dns_xfrout_start(self, sock_fd, msg_query, quota_ok=True):
         rcode_, msg = self._parse_query_message(msg_query)
@@ -456,9 +461,8 @@ class XfroutSession():
         zone_class = question.get_class()
         zone_str = format_zone_str(zone_name, zone_class) # for logging
 
-        # TODO: we should also include class in the check
         try:
-            rcode_ = self._xfrout_setup(msg, zone_name)
+            rcode_ = self._xfrout_setup(msg, zone_name, zone_class)
         except Exception as ex:
             logger.error(XFROUT_XFR_TRANSFER_CHECK_ERROR, self._request_typestr,
                          format_addrinfo(self._remote), zone_str, ex)
