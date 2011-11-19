@@ -187,13 +187,15 @@ Query::addWildcardProof(ZoneFinder& finder) {
 
 void
 Query::addWildcardNxrrsetProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
-    // The query name shouldn't exist in the zone if there were no wildcard
-    // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
-    // in NXDOMAIN and an NSEC RR that proves it should be returned.
+    // There should be one NSEC RR which was found in the zone to prove
+	// that there is not matched <QNAME,QTYPE> via wildcard expansion.
     if (nsec->getRdataCount() == 0) {
-	    isc_throw(BadNSEC, "NSEC for NXRRSET is empty");
+	    isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
 	    return;
 	}
+    // Add this NSEC RR to authority section.
+	response_.addRRset(Message::SECTION_AUTHORITY,
+                      boost::const_pointer_cast<RRset>(nsec), dnssec_);
 	
 	const ZoneFinder::FindResult fresult =
         finder.find(qname_, RRType::NSEC(), NULL,
@@ -204,19 +206,11 @@ Query::addWildcardNxrrsetProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
         return;
     }
    
-    if (nsec->getName() == fresult.rrset->getName()) {
-		// one NSEC RR proves wildcard_nxrrset and no matched QNAME.
+    if (nsec->getName() != fresult.rrset->getName()) {
+		// one NSEC RR proves wildcard_nxrrset that no matched QNAME.
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<RRset>(fresult.rrset),
                            dnssec_);
-    } else {
-    	// add NSEC RR that proves wildcard_nxrrset.
-		response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<RRset>(nsec), dnssec_);
-		// add NSEC RR that proves no matched QNAME.
-		response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<RRset>(fresult.rrset),
-                       dnssec_);
 	}
 }
 
