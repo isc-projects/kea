@@ -383,34 +383,41 @@ class XfroutSession():
                     auth_rrset.get_class() != zone_class:
                 continue
             if auth_rrset.get_rdata_count() != 1:
-                # TBD: log it.
+                logger.info(XFROUT_IXFR_MULTIPLE_SOA,
+                            format_addrinfo(self._remote))
                 return Rcode.FORMERR()
             remote_soa = auth_rrset
         if remote_soa is None:
-            # TBD: log it.
+            logger.info(XFROUT_IXFR_NO_SOA, format_addrinfo(self._remote))
             return Rcode.FORMERR()
 
         rcode, self._soa = self._get_zone_soa(zone_name)
         if rcode != Rcode.NOERROR():
             return rcode
         try:
+            begin_serial = get_soa_serial(remote_soa.get_rdata()[0])
+            end_serial = get_soa_serial(self._soa.get_rdata()[0])
             code, self._jnl_reader = self._datasrc_client.get_journal_reader(
-                zone_name, get_soa_serial(remote_soa.get_rdata()[0]),
-                get_soa_serial(self._soa.get_rdata()[0]))
+                zone_name, begin_serial, end_serial)
         except isc.datasrc.NotImplemented as ex:
             # The underlying data source doesn't support journaling.
-            # Fallback to AXFR-style IXFR.
-            # TBD: log it.
+            # Fall back to AXFR-style IXFR.
+            logger.info(XFROUT_IXFR_NO_JOURNAL_SUPPORT,
+                        format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class))
             return self.__axfr_setup(zone_name)
         if code == ZoneJournalReader.NO_SUCH_VERSION:
-            # fallback to AXFR-style IXFR
-            # TBD: log it.
+            logger.info(XFROUT_IXFR_NO_VERSION, format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class),
+                        begin_serial, end_serial)
             return self.__axfr_setup(zone_name)
         if code == ZoneJournalReader.NO_SUCH_ZONE:
             # this is quite unexpected as we know zone's SOA exists.
             # It might be a bug or the data source is somehow broken,
             # but it can still happen if someone has removed the zone
             # between these two operations.  We treat it as NOTAUTH.
+            logger.warn(XFROUT_IXFR_NO_ZONE, format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class))
             return Rcode.NOTAUTH()
 
         return Rcode.NOERROR()
