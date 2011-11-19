@@ -201,7 +201,8 @@ class XfroutSession():
         tsig_record = msg.get_tsig_record()
         if tsig_record is not None:
             self._tsig_len = tsig_record.get_length()
-            self._tsig_ctx = self.create_tsig_ctx(tsig_record, self._tsig_key_ring)
+            self._tsig_ctx = self.create_tsig_ctx(tsig_record,
+                                                  self._tsig_key_ring)
             tsig_error = self._tsig_ctx.verify(tsig_record, request_data)
             if tsig_error != TSIGError.NOERROR:
                 return Rcode.NOTAUTH()
@@ -224,10 +225,12 @@ class XfroutSession():
             return rcode, msg
 
         # Make sure the question is valid.  This should be ensured by
-        # the auth server, but since it's far from our xfrout itself,
-        # we check it by ourselves.
+        # the auth server, but since it's far from xfrout itself, we check
+        # it by ourselves.  A viloation would be an internal bug, so we
+        # raise and stop here rather than returning a FORMERR or SERVFAIL.
         if msg.get_rr_count(Message.SECTION_QUESTION) != 1:
-            return Rcode.FORMERR(), msg
+            raise RuntimeError('Invalid number of question for XFR: ' +
+                               str(msg.get_rr_count(Message.SECTION_QUESTION)))
         question = msg.get_question()[0]
 
         # Identify the request type
@@ -237,9 +240,9 @@ class XfroutSession():
         elif self._request_type == RRType.IXFR():
             self._request_typestr = 'IXFR'
         else:
-            # Likewise, this should be impossible.  (TBD: to be tested)
-            raise RuntimeError('Unexpected XFR type: ' + \
-                                   str(self._request_type))
+            # Likewise, this should be impossible.
+            raise RuntimeError('Unexpected XFR type: ' +
+                               str(self._request_type))
 
         # ACL checks
         zone_name = question.get_name()
