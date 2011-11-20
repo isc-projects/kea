@@ -98,8 +98,8 @@ class MockDataSrcClient:
         '''Mock version of find_zone().
 
         It returns itself (subsequently acting as a mock ZoneFinder) for
-        some test zone names.  For some others it returns either NOTFOUND
-        or PARTIALMATCH.
+        some test zone names.  For a special name it returns NOTFOUND to
+        emulate the condition where the specified zone doen't exist.
 
         '''
         self._zone_name = zone_name
