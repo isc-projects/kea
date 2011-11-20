@@ -414,9 +414,12 @@ class XfroutSession():
             # iteration in response generation
             self._iterator = None
             self._jnl_reader = None
-            # Log it.
+            logger.info(XFROUT_IXFR_UPTODATE, format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class),
+                        begin_serial, end_serial)
             return Rcode.NOERROR()
 
+        # Set up the journal reader or fall back to AXFR-style IXFR
         try:
             code, self._jnl_reader = self._datasrc_client.get_journal_reader(
                 zone_name, begin_serial, end_serial)
