@@ -154,6 +154,7 @@ class XfroutSession():
         self._zone_config = zone_config
         self.ClientClass = client_class # parameterize this for testing
         self._soa = None # will be set in _xfrout_setup or in tests
+        self._jnl_reader = None # will be set to a reader for IXFR
         self._handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -424,6 +425,9 @@ class XfroutSession():
                         format_zone_str(zone_name, zone_class))
             return Rcode.NOTAUTH()
 
+        # Use the reader as the iterator to generate the response.
+        self._iterator = self._jnl_reader
+
         return Rcode.NOERROR()
 
     def _xfrout_setup(self, request_msg, zone_name, zone_class):
@@ -537,7 +541,9 @@ class XfroutSession():
                 logger.info(XFROUT_STOPPING)
                 return
 
-            if rrset.get_type() == RRType.SOA():
+            # For AXFR (or AXFR-style IXFR), in which case _jnl_reader is None,
+            # we should skip SOAs from the iterator.
+            if self._jnl_reader is None and rrset.get_type() == RRType.SOA():
                 continue
 
             # We calculate the maximum size of the RRset (i.e. the
