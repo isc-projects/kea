@@ -192,6 +192,14 @@ An IXFR request was received but the underlying data source did
 not support journaling.  The xfrout daemon fell back to AXFR-style
 IXFR.
 
+% XFROUT_IXFR_UPTODATE IXFR client %1, %2: client version is new enough (ours=%3, theirs=%4)
+An IXFR request was received, but the client's SOA version is the same as
+or newer than that of the server.  The xfrout server responds to the
+request with the answer section being just one SOA of that version.
+Note: as of this wrting the 'newer version' cannot be identified due to
+the lack of support for the serial number arithmetic.  This will soon
+be implemented.
+
 % XFROUT_IXFR_NO_VERSION IXFR client %1, %2: version (%3 to %4) not in journal, falling back to AXFR
 An IXFR request was received, but the requested range of differences
 were not found in the data source.  The xfrout daemon fell back to
