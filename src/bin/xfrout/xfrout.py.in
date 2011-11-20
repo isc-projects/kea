@@ -399,9 +399,25 @@ class XfroutSession():
         rcode, self._soa = self._get_zone_soa(zone_name)
         if rcode != Rcode.NOERROR():
             return rcode
+
+        # RFC1995 says "If an IXFR query with the same or newer version
+        # number than that of the server is received, it is replied to with
+        # a single SOA record of the server's current version, just as
+        # in AXFR".  The claim about AXFR is incorrect, but other than that,
+        # we do as the RFC says.
+        # Note: until we complete #1278 we can only check equality of the
+        # two serials.  The "newer version" case would fall back to AXFR-style.
+        begin_serial = get_soa_serial(remote_soa.get_rdata()[0])
+        end_serial = get_soa_serial(self._soa.get_rdata()[0])
+        if begin_serial == end_serial:
+            # clear both iterator and jnl_reader to signal we won't do
+            # iteration in response generation
+            self._iterator = None
+            self._jnl_reader = None
+            # Log it.
+            return Rcode.NOERROR()
+
         try:
-            begin_serial = get_soa_serial(remote_soa.get_rdata()[0])
-            end_serial = get_soa_serial(self._soa.get_rdata()[0])
             code, self._jnl_reader = self._datasrc_client.get_journal_reader(
                 zone_name, begin_serial, end_serial)
         except isc.datasrc.NotImplemented as ex:
@@ -531,10 +547,18 @@ class XfroutSession():
         #TODO, there should be a better way to insert rrset.
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
-        msg.add_rrset(Message.SECTION_ANSWER, self._soa)
 
+        # If the iterator is None, we are responding to IXFR with a single
+        # SOA RR.
+        if self._iterator is None:
+            self._send_message_with_last_soa(msg, sock_fd, self._soa, 0)
+            return
+
+        # Add the beginning SOA
+        msg.add_rrset(Message.SECTION_ANSWER, self._soa)
         message_upper_len = get_rrset_len(self._soa) + self._tsig_len
 
+        # Add the rest of the zone/diff contets
         for rrset in self._iterator:
             # Check if xfrout is shutdown
             if  self._server._shutdown_event.is_set():
@@ -564,6 +588,7 @@ class XfroutSession():
             # Reserve tsig space for signed packet
             message_upper_len = rrset_len + self._tsig_len
 
+        # Add and send the trailing SOA
         self._send_message_with_last_soa(msg, sock_fd, self._soa,
                                          message_upper_len)
 
