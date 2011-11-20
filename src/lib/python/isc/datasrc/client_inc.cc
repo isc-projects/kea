@@ -232,6 +232,8 @@ isc.datasrc.NotImplemented.\n\
 Exceptions:\n\
   isc.datasrc.NotImplemented The data source does not support differences.\n\
   isc.datasrc.Error Other operational errors at the data source level.\n\
+  SystemError An unexpected error in the backend C++ code.  Either a rare\n\
+              system error such as short memory or an implementation bug.\n\
 \n\
 Parameters:\n\
   zone       The name of the zone for which the difference should be\n\
