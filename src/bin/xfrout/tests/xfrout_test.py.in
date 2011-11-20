@@ -786,9 +786,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         sent_data = self.sock.readsent()
         self.assertEqual(len(sent_data), 0)
 
-    def default(self, param):
-        return "example.com"
-
     def test_dns_xfrout_start_notauth(self):
         def notauth(msg, name, rrclass):
             return Rcode.NOTAUTH()
