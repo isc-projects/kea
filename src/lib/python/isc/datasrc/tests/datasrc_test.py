@@ -17,6 +17,7 @@ import isc.log
 import isc.datasrc
 from isc.datasrc import ZoneFinder, ZoneJournalReader
 from isc.dns import *
+from isc.testutils.rrset_utils import rrsets_equal
 import unittest
 import sqlite3
 import os
@@ -39,19 +40,6 @@ def add_rrset(rrset_list, name, rrclass, rrtype, ttl, rdatas):
         for rdata in rdatas:
             rrset_to_add.add_rdata(isc.dns.Rdata(rrtype, rrclass, rdata))
     rrset_list.append(rrset_to_add)
-
-# helper function, we have no direct rrset comparison atm
-def rrsets_equal(a, b):
-    # no accessor for sigs either (so this only checks name, class, type, ttl,
-    # and rdata)
-    # also, because of the fake data in rrsigs, if the type is rrsig, the
-    # rdata is not checked
-    return a.get_name() == b.get_name() and\
-           a.get_class() == b.get_class() and\
-           a.get_type() == b.get_type() and \
-           a.get_ttl() == b.get_ttl() and\
-           (a.get_type() == isc.dns.RRType.RRSIG() or
-            sorted(a.get_rdata()) == sorted(b.get_rdata()))
 
 # returns true if rrset is in expected_rrsets
 # will remove the rrset from expected_rrsets if found
