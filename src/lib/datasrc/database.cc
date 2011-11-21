@@ -392,17 +392,18 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
 
 DatabaseClient::Finder::DelegationSearchResult
 DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
-                                            const FindOptions options) {
+                                            const FindOptions options)
+{
     // Result of search
-    isc::dns::RRsetPtr result_rrset;
+    isc::dns::ConstRRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
 
     // In case we are in GLUE_OK mode and start matching wildcards,
     // we can't do it under NS, so we store it here to check
-    isc::dns::RRsetPtr first_ns;
+    isc::dns::ConstRRsetPtr first_ns;
 
     // Are we searching for glue?
-    bool glue_ok((options & FIND_GLUE_OK) != 0);
+    const bool glue_ok((options & FIND_GLUE_OK) != 0);
 
     // First, do we have any kind of delegation (NS/DNAME) here?
     const Name origin(getOrigin());
@@ -418,14 +419,14 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
     // Go through all superdomains from the origin down searching for nodes
     // that indicate a delegation (NS or DNAME).
     for (int i = remove_labels; i > 0; --i) {
-        Name superdomain(name.split(i));
+        const Name superdomain(name.split(i));
 
         // Note if this is the origin.
-        bool not_origin = (i != remove_labels);
+        const bool not_origin = (i != remove_labels);
 
         // Look if there's NS or DNAME (but ignore the NS in origin)
-        FoundRRsets found = getRRsets(superdomain.toText(), DELEGATION_TYPES(),
-                                      not_origin);
+        const FoundRRsets found = getRRsets(superdomain.toText(),
+                                            DELEGATION_TYPES(), not_origin);
         if (found.first) {
             // It contains some RRs, so it exists.
             last_known = superdomain.getLabelCount();
@@ -470,13 +471,13 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
 }
 
 DatabaseClient::Finder::WildcardSearchResult
-DatabaseClient::Finder::findWildcardMatch(const isc::dns::Name& name,
-                                          const isc::dns::RRType& type,
-                                          const FindOptions options,
-                                          isc::dns::RRsetPtr& first_ns,
-                                          size_t last_known) {
+DatabaseClient::Finder::findWildcardMatch(
+    const isc::dns::Name& name, const isc::dns::RRType& type,
+    const FindOptions options, const isc::dns::ConstRRsetPtr& first_ns,
+    size_t last_known)
+{
     // Result of search
-    isc::dns::RRsetPtr result_rrset;
+    isc::dns::ConstRRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
 
     // Search options
@@ -593,24 +594,24 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
               .arg(accessor_->getDBName()).arg(name).arg(type);
 
-    bool glue_ok((options & FIND_GLUE_OK) != 0);
+    const bool glue_ok((options & FIND_GLUE_OK) != 0);
     const bool dnssec_data((options & FIND_DNSSEC) != 0);
 
     bool records_found = false; // Distinguish between NXDOMAIN and NXRRSET
     bool get_cover = false;
-    isc::dns::RRsetPtr result_rrset;
+    isc::dns::ConstRRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
     const Name origin(getOrigin());
 
     // First stage: go throught all superdomains from the origin down,
     // searching for nodes that indicate a delegation (NS or DNAME).
-    DelegationSearchResult dresult = findDelegationPoint(name, options);
+    const DelegationSearchResult dresult = findDelegationPoint(name, options);
     result_status = dresult.code;
     result_rrset = dresult.rrset;
 
     // In case we are in GLUE_OK mode and start matching wildcards,
     // we can't do it under NS, so we store it here to check
-    isc::dns::RRsetPtr first_ns = dresult.first_ns;
+    const isc::dns::ConstRRsetPtr first_ns = dresult.first_ns;
     size_t last_known = dresult.last_known;
 
     if (!result_rrset) { // Only if we didn't find a redirect already
@@ -620,8 +621,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         // And we don't consider the NS in origin
         WantedTypes final_types(FINAL_TYPES());
         final_types.insert(type);
-        FoundRRsets found = getRRsets(name.toText(), final_types,
-                                      name != origin);
+        const FoundRRsets found = getRRsets(name.toText(), final_types,
+                                            name != origin);
         records_found = found.first;
 
         // NS records, CNAME record and Wanted Type records
@@ -675,10 +676,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // It's not an empty non-terminal so check for wildcards.
                 // We remove labels one by one and look for the wildcard there.
                 // Go up to first non-empty domain.
-                WildcardSearchResult wresult = findWildcardMatch(name, type,
-                                                                 options,
-                                                                 first_ns,
-                                                                 last_known);
+                const WildcardSearchResult wresult =
+                    findWildcardMatch(name, type, options, first_ns,
+                                      last_known);
                 result_status = wresult.code;
                 result_rrset = wresult.rrset;
                 records_found = wresult.records_found;
