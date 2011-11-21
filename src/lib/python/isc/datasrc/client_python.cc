@@ -203,10 +203,9 @@ DataSourceClient_getJournalReader(PyObject* po_self, PyObject* args) {
         } catch (const DataSourceError& ex) {
             PyErr_SetString(getDataSourceException("Error"), ex.what());
         } catch (const std::exception& ex) {
-            PyErr_SetString(getDataSourceException("Error"), ex.what());
+            PyErr_SetString(PyExc_SystemError, ex.what());
         } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"),
-                            "Unexpected exception");
+            PyErr_SetString(PyExc_SystemError, "Unexpected exception");
         }
     }
     return (NULL);
