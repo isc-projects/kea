@@ -84,8 +84,8 @@ class MockDataSrcClient:
         '''Mock version of find_zone().
 
         It returns itself (subsequently acting as a mock ZoneFinder) for
-        some test zone names.  For some others it returns either NOTFOUND
-        or PARTIALMATCH.
+        some test zone names.  For a special name it returns NOTFOUND to
+        emulate the condition where the specified zone doen't exist.
 
         '''
         self._zone_name = zone_name
@@ -96,21 +96,21 @@ class MockDataSrcClient:
     def find(self, name, rrtype, target, options):
         '''Mock ZoneFinder.find().
 
-        It returns the predefined SOA RRset to queries for SOA of the common
-        test zone name.  It also emulates some unusual cases for special
+        (At the moment) this method only handles query for type SOA.
+        By default it returns a normal SOA RR(set) whose owner name is
+        the query name  It also emulates some unusual cases for special
         zone names.
 
         '''
-        if name == TEST_ZONE_NAME and rrtype == RRType.SOA():
-            return (ZoneFinder.SUCCESS, create_soa(SOA_CURRENT_VERSION))
-        elif name == Name('nosoa.example.com') and rrtype == RRType.SOA():
+        if name == Name('nosoa.example.com') and rrtype == RRType.SOA():
             return (ZoneFinder.NXDOMAIN, None)
         elif name == Name('multisoa.example.com') and rrtype == RRType.SOA():
             soa_rrset = create_soa(SOA_CURRENT_VERSION)
             soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
             return (ZoneFinder.SUCCESS, soa_rrset)
-        else:
+        elif rrtype == RRType.SOA():
             return (ZoneFinder.SUCCESS, create_soa(SOA_CURRENT_VERSION))
+        raise ValueError('Unexpected input to mock finder: bug in test case?')
 
     def get_iterator(self, zone_name, adjust_ttl=False):
         if zone_name == Name('notauth.example.com'):
@@ -775,9 +775,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess.dns_xfrout_start(self.sock, b"\xd6=\x00\x00\x00\x01\x00")
         sent_data = self.sock.readsent()
         self.assertEqual(len(sent_data), 0)
-
-    def default(self, param):
-        return "example.com"
 
     def test_dns_xfrout_start_notauth(self):
         def notauth(msg, name, rrclass):
