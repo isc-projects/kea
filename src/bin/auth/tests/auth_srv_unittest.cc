@@ -814,8 +814,9 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
                          Name("example.com"), RRClass::IN(), RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
-    // so we shouldn't have to respond.
+    // so auth itself shouldn't respond.
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing TCP AXFR query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 }
@@ -827,10 +828,11 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("example.com"), RRClass::IN(), RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    // On success, the AXFR query has been passed to a separate process,
-    // so we shouldn't have to respond.
+    // On success, the IXFR query has been passed to a separate process,
+    // so auth itself shouldn't respond.
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
-    // After processing TCP AXFR query, the counter should be 1.
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    // After processing TCP IXFR query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 }
 
