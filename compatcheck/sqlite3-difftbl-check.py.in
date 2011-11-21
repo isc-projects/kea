@@ -52,7 +52,7 @@ except sqlite3.OperationalError as ex:
                         'ttl INTEGER NOT NULL, rdata STRING NOT NULL)')
         else:
             sys.stdout.write('Found an older version of SQLite3 DB file: ' +
-                             db_file + '\n' + "Peform '" + os.getcwd() +
+                             db_file + '\n' + "Perform '" + os.getcwd() +
                              "/sqlite3-difftbl-check.py --upgrade " +
                              db_file + "'\n" +
                              'before continuing install.\n')
