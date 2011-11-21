@@ -473,10 +473,10 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
             sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
-                                                 tsig_context);
+                                                tsig_context);
         } else if (qtype == RRType::IXFR()) {
             sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
-                                                 tsig_context);
+                                                tsig_context);
         } else {
             sendAnswer = impl_->processNormalQuery(io_message, message, buffer,
                                                    tsig_context);
