@@ -28,6 +28,11 @@ if len(args) == 0:
     parser.error('missing argument')
 
 db_file = args[0]
+
+# If the file doesn't exist, there's nothing to do
+if not os.path.exists(db_file):
+    sys.exit(0)
+
 conn = sqlite3.connect(db_file)
 cur = conn.cursor()
 try:
