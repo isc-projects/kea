@@ -21,8 +21,8 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <dns/rrclass.h>
-#include <dns/rrclass.h>
 #include <dns/rrset.h>
+#include <dns/rrtype.h>
 
 #include <datasrc/client.h>
 
@@ -815,7 +815,7 @@ public:
         const DatabaseAccessor& getAccessor() const {
             return (*accessor_);
         }
-        
+
         /// \brief Search result of \c findDelegationPoint().
         ///
         /// This is a tuple combining the result of the search - a status code
@@ -847,6 +847,32 @@ public:
             const isc::dns::RRsetPtr rrset;     ///< Pointer to RRset found
             const isc::dns::RRsetPtr first_ns;  ///< Pointer to first NS found
             const size_t last_known; ///< No. labels in last non-empty domain
+        };
+
+        /// \brief Search result of \c findWildcard().
+        ///
+        /// This is a tuple combining the result of the search - a status code
+        /// and a pointer to the RRset found - together with additional
+        /// information needed for subsequent processing: if there is not a
+        /// match for the data sought, then whether there is no match for the
+        /// wildcard or where there is a match, but no RRs of the type
+        /// requested.
+        ///
+        /// Note that the code and rrset elements are the same as that in
+        /// the \c ZoneFinder::FindResult struct: this structure could be
+        /// derived from that one, but as it is used just once in the code and
+        /// will never be treated as a \c FindResult, the obscurity involved in
+        /// deriving it from a parent class was deemed not worthwhile.
+        struct WildcardSearchResult {
+            WildcardSearchResult(const ZoneFinder::Result param_code,
+                                 const isc::dns::RRsetPtr param_rrset,
+                                 const bool param_found) :
+                                 code(param_code), rrset(param_rrset),
+                                 records_found(param_found)
+            {}
+            const ZoneFinder::Result code;      ///< Result code
+            const isc::dns::RRsetPtr rrset;     ///< Pointer to RRset found
+            const bool records_found;           ///< true => NXRRSET
         };
 
     private:
@@ -898,10 +924,23 @@ public:
          * down, searching for a point that indicates a delegation (i.e. an
          * NS record or a DNAME).
          *
+         * The method operates in two modes, non-glue-ok and glue-ok modes:
+         *
+         * In non-glue-ok mode, the search is made purely for the NS or DNAME
+         * RR.  The zone is searched from the origin down looking  for one
+         * of these RRTypes (and ignoring the NS records at the zone origin).
+         * A status is returned indicating what is found: DNAME, DELEGATION
+         * of SUCCESS, the last indicating that nothing was found, together
+         * with a pointer to the relevant RR.
+         *
+         * In glue-ok mode, the first NS encountered in the search (apart from
+         * the NS at the zone apex) is remembered but otherwise NS records are
+         * ignored and the search attempts to find a DNAME.  The result is
+         * returned in the same format, along with a pointer to the first non-
+         * apex NS (if found).
+         *
          * \param name The name to find
-         * \param type The RRType to find
-         * \param target Unused at this moment
-         * \param options Options about how to search. See
+         * \param options Options about how to search. See the documentation for
          *        ZoneFinder::FindOptions.
          *
          * \return Tuple holding the result of the search - the RRset of the
@@ -912,11 +951,56 @@ public:
          *         non-empty domain.  The associated information is found as
          *         a natural part of the search for the delegation point and
          *         is used later in the find() processing; it is passed back
-         *         to avoid the need to perform a second search toi obtain it.
+         *         to avoid the need to perform a second search to obtain it.
          */
         DelegationSearchResult
         findDelegationPoint(const isc::dns::Name& name,
-                            const FindOptions options = FIND_DEFAULT);
+                            const FindOptions options);
+
+        /**
+         * \brief Find wildcard match
+         *
+         * Having found that the name is not an empty non-terminal, this
+         * searches the zone for for wildcards that match the name.
+         *
+         * It searches superdomains of the name from the zone origin down
+         * looking for a wildcard in the zone that matches the name.  There
+         * are several cases to consider:
+         *
+         * - If the previous search for a delegation point has found that
+         *   there is an NS at the superdomain of the point at which the
+         *   wildcard is found, the delegation is returned.
+         * - If there is a match to the name, an appropriate status is
+         *   returned (match on requested type, delegation, cname, or just
+         *   the indication of a match but no RRs relevant to the query).
+         * - If the match is to an non-empty non-terminal wildcard, a
+         *   wildcard NXRRSET is returned.
+         *
+         * Note that if DNSSEC is enabled for the search and the zone uses
+         * NSEC for authenticated denial of existence, the search may
+         * return NSEC records.
+         *
+         * \param name The name to find
+         * \param type The RRType to find
+         * \param options Options about how to search. See the documentation
+         *        for ZoneFinder::FindOptions.
+         * \param first_ns A pointer to the first NS found in a search for
+         *        the name (will only be non-null in glue-ok mode).
+         * \param last_known the number of labels in the last known non-empty
+         *        domain in the name.
+         *
+         * \return Tuple holding the result of the search - the RRset of the
+         *         wildcard records matching the name, together with a status
+         *         indicating the match type (e.g. CNAME at the wildcard
+         *         match, no RRs of the requested type at the wildcard,
+         *         success due to an exact match).  Also returned if there
+         *         is no match is an indication as to whether there was an
+         *         NXDOMAIN or an NXRRSET.
+         */
+        WildcardSearchResult
+        findWildcardMatch(const isc::dns::Name& name,
+                     const isc::dns::RRType& type, const FindOptions options,
+                     isc::dns::RRsetPtr& first_ns, size_t last_known);
 
         /**
          * \brief Checks if something lives below this domain.
