@@ -55,6 +55,6 @@ except sqlite3.OperationalError as ex:
                              db_file + '\n' + "Peform '" + os.getcwd() +
                              "/sqlite3-difftbl-check.py --upgrade " +
                              db_file + "'\n" +
-                             'before continueing install.\n')
+                             'before continuing install.\n')
             sys.exit(1)
 conn.close()
