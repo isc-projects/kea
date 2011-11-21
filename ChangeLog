@@ -1,3 +1,10 @@
+326.	[build]*	jinmei
+	Added a check script for the SQLite3 schema version.  It will be
+	run at the beginning of 'make install', and if it detects an old
+	version of schema, installation will stop.  You'll then need to
+	upgrade the database file by following the error message.
+	(Trac #1404, git a435f3ac50667bcb76dca44b7b5d152f45432b57)
+
 325.	[func]		jinmei
 	Python isc.datasrc: added interfaces for difference management:
 	DataSourceClient.get_updater() now has the 'journaling' parameter
