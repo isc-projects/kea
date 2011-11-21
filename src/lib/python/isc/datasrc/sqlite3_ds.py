@@ -72,6 +72,14 @@ def create(cur):
                     rdtype STRING NOT NULL COLLATE NOCASE,
                     rdata STRING NOT NULL)""")
         cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
+        cur.execute("""CREATE TABLE diffs (id INTEGER PRIMARY KEY,
+                    zone_id INTEGER NOT NULL,
+                    version INTEGER NOT NULL,
+                    operation INTEGER NOT NULL,
+                    name STRING NOT NULL COLLATE NOCASE,
+                    rrtype STRING NOT NULL COLLATE NOCASE,
+                    ttl INTEGER NOT NULL,
+                    rdata STRING NOT NULL)""")
         row = [1]
     cur.execute("COMMIT TRANSACTION")
     return row
