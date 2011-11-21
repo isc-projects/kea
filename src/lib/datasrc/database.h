@@ -836,16 +836,16 @@ public:
         /// deriving it from a parent class was deemed not worthwhile.
         struct DelegationSearchResult {
             DelegationSearchResult(const ZoneFinder::Result param_code,
-                                   const isc::dns::RRsetPtr param_rrset,
-                                   const isc::dns::RRsetPtr param_ns,
+                                   const isc::dns::ConstRRsetPtr param_rrset,
+                                   const isc::dns::ConstRRsetPtr param_ns,
                                    size_t param_last_known) :
                                    code(param_code), rrset(param_rrset),
                                    first_ns(param_ns),
                                    last_known(param_last_known)
             {}
             const ZoneFinder::Result code;      ///< Result code
-            const isc::dns::RRsetPtr rrset;     ///< Pointer to RRset found
-            const isc::dns::RRsetPtr first_ns;  ///< Pointer to first NS found
+            const isc::dns::ConstRRsetPtr rrset; ///< Pointer to RRset found
+            const isc::dns::ConstRRsetPtr first_ns; ///< Pointer to first NS found
             const size_t last_known; ///< No. labels in last non-empty domain
         };
 
@@ -865,13 +865,13 @@ public:
         /// deriving it from a parent class was deemed not worthwhile.
         struct WildcardSearchResult {
             WildcardSearchResult(const ZoneFinder::Result param_code,
-                                 const isc::dns::RRsetPtr param_rrset,
+                                 const isc::dns::ConstRRsetPtr param_rrset,
                                  const bool param_found) :
                                  code(param_code), rrset(param_rrset),
                                  records_found(param_found)
             {}
             const ZoneFinder::Result code;      ///< Result code
-            const isc::dns::RRsetPtr rrset;     ///< Pointer to RRset found
+            const isc::dns::ConstRRsetPtr rrset; ///< Pointer to RRset found
             const bool records_found;           ///< true => NXRRSET
         };
 
@@ -998,9 +998,10 @@ public:
          *         NXDOMAIN or an NXRRSET.
          */
         WildcardSearchResult
-        findWildcardMatch(const isc::dns::Name& name,
-                     const isc::dns::RRType& type, const FindOptions options,
-                     isc::dns::RRsetPtr& first_ns, size_t last_known);
+        findWildcardMatch(
+            const isc::dns::Name& name,
+            const isc::dns::RRType& type, const FindOptions options,
+            const isc::dns::ConstRRsetPtr& first_ns, size_t last_known);
 
         /**
          * \brief Checks if something lives below this domain.
