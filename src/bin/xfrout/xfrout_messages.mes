@@ -56,6 +56,10 @@ are missing on the system, or the PYTHONPATH variable is not correct.
 The specific place where this library needs to be depends on your
 system and your specific installation.
 
+% XFROUT_IXFR_REQUEST_MISSING_SOA IXFR client %1: request packet for %2 did not contain SOA RR
+An IXFR request arrived, but it did not contain a SOA RR in its authority
+section. The xfrout daemon will respond with a FORMERR.
+
 % XFROUT_IXFR_TRANSFER_STARTED %1 client %2: IXFR transfer of zone %3 has started
 An incremental transfer out of the given zone has started.
 
@@ -149,6 +153,16 @@ socket needed for contacting the b10-auth daemon to pass requests
 on, but the file is in use. The most likely cause is that another
 xfrout daemon process is still running. This xfrout daemon (the one
 printing this message) will not start.
+
+% XFROUT_XFR_REQUEST_BAD_TYPE bad question type in transfer request for %1 from %2
+A transfer request for the given zone arrived, but the RR in the question
+section was not of type AXFR or IXFR. This request should not even have
+reached the xfrout daemon, and there appears to be a problem in the module
+that passed it on, please file a bug report if this error is encountered.
+
+% XFROUT_XFR_REQUEST_MISSING_QUESTION empty question section in transfer request from %1
+A transfer request from the given client did not contain a question section.
+The xfrout daemon will respond with a FORMERR.
 
 % XFROUT_XFR_TRANSFER_DONE %1 client %2: transfer of %3 complete
 The transfer of the given zone has been completed successfully, or was
