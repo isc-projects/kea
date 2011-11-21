@@ -20,7 +20,7 @@ from isc.dns import *
 def rrsets_equal(a, b):
     '''Compare two RRsets, return True if equal, otherwise False
 
-    We provide this function as part of test utils we have no direct rrset
+    We provide this function as part of test utils as we have no direct rrset
     comparison atm.  There's no accessor for sigs either (so this only checks
     name, class, type, ttl, and rdata).
     Also, since we often use fake data in RRSIGs, RRSIG RDATA are not checked.
