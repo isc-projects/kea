@@ -229,7 +229,8 @@ TEST_F(AuthSrvTest, AXFROverUDP) {
 TEST_F(AuthSrvTest, AXFRSuccess) {
     EXPECT_FALSE(xfrout.isConnected());
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
     // so we shouldn't have to respond.
@@ -245,7 +246,8 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     const TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
     TSIGContext context(key);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("version.bind"), RRClass::CH(), RRType::TXT());
+                                       Name("version.bind"), RRClass::CH(),
+                                       RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Run the message through the server
@@ -278,7 +280,8 @@ TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
     TSIGContext context(key);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("version.bind"), RRClass::CH(), RRType::TXT());
+                                       Name("version.bind"), RRClass::CH(),
+                                       RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Process the message, but use a different key there
@@ -309,7 +312,8 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
     TSIGContext context(key);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("version.bind"), RRClass::CH(), RRType::TXT());
+                                       Name("version.bind"), RRClass::CH(),
+                                       RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Process the message, but use a different key there
@@ -375,7 +379,8 @@ TEST_F(AuthSrvTest, AXFRConnectFail) {
     EXPECT_FALSE(xfrout.isConnected()); // check prerequisite
     xfrout.disableConnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -388,7 +393,8 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
     // first send a valid query, making the connection with the xfr process
     // open.
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(xfrout.isConnected());
@@ -397,7 +403,8 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
     parse_message->clear(Message::PARSE);
     response_obuffer->clear();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -414,7 +421,8 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
     xfrout.disableSend();
     xfrout.disableDisconnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     EXPECT_THROW(server.processMessage(*io_message, parse_message,
                                        response_obuffer, &dnsserv),
@@ -429,7 +437,8 @@ TEST_F(AuthSrvTest, IXFRConnectFail) {
     EXPECT_FALSE(xfrout.isConnected()); // check prerequisite
     xfrout.disableConnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -442,7 +451,8 @@ TEST_F(AuthSrvTest, IXFRSendFail) {
     // first send a valid query, making the connection with the xfr process
     // open.
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(xfrout.isConnected());
@@ -451,7 +461,8 @@ TEST_F(AuthSrvTest, IXFRSendFail) {
     parse_message->clear(Message::PARSE);
     response_obuffer->clear();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -468,7 +479,8 @@ TEST_F(AuthSrvTest, IXFRDisconnectFail) {
     xfrout.disableSend();
     xfrout.disableDisconnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::IXFR());
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     EXPECT_THROW(server.processMessage(*io_message, parse_message,
                                        response_obuffer, &dnsserv),
@@ -480,8 +492,9 @@ TEST_F(AuthSrvTest, IXFRDisconnectFail) {
 }
 
 TEST_F(AuthSrvTest, notify) {
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
@@ -512,8 +525,9 @@ TEST_F(AuthSrvTest, notify) {
 
 TEST_F(AuthSrvTest, notifyForCHClass) {
     // Same as the previous test, but for the CH RRClass.
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::CH(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::CH(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
@@ -541,8 +555,9 @@ TEST_F(AuthSrvTest, notifyEmptyQuestion) {
 }
 
 TEST_F(AuthSrvTest, notifyMultiQuestions) {
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     // add one more SOA question
     request_message.addQuestion(Question(Name("example.com"), RRClass::IN(),
                                          RRType::SOA()));
@@ -555,8 +570,9 @@ TEST_F(AuthSrvTest, notifyMultiQuestions) {
 }
 
 TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::NS());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
@@ -567,8 +583,9 @@ TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
 
 TEST_F(AuthSrvTest, notifyWithoutAA) {
     // implicitly leave the AA bit off.  our implementation will accept it.
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -577,8 +594,9 @@ TEST_F(AuthSrvTest, notifyWithoutAA) {
 }
 
 TEST_F(AuthSrvTest, notifyWithErrorRcode) {
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setRcode(Rcode::SERVFAIL());
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -591,8 +609,9 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
 TEST_F(AuthSrvTest, notifyWithoutSession) {
     server.setXfrinSession(NULL);
 
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
 
@@ -605,8 +624,9 @@ TEST_F(AuthSrvTest, notifyWithoutSession) {
 TEST_F(AuthSrvTest, notifySendFail) {
     notify_session.disableSend();
 
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
 
@@ -617,8 +637,9 @@ TEST_F(AuthSrvTest, notifySendFail) {
 TEST_F(AuthSrvTest, notifyReceiveFail) {
     notify_session.disableReceive();
 
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
@@ -628,8 +649,9 @@ TEST_F(AuthSrvTest, notifyReceiveFail) {
 TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
     notify_session.setMessage(Element::fromJSON("{\"foo\": 1}"));
 
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
@@ -640,8 +662,9 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
     notify_session.setMessage(
         Element::fromJSON("{\"result\": [1, \"FAIL\"]}"));
 
-    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
-                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
