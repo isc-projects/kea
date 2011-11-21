@@ -182,19 +182,31 @@ DataSourceClient_getJournalReader(PyObject* po_self, PyObject* args) {
 
     if (PyArg_ParseTuple(args, "O!kk", &name_type, &name_obj,
                          &begin_obj, &end_obj)) {
-        pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
-            self->cppobj->getInstance().getJournalReader(
-                PyName_ToName(name_obj), static_cast<uint32_t>(begin_obj),
-                static_cast<uint32_t>(end_obj));
-        PyObject* po_reader;
-        if (result.first == ZoneJournalReader::SUCCESS) {
-            po_reader = createZoneJournalReaderObject(result.second, po_self);
-        } else {
-            po_reader = Py_None;
-            Py_INCREF(po_reader); // this will soon be released
+        try {
+            pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
+                self->cppobj->getInstance().getJournalReader(
+                    PyName_ToName(name_obj), static_cast<uint32_t>(begin_obj),
+                    static_cast<uint32_t>(end_obj));
+            PyObject* po_reader;
+            if (result.first == ZoneJournalReader::SUCCESS) {
+                po_reader = createZoneJournalReaderObject(result.second,
+                                                          po_self);
+            } else {
+                po_reader = Py_None;
+                Py_INCREF(po_reader); // this will soon be released
+            }
+            PyObjectContainer container(po_reader);
+            return (Py_BuildValue("(iO)", result.first, container.get()));
+        } catch (const isc::NotImplemented& ex) {
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            ex.what());
+        } catch (const DataSourceError& ex) {
+            PyErr_SetString(getDataSourceException("Error"), ex.what());
+        } catch (const std::exception& ex) {
+            PyErr_SetString(PyExc_SystemError, ex.what());
+        } catch (...) {
+            PyErr_SetString(PyExc_SystemError, "Unexpected exception");
         }
-        PyObjectContainer container(po_reader);
-        return (Py_BuildValue("(iO)", result.first, container.get()));
     }
     return (NULL);
 }
