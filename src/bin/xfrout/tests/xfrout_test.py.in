@@ -941,6 +941,9 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
                             create_soa(2011112001),
                             create_a(Name(self.ns_name), '192.0.2.1'),
                             create_soa(2011112001)]
+        self.assertEqual(len(expected_records), len(actual_records))
+        for (expected_rr, actual_rr) in zip(expected_records, actual_records):
+            self.assertTrue(expected_rr, actual_rr)
 
     def test_ixfr_soa_only(self):
         # The requested SOA serial is the latest one.  The response should
