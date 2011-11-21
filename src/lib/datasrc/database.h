@@ -18,6 +18,7 @@
 #include <string>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <dns/rrclass.h>
 #include <dns/rrclass.h>
@@ -814,6 +815,40 @@ public:
         const DatabaseAccessor& getAccessor() const {
             return (*accessor_);
         }
+        
+        /// \brief Search result of \c findDelegationPoint().
+        ///
+        /// This is a tuple combining the result of the search - a status code
+        /// and a pointer to the RRset found - together with additional
+        /// information needed for subsequent processing, an indication of
+        /// the first NS RRset found in the search and the number of labels
+        /// in the last non-empty domain encountered in the search.  It is
+        /// used by \c findDelegationPoint().
+        ///
+        /// The last two items are located naturally in the search and although
+        /// not strictly part of the result, they are passed back to avoid
+        /// another (duplicate) search later in the processing.
+        ///
+        /// Note that the code and rrset elements are the same as that in
+        /// the \c ZoneFinder::FindResult struct: this structure could be
+        /// derived from that one, but as it is used just once in the code and
+        /// will never be treated as a \c FindResult, the obscurity involved in
+        /// deriving it from a parent class was deemed not worthwhile.
+        struct DelegationSearchResult {
+            DelegationSearchResult(const ZoneFinder::Result param_code,
+                                   const isc::dns::RRsetPtr param_rrset,
+                                   const isc::dns::RRsetPtr param_ns,
+                                   size_t param_last_known) :
+                                   code(param_code), rrset(param_rrset),
+                                   first_ns(param_ns),
+                                   last_known(param_last_known)
+            {}
+            const ZoneFinder::Result code;      ///< Result code
+            const isc::dns::RRsetPtr rrset;     ///< Pointer to RRset found
+            const isc::dns::RRsetPtr first_ns;  ///< Pointer to first NS found
+            const size_t last_known; ///< No. labels in last non-empty domain
+        };
+
     private:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
@@ -824,6 +859,7 @@ public:
             FoundRRsets;
         /// \brief Just shortcut for set of types
         typedef std::set<dns::RRType> WantedTypes;
+
         /**
          * \brief Searches database for RRsets of one domain.
          *
@@ -854,6 +890,34 @@ public:
         FoundRRsets getRRsets(const std::string& name,
                               const WantedTypes& types, bool check_ns,
                               const std::string* construct_name = NULL);
+
+        /**
+         * \brief Find delegation point
+         *
+         * Given a name, searches through the superdomains from the origin
+         * down, searching for a point that indicates a delegation (i.e. an
+         * NS record or a DNAME).
+         *
+         * \param name The name to find
+         * \param type The RRType to find
+         * \param target Unused at this moment
+         * \param options Options about how to search. See
+         *        ZoneFinder::FindOptions.
+         *
+         * \return Tuple holding the result of the search - the RRset of the
+         *         delegation point and the type of the point (DELEGATION or
+         *         DNAME) - and associated information.  This latter item
+         *         comprises two pieces of data: a pointer to the highest
+         *         encountered NS, and the number of labels in the last known
+         *         non-empty domain.  The associated information is found as
+         *         a natural part of the search for the delegation point and
+         *         is used later in the find() processing; it is passed back
+         *         to avoid the need to perform a second search toi obtain it.
+         */
+        DelegationSearchResult
+        findDelegationPoint(const isc::dns::Name& name,
+                            const FindOptions options = FIND_DEFAULT);
+
         /**
          * \brief Checks if something lives below this domain.
          *

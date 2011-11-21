@@ -14,6 +14,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
@@ -389,6 +390,85 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
     return (RRsetPtr());
 }
 
+DatabaseClient::Finder::DelegationSearchResult
+DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
+                                            const FindOptions options) {
+    // Result of search
+    isc::dns::RRsetPtr result_rrset;
+    ZoneFinder::Result result_status = SUCCESS;
+
+    // In case we are in GLUE_OK mode and start matching wildcards,
+    // we can't do it under NS, so we store it here to check
+    isc::dns::RRsetPtr first_ns;
+
+    // Are we searching for glue?
+    bool glue_ok((options & FIND_GLUE_OK) != 0);
+
+    // First, do we have any kind of delegation (NS/DNAME) here?
+    const Name origin(getOrigin());
+    const size_t origin_label_count(origin.getLabelCount());
+
+    // Number of labels in the last known non-empty domain
+    size_t last_known(origin_label_count);
+    const size_t current_label_count(name.getLabelCount());
+
+    // This is how many labels we remove to get origin
+    const size_t remove_labels(current_label_count - origin_label_count);
+
+    // Go through all superdomains from the origin down searching for nodes
+    // that indicate a delegation (NS or DNAME).
+    for (int i = remove_labels; i > 0; --i) {
+        Name superdomain(name.split(i));
+
+        // Note if this is the origin.
+        bool not_origin = (i != remove_labels);
+
+        // Look if there's NS or DNAME (but ignore the NS in origin)
+        FoundRRsets found = getRRsets(superdomain.toText(), DELEGATION_TYPES(),
+                                      not_origin);
+        if (found.first) {
+            // It contains some RRs, so it exists.
+            last_known = superdomain.getLabelCount();
+
+            const FoundIterator nsi(found.second.find(RRType::NS()));
+            const FoundIterator dni(found.second.find(RRType::DNAME()));
+
+            // In case we are in GLUE_OK mode, we want to store the
+            // highest encountered NS (but not apex)
+            if (glue_ok && !first_ns && not_origin && nsi != found.second.end()) {
+                first_ns = nsi->second;
+
+            } else if (!glue_ok && not_origin && nsi != found.second.end()) {
+                // Do a NS delegation, but ignore NS in glue_ok mode. Ignore
+                // delegation in apex
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_DELEGATION).
+                    arg(accessor_->getDBName()).arg(superdomain);
+                result_rrset = nsi->second;
+                result_status = DELEGATION;
+                // No need to go lower, found
+                break;
+
+            } else if (dni != found.second.end()) {
+                // Very similar with DNAME
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_DNAME).
+                    arg(accessor_->getDBName()).arg(superdomain);
+                result_rrset = dni->second;
+                result_status = DNAME;
+                if (result_rrset->getRdataCount() != 1) {
+                    isc_throw(DataSourceError, "DNAME at " << superdomain <<
+                              " has " << result_rrset->getRdataCount() <<
+                              " rdata, 1 expected");
+                }
+                break;
+            }
+        }
+    }
+    return (DelegationSearchResult(result_status, result_rrset, first_ns,
+                                   last_known));
+}
+
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
@@ -406,63 +486,25 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     FoundRRsets found;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(accessor_->getDBName()).arg(name).arg(type);
-    // In case we are in GLUE_OK mode and start matching wildcards,
-    // we can't do it under NS, so we store it here to check
-    isc::dns::RRsetPtr first_ns;
 
     // First, do we have any kind of delegation (NS/DNAME) here?
     const Name origin(getOrigin());
-    const size_t origin_label_count(origin.getLabelCount());
     // Number of labels in the last known non-empty domain
-    size_t last_known(origin_label_count);
     const size_t current_label_count(name.getLabelCount());
     // This is how many labels we remove to get origin
-    const size_t remove_labels(current_label_count - origin_label_count);
+    //const size_t remove_labels(current_label_count - origin_label_count);
 
-    // Now go trough all superdomains from origin down
-    for (int i(remove_labels); i > 0; --i) {
-        Name superdomain(name.split(i));
-        // Look if there's NS or DNAME (but ignore the NS in origin)
-        found = getRRsets(superdomain.toText(), DELEGATION_TYPES(),
-                          i != remove_labels);
-        if (found.first) {
-            // It contains some RRs, so it exists.
-            last_known = superdomain.getLabelCount();
+    // First stage: go throught all superdomains from the origin down,
+    // searching for nodes that indicate a delegation (NS or DNAME).
 
-            const FoundIterator nsi(found.second.find(RRType::NS()));
-            const FoundIterator dni(found.second.find(RRType::DNAME()));
-            // In case we are in GLUE_OK mode, we want to store the
-            // highest encountered NS (but not apex)
-            if (glue_ok && !first_ns && i != remove_labels &&
-                nsi != found.second.end()) {
-                first_ns = nsi->second;
-            } else if (!glue_ok && i != remove_labels &&
-                       nsi != found.second.end()) {
-                // Do a NS delegation, but ignore NS in glue_ok mode. Ignore
-                // delegation in apex
-                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                          DATASRC_DATABASE_FOUND_DELEGATION).
-                    arg(accessor_->getDBName()).arg(superdomain);
-                result_rrset = nsi->second;
-                result_status = DELEGATION;
-                // No need to go lower, found
-                break;
-            } else if (dni != found.second.end()) {
-                // Very similar with DNAME
-                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                          DATASRC_DATABASE_FOUND_DNAME).
-                    arg(accessor_->getDBName()).arg(superdomain);
-                result_rrset = dni->second;
-                result_status = DNAME;
-                if (result_rrset->getRdataCount() != 1) {
-                    isc_throw(DataSourceError, "DNAME at " << superdomain <<
-                              " has " << result_rrset->getRdataCount() <<
-                              " rdata, 1 expected");
-                }
-                break;
-            }
-        }
-    }
+    DelegationSearchResult dresult = findDelegationPoint(name, options);
+    result_status = dresult.code;
+    result_rrset = dresult.rrset;
+
+    // In case we are in GLUE_OK mode and start matching wildcards,
+    // we can't do it under NS, so we store it here to check
+    isc::dns::RRsetPtr first_ns = dresult.first_ns;
+    size_t last_known = dresult.last_known;
 
     if (!result_rrset) { // Only if we didn't find a redirect already
         // Try getting the final result and extract it
