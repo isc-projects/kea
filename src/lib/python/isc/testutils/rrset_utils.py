@@ -18,12 +18,14 @@
 from isc.dns import *
 
 def rrsets_equal(a, b):
-    '''Compare two RRsets, return True if equal, otherwise False'''
+    '''Compare two RRsets, return True if equal, otherwise False
 
-    # no accessor for sigs either (so this only checks name, class, type, ttl,
-    # and rdata)
-    # also, because of the fake data in rrsigs, if the type is rrsig, the
-    # rdata is not checked
+    We provide this function as part of test utils we have no direct rrset
+    comparison atm.  There's no accessor for sigs either (so this only checks
+    name, class, type, ttl, and rdata).
+    Also, since we often use fake data in RRSIGs, RRSIG RDATA are not checked.
+
+    '''
     return a.get_name() == b.get_name() and \
            a.get_class() == b.get_class() and \
            a.get_type() == b.get_type() and \
