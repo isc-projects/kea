@@ -1,3 +1,8 @@
+328.	[func]		jelte
+	b10-auth now passes IXFR requests on to b10-xfrout, and no longer
+	responds to them with NOTIMPL.
+	(Trac #1390, git ab3f90da16d31fc6833d869686e07729d9b8c135)
+
 327.	[func]		jinmei
 	b10-xfrout now supports IXFR.  (Right now there is no user
 	configurable parameter about this feature; b10-xfrout will
