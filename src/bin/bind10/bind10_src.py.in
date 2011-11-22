@@ -742,7 +742,7 @@ class BoB:
 
         If we did not start yet, it raises an exception, which is meant
         to propagate through the component and configurator to the startup
-        routine and abort the startup imediatelly. If it is started up already,
+        routine and abort the startup immediately. If it is started up already,
         we just mark it so we terminate soon.
 
         It does set the exit code in both cases.
