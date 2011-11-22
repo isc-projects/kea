@@ -542,8 +542,7 @@ DatabaseClient::Finder::findWildcardMatch(
                 } else {
                     // NXRRSET case in the wildcard
                     result_status = WILDCARD_NXRRSET;
-                    if (dnssec_data &&
-                        nci != found.second.end()) {
+                    if (dnssec_data && nci != found.second.end()) {
                         // User wants a proof the wildcard doesn't contain it
                         //
                         // However, we need to get the RRset in the name of the
@@ -555,10 +554,8 @@ DatabaseClient::Finder::findWildcardMatch(
                     }
                 }
 
-                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                          DATASRC_DATABASE_WILDCARD).
-                    arg(accessor_->getDBName()).arg(wildcard).
-                    arg(name);
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,DATASRC_DATABASE_WILDCARD).
+                    arg(accessor_->getDBName()).arg(wildcard).arg(name);
             } else {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_WILDCARD_CANCEL_SUB).
@@ -571,8 +568,7 @@ DatabaseClient::Finder::findWildcardMatch(
             records_found = true;
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_WILDCARD_EMPTY).
-                arg(accessor_->getDBName()).arg(wildcard).
-                arg(name);
+                arg(accessor_->getDBName()).arg(wildcard).arg(name);
             if (dnssec_data) {
                 result_rrset = findNSECCover(Name(wildcard));
                 if (result_rrset) {
@@ -726,9 +722,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             }
         }
     } else {
-        logger.debug(DBG_TRACE_DETAILED,
-                     DATASRC_DATABASE_FOUND_RRSET)
-                    .arg(accessor_->getDBName()).arg(*result_rrset);
+        logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FOUND_RRSET)
+            .arg(accessor_->getDBName()).arg(*result_rrset);
     }
     return (FindResult(result_status, result_rrset));
 }
