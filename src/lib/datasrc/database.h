@@ -849,32 +849,6 @@ public:
             const size_t last_known; ///< No. labels in last non-empty domain
         };
 
-        /// \brief Search result of \c findWildcard().
-        ///
-        /// This is a tuple combining the result of the search - a status code
-        /// and a pointer to the RRset found - together with additional
-        /// information needed for subsequent processing: if there is not a
-        /// match for the data sought, then whether there is no match for the
-        /// wildcard or where there is a match, but no RRs of the type
-        /// requested.
-        ///
-        /// Note that the code and rrset elements are the same as that in
-        /// the \c ZoneFinder::FindResult struct: this structure could be
-        /// derived from that one, but as it is used just once in the code and
-        /// will never be treated as a \c FindResult, the obscurity involved in
-        /// deriving it from a parent class was deemed not worthwhile.
-        struct WildcardSearchResult {
-            WildcardSearchResult(const ZoneFinder::Result param_code,
-                                 const isc::dns::ConstRRsetPtr param_rrset,
-                                 const bool param_found) :
-                                 code(param_code), rrset(param_rrset),
-                                 records_found(param_found)
-            {}
-            const ZoneFinder::Result code;      ///< Result code
-            const isc::dns::ConstRRsetPtr rrset; ///< Pointer to RRset found
-            const bool records_found;           ///< true => NXRRSET
-        };
-
     private:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
@@ -997,8 +971,7 @@ public:
          *         is no match is an indication as to whether there was an
          *         NXDOMAIN or an NXRRSET.
          */
-        WildcardSearchResult
-        findWildcardMatch(
+        FindResult findWildcardMatch(
             const isc::dns::Name& name,
             const isc::dns::RRType& type, const FindOptions options,
             const isc::dns::ConstRRsetPtr& first_ns, size_t last_known);
