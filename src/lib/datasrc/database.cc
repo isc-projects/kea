@@ -592,140 +592,94 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
     const bool glue_ok((options & FIND_GLUE_OK) != 0);
     const bool dnssec_data((options & FIND_DNSSEC) != 0);
-
-    bool records_found = false; // Distinguish between NXDOMAIN and NXRRSET
-    bool get_cover = false;
-    isc::dns::ConstRRsetPtr result_rrset;
-    ZoneFinder::Result result_status = SUCCESS;
     const Name origin(getOrigin());
 
-    // First stage: go throught all superdomains from the origin down,
+    // First stage: go through all superdomains from the origin down,
     // searching for nodes that indicate a delegation (NS or DNAME).
     const DelegationSearchResult dresult = findDelegationPoint(name, options);
-    result_status = dresult.code;
-    result_rrset = dresult.rrset;
+    if (dresult.rrset) {
+        return (FindResult(dresult.code, dresult.rrset));
+    }
 
     // In case we are in GLUE_OK mode and start matching wildcards,
     // we can't do it under NS, so we store it here to check
     const isc::dns::ConstRRsetPtr first_ns = dresult.first_ns;
-    size_t last_known = dresult.last_known;
+    const size_t last_known = dresult.last_known;
 
-    if (!result_rrset) { // Only if we didn't find a redirect already
+    // Try getting the final result and extract it
+    // It is special if there's a CNAME or NS, DNAME is ignored here
+    // And we don't consider the NS in origin
+    WantedTypes final_types(FINAL_TYPES());
+    final_types.insert(type);
+    const FoundRRsets found = getRRsets(name.toText(), final_types,
+                                        name != origin);
+    const bool records_found = found.first;
 
-        // Try getting the final result and extract it
-        // It is special if there's a CNAME or NS, DNAME is ignored here
-        // And we don't consider the NS in origin
-        WantedTypes final_types(FINAL_TYPES());
-        final_types.insert(type);
-        const FoundRRsets found = getRRsets(name.toText(), final_types,
-                                            name != origin);
-        records_found = found.first;
+    // NS records, CNAME record and Wanted Type records
+    const FoundIterator nsi(found.second.find(RRType::NS()));
+    const FoundIterator cni(found.second.find(RRType::CNAME()));
+    const FoundIterator wti(found.second.find(type));
 
-        // NS records, CNAME record and Wanted Type records
-        const FoundIterator nsi(found.second.find(RRType::NS()));
-        const FoundIterator cni(found.second.find(RRType::CNAME()));
-        const FoundIterator wti(found.second.find(type));
-
-        if (name != origin && !glue_ok && nsi != found.second.end()) {
-            // There's a delegation at the exact node.
+    if (name != origin && !glue_ok && nsi != found.second.end()) {
+        // There's a delegation at the exact node.
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                  DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
+            arg(accessor_->getDBName()).arg(name);
+        return (FindResult(DELEGATION, nsi->second));
+    } else if (type != RRType::CNAME() && cni != found.second.end()) {
+        // A CNAME here
+        if (cni->second->getRdataCount() != 1) {
+            isc_throw(DataSourceError, "CNAME with " <<
+                      cni->second->getRdataCount() <<
+                      " rdata at " << name << ", expected 1");
+        }
+        return (FindResult(CNAME, cni->second));
+    } else if (wti != found.second.end()) {
+        // Just get the answer
+        return (FindResult(SUCCESS, wti->second));
+    } else if (!records_found) {
+        // Nothing lives here.
+        // But check if something lives below this domain and if so,
+        // pretend something is here as well.
+        if (hasSubdomains(name.toText())) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                      DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
+                      DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
                 arg(accessor_->getDBName()).arg(name);
-            result_status = DELEGATION;
-            result_rrset = nsi->second;
-
-        } else if (type != isc::dns::RRType::CNAME() &&
-                   cni != found.second.end()) {
-            // A CNAME here
-            result_status = CNAME;
-            result_rrset = cni->second;
-            if (result_rrset->getRdataCount() != 1) {
-                isc_throw(DataSourceError, "CNAME with " <<
-                          result_rrset->getRdataCount() <<
-                          " rdata at " << name << ", expected 1");
-            }
-
-        } else if (wti != found.second.end()) {
-            // Just get the answer
-            result_rrset = wti->second;
-
-        } else if (!records_found) {
-            // Nothing lives here.
-            // But check if something lives below this domain and if so,
-            // pretend something is here as well.
-            if (hasSubdomains(name.toText())) {
-                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                          DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
-                    arg(accessor_->getDBName()).arg(name);
-                records_found = true;
-                get_cover = dnssec_data;
-
-            } else if ((options & NO_WILDCARD) != 0) {
-                // If wildcard check is disabled, the search will ultimately
-                // terminate with NXDOMAIN. If DNSSEC is enabled, flag that
-                // we need to get the NSEC records to prove this.
-                if (dnssec_data) {
-                    get_cover = true;
-                }
-
-            } else {
-                // It's not an empty non-terminal so check for wildcards.
-                // We remove labels one by one and look for the wildcard there.
-                // Go up to first non-empty domain.
-                const WildcardSearchResult wresult =
-                    findWildcardMatch(name, type, options, first_ns,
-                                      last_known);
-                result_status = wresult.code;
-                result_rrset = wresult.rrset;
-                records_found = wresult.records_found;
-
+            return (FindResult(NXRRSET, dnssec_data ? findNSECCover(name) :
+                               ConstRRsetPtr()));
+        } else if ((options & NO_WILDCARD) != 0) {
+            // If wildcard check is disabled, the search should terminate
+            // with NXDOMAIN.
+            return (FindResult(NXDOMAIN, dnssec_data ? findNSECCover(name) :
+                               ConstRRsetPtr()));
+        } else {
+            // It's not an empty non-terminal so check for wildcards.
+            // We remove labels one by one and look for the wildcard there.
+            // Go up to first non-empty domain.
+            const WildcardSearchResult wresult =
+                findWildcardMatch(name, type, options, first_ns, last_known);
+            if (!wresult.records_found) {
                 // This is the NXDOMAIN case (nothing found anywhere). If
                 // they want DNSSEC data, try getting the NSEC record
-                if (dnssec_data && !records_found) {
-                    get_cover = true;
-                }
-            }
-        } else if (dnssec_data) {
-            // This is the "usual" NXRRSET case
-            // So in case they want DNSSEC, provide the NSEC
-            // (which should be available already here)
-            result_status = NXRRSET;
-            const FoundIterator nci(found.second.find(RRType::NSEC()));
-            if (nci != found.second.end()) {
-                result_rrset = nci->second;
-            }
-        }
-    }
-
-    if (!result_rrset) {
-        if (result_status == SUCCESS) {
-            // Should we look for NSEC covering the name?
-            if (get_cover) {
-                result_rrset = findNSECCover(name);
-                if (result_rrset) {
-                    result_status = NXDOMAIN;
-                }
-            }
-            // Something is not here and we didn't decide yet what
-            if (records_found) {
-                logger.debug(DBG_TRACE_DETAILED,
-                             DATASRC_DATABASE_FOUND_NXRRSET)
-                    .arg(accessor_->getDBName()).arg(name)
-                    .arg(getClass()).arg(type);
-                result_status = NXRRSET;
+                return (FindResult(NXDOMAIN,
+                                   dnssec_data ? findNSECCover(name) :
+                                   ConstRRsetPtr()));
             } else {
-                logger.debug(DBG_TRACE_DETAILED,
-                             DATASRC_DATABASE_FOUND_NXDOMAIN)
-                    .arg(accessor_->getDBName()).arg(name)
-                    .arg(getClass()).arg(type);
-                result_status = NXDOMAIN;
+                return (FindResult(wresult.code == SUCCESS ? NXRRSET :
+                                   wresult.code, wresult.rrset));
             }
         }
     } else {
-        logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FOUND_RRSET)
-            .arg(accessor_->getDBName()).arg(*result_rrset);
+        // This is the "usual" NXRRSET case.  So in case they want DNSSEC,
+        // provide the NSEC (which should be available already here)
+        if (dnssec_data) {
+            const FoundIterator nci(found.second.find(RRType::NSEC()));
+            if (nci != found.second.end()) {
+                return (FindResult(NXRRSET, nci->second));
+            }
+        }
+        return (FindResult(NXRRSET, ConstRRsetPtr()));
     }
-    return (FindResult(result_status, result_rrset));
 }
 
 Name
