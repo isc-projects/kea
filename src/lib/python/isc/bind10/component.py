@@ -283,7 +283,7 @@ class BaseComponent:
         """
         pass
 
-    def kill(self, forcefull=False):
+    def kill(self, forceful=False):
         """
         Kills the component.
 
