@@ -1369,20 +1369,72 @@ what if a NOTIFY is sent?
       The <command>b10-xfrout</command> process is started by
       <command>bind10</command>.
       When the <command>b10-auth</command> authoritative DNS server
-      receives an AXFR request, <command>b10-xfrout</command>
-      sends the zone.
-      This is used to provide master DNS service to share zones
+      receives an AXFR or IXFR request, <command>b10-auth</command>
+      internally forwards the request to <command>b10-xfrout</command>,
+      which handles the rest of request processing.
+      This is used to provide primary DNS service to share zones
       to secondary name servers.
       The <command>b10-xfrout</command> is also used to send
-      NOTIFY messages to slaves.
+      NOTIFY messages to secondary servers.
+    </para>
+
+    <para>
+      A global or per zone <option>transfer_acl</option> configuration
+      can be used to control accessibility of the outbound zone
+      transfer service.
+      By default, <command>b10-xfrout</command> allows any clients to
+      perform zone transfers for any zones:
+    </para>
+
+      <screen>&gt; <userinput>config show Xfrout/transfer_acl</userinput>
+Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
+
+    <para>
+      You can change this to, for example, rejecting all transfer
+      requests by default while allowing requests for the transfer
+      of zone "example.com" from 192.0.2.1 and 2001:db8::1 as follows:
+    </para>
+
+      <screen>&gt; <userinput>config set Xfrout/transfer_acl[0] {"action": "REJECT"}</userinput>
+&gt; <userinput>config add Xfrout/zone_config</userinput>
+&gt; <userinput>config set Xfrout/zone_config[0]/origin "example.com"</userinput>
+&gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1"},</userinput>
+<userinput>                                                 {"action": "ACCEPT", "from": "2001:db8::1"}]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+    <note><simpara>
+	In the above example the lines
+	for <option>transfer_acl</option> were divided for
+	readability.  In the actual input it must be in a single line.
+    </simpara></note>
+
+    <para>
+      If you want to require TSIG in access control, a separate TSIG
+      "key ring" must be configured specifically
+      for <command>b10-xfrout</command> as well as a system wide
+      key ring, both containing a consistent set of keys.
+      For example, to change the previous example to allowing requests
+      from 192.0.2.1 signed by a TSIG with a key name of
+      "key.example", you'll need to do this:
+    </para>
+
+    <screen>&gt; <userinput>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
+&gt; <userinput>config set Xfrout/tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
+&gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+    <para>
+      The first line of configuration defines a system wide key ring.
+      This is necessary because the <command>b10-auth</command> server
+      also checks TSIGs and it uses the system wide configuration.
     </para>
 
     <note><simpara>
-     The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.)
-     Access control is not yet provided.
+	In a future version, <command>b10-xfrout</command> will also
+	use the system wide TSIG configuration.
+	The way to specify zone specific configuration (ACLs, etc) is
+	likely to be changed, too.
     </simpara></note>
-
 
 <!--
 TODO:
