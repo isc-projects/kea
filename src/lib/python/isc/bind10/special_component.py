@@ -57,8 +57,8 @@ class SockCreator(BaseComponent):
         """
         return self.__creator.pid() if self.__creator else None
 
-    def kill(self, forcefull=False):
-        # We don't really care about forcefull here
+    def kill(self, forceful=False):
+        # We don't really care about forceful here
         if self.__creator:
             self.__creator.kill()
 
@@ -130,7 +130,7 @@ class SetUID(BaseComponent):
             posix.setuid(self.uid)
 
     def _stop_internal(self): pass
-    def kill(self, forcefull=False): pass
+    def kill(self, forceful=False): pass
 
     def name(self):
         return "Set UID"
