@@ -928,9 +928,9 @@ class TestBossComponents(unittest.TestCase):
             (anyway it is not told so). It does not die if it is killed
             the first time. It dies only when killed forcefully.
             """
-            def kill(self, forcefull=False):
-                killed.append(forcefull)
-                if forcefull:
+            def kill(self, forceful=False):
+                killed.append(forceful)
+                if forceful:
                     bob.components = {}
             def pid(self):
                 return 1
