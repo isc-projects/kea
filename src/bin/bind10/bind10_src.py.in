@@ -628,32 +628,17 @@ class BoB:
         # ... and start
         return self.start_process("b10-resolver", resargs, self.c_channel_env)
 
-    def __ld_path_hack(self):
-        # XXX: a quick-hack workaround.  xfrin/out will implicitly use
-        # dynamically loadable data source modules, which will be installed in
-        # $(libdir).
-        # On some OSes (including MacOS X and *BSDs) the main process (python)
-        # cannot find the modules unless they are located in a common shared
-        # object path or a path in the (DY)LD_LIBRARY_PATH.  We should seek
-        # a cleaner solution, but for a short term workaround we specify the
-        # path here, unconditionally, and without even bothering which
-        # environment variable should be used.
-        #
-        # We reuse the ADD_LIBEXEC_PATH variable to see whether we need to
-        # do this, as the conditions that make this workaround needed are
-        # the same as for the libexec path addition
-        # TODO: Once #1292 is finished, remove this method and the special
-        # component, use it as normal component.
-        env = dict(self.c_channel_env)
-        if ADD_LIBEXEC_PATH:
-            cur_path = os.getenv('DYLD_LIBRARY_PATH')
-            cur_path = '' if cur_path is None else ':' + cur_path
-            env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
+    def start_xfrout(self, c_channel_env):
+        self.start_simple("b10-xfrout", c_channel_env)
 
-            cur_path = os.getenv('LD_LIBRARY_PATH')
-            cur_path = '' if cur_path is None else ':' + cur_path
-            env['LD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
-        return env
+    def start_xfrin(self, c_channel_env):
+        self.start_simple("b10-xfrin", c_channel_env)
+
+    def start_zonemgr(self, c_channel_env):
+        self.start_simple("b10-zonemgr", c_channel_env)
+
+    def start_stats(self, c_channel_env):
+        self.start_simple("b10-stats", c_channel_env)
 
     def start_cmdctl(self):
         """
@@ -673,7 +658,7 @@ class BoB:
         if self.verbose:
             args += ['-v']
 
-        return self.start_process("b10-xfrin", args, self.__ld_path_hack())
+        return self.start_process("b10-xfrin", args, self.c_channel_env)
 
     def start_xfrout(self):
         # Set up the command arguments.
@@ -681,7 +666,7 @@ class BoB:
         if self.verbose:
             args += ['-v']
 
-        return self.start_process("b10-xfrout", args, self.__ld_path_hack())
+        return self.start_process("b10-xfrout", args, self.c_channel_env)
 
     def start_all_components(self):
         """

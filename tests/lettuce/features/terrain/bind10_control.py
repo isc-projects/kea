@@ -138,4 +138,7 @@ def send_command(step, command, cmdctl_port):
     bindctl.stdin.write(command + "\n")
     bindctl.stdin.write("quit\n")
     result = bindctl.wait()
-    assert result == 0, "bindctl exit code: " + str(result)
+    (stdout, stderr) = bindctl.communicate()
+    assert result == 0, "bindctl exit code: " + str(result) +\
+                        "\nstdout:\n" + str(stdout) +\
+                        "stderr:\n" + str(stderr)

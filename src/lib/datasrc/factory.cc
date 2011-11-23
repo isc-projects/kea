@@ -19,12 +19,52 @@
 #include "sqlite3_accessor.h"
 #include "memory_datasrc.h"
 
+#include "datasrc_config.h"
+
 #include <datasrc/logger.h>
 
 #include <dlfcn.h>
 
 using namespace isc::data;
 using namespace isc::datasrc;
+
+namespace {
+// This helper function takes the 'type' string as passed to
+// the DataSourceClient container below, and, unless it
+// already specifies a specific loadable .so file, will
+// convert the short-name to the full file.
+// I.e. it will add '_ds.so' (if necessary), and prepend
+// it with an absolute path (if necessary).
+// Returns the resulting string to use with LibraryContainer.
+const std::string getDataSourceLibFile(std::string type) {
+    std::string lib_file = type;
+    if (type.length() == 0) {
+        isc_throw(DataSourceError,
+                  "DataSourceClient container called with empty type value");
+    }
+
+    // Type can be either a short name, in which case we need to
+    // append "_ds.so", or it can be a direct .so module.
+    const int ext_pos = lib_file.rfind(".so");
+    if (ext_pos == std::string::npos ||
+        ext_pos + 3 != lib_file.length()) {
+        lib_file.append("_ds.so");
+    }
+    // And if it is not an absolute path, prepend it with our
+    // module path
+    if (type[0] != '/') {
+        // When running from the build tree, we do NOT want
+        // to load the installed module
+        if (getenv("B10_FROM_BUILD")) {
+            lib_file = std::string(getenv("B10_FROM_BUILD")) +
+                       "/src/lib/datasrc/.libs/" + lib_file;
+        } else {
+            lib_file = MODULE_PATH + lib_file;
+        }
+    }
+    return lib_file;
+}
+} // end anonymous namespace
 
 namespace isc {
 namespace datasrc {
@@ -61,7 +101,7 @@ LibraryContainer::getSym(const char* name) {
 
 DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
                                                      ConstElementPtr config)
-: ds_lib_(type + "_ds.so")
+: ds_lib_(getDataSourceLibFile(type))
 {
     // We are casting from a data to a function pointer here
     // Some compilers (rightfully) complain about that, but
