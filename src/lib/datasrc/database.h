@@ -25,6 +25,7 @@
 #include <dns/rrtype.h>
 
 #include <datasrc/client.h>
+#include <datasrc/logger.h>
 
 #include <dns/name.h>
 #include <exceptions/exceptions.h>
@@ -981,6 +982,14 @@ public:
                                     const isc::dns::RRType& type,
                                     FindOptions options,
                                     const DelegationSearchResult& dresult);
+
+        // To be documented.
+        FindResult logAndCreateResult(const isc::dns::Name& name,
+                                      const isc::dns::RRType& type,
+                                      ZoneFinder::Result code,
+                                      isc::dns::ConstRRsetPtr rrset,
+                                      const isc::log::MessageID& log_id);
+
         /**
          * \brief Checks if something lives below this domain.
          *
