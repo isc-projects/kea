@@ -473,8 +473,7 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
 ZoneFinder::FindResult
 DatabaseClient::Finder::findWildcardMatch(
     const isc::dns::Name& name, const isc::dns::RRType& type,
-    const FindOptions options, const isc::dns::ConstRRsetPtr& first_ns,
-    size_t last_known)
+    const FindOptions options, const DelegationSearchResult& dresult)
 {
     // Result of search
     isc::dns::ConstRRsetPtr result_rrset;
@@ -491,7 +490,7 @@ DatabaseClient::Finder::findWildcardMatch(
     // We can start at the last known non-empty domain and work up.  We remove
     // labels one by one and look for the wildcard there, up to the
     // first non-empty domain.
-    for (size_t i = 1; i <= name.getLabelCount() - last_known; ++i) {
+    for (size_t i = 1; i <= name.getLabelCount() - dresult.last_known; ++i) {
 
         // Construct the name with *
         const Name superdomain(name.split(i));
@@ -503,16 +502,16 @@ DatabaseClient::Finder::findWildcardMatch(
         FoundRRsets found = getRRsets(wildcard, final_types, true,
                                       &construct_name);
         if (found.first) {
-            if (first_ns) {
+            if (dresult.first_ns) {
                 // In case we are under NS, we don't wildcard-match, but return
                 // delegation
-                result_rrset = first_ns;
+                result_rrset = dresult.first_ns;
                 result_status = DELEGATION;
 
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_WILDCARD_CANCEL_NS).
                     arg(accessor_->getDBName()).arg(wildcard).
-                    arg(first_ns->getName());
+                    arg(dresult.first_ns->getName());
 
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
 
@@ -599,11 +598,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         return (FindResult(dresult.code, dresult.rrset));
     }
 
-    // In case we are in GLUE_OK mode and start matching wildcards,
-    // we can't do it under NS, so we store it here to check
-    const isc::dns::ConstRRsetPtr first_ns = dresult.first_ns;
-    const size_t last_known = dresult.last_known;
-
     // Try getting the final result and extract it
     // It is special if there's a CNAME or NS, DNAME is ignored here
     // And we don't consider the NS in origin
@@ -655,7 +649,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             // We remove labels one by one and look for the wildcard there.
             // Go up to first non-empty domain.
             const ZoneFinder::FindResult wresult =
-                findWildcardMatch(name, type, options, first_ns, last_known);
+                findWildcardMatch(name, type, options, dresult);
             if (wresult.code == NXDOMAIN && dnssec_data) {
                 // If the result is NXDOMAIN case and the caller wanted
                 // DNSSEC data, try getting the NSEC record.

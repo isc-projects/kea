@@ -974,7 +974,7 @@ public:
         FindResult findWildcardMatch(
             const isc::dns::Name& name,
             const isc::dns::RRType& type, const FindOptions options,
-            const isc::dns::ConstRRsetPtr& first_ns, size_t last_known);
+            const DelegationSearchResult& dresult);
 
         /**
          * \brief Checks if something lives below this domain.
