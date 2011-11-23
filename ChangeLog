@@ -1,3 +1,8 @@
+329.	[doc]		vorner, jreed
+	Document the bind10 run control configuration in
+	guide and manual page.
+	(Trac #1341, git c1171699a2b501321ab54207ad26e5da2b092d63)
+
 328.	[func]		jelte
 	b10-auth now passes IXFR requests on to b10-xfrout, and no longer
 	responds to them with NOTIMPL.
