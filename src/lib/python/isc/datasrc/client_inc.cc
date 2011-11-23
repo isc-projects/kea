@@ -89,7 +89,7 @@ None\n\
 ";
 
 const char* const DataSourceClient_getIterator_doc = "\
-get_iterator(name, adjust_ttl=True) -> ZoneIterator\n\
+get_iterator(name, separate_rrs=False) -> ZoneIterator\n\
 \n\
 Returns an iterator to the given zone.\n\
 \n\
@@ -111,17 +111,18 @@ anything else.\n\
 Parameters:\n\
   isc.dns.Name The name of zone apex to be traversed. It doesn't do\n\
                nearest match as find_zone.\n\
-  adjust_ttl   If True, the iterator will treat RRs with the same\n\
-               name and type but different TTL values to be of the\n\
-               same RRset, and will adjust the TTL to the lowest\n\
-               value found. If false, it will consider the RR to\n\
-               belong to a different RRset.\n\
+  separate_rrs If true, the iterator will return each RR as a\n\
+               new RRset object. If false, the iterator will\n\
+               combine consecutive RRs with the name and type\n\
+               into 1 RRset. The capitalization of the RRset will\n\
+               be that of the first RR read, and TTLs will be\n\
+               adjusted to the lowest one found.\n\
 \n\
 Return Value(s): Pointer to the iterator.\n\
 ";
 
 const char* const DataSourceClient_getUpdater_doc = "\
-get_updater(name, replace) -> ZoneUpdater\n\
+get_updater(name, replace, journaling=False) -> ZoneUpdater\n\
 \n\
 Return an updater to make updates to a specific zone.\n\
 \n\
@@ -162,6 +163,22 @@ A data source can be \"read only\" or can prohibit partial updates. In\n\
 such cases this method will result in an isc.datasrc.NotImplemented exception\n\
 unconditionally or when replace is false).\n\
 \n\
+If journaling is True, the data source should store a journal of\n\
+changes. These can be used later on by, for example, IXFR-out.\n\
+However, the parameter is a hint only. It might be unable to store\n\
+them and they would be silently discarded. Or it might need to store\n\
+them no matter what (for example a git-based data source would store\n\
+journal implicitly). When the journaling is True, it requires that the\n\
+following update be formatted as IXFR transfer (SOA to be removed,\n\
+bunch of RRs to be removed, SOA to be added, bunch of RRs to be added,\n\
+and possibly repeated). However, it is not required that the updater\n\
+checks that. If it is False, it must not require so and must accept\n\
+any order of changes.\n\
+\n\
+We don't support erasing the whole zone (by replace being True) and\n\
+saving a journal at the same time. In such situation, isc.datasrc.Error\n\
+is thrown.\n\
+\n\
 Exceptions:\n\
   isc.datasrc. NotImplemented The underlying data source does not support\n\
                updates.\n\
@@ -170,6 +187,7 @@ Exceptions:\n\
 Parameters:\n\
   name       The zone name to be updated\n\
   replace    Whether to delete existing RRs before making updates\n\
+  journaling The zone updater should store a journal of the changes.\n\
 \n\
 ";
 } // unnamed namespace

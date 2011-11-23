@@ -1,3 +1,31 @@
+320.	[func]*		vorner
+	The --brittle switch was removed from the bind10 executable. It didn't
+	work after the #213 change and the same effect can be accomplished by
+	declaring all components as core.
+	(Trac #1340, git f9224368908dd7ba16875b0d36329cf1161193f0)
+
+319.	[func]		naokikambe
+	b10-stats-httpd was updated. In addition of the access to all
+	statistics items of all modules, the specified item or the items of the
+	specified module name can be accessed. For example, the URI requested
+	by using the feature is showed as "/bind10/statistics/xml/Auth" or
+	"/bind10/statistics/xml/Auth/queries.tcp". The list of all possible
+	module names and all possible item names can be showed in the root
+	document, whose URI is "/bind10/statistics/xml". This change is not
+	only for the XML documents but also is for the XSD and XSL documents.
+	(Trac #917, git b34bf286c064d44746ec0b79e38a6177d01e6956)
+
+318.    [func]      stephen
+	Add C++ API for accessing zone difference information in database-based
+	data sources.
+	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
+
+317.    [func]      vorner
+	datasrc: the getUpdater method of DataSourceClient supports an optional
+	'journaling' parameter to indicate the generated updater to store diffs.
+	The database based derived class implements this extension.
+	(Trac #1331, git 713160c9bed3d991a00b2ea5e7e3e7714d79625d)
+
 316.	[func]*		vorner
 	The configuration of what parts of the system run is more flexible now.
 	Everything that should run must have an entry in Boss/components.
@@ -484,7 +512,7 @@ bind10-devel-20110705 released on July 05, 2011
 	(Trac #542, git 1aa773d84cd6431aa1483eb34a7f4204949a610f)
 
 243.	[func]*		feng
-	Add optional hmac algorithm SHA224/384/812.
+	Add optional hmac algorithm SHA224/384/512.
 	(Trac #782, git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1)
 
 bind10-devel-20110519 released on May 19, 2011

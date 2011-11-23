@@ -84,26 +84,26 @@ PyObject*
 DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject* name_obj;
-    PyObject* adjust_ttl_obj = NULL;
+    PyObject* separate_rrs_obj = NULL;
     if (PyArg_ParseTuple(args, "O!|O", &name_type, &name_obj,
-                         &adjust_ttl_obj)) {
+                         &separate_rrs_obj)) {
         try {
-            bool adjust_ttl = true;
-            if (adjust_ttl_obj != NULL) {
+            bool separate_rrs = false;
+            if (separate_rrs_obj != NULL) {
                 // store result in local var so we can explicitely check for
                 // -1 error return value
-                int adjust_ttl_no = PyObject_Not(adjust_ttl_obj);
-                if (adjust_ttl_no == 1) {
-                    adjust_ttl = false;
-                } else if (adjust_ttl_no == -1) {
+                int separate_rrs_true = PyObject_IsTrue(separate_rrs_obj);
+                if (separate_rrs_true == 1) {
+                    separate_rrs = true;
+                } else if (separate_rrs_true == -1) {
                     PyErr_SetString(getDataSourceException("Error"),
-                                    "Error getting value of adjust_ttl");
+                                    "Error getting value of separate_rrs");
                     return (NULL);
                 }
             }
             return (createZoneIteratorObject(
                 self->cppobj->getInstance().getIterator(PyName_ToName(name_obj),
-                                                        adjust_ttl),
+                                                        separate_rrs),
                 po_self));
         } catch (const isc::NotImplemented& ne) {
             PyErr_SetString(getDataSourceException("NotImplemented"),
@@ -129,14 +129,17 @@ PyObject*
 DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject *name_obj;
-    PyObject *replace_obj;
-    if (PyArg_ParseTuple(args, "O!O", &name_type, &name_obj, &replace_obj) &&
-        PyBool_Check(replace_obj)) {
-        bool replace = (replace_obj != Py_False);
+    PyObject *replace_obj = NULL;
+    PyObject *journaling_obj = Py_False;
+    if (PyArg_ParseTuple(args, "O!O|O", &name_type, &name_obj,
+                         &replace_obj, &journaling_obj) &&
+        PyBool_Check(replace_obj) && PyBool_Check(journaling_obj)) {
+        const bool replace = (replace_obj != Py_False);
+        const bool journaling = (journaling_obj == Py_True);
         try {
             ZoneUpdaterPtr updater =
                 self->cppobj->getInstance().getUpdater(PyName_ToName(name_obj),
-                                                       replace);
+                                                       replace, journaling);
             if (!updater) {
                 return (Py_None);
             }
@@ -157,6 +160,15 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
             return (NULL);
         }
     } else {
+        // PyBool_Check doesn't set the error, so we have to set it ourselves.
+        if (replace_obj != NULL && !PyBool_Check(replace_obj)) {
+            PyErr_SetString(PyExc_TypeError, "'replace' for "
+                            "DataSourceClient.get_updater must be boolean");
+        }
+        if (!PyBool_Check(journaling_obj)) {
+            PyErr_SetString(PyExc_TypeError, "'journaling' for "
+                            "DataSourceClient.get_updater must be boolean");
+        }
         return (NULL);
     }
 }
