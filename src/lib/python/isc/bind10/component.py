@@ -187,7 +187,7 @@ class BaseComponent:
 
         The exit code is used for logging. It might be None.
 
-        It calles _failed_internal internally.
+        It calls _failed_internal internally.
         """
         logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
                      exit_code if exit_code is not None else "unknown")

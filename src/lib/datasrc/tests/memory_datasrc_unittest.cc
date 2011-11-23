@@ -177,6 +177,54 @@ TEST_F(InMemoryClientTest, iterator) {
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
+TEST_F(InMemoryClientTest, iterator_separate_rrs) {
+    // Exactly the same tests as for iterator, but now with separate_rrs = true
+    // For the one that returns actual data, the AAAA should now be split up
+    boost::shared_ptr<InMemoryZoneFinder>
+        zone(new InMemoryZoneFinder(RRClass::IN(), Name("a")));
+    RRsetPtr aRRsetA(new RRset(Name("a"), RRClass::IN(), RRType::A(),
+                                  RRTTL(300)));
+    aRRsetA->addRdata(rdata::in::A("192.0.2.1"));
+    RRsetPtr aRRsetAAAA(new RRset(Name("a"), RRClass::IN(), RRType::AAAA(),
+                                  RRTTL(300)));
+    aRRsetAAAA->addRdata(rdata::in::AAAA("2001:db8::1"));
+    aRRsetAAAA->addRdata(rdata::in::AAAA("2001:db8::2"));
+    RRsetPtr aRRsetAAAA_r1(new RRset(Name("a"), RRClass::IN(), RRType::AAAA(),
+                                  RRTTL(300)));
+    aRRsetAAAA_r1->addRdata(rdata::in::AAAA("2001:db8::1"));
+    RRsetPtr aRRsetAAAA_r2(new RRset(Name("a"), RRClass::IN(), RRType::AAAA(),
+                                  RRTTL(300)));
+    aRRsetAAAA_r2->addRdata(rdata::in::AAAA("2001:db8::2"));
+
+    RRsetPtr subRRsetA(new RRset(Name("sub.x.a"), RRClass::IN(), RRType::A(),
+                                  RRTTL(300)));
+    subRRsetA->addRdata(rdata::in::A("192.0.2.2"));
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(zone));
+
+    // First, the zone is not there, so it should throw
+    EXPECT_THROW(memory_client.getIterator(Name("b"), true), DataSourceError);
+    // This zone is not there either, even when there's a zone containing this
+    EXPECT_THROW(memory_client.getIterator(Name("x.a")), DataSourceError);
+    // Now, an empty zone
+    ZoneIteratorPtr iterator(memory_client.getIterator(Name("a"), true));
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+    // It throws Unexpected when we are past the end
+    EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
+
+    ASSERT_EQ(result::SUCCESS, zone->add(aRRsetA));
+    ASSERT_EQ(result::SUCCESS, zone->add(aRRsetAAAA));
+    ASSERT_EQ(result::SUCCESS, zone->add(subRRsetA));
+    // Check it with full zone, one by one.
+    // It should be in ascending order in case of InMemory data source
+    // (isn't guaranteed in general)
+    iterator = memory_client.getIterator(Name("a"), true);
+    EXPECT_EQ(aRRsetA->toText(), iterator->getNextRRset()->toText());
+    EXPECT_EQ(aRRsetAAAA_r1->toText(), iterator->getNextRRset()->toText());
+    EXPECT_EQ(aRRsetAAAA_r2->toText(), iterator->getNextRRset()->toText());
+    EXPECT_EQ(subRRsetA->toText(), iterator->getNextRRset()->toText());
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+}
+
 TEST_F(InMemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, memory_client.getZoneCount());
     memory_client.addZone(

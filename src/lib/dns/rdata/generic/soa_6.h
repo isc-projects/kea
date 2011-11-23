@@ -34,6 +34,8 @@ public:
     SOA(const Name& mname, const Name& rname, uint32_t serial,
         uint32_t refresh, uint32_t retry, uint32_t expire,
         uint32_t minimum);
+    /// \brief Returns the serial stored in the SOA.
+    uint32_t getSerial() const;
 private:
     /// Note: this is a prototype version; we may reconsider
     /// this representation later.

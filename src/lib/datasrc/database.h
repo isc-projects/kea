@@ -274,6 +274,56 @@ public:
      */
     virtual IteratorContextPtr getAllRecords(int id) const = 0;
 
+    /**
+     * \brief Creates an iterator context for a set of differences.
+     *
+     * Returns an IteratorContextPtr that contains all difference records for
+     * the given zone between two versions of a zone.
+     *
+     * The difference records are the set of records that would appear in an
+     * IXFR serving a request for the difference between two versions of a zone.
+     * The records are returned in the same order as they would be in the IXFR.
+     * This means that if the the difference between versions of a zone with SOA
+     * serial numbers of "start" and "end" is required, and the zone contains
+     * the differences between serial number "start" to serial number
+     * "intermediate" and from serial number "intermediate" to serial number
+     * "end", the returned records will be (in order):
+     *
+     * \li SOA for serial "start"
+     * \li Records removed from the zone between versions "start" and
+     *     "intermediate" of the zone.  The order of these is not guaranteed.
+     * \li SOA for serial "intermediate"
+     * \li Records added to the zone between versions "start" and
+     *     "intermediate" of the zone.  The order of these is not guaranteed.
+     * \li SOA for serial "intermediate"
+     * \li Records removed from the zone between versions "intermediate" and
+     *     "end" of the zone.  The order of these is not guaranteed.
+     * \li SOA for serial "end"
+     * \li Records added to the zone between versions "intermediate" and "end"
+     *     of the zone. The order of these is not guaranteed.
+     *
+     * Note that there is no requirement that "start" be less than "end". Owing
+     * to serial number arithmetic, it is entirely possible that a later version
+     * of a zone will have a smaller SOA serial number than an earlier version.
+     *
+     * Each call to getNext() on the returned iterator should copy all
+     * column fields of the array that is passed, as defined in the
+     * RecordColumns enum.
+     *
+     * \exception any Since any implementation can be used, the caller should
+     *                expect any exception to be thrown.
+     *
+     * \param id The ID of the zone, returned from getZone().
+     * \param start The SOA serial number of the version of the zone from
+     *        which the difference sequence should start.
+     * \param end The SOA serial number of the version of the zone at which
+     *        the difference sequence should end.
+     *
+     * \return Newly created iterator context. Must not be NULL.
+     */
+    virtual IteratorContextPtr
+    getDiffs(int id, uint32_t start, uint32_t end) const = 0;
+
     /// Start a transaction for updating a zone.
     ///
     /// Each derived class version of this method starts a database
@@ -863,22 +913,24 @@ public:
      * \exception Anything else the underlying DatabaseConnection might
      *     want to throw.
      * \param name The origin of the zone to iterate.
-     * \param adjust_ttl If true, the iterator will treat RRs with the same
-     *                   name and type but different TTL values to be of the
-     *                   same RRset, and will adjust the TTL to the lowest
-     *                   value found. If false, it will consider the RR to
-     *                   belong to a different RRset.
+     * \param separate_rrs If true, the iterator will return each RR as a
+     *                     new RRset object. If false, the iterator will
+     *                     combine consecutive RRs with the name and type
+     *                     into 1 RRset. The capitalization of the RRset will
+     *                     be that of the first RR read, and TTLs will be
+     *                     adjusted to the lowest one found.
      * \return Shared pointer to the iterator (it will never be NULL)
      */
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool adjust_ttl = true) const;
+                                        bool separate_rrs = false) const;
 
     /// This implementation internally clones the accessor from the one
     /// used in the client and starts a separate transaction using the cloned
     /// accessor.  The returned updater will be able to work separately from
     /// the original client.
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
-                                      bool replace) const;
+                                      bool replace,
+                                      bool journaling = false) const;
 
 private:
     /// \brief The RR class that this client handles.
