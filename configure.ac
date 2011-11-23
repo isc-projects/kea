@@ -988,6 +988,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/bind10_config.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
+           src/lib/datasrc/datasrc_config.h
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
