@@ -775,7 +775,7 @@ Debian and Ubuntu:
         is a slave only), you would just remove the corresponding component
         from the set, like this and the process would be stopped immediately
         (and not started on the next startup):
-      <screen>&gt; <userinput>config del Boss/components b10-xfrout</userinput>
+      <screen>&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
 
@@ -1580,9 +1580,9 @@ what is XfroutClient xfr_client??
       You may change this using <command>bindctl</command>, for example:
 
       <screen>
-&gt; <userinput>config del Boss/components b10-xfrout</userinput>
-&gt; <userinput>config del Boss/components b10-xfrin</userinput>
-&gt; <userinput>config del Boss/components b10-auth</userinput>
+&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
+&gt; <userinput>config remove Boss/components b10-xfrin</userinput>
+&gt; <userinput>config remove Boss/components b10-auth</userinput>
 &gt; <userinput>config add Boss/components b10-resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
