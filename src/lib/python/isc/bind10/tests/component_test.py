@@ -673,7 +673,7 @@ class TestComponent(BaseComponent):
     def _failed_internal(self):
         self.log('failed')
 
-    def kill(self, forcefull=False):
+    def kill(self, forceful=False):
         self.log('killed')
 
 class FailComponent(BaseComponent):
