@@ -155,7 +155,7 @@
 	automatically.
 	(Trac #1279, git cd3588c9020d0310f949bfd053c4d3a4bd84ef88)
 
-306.	[bug]		Stephen
+306.	[bug]		stephen
 	Boss process now waits for the configuration manager to initialize
 	itself before continuing with startup.  This fixes a race condition
 	whereby the Boss could start the configuration manager and then
