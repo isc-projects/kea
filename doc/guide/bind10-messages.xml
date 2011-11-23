@@ -573,19 +573,117 @@ needs a dedicated message bus.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="BIND10_CONFIGURATION_START_AUTH">
-<term>BIND10_CONFIGURATION_START_AUTH start authoritative server: %1</term>
+<varlistentry id="BIND10_COMPONENT_FAILED">
+<term>BIND10_COMPONENT_FAILED component %1 (pid %2) failed with %3 exit status</term>
 <listitem><para>
-This message shows whether or not the authoritative server should be
-started according to the configuration.
+The process terminated, but the bind10 boss didn't expect it to, which means
+it must have failed.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="BIND10_CONFIGURATION_START_RESOLVER">
-<term>BIND10_CONFIGURATION_START_RESOLVER start resolver: %1</term>
+<varlistentry id="BIND10_COMPONENT_RESTART">
+<term>BIND10_COMPONENT_RESTART component %1 is about to restart</term>
 <listitem><para>
-This message shows whether or not the resolver should be
-started according to the configuration.
+The named component failed previously and we will try to restart it to provide
+as flawless service as possible, but it should be investigated what happened,
+as it could happen again.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_COMPONENT_START">
+<term>BIND10_COMPONENT_START component %1 is starting</term>
+<listitem><para>
+The named component is about to be started by the boss process.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_COMPONENT_START_EXCEPTION">
+<term>BIND10_COMPONENT_START_EXCEPTION component %1 failed to start: %2</term>
+<listitem><para>
+An exception (mentioned in the message) happened during the startup of the
+named component. The componet is not considered started and further actions
+will be taken about it.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_COMPONENT_STOP">
+<term>BIND10_COMPONENT_STOP component %1 is being stopped</term>
+<listitem><para>
+A component is about to be asked to stop willingly by the boss.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_COMPONENT_UNSATISFIED">
+<term>BIND10_COMPONENT_UNSATISFIED component %1 is required to run and failed</term>
+<listitem><para>
+A component failed for some reason (see previous messages). It is either a core
+component or needed component that was just started. In any case, the system
+can't continue without it and will terminate.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_CONFIGURATOR_BUILD">
+<term>BIND10_CONFIGURATOR_BUILD building plan '%1' -&gt; '%2'</term>
+<listitem><para>
+A debug message. This indicates that the configurator is building a plan
+how to change configuration from the older one to newer one. This does no
+real work yet, it just does the planning what needs to be done.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_CONFIGURATOR_PLAN_INTERRUPTED">
+<term>BIND10_CONFIGURATOR_PLAN_INTERRUPTED configurator plan interrupted, only %1 of %2 done</term>
+<listitem><para>
+There was an exception during some planned task. The plan will not continue and
+only some tasks of the plan were completed. The rest is aborted. The exception
+will be propagated.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_CONFIGURATOR_RECONFIGURE">
+<term>BIND10_CONFIGURATOR_RECONFIGURE reconfiguring running components</term>
+<listitem><para>
+A different configuration of which components should be running is being
+installed. All components that are no longer needed will be stopped and
+newly introduced ones started. This happens at startup, when the configuration
+is read the first time, or when an operator changes configuration of the boss.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_CONFIGURATOR_RUN">
+<term>BIND10_CONFIGURATOR_RUN running plan of %1 tasks</term>
+<listitem><para>
+A debug message. The configurator is about to execute a plan of actions it
+computed previously.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_CONFIGURATOR_START">
+<term>BIND10_CONFIGURATOR_START bind10 component configurator is starting up</term>
+<listitem><para>
+The part that cares about starting and stopping the right component from the
+boss process is starting up. This happens only once at the startup of the
+boss process. It will start the basic set of processes now (the ones boss
+needs to read the configuration), the rest will be started after the
+configuration is known.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_CONFIGURATOR_STOP">
+<term>BIND10_CONFIGURATOR_STOP bind10 component configurator is shutting down</term>
+<listitem><para>
+The part that cares about starting and stopping processes in the boss is
+shutting down. All started components will be shut down now (more precisely,
+asked to terminate by their own, if they fail to comply, other parts of
+the boss process will try to force them).
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_CONFIGURATOR_TASK">
+<term>BIND10_CONFIGURATOR_TASK performing task %1 on %2</term>
+<listitem><para>
+A debug message. The configurator is about to perform one task of the plan it
+is currently executing on the named component.
 </para></listitem>
 </varlistentry>
 
@@ -632,14 +730,6 @@ running, which needs to be stopped.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="BIND10_MSGQ_DAEMON_ENDED">
-<term>BIND10_MSGQ_DAEMON_ENDED b10-msgq process died, shutting down</term>
-<listitem><para>
-The message bus daemon has died. This is a fatal error, since it may
-leave the system in an inconsistent state. BIND10 will now shut down.
-</para></listitem>
-</varlistentry>
-
 <varlistentry id="BIND10_MSGQ_DISAPPEARED">
 <term>BIND10_MSGQ_DISAPPEARED msgq channel disappeared</term>
 <listitem><para>
@@ -649,24 +739,12 @@ inconsistent state of the system, and BIND 10 will now shut down.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="BIND10_PROCESS_ENDED_NO_EXIT_STATUS">
-<term>BIND10_PROCESS_ENDED_NO_EXIT_STATUS process %1 (PID %2) died: exit status not available</term>
+<varlistentry id="BIND10_PROCESS_ENDED">
+<term>BIND10_PROCESS_ENDED process %2 of %1 ended with status %3</term>
 <listitem><para>
-The given process ended unexpectedly, but no exit status is
-available. See BIND10_PROCESS_ENDED_WITH_EXIT_STATUS for a longer
-description.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="BIND10_PROCESS_ENDED_WITH_EXIT_STATUS">
-<term>BIND10_PROCESS_ENDED_WITH_EXIT_STATUS process %1 (PID %2) terminated, exit status = %3</term>
-<listitem><para>
-The given process ended unexpectedly with the given exit status.
-Depending on which module it was, it may simply be restarted, or it
-may be a problem that will cause the boss module to shut down too.
-The latter happens if it was the message bus daemon, which, if it has
-died suddenly, may leave the system in an inconsistent state. BIND10
-will also shut down now if it has been run with --brittle.
+This indicates a process started previously terminated. The process id
+and component owning the process are indicated, as well as the exit code.
+This doesn't distinguish if the process was supposed to terminate or not.
 </para></listitem>
 </varlistentry>
 
@@ -740,6 +818,13 @@ The boss module is sending a SIGTERM signal to the given process.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="BIND10_SETUID">
+<term>BIND10_SETUID setting UID to %1</term>
+<listitem><para>
+The boss switches the user it runs as to the given UID.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="BIND10_SHUTDOWN">
 <term>BIND10_SHUTDOWN stopping the server</term>
 <listitem><para>
@@ -771,15 +856,6 @@ which failed is unknown (not one of 'S' for socket or 'B' for bind).
 <listitem><para>
 The boss requested a socket from the creator, but the answer is unknown. This
 looks like a programmer error.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="BIND10_SOCKCREATOR_CRASHED">
-<term>BIND10_SOCKCREATOR_CRASHED the socket creator crashed</term>
-<listitem><para>
-The socket creator terminated unexpectedly. It is not possible to restart it
-(because the boss already gave up root privileges), so the system is going
-to terminate.
 </para></listitem>
 </varlistentry>
 
@@ -846,6 +922,14 @@ The boss forwards a request for a socket to the socket creator.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="BIND10_STARTED_CC">
+<term>BIND10_STARTED_CC started configuration/command session</term>
+<listitem><para>
+Debug message given when BIND 10 has successfull started the object that
+handles configuration and commands.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="BIND10_STARTED_PROCESS">
 <term>BIND10_STARTED_PROCESS started %1</term>
 <listitem><para>
@@ -864,6 +948,14 @@ The given process has successfully been started, and has the given PID.
 <term>BIND10_STARTING starting BIND10: %1</term>
 <listitem><para>
 Informational message on startup that shows the full version.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_STARTING_CC">
+<term>BIND10_STARTING_CC starting configuration/command session</term>
+<listitem><para>
+Informational message given when BIND 10 is starting the session object
+that handles configuration and commands.
 </para></listitem>
 </varlistentry>
 
@@ -905,10 +997,41 @@ shown, and BIND10 will now shut down.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="BIND10_START_AS_NON_ROOT">
-<term>BIND10_START_AS_NON_ROOT starting %1 as a user, not root. This might fail.</term>
+<varlistentry id="BIND10_STARTUP_UNEXPECTED_MESSAGE">
+<term>BIND10_STARTUP_UNEXPECTED_MESSAGE unrecognised startup message %1</term>
 <listitem><para>
-The given module is being started or restarted without root privileges.
+During the startup process, a number of messages are exchanged between the
+Boss process and the processes it starts.  This error is output when a
+message received by the Boss process is recognised as being of the
+correct format but is unexpected.  It may be that processes are starting
+of sequence.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_STARTUP_UNRECOGNISED_MESSAGE">
+<term>BIND10_STARTUP_UNRECOGNISED_MESSAGE unrecognised startup message %1</term>
+<listitem><para>
+During the startup process, a number of messages are exchanged between the
+Boss process and the processes it starts.  This error is output when a
+message received by the Boss process is not recognised.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_START_AS_NON_ROOT_AUTH">
+<term>BIND10_START_AS_NON_ROOT_AUTH starting b10-auth as a user, not root. This might fail.</term>
+<listitem><para>
+The authoritative server is being started or restarted without root privileges.
+If the module needs these privileges, it may have problems starting.
+Note that this issue should be resolved by the pending 'socket-creator'
+process; once that has been implemented, modules should not need root
+privileges anymore. See tickets #800 and #801 for more information.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_START_AS_NON_ROOT_RESOLVER">
+<term>BIND10_START_AS_NON_ROOT_RESOLVER starting b10-resolver as a user, not root. This might fail.</term>
+<listitem><para>
+The resolver is being started or restarted without root privileges.
 If the module needs these privileges, it may have problems starting.
 Note that this issue should be resolved by the pending 'socket-creator'
 process; once that has been implemented, modules should not need root
@@ -929,6 +1052,20 @@ the message channel.
 <listitem><para>
 An unknown child process has exited. The PID is printed, but no further
 action will be taken by the boss process.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="BIND10_WAIT_CFGMGR">
+<term>BIND10_WAIT_CFGMGR waiting for configuration manager process to initialize</term>
+<listitem><para>
+The configuration manager process is so critical to operation of BIND 10
+that after starting it, the Boss module will wait for it to initialize
+itself before continuing.  This debug message is produced during the
+wait and may be output zero or more times depending on how long it takes
+the configuration manager to start up.  The total length of time Boss
+will wait for the configuration manager before reporting an error is
+set with the command line --wait switch, which has a default value of
+ten seconds.
 </para></listitem>
 </varlistentry>
 
@@ -1535,6 +1672,13 @@ certificate file could not be read.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="CMDCTL_STARTED">
+<term>CMDCTL_STARTED cmdctl is listening for connections on %1:%2</term>
+<listitem><para>
+The cmdctl daemon has started and is now listening for connections.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="CMDCTL_STOPPED_BY_KEYBOARD">
 <term>CMDCTL_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down</term>
 <listitem><para>
@@ -1906,6 +2050,50 @@ While iterating through the zone, the time to live for RRs of the given RRset
 were found to be different. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_JOURNALREADER_END">
+<term>DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5</term>
+<listitem><para>
+This is a debug message indicating that the program (successfully)
+reaches the end of sequences of a zone's differences.  The zone's name
+and class, database name, and the start and end serials are shown in
+the message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_JOURNALREADER_NEXT">
+<term>DATASRC_DATABASE_JOURNALREADER_NEXT %1/%2 in %3/%4 on %5</term>
+<listitem><para>
+This is a debug message indicating that the program retrieves one
+difference in difference sequences of a zone and successfully converts
+it to an RRset.  The zone's name and class, database name, and the
+name and RR type of the retrieved diff are shown in the message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_JOURNALREADER_START">
+<term>DATASRC_DATABASE_JOURNALREADER_START %1/%2 on %3 from %4 to %5</term>
+<listitem><para>
+This is a debug message indicating that the program starts reading
+a zone's difference sequences from a database-based data source.  The
+zone's name and class, database name, and the start and end serials
+are shown in the message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_JOURNALREADR_BADDATA">
+<term>DATASRC_DATABASE_JOURNALREADR_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6</term>
+<listitem><para>
+This is an error message indicating that a zone's diff is broken and
+the data source library failed to convert it to a valid RRset.  The
+most likely cause of this is that someone has manually modified the
+zone's diff in the database and inserted invalid data as a result.
+The zone's name and class, database name, and the start and end
+serials, and an additional detail of the error are shown in the
+message.  The administrator should examine the diff in the database
+to find any invalid data and fix it.
 </para></listitem>
 </varlistentry>
 
@@ -2890,6 +3078,20 @@ together, the later one get's overwritten to the earlier one in the sequence.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="LIBXFRIN_NO_JOURNAL">
+<term>LIBXFRIN_NO_JOURNAL disabled journaling for updates to %1 on %2</term>
+<listitem><para>
+An attempt was made to create a Diff object with journaling enabled, but
+the underlying data source didn't support journaling (while still allowing
+updates) and so the created object has it disabled.  At a higher level this
+means that the updates will be applied to the zone but subsequent IXFR requests
+will result in a full zone transfer (i.e., an AXFR-style IXFR).  Unless the
+overhead of the full transfer is an issue this message can be ignored;
+otherwise you may want to check why the journaling wasn't allowed on the
+data source and either fix the issue or use a different type of data source.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="LOGIMPL_ABOVE_MAX_DEBUG">
 <term>LOGIMPL_ABOVE_MAX_DEBUG debug level of %1 is too high and will be set to the maximum of %2</term>
 <listitem><para>
@@ -3126,6 +3328,26 @@ to the named output file.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="NOTIFY_OUT_DATASRC_ACCESS_FAILURE">
+<term>NOTIFY_OUT_DATASRC_ACCESS_FAILURE failed to get access to data source: %1</term>
+<listitem><para>
+notify_out failed to get access to one of configured data sources.
+Detailed error is shown in the log message.  This can be either a
+configuration error or installation setup failure.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="NOTIFY_OUT_DATASRC_ZONE_NOT_FOUND">
+<term>NOTIFY_OUT_DATASRC_ZONE_NOT_FOUND Zone %1 is not found</term>
+<listitem><para>
+notify_out attempted to get slave information of a zone but the zone
+isn't found in the expected data source.  This shouldn't happen,
+because notify_out first identifies a list of available zones before
+this process.  So this means some critical inconsistency in the data
+source or software bug.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="NOTIFY_OUT_INVALID_ADDRESS">
 <term>NOTIFY_OUT_INVALID_ADDRESS invalid address %1#%2: %3</term>
 <listitem><para>
@@ -3234,6 +3456,23 @@ provide more information.
 The notify message to the given address (noted as address#port) has
 timed out, and the message will be resent until the max retry limit
 is reached.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="NOTIFY_OUT_ZONE_BAD_SOA">
+<term>NOTIFY_OUT_ZONE_BAD_SOA Zone %1 is invalid in terms of SOA</term>
+<listitem><para>
+This is a warning issued when the notify_out module finds a zone that
+doesn't have an SOA RR or has multiple SOA RRs.  Notify message won't
+be sent to such a zone.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="NOTIFY_OUT_ZONE_NO_NS">
+<term>NOTIFY_OUT_ZONE_NO_NS Zone %1 doesn't have NS RR</term>
+<listitem><para>
+This is a warning issued when the notify_out module finds a zone that
+doesn't have an NS RR.  Notify message won't be sent to such a zone.
 </para></listitem>
 </varlistentry>
 
@@ -4144,6 +4383,16 @@ be ignored.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="STATHTTPD_SERVER_DATAERROR">
+<term>STATHTTPD_SERVER_DATAERROR HTTP server data error: %1</term>
+<listitem><para>
+An internal error occurred while handling an HTTP request. An HTTP 404
+response will be sent back, and the specific error is printed. This
+is an error condition that likely points the specified data
+corresponding to the requested URI is incorrect.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="STATHTTPD_SERVER_ERROR">
 <term>STATHTTPD_SERVER_ERROR HTTP server error: %1</term>
 <listitem><para>
@@ -4518,11 +4767,40 @@ in database connection.  The error is shown in the log message.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="XFRIN_XFR_PROCESS_FAILURE">
+<term>XFRIN_XFR_PROCESS_FAILURE %1 transfer of zone %2/%3 failed: %4</term>
+<listitem><para>
+An XFR session failed outside the main protocol handling.  This
+includes an error at the data source level at the initialization
+phase, unexpected failure in the network connection setup to the
+master server, or even more unexpected failure due to unlikely events
+such as memory allocation failure.  Details of the error are shown in
+the log message.  In general, these errors are not really expected
+ones, and indicate an installation error or a program bug.  The
+session handler thread tries to clean up all intermediate resources
+even on these errors, but it may be incomplete.  So, if this log
+message continuously appears, system resource consumption should be
+checked, and you may even want to disable the corresponding transfers.
+You may also want to file a bug report if this message appears so
+often.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="XFRIN_XFR_TRANSFER_FAILURE">
 <term>XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 failed: %3</term>
 <listitem><para>
 The XFR transfer for the given zone has failed due to a protocol error.
 The error is shown in the log message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFRIN_XFR_TRANSFER_FALLBACK">
+<term>XFRIN_XFR_TRANSFER_FALLBACK falling back from IXFR to AXFR for %1</term>
+<listitem><para>
+The IXFR transfer of the given zone failed. This might happen in many cases,
+such that the remote server doesn't support IXFR, we don't have the SOA record
+(or the zone at all), we are out of sync, etc. In many of these situations,
+AXFR could still work. Therefore we try that one in case it helps.
 </para></listitem>
 </varlistentry>
 
@@ -4538,44 +4816,6 @@ the SOA record has been checked, and a zone transfer has been started.
 <term>XFRIN_XFR_TRANSFER_SUCCESS %1 transfer of zone %2 succeeded</term>
 <listitem><para>
 The XFR transfer of the given zone was successfully completed.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="XFROUT_AXFR_TRANSFER_DONE">
-<term>XFROUT_AXFR_TRANSFER_DONE transfer of %1/%2 complete</term>
-<listitem><para>
-The transfer of the given zone has been completed successfully, or was
-aborted due to a shutdown event.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="XFROUT_AXFR_TRANSFER_ERROR">
-<term>XFROUT_AXFR_TRANSFER_ERROR error transferring zone %1/%2: %3</term>
-<listitem><para>
-An uncaught exception was encountered while sending the response to
-an AXFR query. The error message of the exception is included in the
-log message, but this error most likely points to incomplete exception
-handling in the code.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="XFROUT_AXFR_TRANSFER_FAILED">
-<term>XFROUT_AXFR_TRANSFER_FAILED transfer of %1/%2 failed, rcode: %3</term>
-<listitem><para>
-A transfer out for the given zone failed. An error response is sent
-to the client. The given rcode is the rcode that is set in the error
-response. This is either NOTAUTH (we are not authoritative for the
-zone), SERVFAIL (our internal database is missing the SOA record for
-the zone), or REFUSED (the limit of simultaneous outgoing AXFR
-transfers, as specified by the configuration value
-Xfrout/max_transfers_out, has been reached).
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="XFROUT_AXFR_TRANSFER_STARTED">
-<term>XFROUT_AXFR_TRANSFER_STARTED transfer of zone %1/%2 has started</term>
-<listitem><para>
-A transfer out of the given zone has started.
 </para></listitem>
 </varlistentry>
 
@@ -4641,6 +4881,69 @@ system and your specific installation.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="XFROUT_IXFR_MULTIPLE_SOA">
+<term>XFROUT_IXFR_MULTIPLE_SOA IXFR client %1: authority section has multiple SOAs</term>
+<listitem><para>
+An IXFR request was received with more than one SOA RRs in the authority
+section.  The xfrout daemon rejects the request with an RCODE of
+FORMERR.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_IXFR_NO_JOURNAL_SUPPORT">
+<term>XFROUT_IXFR_NO_JOURNAL_SUPPORT IXFR client %1, %2: journaling not supported in the data source, falling back to AXFR</term>
+<listitem><para>
+An IXFR request was received but the underlying data source did
+not support journaling.  The xfrout daemon fell back to AXFR-style
+IXFR.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_IXFR_NO_SOA">
+<term>XFROUT_IXFR_NO_SOA IXFR client %1: missing SOA</term>
+<listitem><para>
+An IXFR request was received with no SOA RR in the authority section.
+The xfrout daemon rejects the request with an RCODE of FORMERR.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_IXFR_NO_VERSION">
+<term>XFROUT_IXFR_NO_VERSION IXFR client %1, %2: version (%3 to %4) not in journal, falling back to AXFR</term>
+<listitem><para>
+An IXFR request was received, but the requested range of differences
+were not found in the data source.  The xfrout daemon fell back to
+AXFR-style IXFR.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_IXFR_NO_ZONE">
+<term>XFROUT_IXFR_NO_ZONE IXFR client %1, %2: zone not found with journal</term>
+<listitem><para>
+The requested zone in IXFR was not found in the data source
+even though the xfrout daemon sucessfully found the SOA RR of the zone
+in the data source.  This can happen if the administrator removed the
+zone from the data source within the small duration between these
+operations, but it's more likely to be a bug or broken data source.
+Unless you know why this message was logged, and especially if it
+happens often, it's advisable to check whether the data source is
+valid for this zone.  The xfrout daemon considers it a possible,
+though unlikely, event, and returns a response with an RCODE of
+NOTAUTH.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_IXFR_UPTODATE">
+<term>XFROUT_IXFR_UPTODATE IXFR client %1, %2: client version is new enough (theirs=%3, ours=%4)</term>
+<listitem><para>
+An IXFR request was received, but the client's SOA version is the same as
+or newer than that of the server.  The xfrout server responds to the
+request with the answer section being just one SOA of that version.
+Note: as of this wrting the 'newer version' cannot be identified due to
+the lack of support for the serial number arithmetic.  This will soon
+be implemented.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="XFROUT_MODULECC_SESSION_ERROR">
 <term>XFROUT_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1</term>
 <listitem><para>
@@ -4699,21 +5002,36 @@ in the code.
 </varlistentry>
 
 <varlistentry id="XFROUT_QUERY_DROPPED">
-<term>XFROUT_QUERY_DROPPED request to transfer %1/%2 to [%3]:%4 dropped</term>
+<term>XFROUT_QUERY_DROPPED %1 client %2: request to transfer %3 dropped</term>
 <listitem><para>
-The xfrout process silently dropped a request to transfer zone to given host.
-This is required by the ACLs. The %1 and %2 represent the zone name and class,
-the %3 and %4 the IP address and port of the peer requesting the transfer.
+The xfrout process silently dropped a request to transfer zone to
+given host.  This is required by the ACLs.  The %2 represents the IP
+address and port of the peer requesting the transfer, and the %3
+represents the zone name and class.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_QUERY_QUOTA_EXCCEEDED">
+<term>XFROUT_QUERY_QUOTA_EXCCEEDED %1 client %2: request denied due to quota (%3)</term>
+<listitem><para>
+The xfr request was rejected because the server was already handling
+the maximum number of allowable transfers as specified in the transfers_out
+configuration parameter, which is also shown in the log message.  The
+request was immediately responded and terminated with an RCODE of REFUSED.
+This can happen for a busy xfrout server, and you may want to increase
+this parameter; if the server is being too busy due to requests from
+unexpected clients you may want to restrict the legitimate clients
+with ACL.
 </para></listitem>
 </varlistentry>
 
 <varlistentry id="XFROUT_QUERY_REJECTED">
-<term>XFROUT_QUERY_REJECTED request to transfer %1/%2 to [%3]:%4 rejected</term>
+<term>XFROUT_QUERY_REJECTED %1 client %2: request to transfer %3 rejected</term>
 <listitem><para>
 The xfrout process rejected (by REFUSED rcode) a request to transfer zone to
-given host. This is because of ACLs. The %1 and %2 represent the zone name and
-class, the %3 and %4 the IP address and port of the peer requesting the
-transfer.
+given host. This is because of ACLs.  The %2 represents the IP
+address and port of the peer requesting the transfer, and the %3
+represents the zone name and class.
 </para></listitem>
 </varlistentry>
 
@@ -4789,6 +5107,55 @@ socket needed for contacting the b10-auth daemon to pass requests
 on, but the file is in use. The most likely cause is that another
 xfrout daemon process is still running. This xfrout daemon (the one
 printing this message) will not start.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_XFR_TRANSFER_CHECK_ERROR">
+<term>XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4</term>
+<listitem><para>
+Pre-response check for an incomding XFR request failed unexpectedly.
+The most likely cause of this is that some low level error in the data
+source, but it may also be other general (more unlikely) errors such
+as memory shortage.  Some detail of the error is also included in the
+message.  The xfrout server tries to return a SERVFAIL response in this case.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_XFR_TRANSFER_DONE">
+<term>XFROUT_XFR_TRANSFER_DONE %1 client %2: transfer of %3 complete</term>
+<listitem><para>
+The transfer of the given zone has been completed successfully, or was
+aborted due to a shutdown event.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_XFR_TRANSFER_ERROR">
+<term>XFROUT_XFR_TRANSFER_ERROR %1 client %2: error transferring zone %3: %4</term>
+<listitem><para>
+An uncaught exception was encountered while sending the response to
+an AXFR query. The error message of the exception is included in the
+log message, but this error most likely points to incomplete exception
+handling in the code.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_XFR_TRANSFER_FAILED">
+<term>XFROUT_XFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4</term>
+<listitem><para>
+A transfer out for the given zone failed. An error response is sent
+to the client. The given rcode is the rcode that is set in the error
+response. This is either NOTAUTH (we are not authoritative for the
+zone), SERVFAIL (our internal database is missing the SOA record for
+the zone), or REFUSED (the limit of simultaneous outgoing AXFR
+transfers, as specified by the configuration value
+Xfrout/max_transfers_out, has been reached).
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_XFR_TRANSFER_STARTED">
+<term>XFROUT_XFR_TRANSFER_STARTED %1 client %2: transfer of zone %3 has started</term>
+<listitem><para>
+A transfer out of the given zone has started.
 </para></listitem>
 </varlistentry>
 
