@@ -16,6 +16,7 @@
 #include <Python.h>
 #include <dns/rdata.h>
 #include <dns/messagerenderer.h>
+#include <dns/exceptions.h>
 #include <util/buffer.h>
 #include <util/python/pycppwrapper_util.h>
 
@@ -23,6 +24,7 @@
 #include "rrtype_python.h"
 #include "rrclass_python.h"
 #include "messagerenderer_python.h"
+#include "name_python.h"
 
 using namespace isc::dns;
 using namespace isc::dns::python;
@@ -82,20 +84,49 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     const char* data;
     Py_ssize_t len;
 
-    // Create from string
-    if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
-                                        &rrclass_type, &rrclass,
-                                        &s)) {
-        self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
-                                   PyRRClass_ToRRClass(rrclass), s);
-        return (0);
-    } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
-                                &rrclass_type, &rrclass, &data, &len)) {
-        InputBuffer input_buffer(data, len);
-        self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
-                                   PyRRClass_ToRRClass(rrclass),
-                                   input_buffer, len);
-        return (0);
+    try {
+        // Create from string
+        if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
+                             &rrclass_type, &rrclass,
+                             &s)) {
+            self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
+                                       PyRRClass_ToRRClass(rrclass), s);
+            return (0);
+        } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
+                                    &rrclass_type, &rrclass, &data, &len)) {
+            InputBuffer input_buffer(data, len);
+            self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
+                                       PyRRClass_ToRRClass(rrclass),
+                                       input_buffer, len);
+            return (0);
+        }
+    }
+    catch (const isc::dns::rdata::InvalidRdataText& irdt) {
+        PyErr_SetString(po_InvalidRdataText, irdt.what());
+        return (-1);
+    }
+    catch (const isc::dns::rdata::InvalidRdataLength& irdl) {
+        PyErr_SetString(po_InvalidRdataLength, irdl.what());
+        return (-1);
+    }
+    catch (const isc::dns::rdata::CharStringTooLong& cstl) {
+        PyErr_SetString(po_CharStringTooLong, cstl.what());
+        return (-1);
+    }
+    catch (const isc::dns::DNSMessageFORMERR& dmfe) {
+        PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
+        return (-1);
+    }
+    // FIXME: These exceptions are not tested, I don't know how or if
+    // at all they can be triggered. But they are caught just in the case.
+    catch (const std::exception& ex) {
+        PyErr_SetString(PyExc_Exception, (std::string("Unknown exception: ") +
+                        ex.what()).c_str());
+        return (-1);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_Exception, "Unknown exception");
+        return (-1);
     }
 
     return (-1);
