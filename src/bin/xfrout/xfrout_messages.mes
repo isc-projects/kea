@@ -15,17 +15,24 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrout messages python module.
 
-% XFROUT_AXFR_TRANSFER_DONE transfer of %1/%2 complete
+% XFROUT_AXFR_TRANSFER_DONE %1 client %2: transfer of %3 complete
 The transfer of the given zone has been completed successfully, or was
 aborted due to a shutdown event.
 
-% XFROUT_AXFR_TRANSFER_ERROR error transferring zone %1/%2: %3
+% XFROUT_AXFR_TRANSFER_ERROR %1 client %2: error transferring zone %3: %4
 An uncaught exception was encountered while sending the response to
 an AXFR query. The error message of the exception is included in the
 log message, but this error most likely points to incomplete exception
 handling in the code.
 
-% XFROUT_AXFR_TRANSFER_FAILED transfer of %1/%2 failed, rcode: %3
+% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
+Pre-response check for an incomding XFR request failed unexpectedly.
+The most likely cause of this is that some low level error in the data
+source, but it may also be other general (more unlikely) errors such
+as memory shortage.  Some detail of the error is also included in the
+message.  The xfrout server tries to return a SERVFAIL response in this case.
+
+% XFROUT_AXFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4
 A transfer out for the given zone failed. An error response is sent
 to the client. The given rcode is the rcode that is set in the error
 response. This is either NOTAUTH (we are not authoritative for the
@@ -36,7 +43,7 @@ Xfrout/max_transfers_out, has been reached).
 # Still a TODO, but when implemented, REFUSED can also mean
 # the client is not allowed to transfer the zone
 
-% XFROUT_AXFR_TRANSFER_STARTED transfer of zone %1/%2 has started
+% XFROUT_AXFR_TRANSFER_STARTED %1 client %2: transfer of zone %3 has started
 A transfer out of the given zone has started.
 
 % XFROUT_BAD_TSIG_KEY_STRING bad TSIG key string: %1
@@ -106,16 +113,27 @@ in the log message, but at this point no specific information other
 than that could be given. This points to incomplete exception handling
 in the code.
 
-% XFROUT_QUERY_DROPPED request to transfer %1/%2 to [%3]:%4 dropped
-The xfrout process silently dropped a request to transfer zone to given host.
-This is required by the ACLs. The %1 and %2 represent the zone name and class,
-the %3 and %4 the IP address and port of the peer requesting the transfer.
+% XFROUT_QUERY_DROPPED %1 client %2: request to transfer %3 dropped
+The xfrout process silently dropped a request to transfer zone to
+given host.  This is required by the ACLs.  The %2 represents the IP
+address and port of the peer requesting the transfer, and the %3
+represents the zone name and class.
 
-% XFROUT_QUERY_REJECTED request to transfer %1/%2 to [%3]:%4 rejected
+% XFROUT_QUERY_REJECTED %1 client %2: request to transfer %3 rejected
 The xfrout process rejected (by REFUSED rcode) a request to transfer zone to
-given host. This is because of ACLs. The %1 and %2 represent the zone name and
-class, the %3 and %4 the IP address and port of the peer requesting the
-transfer.
+given host. This is because of ACLs.  The %2 represents the IP
+address and port of the peer requesting the transfer, and the %3
+represents the zone name and class.
+
+% XFROUT_QUERY_QUOTA_EXCCEEDED %1 client %2: request denied due to quota (%3)
+The xfr request was rejected because the server was already handling
+the maximum number of allowable transfers as specified in the transfers_out
+configuration parameter, which is also shown in the log message.  The
+request was immediately responded and terminated with an RCODE of REFUSED.
+This can happen for a busy xfrout server, and you may want to increase
+this parameter; if the server is being too busy due to requests from
+unexpected clients you may want to restrict the legitimate clients
+with ACL.
 
 % XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
 There was an error receiving the file descriptor for the transfer

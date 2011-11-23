@@ -45,7 +45,12 @@ DUMMY_DATA = {
         },
     'Auth' : {
         "queries.tcp": 2,
-        "queries.udp": 3
+        "queries.udp": 3,
+        "queries.perzone": [{
+                "zonename": "test.example",
+                "queries.tcp": 2,
+                "queries.udp": 3
+                }]
         },
     'Stats' : {
         "report_time": "2011-03-04T11:59:19Z",
@@ -129,68 +134,295 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(len(self.stats_httpd.httpd), 1)
         self.assertEqual((self.address, self.port), self.stats_httpd.http_addrs[0])
 
-        # URL is '/bind10/statistics/xml'
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        self.assertTrue(root.tag.find('stats_data') > 0)
-        for (k,v) in root.attrib.items():
-            if k.find('schemaLocation') > 0:
-                self.assertEqual(v, stats_httpd.XSD_NAMESPACE + ' ' + stats_httpd.XSD_URL_PATH)
-        for mod in DUMMY_DATA:
-            for (item, value) in DUMMY_DATA[mod].items():
+        def check_XML_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XML_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            xml_doctype = response.readline().decode()
+            xsl_doctype = response.readline().decode()
+            self.assertTrue(len(xml_doctype) > 0)
+            self.assertTrue(len(xsl_doctype) > 0)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            self.assertTrue(root.tag.find('statistics') > 0)
+            schema_loc = '{http://www.w3.org/2001/XMLSchema-instance}schemaLocation'
+            if item is None and mod is None:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith(
+                        '<?xml-stylesheet type="text/xsl" href="' + 
+                        stats_httpd.XSL_URL_PATH
+                        + '"?>'))
+                for m in DUMMY_DATA:
+                    for k in DUMMY_DATA[m].keys():
+                        self.assertIsNotNone(root.find(m + '/' + k))
+                        itm = root.find(m + '/' + k)
+                        if type(DUMMY_DATA[m][k]) is list:
+                            for v in DUMMY_DATA[m][k]:
+                                for i in v:
+                                    self.assertIsNotNone(itm.find('zones/' + i))
+            elif item is None:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH + '/' + mod)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith( 
+                                 '<?xml-stylesheet type="text/xsl" href="'
+                                 + stats_httpd.XSL_URL_PATH + '/' + mod
+                                 + '"?>'))
+                for k in DUMMY_DATA[mod].keys():
+                    self.assertIsNotNone(root.find(mod + '/' + k))
+                    itm = root.find(mod + '/' + k)
+                    self.assertIsNotNone(itm)
+                    if type(DUMMY_DATA[mod][k]) is list:
+                        for v in DUMMY_DATA[mod][k]:
+                            for i in v:
+                                self.assertIsNotNone(itm.find('zones/' + i))
+            else:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH + '/' + mod + '/' + item)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith( 
+                                 '<?xml-stylesheet type="text/xsl" href="'
+                                 + stats_httpd.XSL_URL_PATH + '/' + mod + '/' + item
+                                 + '"?>'))
                 self.assertIsNotNone(root.find(mod + '/' + item))
 
-        # URL is '/bind10/statitics/xsd'
-        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
-        tags = [ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ]
-        xsdpath = '/'.join(tags)
-        self.assertTrue(root.tag.find('schema') > 0)
-        self.assertTrue(hasattr(root, 'attrib'))
-        self.assertTrue('targetNamespace' in root.attrib)
-        self.assertEqual(root.attrib['targetNamespace'],
-                         stats_httpd.XSD_NAMESPACE)
-        for elm in root.findall(xsdpath):
-            self.assertIsNotNone(elm.attrib['name'])
-            self.assertTrue(elm.attrib['name'] in DUMMY_DATA)
+        # URL is '/bind10/statistics/xml'
+        check_XML_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xml/Module'
+            check_XML_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xml/Module/Item'
+                check_XML_URL_PATH(mod=m, item=k)
 
-        # URL is '/bind10/statitics/xsl'
-        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
-        self.client.endheaders()
-        response = self.client.getresponse()
-        self.assertEqual(response.getheader("Content-type"), "text/xml")
-        self.assertTrue(int(response.getheader("Content-Length")) > 0)
-        self.assertEqual(response.status, 200)
-        root = xml.etree.ElementTree.parse(response).getroot()
-        url_trans = '{http://www.w3.org/1999/XSL/Transform}'
-        url_xhtml = '{http://www.w3.org/1999/xhtml}'
-        xslpath = url_trans + 'template/' + url_xhtml + 'tr'
-        self.assertEqual(root.tag, url_trans + 'stylesheet')
-        for tr in root.findall(xslpath):
-            tds = tr.findall(url_xhtml + 'td')
-            self.assertIsNotNone(tds)
-            self.assertEqual(type(tds), list)
-            self.assertTrue(len(tds) > 2)
-            self.assertTrue(hasattr(tds[0], 'text'))
-            self.assertTrue(tds[0].text in DUMMY_DATA)
-            valueof = tds[2].find(url_trans + 'value-of')
-            self.assertIsNotNone(valueof)
-            self.assertTrue(hasattr(valueof, 'attrib'))
-            self.assertIsNotNone(valueof.attrib)
-            self.assertTrue('select' in valueof.attrib)
-            self.assertTrue(valueof.attrib['select'] in \
-                                [ tds[0].text+'/'+item for item in DUMMY_DATA[tds[0].text].keys() ])
+        def check_XSD_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XSD_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
+            self.assertTrue(root.tag.find('schema') > 0)
+            self.assertTrue(hasattr(root, 'attrib'))
+            self.assertTrue('targetNamespace' in root.attrib)
+            self.assertEqual(root.attrib['targetNamespace'],
+                             stats_httpd.XSD_NAMESPACE)
+            if mod is None and item is None:
+                for (mod, itm) in DUMMY_DATA.items():
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                    mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                    self.assertTrue(mod in mod_elm)
+                    for (it, val) in itm.items():
+                        xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                        itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
+                        self.assertTrue(it in itm_elm)
+                        if type(val) is list:
+                            xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                            itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[it].findall(xsdpath) ])
+                            self.assertTrue('zones' in itm_elm2)
+                            for i in val:
+                                for k in i.keys():
+                                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                                    self.assertTrue(
+                                        k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
+            elif item is None:
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                self.assertTrue(mod in mod_elm)
+                for (it, val) in DUMMY_DATA[mod].items():
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                    itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
+                    self.assertTrue(it in itm_elm)
+                    if type(val) is list:
+                        xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                        itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[it].findall(xsdpath) ])
+                        self.assertTrue('zones' in itm_elm2)
+                        for i in val:
+                            for k in i.keys():
+                                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                                self.assertTrue(
+                                    k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
+            else:
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                self.assertTrue(mod in mod_elm)
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
+                self.assertTrue(item in itm_elm)
+                if type(DUMMY_DATA[mod][item]) is list:
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                    itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[item].findall(xsdpath) ])
+                    self.assertTrue('zones' in itm_elm2)
+                    for i in DUMMY_DATA[mod][item]:
+                        for k in i.keys():
+                            xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                            self.assertTrue(
+                                k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
+
+        # URL is '/bind10/statistics/xsd'
+        check_XSD_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xsd/Module'
+            check_XSD_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xsd/Module/Item'
+                check_XSD_URL_PATH(mod=m, item=k)
+
+        def check_XSL_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XSL_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            url_trans = '{http://www.w3.org/1999/XSL/Transform}'
+            url_xhtml = '{http://www.w3.org/1999/xhtml}'
+            self.assertEqual(root.tag, url_trans + 'stylesheet')
+            if item is None and mod is None:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                for (mod, itms) in DUMMY_DATA.items():
+                    self.assertTrue(mod in mod_fe)
+                    for (k, v) in itms.items():
+                        if type(v) is list:
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_trans + 'for-each'
+                            itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
+                            self.assertTrue(k in itm_fe)
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'a'
+                            itm_a = [ x.attrib['href'] for x in itm_fe[k].findall(xslpath) ]
+                            self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+                            for itms in v:
+                                xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                    + url_xhtml + 'table/' + url_trans + 'for-each'
+                                itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
+                                self.assertTrue('zones' in itm_fe)
+                                for (k, v) in itms.items():
+                                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                        + url_xhtml + 'td/' + url_trans + 'value-of'
+                                    itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
+                                    self.assertTrue(k in itm_vo)
+                        else:
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                + url_xhtml + 'td/' + url_trans + 'value-of'
+                            itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
+                            self.assertTrue(k in itm_vo)
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                + url_xhtml + 'td/' + url_xhtml + 'a'
+                            itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                            self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+            elif item is None:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                self.assertTrue(mod in mod_fe)
+                for (k, v) in DUMMY_DATA[mod].items():
+                    if type(v) is list:
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_trans + 'for-each'
+                        itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
+                        self.assertTrue(k in itm_fe)
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'a'
+                        itm_a = [ x.attrib['href'] for x in itm_fe[k].findall(xslpath) ]
+                        self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+                        for itms in v:
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_trans + 'for-each'
+                            itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
+                            self.assertTrue('zones' in itm_fe)
+                            for (k, v) in itms.items():
+                                xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                    + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                    + url_xhtml + 'td/' + url_trans + 'value-of'
+                                itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
+                                self.assertTrue(k in itm_vo)
+                    else:
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                            + url_xhtml + 'td/' + url_trans + 'value-of'
+                        itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
+                        self.assertTrue(k in itm_vo)
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                            + url_xhtml + 'td/' + url_xhtml + 'a'
+                        itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                        self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+            else:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                self.assertTrue(mod in mod_fe)
+                if type(DUMMY_DATA[mod][item]) is list:
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_trans + 'for-each'
+                    itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
+                    self.assertTrue(item in itm_fe)
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'a'
+                    itm_a = [ x.attrib['href'] for x in itm_fe[item].findall(xslpath) ]
+                    self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + item in itm_a)
+                    for itms in DUMMY_DATA[mod][item]:
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_trans + 'for-each'
+                        itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[item].findall(xslpath) ])
+                        self.assertTrue('zones' in itm_fe)
+                        for (k, v) in itms.items():
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                + url_xhtml + 'td/' + url_trans + 'value-of'
+                            itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
+                            self.assertTrue(k in itm_vo)
+                else:
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                        + url_xhtml + 'td/' + url_trans + 'value-of'
+                    itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
+                    self.assertTrue(item in itm_vo)
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                        + url_xhtml + 'td/' + url_xhtml + 'a'
+                    itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                    self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + item in itm_a)
+
+        # URL is '/bind10/statistics/xsl'
+        check_XSL_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xsl/Module'
+            check_XSL_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xsl/Module/Item'
+                check_XSL_URL_PATH(mod=m, item=k)
 
         # 302 redirect
         self.client._http_vsn_str = 'HTTP/1.1'
@@ -202,13 +434,102 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(response.getheader('Location'),
                          "http://%s:%d%s" % (self.address, self.port, stats_httpd.XML_URL_PATH))
 
-        # 404 NotFound
+        # 404 NotFound (random path)
         self.client._http_vsn_str = 'HTTP/1.0'
         self.client.putrequest('GET', '/path/to/foo/bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + 'Auth') # with no slash
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
 
+        # 200 ok
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '#foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '?foo=bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
+
+        # 404 NotFound (too long path)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Boss/boot_time/a')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 404 NotFound (nonexistent module name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 404 NotFound (nonexistent item name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 404 NotFound (existent module but nonexistent item name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
 
     def test_do_GET_failed1(self):
         # checks status
@@ -242,26 +563,26 @@ class TestHttpHandler(unittest.TestCase):
         # failure case(Stats replies an error)
         self.stats.mccs.set_command_handler(
             lambda cmd, args: \
-                isc.config.ccsession.create_answer(1, "I have an error.")
+                isc.config.ccsession.create_answer(1, "specified arguments are incorrect: I have an error.")
             )
 
         # request XML
         self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 500)
+        self.assertEqual(response.status, 404)
 
         # request XSD
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 500)
+        self.assertEqual(response.status, 404)
 
         # request XSL
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 500)
+        self.assertEqual(response.status, 404)
 
     def test_do_HEAD(self):
         self.client.putrequest('HEAD', stats_httpd.XML_URL_PATH)
@@ -306,10 +627,16 @@ class TestHttpServer(unittest.TestCase):
 class TestStatsHttpdError(unittest.TestCase):
     """Tests for StatsHttpdError exception"""
 
-    def test_raises(self):
+    def test_raises1(self):
         try:
             raise stats_httpd.StatsHttpdError('Nothing')
         except stats_httpd.StatsHttpdError as err:
+            self.assertEqual(str(err), 'Nothing')
+
+    def test_raises2(self):
+        try:
+            raise stats_httpd.StatsHttpdDataError('Nothing')
+        except stats_httpd.StatsHttpdDataError as err:
             self.assertEqual(str(err), 'Nothing')
 
 class TestStatsHttpd(unittest.TestCase):
@@ -488,17 +815,13 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(
             xml_string="<dummy></dummy>",
-            xsd_namespace="http://host/path/to/",
-            xsd_url_path="/path/to/",
             xsl_url_path="/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertTrue(lines.find(opts[n])>0)
         tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
-        opts = dict(
-            xsd_string="<dummy></dummy>",
-            xsd_namespace="http://host/path/to/")
+        opts = dict(xsd_string="<dummy></dummy>")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertTrue(lines.find(opts[n])>0)
@@ -580,26 +903,7 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_xml_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_data = lambda: \
-            { 'Dummy' : { 'foo':'bar' } }
-        xml_body1 = self.stats_httpd.open_template(
-            stats_httpd.XML_TEMPLATE_LOCATION).substitute(
-            xml_string='<Dummy><foo>bar</foo></Dummy>',
-            xsd_namespace=stats_httpd.XSD_NAMESPACE,
-            xsd_url_path=stats_httpd.XSD_URL_PATH,
-            xsl_url_path=stats_httpd.XSL_URL_PATH)
-        xml_body2 = self.stats_httpd.xml_handler()
-        self.assertEqual(type(xml_body1), str)
-        self.assertEqual(type(xml_body2), str)
-        self.assertEqual(xml_body1, xml_body2)
-        self.stats_httpd.get_stats_data = lambda: \
-            { 'Dummy' : {'bar':'foo'} }
-        xml_body2 = self.stats_httpd.xml_handler()
-        self.assertNotEqual(xml_body1, xml_body2)
-
-    def test_xsd_handler(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "foo",
@@ -608,23 +912,241 @@ class TestStatsHttpd(unittest.TestCase):
                         "item_default": "bar",
                         "item_description": "foo is bar",
                         "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
+                        }]
+              }
+        self.stats_httpd.get_stats_data = lambda x,y: \
+            { 'Dummy' : { 'foo':'bar',
+                          'foo2': [
+                            {
+                                "foo2-1-1" : "bar1",
+                                "foo2-1-2" : 10,
+                                "foo2-1-3" : 9
+                                },
+                            {
+                                "foo2-1-1" : "bar2",
+                                "foo2-1-2" : 8,
+                                "foo2-1-3" : 7
+                                }
+                            ] } }
+        xml_body1 = self.stats_httpd.open_template(
+            stats_httpd.XML_TEMPLATE_LOCATION).substitute(
+            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 ' + stats_httpd.XSD_URL_PATH + '"><Dummy><foo>bar</foo><foo2><foo2-1><foo2-1-1>bar1</foo2-1-1><foo2-1-2>10</foo2-1-2><foo2-1-3>9</foo2-1-3></foo2-1><foo2-1><foo2-1-1>bar2</foo2-1-1><foo2-1-2>8</foo2-1-2><foo2-1-3>7</foo2-1-3></foo2-1></foo2></Dummy></bind10:statistics>',
+            xsl_url_path=stats_httpd.XSL_URL_PATH)
+        xml_body2 = self.stats_httpd.xml_handler()
+        self.assertEqual(type(xml_body1), str)
+        self.assertEqual(type(xml_body2), str)
+        self.assertEqual(xml_body1, xml_body2)
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "bar",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "foo",
+                        "item_description": "bar foo",
+                        "item_title": "Bar"
+                        },
+                   {
+                        "item_name": "bar2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Bar foo",
+                        "item_description": "Bar foo",
+                        "list_item_spec": {
+                            "item_name": "bar2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "bar2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Bar2 1 1",
+                                    "item_description": "Bar foo"
+                                    },
+                                {
+                                    "item_name": "bar2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Bar2 1 2",
+                                    "item_description": "Bar foo"
+                                    },
+                                {
+                                    "item_name": "bar2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Bar2 1 3",
+                                    "item_description": "Bar foo"
+                                    }
+                                ]
+                            }
+                        }]
+              }
+        self.stats_httpd.get_stats_data = lambda x,y: \
+            { 'Dummy' : { 'bar':'foo',
+                          'bar2': [
+                            {
+                                "bar2-1-1" : "foo1",
+                                "bar2-1-2" : 10,
+                                "bar2-1-3" : 9
+                                },
+                            {
+                                "bar2-1-1" : "foo2",
+                                "bar2-1-2" : 8,
+                                "bar2-1-3" : 7
+                                }
+                            ] } }
+        xml_body2 = self.stats_httpd.xml_handler()
+        self.assertNotEqual(xml_body1, xml_body2)
+
+    def test_xsd_handler(self):
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "foo",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "bar",
+                        "item_description": "foo is bar",
+                        "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "hoo_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "2011-01-01T01:01:01Z",
+                        "item_description": "hoo time",
+                        "item_title": "Hoo Time",
+                        "item_format": "date-time"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
                         }]
               }
         xsd_body1 = self.stats_httpd.open_template(
             stats_httpd.XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string=\
-                '<all><element name="Dummy"><complexType><all>' \
-                + '<element maxOccurs="1" minOccurs="1" name="foo" type="string">' \
-                + '<annotation><appinfo>Foo</appinfo>' \
-                + '<documentation>foo is bar</documentation>' \
-                + '</annotation></element></all>' \
-                + '</complexType></element></all>',
-            xsd_namespace=stats_httpd.XSD_NAMESPACE)
+            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="hoo_time" type="dateTime"><annotation><appinfo>Hoo Time</appinfo><documentation>hoo time</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2"><complexType><sequence><element maxOccurs="unbounded" minOccurs="1" name="foo2-1"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo2-1-1" type="string"><annotation><appinfo>Foo2 1 1</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-2" type="integer"><annotation><appinfo>Foo2 1 2</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-3" type="integer"><annotation><appinfo>Foo2 1 3</appinfo><documentation>Foo bar</documentation></annotation></element></all></complexType></element></sequence></complexType></element></all></complexType></element></all></complexType></element></schema>')
         xsd_body2 = self.stats_httpd.xsd_handler()
         self.assertEqual(type(xsd_body1), str)
         self.assertEqual(type(xsd_body2), str)
         self.assertEqual(xsd_body1, xsd_body2)
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "bar",
@@ -633,6 +1155,66 @@ class TestStatsHttpd(unittest.TestCase):
                         "item_default": "foo",
                         "item_description": "bar is foo",
                         "item_title": "bar"
+                        },
+                   {
+                        "item_name": "boo_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "2012-02-02T02:02:02Z",
+                        "item_description": "boo time",
+                        "item_title": "Boo Time",
+                        "item_format": "date-time"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
                         }]
               }
         xsd_body2 = self.stats_httpd.xsd_handler()
@@ -640,30 +1222,77 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_xsl_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "foo",
                         "item_type": "string",
                         "item_optional": False,
                         "item_default": "bar",
-                        "item_description": "foo is bar",
+                        "item_description": "foo bar",
                         "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
                         }]
               }
         xsl_body1 = self.stats_httpd.open_template(
             stats_httpd.XSL_TEMPLATE_LOCATION).substitute(
-            xsl_string='<xsl:template match="*"><tr>' \
-                + '<td>Dummy</td>' \
-                + '<td class="title" title="foo is bar">Foo</td>' \
-                + '<td><xsl:value-of select="Dummy/foo" /></td>' \
-                + '</tr></xsl:template>',
+            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Name</th><th>Module Item</th></tr><xsl:for-each select="Dummy"><tr><td><a href="' + stats_httpd.XML_URL_PATH + '/Dummy">Dummy</a></td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><tr><td class="title" title="foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo">Foo</a></td><td><xsl:value-of select="foo" /></td></tr><xsl:for-each select="foo2"><tr><td class="title" title="Foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo2">Foo bar</a></td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><xsl:for-each select="foo2-1"><tr><td class="title" title="">foo2-1</td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><tr><td class="title" title="Foo bar">Foo2 1 1</td><td><xsl:value-of select="foo2-1-1" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 2</td><td><xsl:value-of select="foo2-1-2" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 3</td><td><xsl:value-of select="foo2-1-3" /></td></tr></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></xsl:template>',
             xsd_namespace=stats_httpd.XSD_NAMESPACE)
         xsl_body2 = self.stats_httpd.xsl_handler()
         self.assertEqual(type(xsl_body1), str)
         self.assertEqual(type(xsl_body2), str)
         self.assertEqual(xsl_body1, xsl_body2)
-        self.stats_httpd.get_stats_spec = lambda: \
+        self.stats_httpd.get_stats_spec = lambda x,y: \
             { "Dummy" :
                   [{
                         "item_name": "bar",

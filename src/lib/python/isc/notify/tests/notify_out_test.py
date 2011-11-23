@@ -19,9 +19,11 @@ import os
 import tempfile
 import time
 import socket
-from isc.datasrc import sqlite3_ds
 from isc.notify import notify_out, SOCK_DATA
 import isc.log
+from isc.dns import *
+
+TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 
 # our fake socket, where we can read and insert messages
 class MockSocket():
@@ -92,10 +94,8 @@ class TestZoneNotifyInfo(unittest.TestCase):
 
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
-        self._db_file = tempfile.NamedTemporaryFile(delete=False)
-        sqlite3_ds.load(self._db_file.name, 'example.net.', self._example_net_data_reader)
-        sqlite3_ds.load(self._db_file.name, 'example.com.', self._example_com_data_reader)
-        self._notify = notify_out.NotifyOut(self._db_file.name)
+        self._db_file = TESTDATA_SRCDIR + '/test.sqlite3'
+        self._notify = notify_out.NotifyOut(self._db_file)
         self._notify._notify_infos[('example.com.', 'IN')] = MockZoneNotifyInfo('example.com.', 'IN')
         self._notify._notify_infos[('example.com.', 'CH')] = MockZoneNotifyInfo('example.com.', 'CH')
         self._notify._notify_infos[('example.net.', 'IN')] = MockZoneNotifyInfo('example.net.', 'IN')
@@ -109,10 +109,6 @@ class TestNotifyOut(unittest.TestCase):
         com_info.notify_slaves.append(('1.1.1.1', 5353))
         com_ch_info = self._notify._notify_infos[('example.com.', 'CH')]
         com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
-
-    def tearDown(self):
-        self._db_file.close()
-        os.unlink(self._db_file.name)
 
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
@@ -309,39 +305,9 @@ class TestNotifyOut(unittest.TestCase):
         self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_READ)
         self.assertNotEqual(cur_tgt, example_net_info._notify_current)
 
-
-    def _example_net_data_reader(self):
-        zone_data = [
-        ('example.net.',         '1000',  'IN',  'SOA', 'a.dns.example.net. mail.example.net. 1 1 1 1 1'),
-        ('example.net.',         '1000',  'IN',  'NS',  'a.dns.example.net.'),
-        ('example.net.',         '1000',  'IN',  'NS',  'b.dns.example.net.'),
-        ('example.net.',         '1000',  'IN',  'NS',  'c.dns.example.net.'),
-        ('a.dns.example.net.',   '1000',  'IN',  'A',    '1.1.1.1'),
-        ('a.dns.example.net.',   '1000',  'IN',  'AAAA', '2:2::2:2'),
-        ('b.dns.example.net.',   '1000',  'IN',  'A',    '3.3.3.3'),
-        ('b.dns.example.net.',   '1000',  'IN',  'AAAA', '4:4::4:4'),
-        ('b.dns.example.net.',   '1000',  'IN',  'AAAA', '5:5::5:5'),
-        ('c.dns.example.net.',   '1000',  'IN',  'A',    '6.6.6.6'),
-        ('c.dns.example.net.',   '1000',  'IN',  'A',    '7.7.7.7'),
-        ('c.dns.example.net.',   '1000',  'IN',  'AAAA', '8:8::8:8')]
-        for item in zone_data:
-            yield item
-
-    def _example_com_data_reader(self):
-        zone_data = [
-        ('example.com.',         '1000',  'IN',  'SOA', 'a.dns.example.com. mail.example.com. 1 1 1 1 1'),
-        ('example.com.',         '1000',  'IN',  'NS',  'a.dns.example.com.'),
-        ('example.com.',         '1000',  'IN',  'NS',  'b.dns.example.com.'),
-        ('example.com.',         '1000',  'IN',  'NS',  'c.dns.example.com.'),
-        ('a.dns.example.com.',   '1000',  'IN',  'A',    '1.1.1.1'),
-        ('b.dns.example.com.',   '1000',  'IN',  'A',    '3.3.3.3'),
-        ('b.dns.example.com.',   '1000',  'IN',  'AAAA', '4:4::4:4'),
-        ('b.dns.example.com.',   '1000',  'IN',  'AAAA', '5:5::5:5')]
-        for item in zone_data:
-            yield item
-
     def test_get_notify_slaves_from_ns(self):
-        records = self._notify._get_notify_slaves_from_ns('example.net.')
+        records = self._notify._get_notify_slaves_from_ns(Name('example.net.'),
+                                                          RRClass.IN())
         self.assertEqual(6, len(records))
         self.assertEqual('8:8::8:8', records[5])
         self.assertEqual('7.7.7.7', records[4])
@@ -350,14 +316,32 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual('4:4::4:4', records[1])
         self.assertEqual('3.3.3.3', records[0])
 
-        records = self._notify._get_notify_slaves_from_ns('example.com.')
+        records = self._notify._get_notify_slaves_from_ns(Name('example.com.'),
+                                                          RRClass.IN())
         self.assertEqual(3, len(records))
         self.assertEqual('5:5::5:5', records[2])
         self.assertEqual('4:4::4:4', records[1])
         self.assertEqual('3.3.3.3', records[0])
 
+    def test_get_notify_slaves_from_ns_unusual(self):
+        self._notify._db_file = TESTDATA_SRCDIR + '/brokentest.sqlite3'
+        self.assertEqual([], self._notify._get_notify_slaves_from_ns(
+                Name('nons.example'), RRClass.IN()))
+        self.assertEqual([], self._notify._get_notify_slaves_from_ns(
+                Name('nosoa.example'), RRClass.IN()))
+        self.assertEqual([], self._notify._get_notify_slaves_from_ns(
+                Name('multisoa.example'), RRClass.IN()))
+
+        self.assertEqual([], self._notify._get_notify_slaves_from_ns(
+                Name('nosuchzone.example'), RRClass.IN()))
+
+        # This will cause failure in getting access to the data source.
+        self._notify._db_file = TESTDATA_SRCDIR + '/nodir/error.sqlite3'
+        self.assertEqual([], self._notify._get_notify_slaves_from_ns(
+                Name('example.com'), RRClass.IN()))
+
     def test_init_notify_out(self):
-        self._notify._init_notify_out(self._db_file.name)
+        self._notify._init_notify_out(self._db_file)
         self.assertListEqual([('3.3.3.3', 53), ('4:4::4:4', 53), ('5:5::5:5', 53)],
                              self._notify._notify_infos[('example.com.', 'IN')].notify_slaves)
 
@@ -417,6 +401,5 @@ class TestNotifyOut(unittest.TestCase):
 
 if __name__== "__main__":
     isc.log.init("bind10")
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
-
-
