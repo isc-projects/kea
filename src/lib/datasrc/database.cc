@@ -631,18 +631,17 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // Try getting the final result and extract it
     // It is special if there's a CNAME or NS, DNAME is ignored here
     // And we don't consider the NS in origin
-    const Name origin(getOrigin());
+    const bool is_origin = (name == getOrigin());
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
-    const FoundRRsets found = getRRsets(name.toText(), final_types,
-                                        name != origin);
+    const FoundRRsets found(getRRsets(name.toText(), final_types, !is_origin));
 
     // NS records, CNAME record and Wanted Type records
     const FoundIterator nsi(found.second.find(RRType::NS()));
     const FoundIterator cni(found.second.find(RRType::CNAME()));
     const FoundIterator wti(found.second.find(type));
 
-    if (name != origin && (options & FIND_GLUE_OK) == 0 &&
+    if (!is_origin && (options & FIND_GLUE_OK) == 0 &&
         nsi != found.second.end()) { // delegation at the exact node
         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
