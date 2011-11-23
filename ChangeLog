@@ -16,7 +16,7 @@ bind10-devel-20111128 released on November 28, 2011
 	always respond to IXFR requests according to RFC1995).
 	(Trac #1371 and #1372, git 80c131f5b0763753d199b0fb9b51f10990bcd92b)
 
-326.	[build]*	jinmei
+326.	[build]*		jinmei
 	Added a check script for the SQLite3 schema version.  It will be
 	run at the beginning of 'make install', and if it detects an old
 	version of schema, installation will stop.  You'll then need to
@@ -70,29 +70,33 @@ bind10-devel-20111128 released on November 28, 2011
 
 319.	[func]		naokikambe
 	b10-stats-httpd was updated. In addition of the access to all
-	statistics items of all modules, the specified item or the items of the
-	specified module name can be accessed. For example, the URI requested
-	by using the feature is showed as "/bind10/statistics/xml/Auth" or
+	statistics items of all modules, the specified item or the items
+	of the specified module name can be accessed.  For example, the
+	URI requested by using the feature is showed as
+	"/bind10/statistics/xml/Auth" or
 	"/bind10/statistics/xml/Auth/queries.tcp". The list of all possible
-	module names and all possible item names can be showed in the root
-	document, whose URI is "/bind10/statistics/xml". This change is not
-	only for the XML documents but also is for the XSD and XSL documents.
+	module names and all possible item names can be showed in the
+	root document, whose URI is "/bind10/statistics/xml".  This change
+	is not only for the XML documents but also is for the XSD and
+	XSL documents.
 	(Trac #917, git b34bf286c064d44746ec0b79e38a6177d01e6956)
 
-318.    [func]		stephen
-	Add C++ API for accessing zone difference information in database-based
-	data sources.
+318.	[func]		stephen
+	Add C++ API for accessing zone difference information in
+	database-based data sources.
 	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
 
-317.    [func]		vorner
-	datasrc: the getUpdater method of DataSourceClient supports an optional
-	'journaling' parameter to indicate the generated updater to store diffs.
-	The database based derived class implements this extension.
+317.	[func]		vorner
+	datasrc: the getUpdater method of DataSourceClient supports an
+	optional 'journaling' parameter to indicate the generated updater
+	to store diffs.  The database based derived class implements this
+	extension.
 	(Trac #1331, git 713160c9bed3d991a00b2ea5e7e3e7714d79625d)
 
 316.	[func]*		vorner
-	The configuration of what parts of the system run is more flexible now.
-	Everything that should run must have an entry in Boss/components.
+	The configuration of what parts of the system run is more
+	flexible now.  Everything that should run must have an
+	entry in Boss/components.
 	(Trac #213, git 08e1873a3593b4fa06754654d22d99771aa388a6)
 
 315.	[func]		tomek
