@@ -239,7 +239,7 @@ TODO: configuration section
       The configuration provides settings for components for
       <command>bind10</command> to manage under
       <varname>/Boss/components/</varname>.
-      The default named sets are:
+      The default elements are:
     </para>
 
     <itemizedlist>
@@ -279,6 +279,13 @@ TODO: configuration section
     </itemizedlist>
 
     <para>
+      (Note that the startup of <command>b10-sockcreator</command>,
+      <command>b10-cfgmgr</command>, and <command>b10-msgq</command>
+      is not configurable. It is hardcoded and <command>bind10</command>
+      will not run without them.)
+    </para>
+
+    <para>
       These named sets (listed above) contain the following settings:
     </para>
 
@@ -289,7 +296,12 @@ TODO: configuration section
         <listitem>
 	  <para>The name used for communicating to it on the message
 	  bus.</para>
-<!-- TODO: why are some addresses are just null? -->
+<!-- NOTE: vorner said:
+These can be null, because the components are special ones, and
+the special class there already knows the address. It is (I hope)
+explained in the guide. I'd like to get rid of the special components
+sometime and I'd like it to teach to guess the address.
+-->
         </listitem>
       </varlistentry>
 
@@ -370,17 +382,6 @@ xfrin
       </varlistentry>
 
     </variablelist>
-
-<!--
-
-TODO: what about: why aren't they listed in config show Boss/components ?
-
-socket creator
-cfgmgr
-
-startup of msgq is not configurable?
-
--->
 
 <!-- TODO: formating -->
     <para>
