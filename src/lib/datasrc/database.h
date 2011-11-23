@@ -976,6 +976,11 @@ public:
             const isc::dns::RRType& type, const FindOptions options,
             const DelegationSearchResult& dresult);
 
+        /// To be documented.
+        FindResult findNoNameResult(const isc::dns::Name& name,
+                                    const isc::dns::RRType& type,
+                                    FindOptions options,
+                                    const DelegationSearchResult& dresult);
         /**
          * \brief Checks if something lives below this domain.
          *
