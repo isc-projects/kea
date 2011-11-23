@@ -110,6 +110,12 @@ The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
 
+% DATASRC_DATABASE_FOUND_CNAME search in datasource %1 for %2/%3/%4 resulted in CNAME %5
+(TBD)
+
+% DATASRC_DATABASE_FOUND_NXRRSET_NSEC search in datasource %1 for %2/%3/%4 resulted in RRset %5
+(TBD)
+
 % DATASRC_DATABASE_ITERATE iterating zone %1
 The program is reading the whole zone, eg. not searching for data, but going
 through each of the RRsets there.

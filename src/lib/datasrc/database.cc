@@ -613,6 +613,24 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
 }
 
 ZoneFinder::FindResult
+DatabaseClient::Finder::logAndCreateResult(const Name& name,
+                                           const RRType& type,
+                                           ZoneFinder::Result code,
+                                           ConstRRsetPtr rrset,
+                                           const isc::log::MessageID& log_id)
+{
+    if (rrset) {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
+            arg(accessor_->getDBName()).arg(name).arg(getClass()).
+            arg(type).arg(*rrset);
+    } else {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
+            arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
+    }
+    return (ZoneFinder::FindResult(code, rrset));
+}
+
+ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              isc::dns::RRsetList*,
@@ -643,19 +661,19 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
     if (!is_origin && (options & FIND_GLUE_OK) == 0 &&
         nsi != found.second.end()) { // delegation at the exact node
-        LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                  DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
-            arg(accessor_->getDBName()).arg(name);
-        return (FindResult(DELEGATION, nsi->second));
+        return (logAndCreateResult(name, type, DELEGATION, nsi->second,
+                                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT));
     } else if (type != RRType::CNAME() && cni != found.second.end()) { // CNAME
         if (cni->second->getRdataCount() != 1) {
             isc_throw(DataSourceError, "CNAME with " <<
                       cni->second->getRdataCount() <<
                       " rdata at " << name << ", expected 1");
         }
-        return (FindResult(CNAME, cni->second));
+        return (logAndCreateResult(name, type, CNAME, cni->second,
+                                   DATASRC_DATABASE_FOUND_CNAME));
     } else if (wti != found.second.end()) { // normal answer
-        return (FindResult(SUCCESS, wti->second));
+        return (logAndCreateResult(name, type, SUCCESS, wti->second,
+                                   DATASRC_DATABASE_FOUND_RRSET));
     } else if (!found.first) { // NXDOMAIN, empty name, wildcard
         return (findNoNameResult(name, type, options, dresult));
     } else {
@@ -664,10 +682,12 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         if ((options & FIND_DNSSEC) != 0) {
             const FoundIterator nci(found.second.find(RRType::NSEC()));
             if (nci != found.second.end()) {
-                return (FindResult(NXRRSET, nci->second));
+                return (logAndCreateResult(name, type, NXRRSET, nci->second,
+                                           DATASRC_DATABASE_FOUND_NXRRSET_NSEC));
             }
         }
-        return (FindResult(NXRRSET, ConstRRsetPtr()));
+        return (logAndCreateResult(name, type, NXRRSET, ConstRRsetPtr(),
+                                   DATASRC_DATABASE_FOUND_NXRRSET));
     }
 }
 
