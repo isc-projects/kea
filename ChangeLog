@@ -7,9 +7,6 @@
 	b10-xfrout now supports IXFR.  (Right now there is no user
 	configurable parameter about this feature; b10-xfrout will
 	always respond to IXFR requests according to RFC1995).
-	Note also that Trac #1390 is necessary for outbound IXFR to work
-	in practice, so as of this writing this is not a user visible
-	feature.
 	(Trac #1371 and #1372, git 80c131f5b0763753d199b0fb9b51f10990bcd92b)
 
 326.	[build]*	jinmei
