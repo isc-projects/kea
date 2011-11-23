@@ -818,33 +818,44 @@ Debian and Ubuntu:
       </para>
 
       <para>
-        The kind specifies how a failure of the component should be handled.
-        If it is set to "dispensable" (the default unless you set something
-        else), it will get started again if it fails. If it is set to
-        "needed" and it fails at startup, the whole bind10 shuts down and exits
-        with error exit code. But if it fails some time later, it is just
-        started again. If you set it to "core", you indicate that the system
-        is not usable without the component and if such component fails, the
-        system shuts down no matter when the failure happened. This is the
-        behaviour of the core components (the ones you can't turn off), but
-        you can declare any other components as core as well if you wish
-        (but you can turn these off, they just can't fail).
+	The kind specifies how a failure of the component should
+	be handled.  If it is set to <quote>dispensable</quote>
+	(the default unless you set something else), it will get
+	started again if it fails. If it is set to <quote>needed</quote>
+	and it fails at startup, the whole <command>bind10</command>
+	shuts down and exits with error exit code. But if it fails
+	some time later, it is just started again. If you set it
+	to <quote>core</quote>, you indicate that the system is
+	not usable without the component and if such component
+	fails, the system shuts down no matter when the failure
+	happened.  This is the behaviour of the core components
+	(the ones you can't turn off), but you can declare any
+	other components as core as well if you wish (but you can
+	turn these off, they just can't fail).
       </para>
 
       <para>
         The priority defines order in which the components should start.
         The ones with higher number are started sooner than the ones with
-        lover ones. If you don't set it, 0 is used as the priority.
+        lower ones. If you don't set it, 0 (zero) is used as the priority.
       </para>
 
       <para>
         There are other parameters we didn't use in our example.
-        One of them is "address". It is the address used by the component
-        on the b10-msgq message bus. The special components already know
-        their address, but the usual ones don't. The address is by convention
-        the thing after b10-, with the first letter capital (eg. b10-stats
-        would have Stats as its address).
+	One of them is <quote>address</quote>. It is the address
+	used by the component on the <command>b10-msgq</command>
+	message bus. The special components already know their
+	address, but the usual ones don't. The address is by
+	convention the thing after <emphasis>b10-</emphasis>, with
+	the first letter capital (eg. <command>b10-stats</command>
+	would have <quote>Stats</quote> as its address).
+<!-- TODO: this should be simplified so we don't even have to document it -->
       </para>
+
+<!-- TODO: what does "The special components already know their
+address, but the usual ones don't." mean? -->
+
+<!-- TODO: document params when is enabled -->
 
       <para>
         The last one is process. It is the name of the process to be started.
@@ -866,12 +877,18 @@ Debian and Ubuntu:
 
       <note>
         <para>
-          The configuration is quite powerful, but that includes a lot of space
-          for mistakes. You could turn off the b10-cmdctl, but then you
-          couldn't change it back the usual way, as it would require it to be
-          running (you would have to find and edit the configuration directly).
-          Also, some modules might have dependencies -- b10-stats-http need
-          b10-stats, b10-xfrout needs the b10-auth to be running, etc.
+	  The configuration is quite powerful, but that includes
+	  a lot of space for mistakes. You could turn off the
+	  <command>b10-cmdctl</command>, but then you couldn't
+	  change it back the usual way, as it would require it to
+	  be running (you would have to find and edit the configuration
+	  directly).  Also, some modules might have dependencies
+	  -- <command>b10-stats-httpd</command> need
+	  <command>b10-stats</command>, <command>b10-xfrout</command>
+	  needs the <command>b10-auth</command> to be running, etc.
+
+<!-- TODO: should we define dependencies? -->
+
         </para>
         <para>
           In short, you should think twice before disabling something here.
@@ -879,16 +896,19 @@ Debian and Ubuntu:
       </note>
 
       <para>
-        Now, to the mysterious setuid virtual component. If you use the <command>-u</command>
-        option to start the bind10 as root, but change the user later, we need
-        to start the <command>b10-auth</command> or <command>b10-resolver</command>
-        as root (until the socket creator is finished). So we need to specify
-        the time when the switch from root do the given user happens and that's
-        what the setuid component is for. The switch is done at the time the
-        setuid component would be started, if it was a process. The default
-        configuration contains the setuid component with priority 5, b10-auth
-        has 10 to be started before the switch and everything else is without
-        priority, so it is started after the switch.
+	Now, to the mysterious setuid virtual component. If you
+	use the <command>-u</command> option to start the
+	<command>bind10</command> as root, but change the user
+	later, we need to start the <command>b10-auth</command> or
+	<command>b10-resolver</command> as root (until the socket
+	creator is finished).<!-- TODO --> So we need to specify
+	the time when the switch from root do the given user happens
+	and that's what the setuid component is for. The switch is
+	done at the time the setuid component would be started, if
+	it was a process. The default configuration contains the
+	setuid component with priority 5, <command>b10-auth</command>
+	has 10 to be started before the switch and everything else
+	is without priority, so it is started after the switch.
       </para>
 
     </section>
