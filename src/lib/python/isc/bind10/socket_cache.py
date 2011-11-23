@@ -17,9 +17,21 @@
 Here's the cache for sockets from socket creator.
 """
 
-class SocketError(Exception): pass
+class SocketError(Exception):
+    """
+    Exception raised when the socket creator is unable to create requested
+    socket. Possible reasons might be the address it should be bound to
+    is already taken, the permissions are unsufficient, the address family
+    is not supported on this computer and many more.
+    """
+    pass
 
-class ShareError(Exception): pass
+class ShareError(Exception):
+    """
+    Such socket is already taken by other component and the sharing
+    parameters doesn't allow sharing with the new request.
+    """
+    pass
 
 class Cache:
     """
