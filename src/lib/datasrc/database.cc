@@ -621,10 +621,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
               .arg(accessor_->getDBName()).arg(name).arg(type);
 
-    const bool glue_ok((options & FIND_GLUE_OK) != 0);
-    const bool dnssec_data((options & FIND_DNSSEC) != 0);
-    const Name origin(getOrigin());
-
     // First stage: go through all superdomains from the origin down,
     // searching for nodes that indicate a delegation (NS or DNAME).
     const DelegationSearchResult dresult = findDelegationPoint(name, options);
@@ -635,19 +631,19 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // Try getting the final result and extract it
     // It is special if there's a CNAME or NS, DNAME is ignored here
     // And we don't consider the NS in origin
+    const Name origin(getOrigin());
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
                                         name != origin);
-    const bool records_found = found.first;
 
     // NS records, CNAME record and Wanted Type records
     const FoundIterator nsi(found.second.find(RRType::NS()));
     const FoundIterator cni(found.second.find(RRType::CNAME()));
     const FoundIterator wti(found.second.find(type));
 
-    if (name != origin && !glue_ok && nsi != found.second.end()) {
-        // There's a delegation at the exact node.
+    if (name != origin && (options & FIND_GLUE_OK) == 0 &&
+        nsi != found.second.end()) { // delegation at the exact node
         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
             arg(accessor_->getDBName()).arg(name);
@@ -661,12 +657,12 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         return (FindResult(CNAME, cni->second));
     } else if (wti != found.second.end()) { // normal answer
         return (FindResult(SUCCESS, wti->second));
-    } else if (!records_found) { // NXDOMAIN, empty name, wildcard
+    } else if (!found.first) { // NXDOMAIN, empty name, wildcard
         return (findNoNameResult(name, type, options, dresult));
     } else {
         // This is the "usual" NXRRSET case.  So in case they want DNSSEC,
         // provide the NSEC (which should be available already here)
-        if (dnssec_data) {
+        if ((options & FIND_DNSSEC) != 0) {
             const FoundIterator nci(found.second.find(RRType::NSEC()));
             if (nci != found.second.end()) {
                 return (FindResult(NXRRSET, nci->second));
