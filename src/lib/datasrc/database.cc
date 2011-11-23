@@ -579,6 +579,40 @@ DatabaseClient::Finder::findWildcardMatch(
 }
 
 ZoneFinder::FindResult
+DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
+                                         FindOptions options,
+                                         const DelegationSearchResult& dresult)
+{
+    const bool dnssec_data((options & FIND_DNSSEC) != 0);
+
+    // We know the database doesn't have any record for the given name.
+    // But check if something lives below this domain and if so,
+    // pretend something is here as well.
+    if (hasSubdomains(name.toText())) {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                  DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
+            arg(accessor_->getDBName()).arg(name);
+        return (FindResult(NXRRSET, dnssec_data ? findNSECCover(name) :
+                           ConstRRsetPtr()));
+    } else if ((options & NO_WILDCARD) != 0) {
+        // If wildcard check is disabled, the search should terminate
+        // with NXDOMAIN.
+        return (FindResult(NXDOMAIN, dnssec_data ? findNSECCover(name) :
+                           ConstRRsetPtr()));
+    } else {
+        // It's not an empty non-terminal so check for wildcards.
+        const ZoneFinder::FindResult wresult =
+            findWildcardMatch(name, type, options, dresult);
+        if (wresult.code == NXDOMAIN && dnssec_data) {
+            // If the result is NXDOMAIN case and the caller wanted
+            // DNSSEC data, try getting the NSEC record.
+            return (FindResult(NXDOMAIN, findNSECCover(name)));
+        }
+        return (FindResult(wresult.code, wresult.rrset));
+    }
+}
+
+ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              isc::dns::RRsetList*,
@@ -618,45 +652,17 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
             arg(accessor_->getDBName()).arg(name);
         return (FindResult(DELEGATION, nsi->second));
-    } else if (type != RRType::CNAME() && cni != found.second.end()) {
-        // A CNAME here
+    } else if (type != RRType::CNAME() && cni != found.second.end()) { // CNAME
         if (cni->second->getRdataCount() != 1) {
             isc_throw(DataSourceError, "CNAME with " <<
                       cni->second->getRdataCount() <<
                       " rdata at " << name << ", expected 1");
         }
         return (FindResult(CNAME, cni->second));
-    } else if (wti != found.second.end()) {
-        // Just get the answer
+    } else if (wti != found.second.end()) { // normal answer
         return (FindResult(SUCCESS, wti->second));
-    } else if (!records_found) {
-        // Nothing lives here.
-        // But check if something lives below this domain and if so,
-        // pretend something is here as well.
-        if (hasSubdomains(name.toText())) {
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                      DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
-                arg(accessor_->getDBName()).arg(name);
-            return (FindResult(NXRRSET, dnssec_data ? findNSECCover(name) :
-                               ConstRRsetPtr()));
-        } else if ((options & NO_WILDCARD) != 0) {
-            // If wildcard check is disabled, the search should terminate
-            // with NXDOMAIN.
-            return (FindResult(NXDOMAIN, dnssec_data ? findNSECCover(name) :
-                               ConstRRsetPtr()));
-        } else {
-            // It's not an empty non-terminal so check for wildcards.
-            // We remove labels one by one and look for the wildcard there.
-            // Go up to first non-empty domain.
-            const ZoneFinder::FindResult wresult =
-                findWildcardMatch(name, type, options, dresult);
-            if (wresult.code == NXDOMAIN && dnssec_data) {
-                // If the result is NXDOMAIN case and the caller wanted
-                // DNSSEC data, try getting the NSEC record.
-                return (FindResult(NXDOMAIN, findNSECCover(name)));
-            }
-            return (FindResult(wresult.code, wresult.rrset));
-        }
+    } else if (!records_found) { // NXDOMAIN, empty name, wildcard
+        return (findNoNameResult(name, type, options, dresult));
     } else {
         // This is the "usual" NXRRSET case.  So in case they want DNSSEC,
         // provide the NSEC (which should be available already here)
