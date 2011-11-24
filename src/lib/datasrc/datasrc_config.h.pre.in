@@ -11,5 +11,21 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+#ifndef __DATASRC_CONFIG_H
+#define __DATASRC_CONFIG_H 1
 
-#define MODULE_PATH "@prefix@/lib/"
+namespace isc {
+namespace datasrc {
+
+/// \brief Default directory to find the loadable data source modules
+///
+/// This is the directory where, once installed, modules such as
+/// memory_ds.so and sqlite3_ds.so are found. It is used by the
+/// DataSourceClient loader if no absolute path is used and
+/// B10_FROM_BUILD is not set in the environment.
+const char* const MODULE_PATH = "@@PKGLIBEXECDIR@@/";
+
+} // end namespace datasrc
+} // end namespace isc
+
+#endif // __DATASRC_CONFIG_H
