@@ -36,7 +36,8 @@ namespace {
 // I.e. it will add '_ds.so' (if necessary), and prepend
 // it with an absolute path (if necessary).
 // Returns the resulting string to use with LibraryContainer.
-const std::string getDataSourceLibFile(std::string type) {
+const std::string
+getDataSourceLibFile(const std::string& type) {
     std::string lib_file = type;
     if (type.length() == 0) {
         isc_throw(DataSourceError,
@@ -46,8 +47,7 @@ const std::string getDataSourceLibFile(std::string type) {
     // Type can be either a short name, in which case we need to
     // append "_ds.so", or it can be a direct .so module.
     const int ext_pos = lib_file.rfind(".so");
-    if (ext_pos == std::string::npos ||
-        ext_pos + 3 != lib_file.length()) {
+    if (ext_pos == std::string::npos || ext_pos + 3 != lib_file.length()) {
         lib_file.append("_ds.so");
     }
     // And if it is not an absolute path, prepend it with our
@@ -55,14 +55,14 @@ const std::string getDataSourceLibFile(std::string type) {
     if (type[0] != '/') {
         // When running from the build tree, we do NOT want
         // to load the installed module
-        if (getenv("B10_FROM_BUILD")) {
+        if (getenv("B10_FROM_BUILD") != NULL) {
             lib_file = std::string(getenv("B10_FROM_BUILD")) +
                        "/src/lib/datasrc/.libs/" + lib_file;
         } else {
             lib_file = MODULE_PATH + lib_file;
         }
     }
-    return lib_file;
+    return (lib_file);
 }
 } // end anonymous namespace
 
