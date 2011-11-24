@@ -38,14 +38,14 @@ namespace {
 // Returns the resulting string to use with LibraryContainer.
 const std::string
 getDataSourceLibFile(const std::string& type) {
-    std::string lib_file = type;
-    if (type.length() == 0) {
+    if (type.empty()) {
         isc_throw(DataSourceError,
                   "DataSourceClient container called with empty type value");
     }
 
     // Type can be either a short name, in which case we need to
     // append "_ds.so", or it can be a direct .so module.
+    std::string lib_file = type;
     const int ext_pos = lib_file.rfind(".so");
     if (ext_pos == std::string::npos || ext_pos + 3 != lib_file.length()) {
         lib_file.append("_ds.so");
