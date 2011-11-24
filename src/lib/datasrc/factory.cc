@@ -59,7 +59,7 @@ getDataSourceLibFile(const std::string& type) {
             lib_file = std::string(getenv("B10_FROM_BUILD")) +
                        "/src/lib/datasrc/.libs/" + lib_file;
         } else {
-            lib_file = MODULE_PATH + lib_file;
+            lib_file = isc::datasrc::MODULE_PATH + lib_file;
         }
     }
     return (lib_file);
