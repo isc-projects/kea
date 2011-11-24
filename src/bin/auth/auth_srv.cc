@@ -219,8 +219,9 @@ class ConfigChecker : public SimpleCallback {
 public:
     ConfigChecker(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage&) const {
-        if (server_->getConfigSession()->hasQueuedMsgs()) {
-            server_->getConfigSession()->checkCommand();
+        ModuleCCSession* cfg_session = server_->getConfigSession();
+        if (cfg_session != NULL && cfg_session->hasQueuedMsgs()) {
+            cfg_session->checkCommand();
         }
     }
 private:
