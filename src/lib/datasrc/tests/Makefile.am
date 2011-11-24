@@ -124,4 +124,3 @@ run_unittests_factory_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 run_unittests_factory_LDADD = $(common_ldadd)
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests_factory
-
