@@ -812,6 +812,22 @@ class BoB:
 
         return next_restart_time
 
+    def socket_request_handler(self, token, unix_socket):
+        """
+        This function handles a token that comes over a unix_domain socket.
+        The function looks into the _socket_cache and sends the socket
+        identified by the tocken back over the unix_socket.
+        """
+        pass
+
+    def socket_consumer_dead(self, unix_socket):
+        """
+        This function handles when a unix_socket closes. This means all
+        sockets sent to it are to be considered closed. This function signals
+        so to the _socket_cache.
+        """
+        pass
+
 # global variables, needed for signal handlers
 options = None
 boss_of_bind = None
