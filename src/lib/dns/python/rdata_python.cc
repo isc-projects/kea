@@ -100,31 +100,25 @@ Rdata_init(s_Rdata* self, PyObject* args) {
                                        input_buffer, len);
             return (0);
         }
-    }
-    catch (const isc::dns::rdata::InvalidRdataText& irdt) {
+    } catch (const isc::dns::rdata::InvalidRdataText& irdt) {
         PyErr_SetString(po_InvalidRdataText, irdt.what());
         return (-1);
-    }
-    catch (const isc::dns::rdata::InvalidRdataLength& irdl) {
+    } catch (const isc::dns::rdata::InvalidRdataLength& irdl) {
         PyErr_SetString(po_InvalidRdataLength, irdl.what());
         return (-1);
-    }
-    catch (const isc::dns::rdata::CharStringTooLong& cstl) {
+    } catch (const isc::dns::rdata::CharStringTooLong& cstl) {
         PyErr_SetString(po_CharStringTooLong, cstl.what());
         return (-1);
-    }
-    catch (const isc::dns::DNSMessageFORMERR& dmfe) {
+    } catch (const isc::dns::DNSMessageFORMERR& dmfe) {
         PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
         return (-1);
-    }
-    // FIXME: These exceptions are not tested, I don't know how or if
-    // at all they can be triggered. But they are caught just in the case.
-    catch (const std::exception& ex) {
+    } catch (const std::exception& ex) {
+        // FIXME: These exceptions are not tested, I don't know how or if
+        // at all they can be triggered. But they are caught just in the case.
         PyErr_SetString(PyExc_Exception, (std::string("Unknown exception: ") +
                         ex.what()).c_str());
         return (-1);
-    }
-    catch (...) {
+    } catch (...) {
         PyErr_SetString(PyExc_Exception, "Unknown exception");
         return (-1);
     }
