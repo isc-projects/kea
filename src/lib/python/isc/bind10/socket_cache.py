@@ -21,15 +21,15 @@ class SocketError(Exception):
     """
     Exception raised when the socket creator is unable to create requested
     socket. Possible reasons might be the address it should be bound to
-    is already taken, the permissions are unsufficient, the address family
+    is already taken, the permissions are insufficient, the address family
     is not supported on this computer and many more.
     """
     pass
 
 class ShareError(Exception):
     """
-    Such socket is already taken by other component and the sharing
-    parameters doesn't allow sharing with the new request.
+    The requested socket is already taken by other component and the sharing
+    parameters don't allow sharing with the new request.
     """
     pass
 
@@ -78,7 +78,7 @@ class Cache:
         be set), it will be removed and the token is invalid.
 
         It can fail in various ways. Explicitly listed exceptions are:
-        - SockeError: this one is thrown if the socket creator couldn't provide
+        - SocketError: this one is thrown if the socket creator couldn't provide
           the socket and it is not yet cached (it belongs to other application,
           for example).
         - ShareError: the socket is already in the cache, but it can't be
