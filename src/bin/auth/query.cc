@@ -188,16 +188,16 @@ Query::addWildcardProof(ZoneFinder& finder) {
 void
 Query::addWildcardNxrrsetProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // There should be one NSEC RR which was found in the zone to prove
-	// that there is not matched <QNAME,QTYPE> via wildcard expansion.
+    // that there is not matched <QNAME,QTYPE> via wildcard expansion.
     if (nsec->getRdataCount() == 0) {
-	    isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
-	    return;
-	}
+        isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
+        return;
+    }
     // Add this NSEC RR to authority section.
-	response_.addRRset(Message::SECTION_AUTHORITY,
+    response_.addRRset(Message::SECTION_AUTHORITY,
                       boost::const_pointer_cast<RRset>(nsec), dnssec_);
-	
-	const ZoneFinder::FindResult fresult =
+    
+    const ZoneFinder::FindResult fresult =
         finder.find(qname_, RRType::NSEC(), NULL,
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
@@ -207,13 +207,13 @@ Query::addWildcardNxrrsetProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     }
    
     if (nsec->getName() != fresult.rrset->getName()) {
-		// one NSEC RR proves wildcard_nxrrset that no matched QNAME.
+        // one NSEC RR proves wildcard_nxrrset that no matched QNAME.
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<RRset>(fresult.rrset),
                            dnssec_);
-	}
+    }
 }
-
+    
 void
 Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
@@ -384,12 +384,12 @@ Query::process() {
                                        dnssec_);
                 }
                 break;
-			case ZoneFinder::WILDCARD_NXRRSET:
+            case ZoneFinder::WILDCARD_NXRRSET:
                 addSOA(*result.zone_finder);
                 if (dnssec_ && db_result.rrset) {
-					addWildcardNxrrsetProof(zfinder,db_result.rrset);
-				}
-				break;
+                    addWildcardNxrrsetProof(zfinder,db_result.rrset);
+                }
+                break;
             default:
                 // This is basically a bug of the data source implementation,
                 // but could also happen in the middle of development where
