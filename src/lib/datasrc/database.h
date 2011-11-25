@@ -817,6 +817,17 @@ public:
             return (*accessor_);
         }
 
+    private:
+        boost::shared_ptr<DatabaseAccessor> accessor_;
+        const int zone_id_;
+        const isc::dns::Name origin_;
+        //
+        /// \brief Shortcut name for the result of getRRsets
+        typedef std::pair<bool, std::map<dns::RRType, dns::RRsetPtr> >
+            FoundRRsets;
+        /// \brief Just shortcut for set of types
+        typedef std::set<dns::RRType> WantedTypes;
+
         /// \brief Search result of \c findDelegationPoint().
         ///
         /// This is a tuple combining the result of the search - a status code
@@ -850,17 +861,6 @@ public:
             const size_t last_known; ///< No. labels in last non-empty domain
         };
 
-    private:
-        boost::shared_ptr<DatabaseAccessor> accessor_;
-        const int zone_id_;
-        const isc::dns::Name origin_;
-        //
-        /// \brief Shortcut name for the result of getRRsets
-        typedef std::pair<bool, std::map<dns::RRType, dns::RRsetPtr> >
-            FoundRRsets;
-        /// \brief Just shortcut for set of types
-        typedef std::set<dns::RRType> WantedTypes;
-
         /**
          * \brief Searches database for RRsets of one domain.
          *
@@ -892,112 +892,151 @@ public:
                               const WantedTypes& types, bool check_ns,
                               const std::string* construct_name = NULL);
 
-        /**
-         * \brief Find delegation point
-         *
-         * Given a name, searches through the superdomains from the origin
-         * down, searching for a point that indicates a delegation (i.e. an
-         * NS record or a DNAME).
-         *
-         * The method operates in two modes, non-glue-ok and glue-ok modes:
-         *
-         * In non-glue-ok mode, the search is made purely for the NS or DNAME
-         * RR.  The zone is searched from the origin down looking  for one
-         * of these RRTypes (and ignoring the NS records at the zone origin).
-         * A status is returned indicating what is found: DNAME, DELEGATION
-         * of SUCCESS, the last indicating that nothing was found, together
-         * with a pointer to the relevant RR.
-         *
-         * In glue-ok mode, the first NS encountered in the search (apart from
-         * the NS at the zone apex) is remembered but otherwise NS records are
-         * ignored and the search attempts to find a DNAME.  The result is
-         * returned in the same format, along with a pointer to the first non-
-         * apex NS (if found).
-         *
-         * \param name The name to find
-         * \param options Options about how to search. See the documentation for
-         *        ZoneFinder::FindOptions.
-         *
-         * \return Tuple holding the result of the search - the RRset of the
-         *         delegation point and the type of the point (DELEGATION or
-         *         DNAME) - and associated information.  This latter item
-         *         comprises two pieces of data: a pointer to the highest
-         *         encountered NS, and the number of labels in the last known
-         *         non-empty domain.  The associated information is found as
-         *         a natural part of the search for the delegation point and
-         *         is used later in the find() processing; it is passed back
-         *         to avoid the need to perform a second search to obtain it.
-         */
+        /// \brief Find delegation point
+        ///
+        /// Given a name, searches through the superdomains from the origin
+        /// down, searching for a point that indicates a delegation (i.e. an
+        /// NS record or a DNAME).
+        ///
+        /// The method operates in two modes, non-glue-ok and glue-ok modes:
+        ///
+        /// In non-glue-ok mode, the search is made purely for the NS or DNAME
+        /// RR.  The zone is searched from the origin down looking  for one
+        /// of these RRTypes (and ignoring the NS records at the zone origin).
+        /// A status is returned indicating what is found: DNAME, DELEGATION
+        /// of SUCCESS, the last indicating that nothing was found, together
+        /// with a pointer to the relevant RR.
+        ///
+        /// In glue-ok mode, the first NS encountered in the search (apart from
+        /// the NS at the zone apex) is remembered but otherwise NS records are
+        /// ignored and the search attempts to find a DNAME.  The result is
+        /// returned in the same format, along with a pointer to the first non-
+        /// apex NS (if found).
+        ///
+        /// \param name The name to find
+        /// \param options Options about how to search. See the documentation
+        ///        for ZoneFinder::FindOptions.
+        ///
+        /// \return Tuple holding the result of the search - the RRset of the
+        ///         delegation point and the type of the point (DELEGATION or
+        ///         DNAME) - and associated information.  This latter item
+        ///         comprises two pieces of data: a pointer to the highest
+        ///         encountered NS, and the number of labels in the last known
+        ///         non-empty domain.  The associated information is found as
+        ///         a natural part of the search for the delegation point and
+        ///         is used later in the find() processing; it is passed back
+        ///         to avoid the need to perform a second search to obtain it.
         DelegationSearchResult
         findDelegationPoint(const isc::dns::Name& name,
                             const FindOptions options);
 
-        /**
-         * \brief Find wildcard match
-         *
-         * Having found that the name is not an empty non-terminal, this
-         * searches the zone for for wildcards that match the name.
-         *
-         * It searches superdomains of the name from the zone origin down
-         * looking for a wildcard in the zone that matches the name.  There
-         * are several cases to consider:
-         *
-         * - If the previous search for a delegation point has found that
-         *   there is an NS at the superdomain of the point at which the
-         *   wildcard is found, the delegation is returned.
-         * - If there is a match to the name, an appropriate status is
-         *   returned (match on requested type, delegation, cname, or just
-         *   the indication of a match but no RRs relevant to the query).
-         * - If the match is to an non-empty non-terminal wildcard, a
-         *   wildcard NXRRSET is returned.
-         *
-         * Note that if DNSSEC is enabled for the search and the zone uses
-         * NSEC for authenticated denial of existence, the search may
-         * return NSEC records.
-         *
-         * \param name The name to find
-         * \param type The RRType to find
-         * \param options Options about how to search. See the documentation
-         *        for ZoneFinder::FindOptions.
-         * \param first_ns A pointer to the first NS found in a search for
-         *        the name (will only be non-null in glue-ok mode).
-         * \param last_known the number of labels in the last known non-empty
-         *        domain in the name.
-         *
-         * \return Tuple holding the result of the search - the RRset of the
-         *         wildcard records matching the name, together with a status
-         *         indicating the match type (e.g. CNAME at the wildcard
-         *         match, no RRs of the requested type at the wildcard,
-         *         success due to an exact match).  Also returned if there
-         *         is no match is an indication as to whether there was an
-         *         NXDOMAIN or an NXRRSET.
-         */
+        /// \brief Find wildcard match
+        /// 
+        /// Having found that the name is not an empty non-terminal, this
+        /// searches the zone for for wildcards that match the name.
+        /// 
+        /// It searches superdomains of the name from the zone origin down
+        /// looking for a wildcard in the zone that matches the name.  There
+        /// are several cases to consider:
+        /// 
+        /// - If the previous search for a delegation point has found that
+        ///   there is an NS at the superdomain of the point at which the
+        ///   wildcard is found, the delegation is returned.
+        /// - If there is a match to the name, an appropriate status is
+        ///   returned (match on requested type, delegation, cname, or just
+        ///   the indication of a match but no RRs relevant to the query).
+        /// - If the match is to an non-empty non-terminal wildcard, a
+        ///   wildcard NXRRSET is returned.
+        /// 
+        /// Note that if DNSSEC is enabled for the search and the zone uses
+        /// NSEC for authenticated denial of existence, the search may
+        /// return NSEC records.
+        /// 
+        /// \param name The name to find
+        /// \param type The RRType to find
+        /// \param options Options about how to search. See the documentation
+        ///        for ZoneFinder::FindOptions.
+        /// \param dresult Result of the search through the zone for a
+        ///        delegation.
+        /// 
+        /// \return Tuple holding the result of the search - the RRset of the
+        ///         wildcard records matching the name, together with a status
+        ///         indicating the match type (e.g. CNAME at the wildcard
+        ///         match, no RRs of the requested type at the wildcard,
+        ///         success due to an exact match).  Also returned if there
+        ///         is no match is an indication as to whether there was an
+        ///         NXDOMAIN or an NXRRSET.
         FindResult findWildcardMatch(
             const isc::dns::Name& name,
             const isc::dns::RRType& type, const FindOptions options,
             const DelegationSearchResult& dresult);
 
-        /// To be documented.
+        /// \brief Handle no match for name
+        ///
+        /// This is called when it is known that there is no delegation and
+        /// there is no exact match for the name (regardless of RR types
+        /// requested).  Before returning NXDOMAIN, we need to check two
+        /// cases:
+        /// - Empty non-terminal: if the name has subdomains in the database,
+        ///   flag the fact.  An NXRRSET will be returned (along with the
+        ///   NSEC record covering the requested domain name if DNSSEC data
+        ///   is being returned).
+        /// - Wildcard: is there a wildcard record in the zone that matches
+        ///   requested name? If so, return it.  If not, return the relevant
+        ///   NSEC records (if requested).
+        /// 
+        /// \param name The name to find
+        /// \param type The RRType to find
+        /// \param options Options about how to search. See the documentation
+        ///        for ZoneFinder::FindOptions.
+        /// \param dresult Result of the search through the zone for a
+        ///        delegation.
+        /// 
+        /// \return Tuple holding the result of the search - the RRset of the
+        ///         wildcard records matching the name, together with a status
+        ///         indicating the match type (e.g. CNAME at the wildcard
+        ///         match, no RRs of the requested type at the wildcard,
+        ///         success due to an exact match).  Also returned if there
+        ///         is no match is an indication as to whether there was an
+        ///         NXDOMAIN or an NXRRSET.
         FindResult findNoNameResult(const isc::dns::Name& name,
                                     const isc::dns::RRType& type,
                                     FindOptions options,
                                     const DelegationSearchResult& dresult);
 
-        // To be documented.
+        /// Logs condition and creates result
+        ///
+        /// A convenience function used by find(), it both creates the
+        /// FindResult object that find() will return to its caller as well
+        /// as logging a debug message for the information being returned.
+        ///
+        /// \param name Domain name of the RR that was being sought.
+        /// \param type Type of RR being sought.
+        /// \param code Result of the find operation
+        /// \param rrset RRset found as a result of the find (which may be
+        ///        null).
+        /// \param log_id ID of the message being logged.  Up to five
+        ///        parameters are available to the message: data source name,
+        ///        requested domain name, requested class, requested type
+        ///        and (but only if the search was successful and returned
+        ///        an RRset) details of the RRset found.
+        ///
+        /// \return FindResult object constructed from the code and rrset
+        ///         arguments.
         FindResult logAndCreateResult(const isc::dns::Name& name,
                                       const isc::dns::RRType& type,
                                       ZoneFinder::Result code,
                                       isc::dns::ConstRRsetPtr rrset,
                                       const isc::log::MessageID& log_id);
 
-        /**
-         * \brief Checks if something lives below this domain.
-         *
-         * This looks if there's any subdomain of the given name. It can be
-         * used to test if domain is empty non-terminal.
-         *
-         * \param name The domain to check.
-         */
+        /// \brief Checks if something lives below this domain.
+        ///
+        /// This looks if there's any subdomain of the given name. It can be
+        /// used to test if domain is empty non-terminal.
+        ///
+        /// \param name The domain to check.
+        ///
+        /// \return true if the name has subdomains, false if not.
         bool hasSubdomains(const std::string& name);
 
         /**
