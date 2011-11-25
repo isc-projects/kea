@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+/ Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -102,13 +102,13 @@ const char* const nsec_cnamewild_txt = "*.cnamewild.example.com. "
     "3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG\n";
 // Wildcard_nxrrset
 const char* const wild_txt_nxrrset =
-	"*.uwild.example.com. 3600 IN A 192.0.2.9\n";
+    "*.uwild.example.com. 3600 IN A 192.0.2.9\n";
 const char* const nsec_wild_txt_nxrrset =
-	"*.uwild.example.com. 3600 IN NSEC www.uwild.example.com. A NSEC RRSIG\n";
+    "*.uwild.example.com. 3600 IN NSEC www.uwild.example.com. A NSEC RRSIG\n";
 const char* const wild_txt_next =
-	"www.uwild.example.com. 3600 IN A 192.0.2.11\n";
+    "www.uwild.example.com. 3600 IN A 192.0.2.11\n";
 const char* const nsec_wild_txt_next =
-	"www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG\n";
+    "www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG\n";
 // Used in NXDOMAIN proof test.  We are going to test some unusual case where
 // the best possible wildcard is below the "next domain" of the NSEC RR that
 // proves the NXDOMAIN, i.e.,
@@ -191,7 +191,7 @@ public:
             wild_txt_nxrrset<<nsec_wild_txt_nxrrset<<wild_txt_next<<
             nsec_wild_txt_next;
 
-		masterLoad(zone_stream, origin_, rrclass_,
+        masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
 
         empty_nsec_rrset_ = ConstRRsetPtr(new RRset(Name::ROOT_NAME(),
@@ -406,27 +406,27 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // hardcoded specific cases, ignoring other details such as canceling
     // due to the existence of closer name.
     if ((options & NO_WILDCARD) == 0) {
-		const Name wild_suffix(name.split(1));
-		if (name.equals(Name("www.wild.example.com"))||
-		   name.equals(Name("www1.uwild.example.com"))) {
-        	if (name.compare(wild_suffix).getRelation() ==
-            	NameComparisonResult::SUBDOMAIN) {
-            	domain = domains_.find(Name("*").concatenate(wild_suffix));
-            	assert(domain != domains_.end());
-            	RRsetStore::const_iterator found_rrset = domain->second.find(type);
-            	if (found_rrset != domain->second.end()) {
-					return (FindResult(WILDCARD,
+        const Name wild_suffix(name.split(1));
+        if (name.equals(Name("www.wild.example.com"))||
+           name.equals(Name("www1.uwild.example.com"))) {
+            if (name.compare(wild_suffix).getRelation() ==
+                NameComparisonResult::SUBDOMAIN) {
+                domain = domains_.find(Name("*").concatenate(wild_suffix));
+                assert(domain != domains_.end());
+                RRsetStore::const_iterator found_rrset = domain->second.find(type);
+                if (found_rrset != domain->second.end()) {
+                    return (FindResult(WILDCARD,
                             substituteWild(*found_rrset->second, name)));
-				} else {
-					found_rrset = domain->second.find(RRType::NSEC());
-					assert(found_rrset != domain->second.end());
-					Name newName = Name("*").concatenate(wild_suffix);
-					return (FindResult(WILDCARD_NXRRSET,
-						   substituteWild(*found_rrset->second,newName)));
-				}
+                } else {
+                    found_rrset = domain->second.find(RRType::NSEC());
+                    assert(found_rrset != domain->second.end());
+                    Name newName = Name("*").concatenate(wild_suffix);
+                    return (FindResult(WILDCARD_NXRRSET,
+                           substituteWild(*found_rrset->second,newName)));
+                }
 
-       		 }
-		}
+             }
+        }
         const Name cnamewild_suffix("cnamewild.example.com");
         if (name.compare(cnamewild_suffix).getRelation() ==
             NameComparisonResult::SUBDOMAIN) {
@@ -946,8 +946,9 @@ TEST_F(QueryTest, badWildcardProof3) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs.
+    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
+    // NXRRSET and their RRSIGs. In this case we only need one NSEC,
+    // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
     Query(memory_client, Name("www.wild.example.com"), RRType::TXT(), response,
           true).process();
 
@@ -961,20 +962,21 @@ TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
-    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs.
+    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
+    // NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
+    // one proves NXDOMAIN and the other proves non existence RRSETs of wildcard.
     Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(), response,
           true).process();
     
-	responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_wild_txt_nxrrset) + 
                    string("*.uwild.example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC")+"\n" +
-				   string(nsec_wild_txt_next) +
-				   string("www.uwild.example.com. 3600 IN RRSIG ") +
-				   getCommonRRSIGText("NSEC") + "\n").c_str(),
+                   string(nsec_wild_txt_next) +
+                   string("www.uwild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
 }
 /*
