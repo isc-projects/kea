@@ -47,6 +47,9 @@ class Cache:
     it is removed from cache and closed.
 
     This is expected to be part of Boss, it is not a general utility class.
+
+    It is not expected to be subclassed. The methods and members are named
+    as protected so tests are easier access into them.
     """
     def __init__(self, creator):
         """
@@ -54,7 +57,25 @@ class Cache:
         (isc.bind10.sockcreator.Creator) which will be used to create yet
         uncached sockets.
         """
-        pass
+        self._creator = creator
+        # The sockets we have live here, these dicts are various ways how
+        # to get them. Each of them contains the Socket objects somehow
+
+        # This one is dict of token: socket for the ones that were not yet
+        # picked up by an application.
+        self._waiting_tokens = {}
+        # This format is the same as above, but for the tokens that were
+        # already picked up by the application and not yet released.
+        self._active_tokens = {}
+        # This is a dict from applications to list of sockets, for the
+        # sockets already picked up by an application
+        self._active_apps = {}
+        # The sockets live here to be indexed by address and subsequently
+        # by port
+        self._sockets = {}
+        # These are just the tokens actually in use, so we don't generate
+        # dupes. If one is dropped, it can be potentially reclaimed.
+        self._live_tokens = set()
 
     def get_token(self, protocol, address, port, share_mode, share_name):
         """
