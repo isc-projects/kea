@@ -16,8 +16,70 @@
 import unittest
 import isc.log
 import isc.bind10.socket_cache
+from isc.net.addr import IPAddr
+import os
 
-class SocketCacheTest(unittest.TestCase):
+class Test(unittest.TestCase):
+    """
+    Base for the tests here. It replaces the os.close method.
+    """
+    def setUp(self):
+        self._closes = []
+        isc.bind10.socket_cache.os.close = self.__close
+
+    def tearDown(self):
+        # This is not very clean solution. But when the test stops
+        # to exist, the method must not be used to destroy the
+        # object any more. And we can't restore the os.close here
+        # as we never work with real sockets here.
+        isc.bind10.socket_cache.os.close = lambda fd: None
+
+    def __close(self, fd):
+        """
+        Just log a close was called.
+        """
+        self._closes.append(fd)
+
+class SocketTest(Test):
+    """
+    Test for the Socket class.
+    """
+    def setUp(self):
+        """
+        Creates the socket to be tested.
+
+        It has 'Test' as the protocol , which means the
+        fileno file descriptor will not be closed on deletion.
+
+        It also creates other useful test variables.
+        """
+        Test.setUp(self)
+        self.__address = IPAddr("192.0.2.1")
+        self.__socket = isc.bind10.socket_cache.Socket('Test', self.__address,
+                                                       1024, 42)
+
+    def test_init(self):
+        """
+        Checks the intrnals of the cache just after the creation.
+        """
+        self.assertEqual('Test', self.__socket.protocol)
+        self.assertEqual(self.__address, self.__socket.address)
+        self.assertEqual(1024, self.__socket.port)
+        self.assertEqual(42, self.__socket.fileno)
+        self.assertEqual({}, self.__socket.active_tokens)
+        self.assertEqual({}, self.__socket.shares)
+        self.assertEqual(set(), self.__socket.waiting_tokens)
+
+    def test_del(self):
+        """
+        Check it closes the socket when removed.
+        """
+        # This should make the refcount 0 and call the descructor
+        # right away
+        self.__socket = None
+        self.assertEqual([42], self._closes)
+
+class SocketCacheTest(Test):
     """
     Some tests for the isc.bind10.socket_cache.Cache.
 
@@ -28,6 +90,7 @@ class SocketCacheTest(unittest.TestCase):
         """
         Creates the cache for tests with us being the socket creator.
         """
+        Test.setUp(self)
         self.__cache = isc.bind10.socket_cache.Cache(self)
 
     def test_init(self):
