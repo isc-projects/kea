@@ -18,6 +18,7 @@ Here's the cache for sockets from socket creator.
 """
 
 import os
+import random
 
 class SocketError(Exception):
     """
@@ -131,8 +132,8 @@ class Cache:
         # This is a dict from applications to set of tokens used by the
         # application, for the sockets already picked up by an application
         self._active_apps = {}
-        # The sockets live here to be indexed by address and subsequently
-        # by port
+        # The sockets live here to be indexed by protocol, address and
+        # subsequently by port
         self._sockets = {}
         # These are just the tokens actually in use, so we don't generate
         # dupes. If one is dropped, it can be potentially reclaimed.
@@ -173,7 +174,27 @@ class Cache:
         Note that it isn't guaranteed the tokens would be unique and they
         should be used as an opaque handle only.
         """
-        pass
+        addr_str = str(address)
+        try:
+            socket = self._sockets[protocol][addr_str][port]
+        except KeyError:
+            # Something in the dicts is not there, so socket is to be
+            # created
+            # TODO
+            pass
+        # Now we get the token, check it is compatible
+        if not socket.shareCompatible(share_mode, share_name):
+            raise ShareError("Cached socket not compatible with mode " +
+                             share_mode + " and name " + share_name)
+        # Grab yet unused token
+        token = 't' + str(random.randint(0, 2^32-1))
+        while token in self._live_tokens:
+            token = 't' + str(random.randint(0, 2^32-1))
+        self._waiting_tokens[token] = socket
+        self._live_tokens.add(token)
+        socket.shares[token] = (share_mode, share_name)
+        socket.waiting_tokens.add(token)
+        return token
 
     def get_socket(self, token, application):
         """
