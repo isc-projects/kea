@@ -134,9 +134,14 @@ class SocketCacheTest(Test):
     def setUp(self):
         """
         Creates the cache for tests with us being the socket creator.
+
+        Also creates some more variables for testing.
         """
         Test.setUp(self)
         self.__cache = isc.bind10.socket_cache.Cache(self)
+        self.__address = IPAddr("192.0.2.1")
+        self.__socket = isc.bind10.socket_cache.Socket('Test', self.__address,
+                                                       1024, 42)
 
     def test_init(self):
         """
@@ -148,6 +153,36 @@ class SocketCacheTest(Test):
         self.assertEqual({}, self.__cache._active_apps)
         self.assertEqual({}, self.__cache._sockets)
         self.assertEqual(set(), self.__cache._live_tokens)
+
+    def test_get_token_cached(self):
+        """
+        Check the behaviour of get_token when the requested socket is already
+        cached inside.
+        """
+        self.__cache._sockets = {
+            'UDP': {'192.0.2.1': {42: self.__socket}}
+        }
+        token = self.__cache.get_token('UDP', self.__address, 42, 'ANY',
+                                       'test')
+        # It returned something
+        self.assertIsNotNone(token)
+        # The token is both in the waiting sockets and the live tokens
+        self.assertEqual({token: self.__socket}, self.__cache._waiting_tokens)
+        self.assertEqual(set([token]), self.__cache._live_tokens)
+        # The token got the new share to block any relevant queries
+        self.assertEqual({token: ('ANY', 'test')}, self.__socket.shares)
+        # The socket knows the token is waiting in it
+        self.assertEqual(set([token]), self.__socket.waiting_tokens)
+
+        # If we request one more, with incompatible share, it is rejected
+        self.assertRaises(isc.bind10.socket_cache.ShareError,
+                          self.__cache.get_token, 'UDP', self.__address, 42,
+                          'NO', 'test')
+        # The internals are not changed, so the same checks
+        self.assertEqual({token: self.__socket}, self.__cache._waiting_tokens)
+        self.assertEqual(set([token]), self.__cache._live_tokens)
+        self.assertEqual({token: ('ANY', 'test')}, self.__socket.shares)
+        self.assertEqual(set([token]), self.__socket.waiting_tokens)
 
 if __name__ == '__main__':
     isc.log.init("bind10")
