@@ -46,16 +46,16 @@ typedef CPPPyObjectContainer<s_Rdata, Rdata> RdataContainer;
 //
 
 // General creation and destruction
-int Rdata_init(s_Rdata* self, PyObject* args);
-void Rdata_destroy(s_Rdata* self);
+int Rdata_init(PyObject* self, PyObject* args, PyObject*);
+void Rdata_destroy(PyObject* self);
 
 // These are the functions we export
-PyObject* Rdata_toText(s_Rdata* self);
+PyObject* Rdata_toText(PyObject* self, PyObject*);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
 PyObject* Rdata_str(PyObject* self);
-PyObject* Rdata_toWire(s_Rdata* self, PyObject* args);
-PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
+PyObject* Rdata_toWire(PyObject* self, PyObject* args);
+PyObject* RData_richcmp(PyObject* self, PyObject* other, int op);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -64,9 +64,9 @@ PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
 // 3. Argument type
 // 4. Documentation
 PyMethodDef Rdata_methods[] = {
-    { "to_text", reinterpret_cast<PyCFunction>(Rdata_toText), METH_NOARGS,
+    { "to_text", Rdata_toText, METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", reinterpret_cast<PyCFunction>(Rdata_toWire), METH_VARARGS,
+    { "to_wire", Rdata_toWire, METH_VARARGS,
       "Converts the Rdata object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
@@ -77,12 +77,13 @@ PyMethodDef Rdata_methods[] = {
 };
 
 int
-Rdata_init(s_Rdata* self, PyObject* args) {
+Rdata_init(PyObject* self_p, PyObject* args, PyObject*) {
     PyObject* rrtype;
     PyObject* rrclass;
     const char* s;
     const char* data;
     Py_ssize_t len;
+    s_Rdata* self(static_cast<s_Rdata*>(self_p));
 
     try {
         // Create from string
@@ -127,31 +128,33 @@ Rdata_init(s_Rdata* self, PyObject* args) {
 }
 
 void
-Rdata_destroy(s_Rdata* self) {
+Rdata_destroy(PyObject* self) {
     // Clear the shared_ptr so that its reference count is zero
     // before we call tp_free() (there is no direct release())
-    self->cppobj.reset();
+    static_cast<s_Rdata*>(self)->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
-Rdata_toText(s_Rdata* self) {
+Rdata_toText(PyObject* self, PyObject*) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+    return (Py_BuildValue("s", static_cast<const s_Rdata*>(self)->cppobj->
+                          toText().c_str()));
 }
 
 PyObject*
 Rdata_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
-                               const_cast<char*>("to_text"),
+                                const_cast<char*>("to_text"),
                                 const_cast<char*>("")));
 }
 
 PyObject*
-Rdata_toWire(s_Rdata* self, PyObject* args) {
+Rdata_toWire(PyObject* self_p, PyObject* args) {
     PyObject* bytes;
     PyObject* mr;
+    const s_Rdata* self(static_cast<const s_Rdata*>(self_p));
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -177,8 +180,10 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
 }
 
 PyObject*
-RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
+RData_richcmp(PyObject* self_p, PyObject* other_p, int op) {
     bool c;
+    const s_Rdata* self(static_cast<const s_Rdata*>(self_p)),
+          * other(static_cast<const s_Rdata*>(other_p));
 
     // Check for null and if the types match. If different type,
     // simply return False
@@ -242,7 +247,7 @@ PyTypeObject rdata_type = {
     "pydnspp.Rdata",
     sizeof(s_Rdata),                    // tp_basicsize
     0,                                  // tp_itemsize
-    (destructor)Rdata_destroy,          // tp_dealloc
+    Rdata_destroy,                      // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -262,7 +267,7 @@ PyTypeObject rdata_type = {
     "a set of common interfaces to manipulate concrete RDATA objects.",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
-    (richcmpfunc)RData_richcmp,         // tp_richcompare
+    RData_richcmp,                      // tp_richcompare
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
@@ -274,7 +279,7 @@ PyTypeObject rdata_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    (initproc)Rdata_init,               // tp_init
+    Rdata_init,                         // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
