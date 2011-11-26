@@ -19,6 +19,7 @@ Here's the cache for sockets from socket creator.
 
 import os
 import random
+import isc.bind10.sockcreator
 
 class SocketError(Exception):
     """
@@ -26,8 +27,12 @@ class SocketError(Exception):
     socket. Possible reasons might be the address it should be bound to
     is already taken, the permissions are insufficient, the address family
     is not supported on this computer and many more.
+
+    The errno, if not None, is passed from the socket creator.
     """
-    pass
+    def __init__(self, message, errno):
+        Exception.__init__(self, message)
+        self.errno = errno
 
 class ShareError(Exception):
     """
@@ -180,8 +185,20 @@ class Cache:
         except KeyError:
             # Something in the dicts is not there, so socket is to be
             # created
-            # TODO
-            pass
+            try:
+                fileno = self._creator.get_socket(address, port, protocol)
+            except isc.bind10.sockcreator.CreatorError as ce:
+                if ce.fatal:
+                    raise
+                else:
+                    raise SocketError(str(ce), ce.errno)
+            socket = Socket(protocol, address, port, fileno)
+            # And cache it
+            if protocol not in self._sockets:
+                self._sockets[protocol] = {}
+            if addr_str not in self._sockets[protocol]:
+                self._sockets[protocol][addr_str] = {}
+            self._sockets[protocol][addr_str][port] = socket
         # Now we get the token, check it is compatible
         if not socket.shareCompatible(share_mode, share_name):
             raise ShareError("Cached socket not compatible with mode " +
