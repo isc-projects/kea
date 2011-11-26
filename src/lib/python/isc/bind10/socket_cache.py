@@ -17,6 +17,8 @@
 Here's the cache for sockets from socket creator.
 """
 
+import os
+
 class SocketError(Exception):
     """
     Exception raised when the socket creator is unable to create requested
@@ -32,6 +34,40 @@ class ShareError(Exception):
     parameters don't allow sharing with the new request.
     """
     pass
+
+class Socket:
+    """
+    This represents one socket cached by the cache program. This should never
+    be used directly by a user, it is used internally by the Cache. Therefore
+    many member variables are used directly instead of by a accessor method.
+
+    Be warned that this object implements the __del__ method. It closes the
+    socket held inside in it. But this poses various problems with garbage
+    collector. In short, do not make reference cycles with this and generally
+    leave this class alone to live peacefully.
+    """
+    def __init__(self, protocol, address, port, fileno):
+        """
+        Creates the socket.
+
+        The protocol, address and port are preserved for the information.
+        """
+        self.protocol = protocol
+        self.address = address
+        self.port = port
+        self.fileno = fileno
+        # Mapping from token -> application
+        self.active_tokens = {}
+        # The tokens which were not yet picked up
+        self.waiting_tokens = set()
+        # Share modes and names by the tokens (token -> (mode, name))
+        self.shares = {}
+
+    def __del__(self):
+        """
+        Closes the file descriptor.
+        """
+        os.close(self.fileno)
 
 class Cache:
     """
@@ -67,8 +103,8 @@ class Cache:
         # This format is the same as above, but for the tokens that were
         # already picked up by the application and not yet released.
         self._active_tokens = {}
-        # This is a dict from applications to list of sockets, for the
-        # sockets already picked up by an application
+        # This is a dict from applications to set of tokens used by the
+        # application, for the sockets already picked up by an application
         self._active_apps = {}
         # The sockets live here to be indexed by address and subsequently
         # by port
