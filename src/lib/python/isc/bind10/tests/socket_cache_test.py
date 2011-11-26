@@ -79,6 +79,51 @@ class SocketTest(Test):
         self.__socket = None
         self.assertEqual([42], self._closes)
 
+    def test_share_modes(self):
+        """
+        Test the share mode compatibility check function.
+        """
+        modes = ['NO', 'SAMEAPP', 'ANY']
+        # If there are no shares, it is compatible with everything.
+        for mode in modes:
+            self.assertTrue(self.__socket.shareCompatible(mode, 'anything'))
+
+        # There's an NO already, so it is incompatible with everything.
+        self.__socket.shares = {'token': ('NO', 'anything')}
+        for mode in modes:
+            self.assertFalse(self.__socket.shareCompatible(mode, 'anything'))
+
+        # If there's SAMEAPP, it is compatible with ANY and SAMEAPP with the
+        # same name.
+        self.__socket.shares = {'token': ('SAMEAPP', 'app')}
+        self.assertFalse(self.__socket.shareCompatible('NO', 'app'))
+        self.assertFalse(self.__socket.shareCompatible('SAMEAPP', 'something'))
+        self.assertTrue(self.__socket.shareCompatible('SAMEAPP', 'app'))
+        self.assertTrue(self.__socket.shareCompatible('ANY', 'app'))
+        self.assertFalse(self.__socket.shareCompatible('ANY', 'something'))
+
+        # If there's ANY, then ANY and SAMEAPP with the same name is compatible
+        self.__socket.shares = {'token': ('ANY', 'app')}
+        self.assertFalse(self.__socket.shareCompatible('NO', 'app'))
+        self.assertFalse(self.__socket.shareCompatible('SAMEAPP', 'something'))
+        self.assertTrue(self.__socket.shareCompatible('SAMEAPP', 'app'))
+        self.assertTrue(self.__socket.shareCompatible('ANY', 'something'))
+
+        # In case there are multiple already inside
+        self.__socket.shares = {
+            'token': ('ANY', 'app'),
+            'another': ('SAMEAPP', 'app')
+        }
+        self.assertFalse(self.__socket.shareCompatible('NO', 'app'))
+        self.assertFalse(self.__socket.shareCompatible('SAMEAPP', 'something'))
+        self.assertTrue(self.__socket.shareCompatible('SAMEAPP', 'app'))
+        self.assertFalse(self.__socket.shareCompatible('ANY', 'something'))
+        self.assertTrue(self.__socket.shareCompatible('ANY', 'app'))
+
+        # Invalid inputs are rejected
+        self.assertRaises(ValueError, self.__socket.shareCompatible, 'bad',
+                          'bad')
+
 class SocketCacheTest(Test):
     """
     Some tests for the isc.bind10.socket_cache.Cache.

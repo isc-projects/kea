@@ -69,6 +69,31 @@ class Socket:
         """
         os.close(self.fileno)
 
+    def shareCompatible(self, mode, name):
+        """
+        Checks if the given share mode and name is compatible with the ones
+        already installed here.
+
+        The allowed values for mode are listed in the Cache.get_token
+        function.
+        """
+        if mode not in ['NO', 'SAMEAPP', 'ANY']:
+            raise ValueError("Mode " + mode + " is invalid")
+
+        # Go through the existing ones
+        for (emode, ename) in self.shares.values():
+            if emode == 'NO' or mode == 'NO':
+                # One of them can't live together with anything
+                return False
+            if (emode == 'SAMEAPP' or mode == 'SAMEAPP') and \
+                ename != name:
+                # One of them can't live together with someone of different
+                # name
+                return False
+            # else both are ANY or SAMEAPP with the same name, which is OK
+        # No problem found, so we consider it OK
+        return True
+
 class Cache:
     """
     This is the cache for sockets from socket creator. The purpose of cache
