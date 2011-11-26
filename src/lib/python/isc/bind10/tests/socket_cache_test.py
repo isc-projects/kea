@@ -248,6 +248,38 @@ class SocketCacheTest(Test):
                           self.__cache.get_token, 'UDP', self.__address, 1024,
                           'NO', 'test')
 
+    def test_get_socket(self):
+        """
+        Test that we can pickup a socket if we know a token.
+        """
+        token = "token"
+        app = 13
+        # No socket prepared there
+        self.assertRaises(ValueError, self.__cache.get_socket, token, app)
+        # Not changed
+        self.assertEqual({}, self.__cache._active_tokens)
+        self.assertEqual({}, self.__cache._active_apps)
+        self.assertEqual({}, self.__cache._sockets)
+        self.assertEqual(set(), self.__cache._live_tokens)
+        # Prepare a token there
+        self.__socket.waiting_tokens = set([token])
+        self.__socket.shares = {token: ('ANY', 'app')}
+        self.__cache._waiting_tokens = {token: self.__socket}
+        self.__cache._sockets = {'UDP': {'192.0.2.1': {1024: self.__socket}}}
+        self.__cache._live_tokens = set([token])
+        socket = self.__cache.get_socket(token, app)
+        # Received the fileno
+        self.assertEqual(42, socket)
+        # It moved from waiting to active ones
+        self.assertEqual({}, self.__cache._waiting_tokens)
+        self.assertEqual({token: self.__socket}, self.__cache._active_tokens)
+        self.assertEqual({13: set([token])}, self.__cache._active_apps)
+        self.assertEqual(set([token]), self.__cache._live_tokens)
+        self.assertEqual(set(), self.__socket.waiting_tokens)
+        self.assertEqual({token: 13}, self.__socket.active_tokens)
+        # Trying to get it again fails
+        self.assertRaises(ValueError, self.__cache.get_socket, token, app)
+
 if __name__ == '__main__':
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
