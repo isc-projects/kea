@@ -229,7 +229,19 @@ class Cache:
         get_token, it was already used, the socket wasn't picked up soon
         enough, ...), it raises ValueError.
         """
-        pass
+        try:
+            socket = self._waiting_tokens[token]
+        except KeyError:
+            raise ValueError("Token " + token +
+                             " isn't waiting to be picked up")
+        del self._waiting_tokens[token]
+        self._active_tokens[token] = socket
+        if application not in self._active_apps:
+            self._active_apps[application] = set()
+        self._active_apps[application].add(token)
+        socket.waiting_tokens.remove(token)
+        socket.active_tokens[token] = application
+        return socket.fileno
 
     def drop_socket(self, token):
         """
