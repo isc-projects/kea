@@ -33,6 +33,27 @@ using namespace isc::util::python;
 using namespace isc::dns::rdata;
 
 namespace {
+
+typedef PyObject* method(PyObject* self, PyObject* args);
+
+// Wrap a method into an exception handling, converting C++ exceptions
+// to python ones. The params and return value is just passed through.
+PyObject*
+exception_wrap(method* method, PyObject* self, PyObject* args) {
+    try {
+        return (method(self, args));
+    } catch (const std::exception& ex) {
+        // FIXME: These exceptions are not tested, I don't know how or if
+        // at all they can be triggered. But they are caught just in the case.
+        PyErr_SetString(PyExc_Exception, (std::string("Unknown exception: ") +
+                        ex.what()).c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_Exception, "Unknown exception");
+        return (NULL);
+    }
+}
+
 class s_Rdata : public PyObject {
 public:
     isc::dns::rdata::ConstRdataPtr cppobj;
@@ -136,10 +157,15 @@ Rdata_destroy(PyObject* self) {
 }
 
 PyObject*
-Rdata_toText(PyObject* self, PyObject*) {
+Rdata_toText_internal(PyObject* self, PyObject*) {
     // Py_BuildValue makes python objects from native data
     return (Py_BuildValue("s", static_cast<const s_Rdata*>(self)->cppobj->
                           toText().c_str()));
+}
+
+PyObject*
+Rdata_toText(PyObject* self, PyObject* args) {
+    return (exception_wrap(&Rdata_toText_internal, self, args));
 }
 
 PyObject*
@@ -151,7 +177,7 @@ Rdata_str(PyObject* self) {
 }
 
 PyObject*
-Rdata_toWire(PyObject* self_p, PyObject* args) {
+Rdata_toWire_internal(PyObject* self_p, PyObject* args) {
     PyObject* bytes;
     PyObject* mr;
     const s_Rdata* self(static_cast<const s_Rdata*>(self_p));
@@ -162,6 +188,11 @@ Rdata_toWire(PyObject* self_p, PyObject* args) {
         OutputBuffer buffer(4);
         self->cppobj->toWire(buffer);
         PyObject* rd_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
+        // Make sure exceptions from here are propagated.
+        // The exception is already set, so we just return NULL
+        if (rd_bytes == NULL) {
+            return (NULL);
+        }
         PyObject* result = PySequence_InPlaceConcat(bytes_o, rd_bytes);
         // We need to release the object we temporarily created here
         // to prevent memory leak
@@ -180,47 +211,63 @@ Rdata_toWire(PyObject* self_p, PyObject* args) {
 }
 
 PyObject*
+Rdata_toWire(PyObject* self, PyObject* args) {
+    return (exception_wrap(&Rdata_toWire_internal, self, args));
+}
+
+PyObject*
 RData_richcmp(PyObject* self_p, PyObject* other_p, int op) {
-    bool c;
-    const s_Rdata* self(static_cast<const s_Rdata*>(self_p)),
-          * other(static_cast<const s_Rdata*>(other_p));
+    try {
+        bool c;
+        const s_Rdata* self(static_cast<const s_Rdata*>(self_p)),
+              * other(static_cast<const s_Rdata*>(other_p));
 
-    // Check for null and if the types match. If different type,
-    // simply return False
-    if (!other || (self->ob_type != other->ob_type)) {
-        Py_RETURN_FALSE;
-    }
+        // Check for null and if the types match. If different type,
+        // simply return False
+        if (!other || (self->ob_type != other->ob_type)) {
+            Py_RETURN_FALSE;
+        }
 
-    switch (op) {
-    case Py_LT:
-        c = self->cppobj->compare(*other->cppobj) < 0;
-        break;
-    case Py_LE:
-        c = self->cppobj->compare(*other->cppobj) < 0 ||
-            self->cppobj->compare(*other->cppobj) == 0;
-        break;
-    case Py_EQ:
-        c = self->cppobj->compare(*other->cppobj) == 0;
-        break;
-    case Py_NE:
-        c = self->cppobj->compare(*other->cppobj) != 0;
-        break;
-    case Py_GT:
-        c = self->cppobj->compare(*other->cppobj) > 0;
-        break;
-    case Py_GE:
-        c = self->cppobj->compare(*other->cppobj) > 0 ||
-            self->cppobj->compare(*other->cppobj) == 0;
-        break;
-    default:
-        PyErr_SetString(PyExc_IndexError,
-                        "Unhandled rich comparison operator");
+        switch (op) {
+            case Py_LT:
+                c = self->cppobj->compare(*other->cppobj) < 0;
+                break;
+            case Py_LE:
+                c = self->cppobj->compare(*other->cppobj) < 0 ||
+                    self->cppobj->compare(*other->cppobj) == 0;
+                break;
+            case Py_EQ:
+                c = self->cppobj->compare(*other->cppobj) == 0;
+                break;
+            case Py_NE:
+                c = self->cppobj->compare(*other->cppobj) != 0;
+                break;
+            case Py_GT:
+                c = self->cppobj->compare(*other->cppobj) > 0;
+                break;
+            case Py_GE:
+                c = self->cppobj->compare(*other->cppobj) > 0 ||
+                    self->cppobj->compare(*other->cppobj) == 0;
+                break;
+            default:
+                PyErr_SetString(PyExc_IndexError,
+                                "Unhandled rich comparison operator");
+                return (NULL);
+        }
+        if (c)
+            Py_RETURN_TRUE;
+        else
+            Py_RETURN_FALSE;
+    } catch (const std::exception& ex) {
+        // FIXME: These exceptions are not tested, I don't know how or if
+        // at all they can be triggered. But they are caught just in the case.
+        PyErr_SetString(PyExc_Exception, (std::string("Unknown exception: ") +
+                        ex.what()).c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_Exception, "Unknown exception");
         return (NULL);
     }
-    if (c)
-        Py_RETURN_TRUE;
-    else
-        Py_RETURN_FALSE;
 }
 
 } // end of unnamed namespace
