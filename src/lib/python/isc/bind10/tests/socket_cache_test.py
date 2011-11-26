@@ -16,6 +16,7 @@
 import unittest
 import isc.log
 import isc.bind10.socket_cache
+import isc.bind10.sockcreator
 from isc.net.addr import IPAddr
 import os
 
@@ -142,6 +143,7 @@ class SocketCacheTest(Test):
         self.__address = IPAddr("192.0.2.1")
         self.__socket = isc.bind10.socket_cache.Socket('Test', self.__address,
                                                        1024, 42)
+        self.__get_socket_called = False
 
     def test_init(self):
         """
@@ -154,16 +156,32 @@ class SocketCacheTest(Test):
         self.assertEqual({}, self.__cache._sockets)
         self.assertEqual(set(), self.__cache._live_tokens)
 
+    def get_socket(self, address, port, socktype):
+        """
+        Pretend to be a socket creator.
+
+        This expects to be called with the _address, port 1024 and 'UDP'.
+
+        Returns 42 and notes down it was called.
+        """
+        self.assertEqual(self.__address, address)
+        self.assertEqual(1024, port)
+        self.assertEqual('UDP', socktype)
+        self.__get_socket_called = True
+        return 42
+
     def test_get_token_cached(self):
         """
         Check the behaviour of get_token when the requested socket is already
         cached inside.
         """
         self.__cache._sockets = {
-            'UDP': {'192.0.2.1': {42: self.__socket}}
+            'UDP': {'192.0.2.1': {1024: self.__socket}}
         }
-        token = self.__cache.get_token('UDP', self.__address, 42, 'ANY',
+        token = self.__cache.get_token('UDP', self.__address, 1024, 'ANY',
                                        'test')
+        # It didn't call get_socket
+        self.assertFalse(self.__get_socket_called)
         # It returned something
         self.assertIsNotNone(token)
         # The token is both in the waiting sockets and the live tokens
@@ -176,13 +194,59 @@ class SocketCacheTest(Test):
 
         # If we request one more, with incompatible share, it is rejected
         self.assertRaises(isc.bind10.socket_cache.ShareError,
-                          self.__cache.get_token, 'UDP', self.__address, 42,
+                          self.__cache.get_token, 'UDP', self.__address, 1024,
                           'NO', 'test')
         # The internals are not changed, so the same checks
         self.assertEqual({token: self.__socket}, self.__cache._waiting_tokens)
         self.assertEqual(set([token]), self.__cache._live_tokens)
         self.assertEqual({token: ('ANY', 'test')}, self.__socket.shares)
         self.assertEqual(set([token]), self.__socket.waiting_tokens)
+
+    def test_get_token_uncached(self):
+        """
+        Check a new socket is created when a corresponding one is missing.
+        """
+        token = self.__cache.get_token('UDP', self.__address, 1024, 'ANY',
+                                       'test')
+        # The get_socket was called
+        self.assertTrue(self.__get_socket_called)
+        # It returned something
+        self.assertIsNotNone(token)
+        # Get the socket and check it looks OK
+        socket = self.__cache._waiting_tokens[token]
+        self.assertEqual(self.__address, socket.address)
+        self.assertEqual(1024, socket.port)
+        self.assertEqual(42, socket.fileno)
+        self.assertEqual('UDP', socket.protocol)
+        # The socket is properly cached
+        self.assertEqual({
+            'UDP': {'192.0.2.1': {1024: socket}}
+        }, self.__cache._sockets)
+        # The token is both in the waiting sockets and the live tokens
+        self.assertEqual({token: socket}, self.__cache._waiting_tokens)
+        self.assertEqual(set([token]), self.__cache._live_tokens)
+        # The token got the new share to block any relevant queries
+        self.assertEqual({token: ('ANY', 'test')}, socket.shares)
+        # The socket knows the token is waiting in it
+        self.assertEqual(set([token]), socket.waiting_tokens)
+
+    def test_get_token_excs(self):
+        """
+        Test that it is handled properly if the socket creator raises
+        some exceptions.
+        """
+        def raiseCreatorError(fatal):
+            raise isc.bind10.sockcreator.CreatorError('test error', fatal)
+        # First, fatal socket creator errors are passed through
+        self.get_socket = lambda addr, port, proto: raiseCreatorError(True)
+        self.assertRaises(isc.bind10.sockcreator.CreatorError,
+                          self.__cache.get_token, 'UDP', self.__address, 1024,
+                          'NO', 'test')
+        # And nonfatal are converted to SocketError
+        self.get_socket = lambda addr, port, proto: raiseCreatorError(False)
+        self.assertRaises(isc.bind10.socket_cache.SocketError,
+                          self.__cache.get_token, 'UDP', self.__address, 1024,
+                          'NO', 'test')
 
 if __name__ == '__main__':
     isc.log.init("bind10")
