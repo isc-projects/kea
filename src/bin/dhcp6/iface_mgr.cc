@@ -323,13 +323,16 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
         close(sock);
         isc_throw(Unexpected, "setsockopt: IP_RECVPKTINFO failed.")
     }
-#else
+#elif defined(IP_PKTINFO)
     /* RFC2292 - an old way */
     if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO,
                    &flag, sizeof(flag)) != 0) {
         close(sock);
         isc_throw(Unexpected, "setsockopt: IP_PKTINFO: failed.");
     }
+#else
+    // "Neither IP_RECVPKTINFO nor IP_PKTINFO defined. Cannot continue"
+    flag = 1; // just to avoid compilation warnings about unused flag variable
 #endif
 
 
