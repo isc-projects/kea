@@ -303,6 +303,14 @@ public:
     boost::shared_ptr<Option>
     getOption(uint8_t opt_type);
 
+    /// @brief Returns interface name.
+    ///
+    /// Returns interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    std::string getIface() { return iface_; };
+
 protected:
 
     /// converts DHCP message type to BOOTP op type
