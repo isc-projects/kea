@@ -520,7 +520,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // It's not empty non-terminal. So check for wildcards.
                 // We remove labels one by one and look for the wildcard there.
                 // Go up to first non-empty domain.
-                for (size_t i(1); i <= current_label_count - last_known; ++i) {
+                for (size_t i(1); i + last_known <= current_label_count; ++i) {
                     // Construct the name with *
                     const Name superdomain(name.split(i));
                     const string wildcard("*." + superdomain.toText());
