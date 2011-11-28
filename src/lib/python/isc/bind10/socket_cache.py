@@ -252,11 +252,35 @@ class Cache:
 
         It raises ValueError if the token doesn't exist.
         """
-        pass
+        try:
+            socket = self._active_tokens[token]
+        except KeyError:
+            raise ValueError("Token " + token + " doesn't represent an " +
+                             "active socket")
+        # Now, remove everything from the bookkeeping
+        del socket.shares[token]
+        app = socket.active_tokens[token]
+        del socket.active_tokens[token]
+        del self._active_tokens[token]
+        self._active_apps[app].remove(token)
+        if self._active_apps[app] == set():
+            del self._active_apps[app]
+        self._live_tokens.remove(token)
+        # The socket is not used by anything now, so remove it
+        if socket.active_tokens == {} and socket.waiting_tokens == set():
+            addr = str(socket.address)
+            port = socket.port
+            proto = socket.protocol
+            del self._sockets[proto][addr][port]
+            # Clean up empty branches of the structure
+            if self._sockets[proto][addr] == {}:
+                del self._sockets[proto][addr]
+            if self._sockets[proto] == {}:
+                del self._sockets[proto]
 
     def drop_application(self, application):
         """
-        This signals the application terminated and all socket it picked up
+        This signals the application terminated and all sockets it picked up
         should be considered unused by it now. It effectively calls drop_socket
         on each of the sockets the application picked up and didn't drop yet.
 
