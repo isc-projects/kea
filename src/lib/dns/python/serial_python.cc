@@ -13,11 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <Python.h>
-#include <vector>
 
 #include <dns/serial.h>
-#include <dns/messagerenderer.h>
-#include <util/buffer.h>
 #include <util/python/pycppwrapper_util.h>
 
 #include "serial_python.h"
@@ -52,10 +49,12 @@ PyObject* Serial_add(PyObject *right, PyObject *left);
 // 4. Documentation
 PyMethodDef Serial_methods[] = {
     { "get_value", reinterpret_cast<PyCFunction>(Serial_getValue), METH_NOARGS,
-      "Returns the Serial as an integer" },
+      "Returns the Serial value as an integer" },
     { NULL, NULL, 0, NULL }
 };
 
+// For overriding the + operator. We do not define any other operators for
+// this type.
 PyNumberMethods Serial_NumberMethods = {
     Serial_add, //nb_add;
     NULL, //nb_subtract;
@@ -162,15 +161,16 @@ Serial_richcmp(s_Serial* self, s_Serial* other, int op) {
             *self->cppobj == *other->cppobj;
         break;
     }
-    if (c)
+    if (c) {
         Py_RETURN_TRUE;
-    else
+    } else {
         Py_RETURN_FALSE;
+    }
 }
 
 PyObject *
 Serial_add(PyObject *left, PyObject *right) {
-    // Either can be either a serial or a number, as long as one of them is a
+    // Either can be either a serial or a long, as long as one of them is a
     // serial
     if (PySerial_Check(left) && PySerial_Check(right)) {
         return (createSerialObject(PySerial_ToSerial(left) +
@@ -192,15 +192,6 @@ Serial_add(PyObject *left, PyObject *right) {
 namespace isc {
 namespace dns {
 namespace python {
-
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function in pydnspp.cc
-//
-PyObject* po_InvalidSerial;
-PyObject* po_IncompleteSerial;
-
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_Serial
 // Most of the functions are not actually implemented and NULL here.
@@ -225,12 +216,14 @@ PyTypeObject serial_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Serial class encapsulates Serials used in DNS resource records.\n\n"
+    "The Serial class encapsulates Serials used in DNS SOA records.\n\n"
     "This is a straightforward class; an Serial object simply maintains a "
-    "32-bit unsigned integer corresponding to the Serial value.  The main purpose "
-    "of this class is to provide convenient interfaces to convert a textual "
-    "representation into the integer Serial value and vice versa, and to handle "
-    "wire-format representations.",
+    "32-bit unsigned integer corresponding to the SOA SERIAL value.  The "
+    "main purpose of this class is to provide serial number arithmetic, as "
+    "described in RFC 1892. Objects of this type can be compared and added "
+    "to each other, as described in RFC 1892. Apart from str(), get_value(), "
+    "comparison operators, and the + operand, no other operations are "
+    "defined for this type.",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     (richcmpfunc)Serial_richcmp,        // tp_richcompare
@@ -269,7 +262,8 @@ createSerialObject(const Serial& source) {
 bool
 PySerial_Check(PyObject* obj) {
     if (obj == NULL) {
-        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Serial typecheck");
     }
     return (PyObject_TypeCheck(obj, &serial_type));
 }
