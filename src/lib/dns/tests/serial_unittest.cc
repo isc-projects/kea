@@ -22,10 +22,10 @@ class SerialTest : public ::testing::Test {
 public:
     SerialTest() : one(1), one_2(1), two(2),
                    date_zero(1980120100), date_one(1980120101),
-                   min(0), max(4294967295),
+                   min(0), max(4294967295u),
                    number_low(12345),
                    number_medium(2000000000),
-                   number_high(4000000000)
+                   number_high(4000000000u)
     {}
     Serial one, one_2, two, date_zero, date_one, min, max, number_low, number_medium, number_high;
 };
@@ -41,10 +41,10 @@ TEST_F(SerialTest, get_value) {
     EXPECT_EQ(1980120100, date_zero.getValue());
     EXPECT_EQ(1980120101, date_one.getValue());
     EXPECT_EQ(0, min.getValue());
-    EXPECT_EQ(4294967295, max.getValue());
+    EXPECT_EQ(4294967295u, max.getValue());
     EXPECT_EQ(12345, number_low.getValue());
     EXPECT_EQ(2000000000, number_medium.getValue());
-    EXPECT_EQ(4000000000, number_high.getValue());
+    EXPECT_EQ(4000000000u, number_high.getValue());
 }
 
 TEST_F(SerialTest, equals) {
