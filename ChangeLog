@@ -1,5 +1,11 @@
 bind10-devel-20111128 released on November 28, 2011
 
+330.	[bug]		jelte
+	Fixed a bug in b10-auth where it would sometimes fail because it
+	tried to check for queued msgq messages before the session was
+	fully running. Reviewed via jabber.
+	(No trac number, git 64c2d16fff1dd9e903378a55087843ad058791f5)
+
 329.	[doc]		vorner, jreed
 	Document the bind10 run control configuration in
 	guide and manual page.
