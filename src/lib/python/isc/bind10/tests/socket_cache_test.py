@@ -280,6 +280,29 @@ class SocketCacheTest(Test):
         # Trying to get it again fails
         self.assertRaises(ValueError, self.__cache.get_socket, token, app)
 
+    def test_drop_application(self):
+        """
+        Test that a drop_application calls drop_socket on all the sockets
+        held by the application.
+        """
+        sockets = set()
+        def drop_socket(token):
+            sockets.add(token)
+        # Mock the drop_socket so we know it is called
+        self.__cache.drop_socket = drop_socket
+        self.assertRaises(ValueError, self.__cache.drop_application,
+                          "bad token")
+        self.assertEqual(set(), sockets)
+        # Put the tokens into active_apps. Nothing else should be touched
+        # by this call, so leave it alone.
+        self.__cache._active_apps = {
+            1: set(['t1', 't2']),
+            2: set(['t3'])
+        }
+        self.__cache.drop_application(1)
+        self.assertEqual({2: set(['t3'])}, self.__cache._active_apps)
+        self.assertEqual(set(['t1', 't2']), sockets)
+
 if __name__ == '__main__':
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
