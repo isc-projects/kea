@@ -68,7 +68,7 @@ The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
 in the answer as a result.
 
-% DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3
+% DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3/%4
 Debug information. The database data source is looking up records with the given
 name and type in the database.
 
@@ -78,7 +78,7 @@ different TTL values. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
 
-% DATASRC_DATABASE_FOUND_CNAME search in datasource %1 for %2/%3/%4 resulted in CNAME %5
+% DATASRC_DATABASE_FOUND_CNAME search in datasource %1 for %2/%3/%4 found CNAME
 When searching the domain for a name a CNAME was found at that name.  Even
 though it was not the RR type being sought, it is returned.  If the query
 of the database was issued by a result searching for the name, the return of
@@ -89,7 +89,7 @@ target of the CNAME.
 When searching for a domain, the program met a delegation to a different zone
 at the given domain name. It will return that one instead.
 
-% DATASRC_DATABASE_FOUND_DELEGATION_EXACT Found delegation at %2 (exact match) in %1
+% DATASRC_DATABASE_FOUND_DELEGATION_EXACT search in datasource %1 for %2/%3/%4 found delegation at %5
 The program found the domain requested, but it is a delegation point to a
 different zone, therefore it is not authoritative for this domain name.
 It will return the NS record instead.
@@ -118,7 +118,7 @@ A search in the database for RRs for the specified name, type and class has
 located RRs that match the name and class but not the type.  DNSSEC information
 has been requested, but there is no NSEC record corresponding to the node.
 
-% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2
+% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %5
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
@@ -139,6 +139,10 @@ While iterating through the zone, the time to live for RRs of the given RRset
 were found to be different. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_NO_MATCH not match for %2/%3/%4 in %1
+No match (not even a wildcard) was found in the named data source for the given
+name/type/class in the data source.
 
 % DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
 Debug information.  A set of updates to a zone has been successfully
@@ -175,11 +179,7 @@ whether the data is still valid.  The zone name, its class, and the
 underlying database name as well as the error message thrown from the
 database module are shown in the log message.
 
-% DATASRC_DATABASE_WILDCARD constructing RRset %3 from wildcard %2 in %1
-The database doesn't contain directly matching domain, but it does contain a
-wildcard one which is being used to synthesize the answer.
-
-% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %2 because %3 contains NS in %1
+% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %3 because %2 contains NS (data source %1)
 The database was queried to provide glue data and it didn't find direct match.
 It could create it from given wildcard, but matching wildcards is forbidden
 under a zone cut, which was found. Therefore the delegation will be returned
@@ -191,11 +191,31 @@ exists, therefore this name is something like empty non-terminal (actually,
 from the protocol point of view, it is empty non-terminal, but the code
 discovers it differently).
 
-% DATASRC_DATABASE_WILDCARD_EMPTY implicit wildcard %2 used to construct %3 in %1
-The given wildcard exists implicitly in the domainspace, as empty nonterminal
-(eg. there's something like subdomain.*.example.org, so *.example.org exists
-implicitly, but is empty). This will produce NXRRSET, because the constructed
-domain is empty as well as the wildcard.
+% DATASRC_DATABASE_WILDCARD_CNAME found CNAME at %2 which is a wildcard match for %3 in %1
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a CNAME RR was found at a wildcard record
+matching the name.  This is returned as the result of the search.
+
+% DATASRC_DATABASE_WILDCARD_EMPTY found subdomains of %2 which is a wildcard match for %3 in %1
+The given wildcard matches the name being sough but it as an empty
+nonterminal (e.g. there's nothing at *.example.com but something like
+subdomain.*.example.org, do exist: so *.example.org exists in the
+namespace but has no RRs assopciated with it). This will produce NXRRSET.
+
+% DATASRC_DATABASE_WILDCARD_MATCH found match at %2 which is a wildcard match for %3 in %1
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a wildcard record matching the name and type of
+the query was found. The data at this point is returned.
+
+% DATASRC_DATABASE_WILDCARD_NS found NS at %2 which is a wildcard match for %3 in %1
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, an NS RR was found at a wildcard record matching
+the name.  This is returned as the result of the search.
+
+% DATASRC_DATABASE_WILDCARD_NXRRSET found no data at %2 which is a wildcard match for %3 in %1
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a matching wildcard entry was found but it did
+not contain RRs the requested type.  AN NXRRSET indication is returned.
 
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
