@@ -49,6 +49,7 @@
 #include "rrset_python.h"
 #include "rrttl_python.h"
 #include "rrtype_python.h"
+#include "serial_python.h"
 #include "tsigerror_python.h"
 #include "tsigkey_python.h"
 #include "tsig_python.h"
@@ -492,6 +493,18 @@ initModulePart_RRType(PyObject* mod) {
 }
 
 bool
+initModulePart_Serial(PyObject* mod) {
+    if (PyType_Ready(&serial_type) < 0) {
+        return (false);
+    }
+    Py_INCREF(&serial_type);
+    PyModule_AddObject(mod, "Serial",
+                       reinterpret_cast<PyObject*>(&serial_type));
+
+    return (true);
+}
+
+bool
 initModulePart_TSIGError(PyObject* mod) {
     if (PyType_Ready(&tsigerror_type) < 0) {
         return (false);
@@ -801,6 +814,10 @@ PyInit_pydnspp(void) {
     }
 
     if (!initModulePart_EDNS(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_Serial(mod)) {
         return (NULL);
     }
 

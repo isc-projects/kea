@@ -76,7 +76,7 @@ TEST_F(Rdata_SOA_Test, toText) {
 }
 
 TEST_F(Rdata_SOA_Test, getSerial) {
-    EXPECT_EQ(2010012601, rdata_soa.getSerial());
+    EXPECT_EQ(2010012601, rdata_soa.getSerial().getValue());
 }
 
 }
