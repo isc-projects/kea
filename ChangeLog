@@ -4,7 +4,7 @@ bind10-devel-20111128 released on November 28, 2011
 	Fixed a bug in data source library where a zone with more labels
 	than an out-of-bailiwick name server would cause an exception to
 	be raised.
-	(git 81f62344db074bc5eea3aaf3682122fdec6451ad)
+	(Trac #1430, git 81f62344db074bc5eea3aaf3682122fdec6451ad)
 
 330.	[bug]		jelte
 	Fixed a bug in b10-auth where it would sometimes fail because it
