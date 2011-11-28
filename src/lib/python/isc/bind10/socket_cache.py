@@ -263,4 +263,15 @@ class Cache:
         If the application is invalid (no get_socket was successful with this
         value of application), it raises ValueError.
         """
-        pass
+        try:
+            # Get a copy. Who knows how iteration works through sets if we
+            # delete from it during the time, so we'll just have our own copy
+            # to iterate
+            to_drop = set(self._active_apps[application])
+        except KeyError:
+            raise ValueError("Application " + str(application) +
+                             " doesn't hold any sockets")
+        for token in to_drop:
+            self.drop_socket(token)
+        # We don't call del now. The last drop_socket should have
+        # removed the application key as well.
