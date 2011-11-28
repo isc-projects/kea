@@ -14,7 +14,6 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
@@ -392,21 +391,35 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
 
 DatabaseClient::Finder::DelegationSearchResult
 DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
-                                            const FindOptions options) {
+                                            const FindOptions options)
+{
     // Result of search
     isc::dns::ConstRRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
 
-    // In case we are in GLUE_OK mode and start matching wildcards,
-    // we can't do it under NS, so we store it here to check
-    isc::dns::ConstRRsetPtr first_ns;
-
     // Are we searching for glue?
-    const bool glue_ok((options & FIND_GLUE_OK) != 0);
+    const bool glue_ok = ((options & FIND_GLUE_OK) != 0);
+
+    // This next declaration is an optimisation.  When we search the database
+    // for glue records, we generally ignore delegations. (This allows for
+    // the case where e.g. the delegation to zone example.com refers to
+    // nameservers within the zone, e.g. ns1.example.com.  When conducting the
+    // search for ns1.example.com, we have to search past the NS records at
+    // example.com.)
+    //
+    // The one case where this is forbidden is when we search past the zone
+    // cut but the match we find for the glue is a wildcard match.  In that
+    // case, we return the delegation instead.  To save a new search, we record
+    // the location of the delegation cut when we encounter it here.
+    // TODO: where does it say we can't return wildcard glue?
+    isc::dns::ConstRRsetPtr first_ns;
 
     // We want to search from the apex down.  We are given the full domain
     // name so we have to do some manipulation to ensure that when we start
-    // checking superdomains, we start from the right label:
+    // checking superdomains, we start from the the domain name of the zone
+    // (e.g. if the name is b.a.example.com. and we are in the example.com.
+    // zone, we check example.com., a.example.com. and b.a.example.com.  We
+    // don't need to check com. or .).
     //
     // Set the number of labels in the origin (i.e. apex of the zone) and in
     // the last known non-empty domain (which, at this point, is the origin).
@@ -418,7 +431,7 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
     const size_t remove_labels = name.getLabelCount() - origin_label_count;
 
     // Go through all superdomains from the origin down searching for nodes
-    // that indicate a delegation (NS or DNAME).
+    // that indicate a delegation (.e. NS or DNAME).
     for (int i = remove_labels; i > 0; --i) {
         const Name superdomain(name.split(i));
 
@@ -433,31 +446,39 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
                                             DELEGATION_TYPES(), not_origin);
         if (found.first) {
             // This node contains either NS or DNAME RRs so it does exist.
-            last_known = superdomain.getLabelCount();
             const FoundIterator nsi(found.second.find(RRType::NS()));
             const FoundIterator dni(found.second.find(RRType::DNAME()));
 
-            // In case we are in GLUE_OK mode, we want to store the
-            // highest encountered NS (but not apex)
-            // TODO: WHY?
+            // An optimisation.  We know that there is an exact match for
+            // something at this point in the tree so remember it.  If we have
+            // to do a wildcard search, as we search upwards through the tree
+            // we don't need to pass this point, which is an exact match for
+            // the domain name.
+            last_known = superdomain.getLabelCount();
+
             if (glue_ok && !first_ns && not_origin &&
                     nsi != found.second.end()) {
+                // If we are searching for glue ("glue OK" mode), store the
+                // highest NS record that we find that is not the apex.  This
+                // is another optimisation for later, where we need the
+                // information if the domain we are looking for matches through
+                // a wildcard.
                 first_ns = nsi->second;
 
             } else if (!glue_ok && not_origin && nsi != found.second.end()) {
-                // Not in glue OK mode and we have found an NS RRset that is
-                // not at the apex.  We have a delegation so return that fact.
+                // Not searching for glue and we have found an NS RRset that is
+                // not at the apex.  We have found a delegation - return that
+                // fact, there is no need to search further down the tree.
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_DELEGATION).
                     arg(accessor_->getDBName()).arg(superdomain);
                 result_rrset = nsi->second;
                 result_status = DELEGATION;
-
-                // No need to go further down the tree.
                 break;
 
             } else if (dni != found.second.end()) {
-                // We have found a DNAME so again return the fact.
+                // We have found a DNAME so again stop searching down the tree
+                // and return the information.
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_DNAME).
                     arg(accessor_->getDBName()).arg(superdomain);
@@ -468,8 +489,6 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
                               " has " << result_rrset->getRdataCount() <<
                               " rdata, 1 expected");
                 }
-
-                // No need to go further down the tree.
                 break;
             }
         }
@@ -483,13 +502,12 @@ DatabaseClient::Finder::findWildcardMatch(
     const isc::dns::Name& name, const isc::dns::RRType& type,
     const FindOptions options, const DelegationSearchResult& dresult)
 {
-    // Result of search (status initialized to assume we don't find any
-    // matching RRsets).
+    // Initialize search result to indicate nothing found
     isc::dns::ConstRRsetPtr result_rrset;
     ZoneFinder::Result result_status = NXDOMAIN;
 
-    // Search options
-    const bool dnssec_data((options & FIND_DNSSEC) != 0);
+    // Should DNSSEC data be returned?
+    const bool dnssec_data = ((options & FIND_DNSSEC) != 0);
 
     // Note that during the search we are going to search not only for the
     // requested type, but also for types that indicate a delegation -
@@ -497,73 +515,128 @@ DatabaseClient::Finder::findWildcardMatch(
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
 
-    // We know that the name is a non-empty terminal, so check for wildcards.
-    // We can start at the last known non-empty domain and work up.  We remove
-    // labels one by one and look for the wildcard there, up to the
-    // first non-empty domain.
-    for (size_t i = 1; i <= name.getLabelCount() - dresult.last_known; ++i) {
+    // This method is called when we have not found an exact match and when we
+    // know that the name is not an empty non-terminal.  So the only way that
+    // the name can match something in the zone is through a wildcard match.
+    //
+    // During an earlier stage in the search for this name, we made a record of
+    // the lowest superdomain for which we know an RR exists. (Note the "we
+    // know" qualification - there may be lower superdomains (ones with more
+    // labels) that hold an RR, but as we weren't searching for them, we don't
+    // know about them.)
+    //
+    // In the search for a wildcard match (which starts at the given domain
+    // name and goes up the tree to successive superdomains), this is the level
+    // at which we can stop - there can't be a wildcard at or beyond that
+    // point.
+    for (size_t i = 1; i <= (name.getLabelCount() - dresult.last_known); ++i) {
 
-        // Construct the name with *
+        // Strip off the left-more label(s) in the name and replace with a "*".
         const Name superdomain(name.split(i));
         const string wildcard("*." + superdomain.toText());
         const string construct_name(name.toText());
 
         // TODO What do we do about DNAME here?
-        // The types are the same as with original query
+        // Search for a match.  The types are the same as with original query.
         FoundRRsets found = getRRsets(wildcard, final_types, true,
                                       &construct_name);
         if (found.first) {
-            if (dresult.first_ns) {
-                // In case we are under NS, we don't wildcard-match, but return
-                // delegation
-                result_rrset = dresult.first_ns;
-                result_status = DELEGATION;
+            // Found something - but what?
 
+            if (dresult.first_ns) {
+                // About to use first_ns.  The only way this can be set is if
+                // we are searching for glue, so do a sanity check.
+                if ((options & FIND_GLUE_OK) == 0) {
+                    isc_throw(Unexpected, "Inconsistent conditions during "
+                              "cancel of wilcard search for " <<
+                              name.toText() << ": find_ns non-null when not "
+                              "processing glue request");
+                }
+
+                // We found a wildcard match for a glue record below a
+                // delegation point.  In this case we don't return the match,
+                // instead we return the delegation.  (Note that if we didn't
+                // a wildcard match at all, we would return NXDOMAIN, not the
+                // the delegation.)
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_WILDCARD_CANCEL_NS).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(dresult.first_ns->getName());
+                result_status = DELEGATION;
+                result_rrset = dresult.first_ns;
+
 
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
-
-                // Nothing we added as part of the * can exist directly, as we
-                // go up only to first existing domain, but it could be an empty
-                // non-terminal. In that case, we need to cancel the match.
-
+                // We found a wildcard match and we are sure that the match
+                // is not an empty non-terminal (E.g. searching for a match
+                // for c.b.a.example.com, we found that b.a.example.com did
+                // not exist but that *.a.example.com. did. Checking
+                // b.a.example.com revealed no subdomains, so we can use the
+                // wilcard match we found.)
                 const FoundIterator cni(found.second.find(RRType::CNAME()));
                 const FoundIterator nsi(found.second.find(RRType::NS()));
                 const FoundIterator nci(found.second.find(RRType::NSEC()));
                 const FoundIterator wti(found.second.find(type));
+
                 if (cni != found.second.end() && type != RRType::CNAME()) {
-                    result_rrset = cni->second;
+                    // Found a wildcard match for a CNAME but were not
+                    // searching for one.
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_WILDCARD_CNAME).
+                              arg(accessor_->getDBName()).
+                              arg(wildcard).arg(name);
                     result_status = WILDCARD_CNAME;
+                    result_rrset = cni->second;
 
                 } else if (nsi != found.second.end()) {
-                    result_rrset = nsi->second;
+                    // Found a wildcard match to an NS.
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_WILDCARD_NS).
+                              arg(accessor_->getDBName()).
+                              arg(wildcard).arg(name);
                     result_status = DELEGATION;
+                    result_rrset = nsi->second;
 
                 } else if (wti != found.second.end()) {
-                    result_rrset = wti->second;
+                    // Found a wildcard match to the name and type we were
+                    // search for.
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_WILDCARD_MATCH).
+                              arg(accessor_->getDBName()).
+                              arg(wildcard).arg(name);
                     result_status = WILDCARD;
+                    result_rrset = wti->second;
 
                 } else {
-                    // NXRRSET case in the wildcard
+                    // Found a wildcard match to the name but not to the type
+                    // (i.e. NXRRSET).
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_WILDCARD_NXRRSET).
+                              arg(accessor_->getDBName()).
+                              arg(wildcard).arg(name);
                     result_status = WILDCARD_NXRRSET;
+
                     if (dnssec_data && nci != found.second.end()) {
-                        // User wants a proof the wildcard doesn't contain it
-                        //
-                        // However, we need to get the RRset in the name of the
-                        // wildcard, not the constructed one, so we walk it
-                        // again
+                        // User wants a proof the wildcard doesn't contain 
+                        // the requested type.  However, we need to get the
+                        // RRset in the name of the wildcard, not the
+                        // constructed one, so we search the tree again.
                         found = getRRsets(wildcard, NSEC_TYPES(), true);
                         result_rrset =
                             found.second.find(RRType::NSEC())->second;
                     }
                 }
 
-                LOG_DEBUG(logger, DBG_TRACE_DETAILED,DATASRC_DATABASE_WILDCARD).
-                    arg(accessor_->getDBName()).arg(wildcard).arg(name);
             } else {
+                // A more specified match was found so the wildcard search
+                // is canceled.  (E.g. searching for a match
+                // for c.b.a.example.com, we found that b.a.example.com did
+                // not exist but that *.a.example.com. did. Checking
+                // b.a.example.com found subdomains.  So b.example.com is
+                // an empty non-terminal and so should not be returned in
+                // the wildcard matching process.  In other words,
+                // b.example.com does exist in the DNS space, it just doesn't
+                // have any RRs associated with it.)
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_WILDCARD_CANCEL_SUB).
                     arg(accessor_->getDBName()).arg(wildcard).
@@ -571,12 +644,19 @@ DatabaseClient::Finder::findWildcardMatch(
                 result_status = NXDOMAIN;
             }
             break;
+
         } else if (hasSubdomains(wildcard)) {
-            // Empty non-terminal asterisk
+            // Found a match, but it is an empty non-terminal asterisk.  (E.g.#
+            // subdomain.*.example.com.  is present, but there is nothing at
+            // *.example.com.)  In this case, return an NXRRSET indication;
+            // the wildcard exists in the DNS space, there's just nothing
+            // associated with it.  If DNSSEC data is required, return the
+            // covering NSEC record.
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_WILDCARD_EMPTY).
                 arg(accessor_->getDBName()).arg(wildcard).arg(name);
             result_status = NXRRSET;
+
             if (dnssec_data) {
                 result_rrset = findNSECCover(Name(wildcard));
                 if (result_rrset) {
@@ -626,6 +706,8 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
 
     // All avenues to find a match are now exhausted, return NXDOMAIN (plus
     // NSEC records if requested).
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_NO_MATCH).
+              arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
     return (FindResult(NXDOMAIN, dnssec_data ? findNSECCover(name) :
                            ConstRRsetPtr()));
 }
@@ -652,24 +734,29 @@ ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              isc::dns::RRsetList*,
-                             const FindOptions options) {
+                             const FindOptions options)
+{
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
-              .arg(accessor_->getDBName()).arg(name).arg(type);
+              .arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
 
     // First, go through all superdomains from the origin down, searching for
     // nodes that indicate a delegation (i.e. NS or DNAME, ignoring NS records
     // at the apex).  If one is found, the search stops there.
     //
     // (In fact there could be RRs in the database corresponding to subdomains
-    // of the delegation.  However as no search will find them, they are said
-    // to be occluded by the presence of the delegation.)
+    // of the delegation.  The reason we do the search for the delegations
+    // first is because the delegation means that another zone is authoritative
+    // for the data and so should be consulted to retrieve it.  RRs below
+    // this delegation point can be found in a search for glue but not
+    // otherwise; in the latter case they are said to be occluded by the
+    // presence of the delegation.)
     const DelegationSearchResult dresult = findDelegationPoint(name, options);
     if (dresult.rrset) {
         return (FindResult(dresult.code, dresult.rrset));
     }
 
-    // If there is no delegation in the page, look for the exact match to the
-    // request name/type/class.  However, there are special cases:
+    // If there is no delegation, look for the exact match to the request
+    // name/type/class.  However, there are special cases:
     // - Requested name has a singleton CNAME record associated with it
     // - Requested name is a delegation point (NS only but not at the zone
     //   apex - DNAME is ignored here).
@@ -687,10 +774,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
     if (!is_origin && ((options & FIND_GLUE_OK) == 0) &&
             nsi != found.second.end()) { 
-        // A NS RRset was found at the domain we were searching for.  As
-        // it is not at the origin of the zone, it is a delegation and
-        // indicates that this this zone is not authoritative for the data.
-        // Just return the delegation information.
+        // A NS RRset was found at the domain we were searching for.  As it is
+        // not at the origin of the zone, it is a delegation and indicates that
+        // this this zone is not authoritative for the data. Just return the
+        // delegation information.
         return (logAndCreateResult(name, type, DELEGATION, nsi->second,
                                    DATASRC_DATABASE_FOUND_DELEGATION_EXACT));
 
@@ -719,8 +806,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
     } else if (wti != found.second.end()) {
         // Found an RR matching the query, so return it.  (Note that this
-        // includes the case where we were querying for a CNAME and found
-        // it.  It also includes the case where we were querying for an NS
+        // includes the case where we were explicitly querying for a CNAME and
+        // found it.  It also includes the case where we were querying for an NS
         // RRset and found it at the apex of the zone.)
         return (logAndCreateResult(name, type, SUCCESS, wti->second,
                                    DATASRC_DATABASE_FOUND_RRSET));
@@ -733,8 +820,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     }
 
     // If we get here, we have found something at the requested name but not
-    // one of the RR types we were interested in. This is the NXRRSET case so,
-    // if DNSSEC information was requested, provide the NSEC records.
+    // one of the RR types we were interested in. This is the NXRRSET case so
+    // return the appropriate status.  If DNSSEC information was requested,
+    // provide the NSEC records.
     if ((options & FIND_DNSSEC) != 0) {
         const FoundIterator nci = found.second.find(RRType::NSEC());
         if (nci != found.second.end()) {
@@ -753,10 +841,9 @@ DatabaseClient::Finder::findPreviousName(const Name& name) const {
     try {
         return (Name(str));
     }
-    /*
-     * To avoid having the same code many times, we just catch all the
-     * exceptions and handle them in a common code below
-     */
+
+    // To avoid having the same code many times, we just catch all the
+    // exceptions and handle them in a common code below
     catch (const isc::dns::EmptyLabel&) {}
     catch (const isc::dns::TooLongLabel&) {}
     catch (const isc::dns::BadLabelType&) {}
@@ -779,14 +866,12 @@ DatabaseClient::Finder::getClass() const {
 
 namespace {
 
-/*
- * This needs, beside of converting all data from textual representation, group
- * together rdata of the same RRsets. To do this, we hold one row of data ahead
- * of iteration. When we get a request to provide data, we create it from this
- * data and load a new one. If it is to be put to the same rrset, we add it.
- * Otherwise we just return what we have and keep the row as the one ahead
- * for next time.
- */
+/// This needs, beside of converting all data from textual representation, group
+/// together rdata of the same RRsets. To do this, we hold one row of data ahead
+/// of iteration. When we get a request to provide data, we create it from this
+/// data and load a new one. If it is to be put to the same rrset, we add it.
+/// Otherwise we just return what we have and keep the row as the one ahead
+/// for next time.
 class DatabaseIterator : public ZoneIterator {
 public:
     DatabaseIterator(shared_ptr<DatabaseAccessor> accessor,
@@ -1154,5 +1239,5 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
                                                name, rrclass_, journaling)));
 }
-}
-}
+}   // namespace datasrc
+}   // namespace isc
