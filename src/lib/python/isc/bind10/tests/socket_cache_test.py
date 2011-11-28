@@ -49,21 +49,18 @@ class SocketTest(Test):
         """
         Creates the socket to be tested.
 
-        It has 'Test' as the protocol , which means the
-        fileno file descriptor will not be closed on deletion.
-
         It also creates other useful test variables.
         """
         Test.setUp(self)
         self.__address = IPAddr("192.0.2.1")
-        self.__socket = isc.bind10.socket_cache.Socket('Test', self.__address,
+        self.__socket = isc.bind10.socket_cache.Socket('UDP', self.__address,
                                                        1024, 42)
 
     def test_init(self):
         """
         Checks the intrnals of the cache just after the creation.
         """
-        self.assertEqual('Test', self.__socket.protocol)
+        self.assertEqual('UDP', self.__socket.protocol)
         self.assertEqual(self.__address, self.__socket.address)
         self.assertEqual(1024, self.__socket.port)
         self.assertEqual(42, self.__socket.fileno)
@@ -141,7 +138,7 @@ class SocketCacheTest(Test):
         Test.setUp(self)
         self.__cache = isc.bind10.socket_cache.Cache(self)
         self.__address = IPAddr("192.0.2.1")
-        self.__socket = isc.bind10.socket_cache.Socket('Test', self.__address,
+        self.__socket = isc.bind10.socket_cache.Socket('UDP', self.__address,
                                                        1024, 42)
         self.__get_socket_called = False
 
@@ -291,7 +288,7 @@ class SocketCacheTest(Test):
         # Mock the drop_socket so we know it is called
         self.__cache.drop_socket = drop_socket
         self.assertRaises(ValueError, self.__cache.drop_application,
-                          "bad token")
+                          13)
         self.assertEqual(set(), sockets)
         # Put the tokens into active_apps. Nothing else should be touched
         # by this call, so leave it alone.
@@ -300,8 +297,95 @@ class SocketCacheTest(Test):
             2: set(['t3'])
         }
         self.__cache.drop_application(1)
-        self.assertEqual({2: set(['t3'])}, self.__cache._active_apps)
+        # We don't check the _active_apps, as it would be cleaned by
+        # drop_socket and we removed it.
         self.assertEqual(set(['t1', 't2']), sockets)
+
+    def test_drop_socket(self):
+        """
+        Test the drop_socket call. It tests:
+        * That a socket that still has something to keep it alive is left alive
+          (both waiting and active).
+        * If not, it is deleted.
+        * All bookkeeping data around are properly removed.
+        * Of course the exception.
+        """
+        self.assertRaises(ValueError, self.__cache.drop_socket, "bad token")
+        self.__socket.active_tokens = {'t1': 1}
+        self.__socket.waiting_tokens = set(['t2'])
+        self.__socket.shares = {'t1': ('ANY', 'app1'), 't2': ('ANY', 'app2')}
+        self.__cache._waiting_tokens = {'t2': self.__socket}
+        self.__cache._active_tokens = {'t1': self.__socket}
+        self.__cache._sockets = {'UDP': {'192.0.2.1': {1024: self.__socket}}}
+        self.__cache._live_tokens = set(['t1', 't2'])
+        self.__cache._active_apps = {1: set(['t1'])}
+        # We can't drop what wasn't picket up yet
+        self.assertRaises(ValueError, self.__cache.drop_socket, 't2')
+        self.assertEqual({'t1': 1}, self.__socket.active_tokens)
+        self.assertEqual(set(['t2']), self.__socket.waiting_tokens)
+        self.assertEqual({'t1': ('ANY', 'app1'), 't2': ('ANY', 'app2')},
+                         self.__socket.shares)
+        self.assertEqual({'t2': self.__socket}, self.__cache._waiting_tokens)
+        self.assertEqual({'t1': self.__socket}, self.__cache._active_tokens)
+        self.assertEqual({'UDP': {'192.0.2.1': {1024: self.__socket}}},
+                         self.__cache._sockets)
+        self.assertEqual(set(['t1', 't2']), self.__cache._live_tokens)
+        self.assertEqual({1: set(['t1'])}, self.__cache._active_apps)
+        self.assertEqual([], self._closes)
+        # If we drop this, it survives because it waits for being picked up
+        self.__cache.drop_socket('t1')
+        self.assertEqual({}, self.__socket.active_tokens)
+        self.assertEqual(set(['t2']), self.__socket.waiting_tokens)
+        self.assertEqual({'t2': ('ANY', 'app2')}, self.__socket.shares)
+        self.assertEqual({}, self.__cache._active_tokens)
+        self.assertEqual({'UDP': {'192.0.2.1': {1024: self.__socket}}},
+                         self.__cache._sockets)
+        self.assertEqual(set(['t2']), self.__cache._live_tokens)
+        self.assertEqual({}, self.__cache._active_apps)
+        self.assertEqual([], self._closes)
+        # Fill it again, now two applications having the same socket
+        self.__socket.active_tokens = {'t1': 1, 't2': 2}
+        self.__socket.waiting_tokens = set()
+        self.__socket.shares = {'t1': ('ANY', 'app1'), 't2': ('ANY', 'app2')}
+        self.__cache._waiting_tokens = {}
+        self.__cache._active_tokens = {
+            't1': self.__socket,
+            't2': self.__socket
+        }
+        self.__cache._live_tokens = set(['t1', 't2', 't3'])
+        self.assertEqual([], self._closes)
+        # We cheat here little bit, the t3 doesn't exist enywhere else, but
+        # we need to check the app isn't removed too soon and it shouldn't
+        # matter anywhere else, so we just avoid the tiresome filling in
+        self.__cache._active_apps = {1: set(['t1', 't3']), 2: set(['t2'])}
+        # Drop it as t1. It should still live.
+        self.__cache.drop_socket('t1')
+        self.assertEqual({'t2': 2}, self.__socket.active_tokens)
+        self.assertEqual(set(), self.__socket.waiting_tokens)
+        self.assertEqual({'t2': ('ANY', 'app2')}, self.__socket.shares)
+        self.assertEqual({}, self.__cache._waiting_tokens)
+        self.assertEqual({'t2': self.__socket}, self.__cache._active_tokens)
+        self.assertEqual({'UDP': {'192.0.2.1': {1024: self.__socket}}},
+                         self.__cache._sockets)
+        self.assertEqual(set(['t3', 't2']), self.__cache._live_tokens)
+        self.assertEqual({1: set(['t3']), 2: set(['t2'])},
+                         self.__cache._active_apps)
+        self.assertEqual([], self._closes)
+        # Drop it again, from the other application. It should get removed
+        # and closed.
+        self.__cache.drop_socket('t2')
+        self.assertEqual({}, self.__socket.active_tokens)
+        self.assertEqual(set(), self.__socket.waiting_tokens)
+        self.assertEqual({}, self.__socket.shares)
+        self.assertEqual({}, self.__cache._waiting_tokens)
+        self.assertEqual({}, self.__cache._active_tokens)
+        self.assertEqual({}, self.__cache._sockets)
+        self.assertEqual(set(['t3']), self.__cache._live_tokens)
+        self.assertEqual({1: set(['t3'])}, self.__cache._active_apps)
+        # The cache doesn't hold the socket. So when we remove it ourself,
+        # it should get closed.
+        self.__socket = None
+        self.assertEqual([42], self._closes)
 
 if __name__ == '__main__':
     isc.log.init("bind10")
