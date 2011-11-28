@@ -700,6 +700,7 @@ public:
         ///     the zone using the name, it should have it.
         Finder(boost::shared_ptr<DatabaseAccessor> database, int zone_id,
                const isc::dns::Name& origin);
+
         // The following three methods are just implementations of inherited
         // ZoneFinder's pure virtual methods.
         virtual isc::dns::Name getOrigin() const;
