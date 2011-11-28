@@ -68,7 +68,7 @@ TEST_F(SerialTest, comparison) {
     EXPECT_LT(one, number_low);
     EXPECT_LT(number_low, number_medium);
     EXPECT_LT(number_medium, number_high);
-    
+
     // now let's try some that 'wrap', as it were
     EXPECT_GT(min, max);
     EXPECT_LT(max, min);
@@ -85,7 +85,7 @@ TEST_F(SerialTest, addition) {
     EXPECT_EQ(min, max + one);
     EXPECT_EQ(one, max + two);
     EXPECT_EQ(one, max + one + one);
-    
+
     EXPECT_EQ(one + 100, max + 102);
     EXPECT_EQ(min + 2147483645, max + 2147483646);
     EXPECT_EQ(min + 2147483646, max + MAX_INCREMENT);
