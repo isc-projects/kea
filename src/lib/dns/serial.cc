@@ -67,7 +67,7 @@ Serial::operator+(uint32_t other_val) const {
         if (value_ - MAX_INCREMENT + other_val <= MAX_INCREMENT + 1) {
             return (Serial(value_ + other_val));
         } else {
-            return (Serial(value_ - MAX_INCREMENT + 
+            return (Serial(value_ - MAX_INCREMENT +
                            other_val - MAX_INCREMENT - 2));
         }
     }
