@@ -828,7 +828,7 @@ class BoB:
         sockets sent to it are to be considered closed. This function signals
         so to the _socket_cache.
         """
-        pass
+        self._socket_cache.drop_application(unix_socket.fileno())
 
     def insert_creator(self, creator):
         """
