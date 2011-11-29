@@ -1,4 +1,4 @@
-EXTRA_DIST = __init__.py parse_args.py tsigctx_mock.py
+EXTRA_DIST = __init__.py parse_args.py tsigctx_mock.py rrset_utils.py
 
 CLEANDIRS = __pycache__
 

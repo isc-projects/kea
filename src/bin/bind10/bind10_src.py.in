@@ -92,51 +92,6 @@ VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 # This is for boot_time of Boss
 _BASETIME = time.gmtime()
 
-class RestartSchedule:
-    """
-Keeps state when restarting something (in this case, a process).
-
-When a process dies unexpectedly, we need to restart it. However, if 
-it fails to restart for some reason, then we should not simply keep
-restarting it at high speed.
-
-A more sophisticated algorithm can be developed, but for now we choose
-a simple set of rules:
-
-  * If a process was been running for >=10 seconds, we restart it
-    right away.
-  * If a process was running for <10 seconds, we wait until 10 seconds
-    after it was started.
-
-To avoid programs getting into lockstep, we use a normal distribution
-to avoid being restarted at exactly 10 seconds."""
-
-    def __init__(self, restart_frequency=10.0):
-        self.restart_frequency = restart_frequency
-        self.run_start_time = None
-        self.run_stop_time = None
-        self.restart_time = None
-    
-    def set_run_start_time(self, when=None):
-        if when is None:
-            when = time.time()
-        self.run_start_time = when
-        sigma = self.restart_frequency * 0.05
-        self.restart_time = when + random.normalvariate(self.restart_frequency, 
-                                                        sigma)
-
-    def set_run_stop_time(self, when=None):
-        """We don't actually do anything with stop time now, but it 
-        might be useful for future algorithms."""
-        if when is None:
-            when = time.time()
-        self.run_stop_time = when
-
-    def get_restart_time(self, when=None):
-        if when is None:
-            when = time.time()
-        return max(when, self.restart_time)
-
 class ProcessInfoError(Exception): pass
 
 class ProcessInfo:
@@ -151,7 +106,6 @@ class ProcessInfo:
         self.env = env
         self.dev_null_stdout = dev_null_stdout
         self.dev_null_stderr = dev_null_stderr
-        self.restart_schedule = RestartSchedule()
         self.uid = uid
         self.username = username
         self.process = None
@@ -200,7 +154,6 @@ class ProcessInfo:
                                         env=spawn_env,
                                         preexec_fn=self._preexec_work)
         self.pid = self.process.pid
-        self.restart_schedule.set_run_start_time()
 
     # spawn() and respawn() are the same for now, but in the future they
     # may have different functionality
@@ -219,7 +172,7 @@ class BoB:
     
     def __init__(self, msgq_socket_file=None, data_path=None,
     config_filename=None, nocache=False, verbose=False, setuid=None,
-    username=None, cmdctl_port=None, brittle=False, wait_time=10):
+    username=None, cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -233,22 +186,13 @@ class BoB:
             The cmdctl_port is passed to cmdctl and specify on which port it
             should listen.
 
-            brittle is a debug option that controls whether the Boss shuts down
-            after any process dies.
-
             wait_time controls the amount of time (in seconds) that Boss waits
             for selected processes to initialize before continuing with the
             initialization.  Currently this is only the configuration manager.
         """
         self.cc_session = None
         self.ccs = None
-        self.cfg_start_auth = True
-        self.cfg_start_resolver = False
-        self.cfg_start_dhcp6 = False
-        self.cfg_start_dhcp4 = False
         self.curproc = None
-        # XXX: Not used now, waits for reintroduction of restarts.
-        self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.component_config = {}
@@ -257,6 +201,9 @@ class BoB:
         # inapropriate. But as the code isn't probably completely ready
         # for it, we leave it at components for now.
         self.components = {}
+        # Simply list of components that died and need to wait for a
+        # restart. Components manage their own restart schedule now
+        self.components_to_restart = []
         self.runnable = False
         self.uid = setuid
         self.username = username
@@ -264,7 +211,6 @@ class BoB:
         self.data_path = data_path
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
-        self.brittle = brittle
         self.wait_time = wait_time
         self._component_configurator = isc.bind10.component.Configurator(self,
             isc.bind10.special_component.get_specials())
@@ -628,6 +574,33 @@ class BoB:
         # ... and start
         return self.start_process("b10-resolver", resargs, self.c_channel_env)
 
+    def __ld_path_hack(self):
+        # XXX: a quick-hack workaround.  xfrin/out will implicitly use
+        # dynamically loadable data source modules, which will be installed in
+        # $(libdir).
+        # On some OSes (including MacOS X and *BSDs) the main process (python)
+        # cannot find the modules unless they are located in a common shared
+        # object path or a path in the (DY)LD_LIBRARY_PATH.  We should seek
+        # a cleaner solution, but for a short term workaround we specify the
+        # path here, unconditionally, and without even bothering which
+        # environment variable should be used.
+        #
+        # We reuse the ADD_LIBEXEC_PATH variable to see whether we need to
+        # do this, as the conditions that make this workaround needed are
+        # the same as for the libexec path addition
+        # TODO: Once #1292 is finished, remove this method and the special
+        # component, use it as normal component.
+        env = dict(self.c_channel_env)
+        if ADD_LIBEXEC_PATH:
+            cur_path = os.getenv('DYLD_LIBRARY_PATH')
+            cur_path = '' if cur_path is None else ':' + cur_path
+            env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
+
+            cur_path = os.getenv('LD_LIBRARY_PATH')
+            cur_path = '' if cur_path is None else ':' + cur_path
+            env['LD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
+        return env
+
     def start_cmdctl(self):
         """
             Starts the command control process
@@ -641,35 +614,20 @@ class BoB:
                                   self.cmdctl_port)
 
     def start_xfrin(self):
-        # XXX: a quick-hack workaround.  xfrin will implicitly use dynamically
-        # loadable data source modules, which will be installed in $(libdir).
-        # On some OSes (including MacOS X and *BSDs) the main process (python)
-        # cannot find the modules unless they are located in a common shared
-        # object path or a path in the (DY)LD_LIBRARY_PATH.  We should seek
-        # a cleaner solution, but for a short term workaround we specify the
-        # path here, unconditionally, and without even bothering which
-        # environment variable should be used.
-        #
-        # We reuse the ADD_LIBEXEC_PATH variable to see whether we need to
-        # do this, as the conditions that make this workaround needed are
-        # the same as for the libexec path addition
-        # TODO: Once #1292 is finished, remove this method and the special
-        # component, use it as normal component.
-        c_channel_env = dict(self.c_channel_env)
-        if ADD_LIBEXEC_PATH:
-            cur_path = os.getenv('DYLD_LIBRARY_PATH')
-            cur_path = '' if cur_path is None else ':' + cur_path
-            c_channel_env['DYLD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
-
-            cur_path = os.getenv('LD_LIBRARY_PATH')
-            cur_path = '' if cur_path is None else ':' + cur_path
-            c_channel_env['LD_LIBRARY_PATH'] = "@@LIBDIR@@" + cur_path
         # Set up the command arguments.
         args = ['b10-xfrin']
         if self.verbose:
             args += ['-v']
 
-        return self.start_process("b10-xfrin", args, c_channel_env)
+        return self.start_process("b10-xfrin", args, self.__ld_path_hack())
+
+    def start_xfrout(self):
+        # Set up the command arguments.
+        args = ['b10-xfrout']
+        if self.verbose:
+            args += ['-v']
+
+        return self.start_process("b10-xfrout", args, self.__ld_path_hack())
 
     def start_all_components(self):
         """
@@ -742,7 +700,7 @@ class BoB:
 
         If we did not start yet, it raises an exception, which is meant
         to propagate through the component and configurator to the startup
-        routine and abort the startup imediatelly. If it is started up already,
+        routine and abort the startup immediately. If it is started up already,
         we just mark it so we terminate soon.
 
         It does set the exit code in both cases.
@@ -817,7 +775,11 @@ class BoB:
                     # Tell it it failed. But only if it matters (we are
                     # not shutting down and the component considers itself
                     # to be running.
-                    component.failed(exit_status);
+                    component_restarted = component.failed(exit_status);
+                    # if the process wants to be restarted, but not just yet,
+                    # it returns False
+                    if not component_restarted:
+                        self.components_to_restart.append(component)
             else:
                 logger.info(BIND10_UNKNOWN_CHILD_PROCESS_ENDED, pid)
 
@@ -833,39 +795,22 @@ class BoB:
             timeout value.
 
         """
-        # TODO: This is an artefact of previous way of handling processes. The
-        # restart queue is currently empty at all times, so this returns None
-        # every time it is called (thought is a relict that is obviously wrong,
-        # it is called and it doesn't hurt).
-        #
-        # It is preserved for archeological reasons for the time when we return
-        # the delayed restarts, most of it might be useful then (or, if it is
-        # found useless, removed).
-        next_restart = None
-        # if we're shutting down, then don't restart
         if not self.runnable:
             return 0
-        # otherwise look through each dead process and try to restart
-        still_dead = {}
+        still_dead = []
+        # keep track of the first time we need to check this queue again,
+        # if at all
+        next_restart_time = None
         now = time.time()
-        for proc_info in self.dead_processes.values():
-            restart_time = proc_info.restart_schedule.get_restart_time(now)
-            if restart_time > now:
-                if (next_restart is None) or (next_restart > restart_time):
-                    next_restart = restart_time
-                still_dead[proc_info.pid] = proc_info
-            else:
-                logger.info(BIND10_RESURRECTING_PROCESS, proc_info.name)
-                try:
-                    proc_info.respawn()
-                    self.components[proc_info.pid] = proc_info
-                    logger.info(BIND10_RESURRECTED_PROCESS, proc_info.name, proc_info.pid)
-                except:
-                    still_dead[proc_info.pid] = proc_info
-        # remember any processes that refuse to be resurrected
-        self.dead_processes = still_dead
-        # return the time when the next process is ready to be restarted
-        return next_restart
+        for component in self.components_to_restart:
+            if not component.restart(now):
+                still_dead.append(component)
+                if next_restart_time is None or\
+                   next_restart_time > component.get_restart_time():
+                    next_restart_time = component.get_restart_time()
+        self.components_to_restart = still_dead
+
+        return next_restart_time
 
 # global variables, needed for signal handlers
 options = None
@@ -928,8 +873,6 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
     parser.add_option("--pid-file", dest="pid_file", type="string",
                       default=None,
                       help="file to dump the PID of the BIND 10 process")
-    parser.add_option("--brittle", dest="brittle", action="store_true",
-                      help="debugging flag: exit if any component dies")
     parser.add_option("-w", "--wait", dest="wait_time", type="int",
                       default=10, help="Time (in seconds) to wait for config manager to start up")
 
@@ -1034,7 +977,7 @@ def main():
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                        options.config_file, options.nocache, options.verbose,
-                       setuid, username, options.cmdctl_port, options.brittle,
+                       setuid, username, options.cmdctl_port,
                        options.wait_time)
     startup_result = boss_of_bind.startup()
     if startup_result:
@@ -1050,10 +993,6 @@ def main():
     while boss_of_bind.runnable:
         # clean up any processes that exited
         boss_of_bind.reap_children()
-        # XXX: As we don't put anything into the processes to be restarted,
-        # this is really a complicated NOP. But we will try to reintroduce
-        # delayed restarts, so it stays here for now, until we find out if
-        # it's useful.
         next_restart = boss_of_bind.restart_processes()
         if next_restart is None:
             wait_time = None

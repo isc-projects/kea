@@ -57,8 +57,8 @@ class SockCreator(BaseComponent):
         """
         return self.__creator.pid() if self.__creator else None
 
-    def kill(self, forcefull=False):
-        # We don't really care about forcefull here
+    def kill(self, forceful=False):
+        # We don't really care about forceful here
         if self.__creator:
             self.__creator.kill()
 
@@ -113,6 +113,11 @@ class XfrIn(Component):
         Component.__init__(self, process, boss, kind, 'Xfrin', None,
                            boss.start_xfrin)
 
+class XfrOut(Component):
+    def __init__(self, process, boss, kind, address=None, params=None):
+        Component.__init__(self, process, boss, kind, 'Xfrout', None,
+                           boss.start_xfrout)
+
 class SetUID(BaseComponent):
     """
     This is a pseudo-component which drops root privileges when started
@@ -130,7 +135,7 @@ class SetUID(BaseComponent):
             posix.setuid(self.uid)
 
     def _stop_internal(self): pass
-    def kill(self, forcefull=False): pass
+    def kill(self, forceful=False): pass
 
     def name(self):
         return "Set UID"
@@ -154,6 +159,7 @@ def get_specials():
         'cmdctl': CmdCtl,
         # FIXME: Temporary workaround before #1292 is done
         'xfrin': XfrIn,
+        'xfrout': XfrOut,
         # TODO: Remove when not needed, workaround before sockcreator works
         'setuid': SetUID
     }

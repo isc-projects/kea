@@ -71,6 +71,19 @@ The configurable settings are:
 defines the maximum number of outgoing zone transfers that can run concurrently\&. The default is 10\&.
 .PP
 
+\fItsig_key_ring\fR
+A list of TSIG keys (each of which is in the form of name:base64\-key[:algorithm]) used for access control on transfer requests\&. The default is an empty list\&.
+.PP
+
+\fItransfer_acl\fR
+A list of ACL elements that apply to all transfer requests by default (unless overridden in zone_config)\&. See the BIND 10 guide for configuration examples\&. The default is an element that allows any transfer requests\&.
+.PP
+
+\fIzone_config\fR
+A list of JSON objects (i\&.e\&. maps) that define per zone configuration concerning
+\fBb10\-xfrout\fR\&. The supported names of each object are "origin" (the origin name of the zone), "class" (the RR class of the zone, optional, default to "IN"), and "acl_element" (ACL only applicable to transfer requests for that zone)\&. See the BIND 10 guide for configuration examples\&. The default is an empty list, that is, no zone specific configuration\&.
+.PP
+
 \fIlog_name\fR
 .PP
 

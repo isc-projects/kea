@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <datasrc/database.h>
@@ -519,7 +520,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // It's not empty non-terminal. So check for wildcards.
                 // We remove labels one by one and look for the wildcard there.
                 // Go up to first non-empty domain.
-                for (size_t i(1); i <= current_label_count - last_known; ++i) {
+                for (size_t i(1); i + last_known <= current_label_count; ++i) {
                     // Construct the name with *
                     const Name superdomain(name.split(i));
                     const string wildcard("*." + superdomain.toText());
@@ -707,11 +708,11 @@ public:
     DatabaseIterator(shared_ptr<DatabaseAccessor> accessor,
                      const Name& zone_name,
                      const RRClass& rrclass,
-                     bool adjust_ttl) :
+                     bool separate_rrs) :
         accessor_(accessor),
         class_(rrclass),
         ready_(true),
-        adjust_ttl_(adjust_ttl)
+        separate_rrs_(separate_rrs)
     {
         // Get the zone
         const pair<bool, int> zone(accessor_->getZone(zone_name.toText()));
@@ -769,20 +770,19 @@ public:
         const RRType rtype(rtype_str);
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
         while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
-            if (adjust_ttl_) {
-                if (ttl_ != ttl) {
-                    if (ttl < ttl_) {
-                        ttl_ = ttl;
-                        rrset->setTTL(RRTTL(ttl));
-                    }
-                    LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
-                        arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
+            if (ttl_ != ttl) {
+                if (ttl < ttl_) {
+                    ttl_ = ttl;
+                    rrset->setTTL(RRTTL(ttl));
                 }
-            } else if (ttl_ != ttl) {
-                break;
+                LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
+                    arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
             }
             rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
             getData();
+            if (separate_rrs_) {
+                break;
+            }
         }
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
             arg(rrset->getName()).arg(rrset->getType());
@@ -814,18 +814,18 @@ private:
     string name_, rtype_, rdata_, ttl_;
     // Whether to modify differing TTL values, or treat a different TTL as
     // a different RRset
-    bool adjust_ttl_;
+    bool separate_rrs_;
 };
 
 }
 
 ZoneIteratorPtr
 DatabaseClient::getIterator(const isc::dns::Name& name,
-                            bool adjust_ttl) const
+                            bool separate_rrs) const
 {
     ZoneIteratorPtr iterator = ZoneIteratorPtr(new DatabaseIterator(
                                                    accessor_->clone(), name,
-                                                   rrclass_, adjust_ttl));
+                                                   rrclass_, separate_rrs));
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
         arg(name);
 
@@ -838,10 +838,12 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
 class DatabaseUpdater : public ZoneUpdater {
 public:
     DatabaseUpdater(shared_ptr<DatabaseAccessor> accessor, int zone_id,
-            const Name& zone_name, const RRClass& zone_class) :
+            const Name& zone_name, const RRClass& zone_class,
+            bool journaling) :
         committed_(false), accessor_(accessor), zone_id_(zone_id),
         db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
-        zone_class_(zone_class),
+        zone_class_(zone_class), journaling_(journaling),
+        diff_phase_(NOT_STARTED),
         finder_(new DatabaseClient::Finder(accessor_, zone_id_, zone_name))
     {
         logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
@@ -877,45 +879,97 @@ public:
     virtual void commit();
 
 private:
+    // A short cut typedef only for making the code shorter.
+    typedef DatabaseAccessor Accessor;
+
     bool committed_;
     shared_ptr<DatabaseAccessor> accessor_;
     const int zone_id_;
     const string db_name_;
     const string zone_name_;
     const RRClass zone_class_;
+    const bool journaling_;
+    // For the journals
+    enum DiffPhase {
+        NOT_STARTED,
+        DELETE,
+        ADD
+    };
+    DiffPhase diff_phase_;
+    uint32_t serial_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
+
+    // This is a set of validation checks commonly used for addRRset() and
+    // deleteRRset to minimize duplicate code logic and to make the main
+    // code concise.
+    void validateAddOrDelete(const char* const op_str, const RRset& rrset,
+                             DiffPhase prev_phase,
+                             DiffPhase current_phase) const;
 };
 
 void
-DatabaseUpdater::addRRset(const RRset& rrset) {
+DatabaseUpdater::validateAddOrDelete(const char* const op_str,
+                                     const RRset& rrset,
+                                     DiffPhase prev_phase,
+                                     DiffPhase current_phase) const
+{
     if (committed_) {
-        isc_throw(DataSourceError, "Add attempt after commit to zone: "
+        isc_throw(DataSourceError, op_str << " attempt after commit to zone: "
                   << zone_name_ << "/" << zone_class_);
     }
-    if (rrset.getClass() != zone_class_) {
-        isc_throw(DataSourceError, "An RRset of a different class is being "
-                  << "added to " << zone_name_ << "/" << zone_class_ << ": "
-                  << rrset.toText());
-    }
-    if (rrset.getRRsig()) {
-        isc_throw(DataSourceError, "An RRset with RRSIG is being added to "
-                  << zone_name_ << "/" << zone_class_ << ": "
-                  << rrset.toText());
-    }
-
-    RdataIteratorPtr it = rrset.getRdataIterator();
-    if (it->isLast()) {
-        isc_throw(DataSourceError, "An empty RRset is being added for "
+    if (rrset.getRdataCount() == 0) {
+        isc_throw(DataSourceError, op_str << " attempt with an empty RRset: "
                   << rrset.getName() << "/" << zone_class_ << "/"
                   << rrset.getType());
     }
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, op_str << " attempt for a different class "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+    if (rrset.getRRsig()) {
+        isc_throw(DataSourceError, op_str << " attempt for RRset with RRSIG "
+                  << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+    if (journaling_) {
+        const RRType rrtype(rrset.getType());
+        if (rrtype == RRType::SOA() && diff_phase_ != prev_phase) {
+            isc_throw(isc::BadValue, op_str << " attempt in an invalid "
+                      << "diff phase: " << diff_phase_ << ", rrset: " <<
+                      rrset.toText());
+        }
+        if (rrtype != RRType::SOA() && diff_phase_ != current_phase) {
+            isc_throw(isc::BadValue, "diff state change by non SOA: "
+                      << rrset.toText());
+        }
+    }
+}
 
-    string columns[DatabaseAccessor::ADD_COLUMN_COUNT]; // initialized with ""
-    columns[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
-    columns[DatabaseAccessor::ADD_REV_NAME] =
-        rrset.getName().reverse().toText();
-    columns[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
-    columns[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
+void
+DatabaseUpdater::addRRset(const RRset& rrset) {
+    validateAddOrDelete("add", rrset, DELETE, ADD);
+
+    // It's guaranteed rrset has at least one RDATA at this point.
+    RdataIteratorPtr it = rrset.getRdataIterator();
+
+    string columns[Accessor::ADD_COLUMN_COUNT]; // initialized with ""
+    columns[Accessor::ADD_NAME] = rrset.getName().toText();
+    columns[Accessor::ADD_REV_NAME] = rrset.getName().reverse().toText();
+    columns[Accessor::ADD_TTL] = rrset.getTTL().toText();
+    columns[Accessor::ADD_TYPE] = rrset.getType().toText();
+    string journal[Accessor::DIFF_PARAM_COUNT];
+    if (journaling_) {
+        journal[Accessor::DIFF_NAME] = columns[Accessor::ADD_NAME];
+        journal[Accessor::DIFF_TYPE] = columns[Accessor::ADD_TYPE];
+        journal[Accessor::DIFF_TTL] = columns[Accessor::ADD_TTL];
+        diff_phase_ = ADD;
+        if (rrset.getType() == RRType::SOA()) {
+            serial_ =
+                dynamic_cast<const generic::SOA&>(it->getCurrent()).
+                getSerial();
+        }
+    }
     for (; !it->isLast(); it->next()) {
         if (rrset.getType() == RRType::RRSIG()) {
             // XXX: the current interface (based on the current sqlite3
@@ -925,43 +979,53 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
             // the interface, but until then we have to conform to the schema.
             const generic::RRSIG& rrsig_rdata =
                 dynamic_cast<const generic::RRSIG&>(it->getCurrent());
-            columns[DatabaseAccessor::ADD_SIGTYPE] =
+            columns[Accessor::ADD_SIGTYPE] =
                 rrsig_rdata.typeCovered().toText();
         }
-        columns[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        columns[Accessor::ADD_RDATA] = it->getCurrent().toText();
+        if (journaling_) {
+            journal[Accessor::DIFF_RDATA] = columns[Accessor::ADD_RDATA];
+            accessor_->addRecordDiff(zone_id_, serial_, Accessor::DIFF_ADD,
+                                     journal);
+        }
         accessor_->addRecordToZone(columns);
     }
 }
 
 void
 DatabaseUpdater::deleteRRset(const RRset& rrset) {
-    if (committed_) {
-        isc_throw(DataSourceError, "Delete attempt after commit on zone: "
-                  << zone_name_ << "/" << zone_class_);
+    // If this is the first operation, pretend we are starting a new delete
+    // sequence after adds.  This will simplify the validation below.
+    if (diff_phase_ == NOT_STARTED) {
+        diff_phase_ = ADD;
     }
-    if (rrset.getClass() != zone_class_) {
-        isc_throw(DataSourceError, "An RRset of a different class is being "
-                  << "deleted from " << zone_name_ << "/" << zone_class_
-                  << ": " << rrset.toText());
-    }
-    if (rrset.getRRsig()) {
-        isc_throw(DataSourceError, "An RRset with RRSIG is being deleted from "
-                  << zone_name_ << "/" << zone_class_ << ": "
-                  << rrset.toText());
-    }
+
+    validateAddOrDelete("delete", rrset, ADD, DELETE);
 
     RdataIteratorPtr it = rrset.getRdataIterator();
-    if (it->isLast()) {
-        isc_throw(DataSourceError, "An empty RRset is being deleted for "
-                  << rrset.getName() << "/" << zone_class_ << "/"
-                  << rrset.getType());
-    }
 
-    string params[DatabaseAccessor::DEL_PARAM_COUNT]; // initialized with ""
-    params[DatabaseAccessor::DEL_NAME] = rrset.getName().toText();
-    params[DatabaseAccessor::DEL_TYPE] = rrset.getType().toText();
+    string params[Accessor::DEL_PARAM_COUNT]; // initialized with ""
+    params[Accessor::DEL_NAME] = rrset.getName().toText();
+    params[Accessor::DEL_TYPE] = rrset.getType().toText();
+    string journal[Accessor::DIFF_PARAM_COUNT];
+    if (journaling_) {
+        journal[Accessor::DIFF_NAME] = params[Accessor::DEL_NAME];
+        journal[Accessor::DIFF_TYPE] = params[Accessor::DEL_TYPE];
+        journal[Accessor::DIFF_TTL] = rrset.getTTL().toText();
+        diff_phase_ = DELETE;
+        if (rrset.getType() == RRType::SOA()) {
+            serial_ =
+                dynamic_cast<const generic::SOA&>(it->getCurrent()).
+                getSerial();
+        }
+    }
     for (; !it->isLast(); it->next()) {
-        params[DatabaseAccessor::DEL_RDATA] = it->getCurrent().toText();
+        params[Accessor::DEL_RDATA] = it->getCurrent().toText();
+        if (journaling_) {
+            journal[Accessor::DIFF_RDATA] = params[Accessor::DEL_RDATA];
+            accessor_->addRecordDiff(zone_id_, serial_, Accessor::DIFF_DELETE,
+                                     journal);
+        }
         accessor_->deleteRecordInZone(params);
     }
 }
@@ -972,6 +1036,9 @@ DatabaseUpdater::commit() {
         isc_throw(DataSourceError, "Duplicate commit attempt for "
                   << zone_name_ << "/" << zone_class_ << " on "
                   << db_name_);
+    }
+    if (journaling_ && diff_phase_ == DELETE) {
+        isc_throw(isc::BadValue, "Update sequence not complete");
     }
     accessor_->commit();
     committed_ = true; // make sure the destructor won't trigger rollback
@@ -986,7 +1053,13 @@ DatabaseUpdater::commit() {
 
 // The updater factory
 ZoneUpdaterPtr
-DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
+DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
+                           bool journaling) const
+{
+    if (replace && journaling) {
+        isc_throw(isc::BadValue, "Can't store journal and replace the whole "
+                  "zone at the same time");
+    }
     shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
     const std::pair<bool, int> zone(update_accessor->startUpdateZone(
                                         name.toText(), replace));
@@ -995,7 +1068,107 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace) const {
     }
 
     return (ZoneUpdaterPtr(new DatabaseUpdater(update_accessor, zone.second,
-                                               name, rrclass_)));
+                                               name, rrclass_, journaling)));
+}
+
+//
+// Zone journal reader using some database system as the underlying data
+//  source.
+//
+class DatabaseJournalReader : public ZoneJournalReader {
+private:
+    // A shortcut typedef to keep the code concise.
+    typedef DatabaseAccessor Accessor;
+public:
+    DatabaseJournalReader(shared_ptr<Accessor> accessor, const Name& zone,
+                          int zone_id, const RRClass& rrclass, uint32_t begin,
+                          uint32_t end) :
+        accessor_(accessor), zone_(zone), rrclass_(rrclass),
+        begin_(begin), end_(end), finished_(false)
+    {
+        context_ = accessor_->getDiffs(zone_id, begin, end);
+    }
+    virtual ~DatabaseJournalReader() {}
+    virtual ConstRRsetPtr getNextDiff() {
+        if (finished_) {
+            isc_throw(InvalidOperation,
+                      "Diff read attempt past the end of sequence on "
+                      << accessor_->getDBName());
+        }
+
+        string data[Accessor::COLUMN_COUNT];
+        if (!context_->getNext(data)) {
+            finished_ = true;
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_JOURNALREADER_END).
+                arg(zone_).arg(rrclass_).arg(accessor_->getDBName()).
+                arg(begin_).arg(end_);
+            return (ConstRRsetPtr());
+        }
+
+        try {
+            RRsetPtr rrset(new RRset(Name(data[Accessor::NAME_COLUMN]),
+                                     rrclass_,
+                                     RRType(data[Accessor::TYPE_COLUMN]),
+                                     RRTTL(data[Accessor::TTL_COLUMN])));
+            rrset->addRdata(rdata::createRdata(rrset->getType(), rrclass_,
+                                               data[Accessor::RDATA_COLUMN]));
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                      DATASRC_DATABASE_JOURNALREADER_NEXT).
+                arg(rrset->getName()).arg(rrset->getType()).
+                arg(zone_).arg(rrclass_).arg(accessor_->getDBName());
+            return (rrset);
+        } catch (const Exception& ex) {
+            LOG_ERROR(logger, DATASRC_DATABASE_JOURNALREADR_BADDATA).
+                arg(zone_).arg(rrclass_).arg(accessor_->getDBName()).
+                arg(begin_).arg(end_).arg(ex.what());
+            isc_throw(DataSourceError, "Failed to create RRset from diff on "
+                      << accessor_->getDBName());
+        }
+    }
+
+private:
+    shared_ptr<Accessor> accessor_;
+    const Name zone_;
+    const RRClass rrclass_;
+    Accessor::IteratorContextPtr context_;
+    const uint32_t begin_;
+    const uint32_t end_;
+    bool finished_;
+};
+
+// The JournalReader factory
+pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+DatabaseClient::getJournalReader(const isc::dns::Name& zone,
+                                 uint32_t begin_serial,
+                                 uint32_t end_serial) const
+{
+    shared_ptr<DatabaseAccessor> jnl_accessor(accessor_->clone());
+    const pair<bool, int> zoneinfo(jnl_accessor->getZone(zone.toText()));
+    if (!zoneinfo.first) {
+        return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
+                    ZoneJournalReader::NO_SUCH_ZONE,
+                    ZoneJournalReaderPtr()));
+    }
+
+    try {
+        const pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> ret(
+            ZoneJournalReader::SUCCESS,
+            ZoneJournalReaderPtr(new DatabaseJournalReader(jnl_accessor,
+                                                           zone,
+                                                           zoneinfo.second,
+                                                           rrclass_,
+                                                           begin_serial,
+                                                           end_serial)));
+        LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                  DATASRC_DATABASE_JOURNALREADER_START).arg(zone).arg(rrclass_).
+            arg(jnl_accessor->getDBName()).arg(begin_serial).arg(end_serial);
+        return (ret);
+    } catch (const NoSuchSerial&) {
+        return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
+                    ZoneJournalReader::NO_SUCH_VERSION,
+                    ZoneJournalReaderPtr()));
+    }
 }
 }
 }

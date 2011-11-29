@@ -273,7 +273,7 @@ public:
 
     /// \brief Implementation of the getIterator method
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool adjust_ttl = true) const;
+                                        bool separate_rrs = false) const;
 
     /// In-memory data source is read-only, so this derived method will
     /// result in a NotImplemented exception.
@@ -284,7 +284,12 @@ public:
     /// to update via its updater (this may or may not be a good idea and
     /// is subject to further discussions).
     virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
-                                      bool replace) const;
+                                      bool replace, bool journaling = false)
+        const;
+
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
+                     uint32_t end_serial) const;
 
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class
