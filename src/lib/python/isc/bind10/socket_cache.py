@@ -54,7 +54,9 @@ class Cache:
         (isc.bind10.sockcreator.Creator) which will be used to create yet
         uncached sockets.
         """
-        pass
+        # Full implementation and tests are in #1427. This is just because
+        # of a boss test.
+        self._creator = creator
 
     def get_token(self, protocol, address, port, share_mode, share_name):
         """
