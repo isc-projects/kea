@@ -7,7 +7,7 @@ AM_CPPFLAGS += $(SQLITE_CFLAGS)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-pkglibexecdir = $(libexecdir)/@PACKAGE@/modules
+pkglibexecdir = $(libexecdir)/@PACKAGE@/backends
 
 datasrc_config.h: datasrc_config.h.pre
 	$(SED) -e "s|@@PKGLIBEXECDIR@@|$(pkglibexecdir)|" datasrc_config.h.pre >$@
