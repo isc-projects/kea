@@ -126,6 +126,8 @@ class TestCacheCommands(unittest.TestCase):
         self.__drop_app_called = None
         self.__get_socket_called = None
         self.__send_fd_called = None
+        self.__get_token_called = None
+        self.__drop_socket_called = None
         bind10_src.libutil_io_python.send_fd = self.__send_fd
 
     def __send_fd(self, to, socket):
@@ -276,6 +278,38 @@ class TestCacheCommands(unittest.TestCase):
         self.__raise_exception = Exception("Test exception")
         check_code(1, self.__socket_args)
 
+    def drop_socket(self, token):
+        """
+        Part of pretending to be the cache. If there's anything in
+        __raise_exception, it is raised. Otherwise, the parameter is stored
+        in __drop_socket_called.
+        """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
+        self.__drop_socket_called = token
+
+    def test_drop_socket(self):
+        """
+        Check the drop_socket command. It should directly call the method
+        on the cache. Exceptions should be translated to error messages.
+        """
+        # This should be OK and just propagated to the call.
+        self.assertEqual({"result": [0]},
+                         self.__boss.command_handler("drop_socket",
+                                                     {"token": "token"}))
+        self.assertEqual("token", self.__drop_socket_called)
+        self.__drop_socket_called = None
+        # Missing parameter
+        self.assertEqual({"result": [1, "Missing token parameter"]},
+                         self.__boss.command_handler("drop_socket", {}))
+        self.assertIsNone(self.__drop_socket_called)
+        # An exception is raised from within the cache
+        self.__raise_exception = ValueError("Test error")
+        self.assertEqual({"result": [1, "Test error"]},
+                         self.__boss.command_handler("drop_socket",
+                         {"token": "token"}))
+
+
 class TestBoB(unittest.TestCase):
     def test_init(self):
         bob = BoB()
@@ -395,6 +429,8 @@ class TestBoB(unittest.TestCase):
         # at all and this is the easiest way to check.
         self.assertEqual({'result': [0, args]},
                          bob.command_handler("get_socket", args))
+        # The drop_socket is not tested here, but in TestCacheCommands.
+        # It needs the cache mocks to be in place and they are there.
 
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and

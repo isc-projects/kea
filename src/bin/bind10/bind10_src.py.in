@@ -322,6 +322,16 @@ class BoB:
                     create_answer(0, self.get_processes())
             elif command == "get_socket":
                 answer = self._get_socket(args)
+            elif command == "drop_socket":
+                if "token" not in args:
+                    answer = isc.config.ccsession. \
+                        create_answer(1, "Missing token parameter")
+                else:
+                    try:
+                        self._socket_cache.drop_socket(args["token"])
+                        answer = isc.config.ccsession.create_answer(0)
+                    except Exception as e:
+                        answer = isc.config.ccsession.create_answer(1, str(e))
             else:
                 answer = isc.config.ccsession.create_answer(1,
                                                             "Unknown command")
