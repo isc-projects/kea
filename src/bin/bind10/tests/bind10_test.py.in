@@ -98,6 +98,48 @@ class TestProcessInfo(unittest.TestCase):
         self.assertTrue(type(pi.pid) is int)
         self.assertNotEqual(pi.pid, old_pid)
 
+class TestCacheCommands(unittest.TestCase):
+    """
+    Test methods of boss related to the socket cache and socket handling.
+    """
+    def setUp(self):
+        """
+        Prepare the boss for some tests.
+
+        Also prepare some variables we need.
+        """
+        self.__boss = BoB()
+        # Fake the cache here so we can pretend it is us and hijack the
+        # calls to its methods.
+        self.__boss._socket_cache = self
+        # What was and wasn't called.
+        self.__drop_app_called = None
+
+    class FalseSocket:
+        """
+        A socket where we can fake methods we need instead of having a real
+        socket.
+        """
+        def fileno(self):
+            """
+            The file number. Used for identifying the remote application.
+            """
+            return 42
+
+    def drop_application(self, application):
+        """
+        Part of pretending to be the cache. Logs the parameter to
+        self.__drop_app_called.
+        """
+        self.__drop_app_called = application
+
+    def test_consumer_dead(self):
+        """
+        Test that it calls the drop_application method of the cache.
+        """
+        self.__boss.socket_consumer_dead(self.FalseSocket())
+        self.assertEqual(42, self.__drop_app_called)
+
 class TestBoB(unittest.TestCase):
     def test_init(self):
         bob = BoB()
