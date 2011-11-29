@@ -72,6 +72,7 @@ import isc.log
 from isc.log_messages.bind10_messages import *
 import isc.bind10.component
 import isc.bind10.special_component
+import isc.bind10.socket_cache
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -241,6 +242,7 @@ class BoB:
         # If -v was set, enable full debug logging.
         if self.verbose:
             logger.set_severity("DEBUG", 99)
+        self._socket_cache = None
 
     def __propagate_component_config(self, config):
         comps = dict(config)
@@ -827,6 +829,18 @@ class BoB:
         so to the _socket_cache.
         """
         pass
+
+    def insert_creator(self, creator):
+        """
+        Registeres a socket creator into the boss. The socket creator is not
+        used directly, but through a cache. The cache is created in this
+        method.
+
+        If called more than once, it raises a ValueError.
+        """
+        if self._socket_cache is not None:
+            raise ValueError("A creator was inserted previously")
+        self._socket_cache = isc.bind10.socket_cache.Cache(creator)
 
 # global variables, needed for signal handlers
 options = None
