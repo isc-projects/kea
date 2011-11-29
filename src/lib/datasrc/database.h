@@ -881,14 +881,14 @@ public:
                             const FindOptions options);
 
         /// \brief Find wildcard match
-        /// 
+        ///
         /// Having found that the name is not an empty non-terminal, this
         /// searches the zone for for wildcards that match the name.
-        /// 
+        ///
         /// It searches superdomains of the name from the zone origin down
         /// looking for a wildcard in the zone that matches the name.  There
         /// are several cases to consider:
-        /// 
+        ///
         /// - If the previous search for a delegation point has found that
         ///   there is an NS at the superdomain of the point at which the
         ///   wildcard is found, the delegation is returned.
@@ -897,18 +897,18 @@ public:
         ///   the indication of a match but no RRs relevant to the query).
         /// - If the match is to an non-empty non-terminal wildcard, a
         ///   wildcard NXRRSET is returned.
-        /// 
+        ///
         /// Note that if DNSSEC is enabled for the search and the zone uses
         /// NSEC for authenticated denial of existence, the search may
         /// return NSEC records.
-        /// 
+        ///
         /// \param name The name to find
         /// \param type The RRType to find
         /// \param options Options about how to search. See the documentation
         ///        for ZoneFinder::FindOptions.
         /// \param dresult Result of the search through the zone for a
         ///        delegation.
-        /// 
+        ///
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (e.g. CNAME at the wildcard
@@ -934,14 +934,14 @@ public:
         /// - Wildcard: is there a wildcard record in the zone that matches
         ///   requested name? If so, return it.  If not, return the relevant
         ///   NSEC records (if requested).
-        /// 
+        ///
         /// \param name The name to find
         /// \param type The RRType to find
         /// \param options Options about how to search. See the documentation
         ///        for ZoneFinder::FindOptions.
         /// \param dresult Result of the search through the zone for a
         ///        delegation.
-        /// 
+        ///
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (e.g. CNAME at the wildcard

@@ -94,7 +94,7 @@ def canonicalise_message_line(line):
     # Extract the first word (the message ID)
     words = line.split()
     message_line = "% " + words[0]
-    
+
     # ... and now the rest of the line
     if len(line) > len(words[0]):
         message_line = message_line + " " + line[len(words[0]):].lstrip()
@@ -129,14 +129,14 @@ def make_dict(lines):
             message_lines = [message_key]
         else:
             message_lines.append(lines[index])
-        
+
         index = index + 1
 
     dictionary[message_key] = removeEmptyLeadingTrailing(message_lines)
 
     return dictionary
 
-        
+
 def print_dict(dictionary):
     """
     Prints the dictionary with a blank line between entries.
