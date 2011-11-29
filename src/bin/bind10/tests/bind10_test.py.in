@@ -113,6 +113,7 @@ class TestCacheCommands(unittest.TestCase):
         # Fake the cache here so we can pretend it is us and hijack the
         # calls to its methods.
         self.__boss._socket_cache = self
+        self.__boss._socket_path = '/socket/path'
         self.__raise_exception = None
         # What was and wasn't called.
         self.__drop_app_called = None
@@ -191,6 +192,42 @@ class TestCacheCommands(unittest.TestCase):
         self.assertEqual("1\n", socket.send)
         self.assertEqual((42, 13), self.__send_fd_called)
         self.assertEqual(("token", 42), self.__get_socket_called)
+
+    def get_token(self, protocol, address, port, share_mode, share_name):
+        """
+        Part of pretending to be the cache. If there's anything in
+        __raise_exception, it is raised. Otherwise, the parameters are
+        logged into __get_token_called and a token is returned.
+        """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
+        self.__get_token_called = (protocol, address, port, share_mode,
+                                   share_name)
+        return "token"
+
+    def test_get_socket_ok(self):
+        """
+        Test the successful scenario of getting a socket.
+        """
+        args = {
+            "port": 53,
+            "address": "0.0.0.0",
+            "protocol": "UDP",
+            "share_mode": "ANY",
+            "share_name": "app"
+        }
+        result = self.__boss._get_socket(args)
+        [code, answer] = result['result']
+        self.assertEqual(0, code)
+        self.assertEqual({
+            'token': 'token',
+            'path': '/socket/path'
+        }, answer)
+        addr = self.__get_token_called[1]
+        self.assertIsInstance(addr, IPAddr)
+        self.assertEqual("0.0.0.0", str(addr))
+        self.assertEqual(("UDP", addr, 53, "ANY", "app"),
+                         self.__get_token_called)
 
 class TestBoB(unittest.TestCase):
     def test_init(self):
