@@ -105,8 +105,8 @@ EXTRA_DIST += testdata/rwtest.sqlite3
 EXTRA_DIST += testdata/diffs.sqlite3
 
 # For the factory unit tests, we need to specify that we want
-# the loadable modules from the build tree, and not from the
-# installation directory. Therefore we build it into a separate
+# the loadable backend libraries from the build tree, and not from 
+# the installation directory. Therefore we build it into a separate
 # binary, and call that from check-local with B10_FROM_BUILD set.
 # Also, we only want to do this when static building is not used,
 # since it will cause various troubles with static link such as

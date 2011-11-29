@@ -115,11 +115,11 @@ private:
 /// easy recognition and to reduce potential mistakes.
 /// For example, the sqlite3 implementation has the type 'sqlite3', and the
 /// derived filename 'sqlite3_ds.so'
-/// The value of type can be a specific loadable module; if it already ends
+/// The value of type can be a specific loadable library; if it already ends
 /// with '.so', the loader will not add '_ds.so'.
 /// It may also be an absolute path; if it starts with '/', nothing is
-/// prepended. If it does not, the loadable module will be taken from the
-/// installation library directory.
+/// prepended. If it does not, the loadable library will be taken from the
+/// libexec/backends/ installation directory.
 /// \note When 'B10_FROM_BUILD' is set in the environment, the build
 ///       directory is used instead of the install directory.
 ///
