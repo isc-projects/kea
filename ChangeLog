@@ -1,3 +1,8 @@
+333.    [bug]		dvv
+	Solaris needs "-z now" to force non-lazy binding and prevent g++ static
+	initialization code from deadlocking.
+	(Trac #1439, git c789138250b33b6b08262425a08a2a0469d90433)
+
 332.    [bug]		vorner
 	C++ exceptions in the isc.dns.Rdata wrapper are now converted
 	to python ones instead of just aborting the interpretter.
