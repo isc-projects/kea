@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <utility>
+
 #include <datasrc/client.h>
 
 #include <dns/name.h>
@@ -32,8 +34,15 @@ public:
     virtual FindResult findZone(const isc::dns::Name&) const {
         return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
     }
-    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name&, bool) const {
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name&, bool, bool)
+        const
+    {
         return (ZoneUpdaterPtr());
+    }
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name&, uint32_t, uint32_t) const {
+        isc_throw(isc::NotImplemented, "Journaling isn't supported "
+                  "in Nop data source");
     }
 };
 

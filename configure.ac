@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20111021, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20111129, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -816,6 +816,7 @@ AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || t
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
+                 compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
@@ -937,6 +938,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/tests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
+           compatcheck/sqlite3-difftbl-check.py
            src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
@@ -1016,6 +1018,7 @@ AC_OUTPUT([doc/version.ent
            tests/system/ixfr/in-3/setup.sh
            tests/system/ixfr/in-4/setup.sh
           ], [
+           chmod +x compatcheck/sqlite3-difftbl-check.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh

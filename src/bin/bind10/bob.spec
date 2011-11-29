@@ -15,7 +15,7 @@
             "kind": "dispensable"
           },
           "b10-xfrin": { "special": "xfrin", "kind": "dispensable" },
-          "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },
+          "b10-xfrout": { "special": "xfrout", "kind": "dispensable" },
           "b10-zonemgr": { "address": "Zonemgr", "kind": "dispensable" },
           "b10-stats": { "address": "Stats", "kind": "dispensable" },
           "b10-stats-httpd": {
