@@ -254,10 +254,11 @@ RData_richcmp(PyObject* self_p, PyObject* other_p, int op) {
                                 "Unhandled rich comparison operator");
                 return (NULL);
         }
-        if (c)
+        if (c) {
             Py_RETURN_TRUE;
-        else
+        } else {
             Py_RETURN_FALSE;
+        }
     } catch (const std::exception& ex) {
         // FIXME: These exceptions are not tested, I don't know how or if
         // at all they can be triggered. But they are caught just in the case.
