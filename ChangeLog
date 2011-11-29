@@ -1,3 +1,8 @@
+332.    [bug]		vorner
+	C++ exceptions in the isc.dns.Rdata wrapper are now converted
+	to python ones instead of just aborting the interpretter.
+	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)
+
 bind10-devel-20111128 released on November 28, 2011
 
 331.	[bug]		shane
