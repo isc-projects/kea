@@ -30,6 +30,43 @@ std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
 
 namespace {
 
+void
+pathtest_helper(const std::string& file, const std::string& expected_error) {
+    std::string error;
+    try {
+        DataSourceClientContainer(file, ElementPtr());
+    } catch (const DataSourceLibraryError& dsle) {
+        error = dsle.what();
+    }
+    EXPECT_EQ(expected_error, error);
+}
+
+TEST(FactoryTest, paths) {
+    // Test whether the paths are made absolute if they are not,
+    // by inspecting the error that is raised when they are wrong
+    const std::string error(": cannot open shared object file: "
+                            "No such file or directory");
+    // With the current implementation, we can safely assume this has
+    // been set for this test (as the loader would otherwise also fail
+    // unless the module happens to be installed)
+    const std::string builddir(getenv("B10_FROM_BUILD"));
+
+    // Absolute and ending with .so should have no change
+    pathtest_helper("/no_such_file.so", "/no_such_file.so" + error);
+
+    // If no ending in .so, it should get _ds.so
+    pathtest_helper("/no_such_file", "/no_such_file_ds.so" + error);
+
+    // If not starting with /, path should be added. For this test that
+    // means the build directory as set in B10_FROM_BUILD
+    pathtest_helper("no_such_file.so",
+                    builddir + "/src/lib/datasrc/.libs/no_such_file.so" +
+                    error);
+    pathtest_helper("no_such_file",
+                    builddir + "/src/lib/datasrc/.libs/no_such_file_ds.so" + 
+                    error);
+}
+
 TEST(FactoryTest, sqlite3ClientBadConfig) {
     // We start out by building the configuration data bit by bit,
     // testing each form of 'bad config', until we have a good one.

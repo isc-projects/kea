@@ -108,16 +108,6 @@ class CmdCtl(Component):
         Component.__init__(self, process, boss, kind, 'Cmdctl', None,
                            boss.start_cmdctl)
 
-class XfrIn(Component):
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Xfrin', None,
-                           boss.start_xfrin)
-
-class XfrOut(Component):
-    def __init__(self, process, boss, kind, address=None, params=None):
-        Component.__init__(self, process, boss, kind, 'Xfrout', None,
-                           boss.start_xfrout)
-
 class SetUID(BaseComponent):
     """
     This is a pseudo-component which drops root privileges when started
@@ -157,9 +147,6 @@ def get_specials():
         'auth': Auth,
         'resolver': Resolver,
         'cmdctl': CmdCtl,
-        # FIXME: Temporary workaround before #1292 is done
-        'xfrin': XfrIn,
-        'xfrout': XfrOut,
         # TODO: Remove when not needed, workaround before sockcreator works
         'setuid': SetUID
     }

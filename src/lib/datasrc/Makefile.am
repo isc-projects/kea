@@ -13,6 +13,7 @@ datasrc_config.h: datasrc_config.h.pre
 	$(SED) -e "s|@@PKGLIBEXECDIR@@|$(pkglibexecdir)|" datasrc_config.h.pre >$@
 
 CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
+CLEANFILES += datasrc_config.h
 
 lib_LTLIBRARIES = libdatasrc.la
 libdatasrc_la_SOURCES = data_source.h data_source.cc
