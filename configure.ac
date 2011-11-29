@@ -96,6 +96,8 @@ case "$host" in
 	# Solaris requires special definitions to get some standard libraries
 	# (e.g. getopt(3)) available with common used header files.
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
+	LDFLAGS="$LDFLAGS -z now"
 	;;
 *-apple-darwin*)
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
