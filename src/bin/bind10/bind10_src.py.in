@@ -73,6 +73,7 @@ from isc.log_messages.bind10_messages import *
 import isc.bind10.component
 import isc.bind10.special_component
 import isc.bind10.socket_cache
+import libutil_io_python
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -820,7 +821,13 @@ class BoB:
         The function looks into the _socket_cache and sends the socket
         identified by the tocken back over the unix_socket.
         """
-        pass
+        try:
+            fd = self._socket_cache.get_socket(token, unix_socket.fileno())
+            unix_socket.sendall("1\n")
+            libutil_io_python.send_fd(unix_socket.fileno(), fd)
+        except Exception as e:
+            # TODO Log
+            unix_socket.sendall("0\n")
 
     def socket_consumer_dead(self, unix_socket):
         """
@@ -828,6 +835,7 @@ class BoB:
         sockets sent to it are to be considered closed. This function signals
         so to the _socket_cache.
         """
+        # TODO Log
         self._socket_cache.drop_application(unix_socket.fileno())
 
     def insert_creator(self, creator):

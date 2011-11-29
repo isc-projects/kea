@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
+import bind10_src
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -112,19 +113,37 @@ class TestCacheCommands(unittest.TestCase):
         # Fake the cache here so we can pretend it is us and hijack the
         # calls to its methods.
         self.__boss._socket_cache = self
+        self.__raise_exception = None
         # What was and wasn't called.
         self.__drop_app_called = None
+        self.__get_socket_called = None
+        self.__send_fd_called = None
+        bind10_src.libutil_io_python.send_fd = self.__send_fd
+
+    def __send_fd(self, to, socket):
+        """
+        A function to hook the send_fd in the bind10_src.
+        """
+        self.__send_fd_called = (to, socket)
 
     class FalseSocket:
         """
         A socket where we can fake methods we need instead of having a real
         socket.
         """
+        def __init__(self):
+            self.send = ""
         def fileno(self):
             """
             The file number. Used for identifying the remote application.
             """
             return 42
+
+        def sendall(self, data):
+            """
+            Adds data to the self.send.
+            """
+            self.send += data
 
     def drop_application(self, application):
         """
@@ -139,6 +158,39 @@ class TestCacheCommands(unittest.TestCase):
         """
         self.__boss.socket_consumer_dead(self.FalseSocket())
         self.assertEqual(42, self.__drop_app_called)
+
+    def get_socket(self, token, application):
+        """
+        Part of pretending to be the cache. If there's anything in
+        __raise_exception, it is raised. Otherwise, the call is logged
+        into __get_socket_called and a number is returned.
+        """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
+        self.__get_socket_called = (token, application)
+        return 13
+
+    def test_request_handler(self):
+        """
+        Test that a request for socket is forwarded and the socket is sent
+        back, if it returns a socket.
+        """
+        socket = self.FalseSocket()
+        # An exception from the cache
+        self.__raise_exception = ValueError("Test value error")
+        self.__boss.socket_request_handler("token", socket)
+        # It was called, but it threw, so it is not noted here
+        self.assertIsNone(self.__get_socket_called)
+        self.assertEqual("0\n", socket.send)
+        # It should not have sent any socket.
+        self.assertIsNone(self.__send_fd_called)
+        # Now prepare a valid scenario
+        self.__raise_exception = None
+        socket.send = ""
+        self.__boss.socket_request_handler("token", socket)
+        self.assertEqual("1\n", socket.send)
+        self.assertEqual((42, 13), self.__send_fd_called)
+        self.assertEqual(("token", 42), self.__get_socket_called)
 
 class TestBoB(unittest.TestCase):
     def test_init(self):
