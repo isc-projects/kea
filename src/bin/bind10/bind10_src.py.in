@@ -640,22 +640,6 @@ class BoB:
         return self.start_process("b10-cmdctl", args, self.c_channel_env,
                                   self.cmdctl_port)
 
-    def start_xfrin(self):
-        # Set up the command arguments.
-        args = ['b10-xfrin']
-        if self.verbose:
-            args += ['-v']
-
-        return self.start_process("b10-xfrin", args, self.c_channel_env)
-
-    def start_xfrout(self):
-        # Set up the command arguments.
-        args = ['b10-xfrout']
-        if self.verbose:
-            args += ['-v']
-
-        return self.start_process("b10-xfrout", args, self.c_channel_env)
-
     def start_all_components(self):
         """
             Starts up all the components.  Any exception generated during the
