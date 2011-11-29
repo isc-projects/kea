@@ -238,10 +238,6 @@ public:
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
     ///
-    /// \note This behavior is controversial as we discussed in
-    /// https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html
-    /// We should revisit the interface before we heavily rely on it.
-    ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows (they are or bit-field):
     ///
