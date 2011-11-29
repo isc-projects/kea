@@ -617,7 +617,7 @@ DatabaseClient::Finder::findWildcardMatch(
                     result_status = WILDCARD_NXRRSET;
 
                     if (dnssec_data && nci != found.second.end()) {
-                        // User wants a proof the wildcard doesn't contain 
+                        // User wants a proof the wildcard doesn't contain
                         // the requested type.  However, we need to get the
                         // RRset in the name of the wildcard, not the
                         // constructed one, so we search the tree again.
