@@ -115,6 +115,13 @@ class TestCacheCommands(unittest.TestCase):
         self.__boss._socket_cache = self
         self.__boss._socket_path = '/socket/path'
         self.__raise_exception = None
+        self.__socket_args = {
+            "port": 53,
+            "address": "0.0.0.0",
+            "protocol": "UDP",
+            "share_mode": "ANY",
+            "share_name": "app"
+        }
         # What was and wasn't called.
         self.__drop_app_called = None
         self.__get_socket_called = None
@@ -209,14 +216,7 @@ class TestCacheCommands(unittest.TestCase):
         """
         Test the successful scenario of getting a socket.
         """
-        args = {
-            "port": 53,
-            "address": "0.0.0.0",
-            "protocol": "UDP",
-            "share_mode": "ANY",
-            "share_name": "app"
-        }
-        result = self.__boss._get_socket(args)
+        result = self.__boss._get_socket(self.__socket_args)
         [code, answer] = result['result']
         self.assertEqual(0, code)
         self.assertEqual({
@@ -228,6 +228,53 @@ class TestCacheCommands(unittest.TestCase):
         self.assertEqual("0.0.0.0", str(addr))
         self.assertEqual(("UDP", addr, 53, "ANY", "app"),
                          self.__get_token_called)
+
+    def test_get_socket_error(self):
+        """
+        Test that bad inputs are handled correctly, etc.
+        """
+        def check_code(code, args):
+            """
+            Pass the args there and check if it returs success or not.
+
+            The rest is not tested, as it is already checked in the
+            test_get_socket_ok.
+            """
+            [rcode, ranswer] = self.__boss._get_socket(args)['result']
+            self.assertEqual(code, rcode)
+            if code == 1:
+                # This should be an error message. The exact formatting
+                # is unknown, but we check it is string at last
+                self.assertIsInstance(ranswer, str)
+        def mod_args(name, value):
+            """
+            Override a parameter in the args.
+            """
+            result = dict(self.__socket_args)
+            result[name] = value
+            return result
+
+        # Port too large
+        check_code(1, mod_args('port', 65536))
+        # Not numeric address
+        check_code(1, mod_args('address', 'example.org.'))
+        # Some bad values of enum-like params
+        check_code(1, mod_args('protocol', 'BAD PROTO'))
+        check_code(1, mod_args('share_mode', 'BAD SHARE'))
+        # Check missing parameters
+        for param in self.__socket_args.keys():
+            args = dict(self.__socket_args)
+            del args[param]
+            check_code(1, args)
+        # These are OK values for the enum-like parameters
+        # The ones from test_get_socket_ok are not tested here
+        check_code(0, mod_args('protocol', 'TCP'))
+        check_code(0, mod_args('share_mode', 'SAMEAPP'))
+        check_code(0, mod_args('share_mode', 'NO'))
+        # If an exception is raised from within the cache, it is converted
+        # to an error, not propagated
+        self.__raise_exception = Exception("Test exception")
+        check_code(1, self.__socket_args)
 
 class TestBoB(unittest.TestCase):
     def test_init(self):
