@@ -114,7 +114,7 @@ public:
     getAddresses() { return addrs_; };
 
     // returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual unsigned short len();
+    virtual uint16_t len();
 
 protected:
     AddressContainer addrs_;

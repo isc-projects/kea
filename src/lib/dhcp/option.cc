@@ -203,7 +203,7 @@ Option::unpack6(const boost::shared_array<uint8_t>& buf,
 
 /// Returns length of the complete option (data length + DHCPv4/DHCPv6
 /// option header)
-unsigned short
+uint16_t
 Option::len() {
 
     // length of the whole option is header and data stored in this option...
@@ -278,17 +278,7 @@ std::string Option::toText(int indent /* =0 */ ) {
     return tmp.str();
 }
 
-unsigned short
-Option::getType() {
-    return type_;
-}
-
-const std::vector<uint8_t>&
-Option::getData() {
-    return (data_);
-}
-
-unsigned short
+uint16_t
 Option::getHeaderLen() {
     switch (universe_) {
     case V4:
