@@ -53,7 +53,7 @@ public:
     /// @param addrs container with a list of addresses
     Option4AddrLst(uint8_t type, const AddressContainer& addrs);
 
-    /// @brief Constrcutor, creates an option with a single address.
+    /// @brief Constructor, creates an option with a single address.
     ///
     /// Creates an option that contains a single address.
     ///
@@ -62,9 +62,6 @@ public:
     Option4AddrLst(uint8_t type, const isc::asiolink::IOAddress& addr);
 
     /// @brief Constructor, used for received options.
-    ///
-    /// This contructor is similar to the previous one, but it does not take
-    /// the whole vector<uint8_t>, but rather subset of it.
     ///
     /// TODO: This can be templated to use different containers, not just
     /// vector. Prototype should look like this:
@@ -106,8 +103,7 @@ public:
     /// option header)
     ///
     /// @return length of the option
-    virtual unsigned short
-    len();
+    virtual uint16_t len();
 
     /// @brief Returns vector with addresses.
     ///

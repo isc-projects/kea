@@ -132,7 +132,7 @@ std::string Option6AddrLst::toText(int indent /* =0 */) {
     return tmp.str();
 }
 
-unsigned short Option6AddrLst::len() {
+uint16_t Option6AddrLst::len() {
 
     return (OPTION6_HDR_LEN + addrs_.size()*16);
 }

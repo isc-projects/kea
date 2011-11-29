@@ -42,10 +42,9 @@ Option4AddrLst::Option4AddrLst(uint8_t type,
                                vector<uint8_t>::const_iterator first,
                                vector<uint8_t>::const_iterator last)
     :Option(V4, type) {
-    vector<uint8_t> buf = std::vector<uint8_t>(first, last);
-    if ( (buf.size() % V4ADDRESS_LEN) ) {
+    if ( (distance(first, last) % V4ADDRESS_LEN) ) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_
-                  << " has invalid length=" << buf.size()
+                  << " has invalid length=" << distance(first, last)
                   << ", must be divisible by 4.");
     }
 
@@ -79,7 +78,7 @@ Option4AddrLst::pack4(isc::util::OutputBuffer& buf) {
 
     while (addr != addrs_.end()) {
         buf.writeUint32(*addr);
-        addr++;
+        ++addr;
     }
 }
 
@@ -112,8 +111,7 @@ void Option4AddrLst::addAddress(const isc::asiolink::IOAddress& addr) {
     addrs_.push_back(addr);
 }
 
-unsigned short
-Option4AddrLst::len() {
+uint16_t Option4AddrLst::len() {
 
     // Returns length of the complete option (option header + data length)
     return (getHeaderLen() + addrs_.size() * V4ADDRESS_LEN);
@@ -122,14 +120,15 @@ Option4AddrLst::len() {
 std::string Option4AddrLst::toText(int indent /* =0 */ ) {
     std::stringstream tmp;
 
-    for (int i = 0; i < indent; i++)
+    for (int i = 0; i < indent; i++) {
         tmp << " ";
+    }
 
-    tmp << "type=" << type_ << ", len=" << len()-getHeaderLen() << ": ";
+    tmp << "type=" << type_ << ", len=" << len()-getHeaderLen() << ":";
 
     for (AddressContainer::const_iterator addr = addrs_.begin();
          addr != addrs_.end(); ++addr) {
-        tmp << (*addr) << " ";
+        tmp << " " << (*addr);
     }
 
     return tmp.str();
