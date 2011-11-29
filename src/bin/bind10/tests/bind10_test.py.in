@@ -293,6 +293,25 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.command_handler("__UNKNOWN__", None),
                          isc.config.ccsession.create_answer(1, "Unknown command"))
 
+        # Fake the _get_socket, which is complicated and tested elsewhere
+        # We just want to pass the parameters in and let it create a response
+        def get_socket(args):
+            return isc.config.ccsession.create_answer(0, args)
+
+        bob._get_socket = get_socket
+        args = {
+            "port": 53,
+            "address": "0.0.0.0",
+            "protocol": "UDP",
+            "share_mode": "ANY",
+            "share_name": "app"
+        }
+        # Test it just returns whatever it got. The real function doesn't
+        # work like this, but we don't want the command_handler to touch it
+        # at all and this is the easiest way to check.
+        self.assertEqual({'result': [0, args]},
+                         bob.command_handler("get_socket", args))
+
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
 # the BoB commands.

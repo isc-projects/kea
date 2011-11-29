@@ -318,6 +318,8 @@ class BoB:
             elif command == "show_processes":
                 answer = isc.config.ccsession. \
                     create_answer(0, self.get_processes())
+            elif command == "get_socket":
+                answer = self._get_socket(args)
             else:
                 answer = isc.config.ccsession.create_answer(1,
                                                             "Unknown command")
@@ -814,6 +816,13 @@ class BoB:
         self.components_to_restart = still_dead
 
         return next_restart_time
+
+    def _get_socket(self, args):
+        """
+        Implementation of the get_socket CC command. It asks the cache
+        to provide the token and sends the information back.
+        """
+        pass
 
     def socket_request_handler(self, token, unix_socket):
         """
