@@ -226,7 +226,7 @@ class TestStats(unittest.TestCase):
                 'show', 'Stats',
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
-            (0, self.const_datetime))
+            (0, {'Boss': {'boot_time': self.const_datetime}}))
         self.assertEqual(
             send_command(
                 'set', 'Stats',
@@ -238,7 +238,7 @@ class TestStats(unittest.TestCase):
                 'show', 'Stats',
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
-            (0, self.const_datetime))
+            (0, {'Boss': {'boot_time': self.const_datetime}}))
         self.assertEqual(
             send_command('status', 'Stats'),
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
@@ -321,25 +321,25 @@ class TestStats(unittest.TestCase):
         my_statistics_data = self.stats.get_statistics_data()
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('Boss' in my_statistics_data)
+        self.assertTrue('boot_time' in my_statistics_data['Boss'])
         my_statistics_data = self.stats.get_statistics_data(owner='Stats')
-        self.assertTrue('report_time' in my_statistics_data)
-        self.assertTrue('boot_time' in my_statistics_data)
-        self.assertTrue('last_update_time' in my_statistics_data)
-        self.assertTrue('timestamp' in my_statistics_data)
-        self.assertTrue('lname' in my_statistics_data)
+        self.assertTrue('Stats' in my_statistics_data)
+        self.assertTrue('report_time' in my_statistics_data['Stats'])
+        self.assertTrue('boot_time' in my_statistics_data['Stats'])
+        self.assertTrue('last_update_time' in my_statistics_data['Stats'])
+        self.assertTrue('timestamp' in my_statistics_data['Stats'])
+        self.assertTrue('lname' in my_statistics_data['Stats'])
         self.assertRaises(stats.StatsError, self.stats.get_statistics_data, owner='Foo')
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats')
-        self.assertTrue('boot_time' in my_statistics_data)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='report_time')
-        self.assertEqual(my_statistics_data, self.const_default_datetime)
+        self.assertEqual(my_statistics_data['Stats']['report_time'], self.const_default_datetime)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='boot_time')
-        self.assertEqual(my_statistics_data, self.const_default_datetime)
+        self.assertEqual(my_statistics_data['Stats']['boot_time'], self.const_default_datetime)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='last_update_time')
-        self.assertEqual(my_statistics_data, self.const_default_datetime)
+        self.assertEqual(my_statistics_data['Stats']['last_update_time'], self.const_default_datetime)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='timestamp')
-        self.assertEqual(my_statistics_data, 0.0)
+        self.assertEqual(my_statistics_data['Stats']['timestamp'], 0.0)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='lname')
-        self.assertEqual(my_statistics_data, '')
+        self.assertEqual(my_statistics_data, {'Stats': {'lname':''}})
         self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
                           owner='Stats', name='Bar')
         self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
@@ -385,10 +385,25 @@ class TestStats(unittest.TestCase):
                 1, "specified arguments are incorrect: owner: Foo, name: bar"))
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
-                0, {'queries.tcp': 0, 'queries.udp': 0}))
+                0, {'Auth':{ 'queries.udp': 0,
+                     'queries.tcp': 0,
+                     'queries.perzone': [{ 'zonename': 'test1.example',
+                                           'queries.udp': 1,
+                                           'queries.tcp': 2 },
+                                         { 'zonename': 'test2.example',
+                                           'queries.udp': 3,
+                                           'queries.tcp': 4 }] }}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
-                0, 0))
+                0, {'Auth': {'queries.udp':0}}))
+        self.assertEqual(self.stats.command_show(owner='Auth', name='queries.perzone'),
+                         isc.config.create_answer(
+                0, {'Auth': {'queries.perzone': [{ 'zonename': 'test1.example',
+                      'queries.udp': 1,
+                      'queries.tcp': 2 },
+                    { 'zonename': 'test2.example',
+                      'queries.udp': 3,
+                      'queries.tcp': 4 }]}}))
         orig_get_timestamp = stats.get_timestamp
         orig_get_datetime = stats.get_datetime
         stats.get_timestamp = lambda : self.const_timestamp
@@ -396,7 +411,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(stats.get_timestamp(), self.const_timestamp)
         self.assertEqual(stats.get_datetime(), self.const_datetime)
         self.assertEqual(self.stats.command_show(owner='Stats', name='report_time'), \
-                             isc.config.create_answer(0, self.const_datetime))
+                             isc.config.create_answer(0, {'Stats': {'report_time':self.const_datetime}}))
         self.assertEqual(self.stats.statistics_data['Stats']['timestamp'], self.const_timestamp)
         self.assertEqual(self.stats.statistics_data['Stats']['boot_time'], self.const_default_datetime)
         stats.get_timestamp = orig_get_timestamp
@@ -442,9 +457,12 @@ class TestStats(unittest.TestCase):
             self.assertTrue('item_format' in item)
 
         schema = value['Auth']
-        self.assertEqual(len(schema), 2)
+        self.assertEqual(len(schema), 3)
         for item in schema:
-            self.assertTrue(len(item) == 6)
+            if item['item_type'] == 'list':
+                self.assertEqual(len(item), 7)
+            else:
+                self.assertEqual(len(item), 6)
             self.assertTrue('item_name' in item)
             self.assertTrue('item_type' in item)
             self.assertTrue('item_optional' in item)
@@ -455,10 +473,10 @@ class TestStats(unittest.TestCase):
         (rcode, value) = isc.config.ccsession.parse_answer(
             self.stats.command_showschema(owner='Stats'))
         self.assertEqual(rcode, 0)
-        self.assertFalse('Stats' in value)
+        self.assertTrue('Stats' in value)
         self.assertFalse('Boss' in value)
         self.assertFalse('Auth' in value)
-        for item in value:
+        for item in value['Stats']:
             self.assertTrue(len(item) == 6 or len(item) == 7)
             self.assertTrue('item_name' in item)
             self.assertTrue('item_type' in item)
@@ -472,19 +490,19 @@ class TestStats(unittest.TestCase):
         (rcode, value) = isc.config.ccsession.parse_answer(
             self.stats.command_showschema(owner='Stats', name='report_time'))
         self.assertEqual(rcode, 0)
-        self.assertFalse('Stats' in value)
+        self.assertTrue('Stats' in value)
         self.assertFalse('Boss' in value)
         self.assertFalse('Auth' in value)
-        self.assertTrue(len(value) == 7)
-        self.assertTrue('item_name' in value)
-        self.assertTrue('item_type' in value)
-        self.assertTrue('item_optional' in value)
-        self.assertTrue('item_default' in value)
-        self.assertTrue('item_title' in value)
-        self.assertTrue('item_description' in value)
-        self.assertTrue('item_format' in value)
-        self.assertEqual(value['item_name'], 'report_time')
-        self.assertEqual(value['item_format'], 'date-time')
+        self.assertEqual(len(value['Stats'][0]), 7)
+        self.assertTrue('item_name' in value['Stats'][0])
+        self.assertTrue('item_type' in value['Stats'][0])
+        self.assertTrue('item_optional' in value['Stats'][0])
+        self.assertTrue('item_default' in value['Stats'][0])
+        self.assertTrue('item_title' in value['Stats'][0])
+        self.assertTrue('item_description' in value['Stats'][0])
+        self.assertTrue('item_format' in value['Stats'][0])
+        self.assertEqual(value['Stats'][0]['item_name'], 'report_time')
+        self.assertEqual(value['Stats'][0]['item_format'], 'date-time')
 
         self.assertEqual(self.stats.command_showschema(owner='Foo'),
                          isc.config.create_answer(
@@ -494,7 +512,7 @@ class TestStats(unittest.TestCase):
                 1, "specified arguments are incorrect: owner: Foo, name: bar"))
         self.assertEqual(self.stats.command_showschema(owner='Auth'),
                          isc.config.create_answer(
-                0, [{
+                0, {'Auth': [{
                         "item_default": 0,
                         "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially",
                         "item_name": "queries.tcp",
@@ -509,17 +527,121 @@ class TestStats(unittest.TestCase):
                         "item_optional": False,
                         "item_title": "Queries UDP",
                         "item_type": "integer"
-                        }]))
+                        },
+                    {
+                        "item_name": "queries.perzone",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1.example",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2.example",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Queries per zone",
+                        "item_description": "Queries per zone",
+                        "list_item_spec": {
+                            "item_name": "zones",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "zonename",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Zonename",
+                                    "item_description": "Zonename"
+                                    },
+                                {
+                                    "item_name": "queries.udp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries UDP per zone",
+                                    "item_description": "A number of UDP query counts per zone"
+                                    },
+                                {
+                                    "item_name": "queries.tcp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries TCP per zone",
+                                    "item_description": "A number of TCP query counts per zone"
+                                    }
+                                ]
+                            }
+                        }]}))
         self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.tcp'),
                          isc.config.create_answer(
-                0, {
+                0, {'Auth': [{
                     "item_default": 0,
                     "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially",
                     "item_name": "queries.tcp",
                     "item_optional": False,
                     "item_title": "Queries TCP",
                     "item_type": "integer"
-                    }))
+                    }]}))
+        self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.perzone'),
+                         isc.config.create_answer(
+                0, {'Auth':[{
+                    "item_name": "queries.perzone",
+                    "item_type": "list",
+                    "item_optional": False,
+                    "item_default": [
+                        {
+                            "zonename" : "test1.example",
+                            "queries.udp" : 1,
+                            "queries.tcp" : 2
+                            },
+                        {
+                            "zonename" : "test2.example",
+                            "queries.udp" : 3,
+                            "queries.tcp" : 4
+                            }
+                    ],
+                    "item_title": "Queries per zone",
+                    "item_description": "Queries per zone",
+                    "list_item_spec": {
+                        "item_name": "zones",
+                        "item_type": "map",
+                        "item_optional": False,
+                        "item_default": {},
+                        "map_item_spec": [
+                            {
+                                "item_name": "zonename",
+                                "item_type": "string",
+                                "item_optional": False,
+                                "item_default": "",
+                                "item_title": "Zonename",
+                                "item_description": "Zonename"
+                                },
+                            {
+                                "item_name": "queries.udp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries UDP per zone",
+                                "item_description": "A number of UDP query counts per zone"
+                                },
+                            {
+                                "item_name": "queries.tcp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries TCP per zone",
+                                "item_description": "A number of TCP query counts per zone"
+                                }
+                            ]
+                        }
+                    }]}))
 
         self.assertEqual(self.stats.command_showschema(owner='Stats', name='bar'),
                          isc.config.create_answer(

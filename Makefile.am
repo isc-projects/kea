@@ -1,4 +1,4 @@
-SUBDIRS = doc src tests
+SUBDIRS = compatcheck doc src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@

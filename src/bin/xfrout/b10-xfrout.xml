@@ -98,6 +98,31 @@
       that can run concurrently. The default is 10.
     </para>
     <para>
+      <varname>tsig_key_ring</varname>
+      A list of TSIG keys (each of which is in the form of
+      name:base64-key[:algorithm]) used for access control on transfer
+      requests.
+      The default is an empty list.
+    </para>
+    <para>
+      <varname>transfer_acl</varname>
+      A list of ACL elements that apply to all transfer requests by
+      default (unless overridden in zone_config).  See the BIND 10
+      guide for configuration examples.
+      The default is an element that allows any transfer requests.
+    </para>
+    <para>
+      <varname>zone_config</varname>
+      A list of JSON objects (i.e. maps) that define per zone
+      configuration concerning <command>b10-xfrout</command>.
+      The supported names of each object are "origin" (the origin
+      name of the zone), "class" (the RR class of the zone, optional,
+      default to "IN"), and "acl_element" (ACL only applicable to
+      transfer requests for that zone).
+      See the BIND 10 guide for configuration examples.
+      The default is an empty list, that is, no zone specific configuration.
+    </para>
+    <para>
       <varname>log_name</varname>
 <!-- TODO -->
     </para>

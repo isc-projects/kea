@@ -53,6 +53,18 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// \brief No such serial number when obtaining difference iterator
+///
+/// Thrown if either the zone/start serial number or zone/end serial number
+/// combination does not exist in the differences table.  (Note that this
+/// includes the case where the differences table contains no records related
+/// to that zone.)
+class NoSuchSerial : public DataSourceError {
+public:
+    NoSuchSerial(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
+
 
 class AbstractDataSrc {
     ///

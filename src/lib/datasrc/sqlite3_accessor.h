@@ -17,6 +17,7 @@
 #define __DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
+#include <datasrc/data_source.h>
 
 #include <exceptions/exceptions.h>
 
@@ -40,10 +41,34 @@ namespace datasrc {
  * It might mean corrupt database file, invalid request or that something is
  * rotten in the library.
  */
-class SQLite3Error : public Exception {
+class SQLite3Error : public DataSourceError {
 public:
     SQLite3Error(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        DataSourceError(file, line, what) {}
+};
+
+/**
+ * \brief Too Much Data
+ *
+ * Thrown if a query expecting a certain number of rows back returned too
+ * many rows.
+ */
+class TooMuchData : public DataSourceError {
+public:
+    TooMuchData(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
+
+/**
+ * \brief Too Little Data
+ *
+ * Thrown if a query expecting a certain number of rows back returned too
+ * few rows (including none).
+ */
+class TooLittleData : public DataSourceError {
+public:
+    TooLittleData(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
 };
 
 struct SQLite3Parameters;
@@ -128,6 +153,27 @@ public:
      */
     virtual IteratorContextPtr getAllRecords(int id) const;
 
+    /** \brief Creates an iterator context for a set of differences.
+     *
+     * Implements the getDiffs() method from DatabaseAccessor
+     *
+     * \exception NoSuchSerial if either of the versions do not exist in
+     *            the difference table.
+     * \exception SQLite3Error if there is an sqlite3 error when performing
+     *            the query
+     *
+     * \param id The ID of the zone, returned from getZone().
+     * \param start The SOA serial number of the version of the zone from
+     *        which the difference sequence should start.
+     * \param end The SOA serial number of the version of the zone at which
+     *        the difference sequence should end.
+     *
+     * \return Iterator containing difference records.
+     */
+    virtual IteratorContextPtr
+    getDiffs(int id, uint32_t start, uint32_t end) const;
+
+
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
                                                  bool replace);
 
@@ -192,14 +238,20 @@ private:
     const std::string filename_;
     /// \brief The class for which the queries are done
     const std::string class_;
+    /// \brief Database name
+    const std::string database_name_;
+
     /// \brief Opens the database
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
-    /// \brief SQLite3 implementation of IteratorContext
+
+    /// \brief SQLite3 implementation of IteratorContext for all records
     class Context;
     friend class Context;
-    const std::string database_name_;
+    /// \brief SQLite3 implementation of IteratorContext for differences
+    class DiffContext;
+    friend class DiffContext;
 };
 
 /// \brief Creates an instance of the SQlite3 datasource client
