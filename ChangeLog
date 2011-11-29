@@ -1,3 +1,10 @@
+359.	[func]*		vorner
+	The target parameter of ZoneFinder::find is no longer present, as the
+	interface was awkward. To get all the RRsets of a single domain, use
+	the new findAll method (the same applies to python version, the method
+	is named find_all).
+	(Trac #1483,#1484, git 0020456f8d118c9f3fd6fc585757c822b79a96f6)
+
 349.	[bug]		dvv
 	resolver: If an upstream server responds with FORMERR to an EDNS query,
 	try querying it without EDNS.
