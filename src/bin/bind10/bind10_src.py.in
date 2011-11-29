@@ -244,6 +244,8 @@ class BoB:
         if self.verbose:
             logger.set_severity("DEBUG", 99)
         self._socket_cache = None
+        # TODO: To be filled in by #1428
+        self._socket_path = None
 
     def __propagate_component_config(self, config):
         comps = dict(config)
@@ -822,7 +824,17 @@ class BoB:
         Implementation of the get_socket CC command. It asks the cache
         to provide the token and sends the information back.
         """
-        pass
+        addr = isc.net.parse.addr_parse(args['address'])
+        port = isc.net.parse.port_parse(args['port'])
+        protocol = args['protocol']
+        share_mode = args['share_mode']
+        share_name = args['share_name']
+        token = self._socket_cache.get_token(protocol, addr, port, share_mode,
+                                             share_name)
+        return isc.config.ccsession.create_answer(0, {
+            'token': token,
+            'path': self._socket_path
+        })
 
     def socket_request_handler(self, token, unix_socket):
         """
