@@ -371,9 +371,9 @@ TEST_F(IfaceMgrTest, socket4) {
     createLoInterfacesTxt();
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
-    // let's assume that every supported OS have lo interface
+    // Let's assume that every supported OS have lo interface.
     IOAddress loAddr("127.0.0.1");
-    // use unprivileged port (it's convenient for running tests as non-root)
+    // Use unprivileged port (it's convenient for running tests as non-root).
     int socket1 = 0;
 
     EXPECT_NO_THROW(
@@ -385,6 +385,7 @@ TEST_F(IfaceMgrTest, socket4) {
     Pkt4 pkt(DHCPDISCOVER, 1234);
     pkt.setIface(LOOPBACK);
 
+    // Expect that we get the socket that we just opened.
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt));
 
     close(socket1);
