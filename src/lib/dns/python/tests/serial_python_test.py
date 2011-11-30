@@ -100,5 +100,10 @@ class SerialTest(unittest.TestCase):
         self.assertEqual(100 + self.one, self.highest + 102)
         self.assertEqual(self.zero + 2147483645, self.highest + 2147483646)
 
+        # using lambda so the error doesn't get thrown on initial evaluation
+        self.assertRaises(TypeError, lambda: self.zero + "bad")
+        self.assertRaises(TypeError, lambda: self.zero + None)
+        self.assertRaises(TypeError, lambda: "bad" + self.zero)
+
 if __name__ == '__main__':
     unittest.main()

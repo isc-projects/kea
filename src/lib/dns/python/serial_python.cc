@@ -144,8 +144,7 @@ Serial_richcmp(s_Serial* self, s_Serial* other, int op) {
         c = *self->cppobj < *other->cppobj;
         break;
     case Py_LE:
-        c = *self->cppobj < *other->cppobj ||
-            *self->cppobj == *other->cppobj;
+        c = *self->cppobj <= *other->cppobj;
         break;
     case Py_EQ:
         c = *self->cppobj == *other->cppobj;
@@ -154,11 +153,10 @@ Serial_richcmp(s_Serial* self, s_Serial* other, int op) {
         c = *self->cppobj != *other->cppobj;
         break;
     case Py_GT:
-        c = *other->cppobj < *self->cppobj;
+        c = *self->cppobj > *other->cppobj;
         break;
     case Py_GE:
-        c = *other->cppobj < *self->cppobj ||
-            *self->cppobj == *other->cppobj;
+        c = *self->cppobj >= *other->cppobj;
         break;
     }
     if (c) {
@@ -222,7 +220,7 @@ PyTypeObject serial_type = {
     "main purpose of this class is to provide serial number arithmetic, as "
     "described in RFC 1892. Objects of this type can be compared and added "
     "to each other, as described in RFC 1892. Apart from str(), get_value(), "
-    "comparison operators, and the + operand, no other operations are "
+    "comparison operators, and the + operator, no other operations are "
     "defined for this type.",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
