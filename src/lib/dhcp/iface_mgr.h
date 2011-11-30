@@ -54,6 +54,8 @@ public:
         /// returns link-layer address a plain text
         std::string getPlainMac() const;
 
+        void setFlags(uint32_t flags);
+
         /// network interface name
         std::string name_;
 
@@ -68,6 +70,29 @@ public:
 
         /// length of link-layer address (usually 6)
         int mac_len_;
+
+        /// specifies if selected interface is loopback
+        bool flag_loopback_;
+
+        /// specifies if selected interface is up
+        bool flag_up_;
+
+        /// flag specifies if selected interface is running
+        /// (e.g. cable plugged in, wifi associated)
+        bool flag_running_;
+
+        /// flag specifies if selected interface is multicast capable
+        bool flag_multicast_;
+
+        /// flag specifies if selected interface is broadcast capable
+        bool flag_broadcast_;
+
+        /// interface flags (this value is as is returned by OS,
+        /// it may mean different things on different OSes)
+        uint32_t flags_;
+
+        /// hardware type
+        uint16_t hardware_type_;
 
         /// socket used to sending data
         int sendsock_;
@@ -140,6 +165,11 @@ public:
     /// @return Pkt6 object representing received packet (or NULL)
     boost::shared_ptr<Pkt6> receive();
 
+    /// @brief returns number of detected interfaces
+    ///
+    /// @return number of detected interfaces
+    uint16_t countIfaces() { return ifaces_.size(); }
+
     // don't use private, we need derived classes in tests
 protected:
 
@@ -158,6 +188,15 @@ protected:
     /// IPv6 address is read from intefaces.txt file.
     void
     detectIfaces();
+
+    /// @brief Stub implementation of network interface detection.
+    ///
+    /// This implementations reads a single line from interfaces.txt file
+    /// and pretends to detect such interface. First interface name and
+    /// link-local IPv6 address or IPv4 address is read from the
+    /// intefaces.txt file.
+    void
+    stubDetectIfaces();
 
     ///
     /// Opens UDP/IPv6 socket and binds it to address, interface and port.
@@ -199,7 +238,7 @@ protected:
 private:
     /// Opens sockets on detected interfaces.
     bool
-    openSockets();
+    openSockets6();
 
     /// creates a single instance of this class (a singleton implementation)
     static void
