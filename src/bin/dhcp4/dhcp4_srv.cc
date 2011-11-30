@@ -48,6 +48,7 @@ Dhcpv4Srv::run() {
         boost::shared_ptr<Pkt4> rsp;   // server's response
 
 #if 0
+        // uncomment this once ticket 1239 is merged.
         query = IfaceMgr::instance().receive4();
 #endif
 
@@ -80,25 +81,26 @@ Dhcpv4Srv::run() {
             cout << "Received " << query->len() << " bytes packet type="
                  << query->getType() << endl;
 
-            /// DEBUG
+            // TODO: print out received packets only if verbose (or debug)
+            // mode is enabled
             cout << query->toText();
 
             if (rsp) {
-#if 0
-                rsp->remote_addr_ = query->remote_addr_;
-                rsp->local_addr_ = query->local_addr_;
-                rsp->remote_port_ = DHCP6_CLIENT_PORT;
-                rsp->local_port_ = DHCP6_SERVER_PORT;
-                rsp->ifindex_ = query->ifindex_;
-                rsp->iface_ = query->iface_;
-#endif
+                rsp->setRemoteAddr(query->getRemoteAddr());
+                rsp->setLocalAddr(query->getLocalAddr());
+                rsp->setRemotePort(DHCP4_CLIENT_PORT);
+                rsp->setLocalPort(DHCP4_SERVER_PORT);
+                rsp->setIface(query->getIface());
+                rsp->setIndex(query->getIndex());
+
                 cout << "Replying with:" << rsp->getType() << endl;
                 cout << rsp->toText();
                 cout << "----" << endl;
                 if (rsp->pack()) {
-                    cout << "#### pack successful." << endl;
+                    cout << "Packet assembled correctly." << endl;
                 }
 #if 0
+                // uncomment this once ticket 1240 is merged.
                 IfaceMgr::instance().send4(rsp);
 #endif
             }
@@ -113,9 +115,11 @@ Dhcpv4Srv::run() {
 
 void
 Dhcpv4Srv::setServerID() {
-    /// TODO implement this for real once interface detection is done.
-    /// Use hardcoded server-id for now
+    /// TODO implement this for real once interface detection (ticket 1237)
+    /// is done. Use hardcoded server-id for now.
+
 #if 0
+    // uncomment this once ticket 1350 is merged.
     IOAddress srvId("127.0.0.1");
     serverid_ = boost::shared_ptr<Option>(
       new Option4AddrLst(Option::V4, DHO_DHCP_SERVER_IDENTIFIER, srvId));
@@ -124,13 +128,13 @@ Dhcpv4Srv::setServerID() {
 
 boost::shared_ptr<Pkt4>
 Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4> discover) {
-    /// TODO: Echo mode. Implement this for real
+    /// TODO: Currently implemented echo mode. Implement this for real
     return (discover);
 }
 
 boost::shared_ptr<Pkt4>
 Dhcpv4Srv::processRequest(boost::shared_ptr<Pkt4> request) {
-    /// TODO: Echo mode. Implement this for real
+    /// TODO: Currently implemented echo mode. Implement this for real
     return (request);
 }
 
@@ -138,14 +142,13 @@ void Dhcpv4Srv::processRelease(boost::shared_ptr<Pkt4> release) {
     /// TODO: Implement this.
     cout << "Received RELEASE on " << release->getIface() << " interface." << endl;
 }
- 
+
 void Dhcpv4Srv::processDecline(boost::shared_ptr<Pkt4> decline) {
     /// TODO: Implement this.
     cout << "Received DECLINE on " << decline->getIface() << " interface." << endl;
 }
 
 boost::shared_ptr<Pkt4> processInform(boost::shared_ptr<Pkt4> inform) {
-    /// TODO: Echo mode. Implement this for real
+    /// TODO: Currently implemented echo mode. Implement this for real
     return (inform);
 }
-

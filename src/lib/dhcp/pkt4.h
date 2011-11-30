@@ -311,6 +311,73 @@ public:
     /// @return interface name
     std::string getIface() { return iface_; };
 
+    /// @brief Sets interface name.
+    ///
+    /// Sets interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    void setIface(const std::string& iface ) { iface_ = iface; };
+
+    /// @brief Sets interface index.
+    ///
+    /// @param ifindex specifies interface index.
+    void setIndex(uint32_t ifindex) { ifindex_ = ifindex; };
+
+    /// @brief Returns interface index.
+    ///
+    /// @return interface index
+    uint32_t getIndex() { return (ifindex_); };
+
+    /// @brief Sets remote address.
+    ///
+    /// @params remote specifies remote address
+    void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
+        remote_addr_ = remote;
+    }
+
+    /// @brief Returns remote address
+    ///
+    /// @return remote address
+    const isc::asiolink::IOAddress& getRemoteAddr() {
+        return (remote_addr_);
+    }
+
+    /// @brief Sets local address.
+    ///
+    /// @params local specifies local address
+    void setLocalAddr(const isc::asiolink::IOAddress& local) {
+        local_addr_ = local;
+    }
+
+    /// @brief Returns local address.
+    ///
+    /// @return local address
+    const isc::asiolink::IOAddress& getLocalAddr() {
+        return (local_addr_);
+    }
+
+    /// @brief Sets local port.
+    ///
+    /// @params local specifies local port
+    void setLocalPort(uint16_t local) { local_port_ = local; }
+
+    /// @brief Returns local port.
+    ///
+    /// @return local port
+    uint16_t getLocalPort() { return (local_port_); }
+
+    /// @brief Sets remote port.
+    ///
+    /// @params remote specifies remote port
+    void setRemotePort(uint16_t remote) { remote_port_ = remote; }
+
+    /// @brief Returns remote port.
+    ///
+    /// @return remote port
+    uint16_t getRemotePort() { return (remote_port_); }
+
+
 protected:
 
     /// converts DHCP message type to BOOTP op type
@@ -335,13 +402,13 @@ protected:
     /// Each network interface has assigned unique ifindex. It is functional
     /// equvalent of name, but sometimes more useful, e.g. when using crazy
     /// systems that allow spaces in interface names e.g. MS Windows)
-    int ifindex_;
+    uint32_t ifindex_;
 
     /// local UDP port
-    int local_port_;
+    uint16_t local_port_;
 
     /// remote UDP port
-    int remote_port_;
+    uint16_t remote_port_;
 
     /// @brief message operation code
     ///
