@@ -863,7 +863,7 @@ class TestXfroutSession(TestXfroutSessionBase):
 
         self.assertEqual(len(expected_records), len(actual_records))
         for (expected_rr, actual_rr) in zip(expected_records, actual_records):
-            self.assertTrue(expected_rr, actual_rr)
+            self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
     def test_reply_xfrout_query_ixfr_soa_only(self):
         # Creating an IXFR response that contains only one RR, which is the
@@ -875,7 +875,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         reply_msg = self.sock.read_msg(Message.PRESERVE_ORDER)
         answer = reply_msg.get_section(Message.SECTION_ANSWER)
         self.assertEqual(1, len(answer))
-        self.assertTrue(create_soa(SOA_CURRENT_VERSION), answer[0])
+        self.assertTrue(rrsets_equal(create_soa(SOA_CURRENT_VERSION),
+                                     answer[0]))
 
 class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
     '''Tests for XFR-out sessions using an SQLite3 DB.
@@ -906,7 +907,7 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
                             create_soa(2011112001)]
         self.assertEqual(len(expected_records), len(actual_records))
         for (expected_rr, actual_rr) in zip(expected_records, actual_records):
-            self.assertTrue(expected_rr, actual_rr)
+            self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
     def test_axfr_normal_session(self):
         XfroutSession._handle(self.xfrsess)
@@ -945,7 +946,7 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
                             create_soa(2011112001)]
         self.assertEqual(len(expected_records), len(actual_records))
         for (expected_rr, actual_rr) in zip(expected_records, actual_records):
-            self.assertTrue(expected_rr, actual_rr)
+            self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
     def test_ixfr_soa_only(self):
         # The requested SOA serial is the latest one.  The response should
@@ -956,7 +957,8 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         answers = response.get_section(Message.SECTION_ANSWER)
         self.assertEqual(1, len(answers))
-        self.assertTrue(create_soa(SOA_CURRENT_VERSION), answers[0])
+        self.assertTrue(rrsets_equal(create_soa(SOA_CURRENT_VERSION),
+                                     answers[0]))
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
