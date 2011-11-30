@@ -900,7 +900,9 @@ class BoB:
                 return
             else:
                 if data == b"\n":
-                    pass
+                    # Handle this token and clear it
+                    self.socket_request_handler(previous, sock)
+                    previous = b''
                 else:
                     previous += data
 
