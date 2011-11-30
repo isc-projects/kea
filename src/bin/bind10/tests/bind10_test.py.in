@@ -971,7 +971,9 @@ class SocketSrvTest(unittest.TestCase):
         def recv(self, bufsize, flags=0):
             self.__owner.assertEqual(1, bufsize)
             self.__owner.assertEqual(socket.MSG_DONTWAIT, flags)
-            if self.data is not None:
+            if isinstance(self.data, socket.error):
+                raise self.data
+            elif self.data is not None:
                 if len(self.data):
                     result = self.data[0:1]
                     self.data = self.data[1:]
@@ -1110,6 +1112,18 @@ class SocketSrvTest(unittest.TestCase):
         self.assertIsNone(self.__consumer_dead_called)
         self.assertEqual((b'token', socket),
                          self.__socket_request_handler_called)
+
+    def test_broken_socket(self):
+        """
+        If the socket raises an exception during the read other than EAGAIN,
+        it is broken and we remove it.
+        """
+        sock = self.__prepare_data(socket.error(errno.ENOMEM,
+            "There's more memory available, but not for you"))
+        self.__boss._socket_data(13)
+        self.assertEqual(sock, self.__consumer_dead_called)
+        self.assertEqual({}, self.__boss._unix_sockets)
+        self.assertTrue(sock.closed)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
