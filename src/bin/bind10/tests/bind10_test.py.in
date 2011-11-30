@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
+import bind10_src
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -927,6 +928,71 @@ class TestBossComponents(unittest.TestCase):
         bob.ccs.get_full_config = lambda: {'components': self.__compconfig}
         bob.start_all_components()
         self.__check_extended(self.__param)
+
+class SocketSrvTest(unittest.TestCase):
+    """
+    This tests some methods of boss related to the unix domain sockets used
+    to transfer other sockets to applications.
+    """
+    def setUp(self):
+        """
+        Create the boss to test, testdata and backup some functions.
+        """
+        self.__boss = BoB()
+        self.__select_backup = bind10_src.select.select
+        self.__select_called = None
+
+    def tearDown(self):
+        """
+        Restore functions.
+        """
+        bind10_src.select.select = self.__select_backup
+
+    class __FalseSocket:
+        """
+        A mock socket for the select and accept and stuff like that.
+        """
+        def fileno(self):
+            return 42
+
+    class __CCS:
+        """
+        A mock CCS, just to provide the socket file number.
+        """
+        class __Socket:
+            def fileno(self):
+                return 1
+        def get_socket(self):
+            return self.__Socket()
+
+    def __select_accept(self, r, w, x, t):
+        self.__select_called = (r, w, x, t)
+        return ([42], [], [])
+
+    def __accept(self):
+        """
+        Hijact the accept method of the boss.
+
+        Notes down it was called and stops the boss.
+        """
+        self.__accept_called = True
+        self.__boss.runnable = False
+
+    def test_srv_accept_called(self):
+        """
+        Test that the _srv_accept method of boss is called when the listening
+        socket is readable.
+        """
+        self.__boss.runnable = True
+        self.__boss._srv_socket = self.__FalseSocket()
+        self.__boss._srv_accept = self.__accept
+        self.__boss.ccs = self.__CCS()
+        bind10_src.select.select = self.__select_accept
+        self.__boss.run(2)
+        # It called the accept
+        self.assertTrue(self.__accept_called)
+        # And the select had the right parameters
+        self.assertEqual(([2, 1, 42], [], [], None), self.__select_called)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
