@@ -724,8 +724,37 @@ then
 	if test "${GTEST_FOUND}" != "true"; then
 		AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
 	fi
-	# TODO: check whether this is needed (depends on gtest compile flags)
-	GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+	# On some systems, there is no gtest-config script, which is supposed
+	# to inform us whether we need -lpthread as well (a gtest compile-time
+	# option). So we still need to test that manually
+	LIBS_SAVED=$LIBS
+	LIBS="$LIBS $GTEST_LDADD"
+	AC_MSG_CHECKING([Checking whether gtest tests need -lpthread])
+	AC_TRY_LINK([
+		#include <gtest/gtest.h>
+		],[
+			int i = 0;
+			char* c = NULL;
+			::testing::InitGoogleTest(&i, &c);
+			return (0);
+		],
+		[ AC_MSG_RESULT(no) ],
+		[
+			LIBS="$LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
+			AC_TRY_LINK([
+				#include <gtest/gtest.h>
+				],[
+					int i = 0;
+					char* c = NULL;
+					::testing::InitGoogleTest(&i, &c);
+					return (0);
+				],
+				[ AC_MSG_RESULT(yes)
+				  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+				],
+				[ AC_MSG_ERROR(unable to compile with gtest) ])
+	])
+	LIBS=$LIBS_SAVED
 else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
