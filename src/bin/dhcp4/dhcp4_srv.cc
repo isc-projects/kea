@@ -14,7 +14,7 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
-#include <dhcp6/iface_mgr.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <asiolink/io_address.h>
 
