@@ -892,7 +892,7 @@ class BoB:
                     self._unix_sockets[socket_fileno] = (sock, previous)
                     return
                 else:
-                    pass # TODO What now? Drop the socket?
+                    data = b'' # Pretend it got closed
             if len(data) == 0: # The socket got to it's end
                 del self._unix_sockets[socket_fileno]
                 self.socket_consumer_dead(sock)
