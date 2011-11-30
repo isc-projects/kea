@@ -941,6 +941,7 @@ class SocketSrvTest(unittest.TestCase):
         self.__boss = BoB()
         self.__select_backup = bind10_src.select.select
         self.__select_called = None
+        self.__socket_data_called = None
 
     def tearDown(self):
         """
@@ -975,6 +976,10 @@ class SocketSrvTest(unittest.TestCase):
     def __select_accept(self, r, w, x, t):
         self.__select_called = (r, w, x, t)
         return ([42], [], [])
+
+    def __select_data(self, r, w, x, t):
+        self.__select_called = (r, w, x, t)
+        return ([13], [], [])
 
     def __accept(self):
         """
@@ -1013,6 +1018,24 @@ class SocketSrvTest(unittest.TestCase):
         self.assertIsInstance(socket, self.__FalseSocket)
         # And the buffer (yet empty) is there
         self.assertEqual({13: (socket, '')}, self.__boss._unix_sockets)
+
+    def __socket_data(self, socket):
+        self.__boss.runnable = False
+        self.__socket_data_called = socket
+
+    def test_socket_data(self):
+        """
+        Test that a socket that wants attention gets it.
+        """
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._socket_data = self.__socket_data
+        self.__boss.ccs = self.__CCS()
+        self.__boss._unix_sockets = {13: (self.__FalseSocket(self, 13), '')}
+        self.__boss.runnable = True
+        bind10_src.select.select = self.__select_data
+        self.__boss.run(2)
+        self.assertEqual(13, self.__socket_data_called)
+        self.assertEqual(([2, 1, 42, 13], [], [], None), self.__select_called)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment

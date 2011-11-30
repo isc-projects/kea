@@ -875,6 +875,14 @@ class BoB:
         socket = self._srv_socket.accept()
         self._unix_sockets[socket.fileno()] = (socket, '')
 
+    def _socket_data(self, socket_fileno):
+        """
+        This is called when a socket identified by the socket_fileno needs
+        attention. We try to read data from there. If it is closed, we remove
+        it.
+        """
+        pass
+
     def run(self, wakeup_fd):
         """
         The main loop, waiting for sockets, commands and dead processes.
@@ -899,7 +907,8 @@ class BoB:
             try:
                 (rlist, wlist, xlist) = \
                     select.select([wakeup_fd, ccs_fd,
-                                   self._srv_socket.fileno()], [], [],
+                                   self._srv_socket.fileno()] +
+                                   list(self._unix_sockets.keys()), [], [],
                                   wait_time)
             except select.error as err:
                 if err.args[0] == errno.EINTR:
@@ -920,6 +929,8 @@ class BoB:
                     os.read(wakeup_fd, 32)
                 elif fd == self._srv_socket.fileno():
                     self._srv_accept()
+                elif fd in self._unix_sockets:
+                    self._socket_data(fd)
 
 # global variables, needed for signal handlers
 options = None
