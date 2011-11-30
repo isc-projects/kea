@@ -119,7 +119,9 @@ private:
 /// with '.so', the loader will not add '_ds.so'.
 /// It may also be an absolute path; if it starts with '/', nothing is
 /// prepended. If it does not, the loadable library will be taken from the
-/// libexec/backends/ installation directory.
+/// installation directory, see the value of
+/// isc::datasrc::BACKEND_LIBRARY_PATH in datasrc_config.h for the exact path.
+///
 /// \note When 'B10_FROM_BUILD' is set in the environment, the build
 ///       directory is used instead of the install directory.
 ///
