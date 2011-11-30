@@ -14,7 +14,7 @@
 
 $NAMESPACE isc::nsas
 
-% NSAS_EMPTY_RESPONSE response to query for %2 returned an empty answer section
+% NSAS_EMPTY_RESPONSE response to query for %1 returned an empty answer section
 The NSAS (nameserver address store - part of the resolver) made a query
 for information it needed.  The query completed successfully but the
 answer section in the response was empty.
