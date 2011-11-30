@@ -264,21 +264,11 @@ TEST_F(IfaceMgrTest, sockets6) {
     int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10548);
     EXPECT_GT(socket2, 0);
 
-    // expect success. This address/port is already bound, but
-    // we are using SO_REUSEADDR, so we can bind it twice
-    int socket3 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
-
-    // rebinding succeeds on Linux, fails on BSD
-    // TODO: add OS-specific defines here (or modify code to
-    // behave the same way on all OSes, but that may not be
-    // possible
-    // EXPECT_GT(socket3, 0); // socket > 0
-
-    // we now have 3 sockets open at the same time. Looks good.
+    // removed code for binding socket twice to the same address/port
+    // as it caused problems on some platforms (e.g. Mac OS X)
 
     close(socket1);
     close(socket2);
-    close(socket3);
 
     delete ifacemgr;
 }
