@@ -556,7 +556,13 @@ class XfroutSession():
         #TODO, there should be a better way to insert rrset.
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
-        message_upper_len = XFROUT_DNS_HEADER_SIZE
+        # Reserved space for the fixed header size, the size of the question
+        # section, and TSIG size (when included).  The size of the question
+        # section is the sum of the qname length and the size of the
+        # fixed-length fields (type and class, 2 bytes each).
+        message_upper_len = XFROUT_DNS_HEADER_SIZE + \
+            msg.get_question()[0].get_name().get_length() + 4 + \
+            self._tsig_len
 
         # If the iterator is None, we are responding to IXFR with a single
         # SOA RR.
@@ -567,7 +573,7 @@ class XfroutSession():
 
         # Add the beginning SOA
         msg.add_rrset(Message.SECTION_ANSWER, self._soa)
-        message_upper_len = get_rrset_len(self._soa) + self._tsig_len
+        message_upper_len += get_rrset_len(self._soa)
 
         # Add the rest of the zone/diff contets
         for rrset in self._iterator:
