@@ -29,6 +29,7 @@ from isc.net.addr import IPAddr
 import time
 import isc
 import isc.log
+import errno
 
 from isc.testutils.parse_args import TestOptParser, OptsError
 
@@ -943,6 +944,7 @@ class SocketSrvTest(unittest.TestCase):
         self.__select_called = None
         self.__socket_data_called = None
         self.__consumer_dead_called = None
+        self.__socket_request_handler_called = None
 
     def tearDown(self):
         """
@@ -970,7 +972,12 @@ class SocketSrvTest(unittest.TestCase):
             self.__owner.assertEqual(1, bufsize)
             self.__owner.assertEqual(socket.MSG_DONTWAIT, flags)
             if self.data is not None:
-                pass # TODO
+                if len(self.data):
+                    result = self.data[0:1]
+                    self.data = self.data[1:]
+                    return result
+                else:
+                    raise socket.error(errno.EAGAIN, "Would block")
             else:
                 return b''
 
@@ -1061,6 +1068,9 @@ class SocketSrvTest(unittest.TestCase):
     def __consumer_dead(self, socket):
         self.__consumer_dead_called = socket
 
+    def __socket_request_handler(self, token, socket):
+        self.__socket_request_handler_called = (token, socket)
+
     def test_socket_closed(self):
         """
         Test that a socket is removed and the socket_consumer_dead is called
@@ -1071,6 +1081,18 @@ class SocketSrvTest(unittest.TestCase):
         self.assertEqual(socket, self.__consumer_dead_called)
         self.assertEqual({}, self.__boss._unix_sockets)
         self.assertTrue(socket.closed)
+
+    def test_socket_short(self):
+        """
+        Test that if there's not enough data to get the whole socket, it is
+        kept there, but nothing is called.
+        """
+        socket = self.__prepare_data(b'tok')
+        self.__boss._socket_data(13)
+        self.assertEqual({13: (socket, b'tok')}, self.__boss._unix_sockets)
+        self.assertFalse(socket.closed)
+        self.assertIsNone(self.__consumer_dead_called)
+        self.assertIsNone(self.__socket_request_handler_called)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
