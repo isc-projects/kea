@@ -549,8 +549,8 @@ class XfroutSession():
         with or without TSIG.  In theory this could be wrong if TSIG is
         stupidly large, but in practice this assumption should be reasonable.
         '''
-        if (message_upper_len + self._tsig_len + get_rrset_len(rrset_soa) >
-            XFROUT_MAX_MESSAGE_SIZE):
+        if message_upper_len + get_rrset_len(rrset_soa) > \
+                XFROUT_MAX_MESSAGE_SIZE:
             self._send_message(sock_fd, msg, self._tsig_ctx)
             msg = self._clear_message(msg)
 
