@@ -246,6 +246,7 @@ class BoB:
         self._socket_path = None
         self._tmpdir = None
         self._srv_socket = None
+        self._unix_sockets = {}
 
     def __propagate_component_config(self, config):
         comps = dict(config)
@@ -871,6 +872,8 @@ class BoB:
         Accept a socket from the unix domain socket server and put it to the
         others we care about.
         """
+        socket = self._srv_socket.accept()
+        self._unix_sockets[socket.fileno()] = (socket, '')
 
     def run(self, wakeup_fd):
         """
