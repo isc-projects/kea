@@ -300,41 +300,15 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
                   << "/port=" << port);
     }
 
-#if defined(SO_BINDTODEVICE)
-#if 0
-    /// For some reason that doesn't work. It's not a big deal as this is
-    /// Linux only feature. We can use IP_PKTINFO to check that we received
-    /// packet over proper interface.
-
-    // Bind this socket to this interface.
-    const char* ifname = iface.getName().c_str();
-    int len = strlen(ifname);
-    if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
-                   ifname, len) < 0) {
-        isc_throw(Unexpected, "setsockopt: SO_BINDTODEVICE failed.");
-    }
-#endif
-#endif
-
+    // if there is no support for IP_PKTINFO, we are really out of luck
+    // it will be difficult to undersand, where this packet came from
+#if defined(IP_PKTINFO)
     int flag = 1;
-#ifdef IP_RECVPKTINFO
-    if (setsockopt(sock, IPPROTO_IP, IP_RECVPKTINFO,
-                   &flag, sizeof(flag)) != 0) {
-        close(sock);
-        isc_throw(Unexpected, "setsockopt: IP_RECVPKTINFO failed.")
-    }
-#elif defined(IP_PKTINFO)
-    /* RFC2292 - an old way */
-    if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO,
-                   &flag, sizeof(flag)) != 0) {
+    if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &flag, sizeof(flag)) != 0) {
         close(sock);
         isc_throw(Unexpected, "setsockopt: IP_PKTINFO: failed.");
     }
-#else
-    // "Neither IP_RECVPKTINFO nor IP_PKTINFO defined. Cannot continue"
-    flag = 1; // just to avoid compilation warnings about unused flag variable
 #endif
-
 
     cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
         addr.toText() << "/port=" << port << endl;
@@ -528,9 +502,19 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     return (result);
 }
 
+bool
+IfaceMgr::send(boost::shared_ptr<Pkt4>& )
+{
+    /// TODO: Implement this (ticket #1240)
+    isc_throw(Unexpected, "Pkt4 send not implemented yet.");
+}
+
+
 boost::shared_ptr<Pkt4>
 IfaceMgr::receive4() {
-    // TODO: To be implemented
+    isc_throw(Unexpected, "Pkt4 reception not implemented yet.");
+
+    // TODO: To be implemented (ticket #1239)
     return (boost::shared_ptr<Pkt4>()); // NULL
 }
 
