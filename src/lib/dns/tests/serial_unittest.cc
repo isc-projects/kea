@@ -88,7 +88,7 @@ TEST_F(SerialTest, addition) {
 
     EXPECT_EQ(one + 100, max + 102);
     EXPECT_EQ(min + 2147483645, max + 2147483646);
-    EXPECT_EQ(min + 2147483646, max + MAX_INCREMENT);
+    EXPECT_EQ(min + 2147483646, max + MAX_SERIAL_INCREMENT);
 }
 
 //
@@ -109,8 +109,8 @@ void do_addition_larger_test(const Serial& number) {
     EXPECT_GT(number + 100, number);
     EXPECT_GT(number + 1111111, number);
     EXPECT_GT(number + 2147483646, number);
-    EXPECT_GT(number + MAX_INCREMENT, number);
-    // Try MAX_INCREMENT as a hardcoded number as well
+    EXPECT_GT(number + MAX_SERIAL_INCREMENT, number);
+    // Try MAX_SERIAL_INCREMENT as a hardcoded number as well
     EXPECT_GT(number + 2147483647, number);
 }
 
@@ -142,7 +142,7 @@ do_two_additions_test_second(const Serial &original,
     EXPECT_NE(original, number + 100);
     EXPECT_NE(original, number + 1111111);
     EXPECT_NE(original, number + 2147483646);
-    EXPECT_NE(original, number + MAX_INCREMENT);
+    EXPECT_NE(original, number + MAX_SERIAL_INCREMENT);
     EXPECT_NE(original, number + 2147483647);
 }
 
@@ -152,7 +152,7 @@ void do_two_additions_test_first(const Serial &number) {
     do_two_additions_test_second(number, number + 100);
     do_two_additions_test_second(number, number + 1111111);
     do_two_additions_test_second(number, number + 2147483646);
-    do_two_additions_test_second(number, number + MAX_INCREMENT);
+    do_two_additions_test_second(number, number + MAX_SERIAL_INCREMENT);
     do_two_additions_test_second(number, number + 2147483647);
 }
 

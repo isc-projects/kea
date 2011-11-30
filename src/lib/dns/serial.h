@@ -24,7 +24,10 @@ namespace dns {
 /// The maximum difference between two serial numbers. If the (plain uint32_t)
 /// difference between two serials is greater than this number, the smaller one
 /// is considered greater.
-const uint32_t MAX_INCREMENT = 2147483647;
+const uint32_t MAX_SERIAL_INCREMENT = 2147483647;
+
+/// Maximum value a serial can have, used in + operator.
+const uint64_t MAX_SERIAL_VALUE = 4294967296;
 
 /// \brief This class defines DNS serial numbers and serial arithmetic.
 ///
@@ -115,7 +118,7 @@ public:
     /// \brief Adds the given value to the serial number. If this would make
     /// the number greater than 2^32-1, it is 'wrapped'.
     /// \note According to the specification, an addition greater than
-    /// MAX_INCREMENT is undefined. We do NOT catch this error (so as not
+    /// MAX_SERIAL_INCREMENT is undefined. We do NOT catch this error (so as not
     /// to raise exceptions), but this behaviour remains undefined.
     ///
     /// \param other The Serial to add
@@ -127,7 +130,7 @@ public:
     /// the number greater than 2^32-1, it is 'wrapped'.
     ///
     /// \note According to the specification, an addition greater than
-    /// MAX_INCREMENT is undefined. We do NOT catch this error (so as not
+    /// MAX_SERIAL_INCREMENT is undefined. We do NOT catch this error (so as not
     /// to raise exceptions), but this behaviour remains undefined.
     ///
     /// \param other_val The uint32_t value to add
