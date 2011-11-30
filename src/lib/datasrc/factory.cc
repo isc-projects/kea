@@ -44,22 +44,22 @@ getDataSourceLibFile(const std::string& type) {
     }
 
     // Type can be either a short name, in which case we need to
-    // append "_ds.so", or it can be a direct .so module.
+    // append "_ds.so", or it can be a direct .so library.
     std::string lib_file = type;
     const int ext_pos = lib_file.rfind(".so");
     if (ext_pos == std::string::npos || ext_pos + 3 != lib_file.length()) {
         lib_file.append("_ds.so");
     }
     // And if it is not an absolute path, prepend it with our
-    // module path
+    // loadable backend library path
     if (type[0] != '/') {
         // When running from the build tree, we do NOT want
-        // to load the installed module
+        // to load the installed loadable library
         if (getenv("B10_FROM_BUILD") != NULL) {
             lib_file = std::string(getenv("B10_FROM_BUILD")) +
                        "/src/lib/datasrc/.libs/" + lib_file;
         } else {
-            lib_file = isc::datasrc::MODULE_PATH + lib_file;
+            lib_file = isc::datasrc::BACKEND_LIBRARY_PATH + lib_file;
         }
     }
     return (lib_file);
@@ -74,7 +74,10 @@ LibraryContainer::LibraryContainer(const std::string& name) {
     // are recognized as such
     ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (ds_lib_ == NULL) {
-        isc_throw(DataSourceLibraryError, dlerror());
+        // This may cause the filename to appear twice in the actual
+        // error, but the output of dlerror is implementation-dependent
+        isc_throw(DataSourceLibraryError, "dlopen failed for " << name << 
+                                          ": " << dlerror());
     }
 }
 
