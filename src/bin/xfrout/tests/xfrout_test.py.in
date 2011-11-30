@@ -1045,13 +1045,22 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         # This zone contains two A RRs for the same name with different TTLs.
         # These TTLs should be preseved in the AXFR stream.
         actual_records = response.get_section(Message.SECTION_ANSWER)
-        expected_records = [create_soa(2011112001),
-                            create_ns(self.ns_name),
-                            create_a(Name(self.ns_name), '192.0.2.1', 3600),
-                            create_a(Name(self.ns_name), '192.0.2.2', 7200),
-                            create_soa(2011112001)]
-        self.assertEqual(len(expected_records), len(actual_records))
-        for (expected_rr, actual_rr) in zip(expected_records, actual_records):
+        self.assertEqual(5, len(actual_records))
+        # The first and last RR should be the expected SOA
+        expected_soa = create_soa(2011112001)
+        self.assertTrue(rrsets_equal(expected_soa, actual_records[0]))
+        self.assertTrue(rrsets_equal(expected_soa, actual_records[-1]))
+
+        # The ordering of the intermediate RRs can differ depending on the
+        # internal details of the SQLite3 library, so we sort them by a simple
+        # rule sufficient for the purpose here, and then compare them.
+        expected_others = [create_ns(self.ns_name),
+                           create_a(Name(self.ns_name), '192.0.2.1', 3600),
+                           create_a(Name(self.ns_name), '192.0.2.2', 7200)]
+        keyfn = lambda x: (x.get_type(), x.get_ttl())
+        for (expected_rr, actual_rr) in zip(sorted(expected_others, key=keyfn),
+                                            sorted(actual_records[1:4],
+                                                   key=keyfn)):
             self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
     def test_axfr_normal_session(self):
