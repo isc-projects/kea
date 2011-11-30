@@ -866,6 +866,12 @@ class BoB:
             os.remove(self._socket_path)
             os.rmdir(self._tmpdir)
 
+    def _srv_accept(self):
+        """
+        Accept a socket from the unix domain socket server and put it to the
+        others we care about.
+        """
+
     def run(self, wakeup_fd):
         """
         The main loop, waiting for sockets, commands and dead processes.
@@ -888,8 +894,10 @@ class BoB:
             # even if they are resumable, so we have to catch
             # the exception
             try:
-                (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [],
-                                                      [], wait_time)
+                (rlist, wlist, xlist) = \
+                    select.select([wakeup_fd, ccs_fd,
+                                   self._srv_socket.fileno()], [], [],
+                                  wait_time)
             except select.error as err:
                 if err.args[0] == errno.EINTR:
                     (rlist, wlist, xlist) = ([], [], [])
@@ -907,6 +915,8 @@ class BoB:
                         break
                 elif fd == wakeup_fd:
                     os.read(wakeup_fd, 32)
+                elif fd == self._srv_socket.fileno():
+                    self._srv_accept()
 
 # global variables, needed for signal handlers
 options = None
