@@ -480,7 +480,7 @@ else
     fi
 fi
 
-BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
 BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
 # We expect botan-config --libs to contain -L<path_to_libbotan>, but
@@ -488,15 +488,15 @@ BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 # -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
 # (but using include instead of lib) below.
 if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
-    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
-        BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
+    echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
+        BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
     echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
         BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
 fi
 # See python_rpath for some info on why we do this
 if test $rpath_available = yes; then
     BOTAN_RPATH=
-    for flag in ${BOTAN_LDFLAGS}; do
+    for flag in ${BOTAN_LIBS}; do
             BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
     done
 AC_SUBST(BOTAN_RPATH)
@@ -511,13 +511,13 @@ AC_SUBST(BOTAN_RPATH)
     LDFLAGS="$BOTAN_RPATH $LDFLAGS"
 fi
 
-AC_SUBST(BOTAN_LDFLAGS)
+AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
-LIBS="$LIBS $BOTAN_LDFLAGS"
+LIBS="$LIBS $BOTAN_LIBS"
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
@@ -544,7 +544,7 @@ if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
-  LOG4CPLUS_LDFLAGS="-L${log4cplus_path}/lib"
+  LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
 	log4cplusdirs="/usr/local /usr/pkg /opt /opt/local"
@@ -552,21 +552,21 @@ else
 	do
 		if test -f $d/include/log4cplus/logger.h; then
 			LOG4CPLUS_INCLUDES="-I$d/include"
-			LOG4CPLUS_LDFLAGS="-L$d/lib"
+			LOG4CPLUS_LIBS="-L$d/lib"
 			break
 		fi
 	done
 fi
 
-LOG4CPLUS_LDFLAGS="$LOG4CPLUS_LDFLAGS -llog4cplus $MULTITHREADING_FLAG"
+LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus $MULTITHREADING_FLAG"
 
-AC_SUBST(LOG4CPLUS_LDFLAGS)
+AC_SUBST(LOG4CPLUS_LIBS)
 AC_SUBST(LOG4CPLUS_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
-LIBS="$LOG4CPLUS_LDFLAGS $LIBS"
+LIBS="$LOG4CPLUS_LIBS $LIBS"
 
 AC_CHECK_HEADERS([log4cplus/logger.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
@@ -726,10 +726,11 @@ then
 	fi
 	# On some systems, there is no gtest-config script, which is supposed
 	# to inform us whether we need -lpthread as well (a gtest compile-time
-	# option). So we still need to test that manually
+	# option). So we still need to test that manually.
 	LIBS_SAVED=$LIBS
 	LIBS="$LIBS $GTEST_LDADD"
 	AC_MSG_CHECKING([Checking whether gtest tests need -lpthread])
+	# First try to compile without pthreads
 	AC_TRY_LINK([
 		#include <gtest/gtest.h>
 		],[
@@ -740,7 +741,8 @@ then
 		],
 		[ AC_MSG_RESULT(no) ],
 		[
-			LIBS="$LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
+			LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
+			# Now try to compile with pthreads
 			AC_TRY_LINK([
 				#include <gtest/gtest.h>
 				],[
@@ -752,6 +754,7 @@ then
 				[ AC_MSG_RESULT(yes)
 				  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
 				],
+				# Apparently we can't compile it at all
 				[ AC_MSG_ERROR(unable to compile with gtest) ])
 	])
 	LIBS=$LIBS_SAVED
@@ -1113,9 +1116,9 @@ dnl includes too
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
   Botan:         ${BOTAN_INCLUDES}
-                 ${BOTAN_LDFLAGS}
+                 ${BOTAN_LIBS}
   Log4cplus:     ${LOG4CPLUS_INCLUDES}
-                 ${LOG4CPLUS_LDFLAGS}
+                 ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

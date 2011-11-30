@@ -11,4 +11,4 @@ lib_LTLIBRARIES = libcryptolink.la
 libcryptolink_la_SOURCES = cryptolink.h cryptolink.cc
 libcryptolink_la_SOURCES += crypto_hmac.h crypto_hmac.cc
 
-libcryptolink_la_LIBADD = ${BOTAN_LDFLAGS} ${BOTAN_RPATH}
+libcryptolink_la_LIBADD = ${BOTAN_LIBS} ${BOTAN_RPATH}
