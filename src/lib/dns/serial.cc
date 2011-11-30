@@ -32,9 +32,9 @@ Serial::operator<(const Serial& other) const {
     uint32_t other_val = other.getValue();
     bool result = false;
     if (value_ < other_val) {
-        result = ((other_val - value_) <= MAX_INCREMENT);
+        result = ((other_val - value_) <= MAX_SERIAL_INCREMENT);
     } else if (other_val < value_) {
-        result = ((value_ - other_val) > MAX_INCREMENT);
+        result = ((value_ - other_val) > MAX_SERIAL_INCREMENT);
     }
     return (result);
 }
@@ -56,21 +56,9 @@ Serial::operator>=(const Serial& other) const {
 
 Serial
 Serial::operator+(uint32_t other_val) const {
-    if (value_ <= MAX_INCREMENT) {
-        // just add
-        return (Serial(value_ + other_val));
-    } else {
-        // check whether it wouldn't wrap
-        // Note the +1 here and the -2 below, these operations use
-        // the MAX_INCREMENT constant, which is 2^31-1, while it really
-        // needs 2^31 itself.
-        if (value_ - MAX_INCREMENT + other_val <= MAX_INCREMENT + 1) {
-            return (Serial(value_ + other_val));
-        } else {
-            return (Serial(value_ - MAX_INCREMENT +
-                           other_val - MAX_INCREMENT - 2));
-        }
-    }
+    uint64_t new_val = static_cast<uint64_t>(value_) +
+                       static_cast<uint64_t>(other_val);
+    return Serial(static_cast<uint32_t>(new_val % MAX_SERIAL_VALUE));
 }
 
 Serial
