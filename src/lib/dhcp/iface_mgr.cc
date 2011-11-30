@@ -52,8 +52,10 @@ IfaceMgr::instance() {
 }
 
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
-    :name_(name), ifindex_(ifindex), mac_len_(0) {
-
+    :name_(name), ifindex_(ifindex), mac_len_(0), flag_loopback_(false),
+     flag_up_(false), flag_running_(false), flag_multicast_(false),
+     flag_broadcast_(false), flags_(0), hardware_type_(0)
+{
     memset(mac_, 0, sizeof(mac_));
 }
 
@@ -71,7 +73,7 @@ IfaceMgr::Iface::getPlainMac() const {
     tmp << hex;
     for (int i = 0; i < mac_len_; i++) {
         tmp.width(2);
-        tmp << mac_[i];
+        tmp <<  int(mac_[i]);
         if (i < mac_len_-1) {
             tmp << ":";
         }
@@ -95,7 +97,7 @@ IfaceMgr::IfaceMgr()
 
         detectIfaces();
 
-        if (!openSockets()) {
+        if (!openSockets6()) {
             isc_throw(Unexpected, "Failed to open/bind sockets.");
         }
     } catch (const std::exception& ex) {
@@ -105,7 +107,7 @@ IfaceMgr::IfaceMgr()
         // interface detection is implemented. Otherwise
         // it is not possible to run tests in a portable
         // way (see detectIfaces() method).
-        // throw ex;
+        throw ex;
     }
 }
 
@@ -115,7 +117,7 @@ IfaceMgr::~IfaceMgr() {
 }
 
 void
-IfaceMgr::detectIfaces() {
+IfaceMgr::stubDetectIfaces() {
     string ifaceName, linkLocal;
 
     // TODO do the actual detection. Currently interface detection is faked
@@ -154,8 +156,13 @@ IfaceMgr::detectIfaces() {
     }
 }
 
-bool
-IfaceMgr::openSockets() {
+#if !defined(OS_LINUX) && !defined(OS_BSD)
+void IfaceMgr::detectIfaces() {
+    stubDetectIfaces();
+}
+#endif
+
+bool IfaceMgr::openSockets6() {
     int sock;
 
     for (IfaceLst::iterator iface=ifaces_.begin();
@@ -165,6 +172,11 @@ IfaceMgr::openSockets() {
         for (Addr6Lst::iterator addr=iface->addrs_.begin();
              addr!=iface->addrs_.end();
              ++addr) {
+
+            // skip IPv4 addresses
+            if (addr->getFamily() != AF_INET6) {
+                continue;
+            }
 
             sock = openSocket(iface->name_, *addr,
                               DHCP6_SERVER_PORT);
@@ -194,14 +206,23 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
     for (IfaceLst::const_iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
-        out << "Detected interface " << iface->getFullName() << endl;
+
+        out << "Detected interface " << iface->getFullName()
+             << ", hwtype=" << iface->hardware_type_ << ", maclen=" << iface->mac_len_
+             << ", mac=" << iface->getPlainMac() << endl;
+        out << "flags=" << hex << iface->flags_ << dec << "("
+            << (iface->flag_loopback_?"LOOPBACK ":"")
+            << (iface->flag_up_?"UP ":"")
+            << (iface->flag_running_?"RUNNING ":"")
+            << (iface->flag_multicast_?"MULTICAST ":"")
+            << (iface->flag_broadcast_?"BROADCAST ":"")
+            << ")" << endl;
         out << "  " << iface->addrs_.size() << " addr(s):" << endl;
         for (Addr6Lst::const_iterator addr=iface->addrs_.begin();
              addr != iface->addrs_.end();
              ++addr) {
             out << "  " << addr->toText() << endl;
         }
-        out << "  mac: " << iface->getPlainMac() << endl;
     }
 }
 

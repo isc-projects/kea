@@ -367,6 +367,33 @@ AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 
+# Detect OS type (it may be used to do OS-specific things, e.g.
+# interface detection in DHCP)
+AC_MSG_CHECKING(OS family)
+system=`uname -s`
+case $system in
+    Linux)
+      OS_TYPE="LINUX"
+      CPPFLAGS="$CPPFLAGS -DOS_LINUX"
+      ;;
+    Darwin | FreeBSD | NetBSD | OpenBSD)
+      OS_TYPE="BSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    Solaris)
+      OS_TYPE="Solaris"
+      CPPFLAGS="$CPPFLAGS -DOS_SOLARIS"
+      ;;
+    *)
+      OS_TYPE="Unknown"
+      AC_MSG_WARN("Unsupported OS: uname returned $system")
+      ;;
+esac
+AC_MSG_RESULT($OS_TYPE)
+AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = LINUX)
+AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
+AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
+
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
@@ -1079,6 +1106,7 @@ Flags:
   CXXFLAGS:      $CXXFLAGS
   LDFLAGS:       $LDFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
+  OS Family:     $OS_TYPE
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_CXXFLAGS}

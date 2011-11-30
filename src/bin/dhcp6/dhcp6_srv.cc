@@ -30,7 +30,17 @@ Dhcpv6Srv::Dhcpv6Srv() {
 
     // first call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
-    IfaceMgr::instance();
+    try {
+	IfaceMgr::instance();
+    } catch (const std::exception &e) {
+	cout << "Failed to instantiate InterfaceManager. Aborting." << endl;
+	shutdown = true;
+    }
+
+    if (IfaceMgr::instance().countIfaces() == 0) {
+	cout << "Failed to detect any network interfaces. Aborting." << endl;
+	shutdown = true;
+    }
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
 

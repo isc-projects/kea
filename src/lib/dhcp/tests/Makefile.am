@@ -27,6 +27,15 @@ libdhcp_unittests_SOURCES += ../option.h ../option.cc option_unittest.cc
 libdhcp_unittests_SOURCES += ../pkt6.h ../pkt6.cc pkt6_unittest.cc
 libdhcp_unittests_SOURCES += ../pkt4.h ../pkt4.cc pkt4_unittest.cc
 
+if OS_LINUX
+libdhcp_unittests_SOURCES += ../iface_mgr_linux.cc
+endif
+
+if OS_BSD
+libdhcp_unittests_SOURCES += ../iface_mgr_bsd.cc
+endif
+
+
 libdhcp_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 libdhcp_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
