@@ -24,6 +24,7 @@ datasrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 datasrc_la_LDFLAGS = $(PYTHON_LDFLAGS)
 datasrc_la_LDFLAGS += -module
 datasrc_la_LIBADD = $(top_builddir)/src/lib/datasrc/libdatasrc.la
+datasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/python/libpydnspp.la
 datasrc_la_LIBADD += $(PYTHON_LIB)
 
