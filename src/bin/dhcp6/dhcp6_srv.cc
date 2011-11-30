@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "dhcp/dhcp6.h"
-#include "dhcp/pkt6.h"
-#include "dhcp6/iface_mgr.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/pkt6.h>
+#include <dhcp/iface_mgr.h>
 #include "dhcp6/dhcp6_srv.h"
 #include "dhcp/option6_ia.h"
 #include "dhcp/option6_iaaddr.h"

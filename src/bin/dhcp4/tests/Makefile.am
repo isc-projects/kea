@@ -1,8 +1,4 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-#PYTESTS = args_test.py bind10_test.py
-# NOTE: this has a generated test found in the builddir
-PYTESTS = dhcp6_test.py
-EXTRA_DIST = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -10,17 +6,6 @@ LIBRARY_PATH_PLACEHOLDER =
 if SET_ENV_LIBRARY_PATH
 LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$(abs_top_builddir)/src/lib/datasrc/.libs:$$$(ENV_LIBRARY_PATH)
 endif
-
-# test using command-line arguments, so use check-local target instead of TESTS
-check-local:
-	for pytest in $(PYTESTS) ; do \
-	echo Running test: $$pytest ; \
-	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_srcdir)/src/bin:$(abs_top_builddir)/src/bin/bind10:$(abs_top_builddir)/src/lib/util/io/.libs \
-	$(LIBRARY_PATH_PLACEHOLDER) \
-	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
-		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
-	done
-
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
@@ -43,20 +28,19 @@ endif
 TESTS =
 if HAVE_GTEST
 
-TESTS += dhcp6_unittests
+TESTS += dhcp4_unittests
 
-dhcp6_unittests_SOURCES = ../dhcp6_srv.h ../dhcp6_srv.cc
-dhcp6_unittests_SOURCES += dhcp6_unittests.cc
-dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
+dhcp4_unittests_SOURCES == ../dhcp4_srv.h ../dhcp4_srv.cc
+dhcp4_unittests_SOURCES += dhcp4_unittests.cc
+dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 
-dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-dhcp6_unittests_LDADD = $(GTEST_LDADD)
-dhcp6_unittests_LDADD += $(SQLITE_LIBS)
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
+dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+dhcp4_unittests_LDADD = $(GTEST_LDADD)
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

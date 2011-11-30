@@ -2,6 +2,10 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcp/tests\"
+AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -15,6 +19,7 @@ if HAVE_GTEST
 TESTS += libdhcp_unittests
 libdhcp_unittests_SOURCES  = run_unittests.cc
 libdhcp_unittests_SOURCES += ../libdhcp.h ../libdhcp.cc libdhcp_unittest.cc
+libdhcp_unittests_SOURCES += ../iface_mgr.cc ../iface_mgr.h iface_mgr_unittest.cc
 libdhcp_unittests_SOURCES += ../option6_iaaddr.h ../option6_iaaddr.cc option6_iaaddr_unittest.cc
 libdhcp_unittests_SOURCES += ../option6_ia.h ../option6_ia.cc option6_ia_unittest.cc
 libdhcp_unittests_SOURCES += ../option6_addrlst.h ../option6_addrlst.cc option6_addrlst_unittest.cc

@@ -20,9 +20,9 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include "io_address.h"
-#include "dhcp/pkt6.h"
-#include "dhcp6/iface_mgr.h"
+#include <asiolink/io_address.h>
+#include <dhcp/pkt6.h>
+#include <dhcp/iface_mgr.h>
 
 using namespace std;
 using namespace isc;
