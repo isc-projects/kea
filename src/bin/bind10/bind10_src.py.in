@@ -72,6 +72,7 @@ import isc.log
 from isc.log_messages.bind10_messages import *
 import isc.bind10.component
 import isc.bind10.special_component
+import tempfile
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -241,6 +242,10 @@ class BoB:
         # If -v was set, enable full debug logging.
         if self.verbose:
             logger.set_severity("DEBUG", 99)
+        # This is set in init_socket_srv
+        self._socket_path = None
+        self._tmpdir = None
+        self._srv_socket = None
 
     def __propagate_component_config(self, config):
         comps = dict(config)
@@ -828,6 +833,39 @@ class BoB:
         """
         pass
 
+    def init_socket_srv(self):
+        """
+        Creates and listens on a unix-domain socket to be able to send out
+        the sockets.
+
+        This method should be called after switching user, or the switched
+        applications won't be able to access the socket.
+        """
+        self._srv_socket = socket.socket(socket.AF_UNIX)
+        # We create a temporary directory somewhere safe and unique, to avoid
+        # the need to find the place ourself or bother users. Also, this
+        # secures the socket on some platforms, as it creates a private
+        # directory.
+        self._tmpdir = tempfile.mkdtemp()
+        # Get the name
+        self._socket_path = os.path.join(self._tmpdir, "sockcreator")
+        # And bind the socket to the name
+        self._srv_socket.bind(self._socket_path)
+        self._srv_socket.listen(5)
+
+    def remove_socket_srv(self):
+        """
+        Closes and removes the listening socket and the directory where it
+        lives, as we created both.
+
+        It does nothing if the _srv_socket is not set (eg. it was not yet
+        initialized).
+        """
+        if self._srv_socket is not None:
+            self._srv_socket.close()
+            os.remove(self._socket_path)
+            os.rmdir(self._tmpdir)
+
     def run(self, wakeup_fd):
         """
         The main loop, waiting for sockets, commands and dead processes.
@@ -1032,25 +1070,31 @@ def main():
     # Block SIGPIPE, as we don't want it to end this process
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
-    # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
-                       options.config_file, options.nocache, options.verbose,
-                       setuid, username, options.cmdctl_port,
-                       options.wait_time)
-    startup_result = boss_of_bind.startup()
-    if startup_result:
-        logger.fatal(BIND10_STARTUP_ERROR, startup_result)
-        sys.exit(1)
-    logger.info(BIND10_STARTUP_COMPLETE)
-    dump_pid(options.pid_file)
+    try:
+        # Go bob!
+        boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
+                           options.config_file, options.nocache,
+                           options.verbose, setuid, username,
+                           options.cmdctl_port, options.wait_time)
+        startup_result = boss_of_bind.startup()
+        if startup_result:
+            logger.fatal(BIND10_STARTUP_ERROR, startup_result)
+            sys.exit(1)
+        boss_of_bind.init_socket_srv()
+        logger.info(BIND10_STARTUP_COMPLETE)
+        dump_pid(options.pid_file)
 
-    # Let it run
-    boss_of_bind.run(wakeup_pipe[0])
+        # Let it run
+        boss_of_bind.run(wakeup_pipe[0])
 
-    # shutdown
-    signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-    boss_of_bind.shutdown()
-    unlink_pid_file(options.pid_file)
+        # shutdown
+        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+        boss_of_bind.shutdown()
+    finally:
+        # Clean up the filesystem
+        unlink_pid_file(options.pid_file)
+        if boss_of_bind is not None:
+            boss_of_bind.remove_socket_srv()
     sys.exit(0)
 
 if __name__ == "__main__":
