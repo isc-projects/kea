@@ -540,15 +540,20 @@ class XfroutSession():
 
     def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa,
                                     message_upper_len):
-        '''Add the SOA record to the end of message. If it can't be
-        added, a new message should be created to send out the last soa .
+        '''Add the SOA record to the end of message.
+
+        If it would exceed the maximum allowable size of a message, a new
+        message will be created to send out the last SOA.
+
+        We assume a message with a single SOA can always fit the buffer
+        with or without TSIG.  In theory this could be wrong if TSIG is
+        stupidly large, but in practice this assumption should be reasonable.
         '''
-        if (message_upper_len + self._tsig_len + get_rrset_len(rrset_soa) >=
+        if (message_upper_len + self._tsig_len + get_rrset_len(rrset_soa) >
             XFROUT_MAX_MESSAGE_SIZE):
             self._send_message(sock_fd, msg, self._tsig_ctx)
             msg = self._clear_message(msg)
 
-        # If tsig context exist, sign the last packet
         msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
