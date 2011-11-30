@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -223,7 +223,8 @@ class NameserverEntry::ResolverCallback :
          * \short We received the address successfully.
          *
          * This extracts the addresses out from the response and puts them
-         * inside the entry. It tries to reuse the address entries from before (if there were any), to keep their RTTs.
+         * inside the entry. It tries to reuse the address entries from before
+         * (if there were any), to keep their RTTs.
          */
         virtual void success(MessagePtr response_message) {
             time_t now = time(NULL);
@@ -231,10 +232,21 @@ class NameserverEntry::ResolverCallback :
             Lock lock(entry_->mutex_);
 
             // TODO: find the correct RRset, not simply the first
-            if (!response_message ||
-                response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
+            if (!response_message) {
+                LOG_ERROR(nsas_logger, NSAS_NULL_RESPONSE).arg(entry_->getName());
+                failureInternal(lock);
+                return;
+
+            } else if (response_message->getRcode() != isc::dns::Rcode::NOERROR()) {
+                LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_ERROR_RESPONSE).
+                          arg(response_message->getRcode()).arg(entry_->getName());
+                failureInternal(lock);
+                return;
+
+            } else if (
                 response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
-                LOG_ERROR(nsas_logger, NSAS_INVALID_RESPONSE).arg(entry_->getName());
+                LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_EMPTY_RESPONSE).
+                          arg(entry_->getName());
                 failureInternal(lock);
                 return;
             }
@@ -371,7 +383,7 @@ class NameserverEntry::ResolverCallback :
             }
         }
 
-        // Handle a failure to optain data. Dispatches callbacks and leaves
+        // Handle a failure to obtain data. Dispatches callbacks and leaves
         // lock unlocked
         void failureInternal(Lock &lock) {
             // Set state of the addresses
