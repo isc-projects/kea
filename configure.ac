@@ -516,9 +516,8 @@ AC_SUBST(BOTAN_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
-
+LIBS_SAVED="$LIBS"
+LIBS="$LIBS $BOTAN_LDFLAGS"
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
@@ -533,7 +532,7 @@ AC_LINK_IFELSE(
          AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
 )
 CPPFLAGS=$CPPFLAGS_SAVED
-LDFLAGS=$LDFLAGS_SAVED
+LIBS=$LIBS_SAVED
 
 # Check for log4cplus
 log4cplus_path="yes"
@@ -566,8 +565,8 @@ AC_SUBST(LOG4CPLUS_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LOG4CPLUS_LDFLAGS $LDFLAGS"
+LIBS_SAVED="$LIBS"
+LIBS="$LOG4CPLUS_LDFLAGS $LIBS"
 
 AC_CHECK_HEADERS([log4cplus/logger.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
@@ -582,7 +581,7 @@ AC_LINK_IFELSE(
 )
 
 CPPFLAGS=$CPPFLAGS_SAVED
-LDFLAGS=$LDFLAGS_SAVED
+LIBS=$LIBS_SAVED
 
 #
 # Configure Boost header path
@@ -675,6 +674,13 @@ else
     AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test "${use_boost_threads}" = "yes")
 fi
 
+# I can't get some of the #include <asio.hpp> right without this
+# TODO: find the real cause of asio/boost wanting pthreads
+# (this currently only occurs for src/lib/cc/session_unittests)
+PTHREAD_LDFLAGS=
+AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
+AC_SUBST(PTHREAD_LDFLAGS)
+AC_SUBST(MULTITHREADING_FLAG)
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -718,6 +724,8 @@ then
 	if test "${GTEST_FOUND}" != "true"; then
 		AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
 	fi
+	# TODO: check whether this is needed (depends on gtest compile flags)
+	GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
 else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
@@ -736,15 +744,6 @@ if test "x$HAVE_PKG_CONFIG" = "xno" ; then
   AC_MSG_ERROR(Please install pkg-config)
 fi
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
-
-# I can't get some of the #include <asio.hpp> right without this
-# TODO: find the real cause of asio/boost wanting pthreads
-# (this currently only occurs for src/lib/cc/session_unittests)
-PTHREAD_LDFLAGS=
-AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
-AC_SUBST(PTHREAD_LDFLAGS)
-
-AC_SUBST(MULTITHREADING_FLAG)
 
 #
 # ASIO: we extensively use it as the C++ event management module.
