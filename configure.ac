@@ -717,6 +717,48 @@ then
 				GTEST_LDFLAGS="-L$dir/lib"
 				GTEST_LDADD="-lgtest"
 				GTEST_FOUND="true"
+				# There is no gtest-config script, which
+				# is supposed to inform us whether we need
+				# pthreads as well (a gtest compile-time 
+				# option). So we still need to test that
+				# manually.
+				CPPFLAGS_SAVED="$CPPFLAGS"
+				CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
+				LDFLAGS_SAVED="$LDFLAGS"
+				LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
+				LIBS_SAVED=$LIBS
+				LIBS="$LIBS $GTEST_LDADD"
+				AC_MSG_CHECKING([Checking whether gtest tests need pthreads])
+				# First try to compile without pthreads
+				AC_TRY_LINK([
+					#include <gtest/gtest.h>
+					],[
+						int i = 0;
+						char* c = NULL;
+						::testing::InitGoogleTest(&i, &c);
+						return (0);
+					],
+					[ AC_MSG_RESULT(no) ],
+					[
+						LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
+						# Now try to compile with pthreads
+						AC_TRY_LINK([
+							#include <gtest/gtest.h>
+							],[
+								int i = 0;
+								char* c = NULL;
+								::testing::InitGoogleTest(&i, &c);
+								return (0);
+							],
+							[ AC_MSG_RESULT(yes)
+							  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+							],
+							# Apparently we can't compile it at all
+							[ AC_MSG_ERROR(unable to compile with gtest) ])
+				])
+				CPPFLAGS=$CPPFLAGS_SAVED
+				LDFLAGS=$LDFLAGS_SAVED
+				LIBS=$LIBS_SAVED
 				break
 			fi
 		done
@@ -724,46 +766,6 @@ then
 	if test "${GTEST_FOUND}" != "true"; then
 		AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
 	fi
-	# On some systems, there is no gtest-config script, which is supposed
-	# to inform us whether we need -lpthread as well (a gtest compile-time
-	# option). So we still need to test that manually.
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
-	LDFLAGS_SAVED="$LDFLAGS"
-	LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
-	LIBS_SAVED=$LIBS
-	LIBS="$LIBS $GTEST_LDADD"
-	AC_MSG_CHECKING([Checking whether gtest tests need -lpthread])
-	# First try to compile without pthreads
-	AC_TRY_LINK([
-		#include <gtest/gtest.h>
-		],[
-			int i = 0;
-			char* c = NULL;
-			::testing::InitGoogleTest(&i, &c);
-			return (0);
-		],
-		[ AC_MSG_RESULT(no) ],
-		[
-			LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
-			# Now try to compile with pthreads
-			AC_TRY_LINK([
-				#include <gtest/gtest.h>
-				],[
-					int i = 0;
-					char* c = NULL;
-					::testing::InitGoogleTest(&i, &c);
-					return (0);
-				],
-				[ AC_MSG_RESULT(yes)
-				  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
-				],
-				# Apparently we can't compile it at all
-				[ AC_MSG_ERROR(unable to compile with gtest) ])
-	])
-	CPPFLAGS=$CPPFLAGS_SAVED
-	LDFLAGS=$LDFLAGS_SAVED
-	LIBS=$LIBS_SAVED
 else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
