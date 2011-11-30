@@ -873,7 +873,7 @@ class BoB:
         others we care about.
         """
         socket = self._srv_socket.accept()
-        self._unix_sockets[socket.fileno()] = (socket, '')
+        self._unix_sockets[socket.fileno()] = (socket, b'')
 
     def _socket_data(self, socket_fileno):
         """
@@ -881,7 +881,14 @@ class BoB:
         attention. We try to read data from there. If it is closed, we remove
         it.
         """
-        pass
+        (sock, previous) = self._unix_sockets[socket_fileno]
+        while True:
+            data = sock.recv(1, socket.MSG_DONTWAIT)
+            if len(data) == 0: # The socket got to it's end
+                del self._unix_sockets[socket_fileno]
+                self.socket_consumer_dead(sock)
+                sock.close()
+                return
 
     def run(self, wakeup_fd):
         """
