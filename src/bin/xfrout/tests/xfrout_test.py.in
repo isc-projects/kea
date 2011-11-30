@@ -865,6 +865,48 @@ class TestXfroutSession(TestXfroutSessionBase):
         for (expected_rr, actual_rr) in zip(expected_records, actual_records):
             self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
+    def test_reply_xfrout_query_axfr_maxlen(self):
+        # The test RR(set) has the length of 65535 - 12 (size of hdr) bytes:
+        # owner name = 1 (root), fixed fields (type,class,TTL,RDLEN) = 10
+        # RDATA = 65512 (= 65535 - 12 - 1 - 10)
+        self.xfrsess._soa = self.soa_rrset
+        test_rr = create_generic(Name('.'), 65512)
+        self.xfrsess._iterator = [self.soa_rrset, test_rr]
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        # The first message should contain the beginning SOA, and only that RR
+        r = self.sock.read_msg()
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(self.soa_rrset,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+        # The second message should contain the beginning SOA, and only that RR
+        r = self.sock.read_msg()
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(test_rr,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+        # The third message should contain the ending SOA, and only that RR
+        r = self.sock.read_msg()
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(self.soa_rrset,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+
+    def test_reply_xfrout_query_axfr_toobigdata(self):
+        # Similar to the previous test, but the RR doesn't even fit in a
+        # single message.
+        self.xfrsess._soa = self.soa_rrset
+        test_rr = create_generic(Name('.'), 65513) # 1 byte larger than 'max'
+        self.xfrsess._iterator = [self.soa_rrset, test_rr]
+        # the reply method should fail with exception
+        self.assertRaises(XfroutSessionError, self.xfrsess._reply_xfrout_query,
+                          self.getmsg(), self.sock)
+        # The first message should still have been sent and contain the
+        # beginning SOA, and only that RR
+        r = self.sock.read_msg()
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(self.soa_rrset,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+        # And there should have been no other messages sent
+        self.assertEqual(0, len(self.sock.sendqueue))
+
     def test_reply_xfrout_query_ixfr_soa_only(self):
         # Creating an IXFR response that contains only one RR, which is the
         # SOA of the current version.

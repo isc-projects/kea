@@ -53,6 +53,19 @@ def create_ns(nsname, name=Name('example.com'), ttl=3600):
     rrset.add_rdata(Rdata(RRType.NS(), RRClass.IN(), nsname))
     return rrset
 
+def create_generic(name, rdlen, type=RRType('TYPE65300'), ttl=3600):
+    '''Create an RR of a general type with an arbitrary length of RDATA
+
+    If the RR type isn't specified, type of 65300 will be used, which is
+    arbitrarily chosen from the IANA "Reserved for Private Usage" range.
+    The RDATA will be filled with specified length of all-0 data.
+
+    '''
+    rrset = RRset(name, RRClass.IN(), type, RRTTL(ttl))
+    rrset.add_rdata(Rdata(type, RRClass.IN(), '\\# ' +
+                          str(rdlen) + ' ' + '00' * rdlen))
+    return rrset
+
 def create_soa(serial, name=Name('example.com'), ttl=3600):
     '''For convenience we use a default name often used as a zone name'''
 
