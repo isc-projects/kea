@@ -558,7 +558,6 @@ class XfroutSession():
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
     def _reply_xfrout_query(self, msg, sock_fd):
-        #TODO, there should be a better way to insert rrset.
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
         # Reserved space for the fixed header size, the size of the question
@@ -814,7 +813,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             os.unlink(self._sock_file)
         except Exception as e:
             logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, self._sock_file, str(e))
-            pass
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module.
