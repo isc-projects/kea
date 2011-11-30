@@ -952,8 +952,15 @@ class SocketSrvTest(unittest.TestCase):
         """
         A mock socket for the select and accept and stuff like that.
         """
+        def __init__(self, owner, fileno=42):
+            self.__owner = owner
+            self.__fileno = fileno
+
         def fileno(self):
-            return 42
+            return self.__fileno
+
+        def accept(self):
+            return self.__class__(self.__owner, 13)
 
     class __CCS:
         """
@@ -984,7 +991,7 @@ class SocketSrvTest(unittest.TestCase):
         socket is readable.
         """
         self.__boss.runnable = True
-        self.__boss._srv_socket = self.__FalseSocket()
+        self.__boss._srv_socket = self.__FalseSocket(self)
         self.__boss._srv_accept = self.__accept
         self.__boss.ccs = self.__CCS()
         bind10_src.select.select = self.__select_accept
@@ -993,6 +1000,19 @@ class SocketSrvTest(unittest.TestCase):
         self.assertTrue(self.__accept_called)
         # And the select had the right parameters
         self.assertEqual(([2, 1, 42], [], [], None), self.__select_called)
+
+    def test_srv_accept(self):
+        """
+        Test how the _srv_accept method works.
+        """
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._srv_accept()
+        # After we accepted, a new socket is added there
+        socket = self.__boss._unix_sockets[13][0]
+        # The socket is properly stored there
+        self.assertIsInstance(socket, self.__FalseSocket)
+        # And the buffer (yet empty) is there
+        self.assertEqual({13: (socket, '')}, self.__boss._unix_sockets)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
