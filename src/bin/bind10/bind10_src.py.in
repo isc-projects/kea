@@ -1095,7 +1095,7 @@ def main():
         unlink_pid_file(options.pid_file)
         if boss_of_bind is not None:
             boss_of_bind.remove_socket_srv()
-    sys.exit(0)
+    sys.exit(boss_of_bind.exitcode)
 
 if __name__ == "__main__":
     main()
