@@ -1063,6 +1063,7 @@ class SocketSrvTest(unittest.TestCase):
         self.__boss._unix_sockets = {13: (socket, b'')}
         socket.data = data
         self.__boss.socket_consumer_dead = self.__consumer_dead
+        self.__boss.socket_request_handler = self.__socket_request_handler
         return socket
 
     def __consumer_dead(self, socket):
@@ -1093,6 +1094,22 @@ class SocketSrvTest(unittest.TestCase):
         self.assertFalse(socket.closed)
         self.assertIsNone(self.__consumer_dead_called)
         self.assertIsNone(self.__socket_request_handler_called)
+
+    def test_socket_continue(self):
+        """
+        Test that we call the token handling function when the whole token
+        comes. This test pretends to continue reading where the previous one
+        stopped.
+        """
+        socket = self.__prepare_data(b"en\nanothe")
+        # The data to finish
+        self.__boss._unix_sockets[13] = (socket, b'tok')
+        self.__boss._socket_data(13)
+        self.assertEqual({13: (socket, b'anothe')}, self.__boss._unix_sockets)
+        self.assertFalse(socket.closed)
+        self.assertIsNone(self.__consumer_dead_called)
+        self.assertEqual((b'token', socket),
+                         self.__socket_request_handler_called)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
