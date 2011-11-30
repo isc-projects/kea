@@ -828,6 +828,48 @@ class BoB:
         """
         pass
 
+    def run(self, wakeup_fd):
+        """
+        The main loop, waiting for sockets, commands and dead processes.
+        Runs as long as the runnable is true.
+
+        The wakeup_fd descriptor is the read end of pipe where CHLD signal
+        handler writes.
+        """
+        ccs_fd = self.ccs.get_socket().fileno()
+        while self.runnable:
+            # clean up any processes that exited
+            self.reap_children()
+            next_restart = self.restart_processes()
+            if next_restart is None:
+                wait_time = None
+            else:
+                wait_time = max(next_restart - time.time(), 0)
+
+            # select() can raise EINTR when a signal arrives,
+            # even if they are resumable, so we have to catch
+            # the exception
+            try:
+                (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [],
+                                                      [], wait_time)
+            except select.error as err:
+                if err.args[0] == errno.EINTR:
+                    (rlist, wlist, xlist) = ([], [], [])
+                else:
+                    logger.fatal(BIND10_SELECT_ERROR, err)
+                    break
+
+            for fd in rlist + xlist:
+                if fd == ccs_fd:
+                    try:
+                        self.ccs.check_command()
+                    except isc.cc.session.ProtocolError:
+                        logger.fatal(BIND10_MSGQ_DISAPPEARED)
+                        self.runnable = False
+                        break
+                elif fd == wakeup_fd:
+                    os.read(wakeup_fd, 32)
+
 # global variables, needed for signal handlers
 options = None
 boss_of_bind = None
@@ -1002,42 +1044,8 @@ def main():
     logger.info(BIND10_STARTUP_COMPLETE)
     dump_pid(options.pid_file)
 
-    # In our main loop, we check for dead processes or messages 
-    # on the c-channel.
-    wakeup_fd = wakeup_pipe[0]
-    ccs_fd = boss_of_bind.ccs.get_socket().fileno()
-    while boss_of_bind.runnable:
-        # clean up any processes that exited
-        boss_of_bind.reap_children()
-        next_restart = boss_of_bind.restart_processes()
-        if next_restart is None:
-            wait_time = None
-        else:
-            wait_time = max(next_restart - time.time(), 0)
-
-        # select() can raise EINTR when a signal arrives, 
-        # even if they are resumable, so we have to catch
-        # the exception
-        try:
-            (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [], [], 
-                                                  wait_time)
-        except select.error as err:
-            if err.args[0] == errno.EINTR:
-                (rlist, wlist, xlist) = ([], [], [])
-            else:
-                logger.fatal(BIND10_SELECT_ERROR, err)
-                break
-
-        for fd in rlist + xlist:
-            if fd == ccs_fd:
-                try:
-                    boss_of_bind.ccs.check_command()
-                except isc.cc.session.ProtocolError:
-                    logger.fatal(BIND10_MSGQ_DISAPPEARED)
-                    self.runnable = False
-                    break
-            elif fd == wakeup_fd:
-                os.read(wakeup_fd, 32)
+    # Let it run
+    boss_of_bind.run(wakeup_pipe[0])
 
     # shutdown
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
