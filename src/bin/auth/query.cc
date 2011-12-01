@@ -385,6 +385,7 @@ Query::process() {
                 }
                 break;
             case ZoneFinder::WILDCARD_NXRRSET:
+            case ZoneFinder::WILDCARD_EMPTY:
                 addSOA(*result.zone_finder);
                 if (dnssec_ && db_result.rrset) {
                     addWildcardNxrrsetProof(zfinder,db_result.rrset);
