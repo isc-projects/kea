@@ -68,7 +68,7 @@ public:
     ///             the library path.
     ///
     /// \exception DataSourceLibraryError If the library cannot be found or
-    ///            cannot be loaded.
+    ///            cannot be loaded, or if name is an empty string.
     LibraryContainer(const std::string& name);
 
     /// \brief Destructor

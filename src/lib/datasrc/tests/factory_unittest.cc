@@ -14,6 +14,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <datasrc/datasrc_config.h>
 #include <datasrc/factory.h>
 #include <datasrc/data_source.h>
 #include <datasrc/sqlite3_accessor.h>
@@ -41,6 +42,7 @@ pathtestHelper(const std::string& file, const std::string& expected_error) {
     } catch (const DataSourceLibraryError& dsle) {
         error = dsle.what();
     }
+    ASSERT_LT(expected_error.size(), error.size());
     EXPECT_EQ(expected_error, error.substr(0, expected_error.size()));
 }
 
@@ -65,6 +67,32 @@ TEST(FactoryTest, paths) {
                    "/src/lib/datasrc/.libs/no_such_file.so");
     pathtestHelper("no_such_file", error + builddir +
                    "/src/lib/datasrc/.libs/no_such_file_ds.so");
+
+    // Some tests with '.so' in the name itself
+    pathtestHelper("no_such_file.so.something", error + builddir +
+                   "/src/lib/datasrc/.libs/no_such_file.so.something_ds.so");
+    pathtestHelper("/no_such_file.so.something", error +
+                   "/no_such_file.so.something_ds.so");
+    pathtestHelper("/no_such_file.so.something.so", error +
+                   "/no_such_file.so.something.so");
+    pathtestHelper("/no_such_file.so.so", error +
+                   "/no_such_file.so.so");
+    pathtestHelper("no_such_file.so.something", error + builddir +
+                   "/src/lib/datasrc/.libs/no_such_file.so.something_ds.so");
+
+    // Temporarily unset B10_FROM_BUILD to see that BACKEND_LIBRARY_PATH
+    // is used
+    unsetenv("B10_FROM_BUILD");
+    pathtestHelper("no_such_file.so", error + BACKEND_LIBRARY_PATH +
+                   "no_such_file.so");
+    // Put it back just in case
+    setenv("B10_FROM_BUILD", builddir.c_str(), 1);
+
+    // Test some bad input values
+    ASSERT_THROW(DataSourceClientContainer("", ElementPtr()),
+                 DataSourceLibraryError);
+    ASSERT_THROW(DataSourceClientContainer(".so", ElementPtr()),
+                 DataSourceLibraryError);
 }
 
 TEST(FactoryTest, sqlite3ClientBadConfig) {

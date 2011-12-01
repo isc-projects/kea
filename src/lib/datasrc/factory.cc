@@ -39,8 +39,12 @@ namespace {
 const std::string
 getDataSourceLibFile(const std::string& type) {
     if (type.empty()) {
-        isc_throw(DataSourceError,
+        isc_throw(DataSourceLibraryError,
                   "DataSourceClient container called with empty type value");
+    }
+    if (type == ".so") {
+        isc_throw(DataSourceLibraryError, "DataSourceClient container called"
+                                          "with bad type or file name");
     }
 
     // Type can be either a short name, in which case we need to
