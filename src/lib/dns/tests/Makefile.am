@@ -65,8 +65,8 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 # is one test system where the path for GTEST_LDFLAGS contains
 # an older version of botan, and somehow that version gets
 # linked if we don't
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-run_unittests_LDADD = $(GTEST_LDADD) $(BOTAN_LIBS)
+run_unittests_LDFLAGS = $(BOTAN_LDFLAGS) $(GTEST_LDFLAGS) $(AM_LDFLAGS)
+run_unittests_LDADD = $(BOTAN_LIBS) $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
