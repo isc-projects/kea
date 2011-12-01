@@ -493,6 +493,16 @@ if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
     echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
         BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
 fi
+
+# botan-config script (and the way we call pkg-config) returns -L and -l
+# as one string, but we need them in separate values
+BOTAN_LDFLAGS=
+BOTAN_NEWLIBS=
+for flag in ${BOTAN_LIBS}; do
+    BOTAN_LDFLAGS="${BOTAN_LDFLAGS} `echo $flag | sed -ne '/^\(\-L\)/p'`"
+    BOTAN_LIBS="${BOTAN_LIBS} `echo $flag | sed -ne '/^\(\-l\)/p'`"
+done
+
 # See python_rpath for some info on why we do this
 if test $rpath_available = yes; then
     BOTAN_RPATH=
@@ -511,6 +521,7 @@ AC_SUBST(BOTAN_RPATH)
     LDFLAGS="$BOTAN_RPATH $LDFLAGS"
 fi
 
+AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
 
