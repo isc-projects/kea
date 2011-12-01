@@ -440,8 +440,8 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
         // the results of some searches.)
         const bool not_origin = (i != remove_labels);
 
-        // Look if there's NS or DNAME at this point of the tree, but ignore the
-        // NS RRs at the apex of the zone.
+        // Look if there's NS or DNAME at this point of the tree, but ignore
+        // the NS RRs at the apex of the zone.
         const FoundRRsets found = getRRsets(superdomain.toText(),
                                             DELEGATION_TYPES(), not_origin);
         if (found.first) {
@@ -681,7 +681,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
     // for special cases.
 
     if (hasSubdomains(name.toText())) {
-        // Does the domain have a subdomain (i.e. is is an empty non-terminal)?
+        // Does the domain have a subdomain (i.e. it is an empty non-terminal)?
         // If so, return NXRRSET instead of NXDOMAIN (as although the name does
         // not exist in the zone, it does exist in the DNS tree).
         // pretend something is here as well.
@@ -692,8 +692,8 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
                            ConstRRsetPtr()));
 
     } else if ((options & NO_WILDCARD) == 0) {
-        // It's not an empty non-terminal and wildcard matching is not disabled,
-        // so check for wildcards.
+        // It's not an empty non-terminal and wildcard matching is not
+        // disabled, so check for wildcards.
         const ZoneFinder::FindResult wresult =
             findWildcardMatch(name, type, options, dresult);
         if (wresult.code == NXDOMAIN && dnssec_data) {
@@ -764,7 +764,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     const bool is_origin = (name == getOrigin());
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
-    const FoundRRsets found = getRRsets(name.toText(), final_types, !is_origin);
+    const FoundRRsets found = getRRsets(name.toText(), final_types,
+                                        !is_origin);
 
     // Get iterators for the different types of records we are interested in -
     // CNAME, NS and Wanted types.
@@ -773,10 +774,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     const FoundIterator wti(found.second.find(type));
 
     if (!is_origin && ((options & FIND_GLUE_OK) == 0) &&
-            nsi != found.second.end()) { 
+        nsi != found.second.end()) {
         // A NS RRset was found at the domain we were searching for.  As it is
         // not at the origin of the zone, it is a delegation and indicates that
-        // this this zone is not authoritative for the data. Just return the
+        // this zone is not authoritative for the data. Just return the
         // delegation information.
         return (logAndCreateResult(name, type, DELEGATION, nsi->second,
                                    DATASRC_DATABASE_FOUND_DELEGATION_EXACT));
@@ -807,8 +808,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     } else if (wti != found.second.end()) {
         // Found an RR matching the query, so return it.  (Note that this
         // includes the case where we were explicitly querying for a CNAME and
-        // found it.  It also includes the case where we were querying for an NS
-        // RRset and found it at the apex of the zone.)
+        // found it.  It also includes the case where we were querying for an
+        // NS RRset and found it at the apex of the zone.)
         return (logAndCreateResult(name, type, SUCCESS, wti->second,
                                    DATASRC_DATABASE_FOUND_RRSET));
 
