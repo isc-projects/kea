@@ -19,12 +19,56 @@
 #include "sqlite3_accessor.h"
 #include "memory_datasrc.h"
 
+#include "datasrc_config.h"
+
 #include <datasrc/logger.h>
 
 #include <dlfcn.h>
 
 using namespace isc::data;
 using namespace isc::datasrc;
+
+namespace {
+// This helper function takes the 'type' string as passed to
+// the DataSourceClient container below, and, unless it
+// already specifies a specific loadable .so file, will
+// convert the short-name to the full file.
+// I.e. it will add '_ds.so' (if necessary), and prepend
+// it with an absolute path (if necessary).
+// Returns the resulting string to use with LibraryContainer.
+const std::string
+getDataSourceLibFile(const std::string& type) {
+    if (type.empty()) {
+        isc_throw(DataSourceLibraryError,
+                  "DataSourceClient container called with empty type value");
+    }
+    if (type == ".so") {
+        isc_throw(DataSourceLibraryError, "DataSourceClient container called "
+                                          "with bad type or file name");
+    }
+
+    // Type can be either a short name, in which case we need to
+    // append "_ds.so", or it can be a direct .so library.
+    std::string lib_file = type;
+    const int ext_pos = lib_file.rfind(".so");
+    if (ext_pos == std::string::npos || ext_pos + 3 != lib_file.length()) {
+        lib_file.append("_ds.so");
+    }
+    // And if it is not an absolute path, prepend it with our
+    // loadable backend library path
+    if (type[0] != '/') {
+        // When running from the build tree, we do NOT want
+        // to load the installed loadable library
+        if (getenv("B10_FROM_BUILD") != NULL) {
+            lib_file = std::string(getenv("B10_FROM_BUILD")) +
+                       "/src/lib/datasrc/.libs/" + lib_file;
+        } else {
+            lib_file = isc::datasrc::BACKEND_LIBRARY_PATH + lib_file;
+        }
+    }
+    return (lib_file);
+}
+} // end anonymous namespace
 
 namespace isc {
 namespace datasrc {
@@ -34,7 +78,10 @@ LibraryContainer::LibraryContainer(const std::string& name) {
     // are recognized as such
     ds_lib_ = dlopen(name.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (ds_lib_ == NULL) {
-        isc_throw(DataSourceLibraryError, dlerror());
+        // This may cause the filename to appear twice in the actual
+        // error, but the output of dlerror is implementation-dependent
+        isc_throw(DataSourceLibraryError, "dlopen failed for " << name << 
+                                          ": " << dlerror());
     }
 }
 
@@ -61,7 +108,7 @@ LibraryContainer::getSym(const char* name) {
 
 DataSourceClientContainer::DataSourceClientContainer(const std::string& type,
                                                      ConstElementPtr config)
-: ds_lib_(type + "_ds.so")
+: ds_lib_(getDataSourceLibFile(type))
 {
     // We are casting from a data to a function pointer here
     // Some compilers (rightfully) complain about that, but
