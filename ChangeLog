@@ -1,3 +1,12 @@
+334.	[bug]		jinmei
+	b10-xfrout could potentially create an overflow response message
+	(exceeding the 64KB max) or could create unnecessarily small
+	messages.  The former was actually unlikely to happen due to the
+	effect of name compression, and the latter was marginal and at least
+	shouldn't cause an interoperability problem, but these were still
+	potential problems and were fixed.
+	(Trac #1389, git 3fdce88046bdad392bd89ea656ec4ac3c858ca2f)
+
 333.    [bug]		dvv
 	Solaris needs "-z now" to force non-lazy binding and prevent g++ static
 	initialization code from deadlocking.
