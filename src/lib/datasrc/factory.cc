@@ -24,7 +24,9 @@
 #include <datasrc/logger.h>
 
 #include <dlfcn.h>
+#include <cstdlib>
 
+using namespace std;
 using namespace isc::data;
 using namespace isc::datasrc;
 
