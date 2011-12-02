@@ -18,7 +18,7 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 #include <util/buffer.h>
-#include <dhcp/libdhcp.h>
+#include <dhcp/libdhcp++.h>
 #include "config.h"
 
 using namespace std;
