@@ -226,7 +226,7 @@ class TestCacheCommands(unittest.TestCase):
             'path': '/socket/path'
         }, answer)
         addr = self.__get_token_called[1]
-        self.assertIsInstance(addr, IPAddr)
+        self.assertTrue(isinstance(addr, IPAddr))
         self.assertEqual("0.0.0.0", str(addr))
         self.assertEqual(("UDP", addr, 53, "ANY", "app"),
                          self.__get_token_called)
@@ -247,7 +247,7 @@ class TestCacheCommands(unittest.TestCase):
             if code == 1:
                 # This should be an error message. The exact formatting
                 # is unknown, but we check it is string at last
-                self.assertIsInstance(ranswer, str)
+                self.assertTrue(isinstance(ranswer, str))
         def mod_args(name, value):
             """
             Override a parameter in the args.
@@ -334,7 +334,8 @@ class TestBoB(unittest.TestCase):
         class Creator: pass
         creator = Creator()
         bob.insert_creator(creator)
-        self.assertIsInstance(bob._socket_cache, isc.bind10.socket_cache.Cache)
+        self.assertTrue(isinstance(bob._socket_cache,
+                        isc.bind10.socket_cache.Cache))
         self.assertEqual(creator, bob._socket_cache._creator)
         self.assertRaises(ValueError, bob.insert_creator, creator)
 
