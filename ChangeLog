@@ -1,3 +1,11 @@
+336.	[func] jelte
+	libdns++ (and its python wrapper) now includes a class Serial, for 
+	SOA SERIAL comparison and addition. Operations on instances of this 
+	class follow the specification from RFC 1982. 
+	Rdata::SOA::getSerial() now returns values of this type (and not 
+	uint32_t).
+	(Trac #1278, git 2ae72d76c74f61a67590722c73ebbf631388acbd)
+
 335.	[bug]*		jelte
 	The DataSourceClientContainer class that dynamically loads 
 	datasource backend libraries no longer provides just a .so file name 
