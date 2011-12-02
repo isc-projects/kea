@@ -43,7 +43,7 @@ getDataSourceLibFile(const std::string& type) {
                   "DataSourceClient container called with empty type value");
     }
     if (type == ".so") {
-        isc_throw(DataSourceLibraryError, "DataSourceClient container called"
+        isc_throw(DataSourceLibraryError, "DataSourceClient container called "
                                           "with bad type or file name");
     }
 
