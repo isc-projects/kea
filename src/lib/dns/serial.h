@@ -27,7 +27,7 @@ namespace dns {
 const uint32_t MAX_SERIAL_INCREMENT = 2147483647;
 
 /// Maximum value a serial can have, used in + operator.
-const uint64_t MAX_SERIAL_VALUE = 4294967296u;
+const uint64_t MAX_SERIAL_VALUE = 4294967296ull;
 
 /// \brief This class defines DNS serial numbers and serial arithmetic.
 ///
