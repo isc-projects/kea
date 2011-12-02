@@ -54,6 +54,7 @@ run_unittests_SOURCES += question_unittest.cc
 run_unittests_SOURCES += rrparamregistry_unittest.cc
 run_unittests_SOURCES += masterload_unittest.cc
 run_unittests_SOURCES += message_unittest.cc
+run_unittests_SOURCES += serial_unittest.cc
 run_unittests_SOURCES += tsig_unittest.cc
 run_unittests_SOURCES += tsigerror_unittest.cc
 run_unittests_SOURCES += tsigkey_unittest.cc

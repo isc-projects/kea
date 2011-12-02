@@ -102,6 +102,7 @@ libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
+libdns___la_SOURCES += serial.h serial.cc
 libdns___la_SOURCES += tsig.h tsig.cc
 libdns___la_SOURCES += tsigerror.h tsigerror.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
