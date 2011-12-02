@@ -20,6 +20,7 @@ Here's the cache for sockets from socket creator.
 import os
 import random
 import isc.bind10.sockcreator
+from copy import copy
 
 class SocketError(Exception):
     """
@@ -75,7 +76,7 @@ class Socket:
         """
         os.close(self.fileno)
 
-    def shareCompatible(self, mode, name):
+    def share_compatible(self, mode, name):
         """
         Checks if the given share mode and name is compatible with the ones
         already installed here.
@@ -200,7 +201,7 @@ class Cache:
                 self._sockets[protocol][addr_str] = {}
             self._sockets[protocol][addr_str][port] = socket
         # Now we get the token, check it is compatible
-        if not socket.shareCompatible(share_mode, share_name):
+        if not socket.share_compatible(share_mode, share_name):
             raise ShareError("Cached socket not compatible with mode " +
                              share_mode + " and name " + share_name)
         # Grab yet unused token
@@ -263,19 +264,19 @@ class Cache:
         del socket.active_tokens[token]
         del self._active_tokens[token]
         self._active_apps[app].remove(token)
-        if self._active_apps[app] == set():
+        if len(self._active_apps[app]) == 0:
             del self._active_apps[app]
         self._live_tokens.remove(token)
         # The socket is not used by anything now, so remove it
-        if socket.active_tokens == {} and socket.waiting_tokens == set():
+        if len(socket.active_tokens) == 0 and len(socket.waiting_tokens) == 0:
             addr = str(socket.address)
             port = socket.port
             proto = socket.protocol
             del self._sockets[proto][addr][port]
             # Clean up empty branches of the structure
-            if self._sockets[proto][addr] == {}:
+            if len(self._sockets[proto][addr]) == 0:
                 del self._sockets[proto][addr]
-            if self._sockets[proto] == {}:
+            if len(self._sockets[proto]) == 0:
                 del self._sockets[proto]
 
     def drop_application(self, application):
@@ -291,7 +292,7 @@ class Cache:
             # Get a copy. Who knows how iteration works through sets if we
             # delete from it during the time, so we'll just have our own copy
             # to iterate
-            to_drop = set(self._active_apps[application])
+            to_drop = copy(self._active_apps[application])
         except KeyError:
             raise ValueError("Application " + str(application) +
                              " doesn't hold any sockets")
