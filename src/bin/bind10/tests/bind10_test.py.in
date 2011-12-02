@@ -268,7 +268,9 @@ class MockBob(BoB):
                     'b10-stats-httpd': self.start_stats_httpd,
                     'b10-cmdctl': self.start_cmdctl,
                     'b10-dhcp6': self.start_dhcp6,
-                    'b10-dhcp4': self.start_dhcp4 }
+                    'b10-dhcp4': self.start_dhcp4,
+                    'b10-xfrin': self.start_xfrin,
+                    'b10-xfrout': self.start_xfrout }
         return procmap[name]()
 
     def start_xfrout(self):
@@ -463,8 +465,9 @@ class TestStartStopProcessesBob(unittest.TestCase):
         if start_auth:
             config['b10-auth'] = { 'kind': 'needed', 'special': 'auth' }
             config['b10-xfrout'] = { 'kind': 'dispensable',
-                                     'special': 'xfrout' }
-            config['b10-xfrin'] = { 'kind': 'dispensable', 'special': 'xfrin' }
+                                     'address': 'Xfrout' }
+            config['b10-xfrin'] = { 'kind': 'dispensable',
+                                    'address': 'Xfrin' }
             config['b10-zonemgr'] = { 'kind': 'dispensable',
                                       'address': 'Zonemgr' }
         if start_resolver:

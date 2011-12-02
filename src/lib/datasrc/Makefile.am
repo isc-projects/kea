@@ -7,9 +7,15 @@ AM_CPPFLAGS += $(SQLITE_CFLAGS)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
+pkglibexecdir = $(libexecdir)/@PACKAGE@/backends
 
-lib_LTLIBRARIES = libdatasrc.la sqlite3_ds.la memory_ds.la
+datasrc_config.h: datasrc_config.h.pre
+	$(SED) -e "s|@@PKGLIBEXECDIR@@|$(pkglibexecdir)|" datasrc_config.h.pre >$@
+
+CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
+CLEANFILES += datasrc_config.h
+
+lib_LTLIBRARIES = libdatasrc.la
 libdatasrc_la_SOURCES = data_source.h data_source.cc
 libdatasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
 libdatasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
@@ -24,6 +30,8 @@ libdatasrc_la_SOURCES += client.h iterator.h
 libdatasrc_la_SOURCES += database.h database.cc
 libdatasrc_la_SOURCES += factory.h factory.cc
 nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
+
+pkglibexec_LTLIBRARIES =  sqlite3_ds.la memory_ds.la
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_LDFLAGS = -module
@@ -42,7 +50,7 @@ libdatasrc_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 libdatasrc_la_LIBADD += $(SQLITE_LIBS)
 
-BUILT_SOURCES = datasrc_messages.h datasrc_messages.cc
+BUILT_SOURCES = datasrc_config.h datasrc_messages.h datasrc_messages.cc
 datasrc_messages.h datasrc_messages.cc: Makefile datasrc_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/datasrc/datasrc_messages.mes
 

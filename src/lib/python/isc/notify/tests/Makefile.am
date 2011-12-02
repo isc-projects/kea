@@ -29,5 +29,6 @@ endif
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	TESTDATASRCDIR=$(abs_top_srcdir)/src/lib/python/isc/notify/tests/testdata/ \
+	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
