@@ -1,3 +1,19 @@
+335.	[bug]*		jelte
+	The DataSourceClientContainer class that dynamically loads 
+	datasource backend libraries no longer provides just a .so file name 
+	to its call to dlopen(), but passes it an absolute path. This means 
+	that it is no longer an system implementation detail that depends on 
+	[DY]LD_LIBRARY_PATH which file is chosen, should there be multiple 
+	options (for instance, when test-running a new build while a 
+	different version is installed).
+	These loadable libraries are also no longer installed in the default 
+	library path, but in a subdirectory of the libexec directory of the 
+	target ($prefix/libexec/[version]/backends).
+	This also removes the need to handle b10-xfin and b10-xfrout as 
+	'special' hardcoded components, and they are now started as regular 
+	components as dictated by the configuration of the boss process.
+	(Trac #1292, git 83ce13c2d85068a1bec015361e4ef8c35590a5d0)
+
 334.	[bug]		jinmei
 	b10-xfrout could potentially create an overflow response message
 	(exceeding the 64KB max) or could create unnecessarily small
