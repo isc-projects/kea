@@ -111,7 +111,7 @@ const char* const nsec_wild_txt_next =
     "www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG\n";
 // Wildcard empty
 const char* const empty_txt = "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
-const char* const nsec_empty_txt = 
+const char* const nsec_empty_txt =
     "b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG\n";
 const char* const empty_prev_txt = "t.example.com. 3600 IN A 192.0.2.15\n";
 const char* const nsec_empty_prev_txt =
@@ -196,7 +196,7 @@ public:
             nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt <<
             wild_txt << nsec_wild_txt << cnamewild_txt << nsec_cnamewild_txt <<
             wild_txt_nxrrset << nsec_wild_txt_nxrrset << wild_txt_next <<
-            nsec_wild_txt_next << empty_txt << nsec_empty_txt << 
+            nsec_wild_txt_next << empty_txt << nsec_empty_txt <<
             empty_prev_txt << nsec_empty_prev_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
@@ -415,7 +415,7 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // due to the existence of closer name.
     if ((options & NO_WILDCARD) == 0) {
         const Name wild_suffix(name.split(1));
-        // Unit Tests use those domains for Wildcard test. 
+        // Unit Tests use those domains for Wildcard test.
         if (name.equals(Name("www.wild.example.com"))||
            name.equals(Name("www1.uwild.example.com"))||
            name.equals(Name("a.t.example.com"))) {
@@ -424,19 +424,20 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                 domain = domains_.find(Name("*").concatenate(wild_suffix));
                 // Matched the QNAME
                 if (domain != domains_.end()) {
-                   RRsetStore::const_iterator found_rrset = domain->second.find(type);
+                   RRsetStore::const_iterator found_rrset =
+                       domain->second.find(type);
                    // Matched the QTYPE
                    if(found_rrset != domain->second.end()) {
                     return (FindResult(WILDCARD,
                             substituteWild(*found_rrset->second, name)));
-                   } else { 
+                   } else {
                    // No matched QTYPE, this case is for WILDCARD_NXRRSET
                      found_rrset = domain->second.find(RRType::NSEC());
                      assert(found_rrset != domain->second.end());
                      Name newName = Name("*").concatenate(wild_suffix);
                      return (FindResult(WILDCARD_NXRRSET,
                            substituteWild(*found_rrset->second,newName)));
-                   } 
+                   }
                  } else {
                     // This is empty non terminal name case on wildcard.
                     Name emptyName = Name("*").concatenate(wild_suffix);
@@ -447,7 +448,8 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                             if ((*it).first < emptyName &&
                             (nsec_it = (*it).second.find(RRType::NSEC()))
                             != (*it).second.end()) {
-                                return (FindResult(WILDCARD_EMPTY, (*nsec_it).second));
+                                return (FindResult(WILDCARD_EMPTY,
+                                                   (*nsec_it).second));
                             }
                         }
                 }
@@ -982,7 +984,7 @@ TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
-                   string(nsec_wild_txt) + 
+                   string(nsec_wild_txt) +
                    string("*.wild.example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC")+"\n").c_str(),
                   NULL, mock_finder->getOrigin());
@@ -994,11 +996,11 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
     // one proves NXDOMAIN and the other proves non existence RRSETs of wildcard.
     Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(), response,
           true).process();
-    
+
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
-                   string(nsec_wild_txt_nxrrset) + 
+                   string(nsec_wild_txt_nxrrset) +
                    string("*.uwild.example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC")+"\n" +
                    string(nsec_wild_txt_next) +
@@ -1017,9 +1019,9 @@ TEST_F(QueryTest, wildcardEmptyWithNSEC) {
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
-                   string(nsec_empty_prev_txt) + 
+                   string(nsec_empty_prev_txt) +
                    string("t.example.com. 3600 IN RRSIG ") +
-                   getCommonRRSIGText("NSEC")+"\n" + 
+                   getCommonRRSIGText("NSEC")+"\n" +
                    string(nsec_empty_txt) +
                    string("b.*.t.example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC")+"\n").c_str(),
