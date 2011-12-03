@@ -36,11 +36,9 @@ TEST_RRCLASS_STR = 'IN'
 TEST_DB_FILE = 'db_file'
 TEST_MASTER_IPV4_ADDRESS = '127.0.0.1'
 TEST_MASTER_IPV4_ADDRINFO = (socket.AF_INET, socket.SOCK_STREAM,
-                             socket.IPPROTO_TCP, '',
                              (TEST_MASTER_IPV4_ADDRESS, 53))
 TEST_MASTER_IPV6_ADDRESS = '::1'
 TEST_MASTER_IPV6_ADDRINFO = (socket.AF_INET6, socket.SOCK_STREAM,
-                             socket.IPPROTO_TCP, '',
                              (TEST_MASTER_IPV6_ADDRESS, 53))
 
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
@@ -274,7 +272,7 @@ class MockXfrinConnection(XfrinConnection):
                 self.response_generator()
         return len(data)
 
-    def create_response_data(self, response=True, bad_qid=False,
+    def create_response_data(self, response=True, auth=True, bad_qid=False,
                              rcode=Rcode.NOERROR(),
                              questions=default_questions,
                              answers=default_answers,
@@ -288,6 +286,8 @@ class MockXfrinConnection(XfrinConnection):
         resp.set_rcode(rcode)
         if response:
             resp.set_header_flag(Message.HEADERFLAG_QR)
+        if auth:
+            resp.set_header_flag(Message.HEADERFLAG_AA)
         [resp.add_question(q) for q in questions]
         [resp.add_rrset(Message.SECTION_ANSWER, a) for a in answers]
 
@@ -599,6 +599,7 @@ class TestXfrinConnection(unittest.TestCase):
             'questions': [example_soa_question],
             'bad_qid': False,
             'response': True,
+            'auth': True,
             'rcode': Rcode.NOERROR(),
             'tsig': False,
             'axfr_after_soa': self._create_normal_response_data
@@ -656,6 +657,7 @@ class TestXfrinConnection(unittest.TestCase):
         self.conn.reply_data = self.conn.create_response_data(
             bad_qid=self.soa_response_params['bad_qid'],
             response=self.soa_response_params['response'],
+            auth=self.soa_response_params['auth'],
             rcode=self.soa_response_params['rcode'],
             questions=self.soa_response_params['questions'],
             tsig_ctx=verify_ctx)
@@ -938,6 +940,11 @@ class TestAXFR(TestXfrinConnection):
 
     def test_soacheck_error_code(self):
         self.soa_response_params['rcode'] = Rcode.SERVFAIL()
+        self.conn.response_generator = self._create_soa_response_data
+        self.assertRaises(XfrinException, self.conn._check_soa_serial)
+
+    def test_soacheck_notauth(self):
+        self.soa_response_params['auth'] = False
         self.conn.response_generator = self._create_soa_response_data
         self.assertRaises(XfrinException, self.conn._check_soa_serial)
 
