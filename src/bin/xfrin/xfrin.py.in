@@ -473,10 +473,13 @@ class XfrinConnection(asyncore.dispatcher):
 
     def __init__(self,
                  sock_map, zone_name, rrclass, datasrc_client,
-                 shutdown_event, master_addrinfo, tsig_key=None,
+                 shutdown_event, master_addrinfo, db_file, tsig_key=None,
                  idle_timeout=60):
         '''Constructor of the XfirnConnection class.
 
+        db_file: SQLite3 DB file.  Unforutnately we still need this for
+                 temporary workaround in _get_zone_soa().  This should be
+                 removed when we eliminate the need for the workaround.
         idle_timeout: max idle time for read data from socket.
         datasrc_client: the data source client object used for the XFR session.
                         This will eventually replace db_file completely.
@@ -500,7 +503,9 @@ class XfrinConnection(asyncore.dispatcher):
         self._rrclass = rrclass
 
         # Data source handler
+        self._db_file = db_file
         self._datasrc_client = datasrc_client
+        self._zone_soa = self._get_zone_soa()
 
         self._sock_map = sock_map
         self._soa_rr_count = 0
@@ -524,6 +529,55 @@ class XfrinConnection(asyncore.dispatcher):
         self.create_socket(self._master_addrinfo[0], self._master_addrinfo[1])
         self.setblocking(1)
 
+    def _get_zone_soa(self):
+        '''Retrieve the current SOA RR of the zone to be transferred.
+
+        It will be used for various purposes in subsequent xfr protocol
+        processing.   It is validly possible that the zone is currently
+        empty and therefore doesn't have an SOA, so this method doesn't
+        consider it an error and returns None in such a case.  It may or
+        may not result in failure in the actual processing depending on
+        how the SOA is used.
+
+        When the zone has an SOA RR, this method makes sure that it's
+        valid, i.e., it has exactly one RDATA; if it is not the case
+        this method returns None.
+
+        If the underlying data source doesn't even know the zone, this method
+        tries to provide backward compatible behavior where xfrin is
+        responsible for creating zone in the corresponding DB table.
+        For a longer term we should deprecate this behavior by introducing
+        more generic zone management framework, but at the moment we try
+        to not surprise existing users.  (Note also that the part of
+        providing the compatible behavior uses the old data source API.
+        We'll deprecate this API in a near future, too).
+
+        '''
+        # get the zone finder.  this must be SUCCESS (not even
+        # PARTIALMATCH) because we are specifying the zone origin name.
+        result, finder = self._datasrc_client.find_zone(self._zone_name)
+        if result != DataSourceClient.SUCCESS:
+            # The data source doesn't know the zone.  For now, we provide
+            # backward compatibility and creates a new one ourselves.
+            isc.datasrc.sqlite3_ds.load(self._db_file,
+                                        self._zone_name.to_text(),
+                                        lambda : [])
+            logger.warn(XFRIN_ZONE_CREATED, self.zone_str())
+            # try again
+            result, finder = self._datasrc_client.find_zone(self._zone_name)
+        if result != DataSourceClient.SUCCESS:
+            return None
+        result, soa_rrset = finder.find(self._zone_name, RRType.SOA(),
+                                        None, ZoneFinder.FIND_DEFAULT)
+        if result != ZoneFinder.SUCCESS:
+            logger.info(XFRIN_ZONE_NO_SOA, self.zone_str())
+            return None
+        if soa_rrset.get_rdata_count() != 1:
+            logger.warn(XFRIN_ZONE_MULTIPLE_SOA, self.zone_str(),
+                        soa_rrset.get_rdata_count())
+            return None
+        return soa_rrset
+
     def __set_xfrstate(self, new_state):
         self.__state = new_state
 
@@ -545,37 +599,16 @@ class XfrinConnection(asyncore.dispatcher):
                          str(e))
             return False
 
-    def _get_zone_soa(self):
-        result, finder = self._datasrc_client.find_zone(self._zone_name)
-        if result != DataSourceClient.SUCCESS:
-            raise XfrinException('Zone not found in the given data ' +
-                                 'source: ' + self.zone_str())
-        result, soa_rrset = finder.find(self._zone_name, RRType.SOA(),
-                                        None, ZoneFinder.FIND_DEFAULT)
-        if result != ZoneFinder.SUCCESS:
-            raise XfrinException('SOA RR not found in zone: ' +
-                                 self.zone_str())
-        # Especially for database-based zones, a working zone may be in
-        # a broken state where it has more than one SOA RR.  We proactively
-        # check the condition and abort the xfr attempt if we identify it.
-        if soa_rrset.get_rdata_count() != 1:
-            raise XfrinException('Invalid number of SOA RRs for ' +
-                                 self.zone_str() + ': ' +
-                                 str(soa_rrset.get_rdata_count()))
-        return soa_rrset
-
     def _create_query(self, query_type):
         '''Create an XFR-related query message.
 
-        query_type is either SOA, AXFR or IXFR.  For type IXFR, it searches
-        the associated data source for the current SOA record to include
-        it in the query.  If the corresponding zone or the SOA record
-        cannot be found, it raises an XfrinException exception.  Note that
-        this may not necessarily a broken configuration; for the first attempt
-        of transfer the secondary may not have any boot-strap zone
-        information, in which case IXFR simply won't work.  The xfrin
-        should then fall back to AXFR.  _request_serial is recorded for
-        later use.
+        query_type is either SOA, AXFR or IXFR.  An IXFR query needs the
+        zone's current SOA record.  If it's not known, it raises an
+        XfrinException exception.  Note that this may not necessarily a
+        broken configuration; for the first attempt of transfer the secondary
+        may not have any boot-strap zone information, in which case IXFR
+        simply won't work.  The xfrin should then fall back to AXFR.
+        _request_serial is recorded for later use.
 
         '''
         msg = Message(Message.RENDER)
@@ -586,26 +619,13 @@ class XfrinConnection(asyncore.dispatcher):
         msg.set_rcode(Rcode.NOERROR())
         msg.add_question(Question(self._zone_name, self._rrclass, query_type))
         if query_type == RRType.IXFR():
-            # get the zone finder.  this must be SUCCESS (not even
-            # PARTIALMATCH) because we are specifying the zone origin name.
-            zone_soa_rr = self._get_zone_soa()
-            msg.add_rrset(Message.SECTION_AUTHORITY, zone_soa_rr)
-            self._request_serial = get_soa_serial(zone_soa_rr.get_rdata()[0])
-        else:
-            # For AXFR, we temporarily provide backward compatible behavior
-            # where xfrin is responsible for creating zone in the corresponding
-            # DB table.  Note that the code below uses the old data source
-            # API and assumes SQLite3 in an ugly manner.  We'll have to
-            # develop a better way of managing zones in a generic way and
-            # eliminate the code like the one here.
-            try:
-                self._get_zone_soa()
-            except XfrinException:
-                def empty_rr_generator():
-                    return []
-                isc.datasrc.sqlite3_ds.load(self._db_file,
-                                            self._zone_name.to_text(),
-                                            empty_rr_generator)
+            if self._zone_soa is None:
+                # (incremental) IXFR doesn't work without known SOA
+                raise XfrinException('Failed to create IXFR query due to no ' +
+                                     'SOA for ' + self.zone_str())
+            msg.add_rrset(Message.SECTION_AUTHORITY, self._zone_soa)
+            self._request_serial = \
+                get_soa_serial(self._zone_soa.get_rdata()[0])
         return msg
 
     def _send_data(self, data):
@@ -840,11 +860,9 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
         while retry:
             retry = False
             conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
-                              shutdown_event, master_addrinfo, tsig_key)
+                              shutdown_event, master_addrinfo, db_file,
+                              tsig_key)
             conn.init_socket()
-            # XXX: We still need _db_file for temporary workaround in _create_query().
-            # This should be removed when we eliminate the need for the workaround.
-            conn._db_file = db_file
             ret = XFRIN_FAIL
             if conn.connect_to_master():
                 ret = conn.do_xfrin(check_soa, request_type)
