@@ -224,7 +224,7 @@ class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
                  shutdown_event, master_addr, tsig_key=None):
         super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
-                         shutdown_event, master_addr)
+                         shutdown_event, master_addr, TEST_DB_FILE)
         self.query_data = b''
         self.reply_data = b''
         self.force_time_out = False
@@ -688,6 +688,15 @@ class TestXfrinConnection(unittest.TestCase):
         rrset.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS, nsname))
         return rrset
 
+    def _set_test_zone(self, zone_name):
+        '''Set the zone name for transfer to the specified one.
+
+        It also make sure that the SOA RR (if exist) is correctly (re)set.
+
+        '''
+        self.conn._zone_name = zone_name
+        self.conn._zone_soa = self.conn._get_zone_soa()
+
 class TestAXFR(TestXfrinConnection):
     def setUp(self):
         super().setUp()
@@ -788,19 +797,20 @@ class TestAXFR(TestXfrinConnection):
         # In these cases _create_query() will fail to find a valid SOA RR to
         # insert in the IXFR query, and should raise an exception.
 
-        self.conn._zone_name = Name('no-such-zone.example')
+        self._set_test_zone(Name('no-such-zone.example'))
         self.assertRaises(XfrinException, self.conn._create_query,
                           RRType.IXFR())
 
-        self.conn._zone_name = Name('partial-match-zone.example')
+        self._set_test_zone(Name('partial-match-zone.example'))
         self.assertRaises(XfrinException, self.conn._create_query,
                           RRType.IXFR())
 
-        self.conn._zone_name = Name('no-soa.example')
+        self._set_test_zone(Name('no-soa.example'))
         self.assertRaises(XfrinException, self.conn._create_query,
                           RRType.IXFR())
 
-        self.conn._zone_name = Name('dup-soa.example')
+        self._set_test_zone(Name('dup-soa.example'))
+        self.conn._zone_soa = self.conn._get_zone_soa()
         self.assertRaises(XfrinException, self.conn._create_query,
                           RRType.IXFR())
 
@@ -1273,7 +1283,6 @@ class TestIXFRResponse(TestXfrinConnection):
         self.conn._query_id = self.conn.qid = 1035
         self.conn._request_serial = isc.dns.Serial(1230)
         self.conn._request_type = RRType.IXFR()
-        self._zone_name = TEST_ZONE_NAME
         self.conn._datasrc_client = MockDataSourceClient()
         XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
 
@@ -1580,7 +1589,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         self.assertEqual(1230, self.get_zone_serial().get_value())
 
     def test_do_ixfrin_nozone_sqlite3(self):
-        self.conn._zone_name = Name('nosuchzone.example')
+        self._set_test_zone(Name('nosuchzone.example'))
         self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR()))
         # This should fail even before starting state transition
         self.assertEqual(None, self.conn.get_xfrstate())
@@ -1666,7 +1675,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
                                     RRType.AXFR())],
                 answers=[soa_rrset, self._create_ns(), soa_rrset])
         self.conn.response_generator = create_response
-        self.conn._zone_name = Name('example.com')
+        self._set_test_zone(Name('example.com'))
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.AXFR()))
         self.assertEqual(type(XfrinAXFREnd()),
                          type(self.conn.get_xfrstate()))
