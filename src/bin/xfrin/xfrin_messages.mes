@@ -50,7 +50,7 @@ The XFR transfer for the given zone has failed due to a problem outside
 of the xfrin module.  Possible reasons are a broken DNS message or failure
 in database connection.  The error is shown in the log message.
 
-% XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 failed: %3
+% XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 with %3 failed: %4
 The XFR transfer for the given zone has failed due to a protocol error.
 The error is shown in the log message.
 

@@ -618,14 +618,19 @@ class XfrinConnection(asyncore.dispatcher):
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
         msg.add_question(Question(self._zone_name, self._rrclass, query_type))
+
+        # Remember our serial, if known
+        self._request_serial = get_soa_serial(self._zone_soa.get_rdata()[0]) \
+            if self._zone_soa is not None else None
+
+        # Set the authority section with our SOA for IXFR
         if query_type == RRType.IXFR():
             if self._zone_soa is None:
                 # (incremental) IXFR doesn't work without known SOA
                 raise XfrinException('Failed to create IXFR query due to no ' +
                                      'SOA for ' + self.zone_str())
             msg.add_rrset(Message.SECTION_AUTHORITY, self._zone_soa)
-            self._request_serial = \
-                get_soa_serial(self._zone_soa.get_rdata()[0])
+
         return msg
 
     def _send_data(self, data):
@@ -707,9 +712,11 @@ class XfrinConnection(asyncore.dispatcher):
         # TSIG related checks, including an unexpected signed response
         self._check_response_tsig(msg, soa_response)
 
-        # perform some minimal level validation.  It's an open issue how
-        # strict we should be (see the comment in _check_response_header())
+        # Validate the header.  Unlike AXFR/IXFR, we should be more strict
+        # for SOA queries and check the AA flag, too.
         self._check_response_header(msg)
+        if not msg.get_header_flag(Message.HEADERFLAG_AA):
+            raise XfrinException('non-authoritative answer to SOA query')
 
         # TODO, need select soa record from data source then compare the two
         # serial, current just return OK, since this function hasn't been used
@@ -739,7 +746,8 @@ class XfrinConnection(asyncore.dispatcher):
 
         except (XfrinException, XfrinProtocolError) as e:
             logger.error(XFRIN_XFR_TRANSFER_FAILURE, request_str,
-                         self.zone_str(), str(e))
+                         self.zone_str(),
+                         format_addrinfo(self._master_addrinfo), str(e))
             ret = XFRIN_FAIL
         except Exception as e:
             # Catching all possible exceptions like this is generally not a
@@ -828,8 +836,8 @@ class XfrinConnection(asyncore.dispatcher):
         return False
 
 def __process_xfrin(server, zone_name, rrclass, db_file,
-                  shutdown_event, master_addrinfo, check_soa, tsig_key,
-                  request_type, conn_class):
+                    shutdown_event, master_addrinfo, check_soa, tsig_key,
+                    request_type, conn_class):
     conn = None
     exception = None
     ret = XFRIN_FAIL
