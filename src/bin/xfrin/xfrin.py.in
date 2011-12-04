@@ -75,15 +75,21 @@ DEFAULT_MASTER_PORT = 53
 DEFAULT_ZONE_CLASS = RRClass.IN()
 
 __version__ = 'BIND10'
-# define xfrin rcode
-XFRIN_OK = 0
-XFRIN_FAIL = 1
+
+# Internal result codes of an xfr session
+XFRIN_OK = 0                    # normal success
+XFRIN_FAIL = 1                  # general failure (internal/external)
 
 class XfrinException(Exception):
     pass
 
 class XfrinProtocolError(Exception):
     '''An exception raised for errors encountered in xfrin protocol handling.
+    '''
+    pass
+
+class XfrinZoneUptodate(Exception):
+    '''TBD
     '''
     pass
 
@@ -709,14 +715,27 @@ class XfrinConnection(asyncore.dispatcher):
         msg = Message(Message.PARSE)
         msg.from_wire(soa_response)
 
-        # TSIG related checks, including an unexpected signed response
-        self._check_response_tsig(msg, soa_response)
-
-        # Validate the header.  Unlike AXFR/IXFR, we should be more strict
+        # Validate the message.  Unlike AXFR/IXFR, we should be more strict
         # for SOA queries and check the AA flag, too.
+        self._check_response_tsig(msg, soa_response)
         self._check_response_header(msg)
         if not msg.get_header_flag(Message.HEADERFLAG_AA):
             raise XfrinException('non-authoritative answer to SOA query')
+
+        # Examine the answer section
+        soa = None
+        for rrset in msg.get_section(Message.SECTION_ANSWER):
+            if rrset.get_type() == RRType.SOA():
+                soa = rrset
+        primary_serial = get_soa_serial(soa.get_rdata()[0])
+        if (self._request_serial is not None) and \
+                self._request_serial >= primary_serial:
+            if self._request_serial != primary_serial:
+                logger.info(XFRIN_ZONE_SERIAL_AHEAD, primary_serial,
+                            self.zone_str(),
+                            format_addrinfo(self._master_addrinfo),
+                            self._request_serial)
+            raise XfrinZoneUptodate
 
         # TODO, need select soa record from data source then compare the two
         # serial, current just return OK, since this function hasn't been used
@@ -744,6 +763,11 @@ class XfrinConnection(asyncore.dispatcher):
                 logger.info(XFRIN_XFR_TRANSFER_SUCCESS, request_str,
                             self.zone_str())
 
+        except XfrinZoneUptodate:
+            # Eventually we'll probably have to treat this case as a trigger
+            # of trying another primary server, etc, but for now We treat it
+            # as "success".
+            pass
         except (XfrinException, XfrinProtocolError) as e:
             logger.error(XFRIN_XFR_TRANSFER_FAILURE, request_str,
                          self.zone_str(),
