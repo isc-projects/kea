@@ -949,7 +949,7 @@ class TestAXFR(TestXfrinConnection):
     def test_soacheck_notauth(self):
         self.soa_response_params['auth'] = False
         self.conn.response_generator = self._create_soa_response_data
-        self.assertRaises(XfrinException, self.conn._check_soa_serial)
+        self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
 
     def test_soacheck_uptodate(self):
         # Primary's SOA serial is identical the local serial
@@ -969,6 +969,32 @@ class TestAXFR(TestXfrinConnection):
         self.soa_response_params['answers'] = [create_soa(0xffffffff)]
         self.conn.response_generator = self._create_soa_response_data
         self.assertRaises(XfrinZoneUptodate, self.conn._check_soa_serial)
+
+    def test_soacheck_question_empty(self):
+        self.conn.response_generator = self._create_soa_response_data
+        self.soa_response_params['questions'] = []
+        self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
+
+    def test_soacheck_question_name_mismatch(self):
+        self.conn.response_generator = self._create_soa_response_data
+        self.soa_response_params['questions'] = [Question(Name('example.org'),
+                                                          TEST_RRCLASS,
+                                                          RRType.SOA())]
+        self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
+
+    def test_soacheck_question_class_mismatch(self):
+        self.conn.response_generator = self._create_soa_response_data
+        self.soa_response_params['questions'] = [Question(TEST_ZONE_NAME,
+                                                          RRClass.CH(),
+                                                          RRType.SOA())]
+        self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
+
+    def test_soacheck_question_type_mismatch(self):
+        self.conn.response_generator = self._create_soa_response_data
+        self.soa_response_params['questions'] = [Question(TEST_ZONE_NAME,
+                                                          TEST_RRCLASS,
+                                                          RRType.AAAA())]
+        self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
 
     def test_soacheck_with_tsig(self):
         # Use a mock tsig context emulating a validly signed response
