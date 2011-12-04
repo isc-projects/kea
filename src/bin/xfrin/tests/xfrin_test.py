@@ -980,6 +980,17 @@ class TestAXFR(TestXfrinConnection):
         self.conn.response_generator = self._create_soa_response_data
         self.assertRaises(XfrinZoneUptodate, self.conn._check_soa_serial)
 
+    def test_soacheck_newzone(self):
+        # Primary's SOA is 'old', but this secondary doesn't know anything
+        # about the zone yet, so it should accept it.
+        def response_generator():
+            # _request_serial is set in _check_soa_serial().  Reset it here.
+            self.conn._request_serial = None
+            self._create_soa_response_data()
+        self.soa_response_params['answers'] = [begin_soa_rrset]
+        self.conn.response_generator = response_generator
+        self.assertEqual(XFRIN_OK, self.conn._check_soa_serial())
+
     def test_soacheck_question_empty(self):
         self.conn.response_generator = self._create_soa_response_data
         self.soa_response_params['questions'] = []
