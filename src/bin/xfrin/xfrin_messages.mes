@@ -45,6 +45,16 @@ and tries to continue processing as if the zone were empty.  This
 means subsequent AXFR can succeed and possibly replace the zone with
 valid content, but an IXFR attempt will fail.
 
+% XFRIN_ZONE_SERIAL_AHEAD Serial number (%1) for %2 received from master %3 < ours (%4)
+The response to an SOA query prior to xfr indicated that the zone's
+SOA serial at the primary server is smaller than that of the xfrin
+client.  This is not necessarily an error especially if that
+particular primary server is another secondary server which hasn't got
+the latest version of the zone.  But if the primary server is known to
+be the real source of the zone, some unexpected inconsistency may have
+happened, and you may want to take a closer look.  In this case xfrin
+doesn't perform subsequent zone transfer.
+
 % XFRIN_XFR_OTHER_FAILURE %1 transfer of zone %2 failed: %3
 The XFR transfer for the given zone has failed due to a problem outside
 of the xfrin module.  Possible reasons are a broken DNS message or failure
