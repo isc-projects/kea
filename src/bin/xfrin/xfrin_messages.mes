@@ -163,6 +163,16 @@ daemon will now shut down.
 An uncaught exception was raised while running the xfrin daemon. The
 exception message is printed in the log message.
 
+% XFRIN_IXFR_UPTODATE IXFR requested serial for %1 is %2, master has %3, not updating
+The first SOA record in an IXFR response indicates the zone's serial
+at the primary server is not newer than the client's.  This is
+basically unexpected event because normally the client first checks
+the SOA serial by an SOA query, but can still happen if the transfer
+is manually invoked or (although unlikely) there is a rapid change at
+the primary server between the SOA and IXFR queries.  The client
+implementation confirms the whole response is this single SOA, and
+aborts the transfer just like a successful case.
+
 % XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
 In an attempt of IXFR processing, the begenning SOA of the first difference
 (following the initial SOA that specified the final SOA for all the
