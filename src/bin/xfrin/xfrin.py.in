@@ -24,6 +24,7 @@ import struct
 import threading
 import socket
 import random
+from functools import reduce
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 from isc.notify import notify_out
@@ -690,7 +691,8 @@ class XfrinConnection(asyncore.dispatcher):
         if self._tsig_ctx is not None:
             tsig_error = self._tsig_ctx.verify(tsig_record, response_data)
             if tsig_error != TSIGError.NOERROR:
-                raise XfrinException('TSIG verify fail: %s' % str(tsig_error))
+                raise XfrinProtocolError('TSIG verify fail: %s' %
+                                         str(tsig_error))
         elif tsig_record is not None:
             # If the response includes a TSIG while we didn't sign the query,
             # we treat it as an error.  RFC doesn't say anything about this
@@ -699,7 +701,7 @@ class XfrinConnection(asyncore.dispatcher):
             # implementation would return such a response, and since this is
             # part of security mechanism, it's probably better to be more
             # strict.
-            raise XfrinException('Unexpected TSIG in response')
+            raise XfrinProtocolError('Unexpected TSIG in response')
 
     def __parse_soa_response(self, msg, response_data):
         '''Parse a response to SOA query and extranct the SOA from ansser.
@@ -730,12 +732,34 @@ class XfrinConnection(asyncore.dispatcher):
             raise XfrinProtocolError('Questions mismatch to ' +
                                      'SOA query: ' + str(resp_question))
 
-        # Examine the answer section
+        # Look into the answer section for SOA
         soa = None
-        for rrset in msg.get_section(Message.SECTION_ANSWER):
-            if rrset.get_type() == RRType.SOA():
-                soa = rrset
+        for rr in msg.get_section(Message.SECTION_ANSWER):
+            if rr.get_type() == RRType.SOA():
+                if soa is not None:
+                    raise XfrinProtocolError('SOA response had multiple SOAs')
+                soa = rr
+            # There should not be a CNAME record at top of zone.
+            if rr.get_type() == RRType.CNAME():
+                raise XfrinProtocolError('SOA query resulted in CNAME')
 
+        # If SOA is not found, try to figure out the reason then report it.
+        if soa is None:
+            # See if we have any SOA records in the authority section.
+            for rr in msg.get_section(Message.SECTION_AUTHORITY):
+                if rr.get_type() == RRType.NS():
+                    raise XfrinProtocolError('SOA query resulted in referral')
+                if rr.get_type() == RRType.SOA():
+                    raise XfrinProtocolError('SOA query resulted in NODATA')
+            raise XfrinProtocolError('SOA query resulted in no SOA at all')
+
+        # Check if the SOA is really what we asked for
+        if soa.get_name() != self._zone_name or \
+                soa.get_class() != self._rrclass:
+            raise XfrinProtocolError("SOA response doesn't match query: " +
+                                     str(soa))
+
+        # All okay, return it
         return soa
 
 
@@ -751,14 +775,14 @@ class XfrinConnection(asyncore.dispatcher):
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
         msg = Message(Message.PARSE)
-        msg.from_wire(soa_response)
+        msg.from_wire(soa_response, Message.PRESERVE_ORDER)
 
         # Validate/parse the rest of the response, and extract the SOA
         # from the answer section
         soa = self.__parse_soa_response(msg, soa_response)
 
         primary_serial = get_soa_serial(soa.get_rdata()[0])
-        if (self._request_serial is not None) and \
+        if self._request_serial is not None and \
                 self._request_serial >= primary_serial:
             if self._request_serial != primary_serial:
                 logger.info(XFRIN_ZONE_SERIAL_AHEAD, primary_serial,
@@ -798,7 +822,12 @@ class XfrinConnection(asyncore.dispatcher):
             # of trying another primary server, etc, but for now We treat it
             # as "success".
             pass
-        except (XfrinException, XfrinProtocolError) as e:
+        except XfrinProtocolError as e:
+            logger.info(XFRIN_XFR_TRANSFER_PROTOCOL_ERROR, request_str,
+                        self.zone_str(),
+                        format_addrinfo(self._master_addrinfo), str(e))
+            ret = XFRIN_FAIL
+        except XfrinException as e:
             logger.error(XFRIN_XFR_TRANSFER_FAILURE, request_str,
                          self.zone_str(),
                          format_addrinfo(self._master_addrinfo), str(e))
@@ -836,13 +865,14 @@ class XfrinConnection(asyncore.dispatcher):
 
         msg_rcode = msg.get_rcode()
         if msg_rcode != Rcode.NOERROR():
-            raise XfrinException('error response: %s' % msg_rcode.to_text())
+            raise XfrinProtocolError('error response: %s' %
+                                     msg_rcode.to_text())
 
         if not msg.get_header_flag(Message.HEADERFLAG_QR):
-            raise XfrinException('response is not a response')
+            raise XfrinProtocolError('response is not a response')
 
         if msg.get_qid() != self._query_id:
-            raise XfrinException('bad query id')
+            raise XfrinProtocolError('bad query id')
 
     def _check_response_status(self, msg):
         '''Check validation of xfr response. '''
@@ -850,7 +880,7 @@ class XfrinConnection(asyncore.dispatcher):
         self._check_response_header(msg)
 
         if msg.get_rr_count(Message.SECTION_QUESTION) > 1:
-            raise XfrinException('query section count greater than 1')
+            raise XfrinProtocolError('query section count greater than 1')
 
     def _handle_xfrin_responses(self):
         read_next_msg = True
