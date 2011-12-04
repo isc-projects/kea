@@ -701,6 +701,44 @@ class XfrinConnection(asyncore.dispatcher):
             # strict.
             raise XfrinException('Unexpected TSIG in response')
 
+    def __parse_soa_response(self, msg, response_data):
+        '''Parse a response to SOA query and extranct the SOA from ansser.
+
+        This is a subroutine of _check_soa_serial().  This method also
+        validates message, and rejects bogus responses with XfrinProtocolError.
+
+        If evenrything is okay, it returns the SOA RR from the answer section
+        of the response.
+
+        '''
+        # Check TSIG integerity and validate the header.  Unlike AXFR/IXFR,
+        # we should be more strict for SOA queries and check the AA flag, too.
+        self._check_response_tsig(msg, response_data)
+        self._check_response_header(msg)
+        if not msg.get_header_flag(Message.HEADERFLAG_AA):
+            raise XfrinProtocolError('non-authoritative answer to SOA query')
+
+        # Validate the question section
+        n_question = msg.get_rr_count(Message.SECTION_QUESTION)
+        if n_question != 1:
+            raise XfrinProtocolError('Invalid number of questions to ' +
+                                     'SOA query (' + str(n_question) + ')')
+        resp_question = msg.get_question()[0]
+        if resp_question.get_name() != self._zone_name or \
+                resp_question.get_class() != self._rrclass or \
+                resp_question.get_type() != RRType.SOA():
+            raise XfrinProtocolError('Questions mismatch to ' +
+                                     'SOA query: ' + str(resp_question))
+
+        # Examine the answer section
+        soa = None
+        for rrset in msg.get_section(Message.SECTION_ANSWER):
+            if rrset.get_type() == RRType.SOA():
+                soa = rrset
+
+        return soa
+
+
     def _check_soa_serial(self):
         ''' Compare the soa serial, if soa serial in master is less than
         the soa serial in local, Finish xfrin.
@@ -715,18 +753,10 @@ class XfrinConnection(asyncore.dispatcher):
         msg = Message(Message.PARSE)
         msg.from_wire(soa_response)
 
-        # Validate the message.  Unlike AXFR/IXFR, we should be more strict
-        # for SOA queries and check the AA flag, too.
-        self._check_response_tsig(msg, soa_response)
-        self._check_response_header(msg)
-        if not msg.get_header_flag(Message.HEADERFLAG_AA):
-            raise XfrinException('non-authoritative answer to SOA query')
+        # Validate/parse the rest of the response, and extract the SOA
+        # from the answer section
+        soa = self.__parse_soa_response(msg, soa_response)
 
-        # Examine the answer section
-        soa = None
-        for rrset in msg.get_section(Message.SECTION_ANSWER):
-            if rrset.get_type() == RRType.SOA():
-                soa = rrset
         primary_serial = get_soa_serial(soa.get_rdata()[0])
         if (self._request_serial is not None) and \
                 self._request_serial >= primary_serial:
