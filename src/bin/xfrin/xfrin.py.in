@@ -188,12 +188,12 @@ class XfrinState:
                              (AXFR or
             (recv SOA)        AXFR-style IXFR)  (SOA, add)
     InitialSOA------->FirstData------------->AXFR--------->AXFREnd
-                          |                  |  ^         (post xfr
-                          |                  |  |        checks, then
-                          |                  +--+        commit)
-                          |            (non SOA, add)
-                          |
-                          |                     (non SOA, delete)
+         |                |                  |  ^         (post xfr
+         |(IXFR &&        |                  |  |        checks, then
+         | recv SOA       |                  +--+        commit)
+         | not new)       |            (non SOA, add)
+         V                |
+    IXFRUptodate          |                     (non SOA, delete)
                (pure IXFR,|                           +-------+
             keep handling)|             (Delete SOA)  V       |
                           + ->IXFRDeleteSOA------>IXFRDelete--+
@@ -307,13 +307,14 @@ class XfrinInitialSOA(XfrinState):
                                      + rr.get_type().to_text() + ' received)')
         conn._end_serial = get_soa_serial(rr.get_rdata()[0])
 
-        # FIXME: we need to check the serial is actually greater than ours.
-        # To do so, however, we need to implement serial number arithmetic.
-        # Although it wouldn't be a big task, we'll leave it for a separate
-        # task for now.  (Always performing xfr could be inefficient, but
-        # shouldn't do any harm otherwise)
+        if conn._request_type == RRType.IXFR() and \
+                conn._end_serial <= conn._request_serial:
+            logger.info(XFRIN_IXFR_UPTODATE, conn.zone_str(),
+                        conn._request_serial, conn._end_serial)
+            self.set_xfrstate(conn, XfrinIXFRUptodate())
+        else:
+            self.set_xfrstate(conn, XfrinFirstData())
 
-        self.set_xfrstate(conn, XfrinFirstData())
         return True
 
 class XfrinFirstData(XfrinState):
@@ -436,6 +437,14 @@ class XfrinIXFREnd(XfrinState):
 
         '''
         return False
+
+class XfrinIXFRUptodate(XfrinState):
+    def handle_rr(self, conn, rr):
+        raise XfrinProtocolError('Extra data after single IXFR response ' +
+                                 rr.to_text())
+
+    def finish_message(self, conn):
+        raise XfrinZoneUptodate
 
 class XfrinAXFR(XfrinState):
     def handle_rr(self, conn, rr):
