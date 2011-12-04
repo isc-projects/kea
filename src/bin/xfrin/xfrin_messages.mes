@@ -60,8 +60,18 @@ The XFR transfer for the given zone has failed due to a problem outside
 of the xfrin module.  Possible reasons are a broken DNS message or failure
 in database connection.  The error is shown in the log message.
 
+% XFRIN_XFR_TRANSFER_PROTOCOL_ERROR %1 transfer of zone %2 with %3 failed: %4
+The XFR transfer for the given zone has failed due to a protocol
+error, such as an unexpected response from the primary server.  The
+error is shown in the log message.  It may be because the primary
+server implementation is broken or (although less likely) there was
+some attack attempt, but it can also happen due to configuration
+mismatch such as the remote server does not have authority for the
+zone any more but the local configuration hasn't been updated.  So it
+is recommended to check the primary server configuration.
+
 % XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 with %3 failed: %4
-The XFR transfer for the given zone has failed due to a protocol error.
+The XFR transfer for the given zone has failed due to an internal error.
 The error is shown in the log message.
 
 % XFRIN_XFR_TRANSFER_FALLBACK falling back from IXFR to AXFR for %1
