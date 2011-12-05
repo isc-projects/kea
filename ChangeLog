@@ -4,7 +4,7 @@
 	added.
 	(Trac #1350, git cc20ff993da1ddb1c6e8a98370438b45a2be9e0a)
 
-336.	[func] jelte
+336.	[func]		jelte
 	libdns++ (and its python wrapper) now includes a class Serial, for 
 	SOA SERIAL comparison and addition. Operations on instances of this 
 	class follow the specification from RFC 1982. 
