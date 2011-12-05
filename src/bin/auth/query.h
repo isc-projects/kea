@@ -91,7 +91,7 @@ private:
     /// query is to be found.
     /// \param nsec The RRset (NSEC RR) which proved that there is no matched 
     /// <QNAME,QTTYPE>.
-    void addWildcardNxrrsetProof(isc::datasrc::ZoneFinder& finder,
+    void addWildcardNXRRSETProof(isc::datasrc::ZoneFinder& finder,
                                  isc::dns::ConstRRsetPtr nsec);
     
     /// \brief Look up additional data (i.e., address records for the names
