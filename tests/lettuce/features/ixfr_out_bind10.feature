@@ -7,6 +7,10 @@ Feature: IXFR out
         Given I have bind10 running with configuration ixfr-out/testset1-config.db
         The SOA serial for example.com should be 22
         
+        # These tests use a zone with just a few records, the first serial
+        # is 2, and it is incremented in steps of 2, up to serial 22.
+        # Each updates either deletes or adds the www.example.com A record.
+        
         # A lot of these tests test specific UDP behaviour.
         # Since we do not support that at this time, these are commented out
         # Once we implement it, we can uncomment them. The tests themselves
@@ -20,7 +24,7 @@ Feature: IXFR out
         #The transfer result should have 1 RRs
         #The full result of the last transfer should be
         #"""
-        #example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         #"""
 
         #
@@ -30,7 +34,7 @@ Feature: IXFR out
         #The transfer result should have 1 RRs
         #The full result of the last transfer should be
         #"""
-        #example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         #"""
 
         #
@@ -41,11 +45,11 @@ Feature: IXFR out
         The transfer result should have 5 RRs
         The full result of the last transfer should be
         """
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 20 28800 7200 604800 18000
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         www.example.com. 3600 IN A 192.0.2.1
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         """
 
         #
@@ -55,14 +59,14 @@ Feature: IXFR out
         The transfer result should have 8 RRs
         The full result of the last transfer should be
         """
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 18 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 18 28800 7200 604800 18000
         www.example.com. 3600 IN A 192.0.2.1
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 20 28800 7200 604800 18000
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 20 28800 7200 604800 18000
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         www.example.com. 3600 IN A 192.0.2.1
-        example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         """
 
         #
@@ -72,7 +76,7 @@ Feature: IXFR out
         #The transfer result should have 1 RRs
         #The full result of the last transfer should be
         #"""
-        #example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         #"""
 
         #
@@ -82,7 +86,7 @@ Feature: IXFR out
         #The transfer result should have 1 RRs
         #The full result of the last transfer should be
         #"""
-        #example.com. 3600 IN SOA ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         #"""
 
         #
@@ -92,18 +96,18 @@ Feature: IXFR out
         The transfer result should have 14 RRs
         The full result of the last transfer should be
         """
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 14 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 14 28800 7200 604800 18000
         www.example.com.        3600    IN      A       192.0.2.1
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 16 28800 7200 604800 18000
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 16 28800 7200 604800 18000
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 18 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 16 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 16 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 18 28800 7200 604800 18000
         www.example.com.        3600    IN      A       192.0.2.1
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 18 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 18 28800 7200 604800 18000
         www.example.com.        3600    IN      A       192.0.2.1
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 20 28800 7200 604800 18000
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 20 28800 7200 604800 18000
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         www.example.com.        3600    IN      A       192.0.2.1
-        example.com.            3600    IN      SOA     ns.example.com. jelte.example.com. 22 28800 7200 604800 18000
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 22 28800 7200 604800 18000
         """
