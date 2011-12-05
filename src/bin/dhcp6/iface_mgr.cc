@@ -80,14 +80,18 @@ IfaceMgr::Iface::getPlainMac() const {
 }
 
 bool IfaceMgr::Iface::delAddress(const isc::asiolink::IOAddress& addr) {
-    for (AddressCollection::iterator a = addrs_.begin();
-         a!=addrs_.end(); ++a) {
-        if (*a==addr) {
-            addrs_.erase(a);
-            return (true);
-        }
+
+    // Let's delete all addresses that match. It really shouldn't matter
+    // if we delete first or all, as the OS should allow to add a single
+    // address to an interface only once. If OS allows multiple instances
+    // of the same address added, we are in deep problems anyway.
+    size_t size = addrs_.size();
+    addrs_.erase(remove(addrs_.begin(), addrs_.end(), addr), addrs_.end());
+    if (addrs_.size() < size) {
+        return (true);
+    } else {
+        return (false);
     }
-    return (false);
 }
 
 bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
@@ -131,6 +135,18 @@ IfaceMgr::IfaceMgr()
 }
 
 IfaceMgr::~IfaceMgr() {
+
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+
+        for (SocketCollection::iterator sock = iface->sockets_.begin();
+             sock != iface->sockets_.end(); ++sock) {
+            cout << "Closing socket " << sock->sockfd_ << endl;
+            close(sock->sockfd_);
+        }
+        iface->sockets_.clear();
+    }
+
     // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;
 }
@@ -310,8 +326,7 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
     cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
         addr.toText() << "/port=" << port << endl;
 
-    SocketInfo info(sock, addr, port);
-    iface.addSocket(info);
+    iface.addSocket(SocketInfo(sock, addr, port));
 
     return (sock);
 }
@@ -390,8 +405,7 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
     cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
         addr.toText() << "/port=" << port << endl;
 
-    SocketInfo info(sock, addr, port);
-    iface.addSocket(info);
+    iface.addSocket(SocketInfo(sock, addr, port));
 
     return (sock);
 }
@@ -495,13 +509,13 @@ bool
 IfaceMgr::send(boost::shared_ptr<Pkt4>& )
 {
     /// TODO: Implement this (ticket #1240)
-    isc_throw(Unexpected, "Pkt4 send not implemented yet.");
+    isc_throw(NotImplemented, "Pkt4 send not implemented yet.");
 }
 
 
 boost::shared_ptr<Pkt4>
 IfaceMgr::receive4() {
-    isc_throw(Unexpected, "Pkt4 reception not implemented yet.");
+    isc_throw(NotImplemented, "Pkt4 reception not implemented yet.");
 
     // TODO: To be implemented (ticket #1239)
     return (boost::shared_ptr<Pkt4>()); // NULL
