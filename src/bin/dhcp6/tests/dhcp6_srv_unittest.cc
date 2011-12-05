@@ -34,7 +34,7 @@ namespace test {
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal fields
 public:
-    NakedDhcpv6Srv() { }
+    NakedDhcpv6Srv():Dhcpv6Srv(DHCP6_SERVER_PORT + 10000) { }
 
     boost::shared_ptr<Pkt6>
     processSolicit(boost::shared_ptr<Pkt6>& request) {
@@ -58,7 +58,7 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // fe80::1234 link-local address on eth0 interface. Obviously
     // an attempt to bind this socket will fail.
     Dhcpv6Srv * srv = 0;
-    EXPECT_NO_THROW( {
+    ASSERT_NO_THROW( {
         // open an unpriviledged port
         srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
     });
@@ -70,7 +70,7 @@ TEST_F(Dhcpv6SrvTest, basic) {
 
 TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     NakedDhcpv6Srv * srv = 0;
-    EXPECT_NO_THROW( srv = new NakedDhcpv6Srv(); );
+    ASSERT_NO_THROW( srv = new NakedDhcpv6Srv(); );
 
     // a dummy content for client-id
     boost::shared_array<uint8_t> clntDuid(new uint8_t[32]);
@@ -137,7 +137,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     EXPECT_EQ(tmp->getType(), srv->getServerID()->getType() );
     ASSERT_EQ(tmp->len(),  srv->getServerID()->len() );
 
-    EXPECT_EQ(tmp->getData(), srv->getServerID()->getData());
+    EXPECT_TRUE(tmp->getData() == srv->getServerID()->getData());
 
     // more checks to be implemented
     delete srv;
