@@ -17,6 +17,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
+#include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
 #include <iostream>
@@ -41,7 +42,7 @@ public:
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID.
-    Dhcpv4Srv();
+    Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     ~Dhcpv4Srv();
