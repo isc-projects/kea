@@ -46,6 +46,12 @@ public:
         isc::asiolink::IOAddress addr_; /// bound address
         uint16_t port_;   /// socket port
         uint16_t family_; /// IPv4 or IPv6
+
+        /// @brief SocketInfo constructor.
+        ///
+        /// @param sockfd socket descriptor
+        /// @param addr an address the socket is bound to
+        /// @param port a port the socket is bound to
         SocketInfo(uint16_t sockfd, const isc::asiolink::IOAddress& addr,
                    uint16_t port)
         :sockfd_(sockfd), addr_(addr), port_(port), family_(addr.getFamily()) { }
@@ -59,7 +65,8 @@ public:
     /// Iface structure represents network interface with all useful
     /// information, like name, interface index, MAC address and
     /// list of assigned addresses
-    struct Iface {
+    class Iface {
+    public:
         /// @brief Iface constructor.
         ///
         /// Creates Iface object that represents network interface.
@@ -222,24 +229,31 @@ public:
     void
     printIfaces(std::ostream& out = std::cout);
 
-    /// @brief Sends a packet.
+    /// @brief Sends an IPv6 packet.
     ///
-    /// Sends a packet. All parameters for actual transmission are specified in
+    /// Sends an IPv6 packet. All parameters for actual transmission are specified in
     /// Pkt6 structure itself. That includes destination address, src/dst port
     /// and interface over which data will be sent.
     ///
     /// @param pkt packet to be sent
     ///
     /// @return true if sending was successful
-    bool
-    send(boost::shared_ptr<Pkt6>& pkt);
+    bool send(boost::shared_ptr<Pkt6>& pkt);
 
-    bool
-    send(boost::shared_ptr<Pkt4>& pkt);
-
-    /// @brief Tries to receive packet over open sockets.
+    /// @brief Sends an IPv4 packet.
     ///
-    /// Attempts to receive a single packet of any of the open sockets.
+    /// Sends an IPv4 packet. All parameters for actual transmission are specified
+    /// in Pkt4 structure itself. That includes destination address, src/dst
+    /// port and interface over which data will be sent.
+    ///
+    /// @param pkt a packet to be sent
+    ///
+    /// @return true if sending was successful
+    bool send(boost::shared_ptr<Pkt4>& pkt);
+
+    /// @brief Tries to receive IPv6 packet over open IPv6 sockets.
+    ///
+    /// Attempts to receive a single IPv6 packet of any of the open IPv6 sockets.
     /// If reception is successful and all information about its sender
     /// are obtained, Pkt6 object is created and returned.
     ///
@@ -250,9 +264,19 @@ public:
     /// @return Pkt6 object representing received packet (or NULL)
     boost::shared_ptr<Pkt6> receive6();
 
+    /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
+    ///
+    /// Attempts to receive a single IPv4 packet of any of the open IPv4 sockets.
+    /// If reception is successful and all information about its sender
+    /// are obtained, Pkt4 object is created and returned.
+    ///
+    /// TODO Start using select() and add timeout to be able
+    /// to not wait infinitely, but rather do something useful
+    /// (e.g. remove expired leases)
+    ///
+    /// @return Pkt4 object representing received packet (or NULL)
     boost::shared_ptr<Pkt4> receive4();
 
-    ///
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
     /// Specific type of socket (UDP/IPv4 or UDP/IPv6) depends on passed addr
@@ -262,13 +286,20 @@ public:
     /// @param addr address to be bound.
     /// @param port UDP port.
     ///
+    /// Method will throw if socket creation, socket binding or multicast
+    /// join fails.
+    ///
     /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful. -1 otherwise.
+    /// group join were all successful.
     uint16_t openSocket(const std::string& ifname,
                         const isc::asiolink::IOAddress& addr, int port);
 
-    /// Opens sockets on detected interfaces.
-    void openSockets();
+    /// Opens IPv6 sockets on detected interfaces.
+    ///
+    /// Will throw exception if socket creation fails.
+    ///
+    /// @param port specifies port number (usually DHCP6_SERVER_PORT)
+    void openSockets(uint16_t port);
 
     // don't use private, we need derived classes in tests
 protected:
@@ -276,15 +307,40 @@ protected:
     /// @brief Protected constructor.
     ///
     /// Protected constructor. This is a singleton class. We don't want
-    /// anyone to create instances of IfaceMgr. Use instance() method
+    /// anyone to create instances of IfaceMgr. Use instance() method instead.
     IfaceMgr();
 
     ~IfaceMgr();
 
+    /// @brief Opens IPv4 socket.
+    ///
+    /// Please do not use this method directly. Use openSocket instead.
+    ///
+    /// This method may throw exception if socket creation fails.
+    ///
+    /// @param iface reference to interface structure.
+    /// @param addr an address the created socket should be bound to
+    /// @param port a port that created socket should be bound to
+    ///
+    /// @return socket descriptor
     uint16_t openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
 
+    /// @brief Opens IPv6 socket.
+    ///
+    /// Please do not use this method directly. Use openSocket instead.
+    ///
+    /// This method may throw exception if socket creation fails.
+    ///
+    /// @param iface reference to interface structure.
+    /// @param addr an address the created socket should be bound to
+    /// @param port a port that created socket should be bound to
+    ///
+    /// @return socket descriptor
     uint16_t openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
 
+    /// @brief Adds an interface to list of known interfaces.
+    ///
+    /// @param iface reference to Iface object.
     void addInterface(const Iface& iface) {
         ifaces_.push_back(iface);
     }

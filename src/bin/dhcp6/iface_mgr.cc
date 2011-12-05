@@ -176,21 +176,20 @@ IfaceMgr::detectIfaces() {
 }
 
 void
-IfaceMgr::openSockets() {
+IfaceMgr::openSockets(uint16_t port) {
     int sock1, sock2;
 
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
 
         AddressCollection addrs = iface->getAddresses();
 
-        for (AddressCollection::iterator addr= addrs.begin();
+        for (AddressCollection::iterator addr = addrs.begin();
              addr != addrs.end();
              ++addr) {
 
-            sock1 = openSocket(iface->getName(), *addr, DHCP6_SERVER_PORT);
-            if (sock1<0) {
+            sock1 = openSocket(iface->getName(), *addr, port);
+            if (sock1 < 0) {
                 isc_throw(Unexpected, "Failed to open unicast socket on "
                           << " interface " << iface->getFullName());
             }
@@ -205,8 +204,8 @@ IfaceMgr::openSockets() {
             // this doesn't work too well on NetBSD
             sock2 = openSocket(iface->getName(),
                                IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                               DHCP6_SERVER_PORT);
-            if (sock2<0) {
+                               port);
+            if (sock2 < 0) {
                 isc_throw(Unexpected, "Failed to open multicast socket on "
                           << " interface " << iface->getFullName());
                 iface->delSocket(sock1); // delete previously opened socket
@@ -217,16 +216,14 @@ IfaceMgr::openSockets() {
 
 void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
-    for (IfaceCollection::const_iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
+    for (IfaceCollection::const_iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
         out << "Detected interface " << iface->getFullName() << endl;
         out << "  " << iface->getAddresses().size() << " addr(s):" << endl;
         const AddressCollection addrs = iface->getAddresses();
 
         for (AddressCollection::const_iterator addr = addrs.begin();
-             addr != addrs.end();
-             ++addr) {
+             addr != addrs.end(); ++addr) {
             out << "  " << addr->toText() << endl;
         }
         out << "  mac: " << iface->getPlainMac() << endl;
@@ -235,11 +232,11 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
 
 IfaceMgr::Iface*
 IfaceMgr::getIface(int ifindex) {
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
-        if (iface->getIndex() == ifindex)
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+        if (iface->getIndex() == ifindex) {
             return (&(*iface));
+        }
     }
 
     return (NULL); // not found
@@ -247,11 +244,11 @@ IfaceMgr::getIface(int ifindex) {
 
 IfaceMgr::Iface*
 IfaceMgr::getIface(const std::string& ifname) {
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
-        if (iface->getName() == ifname)
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+        if (iface->getName() == ifname) {
             return (&(*iface));
+        }
     }
 
     return (NULL); // not found
@@ -300,8 +297,8 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
                   << "/port=" << port);
     }
 
-    // if there is no support for IP_PKTINFO, we are really out of luck
-    // it will be difficult to undersand, where this packet came from
+    // If there is no support for IP_PKTINFO, we are really out of luck.
+    // It will be difficult to understand, where this packet came from.
 #if defined(IP_PKTINFO)
     int flag = 1;
     if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &flag, sizeof(flag)) != 0) {
@@ -346,8 +343,8 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
         isc_throw(Unexpected, "Failed to create UDP6 socket.");
     }
 
-    /* Set the REUSEADDR option so that we don't fail to start if
-       we're being restarted. */
+    // Set the REUSEADDR option so that we don't fail to start if
+    // we're being restarted.
     int flag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
@@ -361,14 +358,14 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
                   << "/port=" << port);
     }
 #ifdef IPV6_RECVPKTINFO
-    /* RFC3542 - a new way */
+    // RFC3542 - a new way
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
                    &flag, sizeof(flag)) != 0) {
         close(sock);
         isc_throw(Unexpected, "setsockopt: IPV6_RECVPKTINFO failed.");
     }
 #else
-    /* RFC2292 - an old way */
+    // RFC2292 - an old way
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO,
                    &flag, sizeof(flag)) != 0) {
         close(sock);
@@ -440,14 +437,10 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
 
     memset(&control_buf_[0], 0, control_buf_len_);
 
-    /*
-     * Initialize our message header structure.
-     */
+    // Initialize our message header structure.
     memset(&m, 0, sizeof(m));
 
-    /*
-     * Set the target address we're sending to.
-     */
+    // Set the target address we're sending to.
     sockaddr_in6 to;
     memset(&to, 0, sizeof(to));
     to.sin6_family = AF_INET6;
@@ -460,24 +453,20 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     m.msg_name = &to;
     m.msg_namelen = sizeof(to);
 
-    /*
-     * Set the data buffer we're sending. (Using this wacky
-     * "scatter-gather" stuff... we only have a single chunk
-     * of data to send, so we declare a single vector entry.)
-     */
+    // Set the data buffer we're sending. (Using this wacky
+    // "scatter-gather" stuff... we only have a single chunk
+    // of data to send, so we declare a single vector entry.)
     v.iov_base = (char *) &pkt->data_[0];
     v.iov_len = pkt->data_len_;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-    /*
-     * Setting the interface is a bit more involved.
-     *
-     * We have to create a "control message", and set that to
-     * define the IPv6 packet information. We could set the
-     * source address if we wanted, but we can safely let the
-     * kernel decide what that should be.
-     */
+    // Setting the interface is a bit more involved.
+    //
+    // We have to create a "control message", and set that to
+    // define the IPv6 packet information. We could set the
+    // source address if we wanted, but we can safely let the
+    // kernel decide what that should be.
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
     cmsg = CMSG_FIRSTHDR(&m);
@@ -549,35 +538,27 @@ IfaceMgr::receive6() {
     memset(&from, 0, sizeof(from));
     memset(&to_addr, 0, sizeof(to_addr));
 
-    /*
-     * Initialize our message header structure.
-     */
+    // Initialize our message header structure.
     memset(&m, 0, sizeof(m));
 
-    /*
-     * Point so we can get the from address.
-     */
+    // Point so we can get the from address.
     m.msg_name = &from;
     m.msg_namelen = sizeof(from);
 
-    /*
-     * Set the data buffer we're receiving. (Using this wacky
-     * "scatter-gather" stuff... but we that doesn't really make
-     * sense for us, so we use a single vector entry.)
-     */
+    // Set the data buffer we're receiving. (Using this wacky
+    // "scatter-gather" stuff... but we that doesn't really make
+    // sense for us, so we use a single vector entry.)
     v.iov_base = (void*)&pkt->data_[0];
     v.iov_len = pkt->data_len_;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-    /*
-     * Getting the interface is a bit more involved.
-     *
-     * We set up some space for a "control message". We have
-     * previously asked the kernel to give us packet
-     * information (when we initialized the interface), so we
-     * should get the destination address from that.
-     */
+    // Getting the interface is a bit more involved.
+    //
+    // We set up some space for a "control message". We have
+    // previously asked the kernel to give us packet
+    // information (when we initialized the interface), so we
+    // should get the destination address from that.
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
 
@@ -611,14 +592,12 @@ IfaceMgr::receive6() {
     result = recvmsg(candidate->sockfd_, &m, 0);
 
     if (result >= 0) {
-        /*
-         * If we did read successfully, then we need to loop
-         * through the control messages we received and
-         * find the one with our destination address.
-         *
-         * We also keep a flag to see if we found it. If we
-         * didn't, then we consider this to be an error.
-         */
+        // If we did read successfully, then we need to loop
+        // through the control messages we received and
+        // find the one with our destination address.
+        //
+        // We also keep a flag to see if we found it. If we
+        // didn't, then we consider this to be an error.
         int found_pktinfo = 0;
         cmsg = CMSG_FIRSTHDR(&m);
         while (cmsg != NULL) {
