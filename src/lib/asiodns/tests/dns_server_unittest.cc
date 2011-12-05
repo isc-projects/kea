@@ -23,6 +23,8 @@
 #include <asiodns/dns_answer.h>
 #include <asiodns/dns_lookup.h>
 #include <string>
+#include <cstring>
+#include <cerrno>
 #include <csignal>
 #include <unistd.h> //for alarm
 
@@ -30,6 +32,8 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
+#include <sys/types.h>
+#include <sys/socket.h>
 
 /// The following tests focus on stop interface for udp and
 /// tcp server, there are lots of things can be shared to test
@@ -305,30 +309,14 @@ class TCPClient : public SimpleClient {
     uint16_t data_to_send_len_;
 };
 
-
-
 // \brief provide the context which including two client and
 // two server, udp client will only communicate with udp server, same for tcp client
-class DNSServerTest : public::testing::Test {
+//
+// This is only the active part of the test. We run the test case twice, once for each
+// type of initialization (once when giving it the address and port, once when giving
+// the file descriptor), to ensure it works both ways exactly the same.
+class DNSServerTestBase : public::testing::Test {
     protected:
-        void SetUp() {
-            ip::address server_address = ip::address::from_string(server_ip);
-            checker_ = new DummyChecker();
-            lookup_ = new DummyLookup();
-            answer_ = new SimpleAnswer();
-            udp_server_ = new UDPServer(service, server_address, server_port,
-                    checker_, lookup_, answer_);
-            udp_client_ = new UDPClient(service,
-                    ip::udp::endpoint(server_address,
-                        server_port));
-            tcp_server_ = new TCPServer(service, server_address, server_port,
-                    checker_, lookup_, answer_);
-            tcp_client_ = new TCPClient(service,
-                    ip::tcp::endpoint(server_address,
-                        server_port));
-        }
-
-
         void TearDown() {
             udp_server_->stop();
             tcp_server_->stop();
@@ -341,7 +329,6 @@ class DNSServerTest : public::testing::Test {
             delete tcp_client_;
         }
 
-
         void testStopServerByStopper(DNSServer* server, SimpleClient* client,
                 ServerStopper* stopper)
         {
@@ -353,7 +340,8 @@ class DNSServerTest : public::testing::Test {
             // Since thread hasn't been introduced into the tool box, using signal
             // to make sure run function will eventually return even server stop
             // failed
-            void (*prev_handler)(int) = std::signal(SIGALRM, DNSServerTest::stopIOService);
+            void (*prev_handler)(int) =
+                std::signal(SIGALRM, DNSServerTestBase::stopIOService);
             alarm(io_service_time_out);
             service.run();
             service.reset();
@@ -362,6 +350,18 @@ class DNSServerTest : public::testing::Test {
             std::signal(SIGALRM, prev_handler);
         }
 
+        void commonSetup() {
+            server_address_ = ip::address::from_string(server_ip);
+            checker_ = new DummyChecker();
+            lookup_ = new DummyLookup();
+            answer_ = new SimpleAnswer();
+            udp_client_ = new UDPClient(service,
+                                        ip::udp::endpoint(server_address_,
+                                                          server_port));
+            tcp_client_ = new TCPClient(service,
+                                        ip::tcp::endpoint(server_address_,
+                                                          server_port));
+        }
 
         static void stopIOService(int _no_use_parameter) {
             io_service_is_time_out = true;
@@ -379,6 +379,7 @@ class DNSServerTest : public::testing::Test {
         UDPClient*    udp_client_;
         TCPClient*    tcp_client_;
         TCPServer*    tcp_server_;
+        ip::address server_address_;
 
         // To access them in signal handle function, the following
         // variables have to be static.
@@ -386,47 +387,114 @@ class DNSServerTest : public::testing::Test {
         static bool io_service_is_time_out;
 };
 
-bool DNSServerTest::io_service_is_time_out = false;
-asio::io_service DNSServerTest::service;
+// Initialization with name and port
+class AddrPortInit : public DNSServerTestBase {
+protected:
+    void SetUp() {
+        commonSetup();
+        udp_server_ = new UDPServer(service, server_address_, server_port,
+                                    checker_, lookup_, answer_);
+        tcp_server_ = new TCPServer(service, server_address_, server_port,
+                                    checker_, lookup_, answer_);
+    }
+};
+
+// Initialization by the file descriptor
+class FdInit : public DNSServerTestBase {
+private:
+    // Opens the file descriptor for us
+    // It uses the low-level C api, as it seems to be the easiest way to get
+    // a raw file descriptor. It also is what the socket creator does and this
+    // API is aimed to it.
+    int getFd(int type) {
+        int result(socket(AF_INET, type, 0));
+        if (result == -1) {
+            return (-1);
+        }
+        int on(1);
+        if (setsockopt(result, SOL_SOCKET, SO_REUSEADDR, &on,
+                       sizeof on) == -1) {
+            return (-1);
+        }
+        struct sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(server_port);
+        if (inet_pton(AF_INET, server_ip.c_str(), &addr.sin_addr.s_addr) != 1) {
+            return (-1);
+        }
+        if (bind(result, reinterpret_cast<const sockaddr*>(&addr),
+                 sizeof addr) == -1) {
+            return (-1);
+        }
+        return (result);
+    }
+protected:
+    void SetUp() {
+        commonSetup();
+        int fdUDP(getFd(SOCK_DGRAM));
+        ASSERT_NE(-1, fdUDP) << strerror(errno);
+        udp_server_ = new UDPServer(service, fdUDP, false, checker_, lookup_,
+                                    answer_);
+        int fdTCP(getFd(SOCK_STREAM));
+        ASSERT_NE(-1, fdTCP) << strerror(errno);
+        tcp_server_ = new TCPServer(service, fdTCP, false, checker_, lookup_,
+                                    answer_);
+    }
+};
+
+// This makes it the template as gtest wants it.
+template<class Parent>
+class DNSServerTest : public Parent { };
+
+typedef ::testing::Types<AddrPortInit, FdInit> ServerTypes;
+TYPED_TEST_CASE(DNSServerTest, ServerTypes);
+
+bool DNSServerTestBase::io_service_is_time_out = false;
+asio::io_service DNSServerTestBase::service;
 
 // Test whether server stopped successfully after client get response
 // client will send query and start to wait for response, once client
 // get response, udp server will be stopped, the io service won't quit
 // if udp server doesn't stop successfully.
-TEST_F(DNSServerTest, stopUDPServerAfterOneQuery) {
-    testStopServerByStopper(udp_server_, udp_client_, udp_client_);
-    EXPECT_EQ(query_message, udp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopUDPServerAfterOneQuery) {
+    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+                                  this->udp_client_);
+    EXPECT_EQ(query_message, this->udp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 // Test whether udp server stopped successfully before server start to serve
-TEST_F(DNSServerTest, stopUDPServerBeforeItStartServing) {
-    udp_server_->stop();
-    testStopServerByStopper(udp_server_, udp_client_, udp_client_);
-    EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopUDPServerBeforeItStartServing) {
+    this->udp_server_->stop();
+    testStopServerByStopper(this->udp_server_, this->udp_client_,
+                            this->udp_client_);
+    EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 
 // Test whether udp server stopped successfully during message check
-TEST_F(DNSServerTest, stopUDPServerDuringMessageCheck) {
-    testStopServerByStopper(udp_server_, udp_client_, checker_);
-    EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopUDPServerDuringMessageCheck) {
+    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+                                  this->checker_);
+    EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 // Test whether udp server stopped successfully during query lookup
-TEST_F(DNSServerTest, stopUDPServerDuringQueryLookup) {
-    testStopServerByStopper(udp_server_, udp_client_, lookup_);
-    EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopUDPServerDuringQueryLookup) {
+    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+                                  this->lookup_);
+    EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 // Test whether udp server stopped successfully during composing answer
-TEST_F(DNSServerTest, stopUDPServerDuringPrepareAnswer) {
-    testStopServerByStopper(udp_server_, udp_client_, answer_);
-    EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopUDPServerDuringPrepareAnswer) {
+    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+                                  this->answer_);
+    EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 static void stopServerManyTimes(DNSServer *server, unsigned int times) {
@@ -437,67 +505,74 @@ static void stopServerManyTimes(DNSServer *server, unsigned int times) {
 
 // Test whether udp server stop interface can be invoked several times without
 // throw any exception
-TEST_F(DNSServerTest, stopUDPServeMoreThanOnce) {
+TYPED_TEST(DNSServerTest, stopUDPServeMoreThanOnce) {
     ASSERT_NO_THROW({
         boost::function<void()> stop_server_3_times
-            = boost::bind(stopServerManyTimes, udp_server_, 3);
-        udp_client_->setGetFeedbackCallback(stop_server_3_times);
-        testStopServerByStopper(udp_server_, udp_client_, udp_client_);
-        EXPECT_EQ(query_message, udp_client_->getReceivedData());
+            = boost::bind(stopServerManyTimes, this->udp_server_, 3);
+        this->udp_client_->setGetFeedbackCallback(stop_server_3_times);
+        this->testStopServerByStopper(this->udp_server_,
+                                      this->udp_client_, this->udp_client_);
+        EXPECT_EQ(query_message, this->udp_client_->getReceivedData());
     });
-    EXPECT_TRUE(serverStopSucceed());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 
-TEST_F(DNSServerTest, stopTCPServerAfterOneQuery) {
-    testStopServerByStopper(tcp_server_, tcp_client_, tcp_client_);
-    EXPECT_EQ(query_message, tcp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopTCPServerAfterOneQuery) {
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ(query_message, this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 
 // Test whether tcp server stopped successfully before server start to serve
-TEST_F(DNSServerTest, stopTCPServerBeforeItStartServing) {
-    tcp_server_->stop();
-    testStopServerByStopper(tcp_server_, tcp_client_, tcp_client_);
-    EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopTCPServerBeforeItStartServing) {
+    this->tcp_server_->stop();
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 
 // Test whether tcp server stopped successfully during message check
-TEST_F(DNSServerTest, stopTCPServerDuringMessageCheck) {
-    testStopServerByStopper(tcp_server_, tcp_client_, checker_);
-    EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopTCPServerDuringMessageCheck) {
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->checker_);
+    EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 // Test whether tcp server stopped successfully during query lookup
-TEST_F(DNSServerTest, stopTCPServerDuringQueryLookup) {
-    testStopServerByStopper(tcp_server_, tcp_client_, lookup_);
-    EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopTCPServerDuringQueryLookup) {
+    testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                            this->lookup_);
+    EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 // Test whether tcp server stopped successfully during composing answer
-TEST_F(DNSServerTest, stopTCPServerDuringPrepareAnswer) {
-    testStopServerByStopper(tcp_server_, tcp_client_, answer_);
-    EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
-    EXPECT_TRUE(serverStopSucceed());
+TYPED_TEST(DNSServerTest, stopTCPServerDuringPrepareAnswer) {
+    testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                            this->answer_);
+    EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 
 // Test whether tcp server stop interface can be invoked several times without
 // throw any exception
-TEST_F(DNSServerTest, stopTCPServeMoreThanOnce) {
+TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
     ASSERT_NO_THROW({
         boost::function<void()> stop_server_3_times
-            = boost::bind(stopServerManyTimes, tcp_server_, 3);
-        tcp_client_->setGetFeedbackCallback(stop_server_3_times);
-        testStopServerByStopper(tcp_server_, tcp_client_, tcp_client_);
-        EXPECT_EQ(query_message, tcp_client_->getReceivedData());
+            = boost::bind(stopServerManyTimes, this->tcp_server_, 3);
+        this->tcp_client_->setGetFeedbackCallback(stop_server_3_times);
+        this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                      this->tcp_client_);
+        EXPECT_EQ(query_message, this->tcp_client_->getReceivedData());
     });
-    EXPECT_TRUE(serverStopSucceed());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 }
