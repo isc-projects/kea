@@ -448,12 +448,12 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                             if ((*it).first < emptyName &&
                             (nsec_it = (*it).second.find(RRType::NSEC()))
                             != (*it).second.end()) {
-                                return (FindResult(WILDCARD_EMPTY,
+                                return (FindResult(WILDCARD_NXRRSET,
                                                    (*nsec_it).second));
                             }
                         }
                 }
-                return (FindResult(WILDCARD_EMPTY,RRsetPtr()));
+                return (FindResult(WILDCARD_NXRRSET,RRsetPtr()));
              }
         }
         const Name cnamewild_suffix("cnamewild.example.com");

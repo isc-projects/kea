@@ -136,8 +136,7 @@ public:
         DNAME,    ///< The search encounters and returns a DNAME RR
         WILDCARD, ///< Succes by wildcard match, for DNSSEC
         WILDCARD_CNAME, ///< CNAME on wildcard, search returns CNAME, for DNSSEC
-        WILDCARD_NXRRSET, ///< NXRRSET on wildcard, for DNSSEC
-        WILDCARD_EMPTY    ///< Empty non terminal on wildcard,for DNSSEC
+        WILDCARD_NXRRSET ///< NXRRSET on wildcard, for DNSSEC
     };
 
     /// A helper structure to represent the search result of \c find().
