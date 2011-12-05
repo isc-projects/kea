@@ -44,28 +44,31 @@ class TransferResult(object):
            is passed as is since for IXFR and AXFR there can be very
            different options"""
         self.records = []
-        
+
+        # Technically, using a pipe here can fail; since we don't expect
+        # large output right now, this works, but should we get a test
+        # where we do have a lot of output, this could block, and we will
+        # need to read the output in a different way.
         dig_process = subprocess.Popen(args, 1, None, None, subprocess.PIPE,
                                        None)
         result = dig_process.wait()
         assert result == 0
-        print("[XX]")
-        print("[XX]")
-        print("[XX]")
-        print("[XX]")
         for l in dig_process.stdout:
             line = l.strip()
             if len(line) > 0 and line[0] != ';':
                 self.records.append(line)
-                print(line)
-        print("[XX]")
-        print("[XX]")
-        print("[XX]")
-        print("[XX]")
 
 @step('An AXFR transfer of ([\w.]+)(?: from ([^:]+)(?::([0-9]+))?)?')
 def perform_axfr(step, zone_name, address, port):
-    """Perform an AXFR transfer, and store the result in world.transfer_result
+    """
+    Perform an AXFR transfer, and store the result as an instance of
+    TransferResult in world.transfer_result.
+
+    Step definition:
+    An AXFR transfer of <zone_name> [from <address>:<port>]
+
+    Address defaults to 127.0.0.1
+    Port defaults to 47806
     """
     if address is None:
         address = "127.0.0.1"
@@ -76,7 +79,16 @@ def perform_axfr(step, zone_name, address, port):
 
 @step('An IXFR transfer of ([\w.]+) (\d+)(?: from ([^:]+)(?::([0-9]+))?)?(?: over (tcp|udp))?')
 def perform_ixfr(step, zone_name, serial, address, port, protocol):
-    """Perform an AXFR transfer, and store the result in world.transfer_result
+    """
+    Perform an AXFR transfer, and store the result as an instance of
+    TransferResult in world.transfer_result.
+
+    Step definition:
+    An IXFR transfer of <zone_name> <serial> [from <address>:port] [over <tcp|udp>]
+
+    Address defaults to 127.0.0.1
+    Port defaults to 47806
+    If either tcp or udp is specified, only this protocol will be used.
     """
     if address is None:
         address = "127.0.0.1"
@@ -93,17 +105,34 @@ def perform_ixfr(step, zone_name, serial, address, port, protocol):
 
 @step('transfer result should have (\d+) rrs?')
 def check_transfer_result_count(step, number_of_rrs):
-    """Check the number of rrs in the transfer result object created by
-       the AXFR transfer or IXFR transfer step."""
+    """
+    Check the number of rrs in the transfer result object created by
+    the AXFR transfer or IXFR transfer step.
+
+    Step definition:
+    transfer result should have <number> rr[s]
+
+    Fails if the number of RRs is not equal to number
+    """
     assert int(number_of_rrs) == len(world.transfer_result.records),\
         "Got " + str(len(world.transfer_result.records)) +\
         " records, expected " + str(number_of_rrs)
 
 @step('full result of the last transfer should be')
-def check_full_transfer_result(step, ):
+def check_full_transfer_result(step):
+    """
+    Check the complete output from the last transfer call.
+
+    Step definition:
+    full result of the last transfer should be <multiline value>
+
+    Whitespace is normalized in both the multiline value and the
+    output, but the order of the output is not.
+    Fails if there is any difference between the two. Prints
+    full output and expected value upon failure.
+    """
     records_string = "\n".join(world.transfer_result.records)
     records_string = re.sub("[ \t]+", " ", records_string)
     expect = re.sub("[ \t]+", " ", step.multiline)
     assert records_string.strip() == expect.strip(),\
         "Got:\n'" + records_string + "'\nExpected:\n'" + expect + "'"
-
