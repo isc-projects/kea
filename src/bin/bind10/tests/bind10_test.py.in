@@ -237,7 +237,7 @@ class TestCacheCommands(unittest.TestCase):
         """
         def check_code(code, args):
             """
-            Pass the args there and check if it returs success or not.
+            Pass the args there and check if it returns success or not.
 
             The rest is not tested, as it is already checked in the
             test_get_socket_ok.
@@ -246,7 +246,7 @@ class TestCacheCommands(unittest.TestCase):
             self.assertEqual(code, rcode)
             if code == 1:
                 # This should be an error message. The exact formatting
-                # is unknown, but we check it is string at last
+                # is unknown, but we check it is string at least
                 self.assertTrue(isinstance(ranswer, str))
         def mod_args(name, value):
             """

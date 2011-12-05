@@ -844,7 +844,7 @@ class BoB:
                 share_mode = args['share_mode']
                 if share_mode not in ['ANY', 'SAMEAPP', 'NO']:
                     raise ValueError("Share mode must be one of ANY, SAMEAPP" +
-                                     "or NO")
+                                     " or NO")
                 share_name = args['share_name']
             except KeyError as ke:
                 return \
@@ -865,7 +865,7 @@ class BoB:
         """
         This function handles a token that comes over a unix_domain socket.
         The function looks into the _socket_cache and sends the socket
-        identified by the tocken back over the unix_socket.
+        identified by the token back over the unix_socket.
         """
         try:
             fd = self._socket_cache.get_socket(token, unix_socket.fileno())
