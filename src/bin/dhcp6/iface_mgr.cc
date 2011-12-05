@@ -134,8 +134,7 @@ IfaceMgr::IfaceMgr()
     }
 }
 
-IfaceMgr::~IfaceMgr() {
-
+void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
 
@@ -146,6 +145,11 @@ IfaceMgr::~IfaceMgr() {
         }
         iface->sockets_.clear();
     }
+
+}
+
+IfaceMgr::~IfaceMgr() {
+    closeSockets();
 
     // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;
