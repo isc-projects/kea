@@ -87,7 +87,7 @@ TEST_F(OptionTest, v4_data1) {
     EXPECT_EQ(123, opt->getType());
     vector<uint8_t> optData = opt->getData();
     ASSERT_EQ(optData.size(), data.size());
-    EXPECT_EQ(optData, data);
+    EXPECT_TRUE(optData == data);
     EXPECT_EQ(2, opt->getHeaderLen());
     EXPECT_EQ(6, opt->len());
 
