@@ -53,19 +53,18 @@ public:
 };
 
 TEST_F(Dhcpv6SrvTest, basic) {
-    // there's almost no code now. What's there provides echo capability
-    // that is just a proof of concept and will be removed soon
-    // No need to thoroughly test it
-
     // srv has stubbed interface detection. It will read
     // interfaces.txt instead. It will pretend to have detected
     // fe80::1234 link-local address on eth0 interface. Obviously
     // an attempt to bind this socket will fail.
+    Dhcpv6Srv * srv = 0;
     EXPECT_NO_THROW( {
-        Dhcpv6Srv * srv = new Dhcpv6Srv();
-
+        // open an unpriviledged port
+        srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
+    });
+    if (srv) {
         delete srv;
-        });
+    }
 
 }
 
@@ -75,7 +74,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
 
     // a dummy content for client-id
     boost::shared_array<uint8_t> clntDuid(new uint8_t[32]);
-    for (int i=0; i<32; i++)
+    for (int i = 0; i < 32; i++)
         clntDuid[i] = 100+i;
 
     boost::shared_ptr<Pkt6> sol =
