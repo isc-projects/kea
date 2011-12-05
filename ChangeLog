@@ -1,3 +1,8 @@
+3XX.	[func]		tomek
+	libdhcp++: Support for handling both IPv4 and IPv6 added.
+	Also added support for binding IPv4 sockets.
+	(Trac #1238, git TBD)
+
 311.	[bug]		jelte
 	Fixed a bug in bindctl where tab-completion for names that
 	contain a hyphen resulted in unexpected behaviour, such as
