@@ -74,8 +74,8 @@ def perform_axfr(step, zone_name, address, port):
     args = [ 'dig', 'AXFR', '@' + str(address), '-p', str(port), zone_name ]
     world.transfer_result = TransferResult(args)
 
-@step('An IXFR transfer of ([\w.]+) (\d+)(?: over (tcp|udp))?(?: from ([^:]+)(?::([0-9]+))?)?')
-def perform_ixfr(step, zone_name, serial, protocol, address, port):
+@step('An IXFR transfer of ([\w.]+) (\d+)(?: from ([^:]+)(?::([0-9]+))?)?(?: over (tcp|udp))?')
+def perform_ixfr(step, zone_name, serial, address, port, protocol):
     """Perform an AXFR transfer, and store the result in world.transfer_result
     """
     if address is None:
