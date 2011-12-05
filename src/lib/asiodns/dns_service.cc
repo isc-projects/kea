@@ -78,6 +78,13 @@ public:
     DNSLookup *lookup_;
     DNSAnswer *answer_;
 
+    template<class Ptr, class Server> void addServerFromFD(int fd, bool v6) {
+        Ptr server(new Server(io_service_.get_io_service(), fd, v6, checkin_,
+                              lookup_, answer_));
+        (*server)();
+        servers_.push_back(server);
+    }
+
     void addServer(uint16_t port, const asio::ip::address& address) {
         try {
             dlog(std::string("Initialize TCP server at ") + address.to_string() + ":" + boost::lexical_cast<std::string>(port));
@@ -187,6 +194,14 @@ DNSService::addServer(const char& port, const std::string& address) {
 void
 DNSService::addServer(uint16_t port, const std::string& address) {
     impl_->addServer(port, convertAddr(address));
+}
+
+void DNSService::addServerTCP(int fd, bool v6) {
+    impl_->addServerFromFD<DNSServiceImpl::TCPServerPtr, TCPServer>(fd, v6);
+}
+
+void DNSService::addServerUDP(int fd, bool v6) {
+    impl_->addServerFromFD<DNSServiceImpl::UDPServerPtr, UDPServer>(fd, v6);
 }
 
 void

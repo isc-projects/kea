@@ -53,7 +53,7 @@ namespace asiodns {
  */
 struct UDPServer::Data {
     /*
-     * Constructor from parameters passed to UDPServer constructor.
+     * Constructors from parameters passed to UDPServer constructor.
      * This instance will not be used to retrieve and answer the actual
      * query, it will only hold parameters until we wait for the
      * first packet. But we do initialize the socket in here.
@@ -73,6 +73,20 @@ struct UDPServer::Data {
             socket_->set_option(asio::ip::v6_only(true));
         }
         socket_->bind(udp::endpoint(addr, port));
+    }
+    Data(io_service& io_service, int fd, bool v6,
+        SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
+        io_(io_service), done_(false),
+        checkin_callback_(checkin),lookup_callback_(lookup),
+        answer_callback_(answer)
+    {
+        // We must use different instantiations for v4 and v6;
+        // otherwise ASIO will bind to both
+        udp proto = v6 ? udp::v6() : udp::v4();
+        socket_.reset(new udp::socket(io_service, proto));
+        // For some strange reason, without this, the assign throws an exception.
+        socket_->close();
+        socket_->assign(proto, fd);
     }
 
     /*
@@ -165,6 +179,11 @@ UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
     const uint16_t port, SimpleCallback* checkin, DNSLookup* lookup,
     DNSAnswer* answer) :
     data_(new Data(io_service, addr, port, checkin, lookup, answer))
+{ }
+
+UDPServer::UDPServer(io_service& io_service, int fd, bool v6,
+    SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
+    data_(new Data(io_service, fd, v6, checkin, lookup, answer))
 { }
 
 /// The function operator is implemented with the "stackless coroutine"
