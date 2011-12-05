@@ -23,8 +23,8 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
-Dhcpv4Srv::Dhcpv4Srv() {
-    cout << "Initialization" << endl;
+Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
+    cout << "Initialization: opening sockets on port " << port << endl;
 
     // first call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
@@ -148,7 +148,7 @@ void Dhcpv4Srv::processDecline(boost::shared_ptr<Pkt4> decline) {
     cout << "Received DECLINE on " << decline->getIface() << " interface." << endl;
 }
 
-boost::shared_ptr<Pkt4> processInform(boost::shared_ptr<Pkt4> inform) {
+boost::shared_ptr<Pkt4> Dhcpv4Srv::processInform(boost::shared_ptr<Pkt4> inform) {
     /// TODO: Currently implemented echo mode. Implement this for real
     return (inform);
 }
