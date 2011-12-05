@@ -1,3 +1,9 @@
+ 305.   [func]		tomek
+	libdhcp++: Support for DHCPv4 option that can store a single
+	address or a list of IPv4 addresses added. Support for END option
+	added.
+	(Trac #1350, git TBD)
+
  304.	[func]		tomek
 	libdhcp: Support for DHCPv4 packet manipulation is now implemented.
 	All fixed fields are now supported. Generic support for DHCPv4
