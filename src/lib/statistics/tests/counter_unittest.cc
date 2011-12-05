@@ -58,6 +58,17 @@ TEST_F(CounterTest, incrementCounterItem) {
     EXPECT_EQ(counter.get(ITEM1), 1);
     EXPECT_EQ(counter.get(ITEM2), 2);
     EXPECT_EQ(counter.get(ITEM3), 3);
+    // Increment counters once more
+    counter.inc(ITEM1);
+    counter.inc(ITEM2);
+    counter.inc(ITEM2);
+    counter.inc(ITEM3);
+    counter.inc(ITEM3);
+    counter.inc(ITEM3);
+    // Check if the counters have expected values
+    EXPECT_EQ(counter.get(ITEM1), 2);
+    EXPECT_EQ(counter.get(ITEM2), 4);
+    EXPECT_EQ(counter.get(ITEM3), 6);
 }
 
 TEST_F(CounterTest, invalidCounterSize) {
