@@ -47,7 +47,7 @@ public:
     Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
-    ~Dhcpv6Srv();
+    virtual ~Dhcpv6Srv();
 
     /// @brief Returns server-intentifier option
     ///
