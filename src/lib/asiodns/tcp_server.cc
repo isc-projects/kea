@@ -69,6 +69,19 @@ TCPServer::TCPServer(io_service& io_service,
     acceptor_->listen();
 }
 
+TCPServer::TCPServer(io_service& io_service, int fd, bool v6,
+                     const SimpleCallback* checkin,
+                     const DNSLookup* lookup,
+                     const DNSAnswer* answer) :
+    io_(io_service), done_(false),
+    checkin_callback_(checkin), lookup_callback_(lookup),
+    answer_callback_(answer)
+{
+    acceptor_.reset(new tcp::acceptor(io_service));
+    acceptor_->assign(v6 ? tcp::v6() : tcp::v4(), fd);
+    acceptor_->listen();
+}
+
 void
 TCPServer::operator()(error_code ec, size_t length) {
     /// Because the coroutine reentry block is implemented as

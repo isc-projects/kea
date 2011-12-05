@@ -88,6 +88,10 @@ public:
     /// \brief Add another server to the service
     void addServer(uint16_t port, const std::string &address);
     void addServer(const char &port, const std::string &address);
+    /// \brief Add another server to the service from already opened file
+    /// descriptor
+    void addServerTCP(int fd, bool v6);
+    void addServerUDP(int fd, bool v6);
     /// \brief Remove all servers from the service
     void clearServers();
 
