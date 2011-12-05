@@ -47,6 +47,8 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 
 Dhcpv6Srv::~Dhcpv6Srv() {
     cout << "DHCPv6 Srv shutdown." << endl;
+
+    IfaceMgr::instance().closeSockets();
 }
 
 bool

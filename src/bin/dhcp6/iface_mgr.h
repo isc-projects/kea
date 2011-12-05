@@ -301,6 +301,11 @@ public:
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
     void openSockets(uint16_t port);
 
+
+    /// @brief Closes all open sockets.
+    /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
+    void closeSockets();
+
     // don't use private, we need derived classes in tests
 protected:
 
