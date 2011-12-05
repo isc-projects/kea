@@ -56,14 +56,14 @@ private:
 public:
     // Enum for the type of counter
     enum ServerCounterType {
-        SERVER_UDP_QUERY = 0,  ///< SERVER_UDP_QUERY: counter for UDP queries
-        SERVER_TCP_QUERY = 1,  ///< SERVER_TCP_QUERY: counter for TCP queries
-        SERVER_COUNTER_TYPES = 2 ///< The number of defined counters
+        SERVER_UDP_QUERY,       ///< SERVER_UDP_QUERY: counter for UDP queries
+        SERVER_TCP_QUERY,       ///< SERVER_TCP_QUERY: counter for TCP queries
+        SERVER_COUNTER_TYPES    ///< The number of defined counters
     };
     enum PerZoneCounterType {
-        ZONE_UDP_QUERY = 0,  ///< ZONE_UDP_QUERY: counter for UDP queries
-        ZONE_TCP_QUERY = 1,  ///< ZONE_TCP_QUERY: counter for TCP queries
-        PER_ZONE_COUNTER_TYPES = 2 ///< The number of defined counters
+        ZONE_UDP_QUERY,         ///< ZONE_UDP_QUERY: counter for UDP queries
+        ZONE_TCP_QUERY,         ///< ZONE_TCP_QUERY: counter for TCP queries
+        PER_ZONE_COUNTER_TYPES  ///< The number of defined counters
     };
     /// The constructor.
     ///
