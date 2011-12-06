@@ -83,6 +83,10 @@ logger = isc.log.Logger("boss")
 DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
 DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 
+# Messages sent over the unix domain socket to indicate if it is followed by a real socket
+CREATOR_SOCKET_OK = "1\n"
+CREATOR_SOCKET_UNAVAILABLE = "0\n"
+
 # Assign this process some longer name
 isc.util.process.rename(sys.argv[0])
 
@@ -869,11 +873,11 @@ class BoB:
         """
         try:
             fd = self._socket_cache.get_socket(token, unix_socket.fileno())
-            unix_socket.sendall("1\n")
+            unix_socket.sendall(CREATOR_SOCKET_OK)
             libutil_io_python.send_fd(unix_socket.fileno(), fd)
         except Exception as e:
             logger.error(BIND10_NO_SOCKET, token, e)
-            unix_socket.sendall("0\n")
+            unix_socket.sendall(CREATOR_SOCKET_UNAVAILABLE)
 
     def socket_consumer_dead(self, unix_socket):
         """
