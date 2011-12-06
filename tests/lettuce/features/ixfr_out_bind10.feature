@@ -9,6 +9,13 @@ Feature: IXFR out
     # Once we implement it, we can uncomment them. The tests themselves
     # should already work.
     #
+    # These tests use a zone with just a few records, the first serial
+    # is 2, and it is incremented in steps of 2, up to serial 22.
+    # Each updates either deletes or adds the www.example.com A record.
+    # Version 2 has the record, then the update to version 4 deletes it,
+    # the update to 6 adds it again, and so on, until version 22 (where
+    # the last update has added it again)
+    #
     # Some of the tests (scenario 1 tests 3 and 4, and scenario 2 tests 1 and
     # 2 may still not work if we replicate BIND 9's behaviour; it always
     # responds to UDP IXFR requests with just the SOA, and it does not do
@@ -17,14 +24,11 @@ Feature: IXFR out
     # So in effect, there is only one test that is currently active (scenario
     # 1 test 7)
 
+
     Scenario: Test Set 1
         Given I have bind10 running with configuration ixfr-out/testset1-config.db
         The SOA serial for example.com should be 22
 
-        # These tests use a zone with just a few records, the first serial
-        # is 2, and it is incremented in steps of 2, up to serial 22.
-        # Each updates either deletes or adds the www.example.com A record.
-        
         #
         # Test 1
         #
