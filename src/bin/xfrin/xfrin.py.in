@@ -732,14 +732,16 @@ class XfrinConnection(asyncore.dispatcher):
         # Validate the question section
         n_question = msg.get_rr_count(Message.SECTION_QUESTION)
         if n_question != 1:
-            raise XfrinProtocolError('Invalid number of questions to ' +
-                                     'SOA query (' + str(n_question) + ')')
+            raise XfrinProtocolError('Invalid response to SOA query: ' +
+                                     '(' + str(n_question) + ' questions, 1 ' +
+                                     'expected)')
         resp_question = msg.get_question()[0]
         if resp_question.get_name() != self._zone_name or \
                 resp_question.get_class() != self._rrclass or \
                 resp_question.get_type() != RRType.SOA():
-            raise XfrinProtocolError('Questions mismatch to ' +
-                                     'SOA query: ' + str(resp_question))
+            raise XfrinProtocolError('Invalid response to SOA query: '
+                                     'question mismatch: ' +
+                                     str(resp_question))
 
         # Look into the answer section for SOA
         soa = None
@@ -760,7 +762,8 @@ class XfrinConnection(asyncore.dispatcher):
                     raise XfrinProtocolError('SOA query resulted in referral')
                 if rr.get_type() == RRType.SOA():
                     raise XfrinProtocolError('SOA query resulted in NODATA')
-            raise XfrinProtocolError('SOA query resulted in no SOA at all')
+            raise XfrinProtocolError('No SOA record found in response to ' +
+                                     'SOA query')
 
         # Check if the SOA is really what we asked for
         if soa.get_name() != self._zone_name or \
