@@ -102,10 +102,10 @@ class Cache:
         only once to receive the socket.
 
         The application is a token representing the application that requested
-        it. It is not clear now if that would be the PID of application, it's
-        address on message bus or filehandle of the unix domain socket used
-        to request it, but the same application handle should be used in case
-        the application crashes to call drop_application.
+        it. Currently, boss uses the file descriptor of connection from the
+        application, but anything which can be a key in a dict is OK from the
+        cache's point of view. You just need to use the same thing in
+        drop_application.
 
         In case the token is considered invalid (it doesn't come from the
         get_token, it was already used, the socket wasn't picked up soon
