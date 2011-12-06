@@ -46,6 +46,7 @@ Return the RR class of the zone.\n\
 // - Return type: use tuple instead of the dedicated FindResult type
 // - NULL->None
 // - exceptions
+// - description of the 'target' parameter (must be None for now)
 const char* const ZoneFinder_find_doc = "\
 find(name, type, target=None, options=FIND_DEFAULT) -> (integer, RRset)\n\
 \n\
@@ -74,6 +75,7 @@ answer for the search key. Specifically,\n\
 - If the target isn't None, all RRsets under the domain are inserted\n\
   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned\n\
   instead of normall processing. This is intended to handle ANY query.\n\
+  (Note: the Python version doesn't support this feature yet)\n\
 \n\
 Note: This behavior is controversial as we discussed in\n\
 https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html We\n\
@@ -105,8 +107,7 @@ internal error in the datasource.\n\
 Parameters:\n\
   name       The domain name to be searched for.\n\
   type       The RR type to be searched for.\n\
-  target     If target is not None, insert all RRs under the domain\n\
-             into it.\n\
+  target     Must be None.\n\
   options    The search options.\n\
 \n\
 Return Value(s): A tuple of a result code (integer) and an RRset object\n\
