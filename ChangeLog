@@ -1,3 +1,52 @@
+337.	[func]		tomek
+	libdhcp++: Support for DHCPv4 option that can store a single
+	address or a list of IPv4 addresses added. Support for END option
+	added.
+	(Trac #1350, git cc20ff993da1ddb1c6e8a98370438b45a2be9e0a)
+
+336.	[func]		jelte
+	libdns++ (and its python wrapper) now includes a class Serial, for 
+	SOA SERIAL comparison and addition. Operations on instances of this 
+	class follow the specification from RFC 1982. 
+	Rdata::SOA::getSerial() now returns values of this type (and not 
+	uint32_t).
+	(Trac #1278, git 2ae72d76c74f61a67590722c73ebbf631388acbd)
+
+335.	[bug]*		jelte
+	The DataSourceClientContainer class that dynamically loads 
+	datasource backend libraries no longer provides just a .so file name 
+	to its call to dlopen(), but passes it an absolute path. This means 
+	that it is no longer an system implementation detail that depends on 
+	[DY]LD_LIBRARY_PATH which file is chosen, should there be multiple 
+	options (for instance, when test-running a new build while a 
+	different version is installed).
+	These loadable libraries are also no longer installed in the default 
+	library path, but in a subdirectory of the libexec directory of the 
+	target ($prefix/libexec/[version]/backends).
+	This also removes the need to handle b10-xfin and b10-xfrout as 
+	'special' hardcoded components, and they are now started as regular 
+	components as dictated by the configuration of the boss process.
+	(Trac #1292, git 83ce13c2d85068a1bec015361e4ef8c35590a5d0)
+
+334.	[bug]		jinmei
+	b10-xfrout could potentially create an overflow response message
+	(exceeding the 64KB max) or could create unnecessarily small
+	messages.  The former was actually unlikely to happen due to the
+	effect of name compression, and the latter was marginal and at least
+	shouldn't cause an interoperability problem, but these were still
+	potential problems and were fixed.
+	(Trac #1389, git 3fdce88046bdad392bd89ea656ec4ac3c858ca2f)
+
+333.    [bug]		dvv
+	Solaris needs "-z now" to force non-lazy binding and prevent g++ static
+	initialization code from deadlocking.
+	(Trac #1439, git c789138250b33b6b08262425a08a2a0469d90433)
+
+332.    [bug]		vorner
+	C++ exceptions in the isc.dns.Rdata wrapper are now converted
+	to python ones instead of just aborting the interpretter.
+	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)
+
 bind10-devel-20111128 released on November 28, 2011
 
 331.	[bug]		shane

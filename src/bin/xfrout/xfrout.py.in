@@ -66,6 +66,11 @@ class XfroutConfigError(Exception):
     """
     pass
 
+class XfroutSessionError(Exception):
+    '''An exception raised for some unexpected events during an xfrout session.
+    '''
+    pass
+
 def init_paths():
     global SPECFILE_PATH
     global AUTH_SPECFILE_PATH
@@ -93,7 +98,8 @@ init_paths()
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
 VERBOSE_MODE = False
-XFROUT_MAX_MESSAGE_SIZE = 65535
+XFROUT_DNS_HEADER_SIZE = 12     # protocol constant
+XFROUT_MAX_MESSAGE_SIZE = 65535 # ditto
 
 # borrowed from xfrin.py @ #1298.  We should eventually unify it.
 def format_zone_str(zone_name, zone_class):
@@ -534,32 +540,44 @@ class XfroutSession():
 
     def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa,
                                     message_upper_len):
-        '''Add the SOA record to the end of message. If it can't be
-        added, a new message should be created to send out the last soa .
+        '''Add the SOA record to the end of message.
+
+        If it would exceed the maximum allowable size of a message, a new
+        message will be created to send out the last SOA.
+
+        We assume a message with a single SOA can always fit the buffer
+        with or without TSIG.  In theory this could be wrong if TSIG is
+        stupidly large, but in practice this assumption should be reasonable.
         '''
-        if (message_upper_len + self._tsig_len + get_rrset_len(rrset_soa) >=
-            XFROUT_MAX_MESSAGE_SIZE):
+        if message_upper_len + get_rrset_len(rrset_soa) > \
+                XFROUT_MAX_MESSAGE_SIZE:
             self._send_message(sock_fd, msg, self._tsig_ctx)
             msg = self._clear_message(msg)
 
-        # If tsig context exist, sign the last packet
         msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
     def _reply_xfrout_query(self, msg, sock_fd):
-        #TODO, there should be a better way to insert rrset.
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
+        # Reserved space for the fixed header size, the size of the question
+        # section, and TSIG size (when included).  The size of the question
+        # section is the sum of the qname length and the size of the
+        # fixed-length fields (type and class, 2 bytes each).
+        message_upper_len = XFROUT_DNS_HEADER_SIZE + \
+            msg.get_question()[0].get_name().get_length() + 4 + \
+            self._tsig_len
 
         # If the iterator is None, we are responding to IXFR with a single
         # SOA RR.
         if self._iterator is None:
-            self._send_message_with_last_soa(msg, sock_fd, self._soa, 0)
+            self._send_message_with_last_soa(msg, sock_fd, self._soa,
+                                             message_upper_len)
             return
 
         # Add the beginning SOA
         msg.add_rrset(Message.SECTION_ANSWER, self._soa)
-        message_upper_len = get_rrset_len(self._soa) + self._tsig_len
+        message_upper_len += get_rrset_len(self._soa)
 
         # Add the rest of the zone/diff contets
         for rrset in self._iterator:
@@ -577,19 +595,32 @@ class XfroutSession():
             # size without compression) and use that to see if we
             # may have reached the limit
             rrset_len = get_rrset_len(rrset)
-            if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
+
+            if message_upper_len + rrset_len <= XFROUT_MAX_MESSAGE_SIZE:
                 msg.add_rrset(Message.SECTION_ANSWER, rrset)
                 message_upper_len += rrset_len
                 continue
 
+            # RR would not fit.  If there are other RRs in the buffer, send
+            # them now and leave this RR to the next message.
             self._send_message(sock_fd, msg, self._tsig_ctx)
 
+            # Create a new message and reserve space for the carried-over
+            # RR (and TSIG space in case it's to be TSIG signed)
             msg = self._clear_message(msg)
+            message_upper_len = XFROUT_DNS_HEADER_SIZE + rrset_len + \
+                self._tsig_len
+
+            # If this RR overflows the buffer all by itself, fail.  In theory
+            # some RRs might fit in a TCP message when compressed even if they
+            # do not fit when uncompressed, but surely we don't want to send
+            # such monstrosities to an unsuspecting slave.
+            if message_upper_len > XFROUT_MAX_MESSAGE_SIZE:
+                raise XfroutSessionError('RR too large for zone transfer (' +
+                                         str(rrset_len) + ' bytes)')
+
             # Add the RRset to the new message
             msg.add_rrset(Message.SECTION_ANSWER, rrset)
-
-            # Reserve tsig space for signed packet
-            message_upper_len = rrset_len + self._tsig_len
 
         # Add and send the trailing SOA
         self._send_message_with_last_soa(msg, sock_fd, self._soa,
@@ -782,7 +813,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             os.unlink(self._sock_file)
         except Exception as e:
             logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, self._sock_file, str(e))
-            pass
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module.
