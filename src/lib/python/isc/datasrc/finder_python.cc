@@ -53,12 +53,13 @@ namespace isc_datasrc_internal {
 PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
     if (finder == NULL) {
         PyErr_SetString(getDataSourceException("Error"),
-                        "Internal error in find() wrapper; finder object NULL");
+                        "Internal error in find() wrapper; "
+                        "finder object NULL");
         return (NULL);
     }
-    PyObject *name;
-    PyObject *rrtype;
-    PyObject *target;
+    PyObject* name;
+    PyObject* rrtype;
+    PyObject* target;
     int options_int;
     if (PyArg_ParseTuple(args, "O!O!OI", &name_type, &name,
                                          &rrtype_type, &rrtype,
@@ -66,13 +67,10 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
         try {
             ZoneFinder::FindOptions options =
                 static_cast<ZoneFinder::FindOptions>(options_int);
-            ZoneFinder::FindResult find_result(
-                finder->find(PyName_ToName(name),
-                                   PyRRType_ToRRType(rrtype),
-                                   NULL,
-                                   options
-                                   ));
-            ZoneFinder::Result r = find_result.code;
+            const ZoneFinder::FindResult find_result(
+                finder->find(PyName_ToName(name), PyRRType_ToRRType(rrtype),
+                             NULL, options));
+            const ZoneFinder::Result r = find_result.code;
             isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
             if (rrsp) {
                 // Use N instead of O so the refcount isn't increased twice
