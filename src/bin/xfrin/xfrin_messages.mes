@@ -15,7 +15,7 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrin messages python module.
 
-% XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly crated
+% XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly created
 On starting an xfrin session, it is identified that the zone to be
 transferred is not found in the data source.  This can happen if a
 secondary DNS server first tries to perform AXFR from a primary server
