@@ -99,6 +99,12 @@ The boss module is sending a kill signal to process with the given name,
 as part of the process of killing all started processes during a failed
 startup, as described for BIND10_KILLING_ALL_PROCESSES
 
+% BIND10_LOST_SOCKET_CONSUMER consumer of sockets disconnected, considering all its sockets closed
+A connection from one of the applications which requested a socket was
+closed. This means the application has terminated, so all the sockets it was
+using are now closed and bind10 process can release them as well, unless the
+same sockets are used by yet another application.
+
 % BIND10_MSGQ_ALREADY_RUNNING msgq daemon already running, cannot start
 There already appears to be a message bus daemon running. Either an
 old process was not shut down correctly, and needs to be killed, or
@@ -109,6 +115,11 @@ running, which needs to be stopped.
 While listening on the message bus channel for messages, it suddenly
 disappeared. The msgq daemon may have died. This might lead to an
 inconsistent state of the system, and BIND 10 will now shut down.
+
+% BIND10_NO_SOCKET couldn't send a socket for token %1 because of error: %2
+An error occurred when the bind10 process was asked to send a socket file
+descriptor. The error is mentioned, most common reason is that the request
+is invalid and may not come from bind10 process at all.
 
 % BIND10_PROCESS_ENDED process %2 of %1 ended with status %3
 This indicates a process started previously terminated. The process id
