@@ -17,7 +17,6 @@ import unittest
 import re
 import shutil
 import socket
-import sqlite3
 import sys
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
@@ -25,6 +24,13 @@ from xfrin import *
 import xfrin
 from isc.xfrin.diff import Diff
 import isc.log
+# If we use any python library that is basically a wrapper for
+# a library we use as well (like sqlite3 in our datasources),
+# we must make sure we import ours first; If we have special
+# rpath or libtool rules to pick the correct version, python might
+# choose the wrong one first, if those rules aren't hit first.
+# This would result in missing symbols later.
+import sqlite3
 
 #
 # Commonly used (mostly constant) test parameters
