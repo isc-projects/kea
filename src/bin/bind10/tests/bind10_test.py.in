@@ -159,7 +159,12 @@ class TestCacheCommands(unittest.TestCase):
         """
         Part of pretending to be the cache. Logs the parameter to
         self.__drop_app_called.
+
+        In the case self.__raise_exception is set, the exception there
+        is raised instead.
         """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
         self.__drop_app_called = application
 
     def test_consumer_dead(self):
@@ -168,6 +173,16 @@ class TestCacheCommands(unittest.TestCase):
         """
         self.__boss.socket_consumer_dead(self.FalseSocket())
         self.assertEqual(42, self.__drop_app_called)
+
+    def test_consumer_dead_invalid(self):
+        """
+        Test that it doesn't crash in case the application is not known to
+        the cache, the boss doesn't crash, as this actually can happen in
+        practice.
+        """
+        self.__raise_exception = ValueError("This application is unknown")
+        # This doesn't crash
+        self.__boss.socket_consumer_dead(self.FalseSocket())
 
     def get_socket(self, token, application):
         """
