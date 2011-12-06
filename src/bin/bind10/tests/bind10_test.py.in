@@ -339,20 +339,20 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.nocache, False)
         self.assertIsNone(bob._socket_cache)
 
-    def test_insert_creator(self):
+    def test_set_creator(self):
         """
-        Test the call to insert_creator. First time, the cache is created
+        Test the call to set_creator. First time, the cache is created
         with the passed creator. The next time, it throws an exception.
         """
         bob = BoB()
         # The cache doesn't use it at start, so just create an empty class
         class Creator: pass
         creator = Creator()
-        bob.insert_creator(creator)
+        bob.set_creator(creator)
         self.assertTrue(isinstance(bob._socket_cache,
                         isc.bind10.socket_cache.Cache))
         self.assertEqual(creator, bob._socket_cache._creator)
-        self.assertRaises(ValueError, bob.insert_creator, creator)
+        self.assertRaises(ValueError, bob.set_creator, creator)
 
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")

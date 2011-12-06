@@ -895,7 +895,7 @@ class BoB:
             # rare, though.
             pass
 
-    def insert_creator(self, creator):
+    def set_creator(self, creator):
         """
         Registeres a socket creator into the boss. The socket creator is not
         used directly, but through a cache. The cache is created in this
