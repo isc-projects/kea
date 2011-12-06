@@ -117,7 +117,7 @@ class TestCacheCommands(unittest.TestCase):
         self.__raise_exception = None
         self.__socket_args = {
             "port": 53,
-            "address": "0.0.0.0",
+            "address": "::",
             "protocol": "UDP",
             "share_mode": "ANY",
             "share_name": "app"
@@ -242,7 +242,7 @@ class TestCacheCommands(unittest.TestCase):
         }, answer)
         addr = self.__get_token_called[1]
         self.assertTrue(isinstance(addr, IPAddr))
-        self.assertEqual("0.0.0.0", str(addr))
+        self.assertEqual("::", str(addr))
         self.assertEqual(("UDP", addr, 53, "ANY", "app"),
                          self.__get_token_called)
 
