@@ -713,16 +713,16 @@ class XfrinConnection(asyncore.dispatcher):
             raise XfrinProtocolError('Unexpected TSIG in response')
 
     def __parse_soa_response(self, msg, response_data):
-        '''Parse a response to SOA query and extranct the SOA from ansser.
+        '''Parse a response to SOA query and extract the SOA from answer.
 
         This is a subroutine of _check_soa_serial().  This method also
         validates message, and rejects bogus responses with XfrinProtocolError.
 
-        If evenrything is okay, it returns the SOA RR from the answer section
+        If everything is okay, it returns the SOA RR from the answer section
         of the response.
 
         '''
-        # Check TSIG integerity and validate the header.  Unlike AXFR/IXFR,
+        # Check TSIG integrity and validate the header.  Unlike AXFR/IXFR,
         # we should be more strict for SOA queries and check the AA flag, too.
         self._check_response_tsig(msg, response_data)
         self._check_response_header(msg)
