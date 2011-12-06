@@ -912,6 +912,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/datasrc/tests/testdata/Makefile
                  src/lib/xfr/Makefile
+                 src/lib/xfr/tests/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
                  src/lib/log/tests/Makefile
