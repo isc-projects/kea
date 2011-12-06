@@ -116,7 +116,7 @@ public:
     /// Returns length of this option, including option header and suboptions
     ///
     /// @return length of this option
-    virtual unsigned short
+    virtual uint16_t
     len();
 
 protected:

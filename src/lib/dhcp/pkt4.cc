@@ -51,7 +51,6 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(msg_type)
 {
-    /// TODO: fixed fields, uncomment in ticket #1224
     memset(chaddr_, 0, MAX_CHADDR_LEN);
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
@@ -64,7 +63,6 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       ifindex_(-1),
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
-      /// TODO Fixed fields, uncomment in ticket #1224
       op_(BOOTREQUEST),
       transid_(0),
       secs_(0),
@@ -116,6 +114,10 @@ Pkt4::pack() {
     bufferOut_.writeData(file_, MAX_FILE_LEN);
 
     LibDHCP::packOptions(bufferOut_, options_);
+
+    // add END option that indicates end of options
+    // (End option is very simple, just a 255 octet)
+    bufferOut_.writeUint8(DHO_END);
 
     return (true);
 }

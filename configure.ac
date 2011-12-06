@@ -96,6 +96,8 @@ case "$host" in
 	# Solaris requires special definitions to get some standard libraries
 	# (e.g. getopt(3)) available with common used header files.
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
+	LDFLAGS="$LDFLAGS -z now"
 	;;
 *-apple-darwin*)
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
@@ -990,6 +992,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/bind10_config.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
+           src/lib/datasrc/datasrc_config.h.pre
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
