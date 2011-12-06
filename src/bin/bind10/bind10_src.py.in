@@ -886,7 +886,14 @@ class BoB:
         so to the _socket_cache.
         """
         logger.error(BIND10_LOST_SOCKET_CONSUMER, unix_socket.fileno())
-        self._socket_cache.drop_application(unix_socket.fileno())
+        try:
+            self._socket_cache.drop_application(unix_socket.fileno())
+        except ValueError:
+            # This means the application holds no sockets. It's harmless, as it
+            # can happen in real life - for example, it requests a socket, but
+            # get_socket doesn't find it, so the application dies. It should be
+            # rare, though.
+            pass
 
     def insert_creator(self, creator):
         """
