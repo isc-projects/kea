@@ -16,17 +16,16 @@
 #define OPTION6_ADDRLST_H_
 
 #include <vector>
-#include "asiolink/io_address.h"
-#include "dhcp/option.h"
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief Option class for handling list of IPv6 addresses.
+/// @brief DHCPv6 Option class for handling list of IPv6 addresses.
 ///
 /// This class handles a list of IPv6 addresses. An example of such option
 /// is dns-servers option. It can also be used to handle single address.
-///
 class Option6AddrLst: public Option {
 
 public:
@@ -105,17 +104,17 @@ public:
 
     /// @brief Returns vector with addresses.
     ///
-    /// As user may want to use/modify this list, it is better to return
-    /// a copy rather than const reference to the original. This is
-    /// usually one or two addresses long, so it is not a big deal.
+    /// We return a copy of our list. Although this includes overhead,
+    /// it also makes this list safe to use after this option object
+    /// is no longer available. As options are expected to hold only
+    /// a couple (1-3) addresses, the overhead is not that big.
     ///
-    /// @return vector with addresses
-    ///
+    /// @return address container with addresses
     AddressContainer
     getAddresses() { return addrs_; };
 
     // returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual unsigned short len();
+    virtual uint16_t len();
 
 protected:
     AddressContainer addrs_;

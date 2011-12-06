@@ -14,6 +14,9 @@ CLEANFILES = *.gcno *.gcda
 # with -Werror (our default setting).
 
 lib_LTLIBRARIES = libasiolink.la
+
+libasiolink_la_LDFLAGS = -no-undefined -version-info 1:0:1
+
 libasiolink_la_SOURCES  = asiolink.h
 libasiolink_la_SOURCES += dummy_io_cb.h
 libasiolink_la_SOURCES += interval_timer.cc interval_timer.h
