@@ -83,9 +83,7 @@ struct UDPServer::Data {
         // We must use different instantiations for v4 and v6;
         // otherwise ASIO will bind to both
         udp proto = v6 ? udp::v6() : udp::v4();
-        socket_.reset(new udp::socket(io_service, proto));
-        // For some strange reason, without this, the assign throws an exception.
-        socket_->close();
+        socket_.reset(new udp::socket(io_service));
         socket_->assign(proto, fd);
     }
 
