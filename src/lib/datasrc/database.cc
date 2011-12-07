@@ -409,9 +409,9 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
     //
     // The one case where this is forbidden is when we search past the zone
     // cut but the match we find for the glue is a wildcard match.  In that
-    // case, we return the delegation instead.  To save a new search, we record
-    // the location of the delegation cut when we encounter it here.
-    // TODO: where does it say we can't return wildcard glue?
+    // case, we return the delegation instead (see RFC 1034, section 4.3.3).
+    // To save a new search, we record the location of the delegation cut when
+    // we encounter it here. 
     isc::dns::ConstRRsetPtr first_ns;
 
     // We want to search from the apex down.  We are given the full domain
@@ -536,7 +536,8 @@ DatabaseClient::Finder::findWildcardMatch(
         const string wildcard("*." + superdomain.toText());
         const string construct_name(name.toText());
 
-        // TODO What do we do about DNAME here?
+        // TODO Add a check for DNAME, as DNAME wildcards are discouraged (see
+        // RFC 4592 section 4.4).
         // Search for a match.  The types are the same as with original query.
         FoundRRsets found = getRRsets(wildcard, final_types, true,
                                       &construct_name);
@@ -564,7 +565,6 @@ DatabaseClient::Finder::findWildcardMatch(
                     arg(dresult.first_ns->getName());
                 result_status = DELEGATION;
                 result_rrset = dresult.first_ns;
-
 
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
                 // We found a wildcard match and we are sure that the match
@@ -683,8 +683,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
     if (hasSubdomains(name.toText())) {
         // Does the domain have a subdomain (i.e. it is an empty non-terminal)?
         // If so, return NXRRSET instead of NXDOMAIN (as although the name does
-        // not exist in the zone, it does exist in the DNS tree).
-        // pretend something is here as well.
+        // not exist in the database, it does exist in the DNS tree).
         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                   DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
             arg(accessor_->getDBName()).arg(name);
@@ -693,15 +692,14 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
 
     } else if ((options & NO_WILDCARD) == 0) {
         // It's not an empty non-terminal and wildcard matching is not
-        // disabled, so check for wildcards.
+        // disabled, so check for wildcards. If there is a wildcard match
+        // (i.e. all results except NXDOMAIN) return it; otherwise fall
+        // through to the NXDOMAIN case below.
         const ZoneFinder::FindResult wresult =
             findWildcardMatch(name, type, options, dresult);
-        if (wresult.code == NXDOMAIN && dnssec_data) {
-            // No match on a wildcard, so return the covering NSEC if DNSSEC
-            // data was requested.
-            return (FindResult(NXDOMAIN, findNSECCover(name)));
+        if (wresult.code != NXDOMAIN) {
+            return (FindResult(wresult.code, wresult.rrset));
         }
-        return (FindResult(wresult.code, wresult.rrset));
     }
 
     // All avenues to find a match are now exhausted, return NXDOMAIN (plus
@@ -759,8 +757,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // name/type/class.  However, there are special cases:
     // - Requested name has a singleton CNAME record associated with it
     // - Requested name is a delegation point (NS only but not at the zone
-    //   apex - DNAME is ignored here).
-    // TODO: Why is DNAME ignored?
+    //   apex - DNAME is ignored here as it redirects DNS names subordinate to
+    //   the owner name - the owner name itself is not redirected.)
     const bool is_origin = (name == getOrigin());
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
@@ -784,19 +782,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
     } else if (type != RRType::CNAME() && cni != found.second.end()) {
         // We are not searching for a CNAME but nevertheless we have found one
-        // at the name we are searching so we return it. (A resolver could have
-        // originated the query that caues this result.  If so, it will restart
-        // the resolution process with the name that is the target of this
-        // CNAME.) First though, do a sanity check to ensure that there is
-        // only one RR in the CNAME RRset.
-        //
-        // TODO: Check that throwing an exception here is correct.
-        // Unless the exception is caught higher up (probably not, given the
-        // general nature of the exception), it is probably better to log
-        // and error and terminate the query with SERVFAIL instead of crashing
-        // the server.  Although the CNAME is a singleton and multiple RRs
-        // in the RRset may indicate an error in the data, it does not mean
-        // that the entire database is corrupt.
+        // at the name we are searching so we return it. (The caller may
+        // want to continue the lookup by replacing the query name with the
+        // canonical name and the original RR type.) First though, do a sanity
+        // check to ensure that there is only one RR in the CNAME RRset.
         if (cni->second->getRdataCount() != 1) {
             isc_throw(DataSourceError, "CNAME with " <<
                       cni->second->getRdataCount() << " rdata at " << name <<
