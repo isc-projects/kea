@@ -356,6 +356,90 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     delete ifacemgr;
 }
 
+TEST_F(IfaceMgrTest, sendReceive4) {
+
+    // testing socket operation in a portable way is tricky
+    // without interface detection implemented
+    createLoInterfacesTxt();
+
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    // let's assume that every supported OS have lo interface
+    IOAddress loAddr("127.0.0.1");
+    int socket1 = 0, socket2 = 0;
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+        socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000 + 1);
+    );
+
+    boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
+
+    sendPkt->setLocalAddr(IOAddress("127.0.0.1"));
+
+    sendPkt->setLocalPort(DHCP4_SERVER_PORT + 10000 + 1);
+    sendPkt->setRemotePort(DHCP4_SERVER_PORT + 10000);
+    sendPkt->setRemoteAddr(IOAddress("127.0.0.1"));
+    sendPkt->setIndex(1);
+    sendPkt->setIface(string(LOOPBACK));
+    sendPkt->setHops(6);
+    sendPkt->setSecs(42);
+    sendPkt->setCiaddr(IOAddress("192.0.2.1"));
+    sendPkt->setSiaddr(IOAddress("192.0.2.2"));
+    sendPkt->setYiaddr(IOAddress("192.0.2.3"));
+    sendPkt->setGiaddr(IOAddress("192.0.2.4"));
+
+    uint8_t sname[] = "That's just a string that will act as SNAME";
+    sendPkt->setSname(sname, strlen((const char*)sname));
+    uint8_t file[] = "/another/string/that/acts/as/a/file_name.txt";
+    sendPkt->setFile(file, strlen((const char*)file));
+
+    ASSERT_NO_THROW(
+        sendPkt->pack();
+    );
+
+    boost::shared_ptr<Pkt4> rcvPkt;
+
+    EXPECT_EQ(true, ifacemgr->send(sendPkt));
+
+    rcvPkt = ifacemgr->receive4();
+
+    ASSERT_TRUE( rcvPkt ); // received our own packet
+
+    ASSERT_NO_THROW(
+        rcvPkt->unpack();
+    );
+
+    // let's check that we received what was sent
+    EXPECT_EQ(sendPkt->len(), rcvPkt->len());
+
+    EXPECT_EQ(sendPkt->getRemoteAddr().toText(), rcvPkt->getLocalAddr().toText());
+    EXPECT_EQ(sendPkt->getRemotePort(), rcvPkt->getLocalPort());
+
+    // now let's check content
+    EXPECT_EQ(sendPkt->getHops(), rcvPkt->getHops());
+    EXPECT_EQ(sendPkt->getOp(),   rcvPkt->getOp());
+    EXPECT_EQ(sendPkt->getSecs(), rcvPkt->getSecs());
+    EXPECT_EQ(sendPkt->getFlags(), rcvPkt->getFlags());
+    EXPECT_EQ(sendPkt->getCiaddr(), rcvPkt->getCiaddr());
+    EXPECT_EQ(sendPkt->getSiaddr(), rcvPkt->getSiaddr());
+    EXPECT_EQ(sendPkt->getYiaddr(), rcvPkt->getYiaddr());
+    EXPECT_EQ(sendPkt->getGiaddr(), rcvPkt->getGiaddr());
+    EXPECT_EQ(sendPkt->getTransid(), rcvPkt->getTransid());
+    EXPECT_EQ(sendPkt->getType(), rcvPkt->getType());
+    EXPECT_TRUE(sendPkt->getSname() == rcvPkt->getSname());
+    EXPECT_TRUE(sendPkt->getFile() == rcvPkt->getFile());
+    EXPECT_EQ(sendPkt->getHtype(), rcvPkt->getHtype());
+    EXPECT_EQ(sendPkt->getHlen(), rcvPkt->getHlen());
+
+    // since we opened 2 sockets on the same interface and none of them is multicast,
+    // none is preferred over the other for sending data, so we really should not
+    // assume the one or the other will always be choosen for sending data. We should
+    // skip checking source port of sent address.
+
+    delete ifacemgr;
+}
+
+
 TEST_F(IfaceMgrTest, socket4) {
 
     createLoInterfacesTxt();
