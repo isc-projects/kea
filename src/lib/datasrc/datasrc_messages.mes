@@ -79,11 +79,10 @@ an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
 
 % DATASRC_DATABASE_FOUND_CNAME search in datasource %1 for %2/%3/%4 found CNAME
-When searching the domain for a name a CNAME was found at that name.  Even
-though it was not the RR type being sought, it is returned.  If the query
-of the database was issued by a result searching for the name, the return of
-the CNAME record will cause that resolver to issue another query for the
-target of the CNAME.
+When searching the domain for a name a CNAME was found at that name.
+Even though it was not the RR type being sought, it is returned.  (The
+caller may want to continue the lookup by replacing the query name with
+the canonical name and restarting the query with the original RR type.)
 
 % DATASRC_DATABASE_FOUND_DELEGATION Found delegation at %2 in %1
 When searching for a domain, the program met a delegation to a different zone
@@ -116,7 +115,7 @@ name and class, but not for the given type.
 % DATASRC_DATABASE_FOUND_NXRRSET_NSEC search in datasource %1 for %2/%3/%4 resulted in RRset %5
 A search in the database for RRs for the specified name, type and class has
 located RRs that match the name and class but not the type.  DNSSEC information
-has been requested, but there is no NSEC record corresponding to the node.
+has been requested and returned.
 
 % DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %5
 The data returned by the database backend contained data for the given domain
