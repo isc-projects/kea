@@ -87,11 +87,7 @@ bool IfaceMgr::Iface::delAddress(const isc::asiolink::IOAddress& addr) {
     // of the same address added, we are in deep problems anyway.
     size_t size = addrs_.size();
     addrs_.erase(remove(addrs_.begin(), addrs_.end(), addr), addrs_.end());
-    if (addrs_.size() < size) {
-        return (true);
-    } else {
-        return (false);
-    }
+    return (addrs_.size() < size);
 }
 
 bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
@@ -274,9 +270,8 @@ IfaceMgr::getIface(const std::string& ifname) {
     return (NULL); // not found
 }
 
-uint16_t
-IfaceMgr::openSocket(const std::string& ifname,
-                     const IOAddress& addr,
+int
+IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
                      int port) {
     Iface* iface = getIface(ifname);
     if (!iface) {
@@ -293,7 +288,7 @@ IfaceMgr::openSocket(const std::string& ifname,
     }
 }
 
-uint16_t
+int
 IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
 
     cout << "Creating UDP4 socket on " << iface.getFullName()
@@ -335,7 +330,7 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
     return (sock);
 }
 
-uint16_t
+int
 IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
 
     cout << "Creating UDP6 socket on " << iface.getFullName()
