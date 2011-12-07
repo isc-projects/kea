@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <arpa/inet.h>
@@ -28,6 +29,7 @@ using namespace isc;
 using namespace isc::dhcp;
 
 namespace {
+const char* const INTERFACE_FILE = "interfaces.txt";
 
 class NakedDhcpv4Srv: public Dhcpv4Srv {
     // "naked" Interface Manager, exposes internal fields
@@ -54,9 +56,14 @@ public:
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
     Dhcpv4SrvTest() {
+        unlink(INTERFACE_FILE);
+        fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
+        fakeifaces << "lo ::1";
+        fakeifaces.close();
     }
 
     ~Dhcpv4SrvTest() {
+        unlink(INTERFACE_FILE);
     };
 };
 
