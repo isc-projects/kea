@@ -52,7 +52,6 @@ XfroutClient::~XfroutClient() {
 
 void
 XfroutClient::connect() {
-    asio::error_code err;
     try {
         impl_->socket_.connect(stream_protocol::endpoint(impl_->file_path_));
     } catch (const asio::system_error& err) {
