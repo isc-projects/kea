@@ -92,6 +92,15 @@ LibDHCP::unpackOptions4(const std::vector<uint8_t>& buf,
     // 2 - header of DHCPv4 option
     while (offset + 2 <= buf.size()) {
         uint8_t opt_type = buf[offset++];
+
+        if (opt_type == DHO_END)
+          return; // just return. Don't need to add DHO_END option
+
+        if (offset + 1 >= buf.size()) {
+          isc_throw(OutOfRange, "Attempt to parse truncated option "
+                    << opt_type);
+        }
+
         uint8_t opt_len =  buf[offset++];
         if (offset + opt_len > buf.size() ) {
             isc_throw(OutOfRange, "Option parse failed. Tried to parse "

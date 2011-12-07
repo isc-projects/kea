@@ -353,8 +353,10 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
     memset(&addr4, 0, sizeof(sockaddr));
     addr4.sin_family = AF_INET;
     addr4.sin_port = htons(port);
-    memcpy(&addr4.sin_addr, addr.getAddress().to_v4().to_bytes().data(),
-           sizeof(addr4.sin_addr));
+
+    addr4.sin_addr.s_addr = htonl(addr);
+    //addr4.sin_addr.s_addr = 0; // anyaddr: this will receive 0.0.0.0 => 255.255.255.255 traffic
+    // addr4.sin_addr.s_addr = 0xffffffffu; // broadcast address. This will receive 0.0.0.0 => 255.255.255.255 as well
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
@@ -627,6 +629,11 @@ IfaceMgr::send(boost::shared_ptr<Pkt4>& pkt)
     pktinfo->ipi_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
 
+    cout << "Trying to send " << pkt->getBuffer().getLength() << " bytes to "
+         << pkt->getRemoteAddr().toText() << ":" << pkt->getRemotePort()
+         << " over socket " << getSocket(*pkt) << " on interface "
+         << getIface(pkt->getIface())->getFullName() << endl;
+
     result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
         isc_throw(Unexpected, "Pkt4 send failed.");
@@ -699,7 +706,7 @@ IfaceMgr::receive4() {
     unsigned int ifindex = 0;
     boost::shared_ptr<Pkt4> pkt;
     const uint32_t RCVBUFSIZE = 1500;
-    uint8_t buf[RCVBUFSIZE];
+    uint8_t* buf = (uint8_t*) malloc(RCVBUFSIZE);
 
     memset(&control_buf_[0], 0, control_buf_len_);
     memset(&from_addr, 0, sizeof(from_addr));
@@ -732,6 +739,7 @@ IfaceMgr::receive4() {
 
     if (result < 0) {
         cout << "Failed to receive UDP4 data." << endl;
+        delete buf;
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 
@@ -744,6 +752,10 @@ IfaceMgr::receive4() {
 
             ifindex = pktinfo->ipi_ifindex;
             to_addr = pktinfo->ipi_addr;
+
+            // debug:
+            IOAddress tmp(htonl(pktinfo->ipi_spec_dst.s_addr));
+            cout << "The other addr is: " << tmp.toText() << endl;
             // to_addr = pktinfo->ipi_spec_dst;
             found_pktinfo = 1;
         }
@@ -751,6 +763,7 @@ IfaceMgr::receive4() {
     }
     if (!found_pktinfo) {
         cout << "Unable to find pktinfo" << endl;
+        delete buf;
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 
