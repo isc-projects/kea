@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <arpa/inet.h>
@@ -29,7 +30,8 @@ using namespace isc::dhcp;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
 // Maybe it should be isc::test?
-namespace test {
+namespace {
+const char* const INTERFACE_FILE = "interfaces.txt";
 
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal fields
@@ -49,7 +51,15 @@ public:
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
     Dhcpv6SrvTest() {
+        unlink(INTERFACE_FILE);
+        fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
+        fakeifaces << "lo ::1";
+        fakeifaces.close();
+
     }
+    ~Dhcpv6SrvTest() {
+        unlink(INTERFACE_FILE);
+    };
 };
 
 TEST_F(Dhcpv6SrvTest, basic) {
