@@ -1,3 +1,11 @@
+338.	[bug]		jinmei
+	b10-xfrin didn't check SOA serials of SOA and IXFR responses,
+	which resulted in unnecessary transfer or unexpected IXFR
+	timeouts (these issues were not overlooked but deferred to be
+	fixed until #1278 was completed).  Validation on responses to SOA
+	queries were tighten, too.
+	(Trac #1299, git 6ff03bb9d631023175df99248e8cc0cda586c30a)
+
 337.	[func]		tomek
 	libdhcp++: Support for DHCPv4 option that can store a single
 	address or a list of IPv4 addresses added. Support for END option
