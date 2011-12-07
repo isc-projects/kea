@@ -53,6 +53,12 @@ def create_ns(nsname, name=Name('example.com'), ttl=3600):
     rrset.add_rdata(Rdata(RRType.NS(), RRClass.IN(), nsname))
     return rrset
 
+def create_cname(target='target.example.com', name=Name('example.com'),
+                 ttl=3600):
+    rrset = RRset(name, RRClass.IN(), RRType.CNAME(), RRTTL(ttl))
+    rrset.add_rdata(Rdata(RRType.CNAME(), RRClass.IN(), target))
+    return rrset
+
 def create_generic(name, rdlen, type=RRType('TYPE65300'), ttl=3600):
     '''Create an RR of a general type with an arbitrary length of RDATA
 
