@@ -1,3 +1,0 @@
-eth0 fe80::1
-
-# This file is needed to make stub interface detection work.
