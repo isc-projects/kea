@@ -20,6 +20,8 @@
 #include <boost/scoped_array.hpp>
 #include <boost/noncopyable.hpp>
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
@@ -299,12 +301,21 @@ public:
     /// Will throw exception if socket creation fails.
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
-    void openSockets(uint16_t port);
-
+    ///
+    /// @return true if any sockets were open
+    bool openSockets6(uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
     void closeSockets();
+
+    /// Opens IPv4 sockets on detected interfaces.
+    /// Will throw exception if socket creation fails.
+    ///
+    /// @param port specifies port number (usually DHCP6_SERVER_PORT)
+    ///
+    /// @return true if any sockets were open
+    bool openSockets4(uint16_t port = DHCP4_SERVER_PORT);
 
     // don't use private, we need derived classes in tests
 protected:
