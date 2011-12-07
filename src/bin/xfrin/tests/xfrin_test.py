@@ -158,7 +158,7 @@ class MockDataSourceClient():
             return (DataSourceClient.PARTIALMATCH, self)
         raise ValueError('Unexpected input to mock client: bug in test case?')
 
-    def find(self, name, rrtype, target, options):
+    def find(self, name, rrtype, target=None, options=ZoneFinder.FIND_DEFAULT):
         '''Mock ZoneFinder.find().
 
         It returns the predefined SOA RRset to queries for SOA of the common
@@ -1751,8 +1751,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
     def get_zone_serial(self):
         result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
         self.assertEqual(DataSourceClient.SUCCESS, result)
-        result, soa = finder.find(TEST_ZONE_NAME, RRType.SOA(),
-                                  None, ZoneFinder.FIND_DEFAULT)
+        result, soa = finder.find(TEST_ZONE_NAME, RRType.SOA())
         self.assertEqual(ZoneFinder.SUCCESS, result)
         self.assertEqual(1, soa.get_rdata_count())
         return get_soa_serial(soa.get_rdata()[0])
@@ -1760,7 +1759,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
     def record_exist(self, name, type):
         result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
         self.assertEqual(DataSourceClient.SUCCESS, result)
-        result, soa = finder.find(name, type, None, ZoneFinder.FIND_DEFAULT)
+        result, soa = finder.find(name, type)
         return result == ZoneFinder.SUCCESS
 
     def test_do_ixfrin_sqlite3(self):
