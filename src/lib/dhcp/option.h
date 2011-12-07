@@ -237,6 +237,12 @@ public:
     bool
     delOption(unsigned short type);
 
+    uint8_t getUint8();
+
+    uint16_t getUint16();
+
+    uint32_t getUint32();
+
     /// just to force that every option has virtual dtor
     virtual
     ~Option();
