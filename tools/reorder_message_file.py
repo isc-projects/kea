@@ -26,7 +26,7 @@
 
 import sys
 
-def removeEmptyLeadingTrailing(lines):
+def remove_empty_leading_trailing(lines):
     """
     Removes leading and trailing empty lines.
 
@@ -124,7 +124,7 @@ def make_dict(lines):
     while index < len(lines):
         if lines[index].startswith("%"):
             # Start of new message
-            dictionary[message_key] = removeEmptyLeadingTrailing(message_lines)
+            dictionary[message_key] = remove_empty_leading_trailing(message_lines)
             message_key = canonicalise_message_line(lines[index])
             message_lines = [message_key]
         else:
@@ -132,7 +132,7 @@ def make_dict(lines):
 
         index = index + 1
 
-    dictionary[message_key] = removeEmptyLeadingTrailing(message_lines)
+    dictionary[message_key] = remove_empty_leading_trailing(message_lines)
 
     return dictionary
 
@@ -157,7 +157,7 @@ def print_dict(dictionary):
             print(l.strip())
 
 
-def processFile(filename):
+def process_file(filename):
     """
     Processes a file by reading it and searching for the first line starting
     with the '%' sign.  Everything before that line is treated as the file
@@ -193,4 +193,4 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print "Usage: python reorder.py message_file"
     else:
-        processFile(sys.argv[1])
+        process_file(sys.argv[1])
