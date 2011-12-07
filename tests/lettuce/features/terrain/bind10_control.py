@@ -79,6 +79,20 @@ def wait_for_auth(step, process_name):
     world.processes.wait_for_stderr_str(process_name, ['AUTH_SERVER_STARTED'],
                                         False)
 
+@step('wait for bind10 xfrout (?:of (\w+) )?to start')
+def wait_for_xfrout(step, process_name):
+    """Wait for b10-xfrout to run. This is done by blocking until the message
+       XFROUT_NEW_CONFIG_DONE is logged.
+       Parameters:
+       process_name ('of <name', optional): The name of the BIND 10 instance
+                    to wait for. Defaults to 'bind10'.
+    """
+    if process_name is None:
+        process_name = "bind10"
+    world.processes.wait_for_stderr_str(process_name,
+                                        ['XFROUT_NEW_CONFIG_DONE'],
+                                        False)
+
 @step('have bind10 running(?: with configuration ([\S]+))?' +\
       '(?: with cmdctl port (\d+))?' +\
       '(?: as ([\S]+))?')
