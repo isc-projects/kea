@@ -31,13 +31,13 @@ using namespace isc::statistics;
 // This fixture is for testing Counter.
 class CounterTest : public ::testing::Test {
 protected:
-    CounterTest() {}
+    CounterTest() : counter(NUMBER_OF_ITEMS) {}
     ~CounterTest() {}
+
+    Counter counter;
 };
 
 TEST_F(CounterTest, createCounter) {
-    // Create counter
-    Counter counter(NUMBER_OF_ITEMS);
     // Check if the all counters are initialized with 0
     EXPECT_EQ(counter.get(ITEM1), 0);
     EXPECT_EQ(counter.get(ITEM2), 0);
@@ -45,8 +45,6 @@ TEST_F(CounterTest, createCounter) {
 }
 
 TEST_F(CounterTest, incrementCounterItem) {
-    // Create counter
-    Counter counter(NUMBER_OF_ITEMS);
     // Increment counters
     counter.inc(ITEM1);
     counter.inc(ITEM2);
@@ -78,8 +76,6 @@ TEST_F(CounterTest, invalidCounterSize) {
 }
 
 TEST_F(CounterTest, invalidCounterItem) {
-    // Create counter
-    Counter counter(NUMBER_OF_ITEMS);
     // Incrementing out-of-bound counter will cause an isc::OutOfRange
     // exception
     EXPECT_THROW(counter.inc(NUMBER_OF_ITEMS), isc::OutOfRange);
