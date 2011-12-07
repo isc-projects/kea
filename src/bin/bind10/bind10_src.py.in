@@ -876,7 +876,7 @@ class BoB:
             unix_socket.sendall(CREATOR_SOCKET_OK)
             libutil_io_python.send_fd(unix_socket.fileno(), fd)
         except Exception as e:
-            logger.error(BIND10_NO_SOCKET, token, e)
+            logger.info(BIND10_NO_SOCKET, token, e)
             unix_socket.sendall(CREATOR_SOCKET_UNAVAILABLE)
 
     def socket_consumer_dead(self, unix_socket):
@@ -885,7 +885,7 @@ class BoB:
         sockets sent to it are to be considered closed. This function signals
         so to the _socket_cache.
         """
-        logger.error(BIND10_LOST_SOCKET_CONSUMER, unix_socket.fileno())
+        logger.info(BIND10_LOST_SOCKET_CONSUMER, unix_socket.fileno())
         try:
             self._socket_cache.drop_application(unix_socket.fileno())
         except ValueError:
