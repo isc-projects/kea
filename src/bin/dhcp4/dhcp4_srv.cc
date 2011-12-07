@@ -50,9 +50,12 @@ Dhcpv4Srv::run() {
         boost::shared_ptr<Pkt4> query; // client's message
         boost::shared_ptr<Pkt4> rsp;   // server's response
 
-#if 1
-        // uncomment this once ticket 1239 is merged.
         query = IfaceMgr::instance().receive4();
+
+#if ECHO_SERVER
+	query->repack();
+        IfaceMgr::instance().send(query);
+        continue;
 #endif
 
         if (query) {
