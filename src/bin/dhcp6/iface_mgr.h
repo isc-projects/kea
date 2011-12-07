@@ -291,8 +291,8 @@ public:
     ///
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
-    uint16_t openSocket(const std::string& ifname,
-                        const isc::asiolink::IOAddress& addr, int port);
+    int openSocket(const std::string& ifname,
+                   const isc::asiolink::IOAddress& addr, int port);
 
     /// Opens IPv6 sockets on detected interfaces.
     ///
@@ -328,7 +328,7 @@ protected:
     /// @param port a port that created socket should be bound to
     ///
     /// @return socket descriptor
-    uint16_t openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
 
     /// @brief Opens IPv6 socket.
     ///
@@ -341,7 +341,7 @@ protected:
     /// @param port a port that created socket should be bound to
     ///
     /// @return socket descriptor
-    uint16_t openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
 
     /// @brief Adds an interface to list of known interfaces.
     ///

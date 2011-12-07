@@ -57,15 +57,13 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // interfaces.txt instead. It will pretend to have detected
     // fe80::1234 link-local address on eth0 interface. Obviously
     // an attempt to bind this socket will fail.
-    Dhcpv6Srv * srv = 0;
+    Dhcpv6Srv* srv = 0;
     ASSERT_NO_THROW( {
         // open an unpriviledged port
         srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
     });
-    if (srv) {
-        delete srv;
-    }
 
+    delete srv;
 }
 
 TEST_F(Dhcpv6SrvTest, Solicit_basic) {
@@ -75,7 +73,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     // a dummy content for client-id
     boost::shared_array<uint8_t> clntDuid(new uint8_t[32]);
     for (int i = 0; i < 32; i++)
-        clntDuid[i] = 100+i;
+        clntDuid[i] = 100 + i;
 
     boost::shared_ptr<Pkt6> sol =
         boost::shared_ptr<Pkt6>(new Pkt6(DHCPV6_SOLICIT,
