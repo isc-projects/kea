@@ -51,7 +51,7 @@ Serial::operator>(const Serial& other) const {
 
 bool
 Serial::operator>=(const Serial& other) const {
-    return (operator==(other) || !operator>(other));
+    return (!operator<(other));
 }
 
 Serial
