@@ -559,6 +559,8 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+22, 3)); // data len=3
 }
 
+// This test verifies methods that are used for manipulating meta fields
+// i.e. fields that are not part of DHCPv4 (e.g. interface name).
 TEST(Pkt4Test, metaFields) {
 
     Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
@@ -571,7 +573,6 @@ TEST(Pkt4Test, metaFields) {
     EXPECT_EQ(42, pkt->getIndex());
     EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
     EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
-
 }
 
 } // end of anonymous namespace

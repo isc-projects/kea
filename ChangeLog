@@ -1,3 +1,8 @@
+3XX.	[func]		tomek
+	libdhcp++: Support for handling both IPv4 and IPv6 added.
+	Also added support for binding IPv4 sockets.
+	(Trac #1238, git TBD)
+
 328.	[func]		jelte
 	b10-auth now passes IXFR requests on to b10-xfrout, and no longer
 	responds to them with NOTIMPL.
