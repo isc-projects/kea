@@ -26,8 +26,8 @@ namespace {
 
 TEST(ClientTest, connetFile) {
     // File path is too long
-    const struct sockaddr_un sun;
-    EXPECT_THROW(XfroutClient(string(sizeof(sun.sun_path), 'x')).connect(),
+    struct sockaddr_un s;     // can't be const; some compiler complains
+    EXPECT_THROW(XfroutClient(string(sizeof(s.sun_path), 'x')).connect(),
                  XfroutError);
 
     // File doesn't exist (we assume the file "no_such_file" doesn't exist)
