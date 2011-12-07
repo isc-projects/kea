@@ -575,8 +575,6 @@ IfaceMgr::send(boost::shared_ptr<Pkt4>& pkt)
     struct msghdr m;
     struct iovec v;
     int result;
-    struct in_pktinfo *pktinfo;
-    struct cmsghdr *cmsg;
 
     Iface* iface = getIface(pkt->getIface());
     if (!iface) {
@@ -616,6 +614,9 @@ IfaceMgr::send(boost::shared_ptr<Pkt4>& pkt)
      * source address if we wanted, but we can safely let the
      * kernel decide what that should be.
      */
+#if defined(LINUX)
+    struct in_pktinfo *pktinfo;
+    struct cmsghdr *cmsg;
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
     cmsg = CMSG_FIRSTHDR(&m);
@@ -626,6 +627,7 @@ IfaceMgr::send(boost::shared_ptr<Pkt4>& pkt)
     memset(pktinfo, 0, sizeof(*pktinfo));
     pktinfo->ipi_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
+#endif
 
     cout << "Trying to send " << pkt->getBuffer().getLength() << " bytes to "
          << pkt->getRemoteAddr().toText() << ":" << pkt->getRemotePort()
@@ -700,11 +702,8 @@ IfaceMgr::receive4() {
     struct msghdr m;
     struct iovec v;
     int result;
-    struct cmsghdr* cmsg;
-    struct in_pktinfo* pktinfo;
     struct sockaddr_in from_addr;
     struct in_addr to_addr;
-    unsigned int ifindex = 0;
     boost::shared_ptr<Pkt4> pkt;
     const uint32_t RCVBUFSIZE = 1500;
     uint8_t* buf = (uint8_t*) malloc(RCVBUFSIZE);
@@ -744,6 +743,11 @@ IfaceMgr::receive4() {
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 
+#if defined(LINUX)
+    struct cmsghdr* cmsg;
+    struct in_pktinfo* pktinfo;
+    unsigned int ifindex = 0;
+
     int found_pktinfo = 0;
     cmsg = CMSG_FIRSTHDR(&m);
     while (cmsg != NULL) {
@@ -767,6 +771,7 @@ IfaceMgr::receive4() {
         delete buf;
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
+#endif
 
     IOAddress to(htonl(to_addr.s_addr));
     IOAddress from(htonl(from_addr.sin_addr.s_addr));
