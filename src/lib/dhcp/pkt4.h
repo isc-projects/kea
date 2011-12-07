@@ -78,6 +78,14 @@ public:
     bool
     unpack();
 
+    /// @brief Copies content of input buffer to output buffer.
+    ///
+    /// This is mostly a diagnostic function. It is being used for sending
+    /// received packet. Received packet is stored in bufferIn_, but
+    /// transmitted data is stored in bufferOut_. If we want to send packet
+    /// that we just received, a copy between those two buffers is necessary.
+    void repack();
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.

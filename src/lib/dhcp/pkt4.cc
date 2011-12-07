@@ -156,6 +156,14 @@ Pkt4::unpack() {
     return (true);
 }
 
+void Pkt4::repack() {
+  cout << "Convering RX packet to TX packet: " << bufferIn_.getLength() << " bytes." << endl;
+
+  vector<uint8_t> buf;
+  bufferIn_.readVector(buf, bufferIn_.getLength());
+  bufferOut_.writeData(&buf[0], bufferIn_.getLength());
+}
+
 std::string
 Pkt4::toText() {
     stringstream tmp;
