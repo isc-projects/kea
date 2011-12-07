@@ -922,6 +922,40 @@ public:
             const DelegationSearchResult& dresult);
 
 	/// \brief Handle matching results for name
+	///
+	/// This is called when something is found in the underlying database
+	/// whose domain name is an exact match of the name to be searched for.
+	/// It explores four possible cases to decide the final lookup result:
+	/// - The name is a zone cut due to an NS RR.
+	/// - CNAME is found (while the requested RR type is not CNAME).
+	///   In this case multiple CNAMEs are checked and rejected with
+	///   a \c DataSourceError exception.
+	/// - Requested type is not found at that name.
+	/// - A record of the requested type is found.
+	/// and returns a corresponding find result.
+	///
+	/// This method is commonly used for normal (non wildcard) and wildcard
+	/// matches.
+	///
+        /// \param name The name to find
+        /// \param type The RRType to find
+        /// \param options Options about how to search. See the documentation
+        ///        for ZoneFinder::FindOptions.
+	/// \param is_origin If name is the zone's origin name.
+	/// \param found A set of found RRsets in the search for the name
+	///        and type.  It could contain one or more of the requested
+	///        type, CNAME, NS, and NSEC RRsets of the name.
+	/// \param wildname If non NULL, the method is called on a wildcard
+	///                 match, and points to a string object representing
+	///                 a textual form of the matched wildcard name;
+	///                 it's NULL in the case of non wildcard match.
+	///
+        /// \return Tuple holding the result of the search - the RRset of the
+        ///         wildcard records matching the name, together with a status
+	///         indicating the match type (corresponding to the each of
+	///         the above 4 cases).  The return value is intended to be
+	///         usable as a return value of the caller of this helper
+	///         method.
         FindResult findOnNameResult(const isc::dns::Name& name,
 				    const isc::dns::RRType& type,
 				    const FindOptions options,
@@ -954,9 +988,7 @@ public:
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (e.g. CNAME at the wildcard
         ///         match, no RRs of the requested type at the wildcard,
-        ///         success due to an exact match).  Also returned if there
-        ///         is no match is an indication as to whether there was an
-        ///         NXDOMAIN or an NXRRSET.
+        ///         success due to an exact match).
         FindResult findNoNameResult(const isc::dns::Name& name,
                                     const isc::dns::RRType& type,
                                     FindOptions options,
