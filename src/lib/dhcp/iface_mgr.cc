@@ -148,6 +148,8 @@ void IfaceMgr::closeSockets() {
 IfaceMgr::~IfaceMgr() {
     // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;
+
+    closeSockets();
 }
 
 void
