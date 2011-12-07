@@ -77,8 +77,8 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
 {
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
-                  << " received, at least " << DHCPV4_PKT_HDR_LEN
-                  << "is expected");
+                  << ") received, at least " << DHCPV4_PKT_HDR_LEN
+                  << " is expected.");
     }
 
     data_.resize(len);

@@ -18,6 +18,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
@@ -191,9 +192,52 @@ IfaceMgr::detectIfaces() {
     }
 }
 
-void
-IfaceMgr::openSockets(uint16_t port) {
+bool IfaceMgr::openSockets4(uint16_t port) {
+    int sock;
+    int count = 0;
+
+    for (IfaceCollection::iterator iface=ifaces_.begin();
+         iface!=ifaces_.end();
+         ++iface) {
+
+        cout << "Trying interface " << iface->getFullName() << endl;
+
+#if 0
+        // uncomment when trac1237 (interface detection) is merged
+        if (iface->flag_loopback_ ||
+            !iface->flag_up_ ||
+            !iface->flag_running_) {
+            continue;
+        }
+#endif
+
+        AddressCollection addrs = iface->getAddresses();
+
+        for (AddressCollection::iterator addr= addrs.begin();
+             addr != addrs.end();
+             ++addr) {
+
+            // skip IPv4 addresses
+            if (addr->getFamily() != AF_INET) {
+                continue;
+            }
+
+            sock = openSocket(iface->getName(), *addr, port);
+            if (sock<0) {
+                cout << "Failed to open unicast socket." << endl;
+                return (false);
+            }
+
+            count++;
+        }
+    }
+    return (count > 0);
+
+}
+
+bool IfaceMgr::openSockets6(uint16_t port) {
     int sock1, sock2;
+    int count = 0;
 
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
@@ -228,6 +272,8 @@ IfaceMgr::openSockets(uint16_t port) {
             }
         }
     }
+
+    return (count > 0);
 }
 
 void
@@ -514,10 +560,138 @@ IfaceMgr::send(boost::shared_ptr<Pkt4>& )
 
 boost::shared_ptr<Pkt4>
 IfaceMgr::receive4() {
-    isc_throw(NotImplemented, "Pkt4 reception not implemented yet.");
 
-    // TODO: To be implemented (ticket #1239)
-    return (boost::shared_ptr<Pkt4>()); // NULL
+    const SocketInfo* candidate = 0;
+    IfaceCollection::const_iterator iface;
+    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
+
+#if 0
+        // uncomment when trac1237 (interface detection) is merged
+        // Let's skip loopback and downed interfaces.
+        if (iface->flag_loopback_ ||
+            !iface->flag_up_ ||
+            !iface->flag_running_) {
+            continue;
+        }
+#endif
+
+        SocketCollection::const_iterator s = iface->sockets_.begin();
+        while (s != iface->sockets_.end()) {
+
+            // We don't want IPv6 addresses here.
+            if (s->addr_.getFamily() != AF_INET) {
+                ++s;
+                continue;
+            }
+
+            // This address looks good.
+            if (!candidate) {
+                candidate = &(*s);
+                break;
+            }
+
+            ++s;
+        }
+
+        if (candidate) {
+            break;
+        }
+    }
+
+    if (!candidate) {
+        isc_throw(Unexpected, "Failed to find any suitable sockets on all interfaces.");
+    }
+
+    cout << "Trying to receive over UDP4 socket " << candidate->sockfd_ << " bound to "
+         << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
+         << iface->getFullName() << endl;
+
+    // Now we have a socket, let's get some data from it!
+
+    struct msghdr m;
+    struct iovec v;
+    int result;
+    struct cmsghdr* cmsg;
+    struct in_pktinfo* pktinfo;
+    struct sockaddr_in from_addr;
+    struct in_addr to_addr;
+    unsigned int ifindex = 0;
+    boost::shared_ptr<Pkt4> pkt;
+    const uint32_t RCVBUFSIZE = 1500;
+    uint8_t buf[RCVBUFSIZE];
+
+    memset(&control_buf_[0], 0, control_buf_len_);
+    memset(&from_addr, 0, sizeof(from_addr));
+    memset(&to_addr, 0, sizeof(to_addr));
+
+    // Initialize our message header structure.
+    memset(&m, 0, sizeof(m));
+
+    // Point so we can get the from address.
+    m.msg_name = &from_addr;
+    m.msg_namelen = sizeof(from_addr);
+
+    v.iov_base = (void*)buf;
+    v.iov_len = RCVBUFSIZE;
+    m.msg_iov = &v;
+    m.msg_iovlen = 1;
+
+    /*
+     * Getting the interface is a bit more involved.
+     *
+     * We set up some space for a "control message". We have
+     * previously asked the kernel to give us packet
+     * information (when we initialized the interface), so we
+     * should get the destination address from that.
+     */
+    m.msg_control = &control_buf_[0];
+    m.msg_controllen = control_buf_len_;
+
+    result = recvmsg(candidate->sockfd_, &m, 0);
+
+    if (result < 0) {
+        cout << "Failed to receive UDP4 data." << endl;
+        return (boost::shared_ptr<Pkt4>()); // NULL
+    }
+
+    int found_pktinfo = 0;
+    cmsg = CMSG_FIRSTHDR(&m);
+    while (cmsg != NULL) {
+        if ((cmsg->cmsg_level == IPPROTO_IP) &&
+            (cmsg->cmsg_type == IP_PKTINFO)) {
+            pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
+
+            ifindex = pktinfo->ipi_ifindex;
+            to_addr = pktinfo->ipi_addr;
+            // to_addr = pktinfo->ipi_spec_dst;
+            found_pktinfo = 1;
+        }
+        cmsg = CMSG_NXTHDR(&m, cmsg);
+    }
+    if (!found_pktinfo) {
+        cout << "Unable to find pktinfo" << endl;
+        return (boost::shared_ptr<Pkt4>()); // NULL
+    }
+
+    IOAddress to(htonl(to_addr.s_addr));
+    IOAddress from(htonl(from_addr.sin_addr.s_addr));
+    uint16_t from_port = htons(from_addr.sin_port);
+
+    cout << "Received " << result << " bytes from " << from.toText()
+         << "/port=" << from_port
+         << " sent to " << to.toText() << " over interface "
+         << iface->getFullName() << endl;
+
+    // we have all data let's create Pkt4 object
+    pkt = boost::shared_ptr<Pkt4>(new Pkt4(buf, result));
+
+
+    pkt->setLocalAddr(to);
+    pkt->setRemotePort(from_port);
+    pkt->setLocalPort(candidate->port_);
+    // pkt->setRemoteAddr(from);
+
+    return (pkt);
 }
 
 boost::shared_ptr<Pkt6>
@@ -585,12 +759,16 @@ IfaceMgr::receive6() {
     SocketCollection::const_iterator s = iface->sockets_.begin();
     const SocketInfo* candidate = 0;
     while (s != iface->sockets_.end()) {
+        if (s->addr_.getFamily() != AF_INET6) {
+            ++s;
+            continue;
+        }
         if (s->addr_.getAddress().to_v6().is_multicast()) {
             candidate = &(*s);
             break;
         }
         if (!candidate) {
-            candidate = &(*s); // it's not multicast, but it's better than none
+            candidate = &(*s); // it's not multicast, but it's better than nothing
         }
         ++s;
     }
@@ -599,7 +777,7 @@ IfaceMgr::receive6() {
                   << " does not have any sockets open.");
     }
 
-    cout << "Trying to receive over socket " << candidate->sockfd_ << " bound to "
+    cout << "Trying to receive over UDP6 socket " << candidate->sockfd_ << " bound to "
          << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
          << iface->getFullName() << endl;
     result = recvmsg(candidate->sockfd_, &m, 0);
