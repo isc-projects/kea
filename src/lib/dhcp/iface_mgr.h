@@ -326,7 +326,7 @@ protected:
     /// anyone to create instances of IfaceMgr. Use instance() method instead.
     IfaceMgr();
 
-    ~IfaceMgr();
+    virtual ~IfaceMgr();
 
     /// @brief Opens IPv4 socket.
     ///
