@@ -56,9 +56,13 @@ public:
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
     Dhcpv4SrvTest() {
-        unlink(INTERFACE_FILE);
+       unlink(INTERFACE_FILE);
         fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
-        fakeifaces << "lo ::1";
+        if (if_nametoindex("lo")>0) {
+            fakeifaces << "lo ::1";
+        } else if (if_nametoindex("lo0")>0) {
+            fakeifaces << "lo0 ::1";
+        }
         fakeifaces.close();
     }
 
