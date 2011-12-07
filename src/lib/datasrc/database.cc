@@ -497,38 +497,67 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
                                    last_known));
 }
 
+// This method is called when we have not found an exact match and when we
+// know that the name is not an empty non-terminal.  So the only way that
+// the name can match something in the zone is through a wildcard match.
+//
+// During an earlier stage in the search for this name, we made a record of
+// the lowest superdomain for which we know an RR exists. (Note the "we
+// know" qualification - there may be lower superdomains (ones with more
+// labels) that hold an RR, but as we weren't searching for them, we don't
+// know about them.)
+//
+// In the search for a wildcard match (which starts at the given domain
+// name and goes up the tree to successive superdomains), this is the level
+// at which we can stop - there can't be a wildcard at or beyond that
+// point.
+//
+// At each level that can stop the search, we should consider several cases:
+//
+// - If we found a wildcard match for a glue record below a
+// delegation point, we don't return the match,
+// instead we return the delegation.  (Note that if we didn't
+// a wildcard match at all, we would return NXDOMAIN, not the
+// the delegation.)
+//
+// - If we found a wildcard match and we are sure that the match
+// is not an empty non-terminal, return the result taking into account CNAME,
+// on a zone cut, and NXRRSET.
+// (E.g. searching for a match
+// for c.b.a.example.com, we found that b.a.example.com did
+// not exist but that *.a.example.com. did. Checking
+// b.a.example.com revealed no subdomains, so we can use the
+// wilcard match we found.)
+//
+// - If we found a more specified match, the wildcard search
+// is canceled, resulting in NXDOMAIN.  (E.g. searching for a match
+// for c.b.a.example.com, we found that b.a.example.com did
+// not exist but that *.a.example.com. did. Checking
+// b.a.example.com found subdomains.  So b.example.com is
+// an empty non-terminal and so should not be returned in
+// the wildcard matching process.  In other words,
+// b.example.com does exist in the DNS space, it just doesn't
+// have any RRs associated with it.)
+//
+// - If we found a match, but it is an empty non-terminal asterisk (E.g.#
+// subdomain.*.example.com.  is present, but there is nothing at
+// *.example.com.),  return an NXRRSET indication;
+// the wildcard exists in the DNS space, there's just nothing
+// associated with it.  If DNSSEC data is required, return the
+// covering NSEC record.
+//
+// If none of the above applies in any level, the search fails with NXDOMAIN.
 ZoneFinder::FindResult
 DatabaseClient::Finder::findWildcardMatch(
     const isc::dns::Name& name, const isc::dns::RRType& type,
     const FindOptions options, const DelegationSearchResult& dresult)
 {
-    // Initialize search result to indicate nothing found
-    isc::dns::ConstRRsetPtr result_rrset;
-    ZoneFinder::Result result_status = NXDOMAIN;
-
-    // Should DNSSEC data be returned?
-    const bool dnssec_data = ((options & FIND_DNSSEC) != 0);
-
     // Note that during the search we are going to search not only for the
     // requested type, but also for types that indicate a delegation -
     // NS and DNAME.
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
 
-    // This method is called when we have not found an exact match and when we
-    // know that the name is not an empty non-terminal.  So the only way that
-    // the name can match something in the zone is through a wildcard match.
-    //
-    // During an earlier stage in the search for this name, we made a record of
-    // the lowest superdomain for which we know an RR exists. (Note the "we
-    // know" qualification - there may be lower superdomains (ones with more
-    // labels) that hold an RR, but as we weren't searching for them, we don't
-    // know about them.)
-    //
-    // In the search for a wildcard match (which starts at the given domain
-    // name and goes up the tree to successive superdomains), this is the level
-    // at which we can stop - there can't be a wildcard at or beyond that
-    // point.
     for (size_t i = 1; i <= (name.getLabelCount() - dresult.last_known); ++i) {
 
         // Strip off the left-more label(s) in the name and replace with a "*".
@@ -554,119 +583,165 @@ DatabaseClient::Finder::findWildcardMatch(
                               "processing glue request");
                 }
 
-                // We found a wildcard match for a glue record below a
-                // delegation point.  In this case we don't return the match,
-                // instead we return the delegation.  (Note that if we didn't
-                // a wildcard match at all, we would return NXDOMAIN, not the
-                // the delegation.)
+                // Wildcard match for a glue below a delegation point
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_WILDCARD_CANCEL_NS).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(dresult.first_ns->getName());
-                result_status = DELEGATION;
-                result_rrset = dresult.first_ns;
+                return (ZoneFinder::FindResult(DELEGATION, dresult.first_ns));
 
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
-                // We found a wildcard match and we are sure that the match
-                // is not an empty non-terminal (E.g. searching for a match
-                // for c.b.a.example.com, we found that b.a.example.com did
-                // not exist but that *.a.example.com. did. Checking
-                // b.a.example.com revealed no subdomains, so we can use the
-                // wilcard match we found.)
-                const FoundIterator cni(found.second.find(RRType::CNAME()));
-                const FoundIterator nsi(found.second.find(RRType::NS()));
-                const FoundIterator nci(found.second.find(RRType::NSEC()));
-                const FoundIterator wti(found.second.find(type));
-
-                if (cni != found.second.end() && type != RRType::CNAME()) {
-                    // Found a wildcard match for a CNAME but were not
-                    // searching for one.
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_WILDCARD_CNAME).
-                              arg(accessor_->getDBName()).
-                              arg(wildcard).arg(name);
-                    result_status = WILDCARD_CNAME;
-                    result_rrset = cni->second;
-
-                } else if (nsi != found.second.end()) {
-                    // Found a wildcard match to an NS.
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_WILDCARD_NS).
-                              arg(accessor_->getDBName()).
-                              arg(wildcard).arg(name);
-                    result_status = DELEGATION;
-                    result_rrset = nsi->second;
-
-                } else if (wti != found.second.end()) {
-                    // Found a wildcard match to the name and type we were
-                    // search for.
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_WILDCARD_MATCH).
-                              arg(accessor_->getDBName()).
-                              arg(wildcard).arg(name);
-                    result_status = WILDCARD;
-                    result_rrset = wti->second;
-
-                } else {
-                    // Found a wildcard match to the name but not to the type
-                    // (i.e. NXRRSET).
-                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                              DATASRC_DATABASE_WILDCARD_NXRRSET).
-                              arg(accessor_->getDBName()).
-                              arg(wildcard).arg(name);
-                    result_status = WILDCARD_NXRRSET;
-
-                    if (dnssec_data && nci != found.second.end()) {
-                        // User wants a proof the wildcard doesn't contain
-                        // the requested type.  However, we need to get the
-                        // RRset in the name of the wildcard, not the
-                        // constructed one, so we search the tree again.
-                        found = getRRsets(wildcard, NSEC_TYPES(), true);
-                        result_rrset =
-                            found.second.find(RRType::NSEC())->second;
-                    }
-                }
-
+                // The wildcard match is the best one, find the final result
+                // at it.  Note that wildcard should never be the zone origin.
+                return (findOnNameResult(name, type, options, false,
+                                         found, &wildcard));
             } else {
-                // A more specified match was found so the wildcard search
-                // is canceled.  (E.g. searching for a match
-                // for c.b.a.example.com, we found that b.a.example.com did
-                // not exist but that *.a.example.com. did. Checking
-                // b.a.example.com found subdomains.  So b.example.com is
-                // an empty non-terminal and so should not be returned in
-                // the wildcard matching process.  In other words,
-                // b.example.com does exist in the DNS space, it just doesn't
-                // have any RRs associated with it.)
+
+                // more specified match found, cancel wildcard match
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_WILDCARD_CANCEL_SUB).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(name).arg(superdomain);
-                result_status = NXDOMAIN;
+                return (ZoneFinder::FindResult(NXDOMAIN, ConstRRsetPtr()));
             }
-            break;
 
         } else if (hasSubdomains(wildcard)) {
-            // Found a match, but it is an empty non-terminal asterisk.  (E.g.#
-            // subdomain.*.example.com.  is present, but there is nothing at
-            // *.example.com.)  In this case, return an NXRRSET indication;
-            // the wildcard exists in the DNS space, there's just nothing
-            // associated with it.  If DNSSEC data is required, return the
-            // covering NSEC record.
+            // an empty non-terminal asterisk
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_WILDCARD_EMPTY).
                 arg(accessor_->getDBName()).arg(wildcard).arg(name);
-            result_status = NXRRSET;
-
-            if (dnssec_data) {
-                result_rrset = findNSECCover(Name(wildcard));
-                if (result_rrset) {
-                    result_status = WILDCARD_NXRRSET;
+            if ((options & FIND_DNSSEC) != 0) {
+                ConstRRsetPtr nsec = findNSECCover(Name(wildcard));
+                if (nsec) {
+                    return (ZoneFinder::FindResult(WILDCARD_NXRRSET, nsec));
                 }
             }
-            break;
+            return (ZoneFinder::FindResult(NXRRSET, ConstRRsetPtr()));
         }
     }
-    return (ZoneFinder::FindResult(result_status, result_rrset));
+
+    // Nothing found at any level.
+    return (ZoneFinder::FindResult(NXDOMAIN, ConstRRsetPtr()));
+}
+
+ZoneFinder::FindResult
+DatabaseClient::Finder::logAndCreateResult(
+    const Name& name, const string* wildname, const RRType& type,
+    ZoneFinder::Result code, ConstRRsetPtr rrset,
+    const isc::log::MessageID& log_id) const
+{
+    if (rrset) {
+        if (wildname == NULL) {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
+                arg(accessor_->getDBName()).arg(name).arg(type).
+                arg(getClass()).arg(*rrset);
+        } else {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
+                arg(accessor_->getDBName()).arg(name).arg(type).
+                arg(getClass()).arg(*wildname).arg(*rrset);
+        }
+    } else {
+        if (wildname == NULL) {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
+                arg(accessor_->getDBName()).arg(name).arg(type).
+                arg(getClass());
+        } else {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
+                arg(accessor_->getDBName()).arg(name).arg(type).
+                arg(getClass()).arg(*wildname);
+        }
+    }
+    return (ZoneFinder::FindResult(code, rrset));
+}
+
+ZoneFinder::FindResult
+DatabaseClient::Finder::findOnNameResult(const Name& name,
+                                         const RRType& type,
+                                         const FindOptions options,
+                                         const bool is_origin,
+                                         const FoundRRsets& found,
+                                         const string* wildname)
+{
+    const bool wild = (wildname != NULL);
+
+    // Get iterators for the different types of records we are interested in -
+    // CNAME, NS and Wanted types.
+    const FoundIterator nsi(found.second.find(RRType::NS()));
+    const FoundIterator cni(found.second.find(RRType::CNAME()));
+    const FoundIterator wti(found.second.find(type));
+
+    if (!is_origin && ((options & FIND_GLUE_OK) == 0) &&
+        nsi != found.second.end()) {
+        // A NS RRset was found at the domain we were searching for.  As it is
+        // not at the origin of the zone, it is a delegation and indicates that
+        // this zone is not authoritative for the data. Just return the
+        // delegation information.
+        return (logAndCreateResult(name, wildname, type, DELEGATION,
+                                   nsi->second,
+                                   wild ? DATASRC_DATABASE_WILDCARD_NS :
+                                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT));
+
+    } else if (type != RRType::CNAME() && cni != found.second.end()) {
+        // We are not searching for a CNAME but nevertheless we have found one
+        // at the name we are searching so we return it. (The caller may
+        // want to continue the lookup by replacing the query name with the
+        // canonical name and the original RR type.) First though, do a sanity
+        // check to ensure that there is only one RR in the CNAME RRset.
+        if (cni->second->getRdataCount() != 1) {
+            isc_throw(DataSourceError, "CNAME with " <<
+                      cni->second->getRdataCount() << " rdata at " << name <<
+                      ", expected 1");
+        }
+        return (logAndCreateResult(name, wildname, type,
+                                   wild ? WILDCARD_CNAME : CNAME, cni->second,
+                                   wild ? DATASRC_DATABASE_WILDCARD_CNAME :
+                                   DATASRC_DATABASE_FOUND_CNAME));
+
+    } else if (wti != found.second.end()) {
+        // Found an RR matching the query, so return it.  (Note that this
+        // includes the case where we were explicitly querying for a CNAME and
+        // found it.  It also includes the case where we were querying for an
+        // NS RRset and found it at the apex of the zone.)
+        return (logAndCreateResult(name, wildname, type,
+                                   wild ? WILDCARD : SUCCESS, wti->second,
+                                   wild ? DATASRC_DATABASE_WILDCARD_MATCH :
+                                   DATASRC_DATABASE_FOUND_RRSET));
+    }
+
+    // If we get here, we have found something at the requested name but not
+    // one of the RR types we were interested in. This is the NXRRSET case so
+    // return the appropriate status.  If DNSSEC information was requested,
+    // provide the NSEC records.  If it's for wildcard, we need to get the
+    // NSEC records in the name of the wildcard, not the substituted one,
+    // so we need to search the tree again.
+    ConstRRsetPtr nsec_rrset;   // possibly used with DNSSEC, otherwise NULL
+    if ((options & FIND_DNSSEC) != 0) {
+        if (wild) {
+            const FoundRRsets wfound = getRRsets(*wildname, NSEC_TYPES(),
+                                                 true);
+            const FoundIterator nci = wfound.second.find(RRType::NSEC());
+            if (nci != wfound.second.end()) {
+                nsec_rrset = nci->second;
+            }
+        } else {
+            const FoundIterator nci = found.second.find(RRType::NSEC());
+            if (nci != found.second.end()) {
+                nsec_rrset = nci->second;
+            }
+        }
+    }
+    if (nsec_rrset) {
+        // This log message covers both normal and wildcard cases, so we pass
+        // NULL for 'wildname'.
+        return (logAndCreateResult(name, NULL, type,
+                                   wild ? WILDCARD_NXRRSET : NXRRSET,
+                                   nsec_rrset,
+                                   DATASRC_DATABASE_FOUND_NXRRSET_NSEC));
+    }
+    return (logAndCreateResult(name, wildname, type,
+                               wild ? WILDCARD_NXRRSET : NXRRSET, nsec_rrset,
+                               wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
+                               DATASRC_DATABASE_FOUND_NXRRSET));
 }
 
 ZoneFinder::FindResult
@@ -711,24 +786,6 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
 }
 
 ZoneFinder::FindResult
-DatabaseClient::Finder::logAndCreateResult(const Name& name,
-                                           const RRType& type,
-                                           ZoneFinder::Result code,
-                                           ConstRRsetPtr rrset,
-                                           const isc::log::MessageID& log_id)
-{
-    if (rrset) {
-        LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
-            arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass()).
-            arg(*rrset);
-    } else {
-        LOG_DEBUG(logger, DBG_TRACE_DETAILED, log_id).
-            arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
-    }
-    return (ZoneFinder::FindResult(code, rrset));
-}
-
-ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              isc::dns::RRsetList*,
@@ -765,63 +822,15 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     const FoundRRsets found = getRRsets(name.toText(), final_types,
                                         !is_origin);
 
-    // Get iterators for the different types of records we are interested in -
-    // CNAME, NS and Wanted types.
-    const FoundIterator nsi(found.second.find(RRType::NS()));
-    const FoundIterator cni(found.second.find(RRType::CNAME()));
-    const FoundIterator wti(found.second.find(type));
-
-    if (!is_origin && ((options & FIND_GLUE_OK) == 0) &&
-        nsi != found.second.end()) {
-        // A NS RRset was found at the domain we were searching for.  As it is
-        // not at the origin of the zone, it is a delegation and indicates that
-        // this zone is not authoritative for the data. Just return the
-        // delegation information.
-        return (logAndCreateResult(name, type, DELEGATION, nsi->second,
-                                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT));
-
-    } else if (type != RRType::CNAME() && cni != found.second.end()) {
-        // We are not searching for a CNAME but nevertheless we have found one
-        // at the name we are searching so we return it. (The caller may
-        // want to continue the lookup by replacing the query name with the
-        // canonical name and the original RR type.) First though, do a sanity
-        // check to ensure that there is only one RR in the CNAME RRset.
-        if (cni->second->getRdataCount() != 1) {
-            isc_throw(DataSourceError, "CNAME with " <<
-                      cni->second->getRdataCount() << " rdata at " << name <<
-                      ", expected 1");
-        }
-        return (logAndCreateResult(name, type, CNAME, cni->second,
-                                   DATASRC_DATABASE_FOUND_CNAME));
-
-    } else if (wti != found.second.end()) {
-        // Found an RR matching the query, so return it.  (Note that this
-        // includes the case where we were explicitly querying for a CNAME and
-        // found it.  It also includes the case where we were querying for an
-        // NS RRset and found it at the apex of the zone.)
-        return (logAndCreateResult(name, type, SUCCESS, wti->second,
-                                   DATASRC_DATABASE_FOUND_RRSET));
-
-    } else if (!found.first) {
+    if (found.first) {
+        // Something found at the domain name.  Look into it further to get
+        // the final result.
+        return (findOnNameResult(name, type, options, is_origin, found, NULL));
+    } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
         return (findNoNameResult(name, type, options, dresult));
-
     }
-
-    // If we get here, we have found something at the requested name but not
-    // one of the RR types we were interested in. This is the NXRRSET case so
-    // return the appropriate status.  If DNSSEC information was requested,
-    // provide the NSEC records.
-    if ((options & FIND_DNSSEC) != 0) {
-        const FoundIterator nci = found.second.find(RRType::NSEC());
-        if (nci != found.second.end()) {
-            return (logAndCreateResult(name, type, NXRRSET, nci->second,
-                                       DATASRC_DATABASE_FOUND_NXRRSET_NSEC));
-        }
-    }
-    return (logAndCreateResult(name, type, NXRRSET, ConstRRsetPtr(),
-                                   DATASRC_DATABASE_FOUND_NXRRSET));
 }
 
 Name
