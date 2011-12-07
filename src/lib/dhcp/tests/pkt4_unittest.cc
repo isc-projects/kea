@@ -486,13 +486,14 @@ TEST(Pkt4Test, options) {
     );
 
     const OutputBuffer& buf = pkt->getBuffer();
-    // check that all options are stored, they should take sizeof(v4Opts)
-    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(v4Opts),
-              buf.getLength());
+    // check that all options are stored, they should take sizeof(v4Opts),
+    // DHCP magic cookie (4 bytes), and OPTION_END added (just one byte)
+    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(DHCP_OPTIONS_COOKIE)
+              + sizeof(v4Opts) + 1, buf.getLength());
 
     // that that this extra data actually contain our options
     const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
-    ptr += Pkt4::DHCPV4_PKT_HDR_LEN; // rewind to end of fixed part
+    ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE); // rewind to end of fixed part
     EXPECT_EQ(0, memcmp(ptr, v4Opts, sizeof(v4Opts)));
 
     EXPECT_NO_THROW(
@@ -503,6 +504,11 @@ TEST(Pkt4Test, options) {
 TEST(Pkt4Test, unpackOptions) {
 
     vector<uint8_t> expectedFormat = generateTestPacket2();
+
+    expectedFormat.push_back(0x63);
+    expectedFormat.push_back(0x82);
+    expectedFormat.push_back(0x53);
+    expectedFormat.push_back(0x63);
 
     for (int i = 0; i < sizeof(v4Opts); i++) {
         expectedFormat.push_back(v4Opts[i]);
