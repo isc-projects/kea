@@ -396,13 +396,14 @@ protected:
 
     // end of real DHCPv4 fields
 
-    /// input buffer (used during message reception)
-    /// Note that it must be modifiable as hooks can modify incoming buffer),
-    /// thus OutputBuffer, not InputBuffer
-    isc::util::InputBuffer bufferIn_;
-
     /// output buffer (used during message
     isc::util::OutputBuffer bufferOut_;
+
+    // that's the data of input buffer used in RX packet. Note that
+    // InputBuffer does not store the data itself, but just expects that
+    // data will be valid for the whole life of InputBuffer. Therefore we
+    // need to keep the data around.
+    std::vector<uint8_t> data_;
 
     /// message type (e.g. 1=DHCPDISCOVER)
     /// TODO: this will eventually be replaced with DHCP Message Type
