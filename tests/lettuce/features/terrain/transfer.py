@@ -80,7 +80,7 @@ def perform_axfr(step, zone_name, address, port):
 @step('An IXFR transfer of ([\w.]+) (\d+)(?: from ([^:]+)(?::([0-9]+))?)?(?: over (tcp|udp))?')
 def perform_ixfr(step, zone_name, serial, address, port, protocol):
     """
-    Perform an AXFR transfer, and store the result as an instance of
+    Perform an IXFR transfer, and store the result as an instance of
     TransferResult in world.transfer_result.
 
     Step definition:
