@@ -23,6 +23,8 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
+// #define ECHO_SERVER
+
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     cout << "Initialization: opening sockets on port " << port << endl;
 
@@ -52,17 +54,21 @@ Dhcpv4Srv::run() {
 
         query = IfaceMgr::instance().receive4();
 
-#if ECHO_SERVER
+#if defined(ECHO_SERVER)
 	query->repack();
         IfaceMgr::instance().send(query);
         continue;
 #endif
 
         if (query) {
-            if (!query->unpack()) {
-                cout << "Failed to parse incoming packet" << endl;
+	    try {
+		query->unpack();
+	    } catch (const std::exception& e) {
+		/// TODO: Printout reasons of failed parsing
+                cout << "Failed to parse incoming packet " << endl;
                 continue;
             }
+
             switch (query->getType()) {
             case DHCPDISCOVER:
                 rsp = processDiscover(query);
@@ -84,8 +90,7 @@ Dhcpv4Srv::run() {
                      << query->getType() << endl;
             }
 
-            cout << "Received " << query->len() << " bytes packet type="
-                 << query->getType() << endl;
+            cout << "Received message type " << int(query->getType()) << endl;
 
             // TODO: print out received packets only if verbose (or debug)
             // mode is enabled
@@ -99,7 +104,7 @@ Dhcpv4Srv::run() {
                 rsp->setIface(query->getIface());
                 rsp->setIndex(query->getIndex());
 
-                cout << "Replying with:" << rsp->getType() << endl;
+                cout << "Replying with message type " << (int)rsp->getType() << ":" << endl;
                 cout << rsp->toText();
                 cout << "----" << endl;
                 if (rsp->pack()) {

@@ -328,6 +328,33 @@ Option::addOption(boost::shared_ptr<Option> opt) {
     options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
 }
 
+uint8_t Option::getUint8() {
+    if (data_.size() < sizeof(uint8_t) ) {
+        isc_throw(OutOfRange, "Attempt to read uint8 from option " << type_
+                  << " that has size " << data_.size());
+    }
+    return (data_[0]);
+}
+
+uint16_t Option::getUint16() {
+    if (data_.size() < sizeof(uint16_t) ) {
+        isc_throw(OutOfRange, "Attempt to read uint16 from option " << type_
+                  << " that has size " << data_.size());
+    }
+    return ( ((uint16_t)data_[0]) << 8 ) + data_[1];
+}
+
+uint32_t Option::getUint32() {
+    if (data_.size() < sizeof(uint32_t) ) {
+        isc_throw(OutOfRange, "Attempt to read uint32 from option " << type_
+                  << " that has size " << data_.size());
+    }
+    return (((uint32_t)data_[0]) << 24)
+      + (((uint32_t)data_[1]) << 16)
+      + (((uint32_t)data_[2]) << 8)
+      + (((uint32_t)data_[3]));
+}
+
 Option::~Option() {
 
 }
