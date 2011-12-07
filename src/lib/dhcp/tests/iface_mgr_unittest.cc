@@ -412,7 +412,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // let's check that we received what was sent
     EXPECT_EQ(sendPkt->len(), rcvPkt->len());
 
-    EXPECT_EQ(sendPkt->getRemoteAddr().toText(), rcvPkt->getLocalAddr().toText());
+    EXPECT_EQ("127.0.0.1", rcvPkt->getRemoteAddr().toText());
     EXPECT_EQ(sendPkt->getRemotePort(), rcvPkt->getLocalPort());
 
     // now let's check content
