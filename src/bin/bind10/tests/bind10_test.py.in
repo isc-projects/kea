@@ -13,6 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# Most of the time, we omit the "bind10_src" for brevity. Sometimes,
+# we want to be explicit about what we do, like when hijacking a library
+# call used by the bind10_src.
 from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
 import bind10_src
 
