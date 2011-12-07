@@ -78,6 +78,17 @@ public:
     bool
     unpack();
 
+    /// @brief performs sanity check on a packet.
+    ///
+    /// This is usually performed after unpack(). It checks if packet is sane:
+    /// required options are present, fields have sane content etc.
+    /// For example verifies that DHCP_MESSAGE_TYPE is present and have
+    /// reasonable value. This method is expected to grow significantly.
+    /// It makes sense to separate unpack() and check() for testing purposes.
+    ///
+    /// Method will throw exception if anomaly is found.
+    void check();
+
     /// @brief Copies content of input buffer to output buffer.
     ///
     /// This is mostly a diagnostic function. It is being used for sending

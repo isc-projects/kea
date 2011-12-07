@@ -50,7 +50,6 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(msg_type)
 {
-    /// TODO: fixed fields, uncomment in ticket #1224
     memset(chaddr_, 0, MAX_CHADDR_LEN);
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
@@ -63,7 +62,6 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       ifindex_(-1),
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
-      /// TODO Fixed fields, uncomment in ticket #1224
       op_(BOOTREQUEST),
       transid_(0),
       secs_(0),
@@ -116,7 +114,14 @@ Pkt4::pack() {
     bufferOut_.writeData(sname_, MAX_SNAME_LEN);
     bufferOut_.writeData(file_, MAX_FILE_LEN);
 
+    // write DHCP magic cookie
+    bufferOut_.writeUint32(DHCP_OPTIONS_COOKIE);
+
     LibDHCP::packOptions(bufferOut_, options_);
+
+    // add END option that indicates end of options
+    // (End option is very simple, just a 255 octet)
+    bufferOut_.writeUint8(DHO_END);
 
     return (true);
 }
@@ -147,8 +152,26 @@ Pkt4::unpack() {
     bufferIn.readData(sname_, MAX_SNAME_LEN);
     bufferIn.readData(file_, MAX_FILE_LEN);
 
+    if (bufferIn.getLength() == bufferIn.getPosition()) {
+        // this is *NOT* DHCP packet. It does not have any DHCPv4 options. In
+        // particular, it does not have magic cookie, a 4 byte sequence that
+        // differentiates between DHCP and BOOTP packets.
+        return (true);
+    }
+
+    if (bufferIn.getLength() - bufferIn.getPosition() < 4) {
+      // there is not enough data to hold magic DHCP cookie
+      isc_throw(Unexpected, "Truncated or no DHCP packet.");
+    }
+
+    uint32_t magic = bufferIn.readUint32();
+    if (magic != DHCP_OPTIONS_COOKIE) {
+      isc_throw(Unexpected, "Invalid or missing DHCP magic cookie");
+    }
+
     size_t opts_len = bufferIn.getLength() - bufferIn.getPosition();
     vector<uint8_t> optsBuffer;
+
     // fist use of readVector
     bufferIn.readVector(optsBuffer, opts_len);
     LibDHCP::unpackOptions4(optsBuffer, options_);
@@ -156,23 +179,40 @@ Pkt4::unpack() {
     return (true);
 }
 
-void Pkt4::repack() {
-  cout << "Convering RX packet to TX packet: " << bufferIn_.getLength() << " bytes." << endl;
+void Pkt4::check() {
+    boost::shared_ptr<Option> typeOpt = getOption(DHO_DHCP_MESSAGE_TYPE);
+    if (typeOpt) {
+        uint8_t msg_type = typeOpt->getUint8();
+        if (msg_type>DHCPLEASEACTIVE) {
+            isc_throw(BadValue, "Invalid DHCP message type received:" << msg_type);
+        }
+        msg_type_ = msg_type;
 
-  vector<uint8_t> buf;
-  bufferIn_.readVector(buf, bufferIn_.getLength());
-  bufferOut_.writeData(&buf[0], bufferIn_.getLength());
+    } else {
+        isc_throw(Unexpected, "Missing DHCP Message Type option");
+    }
+}
+
+void Pkt4::repack() {
+    cout << "Convering RX packet to TX packet: " << data_.size() << " bytes." << endl;
+
+    bufferOut_.writeData(&data_[0], data_.size());
 }
 
 std::string
 Pkt4::toText() {
     stringstream tmp;
-    tmp << "localAddr=[" << local_addr_.toText() << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_.toText()
-        << "]:" << remote_port_ << endl;
-    tmp << "msgtype=" << msg_type_
-        << ", transid=0x" << hex << transid_ << dec
-        << endl;
+    tmp << "localAddr=" << local_addr_.toText() << ":" << local_port_
+        << " remoteAddr=" << remote_addr_.toText()
+        << ":" << remote_port_ << ", msgtype=" << int(msg_type_)
+        << ", transid=0x" << hex << transid_ << dec << endl;
+
+    for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
+         opt != options_.end();
+         ++opt) {
+        tmp << "  " << opt->second->toText() << std::endl;
+    }
+
 
     return tmp.str();
 }
@@ -261,7 +301,6 @@ Pkt4::getOption(uint8_t type) {
     }
     return boost::shared_ptr<isc::dhcp::Option>(); // NULL
 }
-
 
 } // end of namespace isc::dhcp
 

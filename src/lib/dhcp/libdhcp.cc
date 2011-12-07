@@ -17,6 +17,7 @@
 #include <util/buffer.h>
 #include <dhcp/libdhcp.h>
 #include "config.h"
+#include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>

@@ -53,9 +53,7 @@ IfaceMgr::instance() {
 }
 
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
-    :name_(name), ifindex_(ifindex), mac_len_(0), flag_loopback_(false),
-     flag_up_(false), flag_running_(false), flag_multicast_(false),
-     flag_broadcast_(false), flags_(0), hardware_type_(0)
+    :name_(name), ifindex_(ifindex), mac_len_(0)
 {
     memset(mac_, 0, sizeof(mac_));
 }
@@ -133,13 +131,27 @@ IfaceMgr::IfaceMgr()
     }
 }
 
+void IfaceMgr::closeSockets() {
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+
+        for (SocketCollection::iterator sock = iface->sockets_.begin();
+             sock != iface->sockets_.end(); ++sock) {
+            cout << "Closing socket " << sock->sockfd_ << endl;
+            close(sock->sockfd_);
+        }
+        iface->sockets_.clear();
+    }
+
+}
+
 IfaceMgr::~IfaceMgr() {
     // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;
 }
 
 void
-IfaceMgr::stubDetectIfaces() {
+IfaceMgr::detectIfaces() {
     string ifaceName, linkLocal;
 
     // TODO do the actual detection. Currently interface detection is faked
@@ -178,13 +190,7 @@ IfaceMgr::stubDetectIfaces() {
     }
 }
 
-#if !defined(OS_LINUX) && !defined(OS_BSD)
-void IfaceMgr::detectIfaces() {
-    stubDetectIfaces();
-}
-#endif
-
-bool IfaceMgr::openSockets4() {
+bool IfaceMgr::openSockets4(uint16_t port) {
     int sock;
     int count = 0;
 
@@ -194,11 +200,13 @@ bool IfaceMgr::openSockets4() {
 
         cout << "Trying interface " << iface->getFullName() << endl;
 
+#if 0
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
             !iface->flag_running_) {
             continue;
         }
+#endif
 
         AddressCollection addrs = iface->getAddresses();
 
@@ -211,8 +219,7 @@ bool IfaceMgr::openSockets4() {
                 continue;
             }
 
-            sock = openSocket(iface->getName(), *addr,
-                              DHCP4_SERVER_PORT);
+            sock = openSocket(iface->getName(), *addr, port);
             if (sock<0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);
@@ -225,7 +232,7 @@ bool IfaceMgr::openSockets4() {
 
 }
 
-bool IfaceMgr::openSockets6() {
+bool IfaceMgr::openSockets6(uint16_t port) {
     int sock;
     int count = 0;
 
@@ -244,8 +251,7 @@ bool IfaceMgr::openSockets6() {
                 continue;
             }
 
-            sock = openSocket(iface->getName(), *addr,
-                              DHCP6_SERVER_PORT);
+            sock = openSocket(iface->getName(), *addr, port);
             if (sock<0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);
@@ -282,18 +288,11 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
          ++iface) {
 
         out << "Detected interface " << iface->getFullName()
-             << ", hwtype=" << iface->hardware_type_ << ", maclen=" << iface->mac_len_
              << ", mac=" << iface->getPlainMac() << endl;
-        out << "flags=" << hex << iface->flags_ << dec << "("
-            << (iface->flag_loopback_?"LOOPBACK ":"")
-            << (iface->flag_up_?"UP ":"")
-            << (iface->flag_running_?"RUNNING ":"")
-            << (iface->flag_multicast_?"MULTICAST ":"")
-            << (iface->flag_broadcast_?"BROADCAST ":"")
-            << ")" << endl;
-        out << "  " << iface->addrs_.size() << " addr(s):" << endl;
-        for (AddressCollection::const_iterator addr=iface->addrs_.begin();
-             addr != iface->addrs_.end();
+        out << "flags=" <<  endl;
+        out << "  " << iface->getAddresses().size() << " addr(s):" << endl;
+        for (AddressCollection::const_iterator addr=iface->getAddresses().begin();
+             addr != iface->getAddresses().end();
              ++addr) {
             out << "  " << addr->toText() << endl;
         }
@@ -324,8 +323,7 @@ IfaceMgr::getIface(const std::string& ifname) {
     return (NULL); // not found
 }
 
-uint16_t
-IfaceMgr::openSocket(const std::string& ifname,
+int IfaceMgr::openSocket(const std::string& ifname,
                      const IOAddress& addr,
                      int port) {
     Iface* iface = getIface(ifname);
@@ -343,8 +341,7 @@ IfaceMgr::openSocket(const std::string& ifname,
     }
 }
 
-uint16_t
-IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
+int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
 
     cout << "Creating UDP4 socket on " << iface.getFullName()
          << " " << addr.toText() << "/port=" << port << endl;
@@ -388,8 +385,7 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, int port) {
     return (sock);
 }
 
-uint16_t
-IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
+int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
 
     cout << "Creating UDP6 socket on " << iface.getFullName()
          << " " << addr.toText() << "/port=" << port << endl;
@@ -656,12 +652,15 @@ IfaceMgr::receive4() {
     IfaceCollection::const_iterator iface;
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
 
+#if 0
+        // uncomment this once #1237 is merged
         // Let's skip loopback and downed interfaces.
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
             !iface->flag_running_) {
             continue;
         }
+#endif
 
         SocketCollection::const_iterator s = iface->sockets_.begin();
         while (s != iface->sockets_.end()) {
