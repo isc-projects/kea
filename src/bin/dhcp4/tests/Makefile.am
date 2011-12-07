@@ -37,10 +37,10 @@ dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp4_unittests_LDADD = $(GTEST_LDADD)
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
