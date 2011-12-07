@@ -921,6 +921,14 @@ public:
             const isc::dns::RRType& type, const FindOptions options,
             const DelegationSearchResult& dresult);
 
+	/// \brief Handle matching results for name
+        FindResult findOnNameResult(const isc::dns::Name& name,
+				    const isc::dns::RRType& type,
+				    const FindOptions options,
+				    const bool is_origin,
+				    const FoundRRsets& found,
+				    const std::string* wildname);
+
         /// \brief Handle no match for name
         ///
         /// This is called when it is known that there is no delegation and
@@ -956,11 +964,13 @@ public:
 
         /// Logs condition and creates result
         ///
-        /// A convenience function used by find(), it both creates the
-        /// FindResult object that find() will return to its caller as well
+        /// A convenience function used by findOnNameResult(), it both creates
+	/// the FindResult object that find() will return to its caller as well
         /// as logging a debug message for the information being returned.
         ///
         /// \param name Domain name of the RR that was being sought.
+        /// \param wildname Domain name string of a matched wildcard name or
+	/// NULL for non wildcard match.
         /// \param type Type of RR being sought.
         /// \param code Result of the find operation
         /// \param rrset RRset found as a result of the find (which may be
@@ -974,10 +984,11 @@ public:
         /// \return FindResult object constructed from the code and rrset
         ///         arguments.
         FindResult logAndCreateResult(const isc::dns::Name& name,
+				      const std::string* wildname,
                                       const isc::dns::RRType& type,
                                       ZoneFinder::Result code,
                                       isc::dns::ConstRRsetPtr rrset,
-                                      const isc::log::MessageID& log_id);
+                                      const isc::log::MessageID& log_id) const;
 
         /// \brief Checks if something lives below this domain.
         ///
