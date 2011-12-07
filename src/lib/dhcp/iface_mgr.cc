@@ -507,14 +507,10 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
 
     memset(&control_buf_[0], 0, control_buf_len_);
 
-    /*
-     * Initialize our message header structure.
-     */
+    // Initialize our message header structure.
     memset(&m, 0, sizeof(m));
 
-    /*
-     * Set the target address we're sending to.
-     */
+    // Set the target address we're sending to.
     sockaddr_in6 to;
     memset(&to, 0, sizeof(to));
     to.sin6_family = AF_INET6;
@@ -527,24 +523,20 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     m.msg_name = &to;
     m.msg_namelen = sizeof(to);
 
-    /*
-     * Set the data buffer we're sending. (Using this wacky
-     * "scatter-gather" stuff... we only have a single chunk
-     * of data to send, so we declare a single vector entry.)
-     */
+    // Set the data buffer we're sending. (Using this wacky
+    // "scatter-gather" stuff... we only have a single chunk
+    // of data to send, so we declare a single vector entry.)
     v.iov_base = (char *) &pkt->data_[0];
     v.iov_len = pkt->data_len_;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-    /*
-     * Setting the interface is a bit more involved.
-     *
-     * We have to create a "control message", and set that to
-     * define the IPv6 packet information. We could set the
-     * source address if we wanted, but we can safely let the
-     * kernel decide what that should be.
-     */
+    // Setting the interface is a bit more involved.
+    //
+    // We have to create a "control message", and set that to
+    // define the IPv6 packet information. We could set the
+    // source address if we wanted, but we can safely let the
+    // kernel decide what that should be.
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
     cmsg = CMSG_FIRSTHDR(&m);
@@ -597,24 +589,22 @@ IfaceMgr::send(boost::shared_ptr<Pkt4>& pkt)
     m.msg_name = &to;
     m.msg_namelen = sizeof(to);
 
-    /* Set the data buffer we're sending. (Using this wacky
-     * "scatter-gather" stuff... we only have a single chunk
-     * of data to send, so we declare a single vector entry.)
-     */
+    // Set the data buffer we're sending. (Using this wacky
+    // "scatter-gather" stuff... we only have a single chunk
+    // of data to send, so we declare a single vector entry.)
     v.iov_base = (char *) pkt->getBuffer().getData();
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-    /*
-     * Setting the interface is a bit more involved.
-     *
-     * We have to create a "control message", and set that to
-     * define the IPv6 packet information. We could set the
-     * source address if we wanted, but we can safely let the
-     * kernel decide what that should be.
-     */
-#if defined(LINUX)
+// OS_LINUX defines are part of ticket #1237
+#if defined(OS_LINUX)
+    // Setting the interface is a bit more involved.
+    //
+    // We have to create a "control message", and set that to
+    // define the IPv4 packet information. We could set the
+    // source address if we wanted, but we can safely let the
+    // kernel decide what that should be.
     struct in_pktinfo *pktinfo;
     struct cmsghdr *cmsg;
     m.msg_control = &control_buf_[0];
@@ -724,14 +714,12 @@ IfaceMgr::receive4() {
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-    /*
-     * Getting the interface is a bit more involved.
-     *
-     * We set up some space for a "control message". We have
-     * previously asked the kernel to give us packet
-     * information (when we initialized the interface), so we
-     * should get the destination address from that.
-     */
+    // Getting the interface is a bit more involved.
+    //
+    // We set up some space for a "control message". We have
+    // previously asked the kernel to give us packet
+    // information (when we initialized the interface), so we
+    // should get the destination address from that.
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
 
@@ -743,7 +731,8 @@ IfaceMgr::receive4() {
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 
-#if defined(LINUX)
+// OS_LINUX defines are part of ticket #1237
+#if defined(OS_LINUX)
     struct cmsghdr* cmsg;
     struct in_pktinfo* pktinfo;
     unsigned int ifindex = 0;
@@ -758,9 +747,15 @@ IfaceMgr::receive4() {
             ifindex = pktinfo->ipi_ifindex;
             to_addr = pktinfo->ipi_addr;
 
-            // debug:
-            IOAddress tmp(htonl(pktinfo->ipi_spec_dst.s_addr));
-            cout << "The other addr is: " << tmp.toText() << endl;
+            // This field is useful, when we are bound to unicast
+            // address e.g. 192.0.2.1 and the packet was sent to
+            // broadcast. This will return broadcast address, not
+            // the address we are bound to.
+
+            // IOAddress tmp(htonl(pktinfo->ipi_spec_dst.s_addr));
+            // cout << "The other addr is: " << tmp.toText() << endl;
+
+            // Perhaps we should uncomment this:
             // to_addr = pktinfo->ipi_spec_dst;
             found_pktinfo = 1;
         }

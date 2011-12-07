@@ -1,7 +1,10 @@
 3XX.	[func]		tomek
-	libdhcp++: Support for handling both IPv4 and IPv6 added.
-	Also added support for binding IPv4 sockets.
-	(Trac #1238, git TBD)
+	libdhcp++: Transmission and reception of DHCPv4 packets is now
+	implemented. Low-level hacks are not implemented for transmission
+	to hosts that don't have IPv4 address yet, so currently the code
+	is usable for communication with relays only, not hosts on the
+	same link.
+	(Trac #1239, #1240, git TBD)
 
 328.	[func]		jelte
 	b10-auth now passes IXFR requests on to b10-xfrout, and no longer
