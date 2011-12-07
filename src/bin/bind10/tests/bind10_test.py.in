@@ -430,12 +430,12 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.command_handler("__UNKNOWN__", None),
                          isc.config.ccsession.create_answer(1, "Unknown command"))
 
-        # Fake the _get_socket, which is complicated and tested elsewhere
-        # We just want to pass the parameters in and let it create a response
-        def get_socket(args):
-            return isc.config.ccsession.create_answer(0, args)
-
-        bob._get_socket = get_socket
+        # Fake the get_token of cache and test the command works
+        bob._socket_path = '/socket/path'
+        class cache:
+            def get_token(self, protocol, addr, port, share_mode, share_name):
+                return str(addr) + ':' + str(port)
+        bob._socket_cache = cache()
         args = {
             "port": 53,
             "address": "0.0.0.0",
@@ -443,10 +443,9 @@ class TestBoB(unittest.TestCase):
             "share_mode": "ANY",
             "share_name": "app"
         }
-        # Test it just returns whatever it got. The real function doesn't
-        # work like this, but we don't want the command_handler to touch it
         # at all and this is the easiest way to check.
-        self.assertEqual({'result': [0, args]},
+        self.assertEqual({'result': [0, {'token': '0.0.0.0:53',
+                                         'path': '/socket/path'}]},
                          bob.command_handler("get_socket", args))
         # The drop_socket is not tested here, but in TestCacheCommands.
         # It needs the cache mocks to be in place and they are there.
