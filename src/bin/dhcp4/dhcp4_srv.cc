@@ -31,6 +31,9 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     IfaceMgr::instance();
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
+    IfaceMgr::instance().printIfaces();
+
+    IfaceMgr::instance().openSockets4();
 
     setServerID();
 
@@ -47,7 +50,7 @@ Dhcpv4Srv::run() {
         boost::shared_ptr<Pkt4> query; // client's message
         boost::shared_ptr<Pkt4> rsp;   // server's response
 
-#if 0
+#if 1
         // uncomment this once ticket 1239 is merged.
         query = IfaceMgr::instance().receive4();
 #endif
@@ -99,9 +102,9 @@ Dhcpv4Srv::run() {
                 if (rsp->pack()) {
                     cout << "Packet assembled correctly." << endl;
                 }
-#if 0
+#if 1
                 // uncomment this once ticket 1240 is merged.
-                IfaceMgr::instance().send4(rsp);
+                IfaceMgr::instance().send(rsp);
 #endif
             }
         }
