@@ -685,11 +685,12 @@ IfaceMgr::receive4() {
     // we have all data let's create Pkt4 object
     pkt = boost::shared_ptr<Pkt4>(new Pkt4(buf, result));
 
-
+    pkt->setIface(iface->getName());
+    pkt->setIndex(iface->getIndex());
     pkt->setLocalAddr(to);
+    pkt->setRemoteAddr(from);
     pkt->setRemotePort(from_port);
     pkt->setLocalPort(candidate->port_);
-    // pkt->setRemoteAddr(from);
 
     return (pkt);
 }
