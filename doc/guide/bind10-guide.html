@@ -1,24 +1,26 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the reference guide for BIND 10 version 20110519. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="id1168230298903"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
-        20110519.</p></div><div><p class="copyright">Copyright © 2010 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the reference guide for BIND 10 version 20111021. The most up-to-date version of this document (in PDF, HTML, and plain text formats), along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
+        20111021.</p></div><div><p class="copyright">Copyright © 2010-2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
 	Internet Systems Consortium (ISC). It includes DNS libraries
 	and modular components for controlling authoritative and
 	recursive DNS servers.
       </p><p>
-        This is the reference guide for BIND 10 version 20110519.
-	The most up-to-date version of this document, along with
-	other documents for BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.  </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230284846">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285026">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285045">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285106">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285203">Build</a></span></dt><dt><span class="section"><a href="#id1168230285219">Install</a></span></dt><dt><span class="section"><a href="#id1168230285242">Install Hierarchy</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285816">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285881">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285912">Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#zonemgr">11. Secondary Manager</a></span></dt><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230286300">Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">13. Statistics</a></span></dt><dt><span class="chapter"><a href="#logging">14. Logging</a></span></dt></dl></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></div><p>
+        This is the reference guide for BIND 10 version 20111021.
+	The most up-to-date version of this document (in PDF, HTML,
+	and plain text formats), along with other documents for
+	BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
+	</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229451238">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168229451265">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229436567">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229436859">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168229436878">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168229436939">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168229437037">Build</a></span></dt><dt><span class="section"><a href="#id1168229437052">Install</a></span></dt><dt><span class="section"><a href="#id1168229437076">Install Hierarchy</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt><dt><span class="section"><a href="#bind10.config">Configuration of started processes</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229438007">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168229438072">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168229438171">Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229438302">Configuration for Incoming Zone Transfers</a></span></dt><dt><span class="section"><a href="#id1168229438340">Enabling IXFR</a></span></dt><dt><span class="section"><a href="#id1168229438382">Trigger an Incoming Zone Transfer Manually</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#zonemgr">11. Secondary Manager</a></span></dt><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229438673">Access Control</a></span></dt><dt><span class="section"><a href="#id1168229438891">Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">13. Statistics</a></span></dt><dt><span class="chapter"><a href="#logging">14. Logging</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229439042">Logging configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229439052">Loggers</a></span></dt><dt><span class="section"><a href="#id1168229439294">Output Options</a></span></dt><dt><span class="section"><a href="#id1168229439468">Example session</a></span></dt></dl></dd><dt><span class="section"><a href="#id1168229440023">Logging Message Format</a></span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#id1168229437338"></a></dt></dl></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168229451238">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168229451265">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></div><p>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
       BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
       and provides a modular environment for serving and maintaining DNS.
     </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
         This guide covers the experimental prototype of
-        BIND 10 version 20110519.
+        BIND 10 version 20111021.
       </p></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
         BIND 10 provides a EDNS0- and DNSSEC-capable
         authoritative DNS server and a caching recursive name server
         which also provides forwarding.
-      </p></div><div class="section" title="Supported Platforms"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230299038"></a>Supported Platforms</h2></div></div></div><p>
+      </p></div><div class="section" title="Supported Platforms"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229451238"></a>Supported Platforms</h2></div></div></div><p>
   BIND 10 builds have been tested on Debian GNU/Linux 5,
   Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, and CentOS
   Linux 5.3.
@@ -28,13 +30,15 @@
 
         It is planned for BIND 10 to build, install and run on
         Windows and standard Unix-type platforms.
-      </p></div><div class="section" title="Required Software"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230299065"></a>Required Software</h2></div></div></div><p>
+      </p></div><div class="section" title="Required Software"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229451265"></a>Required Software</h2></div></div></div><p>
         BIND 10 requires Python 3.1.  Later versions may work, but Python
         3.1 is the minimum version which will work.
       </p><p>
 	BIND 10 uses the Botan crypto library for C++. It requires
-	at least Botan version 1.8. To build BIND 10, install the
-	Botan libraries and development include headers.
+	at least Botan version 1.8.
+      </p><p>
+	BIND 10 uses the log4cplus C++ logging library. It requires
+	at least log4cplus version 1.0.3.
       </p><p>
 	The authoritative server requires SQLite 3.3.9 or newer.
 	The <span class="command"><strong>b10-xfrin</strong></span>, <span class="command"><strong>b10-xfrout</strong></span>,
@@ -136,7 +140,10 @@
       and, of course, DNS. These include detailed developer
       documentation and code examples.
 
-    </p></div><div class="chapter" title="Chapter 2. Installation"><div class="titlepage"><div><div><h2 class="title"><a name="installation"></a>Chapter 2. Installation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230284846">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285026">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285045">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285106">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285203">Build</a></span></dt><dt><span class="section"><a href="#id1168230285219">Install</a></span></dt><dt><span class="section"><a href="#id1168230285242">Install Hierarchy</a></span></dt></dl></dd></dl></div><div class="section" title="Building Requirements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230284846"></a>Building Requirements</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+    </p></div><div class="chapter" title="Chapter 2. Installation"><div class="titlepage"><div><div><h2 class="title"><a name="installation"></a>Chapter 2. Installation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168229436567">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229436859">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168229436878">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168229436939">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168229437037">Build</a></span></dt><dt><span class="section"><a href="#id1168229437052">Install</a></span></dt><dt><span class="section"><a href="#id1168229437076">Install Hierarchy</a></span></dt></dl></dd></dl></div><div class="section" title="Building Requirements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229436567"></a>Building Requirements</h2></div></div></div><p>
+          In addition to the run-time requirements, building BIND 10
+          from source code requires various development include headers.
+        </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
             Some operating systems have split their distribution packages into
             a run-time and a development package.  You will need to install
             the development package versions, which include header files and
@@ -147,6 +154,11 @@
   
   
         </p><p>
+	  To build BIND 10, also install the Botan (at least version
+	  1.8) and the log4cplus (at least version 1.0.3)
+          development include headers.
+        </p><p>
+
 	  The Python Library and Python _sqlite3 module are required to
           enable the Xfrout and Xfrin support.
         </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
@@ -156,7 +168,7 @@
           Building BIND 10 also requires a C++ compiler and
           standard development headers, make, and pkg-config.
           BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
-          4.1.3, 4.2.1, 4.3.2, and 4.4.1.
+          4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
         </p></div><div class="section" title="Quick start"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="quickstart"></a>Quick start</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
           This quickly covers the standard steps for installing
           and deploying BIND 10 as an authoritative name server using
@@ -192,14 +204,14 @@
         the Git code revision control system or as a downloadable
         tar file. It may also be available in pre-compiled ready-to-use
         packages from operating system vendors.
-      </p><div class="section" title="Download Tar File"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285026"></a>Download Tar File</h3></div></div></div><p>
+      </p><div class="section" title="Download Tar File"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229436859"></a>Download Tar File</h3></div></div></div><p>
           Downloading a release tar file is the recommended method to
           obtain the source code.
         </p><p>
           The BIND 10 releases are available as tar file downloads from
           <a class="ulink" href="ftp://ftp.isc.org/isc/bind10/" target="_top">ftp://ftp.isc.org/isc/bind10/</a>.
           Periodic development snapshots may also be available.
-        </p></div><div class="section" title="Retrieve from Git"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285045"></a>Retrieve from Git</h3></div></div></div><p>
+        </p></div><div class="section" title="Retrieve from Git"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229436878"></a>Retrieve from Git</h3></div></div></div><p>
           Downloading this "bleeding edge" code is recommended only for
           developers or advanced users.  Using development code in a production
           environment is not recommended.
@@ -233,7 +245,7 @@
           <span class="command"><strong>autoheader</strong></span>,
           <span class="command"><strong>automake</strong></span>,
           and related commands.
-        </p></div><div class="section" title="Configure before the build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285106"></a>Configure before the build</h3></div></div></div><p>
+        </p></div><div class="section" title="Configure before the build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229436939"></a>Configure before the build</h3></div></div></div><p>
           BIND 10 uses the GNU Build System to discover build environment
           details.
           To generate the makefiles using the defaults, simply run:
@@ -242,7 +254,7 @@
           Run <span class="command"><strong>./configure</strong></span> with the <code class="option">--help</code>
           switch to view the different options. The commonly-used options are:
 
-          </p><div class="variablelist"><dl><dt><span class="term">--prefix</span></dt><dd>Define the the installation location (the
+          </p><div class="variablelist"><dl><dt><span class="term">--prefix</span></dt><dd>Define the installation location (the
                 default is <code class="filename">/usr/local/</code>).
               </dd><dt><span class="term">--with-boost-include</span></dt><dd>Define the path to find the Boost headers.
               </dd><dt><span class="term">--with-pythonpath</span></dt><dd>Define the path to Python 3.1 if it is not in the
@@ -264,16 +276,16 @@
         </p><p>
           If the configure fails, it may be due to missing or old
           dependencies.
-        </p></div><div class="section" title="Build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285203"></a>Build</h3></div></div></div><p>
+        </p></div><div class="section" title="Build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229437037"></a>Build</h3></div></div></div><p>
     After the configure step is complete, to build the executables
     from the C++ code and prepare the Python scripts, run:
 
           </p><pre class="screen">$ <strong class="userinput"><code>make</code></strong></pre><p>
-        </p></div><div class="section" title="Install"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285219"></a>Install</h3></div></div></div><p>
+        </p></div><div class="section" title="Install"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229437052"></a>Install</h3></div></div></div><p>
           To install the BIND 10 executables, support files,
           and documentation, run:
           </p><pre class="screen">$ <strong class="userinput"><code>make install</code></strong></pre><p>
-        </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>The install step may require superuser privileges.</p></div></div><div class="section" title="Install Hierarchy"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285242"></a>Install Hierarchy</h3></div></div></div><p>
+        </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>The install step may require superuser privileges.</p></div></div><div class="section" title="Install Hierarchy"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229437076"></a>Install Hierarchy</h3></div></div></div><p>
           The following is the layout of the complete BIND 10 installation:
           </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem">
                 <code class="filename">bin/</code> &#8212;
@@ -303,29 +315,32 @@
                 <code class="filename">var/bind10-devel/</code> &#8212;
                 data source and configuration databases.
               </li></ul></div><p>
-        </p></div></div></div><div class="chapter" title="Chapter 3. Starting BIND10 with bind10"><div class="titlepage"><div><div><h2 class="title"><a name="bind10"></a>Chapter 3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt></dl></div><p>
-      BIND 10 provides the <span class="command"><strong>bind10</strong></span> command which 
+        </p></div></div></div><div class="chapter" title="Chapter 3. Starting BIND10 with bind10"><div class="titlepage"><div><div><h2 class="title"><a name="bind10"></a>Chapter 3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt><dt><span class="section"><a href="#bind10.config">Configuration of started processes</a></span></dt></dl></div><p>
+      BIND 10 provides the <span class="command"><strong>bind10</strong></span> command which
       starts up the required processes.
       <span class="command"><strong>bind10</strong></span>
-      will also restart processes that exit unexpectedly.
+      will also restart some processes that exit unexpectedly.
       This is the only command needed to start the BIND 10 system.
     </p><p>
       After starting the <span class="command"><strong>b10-msgq</strong></span> communications channel,
-      <span class="command"><strong>bind10</strong></span> connects to it, 
+      <span class="command"><strong>bind10</strong></span> connects to it,
       runs the configuration manager, and reads its own configuration.
       Then it starts the other modules.
     </p><p>
-      The <span class="command"><strong>b10-msgq</strong></span> and <span class="command"><strong>b10-cfgmgr</strong></span>
+      The <span class="command"><strong>b10-sockcreator</strong></span>, <span class="command"><strong>b10-msgq</strong></span> and
+      <span class="command"><strong>b10-cfgmgr</strong></span>
       services make up the core. The <span class="command"><strong>b10-msgq</strong></span> daemon
       provides the communication channel between every part of the system.
       The <span class="command"><strong>b10-cfgmgr</strong></span> daemon is always needed by every
       module, if only to send information about themselves somewhere,
       but more importantly to ask about their own settings, and
-      about other modules.
-      The <span class="command"><strong>bind10</strong></span> master process will also start up
+      about other modules. The <span class="command"><strong>b10-sockcreator</strong></span> will
+      allocate sockets for the rest of the system.
+    </p><p>
+      In its default configuration, the <span class="command"><strong>bind10</strong></span>
+      master process will also start up
       <span class="command"><strong>b10-cmdctl</strong></span> for admins to communicate with the
-      system, <span class="command"><strong>b10-auth</strong></span> for authoritative DNS service or
-      <span class="command"><strong>b10-resolver</strong></span> for recursive name service,
+      system, <span class="command"><strong>b10-auth</strong></span> for authoritative DNS service,
       <span class="command"><strong>b10-stats</strong></span> for statistics collection,
       <span class="command"><strong>b10-xfrin</strong></span> for inbound DNS zone transfers,
       <span class="command"><strong>b10-xfrout</strong></span> for outbound DNS zone transfers,
@@ -334,6 +349,111 @@
         To start the BIND 10 service, simply run <span class="command"><strong>bind10</strong></span>.
         Run it with the <code class="option">--verbose</code> switch to
         get additional debugging or diagnostic output.
+      </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+          If the setproctitle Python module is detected at start up,
+          the process names for the Python-based daemons will be renamed
+          to better identify them instead of just <span class="quote">&#8220;<span class="quote">python</span>&#8221;</span>.
+          This is not needed on some operating systems.
+        </p></div></div><div class="section" title="Configuration of started processes"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="bind10.config"></a>Configuration of started processes</h2></div></div></div><p>
+        The processes to be started can be configured, with the exception
+        of the <span class="command"><strong>b10-sockcreator</strong></span>, <span class="command"><strong>b10-msgq</strong></span>
+        and <span class="command"><strong>b10-cfgmgr</strong></span>.
+      </p><p>
+        The configuration is in the Boss/components section. Each element
+        represents one component, which is an abstraction of a process
+        (currently there's also one component which doesn't represent
+        a process). If you didn't want to transfer out at all (your server
+        is a slave only), you would just remove the corresponding component
+        from the set, like this and the process would be stopped immediately
+        (and not started on the next startup):
+      </p><pre class="screen">&gt; <strong class="userinput"><code>config remove Boss/components b10-xfrout</code></strong>
+&gt; <strong class="userinput"><code>config commit</code></strong></pre><p>
+      </p><p>
+        To add a process to the set, let's say the resolver (which not started
+        by default), you would do this:
+        </p><pre class="screen">&gt; <strong class="userinput"><code>config add Boss/components b10-resolver</code></strong>
+&gt; <strong class="userinput"><code>config set Boss/components/b10-resolver/special resolver</code></strong>
+&gt; <strong class="userinput"><code>config set Boss/components/b10-resolver/kind needed</code></strong>
+&gt; <strong class="userinput"><code>config set Boss/components/b10-resolver/priority 10</code></strong>
+&gt; <strong class="userinput"><code>config commit</code></strong></pre><p>
+        Now, what it means. We add an entry called b10-resolver. It is both a
+        name used to reference this component in the configuration and the
+        name of the process to start. Then we set some parameters on how to
+        start it.
+      </p><p>
+        The special one is for components that need some kind of special care
+        during startup or shutdown. Unless specified, the component is started
+        in usual way. This is the list of components that need to be started
+        in a special way, with the value of special used for them:
+        </p><div class="table"><a name="id1168229437338"></a><p class="title"><b>Table 3.1. </b></p><div class="table-contents"><table border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Component</th><th align="left">Special</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">b10-auth</td><td align="left">auth</td><td align="left">Authoritative server</td></tr><tr><td align="left">b10-resolver</td><td align="left">resolver</td><td align="left">The resolver</td></tr><tr><td align="left">b10-cmdctl</td><td align="left">cmdctl</td><td align="left">The command control (remote control interface)</td></tr><tr><td align="left">setuid</td><td align="left">setuid</td><td align="left">Virtual component, see below</td></tr></tbody></table></div></div><p><br class="table-break">
+      </p><p>
+	The kind specifies how a failure of the component should
+	be handled.  If it is set to <span class="quote">&#8220;<span class="quote">dispensable</span>&#8221;</span>
+	(the default unless you set something else), it will get
+	started again if it fails. If it is set to <span class="quote">&#8220;<span class="quote">needed</span>&#8221;</span>
+	and it fails at startup, the whole <span class="command"><strong>bind10</strong></span>
+	shuts down and exits with error exit code. But if it fails
+	some time later, it is just started again. If you set it
+	to <span class="quote">&#8220;<span class="quote">core</span>&#8221;</span>, you indicate that the system is
+	not usable without the component and if such component
+	fails, the system shuts down no matter when the failure
+	happened.  This is the behaviour of the core components
+	(the ones you can't turn off), but you can declare any
+	other components as core as well if you wish (but you can
+	turn these off, they just can't fail).
+      </p><p>
+        The priority defines order in which the components should start.
+        The ones with higher number are started sooner than the ones with
+        lower ones. If you don't set it, 0 (zero) is used as the priority.
+      </p><p>
+        There are other parameters we didn't use in our example.
+	One of them is <span class="quote">&#8220;<span class="quote">address</span>&#8221;</span>. It is the address
+	used by the component on the <span class="command"><strong>b10-msgq</strong></span>
+	message bus. The special components already know their
+	address, but the usual ones don't. The address is by
+	convention the thing after <span class="emphasis"><em>b10-</em></span>, with
+	the first letter capital (eg. <span class="command"><strong>b10-stats</strong></span>
+	would have <span class="quote">&#8220;<span class="quote">Stats</span>&#8221;</span> as its address).
+
+      </p><p>
+        The last one is process. It is the name of the process to be started.
+        It defaults to the name of the component if not set, but you can use
+        this to override it.
+      </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+          This system allows you to start the same component multiple times
+          (by including it in the configuration with different names, but the
+          same process setting). However, the rest of the system doesn't expect
+          such situation, so it would probably not do what you want. Such
+          support is yet to be implemented.
+        </p></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	  The configuration is quite powerful, but that includes
+	  a lot of space for mistakes. You could turn off the
+	  <span class="command"><strong>b10-cmdctl</strong></span>, but then you couldn't
+	  change it back the usual way, as it would require it to
+	  be running (you would have to find and edit the configuration
+	  directly).  Also, some modules might have dependencies
+	  -- <span class="command"><strong>b10-stats-httpd</strong></span> need
+	  <span class="command"><strong>b10-stats</strong></span>, <span class="command"><strong>b10-xfrout</strong></span>
+	  needs the <span class="command"><strong>b10-auth</strong></span> to be running, etc.
+
+
+
+        </p><p>
+          In short, you should think twice before disabling something here.
+        </p></div><p>
+	Now, to the mysterious setuid virtual component. If you
+	use the <span class="command"><strong>-u</strong></span> option to start the
+	<span class="command"><strong>bind10</strong></span> as root, but change the user
+	later, we need to start the <span class="command"><strong>b10-auth</strong></span> or
+	<span class="command"><strong>b10-resolver</strong></span> as root (until the socket
+	creator is finished). So we need to specify
+	the time when the switch from root do the given user happens
+	and that's what the setuid component is for. The switch is
+	done at the time the setuid component would be started, if
+	it was a process. The default configuration contains the
+	setuid component with priority 5, <span class="command"><strong>b10-auth</strong></span>
+	has 10 to be started before the switch and everything else
+	is without priority, so it is started after the switch.
       </p></div></div><div class="chapter" title="Chapter 4. Command channel"><div class="titlepage"><div><div><h2 class="title"><a name="msgq"></a>Chapter 4. Command channel</h2></div></div></div><p>
         The BIND 10 components use the <span class="command"><strong>b10-msgq</strong></span>
         message routing daemon to communicate with other BIND 10 components.
@@ -490,12 +610,12 @@ shutdown
       the details and relays (over a <span class="command"><strong>b10-msgq</strong></span> command
       channel) the configuration on to the specified module.
     </p><p>
-    </p></div><div class="chapter" title="Chapter 8. Authoritative Server"><div class="titlepage"><div><div><h2 class="title"><a name="authserver"></a>Chapter 8. Authoritative Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230285816">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285881">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285912">Loading Master Zones Files</a></span></dt></dl></div><p>
+    </p></div><div class="chapter" title="Chapter 8. Authoritative Server"><div class="titlepage"><div><div><h2 class="title"><a name="authserver"></a>Chapter 8. Authoritative Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168229438007">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168229438072">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168229438171">Loading Master Zones Files</a></span></dt></dl></div><p>
       The <span class="command"><strong>b10-auth</strong></span> is the authoritative DNS server.
       It supports EDNS0 and DNSSEC. It supports IPv6.
       Normally it is started by the <span class="command"><strong>bind10</strong></span> master
       process.
-    </p><div class="section" title="Server Configurations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285816"></a>Server Configurations</h2></div></div></div><p>
+    </p><div class="section" title="Server Configurations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438007"></a>Server Configurations</h2></div></div></div><p>
         <span class="command"><strong>b10-auth</strong></span> is configured via the
         <span class="command"><strong>b10-cfgmgr</strong></span> configuration manager.
         The module name is <span class="quote">&#8220;<span class="quote">Auth</span>&#8221;</span>.
@@ -515,7 +635,7 @@ This may be a temporary setting until then.
         </p><div class="variablelist"><dl><dt><span class="term">shutdown</span></dt><dd>Stop the authoritative DNS server.
               </dd></dl></div><p>
 
-      </p></div><div class="section" title="Data Source Backends"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285881"></a>Data Source Backends</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      </p></div><div class="section" title="Data Source Backends"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438072"></a>Data Source Backends</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
         For the development prototype release, <span class="command"><strong>b10-auth</strong></span>
         supports a SQLite3 data source backend and in-memory data source
         backend.
@@ -529,7 +649,7 @@ This may be a temporary setting until then.
         The default is <code class="filename">/usr/local/var/</code>.)
   This data file location may be changed by defining the
   <span class="quote">&#8220;<span class="quote">database_file</span>&#8221;</span> configuration.
-      </p></div><div class="section" title="Loading Master Zones Files"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285912"></a>Loading Master Zones Files</h2></div></div></div><p>
+      </p></div><div class="section" title="Loading Master Zones Files"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438171"></a>Loading Master Zones Files</h2></div></div></div><p>
         RFC 1035 style DNS master zone files may imported
         into a BIND 10 data source by using the
         <span class="command"><strong>b10-loadzone</strong></span> utility.
@@ -558,41 +678,119 @@ This may be a temporary setting until then.
         If you reload a zone already existing in the database,
         all records from that prior zone disappear and a whole new set
         appears.
-      </p></div></div><div class="chapter" title="Chapter 9. Incoming Zone Transfers"><div class="titlepage"><div><div><h2 class="title"><a name="xfrin"></a>Chapter 9. Incoming Zone Transfers</h2></div></div></div><p>
+      </p></div></div><div class="chapter" title="Chapter 9. Incoming Zone Transfers"><div class="titlepage"><div><div><h2 class="title"><a name="xfrin"></a>Chapter 9. Incoming Zone Transfers</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168229438302">Configuration for Incoming Zone Transfers</a></span></dt><dt><span class="section"><a href="#id1168229438340">Enabling IXFR</a></span></dt><dt><span class="section"><a href="#id1168229438382">Trigger an Incoming Zone Transfer Manually</a></span></dt></dl></div><p>
       Incoming zones are transferred using the <span class="command"><strong>b10-xfrin</strong></span>
       process which is started by <span class="command"><strong>bind10</strong></span>.
-      When received, the zone is stored in the BIND 10
-      data store, and its records can be served by
+      When received, the zone is stored in the corresponding BIND 10
+      data source, and its records can be served by
       <span class="command"><strong>b10-auth</strong></span>.
       In combination with <span class="command"><strong>b10-zonemgr</strong></span> (for
       automated SOA checks), this allows the BIND 10 server to
       provide <span class="quote">&#8220;<span class="quote">secondary</span>&#8221;</span> service.
+    </p><p>
+      The <span class="command"><strong>b10-xfrin</strong></span> process supports both AXFR and
+      IXFR.  Due to some implementation limitations of the current
+      development release, however, it only tries AXFR by default,
+      and care should be taken to enable IXFR.
     </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
-     The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.) 
+     In the current development release of BIND 10, incoming zone
+     transfers are only available for SQLite3-based data sources,
+     that is, they don't work for an in-memory data source.
+    </p></div><div class="section" title="Configuration for Incoming Zone Transfers"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438302"></a>Configuration for Incoming Zone Transfers</h2></div></div></div><p>
+	In practice, you need to specify a list of secondary zones to
+	enable incoming zone transfers for these zones (you can still
+	trigger a zone transfer manually, without a prior configuration
+	(see below)).
+      </p><p>
+	For example, to enable zone transfers for a zone named "example.com"
+	(whose master address is assumed to be 2001:db8::53 here),
+	run the following at the <span class="command"><strong>bindctl</strong></span> prompt:
 
+      </p><pre class="screen">&gt; <strong class="userinput"><code>config add Xfrin/zones</code></strong>
+&gt; <strong class="userinput"><code>config set Xfrin/zones[0]/name "<code class="option">example.com</code>"</code></strong>
+&gt; <strong class="userinput"><code>config set Xfrin/zones[0]/master_addr "<code class="option">2001:db8::53</code>"</code></strong>
+&gt; <strong class="userinput"><code>config commit</code></strong></pre><p>
 
+      (We assume there has been no zone configuration before).
+      </p></div><div class="section" title="Enabling IXFR"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438340"></a>Enabling IXFR</h2></div></div></div><p>
+        As noted above, <span class="command"><strong>b10-xfrin</strong></span> uses AXFR for
+        zone transfers by default.  To enable IXFR for zone transfers
+        for a particular zone, set the <strong class="userinput"><code>use_ixfr</code></strong>
+        configuration parameter to <strong class="userinput"><code>true</code></strong>.
+        In the above example of configuration sequence, you'll need
+        to add the following before performing <strong class="userinput"><code>commit</code></strong>:
+      </p><pre class="screen">&gt; <strong class="userinput"><code>config set Xfrin/zones[0]/use_ixfr true</code></strong></pre><p>
+      </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      One reason why IXFR is disabled by default in the current
+      release is because it does not support automatic fallback from IXFR to
+      AXFR when it encounters a primary server that doesn't support
+      outbound IXFR (and, not many existing implementations support
+      it).  Another, related reason is that it does not use AXFR even
+      if it has no knowledge about the zone (like at the very first
+      time the secondary server is set up).  IXFR requires the
+      "current version" of the zone, so obviously it doesn't work
+      in this situation and AXFR is the only workable choice.
+      The current release of <span class="command"><strong>b10-xfrin</strong></span> does not
+      make this selection automatically.
+      These features will be implemented in a near future
+      version, at which point we will enable IXFR by default.
+      </p></div></div><div class="section" title="Trigger an Incoming Zone Transfer Manually"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438382"></a>Trigger an Incoming Zone Transfer Manually</h2></div></div></div><p>
+	To manually trigger a zone transfer to retrieve a remote zone,
+	you may use the <span class="command"><strong>bindctl</strong></span> utility.
+	For example, at the <span class="command"><strong>bindctl</strong></span> prompt run:
 
-    </p></div><p>
-       To manually trigger a zone transfer to retrieve a remote zone,
-       you may use the <span class="command"><strong>bindctl</strong></span> utility.
-       For example, at the <span class="command"><strong>bindctl</strong></span> prompt run:
-
-       </p><pre class="screen">&gt; <strong class="userinput"><code>Xfrin retransfer zone_name="<code class="option">foo.example.org</code>" master=<code class="option">192.0.2.99</code></code></strong></pre><p>
-    </p></div><div class="chapter" title="Chapter 10. Outbound Zone Transfers"><div class="titlepage"><div><div><h2 class="title"><a name="xfrout"></a>Chapter 10. Outbound Zone Transfers</h2></div></div></div><p>
+	</p><pre class="screen">&gt; <strong class="userinput"><code>Xfrin retransfer zone_name="<code class="option">foo.example.org</code>" master=<code class="option">192.0.2.99</code></code></strong></pre><p>
+      </p></div></div><div class="chapter" title="Chapter 10. Outbound Zone Transfers"><div class="titlepage"><div><div><h2 class="title"><a name="xfrout"></a>Chapter 10. Outbound Zone Transfers</h2></div></div></div><p>
       The <span class="command"><strong>b10-xfrout</strong></span> process is started by
       <span class="command"><strong>bind10</strong></span>.
       When the <span class="command"><strong>b10-auth</strong></span> authoritative DNS server
-      receives an AXFR request, <span class="command"><strong>b10-xfrout</strong></span>
-      sends the zone.
-      This is used to provide master DNS service to share zones
+      receives an AXFR or IXFR request, <span class="command"><strong>b10-auth</strong></span>
+      internally forwards the request to <span class="command"><strong>b10-xfrout</strong></span>,
+      which handles the rest of request processing.
+      This is used to provide primary DNS service to share zones
       to secondary name servers.
       The <span class="command"><strong>b10-xfrout</strong></span> is also used to send
-      NOTIFY messages to slaves.
+      NOTIFY messages to secondary servers.
+    </p><p>
+      A global or per zone <code class="option">transfer_acl</code> configuration
+      can be used to control accessibility of the outbound zone
+      transfer service.
+      By default, <span class="command"><strong>b10-xfrout</strong></span> allows any clients to
+      perform zone transfers for any zones:
+    </p><pre class="screen">&gt; <strong class="userinput"><code>config show Xfrout/transfer_acl</code></strong>
+Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</pre><p>
+      You can change this to, for example, rejecting all transfer
+      requests by default while allowing requests for the transfer
+      of zone "example.com" from 192.0.2.1 and 2001:db8::1 as follows:
+    </p><pre class="screen">&gt; <strong class="userinput"><code>config set Xfrout/transfer_acl[0] {"action": "REJECT"}</code></strong>
+&gt; <strong class="userinput"><code>config add Xfrout/zone_config</code></strong>
+&gt; <strong class="userinput"><code>config set Xfrout/zone_config[0]/origin "example.com"</code></strong>
+&gt; <strong class="userinput"><code>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1"},</code></strong>
+<strong class="userinput"><code>                                                 {"action": "ACCEPT", "from": "2001:db8::1"}]</code></strong>
+&gt; <strong class="userinput"><code>config commit</code></strong></pre><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	In the above example the lines
+	for <code class="option">transfer_acl</code> were divided for
+	readability.  In the actual input it must be in a single line.
+    </p></div><p>
+      If you want to require TSIG in access control, a separate TSIG
+      "key ring" must be configured specifically
+      for <span class="command"><strong>b10-xfrout</strong></span> as well as a system wide
+      key ring, both containing a consistent set of keys.
+      For example, to change the previous example to allowing requests
+      from 192.0.2.1 signed by a TSIG with a key name of
+      "key.example", you'll need to do this:
+    </p><pre class="screen">&gt; <strong class="userinput"><code>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</code></strong>
+&gt; <strong class="userinput"><code>config set Xfrout/tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</code></strong>
+&gt; <strong class="userinput"><code>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]</code></strong>
+&gt; <strong class="userinput"><code>config commit</code></strong></pre><p>
+      The first line of configuration defines a system wide key ring.
+      This is necessary because the <span class="command"><strong>b10-auth</strong></span> server
+      also checks TSIGs and it uses the system wide configuration.
     </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
-     The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.) 
-     Access control is not yet provided.
+	In a future version, <span class="command"><strong>b10-xfrout</strong></span> will also
+	use the system wide TSIG configuration.
+	The way to specify zone specific configuration (ACLs, etc) is
+	likely to be changed, too.
     </p></div></div><div class="chapter" title="Chapter 11. Secondary Manager"><div class="titlepage"><div><div><h2 class="title"><a name="zonemgr"></a>Chapter 11. Secondary Manager</h2></div></div></div><p>
       The <span class="command"><strong>b10-zonemgr</strong></span> process is started by
       <span class="command"><strong>bind10</strong></span>.
@@ -607,21 +805,26 @@ This may be a temporary setting until then.
     </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
      Access control (such as allowing notifies) is not yet provided.
      The primary/secondary service is not yet complete.
-    </p></div></div><div class="chapter" title="Chapter 12. Recursive Name Server"><div class="titlepage"><div><div><h2 class="title"><a name="resolverserver"></a>Chapter 12. Recursive Name Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230286300">Forwarding</a></span></dt></dl></div><p>
+    </p></div></div><div class="chapter" title="Chapter 12. Recursive Name Server"><div class="titlepage"><div><div><h2 class="title"><a name="resolverserver"></a>Chapter 12. Recursive Name Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168229438673">Access Control</a></span></dt><dt><span class="section"><a href="#id1168229438891">Forwarding</a></span></dt></dl></div><p>
       The <span class="command"><strong>b10-resolver</strong></span> process is started by
       <span class="command"><strong>bind10</strong></span>.
 
     </p><p>
       The main <span class="command"><strong>bind10</strong></span> process can be configured
-      to select to run either the authoritative or resolver.
+      to select to run either the authoritative or resolver or both.
       By default, it starts the authoritative service.
 
 
       You may change this using <span class="command"><strong>bindctl</strong></span>, for example:
 
       </p><pre class="screen">
-&gt; <strong class="userinput"><code>config set Boss/start_auth false</code></strong>
-&gt; <strong class="userinput"><code>config set Boss/start_resolver true</code></strong>
+&gt; <strong class="userinput"><code>config remove Boss/components b10-xfrout</code></strong>
+&gt; <strong class="userinput"><code>config remove Boss/components b10-xfrin</code></strong>
+&gt; <strong class="userinput"><code>config remove Boss/components b10-auth</code></strong>
+&gt; <strong class="userinput"><code>config add Boss/components b10-resolver</code></strong>
+&gt; <strong class="userinput"><code>config set Boss/components/b10-resolver/special resolver</code></strong>
+&gt; <strong class="userinput"><code>config set Boss/components/b10-resolver/kind needed</code></strong>
+&gt; <strong class="userinput"><code>config set Boss/components/b10-resolver/priority 10</code></strong>
 &gt; <strong class="userinput"><code>config commit</code></strong>
 </pre><p>
 
@@ -629,14 +832,52 @@ This may be a temporary setting until then.
        The master <span class="command"><strong>bind10</strong></span> will stop and start
        the desired services.
     </p><p>
-      The resolver also needs to be configured to listen on an address
-      and port:
+      By default, the resolver listens on port 53 for 127.0.0.1 and ::1.
+      The following example shows how it can be configured to
+      listen on an additional address (and port):
 
       </p><pre class="screen">
-&gt; <strong class="userinput"><code>config set Resolver/listen_on [{ "address": "127.0.0.1", "port": 53 }]</code></strong>
+&gt; <strong class="userinput"><code>config add Resolver/listen_on</code></strong>
+&gt; <strong class="userinput"><code>config set Resolver/listen_on[<em class="replaceable"><code>2</code></em>]/address "192.168.1.1"</code></strong>
+&gt; <strong class="userinput"><code>config set Resolver/listen_on[<em class="replaceable"><code>2</code></em>]/port 53</code></strong>
 &gt; <strong class="userinput"><code>config commit</code></strong>
 </pre><p>
-    </p><div class="section" title="Forwarding"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230286300"></a>Forwarding</h2></div></div></div><p>
+    </p><p>(Replace the <span class="quote">&#8220;<span class="quote"><em class="replaceable"><code>2</code></em></span>&#8221;</span>
+       as needed; run <span class="quote">&#8220;<span class="quote"><strong class="userinput"><code>config show
+       Resolver/listen_on</code></strong></span>&#8221;</span> if needed.)</p><div class="section" title="Access Control"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438673"></a>Access Control</h2></div></div></div><p>
+        By default, the <span class="command"><strong>b10-resolver</strong></span> daemon only accepts
+        DNS queries from the localhost (127.0.0.1 and ::1).
+        The <code class="option">Resolver/query_acl</code> configuration may
+	be used to reject, drop, or allow specific IPs or networks.
+        This configuration list is first match.
+      </p><p>
+	The configuration's <code class="option">action</code> item may be
+	set to <span class="quote">&#8220;<span class="quote">ACCEPT</span>&#8221;</span> to allow the incoming query,
+	<span class="quote">&#8220;<span class="quote">REJECT</span>&#8221;</span> to respond with a DNS REFUSED return
+	code, or <span class="quote">&#8220;<span class="quote">DROP</span>&#8221;</span> to ignore the query without
+	any response (such as a blackhole).  For more information,
+	see the respective debugging messages:  <a class="ulink" href="bind10-messages.html#RESOLVER_QUERY_ACCEPTED" target="_top">RESOLVER_QUERY_ACCEPTED</a>,
+	<a class="ulink" href="bind10-messages.html#RESOLVER_QUERY_REJECTED" target="_top">RESOLVER_QUERY_REJECTED</a>,
+	and <a class="ulink" href="bind10-messages.html#RESOLVER_QUERY_DROPPED" target="_top">RESOLVER_QUERY_DROPPED</a>.
+      </p><p>
+	The required configuration's <code class="option">from</code> item is set
+        to an IPv4 or IPv6 address, addresses with an network mask, or to
+	the special lowercase keywords <span class="quote">&#8220;<span class="quote">any6</span>&#8221;</span> (for
+	any IPv6 address) or <span class="quote">&#8220;<span class="quote">any4</span>&#8221;</span> (for any IPv4
+	address).
+      </p><p>
+	For example to allow the <em class="replaceable"><code>192.168.1.0/24</code></em>
+	network to use your recursive name server, at the
+	<span class="command"><strong>bindctl</strong></span> prompt run:
+      </p><pre class="screen">
+&gt; <strong class="userinput"><code>config add Resolver/query_acl</code></strong>
+&gt; <strong class="userinput"><code>config set Resolver/query_acl[<em class="replaceable"><code>2</code></em>]/action "ACCEPT"</code></strong>
+&gt; <strong class="userinput"><code>config set Resolver/query_acl[<em class="replaceable"><code>2</code></em>]/from "<em class="replaceable"><code>192.168.1.0/24</code></em>"</code></strong>
+&gt; <strong class="userinput"><code>config commit</code></strong>
+</pre><p>(Replace the <span class="quote">&#8220;<span class="quote"><em class="replaceable"><code>2</code></em></span>&#8221;</span>
+       as needed; run <span class="quote">&#8220;<span class="quote"><strong class="userinput"><code>config show
+       Resolver/query_acl</code></strong></span>&#8221;</span> if needed.)</p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>This prototype access control configuration
+      syntax may be changed.</p></div></div><div class="section" title="Forwarding"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229438891"></a>Forwarding</h2></div></div></div><p>
 
         To enable forwarding, the upstream address and port must be
         configured to forward queries to, such as:
@@ -664,68 +905,440 @@ This may be a temporary setting until then.
 
     </p><p>
 
-       This stats daemon provides commands to identify if it is running,
-       show specified or all statistics data, set values, remove data,
-       and reset data.
+       This stats daemon provides commands to identify if it is
+       running, show specified or all statistics data, show specified
+       or all statistics data schema, and set specified statistics
+       data.
 
        For example, using <span class="command"><strong>bindctl</strong></span>:
 
        </p><pre class="screen">
 &gt; <strong class="userinput"><code>Stats show</code></strong>
 {
-    "auth.queries.tcp": 1749,
-    "auth.queries.udp": 867868,
-    "bind10.boot_time": "2011-01-20T16:59:03Z",
-    "report_time": "2011-01-20T17:04:06Z",
-    "stats.boot_time": "2011-01-20T16:59:05Z",
-    "stats.last_update_time": "2011-01-20T17:04:05Z",
-    "stats.lname": "4d3869d9_a@jreed.example.net",
-    "stats.start_time": "2011-01-20T16:59:05Z",
-    "stats.timestamp": 1295543046.823504
+    "Auth": {
+        "queries.tcp": 1749,
+        "queries.udp": 867868
+    },
+    "Boss": {
+        "boot_time": "2011-01-20T16:59:03Z"
+    },
+    "Stats": {
+        "boot_time": "2011-01-20T16:59:05Z",
+        "last_update_time": "2011-01-20T17:04:05Z",
+        "lname": "4d3869d9_a@jreed.example.net",
+        "report_time": "2011-01-20T17:04:06Z",
+        "timestamp": 1295543046.823504
+    }
 }
        </pre><p>
-    </p></div><div class="chapter" title="Chapter 14. Logging"><div class="titlepage"><div><div><h2 class="title"><a name="logging"></a>Chapter 14. Logging</h2></div></div></div><p>
-        Each message written by BIND 10 to the configured logging destinations
-        comprises a number of components that identify the origin of the
-        message and, if the message indicates a problem, information about the
-        problem that may be useful in fixing it.
-    </p><p>
-        Consider the message below logged to a file:
-        </p><pre class="screen">2011-06-15 13:48:22.034 ERROR [b10-resolver.asiolink]
-    ASIODNS_OPENSOCK error 111 opening TCP socket to 127.0.0.1(53)</pre><p>
-    </p><p>
-      Note: the layout of messages written to the system logging
-      file (syslog) may be slightly different.  This message has
-      been split across two lines here for display reasons; in the
-      logging file, it will appear on one line.)
-    </p><p>
-      The log message comprises a number of components:
+    </p></div><div class="chapter" title="Chapter 14. Logging"><div class="titlepage"><div><div><h2 class="title"><a name="logging"></a>Chapter 14. Logging</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168229439042">Logging configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229439052">Loggers</a></span></dt><dt><span class="section"><a href="#id1168229439294">Output Options</a></span></dt><dt><span class="section"><a href="#id1168229439468">Example session</a></span></dt></dl></dd><dt><span class="section"><a href="#id1168229440023">Logging Message Format</a></span></dt></dl></div><div class="section" title="Logging configuration"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229439042"></a>Logging configuration</h2></div></div></div><p>
 
-        </p><div class="variablelist"><dl><dt><span class="term">2011-06-15 13:48:22.034</span></dt><dd><p>
-            The date and time at which the message was generated.
-        </p></dd><dt><span class="term">ERROR</span></dt><dd><p>
-            The severity of the message.
-        </p></dd><dt><span class="term">[b10-resolver.asiolink]</span></dt><dd><p>
-	    The source of the message.  This comprises two components:
-	    the BIND 10 process generating the message (in this
-	    case, <span class="command"><strong>b10-resolver</strong></span>) and the module
-	    within the program from which the message originated
-	    (which in the example is the asynchronous I/O link
-	    module, asiolink).
-        </p></dd><dt><span class="term">ASIODNS_OPENSOCK</span></dt><dd><p>
+	The logging system in BIND 10 is configured through the
+	Logging module. All BIND 10 modules will look at the
+	configuration in Logging to see what should be logged and
+	to where.
+
+
+
+      </p><div class="section" title="Loggers"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229439052"></a>Loggers</h3></div></div></div><p>
+
+	  Within BIND 10, a message is logged through a component
+	  called a "logger". Different parts of BIND 10 log messages
+	  through different loggers, and each logger can be configured
+	  independently of one another.
+
+        </p><p>
+
+	  In the Logging module, you can specify the configuration
+	  for zero or more loggers; any that are not specified will
+	  take appropriate default values..
+
+        </p><p>
+
+	  The three most important elements of a logger configuration
+	  are the <code class="option">name</code> (the component that is
+	  generating the messages), the <code class="option">severity</code>
+	  (what to log), and the <code class="option">output_options</code>
+	  (where to log).
+
+        </p><div class="section" title="name (string)"><div class="titlepage"><div><div><h4 class="title"><a name="id1168229439077"></a>name (string)</h4></div></div></div><p>
+	  Each logger in the system has a name, the name being that
+	  of the component using it to log messages. For instance,
+	  if you want to configure logging for the resolver module,
+	  you add an entry for a logger named <span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span>. This
+	  configuration will then be used by the loggers in the
+	  Resolver module, and all the libraries used by it.
+              </p><p>
+
+	  If you want to specify logging for one specific library
+	  within the module, you set the name to
+	  <em class="replaceable"><code>module.library</code></em>.  For example, the
+	  logger used by the nameserver address store component
+	  has the full name of <span class="quote">&#8220;<span class="quote">Resolver.nsas</span>&#8221;</span>. If
+	  there is no entry in Logging for a particular library,
+	  it will use the configuration given for the module.
+
+
+
+        </p><p>
+
+
+
+	  To illustrate this, suppose you want the cache library
+	  to log messages of severity DEBUG, and the rest of the
+	  resolver code to log messages of severity INFO. To achieve
+	  this you specify two loggers, one with the name
+	  <span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span> and severity INFO, and one with
+	  the name <span class="quote">&#8220;<span class="quote">Resolver.cache</span>&#8221;</span> with severity
+	  DEBUG. As there are no entries for other libraries (e.g.
+	  the nsas), they will use the configuration for the module
+	  (<span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span>), so giving the desired behavior.
+
+        </p><p>
+
+	  One special case is that of a module name of <span class="quote">&#8220;<span class="quote">*</span>&#8221;</span>
+	  (asterisks), which is interpreted as <span class="emphasis"><em>any</em></span>
+	  module. You can set global logging options by using this,
+	  including setting the logging configuration for a library
+	  that is used by multiple modules (e.g. <span class="quote">&#8220;<span class="quote">*.config</span>&#8221;</span>
+	  specifies the configuration library code in whatever
+	  module is using it).
+
+        </p><p>
+
+	  If there are multiple logger specifications in the
+	  configuration that might match a particular logger, the
+	  specification with the more specific logger name takes
+	  precedence. For example, if there are entries for for
+	  both <span class="quote">&#8220;<span class="quote">*</span>&#8221;</span> and <span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span>, the
+	  resolver module &#8212; and all libraries it uses &#8212;
+	  will log messages according to the configuration in the
+	  second entry (<span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span>). All other modules
+	  will use the configuration of the first entry
+	  (<span class="quote">&#8220;<span class="quote">*</span>&#8221;</span>). If there was also a configuration
+	  entry for <span class="quote">&#8220;<span class="quote">Resolver.cache</span>&#8221;</span>, the cache library
+	  within the resolver would use that in preference to the
+	  entry for <span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span>.
+
+        </p><p>
+
+	  One final note about the naming. When specifying the
+	  module name within a logger, use the name of the module
+	  as specified in <span class="command"><strong>bindctl</strong></span>, e.g.
+	  <span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span> for the resolver module,
+	  <span class="quote">&#8220;<span class="quote">Xfrout</span>&#8221;</span> for the xfrout module, etc. When
+	  the message is logged, the message will include the name
+	  of the logger generating the message, but with the module
+	  name replaced by the name of the process implementing
+	  the module (so for example, a message generated by the
+	  <span class="quote">&#8220;<span class="quote">Auth.cache</span>&#8221;</span> logger will appear in the output
+	  with a logger name of <span class="quote">&#8220;<span class="quote">b10-auth.cache</span>&#8221;</span>).
+
+        </p></div><div class="section" title="severity (string)"><div class="titlepage"><div><div><h4 class="title"><a name="id1168229439176"></a>severity (string)</h4></div></div></div><p>
+
+          This specifies the category of messages logged.
+	  Each message is logged with an associated severity which
+	  may be one of the following (in descending order of
+	  severity):
+        </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"> FATAL </li><li class="listitem"> ERROR </li><li class="listitem"> WARN </li><li class="listitem"> INFO </li><li class="listitem"> DEBUG </li></ul></div><p>
+
+	  When the severity of a logger is set to one of these
+	  values, it will only log messages of that severity, and
+	  the severities above it. The severity may also be set to
+	  NONE, in which case all messages from that logger are
+	  inhibited.
+
+
+
+        </p></div><div class="section" title="output_options (list)"><div class="titlepage"><div><div><h4 class="title"><a name="id1168229439227"></a>output_options (list)</h4></div></div></div><p>
+
+	  Each logger can have zero or more
+	  <code class="option">output_options</code>. These specify where log
+	  messages are sent to. These are explained in detail below.
+
+        </p><p>
+
+          The other options for a logger are:
+
+        </p></div><div class="section" title="debuglevel (integer)"><div class="titlepage"><div><div><h4 class="title"><a name="id1168229439243"></a>debuglevel (integer)</h4></div></div></div><p>
+
+	  When a logger's severity is set to DEBUG, this value
+	  specifies what debug messages should be printed. It ranges
+	  from 0 (least verbose) to 99 (most verbose).
+        </p><p>
+
+          If severity for the logger is not DEBUG, this value is ignored.
+
+        </p></div><div class="section" title="additive (true or false)"><div class="titlepage"><div><div><h4 class="title"><a name="id1168229439258"></a>additive (true or false)</h4></div></div></div><p>
+
+	  If this is true, the <code class="option">output_options</code> from
+	  the parent will be used. For example, if there are two
+	  loggers configured; <span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span> and
+	  <span class="quote">&#8220;<span class="quote">Resolver.cache</span>&#8221;</span>, and <code class="option">additive</code>
+	  is true in the second, it will write the log messages
+	  not only to the destinations specified for
+	  <span class="quote">&#8220;<span class="quote">Resolver.cache</span>&#8221;</span>, but also to the destinations
+	  as specified in the <code class="option">output_options</code> in
+	  the logger named <span class="quote">&#8220;<span class="quote">Resolver</span>&#8221;</span>.
+
+
+
+      </p></div></div><div class="section" title="Output Options"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229439294"></a>Output Options</h3></div></div></div><p>
+
+	  The main settings for an output option are the
+	  <code class="option">destination</code> and a value called
+	  <code class="option">output</code>, the meaning of which depends on
+	  the destination that is set.
+
+        </p><div class="section" title="destination (string)"><div class="titlepage"><div><div><h4 class="title"><a name="id1168229439309"></a>destination (string)</h4></div></div></div><p>
+
+            The destination is the type of output. It can be one of:
+
+          </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"> console </li><li class="listitem"> file </li><li class="listitem"> syslog </li></ul></div></div><div class="section" title="output (string)"><div class="titlepage"><div><div><h4 class="title"><a name="id1168229439341"></a>output (string)</h4></div></div></div><p>
+
+	  Depending on what is set as the output destination, this
+	  value is interpreted as follows:
+
+        </p><div class="variablelist"><dl><dt><span class="term"><code class="option">destination</code> is <span class="quote">&#8220;<span class="quote">console</span>&#8221;</span></span></dt><dd>
+		 The value of output must be one of <span class="quote">&#8220;<span class="quote">stdout</span>&#8221;</span>
+		 (messages printed to standard output) or
+		 <span class="quote">&#8220;<span class="quote">stderr</span>&#8221;</span> (messages printed to standard
+		 error).
+              </dd><dt><span class="term"><code class="option">destination</code> is <span class="quote">&#8220;<span class="quote">file</span>&#8221;</span></span></dt><dd>
+		The value of output is interpreted as a file name;
+		log messages will be appended to this file.
+              </dd><dt><span class="term"><code class="option">destination</code> is <span class="quote">&#8220;<span class="quote">syslog</span>&#8221;</span></span></dt><dd>
+		The value of output is interpreted as the
+		<span class="command"><strong>syslog</strong></span> facility (e.g.
+		<span class="emphasis"><em>local0</em></span>) that should be used
+		for log messages.
+              </dd></dl></div><p>
+
+          The other options for <code class="option">output_options</code> are:
+
+        </p><div class="section" title="flush (true of false)"><div class="titlepage"><div><div><h5 class="title"><a name="id1168229439427"></a>flush (true of false)</h5></div></div></div><p>
+	    Flush buffers after each log message. Doing this will
+	    reduce performance but will ensure that if the program
+	    terminates abnormally, all messages up to the point of
+	    termination are output.
+          </p></div><div class="section" title="maxsize (integer)"><div class="titlepage"><div><div><h5 class="title"><a name="id1168229439436"></a>maxsize (integer)</h5></div></div></div><p>
+	    Only relevant when destination is file, this is maximum
+	    file size of output files in bytes. When the maximum
+	    size is reached, the file is renamed and a new file opened.
+	    (For example, a ".1" is appended to the name &#8212;
+	    if a ".1" file exists, it is renamed ".2",
+            etc.)
+          </p><p>
+            If this is 0, no maximum file size is used.
+          </p></div><div class="section" title="maxver (integer)"><div class="titlepage"><div><div><h5 class="title"><a name="id1168229439449"></a>maxver (integer)</h5></div></div></div><p>
+	    Maximum number of old log files to keep around when
+	    rolling the output file. Only relevant when
+	    <code class="option">destination</code> is <span class="quote">&#8220;<span class="quote">file</span>&#8221;</span>.
+          </p></div></div></div><div class="section" title="Example session"><div class="titlepage"><div><div><h3 class="title"><a name="id1168229439468"></a>Example session</h3></div></div></div><p>
+
+	  In this example we want to set the global logging to
+	  write to the file <code class="filename">/var/log/my_bind10.log</code>,
+	  at severity WARN. We want the authoritative server to
+	  log at DEBUG with debuglevel 40, to a different file
+	  (<code class="filename">/tmp/debug_messages</code>).
+
+        </p><p>
+
+          Start <span class="command"><strong>bindctl</strong></span>.
+
+        </p><p>
+
+           </p><pre class="screen">["login success "]
+&gt; <strong class="userinput"><code>config show Logging</code></strong>
+Logging/loggers	[]	list
+</pre><p>
+
+        </p><p>
+
+	  By default, no specific loggers are configured, in which
+	  case the severity defaults to INFO and the output is
+	  written to stderr.
+
+        </p><p>
+
+          Let's first add a default logger:
+
+        </p><p>
+
+          </p><pre class="screen"><strong class="userinput"><code>&gt; config add Logging/loggers</code></strong>
+&gt; <strong class="userinput"><code>config show Logging</code></strong>
+Logging/loggers/	list	(modified)
+</pre><p>
+
+        </p><p>
+
+	  The loggers value line changed to indicate that it is no
+	  longer an empty list:
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code>config show Logging/loggers</code></strong>
+Logging/loggers[0]/name	""	string	(default)
+Logging/loggers[0]/severity	"INFO"	string	(default)
+Logging/loggers[0]/debuglevel	0	integer	(default)
+Logging/loggers[0]/additive	false	boolean	(default)
+Logging/loggers[0]/output_options	[]	list	(default)
+</pre><p>
+
+        </p><p>
+
+	  The name is mandatory, so we must set it. We will also
+	  change the severity as well. Let's start with the global
+	  logger.
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code>config set Logging/loggers[0]/name *</code></strong>
+&gt; <strong class="userinput"><code>config set Logging/loggers[0]/severity WARN</code></strong>
+&gt; <strong class="userinput"><code>config show Logging/loggers</code></strong>
+Logging/loggers[0]/name	"*"	string	(modified)
+Logging/loggers[0]/severity	"WARN"	string	(modified)
+Logging/loggers[0]/debuglevel	0	integer	(default)
+Logging/loggers[0]/additive	false	boolean	(default)
+Logging/loggers[0]/output_options	[]	list	(default)
+</pre><p>
+
+        </p><p>
+
+	  Of course, we need to specify where we want the log
+	  messages to go, so we add an entry for an output option.
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code> config add Logging/loggers[0]/output_options</code></strong>
+&gt; <strong class="userinput"><code> config show Logging/loggers[0]/output_options</code></strong>
+Logging/loggers[0]/output_options[0]/destination	"console"	string	(default)
+Logging/loggers[0]/output_options[0]/output	"stdout"	string	(default)
+Logging/loggers[0]/output_options[0]/flush	false	boolean	(default)
+Logging/loggers[0]/output_options[0]/maxsize	0	integer	(default)
+Logging/loggers[0]/output_options[0]/maxver	0	integer	(default)
+</pre><p>
+
+
+        </p><p>
+
+          These aren't the values we are looking for.
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code> config set Logging/loggers[0]/output_options[0]/destination file</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[0]/output_options[0]/output /var/log/bind10.log</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[0]/output_options[0]/maxsize 30000</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[0]/output_options[0]/maxver 8</code></strong>
+</pre><p>
+
+        </p><p>
+
+	  Which would make the entire configuration for this logger
+	  look like:
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code> config show all Logging/loggers</code></strong>
+Logging/loggers[0]/name	"*"	string	(modified)
+Logging/loggers[0]/severity	"WARN"	string	(modified)
+Logging/loggers[0]/debuglevel	0	integer	(default)
+Logging/loggers[0]/additive	false	boolean	(default)
+Logging/loggers[0]/output_options[0]/destination	"file"	string	(modified)
+Logging/loggers[0]/output_options[0]/output	"/var/log/bind10.log"	string	(modified)
+Logging/loggers[0]/output_options[0]/flush	false	boolean	(default)
+Logging/loggers[0]/output_options[0]/maxsize	30000	integer	(modified)
+Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
+</pre><p>
+
+        </p><p>
+
+	  That looks OK, so let's commit it before we add the
+	  configuration for the authoritative server's logger.
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code> config commit</code></strong></pre><p>
+
+        </p><p>
+
+	  Now that we have set it, and checked each value along
+	  the way, adding a second entry is quite similar.
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code> config add Logging/loggers</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[1]/name Auth</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[1]/severity DEBUG</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[1]/debuglevel 40</code></strong>
+&gt; <strong class="userinput"><code> config add Logging/loggers[1]/output_options</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[1]/output_options[0]/destination file</code></strong>
+&gt; <strong class="userinput"><code> config set Logging/loggers[1]/output_options[0]/output /tmp/auth_debug.log</code></strong>
+&gt; <strong class="userinput"><code> config commit</code></strong>
+</pre><p>
+
+        </p><p>
+
+	  And that's it. Once we have found whatever it was we
+	  needed the debug messages for, we can simply remove the
+	  second logger to let the authoritative server use the
+	  same settings as the rest.
+
+        </p><p>
+
+          </p><pre class="screen">&gt; <strong class="userinput"><code> config remove Logging/loggers[1]</code></strong>
+&gt; <strong class="userinput"><code> config commit</code></strong>
+</pre><p>
+
+        </p><p>
+
+	  And every module will now be using the values from the
+	  logger named <span class="quote">&#8220;<span class="quote">*</span>&#8221;</span>.
+
+        </p></div></div><div class="section" title="Logging Message Format"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229440023"></a>Logging Message Format</h2></div></div></div><p>
+	  Each message written by BIND 10 to the configured logging
+	  destinations comprises a number of components that identify
+	  the origin of the message and, if the message indicates
+	  a problem, information about the problem that may be
+	  useful in fixing it.
+      </p><p>
+          Consider the message below logged to a file:
+          </p><pre class="screen">2011-06-15 13:48:22.034 ERROR [b10-resolver.asiolink]
+    ASIODNS_OPENSOCK error 111 opening TCP socket to 127.0.0.1(53)</pre><p>
+      </p><p>
+        Note: the layout of messages written to the system logging
+        file (syslog) may be slightly different.  This message has
+        been split across two lines here for display reasons; in the
+        logging file, it will appear on one line.)
+      </p><p>
+        The log message comprises a number of components:
+
+          </p><div class="variablelist"><dl><dt><span class="term">2011-06-15 13:48:22.034</span></dt><dd><p>
+              The date and time at which the message was generated.
+          </p></dd><dt><span class="term">ERROR</span></dt><dd><p>
+              The severity of the message.
+          </p></dd><dt><span class="term">[b10-resolver.asiolink]</span></dt><dd><p>
+            The source of the message.  This comprises two components:
+            the BIND 10 process generating the message (in this
+            case, <span class="command"><strong>b10-resolver</strong></span>) and the module
+            within the program from which the message originated
+            (which in the example is the asynchronous I/O link
+            module, asiolink).
+          </p></dd><dt><span class="term">ASIODNS_OPENSOCK</span></dt><dd><p>
 	    The message identification.  Every message in BIND 10
 	    has a unique identification, which can be used as an
 	    index into the <a class="ulink" href="bind10-messages.html" target="_top"><em class="citetitle">BIND 10 Messages
 	    Manual</em></a> (<a class="ulink" href="http://bind10.isc.org/docs/bind10-messages.html" target="_top">http://bind10.isc.org/docs/bind10-messages.html</a>) from which more information can be obtained.
-        </p></dd><dt><span class="term">error 111 opening TCP socket to 127.0.0.1(53)</span></dt><dd><p>
-            A brief description of the cause of the problem.  Within this text,
-            information relating to the condition that caused the message to
-            be logged will be included.  In this example, error number 111
-            (an operating system-specific error number) was encountered when
-            trying to open a TCP connection to port 53 on the local system
-            (address 127.0.0.1).  The next step would be to find out the reason
-            for the failure by consulting your system's documentation to
-            identify what error number 111 means.
-        </p></dd></dl></div><p>
-
-    </p></div></div></body></html>
+          </p></dd><dt><span class="term">error 111 opening TCP socket to 127.0.0.1(53)</span></dt><dd><p>
+	      A brief description of the cause of the problem.
+	      Within this text, information relating to the condition
+	      that caused the message to be logged will be included.
+	      In this example, error number 111 (an operating
+	      system-specific error number) was encountered when
+	      trying to open a TCP connection to port 53 on the
+	      local system (address 127.0.0.1).  The next step
+	      would be to find out the reason for the failure by
+	      consulting your system's documentation to identify
+	      what error number 111 means.
+          </p></dd></dl></div><p>
+      </p></div></div></div></body></html>

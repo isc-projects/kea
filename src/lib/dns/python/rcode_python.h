@@ -23,29 +23,36 @@ class Rcode;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object.
-//
-// We added a helper variable static_code here
-// Since we can create Rcodes dynamically with Rcode(int), but also
-// use the static globals (Rcode::NOERROR() etc), we use this
-// variable to see if the code came from one of the latter, in which
-// case Rcode_destroy should not free it (the other option is to
-// allocate new Rcodes for every use of the static ones, but this
-// seems more efficient).
-//
-// Follow-up note: we don't have to use the proxy function in the python lib;
-// we can just define class specific constants directly (see TSIGError).
-// We should make this cleanup later.
-class s_Rcode : public PyObject {
-public:
-    s_Rcode();
-    const Rcode* cppobj;
-    bool static_code;
-};
-
 extern PyTypeObject rcode_type;
 
-bool initModulePart_Rcode(PyObject* mod);
+/// This is a simple shortcut to create a python Rcode object (in the
+/// form of a pointer to PyObject) with minimal exception safety.
+/// On success, it returns a valid pointer to PyObject with a reference
+/// counter of 1; if something goes wrong it throws an exception (it never
+/// returns a NULL pointer).
+/// This function is expected to be called within a try block
+/// followed by necessary setup for python exception.
+PyObject* createRcodeObject(const Rcode& source);
+
+/// \brief Checks if the given python object is a Rcode object
+///
+/// \exception PyCPPWrapperException if obj is NULL
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type Rcode, false otherwise
+bool PyRcode_Check(PyObject* obj);
+
+/// \brief Returns a reference to the Rcode object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type Rcode; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyRcode_Check()
+///
+/// \note This is not a copy; if the Rcode is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param rcode_obj The rcode object to convert
+const Rcode& PyRcode_ToRcode(const PyObject* rcode_obj);
 
 } // namespace python
 } // namespace dns

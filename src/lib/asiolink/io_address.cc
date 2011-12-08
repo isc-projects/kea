@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <unistd.h>             // for some IPC/network system calls
+#include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -23,7 +24,7 @@
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
-
+#include <boost/static_assert.hpp>
 
 using namespace asio;
 using asio::ip::udp;
@@ -49,9 +50,30 @@ IOAddress::IOAddress(const ip::address& asio_address) :
     asio_address_(asio_address)
 {}
 
+IOAddress::IOAddress(uint32_t v4address):
+    asio_address_(asio::ip::address_v4(v4address)) {
+
+}
+
 string
 IOAddress::toText() const {
     return (asio_address_.to_string());
+}
+
+IOAddress
+IOAddress::from_bytes(short family, const uint8_t* data) {
+    if (data == NULL) {
+        isc_throw(BadValue, "NULL pointer received.");
+    } else
+    if ( (family != AF_INET) && (family != AF_INET6) ) {
+        isc_throw(BadValue, "Invalid family type. Only AF_INET and AF_INET6"
+                  << "are supported");
+    }
+
+    BOOST_STATIC_ASSERT(INET6_ADDRSTRLEN >= INET_ADDRSTRLEN);
+    char addr_str[INET6_ADDRSTRLEN];
+    inet_ntop(family, data, addr_str, INET6_ADDRSTRLEN);
+    return IOAddress(string(addr_str));
 }
 
 short
@@ -60,6 +82,20 @@ IOAddress::getFamily() const {
         return (AF_INET);
     } else {
         return (AF_INET6);
+    }
+}
+
+const asio::ip::address&
+IOAddress::getAddress() const {
+    return asio_address_;
+}
+
+IOAddress::operator uint32_t() const {
+    if (getAddress().is_v4()) {
+        return (getAddress().to_v4().to_ulong());
+    } else {
+        isc_throw(BadValue, "Can't convert " << toText()
+                  << " address to IPv4.");
     }
 }
 

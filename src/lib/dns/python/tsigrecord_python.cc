@@ -32,10 +32,6 @@ using namespace isc::util::python;
 using namespace isc::dns;
 using namespace isc::dns::python;
 
-//
-// Definition of the classes
-//
-
 // For each class, we need a struct, a helper functions (init, destroy,
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
@@ -44,11 +40,14 @@ using namespace isc::dns::python;
 // TSIGRecord
 //
 
-// Trivial constructor.
-s_TSIGRecord::s_TSIGRecord() : cppobj(NULL) {
-}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_TSIGRecord : public PyObject {
+public:
+    s_TSIGRecord() : cppobj(NULL) {};
+    TSIGRecord* cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIGRecord, TSIGRecord> TSIGRecordContainer;
 
@@ -102,11 +101,12 @@ PyMethodDef TSIGRecord_methods[] = {
 int
 TSIGRecord_init(s_TSIGRecord* self, PyObject* args) {
     try {
-        const s_Name* py_name;
-        const s_TSIG* py_tsig;
+        const PyObject* py_name;
+        const PyObject* py_tsig;
         if (PyArg_ParseTuple(args, "O!O!", &name_type, &py_name,
                              &tsig_type, &py_tsig)) {
-            self->cppobj = new TSIGRecord(*py_name->cppobj, *py_tsig->cppobj);
+            self->cppobj = new TSIGRecord(PyName_ToName(py_name),
+                                          PyTSIG_ToTSIG(py_tsig));
             return (0);
         }
     } catch (const exception& ex) {
@@ -226,7 +226,7 @@ PyTypeObject tsigrecord_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     TSIGRecord_str,                       // tp_str
     NULL,                               // tp_getattro
@@ -262,50 +262,32 @@ PyTypeObject tsigrecord_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_TSIGRecord(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&tsigrecord_type) < 0) {
-        return (false);
-    }
-    void* p = &tsigrecord_type;
-    if (PyModule_AddObject(mod, "TSIGRecord", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigrecord_type);
-
-    // The following template is the typical procedure for installing class
-    // variables.  If the class doesn't have a class variable, remove the
-    // entire try-catch clauses.
-    try {
-        // Constant class variables
-        installClassVariable(tsigrecord_type, "TSIG_TTL",
-                             Py_BuildValue("I", 0));
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in TSIGRecord initialization: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-        return (false);
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in TSIGRecord initialization");
-        return (false);
-    }
-
-    return (true);
-}
-
 PyObject*
 createTSIGRecordObject(const TSIGRecord& source) {
-    TSIGRecordContainer container = PyObject_New(s_TSIGRecord,
-                                                 &tsigrecord_type);
+    TSIGRecordContainer container(PyObject_New(s_TSIGRecord, &tsigrecord_type));
     container.set(new TSIGRecord(source));
     return (container.release());
 }
+
+bool
+PyTSIGRecord_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
+    return (PyObject_TypeCheck(obj, &tsigrecord_type));
+}
+
+const TSIGRecord&
+PyTSIGRecord_ToTSIGRecord(PyObject* tsigrecord_obj) {
+    if (tsigrecord_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in TSIGRecord PyObject conversion");
+    }
+    s_TSIGRecord* tsigrecord = static_cast<s_TSIGRecord*>(tsigrecord_obj);
+    return (*tsigrecord->cppobj);
+}
+
+
 } // namespace python
 } // namespace dns
 } // namespace isc

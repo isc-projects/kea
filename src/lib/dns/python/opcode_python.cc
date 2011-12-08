@@ -12,31 +12,30 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
+
 #include <dns/opcode.h>
+#include <util/python/pycppwrapper_util.h>
+
+#include "pydnspp_common.h"
+#include "opcode_python.h"
+#include "edns_python.h"
 
 using namespace isc::dns;
-
-//
-// Declaration of the custom exceptions (None for this class)
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
+using namespace isc::dns::python;
+using namespace isc::util;
+using namespace isc::util::python;
 
 namespace {
-//
-// Opcode
-//
+
 class s_Opcode : public PyObject {
 public:
-    s_Opcode() : opcode(NULL), static_code(false) {}
-    const Opcode* opcode;
+    s_Opcode() : cppobj(NULL), static_code(false) {}
+    const isc::dns::Opcode* cppobj;
     bool static_code;
 };
+
+typedef CPPPyObjectContainer<s_Opcode, Opcode> OpcodeContainer;
 
 int Opcode_init(s_Opcode* const self, PyObject* args);
 void Opcode_destroy(s_Opcode* const self);
@@ -103,64 +102,13 @@ PyMethodDef Opcode_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-PyTypeObject opcode_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.Opcode",
-    sizeof(s_Opcode),                   // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)Opcode_destroy,         // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    Opcode_str,                         // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Opcode class objects represent standard OPCODEs "
-    "of the header section of DNS messages.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    (richcmpfunc)Opcode_richcmp,        // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    Opcode_methods,                     // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)Opcode_init,              // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
-};
-
 
 int
 Opcode_init(s_Opcode* const self, PyObject* args) {
     uint8_t code = 0;
     if (PyArg_ParseTuple(args, "b", &code)) {
         try {
-            self->opcode = new Opcode(code);
+            self->cppobj = new Opcode(code);
             self->static_code = false;
         } catch (const isc::OutOfRange& ex) {
             PyErr_SetString(PyExc_OverflowError, ex.what());
@@ -181,22 +129,22 @@ Opcode_init(s_Opcode* const self, PyObject* args) {
 void
 Opcode_destroy(s_Opcode* const self) {
     // Depending on whether we created the rcode or are referring
-    // to a global static one, we do or do not delete self->opcode here
+    // to a global static one, we do or do not delete self->cppobj here
     if (!self->static_code) {
-        delete self->opcode;
+        delete self->cppobj;
     }
-    self->opcode = NULL;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
 Opcode_getCode(const s_Opcode* const self) {
-    return (Py_BuildValue("I", self->opcode->getCode()));
+    return (Py_BuildValue("I", self->cppobj->getCode()));
 }
 
 PyObject*
 Opcode_toText(const s_Opcode* const self) {
-    return (Py_BuildValue("s", self->opcode->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 PyObject*
@@ -211,7 +159,7 @@ PyObject*
 Opcode_createStatic(const Opcode& opcode) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
-        ret->opcode = &opcode;
+        ret->cppobj = &opcode;
         ret->static_code = true;
     }
     return (ret);
@@ -297,7 +245,7 @@ Opcode_RESERVED15(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED15()));
 }
 
-PyObject* 
+PyObject*
 Opcode_richcmp(const s_Opcode* const self, const s_Opcode* const other,
                const int op)
 {
@@ -318,10 +266,10 @@ Opcode_richcmp(const s_Opcode* const self, const s_Opcode* const other,
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
         return (NULL);
     case Py_EQ:
-        c = (*self->opcode == *other->opcode);
+        c = (*self->cppobj == *other->cppobj);
         break;
     case Py_NE:
-        c = (*self->opcode != *other->opcode);
+        c = (*self->cppobj != *other->cppobj);
         break;
     case Py_GT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
@@ -336,55 +284,88 @@ Opcode_richcmp(const s_Opcode* const self, const s_Opcode* const other,
         Py_RETURN_FALSE;
 }
 
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_Opcode(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&opcode_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&opcode_type);
-    void* p = &opcode_type;
-    if (PyModule_AddObject(mod, "Opcode", static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&opcode_type);
-        return (false);
-    }
-
-    addClassVariable(opcode_type, "QUERY_CODE",
-                     Py_BuildValue("h", Opcode::QUERY_CODE));
-    addClassVariable(opcode_type, "IQUERY_CODE",
-                     Py_BuildValue("h", Opcode::IQUERY_CODE));
-    addClassVariable(opcode_type, "STATUS_CODE",
-                     Py_BuildValue("h", Opcode::STATUS_CODE));
-    addClassVariable(opcode_type, "RESERVED3_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED3_CODE));
-    addClassVariable(opcode_type, "NOTIFY_CODE",
-                     Py_BuildValue("h", Opcode::NOTIFY_CODE));
-    addClassVariable(opcode_type, "UPDATE_CODE",
-                     Py_BuildValue("h", Opcode::UPDATE_CODE));
-    addClassVariable(opcode_type, "RESERVED6_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED6_CODE));
-    addClassVariable(opcode_type, "RESERVED7_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED7_CODE));
-    addClassVariable(opcode_type, "RESERVED8_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED8_CODE));
-    addClassVariable(opcode_type, "RESERVED9_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED9_CODE));
-    addClassVariable(opcode_type, "RESERVED10_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED10_CODE));
-    addClassVariable(opcode_type, "RESERVED11_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED11_CODE));
-    addClassVariable(opcode_type, "RESERVED12_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED12_CODE));
-    addClassVariable(opcode_type, "RESERVED13_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED13_CODE));
-    addClassVariable(opcode_type, "RESERVED14_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED14_CODE));
-    addClassVariable(opcode_type, "RESERVED15_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED15_CODE));
-
-    return (true);
-}
 } // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+
+PyTypeObject opcode_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.Opcode",
+    sizeof(s_Opcode),                   // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Opcode_destroy,         // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    Opcode_str,                         // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The Opcode class objects represent standard OPCODEs "
+    "of the header section of DNS messages.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)Opcode_richcmp,        // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Opcode_methods,                     // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Opcode_init,              // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
+
+PyObject*
+createOpcodeObject(const Opcode& source) {
+    OpcodeContainer container(PyObject_New(s_Opcode, &opcode_type));
+    container.set(new Opcode(source));
+    return (container.release());
+}
+
+bool
+PyOpcode_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
+    return (PyObject_TypeCheck(obj, &opcode_type));
+}
+
+const Opcode&
+PyOpcode_ToOpcode(const PyObject* opcode_obj) {
+    if (opcode_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Opcode PyObject conversion");
+    }
+    const s_Opcode* opcode = static_cast<const s_Opcode*>(opcode_obj);
+    return (*opcode->cppobj);
+}
+
+} // end python namespace
+} // end dns namespace
+} // end isc namespace

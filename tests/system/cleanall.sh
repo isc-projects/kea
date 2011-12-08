@@ -27,7 +27,10 @@ find . -type f \( \
 
 status=0
 
-for d in `find . -type d -maxdepth 1 -mindepth 1 -print`
+for d in ./.* ./* ./*/*
 do
+   case $d in ./.|./..) continue ;; esac
+   test -d $d || continue
+
    test ! -f $d/clean.sh || ( cd $d && sh clean.sh )
 done

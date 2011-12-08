@@ -23,16 +23,8 @@ class TSIGRecord;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_TSIGRecord : public PyObject {
-public:
-    s_TSIGRecord();
-    TSIGRecord* cppobj;
-};
 
 extern PyTypeObject tsigrecord_type;
-
-bool initModulePart_TSIGRecord(PyObject* mod);
 
 /// This is A simple shortcut to create a python TSIGRecord object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
@@ -42,6 +34,26 @@ bool initModulePart_TSIGRecord(PyObject* mod);
 /// This function is expected to be called with in a try block
 /// followed by necessary setup for python exception.
 PyObject* createTSIGRecordObject(const TSIGRecord& source);
+
+/// \brief Checks if the given python object is a TSIGRecord object
+///
+/// \exception PyCPPWrapperException if obj is NULL
+///
+/// \param obj The object to check the type of
+/// \return true if the object is of type TSIGRecord, false otherwise
+bool PyTSIGRecord_Check(PyObject* obj);
+
+/// \brief Returns a reference to the TSIGRecord object contained within the given
+///        Python object.
+///
+/// \note The given object MUST be of type TSIGRecord; this can be checked with
+///       either the right call to ParseTuple("O!"), or with PyTSIGRecord_Check()
+///
+/// \note This is not a copy; if the TSIGRecord is needed when the PyObject
+/// may be destroyed, the caller must copy it itself.
+///
+/// \param rrtype_obj The rrtype object to convert
+const TSIGRecord& PyTSIGRecord_ToTSIGRecord(PyObject* tsigrecord_obj);
 
 } // namespace python
 } // namespace dns

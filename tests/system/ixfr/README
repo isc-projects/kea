@@ -1,0 +1,86 @@
+Introduction
+============
+The directories in-1 to in-4 implement the following tests of the IXFR-in
+capability of BIND 10.
+
+in-1: Check that BIND 10 can receive IXFR in a single UDP packet.
+in-2: Check that BIND 10 can receive IXFR via TCP.
+in-3: Check that BIND 10 will request AXFR if the server does not support IXFR.
+in-4: Check that BIND 10 will request IXFR when its SOA refresh times out
+
+The tests are described more fully in the document:
+
+http://bind10.isc.org/wiki/IxfrSystemTests
+
+Overview
+========
+All the tests use two nameservers:
+
+* A BIND 9 nameserver acting as the IXFR server (using the nomenclature
+of RFC 1995).
+* A BIND 10 nameserver acting at the IXFR client.
+
+In general, the tests attempt to set up the server and client independently.
+Communication is established between the systems by updating their
+configurations and a notification sent to the client.  This should cause the
+client to request an IXFR from the server. (The exception is test 4, where the
+request is a result of the expiration of the SOA refresh time.)
+
+A check of zone files - or in these tests, of SOA serial number - can only
+reveal that a transfer has taken place.  To check what has happened,
+e.g. whether the transfer was via UDP or whether a TCP request took place,
+the BIND 10 log file is searched for known message IDs.
+
+The searching of the log files for message IDs is one of the reasons that,
+unlike other system tests, the IXFR set of tests is broken up into separate
+tests that require the stopping and starting of nameservers (and tidying up of
+log files) between each test.  Doing this means that only the existence of a
+particular message ID needs to be checked - there is no risk that another test
+produced it.  The other reason is that the each IXFR test requires the
+nameservers to be in a specific state at the start of the test; this is easier
+to assure if they are not updating one another as the result of configuration
+settings established in the previous test.
+
+Test Files
+==========
+
+Data Files
+----------
+(All within tests/system/ixfr.  Some .in files are processed to substitute
+for build variables in the build process to give the files listed here.)
+
+db.example.nX. These files hold the RRs for a zone for which should not
+fit within a single UDP packet.  The files are different versions of the zone
+- the N-0 version (i.e. the latest version - "N" - the "-0" is present so
+that the files have a consistent name), N-2 etc. (See the full description
+of the tests for the meaning of N-2 etc.)
+
+db.example.common: A set of RRs to bulk out the zone to be larger than can
+be contained in a single UDP packet.
+
+db.example.n2.refresh: The N-2 version of the zone, but with a small SOA
+refresh time (for test 4).
+
+named_xxxx.conf: Various BIND 9 configuration files with NOTIFYs and/or
+IXFR enabled or disabled.
+
+Directories
+-----------
+The tests/system/ixfr directory holds the IXFR tests.  Within that
+directory are subdirectories in-1 through in-4 for each test.  And within
+each test directory are the directories ns1 (for the BIND 9 nameserver)
+and nsx2 (for the BIND 10 nameserver).
+
+Shell Scripts
+-------------
+The IXFR tests use the same framework as the rest of the system tests,
+being based around shell scripts.  Many have a ".in" form as they require
+substitution of build variables before they can be used, and so are
+listed in configure.ac.  The files specific to the IXFR tests are:
+
+tests/system/ixfr/ixfr_init.sh.in: defines environment variables and shell
+subroutines used in the tests.  (This references system/conf.sh.in which
+defines most of them.)
+
+tests/system/ixfr/common_tests.sh.in: tests in-1 and in-2 are virtually
+identical - this holds the common code.

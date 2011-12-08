@@ -23,16 +23,7 @@ class TSIGError;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_TSIGError : public PyObject {
-public:
-    s_TSIGError();
-    const TSIGError* cppobj;
-};
-
 extern PyTypeObject tsigerror_type;
-
-bool initModulePart_TSIGError(PyObject* mod);
 
 /// This is A simple shortcut to create a python TSIGError object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
@@ -42,6 +33,7 @@ bool initModulePart_TSIGError(PyObject* mod);
 /// This function is expected to be called with in a try block
 /// followed by necessary setup for python exception.
 PyObject* createTSIGErrorObject(const TSIGError& source);
+
 } // namespace python
 } // namespace dns
 } // namespace isc

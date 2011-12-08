@@ -1,0 +1,1232 @@
+#!@PYTHON@
+
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+"""
+Generator of various types of DNS data in the hex format.
+
+This script reads a human readable specification file (called "spec
+file" hereafter) that defines some type of DNS data (an RDATA, an RR,
+or a complete message) and dumps the defined data to a separate file
+as a "wire format" sequence parsable by the
+UnitTestUtil::readWireData() function (currently defined as part of
+libdns++ tests).  Many DNS related tests involve wire format test
+data, so it will be convenient if we can define the data in a more
+intuitive way than writing the entire hex sequence by hand.
+
+Here is a simple example.  Consider the following spec file:
+
+  [custom]
+  sections: a
+  [a]
+  as_rr: True
+
+When the script reads this file, it detects the file specifies a single
+component (called "section" here) that consists of a single A RDATA,
+which must be dumped as an RR (not only the part of RDATA).  It then
+dumps the following content:
+
+  # A RR (QNAME=example.com Class=IN(1) TTL=86400 RDLEN=4)
+  076578616d706c6503636f6d00 0001 0001 00015180 0004
+  # Address=192.0.2.1
+  c0000201
+
+As can be seen, the script automatically completes all variable
+parameters of RRs: owner name, class, TTL, RDATA length and data.  For
+testing purposes many of these will be the same common one (like
+"example.com" or 192.0.2.1), so it would be convenient if we only have
+to specify non default parameters.  To change the RDATA (i.e., the
+IPv4 address), we should add the following line at the end of the spec
+file:
+
+  address: 192.0.2.2
+
+Then the last two lines of the output file will be as follows:
+
+  # Address=192.0.2.2
+  c0000202
+
+In some cases we would rather specify malformed data for tests.  This
+script has the ability to specify broken parameters for many types of
+data.  For example, we can generate data that would look like an A RR
+but the RDLEN is 3 by adding the following line to the spec file:
+
+  rdlen: 3
+
+Then the first two lines of the output file will be as follows:
+
+  # A RR (QNAME=example.com Class=IN(1) TTL=86400 RDLEN=3)
+  076578616d706c6503636f6d00 0001 0001 00015180 0003
+
+** USAGE **
+
+  gen_wiredata.py [-o output_file] spec_file
+
+If the -o option is missing, and if the spec_file has a suffix (such as
+in the form of "data.spec"), the output file name will be the prefix
+part of it (as in "data"); if -o is missing and the spec_file does not
+have a suffix, the script will fail.
+
+** SPEC FILE SYNTAX **
+
+A spec file accepted in this script should be in the form of a
+configuration file that is parsable by the Python's standard
+configparser module.  In short, it consists of sections; each section
+is identified in the form of [section_name] followed by "name: value"
+entries.  Lines beginning with # or ; will be treated as comments.
+Refer to the configparser module documentation for further details of
+the general syntax.
+
+This script has two major modes: the custom mode and the DNS query
+mode.  The former generates an arbitrary combination of DNS message
+header, question section, RDATAs or RRs.  It is mainly intended to
+generate a test data for a single type of RDATA or RR, or for
+complicated complete DNS messages.  The DNS query mode is actually a
+special case of the custom mode, which is a shortcut to generate a
+simple DNS query message (with or without EDNS).
+
+* Custom mode syntax *
+
+By default this script assumes the DNS query mode.  To specify the
+custom mode, there must be a special "custom" section in the spec
+file, which should contain 'sections' entry.  This value of this
+entryis colon-separated string fields, each of which is either
+"header", "question", "edns", "name", or a string specifying an RR
+type.  For RR types the string is lower-cased string mnemonic that
+identifies the type: 'a' for type A, 'ns' for type NS, and so on
+(note: in the current implementation it's case sensitive, and must be
+lower cased).
+
+Each of these fields is interpreted as a section name of the spec
+(configuration), and in that section parameters specific to the
+semantics of the field can be configured.
+
+A "header" section specifies the content of a DNS message header.
+See the documentation of the DNSHeader class of this module for
+configurable parameters.
+
+A "question" section specifies the content of a single question that
+is normally to be placed in the Question section of a DNS message.
+See the documentation of the DNSQuestion class of this module for
+configurable parameters.
+
+An "edns" section specifies the content of an EDNS OPT RR.  See the
+documentation of the EDNS class of this module for configurable
+parameters.
+
+A "name" section specifies a domain name with or without compression.
+This is specifically intended to be used for testing name related
+functionalities and would rarely be used with other sections.  See the
+documentation of the Name class of this module for configurable
+parameters.
+
+In a specific section for an RR or RDATA, possible entries depend on
+the type.  But there are some common configurable entries.  See the
+description of the RR class.  The most important one would be "as_rr".
+It controls whether the entry should be treated as an RR (with name,
+type, class and TTL) or only as an RDATA.  By default as_rr is
+"False", so if an entry is to be intepreted as an RR, an as_rr entry
+must be explicitly specified with a value of "True".
+
+Another common entry is "rdlen".  It specifies the RDLEN field value
+of the RR (note: this is included when the entry is interpreted as
+RDATA, too).  By default this value is automatically determined by the
+RR type and (it has a variable length) from other fields of RDATA, but
+as shown in the above example, it can be explicitly set, possibly to a
+bogus value for testing against invalid data.
+
+For type specific entries (and their defaults when provided), see the
+documentation of the corresponding Python class defined in this
+module.  In general, there should be a class named the same mnemonic
+of the corresponding RR type for each supported type, and they are a
+subclass of the RR class.  For example, the "NS" class is defined for
+RR type NS.
+
+Look again at the A RR example shown at the beginning of this
+description.  There's a "custom" section, which consists of a
+"sections" entry whose value is a single "a", which means the data to
+be generated is an A RR or RDATA.  There's a corresponding "a"
+section, which only specifies that it should be interpreted as an RR
+(all field values of the RR are derived from the default).
+
+If you want to generate a data sequence for two ore more RRs or
+RDATAs, you can specify them in the form of colon-separated fields for
+the "sections" entry.  For example, to generate a sequence of A and NS
+RRs in that order, the "custom" section would be something like this:
+
+  [custom]
+  sections: a:ns
+
+and there must be an "ns" section in addtion to "a".
+
+If a sequence of two or more RRs/RDATAs of the same RR type should be
+generated, these should be uniquely indexed with the "/" separator.
+For example, to generate two A RRs, the "custom" section would be as
+follows:
+
+  [custom]
+  sections: a/1:a/2
+
+and there must be "a/1" and "a/2" sections.
+
+Another practical example that would be used for many tests is to
+generate data for a complete DNS ressponse message.  The spec file of
+such an example configuration would look like as follows:
+
+  [custom]
+  sections: header:question:a
+  [header]
+  qr: 1
+  ancount: 1
+  [question]
+  [a]
+  as_rr: True
+
+With this configuration, this script will generate test data for a DNS
+response to a query for example.com/IN/A containing one corresponding
+A RR in the answer section.
+
+* DNS query mode syntax *
+
+If the spec file does not contain a "custom" section (that has a
+"sections" entry), this script assumes the DNS query mode.  This mode
+is actually a special case of custom mode; it implicitly assumes the
+"sections" entry whose value is "header:question:edns".
+
+In this mode it is expected that the spec file also contains at least
+a "header" and "question" sections, and optionally an "edns" section.
+But the script does not warn or fail even if the expected sections are
+missing.
+
+* Entry value types *
+
+As described above, a section of the spec file accepts entries
+specific to the semantics of the section.  They generally correspond
+to DNS message or RR fields.
+
+Many of them are expected to be integral values, for which either decimal or
+hexadecimal representation is accepted, for example:
+
+  rr_ttl: 3600
+  tag: 0x1234
+
+Some others are expected to be string.  A string value does not have
+to be quated:
+
+  address: 192.0.2.2
+
+but can also be quoated with single quotes:
+
+  address: '192.0.2.2'
+
+Note 1: a string that can be interpreted as an integer must be quated.
+For example, if you want to set a "string" entry to "3600", it should
+be:
+
+  string: '3600'
+
+instead of
+
+  string: 3600
+
+Note 2: a string enclosed with double quotes is not accepted:
+
+  # This doesn't work:
+  address: "192.0.2.2"
+
+In general, string values are converted to hexadecimal sequences
+according to the semantics of the entry.  For instance, a textual IPv4
+address in the above example will be converted to a hexadecimal
+sequence corresponding to a 4-byte integer.  So, in many cases, the
+acceptable syntax for a particular string entry value should be
+obvious from the context.  There are still some exceptional cases
+especially for complicated RR field values, for which the
+corresponding class documentation should be referenced.
+
+One special string syntax that would be worth noting is domain names,
+which would natually be used in many kinds of entries.  The simplest
+form of acceptable syntax is a textual representation of domain names
+such as "example.com" (note: names are always assumed to be
+"absolute", so the trailing dot can be omitted).  But a domain name in
+the wire format can also contain a compression pointer.  This script
+provides a simple support for name compression with a special notation
+of "ptr=nn" where nn is the numeric pointer value (decimal).  For example,
+if the NSDNAME field of an NS RDATA is specified as follows:
+
+  nsname: ns.ptr=12
+
+this script will generate the following output:
+
+  # NS name=ns.ptr=12
+  026e73c00c
+
+** EXTEND THE SCRIPT **
+
+This script is expected to be extended as we add more support for
+various types of RR.  It is encouraged to add support for a new type
+of RR to this script as we see the need for testing that type.  Here
+is a simple instruction of how to do that.
+
+Assume you are adding support for "FOO" RR.  Also assume that the FOO
+RDATA contains a single field named "value".
+
+What you are expected to do is as follows:
+
+- Define a new class named "FOO" inherited from the RR class.  Also
+  define a class variable named "value" for the FOO RDATA field (the
+  variable name can be different from the field name, but it's
+  convenient if it can be easily identifiable.) with an appropriate
+  default value (if possible):
+
+    class FOO(RR):
+        value = 10
+
+  The name of the variable will be (automatically) used as the
+  corresponding entry name in the spec file.  So, a spec file that
+  sets this field to 20 would look like this:
+
+    [foo]
+    value: 20
+
+- Define the "dump()" method for class FOO.  It must call
+  self.dump_header() (which is derived from class RR) at the
+  beginning.  It then prints the RDATA field values in an appropriate
+  way.  Assuming the value is a 16-bit integer field, a complete
+  dump() method would look like this:
+
+    def dump(self, f):
+        if self.rdlen is None:
+            self.rdlen = 2
+        self.dump_header(f, self.rdlen)
+        f.write('# Value=%d\\n' % (self.value))
+        f.write('%04x\\n' % (self.value))
+
+  The first f.write() call is not mandatory, but is encouraged to
+  be provided so that the generated files will be more human readable.
+  Depending on the complexity of the RDATA fields, the dump()
+  implementation would be more complicated.  In particular, if the
+  RDATA length is variable and the RDLEN field value is not specified
+  in the spec file, the dump() method is normally expected to
+  calculate the correct length and pass it to dump_header().  See the
+  implementation of various derived classes of class RR for actual
+  examples.
+"""
+
+import configparser, re, time, socket, sys
+from datetime import datetime
+from optparse import OptionParser
+
+re_hex = re.compile(r'^0x[0-9a-fA-F]+')
+re_decimal = re.compile(r'^\d+$')
+re_string = re.compile(r"\'(.*)\'$")
+
+dnssec_timefmt = '%Y%m%d%H%M%S'
+
+dict_qr = { 'query' : 0, 'response' : 1 }
+dict_opcode = { 'query' : 0, 'iquery' : 1, 'status' : 2, 'notify' : 4,
+                'update' : 5 }
+rdict_opcode = dict([(dict_opcode[k], k.upper()) for k in dict_opcode.keys()])
+dict_rcode = { 'noerror' : 0, 'formerr' : 1, 'servfail' : 2, 'nxdomain' : 3,
+               'notimp' : 4, 'refused' : 5, 'yxdomain' : 6, 'yxrrset' : 7,
+               'nxrrset' : 8, 'notauth' : 9, 'notzone' : 10 }
+rdict_rcode = dict([(dict_rcode[k], k.upper()) for k in dict_rcode.keys()])
+dict_rrtype = { 'none' : 0, 'a' : 1, 'ns' : 2, 'md' : 3, 'mf' : 4, 'cname' : 5,
+                'soa' : 6, 'mb' : 7, 'mg' : 8, 'mr' : 9, 'null' : 10,
+                'wks' : 11, 'ptr' : 12, 'hinfo' : 13, 'minfo' : 14, 'mx' : 15,
+                'txt' : 16, 'rp' : 17, 'afsdb' : 18, 'x25' : 19, 'isdn' : 20,
+                'rt' : 21, 'nsap' : 22, 'nsap_tr' : 23, 'sig' : 24, 'key' : 25,
+                'px' : 26, 'gpos' : 27, 'aaaa' : 28, 'loc' : 29, 'nxt' : 30,
+                'srv' : 33, 'naptr' : 35, 'kx' : 36, 'cert' : 37, 'a6' : 38,
+                'dname' : 39, 'opt' : 41, 'apl' : 42, 'ds' : 43, 'sshfp' : 44,
+                'ipseckey' : 45, 'rrsig' : 46, 'nsec' : 47, 'dnskey' : 48,
+                'dhcid' : 49, 'nsec3' : 50, 'nsec3param' : 51, 'hip' : 55,
+                'spf' : 99, 'unspec' : 103, 'tkey' : 249, 'tsig' : 250,
+                'dlv' : 32769, 'ixfr' : 251, 'axfr' : 252, 'mailb' : 253,
+                'maila' : 254, 'any' : 255 }
+rdict_rrtype = dict([(dict_rrtype[k], k.upper()) for k in dict_rrtype.keys()])
+dict_rrclass = { 'in' : 1, 'ch' : 3, 'hs' : 4, 'any' : 255 }
+rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in \
+                          dict_rrclass.keys()])
+dict_algorithm = { 'rsamd5' : 1, 'dh' : 2, 'dsa' : 3, 'ecc' : 4,
+                   'rsasha1' : 5 }
+dict_nsec3_algorithm = { 'reserved' : 0, 'sha1' : 1 }
+rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in \
+                            dict_algorithm.keys()])
+rdict_nsec3_algorithm = dict([(dict_nsec3_algorithm[k], k.upper()) for k in \
+                                  dict_nsec3_algorithm.keys()])
+
+header_xtables = { 'qr' : dict_qr, 'opcode' : dict_opcode,
+                   'rcode' : dict_rcode }
+question_xtables = { 'rrtype' : dict_rrtype, 'rrclass' : dict_rrclass }
+
+def parse_value(value, xtable = {}):
+    if re.search(re_hex, value):
+        return int(value, 16)
+    if re.search(re_decimal, value):
+        return int(value)
+    m = re.match(re_string, value)
+    if m:
+        return m.group(1)
+    lovalue = value.lower()
+    if lovalue in xtable:
+        return xtable[lovalue]
+    return value
+
+def code_totext(code, dict):
+    if code in dict.keys():
+        return dict[code] + '(' + str(code) + ')'
+    return str(code)
+
+def encode_name(name, absolute=True):
+    # make sure the name is dot-terminated.  duplicate dots will be ignored
+    # below.
+    name += '.'
+    labels = name.split('.')
+    wire = ''
+    for l in labels:
+        if len(l) > 4 and l[0:4] == 'ptr=':
+            # special meta-syntax for compression pointer
+            wire += '%04x' % (0xc000 | int(l[4:]))
+            break
+        if absolute or len(l) > 0:
+            wire += '%02x' % len(l)
+            wire += ''.join(['%02x' % ord(ch) for ch in l])
+        if len(l) == 0:
+            break
+    return wire
+
+def encode_string(name, len=None):
+    if type(name) is int and len is not None:
+        return '%0.*x' % (len * 2, name)
+    return ''.join(['%02x' % ord(ch) for ch in name])
+
+def count_namelabels(name):
+    if name == '.':             # special case
+        return 0
+    m = re.match('^(.*)\.$', name)
+    if m:
+        name = m.group(1)
+    return len(name.split('.'))
+
+def get_config(config, section, configobj, xtables = {}):
+    try:
+        for field in config.options(section):
+            value = config.get(section, field)
+            if field in xtables.keys():
+                xtable = xtables[field]
+            else:
+                xtable = {}
+            configobj.__dict__[field] = parse_value(value, xtable)
+    except configparser.NoSectionError:
+        return False
+    return True
+
+def print_header(f, input_file):
+    f.write('''###
+### This data file was auto-generated from ''' + input_file + '''
+###
+''')
+
+class Name:
+    '''Implements rendering a single domain name in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - name (string): A textual representation of the name, such as
+      'example.com'.
+    - pointer (int): If specified, compression pointer will be
+      prepended to the generated data with the offset being the value
+      of this parameter.
+    '''
+
+    name = 'example.com'
+    pointer = None                # no compression by default
+    def dump(self, f):
+        name = self.name
+        if self.pointer is not None:
+            if len(name) > 0 and name[-1] != '.':
+                name += '.'
+            name += 'ptr=%d' % self.pointer
+        name_wire = encode_name(name)
+        f.write('\n# DNS Name: %s' % self.name)
+        if self.pointer is not None:
+            f.write(' + compression pointer: %d' % self.pointer)
+        f.write('\n')
+        f.write('%s' % name_wire)
+        f.write('\n')
+
+class DNSHeader:
+    '''Implements rendering a DNS Header section in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - id (16-bit int):
+    - qr, aa, tc, rd, ra, ad, cd (0 or 1): Standard header bits as
+      defined in RFC1035 and RFC4035.  If set to 1, the corresponding
+      bit will be set; if set to 0, it will be cleared.
+    - mbz (0-3): The reserved field of the 3rd and 4th octets of the
+      header.
+    - rcode (4-bit int or string): The RCODE field.  If specified as a
+      string, it must be the commonly used textual mnemonic of the RCODEs
+      (NOERROR, FORMERR, etc, case insensitive).
+    - opcode (4-bit int or string): The OPCODE field.  If specified as
+      a string, it must be the commonly used textual mnemonic of the
+      OPCODEs (QUERY, NOTIFY, etc, case insensitive).
+    - qdcount, ancount, nscount, arcount (16-bit int): The QD/AN/NS/AR
+      COUNT fields, respectively.
+    '''
+
+    id = 0x1035
+    (qr, aa, tc, rd, ra, ad, cd) = 0, 0, 0, 0, 0, 0, 0
+    mbz = 0
+    rcode = 0                   # noerror
+    opcode = 0                  # query
+    (qdcount, ancount, nscount, arcount) = 1, 0, 0, 0
+
+    def dump(self, f):
+        f.write('\n# Header Section\n')
+        f.write('# ID=' + str(self.id))
+        f.write(' QR=' + ('Response' if self.qr else 'Query'))
+        f.write(' Opcode=' + code_totext(self.opcode, rdict_opcode))
+        f.write(' Rcode=' + code_totext(self.rcode, rdict_rcode))
+        f.write('%s' % (' AA' if self.aa else ''))
+        f.write('%s' % (' TC' if self.tc else ''))
+        f.write('%s' % (' RD' if self.rd else ''))
+        f.write('%s' % (' AD' if self.ad else ''))
+        f.write('%s' % (' CD' if self.cd else ''))
+        f.write('\n')
+        f.write('%04x ' % self.id)
+        flag_and_code = 0
+        flag_and_code |= (self.qr << 15 | self.opcode << 14 | self.aa << 10 |
+                          self.tc << 9 | self.rd << 8 | self.ra << 7 |
+                          self.mbz << 6 | self.ad << 5 | self.cd << 4 |
+                          self.rcode)
+        f.write('%04x\n' % flag_and_code)
+        f.write('# QDCNT=%d, ANCNT=%d, NSCNT=%d, ARCNT=%d\n' %
+                (self.qdcount, self.ancount, self.nscount, self.arcount))
+        f.write('%04x %04x %04x %04x\n' % (self.qdcount, self.ancount,
+                                           self.nscount, self.arcount))
+
+class DNSQuestion:
+    '''Implements rendering a DNS question in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - name (string): The QNAME.  The string must be interpreted as a
+      valid domain name.
+    - rrtype (int or string): The question type.  If specified
+      as an integer, it must be the 16-bit RR type value of the
+      covered type.  If specifed as a string, it must be the textual
+      mnemonic of the type.
+    - rrclass (int or string): The question class.  If specified as an
+      integer, it must be the 16-bit RR class value of the covered
+      type.  If specifed as a string, it must be the textual mnemonic
+      of the class.
+    '''
+    name = 'example.com.'
+    rrtype = parse_value('A', dict_rrtype)
+    rrclass = parse_value('IN', dict_rrclass)
+
+    def dump(self, f):
+        f.write('\n# Question Section\n')
+        f.write('# QNAME=%s QTYPE=%s QCLASS=%s\n' %
+                (self.name,
+                 code_totext(self.rrtype, rdict_rrtype),
+                 code_totext(self.rrclass, rdict_rrclass)))
+        f.write(encode_name(self.name))
+        f.write(' %04x %04x\n' % (self.rrtype, self.rrclass))
+
+class EDNS:
+    '''Implements rendering EDNS OPT RR in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - name (string): The owner name of the OPT RR.  The string must be
+      interpreted as a valid domain name.
+    - udpsize (16-bit int): The UDP payload size (set as the RR class)
+    - extrcode (8-bit int): The upper 8 bits of the extended RCODE.
+    - version (8-bit int): The EDNS version.
+    - do (int): The DNSSEC DO bit.  The bit will be set if this value
+      is 1; otherwise the bit will be unset.
+    - mbz (15-bit int): The rest of the flags field.
+    - rdlen (16-bit int): The RDLEN field.  Note: right now specifying
+      a non 0 value (except for making bogus data) doesn't make sense
+      because there is no way to configure RDATA.
+    '''
+    name = '.'
+    udpsize = 4096
+    extrcode = 0
+    version = 0
+    do = 0
+    mbz = 0
+    rdlen = 0
+    def dump(self, f):
+        f.write('\n# EDNS OPT RR\n')
+        f.write('# NAME=%s TYPE=%s UDPSize=%d ExtRcode=%s Version=%s DO=%d\n' %
+                (self.name, code_totext(dict_rrtype['opt'], rdict_rrtype),
+                 self.udpsize, self.extrcode, self.version,
+                 1 if self.do else 0))
+        
+        code_vers = (self.extrcode << 8) | (self.version & 0x00ff)
+        extflags = (self.do << 15) | (self.mbz & ~0x8000)
+        f.write('%s %04x %04x %04x %04x\n' %
+                (encode_name(self.name), dict_rrtype['opt'], self.udpsize,
+                 code_vers, extflags))
+        f.write('# RDLEN=%d\n' % self.rdlen)
+        f.write('%04x\n' % self.rdlen)
+
+class RR:
+    '''This is a base class for various types of RR test data.
+    For each RR type (A, AAAA, NS, etc), we define a derived class of RR
+    to dump type specific RDATA parameters.  This class defines parameters
+    common to all types of RDATA, namely the owner name, RR class and TTL.
+    The dump() method of derived classes are expected to call dump_header(),
+    whose default implementation is provided in this class.  This method
+    decides whether to dump the test data as an RR (with name, type, class)
+    or only as RDATA (with its length), and dumps the corresponding data
+    via the specified file object.
+
+    By convention we assume derived classes are named after the common
+    standard mnemonic of the corresponding RR types.  For example, the
+    derived class for the RR type SOA should be named "SOA".
+
+    Configurable parameters are as follows:
+    - as_rr (bool): Whether or not the data is to be dumped as an RR.
+      False by default.
+    - rr_name (string): The owner name of the RR.  The string must be
+      interpreted as a valid domain name (compression pointer can be
+      contained).  Default is 'example.com.'
+    - rr_class (string): The RR class of the data.  Only meaningful
+      when the data is dumped as an RR.  Default is 'IN'.
+    - rr_ttl (int): The TTL value of the RR.  Only meaningful when
+      the data is dumped as an RR.  Default is 86400 (1 day).
+    - rdlen (int): 16-bit RDATA length.  It can be None (i.e. omitted
+      in the spec file), in which case the actual length of the
+      generated RDATA is automatically determined and used; if
+      negative, the RDLEN field will be omitted from the output data.
+      (Note that omitting RDLEN with as_rr being True is mostly
+      meaningless, although the script doesn't complain about it).
+      Default is None.
+    '''
+
+    def __init__(self):
+        self.as_rr = False
+        # only when as_rr is True, same for class/TTL:
+        self.rr_name = 'example.com'
+        self.rr_class = 'IN'
+        self.rr_ttl = 86400
+        self.rdlen = None
+
+    def dump_header(self, f, rdlen):
+        type_txt = self.__class__.__name__
+        type_code = parse_value(type_txt, dict_rrtype)
+        rdlen_spec = ''
+        rdlen_data = ''
+        if rdlen >= 0:
+            rdlen_spec = ', RDLEN=%d' % rdlen
+            rdlen_data = '%04x' % rdlen
+        if self.as_rr:
+            rrclass = parse_value(self.rr_class, dict_rrclass)
+            f.write('\n# %s RR (QNAME=%s Class=%s TTL=%d%s)\n' %
+                    (type_txt, self.rr_name,
+                     code_totext(rrclass, rdict_rrclass), self.rr_ttl,
+                     rdlen_spec))
+            f.write('%s %04x %04x %08x %s\n' %
+                    (encode_name(self.rr_name), type_code, rrclass,
+                     self.rr_ttl, rdlen_data))
+        else:
+            f.write('\n# %s RDATA%s\n' % (type_txt, rdlen_spec))
+            f.write('%s\n' % rdlen_data)
+
+class A(RR):
+    '''Implements rendering A RDATA (of class IN) in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - address (string): The address field.  This must be a valid textual
+      IPv4 address.
+    '''
+    RDLEN_DEFAULT = 4           # fixed by default
+    address = '192.0.2.1'
+
+    def dump(self, f):
+        if self.rdlen is None:
+            self.rdlen = self.RDLEN_DEFAULT
+        self.dump_header(f, self.rdlen)
+        f.write('# Address=%s\n' % (self.address))
+        bin_address = socket.inet_aton(self.address)
+        f.write('%02x%02x%02x%02x\n' % (bin_address[0], bin_address[1],
+                                        bin_address[2], bin_address[3]))
+
+class AAAA(RR):
+    '''Implements rendering AAAA RDATA (of class IN) in the test data
+    format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - address (string): The address field.  This must be a valid textual
+      IPv6 address.
+    '''
+    RDLEN_DEFAULT = 16          # fixed by default
+    address = '2001:db8::1'
+
+    def dump(self, f):
+        if self.rdlen is None:
+            self.rdlen = self.RDLEN_DEFAULT
+        self.dump_header(f, self.rdlen)
+        f.write('# Address=%s\n' % (self.address))
+        bin_address = socket.inet_pton(socket.AF_INET6, self.address)
+        [f.write('%02x' % x) for x in bin_address]
+        f.write('\n')
+
+class NS(RR):
+    '''Implements rendering NS RDATA in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - nsname (string): The NSDNAME field.  The string must be
+      interpreted as a valid domain name.
+    '''
+
+    nsname = 'ns.example.com'
+
+    def dump(self, f):
+        nsname_wire = encode_name(self.nsname)
+        if self.rdlen is None:
+            self.rdlen = len(nsname_wire) / 2
+        self.dump_header(f, self.rdlen)
+        f.write('# NS name=%s\n' % (self.nsname))
+        f.write('%s\n' % nsname_wire)
+
+class SOA(RR):
+    '''Implements rendering SOA RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - mname/rname (string): The MNAME/RNAME fields, respectively.  The
+      string must be interpreted as a valid domain name.
+    - serial (32-bit int): The SERIAL field
+    - refresh (32-bit int): The REFRESH field
+    - retry (32-bit int): The RETRY field
+    - expire (32-bit int): The EXPIRE field
+    - minimum (32-bit int): The MINIMUM field
+    '''
+
+    mname = 'ns.example.com'
+    rname = 'root.example.com'
+    serial = 2010012601
+    refresh = 3600
+    retry = 300
+    expire = 3600000
+    minimum = 1200
+    def dump(self, f):
+        mname_wire = encode_name(self.mname)
+        rname_wire = encode_name(self.rname)
+        if self.rdlen is None:
+            self.rdlen = int(20 + len(mname_wire) / 2 + len(str(rname_wire)) / 2)
+        self.dump_header(f, self.rdlen)
+        f.write('# NNAME=%s RNAME=%s\n' % (self.mname, self.rname))
+        f.write('%s %s\n' % (mname_wire, rname_wire))
+        f.write('# SERIAL(%d) REFRESH(%d) RETRY(%d) EXPIRE(%d) MINIMUM(%d)\n' %
+                (self.serial, self.refresh, self.retry, self.expire,
+                 self.minimum))
+        f.write('%08x %08x %08x %08x %08x\n' % (self.serial, self.refresh,
+                                                self.retry, self.expire,
+                                                self.minimum))
+
+class TXT(RR):
+    '''Implements rendering TXT RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - nstring (int): number of character-strings
+    - stringlenN (int) (int, N = 0, ..., nstring-1): the length of the
+      N-th character-string.
+    - stringN (string, N = 0, ..., nstring-1): the N-th
+      character-string.
+    - stringlen (int): the default string.  If nstring >= 1 and the
+      corresponding stringlenN isn't specified in the spec file, this
+      value will be used.  If this parameter isn't specified either,
+      the length of the string will be used.  Note that it means
+      this parameter (or any stringlenN) doesn't have to be specified
+      unless you want to intentially build a broken character string.
+    - string (string): the default string.  If nstring >= 1 and the
+      corresponding stringN isn't specified in the spec file, this
+      string will be used.
+    '''
+
+    nstring = 1
+    stringlen = None
+    string = 'Test String'
+
+    def dump(self, f):
+        stringlen_list = []
+        string_list = []
+        wirestring_list = []
+        for i in range(0, self.nstring):
+            key_string = 'string' + str(i)
+            if key_string in self.__dict__:
+                string_list.append(self.__dict__[key_string])
+            else:
+                string_list.append(self.string)
+            wirestring_list.append(encode_string(string_list[-1]))
+            key_stringlen = 'stringlen' + str(i)
+            if key_stringlen in self.__dict__:
+                stringlen_list.append(self.__dict__[key_stringlen])
+            else:
+                stringlen_list.append(self.stringlen)
+            if stringlen_list[-1] is None:
+                stringlen_list[-1] = int(len(wirestring_list[-1]) / 2)
+        if self.rdlen is None:
+            self.rdlen = int(len(''.join(wirestring_list)) / 2) + self.nstring
+        self.dump_header(f, self.rdlen)
+        for i in range(0, self.nstring):
+            f.write('# String Len=%d, String=\"%s\"\n' %
+                    (stringlen_list[i], string_list[i]))
+            f.write('%02x%s%s\n' % (stringlen_list[i],
+                                    ' ' if len(wirestring_list[i]) > 0 else '',
+                                    wirestring_list[i]))
+
+class RP(RR):
+    '''Implements rendering RP RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - mailbox (string): The mailbox field.
+    - text (string): The text field.
+    These strings must be interpreted as a valid domain name.
+    '''
+    mailbox = 'root.example.com'
+    text = 'rp-text.example.com'
+    def dump(self, f):
+        mailbox_wire = encode_name(self.mailbox)
+        text_wire = encode_name(self.text)
+        if self.rdlen is None:
+            self.rdlen = (len(mailbox_wire) + len(text_wire)) / 2
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# MAILBOX=%s TEXT=%s\n' % (self.mailbox, self.text))
+        f.write('%s %s\n' % (mailbox_wire, text_wire))
+
+class MINFO(RR):
+    '''Implements rendering MINFO RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - rmailbox (string): The rmailbox field.
+    - emailbox (string): The emailbox field.
+    These strings must be interpreted as a valid domain name.
+    '''
+    rmailbox = 'rmailbox.example.com'
+    emailbox = 'emailbox.example.com'
+    def dump(self, f):
+        rmailbox_wire = encode_name(self.rmailbox)
+        emailbox_wire = encode_name(self.emailbox)
+        if self.rdlen is None:
+            self.rdlen = (len(rmailbox_wire) + len(emailbox_wire)) / 2
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# RMAILBOX=%s EMAILBOX=%s\n' % (self.rmailbox, self.emailbox))
+        f.write('%s %s\n' % (rmailbox_wire, emailbox_wire))
+
+class AFSDB(RR):
+    '''Implements rendering AFSDB RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - subtype (16 bit int): The subtype field.
+    - server (string): The server field.
+    The string must be interpreted as a valid domain name.
+    '''
+    subtype = 1
+    server = 'afsdb.example.com'
+    def dump(self, f):
+        server_wire = encode_name(self.server)
+        if self.rdlen is None:
+            self.rdlen = 2 + len(server_wire) / 2
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# SUBTYPE=%d SERVER=%s\n' % (self.subtype, self.server))
+        f.write('%04x %s\n' % (self.subtype, server_wire))
+
+class NSECBASE(RR):
+    '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
+    these RRs.  The NSEC and NSEC3 classes will be inherited from this
+    class.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - nbitmap (int): The number of type bitmaps.
+    The following three define the bitmaps.  If suffixed with "N"
+    (0 <= N < nbitmaps), it means the definition for the N-th bitmap.
+    If there is no suffix (e.g., just "block", it means the default
+    for any unspecified values)
+    - block[N] (8-bit int): The Window Block.
+    - maplen[N] (8-bit int): The Bitmap Length.  The default "maplen"
+      can also be unspecified (with being set to None), in which case
+      the corresponding length will be calculated from the bitmap.
+    - bitmap[N] (string): The Bitmap.  This must be the hexadecimal
+      representation of the bitmap field.  For example, for a bitmap
+      where the 7th and 15th bits (and only these bits) are set, it
+      must be '0101'.  Note also that the value must be quated with
+      single quatations because it could also be interpreted as an
+      integer.
+    '''
+    nbitmap = 1                 # number of bitmaps
+    block = 0
+    maplen = None              # default bitmap length, auto-calculate
+    bitmap = '040000000003'     # an arbtrarily chosen bitmap sample
+    def dump(self, f):
+        # first, construct the bitmpa data
+        block_list = []
+        maplen_list = []
+        bitmap_list = []
+        for i in range(0, self.nbitmap):
+            key_bitmap = 'bitmap' + str(i)
+            if key_bitmap in self.__dict__:
+                bitmap_list.append(self.__dict__[key_bitmap])
+            else:
+                bitmap_list.append(self.bitmap)
+            key_maplen = 'maplen' + str(i)
+            if key_maplen in self.__dict__:
+                maplen_list.append(self.__dict__[key_maplen])
+            else:
+                maplen_list.append(self.maplen)
+            if maplen_list[-1] is None: # calculate it if not specified
+                maplen_list[-1] = int(len(bitmap_list[-1]) / 2)
+            key_block = 'block' + str(i)
+            if key_block in self.__dict__:
+               block_list.append(self.__dict__[key_block])
+            else:
+                block_list.append(self.block)
+
+        # dump RR-type specific part (NSEC or NSEC3)
+        self.dump_fixedpart(f, 2 * self.nbitmap + \
+                                int(len(''.join(bitmap_list)) / 2))
+
+        # dump the bitmap
+        for i in range(0, self.nbitmap):
+            f.write('# Bitmap: Block=%d, Length=%d\n' %
+                    (block_list[i], maplen_list[i]))
+            f.write('%02x %02x %s\n' %
+                    (block_list[i], maplen_list[i], bitmap_list[i]))
+
+class NSEC(NSECBASE):
+    '''Implements rendering NSEC RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - Type bitmap related parameters: see class NSECBASE
+    - nextname (string): The Next Domain Name field.  The string must be
+      interpreted as a valid domain name.
+    '''
+
+    nextname = 'next.example.com'
+    def dump_fixedpart(self, f, bitmap_totallen):
+        name_wire = encode_name(self.nextname)
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = int(len(name_wire) / 2) + bitmap_totallen
+        self.dump_header(f, self.rdlen)
+        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
+                                                 int(len(name_wire) / 2)))
+        f.write('%s\n' % name_wire)
+
+class NSEC3(NSECBASE):
+    '''Implements rendering NSEC3 RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - Type bitmap related parameters: see class NSECBASE
+    - hashalg (8-bit int): The Hash Algorithm field.  Note that
+      currently the only defined algorithm is SHA-1, for which a value
+      of 1 will be used, and it's the default.  So this implementation
+      does not support any string representation right now.
+    - optout (bool): The Opt-Out flag of the Flags field.
+    - mbz (7-bit int): The rest of the Flags field.  This value will
+      be left shifted for 1 bit and then OR-ed with optout to
+      construct the complete Flags field.
+    - iterations (16-bit int): The Iterations field.
+    - saltlen (int): The Salt Length field.
+    - salt (string): The Salt field.  It is converted to a sequence of
+      ascii codes and its hexadecimal representation will be used.
+    - hashlen (int): The Hash Length field.
+    - hash (string): The Next Hashed Owner Name field.  This parameter
+      is interpreted as "salt".
+    '''
+
+    hashalg = 1                 # SHA-1
+    optout = False              # opt-out flag
+    mbz = 0                     # other flag fields (none defined yet)
+    iterations = 1
+    saltlen = 5
+    salt = 's' * saltlen
+    hashlen = 20
+    hash = 'h' * hashlen
+    def dump_fixedpart(self, f, bitmap_totallen):
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = 4 + 1 + len(self.salt) + 1 + len(self.hash) \
+                + bitmap_totallen
+        self.dump_header(f, self.rdlen)
+        optout_val = 1 if self.optout else 0
+        f.write('# Hash Alg=%s, Opt-Out=%d, Other Flags=%0x, Iterations=%d\n' %
+                (code_totext(self.hashalg, rdict_nsec3_algorithm),
+                 optout_val, self.mbz, self.iterations))
+        f.write('%02x %02x %04x\n' %
+                (self.hashalg, (self.mbz << 1) | optout_val, self.iterations))
+        f.write("# Salt Len=%d, Salt='%s'\n" % (self.saltlen, self.salt))
+        f.write('%02x%s%s\n' % (self.saltlen,
+                                ' ' if len(self.salt) > 0 else '',
+                                encode_string(self.salt)))
+        f.write("# Hash Len=%d, Hash='%s'\n" % (self.hashlen, self.hash))
+        f.write('%02x%s%s\n' % (self.hashlen,
+                                ' ' if len(self.hash) > 0 else '',
+                                encode_string(self.hash)))
+
+class RRSIG(RR):
+    '''Implements rendering RRSIG RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - covered (int or string): The Type Covered field.  If specified
+      as an integer, it must be the 16-bit RR type value of the
+      covered type.  If specifed as a string, it must be the textual
+      mnemonic of the type.
+    - algorithm (int or string): The Algorithm field.   If specified
+      as an integer, it must be the 8-bit algorithm number as defined
+      in RFC4034.  If specifed as a string, it must be one of the keys
+      of dict_algorithm (case insensitive).
+    - labels (int): The Labels field.  If omitted (the corresponding
+      variable being set to None), the number of labels of "signer"
+      (excluding the trailing null label as specified in RFC4034) will
+      be used.
+    - originalttl (32-bit int): The Original TTL field.
+    - expiration (32-bit int): The Expiration TTL field.
+    - inception (32-bit int): The Inception TTL field.
+    - tag (16-bit int): The Key Tag field.
+    - signer (string): The Signer's Name field.  The string must be
+      interpreted as a valid domain name.
+    - signature (int): The Signature field.  Right now only a simple
+      integer form is supported.  A prefix of "0" will be prepended if
+      the resulting hexadecimal representation consists of an odd
+      number of characters.
+    '''
+
+    covered = 'A'
+    algorithm = 'RSASHA1'
+    labels = None                 # auto-calculate (#labels of signer)
+    originalttl = 3600
+    expiration = int(time.mktime(datetime.strptime('20100131120000',
+                                                   dnssec_timefmt).timetuple()))
+    inception = int(time.mktime(datetime.strptime('20100101120000',
+                                                  dnssec_timefmt).timetuple()))
+    tag = 0x1035
+    signer = 'example.com'
+    signature = 0x123456789abcdef123456789abcdef
+
+    def dump(self, f):
+        name_wire = encode_name(self.signer)
+        sig_wire = '%x' % self.signature
+        if len(sig_wire) % 2 != 0:
+            sig_wire = '0' + sig_wire
+        if self.rdlen is None:
+            self.rdlen = int(18 + len(name_wire) / 2 + len(str(sig_wire)) / 2)
+        self.dump_header(f, self.rdlen)
+
+        if type(self.covered) is str:
+            self.covered = dict_rrtype[self.covered.lower()]
+        if type(self.algorithm) is str:
+            self.algorithm = dict_algorithm[self.algorithm.lower()]
+        if self.labels is None:
+            self.labels = count_namelabels(self.signer)
+        f.write('# Covered=%s Algorithm=%s Labels=%d OrigTTL=%d\n' %
+                (code_totext(self.covered, rdict_rrtype),
+                 code_totext(self.algorithm, rdict_algorithm), self.labels,
+                 self.originalttl))
+        f.write('%04x %02x %02x %08x\n' % (self.covered, self.algorithm,
+                                           self.labels, self.originalttl))
+        f.write('# Expiration=%s, Inception=%s\n' %
+                (str(self.expiration), str(self.inception)))
+        f.write('%08x %08x\n' % (self.expiration, self.inception))
+        f.write('# Tag=%d Signer=%s and Signature\n' % (self.tag, self.signer))
+        f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
+
+class TSIG(RR):
+    '''Implements rendering TSIG RDATA in the test data format.
+
+    As a meta RR type TSIG uses some non common parameters.  This
+    class overrides some of the default attributes of the RR class
+    accordingly:
+    - rr_class is set to 'ANY'
+    - rr_ttl is set to 0
+    Like other derived classes these can be overridden via the spec
+    file.
+
+    Other configurable parameters are as follows (see the description
+    of the same name of attribute for the default value):
+    - algorithm (string): The Algorithm Name field.  The value is
+      generally interpreted as a domain name string, and will
+      typically be one of the standard algorithm names defined in
+      RFC4635.  For convenience, however, a shortcut value "hmac-md5"
+      is allowed instead of the standard "hmac-md5.sig-alg.reg.int".
+    - time_signed (48-bit int): The Time Signed field.
+    - fudge (16-bit int): The Fudge field.
+    - mac_size (int): The MAC Size field.  If omitted, the common value
+      determined by the algorithm will be used.
+    - mac (int or string): The MAC field.  If specified as an integer,
+      the integer value is used as the MAC, possibly with prepended
+      0's so that the total length will be mac_size.  If specifed as a
+      string, it is converted to a sequence of ascii codes and its
+      hexadecimal representation will be used.  So, for example, if
+      "mac" is set to 'abc', it will be converted to '616263'.  Note
+      that in this case the length of "mac" may not be equal to
+      mac_size.  If unspecified, the mac_size number of '78' (ascii
+      code of 'x') will be used.
+    - original_id (16-bit int): The Original ID field.
+    - error (16-bit int): The Error field.
+    - other_len (int): The Other Len field.
+    - other_data (int or string): The Other Data field.  This is
+      interpreted just like "mac" except that other_len is used
+      instead of mac_size.  If unspecified this will be empty unless
+      the "error" is set to 18 (which means the "BADTIME" error), in
+      which case a hexadecimal representation of "time_signed + fudge
+      + 1" will be used.
+    '''
+
+    algorithm = 'hmac-sha256'
+    time_signed = 1286978795    # arbitrarily chosen default
+    fudge = 300
+    mac_size = None             # use a common value for the algorithm
+    mac = None                  # use 'x' * mac_size
+    original_id = 2845          # arbitrarily chosen default
+    error = 0
+    other_len = None         # 6 if error is BADTIME; otherwise 0
+    other_data = None        # use time_signed + fudge + 1 for BADTIME
+    dict_macsize = { 'hmac-md5' : 16, 'hmac-sha1' : 20, 'hmac-sha256' : 32 }
+
+    # TSIG has some special defaults
+    def __init__(self):
+        super().__init__()
+        self.rr_class = 'ANY'
+        self.rr_ttl = 0
+
+    def dump(self, f):
+        if str(self.algorithm) == 'hmac-md5':
+            name_wire = encode_name('hmac-md5.sig-alg.reg.int')
+        else:
+            name_wire = encode_name(self.algorithm)
+        mac_size = self.mac_size
+        if mac_size is None:
+            if self.algorithm in self.dict_macsize.keys():
+                mac_size = self.dict_macsize[self.algorithm]
+            else:
+                raise RuntimeError('TSIG Mac Size cannot be determined')
+        mac = encode_string('x' * mac_size) if self.mac is None else \
+            encode_string(self.mac, mac_size)
+        other_len = self.other_len
+        if other_len is None:
+            # 18 = BADTIME
+            other_len = 6 if self.error == 18 else 0
+        other_data = self.other_data
+        if other_data is None:
+            other_data = '%012x' % (self.time_signed + self.fudge + 1) \
+                if self.error == 18 else ''
+        else:
+            other_data = encode_string(self.other_data, other_len)
+        if self.rdlen is None:
+            self.rdlen = int(len(name_wire) / 2 + 16 + len(mac) / 2 + \
+                                 len(other_data) / 2)
+        self.dump_header(f, self.rdlen)
+        f.write('# Algorithm=%s Time-Signed=%d Fudge=%d\n' %
+                (self.algorithm, self.time_signed, self.fudge))
+        f.write('%s %012x %04x\n' % (name_wire, self.time_signed, self.fudge))
+        f.write('# MAC Size=%d MAC=(see hex)\n' % mac_size)
+        f.write('%04x%s\n' % (mac_size, ' ' + mac if len(mac) > 0 else ''))
+        f.write('# Original-ID=%d Error=%d\n' % (self.original_id, self.error))
+        f.write('%04x %04x\n' %  (self.original_id, self.error))
+        f.write('# Other-Len=%d Other-Data=(see hex)\n' % other_len)
+        f.write('%04x%s\n' % (other_len,
+                              ' ' + other_data if len(other_data) > 0 else ''))
+
+# Build section-class mapping
+config_param = { 'name' : (Name, {}),
+                 'header' : (DNSHeader, header_xtables),
+                 'question' : (DNSQuestion, question_xtables),
+                 'edns' : (EDNS, {}) }
+for rrtype in dict_rrtype.keys():
+    # For any supported RR types add the tuple of (RR_CLASS, {}).
+    # We expect KeyError as not all the types are supported, and simply
+    # ignore them.
+    try:
+        cur_mod = sys.modules[__name__]
+        config_param[rrtype] = (cur_mod.__dict__[rrtype.upper()], {})
+    except KeyError:
+        pass
+
+def get_config_param(section):
+    s = section
+    m = re.match('^([^:]+)/\d+$', section)
+    if m:
+        s = m.group(1)
+    return config_param[s]
+
+usage = '''usage: %prog [options] input_file'''
+
+if __name__ == "__main__":
+    parser = OptionParser(usage=usage)
+    parser.add_option('-o', '--output', action='store', dest='output',
+                      default=None, metavar='FILE',
+                      help='output file name [default: prefix of input_file]')
+    (options, args) = parser.parse_args()
+
+    if len(args) == 0:
+        parser.error('input file is missing')
+    configfile = args[0]
+
+    outputfile = options.output
+    if not outputfile:
+        m = re.match('(.*)\.[^.]+$', configfile)
+        if m:
+            outputfile = m.group(1)
+        else:
+            raise ValueError('output file is not specified and input file is not in the form of "output_file.suffix"')
+
+    config = configparser.SafeConfigParser()
+    config.read(configfile)
+
+    output = open(outputfile, 'w')
+
+    print_header(output, configfile)
+
+    # First try the 'custom' mode; if it fails assume the query mode.
+    try:
+        sections = config.get('custom', 'sections').split(':')
+    except configparser.NoSectionError:
+        sections = ['header', 'question', 'edns']
+
+    for s in sections:
+        section_param = get_config_param(s)
+        (obj, xtables) = (section_param[0](), section_param[1])
+        if get_config(config, s, obj, xtables):
+            obj.dump(output)
+
+    output.close()

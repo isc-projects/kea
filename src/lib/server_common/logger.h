@@ -18,7 +18,7 @@
 #include <log/macros.h>
 #include <server_common/server_common_messages.h>
 
-/// \file logger.h
+/// \file server_common/logger.h
 /// \brief Server Common library global logger
 ///
 /// This holds the logger for the server common library. It is a private header
@@ -31,12 +31,11 @@ namespace server_common {
 /// \brief The logger for this library
 extern isc::log::Logger logger;
 
-enum {
-    /// \brief Trace basic operations
-    DBG_TRACE_BASIC = 10,
-    /// \brief Print also values used
-    DBG_TRACE_VALUES = 40
-};
+/// \brief Trace basic operations
+const int DBG_TRACE_BASIC = DBGLVL_TRACE_BASIC;
+
+/// \brief Print also values used
+const int DBG_TRACE_VALUES = DBGLVL_TRACE_BASIC_DATA;
 
 }
 }

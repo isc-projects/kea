@@ -2,12 +2,12 @@
 .\"     Title: bind10
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: March 31, 2011
+.\"      Date: November 23, 2011
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "BIND10" "8" "March 31, 2011" "BIND10" "BIND10"
+.TH "BIND10" "8" "November 23, 2011" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 bind10 \- BIND 10 boss process
 .SH "SYNOPSIS"
 .HP \w'\fBbind10\fR\ 'u
-\fBbind10\fR [\fB\-c\ \fR\fB\fIconfig\-filename\fR\fR] [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-p\ \fR\fB\fIdata_path\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-\-brittle\fR] [\fB\-\-cmdctl\-port\fR\ \fIport\fR] [\fB\-\-config\-file\fR\ \fIconfig\-filename\fR] [\fB\-\-data\-path\fR\ \fIdirectory\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-pid\-file\fR\ \fIfilename\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-verbose\fR]
+\fBbind10\fR [\fB\-c\ \fR\fB\fIconfig\-filename\fR\fR] [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-p\ \fR\fB\fIdata_path\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-w\ \fR\fB\fIwait_time\fR\fR] [\fB\-\-cmdctl\-port\fR\ \fIport\fR] [\fB\-\-config\-file\fR\ \fIconfig\-filename\fR] [\fB\-\-data\-path\fR\ \fIdirectory\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-pid\-file\fR\ \fIfilename\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-verbose\fR] [\fB\-\-wait\ \fR\fB\fIwait_time\fR\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -31,13 +31,6 @@ daemon starts up other BIND 10 required daemons\&. It handles restarting of exit
 .SH "ARGUMENTS"
 .PP
 The arguments are as follows:
-.PP
-\fB\-\-brittle\fR
-.RS 4
-Shutdown if any of the child processes of
-\fBbind10\fR
-exit\&. This is intended to help developers debug the server, and should not be used in production\&.
-.RE
 .PP
 \fB\-c\fR \fIconfig\-filename\fR, \fB\-\-config\-file\fR \fIconfig\-filename\fR
 .RS 4
@@ -106,6 +99,221 @@ or
 Display more about what is going on for
 \fBbind10\fR
 and its child processes\&.
+.RE
+.PP
+\fB\-w\fR \fIwait_time\fR, \fB\-\-wait\fR \fIwait_time\fR
+.RS 4
+Sets the amount of time that BIND 10 will wait for the configuration manager (a key component of BIND 10) to initialize itself before abandoning the start up and terminating with an error\&. The wait_time is specified in seconds and has a default value of 10\&.
+.RE
+.SH "CONFIGURATION AND COMMANDS"
+.PP
+The configuration provides settings for components for
+\fBbind10\fR
+to manage under
+\fI/Boss/components/\fR\&. The default elements are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/b10\-auth\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/b10\-cmdctl\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/setuid\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/b10\-stats\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/b10\-stats\-httpd\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/b10\-xfrin\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/b10\-xfrout\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fI/Boss/components/b10\-zonemgr\fR
+.RE
+.PP
+(Note that the startup of
+\fBb10\-sockcreator\fR,
+\fBb10\-cfgmgr\fR, and
+\fBb10\-msgq\fR
+is not configurable\&. It is hardcoded and
+\fBbind10\fR
+will not run without them\&.)
+.PP
+These named sets (listed above) contain the following settings:
+.PP
+\fIaddress\fR
+.RS 4
+The name used for communicating to it on the message bus\&.
+.RE
+.PP
+\fIkind\fR
+.RS 4
+This defines how required a component is\&. The possible settings for
+\fIkind\fR
+are:
+\fIcore\fR
+(system won\'t start if it won\'t start and
+\fBbind10\fR
+will shutdown if a
+\(lqcore\(rq
+component crashes),
+\fIdispensable\fR
+(\fBbind10\fR
+will restart failing component), and
+\fIneeded\fR
+(\fBbind10\fR
+will shutdown if component won\'t initially start, but if crashes later, it will attempt to restart)\&. This setting is required\&.
+.RE
+.PP
+\fIpriority\fR
+.RS 4
+This is an integer\&.
+\fBbind10\fR
+will start the components with largest priority numbers first\&.
+.RE
+.PP
+\fIprocess\fR
+.RS 4
+This is the filename of the executable to be started\&. If not defined, then
+\fBbind10\fR
+will use the component name instead\&.
+.RE
+.PP
+\fIspecial\fR
+.RS 4
+This defines if the component is started a special way\&.
+.RE
+.PP
+The
+\fIBoss\fR
+configuration commands are:
+.PP
+
+\fBgetstats\fR
+tells
+\fBbind10\fR
+to send its statistics data to the
+\fBb10\-stats\fR
+daemon\&. This is an internal command and not exposed to the administrator\&.
+
+.PP
+
+\fBping\fR
+is used to check the connection with the
+\fBbind10\fR
+daemon\&. It returns the text
+\(lqpong\(rq\&.
+.PP
+
+\fBsendstats\fR
+tells
+\fBbind10\fR
+to send its statistics data to the
+\fBb10\-stats\fR
+daemon immediately\&.
+.PP
+
+\fBshow_processes\fR
+lists the current processes managed by
+\fBbind10\fR\&. The output is an array in JSON format containing the process ID and the name for each\&.
+
+
+.PP
+
+\fBshutdown\fR
+tells
+\fBbind10\fR
+to shutdown the BIND 10 servers\&. It will tell each process it manages to shutdown and, when complete,
+\fBbind10\fR
+will exit\&.
+.SH "STATISTICS DATA"
+.PP
+The statistics data collected by the
+\fBb10\-stats\fR
+daemon include:
+.PP
+bind10\&.boot_time
+.RS 4
+The date and time that the
+\fBbind10\fR
+process started\&. This is represented in ISO 8601 format\&.
 .RE
 .SH "SEE ALSO"
 .PP

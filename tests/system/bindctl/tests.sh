@@ -24,6 +24,10 @@ SYSTEMTESTTOP=..
 status=0
 n=0
 
+# TODO: consider consistency with statistics definition in auth.spec
+auth_queries_tcp="\<queries\.tcp\>"
+auth_queries_udp="\<queries\.udp\>"
+
 echo "I:Checking b10-auth is working by default ($n)"
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
 # perform a simple check on the output (digcomp would be too much for this)
@@ -40,13 +44,13 @@ echo 'Stats show
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
 # the server should have received 1 UDP and 1 TCP queries (TCP query was
 # sent from the server startup script)
-grep "\"auth.queries.tcp\": 1," bindctl.out.$n > /dev/null || status=1
-grep "\"auth.queries.udp\": 1," bindctl.out.$n > /dev/null || status=1
+grep $auth_queries_tcp".*\<1\>" bindctl.out.$n > /dev/null || status=1
+grep $auth_queries_udp".*\<1\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Stopping b10-auth and checking that ($n)"
-echo 'config set Boss/start_auth false
+echo 'config remove Boss/components b10-auth
 config commit
 quit
 ' | $RUN_BINDCTL \
@@ -57,7 +61,8 @@ if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Restarting b10-auth and checking that ($n)"
-echo 'config set Boss/start_auth true
+echo 'config add Boss/components b10-auth
+config set Boss/components/b10-auth { "special": "auth", "kind": "needed" }
 config commit
 quit
 ' | $RUN_BINDCTL \
@@ -73,8 +78,8 @@ echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
 # The statistics counters should have been reset while stop/start.
-grep "\"auth.queries.tcp\": 0," bindctl.out.$n > /dev/null || status=1
-grep "\"auth.queries.udp\": 1," bindctl.out.$n > /dev/null || status=1
+grep $auth_queries_tcp".*\<0\>" bindctl.out.$n > /dev/null || status=1
+grep $auth_queries_udp".*\<1\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
@@ -97,8 +102,8 @@ echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
 # The statistics counters shouldn't be reset due to hot-swapping datasource.
-grep "\"auth.queries.tcp\": 0," bindctl.out.$n > /dev/null || status=1
-grep "\"auth.queries.udp\": 2," bindctl.out.$n > /dev/null || status=1
+grep $auth_queries_tcp".*\<0\>" bindctl.out.$n > /dev/null || status=1
+grep $auth_queries_udp".*\<2\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 

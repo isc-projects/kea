@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/bind.hpp>
+
 #include <cc/data.h>
 #include <cc/session.h>
 
@@ -76,6 +78,13 @@ protected:
     }
     MockSession statistics_session_;
     AuthCounters counters;
+    // no need to be inherited from the original class here.
+    class MockModuleSpec {
+    public:
+        bool validateStatistics(ConstElementPtr, const bool valid) const
+            { return (valid); }
+    };
+    MockModuleSpec module_spec_;
 };
 
 void
@@ -180,7 +189,7 @@ TEST_F(AuthCountersTest, submitStatisticsWithException) {
     statistics_session_.setThrowSessionTimeout(false);
 }
 
-TEST_F(AuthCountersTest, submitStatistics) {
+TEST_F(AuthCountersTest, submitStatisticsWithoutValidator) {
     // Submit statistics data.
     // Validate if it submits correct data.
 
@@ -200,12 +209,69 @@ TEST_F(AuthCountersTest, submitStatistics) {
     // Command is "set".
     EXPECT_EQ("set", statistics_session_.sent_msg->get("command")
                          ->get(0)->stringValue());
+    EXPECT_EQ("Auth", statistics_session_.sent_msg->get("command")
+                         ->get(1)->get("owner")->stringValue());
     ConstElementPtr statistics_data = statistics_session_.sent_msg
                                           ->get("command")->get(1)
-                                          ->get("stats_data");
+                                          ->get("data");
     // UDP query counter is 2 and TCP query counter is 1.
-    EXPECT_EQ(2, statistics_data->get("auth.queries.udp")->intValue());
-    EXPECT_EQ(1, statistics_data->get("auth.queries.tcp")->intValue());
+    EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
+    EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
 }
 
+TEST_F(AuthCountersTest, submitStatisticsWithValidator) {
+
+    //a validator for the unittest
+    AuthCounters::validator_type validator;
+    ConstElementPtr el;
+
+    // Submit statistics data with correct statistics validator.
+    validator = boost::bind(
+        &AuthCountersTest::MockModuleSpec::validateStatistics,
+        &module_spec_, _1, true);
+
+    EXPECT_TRUE(validator(el));
+
+    // register validator to AuthCounters
+    counters.registerStatisticsValidator(validator);
+
+    // Counters should be initialized to 0.
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+
+    // UDP query counter is set to 2.
+    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    // TCP query counter is set to 1.
+    counters.inc(AuthCounters::SERVER_TCP_QUERY);
+
+    // checks the value returned by submitStatistics
+    EXPECT_TRUE(counters.submitStatistics());
+
+    // Destination is "Stats".
+    EXPECT_EQ("Stats", statistics_session_.msg_destination);
+    // Command is "set".
+    EXPECT_EQ("set", statistics_session_.sent_msg->get("command")
+                         ->get(0)->stringValue());
+    EXPECT_EQ("Auth", statistics_session_.sent_msg->get("command")
+                         ->get(1)->get("owner")->stringValue());
+    ConstElementPtr statistics_data = statistics_session_.sent_msg
+                                          ->get("command")->get(1)
+                                          ->get("data");
+    // UDP query counter is 2 and TCP query counter is 1.
+    EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
+    EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
+
+    // Submit statistics data with incorrect statistics validator.
+    validator = boost::bind(
+        &AuthCountersTest::MockModuleSpec::validateStatistics,
+        &module_spec_, _1, false);
+
+    EXPECT_FALSE(validator(el));
+
+    counters.registerStatisticsValidator(validator);
+
+    // checks the value returned by submitStatistics
+    EXPECT_FALSE(counters.submitStatistics());
+}
 }

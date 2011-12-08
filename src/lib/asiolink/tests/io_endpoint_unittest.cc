@@ -219,7 +219,7 @@ sockAddrMatch(const struct sockaddr& actual_sa,
     res->ai_addr->sa_len = actual_sa.sa_len;
 #endif
     EXPECT_EQ(0, memcmp(res->ai_addr, &actual_sa, res->ai_addrlen));
-    free(res);
+    freeaddrinfo(res);
 }
 
 TEST(IOEndpointTest, getSockAddr) {

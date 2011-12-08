@@ -63,7 +63,7 @@ datebase data source, listing the file that is being accessed.
 
 % AUTH_DNS_SERVICES_CREATED DNS services created
 This is a debug message indicating that the component that will handling
-incoming queries for the authoritiative server (DNSServices) has been
+incoming queries for the authoritative server (DNSServices) has been
 successfully created. It is issued during server startup is an indication
 that the initialization is proceeding normally.
 
@@ -74,7 +74,7 @@ reason for the failure is given in the message.) The server will drop the
 packet.
 
 % AUTH_LOAD_TSIG loading TSIG keys
-This is a debug message indicating that the authoritiative server
+This is a debug message indicating that the authoritative server
 has requested the keyring holding TSIG keys from the configuration
 database. It is issued during server startup is an indication that the
 initialization is proceeding normally.
@@ -141,8 +141,8 @@ encountered an internal error whilst processing a received packet:
 the cause of the error is included in the message.
 
 The server will return a SERVFAIL error code to the sender of the packet.
-However, this message indicates a potential error in the server.
-Please open a bug ticket for this issue.
+This message indicates a potential error in the server.  Please open a
+bug ticket for this issue.
 
 % AUTH_RECEIVED_COMMAND command '%1' received
 This is a debug message issued when the authoritative server has received
@@ -209,7 +209,7 @@ channel.  It is issued during server startup is an indication that the
 initialization is proceeding normally.
 
 % AUTH_STATS_COMMS communication error in sending statistics data: %1
-An error was encountered when the authoritiative server tried to send data
+An error was encountered when the authoritative server tried to send data
 to the statistics daemon. The message includes additional information
 describing the reason for the failure.
 
@@ -257,4 +257,6 @@ request. The zone manager component has been informed of the request,
 but has returned an error response (which is included in the message). The
 NOTIFY request will not be honored.
 
-
+% AUTH_INVALID_STATISTICS_DATA invalid specification of statistics data specified
+An error was encountered when the authoritiative server specified
+statistics data which is invalid for the auth specification file.

@@ -1,11 +1,14 @@
 SUBDIRS = tests
-EXTRA_DIST = README tsig_keys.py tsig_keys.spec
-EXTRA_DIST += logging.spec b10logging.py
+
+EXTRA_DIST = README logging.spec tsig_keys.spec
 
 config_plugindir = @prefix@/share/@PACKAGE@/config_plugins
-config_plugin_DATA = tsig_keys.py tsig_keys.spec
-config_plugin_DATA += b10logging.py logging.spec
+config_plugin_DATA = logging.spec tsig_keys.spec
 
+python_PYTHON = b10logging.py tsig_keys.py
+pythondir = $(config_plugindir)
+
+CLEANFILES = b10logging.pyc tsig_keys.pyc
 CLEANDIRS = __pycache__
 
 clean-local:

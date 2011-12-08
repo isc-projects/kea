@@ -124,10 +124,12 @@ public:
     void setOpcode(const Opcode& opcode);
     void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
-    int parseSection(const Message::Section section, InputBuffer& buffer);
+    int parseSection(const Message::Section section, InputBuffer& buffer,
+                     Message::ParseOptions options);
     void addRR(Message::Section section, const Name& name,
                const RRClass& rrclass, const RRType& rrtype,
-               const RRTTL& ttl, ConstRdataPtr rdata);
+               const RRTTL& ttl, ConstRdataPtr rdata,
+               Message::ParseOptions options);
     void addEDNS(Message::Section section, const Name& name,
                  const RRClass& rrclass, const RRType& rrtype,
                  const RRTTL& ttl, const Rdata& rdata);
@@ -614,7 +616,7 @@ Message::parseHeader(InputBuffer& buffer) {
 }
 
 void
-Message::fromWire(InputBuffer& buffer) {
+Message::fromWire(InputBuffer& buffer, ParseOptions options) {
     if (impl_->mode_ != Message::PARSE) {
         isc_throw(InvalidMessageOperation,
                   "Message parse attempted in non parse mode");
@@ -626,11 +628,11 @@ Message::fromWire(InputBuffer& buffer) {
 
     impl_->counts_[SECTION_QUESTION] = impl_->parseQuestion(buffer);
     impl_->counts_[SECTION_ANSWER] =
-        impl_->parseSection(SECTION_ANSWER, buffer);
+        impl_->parseSection(SECTION_ANSWER, buffer, options);
     impl_->counts_[SECTION_AUTHORITY] =
-        impl_->parseSection(SECTION_AUTHORITY, buffer);
+        impl_->parseSection(SECTION_AUTHORITY, buffer, options);
     impl_->counts_[SECTION_ADDITIONAL] =
-        impl_->parseSection(SECTION_ADDITIONAL, buffer);
+        impl_->parseSection(SECTION_ADDITIONAL, buffer, options);
 }
 
 int
@@ -706,7 +708,7 @@ struct MatchRR : public unary_function<RRsetPtr, bool> {
 // is hardcoded here.
 int
 MessageImpl::parseSection(const Message::Section section,
-                          InputBuffer& buffer)
+                          InputBuffer& buffer, Message::ParseOptions options)
 {
     assert(section < MessageImpl::NUM_SECTIONS);
 
@@ -738,7 +740,7 @@ MessageImpl::parseSection(const Message::Section section,
             addTSIG(section, count, buffer, start_position, name, rrclass, ttl,
                     *rdata);
         } else {
-            addRR(section, name, rrclass, rrtype, ttl, rdata);
+            addRR(section, name, rrclass, rrtype, ttl, rdata, options);
             ++added;
         }
     }
@@ -749,19 +751,22 @@ MessageImpl::parseSection(const Message::Section section,
 void
 MessageImpl::addRR(Message::Section section, const Name& name,
                    const RRClass& rrclass, const RRType& rrtype,
-                   const RRTTL& ttl, ConstRdataPtr rdata)
+                   const RRTTL& ttl, ConstRdataPtr rdata,
+                   Message::ParseOptions options)
 {
-    vector<RRsetPtr>::iterator it =
-        find_if(rrsets_[section].begin(), rrsets_[section].end(),
-                MatchRR(name, rrtype, rrclass));
-    if (it != rrsets_[section].end()) {
-        (*it)->setTTL(min((*it)->getTTL(), ttl));
-        (*it)->addRdata(rdata);
-    } else {
-        RRsetPtr rrset(new RRset(name, rrclass, rrtype, ttl));
-        rrset->addRdata(rdata);
-        rrsets_[section].push_back(rrset);
+    if ((options & Message::PRESERVE_ORDER) == 0) {
+        vector<RRsetPtr>::iterator it =
+            find_if(rrsets_[section].begin(), rrsets_[section].end(),
+                    MatchRR(name, rrtype, rrclass));
+        if (it != rrsets_[section].end()) {
+            (*it)->setTTL(min((*it)->getTTL(), ttl));
+            (*it)->addRdata(rdata);
+            return;
+        }
     }
+    RRsetPtr rrset(new RRset(name, rrclass, rrtype, ttl));
+    rrset->addRdata(rdata);
+    rrsets_[section].push_back(rrset);
 }
 
 void

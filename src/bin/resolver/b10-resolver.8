@@ -2,12 +2,12 @@
 .\"     Title: b10-resolver
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: February 17, 2011
+.\"      Date: August 17, 2011
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-RESOLVER" "8" "February 17, 2011" "BIND10" "BIND10"
+.TH "B10\-RESOLVER" "8" "August 17, 2011" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -54,7 +54,7 @@ must be either a valid numeric user ID or a valid user name\&. By default the da
 .PP
 \fB\-v\fR
 .RS 4
-Enabled verbose mode\&. This enables diagnostic messages to STDERR\&.
+Enable verbose mode\&. This sets logging to the maximum debugging level\&.
 .RE
 .SH "CONFIGURATION AND COMMANDS"
 .PP
@@ -77,6 +77,25 @@ string and
 number\&. The defaults are address ::1 port 53 and address 127\&.0\&.0\&.1 port 53\&.
 .PP
 
+
+
+
+
+
+\fIquery_acl\fR
+is a list of query access control rules\&. The list items are the
+\fIaction\fR
+string and the
+\fIfrom\fR
+or
+\fIkey\fR
+strings\&. The possible actions are ACCEPT, REJECT and DROP\&. The
+\fIfrom\fR
+is a remote (source) IPv4 or IPv6 address or special keyword\&. The
+\fIkey\fR
+is a TSIG key name\&. The default configuration accepts queries from 127\&.0\&.0\&.1 and ::1\&.
+.PP
+
 \fIretries\fR
 is the number of times to retry (resend query) after a query timeout (\fItimeout_query\fR)\&. The default is 3\&.
 .PP
@@ -88,7 +107,7 @@ to use directly as root servers to start resolving\&. The list items are the
 \fIaddress\fR
 string and
 \fIport\fR
-number\&. If empty, a hardcoded address for F\-root (192\&.5\&.5\&.241) is used\&.
+number\&. By default, a hardcoded address for l\&.root\-servers\&.net (199\&.7\&.83\&.42 or 2001:500:3::42) is used\&.
 .PP
 
 \fItimeout_client\fR
@@ -121,8 +140,7 @@ BIND 10 Guide\&.
 .PP
 The
 \fBb10\-resolver\fR
-daemon was first coded in September 2010\&. The initial implementation only provided forwarding\&. Iteration was introduced in January 2011\&.
-
+daemon was first coded in September 2010\&. The initial implementation only provided forwarding\&. Iteration was introduced in January 2011\&. Caching was implemented in February 2011\&. Access control was introduced in June 2011\&.
 .SH "COPYRIGHT"
 .br
 Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")

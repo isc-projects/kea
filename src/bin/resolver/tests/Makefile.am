@@ -60,6 +60,4 @@ run_unittests_CXXFLAGS += -Wno-unused-parameter
 endif
 endif
 
-
-
 noinst_PROGRAMS = $(TESTS)

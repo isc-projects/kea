@@ -114,7 +114,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject requestacl_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "isc.acl.dns.RequestACL",
+    "isc.acl._dns.RequestACL",
     sizeof(s_RequestACL),                 // tp_basicsize
     0,                                  // tp_itemsize
     RequestACL_destroy,                // tp_dealloc
@@ -132,7 +132,7 @@ PyTypeObject requestacl_type = {
     NULL,                               // tp_getattro
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, // tp_flags
     RequestACL_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear

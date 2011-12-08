@@ -43,7 +43,7 @@ from isc.util.file import path_search
 import bind10_config
 from isc.log import log_config_update
 import json
-from config_messages import *
+from isc.log_messages.config_messages import *
 
 logger = isc.log.Logger("config")
 
@@ -91,6 +91,7 @@ COMMAND_CONFIG_UPDATE = "config_update"
 COMMAND_MODULE_SPECIFICATION_UPDATE = "module_specification_update"
 
 COMMAND_GET_COMMANDS_SPEC = "get_commands_spec"
+COMMAND_GET_STATISTICS_SPEC = "get_statistics_spec"
 COMMAND_GET_CONFIG = "get_config"
 COMMAND_SET_CONFIG = "set_config"
 COMMAND_GET_MODULE_SPEC = "get_module_spec"
@@ -142,7 +143,9 @@ class ModuleCCSession(ConfigData):
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
        
-    def __init__(self, spec_file_name, config_handler, command_handler, cc_session=None, handle_logging_config=True):
+    def __init__(self, spec_file_name, config_handler, command_handler,
+                 cc_session=None, handle_logging_config=True,
+                 socket_file = None):
         """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
            for that once the ModuleCCSession has been initialized.
@@ -164,6 +167,12 @@ class ModuleCCSession(ConfigData):
            logger manager when the logging configuration gets updated.
            The module does not need to do anything except intializing
            its loggers, and provide log messages. Defaults to true.
+
+           socket_file: If cc_session was none, this optional argument
+           specifies which socket file to use to connect to msgq. It
+           will be overridden by the environment variable
+           MSGQ_SOCKET_FILE. If none, and no environment variable is
+           set, it will use the system default.
         """
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         ConfigData.__init__(self, module_spec)
@@ -174,7 +183,7 @@ class ModuleCCSession(ConfigData):
         self.set_command_handler(command_handler)
 
         if not cc_session:
-            self._session = Session()
+            self._session = Session(socket_file)
         else:
             self._session = cc_session
         self._session.group_subscribe(self._module_name, "*")
@@ -312,7 +321,7 @@ class ModuleCCSession(ConfigData):
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         module_cfg = ConfigData(module_spec)
         module_name = module_spec.get_module_name()
-        self._session.group_subscribe(module_name);
+        self._session.group_subscribe(module_name)
 
         # Get the current config for that module now
         seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": module_name }), "ConfigManager")
@@ -327,7 +336,7 @@ class ModuleCCSession(ConfigData):
             rcode, value = parse_answer(answer)
             if rcode == 0:
                 if value != None and module_spec.validate_config(False, value):
-                    module_cfg.set_local_config(value);
+                    module_cfg.set_local_config(value)
                     if config_update_callback is not None:
                         config_update_callback(value, module_cfg)
 
@@ -377,7 +386,7 @@ class ModuleCCSession(ConfigData):
                         if self.get_module_spec().validate_config(False,
                                                                   value,
                                                                   errors):
-                            self.set_local_config(value);
+                            self.set_local_config(value)
                             if self._config_handler:
                                 self._config_handler(value)
                         else:
@@ -414,8 +423,8 @@ class UIModuleCCSession(MultiConfigData):
             self.set_specification(isc.config.ModuleSpec(specs[module]))
 
     def update_specs_and_config(self):
-        self.request_specifications();
-        self.request_current_config();
+        self.request_specifications()
+        self.request_current_config()
 
     def request_current_config(self):
         """Requests the current configuration from the configuration
@@ -425,64 +434,143 @@ class UIModuleCCSession(MultiConfigData):
             raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
 
-
-    def add_value(self, identifier, value_str = None):
-        """Add a value to a configuration list. Raises a DataTypeError
-           if the value does not conform to the list_item_spec field
-           of the module config data specification. If value_str is
-           not given, we add the default as specified by the .spec
-           file."""
-        module_spec = self.find_spec_part(identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
-
+    def _add_value_to_list(self, identifier, value, module_spec):
         cur_list, status = self.get_value(identifier)
         if not cur_list:
             cur_list = []
 
-        # Hmm. Do we need to check for duplicates?
-        value = None
-        if value_str is not None:
-            value = isc.cc.data.parse_value_str(value_str)
-        else:
+        if value is None:
             if "item_default" in module_spec["list_item_spec"]:
                 value = module_spec["list_item_spec"]["item_default"]
 
         if value is None:
-            raise isc.cc.data.DataNotFoundError("No value given and no default for " + str(identifier))
-            
+            raise isc.cc.data.DataNotFoundError(
+                "No value given and no default for " + str(identifier))
+
         if value not in cur_list:
             cur_list.append(value)
             self.set_value(identifier, cur_list)
+        else:
+            raise isc.cc.data.DataAlreadyPresentError(value +
+                                                      " already in "
+                                                      + identifier)
 
-    def remove_value(self, identifier, value_str):
-        """Remove a value from a configuration list. The value string
-           must be a string representation of the full item. Raises
-           a DataTypeError if the value at the identifier is not a list,
-           or if the given value_str does not match the list_item_spec
-           """
+    def _add_value_to_named_set(self, identifier, value, item_value):
+        if type(value) != str:
+            raise isc.cc.data.DataTypeError("Name for named_set " +
+                                            identifier +
+                                            " must be a string")
+        # fail on both None and empty string
+        if not value:
+            raise isc.cc.data.DataNotFoundError(
+                    "Need a name to add a new item to named_set " +
+                    str(identifier))
+        else:
+            cur_map, status = self.get_value(identifier)
+            if not cur_map:
+                cur_map = {}
+            if value not in cur_map:
+                cur_map[value] = item_value
+                self.set_value(identifier, cur_map)
+            else:
+                raise isc.cc.data.DataAlreadyPresentError(value +
+                                                          " already in "
+                                                          + identifier)
+
+    def add_value(self, identifier, value_str = None, set_value_str = None):
+        """Add a value to a configuration list. Raises a DataTypeError
+           if the value does not conform to the list_item_spec field
+           of the module config data specification. If value_str is
+           not given, we add the default as specified by the .spec
+           file. Raises a DataNotFoundError if the given identifier
+           is not specified in the specification as a map or list.
+           Raises a DataAlreadyPresentError if the specified element
+           already exists."""
         module_spec = self.find_spec_part(identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
+        if module_spec is None:
+            raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
 
-        if value_str is None:
-            # we are directly removing an list index
+        # the specified element must be a list or a named_set
+        if 'list_item_spec' in module_spec:
+            value = None
+            # in lists, we might get the value with spaces, making it
+            # the third argument. In that case we interpret both as
+            # one big string meant as the value
+            if value_str is not None:
+                if set_value_str is not None:
+                    value_str += set_value_str
+                value = isc.cc.data.parse_value_str(value_str)
+            self._add_value_to_list(identifier, value, module_spec)
+        elif 'named_set_item_spec' in module_spec:
+            item_name = None
+            item_value = None
+            if value_str is not None:
+                item_name =  isc.cc.data.parse_value_str(value_str)
+            if set_value_str is not None:
+                item_value = isc.cc.data.parse_value_str(set_value_str)
+            else:
+                if 'item_default' in module_spec['named_set_item_spec']:
+                    item_value = module_spec['named_set_item_spec']['item_default']
+            self._add_value_to_named_set(identifier, item_name,
+                                         item_value)
+        else:
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named set")
+
+    def _remove_value_from_list(self, identifier, value):
+        if value is None:
+            # we are directly removing a list index
             id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
             if list_indices is None:
-                raise DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
+                raise isc.cc.data.DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
             else:
                 self.set_value(identifier, None)
         else:
-            value = isc.cc.data.parse_value_str(value_str)
-            isc.config.config_data.check_type(module_spec, [value])
             cur_list, status = self.get_value(identifier)
-            #if not cur_list:
-            #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
             if not cur_list:
                 cur_list = []
-            if value in cur_list:
+            elif value in cur_list:
                 cur_list.remove(value)
             self.set_value(identifier, cur_list)
+
+    def _remove_value_from_named_set(self, identifier, value):
+        if value is None:
+            raise isc.cc.data.DataNotFoundError("Need a name to remove an item from named_set " + str(identifier))
+        elif type(value) != str:
+            raise isc.cc.data.DataTypeError("Name for named_set " + identifier + " must be a string")
+        else:
+            cur_map, status = self.get_value(identifier)
+            if not cur_map:
+                cur_map = {}
+            if value in cur_map:
+                del cur_map[value]
+                self.set_value(identifier, cur_map)
+            else:
+                raise isc.cc.data.DataNotFoundError(value + " not found in named_set " + str(identifier))
+
+    def remove_value(self, identifier, value_str):
+        """Remove a value from a configuration list or named set.
+        The value string must be a string representation of the full
+        item. Raises a DataTypeError if the value at the identifier
+        is not a list, or if the given value_str does not match the
+        list_item_spec """
+        module_spec = self.find_spec_part(identifier)
+        if module_spec is None:
+            raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
+
+        value = None
+        if value_str is not None:
+            value = isc.cc.data.parse_value_str(value_str)
+
+        if 'list_item_spec' in module_spec:
+            if value is not None:
+                isc.config.config_data.check_type(module_spec['list_item_spec'], value)
+            self._remove_value_from_list(identifier, value)
+        elif 'named_set_item_spec' in module_spec:
+            self._remove_value_from_named_set(identifier, value)
+        else:
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_set")
+
+
 
     def commit(self):
         """Commit all local changes, send them through b10-cmdctl to

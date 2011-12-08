@@ -28,7 +28,7 @@ import os.path
 import isc.log
 isc.log.init("b10-cfgmgr")
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError, logger
-from cfgmgr_messages import *
+from isc.log_messages.cfgmgr_messages import *
 
 isc.util.process.rename()
 

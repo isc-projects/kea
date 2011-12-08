@@ -119,7 +119,7 @@ private:
 void
 SessionImpl::establish(const char& socket_file) {
     try {
-        LOG_DEBUG(logger, DBG_TRACE_BASIC, CC_ESTABLISH).arg(socket_file);
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, CC_ESTABLISH).arg(&socket_file);
         socket_.connect(asio::local::stream_protocol::endpoint(&socket_file),
                         error_);
         LOG_DEBUG(logger, DBG_TRACE_BASIC, CC_ESTABLISHED);
@@ -254,7 +254,8 @@ SessionImpl::internalRead(const asio::error_code& error,
     }
 }
 
-Session::Session(io_service& io_service) : impl_(new SessionImpl(io_service))
+Session::Session(asio::io_service& io_service) :
+    impl_(new SessionImpl(io_service))
 {}
 
 Session::~Session() {

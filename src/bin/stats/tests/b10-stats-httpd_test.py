@@ -13,147 +13,590 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""
+In each of these tests we start several virtual components. They are
+not the real components, no external processes are started. They are
+just simple mock objects running each in its own thread and pretending
+to be bind10 modules. This helps testing the stats http server in a
+close to real environment.
+"""
+
 import unittest
 import os
-import http.server
-import string
-import fake_select
 import imp
-import sys
-import fake_socket
+import socket
+import errno
+import select
+import string
+import time
+import threading
+import http.client
+import xml.etree.ElementTree
+import random
 
-import isc.cc
-
+import isc
 import stats_httpd
-stats_httpd.socket = fake_socket
-stats_httpd.select = fake_select
+import stats
+from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, SignalHandler, send_command, send_shutdown
 
 DUMMY_DATA = {
-    "auth.queries.tcp": 10000,
-    "auth.queries.udp": 12000,
-    "bind10.boot_time": "2011-03-04T11:59:05Z",
-    "report_time": "2011-03-04T11:59:19Z",
-    "stats.boot_time": "2011-03-04T11:59:06Z",
-    "stats.last_update_time": "2011-03-04T11:59:07Z",
-    "stats.lname": "4d70d40a_c@host",
-    "stats.start_time": "2011-03-04T11:59:06Z",
-    "stats.timestamp": 1299239959.560846
+    'Boss' : {
+        "boot_time": "2011-03-04T11:59:06Z"
+        },
+    'Auth' : {
+        "queries.tcp": 2,
+        "queries.udp": 3,
+        "queries.perzone": [{
+                "zonename": "test.example",
+                "queries.tcp": 2,
+                "queries.udp": 3
+                }]
+        },
+    'Stats' : {
+        "report_time": "2011-03-04T11:59:19Z",
+        "boot_time": "2011-03-04T11:59:06Z",
+        "last_update_time": "2011-03-04T11:59:07Z",
+        "lname": "4d70d40a_c@host",
+        "timestamp": 1299239959.560846
+        }
     }
 
-def push_answer(stats_httpd):
-    stats_httpd.cc_session.group_sendmsg(
-        { 'result': 
-          [ 0, DUMMY_DATA ] }, "Stats")
+def get_availaddr(address='127.0.0.1', port=8001):
+    """returns a tuple of address and port which is available to
+    listen on the platform. The first argument is a address for
+    search. The second argument is a port for search. If a set of
+    address and port is failed on the search for the availability, the
+    port number is increased and it goes on the next trial until the
+    available set of address and port is looked up. If the port number
+    reaches over 65535, it may stop the search and raise a
+    OverflowError exception."""
+    while True:
+        for addr in socket.getaddrinfo(
+            address, port, 0,
+            socket.SOCK_STREAM, socket.IPPROTO_TCP):
+            sock = socket.socket(addr[0], socket.SOCK_STREAM)
+            try:
+                sock.bind((address, port))
+                return (address, port)
+            except socket.error:
+                continue
+            finally:
+                if sock: sock.close()
+        # This address and port number are already in use.
+        # next port number is added
+        port = port + 1
 
-def pull_query(stats_httpd):
-    (msg, env) = stats_httpd.cc_session.group_recvmsg()
-    if 'result' in msg:
-        (ret, arg) = isc.config.ccsession.parse_answer(msg)
-    else:
-        (ret, arg) = isc.config.ccsession.parse_command(msg)
-    return (ret, arg, env)
+def is_ipv6_enabled(address='::1', port=8001):
+    """checks IPv6 enabled on the platform. address for check is '::1'
+    and port for check is random number between 8001 and
+    65535. Retrying is 3 times even if it fails. The built-in socket
+    module provides a 'has_ipv6' parameter, but it's not used here
+    because there may be a situation where the value is True on an
+    environment where the IPv6 config is disabled."""
+    for p in random.sample(range(port, 65535), 3):
+        try:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            sock.bind((address, p))
+            return True
+        except socket.error:
+            continue
+        finally:
+            if sock: sock.close()
+    return False
 
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
-
     def setUp(self):
-        self.stats_httpd = stats_httpd.StatsHttpd()
-        self.assertTrue(type(self.stats_httpd.httpd) is list)
-        self.httpd = self.stats_httpd.httpd
+        # set the signal handler for deadlock
+        self.sig_handler = SignalHandler(self.fail)
+        self.base = BaseModules()
+        self.stats_server = ThreadingServerManager(MyStats)
+        self.stats = self.stats_server.server
+        self.stats_server.run()
+        (self.address, self.port) = get_availaddr()
+        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, (self.address, self.port))
+        self.stats_httpd = self.stats_httpd_server.server
+        self.stats_httpd_server.run()
+        self.client = http.client.HTTPConnection(self.address, self.port)
+        self.client._http_vsn_str = 'HTTP/1.0\n'
+        self.client.connect()
+
+    def tearDown(self):
+        self.client.close()
+        self.stats_httpd_server.shutdown()
+        self.stats_server.shutdown()
+        self.base.shutdown()
+        # reset the signal handler
+        self.sig_handler.reset()
 
     def test_do_GET(self):
-        for ht in self.httpd:
-            self._test_do_GET(ht._handler)
+        self.assertTrue(type(self.stats_httpd.httpd) is list)
+        self.assertEqual(len(self.stats_httpd.httpd), 1)
+        self.assertEqual((self.address, self.port), self.stats_httpd.http_addrs[0])
 
-    def _test_do_GET(self, handler):
+        def check_XML_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XML_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            xml_doctype = response.readline().decode()
+            xsl_doctype = response.readline().decode()
+            self.assertTrue(len(xml_doctype) > 0)
+            self.assertTrue(len(xsl_doctype) > 0)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            self.assertTrue(root.tag.find('statistics') > 0)
+            schema_loc = '{http://www.w3.org/2001/XMLSchema-instance}schemaLocation'
+            if item is None and mod is None:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith(
+                        '<?xml-stylesheet type="text/xsl" href="' + 
+                        stats_httpd.XSL_URL_PATH
+                        + '"?>'))
+                for m in DUMMY_DATA:
+                    for k in DUMMY_DATA[m].keys():
+                        self.assertIsNotNone(root.find(m + '/' + k))
+                        itm = root.find(m + '/' + k)
+                        if type(DUMMY_DATA[m][k]) is list:
+                            for v in DUMMY_DATA[m][k]:
+                                for i in v:
+                                    self.assertIsNotNone(itm.find('zones/' + i))
+            elif item is None:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH + '/' + mod)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith( 
+                                 '<?xml-stylesheet type="text/xsl" href="'
+                                 + stats_httpd.XSL_URL_PATH + '/' + mod
+                                 + '"?>'))
+                for k in DUMMY_DATA[mod].keys():
+                    self.assertIsNotNone(root.find(mod + '/' + k))
+                    itm = root.find(mod + '/' + k)
+                    self.assertIsNotNone(itm)
+                    if type(DUMMY_DATA[mod][k]) is list:
+                        for v in DUMMY_DATA[mod][k]:
+                            for i in v:
+                                self.assertIsNotNone(itm.find('zones/' + i))
+            else:
+                # check the path of XSD
+                self.assertEqual(root.attrib[schema_loc],
+                                 stats_httpd.XSD_NAMESPACE + ' '
+                                 + stats_httpd.XSD_URL_PATH + '/' + mod + '/' + item)
+                # check the path of XSL
+                self.assertTrue(xsl_doctype.startswith( 
+                                 '<?xml-stylesheet type="text/xsl" href="'
+                                 + stats_httpd.XSL_URL_PATH + '/' + mod + '/' + item
+                                 + '"?>'))
+                self.assertIsNotNone(root.find(mod + '/' + item))
 
         # URL is '/bind10/statistics/xml'
-        handler.path = stats_httpd.XML_URL_PATH
-        push_answer(self.stats_httpd)
-        handler.do_GET()
-        (ret, arg, env) = pull_query(self.stats_httpd)
-        self.assertEqual(ret, "show")
-        self.assertIsNone(arg)
-        self.assertTrue('group' in env)
-        self.assertEqual(env['group'], 'Stats')
-        self.assertEqual(handler.response.code, 200)
-        self.assertEqual(handler.response.headers["Content-type"], "text/xml")
-        self.assertTrue(handler.response.headers["Content-Length"] > 0)
-        self.assertTrue(handler.response.wrote_headers)
-        self.assertTrue(handler.response.body.find(stats_httpd.XSD_NAMESPACE)>0)
-        self.assertTrue(handler.response.body.find(stats_httpd.XSD_URL_PATH)>0)
-        for (k, v) in DUMMY_DATA.items():
-            self.assertTrue(handler.response.body.find(str(k))>0)
-            self.assertTrue(handler.response.body.find(str(v))>0)
+        check_XML_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xml/Module'
+            check_XML_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xml/Module/Item'
+                check_XML_URL_PATH(mod=m, item=k)
 
-        # URL is '/bind10/statitics/xsd'
-        handler.path = stats_httpd.XSD_URL_PATH
-        handler.do_GET()
-        self.assertEqual(handler.response.code, 200)
-        self.assertEqual(handler.response.headers["Content-type"], "text/xml")
-        self.assertTrue(handler.response.headers["Content-Length"] > 0)
-        self.assertTrue(handler.response.wrote_headers)
-        self.assertTrue(handler.response.body.find(stats_httpd.XSD_NAMESPACE)>0)
-        for (k, v) in DUMMY_DATA.items():
-            self.assertTrue(handler.response.body.find(str(k))>0)
+        def check_XSD_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XSD_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            url_xmlschema = '{http://www.w3.org/2001/XMLSchema}'
+            self.assertTrue(root.tag.find('schema') > 0)
+            self.assertTrue(hasattr(root, 'attrib'))
+            self.assertTrue('targetNamespace' in root.attrib)
+            self.assertEqual(root.attrib['targetNamespace'],
+                             stats_httpd.XSD_NAMESPACE)
+            if mod is None and item is None:
+                for (mod, itm) in DUMMY_DATA.items():
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                    mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                    self.assertTrue(mod in mod_elm)
+                    for (it, val) in itm.items():
+                        xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                        itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
+                        self.assertTrue(it in itm_elm)
+                        if type(val) is list:
+                            xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                            itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[it].findall(xsdpath) ])
+                            self.assertTrue('zones' in itm_elm2)
+                            for i in val:
+                                for k in i.keys():
+                                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                                    self.assertTrue(
+                                        k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
+            elif item is None:
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                self.assertTrue(mod in mod_elm)
+                for (it, val) in DUMMY_DATA[mod].items():
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                    itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
+                    self.assertTrue(it in itm_elm)
+                    if type(val) is list:
+                        xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                        itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[it].findall(xsdpath) ])
+                        self.assertTrue('zones' in itm_elm2)
+                        for i in val:
+                            for k in i.keys():
+                                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                                self.assertTrue(
+                                    k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
+            else:
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'element', 'complexType', 'all', 'element' ] ])
+                mod_elm = dict([ (elm.attrib['name'], elm) for elm in root.findall(xsdpath) ])
+                self.assertTrue(mod in mod_elm)
+                xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                itm_elm = dict([ (elm.attrib['name'], elm) for elm in mod_elm[mod].findall(xsdpath) ])
+                self.assertTrue(item in itm_elm)
+                if type(DUMMY_DATA[mod][item]) is list:
+                    xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'sequence', 'element' ] ])
+                    itm_elm2 = dict([ (elm.attrib['name'], elm) for elm in itm_elm[item].findall(xsdpath) ])
+                    self.assertTrue('zones' in itm_elm2)
+                    for i in DUMMY_DATA[mod][item]:
+                        for k in i.keys():
+                            xsdpath = '/'.join([ url_xmlschema + t for t in [ 'complexType', 'all', 'element' ] ])
+                            self.assertTrue(
+                                k in [ elm.attrib['name'] for elm in itm_elm2['zones'].findall(xsdpath) ])
 
-        # URL is '/bind10/statitics/xsl'
-        handler.path = stats_httpd.XSL_URL_PATH
-        handler.do_GET()
-        self.assertEqual(handler.response.code, 200)
-        self.assertEqual(handler.response.headers["Content-type"], "text/xml")
-        self.assertTrue(handler.response.headers["Content-Length"] > 0)
-        self.assertTrue(handler.response.wrote_headers)
-        self.assertTrue(handler.response.body.find(stats_httpd.XSD_NAMESPACE)>0)
-        for (k, v) in DUMMY_DATA.items():
-            self.assertTrue(handler.response.body.find(str(k))>0)
+        # URL is '/bind10/statistics/xsd'
+        check_XSD_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xsd/Module'
+            check_XSD_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xsd/Module/Item'
+                check_XSD_URL_PATH(mod=m, item=k)
+
+        def check_XSL_URL_PATH(mod=None, item=None):
+            url_path = stats_httpd.XSL_URL_PATH
+            if mod is not None:
+                url_path = url_path + '/' + mod
+                if item is not None:
+                    url_path = url_path + '/' + item
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            response = self.client.getresponse()
+            self.assertEqual(response.getheader("Content-type"), "text/xml")
+            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertEqual(response.status, 200)
+            root = xml.etree.ElementTree.parse(response).getroot()
+            url_trans = '{http://www.w3.org/1999/XSL/Transform}'
+            url_xhtml = '{http://www.w3.org/1999/xhtml}'
+            self.assertEqual(root.tag, url_trans + 'stylesheet')
+            if item is None and mod is None:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                for (mod, itms) in DUMMY_DATA.items():
+                    self.assertTrue(mod in mod_fe)
+                    for (k, v) in itms.items():
+                        if type(v) is list:
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_trans + 'for-each'
+                            itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
+                            self.assertTrue(k in itm_fe)
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'a'
+                            itm_a = [ x.attrib['href'] for x in itm_fe[k].findall(xslpath) ]
+                            self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+                            for itms in v:
+                                xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                    + url_xhtml + 'table/' + url_trans + 'for-each'
+                                itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
+                                self.assertTrue('zones' in itm_fe)
+                                for (k, v) in itms.items():
+                                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                        + url_xhtml + 'td/' + url_trans + 'value-of'
+                                    itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
+                                    self.assertTrue(k in itm_vo)
+                        else:
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                + url_xhtml + 'td/' + url_trans + 'value-of'
+                            itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
+                            self.assertTrue(k in itm_vo)
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                + url_xhtml + 'td/' + url_xhtml + 'a'
+                            itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                            self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+            elif item is None:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                self.assertTrue(mod in mod_fe)
+                for (k, v) in DUMMY_DATA[mod].items():
+                    if type(v) is list:
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_trans + 'for-each'
+                        itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
+                        self.assertTrue(k in itm_fe)
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'a'
+                        itm_a = [ x.attrib['href'] for x in itm_fe[k].findall(xslpath) ]
+                        self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+                        for itms in v:
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_trans + 'for-each'
+                            itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[k].findall(xslpath) ])
+                            self.assertTrue('zones' in itm_fe)
+                            for (k, v) in itms.items():
+                                xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                    + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                    + url_xhtml + 'td/' + url_trans + 'value-of'
+                                itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
+                                self.assertTrue(k in itm_vo)
+                    else:
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                            + url_xhtml + 'td/' + url_trans + 'value-of'
+                        itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
+                        self.assertTrue(k in itm_vo)
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                            + url_xhtml + 'td/' + url_xhtml + 'a'
+                        itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                        self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + k in itm_a)
+            else:
+                xslpath = url_trans + 'template/' + url_xhtml + 'table/' + url_trans + 'for-each'
+                mod_fe = dict([ (x.attrib['select'], x) for x in root.findall(xslpath) ])
+                self.assertTrue(mod in mod_fe)
+                if type(DUMMY_DATA[mod][item]) is list:
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_trans + 'for-each'
+                    itm_fe = dict([ (x.attrib['select'], x) for x in mod_fe[mod].findall(xslpath) ])
+                    self.assertTrue(item in itm_fe)
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'a'
+                    itm_a = [ x.attrib['href'] for x in itm_fe[item].findall(xslpath) ]
+                    self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + item in itm_a)
+                    for itms in DUMMY_DATA[mod][item]:
+                        xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                            + url_xhtml + 'table/' + url_trans + 'for-each'
+                        itm_fe = dict([ (x.attrib['select'], x) for x in itm_fe[item].findall(xslpath) ])
+                        self.assertTrue('zones' in itm_fe)
+                        for (k, v) in itms.items():
+                            xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                                + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                                + url_xhtml + 'td/' + url_trans + 'value-of'
+                            itm_vo = [ x.attrib['select'] for x in itm_fe['zones'].findall(xslpath) ]
+                            self.assertTrue(k in itm_vo)
+                else:
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                        + url_xhtml + 'td/' + url_trans + 'value-of'
+                    itm_vo = [ x.attrib['select'] for x in mod_fe[mod].findall(xslpath) ]
+                    self.assertTrue(item in itm_vo)
+                    xslpath = url_xhtml + 'tr/' + url_xhtml + 'td/' \
+                        + url_xhtml + 'table/' + url_xhtml + 'tr/' \
+                        + url_xhtml + 'td/' + url_xhtml + 'a'
+                    itm_a = [ x.attrib['href'] for x in mod_fe[mod].findall(xslpath) ]
+                    self.assertTrue(stats_httpd.XML_URL_PATH + '/' + mod + '/' + item in itm_a)
+
+        # URL is '/bind10/statistics/xsl'
+        check_XSL_URL_PATH(mod=None, item=None)
+        for m in DUMMY_DATA:
+            # URL is '/bind10/statistics/xsl/Module'
+            check_XSL_URL_PATH(mod=m)
+            for k in DUMMY_DATA[m].keys():
+                # URL is '/bind10/statistics/xsl/Module/Item'
+                check_XSL_URL_PATH(mod=m, item=k)
 
         # 302 redirect
-        handler.path = '/'
-        handler.headers = {'Host': 'my.host.domain'}
-        handler.do_GET()
-        self.assertEqual(handler.response.code, 302)
-        self.assertEqual(handler.response.headers["Location"],
-                         "http://my.host.domain%s" % stats_httpd.XML_URL_PATH)
+        self.client._http_vsn_str = 'HTTP/1.1'
+        self.client.putrequest('GET', '/')
+        self.client.putheader('Host', self.address)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 302)
+        self.assertEqual(response.getheader('Location'),
+                         "http://%s:%d%s" % (self.address, self.port, stats_httpd.XML_URL_PATH))
 
-        # 404 NotFound
-        handler.path = '/path/to/foo/bar'
-        handler.headers = {}
-        handler.do_GET()
-        self.assertEqual(handler.response.code, 404)
+        # 404 NotFound (random path)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/path/to/foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', '/bind10/statistics/foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + 'Auth') # with no slash
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
 
-        # failure case(connection with Stats is down)
-        handler.path = stats_httpd.XML_URL_PATH
-        push_answer(self.stats_httpd)
-        self.assertFalse(self.stats_httpd.cc_session._socket._closed)
-        self.stats_httpd.cc_session._socket._closed = True
-        handler.do_GET()
-        self.stats_httpd.cc_session._socket._closed = False
-        self.assertEqual(handler.response.code, 500)
-        self.stats_httpd.cc_session._clear_queues()
+        # 200 ok
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '#foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '?foo=bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
 
-        # failure case(Stats module returns err)
-        handler.path = stats_httpd.XML_URL_PATH
-        self.stats_httpd.cc_session.group_sendmsg(
-            { 'result': [ 1, "I have an error." ] }, "Stats")
-        self.assertFalse(self.stats_httpd.cc_session._socket._closed)
-        self.stats_httpd.cc_session._socket._closed = False
-        handler.do_GET()
-        self.assertEqual(handler.response.code, 500)
-        self.stats_httpd.cc_session._clear_queues()
+        # 404 NotFound (too long path)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Boss/boot_time/a')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 404 NotFound (nonexistent module name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 404 NotFound (nonexistent item name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # 404 NotFound (existent module but nonexistent item name)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+        self.client._http_vsn_str = 'HTTP/1.0'
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Auth/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+    def test_do_GET_failed1(self):
+        # checks status
+        self.assertEqual(send_command("status", "Stats"),
+                         (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+        # failure case(Stats is down)
+        self.assertTrue(self.stats.running)
+        self.assertEqual(send_shutdown("Stats"), (0, None)) # Stats is down
+        self.assertFalse(self.stats.running)
+        self.stats_httpd.cc_session.set_timeout(milliseconds=100)
+
+        # request XML
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 500)
+
+        # request XSD
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 500)
+
+        # request XSL
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 500)
+
+    def test_do_GET_failed2(self):
+        # failure case(Stats replies an error)
+        self.stats.mccs.set_command_handler(
+            lambda cmd, args: \
+                isc.config.ccsession.create_answer(1, "specified arguments are incorrect: I have an error.")
+            )
+
+        # request XML
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # request XSD
+        self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
+
+        # request XSL
+        self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
 
     def test_do_HEAD(self):
-        for ht in self.httpd:
-            self._test_do_HEAD(ht._handler)
+        self.client.putrequest('HEAD', stats_httpd.XML_URL_PATH)
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 200)
 
-    def _test_do_HEAD(self, handler):
-        handler.path = '/path/to/foo/bar'
-        handler.do_HEAD()
-        self.assertEqual(handler.response.code, 404)
+        self.client.putrequest('HEAD', '/path/to/foo/bar')
+        self.client.endheaders()
+        response = self.client.getresponse()
+        self.assertEqual(response.status, 404)
 
 class TestHttpServerError(unittest.TestCase):
     """Tests for HttpServerError exception"""
-
     def test_raises(self):
         try:
             raise stats_httpd.HttpServerError('Nothing')
@@ -162,173 +605,223 @@ class TestHttpServerError(unittest.TestCase):
 
 class TestHttpServer(unittest.TestCase):
     """Tests for HttpServer class"""
+    def setUp(self):
+        # set the signal handler for deadlock
+        self.sig_handler = SignalHandler(self.fail)
+        self.base = BaseModules()
+
+    def tearDown(self):
+        if hasattr(self, "stats_httpd"):
+            self.stats_httpd.stop()
+        self.base.shutdown()
+        # reset the signal handler
+        self.sig_handler.reset()
 
     def test_httpserver(self):
-        self.stats_httpd = stats_httpd.StatsHttpd()
-        for ht in self.stats_httpd.httpd:
-            self.assertTrue(ht.server_address in self.stats_httpd.http_addrs)
-            self.assertEqual(ht.xml_handler, self.stats_httpd.xml_handler)
-            self.assertEqual(ht.xsd_handler, self.stats_httpd.xsd_handler)
-            self.assertEqual(ht.xsl_handler, self.stats_httpd.xsl_handler)
-            self.assertEqual(ht.log_writer, self.stats_httpd.write_log)
-            self.assertTrue(isinstance(ht._handler, stats_httpd.HttpHandler))
-            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.assertEqual(type(self.stats_httpd.httpd), list)
+        self.assertEqual(len(self.stats_httpd.httpd), 1)
+        for httpd in self.stats_httpd.httpd:
+            self.assertTrue(isinstance(httpd, stats_httpd.HttpServer))
 
 class TestStatsHttpdError(unittest.TestCase):
     """Tests for StatsHttpdError exception"""
 
-    def test_raises(self):
+    def test_raises1(self):
         try:
             raise stats_httpd.StatsHttpdError('Nothing')
         except stats_httpd.StatsHttpdError as err:
+            self.assertEqual(str(err), 'Nothing')
+
+    def test_raises2(self):
+        try:
+            raise stats_httpd.StatsHttpdDataError('Nothing')
+        except stats_httpd.StatsHttpdDataError as err:
             self.assertEqual(str(err), 'Nothing')
 
 class TestStatsHttpd(unittest.TestCase):
     """Tests for StatsHttpd class"""
 
     def setUp(self):
-        fake_socket._CLOSED = False
-        fake_socket.has_ipv6 = True
-        self.stats_httpd = stats_httpd.StatsHttpd()
+        # set the signal handler for deadlock
+        self.sig_handler = SignalHandler(self.fail)
+        self.base = BaseModules()
+        self.stats_server = ThreadingServerManager(MyStats)
+        self.stats_server.run()
+        # checking IPv6 enabled on this platform
+        self.ipv6_enabled = is_ipv6_enabled()
 
     def tearDown(self):
-        self.stats_httpd.stop()
+        if hasattr(self, "stats_httpd"):
+            self.stats_httpd.stop()
+        self.stats_server.shutdown()
+        self.base.shutdown()
+        # reset the signal handler
+        self.sig_handler.reset()
 
     def test_init(self):
-        self.assertFalse(self.stats_httpd.mccs.get_socket()._closed)
-        self.assertEqual(self.stats_httpd.mccs.get_socket().fileno(),
-                         id(self.stats_httpd.mccs.get_socket()))
-        for ht in self.stats_httpd.httpd:
-            self.assertFalse(ht.socket._closed)
-            self.assertEqual(ht.socket.fileno(), id(ht.socket))
-        fake_socket._CLOSED = True
-        self.assertRaises(isc.cc.session.SessionError,
-                          stats_httpd.StatsHttpd)
-        fake_socket._CLOSED = False
+        server_address = get_availaddr()
+        self.stats_httpd = MyStatsHttpd(server_address)
+        self.assertEqual(self.stats_httpd.running, False)
+        self.assertEqual(self.stats_httpd.poll_intval, 0.5)
+        self.assertNotEqual(len(self.stats_httpd.httpd), 0)
+        self.assertEqual(type(self.stats_httpd.mccs), isc.config.ModuleCCSession)
+        self.assertEqual(type(self.stats_httpd.cc_session), isc.cc.Session)
+        self.assertEqual(len(self.stats_httpd.config), 2)
+        self.assertTrue('listen_on' in self.stats_httpd.config)
+        self.assertEqual(len(self.stats_httpd.config['listen_on']), 1)
+        self.assertTrue('address' in self.stats_httpd.config['listen_on'][0])
+        self.assertTrue('port' in self.stats_httpd.config['listen_on'][0])
+        self.assertTrue(server_address in set(self.stats_httpd.http_addrs))
+
+    def test_openclose_mccs(self):
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.close_mccs()
+        self.assertEqual(self.stats_httpd.mccs, None)
+        self.stats_httpd.open_mccs()
+        self.assertIsNotNone(self.stats_httpd.mccs)
+        self.stats_httpd.mccs = None
+        self.assertEqual(self.stats_httpd.mccs, None)
+        self.assertEqual(self.stats_httpd.close_mccs(), None)
 
     def test_mccs(self):
-        self.stats_httpd.open_mccs()
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.assertIsNotNone(self.stats_httpd.mccs.get_socket())
         self.assertTrue(
-            isinstance(self.stats_httpd.mccs.get_socket(), fake_socket.socket))
+            isinstance(self.stats_httpd.mccs.get_socket(), socket.socket))
         self.assertTrue(
             isinstance(self.stats_httpd.cc_session, isc.cc.session.Session))
-        self.assertTrue(
-            isinstance(self.stats_httpd.stats_module_spec, isc.config.ModuleSpec))
-        for cfg in self.stats_httpd.stats_config_spec:
-            self.assertTrue('item_name' in cfg)
-            self.assertTrue(cfg['item_name'] in DUMMY_DATA)
-        self.assertTrue(len(self.stats_httpd.stats_config_spec), len(DUMMY_DATA))
-
-    def test_load_config(self):
-        self.stats_httpd.load_config()
-        self.assertTrue(('127.0.0.1', 8000) in set(self.stats_httpd.http_addrs))
+        statistics_spec = self.stats_httpd.get_stats_spec()
+        for mod in DUMMY_DATA:
+            self.assertTrue(mod in statistics_spec)
+            for cfg in statistics_spec[mod]:
+                self.assertTrue('item_name' in cfg)
+                self.assertTrue(cfg['item_name'] in DUMMY_DATA[mod])
+            self.assertTrue(len(statistics_spec[mod]), len(DUMMY_DATA[mod]))
+        self.stats_httpd.close_mccs()
+        self.assertIsNone(self.stats_httpd.mccs)
 
     def test_httpd(self):
         # dual stack (addresses is ipv4 and ipv6)
-        fake_socket.has_ipv6 = True
-        self.assertTrue(('127.0.0.1', 8000) in set(self.stats_httpd.http_addrs))
-        self.stats_httpd.http_addrs = [ ('::1', 8000), ('127.0.0.1', 8000) ]
-        self.assertTrue(
-            stats_httpd.HttpServer.address_family in set([fake_socket.AF_INET, fake_socket.AF_INET6]))
-        self.stats_httpd.open_httpd()
-        for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
-        self.stats_httpd.close_httpd()
+        if self.ipv6_enabled:
+            server_addresses = (get_availaddr('::1'), get_availaddr())
+            self.stats_httpd = MyStatsHttpd(*server_addresses)
+            for ht in self.stats_httpd.httpd:
+                self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
+                self.assertTrue(ht.address_family in set([socket.AF_INET, socket.AF_INET6]))
+                self.assertTrue(isinstance(ht.socket, socket.socket))
 
         # dual stack (address is ipv6)
-        fake_socket.has_ipv6 = True
-        self.stats_httpd.http_addrs = [ ('::1', 8000) ]
-        self.stats_httpd.open_httpd()
-        for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
-        self.stats_httpd.close_httpd()
+        if self.ipv6_enabled:
+            server_addresses = get_availaddr('::1')
+            self.stats_httpd = MyStatsHttpd(server_addresses)
+            for ht in self.stats_httpd.httpd:
+                self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
+                self.assertEqual(ht.address_family, socket.AF_INET6)
+                self.assertTrue(isinstance(ht.socket, socket.socket))
 
-        # dual stack (address is ipv4)
-        fake_socket.has_ipv6 = True
-        self.stats_httpd.http_addrs = [ ('127.0.0.1', 8000) ]
-        self.stats_httpd.open_httpd()
+        # dual/single stack (address is ipv4)
+        server_addresses = get_availaddr()
+        self.stats_httpd = MyStatsHttpd(server_addresses)
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
-        self.stats_httpd.close_httpd()
+            self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
+            self.assertEqual(ht.address_family, socket.AF_INET)
+            self.assertTrue(isinstance(ht.socket, socket.socket))
 
-        # only-ipv4 single stack
-        fake_socket.has_ipv6 = False
-        self.stats_httpd.http_addrs = [ ('127.0.0.1', 8000) ]
-        self.stats_httpd.open_httpd()
+        # any address (IPv4)
+        server_addresses = get_availaddr(address='0.0.0.0')
+        self.stats_httpd = MyStatsHttpd(server_addresses)
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
-        self.stats_httpd.close_httpd()
+            self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
+            self.assertEqual(ht.address_family,socket.AF_INET)
+            self.assertTrue(isinstance(ht.socket, socket.socket))
 
-        # only-ipv4 single stack (force set ipv6 )
-        fake_socket.has_ipv6 = False
-        self.stats_httpd.http_addrs = [ ('::1', 8000) ]
-        self.assertRaises(stats_httpd.HttpServerError,
-            self.stats_httpd.open_httpd)
+        # any address (IPv6)
+        if self.ipv6_enabled:
+            server_addresses = get_availaddr(address='::')
+            self.stats_httpd = MyStatsHttpd(server_addresses)
+            for ht in self.stats_httpd.httpd:
+                self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
+                self.assertEqual(ht.address_family,socket.AF_INET6)
+                self.assertTrue(isinstance(ht.socket, socket.socket))
 
-        # hostname
-        self.stats_httpd.http_addrs = [ ('localhost', 8000) ]
-        self.stats_httpd.open_httpd()
-        for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
-        self.stats_httpd.close_httpd()
+        # existent hostname
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+                          get_availaddr(address='localhost'))
 
-        self.stats_httpd.http_addrs = [ ('my.host.domain', 8000) ]
-        self.stats_httpd.open_httpd()
-        for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
-        self.stats_httpd.close_httpd()
+        # nonexistent hostname
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('my.host.domain', 8000))
 
         # over flow of port number
-        self.stats_httpd.http_addrs = [ ('', 80000) ]
-        self.assertRaises(stats_httpd.HttpServerError, self.stats_httpd.open_httpd)
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', 80000))
+
         # negative
-        self.stats_httpd.http_addrs = [ ('', -8000) ]
-        self.assertRaises(stats_httpd.HttpServerError, self.stats_httpd.open_httpd)
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', -8000))
+
         # alphabet
-        self.stats_httpd.http_addrs = [ ('', 'ABCDE') ]
-        self.assertRaises(stats_httpd.HttpServerError, self.stats_httpd.open_httpd)
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', 'ABCDE'))
 
-    def test_start(self):
-        self.stats_httpd.cc_session.group_sendmsg(
-            { 'command': [ "shutdown" ] }, "StatsHttpd")
-        self.stats_httpd.start()
-        self.stats_httpd = stats_httpd.StatsHttpd()
-        self.assertRaises(
-            fake_select.error, self.stats_httpd.start)
+        # Address already in use
+        server_addresses = get_availaddr()
+        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, server_addresses)
+        self.stats_httpd_server.run()
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, server_addresses)
+        send_shutdown("StatsHttpd")
 
-    def test_stop(self):
-        # success case
-        fake_socket._CLOSED = False
-        self.stats_httpd.stop()
+    def test_running(self):
+        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
+        self.stats_httpd = self.stats_httpd_server.server
         self.assertFalse(self.stats_httpd.running)
-        self.assertIsNone(self.stats_httpd.mccs)
-        for ht in self.stats_httpd.httpd:
-            self.assertTrue(ht.socket._closed)
-        self.assertTrue(self.stats_httpd.cc_session._socket._closed)
+        self.stats_httpd_server.run()
+        self.assertEqual(send_command("status", "StatsHttpd"),
+                         (0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
+        self.assertTrue(self.stats_httpd.running)
+        self.assertEqual(send_shutdown("StatsHttpd"), (0, None))
+        self.assertFalse(self.stats_httpd.running)
+        self.stats_httpd_server.shutdown()
+
         # failure case
-        self.stats_httpd.cc_session._socket._closed = False
-        self.stats_httpd.open_mccs()
-        self.stats_httpd.cc_session._socket._closed = True
-        self.stats_httpd.stop() # No excetion raises
-        self.stats_httpd.cc_session._socket._closed = False
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.cc_session.close()
+        self.assertRaises(ValueError, self.stats_httpd.start)
+
+    def test_failure_with_a_select_error (self):
+        """checks select.error is raised if the exception except
+        errno.EINTR is raised while it's selecting"""
+        def raise_select_except(*args):
+            raise select.error('dummy error')
+        orig_select = stats_httpd.select.select
+        stats_httpd.select.select = raise_select_except
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.assertRaises(select.error, self.stats_httpd.start)
+        stats_httpd.select.select = orig_select
+
+    def test_nofailure_with_errno_EINTR(self):
+        """checks no exception is raised if errno.EINTR is raised
+        while it's selecting"""
+        def raise_select_except(*args):
+            raise select.error(errno.EINTR)
+        orig_select = stats_httpd.select.select
+        stats_httpd.select.select = raise_select_except
+        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
+        self.stats_httpd_server.run()
+        self.stats_httpd_server.shutdown()
+        stats_httpd.select.select = orig_select
 
     def test_open_template(self):
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         # successful conditions
         tmpl = self.stats_httpd.open_template(stats_httpd.XML_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(
             xml_string="<dummy></dummy>",
-            xsd_namespace="http://host/path/to/",
-            xsd_url_path="/path/to/",
             xsl_url_path="/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertTrue(lines.find(opts[n])>0)
         tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
-        opts = dict(
-            xsd_string="<dummy></dummy>",
-            xsd_namespace="http://host/path/to/")
+        opts = dict(xsd_string="<dummy></dummy>")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertTrue(lines.find(opts[n])>0)
@@ -346,13 +839,13 @@ class TestStatsHttpd(unittest.TestCase):
             self.stats_httpd.open_template, '/path/to/foo/bar')
 
     def test_commands(self):
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertEqual(self.stats_httpd.command_handler("status", None),
                          isc.config.ccsession.create_answer(
                 0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
         self.stats_httpd.running = True
         self.assertEqual(self.stats_httpd.command_handler("shutdown", None),
-                         isc.config.ccsession.create_answer(
-                0, "Stats Httpd is shutting down."))
+                         isc.config.ccsession.create_answer(0))
         self.assertFalse(self.stats_httpd.running)
         self.assertEqual(
             self.stats_httpd.command_handler("__UNKNOWN_COMMAND__", None),
@@ -360,42 +853,48 @@ class TestStatsHttpd(unittest.TestCase):
                 1, "Unknown command: __UNKNOWN_COMMAND__"))
 
     def test_config(self):
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertEqual(
             self.stats_httpd.config_handler(dict(_UNKNOWN_KEY_=None)),
             isc.config.ccsession.create_answer(
-                    1, "Unknown known config: _UNKNOWN_KEY_"))
-        self.assertEqual(
-            self.stats_httpd.config_handler(
-                        dict(listen_on=[dict(address="::2",port=8000)])),
-            isc.config.ccsession.create_answer(0))
-        self.assertTrue("listen_on" in self.stats_httpd.config)
-        for addr in self.stats_httpd.config["listen_on"]:
-            self.assertTrue("address" in addr)
-            self.assertTrue("port" in addr)
-            self.assertTrue(addr["address"] == "::2")
-            self.assertTrue(addr["port"] == 8000)
+                1, "unknown item _UNKNOWN_KEY_"))
 
+        addresses = get_availaddr()
         self.assertEqual(
             self.stats_httpd.config_handler(
-                        dict(listen_on=[dict(address="::1",port=80)])),
+                dict(listen_on=[dict(address=addresses[0],port=addresses[1])])),
             isc.config.ccsession.create_answer(0))
         self.assertTrue("listen_on" in self.stats_httpd.config)
         for addr in self.stats_httpd.config["listen_on"]:
             self.assertTrue("address" in addr)
             self.assertTrue("port" in addr)
-            self.assertTrue(addr["address"] == "::1")
-            self.assertTrue(addr["port"] == 80)
+            self.assertTrue(addr["address"] == addresses[0])
+            self.assertTrue(addr["port"] == addresses[1])
 
+        if self.ipv6_enabled:
+            addresses = get_availaddr("::1")
+            self.assertEqual(
+                self.stats_httpd.config_handler(
+                dict(listen_on=[dict(address=addresses[0],port=addresses[1])])),
+                isc.config.ccsession.create_answer(0))
+            self.assertTrue("listen_on" in self.stats_httpd.config)
+            for addr in self.stats_httpd.config["listen_on"]:
+                self.assertTrue("address" in addr)
+                self.assertTrue("port" in addr)
+                self.assertTrue(addr["address"] == addresses[0])
+                self.assertTrue(addr["port"] == addresses[1])
+
+        addresses = get_availaddr()
         self.assertEqual(
             self.stats_httpd.config_handler(
-                        dict(listen_on=[dict(address="1.2.3.4",port=54321)])),
+                dict(listen_on=[dict(address=addresses[0],port=addresses[1])])),
             isc.config.ccsession.create_answer(0))
         self.assertTrue("listen_on" in self.stats_httpd.config)
         for addr in self.stats_httpd.config["listen_on"]:
             self.assertTrue("address" in addr)
             self.assertTrue("port" in addr)
-            self.assertTrue(addr["address"] == "1.2.3.4")
-            self.assertTrue(addr["port"] == 54321)
+            self.assertTrue(addr["address"] == addresses[0])
+            self.assertTrue(addr["port"] == addresses[1])
         (ret, arg) = isc.config.ccsession.parse_answer(
             self.stats_httpd.config_handler(
                 dict(listen_on=[dict(address="1.2.3.4",port=543210)]))
@@ -403,93 +902,409 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(ret, 1)
 
     def test_xml_handler(self):
-        orig_get_stats_data = stats_httpd.StatsHttpd.get_stats_data
-        stats_httpd.StatsHttpd.get_stats_data = lambda x: {'foo':'bar'}
-        xml_body1 = stats_httpd.StatsHttpd().open_template(
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "foo",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "bar",
+                        "item_description": "foo is bar",
+                        "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
+                        }]
+              }
+        self.stats_httpd.get_stats_data = lambda x,y: \
+            { 'Dummy' : { 'foo':'bar',
+                          'foo2': [
+                            {
+                                "foo2-1-1" : "bar1",
+                                "foo2-1-2" : 10,
+                                "foo2-1-3" : 9
+                                },
+                            {
+                                "foo2-1-1" : "bar2",
+                                "foo2-1-2" : 8,
+                                "foo2-1-3" : 7
+                                }
+                            ] } }
+        xml_body1 = self.stats_httpd.open_template(
             stats_httpd.XML_TEMPLATE_LOCATION).substitute(
-            xml_string='<foo>bar</foo>',
-            xsd_namespace=stats_httpd.XSD_NAMESPACE,
-            xsd_url_path=stats_httpd.XSD_URL_PATH,
+            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 ' + stats_httpd.XSD_URL_PATH + '"><Dummy><foo>bar</foo><foo2><foo2-1><foo2-1-1>bar1</foo2-1-1><foo2-1-2>10</foo2-1-2><foo2-1-3>9</foo2-1-3></foo2-1><foo2-1><foo2-1-1>bar2</foo2-1-1><foo2-1-2>8</foo2-1-2><foo2-1-3>7</foo2-1-3></foo2-1></foo2></Dummy></bind10:statistics>',
             xsl_url_path=stats_httpd.XSL_URL_PATH)
-        xml_body2 = stats_httpd.StatsHttpd().xml_handler()
+        xml_body2 = self.stats_httpd.xml_handler()
         self.assertEqual(type(xml_body1), str)
         self.assertEqual(type(xml_body2), str)
         self.assertEqual(xml_body1, xml_body2)
-        stats_httpd.StatsHttpd.get_stats_data = lambda x: {'bar':'foo'}
-        xml_body2 = stats_httpd.StatsHttpd().xml_handler()
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "bar",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "foo",
+                        "item_description": "bar foo",
+                        "item_title": "Bar"
+                        },
+                   {
+                        "item_name": "bar2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Bar foo",
+                        "item_description": "Bar foo",
+                        "list_item_spec": {
+                            "item_name": "bar2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "bar2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Bar2 1 1",
+                                    "item_description": "Bar foo"
+                                    },
+                                {
+                                    "item_name": "bar2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Bar2 1 2",
+                                    "item_description": "Bar foo"
+                                    },
+                                {
+                                    "item_name": "bar2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Bar2 1 3",
+                                    "item_description": "Bar foo"
+                                    }
+                                ]
+                            }
+                        }]
+              }
+        self.stats_httpd.get_stats_data = lambda x,y: \
+            { 'Dummy' : { 'bar':'foo',
+                          'bar2': [
+                            {
+                                "bar2-1-1" : "foo1",
+                                "bar2-1-2" : 10,
+                                "bar2-1-3" : 9
+                                },
+                            {
+                                "bar2-1-1" : "foo2",
+                                "bar2-1-2" : 8,
+                                "bar2-1-3" : 7
+                                }
+                            ] } }
+        xml_body2 = self.stats_httpd.xml_handler()
         self.assertNotEqual(xml_body1, xml_body2)
-        stats_httpd.StatsHttpd.get_stats_data = orig_get_stats_data
 
     def test_xsd_handler(self):
-        orig_get_stats_spec = stats_httpd.StatsHttpd.get_stats_spec
-        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
-            [{
-                "item_name": "foo",
-                "item_type": "string",
-                "item_optional": False,
-                "item_default": "bar",
-                "item_description": "foo is bar",
-                "item_title": "Foo"
-               }]
-        xsd_body1 = stats_httpd.StatsHttpd().open_template(
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "foo",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "bar",
+                        "item_description": "foo is bar",
+                        "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "hoo_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "2011-01-01T01:01:01Z",
+                        "item_description": "hoo time",
+                        "item_title": "Hoo Time",
+                        "item_format": "date-time"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
+                        }]
+              }
+        xsd_body1 = self.stats_httpd.open_template(
             stats_httpd.XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string='<all>' \
-                + '<element maxOccurs="1" minOccurs="1" name="foo" type="string">' \
-                + '<annotation><appinfo>Foo</appinfo>' \
-                + '<documentation>foo is bar</documentation>' \
-                + '</annotation></element></all>',
-            xsd_namespace=stats_httpd.XSD_NAMESPACE)
-        xsd_body2 = stats_httpd.StatsHttpd().xsd_handler()
+            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="hoo_time" type="dateTime"><annotation><appinfo>Hoo Time</appinfo><documentation>hoo time</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2"><complexType><sequence><element maxOccurs="unbounded" minOccurs="1" name="foo2-1"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo2-1-1" type="string"><annotation><appinfo>Foo2 1 1</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-2" type="integer"><annotation><appinfo>Foo2 1 2</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-3" type="integer"><annotation><appinfo>Foo2 1 3</appinfo><documentation>Foo bar</documentation></annotation></element></all></complexType></element></sequence></complexType></element></all></complexType></element></all></complexType></element></schema>')
+        xsd_body2 = self.stats_httpd.xsd_handler()
         self.assertEqual(type(xsd_body1), str)
         self.assertEqual(type(xsd_body2), str)
         self.assertEqual(xsd_body1, xsd_body2)
-        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
-            [{
-                "item_name": "bar",
-                "item_type": "string",
-                "item_optional": False,
-                "item_default": "foo",
-                "item_description": "bar is foo",
-                "item_title": "bar"
-               }]
-        xsd_body2 = stats_httpd.StatsHttpd().xsd_handler()
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "bar",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "foo",
+                        "item_description": "bar is foo",
+                        "item_title": "bar"
+                        },
+                   {
+                        "item_name": "boo_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "2012-02-02T02:02:02Z",
+                        "item_description": "boo time",
+                        "item_title": "Boo Time",
+                        "item_format": "date-time"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
+                        }]
+              }
+        xsd_body2 = self.stats_httpd.xsd_handler()
         self.assertNotEqual(xsd_body1, xsd_body2)
-        stats_httpd.StatsHttpd.get_stats_spec = orig_get_stats_spec
 
     def test_xsl_handler(self):
-        orig_get_stats_spec = stats_httpd.StatsHttpd.get_stats_spec
-        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
-            [{
-                "item_name": "foo",
-                "item_type": "string",
-                "item_optional": False,
-                "item_default": "bar",
-                "item_description": "foo is bar",
-                "item_title": "Foo"
-               }]
-        xsl_body1 = stats_httpd.StatsHttpd().open_template(
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "foo",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "bar",
+                        "item_description": "foo bar",
+                        "item_title": "Foo"
+                        },
+                   {
+                        "item_name": "foo2",
+                        "item_type": "list",
+                        "item_optional": False,
+                        "item_default": [
+                            {
+                                "zonename" : "test1",
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                                },
+                            {
+                                "zonename" : "test2",
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                                }
+                        ],
+                        "item_title": "Foo bar",
+                        "item_description": "Foo bar",
+                        "list_item_spec": {
+                            "item_name": "foo2-1",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "foo2-1-1",
+                                    "item_type": "string",
+                                    "item_optional": False,
+                                    "item_default": "",
+                                    "item_title": "Foo2 1 1",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-2",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 2",
+                                    "item_description": "Foo bar"
+                                    },
+                                {
+                                    "item_name": "foo2-1-3",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Foo2 1 3",
+                                    "item_description": "Foo bar"
+                                    }
+                                ]
+                            }
+                        }]
+              }
+        xsl_body1 = self.stats_httpd.open_template(
             stats_httpd.XSL_TEMPLATE_LOCATION).substitute(
-            xsl_string='<xsl:template match="*"><tr>' \
-                + '<td class="title" title="foo is bar">Foo</td>' \
-                + '<td><xsl:value-of select="foo" /></td>' \
-                + '</tr></xsl:template>',
+            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Name</th><th>Module Item</th></tr><xsl:for-each select="Dummy"><tr><td><a href="' + stats_httpd.XML_URL_PATH + '/Dummy">Dummy</a></td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><tr><td class="title" title="foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo">Foo</a></td><td><xsl:value-of select="foo" /></td></tr><xsl:for-each select="foo2"><tr><td class="title" title="Foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo2">Foo bar</a></td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><xsl:for-each select="foo2-1"><tr><td class="title" title="">foo2-1</td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><tr><td class="title" title="Foo bar">Foo2 1 1</td><td><xsl:value-of select="foo2-1-1" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 2</td><td><xsl:value-of select="foo2-1-2" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 3</td><td><xsl:value-of select="foo2-1-3" /></td></tr></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></xsl:template>',
             xsd_namespace=stats_httpd.XSD_NAMESPACE)
-        xsl_body2 = stats_httpd.StatsHttpd().xsl_handler()
+        xsl_body2 = self.stats_httpd.xsl_handler()
         self.assertEqual(type(xsl_body1), str)
         self.assertEqual(type(xsl_body2), str)
         self.assertEqual(xsl_body1, xsl_body2)
-        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
-            [{
-                "item_name": "bar",
-                "item_type": "string",
-                "item_optional": False,
-                "item_default": "foo",
-                "item_description": "bar is foo",
-                "item_title": "bar"
-               }]
-        xsl_body2 = stats_httpd.StatsHttpd().xsl_handler()
+        self.stats_httpd.get_stats_spec = lambda x,y: \
+            { "Dummy" :
+                  [{
+                        "item_name": "bar",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "foo",
+                        "item_description": "bar is foo",
+                        "item_title": "bar"
+                        }]
+              }
+        xsl_body2 = self.stats_httpd.xsl_handler()
         self.assertNotEqual(xsl_body1, xsl_body2)
-        stats_httpd.StatsHttpd.get_stats_spec = orig_get_stats_spec
 
     def test_for_without_B10_FROM_SOURCE(self):
         # just lets it go through the code without B10_FROM_SOURCE env
@@ -500,8 +1315,6 @@ class TestStatsHttpd(unittest.TestCase):
             imp.reload(stats_httpd)
             os.environ["B10_FROM_SOURCE"] = tmppath
             imp.reload(stats_httpd)
-            stats_httpd.socket = fake_socket
-            stats_httpd.select = fake_select
 
 if __name__ == "__main__":
     unittest.main()

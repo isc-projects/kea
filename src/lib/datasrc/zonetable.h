@@ -41,11 +41,11 @@ namespace datasrc {
 class ZoneTable {
 public:
     struct FindResult {
-        FindResult(result::Result param_code, const ZonePtr param_zone) :
+        FindResult(result::Result param_code, const ZoneFinderPtr param_zone) :
             code(param_code), zone(param_zone)
         {}
         const result::Result code;
-        const ZonePtr zone;
+        const ZoneFinderPtr zone;
     };
     ///
     /// \name Constructors and Destructor.
@@ -83,7 +83,7 @@ public:
     /// added to the zone table.
     /// \return \c result::EXIST The zone table already contains
     /// zone of the same origin.
-    result::Result addZone(ZonePtr zone);
+    result::Result addZone(ZoneFinderPtr zone);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
     ///

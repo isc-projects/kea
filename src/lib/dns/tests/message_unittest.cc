@@ -118,16 +118,20 @@ protected:
     vector<unsigned char> received_data;
     vector<unsigned char> expected_data;
 
-    void factoryFromFile(Message& message, const char* datafile);
+    void factoryFromFile(Message& message, const char* datafile,
+                         Message::ParseOptions options =
+                         Message::PARSE_DEFAULT);
 };
 
 void
-MessageTest::factoryFromFile(Message& message, const char* datafile) {
+MessageTest::factoryFromFile(Message& message, const char* datafile,
+                             Message::ParseOptions options)
+{
     received_data.clear();
     UnitTestUtil::readWireData(datafile, received_data);
 
     InputBuffer buffer(&received_data[0], received_data.size());
-    message.fromWire(buffer);
+    message.fromWire(buffer, options);
 }
 
 TEST_F(MessageTest, headerFlag) {
@@ -175,7 +179,6 @@ TEST_F(MessageTest, headerFlag) {
     EXPECT_THROW(message_parse.setHeaderFlag(Message::HEADERFLAG_QR),
                  InvalidMessageOperation);
 }
-
 TEST_F(MessageTest, getEDNS) {
     EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
 
@@ -532,7 +535,46 @@ TEST_F(MessageTest, appendSection) {
     
 }
 
+TEST_F(MessageTest, parseHeader) {
+    received_data.clear();
+    UnitTestUtil::readWireData("message_fromWire1", received_data);
+
+    // parseHeader() isn't allowed in the render mode.
+    InputBuffer buffer(&received_data[0], received_data.size());
+    EXPECT_THROW(message_render.parseHeader(buffer), InvalidMessageOperation);
+
+    message_parse.parseHeader(buffer);
+    EXPECT_EQ(0x1035, message_parse.getQid());
+    EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
+    EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_RA));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_AD));
+    EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_CD));
+    EXPECT_EQ(1, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2, message_parse.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
+
+    // Only the header part should have been examined.
+    EXPECT_EQ(12, buffer.getPosition()); // 12 = size of the header section
+    EXPECT_TRUE(message_parse.beginQuestion() == message_parse.endQuestion());
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_ANSWER) ==
+                message_parse.endSection(Message::SECTION_ANSWER));
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_AUTHORITY) ==
+                message_parse.endSection(Message::SECTION_AUTHORITY));
+    EXPECT_TRUE(message_parse.beginSection(Message::SECTION_ADDITIONAL) ==
+                message_parse.endSection(Message::SECTION_ADDITIONAL));
+}
+
 TEST_F(MessageTest, fromWire) {
+    // fromWire() isn't allowed in the render mode.
+    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
+                 InvalidMessageOperation);
+
     factoryFromFile(message_parse, "message_fromWire1");
     EXPECT_EQ(0x1035, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
@@ -562,6 +604,87 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
+}
+
+TEST_F(MessageTest, fromWireShortBuffer) {
+    // We trim a valid message (ending with an SOA RR) for one byte.
+    // fromWire() should throw an exception while parsing the trimmed RR.
+    UnitTestUtil::readWireData("message_fromWire22.wire", received_data);
+    InputBuffer buffer(&received_data[0], received_data.size() - 1);
+    EXPECT_THROW(message_parse.fromWire(buffer), InvalidBufferPosition);
+}
+
+TEST_F(MessageTest, fromWireCombineRRs) {
+    // This message contains 3 RRs in the answer section in the order of
+    // A, AAAA, A types.  fromWire() should combine the two A RRs into a
+    // single RRset by default.
+    factoryFromFile(message_parse, "message_fromWire19.wire");
+
+    RRsetIterator it = message_parse.beginSection(Message::SECTION_ANSWER);
+    RRsetIterator it_end = message_parse.endSection(Message::SECTION_ANSWER);
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(2, (*it)->getRdataCount());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::AAAA(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+}
+
+// A helper function for a test pattern commonly used in several tests below.
+void
+preserveRRCheck(const Message& message, Message::Section section) {
+    RRsetIterator it = message.beginSection(section);
+    RRsetIterator it_end = message.endSection(section);
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("192.0.2.1", (*it)->getRdataIterator()->getCurrent().toText());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::AAAA(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("2001:db8::1", (*it)->getRdataIterator()->getCurrent().toText());
+
+    ++it;
+    ASSERT_TRUE(it != it_end);
+    EXPECT_EQ(RRType::A(), (*it)->getType());
+    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ("192.0.2.2", (*it)->getRdataIterator()->getCurrent().toText());
+}
+
+TEST_F(MessageTest, fromWirePreserveAnswer) {
+    // Using the same data as the previous test, but specify the PRESERVE_ORDER
+    // option.  The received order of RRs should be preserved, and each RR
+    // should be stored in a single RRset.
+    factoryFromFile(message_parse, "message_fromWire19.wire",
+                    Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve answer RRs");
+        preserveRRCheck(message_parse, Message::SECTION_ANSWER);
+    }
+}
+
+TEST_F(MessageTest, fromWirePreserveAuthority) {
+    // Same for the previous test, but for the authority section.
+    factoryFromFile(message_parse, "message_fromWire20.wire",
+                    Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve authority RRs");
+        preserveRRCheck(message_parse, Message::SECTION_AUTHORITY);
+    }
+}
+
+TEST_F(MessageTest, fromWirePreserveAdditional) {
+    // Same for the previous test, but for the additional section.
+    factoryFromFile(message_parse, "message_fromWire21.wire",
+                    Message::PRESERVE_ORDER);
+    {
+        SCOPED_TRACE("preserve additional RRs");
+        preserveRRCheck(message_parse, Message::SECTION_ADDITIONAL);
+    }
 }
 
 TEST_F(MessageTest, EDNS0ExtRcode) {

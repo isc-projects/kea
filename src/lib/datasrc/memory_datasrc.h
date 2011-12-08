@@ -17,7 +17,12 @@
 
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
 #include <datasrc/zonetable.h>
+#include <datasrc/client.h>
+
+#include <cc/data.h>
 
 namespace isc {
 namespace dns {
@@ -27,18 +32,17 @@ class RRsetList;
 
 namespace datasrc {
 
-/// A derived zone class intended to be used with the memory data source.
-class MemoryZone : public Zone {
+/// A derived zone finder class intended to be used with the memory data source.
+///
+/// Conceptually this "finder" maintains a local in-memory copy of all RRs
+/// of a single zone from some kind of source (right now it's a textual
+/// master file, but it could also be another data source with a database
+/// backend).  This is why the class has methods like \c load() or \c add().
+///
+/// This class is non copyable.
+class InMemoryZoneFinder : boost::noncopyable, public ZoneFinder {
     ///
     /// \name Constructors and Destructor.
-    ///
-    /// \b Note:
-    /// The copy constructor and the assignment operator are intentionally
-    /// defined as private, making this class non copyable.
-    //@{
-private:
-    MemoryZone(const MemoryZone& source);
-    MemoryZone& operator=(const MemoryZone& source);
 public:
     /// \brief Constructor from zone parameters.
     ///
@@ -48,17 +52,18 @@ public:
     ///
     /// \param rrclass The RR class of the zone.
     /// \param origin The origin name of the zone.
-    MemoryZone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
+    InMemoryZoneFinder(const isc::dns::RRClass& rrclass,
+                       const isc::dns::Name& origin);
 
     /// The destructor.
-    virtual ~MemoryZone();
+    virtual ~InMemoryZoneFinder();
     //@}
 
     /// \brief Returns the origin of the zone.
-    virtual const isc::dns::Name& getOrigin() const;
+    virtual isc::dns::Name getOrigin() const;
 
     /// \brief Returns the class of the zone.
-    virtual const isc::dns::RRClass& getClass() const;
+    virtual isc::dns::RRClass getClass() const;
 
     /// \brief Looks up an RRset in the zone.
     ///
@@ -70,7 +75,13 @@ public:
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
                             isc::dns::RRsetList* target = NULL,
-                            const FindOptions options = FIND_DEFAULT) const;
+                            const FindOptions options = FIND_DEFAULT);
+
+    /// \brief Imelementation of the ZoneFinder::findPreviousName method
+    ///
+    /// This one throws NotImplemented exception, as InMemory doesn't
+    /// support DNSSEC currently.
+    virtual isc::dns::Name findPreviousName(const isc::dns::Name& query) const;
 
     /// \brief Inserts an rrset into the zone.
     ///
@@ -128,14 +139,14 @@ public:
     /// Return the master file name of the zone
     ///
     /// This method returns the name of the zone's master file to be loaded.
-    /// The returned string will be an empty unless the zone has successfully
-    /// loaded a zone.
+    /// The returned string will be an empty unless the zone finder has
+    /// successfully loaded a zone.
     ///
     /// This method should normally not throw an exception.  But the creation
     /// of the return string may involve a resource allocation, and if it
     /// fails, the corresponding standard exception will be thrown.
     ///
-    /// \return The name of the zone file loaded in the zone, or an empty
+    /// \return The name of the zone file loaded in the zone finder, or an empty
     /// string if the zone hasn't loaded any file.
     const std::string getFileName() const;
 
@@ -164,144 +175,160 @@ public:
     ///     configuration reloading is written.
     void load(const std::string& filename);
 
-    /// Exchanges the content of \c this zone with that of the given \c zone.
+    /// Exchanges the content of \c this zone finder with that of the given
+    /// \c zone_finder.
     ///
     /// This method never throws an exception.
     ///
-    /// \param zone Another \c MemoryZone object which is to be swapped with
-    /// \c this zone.
-    void swap(MemoryZone& zone);
+    /// \param zone_finder Another \c InMemoryZone object which is to
+    /// be swapped with \c this zone finder.
+    void swap(InMemoryZoneFinder& zone_finder);
 
 private:
     /// \name Hidden private data
     //@{
-    struct MemoryZoneImpl;
-    MemoryZoneImpl* impl_;
+    struct InMemoryZoneFinderImpl;
+    InMemoryZoneFinderImpl* impl_;
     //@}
+    // The friend here is for InMemoryClient::getIterator. The iterator
+    // needs to access the data inside the zone, so the InMemoryClient
+    // extracts the pointer to data and puts it into the iterator.
+    // The access is read only.
+    friend class InMemoryClient;
 };
 
-/// \brief A data source that uses in memory dedicated backend.
+/// \brief A data source client that holds all necessary data in memory.
 ///
-/// The \c MemoryDataSrc class represents a data source and provides a
-/// basic interface to help DNS lookup processing. For a given domain
-/// name, its \c findZone() method searches the in memory dedicated backend
-/// for the zone that gives a longest match against that name.
+/// The \c InMemoryClient class provides an access to a conceptual data
+/// source that maintains all necessary data in a memory image, thereby
+/// allowing much faster lookups.  The in memory data is a copy of some
+/// real physical source - in the current implementation a list of zones
+/// are populated as a result of \c addZone() calls; zone data is given
+/// in a standard master file (but there's a plan to use database backends
+/// as a source of the in memory data).
 ///
-/// The in memory dedicated backend are assumed to be of the same RR class,
-/// but the \c MemoryDataSrc class does not enforce the assumption through
+/// Although every data source client is assumed to be of the same RR class,
+/// the \c InMemoryClient class does not enforce the assumption through
 /// its interface.
 /// For example, the \c addZone() method does not check if the new zone is of
-/// the same RR class as that of the others already in the dedicated backend.
+/// the same RR class as that of the others already in memory.
 /// It is caller's responsibility to ensure this assumption.
 ///
 /// <b>Notes to developer:</b>
-///
-/// For now, we don't make it a derived class of AbstractDataSrc because the
-/// interface is so different (we'll eventually consider this as part of the
-/// generalization work).
 ///
 /// The addZone() method takes a (Boost) shared pointer because it would be
 /// inconvenient to require the caller to maintain the ownership of zones,
 /// while it wouldn't be safe to delete unnecessary zones inside the dedicated
 /// backend.
 ///
-/// The findZone() method takes a domain name and returns the best matching \c
-/// MemoryZone in the form of (Boost) shared pointer, so that it can provide
-/// the general interface for all data sources.
-class MemoryDataSrc {
+/// The findZone() method takes a domain name and returns the best matching
+/// \c InMemoryZoneFinder in the form of (Boost) shared pointer, so that it can
+/// provide the general interface for all data sources.
+class InMemoryClient : public DataSourceClient {
 public:
-    /// \brief A helper structure to represent the search result of
-    /// <code>MemoryDataSrc::find()</code>.
-    ///
-    /// This is a straightforward pair of the result code and a share pointer
-    /// to the found zone to represent the result of \c find().
-    /// We use this in order to avoid overloading the return value for both
-    /// the result code ("success" or "not found") and the found object,
-    /// i.e., avoid using \c NULL to mean "not found", etc.
-    ///
-    /// This is a simple value class with no internal state, so for
-    /// convenience we allow the applications to refer to the members
-    /// directly.
-    ///
-    /// See the description of \c find() for the semantics of the member
-    /// variables.
-    struct FindResult {
-        FindResult(result::Result param_code, const ZonePtr param_zone) :
-            code(param_code), zone(param_zone)
-        {}
-        const result::Result code;
-        const ZonePtr zone;
-    };
-
     ///
     /// \name Constructors and Destructor.
     ///
-    /// \b Note:
-    /// The copy constructor and the assignment operator are intentionally
-    /// defined as private, making this class non copyable.
     //@{
-private:
-    MemoryDataSrc(const MemoryDataSrc& source);
-    MemoryDataSrc& operator=(const MemoryDataSrc& source);
 
-public:
     /// Default constructor.
     ///
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    MemoryDataSrc();
+    InMemoryClient();
 
     /// The destructor.
-    ~MemoryDataSrc();
+    ~InMemoryClient();
     //@}
 
-    /// Return the number of zones stored in the data source.
+    /// Return the number of zones stored in the client.
     ///
     /// This method never throws an exception.
     ///
-    /// \return The number of zones stored in the data source.
+    /// \return The number of zones stored in the client.
     unsigned int getZoneCount() const;
 
-    /// Add a \c Zone to the \c MemoryDataSrc.
+    /// Add a zone (in the form of \c ZoneFinder) to the \c InMemoryClient.
     ///
-    /// \c Zone must not be associated with a NULL pointer; otherwise
+    /// \c zone_finder must not be associated with a NULL pointer; otherwise
     /// an exception of class \c InvalidParameter will be thrown.
     /// If internal resource allocation fails, a corresponding standard
     /// exception will be thrown.
     /// This method never throws an exception otherwise.
     ///
-    /// \param zone A \c Zone object to be added.
-    /// \return \c result::SUCCESS If the zone is successfully
-    /// added to the memory data source.
+    /// \param zone_finder A \c ZoneFinder object to be added.
+    /// \return \c result::SUCCESS If the zone_finder is successfully
+    /// added to the client.
     /// \return \c result::EXIST The memory data source already
     /// stores a zone that has the same origin.
-    result::Result addZone(ZonePtr zone);
+    result::Result addZone(ZoneFinderPtr zone_finder);
 
-    /// Find a \c Zone that best matches the given name in the \c MemoryDataSrc.
+    /// Returns a \c ZoneFinder for a zone_finder that best matches the given
+    /// name.
     ///
-    /// It searches the internal storage for a \c Zone that gives the
-    /// longest match against \c name, and returns the result in the
-    /// form of a \c FindResult object as follows:
-    /// - \c code: The result code of the operation.
-    ///   - \c result::SUCCESS: A zone that gives an exact match
-    //    is found
-    ///   - \c result::PARTIALMATCH: A zone whose origin is a
-    //    super domain of \c name is found (but there is no exact match)
-    ///   - \c result::NOTFOUND: For all other cases.
-    /// - \c zone: A "Boost" shared pointer to the found \c Zone object if one
-    //  is found; otherwise \c NULL.
+    /// This derived version of the method never throws an exception.
+    /// For other details see \c DataSourceClient::findZone().
+    virtual FindResult findZone(const isc::dns::Name& name) const;
+
+    /// \brief Implementation of the getIterator method
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
+                                        bool separate_rrs = false) const;
+
+    /// In-memory data source is read-only, so this derived method will
+    /// result in a NotImplemented exception.
     ///
-    /// This method never throws an exception.
-    ///
-    /// \param name A domain name for which the search is performed.
-    /// \return A \c FindResult object enclosing the search result (see above).
-    FindResult findZone(const isc::dns::Name& name) const;
+    /// \note We plan to use a database-based data source as a backend
+    /// persistent storage for an in-memory data source.  When it's
+    /// implemented we may also want to allow the user of the in-memory client
+    /// to update via its updater (this may or may not be a good idea and
+    /// is subject to further discussions).
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name& name,
+                                      bool replace, bool journaling = false)
+        const;
+
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
+                     uint32_t end_serial) const;
 
 private:
-    class MemoryDataSrcImpl;
-    MemoryDataSrcImpl* impl_;
+    // TODO: Do we still need the PImpl if nobody should manipulate this class
+    // directly any more (it should be handled through DataSourceClient)?
+    class InMemoryClientImpl;
+    InMemoryClientImpl* impl_;
 };
+
+/// \brief Creates an instance of the Memory datasource client
+///
+/// Currently the configuration passed here must be a MapElement, formed as
+/// follows:
+/// \code
+/// { "type": string ("memory"),
+///   "class": string ("IN"/"CH"/etc),
+///   "zones": list
+/// }
+/// Zones list is a list of maps:
+/// { "origin": string,
+///   "file": string
+/// }
+/// \endcode
+/// (i.e. the configuration that was used prior to the datasource refactor)
+///
+/// This configuration setup is currently under discussion and will change in
+/// the near future.
+///
+/// \param config The configuration for the datasource instance
+/// \param error This string will be set to an error message if an error occurs
+///              during initialization
+/// \return An instance of the memory datasource client, or NULL if there was
+///         an error
+extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config,
+                                            std::string& error);
+
+/// \brief Destroy the instance created by createInstance()
+extern "C" void destroyInstance(DataSourceClient* instance);
+
+
 }
 }
 #endif  // __DATA_SOURCE_MEMORY_H

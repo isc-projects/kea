@@ -78,6 +78,27 @@ message, either in the message parser, or while trying to extract data
 from the parsed message. The error is printed, and notify_out will
 treat the response as a bad message, but this does point to a
 programming error, since all exceptions should have been caught
-explicitely. Please file a bug report. Since there was a response,
+explicitly. Please file a bug report. Since there was a response,
 no more notifies will be sent to this server for this notification
 event.
+
+% NOTIFY_OUT_DATASRC_ACCESS_FAILURE failed to get access to data source: %1
+notify_out failed to get access to one of configured data sources.
+Detailed error is shown in the log message.  This can be either a
+configuration error or installation setup failure.
+
+% NOTIFY_OUT_DATASRC_ZONE_NOT_FOUND Zone %1 is not found
+notify_out attempted to get slave information of a zone but the zone
+isn't found in the expected data source.  This shouldn't happen,
+because notify_out first identifies a list of available zones before
+this process.  So this means some critical inconsistency in the data
+source or software bug.
+
+% NOTIFY_OUT_ZONE_NO_NS Zone %1 doesn't have NS RR
+This is a warning issued when the notify_out module finds a zone that
+doesn't have an NS RR.  Notify message won't be sent to such a zone.
+
+% NOTIFY_OUT_ZONE_BAD_SOA Zone %1 is invalid in terms of SOA
+This is a warning issued when the notify_out module finds a zone that
+doesn't have an SOA RR or has multiple SOA RRs.  Notify message won't
+be sent to such a zone.

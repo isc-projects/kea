@@ -13,21 +13,61 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This file is not installed. The log.so is installed into the right place.
-# It is only to find it in the .libs directory when we run as a test or
-# from the build directory.
-# But as nobody gives us the builddir explicitly (and we can't use generation
-# from .in file, as it would put us into the builddir and we wouldn't be found)
-# we guess from current directory. Any idea for something better? This should
-# be enough for the tests, but would it work for B10_FROM_SOURCE as well?
-# Should we look there? Or define something in bind10_config?
+"""\
+This module provides Python bindings for the C++ classes in the
+isc::acl::dns namespace.  Specifically, it defines Python interfaces of
+handling access control lists (ACLs) with DNS related contexts.
+The actual binding is implemented in an effectively hidden module,
+isc.acl._dns; this frontend module is in terms of implementation so that
+the C++ binding code doesn't have to deal with complicated operations
+that could be done in a more straightforward way in native Python.
 
-import os
-import sys
+For further details of the actual module, see the documentation of the
+_dns module.
+"""
 
-for base in sys.path[:]:
-    bindingdir = os.path.join(base, 'isc/acl/.libs')
-    if os.path.exists(bindingdir):
-        sys.path.insert(0, bindingdir)
+import pydnspp
 
-from dns import *
+import isc.acl._dns
+from isc.acl._dns import *
+
+class RequestACL(isc.acl._dns.RequestACL):
+    """A straightforward wrapper subclass of isc.acl._dns.RequestACL.
+
+    See the base class documentation for more implementation.
+    """
+    pass
+
+class RequestLoader(isc.acl._dns.RequestLoader):
+    """A straightforward wrapper subclass of isc.acl._dns.RequestLoader.
+
+    See the base class documentation for more implementation.
+    """
+    pass
+
+class RequestContext(isc.acl._dns.RequestContext):
+    """A straightforward wrapper subclass of isc.acl._dns.RequestContext.
+
+    See the base class documentation for more implementation.
+    """
+
+    def __init__(self, remote_address, tsig=None):
+        """Wrapper for the RequestContext constructor.
+
+        Internal implementation details that the users don't have to
+        worry about: To avoid dealing with pydnspp bindings in the C++ code,
+        this wrapper converts the TSIG record in its wire format in the form
+        of byte data, and has the binding re-construct the record from it.
+        """
+        tsig_wire = b''
+        if tsig is not None:
+            if not isinstance(tsig, pydnspp.TSIGRecord):
+                raise TypeError("tsig must be a TSIGRecord, not %s" %
+                                tsig.__class__.__name__)
+            tsig_wire = tsig.to_wire(tsig_wire)
+        isc.acl._dns.RequestContext.__init__(self, remote_address, tsig_wire)
+
+    def __str__(self):
+        """Wrap __str__() to convert the module name."""
+        s = isc.acl._dns.RequestContext.__str__(self)
+        return s.replace('<isc.acl._dns', '<isc.acl.dns')

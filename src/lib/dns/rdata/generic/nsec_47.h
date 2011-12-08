@@ -38,6 +38,16 @@ public:
     // END_COMMON_MEMBERS
     NSEC& operator=(const NSEC& source);
     ~NSEC();
+
+    // specialized methods
+
+    /// Return the next domain name.
+    ///
+    /// \exception std::bad_alloc Resource allocation failure in name copy.
+    ///
+    /// \return The next domain name field in the form of \c Name object.
+    const Name& getNextName() const;
+
 private:
     NSECImpl* impl_;
 };

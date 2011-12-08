@@ -11,6 +11,7 @@ PYTESTS += rrclass_python_test.py
 PYTESTS += rrset_python_test.py
 PYTESTS += rrttl_python_test.py
 PYTESTS += rrtype_python_test.py
+PYTESTS += serial_python_test.py
 PYTESTS += tsig_python_test.py
 PYTESTS += tsig_rdata_python_test.py
 PYTESTS += tsigerror_python_test.py
@@ -24,7 +25,7 @@ EXTRA_DIST += testutil.py
 # required by loadable python modules.
 LIBRARY_PATH_PLACEHOLDER =
 if SET_ENV_LIBRARY_PATH
-LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
 endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
