@@ -150,24 +150,25 @@ AuthCountersTest::MockSession::setThrowSessionTimeout(bool flag) {
 
 TEST_F(AuthCountersTest, incrementUDPCounter) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    EXPECT_NO_THROW(counters.inc(AuthCounters::SERVER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_UDP_QUERY));
     // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
+    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_UDP_QUERY));
 }
 
 TEST_F(AuthCountersTest, incrementTCPCounter) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
-    EXPECT_NO_THROW(counters.inc(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_TCP_QUERY));
     // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 }
 
 TEST_F(AuthCountersTest, incrementInvalidCounter) {
-    // Expect to throw an isc::OutOfRange
-    EXPECT_THROW(counters.inc(AuthCounters::SERVER_COUNTER_TYPES),
-                 isc::OutOfRange);
+    // Expect to throw isc::InvalidParameter if the type of the counter is
+    // invalid.
+    EXPECT_THROW(counters.inc(AuthCounters::COUNTER_TYPES),
+                 std::out_of_range);
 }
 
 TEST_F(AuthCountersTest, submitStatisticsWithoutSession) {
@@ -194,14 +195,14 @@ TEST_F(AuthCountersTest, submitStatisticsWithoutValidator) {
     // Validate if it submits correct data.
 
     // Counters should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 
     // UDP query counter is set to 2.
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    counters.inc(AuthCounters::COUNTER_UDP_QUERY);
+    counters.inc(AuthCounters::COUNTER_UDP_QUERY);
     // TCP query counter is set to 1.
-    counters.inc(AuthCounters::SERVER_TCP_QUERY);
+    counters.inc(AuthCounters::COUNTER_TCP_QUERY);
     counters.submitStatistics();
 
     // Destination is "Stats".
@@ -236,14 +237,14 @@ TEST_F(AuthCountersTest, submitStatisticsWithValidator) {
     counters.registerStatisticsValidator(validator);
 
     // Counters should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 
     // UDP query counter is set to 2.
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    counters.inc(AuthCounters::COUNTER_UDP_QUERY);
+    counters.inc(AuthCounters::COUNTER_UDP_QUERY);
     // TCP query counter is set to 1.
-    counters.inc(AuthCounters::SERVER_TCP_QUERY);
+    counters.inc(AuthCounters::COUNTER_TCP_QUERY);
 
     // checks the value returned by submitStatistics
     EXPECT_TRUE(counters.submitStatistics());

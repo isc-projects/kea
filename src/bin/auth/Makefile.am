@@ -71,7 +71,6 @@ b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_auth_LDADD += $(top_builddir)/src/lib/log/liblog.la
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
-b10_auth_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
 b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
