@@ -92,7 +92,7 @@ bind10-devel-20111128 released on November 28, 2011
 	always respond to IXFR requests according to RFC1995).
 	(Trac #1371 and #1372, git 80c131f5b0763753d199b0fb9b51f10990bcd92b)
 
-326.	[build]*		jinmei
+326.	[build]*	jinmei
 	Added a check script for the SQLite3 schema version.  It will be
 	run at the beginning of 'make install', and if it detects an old
 	version of schema, installation will stop.  You'll then need to
