@@ -33,6 +33,7 @@ import time
 import isc
 import isc.log
 import isc.bind10.socket_cache
+import errno
 
 from isc.testutils.parse_args import TestOptParser, OptsError
 
@@ -1194,6 +1195,201 @@ class TestBossComponents(unittest.TestCase):
         bob.ccs.get_full_config = lambda: {'components': self.__compconfig}
         bob.start_all_components()
         self.__check_extended(self.__param)
+
+class SocketSrvTest(unittest.TestCase):
+    """
+    This tests some methods of boss related to the unix domain sockets used
+    to transfer other sockets to applications.
+    """
+    def setUp(self):
+        """
+        Create the boss to test, testdata and backup some functions.
+        """
+        self.__boss = BoB()
+        self.__select_backup = bind10_src.select.select
+        self.__select_called = None
+        self.__socket_data_called = None
+        self.__consumer_dead_called = None
+        self.__socket_request_handler_called = None
+
+    def tearDown(self):
+        """
+        Restore functions.
+        """
+        bind10_src.select.select = self.__select_backup
+
+    class __FalseSocket:
+        """
+        A mock socket for the select and accept and stuff like that.
+        """
+        def __init__(self, owner, fileno=42):
+            self.__owner = owner
+            self.__fileno = fileno
+            self.data = None
+            self.closed = False
+
+        def fileno(self):
+            return self.__fileno
+
+        def accept(self):
+            return self.__class__(self.__owner, 13)
+
+        def recv(self, bufsize, flags=0):
+            self.__owner.assertEqual(1, bufsize)
+            self.__owner.assertEqual(socket.MSG_DONTWAIT, flags)
+            if isinstance(self.data, socket.error):
+                raise self.data
+            elif self.data is not None:
+                if len(self.data):
+                    result = self.data[0:1]
+                    self.data = self.data[1:]
+                    return result
+                else:
+                    raise socket.error(errno.EAGAIN, "Would block")
+            else:
+                return b''
+
+        def close(self):
+            self.closed = True
+
+    class __CCS:
+        """
+        A mock CCS, just to provide the socket file number.
+        """
+        class __Socket:
+            def fileno(self):
+                return 1
+        def get_socket(self):
+            return self.__Socket()
+
+    def __select_accept(self, r, w, x, t):
+        self.__select_called = (r, w, x, t)
+        return ([42], [], [])
+
+    def __select_data(self, r, w, x, t):
+        self.__select_called = (r, w, x, t)
+        return ([13], [], [])
+
+    def __accept(self):
+        """
+        Hijact the accept method of the boss.
+
+        Notes down it was called and stops the boss.
+        """
+        self.__accept_called = True
+        self.__boss.runnable = False
+
+    def test_srv_accept_called(self):
+        """
+        Test that the _srv_accept method of boss is called when the listening
+        socket is readable.
+        """
+        self.__boss.runnable = True
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._srv_accept = self.__accept
+        self.__boss.ccs = self.__CCS()
+        bind10_src.select.select = self.__select_accept
+        self.__boss.run(2)
+        # It called the accept
+        self.assertTrue(self.__accept_called)
+        # And the select had the right parameters
+        self.assertEqual(([2, 1, 42], [], [], None), self.__select_called)
+
+    def test_srv_accept(self):
+        """
+        Test how the _srv_accept method works.
+        """
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._srv_accept()
+        # After we accepted, a new socket is added there
+        socket = self.__boss._unix_sockets[13][0]
+        # The socket is properly stored there
+        self.assertIsInstance(socket, self.__FalseSocket)
+        # And the buffer (yet empty) is there
+        self.assertEqual({13: (socket, b'')}, self.__boss._unix_sockets)
+
+    def __socket_data(self, socket):
+        self.__boss.runnable = False
+        self.__socket_data_called = socket
+
+    def test_socket_data(self):
+        """
+        Test that a socket that wants attention gets it.
+        """
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._socket_data = self.__socket_data
+        self.__boss.ccs = self.__CCS()
+        self.__boss._unix_sockets = {13: (self.__FalseSocket(self, 13), b'')}
+        self.__boss.runnable = True
+        bind10_src.select.select = self.__select_data
+        self.__boss.run(2)
+        self.assertEqual(13, self.__socket_data_called)
+        self.assertEqual(([2, 1, 42, 13], [], [], None), self.__select_called)
+
+    def __prepare_data(self, data):
+        socket = self.__FalseSocket(self, 13)
+        self.__boss._unix_sockets = {13: (socket, b'')}
+        socket.data = data
+        self.__boss.socket_consumer_dead = self.__consumer_dead
+        self.__boss.socket_request_handler = self.__socket_request_handler
+        return socket
+
+    def __consumer_dead(self, socket):
+        self.__consumer_dead_called = socket
+
+    def __socket_request_handler(self, token, socket):
+        self.__socket_request_handler_called = (token, socket)
+
+    def test_socket_closed(self):
+        """
+        Test that a socket is removed and the socket_consumer_dead is called
+        when it is closed.
+        """
+        socket = self.__prepare_data(None)
+        self.__boss._socket_data(13)
+        self.assertEqual(socket, self.__consumer_dead_called)
+        self.assertEqual({}, self.__boss._unix_sockets)
+        self.assertTrue(socket.closed)
+
+    def test_socket_short(self):
+        """
+        Test that if there's not enough data to get the whole socket, it is
+        kept there, but nothing is called.
+        """
+        socket = self.__prepare_data(b'tok')
+        self.__boss._socket_data(13)
+        self.assertEqual({13: (socket, b'tok')}, self.__boss._unix_sockets)
+        self.assertFalse(socket.closed)
+        self.assertIsNone(self.__consumer_dead_called)
+        self.assertIsNone(self.__socket_request_handler_called)
+
+    def test_socket_continue(self):
+        """
+        Test that we call the token handling function when the whole token
+        comes. This test pretends to continue reading where the previous one
+        stopped.
+        """
+        socket = self.__prepare_data(b"en\nanothe")
+        # The data to finish
+        self.__boss._unix_sockets[13] = (socket, b'tok')
+        self.__boss._socket_data(13)
+        self.assertEqual({13: (socket, b'anothe')}, self.__boss._unix_sockets)
+        self.assertFalse(socket.closed)
+        self.assertIsNone(self.__consumer_dead_called)
+        self.assertEqual((b'token', socket),
+                         self.__socket_request_handler_called)
+
+    def test_broken_socket(self):
+        """
+        If the socket raises an exception during the read other than EAGAIN,
+        it is broken and we remove it.
+        """
+        sock = self.__prepare_data(socket.error(errno.ENOMEM,
+            "There's more memory available, but not for you"))
+        self.__boss._socket_data(13)
+        self.assertEqual(sock, self.__consumer_dead_called)
+        self.assertEqual({}, self.__boss._unix_sockets)
+        self.assertTrue(sock.closed)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
