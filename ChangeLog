@@ -2,7 +2,7 @@
 	src/lib/statistics: Added statistics counter library for entire server
 	items and per zone items. Also, modified b10-auth to use it. It is
 	also intended to use in the other modules such as b10-resolver.
-	(Trac #510, git TBD)
+	(Trac #510, git 662233a1483040da5dbc29dd9c9baf6bf0832223)
 
 338.	[bug]		jinmei
 	b10-xfrin didn't check SOA serials of SOA and IXFR responses,
