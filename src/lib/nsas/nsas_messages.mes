@@ -21,8 +21,8 @@ answer section in the response was empty.
 
 % NSAS_ERROR_RESPONSE error response of %1 returned in query for %2
 The NSAS (nameserver address store - part of the resolver) made a query
-for information it needed.  The query successfully completed but RCODE
-in the response was something other than NOERROR.
+for information it needed.  The query completed successfully but the
+RCODE in the response was something other than NOERROR.
 
 % NSAS_FIND_NS_ADDRESS asking resolver to obtain A and AAAA records for %1
 A debug message issued when the NSAS (nameserver address store - part
@@ -47,8 +47,8 @@ nameservers in the zone.
 
 % NSAS_NULL_RESPONSE got null message in success callback for query for %1
 The NSAS (nameserver address store - part of the resolver) made a query
-for information it needed.  The query completed completed successfully,
-but the message passed to the callback was null.
+for information it needed.  The query completed successfully, but the
+message passed to the callback was null.
 
 This message indicates an internal error in the NSAS.  Please raise a
 bug report.
