@@ -28,7 +28,11 @@
 #include <string>
 #include <boost/bind.hpp>
 
+#include <util/python/pycppwrapper_util.h>
+#include <log/log_dbglevels.h>
+
 using namespace isc::log;
+using namespace isc::util::python;
 using std::string;
 using boost::bind;
 
@@ -185,7 +189,7 @@ init(PyObject*, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-// This initialization is for unit tests.  It allows message settings to be
+// This initialization is for unit tests.  It allows message settings to
 // be determined by a set of B10_xxx environment variables.  (See the
 // description of initLogger() for more details.)  The function has been named
 // resetUnitTestRootLogger() here as being more descriptive and
@@ -299,7 +303,8 @@ public:
 extern PyTypeObject logger_type;
 
 int
-Logger_init(LoggerWrapper* self, PyObject* args) {
+Logger_init(PyObject* po_self, PyObject* args, PyObject*) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     const char* name;
     if (!PyArg_ParseTuple(args, "s", &name)) {
         return (-1);
@@ -319,7 +324,9 @@ Logger_init(LoggerWrapper* self, PyObject* args) {
 }
 
 void
-Logger_destroy(LoggerWrapper* const self) {
+//Logger_destroy(LoggerWrapper* const self) {
+Logger_destroy(PyObject* po_self) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     delete self->logger_;
     self->logger_ = NULL;
     Py_TYPE(self)->tp_free(self);
@@ -347,7 +354,8 @@ severityToText(const Severity& severity) {
 }
 
 PyObject*
-Logger_getEffectiveSeverity(LoggerWrapper* self, PyObject*) {
+Logger_getEffectiveSeverity(PyObject* po_self, PyObject*) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     try {
         return (Py_BuildValue("s",
                               severityToText(
@@ -364,7 +372,8 @@ Logger_getEffectiveSeverity(LoggerWrapper* self, PyObject*) {
 }
 
 PyObject*
-Logger_getEffectiveDebugLevel(LoggerWrapper* self, PyObject*) {
+Logger_getEffectiveDebugLevel(PyObject* po_self, PyObject*) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     try {
         return (Py_BuildValue("i", self->logger_->getEffectiveDebugLevel()));
     }
@@ -379,7 +388,8 @@ Logger_getEffectiveDebugLevel(LoggerWrapper* self, PyObject*) {
 }
 
 PyObject*
-Logger_setSeverity(LoggerWrapper* self, PyObject* args) {
+Logger_setSeverity(PyObject* po_self, PyObject* args) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     const char* severity;
     int dbgLevel = 0;
     if (!PyArg_ParseTuple(args, "z|i", &severity, &dbgLevel)) {
@@ -421,27 +431,32 @@ Logger_isLevelEnabled(LoggerWrapper* self, FPtr function) {
 }
 
 PyObject*
-Logger_isInfoEnabled(LoggerWrapper* self, PyObject*) {
+Logger_isInfoEnabled(PyObject* po_self, PyObject*) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_isLevelEnabled(self, &Logger::isInfoEnabled));
 }
 
 PyObject*
-Logger_isWarnEnabled(LoggerWrapper* self, PyObject*) {
+Logger_isWarnEnabled(PyObject* po_self, PyObject*) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_isLevelEnabled(self, &Logger::isWarnEnabled));
 }
 
 PyObject*
-Logger_isErrorEnabled(LoggerWrapper* self, PyObject*) {
+Logger_isErrorEnabled(PyObject* po_self, PyObject*) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_isLevelEnabled(self, &Logger::isErrorEnabled));
 }
 
 PyObject*
-Logger_isFatalEnabled(LoggerWrapper* self, PyObject*) {
+Logger_isFatalEnabled(PyObject* po_self, PyObject*) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_isLevelEnabled(self, &Logger::isFatalEnabled));
 }
 
 PyObject*
-Logger_isDebugEnabled(LoggerWrapper* self, PyObject* args) {
+Logger_isDebugEnabled(PyObject* po_self, PyObject* args) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     int level = MIN_DEBUG_LEVEL;
     if (!PyArg_ParseTuple(args, "|i", &level)) {
         return (NULL);
@@ -466,53 +481,39 @@ Logger_isDebugEnabled(LoggerWrapper* self, PyObject* args) {
 
 string
 objectToStr(PyObject* object, bool convert) {
-    PyObject* cleanup(NULL);
+    PyObjectContainer objstr_container;
     if (convert) {
-        object = cleanup = PyObject_Str(object);
-        if (object == NULL) {
+        PyObject* text_obj = PyObject_Str(object);
+        if (text_obj == NULL) {
+            // PyObject_Str could fail for various reasons, including because
+            // the object cannot be converted to a string.  We exit with
+            // InternalError to preserve the PyErr set in PyObject_Str.
             throw InternalError();
         }
-    }
-    const char* value;
-    PyObject* tuple(Py_BuildValue("(O)", object));
-    if (tuple == NULL) {
-        if (cleanup != NULL) {
-            Py_DECREF(cleanup);
-        }
-        throw InternalError();
+        objstr_container.reset(text_obj);
+        object = objstr_container.get();
     }
 
-    if (!PyArg_ParseTuple(tuple, "s", &value)) {
-        Py_DECREF(tuple);
-        if (cleanup != NULL) {
-            Py_DECREF(cleanup);
-        }
+    PyObjectContainer tuple_container(Py_BuildValue("(O)", object));
+    const char* value;
+    if (!PyArg_ParseTuple(tuple_container.get(), "s", &value)) {
         throw InternalError();
     }
-    string result(value);
-    Py_DECREF(tuple);
-    if (cleanup != NULL) {
-        Py_DECREF(cleanup);
-    }
-    return (result);
+    return (string(value));
 }
 
 // Generic function to output the logging message. Called by the real functions.
-template<class Function>
+template <class Function>
 PyObject*
 Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
     try {
-        Py_ssize_t number(PyObject_Length(args));
+        const Py_ssize_t number(PyObject_Length(args));
         if (number < 0) {
             return (NULL);
         }
 
         // Which argument is the first to format?
-        size_t start(1);
-        if (dbgLevel) {
-            start ++;
-        }
-
+        const size_t start = dbgLevel ? 2 : 1;
         if (number < start) {
             return (PyErr_Format(PyExc_TypeError, "Too few arguments to "
                                  "logging call, at least %zu needed and %zd "
@@ -520,18 +521,10 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         }
 
         // Extract the fixed arguments
-        PyObject *midO(PySequence_GetItem(args, start - 1));
-        if (midO == NULL) {
-            return (NULL);
-        }
-        string mid(objectToStr(midO, false));
         long dbg(0);
         if (dbgLevel) {
-            PyObject *dbgO(PySequence_GetItem(args, 0));
-            if (dbgO == NULL) {
-                return (NULL);
-            }
-            dbg = PyLong_AsLong(dbgO);
+            PyObjectContainer dbg_container(PySequence_GetItem(args, 0));
+            dbg = PyLong_AsLong(dbg_container.get());
             if (PyErr_Occurred()) {
                 return (NULL);
             }
@@ -540,16 +533,16 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         // We create the logging message right now. If we fail to convert a
         // parameter to string, at least the part that we already did will
         // be output
+        PyObjectContainer msgid_container(PySequence_GetItem(args, start - 1));
+        const string mid(objectToStr(msgid_container.get(), false));
         Logger::Formatter formatter(function(dbg, mid.c_str()));
 
         // Now process the rest of parameters, convert each to string and put
         // into the formatter. It will print itself in the end.
         for (size_t i(start); i < number; ++ i) {
-            PyObject* param(PySequence_GetItem(args, i));
-            if (param == NULL) {
-                return (NULL);
-            }
-            formatter = formatter.arg(objectToStr(param, true));
+            PyObjectContainer param_container(PySequence_GetItem(args, i));
+            formatter = formatter.arg(objectToStr(param_container.get(),
+                                                  true));
         }
         Py_RETURN_NONE;
     }
@@ -569,72 +562,74 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
 // Now map the functions into the performOutput. I wish C++ could do
 // functional programming.
 PyObject*
-Logger_debug(LoggerWrapper* self, PyObject* args) {
+Logger_debug(PyObject* po_self, PyObject* args) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_performOutput(bind(&Logger::debug, self->logger_, _1, _2),
                                  args, true));
 }
 
 PyObject*
-Logger_info(LoggerWrapper* self, PyObject* args) {
+Logger_info(PyObject* po_self, PyObject* args) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_performOutput(bind(&Logger::info, self->logger_, _2),
                                  args, false));
 }
 
 PyObject*
-Logger_warn(LoggerWrapper* self, PyObject* args) {
+Logger_warn(PyObject* po_self, PyObject* args) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_performOutput(bind(&Logger::warn, self->logger_, _2),
                                  args, false));
 }
 
 PyObject*
-Logger_error(LoggerWrapper* self, PyObject* args) {
+Logger_error(PyObject* po_self, PyObject* args) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_performOutput(bind(&Logger::error, self->logger_, _2),
                                  args, false));
 }
 
 PyObject*
-Logger_fatal(LoggerWrapper* self, PyObject* args) {
+Logger_fatal(PyObject* po_self, PyObject* args) {
+    LoggerWrapper* self = static_cast<LoggerWrapper*>(po_self);
     return (Logger_performOutput(bind(&Logger::fatal, self->logger_, _2),
                                  args, false));
 }
 
 PyMethodDef loggerMethods[] = {
-    { "get_effective_severity",
-        reinterpret_cast<PyCFunction>(Logger_getEffectiveSeverity),
-        METH_NOARGS, "Returns the effective logging severity as string" },
-    { "get_effective_debug_level",
-        reinterpret_cast<PyCFunction>(Logger_getEffectiveDebugLevel),
-        METH_NOARGS, "Returns the current debug level." },
-    { "set_severity",
-        reinterpret_cast<PyCFunction>(Logger_setSeverity), METH_VARARGS,
+    { "get_effective_severity", Logger_getEffectiveSeverity, METH_NOARGS,
+        "Returns the effective logging severity as string" },
+    { "get_effective_debug_level", Logger_getEffectiveDebugLevel, METH_NOARGS,
+        "Returns the current debug level." },
+    { "set_severity", Logger_setSeverity, METH_VARARGS,
         "Sets the severity of a logger. The parameters are severity as a "
         "string and, optionally, a debug level (integer in range 0-99). "
         "The severity may be NULL, in which case an inherited value is taken."
     },
-    { "is_debug_enabled", reinterpret_cast<PyCFunction>(Logger_isDebugEnabled),
-        METH_VARARGS, "Returns if the logger would log debug message now. "
+    { "is_debug_enabled", Logger_isDebugEnabled, METH_VARARGS,
+      "Returns if the logger would log debug message now. "
             "You can provide a desired debug level." },
-    { "is_info_enabled", reinterpret_cast<PyCFunction>(Logger_isInfoEnabled),
-        METH_NOARGS, "Returns if the logger would log info message now." },
-    { "is_warn_enabled", reinterpret_cast<PyCFunction>(Logger_isWarnEnabled),
-        METH_NOARGS, "Returns if the logger would log warn message now." },
-    { "is_error_enabled", reinterpret_cast<PyCFunction>(Logger_isErrorEnabled),
-        METH_NOARGS, "Returns if the logger would log error message now." },
-    { "is_fatal_enabled", reinterpret_cast<PyCFunction>(Logger_isFatalEnabled),
-        METH_NOARGS, "Returns if the logger would log fatal message now." },
-    { "debug", reinterpret_cast<PyCFunction>(Logger_debug), METH_VARARGS,
+    { "is_info_enabled", Logger_isInfoEnabled, METH_NOARGS,
+      "Returns if the logger would log info message now." },
+    { "is_warn_enabled", Logger_isWarnEnabled, METH_NOARGS,
+      "Returns if the logger would log warn message now." },
+    { "is_error_enabled", Logger_isErrorEnabled, METH_NOARGS,
+      "Returns if the logger would log error message now." },
+    { "is_fatal_enabled", Logger_isFatalEnabled, METH_NOARGS,
+      "Returns if the logger would log fatal message now." },
+    { "debug", Logger_debug, METH_VARARGS,
         "Logs a debug-severity message. It takes the debug level, message ID "
         "and any number of stringifiable arguments to the message." },
-    { "info", reinterpret_cast<PyCFunction>(Logger_info), METH_VARARGS,
+    { "info", Logger_info, METH_VARARGS,
         "Logs a info-severity message. It taskes the message ID and any "
         "number of stringifiable arguments to the message." },
-    { "warn", reinterpret_cast<PyCFunction>(Logger_warn), METH_VARARGS,
+    { "warn", Logger_warn, METH_VARARGS,
         "Logs a warn-severity message. It taskes the message ID and any "
         "number of stringifiable arguments to the message." },
-    { "error", reinterpret_cast<PyCFunction>(Logger_error), METH_VARARGS,
+    { "error", Logger_error, METH_VARARGS,
         "Logs a error-severity message. It taskes the message ID and any "
         "number of stringifiable arguments to the message." },
-    { "fatal", reinterpret_cast<PyCFunction>(Logger_fatal), METH_VARARGS,
+    { "fatal", Logger_fatal, METH_VARARGS,
         "Logs a fatal-severity message. It taskes the message ID and any "
         "number of stringifiable arguments to the message." },
     { NULL, NULL, 0, NULL }
@@ -645,7 +640,7 @@ PyTypeObject logger_type = {
     "isc.log.Logger",
     sizeof(LoggerWrapper),                 // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(Logger_destroy),       // tp_dealloc
+    Logger_destroy,                     // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -677,7 +672,7 @@ PyTypeObject logger_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(Logger_init),            // tp_init
+    Logger_init,                        // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
@@ -714,16 +709,52 @@ PyInit_log(void) {
         return (NULL);
     }
 
-    if (PyType_Ready(&logger_type) < 0) {
+    // Finalize logger class and add in the definitions of the standard debug
+    // levels.  These can then be referred to in Python through the constants
+    // log.DBGLVL_XXX.
+    // N.B. These should be kept in sync with the constants defined in
+    // log_dbglevels.h.
+    try {
+        if (PyType_Ready(&logger_type) < 0) {
+            throw InternalError();
+        }
+        void* p = &logger_type;
+        if (PyModule_AddObject(mod, "Logger",
+                               static_cast<PyObject*>(p)) < 0) {
+            throw InternalError();
+        }
+
+        installClassVariable(logger_type, "DBGLVL_START_SHUT",
+                             Py_BuildValue("I", DBGLVL_START_SHUT));
+        installClassVariable(logger_type, "DBGLVL_COMMAND",
+                             Py_BuildValue("I", DBGLVL_COMMAND));
+        installClassVariable(logger_type, "DBGLVL_COMMAND_DATA",
+                             Py_BuildValue("I", DBGLVL_COMMAND_DATA));
+        installClassVariable(logger_type, "DBGLVL_TRACE_BASIC",
+                             Py_BuildValue("I", DBGLVL_TRACE_BASIC));
+        installClassVariable(logger_type, "DBGLVL_TRACE_BASIC_DATA",
+                             Py_BuildValue("I", DBGLVL_TRACE_BASIC_DATA));
+        installClassVariable(logger_type, "DBGLVL_TRACE_DETAIL",
+                             Py_BuildValue("I", DBGLVL_TRACE_DETAIL));
+        installClassVariable(logger_type, "DBGLVL_TRACE_DETAIL_DATA",
+                             Py_BuildValue("I", DBGLVL_TRACE_DETAIL_DATA));
+    } catch (const InternalError&) {
+        Py_DECREF(mod);
+        return (NULL);
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in Log initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(PyExc_SystemError, ex_what.c_str());
+        Py_DECREF(mod);
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Log initialization");
+        Py_DECREF(mod);
         return (NULL);
     }
 
-    if (PyModule_AddObject(mod, "Logger",
-                           static_cast<PyObject*>(static_cast<void*>(
-                               &logger_type))) < 0) {
-        return (NULL);
-    }
     Py_INCREF(&logger_type);
-
     return (mod);
 }

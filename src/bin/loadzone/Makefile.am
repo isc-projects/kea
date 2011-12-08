@@ -1,5 +1,6 @@
 SUBDIRS = . tests/correct tests/error
 bin_SCRIPTS = b10-loadzone
+noinst_SCRIPTS = run_loadzone.sh
 
 CLEANFILES = b10-loadzone
 

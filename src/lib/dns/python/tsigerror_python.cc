@@ -30,26 +30,21 @@ using namespace isc::util::python;
 using namespace isc::dns;
 using namespace isc::dns::python;
 
-//
-// Definition of the classes
-//
-
 // For each class, we need a struct, a helper functions (init, destroy,
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
-
-//
-// TSIGError
-//
-
-// Trivial constructor.
-s_TSIGError::s_TSIGError() : cppobj(NULL) {
-}
 
 // Import pydoc text
 #include "tsigerror_python_inc.cc"
 
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_TSIGError : public PyObject {
+public:
+    s_TSIGError() : cppobj(NULL) {};
+    const TSIGError* cppobj;
+};
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIGError, TSIGError> TSIGErrorContainer;
 
@@ -107,9 +102,9 @@ TSIGError_init(s_TSIGError* self, PyObject* args) {
 
         // Constructor from Rcode
         PyErr_Clear();
-        s_Rcode* py_rcode;
+        PyObject* py_rcode;
         if (PyArg_ParseTuple(args, "O!", &rcode_type, &py_rcode)) {
-            self->cppobj = new TSIGError(*py_rcode->cppobj);
+            self->cppobj = new TSIGError(PyRcode_ToRcode(py_rcode));
             return (0);
         }
     } catch (const isc::OutOfRange& ex) {
@@ -172,13 +167,8 @@ TSIGError_str(PyObject* self) {
 
 PyObject*
 TSIGError_toRcode(const s_TSIGError* const self) {
-    typedef CPPPyObjectContainer<s_Rcode, Rcode> RcodePyObjectContainer;
-
     try {
-        RcodePyObjectContainer rcode_container(PyObject_New(s_Rcode,
-                                                            &rcode_type));
-        rcode_container.set(new Rcode(self->cppobj->toRcode()));
-        return (rcode_container.release());
+        return (createRcodeObject(self->cppobj->toRcode()));
     } catch (const exception& ex) {
         const string ex_what =
             "Failed to convert TSIGError to Rcode: " + string(ex.what());
@@ -190,7 +180,7 @@ TSIGError_toRcode(const s_TSIGError* const self) {
     return (NULL);
 }
 
-PyObject* 
+PyObject*
 TSIGError_richcmp(const s_TSIGError* const self,
                    const s_TSIGError* const other,
                    const int op)
@@ -252,7 +242,7 @@ PyTypeObject tsigerror_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     // THIS MAY HAVE TO BE CHANGED TO NULL:
     TSIGError_str,                       // tp_str
@@ -290,78 +280,9 @@ PyTypeObject tsigerror_type = {
     0                                   // tp_version_tag
 };
 
-namespace {
-// Trivial shortcut to create and install TSIGError constants.
-inline void
-installTSIGErrorConstant(const char* name, const TSIGError& val) {
-    TSIGErrorContainer container(PyObject_New(s_TSIGError, &tsigerror_type));
-    container.installAsClassVariable(tsigerror_type, name, new TSIGError(val));
-}
-}
-
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_TSIGError(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&tsigerror_type) < 0) {
-        return (false);
-    }
-    void* p = &tsigerror_type;
-    if (PyModule_AddObject(mod, "TSIGError", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigerror_type);
-
-    try {
-        // Constant class variables
-        // Error codes (bare values)
-        installClassVariable(tsigerror_type, "BAD_SIG_CODE",
-                             Py_BuildValue("H", TSIGError::BAD_SIG_CODE));
-        installClassVariable(tsigerror_type, "BAD_KEY_CODE",
-                             Py_BuildValue("H", TSIGError::BAD_KEY_CODE));
-        installClassVariable(tsigerror_type, "BAD_TIME_CODE",
-                             Py_BuildValue("H", TSIGError::BAD_TIME_CODE));
-
-        // Error codes (constant objects)
-        installTSIGErrorConstant("NOERROR", TSIGError::NOERROR());
-        installTSIGErrorConstant("FORMERR", TSIGError::FORMERR());
-        installTSIGErrorConstant("SERVFAIL", TSIGError::SERVFAIL());
-        installTSIGErrorConstant("NXDOMAIN", TSIGError::NXDOMAIN());
-        installTSIGErrorConstant("NOTIMP", TSIGError::NOTIMP());
-        installTSIGErrorConstant("REFUSED", TSIGError::REFUSED());
-        installTSIGErrorConstant("YXDOMAIN", TSIGError::YXDOMAIN());
-        installTSIGErrorConstant("YXRRSET", TSIGError::YXRRSET());
-        installTSIGErrorConstant("NXRRSET", TSIGError::NXRRSET());
-        installTSIGErrorConstant("NOTAUTH", TSIGError::NOTAUTH());
-        installTSIGErrorConstant("NOTZONE", TSIGError::NOTZONE());
-        installTSIGErrorConstant("RESERVED11", TSIGError::RESERVED11());
-        installTSIGErrorConstant("RESERVED12", TSIGError::RESERVED12());
-        installTSIGErrorConstant("RESERVED13", TSIGError::RESERVED13());
-        installTSIGErrorConstant("RESERVED14", TSIGError::RESERVED14());
-        installTSIGErrorConstant("RESERVED15", TSIGError::RESERVED15());
-        installTSIGErrorConstant("BAD_SIG", TSIGError::BAD_SIG());
-        installTSIGErrorConstant("BAD_KEY", TSIGError::BAD_KEY());
-        installTSIGErrorConstant("BAD_TIME", TSIGError::BAD_TIME());
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in TSIGError initialization: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-        return (false);
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in TSIGError initialization");
-        return (false);
-    }
-
-    return (true);
-}
-
 PyObject*
 createTSIGErrorObject(const TSIGError& source) {
-    TSIGErrorContainer container = PyObject_New(s_TSIGError, &tsigerror_type);
+    TSIGErrorContainer container(PyObject_New(s_TSIGError, &tsigerror_type));
     container.set(new TSIGError(source));
     return (container.release());
 }

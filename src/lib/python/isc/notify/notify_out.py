@@ -21,9 +21,10 @@ import threading
 import time
 import errno
 from isc.datasrc import sqlite3_ds
+from isc.datasrc import DataSourceClient
 from isc.net import addr
 import isc
-from notify_out_messages import *
+from isc.log_messages.notify_out_messages import *
 
 logger = isc.log.Logger("notify_out")
 
@@ -31,7 +32,7 @@ logger = isc.log.Logger("notify_out")
 # we can't import we should not start anyway, and logging an error
 # is a bad idea since the logging system is most likely not
 # initialized yet. see trac ticket #1103
-from pydnspp import *
+from isc.dns import *
 
 ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
 _MAX_NOTIFY_NUM = 30
@@ -50,6 +51,24 @@ _BAD_QR = 4
 _BAD_REPLY_PACKET = 5
 
 SOCK_DATA = b's'
+
+# borrowed from xfrin.py @ #1298.  We should eventually unify it.
+def format_zone_str(zone_name, zone_class):
+    """Helper function to format a zone name and class as a string of
+       the form '<name>/<class>'.
+       Parameters:
+       zone_name (isc.dns.Name) name to format
+       zone_class (isc.dns.RRClass) class to format
+    """
+    return zone_name.to_text() + '/' + str(zone_class)
+
+class NotifyOutDataSourceError(Exception):
+    """An exception raised when data source error happens within notify out.
+
+    This exception is expected to be caught within the notify_out module.
+
+    """
+    pass
 
 class ZoneNotifyInfo:
     '''This class keeps track of notify-out information for one zone.'''
@@ -123,16 +142,20 @@ class NotifyOut:
         self._nonblock_event = threading.Event()
 
     def _init_notify_out(self, datasrc_file):
-        '''Get all the zones name and its notify target's address
+        '''Get all the zones name and its notify target's address.
+
         TODO, currently the zones are got by going through the zone
         table in database. There should be a better way to get them
         and also the setting 'also_notify', and there should be one
-        mechanism to cover the changed datasrc.'''
+        mechanism to cover the changed datasrc.
+
+        '''
         self._db_file = datasrc_file
         for zone_name, zone_class in sqlite3_ds.get_zones_info(datasrc_file):
             zone_id = (zone_name, zone_class)
             self._notify_infos[zone_id] = ZoneNotifyInfo(zone_name, zone_class)
-            slaves = self._get_notify_slaves_from_ns(zone_name)
+            slaves = self._get_notify_slaves_from_ns(Name(zone_name),
+                                                     RRClass(zone_class))
             for item in slaves:
                 self._notify_infos[zone_id].notify_slaves.append((item, 53))
 
@@ -234,7 +257,7 @@ class NotifyOut:
     def _get_rdata_data(self, rr):
         return rr[7].strip()
 
-    def _get_notify_slaves_from_ns(self, zone_name):
+    def _get_notify_slaves_from_ns(self, zone_name, zone_class):
         '''Get all NS records, then remove the primary master from ns rrset,
         then use the name in NS record rdata part to get the a/aaaa records
         in the same zone. the targets listed in a/aaaa record rdata are treated
@@ -242,28 +265,52 @@ class NotifyOut:
         Note: this is the simplest way to get the address of slaves,
         but not correct, it can't handle the delegation slaves, or the CNAME
         and DNAME logic.
-        TODO. the function should be provided by one library.'''
-        ns_rrset = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'NS', self._db_file)
-        soa_rrset = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file)
-        ns_rr_name = []
-        for ns in ns_rrset:
-            ns_rr_name.append(self._get_rdata_data(ns))
+        TODO. the function should be provided by one library.
 
-        if len(soa_rrset) > 0:
-            sname = (soa_rrset[0][sqlite3_ds.RR_RDATA_INDEX].split(' '))[0].strip() #TODO, bad hardcode to get rdata part
-            if sname in ns_rr_name:
-                ns_rr_name.remove(sname)
+        '''
+        # Prepare data source client.  This should eventually be moved to
+        # an earlier stage of initialization and also support multiple
+        # data sources.
+        datasrc_config = '{ "database_file": "' + self._db_file + '"}'
+        try:
+            result, finder = DataSourceClient('sqlite3',
+                                              datasrc_config).find_zone(
+                zone_name)
+        except isc.datasrc.Error as ex:
+            logger.error(NOTIFY_OUT_DATASRC_ACCESS_FAILURE, ex)
+            return []
+        if result is not DataSourceClient.SUCCESS:
+            logger.error(NOTIFY_OUT_DATASRC_ZONE_NOT_FOUND,
+                         format_zone_str(zone_name, zone_class))
+            return []
 
-        addr_list = []
-        for rr_name in ns_rr_name:
-            a_rrset = sqlite3_ds.get_zone_rrset(zone_name, rr_name, 'A', self._db_file)
-            aaaa_rrset = sqlite3_ds.get_zone_rrset(zone_name, rr_name, 'AAAA', self._db_file)
-            for rr in a_rrset:
-                addr_list.append(self._get_rdata_data(rr))
-            for rr in aaaa_rrset:
-                addr_list.append(self._get_rdata_data(rr))
+        result, ns_rrset = finder.find(zone_name, RRType.NS())
+        if result is not finder.SUCCESS or ns_rrset is None:
+            logger.warn(NOTIFY_OUT_ZONE_NO_NS,
+                        format_zone_str(zone_name, zone_class))
+            return []
+        result, soa_rrset = finder.find(zone_name, RRType.SOA())
+        if result is not finder.SUCCESS or soa_rrset is None or \
+                soa_rrset.get_rdata_count() != 1:
+            logger.warn(NOTIFY_OUT_ZONE_BAD_SOA,
+                        format_zone_str(zone_name, zone_class))
+            return []           # broken zone anyway, stop here.
+        soa_mname = Name(soa_rrset.get_rdata()[0].to_text().split(' ')[0])
 
-        return addr_list
+        addrs = []
+        for ns_rdata in ns_rrset.get_rdata():
+            ns_name = Name(ns_rdata.to_text())
+            if soa_mname == ns_name:
+                continue
+            result, rrset = finder.find(ns_name, RRType.A())
+            if result is finder.SUCCESS and rrset is not None:
+                addrs.extend([a.to_text() for a in rrset.get_rdata()])
+
+            result, rrset = finder.find(ns_name, RRType.AAAA())
+            if result is finder.SUCCESS and rrset is not None:
+                addrs.extend([aaaa.to_text() for aaaa in rrset.get_rdata()])
+
+        return addrs
 
     def _prepare_select_info(self):
         '''
@@ -404,8 +451,9 @@ class NotifyOut:
                         self._nonblock_event.set()
 
     def _send_notify_message_udp(self, zone_notify_info, addrinfo):
-        msg, qid = self._create_notify_message(zone_notify_info.zone_name,
-                                               zone_notify_info.zone_class)
+        msg, qid = self._create_notify_message(
+            Name(zone_notify_info.zone_name),
+            RRClass(zone_notify_info.zone_class))
         render = MessageRenderer()
         render.set_length_limit(512)
         msg.to_wire(render)
@@ -426,17 +474,6 @@ class NotifyOut:
 
         return True
 
-    def _create_rrset_from_db_record(self, record, zone_class):
-        '''Create one rrset from one record of datasource, if the schema of record is changed,
-        This function should be updated first. TODO, the function is copied from xfrout, there
-        should be library for creating one rrset. '''
-        rrtype_ = RRType(record[sqlite3_ds.RR_TYPE_INDEX])
-        rdata_ = Rdata(rrtype_, RRClass(zone_class), " ".join(record[sqlite3_ds.RR_RDATA_INDEX:]))
-        rrset_ = RRset(Name(record[sqlite3_ds.RR_NAME_INDEX]), RRClass(zone_class), \
-                       rrtype_, RRTTL( int(record[sqlite3_ds.RR_TTL_INDEX])))
-        rrset_.add_rdata(rdata_)
-        return rrset_
-
     def _create_notify_message(self, zone_name, zone_class):
         msg = Message(Message.RENDER)
         qid = random.randint(0, 0xFFFF)
@@ -444,13 +481,34 @@ class NotifyOut:
         msg.set_opcode(Opcode.NOTIFY())
         msg.set_rcode(Rcode.NOERROR())
         msg.set_header_flag(Message.HEADERFLAG_AA)
-        question = Question(Name(zone_name), RRClass(zone_class), RRType('SOA'))
-        msg.add_question(question)
-        # Add soa record to answer section
-        soa_record = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file)
-        rrset_soa = self._create_rrset_from_db_record(soa_record[0], zone_class)
-        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        msg.add_question(Question(zone_name, zone_class, RRType.SOA()))
+        msg.add_rrset(Message.SECTION_ANSWER, self._get_zone_soa(zone_name,
+                                                                 zone_class))
         return msg, qid
+
+    def _get_zone_soa(self, zone_name, zone_class):
+        # We create (and soon drop) the data source client here because
+        # clients should be thread specific.  We could let the main thread
+        # loop (_dispatcher) create and retain the client in order to avoid
+        # the overhead when we generalize the interface (and we may also
+        # revisit the design of notify_out more substantially anyway).
+        datasrc_config = '{ "database_file": "' + self._db_file + '"}'
+        result, finder = DataSourceClient('sqlite3',
+                                          datasrc_config).find_zone(zone_name)
+        if result is not DataSourceClient.SUCCESS:
+            raise NotifyOutDataSourceError('_get_zone_soa: Zone ' +
+                                           zone_name.to_text() + '/' +
+                                           zone_class.to_text() + ' not found')
+
+        result, soa_rrset = finder.find(zone_name, RRType.SOA())
+        if result is not finder.SUCCESS or soa_rrset is None or \
+                soa_rrset.get_rdata_count() != 1:
+            raise NotifyOutDataSourceError('_get_zone_soa: Zone ' +
+                                           zone_name.to_text() + '/' +
+                                           zone_class.to_text() +
+                                           ' is broken: no valid SOA found')
+
+        return soa_rrset
 
     def _handle_notify_reply(self, zone_notify_info, msg_data, from_addr):
         '''Parse the notify reply message.

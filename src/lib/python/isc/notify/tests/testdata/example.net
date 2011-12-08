@@ -1,0 +1,14 @@
+;; This is the source of a zone stored in test.sqlite3.  It's provided
+;; for reference purposes only.
+example.net.         1000  IN  SOA a.dns.example.net. mail.example.net. 1 1 1 1 1
+example.net.         1000  IN  NS  a.dns.example.net.
+example.net.         1000  IN  NS  b.dns.example.net.
+example.net.         1000  IN  NS  c.dns.example.net.
+a.dns.example.net.   1000  IN  A    1.1.1.1
+a.dns.example.net.   1000  IN  AAAA 2:2::2:2
+b.dns.example.net.   1000  IN  A    3.3.3.3
+b.dns.example.net.   1000  IN  AAAA 4:4::4:4
+b.dns.example.net.   1000  IN  AAAA 5:5::5:5
+c.dns.example.net.   1000  IN  A    6.6.6.6
+c.dns.example.net.   1000  IN  A    7.7.7.7
+c.dns.example.net.   1000  IN  AAAA 8:8::8:8

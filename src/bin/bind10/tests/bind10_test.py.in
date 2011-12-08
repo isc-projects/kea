@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from bind10 import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
+from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -21,6 +21,7 @@ from bind10 import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BAS
 import unittest
 import sys
 import os
+import copy
 import signal
 import socket
 from isc.net.addr import IPAddr
@@ -103,17 +104,11 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.msgq_socket_file, None)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
-        self.assertEqual(bob.processes, {})
-        self.assertEqual(bob.dead_processes, {})
+        self.assertEqual(bob.components, {})
         self.assertEqual(bob.runnable, False)
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
         self.assertEqual(bob.nocache, False)
-        self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_resolver, False)
-
-        self.assertEqual(bob.cfg_start_dhcp4, False)
-        self.assertEqual(bob.cfg_start_dhcp6, False)
 
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
@@ -121,25 +116,38 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.msgq_socket_file, "alt_socket_file")
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
-        self.assertEqual(bob.processes, {})
-        self.assertEqual(bob.dead_processes, {})
+        self.assertEqual(bob.components, {})
         self.assertEqual(bob.runnable, False)
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
         self.assertEqual(bob.nocache, False)
-        self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_resolver, False)
-        self.assertEqual(bob.cfg_start_dhcp4, False)
-        self.assertEqual(bob.cfg_start_dhcp6, False)
 
     def test_command_handler(self):
         class DummySession():
             def group_sendmsg(self, msg, group):
                 (self.msg, self.group) = (msg, group)
             def group_recvmsg(self, nonblock, seq): pass
+        class DummyModuleCCSession():
+            module_spec = isc.config.module_spec.ModuleSpec({
+                    "module_name": "Boss",
+                    "statistics": [
+                        {
+                            "item_name": "boot_time",
+                            "item_type": "string",
+                            "item_optional": False,
+                            "item_default": "1970-01-01T00:00:00Z",
+                            "item_title": "Boot time",
+                            "item_description": "A date time when bind10 process starts initially",
+                            "item_format": "date-time"
+                            }
+                        ]
+                    })
+            def get_module_spec(self):
+                return self.module_spec
         bob = BoB()
         bob.verbose = True
         bob.cc_session = DummySession()
+        bob.ccs = DummyModuleCCSession()
         # a bad command
         self.assertEqual(bob.command_handler(-1, None),
                          isc.config.ccsession.create_answer(1, "bad command"))
@@ -147,14 +155,22 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.command_handler("shutdown", None),
                          isc.config.ccsession.create_answer(0))
         self.assertFalse(bob.runnable)
+        # "getstats" command
+        self.assertEqual(bob.command_handler("getstats", None),
+                         isc.config.ccsession.create_answer(0,
+                            { "owner": "Boss",
+                              "data": {
+                                'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                            }}))
         # "sendstats" command
         self.assertEqual(bob.command_handler("sendstats", None),
                          isc.config.ccsession.create_answer(0))
         self.assertEqual(bob.cc_session.group, "Stats")
         self.assertEqual(bob.cc_session.msg,
                          isc.config.ccsession.create_command(
-                'set', { "stats_data": {
-                        'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                "set", { "owner": "Boss",
+                         "data": {
+                        "boot_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", _BASETIME)
                         }}))
         # "ping" command
         self.assertEqual(bob.command_handler("ping", None),
@@ -191,142 +207,192 @@ class MockBob(BoB):
         self.stats = False
         self.stats_httpd = False
         self.cmdctl = False
+        self.dhcp6 = False
+        self.dhcp4 = False
         self.c_channel_env = {}
-        self.processes = { }
+        self.components = { }
+        self.creator = False
 
-    def read_bind10_config(self):
+        class MockSockCreator(isc.bind10.component.Component):
+            def __init__(self, process, boss, kind, address=None, params=None):
+                isc.bind10.component.Component.__init__(self, process, boss,
+                                                        kind, 'SockCreator')
+                self._start_func = boss.start_creator
+
+        specials = isc.bind10.special_component.get_specials()
+        specials['sockcreator'] = MockSockCreator
+        self._component_configurator = \
+            isc.bind10.component.Configurator(self, specials)
+
+    def start_creator(self):
+        self.creator = True
+        procinfo = ProcessInfo('b10-sockcreator', ['/bin/false'])
+        procinfo.pid = 1
+        return procinfo
+
+    def _read_bind10_config(self):
         # Configuration options are set directly
         pass
 
-    def start_msgq(self, c_channel_env):
+    def start_msgq(self):
         self.msgq = True
-        self.processes[2] = ProcessInfo('b10-msgq', ['/bin/false'])
-        self.processes[2].pid = 2
-
-    def start_cfgmgr(self, c_channel_env):
-        self.cfgmgr = True
-        self.processes[3] = ProcessInfo('b10-cfgmgr', ['/bin/false'])
-        self.processes[3].pid = 3
+        procinfo = ProcessInfo('b10-msgq', ['/bin/false'])
+        procinfo.pid = 2
+        return procinfo
 
     def start_ccsession(self, c_channel_env):
+        # this is not a process, don't have to do anything with procinfo
         self.ccsession = True
-        self.processes[4] = ProcessInfo('b10-ccsession', ['/bin/false'])
-        self.processes[4].pid = 4
 
-    def start_auth(self, c_channel_env):
+    def start_cfgmgr(self):
+        self.cfgmgr = True
+        procinfo = ProcessInfo('b10-cfgmgr', ['/bin/false'])
+        procinfo.pid = 3
+        return procinfo
+
+    def start_auth(self):
         self.auth = True
-        self.processes[5] = ProcessInfo('b10-auth', ['/bin/false'])
-        self.processes[5].pid = 5
+        procinfo = ProcessInfo('b10-auth', ['/bin/false'])
+        procinfo.pid = 5
+        return procinfo
 
-    def start_resolver(self, c_channel_env):
+    def start_resolver(self):
         self.resolver = True
-        self.processes[6] = ProcessInfo('b10-resolver', ['/bin/false'])
-        self.processes[6].pid = 6
+        procinfo = ProcessInfo('b10-resolver', ['/bin/false'])
+        procinfo.pid = 6
+        return procinfo
 
-    def start_xfrout(self, c_channel_env):
+    def start_simple(self, name):
+        procmap = { 'b10-zonemgr': self.start_zonemgr,
+                    'b10-stats': self.start_stats,
+                    'b10-stats-httpd': self.start_stats_httpd,
+                    'b10-cmdctl': self.start_cmdctl,
+                    'b10-dhcp6': self.start_dhcp6,
+                    'b10-dhcp4': self.start_dhcp4,
+                    'b10-xfrin': self.start_xfrin,
+                    'b10-xfrout': self.start_xfrout }
+        return procmap[name]()
+
+    def start_xfrout(self):
         self.xfrout = True
-        self.processes[7] = ProcessInfo('b10-xfrout', ['/bin/false'])
-        self.processes[7].pid = 7
+        procinfo = ProcessInfo('b10-xfrout', ['/bin/false'])
+        procinfo.pid = 7
+        return procinfo
 
-    def start_xfrin(self, c_channel_env):
+    def start_xfrin(self):
         self.xfrin = True
-        self.processes[8] = ProcessInfo('b10-xfrin', ['/bin/false'])
-        self.processes[8].pid = 8
+        procinfo = ProcessInfo('b10-xfrin', ['/bin/false'])
+        procinfo.pid = 8
+        return procinfo
 
-    def start_zonemgr(self, c_channel_env):
+    def start_zonemgr(self):
         self.zonemgr = True
-        self.processes[9] = ProcessInfo('b10-zonemgr', ['/bin/false'])
-        self.processes[9].pid = 9
+        procinfo = ProcessInfo('b10-zonemgr', ['/bin/false'])
+        procinfo.pid = 9
+        return procinfo
 
-    def start_stats(self, c_channel_env):
+    def start_stats(self):
         self.stats = True
-        self.processes[10] = ProcessInfo('b10-stats', ['/bin/false'])
-        self.processes[10].pid = 10
+        procinfo = ProcessInfo('b10-stats', ['/bin/false'])
+        procinfo.pid = 10
+        return procinfo
 
-    def start_stats_httpd(self, c_channel_env):
+    def start_stats_httpd(self):
         self.stats_httpd = True
-        self.processes[11] = ProcessInfo('b10-stats-httpd', ['/bin/false'])
-        self.processes[11].pid = 11
+        procinfo = ProcessInfo('b10-stats-httpd', ['/bin/false'])
+        procinfo.pid = 11
+        return procinfo
 
-    def start_cmdctl(self, c_channel_env):
+    def start_cmdctl(self):
         self.cmdctl = True
-        self.processes[12] = ProcessInfo('b10-cmdctl', ['/bin/false'])
-        self.processes[12].pid = 12
+        procinfo = ProcessInfo('b10-cmdctl', ['/bin/false'])
+        procinfo.pid = 12
+        return procinfo
 
-    def start_dhcp6(self, c_channel_env):
+    def start_dhcp6(self):
         self.dhcp6 = True
-        self.processes[13] = ProcessInfo('b10-dhcp6', ['/bin/false'])
-        self.processes[13]
+        procinfo = ProcessInfo('b10-dhcp6', ['/bin/false'])
+        procinfo.pid = 13
+        return procinfo
 
-    def start_dhcp4(self, c_channel_env):
+    def start_dhcp4(self):
         self.dhcp4 = True
-        self.processes[14] = ProcessInfo('b10-dhcp4', ['/bin/false'])
-        self.processes[14]
+        procinfo = ProcessInfo('b10-dhcp4', ['/bin/false'])
+        procinfo.pid = 14
+        return procinfo
 
-    # We don't really use all of these stop_ methods. But it might turn out
-    # someone would add some stop_ method to BoB and we want that one overriden
-    # in case he forgets to update the tests.
+    def stop_process(self, process, recipient):
+        procmap = { 'b10-auth': self.stop_auth,
+                    'b10-resolver': self.stop_resolver,
+                    'b10-xfrout': self.stop_xfrout,
+                    'b10-xfrin': self.stop_xfrin,
+                    'b10-zonemgr': self.stop_zonemgr,
+                    'b10-stats': self.stop_stats,
+                    'b10-stats-httpd': self.stop_stats_httpd,
+                    'b10-cmdctl': self.stop_cmdctl }
+        procmap[process]()
+
+    # Some functions to pretend we stop processes, use by stop_process
     def stop_msgq(self):
         if self.msgq:
-            del self.processes[2]
+            del self.components[2]
         self.msgq = False
 
     def stop_cfgmgr(self):
         if self.cfgmgr:
-            del self.processes[3]
+            del self.components[3]
         self.cfgmgr = False
-
-    def stop_ccsession(self):
-        if self.ccssession:
-            del self.processes[4]
-        self.ccsession = False
 
     def stop_auth(self):
         if self.auth:
-            del self.processes[5]
+            del self.components[5]
         self.auth = False
 
     def stop_resolver(self):
         if self.resolver:
-            del self.processes[6]
+            del self.components[6]
         self.resolver = False
 
     def stop_xfrout(self):
         if self.xfrout:
-            del self.processes[7]
+            del self.components[7]
         self.xfrout = False
 
     def stop_xfrin(self):
         if self.xfrin:
-            del self.processes[8]
+            del self.components[8]
         self.xfrin = False
 
     def stop_zonemgr(self):
         if self.zonemgr:
-            del self.processes[9]
+            del self.components[9]
         self.zonemgr = False
 
     def stop_stats(self):
         if self.stats:
-            del self.processes[10]
+            del self.components[10]
         self.stats = False
 
     def stop_stats_httpd(self):
         if self.stats_httpd:
-            del self.processes[11]
+            del self.components[11]
         self.stats_httpd = False
 
     def stop_cmdctl(self):
         if self.cmdctl:
-            del self.processes[12]
+            del self.components[12]
         self.cmdctl = False
 
 class TestStartStopProcessesBob(unittest.TestCase):
     """
-    Check that the start_all_processes method starts the right combination
-    of processes and that the right processes are started and stopped
+    Check that the start_all_components method starts the right combination
+    of components and that the right components are started and stopped
     according to changes in configuration.
     """
+    def check_environment_unchanged(self):
+        # Check whether the environment has not been changed
+        self.assertEqual(original_os_environ, os.environ)
+
     def check_started(self, bob, core, auth, resolver):
         """
         Check that the right sets of services are started. The ones that
@@ -337,6 +403,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.msgq, core)
         self.assertEqual(bob.cfgmgr, core)
         self.assertEqual(bob.ccsession, core)
+        self.assertEqual(bob.creator, core)
         self.assertEqual(bob.auth, auth)
         self.assertEqual(bob.resolver, resolver)
         self.assertEqual(bob.xfrout, auth)
@@ -345,6 +412,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.stats, core)
         self.assertEqual(bob.stats_httpd, core)
         self.assertEqual(bob.cmdctl, core)
+        self.check_environment_unchanged()
 
     def check_preconditions(self, bob):
         self.check_started(bob, False, False, False)
@@ -352,9 +420,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
     def check_started_none(self, bob):
         """
         Check that the situation is according to configuration where no servers
-        should be started. Some processes still need to be running.
+        should be started. Some components still need to be running.
         """
         self.check_started(bob, True, False, False)
+        self.check_environment_unchanged()
 
     def check_started_both(self, bob):
         """
@@ -362,96 +431,86 @@ class TestStartStopProcessesBob(unittest.TestCase):
         (auth and resolver) are enabled.
         """
         self.check_started(bob, True, True, True)
+        self.check_environment_unchanged()
 
     def check_started_auth(self, bob):
         """
-        Check the set of processes needed to run auth only is started.
+        Check the set of components needed to run auth only is started.
         """
         self.check_started(bob, True, True, False)
+        self.check_environment_unchanged()
 
     def check_started_resolver(self, bob):
         """
-        Check the set of processes needed to run resolver only is started.
+        Check the set of components needed to run resolver only is started.
         """
         self.check_started(bob, True, False, True)
+        self.check_environment_unchanged()
 
     def check_started_dhcp(self, bob, v4, v6):
         """
         Check if proper combinations of DHCPv4 and DHCpv6 can be started
         """
-        v4found = 0
-        v6found = 0
+        self.assertEqual(v4, bob.dhcp4)
+        self.assertEqual(v6, bob.dhcp6)
+        self.check_environment_unchanged()
 
-        for pid in bob.processes:
-            if (bob.processes[pid].name == "b10-dhcp4"):
-                v4found += 1
-            if (bob.processes[pid].name == "b10-dhcp6"):
-                v6found += 1
+    def construct_config(self, start_auth, start_resolver):
+        # The things that are common, not turned on an off
+        config = {}
+        config['b10-stats'] = { 'kind': 'dispensable', 'address': 'Stats' }
+        config['b10-stats-httpd'] = { 'kind': 'dispensable',
+                                      'address': 'StatsHttpd' }
+        config['b10-cmdctl'] = { 'kind': 'needed', 'special': 'cmdctl' }
+        if start_auth:
+            config['b10-auth'] = { 'kind': 'needed', 'special': 'auth' }
+            config['b10-xfrout'] = { 'kind': 'dispensable',
+                                     'address': 'Xfrout' }
+            config['b10-xfrin'] = { 'kind': 'dispensable',
+                                    'address': 'Xfrin' }
+            config['b10-zonemgr'] = { 'kind': 'dispensable',
+                                      'address': 'Zonemgr' }
+        if start_resolver:
+            config['b10-resolver'] = { 'kind': 'needed',
+                                       'special': 'resolver' }
+        return {'components': config}
 
-        # there should be exactly one DHCPv4 daemon (if v4==True)
-        # there should be exactly one DHCPv6 daemon (if v6==True)
-        self.assertEqual(v4==True, v4found==1)
-        self.assertEqual(v6==True, v6found==1)
+    def config_start_init(self, start_auth, start_resolver):
+        """
+        Test the configuration is loaded at the startup.
+        """
+        bob = MockBob()
+        config = self.construct_config(start_auth, start_resolver)
+        class CC:
+            def get_full_config(self):
+                return config
+        # Provide the fake CC with data
+        bob.ccs = CC()
+        # And make sure it's not overwritten
+        def start_ccsession():
+            bob.ccsession = True
+        bob.start_ccsession = lambda _: start_ccsession()
+        # We need to return the original _read_bind10_config
+        bob._read_bind10_config = lambda: BoB._read_bind10_config(bob)
+        bob.start_all_components()
+        self.check_started(bob, True, start_auth, start_resolver)
+        self.check_environment_unchanged()
 
-    # Checks the processes started when starting neither auth nor resolver
-    # is specified.
     def test_start_none(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
+        self.config_start_init(False, False)
 
-        # Start processes and check what was started
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = False
-
-        bob.start_all_processes()
-        self.check_started_none(bob)
-
-    # Checks the processes started when starting only the auth process
-    def test_start_auth(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
-
-        # Start processes and check what was started
-        bob.cfg_start_auth = True
-        bob.cfg_start_resolver = False
-
-        bob.start_all_processes()
-
-        self.check_started_auth(bob)
-
-    # Checks the processes started when starting only the resolver process
     def test_start_resolver(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
+        self.config_start_init(False, True)
 
-        # Start processes and check what was started
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = True
+    def test_start_auth(self):
+        self.config_start_init(True, False)
 
-        bob.start_all_processes()
-
-        self.check_started_resolver(bob)
-
-    # Checks the processes started when starting both auth and resolver process
     def test_start_both(self):
-        # Create BoB and ensure correct initialization
-        bob = MockBob()
-        self.check_preconditions(bob)
-
-        # Start processes and check what was started
-        bob.cfg_start_auth = True
-        bob.cfg_start_resolver = True
-
-        bob.start_all_processes()
-
-        self.check_started_both(bob)
+        self.config_start_init(True, True)
 
     def test_config_start(self):
         """
-        Test that the configuration starts and stops processes according
+        Test that the configuration starts and stops components according
         to configuration changes.
         """
 
@@ -459,17 +518,13 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob = MockBob()
         self.check_preconditions(bob)
 
-        # Start processes (nothing much should be started, as in
-        # test_start_none)
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = False
-
-        bob.start_all_processes()
+        bob.start_all_components()
         bob.runnable = True
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Enable both at once
-        bob.config_handler({'start_auth': True, 'start_resolver': True})
+        bob.config_handler(self.construct_config(True, True))
         self.check_started_both(bob)
 
         # Not touched by empty change
@@ -477,11 +532,11 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_started_both(bob)
 
         # Not touched by change to the same configuration
-        bob.config_handler({'start_auth': True, 'start_resolver': True})
+        bob.config_handler(self.construct_config(True, True))
         self.check_started_both(bob)
 
         # Turn them both off again
-        bob.config_handler({'start_auth': False, 'start_resolver': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Not touched by empty change
@@ -489,47 +544,45 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_started_none(bob)
 
         # Not touched by change to the same configuration
-        bob.config_handler({'start_auth': False, 'start_resolver': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Start and stop auth separately
-        bob.config_handler({'start_auth': True})
+        bob.config_handler(self.construct_config(True, False))
         self.check_started_auth(bob)
 
-        bob.config_handler({'start_auth': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Start and stop resolver separately
-        bob.config_handler({'start_resolver': True})
+        bob.config_handler(self.construct_config(False, True))
         self.check_started_resolver(bob)
 
-        bob.config_handler({'start_resolver': False})
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_none(bob)
 
         # Alternate
-        bob.config_handler({'start_auth': True})
+        bob.config_handler(self.construct_config(True, False))
         self.check_started_auth(bob)
 
-        bob.config_handler({'start_auth': False, 'start_resolver': True})
+        bob.config_handler(self.construct_config(False, True))
         self.check_started_resolver(bob)
 
-        bob.config_handler({'start_auth': True, 'start_resolver': False})
+        bob.config_handler(self.construct_config(True, False))
         self.check_started_auth(bob)
 
     def test_config_start_once(self):
         """
-        Tests that a process is started only once.
+        Tests that a component is started only once.
         """
         # Create BoB and ensure correct initialization
         bob = MockBob()
         self.check_preconditions(bob)
 
-        # Start processes (both)
-        bob.cfg_start_auth = True
-        bob.cfg_start_resolver = True
+        bob.start_all_components()
 
-        bob.start_all_processes()
         bob.runnable = True
+        bob.config_handler(self.construct_config(True, True))
         self.check_started_both(bob)
 
         bob.start_auth = lambda: self.fail("Started auth again")
@@ -539,12 +592,11 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.start_resolver = lambda: self.fail("Started resolver again")
 
         # Send again we want to start them. Should not do it, as they are.
-        bob.config_handler({'start_auth': True})
-        bob.config_handler({'start_resolver': True})
+        bob.config_handler(self.construct_config(True, True))
 
     def test_config_not_started_early(self):
         """
-        Test that processes are not started by the config handler before
+        Test that components are not started by the config handler before
         startup.
         """
         bob = MockBob()
@@ -558,27 +610,29 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
         bob.config_handler({'start_auth': True, 'start_resolver': True})
 
-    # Checks that DHCP (v4 and v6) processes are started when expected
+    # Checks that DHCP (v4 and v6) components are started when expected
     def test_start_dhcp(self):
 
         # Create BoB and ensure correct initialization
         bob = MockBob()
         self.check_preconditions(bob)
 
-        # don't care about DNS stuff
-        bob.cfg_start_auth = False
-        bob.cfg_start_resolver = False
-
-        # v4 and v6 disabled
-        bob.cfg_start_dhcp6 = False
-        bob.cfg_start_dhcp4 = False
-        bob.start_all_processes()
+        bob.start_all_components()
+        bob.config_handler(self.construct_config(False, False))
         self.check_started_dhcp(bob, False, False)
 
+    def test_start_dhcp_v6only(self):
+        # Create BoB and ensure correct initialization
+        bob = MockBob()
+        self.check_preconditions(bob)
         # v6 only enabled
-        bob.cfg_start_dhcp6 = True
-        bob.cfg_start_dhcp4 = False
-        bob.start_all_processes()
+        bob.start_all_components()
+        bob.runnable = True
+        bob._BoB_started = True
+        config = self.construct_config(False, False)
+        config['components']['b10-dhcp6'] = { 'kind': 'needed',
+                                              'address': 'Dhcp6' }
+        bob.config_handler(config)
         self.check_started_dhcp(bob, False, True)
 
         # uncomment when dhcpv4 becomes implemented
@@ -592,6 +646,12 @@ class TestStartStopProcessesBob(unittest.TestCase):
         #bob.cfg_start_dhcp4 = True
         #self.check_started_dhcp(bob, True, True)
 
+class MockComponent:
+    def __init__(self, name, pid):
+        self.name = lambda: name
+        self.pid = lambda: pid
+
+
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
         """
@@ -601,7 +661,7 @@ class TestBossCmd(unittest.TestCase):
         answer = bob.command_handler("ping", None)
         self.assertEqual(answer, {'result': [0, 'pong']})
 
-    def test_show_processes(self):
+    def test_show_processes_empty(self):
         """
         Confirm getting a list of processes works.
         """
@@ -609,23 +669,16 @@ class TestBossCmd(unittest.TestCase):
         answer = bob.command_handler("show_processes", None)
         self.assertEqual(answer, {'result': [0, []]})
 
-    def test_show_processes_started(self):
+    def test_show_processes(self):
         """
         Confirm getting a list of processes works.
         """
         bob = MockBob()
-        bob.start_all_processes()
+        bob.register_process(1, MockComponent('first', 1))
+        bob.register_process(2, MockComponent('second', 2))
         answer = bob.command_handler("show_processes", None)
-        processes = [[2, 'b10-msgq'],
-                     [3, 'b10-cfgmgr'], 
-                     [4, 'b10-ccsession'],
-                     [5, 'b10-auth'],
-                     [7, 'b10-xfrout'],
-                     [8, 'b10-xfrin'], 
-                     [9, 'b10-zonemgr'],
-                     [10, 'b10-stats'], 
-                     [11, 'b10-stats-httpd'], 
-                     [12, 'b10-cmdctl']]
+        processes = [[1, 'first'],
+                     [2, 'second']]
         self.assertEqual(answer, {'result': [0, processes]})
 
 class TestParseArgs(unittest.TestCase):
@@ -679,15 +732,6 @@ class TestParseArgs(unittest.TestCase):
         options = parse_args(['--cmdctl-port=1234'], TestOptParser)
         self.assertEqual(1234, options.cmdctl_port)
 
-    def test_brittle(self):
-        """
-        Test we can use the "brittle" flag.
-        """
-        options = parse_args([], TestOptParser)
-        self.assertFalse(options.brittle)
-        options = parse_args(['--brittle'], TestOptParser)
-        self.assertTrue(options.brittle)
-
 class TestPIDFile(unittest.TestCase):
     def setUp(self):
         self.pid_file = '@builddir@' + os.sep + 'bind10.pid'
@@ -735,35 +779,160 @@ class TestPIDFile(unittest.TestCase):
         self.assertRaises(IOError, dump_pid,
                           'nonexistent_dir' + os.sep + 'bind10.pid')
 
-class TestBrittle(unittest.TestCase):
-    def test_brittle_disabled(self):
+class TestBossComponents(unittest.TestCase):
+    """
+    Test the boss propagates component configuration properly to the
+    component configurator and acts sane.
+    """
+    def setUp(self):
+        self.__param = None
+        self.__called = False
+        self.__compconfig = {
+            'comp': {
+                'kind': 'needed',
+                'process': 'cat'
+            }
+        }
+
+    def __unary_hook(self, param):
+        """
+        A hook function that stores the parameter for later examination.
+        """
+        self.__param = param
+
+    def __nullary_hook(self):
+        """
+        A hook function that notes down it was called.
+        """
+        self.__called = True
+
+    def __check_core(self, config):
+        """
+        A function checking that the config contains parts for the valid
+        core component configuration.
+        """
+        self.assertIsNotNone(config)
+        for component in ['sockcreator', 'msgq', 'cfgmgr']:
+            self.assertTrue(component in config)
+            self.assertEqual(component, config[component]['special'])
+            self.assertEqual('core', config[component]['kind'])
+
+    def __check_extended(self, config):
+        """
+        This checks that the config contains the core and one more component.
+        """
+        self.__check_core(config)
+        self.assertTrue('comp' in config)
+        self.assertEqual('cat', config['comp']['process'])
+        self.assertEqual('needed', config['comp']['kind'])
+        self.assertEqual(4, len(config))
+
+    def test_correct_run(self):
+        """
+        Test the situation when we run in usual scenario, nothing fails,
+        we just start, reconfigure and then stop peacefully.
+        """
         bob = MockBob()
-        bob.start_all_processes()
+        # Start it
+        orig = bob._component_configurator.startup
+        bob._component_configurator.startup = self.__unary_hook
+        bob.start_all_components()
+        bob._component_configurator.startup = orig
+        self.__check_core(self.__param)
+        self.assertEqual(3, len(self.__param))
+
+        # Reconfigure it
+        self.__param = None
+        orig = bob._component_configurator.reconfigure
+        bob._component_configurator.reconfigure = self.__unary_hook
+        # Otherwise it does not work
         bob.runnable = True
+        bob.config_handler({'components': self.__compconfig})
+        self.__check_extended(self.__param)
+        currconfig = self.__param
+        # If we reconfigure it, but it does not contain the components part,
+        # nothing is called
+        bob.config_handler({})
+        self.assertEqual(self.__param, currconfig)
+        self.__param = None
+        bob._component_configurator.reconfigure = orig
+        # Check a configuration that messes up the core components is rejected.
+        compconf = dict(self.__compconfig)
+        compconf['msgq'] = { 'process': 'echo' }
+        result = bob.config_handler({'components': compconf})
+        # Check it rejected it
+        self.assertEqual(1, result['result'][0])
 
-        bob.reap_children()
-        self.assertTrue(bob.runnable)
+        # We can't call shutdown, that one relies on the stuff in main
+        # We check somewhere else that the shutdown is actually called
+        # from there (the test_kills).
 
-    def simulated_exit(self):
-        ret_val = self.exit_info
-        self.exit_info = (0, 0)
-        return ret_val
-
-    def test_brittle_enabled(self):
+    def test_kills(self):
+        """
+        Test that the boss kills components which don't want to stop.
+        """
         bob = MockBob()
-        bob.start_all_processes()
-        bob.runnable = True
+        killed = []
+        class ImmortalComponent:
+            """
+            An immortal component. It does not stop when it is told so
+            (anyway it is not told so). It does not die if it is killed
+            the first time. It dies only when killed forcefully.
+            """
+            def kill(self, forceful=False):
+                killed.append(forceful)
+                if forceful:
+                    bob.components = {}
+            def pid(self):
+                return 1
+            def name(self):
+                return "Immortal"
+        bob.components = {}
+        bob.register_process(1, ImmortalComponent())
 
-        bob.brittle = True
-        self.exit_info = (5, 0)
-        bob._get_process_exit_status = self.simulated_exit
+        # While at it, we check the configurator shutdown is actually called
+        orig = bob._component_configurator.shutdown
+        bob._component_configurator.shutdown = self.__nullary_hook
+        self.__called = False
 
-        old_stdout = sys.stdout
-        sys.stdout = open("/dev/null", "w")
-        bob.reap_children()
-        sys.stdout = old_stdout
+        bob.shutdown()
+
+        self.assertEqual([False, True], killed)
+        self.assertTrue(self.__called)
+
+        bob._component_configurator.shutdown = orig
+
+    def test_component_shutdown(self):
+        """
+        Test the component_shutdown sets all variables accordingly.
+        """
+        bob = MockBob()
+        self.assertRaises(Exception, bob.component_shutdown, 1)
+        self.assertEqual(1, bob.exitcode)
+        bob._BoB__started = True
+        bob.component_shutdown(2)
+        self.assertEqual(2, bob.exitcode)
         self.assertFalse(bob.runnable)
 
+    def test_init_config(self):
+        """
+        Test initial configuration is loaded.
+        """
+        bob = MockBob()
+        # Start it
+        bob._component_configurator.reconfigure = self.__unary_hook
+        # We need to return the original read_bind10_config
+        bob._read_bind10_config = lambda: BoB._read_bind10_config(bob)
+        # And provide a session to read the data from
+        class CC:
+            pass
+        bob.ccs = CC()
+        bob.ccs.get_full_config = lambda: {'components': self.__compconfig}
+        bob.start_all_components()
+        self.__check_extended(self.__param)
+
 if __name__ == '__main__':
+    # store os.environ for test_unchanged_environment
+    original_os_environ = copy.deepcopy(os.environ)
     isc.log.resetUnitTestRootLogger()
     unittest.main()

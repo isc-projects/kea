@@ -22,7 +22,7 @@ import isc.cc
 import threading
 import struct
 import signal
-from isc.datasrc import sqlite3_ds
+from isc.datasrc import DataSourceClient, ZoneFinder, ZoneJournalReader
 from socketserver import *
 import os
 from isc.config.ccsession import *
@@ -35,10 +35,11 @@ import errno
 from optparse import OptionParser, OptionValueError
 from isc.util import socketserver_mixin
 
-from xfrout_messages import *
+from isc.log_messages.xfrout_messages import *
 
 isc.log.init("b10-xfrout")
 logger = isc.log.Logger("xfrout")
+DBG_XFROUT_TRACE = logger.DBGLVL_TRACE_BASIC
 
 try:
     from libutil_io_python import *
@@ -46,12 +47,29 @@ try:
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
     # must keep running, so we warn about it and move forward.
-    log.error(XFROUT_IMPORT, str(e))
+    logger.error(XFROUT_IMPORT, str(e))
 
-from isc.acl.acl import ACCEPT, REJECT, DROP
+from isc.acl.acl import ACCEPT, REJECT, DROP, LoaderError
 from isc.acl.dns import REQUEST_LOADER
 
 isc.util.process.rename()
+
+class XfroutConfigError(Exception):
+    """An exception indicating an error in updating xfrout configuration.
+
+    This exception is raised when the xfrout process encouters an error in
+    handling configuration updates.  Not all syntax error can be caught
+    at the module-CC layer, so xfrout needs to (explicitly or implicitly)
+    validate the given configuration data itself.  When it finds an error
+    it raises this exception (either directly or by converting an exception
+    from other modules) as a unified error in configuration.
+    """
+    pass
+
+class XfroutSessionError(Exception):
+    '''An exception raised for some unexpected events during an xfrout session.
+    '''
+    pass
 
 def init_paths():
     global SPECFILE_PATH
@@ -73,19 +91,47 @@ def init_paths():
         if "BIND10_XFROUT_SOCKET_FILE" in os.environ:
             UNIX_SOCKET_FILE = os.environ["BIND10_XFROUT_SOCKET_FILE"]
         else:
-            UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
+            UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/@PACKAGE_NAME@/auth_xfrout_conn"
 
 init_paths()
 
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
-MAX_TRANSFERS_OUT = 10
 VERBOSE_MODE = False
-# tsig sign every N axfr packets.
-TSIG_SIGN_EVERY_NTH = 96
+XFROUT_DNS_HEADER_SIZE = 12     # protocol constant
+XFROUT_MAX_MESSAGE_SIZE = 65535 # ditto
 
-XFROUT_MAX_MESSAGE_SIZE = 65535
+# borrowed from xfrin.py @ #1298.  We should eventually unify it.
+def format_zone_str(zone_name, zone_class):
+    """Helper function to format a zone name and class as a string of
+       the form '<name>/<class>'.
+       Parameters:
+       zone_name (isc.dns.Name) name to format
+       zone_class (isc.dns.RRClass) class to format
+    """
+    return zone_name.to_text(True) + '/' + str(zone_class)
 
+# borrowed from xfrin.py @ #1298.
+def format_addrinfo(addrinfo):
+    """Helper function to format the addrinfo as a string of the form
+       <addr>:<port> (for IPv4) or [<addr>]:port (for IPv6). For unix domain
+       sockets, and unknown address families, it returns a basic string
+       conversion of the third element of the passed tuple.
+       Parameters:
+       addrinfo: a 3-tuple consisting of address family, socket type, and,
+                 depending on the family, either a 2-tuple with the address
+                 and port, or a filename
+    """
+    try:
+        if addrinfo[0] == socket.AF_INET:
+            return str(addrinfo[2][0]) + ":" + str(addrinfo[2][1])
+        elif addrinfo[0] == socket.AF_INET6:
+            return "[" + str(addrinfo[2][0]) + "]:" + str(addrinfo[2][1])
+        else:
+            return str(addrinfo[2])
+    except IndexError:
+        raise TypeError("addrinfo argument to format_addrinfo() does not "
+                        "appear to be consisting of (family, socktype, (addr, port))")
 
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
@@ -93,10 +139,15 @@ def get_rrset_len(rrset):
     rrset.to_wire(bytes)
     return len(bytes)
 
+def get_soa_serial(soa_rdata):
+    '''Extract the serial field of an SOA RDATA and returns it as an intger.
+    (borrowed from xfrin)
+    '''
+    return int(soa_rdata.to_text().split()[2])
 
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
-                 acl):
+                 default_acl, zone_config, client_class=DataSourceClient):
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
@@ -104,22 +155,53 @@ class XfroutSession():
         self._tsig_ctx = None
         self._tsig_len = 0
         self._remote = remote
-        self._acl = acl
-        self.handle()
+        self._request_type = None
+        self._request_typestr = None
+        self._acl = default_acl
+        self._zone_config = zone_config
+        self.ClientClass = client_class # parameterize this for testing
+        self._soa = None # will be set in _xfrout_setup or in tests
+        self._jnl_reader = None # will be set to a reader for IXFR
+        self._handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
         return TSIGContext(tsig_record.get_name(), tsig_record.get_rdata().get_algorithm(),
                            tsig_key_ring)
 
-    def handle(self):
-        ''' Handle a xfrout query, send xfrout response '''
-        try:
-            self.dns_xfrout_start(self._sock_fd, self._request_data)
-            #TODO, avoid catching all exceptions
-        except Exception as e:
-            logger.error(XFROUT_HANDLE_QUERY_ERROR, e)
-            pass
+    def _handle(self):
+        ''' Handle a xfrout query, send xfrout response(s).
 
+        This is separated from the constructor so that we can override
+        it from tests.
+
+        '''
+        # Check the xfrout quota.  We do both increase/decrease in this
+        # method so it's clear we always release it once acuired.
+        quota_ok = self._server.increase_transfers_counter()
+        ex = None
+        try:
+            self.dns_xfrout_start(self._sock_fd, self._request_data, quota_ok)
+        except Exception as e:
+            # To avoid resource leak we need catch all possible exceptions
+            # We log it later to exclude the case where even logger raises
+            # an exception.
+            ex = e
+
+        # Release any critical resources
+        if quota_ok:
+            self._server.decrease_transfers_counter()
+        self._close_socket()
+
+        if ex is not None:
+            logger.error(XFROUT_HANDLE_QUERY_ERROR, ex)
+
+    def _close_socket(self):
+        '''Simply close the socket via the given FD.
+
+        This is a dedicated subroutine of handle() and is sepsarated from it
+        for the convenience of tests.
+
+        '''
         os.close(self._sock_fd)
 
     def _check_request_tsig(self, msg, request_data):
@@ -127,7 +209,8 @@ class XfroutSession():
         tsig_record = msg.get_tsig_record()
         if tsig_record is not None:
             self._tsig_len = tsig_record.get_length()
-            self._tsig_ctx = self.create_tsig_ctx(tsig_record, self._tsig_key_ring)
+            self._tsig_ctx = self.create_tsig_ctx(tsig_record,
+                                                  self._tsig_key_ring)
             tsig_error = self._tsig_ctx.verify(tsig_record, request_data)
             if tsig_error != TSIGError.NOERROR:
                 return Rcode.NOTAUTH()
@@ -140,40 +223,71 @@ class XfroutSession():
         try:
             msg = Message(Message.PARSE)
             Message.from_wire(msg, mdata)
-
-            # TSIG related checks
-            rcode = self._check_request_tsig(msg, mdata)
-
-            if rcode == Rcode.NOERROR():
-                # ACL checks
-                acl_result = self._acl.execute(
-                    isc.acl.dns.RequestContext(self._remote))
-                if acl_result == DROP:
-                    logger.info(XFROUT_QUERY_DROPPED,
-                                self._get_query_zone_name(msg),
-                                self._get_query_zone_class(msg),
-                                self._remote[0], self._remote[1])
-                    return None, None
-                elif acl_result == REJECT:
-                    logger.info(XFROUT_QUERY_REJECTED,
-                                self._get_query_zone_name(msg),
-                                self._get_query_zone_class(msg),
-                                self._remote[0], self._remote[1])
-                    return Rcode.REFUSED(), msg
-
-        except Exception as err:
+        except Exception as err: # Exception is too broad
             logger.error(XFROUT_PARSE_QUERY_ERROR, err)
             return Rcode.FORMERR(), None
 
+        # TSIG related checks
+        rcode = self._check_request_tsig(msg, mdata)
+        if rcode != Rcode.NOERROR():
+            return rcode, msg
+
+        # Make sure the question is valid.  This should be ensured by
+        # the auth server, but since it's far from xfrout itself, we check
+        # it by ourselves.  A viloation would be an internal bug, so we
+        # raise and stop here rather than returning a FORMERR or SERVFAIL.
+        if msg.get_rr_count(Message.SECTION_QUESTION) != 1:
+            raise RuntimeError('Invalid number of question for XFR: ' +
+                               str(msg.get_rr_count(Message.SECTION_QUESTION)))
+        question = msg.get_question()[0]
+
+        # Identify the request type
+        self._request_type = question.get_type()
+        if self._request_type == RRType.AXFR():
+            self._request_typestr = 'AXFR'
+        elif self._request_type == RRType.IXFR():
+            self._request_typestr = 'IXFR'
+        else:
+            # Likewise, this should be impossible.
+            raise RuntimeError('Unexpected XFR type: ' +
+                               str(self._request_type))
+
+        # ACL checks
+        zone_name = question.get_name()
+        zone_class = question.get_class()
+        acl = self._get_transfer_acl(zone_name, zone_class)
+        acl_result = acl.execute(
+            isc.acl.dns.RequestContext(self._remote[2], msg.get_tsig_record()))
+        if acl_result == DROP:
+            logger.debug(DBG_XFROUT_TRACE, XFROUT_QUERY_DROPPED,
+                         self._request_type, format_addrinfo(self._remote),
+                         format_zone_str(zone_name, zone_class))
+            return None, None
+        elif acl_result == REJECT:
+            logger.debug(DBG_XFROUT_TRACE, XFROUT_QUERY_REJECTED,
+                         self._request_type, format_addrinfo(self._remote),
+                         format_zone_str(zone_name, zone_class))
+            return Rcode.REFUSED(), msg
+
         return rcode, msg
 
-    def _get_query_zone_name(self, msg):
-        question = msg.get_question()[0]
-        return question.get_name().to_text()
+    def _get_transfer_acl(self, zone_name, zone_class):
+        '''Return the ACL that should be applied for a given zone.
 
-    def _get_query_zone_class(self, msg):
-        question = msg.get_question()[0]
-        return question.get_class().to_text()
+        The zone is identified by a tuple of name and RR class.
+        If a per zone configuration for the zone exists and contains
+        transfer_acl, that ACL will be used; otherwise, the default
+        ACL will be used.
+
+        '''
+        # Internally zone names are managed in lower cased label characters,
+        # so we first need to convert the name.
+        zone_name_lower = Name(zone_name.to_text(), True)
+        config_key = (zone_class.to_text(), zone_name_lower.to_text())
+        if config_key in self._zone_config and \
+                'transfer_acl' in self._zone_config[config_key]:
+            return self._zone_config[config_key]['transfer_acl']
+        return self._acl
 
     def _send_data(self, sock_fd, data):
         size = len(data)
@@ -210,51 +324,165 @@ class XfroutSession():
         msg.set_rcode(rcode_)
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
-    def _zone_has_soa(self, zone):
-        '''Judge if the zone has an SOA record.'''
-        # In some sense, the SOA defines a zone.
-        # If the current name server has authority for the
-        # specific zone, we need to judge if the zone has an SOA record;
-        # if not, we consider the zone has incomplete data, so xfrout can't
-        # serve for it.
-        if sqlite3_ds.get_zone_soa(zone, self._server.get_db_file()):
-            return True
+    def _get_zone_soa(self, zone_name):
+        '''Retrieve the SOA RR of the given zone.
 
-        return False
+        It returns a pair of RCODE and the SOA (in the form of RRset).
+        On success RCODE is NOERROR and returned SOA is not None;
+        on failure RCODE indicates the appropriate code in the context of
+        xfr processing, and the returned SOA is None.
 
-    def _zone_exist(self, zonename):
-        '''Judge if the zone is configured by config manager.'''
-        # Currently, if we find the zone in datasource successfully, we
-        # consider the zone is configured, and the current name server has
-        # authority for the specific zone.
-        # TODO: should get zone's configuration from cfgmgr or other place
-        # in future.
-        return sqlite3_ds.zone_exist(zonename, self._server.get_db_file())
-
-    def _check_xfrout_available(self, zone_name):
-        '''Check if xfr request can be responsed.
-           TODO, Get zone's configuration from cfgmgr or some other place
-           eg. check allow_transfer setting,
         '''
-        # If the current name server does not have authority for the
-        # zone, xfrout can't serve for it, return rcode NOTAUTH.
-        if not self._zone_exist(zone_name):
+        result, finder = self._datasrc_client.find_zone(zone_name)
+        if result != DataSourceClient.SUCCESS:
+            return (Rcode.NOTAUTH(), None)
+        result, soa_rrset = finder.find(zone_name, RRType.SOA(), None,
+                                        ZoneFinder.FIND_DEFAULT)
+        if result != ZoneFinder.SUCCESS:
+            return (Rcode.SERVFAIL(), None)
+        # Especially for database-based zones, a working zone may be in
+        # a broken state where it has more than one SOA RR.  We proactively
+        # check the condition and abort the xfr attempt if we identify it.
+        if soa_rrset.get_rdata_count() != 1:
+            return (Rcode.SERVFAIL(), None)
+        return (Rcode.NOERROR(), soa_rrset)
+
+    def __axfr_setup(self, zone_name):
+        '''Setup a zone iterator for AXFR or AXFR-style IXFR.
+
+        '''
+        try:
+            # Note that we enable 'separate_rrs'.  In xfr-out we need to
+            # preserve as many things as possible (even if it's half broken)
+            # stored in the zone.
+            self._iterator = self._datasrc_client.get_iterator(zone_name,
+                                                               True)
+        except isc.datasrc.Error:
+            # If the current name server does not have authority for the
+            # zone, xfrout can't serve for it, return rcode NOTAUTH.
+            # Note: this exception can happen for other reasons.  We should
+            # update get_iterator() API so that we can distinguish "no such
+            # zone" and other cases (#1373).  For now we consider all these
+            # cases as NOTAUTH.
             return Rcode.NOTAUTH()
 
         # If we are an authoritative name server for the zone, but fail
         # to find the zone's SOA record in datasource, xfrout can't
         # provide zone transfer for it.
-        if not self._zone_has_soa(zone_name):
+        self._soa = self._iterator.get_soa()
+        if self._soa is None or self._soa.get_rdata_count() != 1:
             return Rcode.SERVFAIL()
-
-        #TODO, check allow_transfer
-        if not self._server.increase_transfers_counter():
-            return Rcode.REFUSED()
 
         return Rcode.NOERROR()
 
+    def __ixfr_setup(self, request_msg, zone_name, zone_class):
+        '''Setup a zone journal reader for IXFR.
 
-    def dns_xfrout_start(self, sock_fd, msg_query):
+        If the underlying data source does not know the requested range
+        of zone differences it automatically falls back to AXFR-style
+        IXFR by setting up a zone iterator instead of a journal reader.
+
+        '''
+        # Check the authority section.  Look for a SOA record with
+        # the same name and class as the question.
+        remote_soa = None
+        for auth_rrset in request_msg.get_section(Message.SECTION_AUTHORITY):
+            # Ignore data whose owner name is not the zone apex, and
+            # ignore non-SOA or different class of records.
+            if auth_rrset.get_name() != zone_name or \
+                    auth_rrset.get_type() != RRType.SOA() or \
+                    auth_rrset.get_class() != zone_class:
+                continue
+            if auth_rrset.get_rdata_count() != 1:
+                logger.info(XFROUT_IXFR_MULTIPLE_SOA,
+                            format_addrinfo(self._remote))
+                return Rcode.FORMERR()
+            remote_soa = auth_rrset
+        if remote_soa is None:
+            logger.info(XFROUT_IXFR_NO_SOA, format_addrinfo(self._remote))
+            return Rcode.FORMERR()
+
+        # Retrieve the local SOA
+        rcode, self._soa = self._get_zone_soa(zone_name)
+        if rcode != Rcode.NOERROR():
+            return rcode
+
+        # RFC1995 says "If an IXFR query with the same or newer version
+        # number than that of the server is received, it is replied to with
+        # a single SOA record of the server's current version, just as
+        # in AXFR".  The claim about AXFR is incorrect, but other than that,
+        # we do as the RFC says.
+        # Note: until we complete #1278 we can only check equality of the
+        # two serials.  The "newer version" case would fall back to AXFR-style.
+        begin_serial = get_soa_serial(remote_soa.get_rdata()[0])
+        end_serial = get_soa_serial(self._soa.get_rdata()[0])
+        if begin_serial == end_serial:
+            # clear both iterator and jnl_reader to signal we won't do
+            # iteration in response generation
+            self._iterator = None
+            self._jnl_reader = None
+            logger.info(XFROUT_IXFR_UPTODATE, format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class),
+                        begin_serial, end_serial)
+            return Rcode.NOERROR()
+
+        # Set up the journal reader or fall back to AXFR-style IXFR
+        try:
+            code, self._jnl_reader = self._datasrc_client.get_journal_reader(
+                zone_name, begin_serial, end_serial)
+        except isc.datasrc.NotImplemented as ex:
+            # The underlying data source doesn't support journaling.
+            # Fall back to AXFR-style IXFR.
+            logger.info(XFROUT_IXFR_NO_JOURNAL_SUPPORT,
+                        format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class))
+            return self.__axfr_setup(zone_name)
+        if code == ZoneJournalReader.NO_SUCH_VERSION:
+            logger.info(XFROUT_IXFR_NO_VERSION, format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class),
+                        begin_serial, end_serial)
+            return self.__axfr_setup(zone_name)
+        if code == ZoneJournalReader.NO_SUCH_ZONE:
+            # this is quite unexpected as we know zone's SOA exists.
+            # It might be a bug or the data source is somehow broken,
+            # but it can still happen if someone has removed the zone
+            # between these two operations.  We treat it as NOTAUTH.
+            logger.warn(XFROUT_IXFR_NO_ZONE, format_addrinfo(self._remote),
+                        format_zone_str(zone_name, zone_class))
+            return Rcode.NOTAUTH()
+
+        # Use the reader as the iterator to generate the response.
+        self._iterator = self._jnl_reader
+
+        return Rcode.NOERROR()
+
+    def _xfrout_setup(self, request_msg, zone_name, zone_class):
+        '''Setup a context for xfr responses according to the request type.
+
+        This method identifies the most appropriate data source for the
+        request and set up a zone iterator or journal reader depending on
+        whether the request is AXFR or IXFR.  If it identifies any protocol
+        level error it returns an RCODE other than NOERROR.
+
+        '''
+
+        # Identify the data source for the requested zone and see if it has
+        # SOA while initializing objects used for request processing later.
+        # We should eventually generalize this so that we can choose the
+        # appropriate data source from (possible) multiple candidates.
+        # We should eventually take into account the RR class here.
+        # For now, we hardcode a particular type (SQLite3-based), and only
+        # consider that one.
+        datasrc_config = '{ "database_file": "' + \
+            self._server.get_db_file() + '"}'
+        self._datasrc_client = self.ClientClass('sqlite3', datasrc_config)
+
+        if self._request_type == RRType.AXFR():
+            return self.__axfr_setup(zone_name)
+        else:
+            return self.__ixfr_setup(request_msg, zone_name, zone_class)
+
+    def dns_xfrout_start(self, sock_fd, msg_query, quota_ok=True):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
         if rcode_ is None: # Dropped by ACL
@@ -264,29 +492,38 @@ class XfroutSession():
         elif rcode_ != Rcode.NOERROR():
             return self._reply_query_with_error_rcode(msg, sock_fd,
                                                       Rcode.FORMERR())
+        elif not quota_ok:
+            logger.warn(XFROUT_QUERY_QUOTA_EXCCEEDED, self._request_typestr,
+                        format_addrinfo(self._remote),
+                        self._server._max_transfers_out)
+            return self._reply_query_with_error_rcode(msg, sock_fd,
+                                                      Rcode.REFUSED())
 
-        zone_name = self._get_query_zone_name(msg)
-        zone_class_str = self._get_query_zone_class(msg)
-        # TODO: should we not also include class in the check?
-        rcode_ = self._check_xfrout_available(zone_name)
+        question = msg.get_question()[0]
+        zone_name = question.get_name()
+        zone_class = question.get_class()
+        zone_str = format_zone_str(zone_name, zone_class) # for logging
 
+        try:
+            rcode_ = self._xfrout_setup(msg, zone_name, zone_class)
+        except Exception as ex:
+            logger.error(XFROUT_XFR_TRANSFER_CHECK_ERROR, self._request_typestr,
+                         format_addrinfo(self._remote), zone_str, ex)
+            rcode_ = Rcode.SERVFAIL()
         if rcode_ != Rcode.NOERROR():
-            logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_name,
-                        zone_class_str, rcode_.to_text())
+            logger.info(XFROUT_XFR_TRANSFER_FAILED, self._request_typestr,
+                        format_addrinfo(self._remote), zone_str, rcode_)
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
-            logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_name, zone_class_str)
-            self._reply_xfrout_query(msg, sock_fd, zone_name)
+            logger.info(XFROUT_XFR_TRANSFER_STARTED, self._request_typestr,
+                        format_addrinfo(self._remote), zone_str)
+            self._reply_xfrout_query(msg, sock_fd)
         except Exception as err:
-            logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_name,
-                         zone_class_str, str(err))
-            pass
-        logger.info(XFROUT_AXFR_TRANSFER_DONE, zone_name, zone_class_str)
-
-        self._server.decrease_transfers_counter()
-        return
-
+            logger.error(XFROUT_XFR_TRANSFER_ERROR, self._request_typestr,
+                    format_addrinfo(self._remote), zone_str, err)
+        logger.info(XFROUT_XFR_TRANSFER_DONE, self._request_typestr,
+                    format_addrinfo(self._remote), zone_str)
 
     def _clear_message(self, msg):
         qid = msg.get_qid()
@@ -301,92 +538,100 @@ class XfroutSession():
         msg.set_header_flag(Message.HEADERFLAG_QR)
         return msg
 
-    def _create_rrset_from_db_record(self, record):
-        '''Create one rrset from one record of datasource, if the schema of record is changed,
-        This function should be updated first.
-        '''
-        rrtype_ = RRType(record[5])
-        rdata_ = Rdata(rrtype_, RRClass("IN"), " ".join(record[7:]))
-        rrset_ = RRset(Name(record[2]), RRClass("IN"), rrtype_, RRTTL( int(record[4])))
-        rrset_.add_rdata(rdata_)
-        return rrset_
+    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa,
+                                    message_upper_len):
+        '''Add the SOA record to the end of message.
 
-    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len,
-                                    count_since_last_tsig_sign):
-        '''Add the SOA record to the end of message. If it can't be
-        added, a new message should be created to send out the last soa .
-        '''
-        rrset_len = get_rrset_len(rrset_soa)
+        If it would exceed the maximum allowable size of a message, a new
+        message will be created to send out the last SOA.
 
-        if (count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH and
-            message_upper_len + rrset_len >= XFROUT_MAX_MESSAGE_SIZE):
-            # If tsig context exist, sign the packet with serial number TSIG_SIGN_EVERY_NTH
+        We assume a message with a single SOA can always fit the buffer
+        with or without TSIG.  In theory this could be wrong if TSIG is
+        stupidly large, but in practice this assumption should be reasonable.
+        '''
+        if message_upper_len + get_rrset_len(rrset_soa) > \
+                XFROUT_MAX_MESSAGE_SIZE:
             self._send_message(sock_fd, msg, self._tsig_ctx)
             msg = self._clear_message(msg)
-        elif (count_since_last_tsig_sign != TSIG_SIGN_EVERY_NTH and
-              message_upper_len + rrset_len + self._tsig_len >= XFROUT_MAX_MESSAGE_SIZE):
-            self._send_message(sock_fd, msg)
-            msg = self._clear_message(msg)
 
-        # If tsig context exist, sign the last packet
         msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
-
-    def _reply_xfrout_query(self, msg, sock_fd, zone_name):
-        #TODO, there should be a better way to insert rrset.
-        count_since_last_tsig_sign = TSIG_SIGN_EVERY_NTH
+    def _reply_xfrout_query(self, msg, sock_fd):
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
-        soa_record = sqlite3_ds.get_zone_soa(zone_name, self._server.get_db_file())
-        rrset_soa = self._create_rrset_from_db_record(soa_record)
-        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        # Reserved space for the fixed header size, the size of the question
+        # section, and TSIG size (when included).  The size of the question
+        # section is the sum of the qname length and the size of the
+        # fixed-length fields (type and class, 2 bytes each).
+        message_upper_len = XFROUT_DNS_HEADER_SIZE + \
+            msg.get_question()[0].get_name().get_length() + 4 + \
+            self._tsig_len
 
-        message_upper_len = get_rrset_len(rrset_soa) + self._tsig_len
+        # If the iterator is None, we are responding to IXFR with a single
+        # SOA RR.
+        if self._iterator is None:
+            self._send_message_with_last_soa(msg, sock_fd, self._soa,
+                                             message_upper_len)
+            return
 
-        for rr_data in sqlite3_ds.get_zone_datas(zone_name, self._server.get_db_file()):
-            if  self._server._shutdown_event.is_set(): # Check if xfrout is shutdown
+        # Add the beginning SOA
+        msg.add_rrset(Message.SECTION_ANSWER, self._soa)
+        message_upper_len += get_rrset_len(self._soa)
+
+        # Add the rest of the zone/diff contets
+        for rrset in self._iterator:
+            # Check if xfrout is shutdown
+            if  self._server._shutdown_event.is_set():
                 logger.info(XFROUT_STOPPING)
                 return
-            # TODO: RRType.SOA() ?
-            if RRType(rr_data[5]) == RRType("SOA"): #ignore soa record
-                continue
 
-            rrset_ = self._create_rrset_from_db_record(rr_data)
+            # For AXFR (or AXFR-style IXFR), in which case _jnl_reader is None,
+            # we should skip SOAs from the iterator.
+            if self._jnl_reader is None and rrset.get_type() == RRType.SOA():
+                continue
 
             # We calculate the maximum size of the RRset (i.e. the
             # size without compression) and use that to see if we
             # may have reached the limit
-            rrset_len = get_rrset_len(rrset_)
-            if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
-                msg.add_rrset(Message.SECTION_ANSWER, rrset_)
+            rrset_len = get_rrset_len(rrset)
+
+            if message_upper_len + rrset_len <= XFROUT_MAX_MESSAGE_SIZE:
+                msg.add_rrset(Message.SECTION_ANSWER, rrset)
                 message_upper_len += rrset_len
                 continue
 
-            # If tsig context exist, sign every N packets
-            if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
-                count_since_last_tsig_sign = 0
-                self._send_message(sock_fd, msg, self._tsig_ctx)
-            else:
-                self._send_message(sock_fd, msg)
+            # RR would not fit.  If there are other RRs in the buffer, send
+            # them now and leave this RR to the next message.
+            self._send_message(sock_fd, msg, self._tsig_ctx)
 
-            count_since_last_tsig_sign += 1
+            # Create a new message and reserve space for the carried-over
+            # RR (and TSIG space in case it's to be TSIG signed)
             msg = self._clear_message(msg)
-            msg.add_rrset(Message.SECTION_ANSWER, rrset_) # Add the rrset to the new message
+            message_upper_len = XFROUT_DNS_HEADER_SIZE + rrset_len + \
+                self._tsig_len
 
-            # Reserve tsig space for signed packet
-            if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
-                message_upper_len = rrset_len + self._tsig_len
-            else:
-                message_upper_len = rrset_len
+            # If this RR overflows the buffer all by itself, fail.  In theory
+            # some RRs might fit in a TCP message when compressed even if they
+            # do not fit when uncompressed, but surely we don't want to send
+            # such monstrosities to an unsuspecting slave.
+            if message_upper_len > XFROUT_MAX_MESSAGE_SIZE:
+                raise XfroutSessionError('RR too large for zone transfer (' +
+                                         str(rrset_len) + ' bytes)')
 
-        self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len,
-                                         count_since_last_tsig_sign)
+            # Add the RRset to the new message
+            msg.add_rrset(Message.SECTION_ANSWER, rrset)
 
-class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
+        # Add and send the trailing SOA
+        self._send_message_with_last_soa(msg, sock_fd, self._soa,
+                                         message_upper_len)
+
+class UnixSockServer(socketserver_mixin.NoPollMixIn,
+                     ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
-    def __init__(self, sock_file, handle_class, shutdown_event, config_data, cc):
+    def __init__(self, sock_file, handle_class, shutdown_event, config_data,
+                 cc):
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
         socketserver_mixin.NoPollMixIn.__init__(self)
@@ -394,16 +639,15 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
         self._common_init()
-        self.update_config_data(config_data)
         self._cc = cc
+        self.update_config_data(config_data)
 
     def _common_init(self):
+        '''Initialization shared with the mock server class used for tests'''
         self._lock = threading.Lock()
         self._transfers_counter = 0
-        # This default value will probably get overwritten by the (same)
-        # default value from the spec file. This is here just to make
-        # sure and to make the default value in tests consistent.
-        self._acl = REQUEST_LOADER.load('[{"action": "ACCEPT"}]')
+        self._zone_config = {}
+        self._acl = None # this will be initialized in update_config_data()
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
@@ -454,7 +698,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             try:
                 self.process_request(request)
             except Exception as pre:
-                log.error(XFROUT_PROCESS_REQUEST_ERROR, str(pre))
+                logger.error(XFROUT_PROCESS_REQUEST_ERROR, str(pre))
                 break
 
     def _handle_request_noblock(self):
@@ -481,16 +725,19 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         if not request_data:
             return
 
-        t = threading.Thread(target = self.finish_request,
+        t = threading.Thread(target=self.finish_request,
                              args = (sock_fd, request_data))
         if self.daemon_threads:
             t.daemon = True
         t.start()
 
     def _guess_remote(self, sock_fd):
-        """
-           Guess remote address and port of the socket. The sock_fd must be a
-           socket
+        """Guess remote address and port of the socket.
+
+        The sock_fd must be a file descriptor of a socket.
+        This method retuns a 3-tuple consisting of address family,
+        socket type, and a 2-tuple with the address (string) and port (int).
+
         """
         # This uses a trick. If the socket is IPv4 in reality and we pretend
         # it to be IPv6, it returns IPv4 address anyway. This doesn't seem
@@ -502,13 +749,32 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             # To make it work even on hosts without IPv6 support
             # (Any idea how to simulate this in test?)
             sock = socket.fromfd(sock_fd, socket.AF_INET, socket.SOCK_STREAM)
-        return sock.getpeername()
+        peer = sock.getpeername()
+
+        # Identify the correct socket family.  Due to the above "trick",
+        # we cannot simply use sock.family.
+        family = socket.AF_INET6
+        try:
+            socket.inet_pton(socket.AF_INET6, peer[0])
+        except socket.error:
+            family = socket.AF_INET
+        return (family, socket.SOCK_STREAM, peer)
 
     def finish_request(self, sock_fd, request_data):
-        '''Finish one request by instantiating RequestHandlerClass.'''
+        '''Finish one request by instantiating RequestHandlerClass.
+
+        This is an entry point of a separate thread spawned in
+        UnixSockServer.process_request().
+
+        This method creates a XfroutSession object.
+        '''
+        self._lock.acquire()
+        acl = self._acl
+        zone_config = self._zone_config
+        self._lock.release()
         self.RequestHandlerClass(sock_fd, request_data, self,
                                  self.tsig_key_ring,
-                                 self._guess_remote(sock_fd), self._acl)
+                                 self._guess_remote(sock_fd), acl, zone_config)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
@@ -547,18 +813,66 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             os.unlink(self._sock_file)
         except Exception as e:
             logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, self._sock_file, str(e))
-            pass
 
     def update_config_data(self, new_config):
-        '''Apply the new config setting of xfrout module. '''
-        logger.info(XFROUT_NEW_CONFIG)
-        if 'query_acl' in new_config:
-            self._acl = REQUEST_LOADER.load(new_config['query_acl'])
+        '''Apply the new config setting of xfrout module.
+
+        '''
         self._lock.acquire()
-        self._max_transfers_out = new_config.get('transfers_out')
-        self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
+        try:
+            logger.info(XFROUT_NEW_CONFIG)
+            new_acl = self._acl
+            if 'transfer_acl' in new_config:
+                try:
+                    new_acl = REQUEST_LOADER.load(new_config['transfer_acl'])
+                except LoaderError as e:
+                    raise XfroutConfigError('Failed to parse transfer_acl: ' +
+                                            str(e))
+
+            new_zone_config = self._zone_config
+            zconfig_data = new_config.get('zone_config')
+            if zconfig_data is not None:
+                new_zone_config = self.__create_zone_config(zconfig_data)
+
+            self._acl = new_acl
+            self._zone_config = new_zone_config
+            self._max_transfers_out = new_config.get('transfers_out')
+            self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
+        except Exception as e:
+            self._lock.release()
+            raise e
         self._lock.release()
         logger.info(XFROUT_NEW_CONFIG_DONE)
+
+    def __create_zone_config(self, zone_config_list):
+        new_config = {}
+        for zconf in zone_config_list:
+            # convert the class, origin (name) pair.  First build pydnspp
+            # object to reject invalid input.
+            zclass_str = zconf.get('class')
+            if zclass_str is None:
+                #zclass_str = 'IN' # temporary
+                zclass_str = self._cc.get_default_value('zone_config/class')
+            zclass = RRClass(zclass_str)
+            zorigin = Name(zconf['origin'], True)
+            config_key = (zclass.to_text(), zorigin.to_text())
+
+            # reject duplicate config
+            if config_key in new_config:
+                raise XfroutConfigError('Duplicate zone_config for ' +
+                                        str(zorigin) + '/' + str(zclass))
+
+            # create a new config entry, build any given (and known) config
+            new_config[config_key] = {}
+            if 'transfer_acl' in zconf:
+                try:
+                    new_config[config_key]['transfer_acl'] = \
+                        REQUEST_LOADER.load(zconf['transfer_acl'])
+                except LoaderError as e:
+                    raise XfroutConfigError('Failed to parse transfer_acl ' +
+                                            'for ' + zorigin.to_text() + '/' +
+                                            zclass_str + ': ' + str(e))
+        return new_config
 
     def set_tsig_key_ring(self, key_list):
         """Set the tsig_key_ring , given a TSIG key string list representation. """
@@ -616,8 +930,10 @@ class XfroutServer:
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
-        self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession,
-                                                  self._shutdown_event, self._config_data,
+        self._unix_socket_server = UnixSockServer(self._listen_sock_file,
+                                                  XfroutSession,
+                                                  self._shutdown_event,
+                                                  self._config_data,
                                                   self._cc)
         listener = threading.Thread(target=self._unix_socket_server.serve_forever)
         listener.start()
@@ -725,6 +1041,10 @@ if '__main__' == __name__:
         logger.INFO(XFROUT_STOPPED_BY_KEYBOARD)
     except SessionError as e:
         logger.error(XFROUT_CC_SESSION_ERROR, str(e))
+    except ModuleCCSessionError as e:
+        logger.error(XFROUT_MODULECC_SESSION_ERROR, str(e))
+    except XfroutConfigError as e:
+        logger.error(XFROUT_CONFIG_ERROR, str(e))
     except SessionTimeout as e:
         logger.error(XFROUT_CC_SESSION_TIMEOUT_ERROR)
 

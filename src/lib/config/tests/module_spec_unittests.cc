@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 #include <config/module_spec.h>
 
 #include <fstream>
+
+#include <boost/foreach.hpp>
 
 #include <config/tests/data_def_unittests_config.h>
 
@@ -57,6 +59,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
 
     dd = moduleSpecFromFile(specfile("spec2.spec"));
     EXPECT_EQ("[ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ]", dd.getCommandsSpec()->str());
+    EXPECT_EQ("[ { \"item_default\": \"1970-01-01T00:00:00Z\", \"item_description\": \"A dummy date time\", \"item_format\": \"date-time\", \"item_name\": \"dummy_time\", \"item_optional\": false, \"item_title\": \"Dummy Time\", \"item_type\": \"string\" } ]", dd.getStatisticsSpec()->str());
     EXPECT_EQ("Spec2", dd.getModuleName());
     EXPECT_EQ("", dd.getModuleDescription());
 
@@ -64,6 +67,11 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     EXPECT_EQ("Spec25", dd.getModuleName());
     EXPECT_EQ("Just an empty module", dd.getModuleDescription());
     EXPECT_THROW(moduleSpecFromFile(specfile("spec26.spec")), ModuleSpecError);
+    EXPECT_THROW(moduleSpecFromFile(specfile("spec34.spec")), ModuleSpecError);
+    EXPECT_THROW(moduleSpecFromFile(specfile("spec35.spec")), ModuleSpecError);
+    EXPECT_THROW(moduleSpecFromFile(specfile("spec36.spec")), ModuleSpecError);
+    EXPECT_THROW(moduleSpecFromFile(specfile("spec37.spec")), ModuleSpecError);
+    EXPECT_THROW(moduleSpecFromFile(specfile("spec38.spec")), ModuleSpecError);
 
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
@@ -71,6 +79,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     EXPECT_EQ(dd.getFullSpec()->get("module_name")
                               ->stringValue(), "Spec1");
     EXPECT_TRUE(isNull(dd.getCommandsSpec()));
+    EXPECT_TRUE(isNull(dd.getStatisticsSpec()));
 
     std::ifstream file2;
     file2.open(specfile("spec8.spec").c_str());
@@ -114,6 +123,12 @@ TEST(ModuleSpec, SpecfileConfigData) {
                    "commands is not a list of elements");
 }
 
+TEST(ModuleSpec, SpecfileStatistics) {
+    moduleSpecError("spec36.spec", "item_default not valid type of item_format");
+    moduleSpecError("spec37.spec", "statistics is not a list of elements");
+    moduleSpecError("spec38.spec", "item_default not valid type of item_format");
+}
+
 TEST(ModuleSpec, SpecfileCommands) {
     moduleSpecError("spec17.spec",
                    "command_name missing in { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\" }");
@@ -137,6 +152,17 @@ dataTest(const ModuleSpec& dd, const std::string& data_file_name) {
 }
 
 bool
+statisticsTest(const ModuleSpec& dd, const std::string& data_file_name) {
+    std::ifstream data_file;
+
+    data_file.open(specfile(data_file_name).c_str());
+    ConstElementPtr data = Element::fromJSON(data_file, data_file_name);
+    data_file.close();
+
+    return (dd.validateStatistics(data));
+}
+
+bool
 dataTestWithErrors(const ModuleSpec& dd, const std::string& data_file_name,
                       ElementPtr errors)
 {
@@ -147,6 +173,19 @@ dataTestWithErrors(const ModuleSpec& dd, const std::string& data_file_name,
     data_file.close();
 
     return (dd.validateConfig(data, true, errors));
+}
+
+bool
+statisticsTestWithErrors(const ModuleSpec& dd, const std::string& data_file_name,
+                      ElementPtr errors)
+{
+    std::ifstream data_file;
+
+    data_file.open(specfile(data_file_name).c_str());
+    ConstElementPtr data = Element::fromJSON(data_file, data_file_name);
+    data_file.close();
+
+    return (dd.validateStatistics(data, true, errors));
 }
 
 TEST(ModuleSpec, DataValidation) {
@@ -173,6 +212,17 @@ TEST(ModuleSpec, DataValidation) {
     errors = Element::createList();
     EXPECT_FALSE(dataTestWithErrors(dd, "data22_9.data", errors));
     EXPECT_EQ("[ \"Unknown item value_does_not_exist\" ]", errors->str());
+}
+
+TEST(ModuleSpec, StatisticsValidation) {
+    ModuleSpec dd = moduleSpecFromFile(specfile("spec33.spec"));
+
+    EXPECT_TRUE(statisticsTest(dd, "data33_1.data"));
+    EXPECT_FALSE(statisticsTest(dd, "data33_2.data"));
+
+    ElementPtr errors = Element::createList();
+    EXPECT_FALSE(statisticsTestWithErrors(dd, "data33_2.data", errors));
+    EXPECT_EQ("[ \"Format mismatch\", \"Format mismatch\", \"Format mismatch\" ]", errors->str());
 }
 
 TEST(ModuleSpec, CommandValidation) {
@@ -210,4 +260,119 @@ TEST(ModuleSpec, CommandValidation) {
     EXPECT_EQ(errors->size(), 1);
     EXPECT_EQ(errors->get(0)->stringValue(), "Type mismatch");
 
+}
+
+TEST(ModuleSpec, NamedSetValidation) {
+    ModuleSpec dd = moduleSpecFromFile(specfile("spec32.spec"));
+
+    ElementPtr errors = Element::createList();
+    EXPECT_TRUE(dataTestWithErrors(dd, "data32_1.data", errors));
+    EXPECT_FALSE(dataTest(dd, "data32_2.data"));
+    EXPECT_FALSE(dataTest(dd, "data32_3.data"));
+}
+
+TEST(ModuleSpec, CheckFormat) {
+
+    const std::string json_begin = "{ \"module_spec\": { \"module_name\": \"Foo\", \"statistics\": [ { \"item_name\": \"dummy_time\", \"item_type\": \"string\", \"item_optional\": true, \"item_title\": \"Dummy Time\", \"item_description\": \"A dummy date time\"";
+    const std::string json_end = " } ] } }";
+    std::string item_default;
+    std::string item_format;
+    std::vector<std::string> specs;
+    ConstElementPtr el;
+
+    specs.clear();
+    item_default = "\"item_default\": \"2011-05-27T19:42:57Z\",";
+    item_format  = "\"item_format\": \"date-time\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"2011-05-27\",";
+    item_format  = "\"item_format\": \"date\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"19:42:57\",";
+    item_format  = "\"item_format\": \"time\"";
+    specs.push_back("," + item_default + item_format);
+
+    item_format  = "\"item_format\": \"date-time\"";
+    specs.push_back("," + item_format);
+    item_default = "";
+    item_format  = "\"item_format\": \"date\"";
+    specs.push_back("," + item_format);
+    item_default = "";
+    item_format  = "\"item_format\": \"time\"";
+    specs.push_back("," + item_format);
+
+    item_default = "\"item_default\": \"a\"";
+    specs.push_back("," + item_default);
+    item_default = "\"item_default\": \"b\"";
+    specs.push_back("," + item_default);
+    item_default = "\"item_default\": \"c\"";
+    specs.push_back("," + item_default);
+
+    item_format  = "\"item_format\": \"dummy\"";
+    specs.push_back("," + item_format);
+
+    specs.push_back("");
+
+    BOOST_FOREACH(std::string s, specs) {
+        el = Element::fromJSON(json_begin + s + json_end)->get("module_spec");
+        EXPECT_NO_THROW(ModuleSpec(el, true));
+    }
+
+    specs.clear();
+    item_default = "\"item_default\": \"2011-05-27T19:42:57Z\",";
+    item_format  = "\"item_format\": \"dummy\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"2011-05-27\",";
+    item_format  = "\"item_format\": \"dummy\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"19:42:57Z\",";
+    item_format  = "\"item_format\": \"dummy\"";
+    specs.push_back("," + item_default + item_format);
+
+    item_default = "\"item_default\": \"2011-13-99T99:99:99Z\",";
+    item_format  = "\"item_format\": \"date-time\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"2011-13-99\",";
+    item_format  = "\"item_format\": \"date\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"99:99:99Z\",";
+    item_format  = "\"item_format\": \"time\"";
+    specs.push_back("," + item_default + item_format);
+
+    item_default = "\"item_default\": \"1\",";
+    item_format  = "\"item_format\": \"date-time\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"1\",";
+    item_format  = "\"item_format\": \"date\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"1\",";
+    item_format  = "\"item_format\": \"time\"";
+    specs.push_back("," + item_default + item_format);
+
+    item_default = "\"item_default\": \"\",";
+    item_format  = "\"item_format\": \"date-time\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"\",";
+    item_format  = "\"item_format\": \"date\"";
+    specs.push_back("," + item_default + item_format);
+    item_default = "\"item_default\": \"\",";
+    item_format  = "\"item_format\": \"time\"";
+    specs.push_back("," + item_default + item_format);
+
+    // wrong date-time-type format not ending with "Z"
+    item_default = "\"item_default\": \"2011-05-27T19:42:57\",";
+    item_format  = "\"item_format\": \"date-time\"";
+    specs.push_back("," + item_default + item_format);
+    // wrong date-type format ending with "T"
+    item_default = "\"item_default\": \"2011-05-27T\",";
+    item_format  = "\"item_format\": \"date\"";
+    specs.push_back("," + item_default + item_format);
+    // wrong time-type format ending with "Z"
+    item_default = "\"item_default\": \"19:42:57Z\",";
+    item_format  = "\"item_format\": \"time\"";
+    specs.push_back("," + item_default + item_format);
+
+    BOOST_FOREACH(std::string s, specs) {
+        el = Element::fromJSON(json_begin + s + json_end)->get("module_spec");
+        EXPECT_THROW(ModuleSpec(el, true), ModuleSpecError);
+    }
 }

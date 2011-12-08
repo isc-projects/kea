@@ -19,6 +19,7 @@
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
+#include <stdint.h>             // for uint32_t
 #include <asio/ip/address.hpp>
 
 #include <functional>
@@ -28,6 +29,12 @@
 
 namespace isc {
 namespace asiolink {
+
+    /// Defines length of IPv6 address.
+    const static size_t V6ADDRESS_LEN = 16;
+
+    /// Defines length of IPv4 address.
+    const static size_t V4ADDRESS_LEN = 4;
 
 /// \brief The \c IOAddress class represents an IP addresses (version
 /// agnostic)
@@ -65,6 +72,15 @@ public:
     IOAddress(const asio::ip::address& asio_address);
     //@}
 
+    /// @brief Constructor for ip::address_v4 object.
+    ///
+    /// This constructor is intented to be used when constructing
+    /// IPv4 address out of uint32_t type. Passed value must be in
+    /// network byte order
+    ///
+    /// @param v4address IPv4 address represnted by uint32_t
+    IOAddress(uint32_t v4address);
+
     /// \brief Convert the address to a string.
     ///
     /// This method is basically expected to be exception free, but
@@ -74,10 +90,28 @@ public:
     /// \return A string representation of the address.
     std::string toText() const;
 
+    /// \brief Returns const reference to the underlying address object.
+    ///
+    /// This is useful, when access to interface offerted by
+    //  asio::ip::address_v4 and asio::ip::address_v6 is beneficial.
+    /// 
+    /// \return A const reference to asio::ip::address object
+    const asio::ip::address& getAddress() const;
+
     /// \brief Returns the address family
     ///
     /// \return AF_INET for IPv4 or AF_INET6 for IPv6.
     short getFamily() const;
+
+
+    /// \brief Creates an address from over wire data.
+    ///
+    /// \param family AF_NET for IPv4 or AF_NET6 for IPv6.
+    /// \param data pointer to first char of data
+    ///
+    /// \return Created IOAddress object
+    static IOAddress
+    from_bytes(short family, const uint8_t* data);
 
     /// \brief Compare addresses for equality
     ///
@@ -115,6 +149,14 @@ public:
         return (nequals(other));
     }
 
+    /// \brief Converts IPv4 address to uint32_t
+    ///
+    /// Will throw BadValue exception if that is not IPv4
+    /// address.
+    ///
+    /// \return uint32_t that represents IPv4 address in
+    ///         network byte order
+    operator uint32_t () const;
 
 private:
     asio::ip::address asio_address_;

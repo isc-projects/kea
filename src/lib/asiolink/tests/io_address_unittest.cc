@@ -18,6 +18,8 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_address.h>
 
+#include <cstring>
+
 using namespace isc::asiolink;
 
 TEST(IOAddressTest, fromText) {
@@ -60,4 +62,40 @@ TEST(IOAddressTest, Equality) {
 TEST(IOAddressTest, Family) {
     EXPECT_EQ(AF_INET, IOAddress("192.0.2.1").getFamily());
     EXPECT_EQ(AF_INET6, IOAddress("2001:0DB8:0:0::0012").getFamily());
+}
+
+TEST(IOAddressTest, from_bytes) {
+    // 2001:db8:1::dead:beef
+    uint8_t v6[] = {
+        0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0, 0,
+        0, 0, 0, 0, 0xde, 0xad, 0xbe, 0xef };
+
+    uint8_t v4[] = { 192, 0 , 2, 3 };
+
+    IOAddress addr("::");
+    EXPECT_NO_THROW({
+        addr = IOAddress::from_bytes(AF_INET6, v6);
+    });
+    EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
+
+    EXPECT_NO_THROW({
+        addr = IOAddress::from_bytes(AF_INET, v4);
+    });
+    EXPECT_EQ(addr.toText(), IOAddress("192.0.2.3").toText());
+}
+
+TEST(IOAddressTest, uint32) {
+    IOAddress addr1("192.0.2.5");
+
+    // operator uint_32() is used here
+    uint32_t tmp = addr1;
+
+    uint32_t expected = (192U << 24) +  (0U << 16) + (2U << 8) + 5U;
+
+    EXPECT_EQ(expected, tmp);
+
+    // now let's try opposite conversion
+    IOAddress addr3 = IOAddress(expected);
+
+    EXPECT_EQ(addr3.toText(), "192.0.2.5");
 }

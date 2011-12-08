@@ -43,6 +43,11 @@
           { "item_name": "tsig_key",
             "item_type": "string",
             "item_optional": true
+          },
+          { "item_name": "use_ixfr",
+            "item_type": "boolean",
+            "item_optional": false,
+            "item_default": false
           }
           ]
         }

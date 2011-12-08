@@ -5,7 +5,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS=$(B10_CXXFLAGS)
 
 if HAVE_GTEST
-lib_LTLIBRARIES = libtestutils.la
+noinst_LTLIBRARIES = libtestutils.la
 
 libtestutils_la_SOURCES = srv_test.h srv_test.cc
 libtestutils_la_SOURCES += dnsmessage_test.h dnsmessage_test.cc

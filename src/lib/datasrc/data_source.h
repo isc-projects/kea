@@ -53,6 +53,18 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// \brief No such serial number when obtaining difference iterator
+///
+/// Thrown if either the zone/start serial number or zone/end serial number
+/// combination does not exist in the differences table.  (Note that this
+/// includes the case where the differences table contains no records related
+/// to that zone.)
+class NoSuchSerial : public DataSourceError {
+public:
+    NoSuchSerial(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
+
 
 class AbstractDataSrc {
     ///
@@ -184,9 +196,9 @@ public:
     void setClass(isc::dns::RRClass& c) { rrclass = c; }
     void setClass(const isc::dns::RRClass& c) { rrclass = c; }
 
-    Result init() { return (NOT_IMPLEMENTED); }
-    Result init(isc::data::ConstElementPtr config);
-    Result close() { return (NOT_IMPLEMENTED); }
+    virtual Result init() { return (NOT_IMPLEMENTED); }
+    virtual Result init(isc::data::ConstElementPtr config);
+    virtual Result close() { return (NOT_IMPLEMENTED); }
 
     virtual Result findRRset(const isc::dns::Name& qname,
                              const isc::dns::RRClass& qclass,
@@ -351,7 +363,7 @@ public:
 
     /// \brief Returns the best enclosing zone name found for the given
     // name and RR class so far.
-    /// 
+    ///
     /// \return A pointer to the zone apex \c Name, NULL if none found yet.
     ///
     /// This method never throws an exception.
@@ -413,6 +425,6 @@ private:
 
 #endif
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

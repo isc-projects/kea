@@ -70,6 +70,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors = RRsetPtr(new RRset(authors_name, RRClass::CH(),
                                  RRType::TXT(), RRTTL(0)));
     authors->addRdata(generic::TXT("Chen Zhengzhang")); // Jerry
+    authors->addRdata(generic::TXT("Dmitriy Volodin"));
     authors->addRdata(generic::TXT("Evan Hunt"));
     authors->addRdata(generic::TXT("Haidong Wang")); // Ocean
     authors->addRdata(generic::TXT("Han Feng"));

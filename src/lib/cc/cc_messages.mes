@@ -53,11 +53,11 @@ Debug message, we're about to send a message over the command channel.
 This happens when garbage comes over the command channel or some kind of
 confusion happens in the program. The data received from the socket make no
 sense if we interpret it as lengths of message. The first one is total length
-of message, the second length of the header. The header and it's length
-(2 bytes) is counted in the total length.
+of the message; the second is the length of the header. The header
+and its length (2 bytes) is counted in the total length.
 
 % CC_LENGTH_NOT_READY length not ready
-There should be data representing length of message on the socket, but it
+There should be data representing the length of message on the socket, but it
 is not there.
 
 % CC_NO_MESSAGE no message ready to be received yet

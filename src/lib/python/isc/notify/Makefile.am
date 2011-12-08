@@ -1,21 +1,22 @@
 SUBDIRS = . tests
 
 python_PYTHON = __init__.py notify_out.py
-pyexec_DATA = $(top_builddir)/src/lib/python/notify_out_messages.py
-
 pythondir = $(pyexecdir)/isc/notify
 
-$(top_builddir)/src/lib/python/notify_out_messages.py: notify_out_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message \
-		-p -d $(top_builddir)/src/lib/python \
-		$(top_srcdir)/src/lib/python/isc/notify/notify_out_messages.mes
+BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/work/notify_out_messages.py
+nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/notify_out_messages.py
+pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
 EXTRA_DIST = notify_out_messages.mes
 
-CLEANFILES =  $(top_builddir)/src/lib/python/notify_out_messages.pyc
-CLEANFILES += $(top_builddir)/src/lib/python/notify_out_messages.py
+CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/work/notify_out_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/notify_out_messages.pyc
 
 CLEANDIRS = __pycache__
+
+$(PYTHON_LOGMSGPKG_DIR)/work/notify_out_messages.py : notify_out_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message \
+	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/notify_out_messages.mes
 
 clean-local:
 	rm -rf $(CLEANDIRS)

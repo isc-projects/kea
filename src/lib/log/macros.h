@@ -16,6 +16,7 @@
 #define __LOG_MACROS_H
 
 #include <log/logger.h>
+#include <log/log_dbglevels.h>
 
 /// \brief Macro to conveniently test debug output and log it
 #define LOG_DEBUG(LOGGER, LEVEL, MESSAGE) \

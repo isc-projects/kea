@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>May 19, 2011</date>
+    <date>October 12, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -59,7 +59,7 @@
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
       When triggered it can request and receive a zone transfer and store
-      the zone in a BIND 10 zone data store.
+      the zone in a BIND 10 zone data source.
     </para>
 
 <!-- TODO:
@@ -68,9 +68,14 @@ The logic for handling transfer triggers or zone management is handled
 in separate zonemgr process.
 -->
 
-    <note><simpara>
-      This prototype release only supports AXFR. IXFR is not implemented.
-    </simpara></note>
+    <para>
+      The <command>b10-xfrin</command> daemon supports both AXFR and
+      IXFR.  Due to some implementation limitations of the current
+      development release, however, it only tries AXFR by default,
+      and care should be taken to enable IXFR.
+      See the BIND 10 Guide for more details.
+    </para>
+<!-- TODO: http://bind10.isc.org/ticket/1279 -->
 
     <para>
       This daemon communicates with BIND 10 over a
@@ -92,7 +97,7 @@ in separate zonemgr process.
       The configurable settings are:
     </para>
 
-    <para><varname>transfers-in</varname>
+    <para><varname>transfers_in</varname>
       defines the maximum number of inbound zone transfers
       that can run concurrently. The default is 10.
     </para>
@@ -103,8 +108,10 @@ in separate zonemgr process.
       <command>b10-xfrin</command> daemon.
       The list items are:
       <varname>name</varname> (the zone name),
+      <varname>class</varname> (defaults to <quote>IN</quote>),
       <varname>master_addr</varname> (the zone master to transfer from),
-      <varname>master_port</varname> (defaults to 53), and
+      <varname>master_port</varname> (defaults to 53),
+      <varname>use_ixfr</varname> (defaults to false), and
       <varname>tsig_key</varname> (optional TSIG key to use).
       The <varname>tsig_key</varname> is specified using a full string
       colon-delimited name:key:algorithm representation (e.g.
@@ -152,7 +159,7 @@ in separate zonemgr process.
       according to the SOA's REFRESH time
       to tell <command>b10-xfrin</command> that the zone needs to do
       a zone refresh.
-      This is an internal command and not exposed to the administrator. 
+      This is an internal command and not exposed to the administrator.
 <!-- not defined in spec -->
     </para>
 
@@ -168,7 +175,7 @@ in separate zonemgr process.
       and <varname>port</varname> to define the port number on the
       authoritative server (defaults to 53).
       If the address or port is not specified, it will use the
-      values previously defined in the <varname>zones</varname>
+      value previously defined in the <varname>zones</varname>
       configuration.
      </para>
 <!-- TODO: later hostname for master? -->
@@ -202,7 +209,7 @@ add a usage example of xfrin -->
     </para></note>
 
 <!-- TODO:
- it can handle more than one XFR in now, 
+ it can handle more than one XFR in now,
 but the problem is If SQLITE3 datasource part support multiple write
 operation
 -->

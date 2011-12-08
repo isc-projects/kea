@@ -53,6 +53,7 @@ protected:
 
         // NOTE: in addition, the order of the following items matter.
         authors_data.push_back("Chen Zhengzhang");
+        authors_data.push_back("Dmitriy Volodin");
         authors_data.push_back("Evan Hunt");
         authors_data.push_back("Haidong Wang");
         authors_data.push_back("Han Feng");

@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <stdint.h>
+
 #include <string>
 
 #include <gtest/gtest.h>
@@ -22,17 +24,9 @@ using namespace isc;
 using namespace isc::util;
 using namespace std;
 
-class StringUtilTest : public ::testing::Test {
-protected:
-    StringUtilTest()
-    {
-    }
-};
-
-
 // Check for slash replacement
 
-TEST_F(StringUtilTest, Slash) {
+TEST(StringUtilTest, Slash) {
 
     string instring = "";
     isc::util::str::normalizeSlash(instring);
@@ -49,7 +43,7 @@ TEST_F(StringUtilTest, Slash) {
 
 // Check that leading and trailing space trimming works
 
-TEST_F(StringUtilTest, Trim) {
+TEST(StringUtilTest, Trim) {
 
     // Empty and full string.
     EXPECT_EQ("", isc::util::str::trim(""));
@@ -71,7 +65,7 @@ TEST_F(StringUtilTest, Trim) {
 // returned vector; if not as expected, the following references may be invalid
 // so should not be used.
 
-TEST_F(StringUtilTest, Tokens) {
+TEST(StringUtilTest, Tokens) {
     vector<string>  result;
 
     // Default delimiters
@@ -157,7 +151,7 @@ TEST_F(StringUtilTest, Tokens) {
 
 // Changing case
 
-TEST_F(StringUtilTest, ChangeCase) {
+TEST(StringUtilTest, ChangeCase) {
     string mixed("abcDEFghiJKLmno123[]{=+--+]}");
     string upper("ABCDEFGHIJKLMNO123[]{=+--+]}");
     string lower("abcdefghijklmno123[]{=+--+]}");
@@ -173,7 +167,7 @@ TEST_F(StringUtilTest, ChangeCase) {
 
 // Formatting
 
-TEST_F(StringUtilTest, Formatting) {
+TEST(StringUtilTest, Formatting) {
 
     vector<string> args;
     args.push_back("arg1");
@@ -212,4 +206,64 @@ TEST_F(StringUtilTest, Formatting) {
     args.clear();
     string format9 = "%s %s";
     EXPECT_EQ(format9, isc::util::str::format(format9, args));
+}
+
+TEST(StringUtilTest, getToken) {
+    string s("a b c");
+    istringstream ss(s);
+    EXPECT_EQ("a", isc::util::str::getToken(ss));
+    EXPECT_EQ("b", isc::util::str::getToken(ss));
+    EXPECT_EQ("c", isc::util::str::getToken(ss));
+    EXPECT_THROW(isc::util::str::getToken(ss), isc::util::str::StringTokenError);
+}
+
+int32_t tokenToNumCall_32_16(const string& token) {
+    return isc::util::str::tokenToNum<int32_t, 16>(token);
+}
+
+int16_t tokenToNumCall_16_8(const string& token) {
+    return isc::util::str::tokenToNum<int16_t, 8>(token);
+}
+
+TEST(StringUtilTest, tokenToNum) {
+    uint32_t num32 = tokenToNumCall_32_16("0");
+    EXPECT_EQ(0, num32);
+    num32 = tokenToNumCall_32_16("123");
+    EXPECT_EQ(123, num32);
+    num32 = tokenToNumCall_32_16("65535");
+    EXPECT_EQ(65535, num32);
+
+    EXPECT_THROW(tokenToNumCall_32_16(""),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("a"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("-1"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("65536"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("1234567890"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("-1234567890"),
+                 isc::util::str::StringTokenError);
+
+    uint16_t num16 = tokenToNumCall_16_8("123");
+    EXPECT_EQ(123, num16);
+    num16 = tokenToNumCall_16_8("0");
+    EXPECT_EQ(0, num16);
+    num16 = tokenToNumCall_16_8("255");
+    EXPECT_EQ(255, num16);
+
+    EXPECT_THROW(tokenToNumCall_16_8(""),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("a"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("-1"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("256"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("1234567890"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("-1234567890"),
+                 isc::util::str::StringTokenError);
+
 }

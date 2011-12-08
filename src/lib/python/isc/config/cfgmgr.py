@@ -32,7 +32,7 @@ from isc.config import ccsession, config_data, module_spec
 from isc.util.file import path_search
 import bind10_config
 import isc.log
-from cfgmgr_messages import *
+from isc.log_messages.cfgmgr_messages import *
 
 logger = isc.log.Logger("cfgmgr")
 
@@ -117,12 +117,13 @@ class ConfigManagerData:
             if file:
                 file.close();
         return config
-        
+
     def write_to_file(self, output_file_name = None):
         """Writes the current configuration data to a file. If
            output_file_name is not specified, the file used in
            read_from_file is used."""
         filename = None
+
         try:
             file = tempfile.NamedTemporaryFile(mode='w',
                                                prefix="b10-config.db.",
@@ -202,7 +203,7 @@ class ConfigManager:
 
     def notify_boss(self):
         """Notifies the Boss module that the Config Manager is running"""
-        self.cc.group_sendmsg({"running": "configmanager"}, "Boss")
+        self.cc.group_sendmsg({"running": "ConfigManager"}, "Boss")
 
     def set_module_spec(self, spec):
         """Adds a ModuleSpec"""
@@ -267,6 +268,19 @@ class ConfigManager:
                 commands[module_name] = self.module_specs[module_name].get_commands_spec()
         return commands
 
+    def get_statistics_spec(self, name = None):
+        """Returns a dict containing 'module_name': statistics_spec for
+           all modules. If name is specified, only that module will
+           be included"""
+        statistics = {}
+        if name:
+            if name in self.module_specs:
+                statistics[name] = self.module_specs[name].get_statistics_spec()
+        else:
+            for module_name in self.module_specs.keys():
+                statistics[module_name] = self.module_specs[module_name].get_statistics_spec()
+        return statistics
+
     def read_config(self):
         """Read the current configuration from the file specificied at init()"""
         try:
@@ -278,7 +292,7 @@ class ConfigManager:
             # ok, just start with an empty config
             self.config = ConfigManagerData(self.data_path,
                                             self.database_filename)
-        
+
     def write_config(self):
         """Write the current configuration to the file specificied at init()"""
         self.config.write_to_file()
@@ -432,7 +446,7 @@ class ConfigManager:
             answer = ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:
             answer = ccsession.create_answer(1, "No answer message from " + cmd[0])
-            
+
         return answer
 
     def _handle_module_spec(self, spec):
@@ -442,7 +456,7 @@ class ConfigManager:
         # todo: error checking (like keyerrors)
         answer = {}
         self.set_module_spec(spec)
-        
+
         # We should make one general 'spec update for module' that
         # passes both specification and commands at once
         spec_update = ccsession.create_command(ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
@@ -457,6 +471,8 @@ class ConfigManager:
         if cmd:
             if cmd == ccsession.COMMAND_GET_COMMANDS_SPEC:
                 answer = ccsession.create_answer(0, self.get_commands_spec())
+            elif cmd == ccsession.COMMAND_GET_STATISTICS_SPEC:
+                answer = ccsession.create_answer(0, self.get_statistics_spec())
             elif cmd == ccsession.COMMAND_GET_MODULE_SPEC:
                 answer = self._handle_get_module_spec(arg)
             elif cmd == ccsession.COMMAND_GET_CONFIG:
@@ -476,7 +492,7 @@ class ConfigManager:
         else:
             answer = ccsession.create_answer(1, "Unknown message format: " + str(msg))
         return answer
-        
+
     def run(self):
         """Runs the configuration manager."""
         self.running = True

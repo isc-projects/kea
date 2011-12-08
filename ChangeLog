@@ -1,8 +1,473 @@
-TBD.	[func]		y-aharen
+339.	[func]		y-aharen
 	src/lib/statistics: Added statistics counter library for entire server
 	items and per zone items. Also, modified b10-auth to use it. It is
 	also intended to use in the other modules such as b10-resolver.
 	(Trac #510, git TBD)
+
+338.	[bug]		jinmei
+	b10-xfrin didn't check SOA serials of SOA and IXFR responses,
+	which resulted in unnecessary transfer or unexpected IXFR
+	timeouts (these issues were not overlooked but deferred to be
+	fixed until #1278 was completed).  Validation on responses to SOA
+	queries were tighten, too.
+	(Trac #1299, git 6ff03bb9d631023175df99248e8cc0cda586c30a)
+
+337.	[func]		tomek
+	libdhcp++: Support for DHCPv4 option that can store a single
+	address or a list of IPv4 addresses added. Support for END option
+	added.
+	(Trac #1350, git cc20ff993da1ddb1c6e8a98370438b45a2be9e0a)
+
+336.	[func]		jelte
+	libdns++ (and its python wrapper) now includes a class Serial, for 
+	SOA SERIAL comparison and addition. Operations on instances of this 
+	class follow the specification from RFC 1982. 
+	Rdata::SOA::getSerial() now returns values of this type (and not 
+	uint32_t).
+	(Trac #1278, git 2ae72d76c74f61a67590722c73ebbf631388acbd)
+
+335.	[bug]*		jelte
+	The DataSourceClientContainer class that dynamically loads 
+	datasource backend libraries no longer provides just a .so file name 
+	to its call to dlopen(), but passes it an absolute path. This means 
+	that it is no longer an system implementation detail that depends on 
+	[DY]LD_LIBRARY_PATH which file is chosen, should there be multiple 
+	options (for instance, when test-running a new build while a 
+	different version is installed).
+	These loadable libraries are also no longer installed in the default 
+	library path, but in a subdirectory of the libexec directory of the 
+	target ($prefix/libexec/[version]/backends).
+	This also removes the need to handle b10-xfin and b10-xfrout as 
+	'special' hardcoded components, and they are now started as regular 
+	components as dictated by the configuration of the boss process.
+	(Trac #1292, git 83ce13c2d85068a1bec015361e4ef8c35590a5d0)
+
+334.	[bug]		jinmei
+	b10-xfrout could potentially create an overflow response message
+	(exceeding the 64KB max) or could create unnecessarily small
+	messages.  The former was actually unlikely to happen due to the
+	effect of name compression, and the latter was marginal and at least
+	shouldn't cause an interoperability problem, but these were still
+	potential problems and were fixed.
+	(Trac #1389, git 3fdce88046bdad392bd89ea656ec4ac3c858ca2f)
+
+333.    [bug]		dvv
+	Solaris needs "-z now" to force non-lazy binding and prevent g++ static
+	initialization code from deadlocking.
+	(Trac #1439, git c789138250b33b6b08262425a08a2a0469d90433)
+
+332.    [bug]		vorner
+	C++ exceptions in the isc.dns.Rdata wrapper are now converted
+	to python ones instead of just aborting the interpretter.
+	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)
+
+bind10-devel-20111128 released on November 28, 2011
+
+331.	[bug]		shane
+	Fixed a bug in data source library where a zone with more labels
+	than an out-of-bailiwick name server would cause an exception to
+	be raised.
+	(Trac #1430, git 81f62344db074bc5eea3aaf3682122fdec6451ad)
+
+330.	[bug]		jelte
+	Fixed a bug in b10-auth where it would sometimes fail because it
+	tried to check for queued msgq messages before the session was
+	fully running.
+	(git c35d0dde3e835fc5f0a78fcfcc8b76c74bc727ca)
+
+329.	[doc]		vorner, jreed
+	Document the bind10 run control configuration in guide and
+	manual page.
+	(Trac #1341, git c1171699a2b501321ab54207ad26e5da2b092d63)
+
+328.	[func]		jelte
+	b10-auth now passes IXFR requests on to b10-xfrout, and no longer
+	responds to them with NOTIMPL.
+	(Trac #1390, git ab3f90da16d31fc6833d869686e07729d9b8c135)
+
+327.	[func]		jinmei
+	b10-xfrout now supports IXFR.  (Right now there is no user
+	configurable parameter about this feature; b10-xfrout will
+	always respond to IXFR requests according to RFC1995).
+	(Trac #1371 and #1372, git 80c131f5b0763753d199b0fb9b51f10990bcd92b)
+
+326.	[build]*		jinmei
+	Added a check script for the SQLite3 schema version.  It will be
+	run at the beginning of 'make install', and if it detects an old
+	version of schema, installation will stop.  You'll then need to
+	upgrade the database file by following the error message.
+	(Trac #1404, git a435f3ac50667bcb76dca44b7b5d152f45432b57)
+
+325.	[func]		jinmei
+	Python isc.datasrc: added interfaces for difference management:
+	DataSourceClient.get_updater() now has the 'journaling' parameter
+	to enable storing diffs to the data source, and a new class
+	ZoneJournalReader was introduced to retrieve them, which can be
+	created by the new DataSourceClient.get_journal_reader() method.
+	(Trac #1333, git 3e19362bc1ba7dc67a87768e2b172c48b32417f5,
+	git 39def1d39c9543fc485eceaa5d390062edb97676)
+
+324.	[bug]		jinmei
+	Fixed reference leak in the isc.log Python module.  Most of all
+	BIND 10 Python programs had memory leak (even though the pace of
+	leak may be slow) due to this bug.
+	(Trac #1359, git 164d651a0e4c1059c71f56b52ea87ac72b7f6c77)
+
+323.	[bug]		jinmei
+	b10-xfrout incorrectly skipped adding TSIG RRs to some
+	intermediate responses (when TSIG is to be used for the
+	responses).  While RFC2845 optionally allows to skip intermediate
+	TSIGs (as long as the digest for the skipped part was included
+	in a later TSIG), the underlying TSIG API doesn't support this
+	mode of signing.
+	(Trac #1370, git 76fb414ea5257b639ba58ee336fae9a68998b30d)
+
+322.	[func]		jinmei
+	datasrc: Added C++ API for retrieving difference of two versions
+	of a zone.  A new ZoneJournalReader class was introduced for this
+	purpose, and a corresponding factory method was added to
+	DataSourceClient.
+	(Trac #1332, git c1138d13b2692fa3a4f2ae1454052c866d24e654)
+
+321.	[func]*		jinmei
+	b10-xfrin now installs IXFR differences into the underlying data
+	source (if it supports journaling) so that the stored differences
+	can be used for subsequent IXFR-out transactions.
+	Note: this is a backward incompatibility change for older sqlite3
+	database files.  They need to be upgraded to have a "diffs" table.
+	(Trac #1376, git 1219d81b49e51adece77dc57b5902fa1c6be1407)
+
+320.	[func]*		vorner
+	The --brittle switch was removed from the bind10 executable.
+	It didn't work after change #316 (Trac #213) and the same
+	effect can be accomplished by declaring all components as core.
+	(Trac #1340, git f9224368908dd7ba16875b0d36329cf1161193f0)
+
+319.	[func]		naokikambe
+	b10-stats-httpd was updated. In addition of the access to all
+	statistics items of all modules, the specified item or the items
+	of the specified module name can be accessed.  For example, the
+	URI requested by using the feature is showed as
+	"/bind10/statistics/xml/Auth" or
+	"/bind10/statistics/xml/Auth/queries.tcp". The list of all possible
+	module names and all possible item names can be showed in the
+	root document, whose URI is "/bind10/statistics/xml".  This change
+	is not only for the XML documents but also is for the XSD and
+	XSL documents.
+	(Trac #917, git b34bf286c064d44746ec0b79e38a6177d01e6956)
+
+318.	[func]		stephen
+	Add C++ API for accessing zone difference information in
+	database-based data sources.
+	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
+
+317.	[func]		vorner
+	datasrc: the getUpdater method of DataSourceClient supports an
+	optional 'journaling' parameter to indicate the generated updater
+	to store diffs.  The database based derived class implements this
+	extension.
+	(Trac #1331, git 713160c9bed3d991a00b2ea5e7e3e7714d79625d)
+
+316.	[func]*		vorner
+	The configuration of what parts of the system run is more
+	flexible now.  Everything that should run must have an
+	entry in Boss/components.
+	(Trac #213, git 08e1873a3593b4fa06754654d22d99771aa388a6)
+
+315.	[func]		tomek
+	libdhcp: Support for DHCPv4 packet manipulation is now implemented.
+	All fixed fields are now supported. Generic support for DHCPv4
+	options is available (both parsing and assembly). There is no code
+	that uses this new functionality yet, so it is not usable directly
+	at this time. This code will be used by upcoming b10-dhcp4 daemon.
+	(Trac #1228, git 31d5a4f66b18cca838ca1182b9f13034066427a7)
+
+314.	[bug]		jelte
+	b10-xfrin would previously initiate incoming transfers upon 
+	receiving NOTIFY messages from any address (if the zone was 
+	known to b10-xfrin, and using the configured address). It now 
+	only starts a transfer if the source address from the NOTIFY 
+	packet matches the configured master address and port. This was 
+	really already fixed in release bind10-devel-20111014, but there 
+	were some deferred cleanups to add.
+	(Trac #1298, git 1177bfe30e17a76bea6b6447e14ae9be9e1ca8c2)
+
+313.	[func]		jinmei
+	datasrc: Added C++ API for adding zone differences to database
+	based data sources.  It's intended to be used for the support for
+	IXFR-in and dynamic update (so they can subsequently be retrieved
+	for IXFR-out).  The addRecordDiff method of the DatabaseAccessor
+	defines the interface, and a concrete implementation for SQLite3
+	was provided.
+	(Trac #1329, git 1aa233fab1d74dc776899df61181806679d14013)
+
+312.	[func]		jelte
+	Added an initial framework for doing system tests using the 
+	cucumber-based BDD tool Lettuce. A number of general steps are
+	included,  for instance running bind10 with specific
+	configurations, sending queries, and inspecting query answers. A
+	few very basic tests are included as well.
+	(Trac #1290, git 6b75c128bcdcefd85c18ccb6def59e9acedd4437)
+
+311.	[bug]		jelte
+	Fixed a bug in bindctl where tab-completion for names that
+	contain a hyphen resulted in unexpected behaviour, such as
+	appending the already-typed part again.
+	(Trac #1345, git f80ab7879cc29f875c40dde6b44e3796ac98d6da)
+
+310.	[bug]		jelte
+	Fixed a bug where bindctl could not set a value that is optional
+	and has no default, resulting in the error that the setting
+	itself was unknown. bindctl now correctly sees the setting and
+	is able to set it.
+	(Trac #1344, git 0e776c32330aee466073771600390ce74b959b38)
+
+309.	[bug]		jelte
+	Fixed a bug in bindctl where the removal of elements from a set
+	with default values was not stored, unless the set had been
+	modified in another way already.
+	(Trac #1343, git 25c802dd1c30580b94345e83eeb6a168ab329a33)
+
+308.	[build]		jelte
+	The configure script will now use pkg-config for finding
+	information about the Botan library. If pkg-config is unavailable,
+	or unaware of Botan, it will fall back to botan-config. It will
+	also use botan-config when a specific botan library directory is
+	given using the '--with-botan=' flag
+	(Trac #1194, git dc491833cf75ac1481ba1475795b0f266545013d)
+
+307.	[func]		vorner
+	When zone transfer in fails with IXFR, it is retried with AXFR
+	automatically.
+	(Trac #1279, git cd3588c9020d0310f949bfd053c4d3a4bd84ef88)
+
+306.	[bug]		stephen
+	Boss process now waits for the configuration manager to initialize
+	itself before continuing with startup.  This fixes a race condition
+	whereby the Boss could start the configuration manager and then
+	immediately start components that depended on that component being
+	fully initialized.
+	(Trac #1271, git 607cbae949553adac7e2a684fa25bda804658f61)
+
+305.	[bug]		jinmei
+	Python isc.dns, isc.datasrc, xfrin, xfrout: fixed reference leak
+	in Message.get_question(), Message.get_section(),
+	RRset.get_rdata(), and DataSourceClient.get_updater().
+	The leak caused severe memory leak in b10-xfrin, and (although no
+	one reported it) should have caused less visible leak in
+	b10-xfrout.  b10-xfrin had its own leak, which was also fixed.
+	(Trac #1028, git a72886e643864bb6f86ab47b115a55e0c7f7fcad)
+
+304.	[bug]		jelte
+	The run_bind10.sh test script now no longer runs processes from
+	an installed version of BIND 10, but will correctly use the
+	build tree paths.
+	(Trac #1246, git 1d43b46ab58077daaaf5cae3c6aa3e0eb76eb5d8)
+
+303.	[bug]		jinmei
+	Changed the installation path for the UNIX domain file used
+	for the communication between b10-auth and b10-xfrout to a
+	"@PACKAGE@" subdirectory (e.g. from /usr/local/var to
+	/usr/local/var/bind10-devel).  This should be transparent change
+	because this file is automatically created and cleaned up, but
+	if the old file somehow remains, it can now be safely removed.
+	(Trac #869, git 96e22f4284307b1d5f15e03837559711bb4f580c)
+
+302.	[bug]		jelte
+	msgq no longer crashes if the remote end is closed while msgq
+	tries to send data. It will now simply drop the message and close
+	the connection itself.
+	(Trac #1180, git 6e68b97b050e40e073f736d84b62b3e193dd870a)
+
+301.	[func]		stephen
+	Add system test for IXFR over TCP.
+	(Trac #1213, git 68ee3818bcbecebf3e6789e81ea79d551a4ff3e8)
+
+300.	[func]*		tomek
+	libdhcp: DHCP packet library was implemented. Currently it handles
+	packet reception, option parsing, option generation and output
+	packet building. Generic and specialized classes for several
+	DHCPv6 options (IA_NA, IAADDR, address-list) are available. A
+	simple code was added that leverages libdhcp. It is a skeleton
+	DHCPv6 server. It receives incoming SOLICIT and REQUEST messages
+	and responds with proper ADVERTISE and REPLY. Note that since
+	LeaseManager is not implemented, server assigns the same
+	hardcoded lease for every client. This change removes existing
+	DHCPv6 echo server as it was only a proof of concept code.
+	(Trac #1186, git 67ea6de047d4dbd63c25fe7f03f5d5cc2452ad7d)
+
+299.	[build]		jreed
+	Do not install the libfake_session, libtestutils, or libbench
+	libraries. They are used by tests within the source tree.
+	Convert all test-related makefiles to build test code at
+	regular make time to better work with test-driven development.
+	This reverts some of #1901. (The tests are ran using "make
+	check".)
+	(Trac #1286, git cee641fd3d12341d6bfce5a6fbd913e3aebc1e8e)
+
+bind10-devel-20111014 released on October 14, 2011
+
+298.	[doc]		jreed
+	Shorten README. Include plain text format of the Guide.
+	(git d1897d3, git 337198f)
+
+297.	[func]		dvv
+	Implement the SPF rrtype according to RFC4408.
+	(Trac #1140, git 146934075349f94ee27f23bf9ff01711b94e369e)
+
+296.	[build]		jreed
+	Do not install the unittest libraries. At this time, they
+	are not useful without source tree (and they may or may
+	not have googletest support). Also, convert several makefiles
+	to build tests at "check" time and not build time.
+	(Trac #1091, git 2adf4a90ad79754d52126e7988769580d20501c3)
+
+295.	[bug]		jinmei
+	__init__.py for isc.dns was installed in the wrong directory,
+	which would now make xfrin fail to start.  It was also bad
+	in that it replaced any existing __init__.py in th public
+	site-packages directory.  After applying this fix You may want to
+	check if the wrong init file is in the wrong place, in which
+	case it should be removed.
+	(Trac #1285, git af3b17472694f58b3d6a56d0baf64601b0f6a6a1)
+
+294.	[func]		jelte, jinmei, vorner
+	b10-xfrin now supports incoming IXFR.  See BIND 10 Guide for
+	how to configure it and operational notes.
+	(Trac #1212, multiple git merges)
+
+293.	[func]*		tomek
+	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
+	multicast groups and listens to incoming DHCPv6 client messages.
+	Received messages are then echoed back to clients. This
+	functionality is limited, but it can be used to test out client
+	resiliency to unexpected messages. Note that network interface
+	detection routines are not implemented yet, so interface name
+	and its address must be specified in interfaces.txt.
+	(Trac #878, git 3b1a604abf5709bfda7271fa94213f7d823de69d)
+
+292.	[func]		dvv
+	Implement the DLV rrtype according to RFC4431.
+	(Trac #1144, git d267c0511a07c41cd92e3b0b9ee9bf693743a7cf)
+
+291.	[func]		naokikambe
+	Statistics items are specified by each module's spec file.
+	Stats module can read these through the config manager. Stats
+	module and stats httpd report statistics data and statistics
+	schema by each module via both bindctl and HTTP/XML.
+	(Trac #928,#929,#930,#1175,
+	git 054699635affd9c9ecbe7a108d880829f3ba229e)
+
+290.	[func]		jinmei
+	libdns++/pydnspp: added an option parameter to the "from wire"
+	methods of the Message class.  One option is defined,
+	PRESERVE_ORDER, which specifies the parser to handle each RR
+	separately, preserving the order, and constructs RRsets in the
+	message sections so that each RRset contains only one RR.
+	(Trac #1258, git c874cb056e2a5e656165f3c160e1b34ccfe8b302)
+
+289.	[func]*		jinmei
+	b10-xfrout: ACLs for xfrout can now be configured per zone basis.
+	A per zone ACL is part of a more general zone configuration.  A
+	quick example for configuring an ACL for zone "example.com" that
+	rejects any transfer request for that zone is as follows:
+	> config add Xfrout/zone_config
+	> config set Xfrout/zone_config[0]/origin "example.com"
+	> config add Xfrout/zone_config[0]/transfer_acl
+	> config set Xfrout/zone_config[0]/transfer_acl[0] {"action": "REJECT"}
+	The previous global ACL (query_acl) was renamed to transfer_acl,
+	which now works as the default ACL.  Note: backward compatibility
+	is not provided, so an existing configuration using query_acl
+	needs to be updated by hand.
+	Note: the per zone configuration framework is a temporary
+	workaround.  It will eventually be redesigned as a system wide
+	configuration.
+	(Trac #1165, git 698176eccd5d55759fe9448b2c249717c932ac31)
+
+288.	[bug]		stephen
+	Fixed problem whereby the order in which component files appeared in
+	rdataclass.cc was system dependent, leading to problems on some
+	systems where data types were used before the header file in which
+	they were declared was included.
+	(Trac #1202, git 4a605525cda67bea8c43ca8b3eae6e6749797450)
+
+287.	[bug]*		jinmei
+	Python script files for log messages (xxx_messages.py) should have
+	been installed under the "isc" package.  This fix itself should
+	be a transparent change without affecting existing configurations
+	or other operational practices, but you may want to clean up the
+	python files from the common directly (such as "site-packages").
+	(Trac #1101, git 0eb576518f81c3758c7dbaa2522bd8302b1836b3)
+
+286.	[func]		ocean
+	libdns++: Implement the HINFO rrtype support according to RFC1034,
+	and RFC1035.
+	(Trac #1112, git 12d62d54d33fbb1572a1aa3089b0d547d02924aa)
+
+285.	[bug]		jelte
+	sqlite3 data source: fixed a race condition on initial startup,
+	when the database has not been initialized yet, and multiple
+	processes are trying to do so, resulting in one of them failing.
+	(Trac #326, git 5de6f9658f745e05361242042afd518b444d7466)
+
+284.	[bug]		jerry
+	b10-zonemgr: zonemgr will not terminate on empty zones, it will
+	log a warning and try to do zone transfer for them.
+	(Trac #1153, git 0a39659638fc68f60b95b102968d7d0ad75443ea)
+
+283.	[bug]		zhanglikun
+	Make stats and boss processes wait for answer messages from each
+	other in block mode to avoid orphan answer messages, add an internal
+	command "getstats" to boss process for getting statistics data from
+	boss.
+	(Trac #519, git 67d8e93028e014f644868fede3570abb28e5fb43)
+
+282.	[func]		ocean
+	libdns++: Implement the NAPTR rrtype according to RFC2915,
+	RFC2168 and RFC3403.
+	(Trac #1130, git 01d8d0f13289ecdf9996d6d5d26ac0d43e30549c)
+
+bind10-devel-20110819 released on August 19, 2011
+
+281.	[func]		jelte
+	Added a new type for configuration data: "named set". This allows for
+	similar configuration as the current "list" type, but with strings
+	instead of indices as identifiers. The intended use is for instance
+	/foo/zones/example.org/bar instead of /foo/zones[2]/bar. Currently
+	this new type is not in use yet.
+	(Trac #926, git 06aeefc4787c82db7f5443651f099c5af47bd4d6)
+
+280.	[func]		jerry
+	libdns++: Implement the MINFO rrtype according to RFC1035.
+	(Trac #1113, git 7a9a19d6431df02d48a7bc9de44f08d9450d3a37)
+
+279.	[func]		jerry
+	libdns++: Implement the AFSDB rrtype according to RFC1183.
+	(Trac #1114, git ce052cd92cd128ea3db5a8f154bd151956c2920c)
+
+278.	[doc]		jelte
+	Add logging configuration documentation to the guide.
+	(Trac #1011, git 2cc500af0929c1f268aeb6f8480bc428af70f4c4)
+
+277.	[func]		jerry
+	libdns++: Implement the SRV rrtype according to RFC2782.
+	(Trac #1128, git 5fd94aa027828c50e63ae1073d9d6708e0a9c223)
+
+276.	[func]		stephen
+	Although the top-level loggers are named after the program (e.g.
+	b10-auth, b10-resolver), allow the logger configuration to omit the
+	"b10-" prefix and use just the module name.
+	(Trac #1003, git a01cd4ac5a68a1749593600c0f338620511cae2d)
+
+275.	[func]		jinmei
+	Added support for TSIG key matching in ACLs.  The xfrout ACL can
+	now refer to TSIG key names using the "key" attribute.  For
+	example, the following specifies an ACL that allows zone transfer
+	if and only if the request is signed with a TSIG of a key name
+	"key.example":
+	> config set Xfrout/query_acl[0] {"action": "ACCEPT", \
+	                                  "key": "key.example"}
+	(Trac #1104, git 9b2e89cabb6191db86f88ee717f7abc4171fa979)
 
 274.	[bug]		naokikambe
 	add unittests for functions xml_handler, xsd_handler and xsl_handler
@@ -11,7 +476,7 @@ TBD.	[func]		y-aharen
 	returns is str or byte.
 	(Trac #1021, git 486bf91e0ecc5fbecfe637e1e75ebe373d42509b)
 
-273.    [func]		vorner
+273.	[func]		vorner
 	It is possible to specify ACL for the xfrout module. It is in the ACL
 	configuration key and has the usual ACL syntax. It currently supports
 	only the source address. Default ACL accepts everything.
@@ -190,7 +655,7 @@ bind10-devel-20110705 released on July 05, 2011
 	(Trac #542, git 1aa773d84cd6431aa1483eb34a7f4204949a610f)
 
 243.	[func]*		feng
-	Add optional hmac algorithm SHA224/384/812.
+	Add optional hmac algorithm SHA224/384/512.
 	(Trac #782, git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1)
 
 bind10-devel-20110519 released on May 19, 2011

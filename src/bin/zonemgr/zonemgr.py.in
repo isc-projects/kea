@@ -37,6 +37,16 @@ from isc.datasrc import sqlite3_ds
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 import isc.util.process
+from isc.log_messages.zonemgr_messages import *
+
+# Initialize logging for called modules.
+isc.log.init("b10-zonemgr")
+logger = isc.log.Logger("zonemgr")
+
+# Constants for debug levels.
+DBG_START_SHUT = logger.DBGLVL_START_SHUT
+DBG_ZONEMGR_COMMAND = logger.DBGLVL_COMMAND
+DBG_ZONEMGR_BASIC = logger.DBGLVL_TRACE_BASIC
 
 isc.util.process.rename()
 
@@ -77,13 +87,6 @@ REFRESH_OFFSET = 3
 RETRY_OFFSET = 4
 EXPIRED_OFFSET = 5
 
-# verbose mode
-VERBOSE_MODE = False
-
-def log_msg(msg):
-    if VERBOSE_MODE:
-        sys.stdout.write("[b10-zonemgr] %s\n" % str(msg))
-
 class ZonemgrException(Exception):
     pass
 
@@ -93,7 +96,6 @@ class ZonemgrRefresh:
     do zone refresh.
     Zone timers can be started by calling run_timer(), and it
     can be stopped by calling shutdown() in another thread.
-
     """
 
     def __init__(self, cc, db_file, slave_socket, config_data):
@@ -140,7 +142,10 @@ class ZonemgrRefresh:
         """Set zone next refresh time after zone refresh fail.
            now + retry - retry_jitter <= next_refresh_time <= now + retry
            """
-        zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[RETRY_OFFSET])
+        if (self._get_zone_soa_rdata(zone_name_class) is not None):
+            zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[RETRY_OFFSET])
+        else:
+            zone_retry_time = 0.0
         zone_retry_time = max(self._lowerbound_retry, zone_retry_time)
         self._set_zone_timer(zone_name_class, zone_retry_time, self._refresh_jitter * zone_retry_time)
 
@@ -157,6 +162,7 @@ class ZonemgrRefresh:
     def zone_refresh_success(self, zone_name_class):
         """Update zone info after zone refresh success"""
         if (self._zone_not_exist(zone_name_class)):
+            logger.error(ZONEMGR_UNKNOWN_ZONE_SUCCESS, zone_name_class[0], zone_name_class[1])
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
         self.zonemgr_reload_zone(zone_name_class)
@@ -167,10 +173,12 @@ class ZonemgrRefresh:
     def zone_refresh_fail(self, zone_name_class):
         """Update zone info after zone refresh fail"""
         if (self._zone_not_exist(zone_name_class)):
+            logger.error(ZONEMGR_UNKNOWN_ZONE_FAIL, zone_name_class[0], zone_name_class[1])
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
         # Is zone expired?
-        if (self._zone_is_expired(zone_name_class)):
+        if ((self._get_zone_soa_rdata(zone_name_class) is None) or
+            self._zone_is_expired(zone_name_class)):
             self._set_zone_state(zone_name_class, ZONE_EXPIRED)
         else:
             self._set_zone_state(zone_name_class, ZONE_OK)
@@ -179,6 +187,7 @@ class ZonemgrRefresh:
     def zone_handle_notify(self, zone_name_class, master):
         """Handle zone notify"""
         if (self._zone_not_exist(zone_name_class)):
+            logger.error(ZONEMGR_UNKNOWN_ZONE_NOTIFIED, zone_name_class[0], zone_name_class[1])
             raise ZonemgrException("[b10-zonemgr] Notified zone (%s, %s) "
                                    "doesn't belong to zonemgr" % zone_name_class)
         self._set_zone_notifier_master(zone_name_class, master)
@@ -191,19 +200,23 @@ class ZonemgrRefresh:
 
     def zonemgr_add_zone(self, zone_name_class):
         """ Add a zone into zone manager."""
-        log_msg("Loading zone (%s, %s)" % zone_name_class)
+
+        logger.debug(DBG_ZONEMGR_BASIC, ZONEMGR_LOAD_ZONE, zone_name_class[0], zone_name_class[1])
         zone_info = {}
         zone_soa = sqlite3_ds.get_zone_soa(str(zone_name_class[0]), self._db_file)
-        if not zone_soa:
-            raise ZonemgrException("[b10-zonemgr] zone (%s, %s) doesn't have soa." % zone_name_class)
-        zone_info["zone_soa_rdata"] = zone_soa[7]
+        if zone_soa is None:
+            logger.warn(ZONEMGR_NO_SOA, zone_name_class[0], zone_name_class[1])
+            zone_info["zone_soa_rdata"] = None
+            zone_reload_time = 0.0
+        else:
+            zone_info["zone_soa_rdata"] = zone_soa[7]
+            zone_reload_time = float(zone_soa[7].split(" ")[RETRY_OFFSET])
         zone_info["zone_state"] = ZONE_OK
         zone_info["last_refresh_time"] = self._get_current_time()
         self._zonemgr_refresh_info[zone_name_class] = zone_info
         # Imposes some random jitters to avoid many zones need to do refresh at the same time.
-        zone_reload_jitter = float(zone_soa[7].split(" ")[RETRY_OFFSET])
-        zone_reload_jitter = max(self._lowerbound_retry, zone_reload_jitter)
-        self._set_zone_timer(zone_name_class, zone_reload_jitter, self._reload_jitter * zone_reload_jitter)
+        zone_reload_time = max(self._lowerbound_retry, zone_reload_time)
+        self._set_zone_timer(zone_name_class, zone_reload_time, self._reload_jitter * zone_reload_time)
 
     def _zone_is_expired(self, zone_name_class):
         """Judge whether a zone is expired or not."""
@@ -265,7 +278,7 @@ class ZonemgrRefresh:
             except isc.cc.session.SessionTimeout:
                 pass        # for now we just ignore the failure
         except socket.error:
-            sys.stderr.write("[b10-zonemgr] Failed to send to module %s, the session has been closed." % module_name)
+            logger.error(ZONEMGR_SEND_FAIL, module_name)
 
     def _find_need_do_refresh_zone(self):
         """Find the first zone need do refresh, if no zone need
@@ -274,7 +287,8 @@ class ZonemgrRefresh:
         zone_need_refresh = None
         for zone_name_class in self._zonemgr_refresh_info.keys():
             zone_state = self._get_zone_state(zone_name_class)
-            # If hasn't received refresh response but are within refresh timeout, skip the zone
+            # If hasn't received refresh response but are within refresh
+            # timeout, skip the zone
             if (ZONE_REFRESHING == zone_state and
                 (self._get_zone_refresh_timeout(zone_name_class) > self._get_current_time())):
                 continue
@@ -294,7 +308,7 @@ class ZonemgrRefresh:
 
     def _do_refresh(self, zone_name_class):
         """Do zone refresh."""
-        log_msg("Do refresh for zone (%s, %s)." % zone_name_class)
+        logger.debug(DBG_ZONEMGR_BASIC, ZONEMGR_REFRESH_ZONE, zone_name_class[0], zone_name_class[1])
         self._set_zone_state(zone_name_class, ZONE_REFRESHING)
         self._set_zone_refresh_timeout(zone_name_class, self._get_current_time() + self._max_transfer_timeout)
         notify_master = self._get_zone_notifier_master(zone_name_class)
@@ -351,7 +365,7 @@ class ZonemgrRefresh:
                 if e.args[0] == errno.EINTR:
                     (rlist, wlist, xlist) = ([], [], [])
                 else:
-                    sys.stderr.write("[b10-zonemgr] Error with select(); %s\n" % e)
+                    logger.error(ZONEMGR_SELECT_ERROR, e);
                     break
 
             for fd in rlist:
@@ -365,12 +379,14 @@ class ZonemgrRefresh:
 
     def run_timer(self, daemon=False):
         """
-        Keep track of zone timers. Spawns and starts a thread. The thread object is returned.
+        Keep track of zone timers. Spawns and starts a thread. The thread object
+        is returned.
 
         You can stop it by calling shutdown().
         """
         # Small sanity check
         if self._running:
+            logger.error(ZONEMGR_TIMER_THREAD_RUNNING)
             raise RuntimeError("Trying to run the timers twice at the same time")
 
         # Prepare the launch
@@ -395,6 +411,7 @@ class ZonemgrRefresh:
         called from a different thread.
         """
         if not self._running:
+            logger.error(ZONEMGR_NO_TIMER_THREAD)
             raise RuntimeError("Trying to shutdown, but not running")
 
         # Ask the thread to stop
@@ -409,12 +426,6 @@ class ZonemgrRefresh:
 
     def update_config_data(self, new_config):
         """ update ZonemgrRefresh config """
-        # TODO: we probably want to store all this info in a nice
-        # class, so that we don't have to backup and restore every
-        # single value.
-        # TODO2: We also don't use get_default_value yet
-        backup = self._zonemgr_refresh_info.copy()
-
         # Get a new value, but only if it is defined (commonly used below)
         # We don't use "value or default", because if value would be
         # 0, we would take default
@@ -424,26 +435,21 @@ class ZonemgrRefresh:
             else:
                 return default
 
-        # store the values so we can restore them if there is a problem
-        lowerbound_refresh_backup = self._lowerbound_refresh
         self._lowerbound_refresh = val_or_default(
             new_config.get('lowerbound_refresh'), self._lowerbound_refresh)
 
-        lowerbound_retry_backup = self._lowerbound_retry
         self._lowerbound_retry = val_or_default(
             new_config.get('lowerbound_retry'), self._lowerbound_retry)
 
-        max_transfer_timeout_backup = self._max_transfer_timeout
         self._max_transfer_timeout = val_or_default(
             new_config.get('max_transfer_timeout'), self._max_transfer_timeout)
 
-        refresh_jitter_backup = self._refresh_jitter
         self._refresh_jitter = val_or_default(
             new_config.get('refresh_jitter'), self._refresh_jitter)
 
-        reload_jitter_backup = self._reload_jitter
         self._reload_jitter = val_or_default(
             new_config.get('reload_jitter'), self._reload_jitter)
+
         try:
             required = {}
             secondary_zones = new_config.get('secondary_zones')
@@ -458,6 +464,7 @@ class ZonemgrRefresh:
                     required[name_class] = True
                     # Add it only if it isn't there already
                     if not name_class in self._zonemgr_refresh_info:
+                        # If we are not able to find it in database, log an warning
                         self.zonemgr_add_zone(name_class)
                 # Drop the zones that are no longer there
                 # Do it in two phases, python doesn't like deleting while iterating
@@ -467,14 +474,7 @@ class ZonemgrRefresh:
                         to_drop.append(old_zone)
                 for drop in to_drop:
                     del self._zonemgr_refresh_info[drop]
-        # If we are not able to find it in database, restore the original
         except:
-            self._zonemgr_refresh_info = backup
-            self._lowerbound_refresh = lowerbound_refresh_backup
-            self._lowerbound_retry = lowerbound_retry_backup
-            self._max_transfer_timeout = max_transfer_timeout_backup
-            self._refresh_jitter = refresh_jitter_backup
-            self._reload_jitter = reload_jitter_backup
             raise
 
 class Zonemgr:
@@ -515,8 +515,8 @@ class Zonemgr:
         return db_file
 
     def shutdown(self):
-        """Shutdown the zonemgr process. the thread which is keeping track of zone
-        timers should be terminated.
+        """Shutdown the zonemgr process. The thread which is keeping track of
+           zone timers should be terminated.
         """
         self._zone_refresh.shutdown()
 
@@ -556,17 +556,17 @@ class Zonemgr:
         # jitter should not be bigger than half of the original value
         if config_data.get('refresh_jitter') > 0.5:
             config_data['refresh_jitter'] = 0.5
-            log_msg("[b10-zonemgr] refresh_jitter is too big, its value will "
-                      "be set to 0.5")
-
+            logger.warn(ZONEMGR_JITTER_TOO_BIG)
 
     def _parse_cmd_params(self, args, command):
         zone_name = args.get("zone_name")
         if not zone_name:
+            logger.error(ZONEMGR_NO_ZONE_NAME)
             raise ZonemgrException("zone name should be provided")
 
         zone_class = args.get("zone_class")
         if not zone_class:
+            logger.error(ZONEMGR_NO_ZONE_CLASS)
             raise ZonemgrException("zone class should be provided")
 
         if (command != ZONE_NOTIFY_COMMAND):
@@ -574,6 +574,7 @@ class Zonemgr:
 
         master_str = args.get("master")
         if not master_str:
+            logger.error(ZONEMGR_NO_MASTER_ADDRESS)
             raise ZonemgrException("master address should be provided")
 
         return ((zone_name, zone_class), master_str)
@@ -581,15 +582,16 @@ class Zonemgr:
 
     def command_handler(self, command, args):
         """Handle command receivd from command channel.
-        ZONE_NOTIFY_COMMAND is issued by Auth process; ZONE_XFRIN_SUCCESS_COMMAND
-        and ZONE_XFRIN_FAILED_COMMAND are issued by Xfrin process; shutdown is issued
-        by a user or Boss process. """
+        ZONE_NOTIFY_COMMAND is issued by Auth process;
+        ZONE_XFRIN_SUCCESS_COMMAND and ZONE_XFRIN_FAILED_COMMAND are issued by
+        Xfrin process;
+        shutdown is issued by a user or Boss process. """
         answer = create_answer(0)
         if command == ZONE_NOTIFY_COMMAND:
             """ Handle Auth notify command"""
             # master is the source sender of the notify message.
             zone_name_class, master = self._parse_cmd_params(args, command)
-            log_msg("Received notify command for zone (%s, %s)." % zone_name_class)
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_NOTIFY, zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_handle_notify(zone_name_class, master)
             # Send notification to zonemgr timer thread
@@ -598,6 +600,7 @@ class Zonemgr:
         elif command == ZONE_XFRIN_SUCCESS_COMMAND:
             """ Handle xfrin success command"""
             zone_name_class = self._parse_cmd_params(args, command)
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_SUCCESS, zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_refresh_success(zone_name_class)
             self._master_socket.send(b" ")# make self._slave_socket readble
@@ -605,14 +608,17 @@ class Zonemgr:
         elif command == ZONE_XFRIN_FAILED_COMMAND:
             """ Handle xfrin fail command"""
             zone_name_class = self._parse_cmd_params(args, command)
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_FAILED, zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_refresh_fail(zone_name_class)
             self._master_socket.send(b" ")# make self._slave_socket readble
 
         elif command == "shutdown":
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_SHUTDOWN)
             self.shutdown()
 
         else:
+            logger.warn(ZONEMGR_RECEIVE_UNKNOWN, str(command))
             answer = create_answer(1, "Unknown command:" + str(command))
 
         return answer
@@ -639,25 +645,29 @@ def set_cmd_options(parser):
 
 if '__main__' == __name__:
     try:
+        logger.debug(DBG_START_SHUT, ZONEMGR_STARTING)
         parser = OptionParser()
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
-        VERBOSE_MODE = options.verbose
+        if options.verbose:
+            logger.set_severity("DEBUG", 99)
 
         set_signal_handler()
         zonemgrd = Zonemgr()
         zonemgrd.run()
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-zonemgr] exit zonemgr process\n")
+        logger.info(ZONEMGR_KEYBOARD_INTERRUPT)
+
     except isc.cc.session.SessionError as e:
-        sys.stderr.write("[b10-zonemgr] Error creating zonemgr, "
-                           "is the command channel daemon running?\n")
+        logger.error(ZONEMGR_SESSION_ERROR)
+
     except isc.cc.session.SessionTimeout as e:
-        sys.stderr.write("[b10-zonemgr] Error creating zonemgr, "
-                           "is the configuration manager running?\n")
+        logger.error(ZONEMGR_SESSION_TIMEOUT)
+
     except isc.config.ModuleCCSessionError as e:
-        sys.stderr.write("[b10-zonemgr] exit zonemgr process: %s\n" % str(e))
+        logger.error(ZONEMGR_CCSESSION_ERROR, str(e))
 
     if zonemgrd and zonemgrd.running:
         zonemgrd.shutdown()
 
+    logger.debug(DBG_START_SHUT, ZONEMGR_SHUTDOWN)

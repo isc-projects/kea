@@ -37,7 +37,7 @@ class TestConfigManagerData(unittest.TestCase):
         It shouldn't append the data path to it.
         """
         abs_path = self.data_path + os.sep + "b10-config-imaginary.db"
-        data = ConfigManagerData(os.getcwd(), abs_path)
+        data = ConfigManagerData(self.data_path, abs_path)
         self.assertEqual(abs_path, data.db_filename)
         self.assertEqual(self.data_path, data.data_path)
 
@@ -88,7 +88,7 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(cfd1, cfd2)
         cfd2.data['test'] = { 'a': [ 1, 2, 3]}
         self.assertNotEqual(cfd1, cfd2)
-        
+
 
 class TestConfigManager(unittest.TestCase):
 
@@ -128,7 +128,7 @@ class TestConfigManager(unittest.TestCase):
         msg = self.fake_session.get_message("Boss", None)
         self.assert_(msg)
         # this one is actually wrong, but 'current status quo'
-        self.assertEqual(msg, {"running": "configmanager"})
+        self.assertEqual(msg, {"running": "ConfigManager"})
 
     def test_set_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
@@ -198,8 +198,8 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual(config_spec['Spec2'], module_spec.get_config_spec())
         config_spec = self.cm.get_config_spec('Spec2')
         self.assertEqual(config_spec['Spec2'], module_spec.get_config_spec())
-        
-    
+
+
     def test_get_commands_spec(self):
         commands_spec = self.cm.get_commands_spec()
         self.assertEqual(commands_spec, {})
@@ -219,6 +219,25 @@ class TestConfigManager(unittest.TestCase):
         commands_spec = self.cm.get_commands_spec('Spec2')
         self.assertEqual(commands_spec['Spec2'], module_spec.get_commands_spec())
 
+    def test_get_statistics_spec(self):
+        statistics_spec = self.cm.get_statistics_spec()
+        self.assertEqual(statistics_spec, {})
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        statistics_spec = self.cm.get_statistics_spec()
+        self.assertEqual(statistics_spec, { 'Spec1': None })
+        self.cm.remove_module_spec('Spec1')
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        statistics_spec = self.cm.get_statistics_spec()
+        self.assertEqual(statistics_spec['Spec2'], module_spec.get_statistics_spec())
+        statistics_spec = self.cm.get_statistics_spec('Spec2')
+        self.assertEqual(statistics_spec['Spec2'], module_spec.get_statistics_spec())
+
     def test_read_config(self):
         self.assertEqual(self.cm.config.data, {'version': config_data.BIND10_CONFIG_DATA_VERSION})
         self.cm.read_config()
@@ -231,7 +250,7 @@ class TestConfigManager(unittest.TestCase):
     def test_write_config(self):
         # tested in ConfigManagerData tests
         pass
-    
+
     def _handle_msg_helper(self, msg, expected_answer):
         answer = self.cm.handle_msg(msg)
         self.assertEqual(expected_answer, answer)
@@ -241,6 +260,7 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper("", { 'result': [ 1, 'Unknown message format: ']})
         self._handle_msg_helper({ "command": [ "badcommand" ] }, { 'result': [ 1, "Unknown command: badcommand"]})
         self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_statistics_spec" ] }, { 'result': [ 0, {} ]})
         self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, {} ]})
         self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "Spec2" } ] }, { 'result': [ 0, {} ]})
         #self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "nosuchmodule" } ] },
@@ -318,7 +338,7 @@ class TestConfigManager(unittest.TestCase):
         #                 self.fake_session.get_message(self.name, None))
         #self.assertEqual({'version': 1, 'TestModule': {'test': 124}}, self.cm.config.data)
         #
-        self._handle_msg_helper({ "command": 
+        self._handle_msg_helper({ "command":
                                   ["module_spec", self.spec.get_full_spec()]
                                 },
                                 {'result': [0]})
@@ -329,6 +349,7 @@ class TestConfigManager(unittest.TestCase):
                                                { "module_name" : "Spec2" } ] },
                                 { 'result': [ 0, self.spec.get_full_spec() ] })
         self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_commands_spec() } ]})
+        self._handle_msg_helper({ "command": [ "get_statistics_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_statistics_spec() } ]})
         # re-add this once we have new way to propagate spec changes (1 instead of the current 2 messages)
         #self.assertEqual(len(self.fake_session.message_queue), 2)
         # the name here is actually wrong (and hardcoded), but needed in the current version
@@ -338,7 +359,7 @@ class TestConfigManager(unittest.TestCase):
         #self.assertEqual({'commands_update': [ self.name, self.commands ] },
         #                 self.fake_session.get_message("Cmdctl", None))
 
-        self._handle_msg_helper({ "command": 
+        self._handle_msg_helper({ "command":
                                   ["shutdown"]
                                 },
                                 {'result': [0]})
@@ -450,6 +471,7 @@ class TestConfigManager(unittest.TestCase):
 
     def test_run(self):
         self.fake_session.group_sendmsg({ "command": [ "get_commands_spec" ] }, "ConfigManager")
+        self.fake_session.group_sendmsg({ "command": [ "get_statistics_spec" ] }, "ConfigManager")
         self.fake_session.group_sendmsg({ "command": [ "shutdown" ] }, "ConfigManager")
         self.cm.run()
         pass

@@ -132,6 +132,17 @@ format(const std::string& format, const std::vector<std::string>& args) {
     return (result);
 }
 
+std::string
+getToken(std::istringstream& iss) {
+    string token;
+    iss >> token;
+    if (iss.bad() || iss.fail()) {
+        isc_throw(StringTokenError, "could not read token from string");
+    }
+    return (token);
+}
+
+
 } // namespace str
 } // namespace util
 } // namespace isc

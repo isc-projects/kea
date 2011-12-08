@@ -29,21 +29,21 @@ import http.server
 import socket
 import string
 import xml.etree.ElementTree
+import urllib.parse
 
 import isc.cc
 import isc.config
 import isc.util.process
 
 import isc.log
-from stats_httpd_messages import *
+from isc.log_messages.stats_httpd_messages import *
 
 isc.log.init("b10-stats-httpd")
 logger = isc.log.Logger("stats-httpd")
 
-# Some constants for debug levels, these should be removed when we
-# have #1074
-DBG_STATHTTPD_INIT = 10
-DBG_STATHTTPD_MESSAGING = 30
+# Some constants for debug levels.
+DBG_STATHTTPD_INIT = logger.DBGLVL_START_SHUT
+DBG_STATHTTPD_MESSAGING = logger.DBGLVL_COMMAND
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
@@ -57,7 +57,6 @@ else:
     BASE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@"
     BASE_LOCATION = BASE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd.spec"
-SCHEMA_SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-schema.spec"
 XML_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xml.tpl"
 XSD_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsd.tpl"
 XSL_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsl.tpl"
@@ -68,8 +67,7 @@ XML_URL_PATH = '/bind10/statistics/xml'
 XSD_URL_PATH = '/bind10/statistics/xsd'
 XSL_URL_PATH = '/bind10/statistics/xsl'
 # TODO: This should be considered later.
-XSD_NAMESPACE = 'http://bind10.isc.org' + XSD_URL_PATH
-DEFAULT_CONFIG = dict(listen_on=[('127.0.0.1', 8000)])
+XSD_NAMESPACE = 'http://bind10.isc.org/bind10'
 
 # Assign this process name
 isc.util.process.rename()
@@ -88,14 +86,29 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
 
     def send_head(self):
         try:
-            if self.path == XML_URL_PATH:
-                body = self.server.xml_handler()
-            elif self.path == XSD_URL_PATH:
-                body = self.server.xsd_handler()
-            elif self.path == XSL_URL_PATH:
-                body = self.server.xsl_handler()
+            req_path = self.path
+            req_path = urllib.parse.urlsplit(req_path).path
+            req_path = urllib.parse.unquote(req_path)
+            req_path = os.path.normpath(req_path)
+            path_dirs = req_path.split('/')
+            path_dirs = [ d for d in filter(None, path_dirs) ]
+            req_path = '/'+"/".join(path_dirs)
+            module_name = None
+            item_name = None
+            # in case of /bind10/statistics/xxx/YYY/zzz
+            if len(path_dirs) >= 5:
+                item_name = path_dirs[4]
+            # in case of /bind10/statistics/xxx/YYY ...
+            if len(path_dirs) >= 4:
+                module_name = path_dirs[3]
+            if req_path == '/'.join([XML_URL_PATH] + path_dirs[3:5]):
+                body = self.server.xml_handler(module_name, item_name)
+            elif req_path == '/'.join([XSD_URL_PATH] + path_dirs[3:5]):
+                body = self.server.xsd_handler(module_name, item_name)
+            elif req_path == '/'.join([XSL_URL_PATH] + path_dirs[3:5]):
+                body = self.server.xsl_handler(module_name, item_name)
             else:
-                if self.path == '/' and 'Host' in self.headers.keys():
+                if req_path == '/' and 'Host' in self.headers.keys():
                     # redirect to XML URL only when requested with '/'
                     self.send_response(302)
                     self.send_header(
@@ -107,6 +120,12 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                     # Couldn't find HOST
                     self.send_error(404)
                     return None
+        except StatsHttpdDataError as err:
+            # Couldn't find neither specified module name nor
+            # specified item name
+            self.send_error(404)
+            logger.error(STATHTTPD_SERVER_DATAERROR, err)
+            return None
         except StatsHttpdError as err:
             self.send_error(500)
             logger.error(STATHTTPD_SERVER_ERROR, err)
@@ -148,6 +167,12 @@ class StatsHttpdError(Exception):
     main routine."""
     pass
 
+class StatsHttpdDataError(Exception):
+    """Exception class for StatsHttpd class. The reason seems to be
+    due to the data. It is intended to be thrown from the the
+    StatsHttpd object to the HttpHandler object or main routine."""
+    pass
+
 class StatsHttpd:
     """The main class of HTTP server of HTTP/XML interface for
     statistics module. It handles HTTP requests, and command channel
@@ -160,8 +185,10 @@ class StatsHttpd:
         self.mccs = None
         self.httpd = []
         self.open_mccs()
+        self.config = {}
         self.load_config()
-        self.load_templates()
+        self.http_addrs = []
+        self.mccs.start()
         self.open_httpd()
 
     def open_mccs(self):
@@ -171,10 +198,6 @@ class StatsHttpd:
         self.mccs = isc.config.ModuleCCSession(
             SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self.cc_session = self.mccs._session
-        # read spec file of stats module and subscribe 'Stats'
-        self.stats_module_spec = isc.config.module_spec_from_file(SCHEMA_SPECFILE_LOCATION)
-        self.stats_config_spec = self.stats_module_spec.get_config_spec()
-        self.stats_module_name = self.stats_module_spec.get_module_name()
 
     def close_mccs(self):
         """Closes a ModuleCCSession object"""
@@ -189,18 +212,19 @@ class StatsHttpd:
         """Loads configuration from spec file or new configuration
         from the config manager"""
         # load config
-        if len(new_config) > 0:
-            self.config.update(new_config)
-        else:
-            self.config = DEFAULT_CONFIG
-            self.config.update(
-                dict([
-                        (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
-                        for itm in self.mccs.get_module_spec().get_config_spec()
-                        ])
-                )
+        if len(self.config) == 0:
+            self.config = dict([
+                (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
+                for itm in self.mccs.get_module_spec().get_config_spec()
+                ])
+        self.config.update(new_config)
         # set addresses and ports for HTTP
-        self.http_addrs = [ (cf['address'], cf['port']) for cf in self.config['listen_on'] ]
+        addrs = []
+        if 'listen_on' in self.config:
+            for cf in self.config['listen_on']:
+                if 'address' in cf and 'port' in cf:
+                    addrs.append((cf['address'], cf['port']))
+        self.http_addrs = addrs
 
     def open_httpd(self):
         """Opens sockets for HTTP. Iterating each HTTP address to be
@@ -208,46 +232,44 @@ class StatsHttpd:
         for addr in self.http_addrs:
             self.httpd.append(self._open_httpd(addr))
 
-    def _open_httpd(self, server_address, address_family=None):
+    def _open_httpd(self, server_address):
+        httpd = None
         try:
-            # try IPv6 at first
-            if address_family is not None:
-                HttpServer.address_family = address_family
-            elif socket.has_ipv6:
-                HttpServer.address_family = socket.AF_INET6
+            # get address family for the server_address before
+            # creating HttpServer object. If a specified address is
+            # not numerical, gaierror may be thrown.
+            address_family = socket.getaddrinfo(
+                server_address[0], server_address[1], 0,
+                socket.SOCK_STREAM, socket.IPPROTO_TCP, socket.AI_NUMERICHOST
+                )[0][0]
+            HttpServer.address_family = address_family
             httpd = HttpServer(
                 server_address, HttpHandler,
                 self.xml_handler, self.xsd_handler, self.xsl_handler,
                 self.write_log)
-        except (socket.gaierror, socket.error,
-                OverflowError, TypeError) as err:
-            # try IPv4 next
-            if HttpServer.address_family == socket.AF_INET6:
-                httpd = self._open_httpd(server_address, socket.AF_INET)
-            else:
-                raise HttpServerError(
-                    "Invalid address %s, port %s: %s: %s" %
-                    (server_address[0], server_address[1],
-                     err.__class__.__name__, err))
-        else:
             logger.info(STATHTTPD_STARTED, server_address[0],
                         server_address[1])
-        return httpd
+            return httpd
+        except (socket.gaierror, socket.error,
+                OverflowError, TypeError) as err:
+           if httpd:
+                httpd.server_close()
+           raise HttpServerError(
+               "Invalid address %s, port %s: %s: %s" %
+               (server_address[0], server_address[1],
+                err.__class__.__name__, err))
 
     def close_httpd(self):
         """Closes sockets for HTTP"""
-        if len(self.httpd) == 0:
-            return
-        for ht in self.httpd:
+        while len(self.httpd)>0:
+            ht = self.httpd.pop()
             logger.info(STATHTTPD_CLOSING, ht.server_address[0],
                         ht.server_address[1])
             ht.server_close()
-        self.httpd = []
 
     def start(self):
         """Starts StatsHttpd objects to run. Waiting for client
         requests by using select.select functions"""
-        self.mccs.start()
         self.running = True
         while self.running:
             try:
@@ -280,6 +302,7 @@ class StatsHttpd:
         logger.info(STATHTTPD_SHUTDOWN)
         self.close_httpd()
         self.close_mccs()
+        self.running = False
 
     def get_sockets(self):
         """Returns sockets to select.select"""
@@ -296,23 +319,27 @@ class StatsHttpd:
         addresses and ports to listen HTTP requests on."""
         logger.debug(DBG_STATHTTPD_MESSAGING, STATHTTPD_HANDLE_CONFIG,
                    new_config)
-        for key in new_config.keys():
-            if key not in DEFAULT_CONFIG and key != "version":
-                logger.error(STATHTTPD_UNKNOWN_CONFIG_ITEM, key)
+        errors = []
+        if not self.mccs.get_module_spec().\
+                validate_config(False, new_config, errors):
                 return isc.config.ccsession.create_answer(
-                    1, "Unknown known config: %s" % key)
+                    1, ", ".join(errors))
         # backup old config
         old_config = self.config.copy()
-        self.close_httpd()
         self.load_config(new_config)
+        # If the http sockets aren't opened or
+        # if new_config doesn't have'listen_on', it returns
+        if len(self.httpd) == 0 or 'listen_on' not in new_config:
+            return isc.config.ccsession.create_answer(0)
+        self.close_httpd()
         try:
             self.open_httpd()
         except HttpServerError as err:
             logger.error(STATHTTPD_SERVER_ERROR, err)
             # restore old config
-            self.config_handler(old_config)
-            return isc.config.ccsession.create_answer(
-                1, "[b10-stats-httpd] %s" % err)
+            self.load_config(old_config)
+            self.open_httpd()
+            return isc.config.ccsession.create_answer(1, str(err))
         else:
             return isc.config.ccsession.create_answer(0)
 
@@ -328,21 +355,34 @@ class StatsHttpd:
             logger.debug(DBG_STATHTTPD_MESSAGING,
                          STATHTTPD_RECEIVED_SHUTDOWN_COMMAND)
             self.running = False
-            return isc.config.ccsession.create_answer(
-                0, "Stats Httpd is shutting down.")
+            return isc.config.ccsession.create_answer(0)
         else:
             logger.debug(DBG_STATHTTPD_MESSAGING,
                          STATHTTPD_RECEIVED_UNKNOWN_COMMAND, command)
             return isc.config.ccsession.create_answer(
                 1, "Unknown command: " + str(command))
 
-    def get_stats_data(self):
+    def get_stats_data(self, owner=None, name=None):
         """Requests statistics data to the Stats daemon and returns
-        the data which obtains from it"""
+        the data which obtains from it. The first argument is the
+        module name which owns the statistics data, the second
+        argument is one name of the statistics items which the the
+        module owns. The second argument cannot be specified when the
+        first argument is not specified. It returns the statistics
+        data of the specified module or item. When the session timeout
+        or the session error is occurred, it raises
+        StatsHttpdError. When the stats daemon returns none-zero
+        value, it raises StatsHttpdDataError."""
+        param = {}
+        if owner is None and name is None:
+            param = None
+        if owner is not None:
+            param['owner'] = owner
+        if name is not None:
+            param['name'] = name
         try:
             seq = self.cc_session.group_sendmsg(
-                isc.config.ccsession.create_command('show'),
-                self.stats_module_name)
+                isc.config.ccsession.create_command('show', param), 'Stats')
             (answer, env) = self.cc_session.group_recvmsg(False, seq)
             if answer:
                 (rcode, value) = isc.config.ccsession.parse_answer(answer)
@@ -354,122 +394,424 @@ class StatsHttpd:
             if rcode == 0:
                 return value
             else:
-                raise StatsHttpdError("Stats module: %s" % str(value))
+                raise StatsHttpdDataError("Stats module: %s" % str(value))
 
-    def get_stats_spec(self):
-        """Just returns spec data"""
-        return self.stats_config_spec
+    def get_stats_spec(self, owner=None, name=None):
+        """Requests statistics data to the Stats daemon and returns
+        the data which obtains from it. The first argument is the
+        module name which owns the statistics data, the second
+        argument is one name of the statistics items which the the
+        module owns. The second argument cannot be specified when the
+        first argument is not specified. It returns the statistics
+        specification of the specified module or item. When the
+        session timeout or the session error is occurred, it raises
+        StatsHttpdError. When the stats daemon returns none-zero
+        value, it raises StatsHttpdDataError."""
+        param = {}
+        if owner is None and name is None:
+            param = None
+        if owner is not None:
+            param['owner'] = owner
+        if name is not None:
+            param['name'] = name
+        try:
+            seq = self.cc_session.group_sendmsg(
+                isc.config.ccsession.create_command('showschema', param), 'Stats')
+            (answer, env) = self.cc_session.group_recvmsg(False, seq)
+            if answer:
+                (rcode, value) = isc.config.ccsession.parse_answer(answer)
+                if rcode == 0:
+                    return value
+                else:
+                    raise StatsHttpdDataError("Stats module: %s" % str(value))
+        except (isc.cc.session.SessionTimeout,
+                isc.cc.session.SessionError) as err:
+            raise StatsHttpdError("%s: %s" %
+                                  (err.__class__.__name__, err))
 
-    def load_templates(self):
-        """Setup the bodies of XSD and XSL documents to be responds to
-        HTTP clients. Before that it also creates XML tag structures by
-        using xml.etree.ElementTree.Element class and substitutes
-        concrete strings with parameters embed in the string.Template
-        object."""
-        # for XSD
-        xsd_root = xml.etree.ElementTree.Element("all") # started with "all" tag
-        for item in self.get_stats_spec():
-            element = xml.etree.ElementTree.Element(
-                "element",
-                dict( name=item["item_name"],
-                      type=item["item_type"] if item["item_type"].lower() != 'real' else 'float',
-                      minOccurs="1",
-                      maxOccurs="1" ),
-                )
-            annotation = xml.etree.ElementTree.Element("annotation")
-            appinfo = xml.etree.ElementTree.Element("appinfo")
-            documentation = xml.etree.ElementTree.Element("documentation")
-            appinfo.text = item["item_title"]
-            documentation.text = item["item_description"]
-            annotation.append(appinfo)
-            annotation.append(documentation)
-            element.append(annotation)
-            xsd_root.append(element)
+
+    def xml_handler(self, module_name=None, item_name=None):
+        """Requests the specified statistics data and specification by
+        using the functions get_stats_data and get_stats_spec
+        respectively and loads the XML template file and returns the
+        string of the XML document.The first argument is the module
+        name which owns the statistics data, the second argument is
+        one name of the statistics items which the the module
+        owns. The second argument cannot be specified when the first
+        argument is not specified."""
+
+        # TODO: Separate the following recursive function by type of
+        # the parameter. Because we should be sure what type there is
+        # when we call it recursively.
+        def stats_data2xml(stats_spec, stats_data, xml_elem):
+            """Internal use for xml_handler. Reads stats_data and
+            stats_spec specified as first and second arguments, and
+            modify the xml object specified as third
+            argument. xml_elem must be modified and always returns
+            None."""
+            # assumed started with module_spec or started with
+            # item_spec in statistics
+            if type(stats_spec) is dict:
+                # assumed started with module_spec
+                if 'item_name' not in stats_spec \
+                        and 'item_type' not in stats_spec:
+                    for module_name in stats_spec.keys():
+                        elem = xml.etree.ElementTree.Element(module_name)
+                        stats_data2xml(stats_spec[module_name],
+                                       stats_data[module_name], elem)
+                        xml_elem.append(elem)
+                # started with item_spec in statistics
+                else:
+                    elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
+                    if stats_spec['item_type'] == 'map':
+                        stats_data2xml(stats_spec['map_item_spec'],
+                                       stats_data,
+                                       elem)
+                    elif stats_spec['item_type'] == 'list':
+                        for item in stats_data:
+                            stats_data2xml(stats_spec['list_item_spec'],
+                                           item, elem)
+                    else:
+                        elem.text = str(stats_data)
+                    xml_elem.append(elem)
+            # assumed started with stats_spec
+            elif type(stats_spec) is list:
+                for item_spec in stats_spec:
+                    stats_data2xml(item_spec,
+                                   stats_data[item_spec['item_name']],
+                                   xml_elem)
+
+        stats_spec = self.get_stats_spec(module_name, item_name)
+        stats_data = self.get_stats_data(module_name, item_name)
+        # make the path xxx/module/item if specified respectively
+        path_info = ''
+        if module_name is not None and item_name is not None:
+            path_info = '/' + module_name + '/' + item_name
+        elif module_name is not None:
+            path_info = '/' + module_name
+        xml_elem = xml.etree.ElementTree.Element(
+            'bind10:statistics',
+            attrib={ 'xsi:schemaLocation' : XSD_NAMESPACE + ' ' + XSD_URL_PATH + path_info,
+                     'xmlns:bind10' : XSD_NAMESPACE,
+                     'xmlns:xsi' : "http://www.w3.org/2001/XMLSchema-instance" })
+        stats_data2xml(stats_spec, stats_data, xml_elem)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
         # cases transparently, we first make sure tostring() returns
         # bytes by specifying utf-8 and then convert the result to a
         # plain string (code below assume it).
+        # FIXME: Non-ASCII characters might be lost here. Consider how
+        # the whole system should handle non-ASCII characters.
+        xml_string = str(xml.etree.ElementTree.tostring(xml_elem, encoding='utf-8'),
+                         encoding='us-ascii')
+        self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
+            xml_string=xml_string,
+            xsl_url_path=XSL_URL_PATH + path_info)
+        assert self.xml_body is not None
+        return self.xml_body
+
+    def xsd_handler(self, module_name=None, item_name=None):
+        """Requests the specified statistics specification by using
+        the function get_stats_spec respectively and loads the XSD
+        template file and returns the string of the XSD document.The
+        first argument is the module name which owns the statistics
+        data, the second argument is one name of the statistics items
+        which the the module owns. The second argument cannot be
+        specified when the first argument is not specified."""
+
+        # TODO: Separate the following recursive function by type of
+        # the parameter. Because we should be sure what type there is
+        # when we call it recursively.
+        def stats_spec2xsd(stats_spec, xsd_elem):
+            """Internal use for xsd_handler. Reads stats_spec
+            specified as first arguments, and modify the xml object
+            specified as second argument. xsd_elem must be
+            modified. Always returns None with no exceptions."""
+            # assumed module_spec or one stats_spec
+            if type(stats_spec) is dict:
+                # assumed module_spec
+                if 'item_name' not in stats_spec:
+                    for mod in stats_spec.keys():
+                        elem = xml.etree.ElementTree.Element(
+                            "element", { "name" : mod })
+                        complextype = xml.etree.ElementTree.Element("complexType")
+                        alltag = xml.etree.ElementTree.Element("all")
+                        stats_spec2xsd(stats_spec[mod], alltag)
+                        complextype.append(alltag)
+                        elem.append(complextype)
+                        xsd_elem.append(elem)
+                # assumed stats_spec
+                else:
+                    if stats_spec['item_type'] == 'map':
+                        alltag = xml.etree.ElementTree.Element("all")
+                        stats_spec2xsd(stats_spec['map_item_spec'], alltag)
+                        complextype = xml.etree.ElementTree.Element("complexType")
+                        complextype.append(alltag)
+                        elem = xml.etree.ElementTree.Element(
+                            "element", attrib={ "name" : stats_spec["item_name"],
+                                                "minOccurs": "0" \
+                                                    if stats_spec["item_optional"] \
+                                                    else "1",
+                                                "maxOccurs": "unbounded" })
+                        elem.append(complextype)
+                        xsd_elem.append(elem)
+                    elif stats_spec['item_type'] == 'list':
+                        alltag = xml.etree.ElementTree.Element("sequence")
+                        stats_spec2xsd(stats_spec['list_item_spec'], alltag)
+                        complextype = xml.etree.ElementTree.Element("complexType")
+                        complextype.append(alltag)
+                        elem = xml.etree.ElementTree.Element(
+                            "element", attrib={ "name" : stats_spec["item_name"],
+                                                "minOccurs": "0" \
+                                                    if stats_spec["item_optional"] \
+                                                    else "1",
+                                                "maxOccurs": "1" })
+                        elem.append(complextype)
+                        xsd_elem.append(elem)
+                    else:
+                        # determine the datatype of XSD
+                        # TODO: Should consider other item_format types
+                        datatype = stats_spec["item_type"] \
+                            if stats_spec["item_type"].lower() != 'real' \
+                            else 'float'
+                        if "item_format" in stats_spec:
+                            item_format = stats_spec["item_format"]
+                            if datatype.lower() == 'string' \
+                                    and item_format.lower() == 'date-time':
+                                 datatype = 'dateTime'
+                            elif datatype.lower() == 'string' \
+                                    and (item_format.lower() == 'date' \
+                                             or item_format.lower() == 'time'):
+                                 datatype = item_format.lower()
+                        elem = xml.etree.ElementTree.Element(
+                            "element",
+                            attrib={
+                                'name' : stats_spec["item_name"],
+                                'type' : datatype,
+                                'minOccurs' : "0" \
+                                    if stats_spec["item_optional"] \
+                                    else "1",
+                                'maxOccurs' : "1"
+                                }
+                            )
+                        annotation = xml.etree.ElementTree.Element("annotation")
+                        appinfo = xml.etree.ElementTree.Element("appinfo")
+                        documentation = xml.etree.ElementTree.Element("documentation")
+                        if "item_title" in stats_spec:
+                            appinfo.text = stats_spec["item_title"]
+                        if "item_description" in stats_spec:
+                            documentation.text = stats_spec["item_description"]
+                        annotation.append(appinfo)
+                        annotation.append(documentation)
+                        elem.append(annotation)
+                        xsd_elem.append(elem)
+            # multiple stats_specs
+            elif type(stats_spec) is list:
+                for item_spec in stats_spec:
+                    stats_spec2xsd(item_spec, xsd_elem)
+
+        # for XSD
+        stats_spec = self.get_stats_spec(module_name, item_name)
+        alltag = xml.etree.ElementTree.Element("all")
+        stats_spec2xsd(stats_spec, alltag)
+        complextype = xml.etree.ElementTree.Element("complexType")
+        complextype.append(alltag)
+        documentation = xml.etree.ElementTree.Element("documentation")
+        documentation.text = "A set of statistics data"
+        annotation = xml.etree.ElementTree.Element("annotation")
+        annotation.append(documentation)
+        elem = xml.etree.ElementTree.Element(
+            "element", attrib={ 'name' : 'statistics' })
+        elem.append(annotation)
+        elem.append(complextype)
+        documentation = xml.etree.ElementTree.Element("documentation")
+        documentation.text = "XML schema of the statistics data in BIND 10"
+        annotation = xml.etree.ElementTree.Element("annotation")
+        annotation.append(documentation)
+        xsd_root = xml.etree.ElementTree.Element(
+            "schema",
+            attrib={ 'xmlns' : "http://www.w3.org/2001/XMLSchema",
+                     'targetNamespace' : XSD_NAMESPACE,
+                     'xmlns:bind10' : XSD_NAMESPACE })
+        xsd_root.append(annotation)
+        xsd_root.append(elem)
+        # The coding conversion is tricky. xml..tostring() of Python 3.2
+        # returns bytes (not string) regardless of the coding, while
+        # tostring() of Python 3.1 returns a string.  To support both
+        # cases transparently, we first make sure tostring() returns
+        # bytes by specifying utf-8 and then convert the result to a
+        # plain string (code below assume it).
+        # FIXME: Non-ASCII characters might be lost here. Consider how
+        # the whole system should handle non-ASCII characters.
         xsd_string = str(xml.etree.ElementTree.tostring(xsd_root, encoding='utf-8'),
                          encoding='us-ascii')
         self.xsd_body = self.open_template(XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string=xsd_string,
-            xsd_namespace=XSD_NAMESPACE
-            )
+            xsd_string=xsd_string)
         assert self.xsd_body is not None
+        return self.xsd_body
+
+    def xsl_handler(self, module_name=None, item_name=None):
+        """Requests the specified statistics specification by using
+        the function get_stats_spec respectively and loads the XSL
+        template file and returns the string of the XSL document.The
+        first argument is the module name which owns the statistics
+        data, the second argument is one name of the statistics items
+        which the the module owns. The second argument cannot be
+        specified when the first argument is not specified."""
+
+        # TODO: Separate the following recursive function by type of
+        # the parameter. Because we should be sure what type there is
+        # when we call it recursively.
+        def stats_spec2xsl(stats_spec, xsl_elem, path=XML_URL_PATH):
+            """Internal use for xsl_handler. Reads stats_spec
+            specified as first arguments, and modify the xml object
+            specified as second argument. xsl_elem must be
+            modified. The third argument is a base path used for
+            making anchor tag in XSL. Always returns None with no
+            exceptions."""
+            # assumed module_spec or one stats_spec
+            if type(stats_spec) is dict:
+                # assumed module_spec
+                if 'item_name' not in stats_spec:
+                    table = xml.etree.ElementTree.Element("table")
+                    tr = xml.etree.ElementTree.Element("tr")
+                    th = xml.etree.ElementTree.Element("th")
+                    th.text = "Module Name"
+                    tr.append(th)
+                    th = xml.etree.ElementTree.Element("th")
+                    th.text = "Module Item"
+                    tr.append(th)
+                    table.append(tr)
+                    for mod in stats_spec.keys():
+                        foreach = xml.etree.ElementTree.Element(
+                            "xsl:for-each", attrib={ "select" : mod })
+                        tr = xml.etree.ElementTree.Element("tr")
+                        td = xml.etree.ElementTree.Element("td")
+                        a = xml.etree.ElementTree.Element(
+                            "a", attrib={ "href": urllib.parse.quote(path + "/" + mod) })
+                        a.text = mod
+                        td.append(a)
+                        tr.append(td)
+                        td = xml.etree.ElementTree.Element("td")
+                        stats_spec2xsl(stats_spec[mod], td,
+                                       path + "/" + mod)
+                        tr.append(td)
+                        foreach.append(tr)
+                        table.append(foreach)
+                    xsl_elem.append(table)
+                # assumed stats_spec
+                else:
+                    if stats_spec['item_type'] == 'map':
+                        table = xml.etree.ElementTree.Element("table")
+                        tr = xml.etree.ElementTree.Element("tr")
+                        th = xml.etree.ElementTree.Element("th")
+                        th.text = "Item Name"
+                        tr.append(th)
+                        th = xml.etree.ElementTree.Element("th")
+                        th.text = "Item Value"
+                        tr.append(th)
+                        table.append(tr)
+                        foreach = xml.etree.ElementTree.Element(
+                            "xsl:for-each", attrib={ "select" : stats_spec['item_name'] })
+                        tr = xml.etree.ElementTree.Element("tr")
+                        td = xml.etree.ElementTree.Element(
+                            "td",
+                            attrib={ "class" : "title",
+                                     "title" : stats_spec["item_description"] \
+                                         if "item_description" in stats_spec \
+                                         else "" })
+                        # TODO: Consider whether we should always use
+                        # the identical name "item_name" for the
+                        # user-visible name in XSL.
+                        td.text = stats_spec[ "item_title" if "item_title" in stats_spec else "item_name" ]
+                        tr.append(td)
+                        td = xml.etree.ElementTree.Element("td")
+                        stats_spec2xsl(stats_spec['map_item_spec'], td,
+                                       path + "/" + stats_spec["item_name"])
+                        tr.append(td)
+                        foreach.append(tr)
+                        table.append(foreach)
+                        xsl_elem.append(table)
+                    elif stats_spec['item_type'] == 'list':
+                        stats_spec2xsl(stats_spec['list_item_spec'], xsl_elem,
+                                       path + "/" + stats_spec["item_name"])
+                    else:
+                        xsl_valueof = xml.etree.ElementTree.Element(
+                            "xsl:value-of",
+                            attrib={'select': stats_spec["item_name"]})
+                        xsl_elem.append(xsl_valueof)
+
+            # multiple stats_specs
+            elif type(stats_spec) is list:
+                table = xml.etree.ElementTree.Element("table")
+                tr = xml.etree.ElementTree.Element("tr")
+                th = xml.etree.ElementTree.Element("th")
+                th.text = "Item Name"
+                tr.append(th)
+                th = xml.etree.ElementTree.Element("th")
+                th.text = "Item Value"
+                tr.append(th)
+                table.append(tr)
+                for item_spec in stats_spec:
+                    tr = xml.etree.ElementTree.Element("tr")
+                    td = xml.etree.ElementTree.Element(
+                        "td",
+                        attrib={ "class" : "title",
+                                 "title" : item_spec["item_description"] \
+                                     if "item_description" in item_spec \
+                                     else "" })
+                    # if the path length is equal to or shorter than
+                    # XML_URL_PATH + /Module/Item, add the anchor tag.
+                    if len(path.split('/')) <= len((XML_URL_PATH + '/Module/Item').split('/')):
+                        a = xml.etree.ElementTree.Element(
+                            "a", attrib={ "href": urllib.parse.quote(path + "/" + item_spec["item_name"]) })
+                        a.text = item_spec[ "item_title" if "item_title" in item_spec else "item_name" ]
+                        td.append(a)
+                    else:
+                        td.text = item_spec[ "item_title" if "item_title" in item_spec else "item_name" ]
+                    tr.append(td)
+                    td = xml.etree.ElementTree.Element("td")
+                    stats_spec2xsl(item_spec, td, path)
+                    tr.append(td)
+                    if item_spec['item_type'] == 'list':
+                        foreach = xml.etree.ElementTree.Element(
+                            "xsl:for-each", attrib={ "select" : item_spec['item_name'] })
+                        foreach.append(tr)
+                        table.append(foreach)
+                    else:
+                        table.append(tr)
+                xsl_elem.append(table)
 
         # for XSL
-        xsd_root = xml.etree.ElementTree.Element(
+        stats_spec = self.get_stats_spec(module_name, item_name)
+        xsd_root = xml.etree.ElementTree.Element( # started with xml:template tag
             "xsl:template",
-            dict(match="*")) # started with xml:template tag
-        for item in self.get_stats_spec():
-            tr = xml.etree.ElementTree.Element("tr")
-            td1 = xml.etree.ElementTree.Element(
-                "td", { "class" : "title",
-                        "title" : item["item_description"] })
-            td1.text = item["item_title"]
-            td2 = xml.etree.ElementTree.Element("td")
-            xsl_valueof = xml.etree.ElementTree.Element(
-                "xsl:value-of",
-                dict(select=item["item_name"]))
-            td2.append(xsl_valueof)
-            tr.append(td1)
-            tr.append(td2)
-            xsd_root.append(tr)
+            attrib={'match': "bind10:statistics"})
+        stats_spec2xsl(stats_spec, xsd_root)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
         # cases transparently, we first make sure tostring() returns
         # bytes by specifying utf-8 and then convert the result to a
         # plain string (code below assume it).
+        # FIXME: Non-ASCII characters might be lost here. Consider how
+        # the whole system should handle non-ASCII characters.
         xsl_string = str(xml.etree.ElementTree.tostring(xsd_root, encoding='utf-8'),
                          encoding='us-ascii')
         self.xsl_body = self.open_template(XSL_TEMPLATE_LOCATION).substitute(
             xsl_string=xsl_string,
             xsd_namespace=XSD_NAMESPACE)
         assert self.xsl_body is not None
-
-    def xml_handler(self):
-        """Handler which requests to Stats daemon to obtain statistics
-        data and returns the body of XML document"""
-        xml_list=[]
-        for (k, v) in self.get_stats_data().items():
-            (k, v) = (str(k), str(v))
-            elem = xml.etree.ElementTree.Element(k)
-            elem.text = v
-            # The coding conversion is tricky. xml..tostring() of Python 3.2
-            # returns bytes (not string) regardless of the coding, while
-            # tostring() of Python 3.1 returns a string.  To support both
-            # cases transparently, we first make sure tostring() returns
-            # bytes by specifying utf-8 and then convert the result to a
-            # plain string (code below assume it).
-            xml_list.append(
-                str(xml.etree.ElementTree.tostring(elem, encoding='utf-8'),
-                    encoding='us-ascii'))
-        xml_string = "".join(xml_list)
-        self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
-            xml_string=xml_string,
-            xsd_namespace=XSD_NAMESPACE,
-            xsd_url_path=XSD_URL_PATH,
-            xsl_url_path=XSL_URL_PATH)
-        assert self.xml_body is not None
-        return self.xml_body
-
-    def xsd_handler(self):
-        """Handler which just returns the body of XSD document"""
-        return self.xsd_body
-
-    def xsl_handler(self):
-        """Handler which just returns the body of XSL document"""
         return self.xsl_body
 
     def open_template(self, file_name):
         """It opens a template file, and it loads all lines to a
         string variable and returns string. Template object includes
         the variable. Limitation of a file size isn't needed there."""
-        lines = "".join(
-            open(file_name, 'r').readlines())
+        f = open(file_name, 'r')
+        lines = "".join(f.readlines())
+        f.close()
         assert lines is not None
         return string.Template(lines)
 
@@ -491,7 +833,7 @@ if __name__ == "__main__":
         logger.fatal(STATHTTPD_CC_SESSION_ERROR, se)
         sys.exit(1)
     except HttpServerError as hse:
-        logger.fatal(STATHTTPD_START_SERVER_ERROR, hse)
+        logger.fatal(STATHTTPD_START_SERVER_INIT_ERROR, hse)
         sys.exit(1)
     except KeyboardInterrupt as kie:
         logger.info(STATHTTPD_STOPPED_BY_KEYBOARD)

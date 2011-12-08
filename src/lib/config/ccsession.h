@@ -377,10 +377,10 @@ default_logconfig_handler(const std::string& module_name,
 /// \brief Returns the loggers related to this module
 ///
 /// This function does two things;
-/// - it drops the configuration parts for loggers for other modules
+/// - it drops the configuration parts for loggers for other modules.
 /// - it replaces the '*' in the name of the loggers by the name of
 ///   this module, but *only* if the expanded name is not configured
-///   explicitely
+///   explicitly.
 ///
 /// Examples: if this is the module b10-resolver,
 /// For the config names ['*', 'b10-auth']

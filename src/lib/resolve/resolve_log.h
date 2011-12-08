@@ -27,17 +27,17 @@ namespace resolve {
 /// Note that higher numbers equate to more verbose (and detailed) output.
 
 // The first level traces normal operations
-const int RESLIB_DBG_TRACE = 10;
+const int RESLIB_DBG_TRACE = DBGLVL_TRACE_BASIC;
 
 // The next level extends the normal operations and records the results of the
 // lookups.
-const int RESLIB_DBG_RESULTS = 20;
+const int RESLIB_DBG_RESULTS = DBGLVL_TRACE_BASIC_DATA;
 
 // Report cache lookups and results
-const int RESLIB_DBG_CACHE = 40;
+const int RESLIB_DBG_CACHE = DBGLVL_TRACE_DETAIL_DATA;
 
 // Indicate when callbacks are called
-const int RESLIB_DBG_CB = 50;
+const int RESLIB_DBG_CB = DBGLVL_TRACE_DETAIL_DATA + 10;
 
 
 /// \brief Resolver Library Logger

@@ -79,7 +79,7 @@ public:
     ///
     /// \return true if the message was added to the dictionary, false if the
     /// message existed and it was not added.
-    virtual bool add (const std::string& ident, const std::string& test);
+    virtual bool add (const std::string& ident, const std::string& text);
 
 
     /// \brief Replace Message

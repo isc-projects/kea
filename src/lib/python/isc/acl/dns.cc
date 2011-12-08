@@ -52,7 +52,7 @@ PyMethodDef methods[] = {
 
 PyModuleDef dnsacl = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
-    "isc.acl.dns",
+    "isc.acl._dns",
     dnsacl_doc,
     -1,
     methods,
@@ -90,7 +90,7 @@ getACLException(const char* ex_name) {
 }
 
 PyMODINIT_FUNC
-PyInit_dns(void) {
+PyInit__dns(void) {
     PyObject* mod = PyModule_Create(&dnsacl);
     if (mod == NULL) {
         return (NULL);

@@ -20,26 +20,84 @@ The boss process is starting up and will now check if the message bus
 daemon is already running. If so, it will not be able to start, as it
 needs a dedicated message bus.
 
-% BIND10_CONFIGURATION_START_AUTH start authoritative server: %1
-This message shows whether or not the authoritative server should be
-started according to the configuration.
+% BIND10_INVALID_STATISTICS_DATA invalid specification of statistics data specified
+An error was encountered when the boss module specified
+statistics data which is invalid for the boss specification file.
 
-% BIND10_CONFIGURATION_START_RESOLVER start resolver: %1
-This message shows whether or not the resolver should be
-started according to the configuration.
+% BIND10_COMPONENT_FAILED component %1 (pid %2) failed with %3 exit status
+The process terminated, but the bind10 boss didn't expect it to, which means
+it must have failed.
+
+% BIND10_COMPONENT_RESTART component %1 is about to restart
+The named component failed previously and we will try to restart it to provide
+as flawless service as possible, but it should be investigated what happened,
+as it could happen again.
+
+% BIND10_COMPONENT_START component %1 is starting
+The named component is about to be started by the boss process.
+
+% BIND10_COMPONENT_START_EXCEPTION component %1 failed to start: %2
+An exception (mentioned in the message) happened during the startup of the
+named component. The componet is not considered started and further actions
+will be taken about it.
+
+% BIND10_COMPONENT_STOP component %1 is being stopped
+A component is about to be asked to stop willingly by the boss.
+
+% BIND10_COMPONENT_UNSATISFIED component %1 is required to run and failed
+A component failed for some reason (see previous messages). It is either a core
+component or needed component that was just started. In any case, the system
+can't continue without it and will terminate.
+
+% BIND10_CONFIGURATOR_BUILD building plan '%1' -> '%2'
+A debug message. This indicates that the configurator is building a plan
+how to change configuration from the older one to newer one. This does no
+real work yet, it just does the planning what needs to be done.
+
+% BIND10_CONFIGURATOR_PLAN_INTERRUPTED configurator plan interrupted, only %1 of %2 done
+There was an exception during some planned task. The plan will not continue and
+only some tasks of the plan were completed. The rest is aborted. The exception
+will be propagated.
+
+% BIND10_CONFIGURATOR_RECONFIGURE reconfiguring running components
+A different configuration of which components should be running is being
+installed. All components that are no longer needed will be stopped and
+newly introduced ones started. This happens at startup, when the configuration
+is read the first time, or when an operator changes configuration of the boss.
+
+% BIND10_CONFIGURATOR_RUN running plan of %1 tasks
+A debug message. The configurator is about to execute a plan of actions it
+computed previously.
+
+% BIND10_CONFIGURATOR_START bind10 component configurator is starting up
+The part that cares about starting and stopping the right component from the
+boss process is starting up. This happens only once at the startup of the
+boss process. It will start the basic set of processes now (the ones boss
+needs to read the configuration), the rest will be started after the
+configuration is known.
+
+% BIND10_CONFIGURATOR_STOP bind10 component configurator is shutting down
+The part that cares about starting and stopping processes in the boss is
+shutting down. All started components will be shut down now (more precisely,
+asked to terminate by their own, if they fail to comply, other parts of
+the boss process will try to force them).
+
+% BIND10_CONFIGURATOR_TASK performing task %1 on %2
+A debug message. The configurator is about to perform one task of the plan it
+is currently executing on the named component.
 
 % BIND10_INVALID_USER invalid user: %1
 The boss process was started with the -u option, to drop root privileges
 and continue running as the specified user, but the user is unknown.
 
+% BIND10_KILLING_ALL_PROCESSES killing all started processes
+The boss module was not able to start every process it needed to start
+during startup, and will now kill the processes that did get started.
+
 % BIND10_KILL_PROCESS killing process %1
 The boss module is sending a kill signal to process with the given name,
 as part of the process of killing all started processes during a failed
 startup, as described for BIND10_KILLING_ALL_PROCESSES
-
-% BIND10_KILLING_ALL_PROCESSES killing all started processes
-The boss module was not able to start every process it needed to start
-during startup, and will now kill the processes that did get started.
 
 % BIND10_MSGQ_ALREADY_RUNNING msgq daemon already running, cannot start
 There already appears to be a message bus daemon running. Either an
@@ -47,27 +105,15 @@ old process was not shut down correctly, and needs to be killed, or
 another instance of BIND10, with the same msgq domain socket, is
 running, which needs to be stopped.
 
-% BIND10_MSGQ_DAEMON_ENDED b10-msgq process died, shutting down
-The message bus daemon has died. This is a fatal error, since it may
-leave the system in an inconsistent state. BIND10 will now shut down.
-
 % BIND10_MSGQ_DISAPPEARED msgq channel disappeared
 While listening on the message bus channel for messages, it suddenly
 disappeared. The msgq daemon may have died. This might lead to an
 inconsistent state of the system, and BIND 10 will now shut down.
 
-% BIND10_PROCESS_ENDED_NO_EXIT_STATUS process %1 (PID %2) died: exit status not available
-The given process ended unexpectedly, but no exit status is
-available. See BIND10_PROCESS_ENDED_WITH_EXIT_STATUS for a longer
-description.
-
-% BIND10_PROCESS_ENDED_WITH_EXIT_STATUS process %1 (PID %2) terminated, exit status = %3
-The given process ended unexpectedly with the given exit status.
-Depending on which module it was, it may simply be restarted, or it
-may be a problem that will cause the boss module to shut down too.
-The latter happens if it was the message bus daemon, which, if it has
-died suddenly, may leave the system in an inconsistent state. BIND10
-will also shut down now if it has been run with --brittle.
+% BIND10_PROCESS_ENDED process %2 of %1 ended with status %3
+This indicates a process started previously terminated. The process id
+and component owning the process are indicated, as well as the exit code.
+This doesn't distinguish if the process was supposed to terminate or not.
 
 % BIND10_READING_BOSS_CONFIGURATION reading boss configuration
 The boss process is starting up, and will now process the initial
@@ -103,6 +149,9 @@ The boss module is sending a SIGKILL signal to the given process.
 % BIND10_SEND_SIGTERM sending SIGTERM to %1 (PID %2)
 The boss module is sending a SIGTERM signal to the given process.
 
+% BIND10_SETUID setting UID to %1
+The boss switches the user it runs as to the given UID.
+
 % BIND10_SHUTDOWN stopping the server
 The boss process received a command or signal telling it to shut down.
 It will send a shutdown command to each process. The processes that do
@@ -113,12 +162,48 @@ it shall send SIGKILL signals to the processes still alive.
 All child processes have been stopped, and the boss process will now
 stop itself.
 
-% BIND10_START_AS_NON_ROOT starting %1 as a user, not root. This might fail.
-The given module is being started or restarted without root privileges.
-If the module needs these privileges, it may have problems starting.
-Note that this issue should be resolved by the pending 'socket-creator'
-process; once that has been implemented, modules should not need root
-privileges anymore. See tickets #800 and #801 for more information.
+% BIND10_SOCKCREATOR_BAD_CAUSE unknown error cause from socket creator: %1
+The socket creator reported an error when creating a socket. But the function
+which failed is unknown (not one of 'S' for socket or 'B' for bind).
+
+% BIND10_SOCKCREATOR_BAD_RESPONSE unknown response for socket request: %1
+The boss requested a socket from the creator, but the answer is unknown. This
+looks like a programmer error.
+
+% BIND10_SOCKCREATOR_EOF eof while expecting data from socket creator
+There should be more data from the socket creator, but it closed the socket.
+It probably crashed.
+
+% BIND10_SOCKCREATOR_INIT initializing socket creator parser
+The boss module initializes routines for parsing the socket creator
+protocol.
+
+% BIND10_SOCKCREATOR_KILL killing the socket creator
+The socket creator is being terminated the aggressive way, by sending it
+sigkill. This should not happen usually.
+
+% BIND10_SOCKCREATOR_TERMINATE terminating socket creator
+The boss module sends a request to terminate to the socket creator.
+
+% BIND10_SOCKCREATOR_TRANSPORT_ERROR transport error when talking to the socket creator: %1
+Either sending or receiving data from the socket creator failed with the given
+error. The creator probably crashed or some serious OS-level problem happened,
+as the communication happens only on local host.
+
+% BIND10_SOCKET_CREATED successfully created socket %1
+The socket creator successfully created and sent a requested socket, it has
+the given file number.
+
+% BIND10_SOCKET_ERROR error on %1 call in the creator: %2/%3
+The socket creator failed to create the requested socket. It failed on the
+indicated OS API function with given error.
+
+% BIND10_SOCKET_GET requesting socket [%1]:%2 of type %3 from the creator
+The boss forwards a request for a socket to the socket creator.
+
+% BIND10_STARTED_CC started configuration/command session
+Debug message given when BIND 10 has successfull started the object that
+handles configuration and commands.
 
 % BIND10_STARTED_PROCESS started %1
 The given process has successfully been started.
@@ -128,6 +213,10 @@ The given process has successfully been started, and has the given PID.
 
 % BIND10_STARTING starting BIND10: %1
 Informational message on startup that shows the full version.
+
+% BIND10_STARTING_CC starting configuration/command session
+Informational message given when BIND 10 is starting the session object
+that handles configuration and commands.
 
 % BIND10_STARTING_PROCESS starting process %1
 The boss module is starting the given process.
@@ -147,6 +236,32 @@ All modules have been successfully started, and BIND 10 is now running.
 There was a fatal error when BIND10 was trying to start. The error is
 shown, and BIND10 will now shut down.
 
+% BIND10_STARTUP_UNEXPECTED_MESSAGE unrecognised startup message %1
+During the startup process, a number of messages are exchanged between the
+Boss process and the processes it starts.  This error is output when a
+message received by the Boss process is recognised as being of the
+correct format but is unexpected.  It may be that processes are starting
+of sequence.
+
+% BIND10_STARTUP_UNRECOGNISED_MESSAGE unrecognised startup message %1
+During the startup process, a number of messages are exchanged between the
+Boss process and the processes it starts.  This error is output when a
+message received by the Boss process is not recognised.
+
+% BIND10_START_AS_NON_ROOT_AUTH starting b10-auth as a user, not root. This might fail.
+The authoritative server is being started or restarted without root privileges.
+If the module needs these privileges, it may have problems starting.
+Note that this issue should be resolved by the pending 'socket-creator'
+process; once that has been implemented, modules should not need root
+privileges anymore. See tickets #800 and #801 for more information.
+
+% BIND10_START_AS_NON_ROOT_RESOLVER starting b10-resolver as a user, not root. This might fail.
+The resolver is being started or restarted without root privileges.
+If the module needs these privileges, it may have problems starting.
+Note that this issue should be resolved by the pending 'socket-creator'
+process; once that has been implemented, modules should not need root
+privileges anymore. See tickets #800 and #801 for more information.
+
 % BIND10_STOP_PROCESS asking %1 to shut down
 The boss module is sending a shutdown command to the given module over
 the message channel.
@@ -154,4 +269,14 @@ the message channel.
 % BIND10_UNKNOWN_CHILD_PROCESS_ENDED unknown child pid %1 exited
 An unknown child process has exited. The PID is printed, but no further
 action will be taken by the boss process.
+
+% BIND10_WAIT_CFGMGR waiting for configuration manager process to initialize
+The configuration manager process is so critical to operation of BIND 10
+that after starting it, the Boss module will wait for it to initialize
+itself before continuing.  This debug message is produced during the
+wait and may be output zero or more times depending on how long it takes
+the configuration manager to start up.  The total length of time Boss
+will wait for the configuration manager before reporting an error is
+set with the command line --wait switch, which has a default value of
+ten seconds.
 

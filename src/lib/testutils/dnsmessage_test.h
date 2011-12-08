@@ -21,6 +21,7 @@
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/masterload.h>
+#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
 
@@ -113,13 +114,32 @@ void rrsetCheck(isc::dns::ConstRRsetPtr expected_rrset,
 /// The definitions in this name space are not supposed to be used publicly,
 /// but are given here because they are used in templated functions.
 namespace detail {
-// Helper matching class used in rrsetsCheck()
+// Helper matching class used in rrsetsCheck().  Basically we only have to
+// check the equality of name, RR type and RR class, but for RRSIGs we need
+// special additional checks because they are essentially different if their
+// 'type covered' are different.  For simplicity, we only compare the types
+// of the first RRSIG RDATAs (and only check when they exist); if there's
+// further difference in the RDATA, the main comparison checks will detect it.
 struct RRsetMatch : public std::unary_function<isc::dns::ConstRRsetPtr, bool> {
     RRsetMatch(isc::dns::ConstRRsetPtr target) : target_(target) {}
     bool operator()(isc::dns::ConstRRsetPtr rrset) const {
-        return (rrset->getType() == target_->getType() &&
-                rrset->getClass() == target_->getClass() &&
-                rrset->getName() == target_->getName());
+        if (rrset->getType() != target_->getType() ||
+            rrset->getClass() != target_->getClass() ||
+            rrset->getName() != target_->getName()) {
+            return (false);
+        }
+        if (rrset->getType() != isc::dns::RRType::RRSIG()) {
+            return (true);
+        }
+        if (rrset->getRdataCount() == 0 || target_->getRdataCount() == 0) {
+            return (true);
+        }
+        isc::dns::RdataIteratorPtr rdit = rrset->getRdataIterator();
+        isc::dns::RdataIteratorPtr targetit = target_->getRdataIterator();
+        return (dynamic_cast<const isc::dns::rdata::generic::RRSIG&>(
+                    rdit->getCurrent()).typeCovered() ==
+                dynamic_cast<const isc::dns::rdata::generic::RRSIG&>(
+                    targetit->getCurrent()).typeCovered());
     }
     const isc::dns::ConstRRsetPtr target_;
 };
