@@ -824,7 +824,7 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
 // Submit TCP IXFR query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("example.com"), RRClass::IN(), RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
@@ -833,7 +833,7 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing TCP IXFR query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 }
 
 // class for queryCounterUnexpected test
