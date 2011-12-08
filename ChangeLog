@@ -1,9 +1,3 @@
-339.	[func]		y-aharen
-	src/lib/statistics: Added statistics counter library for entire server
-	items and per zone items. Also, modified b10-auth to use it. It is
-	also intended to use in the other modules such as b10-resolver.
-	(Trac #510, git TBD)
-
 338.	[bug]		jinmei
 	b10-xfrin didn't check SOA serials of SOA and IXFR responses,
 	which resulted in unnecessary transfer or unexpected IXFR
