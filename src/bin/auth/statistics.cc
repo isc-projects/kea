@@ -18,67 +18,48 @@
 #include <cc/data.h>
 #include <cc/session.h>
 
-#include <statistics/counter.h>
-#include <statistics/counter_dict.h>
-
 #include <sstream>
 #include <iostream>
 
-#include <boost/noncopyable.hpp>
-
 using namespace isc::auth;
-using namespace isc::statistics;
 
 // TODO: We need a namespace ("auth_server"?) to hold
-//        AuthSrv and AuthCounters.
+// AuthSrv and AuthCounters.
 
-// TODO: Make use of wrappers like isc::dns::Opcode
-//        for counter item type.
-
-class AuthCountersImpl : boost::noncopyable {
+class AuthCountersImpl {
+private:
+    // prohibit copy
+    AuthCountersImpl(const AuthCountersImpl& source);
+    AuthCountersImpl& operator=(const AuthCountersImpl& source);
 public:
     AuthCountersImpl();
     ~AuthCountersImpl();
-    void inc(const AuthCounters::ServerCounterType type);
-    void inc(const std::string& zone,
-             const AuthCounters::PerZoneCounterType type);
+    void inc(const AuthCounters::CounterType type);
     bool submitStatistics() const;
     void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
     void registerStatisticsValidator
     (AuthCounters::validator_type validator);
     // Currently for testing purpose only
-    uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
+    uint64_t getCounter(const AuthCounters::CounterType type) const;
 private:
-    Counter server_counter_;
-    CounterDictionary per_zone_counter_;
+    std::vector<uint64_t> counters_;
     isc::cc::AbstractSession* statistics_session_;
     AuthCounters::validator_type validator_;
 };
 
 AuthCountersImpl::AuthCountersImpl() :
     // initialize counter
-    // size of server_counter_: AuthCounters::SERVER_COUNTER_TYPES
-    // size of per_zone_counter_: AuthCounters::PER_ZONE_COUNTER_TYPES
-    server_counter_(AuthCounters::SERVER_COUNTER_TYPES),
-    per_zone_counter_(AuthCounters::PER_ZONE_COUNTER_TYPES),
+    // size: AuthCounters::COUNTER_TYPES, initial value: 0
+    counters_(AuthCounters::COUNTER_TYPES, 0),
     statistics_session_(NULL)
-{
-    per_zone_counter_.addElement("_SERVER_");
-}
+{}
 
 AuthCountersImpl::~AuthCountersImpl()
 {}
 
 void
-AuthCountersImpl::inc(const AuthCounters::ServerCounterType type) {
-    server_counter_.inc(type);
-}
-
-void
-AuthCountersImpl::inc(const std::string& zone,
-                      const AuthCounters::PerZoneCounterType type)
-{
-    per_zone_counter_[zone].inc(type);
+AuthCountersImpl::inc(const AuthCounters::CounterType type) {
+    ++counters_.at(type);
 }
 
 bool
@@ -92,9 +73,9 @@ AuthCountersImpl::submitStatistics() const {
                       <<   "{ \"owner\": \"Auth\","
                       <<   "  \"data\":"
                       <<     "{ \"queries.udp\": "
-                      <<     server_counter_.get(AuthCounters::SERVER_UDP_QUERY)
+                      <<     counters_.at(AuthCounters::COUNTER_UDP_QUERY)
                       <<     ", \"queries.tcp\": "
-                      <<     server_counter_.get(AuthCounters::SERVER_TCP_QUERY)
+                      <<     counters_.at(AuthCounters::COUNTER_TCP_QUERY)
                       <<   " }"
                       <<   "}"
                       << "]}";
@@ -145,17 +126,19 @@ AuthCountersImpl::registerStatisticsValidator
 
 // Currently for testing purpose only
 uint64_t
-AuthCountersImpl::getCounter(const AuthCounters::ServerCounterType type) const {
-    return (server_counter_.get(type));
+AuthCountersImpl::getCounter(const AuthCounters::CounterType type) const {
+    return (counters_.at(type));
 }
 
 AuthCounters::AuthCounters() : impl_(new AuthCountersImpl())
 {}
 
-AuthCounters::~AuthCounters() {}
+AuthCounters::~AuthCounters() {
+    delete impl_;
+}
 
 void
-AuthCounters::inc(const AuthCounters::ServerCounterType type) {
+AuthCounters::inc(const AuthCounters::CounterType type) {
     impl_->inc(type);
 }
 
@@ -172,7 +155,7 @@ AuthCounters::setStatisticsSession
 }
 
 uint64_t
-AuthCounters::getCounter(const AuthCounters::ServerCounterType type) const {
+AuthCounters::getCounter(const AuthCounters::CounterType type) const {
     return (impl_->getCounter(type));
 }
 
