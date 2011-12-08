@@ -74,6 +74,7 @@ import isc.bind10.component
 import isc.bind10.special_component
 import isc.bind10.socket_cache
 import libutil_io_python
+import tempfile
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -247,9 +248,12 @@ class BoB:
         # If -v was set, enable full debug logging.
         if self.verbose:
             logger.set_severity("DEBUG", 99)
-        self._socket_cache = None
-        # TODO: To be filled in by #1428
+        # This is set in init_socket_srv
         self._socket_path = None
+        self._socket_cache = None
+        self._tmpdir = None
+        self._srv_socket = None
+        self._unix_sockets = {}
 
     def __propagate_component_config(self, config):
         comps = dict(config)
@@ -915,6 +919,127 @@ class BoB:
             raise ValueError("A creator was inserted previously")
         self._socket_cache = isc.bind10.socket_cache.Cache(creator)
 
+    def init_socket_srv(self):
+        """
+        Creates and listens on a unix-domain socket to be able to send out
+        the sockets.
+
+        This method should be called after switching user, or the switched
+        applications won't be able to access the socket.
+        """
+        self._srv_socket = socket.socket(socket.AF_UNIX)
+        # We create a temporary directory somewhere safe and unique, to avoid
+        # the need to find the place ourself or bother users. Also, this
+        # secures the socket on some platforms, as it creates a private
+        # directory.
+        self._tmpdir = tempfile.mkdtemp()
+        # Get the name
+        self._socket_path = os.path.join(self._tmpdir, "sockcreator")
+        # And bind the socket to the name
+        self._srv_socket.bind(self._socket_path)
+        self._srv_socket.listen(5)
+
+    def remove_socket_srv(self):
+        """
+        Closes and removes the listening socket and the directory where it
+        lives, as we created both.
+
+        It does nothing if the _srv_socket is not set (eg. it was not yet
+        initialized).
+        """
+        if self._srv_socket is not None:
+            self._srv_socket.close()
+            os.remove(self._socket_path)
+            os.rmdir(self._tmpdir)
+
+    def _srv_accept(self):
+        """
+        Accept a socket from the unix domain socket server and put it to the
+        others we care about.
+        """
+        socket = self._srv_socket.accept()
+        self._unix_sockets[socket.fileno()] = (socket, b'')
+
+    def _socket_data(self, socket_fileno):
+        """
+        This is called when a socket identified by the socket_fileno needs
+        attention. We try to read data from there. If it is closed, we remove
+        it.
+        """
+        (sock, previous) = self._unix_sockets[socket_fileno]
+        while True:
+            try:
+                data = sock.recv(1, socket.MSG_DONTWAIT)
+            except socket.error as se:
+                # These two might be different on some systems
+                if se.errno == errno.EAGAIN or se.errno == errno.EWOULDBLOCK:
+                    # No more data now. Oh, well, just store what we have.
+                    self._unix_sockets[socket_fileno] = (sock, previous)
+                    return
+                else:
+                    data = b'' # Pretend it got closed
+            if len(data) == 0: # The socket got to it's end
+                del self._unix_sockets[socket_fileno]
+                self.socket_consumer_dead(sock)
+                sock.close()
+                return
+            else:
+                if data == b"\n":
+                    # Handle this token and clear it
+                    self.socket_request_handler(previous, sock)
+                    previous = b''
+                else:
+                    previous += data
+
+    def run(self, wakeup_fd):
+        """
+        The main loop, waiting for sockets, commands and dead processes.
+        Runs as long as the runnable is true.
+
+        The wakeup_fd descriptor is the read end of pipe where CHLD signal
+        handler writes.
+        """
+        ccs_fd = self.ccs.get_socket().fileno()
+        while self.runnable:
+            # clean up any processes that exited
+            self.reap_children()
+            next_restart = self.restart_processes()
+            if next_restart is None:
+                wait_time = None
+            else:
+                wait_time = max(next_restart - time.time(), 0)
+
+            # select() can raise EINTR when a signal arrives,
+            # even if they are resumable, so we have to catch
+            # the exception
+            try:
+                (rlist, wlist, xlist) = \
+                    select.select([wakeup_fd, ccs_fd,
+                                   self._srv_socket.fileno()] +
+                                   list(self._unix_sockets.keys()), [], [],
+                                  wait_time)
+            except select.error as err:
+                if err.args[0] == errno.EINTR:
+                    (rlist, wlist, xlist) = ([], [], [])
+                else:
+                    logger.fatal(BIND10_SELECT_ERROR, err)
+                    break
+
+            for fd in rlist + xlist:
+                if fd == ccs_fd:
+                    try:
+                        self.ccs.check_command()
+                    except isc.cc.session.ProtocolError:
+                        logger.fatal(BIND10_MSGQ_DISAPPEARED)
+                        self.runnable = False
+                        break
+                elif fd == wakeup_fd:
+                    os.read(wakeup_fd, 32)
+                elif fd == self._srv_socket.fileno():
+                    self._srv_accept()
+                elif fd in self._unix_sockets:
+                    self._socket_data(fd)
+
 # global variables, needed for signal handlers
 options = None
 boss_of_bind = None
@@ -1077,60 +1202,32 @@ def main():
     # Block SIGPIPE, as we don't want it to end this process
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
-    # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
-                       options.config_file, options.nocache, options.verbose,
-                       setuid, username, options.cmdctl_port,
-                       options.wait_time)
-    startup_result = boss_of_bind.startup()
-    if startup_result:
-        logger.fatal(BIND10_STARTUP_ERROR, startup_result)
-        sys.exit(1)
-    logger.info(BIND10_STARTUP_COMPLETE)
-    dump_pid(options.pid_file)
+    try:
+        # Go bob!
+        boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
+                           options.config_file, options.nocache,
+                           options.verbose, setuid, username,
+                           options.cmdctl_port, options.wait_time)
+        startup_result = boss_of_bind.startup()
+        if startup_result:
+            logger.fatal(BIND10_STARTUP_ERROR, startup_result)
+            sys.exit(1)
+        boss_of_bind.init_socket_srv()
+        logger.info(BIND10_STARTUP_COMPLETE)
+        dump_pid(options.pid_file)
 
-    # In our main loop, we check for dead processes or messages 
-    # on the c-channel.
-    wakeup_fd = wakeup_pipe[0]
-    ccs_fd = boss_of_bind.ccs.get_socket().fileno()
-    while boss_of_bind.runnable:
-        # clean up any processes that exited
-        boss_of_bind.reap_children()
-        next_restart = boss_of_bind.restart_processes()
-        if next_restart is None:
-            wait_time = None
-        else:
-            wait_time = max(next_restart - time.time(), 0)
+        # Let it run
+        boss_of_bind.run(wakeup_pipe[0])
 
-        # select() can raise EINTR when a signal arrives, 
-        # even if they are resumable, so we have to catch
-        # the exception
-        try:
-            (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [], [], 
-                                                  wait_time)
-        except select.error as err:
-            if err.args[0] == errno.EINTR:
-                (rlist, wlist, xlist) = ([], [], [])
-            else:
-                logger.fatal(BIND10_SELECT_ERROR, err)
-                break
-
-        for fd in rlist + xlist:
-            if fd == ccs_fd:
-                try:
-                    boss_of_bind.ccs.check_command()
-                except isc.cc.session.ProtocolError:
-                    logger.fatal(BIND10_MSGQ_DISAPPEARED)
-                    self.runnable = False
-                    break
-            elif fd == wakeup_fd:
-                os.read(wakeup_fd, 32)
-
-    # shutdown
-    signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-    boss_of_bind.shutdown()
-    unlink_pid_file(options.pid_file)
-    sys.exit(0)
+        # shutdown
+        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+        boss_of_bind.shutdown()
+    finally:
+        # Clean up the filesystem
+        unlink_pid_file(options.pid_file)
+        if boss_of_bind is not None:
+            boss_of_bind.remove_socket_srv()
+    sys.exit(boss_of_bind.exitcode)
 
 if __name__ == "__main__":
     main()
