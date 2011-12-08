@@ -485,8 +485,8 @@ BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
 # We expect botan-config --libs to contain -L<path_to_libbotan>, but
 # this is not always the case.  As a heuristics workaround we add
-# -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
-# (but using include instead of lib) below.
+# -L`botan-config --prefix/lib` in this case (if not present already).
+# Same for BOTAN_INCLUDES (but using include instead of lib) below.
 if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
     echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
         BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
@@ -728,11 +728,11 @@ then
 				GTEST_LDFLAGS="-L$dir/lib"
 				GTEST_LDADD="-lgtest"
 				GTEST_FOUND="true"
-				# There is no gtest-config script, which
-				# is supposed to inform us whether we need
-				# pthreads as well (a gtest compile-time 
-				# option). So we still need to test that
-				# manually.
+				# There is no gtest-config script on this
+				# system, which is supposed to inform us
+				# whether we need pthreads as well (a 
+				# gtest compile-time option). So we still
+				# need to test that manually.
 				CPPFLAGS_SAVED="$CPPFLAGS"
 				CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
 				LDFLAGS_SAVED="$LDFLAGS"
@@ -1135,6 +1135,7 @@ dnl includes too
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
   Botan:         ${BOTAN_INCLUDES}
+                 ${BOTAN_LDFLAGS}
                  ${BOTAN_LIBS}
   Log4cplus:     ${LOG4CPLUS_INCLUDES}
                  ${LOG4CPLUS_LIBS}
