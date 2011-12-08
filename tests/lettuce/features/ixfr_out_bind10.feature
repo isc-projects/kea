@@ -5,9 +5,13 @@ Feature: IXFR out
 
     # A lot of these tests test specific UDP behaviour.
     #
-    # Since we do not support that at this time, these are commented out
-    # Once we implement it, we can uncomment them. The tests themselves
-    # should already work.
+    # Where possible, we use the TCP equivalent. Some of the behaviour
+    # tested is UDP-specific though. In either case, a comment above
+    # the test shows how and why it differs from the test specification,
+    # or why it is commented out for now.
+    # When we do implement UDP IXFR, we should probably keep the TCP
+    # tests, and add them to the test specification, so we still have a
+    # 1-to-1 mapping between these tests and the specification document.
     #
     # These tests use a zone with just a few records, the first serial
     # is 2, and it is incremented in steps of 2, up to serial 22.
@@ -33,6 +37,9 @@ Feature: IXFR out
         #
         # Test 1
         #
+        # We don't support UDP yet, and for TCP we currently return full zone,
+        # so this test is currently skipped
+        #
         #When I do an IXFR transfer of example.com 123 over udp
         #The transfer result should have 1 RRs
         #The full result of the last transfer should be
@@ -43,46 +50,57 @@ Feature: IXFR out
         #
         # Test 2
         #
-        #When I do an IXFR transfer of example.com 123 over udp
-        #The transfer result should have 1 RRs
-        #The full result of the last transfer should be
-        #"""
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #"""
+        # Original test specification was for UDP, using TCP for now
+        #
+        #When I do an IXFR transfer of example.com 22 over udp
+        When I do an IXFR transfer of example.com 22 over tcp
+        The transfer result should have 1 RRs
+        The full result of the last transfer should be
+        """
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        """
 
         #
         # Test 3
         #
+        # Original test specification was for UDP, using TCP for now
+        #
         #When I do an IXFR transfer of example.com 20 over udp
-        #The transfer result should have 5 RRs
-        #The full result of the last transfer should be
-        #"""
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #www.example.com. 3600 IN A 192.0.2.1
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #"""
+        When I do an IXFR transfer of example.com 20 over tcp
+        The transfer result should have 5 RRs
+        The full result of the last transfer should be
+        """
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        www.example.com. 3600 IN A 192.0.2.1
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        """
 
         #
         # Test 4
         #
+        # Original test specification was for UDP, using TCP for now
+        #
         #When I do an IXFR transfer of example.com 18 over udp
-        #The transfer result should have 8 RRs
-        #The full result of the last transfer should be
-        #"""
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 18 28800 7200 604800 18000
-        #www.example.com. 3600 IN A 192.0.2.1
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #www.example.com. 3600 IN A 192.0.2.1
-        #example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #"""
+        When I do an IXFR transfer of example.com 18 over tcp
+        The transfer result should have 8 RRs
+        The full result of the last transfer should be
+        """
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 18 28800 7200 604800 18000
+        www.example.com. 3600 IN A 192.0.2.1
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 20 28800 7200 604800 18000
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        www.example.com. 3600 IN A 192.0.2.1
+        example.com. 3600 IN SOA ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        """
 
         #
         # Test 5
+        #
+        # This test does not have a TCP equivalent, so it is skipped.
         #
         #When I do an IXFR transfer of example.com 2 over udp
         #The transfer result should have 1 RRs
@@ -93,6 +111,8 @@ Feature: IXFR out
 
         #
         # Test 6
+        #
+        # This test does not have a TCP equivalent, so it is skipped.
         #
         #When I do an IXFR transfer of example.com 5 over udp
         #The transfer result should have 1 RRs
@@ -132,19 +152,24 @@ Feature: IXFR out
         #
         # Test 1
         #
+        # Original test specification was for UDP, using TCP for now
+        #
         #When I do an IXFR transfer of example.com 19 over udp
-        #The transfer result should have 5 RRs
-        #The full result of the last transfer should be
-        #"""
-        #example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #example.com.            3600    IN      NS      ns.example.com.
-        #ns.example.com.         3600    IN      A       192.0.2.1
-        #www.example.com.        3600    IN      A       192.0.2.1
-        #example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 22 28800 7200 604800 18000
-        #"""
+        When I do an IXFR transfer of example.com 19 over tcp
+        The transfer result should have 5 RRs
+        The full result of the last transfer should be
+        """
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        example.com.            3600    IN      NS      ns.example.com.
+        ns.example.com.         3600    IN      A       192.0.2.1
+        www.example.com.        3600    IN      A       192.0.2.1
+        example.com.            3600    IN      SOA     ns.example.com. admin.example.com. 22 28800 7200 604800 18000
+        """
 
         #
         # Test 2
+        #
+        # This test has no TCP equivalent
         #
         #When I do an IXFR transfer of example.com 6 over udp
         #The transfer result should have 5 RRs
@@ -160,7 +185,9 @@ Feature: IXFR out
         #
         # Test 3
         #
-        #When I do an IXFR transfer of example.com 19 over udp
+        # This test has no TCP equivalent
+        #
+        #When I do an IXFR transfer of example.com 2 over udp
         #The transfer result should have 1 RRs
         #The full result of the last transfer should be
         #"""
