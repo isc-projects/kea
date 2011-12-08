@@ -118,20 +118,22 @@ TEST_F(CounterDictionaryTest, iteratorTest) {
     // Walk through the elements with iterator
     // Check if the elements "test" and "sub.test" appears only once
     //  and the counters have expected value
-    BOOST_FOREACH(CounterDictionary::ValueType i,
-                  static_cast<const CounterDictionary &>(counters))
+    for (CounterDictionary::ConstIterator i = counters.begin(),
+                                          e = counters.end();
+         i != e;
+         ++i)
     {
-        if (i.name == "test" && element_test_visited == false) {
+        if (i->name == "test" && element_test_visited == false) {
             element_test_visited = true;
             // Check if the counters have expected value
-            EXPECT_EQ(i.element.get(ITEM1), 1);
-            EXPECT_EQ(i.element.get(ITEM2), 0);
-        } else if (i.name == "sub.test" &&
+            EXPECT_EQ(i->element.get(ITEM1), 1);
+            EXPECT_EQ(i->element.get(ITEM2), 0);
+        } else if (i->name == "sub.test" &&
                    element_sub_test_visited == false) {
             element_sub_test_visited = true;
             // Check if the counters have expected value
-            EXPECT_EQ(i.element.get(ITEM1), 0);
-            EXPECT_EQ(i.element.get(ITEM2), 2);
+            EXPECT_EQ(i->element.get(ITEM1), 0);
+            EXPECT_EQ(i->element.get(ITEM2), 2);
         } else {
             // Test fails when reaches here: the element is not expected or
             //  the element appeared twice
