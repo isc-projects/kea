@@ -50,17 +50,28 @@ def prepare_config_commands(tool):
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "add", desc = "Add an entry to configuration list. If no value is given, a default value is added.")
+    cmd = CommandInfo(name = "add", desc =
+        "Add an entry to configuration list or a named set. "
+        "When adding to a list, the command has one optional argument, "
+        "a value to add to the list. The value must be in correct JSON "
+        "and complete. When adding to a named set, it has one "
+        "mandatory parameter (the name to add), and an optional "
+        "parameter value, similar to when adding to a list. "
+        "In either case, when no value is given, an entry will be "
+        "constructed with default values.")
     param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=True, desc = "Specifies a value to add to the list. It must be in correct JSON format and complete.")
+    param = ParamInfo(name = "value_or_name", type = "string", optional=True, desc = "Specifies a value to add to the list, or the name when adding to a named set. It must be in correct JSON format and complete.")
+    cmd.add_param(param)
+    module.add_command(cmd)
+    param = ParamInfo(name = "value_for_set", type = "string", optional=True, desc = "Specifies an optional value to add to the named map. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list.")
+    cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list or named set.")
     param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=True, desc = "Specifies a value to remove from the list. It must be in correct JSON format and complete.")
+    param = ParamInfo(name = "value", type = "string", optional=True, desc = "When identifier is a list, specifies a value to remove from the list. It must be in correct JSON format and complete. When it is a named set, specifies the name to remove.")
     cmd.add_param(param)
     module.add_command(cmd)
 
@@ -135,4 +146,5 @@ if __name__ == '__main__':
     tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain,
                               csv_file_dir=options.csv_file_dir)
     prepare_config_commands(tool)
-    tool.run()
+    result = tool.run()
+    sys.exit(result)

@@ -64,12 +64,15 @@ be set up. The specific error is given in the log message. Possible
 causes may be that the ssl request itself was bad, or the local key or
 certificate file could not be read.
 
+% CMDCTL_STARTED cmdctl is listening for connections on %1:%2
+The cmdctl daemon has started and is now listening for connections.
+
 % CMDCTL_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the cmdctl daemon. The
 daemon will now shut down.
 
 % CMDCTL_UNCAUGHT_EXCEPTION uncaught exception: %1
-The b10-cdmctl daemon encountered an uncaught exception and
+The b10-cmdctl daemon encountered an uncaught exception and
 will now shut down. This is indicative of a programming error and
 should not happen under normal circumstances. The exception message
 is printed.

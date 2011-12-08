@@ -202,15 +202,15 @@ TEST_F(CacheTest, retrieveFail) {
 }
 
 TEST_F(CacheTest, expire) {
-    // Insert "foo" with a duration of 2 seconds; sleep 3.  The
+    // Insert "foo" with a duration of 1 seconds; sleep 2.  The
     // record should not be returned from the cache even though it's
     // at the top of the cache.
     RRsetPtr aaaa(new RRset(Name("foo"), RRClass::IN(), RRType::AAAA(),
                             RRTTL(0)));
     aaaa->addRdata(in::AAAA("2001:db8:3:bb::5"));
-    cache.addPositive(aaaa, 0, 2);
+    cache.addPositive(aaaa, 0, 1);
 
-    sleep(3);
+    sleep(2);
 
     RRsetPtr r;
     uint32_t f;

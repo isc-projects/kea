@@ -17,12 +17,12 @@
 
 ''' cmdctl module is the configuration entry point for all commands from bindctl
 or some other web tools client of bind10. cmdctl is pure https server which provi-
-des RESTful API. When command client connecting with cmdctl, it should first login 
-with legal username and password. 
-    When cmdctl starting up, it will collect command specification and 
+des RESTful API. When command client connecting with cmdctl, it should first login
+with legal username and password.
+    When cmdctl starting up, it will collect command specification and
 configuration specification/data of other available modules from configmanager, then
 wait for receiving request from client, parse the request and resend the request to
-the proper module. When getting the request result from the module, send back the 
+the proper module. When getting the request result from the module, send back the
 resut to client.
 '''
 
@@ -47,18 +47,13 @@ import isc.net.parse
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 from isc.util import socketserver_mixin
-from cmdctl_messages import *
-
-# TODO: these debug-levels are hard-coded here; we are planning on
-# creating a general set of debug levels, see ticket #1074. When done,
-# we should remove these values and use the general ones in the
-# logger.debug calls
-
-# Debug level for communication with BIND10
-DBG_CMDCTL_MESSAGING = 30
+from isc.log_messages.cmdctl_messages import *
 
 isc.log.init("b10-cmdctl")
 logger = isc.log.Logger("cmdctl")
+
+# Debug level for communication with BIND10
+DBG_CMDCTL_MESSAGING = logger.DBGLVL_COMMAND
 
 try:
     import threading
@@ -86,16 +81,16 @@ SPECFILE_LOCATION = SPECFILE_PATH + os.sep + "cmdctl.spec"
 
 class CmdctlException(Exception):
     pass
-       
+
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.  '''
     def do_GET(self):
-        '''The client should send its session id in header with 
+        '''The client should send its session id in header with
         the name 'cookie'
         '''
         self.session_id = self.headers.get('cookie')
-        rcode, reply = http.client.OK, []        
+        rcode, reply = http.client.OK, []
         if self._is_session_valid():
             if self._is_user_logged_in():
                 rcode, reply = self._handle_get_request()
@@ -111,16 +106,16 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def _handle_get_request(self):
         '''Currently only support the following three url GET request '''
         id, module = self._parse_request_path()
-        return self.server.get_reply_data_for_GET(id, module) 
+        return self.server.get_reply_data_for_GET(id, module)
 
     def _is_session_valid(self):
-        return self.session_id 
+        return self.session_id
 
     def _is_user_logged_in(self):
         login_time = self.server.user_sessions.get(self.session_id)
         if not login_time:
             return False
-        
+
         idle_time = time.time() - login_time
         if idle_time > self.server.idle_timeout:
             return False
@@ -130,7 +125,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def _parse_request_path(self):
         '''Parse the url, the legal url should like /ldh or /ldh/ldh '''
-        groups = URL_PATTERN.match(self.path) 
+        groups = URL_PATTERN.match(self.path)
         if not groups:
             return (None, None)
         else:
@@ -138,8 +133,8 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         '''Process POST request. '''
-        '''Process user login and send command to proper module  
-        The client should send its session id in header with 
+        '''Process user login and send command to proper module
+        The client should send its session id in header with
         the name 'cookie'
         '''
         self.session_id = self.headers.get('cookie')
@@ -153,7 +148,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 rcode, reply = http.client.UNAUTHORIZED, ["please login"]
         else:
             rcode, reply = http.client.BAD_REQUEST, ["session isn't valid"]
-      
+
         self.send_response(rcode)
         self.end_headers()
         self.wfile.write(json.dumps(reply).encode())
@@ -174,12 +169,12 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         length = self.headers.get('Content-Length')
 
         if not length:
-            return False, ["invalid username or password"]     
+            return False, ["invalid username or password"]
 
         try:
             user_info = json.loads((self.rfile.read(int(length))).decode())
         except:
-            return False, ["invalid username or password"]                
+            return False, ["invalid username or password"]
 
         user_name = user_info.get('username')
         if not user_name:
@@ -198,7 +193,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             return False, ["username or password error"]
 
         return True, None
-   
+
 
     def _handle_post_request(self):
         '''Handle all the post request from client. '''
@@ -220,7 +215,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if rcode != 0:
             ret = http.client.BAD_REQUEST
         return ret, reply
-    
+
     def log_request(self, code='-', size='-'):
         '''Rewrite the log request function, log nothing.'''
         pass
@@ -244,11 +239,11 @@ class CommandControl():
 
     def _setup_session(self):
         '''Setup the session for receving the commands
-        sent from other modules. There are two sessions 
-        for cmdctl, one(self.module_cc) is used for receiving 
-        commands sent from other modules, another one (self._cc) 
-        is used to send the command from Bindctl or other tools 
-        to proper modules.''' 
+        sent from other modules. There are two sessions
+        for cmdctl, one(self.module_cc) is used for receiving
+        commands sent from other modules, another one (self._cc)
+        is used to send the command from Bindctl or other tools
+        to proper modules.'''
         self._cc = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
@@ -256,7 +251,7 @@ class CommandControl():
         self._module_name = self._module_cc.get_module_spec().get_module_name()
         self._cmdctl_config_data = self._module_cc.get_full_config()
         self._module_cc.start()
-    
+
     def _accounts_file_check(self, filepath):
         ''' Check whether the accounts file is valid, each row
         should be a list with 3 items.'''
@@ -293,7 +288,7 @@ class CommandControl():
                 errstr = self._accounts_file_check(new_config[key])
             else:
                 errstr = 'unknown config item: ' + key
-            
+
             if errstr != None:
                 logger.error(CMDCTL_BAD_CONFIG_DATA, errstr);
                 return ccsession.create_answer(1, errstr)
@@ -319,7 +314,7 @@ class CommandControl():
                 self.modules_spec[args[0]] = args[1]
 
         elif command == ccsession.COMMAND_SHUTDOWN:
-            #When cmdctl get 'shutdown' command from boss, 
+            #When cmdctl get 'shutdown' command from boss,
             #shutdown the outer httpserver.
             self._httpserver.shutdown()
             self._serving = False
@@ -389,12 +384,12 @@ class CommandControl():
         specs = self.get_modules_spec()
         if module_name not in specs.keys():
             return 1, {'error' : 'unknown module'}
-       
+
         spec_obj = isc.config.module_spec.ModuleSpec(specs[module_name], False)
         errors = []
         if not spec_obj.validate_command(command_name, params, errors):
             return 1, {'error': errors[0]}
-        
+
         return self.send_command(module_name, command_name, params)
 
     def send_command(self, module_name, command_name, params = None):
@@ -405,7 +400,7 @@ class CommandControl():
                      command_name, module_name)
 
         if module_name == self._module_name:
-            # Process the command sent to cmdctl directly. 
+            # Process the command sent to cmdctl directly.
             answer = self.command_handler(command_name, params)
         else:
             msg = ccsession.create_command(command_name, params)
@@ -434,7 +429,7 @@ class CommandControl():
 
         logger.error(CMDCTL_COMMAND_ERROR, command_name, module_name, errstr)
         return 1, {'error': errstr}
-    
+
     def get_cmdctl_config_data(self):
         ''' If running in source code tree, use keyfile, certificate
         and user accounts file in source code. '''
@@ -458,13 +453,15 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
     '''Make the server address can be reused.'''
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass, 
+    def __init__(self, server_address, RequestHandlerClass,
                  CommandControlClass,
                  idle_timeout = 1200, verbose = False):
         '''idle_timeout: the max idle time for login'''
         socketserver_mixin.NoPollMixIn.__init__(self)
         try:
             http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
+            logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_STARTED,
+                         server_address[0], server_address[1])
         except socket.error as err:
             raise CmdctlException("Error creating server, because: %s \n" % str(err))
 
@@ -477,9 +474,9 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         self._accounts_file = None
 
     def _create_user_info(self, accounts_file):
-        '''Read all user's name and its' salt, hashed password 
+        '''Read all user's name and its' salt, hashed password
         from accounts file.'''
-        if (self._accounts_file == accounts_file) and (len(self._user_infos) > 0): 
+        if (self._accounts_file == accounts_file) and (len(self._user_infos) > 0):
             return
 
         with self._lock:
@@ -500,10 +497,10 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         self._accounts_file = accounts_file
         if len(self._user_infos) == 0:
             logger.error(CMDCTL_NO_USER_ENTRIES_READ)
-         
+
     def get_user_info(self, username):
         '''Get user's salt and hashed string. If the user
-        doesn't exist, return None, or else, the list 
+        doesn't exist, return None, or else, the list
         [salt, hashed password] will be returned.'''
         with self._lock:
             info = self._user_infos.get(username)
@@ -512,9 +509,9 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
     def save_user_session_id(self, session_id):
         ''' Record user's id and login time. '''
         self.user_sessions[session_id] = time.time()
-        
+
     def _check_key_and_cert(self, key, cert):
-        # TODO, check the content of key/certificate file 
+        # TODO, check the content of key/certificate file
         if not os.path.exists(key):
             raise CmdctlException("key file '%s' doesn't exist " % key)
 
@@ -529,7 +526,7 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                                       certfile = cert,
                                       keyfile = key,
                                       ssl_version = ssl.PROTOCOL_SSLv23)
-            return ssl_sock 
+            return ssl_sock
         except (ssl.SSLError, CmdctlException) as err :
             logger.info(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
             self.close_request(sock)
@@ -546,18 +543,18 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
 
     def get_reply_data_for_GET(self, id, module):
         '''Currently only support the following three url GET request '''
-        rcode, reply = http.client.NO_CONTENT, []        
+        rcode, reply = http.client.NO_CONTENT, []
         if not module:
             if id == CONFIG_DATA_URL:
                 rcode, reply = http.client.OK, self.cmdctl.get_config_data()
             elif id == MODULE_SPEC_URL:
                 rcode, reply = http.client.OK, self.cmdctl.get_modules_spec()
-        
-        return rcode, reply 
+
+        return rcode, reply
 
     def send_command_to_module(self, module_name, command_name, params):
         return self.cmdctl.send_command_with_check(module_name, command_name, params)
-   
+
 httpd = None
 
 def signal_handler(signal, frame):
@@ -571,10 +568,9 @@ def set_signal_handler():
 
 def run(addr = 'localhost', port = 8080, idle_timeout = 1200, verbose = False):
     ''' Start cmdctl as one https server. '''
-    if verbose:
-        sys.stdout.write("[b10-cmdctl] starting on %s port:%d\n" %(addr, port))
-    httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler, 
+    httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler,
                              CommandControl, idle_timeout, verbose)
+
     httpd.serve_forever()
 
 def check_port(option, opt_str, value, parser):
@@ -612,6 +608,8 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
     result = 1                  # in case of failure
     try:
+        if options.verbose:
+            logger.set_severity("DEBUG", 99)
         run(options.addr, options.port, options.idle_timeout, options.verbose)
         result = 0
     except isc.cc.SessionError as err:

@@ -121,6 +121,15 @@ class NameTest(unittest.TestCase):
         self.assertEqual(".", str(self.name2))
         self.assertEqual("something.completely.different.", self.name3.to_text())
 
+        self.assertEqual("example.com.", self.name1.to_text(False))
+        self.assertEqual("example.com", self.name1.to_text(True))
+
+        # make sure it does not behave unexpectedly on wrong arguments
+        self.assertRaises(TypeError, self.name1.to_text, True, 1)
+        self.assertRaises(TypeError, self.name1.to_text, 1)
+        self.assertRaises(TypeError, self.name1.to_text, [])
+        self.assertRaises(TypeError, self.name1.to_text, "foo")
+
     def test_to_wire(self):
         b1 = bytearray()
         self.name1.to_wire(b1)

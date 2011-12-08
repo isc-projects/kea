@@ -11,7 +11,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-lib_LTLIBRARIES = libfake_session.la
+noinst_LTLIBRARIES = libfake_session.la
 libfake_session_la_SOURCES = fake_session.h fake_session.cc
 
 TESTS =

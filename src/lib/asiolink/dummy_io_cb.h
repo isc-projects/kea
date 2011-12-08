@@ -39,7 +39,8 @@ public:
 
     /// \brief Asynchronous I/O callback method
     ///
-    /// \param error Unused
+    /// TODO: explain why this method should never be called.
+    /// This should be unused.
     void operator()(asio::error_code)
     {
         // TODO: log an error if this method ever gets called.
@@ -47,8 +48,8 @@ public:
 
     /// \brief Asynchronous I/O callback method
     ///
-    /// \param error Unused
-    /// \param length Unused
+    /// TODO: explain why this method should never be called.
+    /// This should be unused.
     void operator()(asio::error_code, size_t)
     {
         // TODO: log an error if this method ever gets called.

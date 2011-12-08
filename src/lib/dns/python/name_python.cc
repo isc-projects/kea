@@ -25,20 +25,27 @@
 #include "messagerenderer_python.h"
 #include "name_python.h"
 
-//
-// Definition of the classes
-//
+#include <iostream>
 
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
 using namespace isc::dns;
 using namespace isc::dns::python;
 using namespace isc::util;
 using namespace isc::util::python;
 
 namespace {
-// NameComparisonResult
+// The s_* Class simply covers one instantiation of the object.
+class s_NameComparisonResult : public PyObject {
+public:
+    s_NameComparisonResult() : cppobj(NULL) {}
+    NameComparisonResult* cppobj;
+};
+
+class s_Name : public PyObject {
+public:
+    s_Name() : cppobj(NULL), position(0) {}
+    Name* cppobj;
+    size_t position;
+};
 
 int NameComparisonResult_init(s_NameComparisonResult*, PyObject*);
 void NameComparisonResult_destroy(s_NameComparisonResult* self);
@@ -84,9 +91,7 @@ PyObject*
 NameComparisonResult_getRelation(s_NameComparisonResult* self) {
     return (Py_BuildValue("I", self->cppobj->getRelation()));
 }
-// end of NameComparisonResult
 
-// Name
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_Name, Name> NameContainer;
 
@@ -94,7 +99,7 @@ int Name_init(s_Name* self, PyObject* args);
 void Name_destroy(s_Name* self);
 
 PyObject* Name_toWire(s_Name* self, PyObject* args);
-PyObject* Name_toText(s_Name* self);
+PyObject* Name_toText(s_Name* self, PyObject* args);
 PyObject* Name_str(PyObject* self);
 PyObject* Name_getLabelCount(s_Name* self);
 PyObject* Name_at(s_Name* self, PyObject* args);
@@ -117,8 +122,9 @@ PyMethodDef Name_methods[] = {
       "Returns the length" },
     { "get_labelcount", reinterpret_cast<PyCFunction>(Name_getLabelCount), METH_NOARGS,
       "Returns the number of labels" },
-    { "to_text", reinterpret_cast<PyCFunction>(Name_toText), METH_NOARGS,
-      "Returns the string representation" },
+    { "to_text", reinterpret_cast<PyCFunction>(Name_toText), METH_VARARGS,
+      "Returns the string representation. The optional argument must be either"
+      "True of False. If True, the final dot will be omitted." },
     { "to_wire", reinterpret_cast<PyCFunction>(Name_toWire), METH_VARARGS,
       "Converts the Name object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
@@ -275,8 +281,24 @@ Name_getLabelCount(s_Name* self) {
 }
 
 PyObject*
-Name_toText(s_Name* self) {
-    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+Name_toText(s_Name* self, PyObject* args) {
+    PyObject* omit_final_dot_obj = NULL;
+    if (PyArg_ParseTuple(args, "|O", &omit_final_dot_obj)) {
+        bool omit_final_dot = false;
+        if (omit_final_dot_obj != NULL) {
+            if (PyBool_Check(omit_final_dot_obj) != 0) {
+                omit_final_dot = (omit_final_dot_obj == Py_True);
+            } else {
+                PyErr_SetString(PyExc_TypeError,
+                    "Optional argument 1 of to_text() should be True of False");
+                return (NULL);
+            }
+        }
+        return (Py_BuildValue("s",
+                              self->cppobj->toText(omit_final_dot).c_str()));
+    } else {
+        return (NULL);
+    }
 }
 
 PyObject*
@@ -292,7 +314,7 @@ Name_str(PyObject* self) {
 PyObject*
 Name_toWire(s_Name* self, PyObject* args) {
     PyObject* bytes;
-    s_MessageRenderer* mr;
+    PyObject* mr;
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -306,7 +328,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         Py_DECREF(name_bytes);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->cppobj->toWire(*mr->messagerenderer);
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -495,7 +517,7 @@ Name_isWildCard(s_Name* self) {
         Py_RETURN_FALSE;
     }
 }
-// end of Name
+
 } // end of unnamed namespace
 
 namespace isc {
@@ -634,94 +656,32 @@ PyTypeObject name_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_Name(PyObject* mod) {
-    // Add the classes to the module
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module
-
-    //
-    // NameComparisonResult
-    //
-    if (PyType_Ready(&name_comparison_result_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&name_comparison_result_type);
-
-    // Add the enums to the module
-    po_NameRelation = Py_BuildValue("{i:s,i:s,i:s,i:s}",
-                                    NameComparisonResult::SUPERDOMAIN, "SUPERDOMAIN",
-                                    NameComparisonResult::SUBDOMAIN, "SUBDOMAIN",
-                                    NameComparisonResult::EQUAL, "EQUAL",
-                                    NameComparisonResult::COMMONANCESTOR, "COMMONANCESTOR");
-    addClassVariable(name_comparison_result_type, "NameRelation", po_NameRelation);
-
-    PyModule_AddObject(mod, "NameComparisonResult",
-                       reinterpret_cast<PyObject*>(&name_comparison_result_type));
-
-    //
-    // Name
-    //
-    
-    if (PyType_Ready(&name_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&name_type);
-
-    // Add the constants to the module
-    addClassVariable(name_type, "MAX_WIRE", Py_BuildValue("I", Name::MAX_WIRE));
-    addClassVariable(name_type, "MAX_LABELS", Py_BuildValue("I", Name::MAX_LABELS));
-    addClassVariable(name_type, "MAX_LABELLEN", Py_BuildValue("I", Name::MAX_LABELLEN));
-    addClassVariable(name_type, "MAX_COMPRESS_POINTER", Py_BuildValue("I", Name::MAX_COMPRESS_POINTER));
-    addClassVariable(name_type, "COMPRESS_POINTER_MARK8", Py_BuildValue("I", Name::COMPRESS_POINTER_MARK8));
-    addClassVariable(name_type, "COMPRESS_POINTER_MARK16", Py_BuildValue("I", Name::COMPRESS_POINTER_MARK16));
-
-    s_Name* root_name = PyObject_New(s_Name, &name_type);
-    root_name->cppobj = new Name(Name::ROOT_NAME());
-    PyObject* po_ROOT_NAME = root_name;
-    addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
-
-    PyModule_AddObject(mod, "Name",
-                       reinterpret_cast<PyObject*>(&name_type));
-    
-
-    // Add the exceptions to the module
-    po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
-    PyModule_AddObject(mod, "EmptyLabel", po_EmptyLabel);
-
-    po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
-    PyModule_AddObject(mod, "TooLongName", po_TooLongName);
-
-    po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
-    PyModule_AddObject(mod, "TooLongLabel", po_TooLongLabel);
-
-    po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
-    PyModule_AddObject(mod, "BadLabelType", po_BadLabelType);
-
-    po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
-    PyModule_AddObject(mod, "BadEscape", po_BadEscape);
-
-    po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL, NULL);
-    PyModule_AddObject(mod, "IncompleteName", po_IncompleteName);
-
-    po_InvalidBufferPosition = PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
-
-    // This one could have gone into the message_python.cc file, but is
-    // already needed here.
-    po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR", NULL, NULL);
-    PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
-
-    return (true);
-}
-
 PyObject*
 createNameObject(const Name& source) {
-    NameContainer container = PyObject_New(s_Name, &name_type);
+    NameContainer container(PyObject_New(s_Name, &name_type));
     container.set(new Name(source));
     return (container.release());
 }
+
+bool
+PyName_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
+    return (PyObject_TypeCheck(obj, &name_type));
+}
+
+const Name&
+PyName_ToName(const PyObject* name_obj) {
+    if (name_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Name PyObject conversion");
+    }
+    const s_Name* name = static_cast<const s_Name*>(name_obj);
+    return (*name->cppobj);
+}
+
+
 } // namespace python
 } // namespace dns
 } // namespace isc

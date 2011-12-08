@@ -44,12 +44,15 @@ public:
              const AuthCounters::PerZoneCounterType type);
     bool submitStatistics() const;
     void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
+    void registerStatisticsValidator
+    (AuthCounters::validator_type validator);
     // Currently for testing purpose only
     uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
 private:
     Counter server_counter_;
     CounterDictionary per_zone_counter_;
     isc::cc::AbstractSession* statistics_session_;
+    AuthCounters::validator_type validator_;
 };
 
 AuthCountersImpl::AuthCountersImpl() :
@@ -86,16 +89,25 @@ AuthCountersImpl::submitStatistics() const {
     }
     std::stringstream statistics_string;
     statistics_string << "{\"command\": [\"set\","
-                      <<   "{ \"stats_data\": "
-                      <<     "{ \"auth.queries.udp\": "
+                      <<   "{ \"owner\": \"Auth\","
+                      <<   "  \"data\":"
+                      <<     "{ \"queries.udp\": "
                       <<     server_counter_.get(AuthCounters::SERVER_UDP_QUERY)
-                      <<     ", \"auth.queries.tcp\": "
+                      <<     ", \"queries.tcp\": "
                       <<     server_counter_.get(AuthCounters::SERVER_TCP_QUERY)
                       <<   " }"
                       <<   "}"
                       << "]}";
     isc::data::ConstElementPtr statistics_element =
         isc::data::Element::fromJSON(statistics_string);
+    // validate the statistics data before send
+    if (validator_) {
+        if (!validator_(
+                statistics_element->get("command")->get(1)->get("data"))) {
+            LOG_ERROR(auth_logger, AUTH_INVALID_STATISTICS_DATA);
+            return (false);
+        }
+    }
     try {
         // group_{send,recv}msg() can throw an exception when encountering
         // an error, and group_recvmsg() will throw an exception on timeout.
@@ -122,6 +134,13 @@ AuthCountersImpl::setStatisticsSession
     (isc::cc::AbstractSession* statistics_session)
 {
     statistics_session_ = statistics_session;
+}
+
+void
+AuthCountersImpl::registerStatisticsValidator
+    (AuthCounters::validator_type validator)
+{
+    validator_ = validator;
 }
 
 // Currently for testing purpose only
@@ -155,4 +174,11 @@ AuthCounters::setStatisticsSession
 uint64_t
 AuthCounters::getCounter(const AuthCounters::ServerCounterType type) const {
     return (impl_->getCounter(type));
+}
+
+void
+AuthCounters::registerStatisticsValidator
+    (AuthCounters::validator_type validator) const
+{
+    return (impl_->registerStatisticsValidator(validator));
 }

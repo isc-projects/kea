@@ -296,7 +296,7 @@ public:
     /// as long as the \c RdataFields object is used.
     ///
     /// \param fields An array of \c FieldSpec entries.  This can be \c NULL.
-    /// \param nfields The number of entries of \c fields.
+    /// \param fields_length The total length of the \c fields.
     /// \param data A pointer to memory region for the entire RDATA.  This can
     /// be NULL.
     /// \param data_length The length of \c data in bytes.

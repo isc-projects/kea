@@ -23,6 +23,10 @@ def reload():
     global DATA_PATH
     global PLUGIN_PATHS
     global PREFIX
+    global LIBEXECDIR
+    LIBEXECDIR = ("@libexecdir@/@PACKAGE@"). \
+        replace("${exec_prefix}", "@exec_prefix@"). \
+        replace("${prefix}", "@prefix@")
     BIND10_MSGQ_SOCKET_FILE = os.path.join("@localstatedir@",
                                            "@PACKAGE_NAME@",
                                            "msgq_socket").replace("${prefix}",

@@ -50,12 +50,19 @@ b10_auth_SOURCES += command.cc command.h
 b10_auth_SOURCES += common.h common.cc
 b10_auth_SOURCES += statistics.cc statistics.h
 b10_auth_SOURCES += main.cc
+# This is a temporary workaround for #1206, where the InMemoryClient has been
+# moved to an ldopened library. We could add that library to LDADD, but that
+# is nonportable. When #1207 is done this becomes moot anyway, and the
+# specific workaround is not needed anymore, so we can then remove this
+# line again.
+b10_auth_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 
 nodist_b10_auth_SOURCES = auth_messages.h auth_messages.cc
 EXTRA_DIST += auth_messages.mes
 
 b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+b10_auth_LDADD += $(top_builddir)/src/lib/util/libutil.la
 b10_auth_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

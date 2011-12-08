@@ -293,7 +293,7 @@ protected:
 /// \c PyObject_New() to the caller.
 template <typename PYSTRUCT, typename CPPCLASS>
 struct CPPPyObjectContainer : public PyObjectContainer {
-    CPPPyObjectContainer(PYSTRUCT* obj) : PyObjectContainer(obj) {}
+    explicit CPPPyObjectContainer(PYSTRUCT* obj) : PyObjectContainer(obj) {}
 
     // This method associates a C++ object with the corresponding python
     // object enclosed in this class.

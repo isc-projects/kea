@@ -1,12 +1,16 @@
-SUBDIRS = doc src tests
+SUBDIRS = compatcheck doc src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
+DISTCHECK_GTEST_CONFIGURE_FLAG=@DISTCHECK_GTEST_CONFIGURE_FLAG@
 
 DISTCLEANFILES = config.report
 
 # When running distcheck target, do not install the configurations
 DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
+
+# Use same --with-gtest flag if set
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_GTEST_CONFIGURE_FLAG)
 
 clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \

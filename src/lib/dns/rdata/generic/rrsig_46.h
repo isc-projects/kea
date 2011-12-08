@@ -38,6 +38,9 @@ public:
     // END_COMMON_MEMBERS
     RRSIG& operator=(const RRSIG& source);
     ~RRSIG();
+
+    // specialized methods
+    const RRType& typeCovered() const;
 private:
     RRSIGImpl* impl_;
 };

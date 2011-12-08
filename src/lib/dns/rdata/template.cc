@@ -18,6 +18,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rrtype.h>
 
 using namespace std;
 using namespace isc::util;

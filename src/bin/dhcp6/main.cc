@@ -26,21 +26,23 @@
 #include <iostream>
 
 #include <exceptions/exceptions.h>
+#if 0
+// TODO cc is not used yet. It should be eventually
 #include <cc/session.h>
 #include <config/ccsession.h>
+#endif
 
 #include <util/buffer.h>
 #include <log/dummylog.h>
 
 #include <dhcp6/spec_config.h>
-
+#include "dhcp6/dhcp6_srv.h"
 
 using namespace std;
 using namespace isc::util;
-using namespace isc::data;
-using namespace isc::cc;
-using namespace isc::config;
-using namespace isc::util;
+
+using namespace isc;
+using namespace isc::dhcp;
 
 namespace {
 
@@ -48,9 +50,8 @@ bool verbose_mode = false;
 
 void
 usage() {
-    cerr << "Usage:  b10-dhcp6 [-u user] [-v]"
+    cerr << "Usage:  b10-dhcp6 [-v]"
          << endl;
-    cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
@@ -59,26 +60,20 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    const char* uid = NULL;
-    bool cache = true;
 
-    while ((ch = getopt(argc, argv, ":nu:v")) != -1) {
+    while ((ch = getopt(argc, argv, ":v")) != -1) {
         switch (ch) {
-        case 'n':
-            cache = false;
-            break;
-        case 'u':
-            uid = optarg;
-            break;
         case 'v':
             verbose_mode = true;
             isc::log::denabled = true;
             break;
-        case '?':
+        case ':':
         default:
             usage();
         }
     }
+
+    cout << "My pid=" << getpid() << endl;
 
     if (argc - optind > 0) {
         usage();
@@ -86,13 +81,11 @@ main(int argc, char* argv[]) {
 
     int ret = 0;
 
-    // XXX: we should eventually pass io_service here.
+    // TODO remainder of auth to dhcp6 code copy. We need to enable this in
+    //      dhcp6 eventually
 #if 0
     Session* cc_session = NULL;
-    Session* xfrin_session = NULL;
     Session* statistics_session = NULL;
-    bool xfrin_session_established = false; // XXX (see Trac #287)
-    bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
 #endif
     try {
@@ -104,18 +97,15 @@ main(int argc, char* argv[]) {
             specfile = string(DHCP6_SPECFILE_LOCATION);
         }
 
-        // auth_server = new AuthSrv(cache, xfrout_client);
-        // auth_server->setVerbose(verbose_mode);
         cout << "[b10-dhcp6] Initiating DHCPv6 operation." << endl;
+
+        Dhcpv6Srv* srv = new Dhcpv6Srv();
+
+        srv->run();
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp6] Server failed: " << ex.what() << endl;
         ret = 1;
-    }
-
-    while (true) {
-            sleep(10);
-            cout << "[b10-dhcp6] I'm alive." << endl;
     }
 
     return (ret);

@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# \file
+# This script is used in a couple of IXFR tests.
+#
+# Preconditions:\n
+# The BIND 9 nameserver (ns1, 10.53.0.1, acting as the IXFR server) is loaded
+# with the N-4 version of the zone.  (It may hold prior versions as well.)
+# Notifications are disabled.
+#
+# The BIND 10 nameserver (nsx2, 10.53.0.2, acting as the IXFR client) is loaded
+# with an earlier (unspecified) version of the zone.
+#
+# Actions:\n
+# This script updates the IXFR server with the N-2 and N-0 versions of the zone.
+# It then updates the BIND 10 configuration so that it looks for IXFRs from
+# the IXFR server and causes the server to send the client a NOTIFY.  After
+# waiting for the client to update from the server, it compares ther zones of
+# the two system, reporting an error if they are different.
+#
+# Caller Actions:\n
+# The caller can pre-load the BIND 10 IXFR client with whatever version of the
+# zone it requires.  It can also load the BIND 9 IXFR server with zones earlier
+# than N-4.
+#
+# After this test has finished, it is up to the caller to check the logs
+# to see if they report the expected behavior.
+#
+# \return 0 if the script executed successfully, non-zero otherwise
+
+# Set up variables etc.
+. @abs_top_builddir@/tests/system/conf.sh
+. $IXFR_TOP/ixfr_init.sh
+
+set -e
+
+# Store the SOA serial number of the BIND 10 client for later use.
+old_client_serial=`$DIG_SOA @$CLIENT_IP | $AWK '{print $3}'`
+echo "I:$CLIENT_NAME SOA serial of IXFR client is $old_client_serial"
+
+# Load the BIND 9 system (the IXFR server) with the "n - 2" and "n" version of
+# the zones.  With ixfr-from-differences set to "yes", the nameserver should
+# generate the differences between them.
+echo "I:$SERVER_NAME updating IXFR-server for ixfr-in tests"
+update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n2
+
+# Wait a bit - it seems that if two updates are loaded in quick succession,
+# the second sometimes gets lost.
+sleep 5
+update_server_zone $SERVER_NAME $SERVER_IP $IXFR_TOP/db.example.n0
+
+echo "I:$CLIENT_NAME forcing IXFR client to retrieve new version of the zone"
+$RUN_BINDCTL << .
+Xfrin retransfer zone_name="example"
+.
+
+# Wait for the client to update itself.
+wait_for_update $CLIENT_NAME $CLIENT_IP $old_client_serial
+
+# Has updated, compare the client and server's versions of the zone s- they
+# should be the same.
+compare_zones $SERVER_NAME $SERVER_IP $CLIENT_NAME $CLIENT_IP
+
+set +e

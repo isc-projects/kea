@@ -209,7 +209,7 @@ public:
     /// \exception isc::InvalidParameter Unsettable flag is specified
     /// \exception None otherwise
     /// \param flag The node flag to be changed.
-    /// \on If \c true, set the flag to on; otherwise set it to off.
+    /// \param on If \c true, set the flag to on; otherwise set it to off.
     void setFlag(Flags flag, bool on = true) {
         if ((flag & ~SETTABLE_FLAGS) != 0) {
             isc_throw(isc::InvalidParameter,
@@ -226,7 +226,8 @@ public:
 private:
     /// \name Callback related methods
     ///
-    /// See the description of \c RBTree<T>::find() about callbacks.
+    /// See the description of \c RBTree<T>::find() at \ref callback
+    /// about callbacks.
     ///
     /// These methods never throw an exception.
     //@{
@@ -702,11 +703,12 @@ public:
     }
 
     /// \brief Find with callback and node chain.
+    /// \anchor callback
     ///
     /// This version of \c find() is specifically designed for the backend
-    /// of the \c MemoryZone class, and implements all necessary features
-    /// for that purpose.  Other applications shouldn't need these additional
-    /// features, and should normally use the simpler versions.
+    /// of the \c InMemoryZoneFinder class, and implements all necessary
+    /// features for that purpose.  Other applications shouldn't need these
+    /// additional features, and should normally use the simpler versions.
     ///
     /// This version of \c find() calls the callback whenever traversing (on
     /// the way from root down the tree) a marked node on the way down through

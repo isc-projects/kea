@@ -33,44 +33,71 @@ def create(cur):
     Arguments:
         cur - sqlite3 cursor.
     """
-    cur.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
-    cur.execute("INSERT INTO schema_version VALUES (1)")
-    cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY,
-                   name STRING NOT NULL COLLATE NOCASE,
-                   rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN',
-                   dnssec BOOLEAN NOT NULL DEFAULT 0)""")
-    cur.execute("CREATE INDEX zones_byname ON zones (name)")
-    cur.execute("""CREATE TABLE records (id INTEGER PRIMARY KEY,
-                   zone_id INTEGER NOT NULL,
-                   name STRING NOT NULL COLLATE NOCASE,
-                   rname STRING NOT NULL COLLATE NOCASE,
-                   ttl INTEGER NOT NULL,
-                   rdtype STRING NOT NULL COLLATE NOCASE,
-                   sigtype STRING COLLATE NOCASE,
-                   rdata STRING NOT NULL)""")
-    cur.execute("CREATE INDEX records_byname ON records (name)")
-    cur.execute("CREATE INDEX records_byrname ON records (rname)")
-    cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY,
-                   zone_id INTEGER NOT NULL,
-                   hash STRING NOT NULL COLLATE NOCASE,
-                   owner STRING NOT NULL COLLATE NOCASE,
-                   ttl INTEGER NOT NULL,
-                   rdtype STRING NOT NULL COLLATE NOCASE,
-                   rdata STRING NOT NULL)""")
-    cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
+    # We are creating the database because it apparently had not been at
+    # the time we tried to read from it. However, another process may have
+    # had the same idea, resulting in a potential race condition.
+    # Therefore, we obtain an exclusive lock before we create anything
+    # When we have it, we check *again* whether the database has been
+    # initialized. If not, we do so.
 
-def open(dbfile):
+    # If the database is perpetually locked, it'll time out automatically
+    # and we just let it fail.
+    cur.execute("BEGIN EXCLUSIVE TRANSACTION")
+    try:
+        cur.execute("SELECT version FROM schema_version")
+        row = cur.fetchone()
+    except sqlite3.OperationalError:
+        cur.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
+        cur.execute("INSERT INTO schema_version VALUES (1)")
+        cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY,
+                    name STRING NOT NULL COLLATE NOCASE,
+                    rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN',
+                    dnssec BOOLEAN NOT NULL DEFAULT 0)""")
+        cur.execute("CREATE INDEX zones_byname ON zones (name)")
+        cur.execute("""CREATE TABLE records (id INTEGER PRIMARY KEY,
+                    zone_id INTEGER NOT NULL,
+                    name STRING NOT NULL COLLATE NOCASE,
+                    rname STRING NOT NULL COLLATE NOCASE,
+                    ttl INTEGER NOT NULL,
+                    rdtype STRING NOT NULL COLLATE NOCASE,
+                    sigtype STRING COLLATE NOCASE,
+                    rdata STRING NOT NULL)""")
+        cur.execute("CREATE INDEX records_byname ON records (name)")
+        cur.execute("CREATE INDEX records_byrname ON records (rname)")
+        cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY,
+                    zone_id INTEGER NOT NULL,
+                    hash STRING NOT NULL COLLATE NOCASE,
+                    owner STRING NOT NULL COLLATE NOCASE,
+                    ttl INTEGER NOT NULL,
+                    rdtype STRING NOT NULL COLLATE NOCASE,
+                    rdata STRING NOT NULL)""")
+        cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
+        cur.execute("""CREATE TABLE diffs (id INTEGER PRIMARY KEY,
+                    zone_id INTEGER NOT NULL,
+                    version INTEGER NOT NULL,
+                    operation INTEGER NOT NULL,
+                    name STRING NOT NULL COLLATE NOCASE,
+                    rrtype STRING NOT NULL COLLATE NOCASE,
+                    ttl INTEGER NOT NULL,
+                    rdata STRING NOT NULL)""")
+        row = [1]
+    cur.execute("COMMIT TRANSACTION")
+    return row
+
+def open(dbfile, connect_timeout=5.0):
     """ Open a database, if the database is not yet set up, call create
     to do so. It may raise Sqlite3DSError if failed to open sqlite3
     database file or find bad database schema version in the database.
 
     Arguments:
         dbfile - the filename for the sqlite3 database.
+        connect_timeout - timeout for opening the database or acquiring locks
+                          defaults to sqlite3 module's default of 5.0 seconds
 
     Return sqlite3 connection, sqlite3 cursor.
     """
     try:
-        conn = sqlite3.connect(dbfile)
+        conn = sqlite3.connect(dbfile, timeout=connect_timeout)
         cur = conn.cursor()
     except Exception as e:
         fail = "Failed to open " + dbfile + ": " + e.args[0]
@@ -80,10 +107,13 @@ def open(dbfile):
     try:
         cur.execute("SELECT version FROM schema_version")
         row = cur.fetchone()
-    except:
-        create(cur)
-        conn.commit()
-        row = [1]
+    except sqlite3.OperationalError:
+        # temporarily disable automatic transactions so
+        # we can do our own
+        iso_lvl = conn.isolation_level
+        conn.isolation_level = None
+        row = create(cur)
+        conn.isolation_level = iso_lvl
 
     if row == None or row[0] != 1:
         raise Sqlite3DSError("Bad database schema version")

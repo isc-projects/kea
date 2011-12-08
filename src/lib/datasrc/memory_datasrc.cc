@@ -16,6 +16,9 @@
 #include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+
+#include <exceptions/exceptions.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -25,17 +28,44 @@
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
 #include <datasrc/logger.h>
+#include <datasrc/iterator.h>
+#include <datasrc/data_source.h>
+#include <datasrc/factory.h>
+
+#include <cc/data.h>
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::data;
 
 namespace isc {
 namespace datasrc {
 
-// Private data and hidden methods of MemoryZone
-struct MemoryZone::MemoryZoneImpl {
+namespace {
+// Some type aliases
+/*
+ * Each domain consists of some RRsets. They will be looked up by the
+ * RRType.
+ *
+ * The use of map is questionable with regard to performance - there'll
+ * be usually only few RRsets in the domain, so the log n benefit isn't
+ * much and a vector/array might be faster due to its simplicity and
+ * continuous memory location. But this is unlikely to be a performance
+ * critical place and map has better interface for the lookups, so we use
+ * that.
+ */
+typedef map<RRType, ConstRRsetPtr> Domain;
+typedef Domain::value_type DomainPair;
+typedef boost::shared_ptr<Domain> DomainPtr;
+// The tree stores domains
+typedef RBTree<Domain> DomainTree;
+typedef RBNode<Domain> DomainNode;
+}
+
+// Private data and hidden methods of InMemoryZoneFinder
+struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // Constructor
-    MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
+    InMemoryZoneFinderImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin), origin_data_(NULL),
         domains_(true)
     {
@@ -44,25 +74,6 @@ struct MemoryZone::MemoryZoneImpl {
         DomainPtr origin_domain(new Domain);
         origin_data_->setData(origin_domain);
     }
-
-    // Some type aliases
-    /*
-     * Each domain consists of some RRsets. They will be looked up by the
-     * RRType.
-     *
-     * The use of map is questionable with regard to performance - there'll
-     * be usually only few RRsets in the domain, so the log n benefit isn't
-     * much and a vector/array might be faster due to its simplicity and
-     * continuous memory location. But this is unlikely to be a performance
-     * critical place and map has better interface for the lookups, so we use
-     * that.
-     */
-    typedef map<RRType, ConstRRsetPtr> Domain;
-    typedef Domain::value_type DomainPair;
-    typedef boost::shared_ptr<Domain> DomainPtr;
-    // The tree stores domains
-    typedef RBTree<Domain> DomainTree;
-    typedef RBNode<Domain> DomainNode;
     static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
     // Information about the zone
@@ -223,7 +234,7 @@ struct MemoryZone::MemoryZoneImpl {
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
      */
-    // Implementation of MemoryZone::add
+    // Implementation of InMemoryZoneFinder::add
     result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
@@ -409,7 +420,7 @@ struct MemoryZone::MemoryZoneImpl {
         }
     }
 
-    // Implementation of MemoryZone::find
+    // Implementation of InMemoryZoneFinder::find
     FindResult find(const Name& name, RRType type,
                     RRsetList* target, const FindOptions options) const
     {
@@ -593,50 +604,50 @@ struct MemoryZone::MemoryZoneImpl {
     }
 };
 
-MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
-    impl_(new MemoryZoneImpl(zone_class, origin))
+InMemoryZoneFinder::InMemoryZoneFinder(const RRClass& zone_class, const Name& origin) :
+    impl_(new InMemoryZoneFinderImpl(zone_class, origin))
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_CREATE).arg(origin).
         arg(zone_class);
 }
 
-MemoryZone::~MemoryZone() {
+InMemoryZoneFinder::~InMemoryZoneFinder() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_DESTROY).arg(getOrigin()).
         arg(getClass());
     delete impl_;
 }
 
-const Name&
-MemoryZone::getOrigin() const {
+Name
+InMemoryZoneFinder::getOrigin() const {
     return (impl_->origin_);
 }
 
-const RRClass&
-MemoryZone::getClass() const {
+RRClass
+InMemoryZoneFinder::getClass() const {
     return (impl_->zone_class_);
 }
 
-Zone::FindResult
-MemoryZone::find(const Name& name, const RRType& type,
-                 RRsetList* target, const FindOptions options) const
+ZoneFinder::FindResult
+InMemoryZoneFinder::find(const Name& name, const RRType& type,
+                 RRsetList* target, const FindOptions options)
 {
     return (impl_->find(name, type, target, options));
 }
 
 result::Result
-MemoryZone::add(const ConstRRsetPtr& rrset) {
+InMemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
     return (impl_->add(rrset, &impl_->domains_));
 }
 
 
 void
-MemoryZone::load(const string& filename) {
+InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
     // Load it into a temporary tree
-    MemoryZoneImpl::DomainTree tmp;
+    DomainTree tmp;
     masterLoad(filename.c_str(), getOrigin(), getClass(),
-        boost::bind(&MemoryZoneImpl::addFromLoad, impl_, _1, &tmp));
+        boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_, _1, &tmp));
     // If it went well, put it inside
     impl_->file_name_ = filename;
     tmp.swap(impl_->domains_);
@@ -644,64 +655,350 @@ MemoryZone::load(const string& filename) {
 }
 
 void
-MemoryZone::swap(MemoryZone& zone) {
+InMemoryZoneFinder::swap(InMemoryZoneFinder& zone_finder) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_SWAP).arg(getOrigin()).
-        arg(zone.getOrigin());
-    std::swap(impl_, zone.impl_);
+        arg(zone_finder.getOrigin());
+    std::swap(impl_, zone_finder.impl_);
 }
 
 const string
-MemoryZone::getFileName() const {
+InMemoryZoneFinder::getFileName() const {
     return (impl_->file_name_);
 }
 
-/// Implementation details for \c MemoryDataSrc hidden from the public
+isc::dns::Name
+InMemoryZoneFinder::findPreviousName(const isc::dns::Name&) const {
+    isc_throw(NotImplemented, "InMemory data source doesn't support DNSSEC "
+              "yet, can't find previous name");
+}
+
+/// Implementation details for \c InMemoryClient hidden from the public
 /// interface.
 ///
-/// For now, \c MemoryDataSrc only contains a \c ZoneTable object, which
-/// consists of (pointers to) \c MemoryZone objects, we may add more
+/// For now, \c InMemoryClient only contains a \c ZoneTable object, which
+/// consists of (pointers to) \c InMemoryZoneFinder objects, we may add more
 /// member variables later for new features.
-class MemoryDataSrc::MemoryDataSrcImpl {
+class InMemoryClient::InMemoryClientImpl {
 public:
-    MemoryDataSrcImpl() : zone_count(0) {}
+    InMemoryClientImpl() : zone_count(0) {}
     unsigned int zone_count;
     ZoneTable zone_table;
 };
 
-MemoryDataSrc::MemoryDataSrc() : impl_(new MemoryDataSrcImpl)
+InMemoryClient::InMemoryClient() : impl_(new InMemoryClientImpl)
 {}
 
-MemoryDataSrc::~MemoryDataSrc() {
+InMemoryClient::~InMemoryClient() {
     delete impl_;
 }
 
 unsigned int
-MemoryDataSrc::getZoneCount() const {
+InMemoryClient::getZoneCount() const {
     return (impl_->zone_count);
 }
 
 result::Result
-MemoryDataSrc::addZone(ZonePtr zone) {
-    if (!zone) {
+InMemoryClient::addZone(ZoneFinderPtr zone_finder) {
+    if (!zone_finder) {
         isc_throw(InvalidParameter,
-                  "Null pointer is passed to MemoryDataSrc::addZone()");
+                  "Null pointer is passed to InMemoryClient::addZone()");
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
-        arg(zone->getOrigin()).arg(zone->getClass().toText());
+        arg(zone_finder->getOrigin()).arg(zone_finder->getClass().toText());
 
-    const result::Result result = impl_->zone_table.addZone(zone);
+    const result::Result result = impl_->zone_table.addZone(zone_finder);
     if (result == result::SUCCESS) {
         ++impl_->zone_count;
     }
     return (result);
 }
 
-MemoryDataSrc::FindResult
-MemoryDataSrc::findZone(const isc::dns::Name& name) const {
+InMemoryClient::FindResult
+InMemoryClient::findZone(const isc::dns::Name& name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(name);
-    return (FindResult(impl_->zone_table.findZone(name).code,
-                       impl_->zone_table.findZone(name).zone));
+    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    return (FindResult(result.code, result.zone));
 }
+
+namespace {
+
+class MemoryIterator : public ZoneIterator {
+private:
+    RBTreeNodeChain<Domain> chain_;
+    Domain::const_iterator dom_iterator_;
+    const DomainTree& tree_;
+    const DomainNode* node_;
+    // Only used when separate_rrs_ is true
+    RdataIteratorPtr rdata_iterator_;
+    bool separate_rrs_;
+    bool ready_;
+public:
+    MemoryIterator(const DomainTree& tree, const Name& origin, bool separate_rrs) :
+        tree_(tree),
+        separate_rrs_(separate_rrs),
+        ready_(true)
+    {
+        // Find the first node (origin) and preserve the node chain for future
+        // searches
+        DomainTree::Result result(tree_.find<void*>(origin, &node_, chain_,
+                                                    NULL, NULL));
+        // It can't happen that the origin is not in there
+        if (result != DomainTree::EXACTMATCH) {
+            isc_throw(Unexpected,
+                      "In-memory zone corrupted, missing origin node");
+        }
+        // Initialize the iterator if there's somewhere to point to
+        if (node_ != NULL && node_->getData() != DomainPtr()) {
+            dom_iterator_ = node_->getData()->begin();
+            if (separate_rrs_ && dom_iterator_ != node_->getData()->end()) {
+                rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+            }
+        }
+    }
+
+    virtual ConstRRsetPtr getNextRRset() {
+        if (!ready_) {
+            isc_throw(Unexpected, "Iterating past the zone end");
+        }
+        /*
+         * This cycle finds the first nonempty node with yet unused RRset.
+         * If it is NULL, we run out of nodes. If it is empty, it doesn't
+         * contain any RRsets. If we are at the end, just get to next one.
+         */
+        while (node_ != NULL && (node_->getData() == DomainPtr() ||
+                                 dom_iterator_ == node_->getData()->end())) {
+            node_ = tree_.nextNode(chain_);
+            // If there's a node, initialize the iterator and check next time
+            // if the map is empty or not
+            if (node_ != NULL && node_->getData() != NULL) {
+                dom_iterator_ = node_->getData()->begin();
+                // New RRset, so get a new rdata iterator
+                if (separate_rrs_) {
+                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+                }
+            }
+        }
+        if (node_ == NULL) {
+            // That's all, folks
+            ready_ = false;
+            return (ConstRRsetPtr());
+        }
+
+        if (separate_rrs_) {
+            // For separate rrs, reconstruct a new RRset with just the
+            // 'current' rdata
+            RRsetPtr result(new RRset(dom_iterator_->second->getName(),
+                                      dom_iterator_->second->getClass(),
+                                      dom_iterator_->second->getType(),
+                                      dom_iterator_->second->getTTL()));
+            result->addRdata(rdata_iterator_->getCurrent());
+            rdata_iterator_->next();
+            if (rdata_iterator_->isLast()) {
+                // all used up, next.
+                ++dom_iterator_;
+                // New RRset, so get a new rdata iterator, but only if this
+                // was not the final RRset in the chain
+                if (dom_iterator_ != node_->getData()->end()) {
+                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+                }
+            }
+            return (result);
+        } else {
+            // The iterator points to the next yet unused RRset now
+            ConstRRsetPtr result(dom_iterator_->second);
+
+            // This one is used, move it to the next time for next call
+            ++dom_iterator_;
+
+            return (result);
+        }
+    }
+
+    virtual ConstRRsetPtr getSOA() const {
+        isc_throw(NotImplemented, "Not imelemented");
+    }
+};
+
+} // End of anonymous namespace
+
+ZoneIteratorPtr
+InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
+    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    if (result.code != result::SUCCESS) {
+        isc_throw(DataSourceError, "No such zone: " + name.toText());
+    }
+
+    const InMemoryZoneFinder*
+        zone(dynamic_cast<const InMemoryZoneFinder*>(result.zone.get()));
+    if (zone == NULL) {
+        /*
+         * TODO: This can happen only during some of the tests and only as
+         * a temporary solution. This should be fixed by #1159 and then
+         * this cast and check shouldn't be necessary. We don't have
+         * test for handling a "can not happen" condition.
+         */
+        isc_throw(Unexpected, "The zone at " + name.toText() +
+                  " is not InMemoryZoneFinder");
+    }
+    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name,
+                                               separate_rrs)));
+}
+
+ZoneUpdaterPtr
+InMemoryClient::getUpdater(const isc::dns::Name&, bool, bool) const {
+    isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
+}
+
+pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+InMemoryClient::getJournalReader(const isc::dns::Name&, uint32_t,
+                                 uint32_t) const
+{
+    isc_throw(isc::NotImplemented, "Journaling isn't supported for "
+              "in memory data source");
+}
+
+namespace {
+// convencience function to add an error message to a list of those
+// (TODO: move functions like these to some util lib?)
+void
+addError(ElementPtr errors, const std::string& error) {
+    if (errors != ElementPtr() && errors->getType() == Element::list) {
+        errors->add(Element::create(error));
+    }
+}
+
+/// Check if the given element exists in the map, and if it is a string
+bool
+checkConfigElementString(ConstElementPtr config, const std::string& name,
+                         ElementPtr errors)
+{
+    if (!config->contains(name)) {
+        addError(errors,
+                 "Config for memory backend does not contain a '"
+                 +name+
+                 "' value");
+        return false;
+    } else if (!config->get(name) ||
+               config->get(name)->getType() != Element::string) {
+        addError(errors, "value of " + name +
+                 " in memory backend config is not a string");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool
+checkZoneConfig(ConstElementPtr config, ElementPtr errors) {
+    bool result = true;
+    if (!config || config->getType() != Element::map) {
+        addError(errors, "Elements in memory backend's zone list must be maps");
+        result = false;
+    } else {
+        if (!checkConfigElementString(config, "origin", errors)) {
+            result = false;
+        }
+        if (!checkConfigElementString(config, "file", errors)) {
+            result = false;
+        }
+        // we could add some existence/readabilty/parsability checks here
+        // if we want
+    }
+    return result;
+}
+
+bool
+checkConfig(ConstElementPtr config, ElementPtr errors) {
+    /* Specific configuration is under discussion, right now this accepts
+     * the 'old' configuration, see [TODO]
+     * So for memory datasource, we get a structure like this:
+     * { "type": string ("memory"),
+     *   "class": string ("IN"/"CH"/etc),
+     *   "zones": list
+     * }
+     * Zones list is a list of maps:
+     * { "origin": string,
+     *     "file": string
+     * }
+     *
+     * At this moment we cannot be completely sure of the contents of the
+     * structure, so we have to do some more extensive tests than should
+     * strictly be necessary (e.g. existence and type of elements)
+     */
+    bool result = true;
+
+    if (!config || config->getType() != Element::map) {
+        addError(errors, "Base config for memory backend must be a map");
+        result = false;
+    } else {
+        if (!checkConfigElementString(config, "type", errors)) {
+            result = false;
+        } else {
+            if (config->get("type")->stringValue() != "memory") {
+                addError(errors,
+                         "Config for memory backend is not of type \"memory\"");
+                result = false;
+            }
+        }
+        if (!checkConfigElementString(config, "class", errors)) {
+            result = false;
+        } else {
+            try {
+                RRClass rrc(config->get("class")->stringValue());
+            } catch (const isc::Exception& rrce) {
+                addError(errors,
+                         "Error parsing class config for memory backend: " +
+                         std::string(rrce.what()));
+                result = false;
+            }
+        }
+        if (!config->contains("zones")) {
+            addError(errors, "No 'zones' element in memory backend config");
+            result = false;
+        } else if (!config->get("zones") ||
+                   config->get("zones")->getType() != Element::list) {
+            addError(errors, "'zones' element in memory backend config is not a list");
+            result = false;
+        } else {
+            BOOST_FOREACH(ConstElementPtr zone_config,
+                          config->get("zones")->listValue()) {
+                if (!checkZoneConfig(zone_config, errors)) {
+                    result = false;
+                }
+            }
+        }
+    }
+
+    return (result);
+    return true;
+}
+
+} // end anonymous namespace
+
+DataSourceClient *
+createInstance(isc::data::ConstElementPtr config, std::string& error) {
+    ElementPtr errors(Element::createList());
+    if (!checkConfig(config, errors)) {
+        error = "Configuration error: " + errors->str();
+        return (NULL);
+    }
+    try {
+        return (new InMemoryClient());
+    } catch (const std::exception& exc) {
+        error = std::string("Error creating memory datasource: ") + exc.what();
+        return (NULL);
+    } catch (...) {
+        error = std::string("Error creating memory datasource, "
+                            "unknown exception");
+        return (NULL);
+    }
+}
+
+void destroyInstance(DataSourceClient* instance) {
+    delete instance;
+}
+
+
 } // end of namespace datasrc
-} // end of namespace dns
+} // end of namespace isc

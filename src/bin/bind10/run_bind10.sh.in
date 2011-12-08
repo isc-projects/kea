@@ -20,17 +20,17 @@ export PYTHON_EXEC
 
 BIND10_PATH=@abs_top_builddir@/src/bin/bind10
 
-PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/resolver:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/stats:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:@abs_top_builddir@/src/bin/zonemgr:@abs_top_builddir@/src/bin/dhcp6:$PATH
+PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/resolver:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/stats:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:@abs_top_builddir@/src/bin/zonemgr:@abs_top_builddir@/src/bin/dhcp6:@abs_top_builddir@/src/bin/sockcreator:$PATH
 export PATH
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/xfr/.libs:@abs_top_builddir@/src/lib/log/.libs:@abs_top_builddir@/src/lib/util/io/.libs:@abs_top_builddir@/src/lib/python/isc/config
+PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/xfr/.libs:@abs_top_builddir@/src/lib/log/.libs:@abs_top_builddir@/src/lib/util/io/.libs:@abs_top_builddir@/src/lib/python/isc/config:@abs_top_builddir@/src/lib/python/isc/acl/.libs:@abs_top_builddir@/src/lib/python/isc/datasrc/.libs
 export PYTHONPATH
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
 SET_ENV_LIBRARY_PATH=@SET_ENV_LIBRARY_PATH@
 if test $SET_ENV_LIBRARY_PATH = yes; then
-	@ENV_LIBRARY_PATH@=@abs_top_builddir@/src/lib/dns/.libs:@abs_top_builddir@/src/lib/cryptolink/.libs:@abs_top_builddir@/src/lib/cc/.libs:@abs_top_builddir@/src/lib/config/.libs:@abs_top_builddir@/src/lib/log/.libs:@abs_top_builddir@/src/lib/util/.libs:@abs_top_builddir@/src/lib/util/io/.libs:@abs_top_builddir@/src/lib/exceptions/.libs:$@ENV_LIBRARY_PATH@
+	@ENV_LIBRARY_PATH@=@abs_top_builddir@/src/lib/dns/.libs:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/cryptolink/.libs:@abs_top_builddir@/src/lib/cc/.libs:@abs_top_builddir@/src/lib/config/.libs:@abs_top_builddir@/src/lib/log/.libs:@abs_top_builddir@/src/lib/acl/.libs:@abs_top_builddir@/src/lib/util/.libs:@abs_top_builddir@/src/lib/util/io/.libs:@abs_top_builddir@/src/lib/exceptions/.libs:@abs_top_builddir@/src/lib/datasrc/.libs:$@ENV_LIBRARY_PATH@
 	export @ENV_LIBRARY_PATH@
 fi
 
@@ -45,6 +45,5 @@ export B10_FROM_BUILD
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
 
-cd ${BIND10_PATH}
-exec ${PYTHON_EXEC} -O bind10 "$@"
+exec ${PYTHON_EXEC} -O ${BIND10_PATH}/bind10 "$@"
 

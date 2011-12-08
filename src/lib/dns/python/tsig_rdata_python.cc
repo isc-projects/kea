@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include <string>
@@ -32,23 +33,19 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::dns::python;
 
-//
-// Definition of the classes
-//
-
 // For each class, we need a struct, a helper functions (init, destroy,
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 
-//
-// TSIG RDATA
-//
-
-// Trivial constructor.
-s_TSIG::s_TSIG() : cppobj(NULL) {
-}
-
 namespace {
+// The s_* Class simply covers one instantiation of the object
+class s_TSIG : public PyObject {
+public:
+    s_TSIG() : cppobj(NULL) {};
+    const rdata::any::TSIG* cppobj;
+};
+
+
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIG, any::TSIG> TSIGContainer;
 
@@ -235,7 +232,7 @@ TSIG_toWire(const s_TSIG* const self, PyObject* args) {
                 self, args));
 }
 
-PyObject* 
+PyObject*
 TSIG_richcmp(const s_TSIG* const self,
                    const s_TSIG* const other,
                    const int op)
@@ -302,7 +299,7 @@ PyTypeObject tsig_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     TSIG_str,                       // tp_str
     NULL,                               // tp_getattro
@@ -340,30 +337,31 @@ PyTypeObject tsig_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
-bool
-initModulePart_TSIG(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&tsig_type) < 0) {
-        return (false);
-    }
-    void* p = &tsig_type;
-    if (PyModule_AddObject(mod, "TSIG", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsig_type);
-
-    return (true);
-}
-
 PyObject*
 createTSIGObject(const any::TSIG& source) {
-    TSIGContainer container = PyObject_New(s_TSIG, &tsig_type);
+    TSIGContainer container(PyObject_New(s_TSIG, &tsig_type));
     container.set(new any::TSIG(source));
     return (container.release());
 }
+
+bool
+PyTSIG_Check(PyObject* obj) {
+    if (obj == NULL) {
+        isc_throw(PyCPPWrapperException, "obj argument NULL in typecheck");
+    }
+    return (PyObject_TypeCheck(obj, &tsig_type));
+}
+
+const any::TSIG&
+PyTSIG_ToTSIG(const PyObject* tsig_obj) {
+    if (tsig_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in TSIG PyObject conversion");
+    }
+    const s_TSIG* tsig = static_cast<const s_TSIG*>(tsig_obj);
+    return (*tsig->cppobj);
+}
+
 } // namespace python
 } // namespace dns
 } // namespace isc

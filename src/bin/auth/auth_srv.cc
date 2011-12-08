@@ -91,9 +91,9 @@ public:
     bool processNormalQuery(const IOMessage& io_message, MessagePtr message,
                             OutputBufferPtr buffer,
                             auto_ptr<TSIGContext> tsig_context);
-    bool processAxfrQuery(const IOMessage& io_message, MessagePtr message,
-                          OutputBufferPtr buffer,
-                          auto_ptr<TSIGContext> tsig_context);
+    bool processXfrQuery(const IOMessage& io_message, MessagePtr message,
+                         OutputBufferPtr buffer,
+                         auto_ptr<TSIGContext> tsig_context);
     bool processNotify(const IOMessage& io_message, MessagePtr message,
                        OutputBufferPtr buffer,
                        auto_ptr<TSIGContext> tsig_context);
@@ -108,8 +108,8 @@ public:
     AbstractSession* xfrin_session_;
 
     /// In-memory data source.  Currently class IN only for simplicity.
-    const RRClass memory_datasrc_class_;
-    AuthSrv::MemoryDataSrcPtr memory_datasrc_;
+    const RRClass memory_client_class_;
+    AuthSrv::InMemoryClientPtr memory_client_;
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
@@ -125,6 +125,10 @@ public:
 
     /// The TSIG keyring
     const shared_ptr<TSIGKeyRing>* keyring_;
+
+    /// Bind the ModuleSpec object in config_session_ with
+    /// isc:config::ModuleSpec::validateStatistics.
+    void registerStatisticsValidator();
 private:
     std::string db_file_;
 
@@ -139,13 +143,16 @@ private:
 
     /// Increment query counter
     void incCounter(const int protocol);
+
+    // validateStatistics
+    bool validateStatistics(isc::data::ConstElementPtr data) const;
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
                          AbstractXfroutClient& xfrout_client) :
     config_session_(NULL),
     xfrin_session_(NULL),
-    memory_datasrc_class_(RRClass::IN()),
+    memory_client_class_(RRClass::IN()),
     statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
@@ -212,8 +219,9 @@ class ConfigChecker : public SimpleCallback {
 public:
     ConfigChecker(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage&) const {
-        if (server_->getConfigSession()->hasQueuedMsgs()) {
-            server_->getConfigSession()->checkCommand();
+        ModuleCCSession* cfg_session = server_->getConfigSession();
+        if (cfg_session != NULL && cfg_session->hasQueuedMsgs()) {
+            cfg_session->checkCommand();
         }
     }
 private:
@@ -317,6 +325,7 @@ AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
 void
 AuthSrv::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
+    impl_->registerStatisticsValidator();
 }
 
 void
@@ -329,34 +338,34 @@ AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 
-AuthSrv::MemoryDataSrcPtr
-AuthSrv::getMemoryDataSrc(const RRClass& rrclass) {
+AuthSrv::InMemoryClientPtr
+AuthSrv::getInMemoryClient(const RRClass& rrclass) {
     // XXX: for simplicity, we only support the IN class right now.
-    if (rrclass != impl_->memory_datasrc_class_) {
+    if (rrclass != impl_->memory_client_class_) {
         isc_throw(InvalidParameter,
                   "Memory data source is not supported for RR class "
                   << rrclass);
     }
-    return (impl_->memory_datasrc_);
+    return (impl_->memory_client_);
 }
 
 void
-AuthSrv::setMemoryDataSrc(const isc::dns::RRClass& rrclass,
-                          MemoryDataSrcPtr memory_datasrc)
+AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
+                           InMemoryClientPtr memory_client)
 {
     // XXX: see above
-    if (rrclass != impl_->memory_datasrc_class_) {
+    if (rrclass != impl_->memory_client_class_) {
         isc_throw(InvalidParameter,
                   "Memory data source is not supported for RR class "
                   << rrclass);
-    } else if (!impl_->memory_datasrc_ && memory_datasrc) {
+    } else if (!impl_->memory_client_ && memory_client) {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_ENABLED)
                   .arg(rrclass);
-    } else if (impl_->memory_datasrc_ && !memory_datasrc) {
+    } else if (impl_->memory_client_ && !memory_client) {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_DISABLED)
                   .arg(rrclass);
     }
-    impl_->memory_datasrc_ = memory_datasrc;
+    impl_->memory_client_ = memory_client;
 }
 
 uint32_t
@@ -464,10 +473,11 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         ConstQuestionPtr question = *message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
-            sendAnswer = impl_->processAxfrQuery(io_message, message, buffer,
-                                                 tsig_context);
+            sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
+                                                tsig_context);
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(message, buffer, Rcode::NOTIMP(), tsig_context);
+            sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
+                                                tsig_context);
         } else {
             sendAnswer = impl_->processNormalQuery(io_message, message, buffer,
                                                    tsig_context);
@@ -505,10 +515,10 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
         // If a memory data source is configured call the separate
         // Query::process()
         const ConstQuestionPtr question = *message->beginQuestion();
-        if (memory_datasrc_ && memory_datasrc_class_ == question->getClass()) {
+        if (memory_client_ && memory_client_class_ == question->getClass()) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            auth::Query(*memory_datasrc_, qname, qtype, *message).process();
+            auth::Query(*memory_client_, qname, qtype, *message).process();
         } else {
             datasrc::Query query(*message, cache_, dnssec_ok);
             data_sources_.doQuery(query);
@@ -535,9 +545,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
 }
 
 bool
-AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
-                              OutputBufferPtr buffer,
-                              auto_ptr<TSIGContext> tsig_context)
+AuthSrvImpl::processXfrQuery(const IOMessage& io_message, MessagePtr message,
+                             OutputBufferPtr buffer,
+                             auto_ptr<TSIGContext> tsig_context)
 {
     // Increment query counter.
     incCounter(io_message.getSocket().getProtocol());
@@ -668,6 +678,22 @@ AuthSrvImpl::incCounter(const int protocol) {
         // unknown protocol
         isc_throw(Unexpected, "Unknown protocol: " << protocol);
     }
+}
+
+void
+AuthSrvImpl::registerStatisticsValidator() {
+    counters_.registerStatisticsValidator(
+        boost::bind(&AuthSrvImpl::validateStatistics, this, _1));
+}
+
+bool
+AuthSrvImpl::validateStatistics(isc::data::ConstElementPtr data) const {
+    if (config_session_ == NULL) {
+        return (false);
+    }
+    return (
+        config_session_->getModuleSpec().validateStatistics(
+            data, true));
 }
 
 ConstElementPtr

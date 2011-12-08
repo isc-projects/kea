@@ -74,4 +74,9 @@ TEST_F(Rdata_SOA_Test, toText) {
     EXPECT_EQ("ns.example.com. root.example.com. "
               "2010012601 3600 300 3600000 1200", rdata_soa.toText());
 }
+
+TEST_F(Rdata_SOA_Test, getSerial) {
+    EXPECT_EQ(2010012601, rdata_soa.getSerial().getValue());
+}
+
 }

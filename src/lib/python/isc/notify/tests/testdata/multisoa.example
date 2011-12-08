@@ -1,0 +1,5 @@
+;; This is the source of a zone stored in test.sqlite3.  It's provided
+;; for reference purposes only.
+multisoa.example.         1000  IN  SOA a.dns.multisoa.example. mail.multisoa.example. 1 1 1 1 1
+multisoa.example.         1000  IN  SOA a.dns.multisoa.example. mail.multisoa.example. 2 2 2 2 2
+multisoa.example.         1000  IN  NS  a.dns.multisoa.example.

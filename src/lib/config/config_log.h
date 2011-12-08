@@ -30,7 +30,10 @@ namespace config {
 /// Define the logger used to log messages.  We could define it in multiple
 /// modules, but defining in a single module and linking to it saves time and
 /// space.
-extern isc::log::Logger config_logger;    // isc::config::config_logger is the CONFIG logger
+extern isc::log::Logger config_logger;
+
+// Enumerate configuration elements as they are processed.
+const int DBG_CONFIG_PROCESS = DBGLVL_TRACE_BASIC;
 
 } // namespace config
 } // namespace isc

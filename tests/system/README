@@ -5,48 +5,49 @@ See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 This is a simple test environment for running BIND 10 system tests
 involving multiple name servers.  It was originally developed for BIND
 9, and has been ported to test BIND 10 implementations.  Ideally we
-should share the same framework for both versions, so some part of
-the original setup are kept, even though they are BIND 9 specific and
-not currently used.
+should share the same framework for both versions, so some part of the
+original setup are kept, even though they are BIND 9 specific and not
+currently used.
 
-Also, these tests generally rely on BIND 9 programs, most commonly its
-dig, and will sometimes be its name server (named).  So, the test
+Also, these tests generally rely on BIND 9 programs, most commonly
+its dig, and will sometimes be its name server (named).  So, the test
 environment assumes that there's a source tree of BIND 9 where its
-programs are built, and that an environment variable "BIND9_TOP" is
-set to point to the top directory of the source tree.
+programs are built, and that an environment variable "BIND9_TOP" is set
+to point to the top directory of the source tree.
 
 There are multiple test suites, each in a separate subdirectory and
 involving a different DNS setup.  They are:
 
   bindctl/      Some basic management operations using the bindctl tool
-  glue/		Glue handling tests
+  glue/		    Glue handling tests
+  ixfr/         Incremental transfer tests
+
 (the following tests are planned to be added soon)
-  dnssec/	DNSSEC tests
+  dnssec/	    DNSSEC tests
   masterfile/	Master file parser
-  xfer/		Zone transfer tests
+  axfr/         Full-transfer tests
 
 Typically each test suite sets up 2-5 instances of BIND 10 (or BIND 9
-named) and then performs one or more tests against them.  Within the
-test suite subdirectory, each instance has a separate subdirectory
-containing its configuration data.  By convention, these
-subdirectories are named "nsx1", "nsx2", etc for BIND 10 ("x" means
-BIND 10), and "ns1", "ns2", etc. for BIND 9.
+named) and then performs one or more tests against them.  Within the test
+suite subdirectory, each instance has a separate subdirectory containing
+its configuration data.  By convention, these subdirectories are named
+"nsx1", "nsx2", etc for BIND 10 ("x" means BIND 10), and "ns1", "ns2",
+etc. for BIND 9.
 
 The tests are completely self-contained and do not require access to
-the real DNS.  Generally, one of the test servers (ns[x]1) is set up
-as a root name server and is listed in the hints file of the others.
+the real DNS.  Generally, one of the test servers (ns[x]1) is set up as
+a root name server and is listed in the hints file of the others.
 
-To enable all servers to run on the same machine, they bind to
-separate virtual IP address on the loopback interface.  ns[x]1 runs on
-10.53.0.1, ns[x]2 on 10.53.0.2, etc.  Before running any tests, you
-must set up these addresses by running "ifconfig.sh up" as root.
+To enable all servers to run on the same machine, they bind to separate
+virtual IP address on the loopback interface.  ns[x]1 runs on 10.53.0.1,
+ns[x]2 on 10.53.0.2, etc.  Before running any tests, you must set up
+these addresses by running "ifconfig.sh up" as root.
 
 Mac OS X:
-If you wish to make the interfaces survive across reboots
-copy org.isc.bind.system and org.isc.bind.system to
-/Library/LaunchDaemons then run
-"launchctl load /Library/LaunchDaemons/org.isc.bind.system.plist" as
-root.
+If you wish to make the interfaces survive across reboots copy
+org.isc.bind.system and org.isc.bind.system to /Library/LaunchDaemons
+then run "launchctl load /Library/LaunchDaemons/org.isc.bind.system.plist"
+as root.
 
 The servers use port 53210 instead of the usual port 53, so they can be
 run without root privileges once the interfaces have been set up.

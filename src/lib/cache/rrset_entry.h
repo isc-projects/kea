@@ -27,9 +27,9 @@ using namespace isc::nsas;
 namespace isc {
 namespace cache {
 
-/// \enum RRset Trustworthiness
+/// \enum RRsetTrustLevel
 /// For detail of RRset trustworthiness, please refer to
-/// RFC2181 section5.4.1.
+/// RFC 2181 section 5.4.1.
 /// Bigger value is more trustworthy.
 enum RRsetTrustLevel {
     /// Default trust for RRset.

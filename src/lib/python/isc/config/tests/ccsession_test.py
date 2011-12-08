@@ -695,6 +695,12 @@ class TestUIModuleCCSession(unittest.TestCase):
         fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
         return UIModuleCCSession(fake_conn)
 
+    def create_uccs_named_set(self, fake_conn):
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec32.spec"))
+        fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
+        fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
+        return UIModuleCCSession(fake_conn)
+
     def test_init(self):
         fake_conn = fakeUIConn()
         fake_conn.set_get_answer('/module_spec', {})
@@ -715,12 +721,14 @@ class TestUIModuleCCSession(unittest.TestCase):
     def test_add_remove_value(self):
         fake_conn = fakeUIConn()
         uccs = self.create_uccs2(fake_conn)
+
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, 1, "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "no_such_item", "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "Spec2/item1", "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, 1, "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "no_such_item", "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "Spec2/item1", "a")
+
         self.assertEqual({}, uccs._local_changes)
         uccs.add_value("Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['a', 'b', 'foo']}}, uccs._local_changes)
@@ -730,10 +738,87 @@ class TestUIModuleCCSession(unittest.TestCase):
         uccs.remove_value("Spec2/item5", "foo")
         uccs.add_value("Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
-        uccs.add_value("Spec2/item5", "foo")
+        self.assertRaises(isc.cc.data.DataAlreadyPresentError,
+                          uccs.add_value, "Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          uccs.remove_value, "Spec2/item5[123]", None)
         uccs.remove_value("Spec2/item5[0]", None)
         self.assertEqual({'Spec2': {'item5': []}}, uccs._local_changes)
+        uccs.add_value("Spec2/item5", None);
+        self.assertEqual({'Spec2': {'item5': ['']}}, uccs._local_changes)
+        # Intending to empty a list element, but forget specifying the index.
+        self.assertRaises(isc.cc.data.DataTypeError,
+                          uccs.remove_value, "Spec2/item5", None)
+
+    def test_add_remove_value_named_set(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs_named_set(fake_conn)
+        value, status = uccs.get_value("/Spec32/named_set_item")
+        self.assertEqual({'a': 1, 'b': 2}, value)
+
+        # make sure that removing from default actually removes it
+        uccs.remove_value("/Spec32/named_set_item", "a")
+        value, status = uccs.get_value("/Spec32/named_set_item")
+        self.assertEqual({'b': 2}, value)
+        self.assertEqual(uccs.LOCAL, status)
+
+        # ok, put it back now
+        uccs.add_value("/Spec32/named_set_item", "a")
+        uccs.set_value("/Spec32/named_set_item/a", 1)
+
+        uccs.add_value("/Spec32/named_set_item", "foo")
+        value, status = uccs.get_value("/Spec32/named_set_item")
+        self.assertEqual({'a': 1, 'b': 2, 'foo': 3}, value)
+
+        uccs.remove_value("/Spec32/named_set_item", "a")
+        uccs.remove_value("/Spec32/named_set_item", "foo")
+        value, status = uccs.get_value("/Spec32/named_set_item")
+        self.assertEqual({'b': 2}, value)
+
+        uccs.set_value("/Spec32/named_set_item/c", 5)
+        value, status = uccs.get_value("/Spec32/named_set_item")
+        self.assertEqual({"b": 2, "c": 5}, value)
+
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          uccs.set_value,
+                          "/Spec32/named_set_item/no_such_item/a",
+                          4)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          uccs.remove_value, "/Spec32/named_set_item",
+                          "no_such_item")
+
+    def test_set_value_named_set(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs_named_set(fake_conn)
+        value, status = uccs.get_value("/Spec32/named_set_item2")
+        self.assertEqual({}, value)
+        self.assertEqual(status, uccs.DEFAULT)
+
+        # Try setting a value that is optional but has no default
+        uccs.add_value("/Spec32/named_set_item2", "new1")
+        uccs.set_value("/Spec32/named_set_item2/new1/first", 3)
+        # Different method to add a new element
+        uccs.set_value("/Spec32/named_set_item2/new2", { "second": 4 })
+
+        value, status = uccs.get_value("/Spec32/named_set_item2")
+        self.assertEqual({ "new1": {"first": 3 }, "new2": {"second": 4}},
+                         value)
+        self.assertEqual(status, uccs.LOCAL)
+
+        uccs.set_value("/Spec32/named_set_item2/new1/second", "foo")
+
+        value, status = uccs.get_value("/Spec32/named_set_item2")
+        self.assertEqual({ "new1": {"first": 3, "second": "foo" },
+                           "new2": {"second": 4}},
+                         value)
+        self.assertEqual(status, uccs.LOCAL)
+
+        # make sure using a bad name still fails
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.set_value,
+                          "/Spec32/named_set_item2/doesnotexist/first", 3)
+
+
 
     def test_commit(self):
         fake_conn = fakeUIConn()

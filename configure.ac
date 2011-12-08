@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110519, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20111129, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -12,6 +12,12 @@ AC_PROG_CXX
 
 # Libtool configuration
 #
+
+# libtool cannot handle spaces in paths, so exit early if there is one
+if [ test `echo $PWD | grep -c ' '` != "0"  ]; then
+    AC_MSG_ERROR([BIND 10 cannot be built in a directory that contains spaces, because of libtool limitations. Please change the directory name, or use a symbolic link that does not contain spaces.])
+fi
+
 # On FreeBSD (and probably some others), clang++ does not meet an autoconf
 # assumption in identifying libtool configuration regarding shared library:
 # the configure script will execute "$CC -shared $CFLAGS/$CXXFLAGS -v" and
@@ -90,6 +96,8 @@ case "$host" in
 	# Solaris requires special definitions to get some standard libraries
 	# (e.g. getopt(3)) available with common used header files.
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
+	LDFLAGS="$LDFLAGS -z now"
 	;;
 *-apple-darwin*)
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
@@ -100,6 +108,12 @@ case "$host" in
 	# libraries when we use them in the source tree.
 	SET_ENV_LIBRARY_PATH=yes
 	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
+	;;
+*-freebsd*)
+	SET_ENV_LIBRARY_PATH=yes
+	;;
+*-netbsd*)
+	SET_ENV_LIBRARY_PATH=yes
 	;;
 esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
@@ -148,6 +162,16 @@ fi
 # pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/some_module
 PYTHON_SITEPKG_DIR=${pyexecdir}
 AC_SUBST(PYTHON_SITEPKG_DIR)
+
+# This will be commonly used in various Makefile.am's that need to generate
+# python log messages.
+PYTHON_LOGMSGPKG_DIR="\$(top_builddir)/src/lib/python/isc/log_messages"
+AC_SUBST(PYTHON_LOGMSGPKG_DIR)
+
+# This is python package paths commonly used in python tests.  See
+# README of log_messages for why it's included.
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python"
+AC_SUBST(COMMON_PYTHON_PATH)
 
 # Check for python development environments
 if test -x ${PYTHON}-config; then
@@ -270,6 +294,8 @@ B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compa
 case "$host" in
 *-solaris*)
 	MULTITHREADING_FLAG=-pthreads
+	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
+	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
 	;;
 *)
 	MULTITHREADING_FLAG=-pthread
@@ -419,7 +445,7 @@ AC_ARG_WITH([botan],
   AC_HELP_STRING([--with-botan=PATH],
     [specify exact directory of Botan library]),
     [botan_path="$withval"])
-if test "${botan_path}" == "no" ; then
+if test "${botan_path}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
 fi
 if test "${botan_path}" != "yes" ; then
@@ -429,41 +455,64 @@ if test "${botan_path}" != "yes" ; then
         AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
     fi
 else
-        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
-fi
-
-if test -x "${BOTAN_CONFIG}" ; then
-    BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
-    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
-    # this is not always the case.  As a heuristics workaround we add
-    # -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
-    # (but using include instead of lib) below.
-    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
-	    BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
-    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
-    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
-	    BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
-    # See python_rpath for some info on why we do this
-    if test $rpath_available = yes; then
-        BOTAN_RPATH=
-        for flag in ${BOTAN_LDFLAGS}; do
-                BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+    # First see if pkg-config knows of it.
+    # Unfortunately, the botan.pc files have their minor version in them
+    # too, so we need to try them one by one
+    BOTAN_CONFIG=""
+    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+    if test "$PKG_CONFIG" != "" ; then
+        BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
+        for version in $BOTAN_VERSIONS; do
+            AC_MSG_CHECKING([Checking botan version with pkg-config $version])
+            
+            if [ $PKG_CONFIG --exists ${version} ]; then
+                AC_MSG_RESULT([found])
+                BOTAN_CONFIG="$PKG_CONFIG ${version}"
+                break
+            else
+                AC_MSG_RESULT([not found])
+            fi
         done
-	AC_SUBST(BOTAN_RPATH)
-
-	# According to the libtool manual, it should be sufficient if we
-	# specify the "-R libdir" in our wrapper library of botan (no other
-	# programs will need libbotan directly); "libdir" should be added to
-	# the program's binary image.  But we've seen in our build environments
-	# that (some versions of?) libtool doesn't propagate -R as documented,
-	# and it caused a linker error at run time.  To work around this, we
-	# also add the rpath to the global LDFLAGS.
-        LDFLAGS="$BOTAN_RPATH $LDFLAGS"
     fi
-
-    AC_SUBST(BOTAN_LDFLAGS)
-    AC_SUBST(BOTAN_INCLUDES)
+    # If we had no pkg-config, or it didn't know about botan, use botan-config
+    if test "$BOTAN_CONFIG" = "" ; then
+        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
+    fi
 fi
+
+BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+
+# We expect botan-config --libs to contain -L<path_to_libbotan>, but
+# this is not always the case.  As a heuristics workaround we add
+# -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
+# (but using include instead of lib) below.
+if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
+    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
+        BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
+    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+        BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+fi
+# See python_rpath for some info on why we do this
+if test $rpath_available = yes; then
+    BOTAN_RPATH=
+    for flag in ${BOTAN_LDFLAGS}; do
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+    done
+AC_SUBST(BOTAN_RPATH)
+
+# According to the libtool manual, it should be sufficient if we
+# specify the "-R libdir" in our wrapper library of botan (no other
+# programs will need libbotan directly); "libdir" should be added to
+# the program's binary image.  But we've seen in our build environments
+# that (some versions of?) libtool doesn't propagate -R as documented,
+# and it caused a linker error at run time.  To work around this, we
+# also add the rpath to the global LDFLAGS.
+    LDFLAGS="$BOTAN_RPATH $LDFLAGS"
+fi
+
+AC_SUBST(BOTAN_LDFLAGS)
+AC_SUBST(BOTAN_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
@@ -492,7 +541,7 @@ AC_ARG_WITH([log4cplus],
   AC_HELP_STRING([--with-log4cplus=PATH],
     [specify exact directory of log4cplus library and headers]),
     [log4cplus_path="$withval"])
-if test "${log4cplus_path}" == "no" ; then
+if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
@@ -632,6 +681,7 @@ fi
 #
 if test "$gtest_path" != "no"
 then
+	DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest=\"$gtest_path\""
 	if test "$gtest_path" != "yes"; then
 		GTEST_PATHS=$gtest_path
 		if test -x "${gtest_path}/bin/gtest-config" ; then
@@ -672,8 +722,10 @@ else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
 	GTEST_LDADD=
+	DISTCHECK_GTEST_CONFIGURE_FLAG=
 fi
 AM_CONDITIONAL(HAVE_GTEST, test $gtest_path != "no")
+AC_SUBST(DISTCHECK_GTEST_CONFIGURE_FLAG)
 AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
@@ -749,6 +801,8 @@ fi
 #
 AC_PATH_PROGS(PERL, perl5 perl)
 AC_SUBST(PERL)
+AC_PATH_PROGS(AWK, gawk awk)
+AC_SUBST(AWK)
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
@@ -764,6 +818,7 @@ AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || t
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
+                 compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
@@ -793,19 +848,13 @@ AC_CONFIG_FILES([Makefile
                  src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
+                 src/bin/xfrin/tests/testdata/Makefile
                  src/bin/xfrout/Makefile
                  src/bin/xfrout/tests/Makefile
                  src/bin/zonemgr/Makefile
                  src/bin/zonemgr/tests/Makefile
                  src/bin/stats/Makefile
                  src/bin/stats/tests/Makefile
-                 src/bin/stats/tests/isc/Makefile
-                 src/bin/stats/tests/isc/cc/Makefile
-                 src/bin/stats/tests/isc/config/Makefile
-                 src/bin/stats/tests/isc/util/Makefile
-                 src/bin/stats/tests/isc/log/Makefile
-                 src/bin/stats/tests/testdata/Makefile
-                 src/bin/stats/tests/http/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
@@ -826,17 +875,24 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/util/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/datasrc/tests/Makefile
+                 src/lib/python/isc/dns/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/log_messages/Makefile
+                 src/lib/python/isc/log_messages/work/Makefile
                  src/lib/python/isc/net/Makefile
                  src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
                  src/lib/python/isc/notify/tests/Makefile
                  src/lib/python/isc/testutils/Makefile
+                 src/lib/python/isc/bind10/Makefile
+                 src/lib/python/isc/bind10/tests/Makefile
+                 src/lib/python/isc/xfrin/Makefile
+                 src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -848,10 +904,13 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns/python/tests/Makefile
                  src/lib/dns/benchmarks/Makefile
+                 src/lib/dhcp/Makefile
+                 src/lib/dhcp/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
+                 src/lib/datasrc/tests/testdata/Makefile
                  src/lib/xfr/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
@@ -869,6 +928,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/util/python/Makefile
                  src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  src/lib/acl/Makefile
@@ -882,6 +942,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/tests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
+           compatcheck/sqlite3-difftbl-check.py
            src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
@@ -904,7 +965,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/bind10/bind10.py
+           src/bin/bind10/bind10_src.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
            src/bin/bindctl/run_bindctl.sh
@@ -928,11 +989,12 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/cc/tests/cc_test
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/python/isc/log/tests/log_console.py
+           src/lib/python/isc/log_messages/work/__init__.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
-           src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
+           src/lib/datasrc/datasrc_config.h.pre
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
@@ -940,12 +1002,28 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
+           src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
+           tests/lettuce/setup_intree_bind10.sh
            tests/system/conf.sh
+           tests/system/run.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
            tests/system/bindctl/nsx1/b10-config.db.template
+           tests/system/ixfr/db.example.n0
+           tests/system/ixfr/db.example.n2
+           tests/system/ixfr/db.example.n2.refresh
+           tests/system/ixfr/db.example.n4
+           tests/system/ixfr/db.example.n6
+           tests/system/ixfr/ixfr_init.sh
+           tests/system/ixfr/b10-config.db
+           tests/system/ixfr/common_tests.sh
+           tests/system/ixfr/in-1/setup.sh
+           tests/system/ixfr/in-2/setup.sh
+           tests/system/ixfr/in-3/setup.sh
+           tests/system/ixfr/in-4/setup.sh
           ], [
+           chmod +x compatcheck/sqlite3-difftbl-check.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
@@ -964,15 +1042,22 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
-           chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
+           chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x tests/system/conf.sh
+           chmod +x tests/system/run.sh
+           chmod +x tests/system/ixfr/ixfr_init.sh
+           chmod +x tests/system/ixfr/common_tests.sh
+           chmod +x tests/system/ixfr/in-1/setup.sh
+           chmod +x tests/system/ixfr/in-2/setup.sh
+           chmod +x tests/system/ixfr/in-3/setup.sh
+           chmod +x tests/system/ixfr/in-4/setup.sh
           ])
 AC_OUTPUT
 

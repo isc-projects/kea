@@ -1,0 +1,31 @@
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the libxfrin_messages python module.
+
+% LIBXFRIN_DIFFERENT_TTL multiple data with different TTLs (%1, %2) on %3/%4. Adjusting %2 -> %1.
+The xfrin module received an update containing multiple rdata changes for the
+same RRset. But the TTLs of these don't match each other. As we combine them
+together, the later one get's overwritten to the earlier one in the sequence.
+
+% LIBXFRIN_NO_JOURNAL disabled journaling for updates to %1 on %2
+An attempt was made to create a Diff object with journaling enabled, but
+the underlying data source didn't support journaling (while still allowing
+updates) and so the created object has it disabled.  At a higher level this
+means that the updates will be applied to the zone but subsequent IXFR requests
+will result in a full zone transfer (i.e., an AXFR-style IXFR).  Unless the
+overhead of the full transfer is an issue this message can be ignored;
+otherwise you may want to check why the journaling wasn't allowed on the
+data source and either fix the issue or use a different type of data source.

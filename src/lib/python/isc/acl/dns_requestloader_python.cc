@@ -171,7 +171,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject requestloader_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "isc.acl.dns.RequestLoader",
+    "isc.acl._dns.RequestLoader",
     sizeof(s_RequestLoader),                 // tp_basicsize
     0,                                  // tp_itemsize
     RequestLoader_destroy,       // tp_dealloc
@@ -189,7 +189,7 @@ PyTypeObject requestloader_type = {
     NULL,                               // tp_getattro
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, // tp_flags
     RequestLoader_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear

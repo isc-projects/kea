@@ -2,7 +2,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-pyexec_LTLIBRARIES = pyunittests_util.la
+noinst_LTLIBRARIES = pyunittests_util.la
+
 pyunittests_util_la_SOURCES = pyunittests_util.cc
 pyunittests_util_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 pyunittests_util_la_LDFLAGS = $(PYTHON_LDFLAGS)
@@ -15,3 +16,7 @@ pyunittests_util_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 pyunittests_util_la_LDFLAGS += -module
 pyunittests_util_la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
 pyunittests_util_la_LIBADD += $(PYTHON_LIB)
+
+# hack to trigger libtool to not create a convenience archive,
+# resulting in shared modules
+pyunittests_util_la_LDFLAGS += -rpath /nowhere

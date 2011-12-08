@@ -83,7 +83,7 @@ public:
     ///
     /// \throw std::out_of_range \a type is unknown.
     ///
-    /// usage: counter.inc(CounterType::COUNTER_UDP_QUERY);
+    /// usage: counter.inc(AuthCounters::SERVER_UDP_QUERY);
     /// 
     void inc(const ServerCounterType type);
 
@@ -137,6 +137,26 @@ public:
     /// \return the value of the counter specified by \a type.
     ///
     uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
+
+    /// \brief A type of validation function for the specification in
+    /// isc::config::ModuleSpec.
+    ///
+    /// This type might be useful for not only statistics
+    /// specificatoin but also for config_data specification and for
+    /// commnad.
+    ///
+    typedef boost::function<bool(const isc::data::ConstElementPtr&)>
+    validator_type;
+
+    /// \brief Register a function type of the statistics validation
+    /// function for AuthCounters.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param validator A function type of the validation of
+    /// statistics specification.
+    ///
+    void registerStatisticsValidator(AuthCounters::validator_type validator) const;
 };
 
 #endif // __STATISTICS_H
