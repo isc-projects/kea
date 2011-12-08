@@ -1307,7 +1307,7 @@ class SocketSrvTest(unittest.TestCase):
         # After we accepted, a new socket is added there
         socket = self.__boss._unix_sockets[13][0]
         # The socket is properly stored there
-        self.assertIsInstance(socket, self.__FalseSocket)
+        self.assertTrue(isinstance(socket, self.__FalseSocket))
         # And the buffer (yet empty) is there
         self.assertEqual({13: (socket, b'')}, self.__boss._unix_sockets)
 
