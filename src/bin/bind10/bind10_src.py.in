@@ -856,6 +856,9 @@ class BoB:
                                                        "Missing parameter " +
                                                        str(ke))
 
+            # FIXME: This call contains blocking IPC. It is expected to be
+            # short, but if it turns out to be problem, we'll need to do
+            # something about it.
             token = self._socket_cache.get_token(protocol, addr, port,
                                                  share_mode, share_name)
             return isc.config.ccsession.create_answer(0, {
@@ -873,6 +876,11 @@ class BoB:
         """
         try:
             fd = self._socket_cache.get_socket(token, unix_socket.fileno())
+            # FIXME: These two calls are blocking in their nature. An OS-level
+            # buffer is likely to be large enough to hold all these data, but
+            # if it wasn't and the remote application got stuck, we would have
+            # a problem. If there appear such problems, we should do something
+            # about it.
             unix_socket.sendall(CREATOR_SOCKET_OK)
             libutil_io_python.send_fd(unix_socket.fileno(), fd)
         except Exception as e:
