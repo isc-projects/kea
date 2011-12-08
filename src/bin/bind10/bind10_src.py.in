@@ -72,6 +72,9 @@ import isc.log
 from isc.log_messages.bind10_messages import *
 import isc.bind10.component
 import isc.bind10.special_component
+import isc.bind10.socket_cache
+import libutil_io_python
+import tempfile
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -80,6 +83,10 @@ logger = isc.log.Logger("boss")
 # use here are hardcoded for now
 DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
 DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
+
+# Messages sent over the unix domain socket to indicate if it is followed by a real socket
+CREATOR_SOCKET_OK = "1\n"
+CREATOR_SOCKET_UNAVAILABLE = "0\n"
 
 # Assign this process some longer name
 isc.util.process.rename(sys.argv[0])
@@ -241,6 +248,12 @@ class BoB:
         # If -v was set, enable full debug logging.
         if self.verbose:
             logger.set_severity("DEBUG", 99)
+        # This is set in init_socket_srv
+        self._socket_path = None
+        self._socket_cache = None
+        self._tmpdir = None
+        self._srv_socket = None
+        self._unix_sockets = {}
 
     def __propagate_component_config(self, config):
         comps = dict(config)
@@ -315,6 +328,18 @@ class BoB:
             elif command == "show_processes":
                 answer = isc.config.ccsession. \
                     create_answer(0, self.get_processes())
+            elif command == "get_socket":
+                answer = self._get_socket(args)
+            elif command == "drop_socket":
+                if "token" not in args:
+                    answer = isc.config.ccsession. \
+                        create_answer(1, "Missing token parameter")
+                else:
+                    try:
+                        self._socket_cache.drop_socket(args["token"])
+                        answer = isc.config.ccsession.create_answer(0)
+                    except Exception as e:
+                        answer = isc.config.ccsession.create_answer(1, str(e))
             else:
                 answer = isc.config.ccsession.create_answer(1,
                                                             "Unknown command")
@@ -769,6 +794,209 @@ class BoB:
 
         return next_restart_time
 
+    def _get_socket(self, args):
+        """
+        Implementation of the get_socket CC command. It asks the cache
+        to provide the token and sends the information back.
+        """
+        try:
+            try:
+                addr = isc.net.parse.addr_parse(args['address'])
+                port = isc.net.parse.port_parse(args['port'])
+                protocol = args['protocol']
+                if protocol not in ['UDP', 'TCP']:
+                    raise ValueError("Protocol must be either UDP or TCP")
+                share_mode = args['share_mode']
+                if share_mode not in ['ANY', 'SAMEAPP', 'NO']:
+                    raise ValueError("Share mode must be one of ANY, SAMEAPP" +
+                                     " or NO")
+                share_name = args['share_name']
+            except KeyError as ke:
+                return \
+                    isc.config.ccsession.create_answer(1,
+                                                       "Missing parameter " +
+                                                       str(ke))
+
+            # FIXME: This call contains blocking IPC. It is expected to be
+            # short, but if it turns out to be problem, we'll need to do
+            # something about it.
+            token = self._socket_cache.get_token(protocol, addr, port,
+                                                 share_mode, share_name)
+            return isc.config.ccsession.create_answer(0, {
+                'token': token,
+                'path': self._socket_path
+            })
+        except Exception as e:
+            return isc.config.ccsession.create_answer(1, str(e))
+
+    def socket_request_handler(self, token, unix_socket):
+        """
+        This function handles a token that comes over a unix_domain socket.
+        The function looks into the _socket_cache and sends the socket
+        identified by the token back over the unix_socket.
+        """
+        try:
+            fd = self._socket_cache.get_socket(token, unix_socket.fileno())
+            # FIXME: These two calls are blocking in their nature. An OS-level
+            # buffer is likely to be large enough to hold all these data, but
+            # if it wasn't and the remote application got stuck, we would have
+            # a problem. If there appear such problems, we should do something
+            # about it.
+            unix_socket.sendall(CREATOR_SOCKET_OK)
+            libutil_io_python.send_fd(unix_socket.fileno(), fd)
+        except Exception as e:
+            logger.info(BIND10_NO_SOCKET, token, e)
+            unix_socket.sendall(CREATOR_SOCKET_UNAVAILABLE)
+
+    def socket_consumer_dead(self, unix_socket):
+        """
+        This function handles when a unix_socket closes. This means all
+        sockets sent to it are to be considered closed. This function signals
+        so to the _socket_cache.
+        """
+        logger.info(BIND10_LOST_SOCKET_CONSUMER, unix_socket.fileno())
+        try:
+            self._socket_cache.drop_application(unix_socket.fileno())
+        except ValueError:
+            # This means the application holds no sockets. It's harmless, as it
+            # can happen in real life - for example, it requests a socket, but
+            # get_socket doesn't find it, so the application dies. It should be
+            # rare, though.
+            pass
+
+    def set_creator(self, creator):
+        """
+        Registeres a socket creator into the boss. The socket creator is not
+        used directly, but through a cache. The cache is created in this
+        method.
+
+        If called more than once, it raises a ValueError.
+        """
+        if self._socket_cache is not None:
+            raise ValueError("A creator was inserted previously")
+        self._socket_cache = isc.bind10.socket_cache.Cache(creator)
+
+    def init_socket_srv(self):
+        """
+        Creates and listens on a unix-domain socket to be able to send out
+        the sockets.
+
+        This method should be called after switching user, or the switched
+        applications won't be able to access the socket.
+        """
+        self._srv_socket = socket.socket(socket.AF_UNIX)
+        # We create a temporary directory somewhere safe and unique, to avoid
+        # the need to find the place ourself or bother users. Also, this
+        # secures the socket on some platforms, as it creates a private
+        # directory.
+        self._tmpdir = tempfile.mkdtemp()
+        # Get the name
+        self._socket_path = os.path.join(self._tmpdir, "sockcreator")
+        # And bind the socket to the name
+        self._srv_socket.bind(self._socket_path)
+        self._srv_socket.listen(5)
+
+    def remove_socket_srv(self):
+        """
+        Closes and removes the listening socket and the directory where it
+        lives, as we created both.
+
+        It does nothing if the _srv_socket is not set (eg. it was not yet
+        initialized).
+        """
+        if self._srv_socket is not None:
+            self._srv_socket.close()
+            os.remove(self._socket_path)
+            os.rmdir(self._tmpdir)
+
+    def _srv_accept(self):
+        """
+        Accept a socket from the unix domain socket server and put it to the
+        others we care about.
+        """
+        socket = self._srv_socket.accept()
+        self._unix_sockets[socket.fileno()] = (socket, b'')
+
+    def _socket_data(self, socket_fileno):
+        """
+        This is called when a socket identified by the socket_fileno needs
+        attention. We try to read data from there. If it is closed, we remove
+        it.
+        """
+        (sock, previous) = self._unix_sockets[socket_fileno]
+        while True:
+            try:
+                data = sock.recv(1, socket.MSG_DONTWAIT)
+            except socket.error as se:
+                # These two might be different on some systems
+                if se.errno == errno.EAGAIN or se.errno == errno.EWOULDBLOCK:
+                    # No more data now. Oh, well, just store what we have.
+                    self._unix_sockets[socket_fileno] = (sock, previous)
+                    return
+                else:
+                    data = b'' # Pretend it got closed
+            if len(data) == 0: # The socket got to it's end
+                del self._unix_sockets[socket_fileno]
+                self.socket_consumer_dead(sock)
+                sock.close()
+                return
+            else:
+                if data == b"\n":
+                    # Handle this token and clear it
+                    self.socket_request_handler(previous, sock)
+                    previous = b''
+                else:
+                    previous += data
+
+    def run(self, wakeup_fd):
+        """
+        The main loop, waiting for sockets, commands and dead processes.
+        Runs as long as the runnable is true.
+
+        The wakeup_fd descriptor is the read end of pipe where CHLD signal
+        handler writes.
+        """
+        ccs_fd = self.ccs.get_socket().fileno()
+        while self.runnable:
+            # clean up any processes that exited
+            self.reap_children()
+            next_restart = self.restart_processes()
+            if next_restart is None:
+                wait_time = None
+            else:
+                wait_time = max(next_restart - time.time(), 0)
+
+            # select() can raise EINTR when a signal arrives,
+            # even if they are resumable, so we have to catch
+            # the exception
+            try:
+                (rlist, wlist, xlist) = \
+                    select.select([wakeup_fd, ccs_fd,
+                                   self._srv_socket.fileno()] +
+                                   list(self._unix_sockets.keys()), [], [],
+                                  wait_time)
+            except select.error as err:
+                if err.args[0] == errno.EINTR:
+                    (rlist, wlist, xlist) = ([], [], [])
+                else:
+                    logger.fatal(BIND10_SELECT_ERROR, err)
+                    break
+
+            for fd in rlist + xlist:
+                if fd == ccs_fd:
+                    try:
+                        self.ccs.check_command()
+                    except isc.cc.session.ProtocolError:
+                        logger.fatal(BIND10_MSGQ_DISAPPEARED)
+                        self.runnable = False
+                        break
+                elif fd == wakeup_fd:
+                    os.read(wakeup_fd, 32)
+                elif fd == self._srv_socket.fileno():
+                    self._srv_accept()
+                elif fd in self._unix_sockets:
+                    self._socket_data(fd)
+
 # global variables, needed for signal handlers
 options = None
 boss_of_bind = None
@@ -931,60 +1159,32 @@ def main():
     # Block SIGPIPE, as we don't want it to end this process
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
-    # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
-                       options.config_file, options.nocache, options.verbose,
-                       setuid, username, options.cmdctl_port,
-                       options.wait_time)
-    startup_result = boss_of_bind.startup()
-    if startup_result:
-        logger.fatal(BIND10_STARTUP_ERROR, startup_result)
-        sys.exit(1)
-    logger.info(BIND10_STARTUP_COMPLETE)
-    dump_pid(options.pid_file)
+    try:
+        # Go bob!
+        boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
+                           options.config_file, options.nocache,
+                           options.verbose, setuid, username,
+                           options.cmdctl_port, options.wait_time)
+        startup_result = boss_of_bind.startup()
+        if startup_result:
+            logger.fatal(BIND10_STARTUP_ERROR, startup_result)
+            sys.exit(1)
+        boss_of_bind.init_socket_srv()
+        logger.info(BIND10_STARTUP_COMPLETE)
+        dump_pid(options.pid_file)
 
-    # In our main loop, we check for dead processes or messages 
-    # on the c-channel.
-    wakeup_fd = wakeup_pipe[0]
-    ccs_fd = boss_of_bind.ccs.get_socket().fileno()
-    while boss_of_bind.runnable:
-        # clean up any processes that exited
-        boss_of_bind.reap_children()
-        next_restart = boss_of_bind.restart_processes()
-        if next_restart is None:
-            wait_time = None
-        else:
-            wait_time = max(next_restart - time.time(), 0)
+        # Let it run
+        boss_of_bind.run(wakeup_pipe[0])
 
-        # select() can raise EINTR when a signal arrives, 
-        # even if they are resumable, so we have to catch
-        # the exception
-        try:
-            (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [], [], 
-                                                  wait_time)
-        except select.error as err:
-            if err.args[0] == errno.EINTR:
-                (rlist, wlist, xlist) = ([], [], [])
-            else:
-                logger.fatal(BIND10_SELECT_ERROR, err)
-                break
-
-        for fd in rlist + xlist:
-            if fd == ccs_fd:
-                try:
-                    boss_of_bind.ccs.check_command()
-                except isc.cc.session.ProtocolError:
-                    logger.fatal(BIND10_MSGQ_DISAPPEARED)
-                    self.runnable = False
-                    break
-            elif fd == wakeup_fd:
-                os.read(wakeup_fd, 32)
-
-    # shutdown
-    signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-    boss_of_bind.shutdown()
-    unlink_pid_file(options.pid_file)
-    sys.exit(0)
+        # shutdown
+        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+        boss_of_bind.shutdown()
+    finally:
+        # Clean up the filesystem
+        unlink_pid_file(options.pid_file)
+        if boss_of_bind is not None:
+            boss_of_bind.remove_socket_srv()
+    sys.exit(boss_of_bind.exitcode)
 
 if __name__ == "__main__":
     main()
