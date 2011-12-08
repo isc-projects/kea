@@ -28,6 +28,12 @@ enum CounterItems {
 
 using namespace isc::statistics;
 
+TEST(CounterCreateTest, invalidCounterSize) {
+    // Creating counter with 0 elements will cause an isc::InvalidParameter
+    // exception
+    EXPECT_THROW(Counter counter(0), isc::InvalidParameter);
+}
+
 // This fixture is for testing Counter.
 class CounterTest : public ::testing::Test {
 protected:
@@ -67,12 +73,6 @@ TEST_F(CounterTest, incrementCounterItem) {
     EXPECT_EQ(counter.get(ITEM1), 2);
     EXPECT_EQ(counter.get(ITEM2), 4);
     EXPECT_EQ(counter.get(ITEM3), 6);
-}
-
-TEST_F(CounterTest, invalidCounterSize) {
-    // Creating counter with 0 elements will cause an isc::InvalidParameter
-    // exception
-    EXPECT_THROW(Counter counter(0), isc::InvalidParameter);
 }
 
 TEST_F(CounterTest, invalidCounterItem) {

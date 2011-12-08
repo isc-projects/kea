@@ -30,18 +30,25 @@ enum CounterItems {
 
 using namespace isc::statistics;
 
+TEST(CounterDictionaryCreateTest, invalidCounterSize) {
+    // Creating counter with 0 elements will cause an isc::InvalidParameter
+    // exception
+    EXPECT_THROW(CounterDictionary counters(0), isc::InvalidParameter);
+}
+
 // This fixture is for testing CounterDictionary.
 class CounterDictionaryTest : public ::testing::Test {
 protected:
-    CounterDictionaryTest() {}
+    CounterDictionaryTest() : counters(NUMBER_OF_ITEMS) {
+        counters.addElement("test");
+        counters.addElement("sub.test");
+    }
     ~CounterDictionaryTest() {}
+
+    CounterDictionary counters;
 };
 
-TEST_F(CounterDictionaryTest, createCounterDictionary) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add an element for this test
-    counters.addElement("test");
+TEST_F(CounterDictionaryTest, initializeCheck) {
     // Check if the all counters are initialized with 0
     EXPECT_EQ(counters["test"].get(ITEM1), 0);
     EXPECT_EQ(counters["test"].get(ITEM2), 0);
@@ -49,10 +56,6 @@ TEST_F(CounterDictionaryTest, createCounterDictionary) {
 }
 
 TEST_F(CounterDictionaryTest, getElement) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add an element for this test
-    counters.addElement("test");
     // Another member function to get counters for the element
     EXPECT_EQ(counters.getElement("test").get(ITEM1), 0);
     EXPECT_EQ(counters.getElement("test").get(ITEM2), 0);
@@ -60,11 +63,6 @@ TEST_F(CounterDictionaryTest, getElement) {
 }
 
 TEST_F(CounterDictionaryTest, incrementCounterItem) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add elements for this test
-    counters.addElement("test");
-    counters.addElement("sub.test");
     // Increment counters
     counters["test"].inc(ITEM1);
     counters["test"].inc(ITEM2);
@@ -82,10 +80,6 @@ TEST_F(CounterDictionaryTest, incrementCounterItem) {
 }
 
 TEST_F(CounterDictionaryTest, deleteElement) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add an element for this test
-    counters.addElement("test");
     // Ensure the element is accessible
     EXPECT_EQ(counters["test"].get(ITEM1), 0);
     EXPECT_EQ(counters["test"].get(ITEM2), 0);
@@ -99,38 +93,19 @@ TEST_F(CounterDictionaryTest, deleteElement) {
     EXPECT_THROW(counters.deleteElement("test"), isc::OutOfRange);
 }
 
-TEST_F(CounterDictionaryTest, invalidCounterSize) {
-    // Creating counter with 0 elements will cause an isc::InvalidParameter
-    // exception
-    EXPECT_THROW(CounterDictionary counters(0), isc::InvalidParameter);
-}
-
 TEST_F(CounterDictionaryTest, invalidCounterItem) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add an element for this test
-    counters.addElement("test");
     // Incrementing out-of-bound counter will cause an isc::OutOfRange
     // exception
     EXPECT_THROW(counters["test"].inc(NUMBER_OF_ITEMS), isc::OutOfRange);
 }
 
-TEST_F(CounterDictionaryTest, uniqueCheck) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add an element for this test
-    counters.addElement("test");
+TEST_F(CounterDictionaryTest, uniquenessCheck) {
     // Adding an element which already exists will cause an isc::OutOfRange
     //  exception 
     EXPECT_THROW(counters.addElement("test"), isc::InvalidParameter);
 }
 
 TEST_F(CounterDictionaryTest, iteratorTest) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add elements for this test
-    counters.addElement("test");
-    counters.addElement("sub.test");
     // Increment counters
     counters["test"].inc(ITEM1);
     counters["sub.test"].inc(ITEM2);
@@ -163,17 +138,12 @@ TEST_F(CounterDictionaryTest, iteratorTest) {
             FAIL() << "Unexpected iterator value";
         }
     }
-    // Check if the "test" and "sub.test" could be accessed
+    // Check if the "test" and "sub.test" is accessible
     EXPECT_TRUE(element_test_visited);
     EXPECT_TRUE(element_sub_test_visited);
 }
 
 TEST_F(CounterDictionaryTest, iteratorCopyTest) {
-    // Create counters
-    CounterDictionary counters(NUMBER_OF_ITEMS);
-    // Add elements for this test
-    counters.addElement("test");
-    counters.addElement("sub.test");
     // Increment counters
     counters["test"].inc(ITEM1);
     counters["sub.test"].inc(ITEM2);
