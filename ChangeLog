@@ -1,9 +1,16 @@
+339.	[bug]		jinmei
+	libxfr, used by b10-auth to share TCP sockets with b10-xfrout,
+	incorrectly propagated ASIO specific exceptions to the application
+	if the given file name was too long.  This could lead to
+	unexpected shut down of b10-auth.
+	(Trac #1387, git a5e9d9176e9c60ef20c0f5ef59eeb6838ed47ab2)
+
 338.	[bug]		jinmei
 	b10-xfrin didn't check SOA serials of SOA and IXFR responses,
 	which resulted in unnecessary transfer or unexpected IXFR
 	timeouts (these issues were not overlooked but deferred to be
 	fixed until #1278 was completed).  Validation on responses to SOA
-	queries were tighten, too.
+	queries were tightened, too.
 	(Trac #1299, git 6ff03bb9d631023175df99248e8cc0cda586c30a)
 
 337.	[func]		tomek
