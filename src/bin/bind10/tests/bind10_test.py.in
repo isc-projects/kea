@@ -13,7 +13,11 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# Most of the time, we omit the "bind10_src" for brevity. Sometimes,
+# we want to be explicit about what we do, like when hijacking a library
+# call used by the bind10_src.
 from bind10_src import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
+import bind10_src
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -28,6 +32,8 @@ from isc.net.addr import IPAddr
 import time
 import isc
 import isc.log
+import isc.bind10.socket_cache
+import errno
 
 from isc.testutils.parse_args import TestOptParser, OptsError
 
@@ -97,6 +103,232 @@ class TestProcessInfo(unittest.TestCase):
         self.assertTrue(type(pi.pid) is int)
         self.assertNotEqual(pi.pid, old_pid)
 
+class TestCacheCommands(unittest.TestCase):
+    """
+    Test methods of boss related to the socket cache and socket handling.
+    """
+    def setUp(self):
+        """
+        Prepare the boss for some tests.
+
+        Also prepare some variables we need.
+        """
+        self.__boss = BoB()
+        # Fake the cache here so we can pretend it is us and hijack the
+        # calls to its methods.
+        self.__boss._socket_cache = self
+        self.__boss._socket_path = '/socket/path'
+        self.__raise_exception = None
+        self.__socket_args = {
+            "port": 53,
+            "address": "::",
+            "protocol": "UDP",
+            "share_mode": "ANY",
+            "share_name": "app"
+        }
+        # What was and wasn't called.
+        self.__drop_app_called = None
+        self.__get_socket_called = None
+        self.__send_fd_called = None
+        self.__get_token_called = None
+        self.__drop_socket_called = None
+        bind10_src.libutil_io_python.send_fd = self.__send_fd
+
+    def __send_fd(self, to, socket):
+        """
+        A function to hook the send_fd in the bind10_src.
+        """
+        self.__send_fd_called = (to, socket)
+
+    class FalseSocket:
+        """
+        A socket where we can fake methods we need instead of having a real
+        socket.
+        """
+        def __init__(self):
+            self.send = ""
+        def fileno(self):
+            """
+            The file number. Used for identifying the remote application.
+            """
+            return 42
+
+        def sendall(self, data):
+            """
+            Adds data to the self.send.
+            """
+            self.send += data
+
+    def drop_application(self, application):
+        """
+        Part of pretending to be the cache. Logs the parameter to
+        self.__drop_app_called.
+
+        In the case self.__raise_exception is set, the exception there
+        is raised instead.
+        """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
+        self.__drop_app_called = application
+
+    def test_consumer_dead(self):
+        """
+        Test that it calls the drop_application method of the cache.
+        """
+        self.__boss.socket_consumer_dead(self.FalseSocket())
+        self.assertEqual(42, self.__drop_app_called)
+
+    def test_consumer_dead_invalid(self):
+        """
+        Test that it doesn't crash in case the application is not known to
+        the cache, the boss doesn't crash, as this actually can happen in
+        practice.
+        """
+        self.__raise_exception = ValueError("This application is unknown")
+        # This doesn't crash
+        self.__boss.socket_consumer_dead(self.FalseSocket())
+
+    def get_socket(self, token, application):
+        """
+        Part of pretending to be the cache. If there's anything in
+        __raise_exception, it is raised. Otherwise, the call is logged
+        into __get_socket_called and a number is returned.
+        """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
+        self.__get_socket_called = (token, application)
+        return 13
+
+    def test_request_handler(self):
+        """
+        Test that a request for socket is forwarded and the socket is sent
+        back, if it returns a socket.
+        """
+        socket = self.FalseSocket()
+        # An exception from the cache
+        self.__raise_exception = ValueError("Test value error")
+        self.__boss.socket_request_handler("token", socket)
+        # It was called, but it threw, so it is not noted here
+        self.assertIsNone(self.__get_socket_called)
+        self.assertEqual("0\n", socket.send)
+        # It should not have sent any socket.
+        self.assertIsNone(self.__send_fd_called)
+        # Now prepare a valid scenario
+        self.__raise_exception = None
+        socket.send = ""
+        self.__boss.socket_request_handler("token", socket)
+        self.assertEqual("1\n", socket.send)
+        self.assertEqual((42, 13), self.__send_fd_called)
+        self.assertEqual(("token", 42), self.__get_socket_called)
+
+    def get_token(self, protocol, address, port, share_mode, share_name):
+        """
+        Part of pretending to be the cache. If there's anything in
+        __raise_exception, it is raised. Otherwise, the parameters are
+        logged into __get_token_called and a token is returned.
+        """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
+        self.__get_token_called = (protocol, address, port, share_mode,
+                                   share_name)
+        return "token"
+
+    def test_get_socket_ok(self):
+        """
+        Test the successful scenario of getting a socket.
+        """
+        result = self.__boss._get_socket(self.__socket_args)
+        [code, answer] = result['result']
+        self.assertEqual(0, code)
+        self.assertEqual({
+            'token': 'token',
+            'path': '/socket/path'
+        }, answer)
+        addr = self.__get_token_called[1]
+        self.assertTrue(isinstance(addr, IPAddr))
+        self.assertEqual("::", str(addr))
+        self.assertEqual(("UDP", addr, 53, "ANY", "app"),
+                         self.__get_token_called)
+
+    def test_get_socket_error(self):
+        """
+        Test that bad inputs are handled correctly, etc.
+        """
+        def check_code(code, args):
+            """
+            Pass the args there and check if it returns success or not.
+
+            The rest is not tested, as it is already checked in the
+            test_get_socket_ok.
+            """
+            [rcode, ranswer] = self.__boss._get_socket(args)['result']
+            self.assertEqual(code, rcode)
+            if code == 1:
+                # This should be an error message. The exact formatting
+                # is unknown, but we check it is string at least
+                self.assertTrue(isinstance(ranswer, str))
+        def mod_args(name, value):
+            """
+            Override a parameter in the args.
+            """
+            result = dict(self.__socket_args)
+            result[name] = value
+            return result
+
+        # Port too large
+        check_code(1, mod_args('port', 65536))
+        # Not numeric address
+        check_code(1, mod_args('address', 'example.org.'))
+        # Some bad values of enum-like params
+        check_code(1, mod_args('protocol', 'BAD PROTO'))
+        check_code(1, mod_args('share_mode', 'BAD SHARE'))
+        # Check missing parameters
+        for param in self.__socket_args.keys():
+            args = dict(self.__socket_args)
+            del args[param]
+            check_code(1, args)
+        # These are OK values for the enum-like parameters
+        # The ones from test_get_socket_ok are not tested here
+        check_code(0, mod_args('protocol', 'TCP'))
+        check_code(0, mod_args('share_mode', 'SAMEAPP'))
+        check_code(0, mod_args('share_mode', 'NO'))
+        # If an exception is raised from within the cache, it is converted
+        # to an error, not propagated
+        self.__raise_exception = Exception("Test exception")
+        check_code(1, self.__socket_args)
+
+    def drop_socket(self, token):
+        """
+        Part of pretending to be the cache. If there's anything in
+        __raise_exception, it is raised. Otherwise, the parameter is stored
+        in __drop_socket_called.
+        """
+        if self.__raise_exception is not None:
+            raise self.__raise_exception
+        self.__drop_socket_called = token
+
+    def test_drop_socket(self):
+        """
+        Check the drop_socket command. It should directly call the method
+        on the cache. Exceptions should be translated to error messages.
+        """
+        # This should be OK and just propagated to the call.
+        self.assertEqual({"result": [0]},
+                         self.__boss.command_handler("drop_socket",
+                                                     {"token": "token"}))
+        self.assertEqual("token", self.__drop_socket_called)
+        self.__drop_socket_called = None
+        # Missing parameter
+        self.assertEqual({"result": [1, "Missing token parameter"]},
+                         self.__boss.command_handler("drop_socket", {}))
+        self.assertIsNone(self.__drop_socket_called)
+        # An exception is raised from within the cache
+        self.__raise_exception = ValueError("Test error")
+        self.assertEqual({"result": [1, "Test error"]},
+                         self.__boss.command_handler("drop_socket",
+                         {"token": "token"}))
+
+
 class TestBoB(unittest.TestCase):
     def test_init(self):
         bob = BoB()
@@ -109,6 +341,22 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
         self.assertEqual(bob.nocache, False)
+        self.assertIsNone(bob._socket_cache)
+
+    def test_set_creator(self):
+        """
+        Test the call to set_creator. First time, the cache is created
+        with the passed creator. The next time, it throws an exception.
+        """
+        bob = BoB()
+        # The cache doesn't use it at start, so just create an empty class
+        class Creator: pass
+        creator = Creator()
+        bob.set_creator(creator)
+        self.assertTrue(isinstance(bob._socket_cache,
+                        isc.bind10.socket_cache.Cache))
+        self.assertEqual(creator, bob._socket_cache._creator)
+        self.assertRaises(ValueError, bob.set_creator, creator)
 
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
@@ -182,6 +430,26 @@ class TestBoB(unittest.TestCase):
         # an unknown command
         self.assertEqual(bob.command_handler("__UNKNOWN__", None),
                          isc.config.ccsession.create_answer(1, "Unknown command"))
+
+        # Fake the get_token of cache and test the command works
+        bob._socket_path = '/socket/path'
+        class cache:
+            def get_token(self, protocol, addr, port, share_mode, share_name):
+                return str(addr) + ':' + str(port)
+        bob._socket_cache = cache()
+        args = {
+            "port": 53,
+            "address": "0.0.0.0",
+            "protocol": "UDP",
+            "share_mode": "ANY",
+            "share_name": "app"
+        }
+        # at all and this is the easiest way to check.
+        self.assertEqual({'result': [0, {'token': '0.0.0.0:53',
+                                         'path': '/socket/path'}]},
+                         bob.command_handler("get_socket", args))
+        # The drop_socket is not tested here, but in TestCacheCommands.
+        # It needs the cache mocks to be in place and they are there.
 
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
@@ -268,7 +536,9 @@ class MockBob(BoB):
                     'b10-stats-httpd': self.start_stats_httpd,
                     'b10-cmdctl': self.start_cmdctl,
                     'b10-dhcp6': self.start_dhcp6,
-                    'b10-dhcp4': self.start_dhcp4 }
+                    'b10-dhcp4': self.start_dhcp4,
+                    'b10-xfrin': self.start_xfrin,
+                    'b10-xfrout': self.start_xfrout }
         return procmap[name]()
 
     def start_xfrout(self):
@@ -463,8 +733,9 @@ class TestStartStopProcessesBob(unittest.TestCase):
         if start_auth:
             config['b10-auth'] = { 'kind': 'needed', 'special': 'auth' }
             config['b10-xfrout'] = { 'kind': 'dispensable',
-                                     'special': 'xfrout' }
-            config['b10-xfrin'] = { 'kind': 'dispensable', 'special': 'xfrin' }
+                                     'address': 'Xfrout' }
+            config['b10-xfrin'] = { 'kind': 'dispensable',
+                                    'address': 'Xfrin' }
             config['b10-zonemgr'] = { 'kind': 'dispensable',
                                       'address': 'Zonemgr' }
         if start_resolver:
@@ -927,6 +1198,201 @@ class TestBossComponents(unittest.TestCase):
         bob.ccs.get_full_config = lambda: {'components': self.__compconfig}
         bob.start_all_components()
         self.__check_extended(self.__param)
+
+class SocketSrvTest(unittest.TestCase):
+    """
+    This tests some methods of boss related to the unix domain sockets used
+    to transfer other sockets to applications.
+    """
+    def setUp(self):
+        """
+        Create the boss to test, testdata and backup some functions.
+        """
+        self.__boss = BoB()
+        self.__select_backup = bind10_src.select.select
+        self.__select_called = None
+        self.__socket_data_called = None
+        self.__consumer_dead_called = None
+        self.__socket_request_handler_called = None
+
+    def tearDown(self):
+        """
+        Restore functions.
+        """
+        bind10_src.select.select = self.__select_backup
+
+    class __FalseSocket:
+        """
+        A mock socket for the select and accept and stuff like that.
+        """
+        def __init__(self, owner, fileno=42):
+            self.__owner = owner
+            self.__fileno = fileno
+            self.data = None
+            self.closed = False
+
+        def fileno(self):
+            return self.__fileno
+
+        def accept(self):
+            return self.__class__(self.__owner, 13)
+
+        def recv(self, bufsize, flags=0):
+            self.__owner.assertEqual(1, bufsize)
+            self.__owner.assertEqual(socket.MSG_DONTWAIT, flags)
+            if isinstance(self.data, socket.error):
+                raise self.data
+            elif self.data is not None:
+                if len(self.data):
+                    result = self.data[0:1]
+                    self.data = self.data[1:]
+                    return result
+                else:
+                    raise socket.error(errno.EAGAIN, "Would block")
+            else:
+                return b''
+
+        def close(self):
+            self.closed = True
+
+    class __CCS:
+        """
+        A mock CCS, just to provide the socket file number.
+        """
+        class __Socket:
+            def fileno(self):
+                return 1
+        def get_socket(self):
+            return self.__Socket()
+
+    def __select_accept(self, r, w, x, t):
+        self.__select_called = (r, w, x, t)
+        return ([42], [], [])
+
+    def __select_data(self, r, w, x, t):
+        self.__select_called = (r, w, x, t)
+        return ([13], [], [])
+
+    def __accept(self):
+        """
+        Hijact the accept method of the boss.
+
+        Notes down it was called and stops the boss.
+        """
+        self.__accept_called = True
+        self.__boss.runnable = False
+
+    def test_srv_accept_called(self):
+        """
+        Test that the _srv_accept method of boss is called when the listening
+        socket is readable.
+        """
+        self.__boss.runnable = True
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._srv_accept = self.__accept
+        self.__boss.ccs = self.__CCS()
+        bind10_src.select.select = self.__select_accept
+        self.__boss.run(2)
+        # It called the accept
+        self.assertTrue(self.__accept_called)
+        # And the select had the right parameters
+        self.assertEqual(([2, 1, 42], [], [], None), self.__select_called)
+
+    def test_srv_accept(self):
+        """
+        Test how the _srv_accept method works.
+        """
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._srv_accept()
+        # After we accepted, a new socket is added there
+        socket = self.__boss._unix_sockets[13][0]
+        # The socket is properly stored there
+        self.assertTrue(isinstance(socket, self.__FalseSocket))
+        # And the buffer (yet empty) is there
+        self.assertEqual({13: (socket, b'')}, self.__boss._unix_sockets)
+
+    def __socket_data(self, socket):
+        self.__boss.runnable = False
+        self.__socket_data_called = socket
+
+    def test_socket_data(self):
+        """
+        Test that a socket that wants attention gets it.
+        """
+        self.__boss._srv_socket = self.__FalseSocket(self)
+        self.__boss._socket_data = self.__socket_data
+        self.__boss.ccs = self.__CCS()
+        self.__boss._unix_sockets = {13: (self.__FalseSocket(self, 13), b'')}
+        self.__boss.runnable = True
+        bind10_src.select.select = self.__select_data
+        self.__boss.run(2)
+        self.assertEqual(13, self.__socket_data_called)
+        self.assertEqual(([2, 1, 42, 13], [], [], None), self.__select_called)
+
+    def __prepare_data(self, data):
+        socket = self.__FalseSocket(self, 13)
+        self.__boss._unix_sockets = {13: (socket, b'')}
+        socket.data = data
+        self.__boss.socket_consumer_dead = self.__consumer_dead
+        self.__boss.socket_request_handler = self.__socket_request_handler
+        return socket
+
+    def __consumer_dead(self, socket):
+        self.__consumer_dead_called = socket
+
+    def __socket_request_handler(self, token, socket):
+        self.__socket_request_handler_called = (token, socket)
+
+    def test_socket_closed(self):
+        """
+        Test that a socket is removed and the socket_consumer_dead is called
+        when it is closed.
+        """
+        socket = self.__prepare_data(None)
+        self.__boss._socket_data(13)
+        self.assertEqual(socket, self.__consumer_dead_called)
+        self.assertEqual({}, self.__boss._unix_sockets)
+        self.assertTrue(socket.closed)
+
+    def test_socket_short(self):
+        """
+        Test that if there's not enough data to get the whole socket, it is
+        kept there, but nothing is called.
+        """
+        socket = self.__prepare_data(b'tok')
+        self.__boss._socket_data(13)
+        self.assertEqual({13: (socket, b'tok')}, self.__boss._unix_sockets)
+        self.assertFalse(socket.closed)
+        self.assertIsNone(self.__consumer_dead_called)
+        self.assertIsNone(self.__socket_request_handler_called)
+
+    def test_socket_continue(self):
+        """
+        Test that we call the token handling function when the whole token
+        comes. This test pretends to continue reading where the previous one
+        stopped.
+        """
+        socket = self.__prepare_data(b"en\nanothe")
+        # The data to finish
+        self.__boss._unix_sockets[13] = (socket, b'tok')
+        self.__boss._socket_data(13)
+        self.assertEqual({13: (socket, b'anothe')}, self.__boss._unix_sockets)
+        self.assertFalse(socket.closed)
+        self.assertIsNone(self.__consumer_dead_called)
+        self.assertEqual((b'token', socket),
+                         self.__socket_request_handler_called)
+
+    def test_broken_socket(self):
+        """
+        If the socket raises an exception during the read other than EAGAIN,
+        it is broken and we remove it.
+        """
+        sock = self.__prepare_data(socket.error(errno.ENOMEM,
+            "There's more memory available, but not for you"))
+        self.__boss._socket_data(13)
+        self.assertEqual(sock, self.__consumer_dead_called)
+        self.assertEqual({}, self.__boss._unix_sockets)
+        self.assertTrue(sock.closed)
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment

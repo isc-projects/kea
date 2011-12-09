@@ -128,23 +128,6 @@ Option::pack4(isc::util::OutputBuffer& buf) {
 }
 
 unsigned int
-Option::pack4(boost::shared_array<uint8_t>& buf,
-             unsigned int buf_len,
-             unsigned int offset) {
-    if (offset + len() > buf_len) {
-        isc_throw(OutOfRange, "Failed to pack v4 option=" <<
-                  type_ << ",len=" << len() << ": too small buffer.");
-    }
-    uint8_t *ptr = &buf[offset];
-    ptr[0] = type_;
-    ptr[1] = len() - getHeaderLen();
-    ptr += 2;
-    memcpy(ptr, &data_[0], data_.size());
-
-    return offset + len();
-}
-
-unsigned int
 Option::pack6(boost::shared_array<uint8_t>& buf,
              unsigned int buf_len,
              unsigned int offset) {
@@ -220,7 +203,7 @@ Option::unpack6(const boost::shared_array<uint8_t>& buf,
 
 /// Returns length of the complete option (data length + DHCPv4/DHCPv6
 /// option header)
-unsigned short
+uint16_t
 Option::len() {
 
     // length of the whole option is header and data stored in this option...
@@ -295,17 +278,7 @@ std::string Option::toText(int indent /* =0 */ ) {
     return tmp.str();
 }
 
-unsigned short
-Option::getType() {
-    return type_;
-}
-
-const std::vector<uint8_t>&
-Option::getData() {
-    return (data_);
-}
-
-unsigned short
+uint16_t
 Option::getHeaderLen() {
     switch (universe_) {
     case V4:
