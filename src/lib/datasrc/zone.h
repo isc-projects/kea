@@ -277,6 +277,21 @@ public:
                             const FindOptions options
                             = FIND_DEFAULT) = 0;
 
+    ///
+    /// \brief Finds all RRsets in the given name.
+    ///
+    /// This function works almost exactly in the same way as the find one. The
+    /// only difference is, when the lookup is successful (eg. the code is
+    /// SUCCESS or WILDCARD), all the RRsets residing in the named node are
+    /// copied into the \c target parameter and the rrset member of the result
+    /// is NULL. All the other (unsuccessful) cases are handled the same,
+    /// including returning delegations, NSEC/NSEC3 proofs, etc. The options
+    /// parameter works the same way and it should comfort to the same exception
+    /// restrictions.
+    virtual FindResult findAll(const isc::dns::Name& name,
+                               std::vector<isc::dns::ConstRRsetPtr> &target,
+                               const FindOptions options = FIND_DEFAULT) = 0;
+
     /// \brief Get previous name in the zone
     ///
     /// Gets the previous name in the DNSSEC order. This can be used
