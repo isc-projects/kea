@@ -15,8 +15,9 @@
 
 import isc.log
 import isc.datasrc
-from isc.datasrc import ZoneFinder
+from isc.datasrc import ZoneFinder, ZoneJournalReader
 from isc.dns import *
+from isc.testutils.rrset_utils import rrsets_equal
 import unittest
 import sqlite3
 import os
@@ -40,19 +41,6 @@ def add_rrset(rrset_list, name, rrclass, rrtype, ttl, rdatas):
             rrset_to_add.add_rdata(isc.dns.Rdata(rrtype, rrclass, rdata))
     rrset_list.append(rrset_to_add)
 
-# helper function, we have no direct rrset comparison atm
-def rrsets_equal(a, b):
-    # no accessor for sigs either (so this only checks name, class, type, ttl,
-    # and rdata)
-    # also, because of the fake data in rrsigs, if the type is rrsig, the
-    # rdata is not checked
-    return a.get_name() == b.get_name() and\
-           a.get_class() == b.get_class() and\
-           a.get_type() == b.get_type() and \
-           a.get_ttl() == b.get_ttl() and\
-           (a.get_type() == isc.dns.RRType.RRSIG() or
-            sorted(a.get_rdata()) == sorted(b.get_rdata()))
-
 # returns true if rrset is in expected_rrsets
 # will remove the rrset from expected_rrsets if found
 def check_for_rrset(expected_rrsets, rrset):
@@ -61,6 +49,13 @@ def check_for_rrset(expected_rrsets, rrset):
             expected_rrsets.remove(cur_rrset)
             return True
     return False
+
+def create_soa(serial):
+    soa = RRset(Name('example.org'), RRClass.IN(), RRType.SOA(), RRTTL(3600))
+    soa.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                        'ns1.example.org. admin.example.org. ' +
+                        str(serial) + ' 3600 1800 2419200 7200'))
+    return soa
 
 class DataSrcClient(unittest.TestCase):
 
@@ -290,6 +285,24 @@ class DataSrcClient(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
+        # Check the optional parameters are optional
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A())
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A(), None)
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # Invalid value for the "target"
+        self.assertRaises(TypeError, finder.find,
+                          isc.dns.Name("www.example.com"),
+                          isc.dns.RRType.A(), True)
+
         result, rrset = finder.find(isc.dns.Name("www.sql1.example.com"),
                                     isc.dns.RRType.A(),
                                     None,
@@ -389,6 +402,36 @@ class DataSrcUpdater(unittest.TestCase):
     def test_construct(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneUpdater)
+
+    def test_update_finder(self):
+        # Check basic behavior of updater's finder
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        updater = dsc.get_updater(isc.dns.Name("example.com"), False)
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A(),
+                                     None,
+                                     ZoneFinder.FIND_DEFAULT)
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # Omit optional parameters
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A(), None)
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # Invalid value for 'target'
+        self.assertRaises(TypeError, updater.find,
+                          isc.dns.Name("www.example.com"),
+                          isc.dns.RRType.A(), 1)
 
     def test_update_delete_commit(self):
 
@@ -606,14 +649,6 @@ class JournalWrite(unittest.TestCase):
             self.assertEqual(expected, actual)
         conn.close()
 
-    def create_soa(self, serial):
-        soa = RRset(Name('example.org'), RRClass.IN(), RRType.SOA(),
-                    RRTTL(3600))
-        soa.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                            'ns1.example.org. admin.example.org. ' +
-                            str(serial) + ' 3600 1800 2419200 7200'))
-        return soa
-
     def create_a(self, address):
         a_rr = RRset(Name('www.example.org'), RRClass.IN(), RRType.A(),
                      RRTTL(3600))
@@ -624,9 +659,9 @@ class JournalWrite(unittest.TestCase):
         # This is a straightforward port of the C++ 'journal' test
         # Note: we add/delete 'out of zone' data (example.org in the
         # example.com zone for convenience.
-        self.updater.delete_rrset(self.create_soa(1234))
+        self.updater.delete_rrset(create_soa(1234))
         self.updater.delete_rrset(self.create_a('192.0.2.2'))
-        self.updater.add_rrset(self.create_soa(1235))
+        self.updater.add_rrset(create_soa(1235))
         self.updater.add_rrset(self.create_a('192.0.2.2'))
         self.updater.commit()
 
@@ -645,11 +680,11 @@ class JournalWrite(unittest.TestCase):
         # This is a straightforward port of the C++ 'journalMultiple' test
         expected = []
         for i in range(1, 100):
-            self.updater.delete_rrset(self.create_soa(1234 + i - 1))
+            self.updater.delete_rrset(create_soa(1234 + i - 1))
             expected.append(("example.org.", "SOA", 3600,
                              "ns1.example.org. admin.example.org. " +
                              str(1234 + i - 1) + " 3600 1800 2419200 7200"))
-            self.updater.add_rrset(self.create_soa(1234 + i))
+            self.updater.add_rrset(create_soa(1234 + i))
             expected.append(("example.org.", "SOA", 3600,
                              "ns1.example.org. admin.example.org. " +
                              str(1234 + i) + " 3600 1800 2419200 7200"))
@@ -665,27 +700,27 @@ class JournalWrite(unittest.TestCase):
         # Add before delete
         self.updater = self.dsc.get_updater(Name("example.com"), False, True)
         self.assertRaises(isc.datasrc.Error, self.updater.add_rrset,
-                          self.create_soa(1234))
+                          create_soa(1234))
         # Add A before SOA
         self.updater = self.dsc.get_updater(Name("example.com"), False, True)
-        self.updater.delete_rrset(self.create_soa(1234))
+        self.updater.delete_rrset(create_soa(1234))
         self.assertRaises(isc.datasrc.Error, self.updater.add_rrset,
                           self.create_a('192.0.2.1'))
         # Commit before add
         self.updater = self.dsc.get_updater(Name("example.com"), False, True)
-        self.updater.delete_rrset(self.create_soa(1234))
+        self.updater.delete_rrset(create_soa(1234))
         self.assertRaises(isc.datasrc.Error, self.updater.commit)
         # Delete two SOAs
         self.updater = self.dsc.get_updater(Name("example.com"), False, True)
-        self.updater.delete_rrset(self.create_soa(1234))
+        self.updater.delete_rrset(create_soa(1234))
         self.assertRaises(isc.datasrc.Error, self.updater.delete_rrset,
-                          self.create_soa(1235))
+                          create_soa(1235))
         # Add two SOAs
         self.updater = self.dsc.get_updater(Name("example.com"), False, True)
-        self.updater.delete_rrset(self.create_soa(1234))
-        self.updater.add_rrset(self.create_soa(1235))
+        self.updater.delete_rrset(create_soa(1234))
+        self.updater.add_rrset(create_soa(1235))
         self.assertRaises(isc.datasrc.Error, self.updater.add_rrset,
-                          self.create_soa(1236))
+                          create_soa(1236))
 
     def test_journal_write_onerase(self):
         self.updater = None
@@ -699,6 +734,119 @@ class JournalWrite(unittest.TestCase):
                           False, 0)
         self.assertRaises(TypeError, dsc.get_updater, Name("example.com"),
                           1, True)
+
+class JournalRead(unittest.TestCase):
+    def setUp(self):
+        # Make a fresh copy of the writable database with all original content
+        self.zname = Name('example.com')
+        shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
+        self.dsc = isc.datasrc.DataSourceClient("sqlite3",
+                                                WRITE_ZONE_DB_CONFIG)
+        self.reader = None
+
+    def tearDown(self):
+        # Some tests leave the reader in the middle of sequence, holding
+        # the lock.  Since the unittest framework keeps each test object
+        # until the end of the entire tests, we need to make sure the reader
+        # is released at the end of each test.  The client shouldn't do harm
+        # but we clean it up, too, just in case.
+        self.dsc = None
+        self.reader = None
+
+    def make_simple_diff(self, begin_soa):
+        updater = self.dsc.get_updater(self.zname, False, True)
+        updater.delete_rrset(begin_soa)
+        updater.add_rrset(create_soa(1235))
+        updater.commit()
+
+    def test_journal_reader(self):
+        # This is a straightforward port of the C++ 'journalReader' test
+        self.make_simple_diff(create_soa(1234))
+        result, self.reader = self.dsc.get_journal_reader(self.zname, 1234,
+                                                          1235)
+        self.assertEqual(ZoneJournalReader.SUCCESS, result)
+        self.assertNotEqual(None, self.reader)
+        rrsets_equal(create_soa(1234), self.reader.get_next_diff())
+        rrsets_equal(create_soa(1235), self.reader.get_next_diff())
+        self.assertEqual(None, self.reader.get_next_diff())
+        self.assertRaises(ValueError, self.reader.get_next_diff)
+
+    def test_journal_reader_with_large_serial(self):
+        # similar to the previous one, but use a very large serial to check
+        # if the python wrapper code has unexpected integer overflow
+        self.make_simple_diff(create_soa(4294967295))
+        result, self.reader = self.dsc.get_journal_reader(self.zname,
+                                                          4294967295, 1235)
+        self.assertNotEqual(None, self.reader)
+        # dump to text and compare them in case create_soa happens to have
+        # an overflow bug
+        self.assertEqual('example.org. 3600 IN SOA ns1.example.org. ' + \
+                         'admin.example.org. 4294967295 3600 1800 ' + \
+                             '2419200 7200\n',
+                         self.reader.get_next_diff().to_text())
+
+    def test_journal_reader_large_journal(self):
+        # This is a straightforward port of the C++ 'readLargeJournal' test.
+        # In this test we use the ZoneJournalReader object as a Python
+        # iterator.
+        updater = self.dsc.get_updater(self.zname, False, True)
+        expected = []
+        for i in range(0, 100):
+            rrset = create_soa(1234 + i)
+            updater.delete_rrset(rrset)
+            expected.append(rrset)
+
+            rrset = create_soa(1234 + i + 1)
+            updater.add_rrset(rrset)
+            expected.append(rrset)
+
+        updater.commit()
+        _, self.reader = self.dsc.get_journal_reader(self.zname, 1234, 1334)
+        self.assertNotEqual(None, self.reader)
+        i = 0
+        for rr in self.reader:
+            self.assertNotEqual(len(expected), i)
+            rrsets_equal(expected[i], rr)
+            i += 1
+        self.assertEqual(len(expected), i)
+
+    def test_journal_reader_no_range(self):
+        # This is a straightforward port of the C++ 'readJournalForNoRange'
+        # test
+        self.make_simple_diff(create_soa(1234))
+        result, self.reader = self.dsc.get_journal_reader(self.zname, 1200,
+                                                          1235)
+        self.assertEqual(ZoneJournalReader.NO_SUCH_VERSION, result)
+        self.assertEqual(None, self.reader)
+
+    def test_journal_reader_no_zone(self):
+        # This is a straightforward port of the C++ 'journalReaderForNXZone'
+        # test
+        result, self.reader = self.dsc.get_journal_reader(Name('nosuchzone'),
+                                                          0, 1)
+        self.assertEqual(ZoneJournalReader.NO_SUCH_ZONE, result)
+        self.assertEqual(None, self.reader)
+
+    def test_journal_reader_bad_params(self):
+        self.assertRaises(TypeError, self.dsc.get_journal_reader,
+                          'example.com.', 0, 1)
+        self.assertRaises(TypeError, self.dsc.get_journal_reader,
+                          self.zname, 'must be int', 1)
+        self.assertRaises(TypeError, self.dsc.get_journal_reader,
+                          self.zname, 0, 'must be int')
+
+    def test_journal_reader_direct_construct(self):
+        # ZoneJournalReader can only be constructed via a factory
+        self.assertRaises(TypeError, ZoneJournalReader)
+
+    def test_journal_reader_old_schema(self):
+        # The database doesn't have a "diffs" table.
+        dbfile = TESTDATA_PATH + 'test.sqlite3.nodiffs'
+        client = isc.datasrc.DataSourceClient("sqlite3",
+                                              "{ \"database_file\": \"" + \
+                                                  dbfile + "\" }")
+        self.assertRaises(isc.datasrc.Error, client.get_journal_reader,
+                          self.zname, 0, 1)
 
 if __name__ == "__main__":
     isc.log.init("bind10")

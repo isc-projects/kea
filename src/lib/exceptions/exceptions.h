@@ -126,6 +126,17 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// \brief A generic exception that is thrown if a function is called
+/// in a prohibited way.
+///
+/// For example, this can happen if a class method is called when the object's
+/// state does not allow that particular method.
+class InvalidOperation : public Exception {
+public:
+    InvalidOperation(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 ///
 /// \brief A generic exception that is thrown when an unexpected
 /// error condition occurs.

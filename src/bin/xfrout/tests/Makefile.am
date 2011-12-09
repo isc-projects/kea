@@ -3,8 +3,8 @@ PYTESTS = xfrout_test.py
 noinst_SCRIPTS = $(PYTESTS)
 
 EXTRA_DIST = testdata/test.sqlite3
-# This one is actually not necessary, but added for reference
-EXTRA_DIST += testdata/example.com
+# These are actually not necessary, but added for reference
+EXTRA_DIST += testdata/example.com testdata/creatediff.py
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.

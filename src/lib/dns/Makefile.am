@@ -84,6 +84,8 @@ BUILT_SOURCES += rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libdns++.la
 
+libdns___la_LDFLAGS = -no-undefined -version-info 1:0:1
+
 libdns___la_SOURCES =
 libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
@@ -102,6 +104,7 @@ libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
+libdns___la_SOURCES += serial.h serial.cc
 libdns___la_SOURCES += tsig.h tsig.cc
 libdns___la_SOURCES += tsigerror.h tsigerror.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
