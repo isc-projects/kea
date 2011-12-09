@@ -352,7 +352,7 @@ FINAL_TYPES() {
 
 }
 
-RRsetPtr
+ConstRRsetPtr
 DatabaseClient::Finder::findNSECCover(const Name& name) {
     try {
         // Which one should contain the NSEC record?
@@ -387,7 +387,7 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
             arg(accessor_->getDBName()).arg(name);
     }
     // We didn't find it, return nothing
-    return (RRsetPtr());
+    return (ConstRRsetPtr());
 }
 
 DatabaseClient::Finder::DelegationSearchResult

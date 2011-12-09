@@ -1037,7 +1037,7 @@ public:
         /// This one calls findPreviousName on the given name and extracts an
         /// NSEC record on the result. It handles various error cases. The
         /// method exists to share code present at more than one location.
-        dns::RRsetPtr findNSECCover(const dns::Name& name);
+        dns::ConstRRsetPtr findNSECCover(const dns::Name& name);
 
         /// \brief Convenience type shortcut.
         ///
