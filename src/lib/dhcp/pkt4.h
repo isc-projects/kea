@@ -299,9 +299,20 @@ public:
     ///
     /// @return returns option of requested type (or NULL)
     ///         if no such option is present
-
     boost::shared_ptr<Option>
     getOption(uint8_t opt_type);
+
+
+    /// @brief set interface over which packet should be sent
+    ///
+    /// @param interface defines outbound interface
+    void setIface(const std::string& interface){ iface_ = interface; }
+
+    /// @brief gets interface over which packet was received or
+    ///        will be transmitted
+    ///
+    /// @return name of the interface
+    std::string getIface() const { return iface_; }
 
 protected:
 
@@ -385,13 +396,14 @@ protected:
 
     // end of real DHCPv4 fields
 
-    /// input buffer (used during message reception)
-    /// Note that it must be modifiable as hooks can modify incoming buffer),
-    /// thus OutputBuffer, not InputBuffer
-    isc::util::InputBuffer bufferIn_;
-
     /// output buffer (used during message
     isc::util::OutputBuffer bufferOut_;
+
+    // that's the data of input buffer used in RX packet. Note that
+    // InputBuffer does not store the data itself, but just expects that
+    // data will be valid for the whole life of InputBuffer. Therefore we
+    // need to keep the data around.
+    std::vector<uint8_t> data_;
 
     /// message type (e.g. 1=DHCPDISCOVER)
     /// TODO: this will eventually be replaced with DHCP Message Type

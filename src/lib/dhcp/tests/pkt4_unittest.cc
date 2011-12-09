@@ -561,4 +561,17 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+22, 3)); // data len=3
 }
 
+// This test verifies methods that are used for manipulating meta fields
+// i.e. fields that are not part of DHCPv4 (e.g. interface name).
+TEST(Pkt4Ttest, metaFields) {
+    Pkt4 pkt(DHCPDISCOVER, 1234);
+
+    pkt.setIface("lo0");
+
+    EXPECT_EQ("lo0", pkt.getIface());
+
+    /// TODO: Expand this test once additonal getters/setters are
+    /// implemented.
+}
+
 } // end of anonymous namespace
