@@ -35,6 +35,14 @@ cause is that the configuration database contains a syntax error and ddns
 failed to start at initialization.  A detailed error message from the module
 will also be displayed.
 
+% DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received
+The ddns daemon received a shutdown command from the command channel
+and will now shut down.
+
+% DDNS_RUNNING ddns server is running and listening for updates
+The ddns daemon has successfully started and is now ready to receive commands
+and updates.
+
 % DDNS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the ddns daemon. The
 daemon will now shut down.
