@@ -74,7 +74,6 @@ public:
     /// (the base class documentation does not seem to require that).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
-                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options = FIND_DEFAULT);
 
     /// \brief Imelementation of the ZoneFinder::findPreviousName method

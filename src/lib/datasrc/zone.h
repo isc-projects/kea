@@ -237,9 +237,6 @@ public:
     ///   a successful match, and the code of \c SUCCESS will be returned.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
-    /// - If the target isn't NULL, all RRsets under the domain are inserted
-    ///   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned
-    ///   instead of normall processing. This is intended to handle ANY query.
     ///
     /// \note This behavior is controversial as we discussed in
     /// https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html
@@ -273,13 +270,10 @@ public:
     ///
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
-    /// \param target If target is not NULL, insert all RRs under the domain
-    /// into it.
     /// \param options The search options.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
-                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options
                             = FIND_DEFAULT) = 0;
 
