@@ -391,6 +391,14 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
 }
 
 ZoneFinder::FindResult
+DatabaseClient::Finder::findAll(const isc::dns::Name&,
+                                std::vector<isc::dns::ConstRRsetPtr>&,
+                                const FindOptions)
+{
+    isc_throw(isc::NotImplemented, "Not implemented");
+}
+
+ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              const FindOptions options)
