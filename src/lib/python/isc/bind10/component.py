@@ -39,6 +39,7 @@ START_CMD = 'start'
 STOP_CMD = 'stop'
 
 STARTED_OK_TIME = 10
+COMPONENT_RESTART_DELAY = 10
 
 STATE_DEAD = 'dead'
 STATE_STOPPED = 'stopped'
@@ -99,10 +100,17 @@ class BaseComponent:
             but it is vital part of the service (like auth server). If
             it fails to start or crashes in less than 10s after the first
             startup, the system is brought down. If it crashes later on,
-            it is restarted.
+            it is restarted (see below).
           * 'dispensable' means the component should be running, but if it
             doesn't start or crashes for some reason, the system simply tries
             to restart it and keeps running.
+
+        For components that are restarted, the restarts are not always
+        immediate; if the component has run for more than
+        COMPONENT_RESTART_DELAY (10) seconds, they are restarted right
+        away. If the component has not run that long, the system waits
+        until that time has passed (since the last start) until the
+        component is restarted.
 
         Note that the __init__ method of child class should have these
         parameters:
@@ -111,7 +119,7 @@ class BaseComponent:
 
         The extra parameters are:
         - `process` - which program should be started.
-        - `address` - the address on message buss, used to talk to the
+        - `address` - the address on message bus, used to talk to the
            component.
         - `params` - parameters to the program.
 
@@ -134,6 +142,7 @@ class BaseComponent:
         self.__state = STATE_STOPPED
         self._kind = kind
         self._boss = boss
+        self._original_start_time = None
 
     def start(self):
         """
@@ -149,6 +158,9 @@ class BaseComponent:
         logger.info(BIND10_COMPONENT_START, self.name())
         self.__state = STATE_RUNNING
         self.__start_time = time.time()
+        if self._original_start_time is None:
+            self._original_start_time = self.__start_time
+        self._restart_time = None
         try:
             self._start_internal()
         except Exception as e:
@@ -188,6 +200,11 @@ class BaseComponent:
         The exit code is used for logging. It might be None.
 
         It calls _failed_internal internally.
+
+        Returns True if the process was immediately restarted, returns
+                False is the process was not restarted, either because
+                it is considered a core or needed component, or because
+                the component is to be restarted later.
         """
         logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
                      exit_code if exit_code is not None else "unknown")
@@ -199,14 +216,47 @@ class BaseComponent:
         # (including it stopped really soon)
         if self._kind == 'core' or \
             (self._kind == 'needed' and time.time() - STARTED_OK_TIME <
-             self.__start_time):
+             self._original_start_time):
             self.__state = STATE_DEAD
             logger.fatal(BIND10_COMPONENT_UNSATISFIED, self.name())
             self._boss.component_shutdown(1)
+            return False
         # This means we want to restart
         else:
-            logger.warn(BIND10_COMPONENT_RESTART, self.name())
+            # if the component was only running for a short time, don't
+            # restart right away, but set a time it wants to restarted,
+            # and return that it wants to be restarted later
+            self.set_restart_time()
+            return self.restart()
+
+    def set_restart_time(self):
+        """Calculates and sets the time this component should be restarted.
+           Currently, it uses a very basic algorithm; start time +
+           RESTART_DELAY (10 seconds). This algorithm may be improved upon
+           in the future.
+        """
+        self._restart_at = self.__start_time + COMPONENT_RESTART_DELAY
+
+    def get_restart_time(self):
+        """Returns the time at which this component should be restarted."""
+        return self._restart_at
+
+    def restart(self, now = None):
+        """Restarts the component if it has a restart_time and if the value
+           of the restart_time is smaller than 'now'.
+
+           If the parameter 'now' is given, its value will be used instead
+           of calling time.time().
+
+           Returns True if the component is restarted, False if not."""
+        if now is None:
+            now = time.time()
+        if self.get_restart_time() is not None and\
+           self.get_restart_time() < now:
             self.start()
+            return True
+        else:
+            return False
 
     def running(self):
         """
@@ -283,7 +333,7 @@ class BaseComponent:
         """
         pass
 
-    def kill(self, forcefull=False):
+    def kill(self, forceful=False):
         """
         Kills the component.
 
@@ -403,7 +453,7 @@ class Configurator:
     * `special` - Some components are started in a special way. If it is
       present, it specifies which class from the specials parameter should
       be used to create the component. In that case, some of the following
-      items might be irrelevant, depending on the special component choosen.
+      items might be irrelevant, depending on the special component chosen.
       If it is not there, the basic Component class is used.
     * `process` - Name of the executable to start. If it is not present,
       it defaults to the identifier of the component.
@@ -460,7 +510,7 @@ class Configurator:
 
         It is not expected that anyone would want to shutdown and then start
         the configurator again, so we don't explicitly make sure that would
-        work. However, we are not avare of anything that would make it not
+        work. However, we are not aware of anything that would make it not
         work either.
         """
         if not self._running:

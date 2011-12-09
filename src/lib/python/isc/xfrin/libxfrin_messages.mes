@@ -19,3 +19,13 @@
 The xfrin module received an update containing multiple rdata changes for the
 same RRset. But the TTLs of these don't match each other. As we combine them
 together, the later one get's overwritten to the earlier one in the sequence.
+
+% LIBXFRIN_NO_JOURNAL disabled journaling for updates to %1 on %2
+An attempt was made to create a Diff object with journaling enabled, but
+the underlying data source didn't support journaling (while still allowing
+updates) and so the created object has it disabled.  At a higher level this
+means that the updates will be applied to the zone but subsequent IXFR requests
+will result in a full zone transfer (i.e., an AXFR-style IXFR).  Unless the
+overhead of the full transfer is an issue this message can be ignored;
+otherwise you may want to check why the journaling wasn't allowed on the
+data source and either fix the issue or use a different type of data source.

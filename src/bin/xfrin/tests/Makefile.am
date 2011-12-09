@@ -27,5 +27,6 @@ endif
 	PYTHONPATH=$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/bin/xfrin:$(COMMON_PYTHON_PATH) \
 	TESTDATASRCDIR=$(abs_top_srcdir)/src/bin/xfrin/tests/testdata/ \
 	TESTDATAOBJDIR=$(abs_top_builddir)/src/bin/xfrin/tests/testdata/ \
+	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

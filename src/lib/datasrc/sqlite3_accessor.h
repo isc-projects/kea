@@ -71,7 +71,6 @@ public:
         DataSourceError(file, line, what) {}
 };
 
-
 struct SQLite3Parameters;
 
 /**

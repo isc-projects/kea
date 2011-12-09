@@ -850,6 +850,13 @@ InMemoryClient::getUpdater(const isc::dns::Name&, bool, bool) const {
     isc_throw(isc::NotImplemented, "Update attempt on in memory data source");
 }
 
+pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+InMemoryClient::getJournalReader(const isc::dns::Name&, uint32_t,
+                                 uint32_t) const
+{
+    isc_throw(isc::NotImplemented, "Journaling isn't supported for "
+              "in memory data source");
+}
 
 namespace {
 // convencience function to add an error message to a list of those

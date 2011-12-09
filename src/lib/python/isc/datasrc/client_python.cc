@@ -38,6 +38,7 @@
 #include "finder_python.h"
 #include "iterator_python.h"
 #include "updater_python.h"
+#include "journal_reader_python.h"
 #include "client_inc.cc"
 
 using namespace std;
@@ -173,6 +174,43 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
     }
 }
 
+PyObject*
+DataSourceClient_getJournalReader(PyObject* po_self, PyObject* args) {
+    s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
+    PyObject *name_obj;
+    unsigned long begin_obj, end_obj;
+
+    if (PyArg_ParseTuple(args, "O!kk", &name_type, &name_obj,
+                         &begin_obj, &end_obj)) {
+        try {
+            pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
+                self->cppobj->getInstance().getJournalReader(
+                    PyName_ToName(name_obj), static_cast<uint32_t>(begin_obj),
+                    static_cast<uint32_t>(end_obj));
+            PyObject* po_reader;
+            if (result.first == ZoneJournalReader::SUCCESS) {
+                po_reader = createZoneJournalReaderObject(result.second,
+                                                          po_self);
+            } else {
+                po_reader = Py_None;
+                Py_INCREF(po_reader); // this will soon be released
+            }
+            PyObjectContainer container(po_reader);
+            return (Py_BuildValue("(iO)", result.first, container.get()));
+        } catch (const isc::NotImplemented& ex) {
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            ex.what());
+        } catch (const DataSourceError& ex) {
+            PyErr_SetString(getDataSourceException("Error"), ex.what());
+        } catch (const std::exception& ex) {
+            PyErr_SetString(PyExc_SystemError, ex.what());
+        } catch (...) {
+            PyErr_SetString(PyExc_SystemError, "Unexpected exception");
+        }
+    }
+    return (NULL);
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -180,18 +218,21 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef DataSourceClient_methods[] = {
-    { "find_zone", reinterpret_cast<PyCFunction>(DataSourceClient_findZone),
-      METH_VARARGS, DataSourceClient_findZone_doc },
+    { "find_zone", DataSourceClient_findZone, METH_VARARGS,
+      DataSourceClient_findZone_doc },
     { "get_iterator",
-      reinterpret_cast<PyCFunction>(DataSourceClient_getIterator), METH_VARARGS,
+      DataSourceClient_getIterator, METH_VARARGS,
       DataSourceClient_getIterator_doc },
-    { "get_updater", reinterpret_cast<PyCFunction>(DataSourceClient_getUpdater),
+    { "get_updater", DataSourceClient_getUpdater,
       METH_VARARGS, DataSourceClient_getUpdater_doc },
+    { "get_journal_reader", DataSourceClient_getJournalReader,
+      METH_VARARGS, DataSourceClient_getJournalReader_doc },
     { NULL, NULL, 0, NULL }
 };
 
 int
-DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
+DataSourceClient_init(PyObject* po_self, PyObject* args, PyObject*) {
+    s_DataSourceClient* self = static_cast<s_DataSourceClient*>(po_self);
     char* ds_type_str;
     char* ds_config_str;
     try {
@@ -236,7 +277,8 @@ DataSourceClient_init(s_DataSourceClient* self, PyObject* args) {
 }
 
 void
-DataSourceClient_destroy(s_DataSourceClient* const self) {
+DataSourceClient_destroy(PyObject* po_self) {
+    s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     delete self->cppobj;
     self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
@@ -255,7 +297,7 @@ PyTypeObject datasourceclient_type = {
     "datasrc.DataSourceClient",
     sizeof(s_DataSourceClient),         // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(DataSourceClient_destroy),// tp_dealloc
+    DataSourceClient_destroy,           // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -286,7 +328,7 @@ PyTypeObject datasourceclient_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(DataSourceClient_init),// tp_init
+    DataSourceClient_init,              // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free

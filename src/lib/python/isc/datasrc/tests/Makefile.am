@@ -6,6 +6,7 @@ EXTRA_DIST = $(PYTESTS)
 
 EXTRA_DIST += testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.sqlite3
+EXTRA_DIST += testdata/test.sqlite3.nodiffs
 CLEANFILES = $(abs_builddir)/rwtest.sqlite3.copied
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
@@ -33,5 +34,6 @@ endif
 	PYTHONPATH=:$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/python/isc/log:$(abs_top_builddir)/src/lib/python/isc/datasrc/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	TESTDATA_PATH=$(abs_srcdir)/testdata \
 	TESTDATA_WRITE_PATH=$(abs_builddir) \
+	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

@@ -17,6 +17,7 @@
 import isc.log
 import unittest
 import json
+import sys
 import bind10_config
 from isc.config.ccsession import path_search
 
@@ -89,6 +90,7 @@ class Logger(unittest.TestCase):
     def setUp(self):
         isc.log.init("root", "DEBUG", 50)
         self.sevs = ['INFO', 'WARN', 'ERROR', 'FATAL']
+        self.TEST_MSG = isc.log.create_message('TEST_MESSAGE', '%1')
 
     # Checks defaults of the logger
     def defaults(self, logger):
@@ -168,6 +170,35 @@ class Logger(unittest.TestCase):
         """
         logger = isc.log.Logger("child")
         self.assertEqual(logger.DBGLVL_COMMAND, 10)
+
+    def test_param_reference(self):
+        """
+        Check whether passing a parameter to a logger causes a reference leak.
+        """
+        class LogParam:
+            def __str__(self):
+                return 'LogParam'
+        logger = isc.log.Logger("child")
+        param = LogParam()
+        orig_msgrefcnt = sys.getrefcount(param)
+        orig_idrefcnt = sys.getrefcount(self.TEST_MSG)
+        logger.info(self.TEST_MSG, param);
+        self.assertEqual(sys.getrefcount(self.TEST_MSG), orig_idrefcnt)
+        self.assertEqual(sys.getrefcount(param), orig_msgrefcnt)
+
+        # intentionally pass an invalid type for debug level.  It will
+        # result in TypeError.  The passed object still shouldn't leak a
+        # reference.
+        self.assertRaises(TypeError, logger.debug, param, self.TEST_MSG, param)
+        self.assertEqual(sys.getrefcount(param), orig_msgrefcnt)
+
+    def test_bad_parameter(self):
+        # a log parameter cannot be converted to a string object.
+        class LogParam:
+            def __str__(self):
+                raise ValueError("LogParam can't be converted to string")
+        logger = isc.log.Logger("child")
+        self.assertRaises(ValueError, logger.info, self.TEST_MSG, LogParam())
 
 if __name__ == '__main__':
     unittest.main()

@@ -563,6 +563,98 @@ public:
 /// \brief A pointer-like type pointing to a \c ZoneUpdater object.
 typedef boost::shared_ptr<ZoneUpdater> ZoneUpdaterPtr;
 
+/// The base class for retrieving differences between two versions of a zone.
+///
+/// On construction, each derived class object will internally set up
+/// retrieving sequences of differences between two specific version of
+/// a specific zone managed in a particular data source.  So the constructor
+/// of a derived class would normally take parameters to identify the zone
+/// and the two versions for which the differences should be retrieved.
+/// See \c DataSourceClient::getJournalReader for more concrete details
+/// used in this API.
+///
+/// Once constructed, an object of this class will act like an iterator
+/// over the sequences.  Every time the \c getNextDiff() method is called
+/// it returns one element of the differences in the form of an \c RRset
+/// until it reaches the end of the entire sequences.
+class ZoneJournalReader {
+public:
+    /// Result codes used by a factory method for \c ZoneJournalReader
+    enum Result {
+        SUCCESS, ///< A \c ZoneJournalReader object successfully created
+        NO_SUCH_ZONE, ///< Specified zone does not exist in the data source
+        NO_SUCH_VERSION ///< Specified versions do not exist in the diff storage
+    };
+
+protected:
+    /// The default constructor.
+    ///
+    /// This is intentionally defined as protected to ensure that this base
+    /// class is never instantiated directly.
+    ZoneJournalReader() {}
+
+public:
+    /// The destructor
+    virtual ~ZoneJournalReader() {}
+
+    /// Return the next difference RR of difference sequences.
+    ///
+    /// In this API, the difference between two versions of a zone is
+    /// conceptually represented as IXFR-style difference sequences:
+    /// Each difference sequence is a sequence of RRs: an older version of
+    /// SOA (to be deleted), zero or more other deleted RRs, the
+    /// post-transaction SOA (to be added), and zero or more other
+    /// added RRs.  (Note, however, that the underlying data source
+    /// implementation may or may not represent the difference in
+    /// straightforward realization of this concept.  The mapping between
+    /// the conceptual difference and the actual implementation is hidden
+    /// in each derived class).
+    ///
+    /// This method provides an application with a higher level interface
+    /// to retrieve the difference along with the conceptual model: the
+    /// \c ZoneJournalReader object iterates over the entire sequences
+    /// from the beginning SOA (which is to be deleted) to one of the
+    /// added RR of with the ending SOA, and each call to this method returns
+    /// one RR in the form of an \c RRset that contains exactly one RDATA
+    /// in the order of the sequences.
+    ///
+    /// Note that the ordering of the sequences specifies the semantics of
+    /// each difference: add or delete.  For example, the first RR is to
+    /// be deleted, and the last RR is to be added.  So the return value
+    /// of this method does not explicitly indicate whether the RR is to be
+    /// added or deleted.
+    ///
+    /// This method ensures the returned \c RRset represents an RR, that is,
+    /// it contains exactly one RDATA.  However, it does not necessarily
+    /// ensure that the resulting sequences are in the form of IXFR-style.
+    /// For example, the first RR is supposed to be an SOA, and it should
+    /// normally be the case, but this interface does not necessarily require
+    /// the derived class implementation ensure this.  Normally the
+    /// differences are expected to be stored using this API (via a
+    /// \c ZoneUpdater object), and as long as that is the case and the
+    /// underlying implementation follows the requirement of the API, the
+    /// result of this method should be a valid IXFR-style sequences.
+    /// So this API does not mandate the almost redundant check as part of
+    /// the interface.  If the application needs to make it sure 100%, it
+    /// must check the resulting sequence itself.
+    ///
+    /// Once the object reaches the end of the sequences, this method returns
+    /// \c Null.  Any subsequent call will result in an exception of
+    /// class \c InvalidOperation.
+    ///
+    /// \exception InvalidOperation The method is called beyond the end of
+    /// the difference sequences.
+    /// \exception DataSourceError Underlying data is broken and the RR
+    /// cannot be created or other low level data source error.
+    ///
+    /// \return An \c RRset that contains one RDATA corresponding to the
+    /// next difference in the sequences.
+    virtual isc::dns::ConstRRsetPtr getNextDiff() = 0;
+};
+
+/// \brief A pointer-like type pointing to a \c ZoneUpdater object.
+typedef boost::shared_ptr<ZoneJournalReader> ZoneJournalReaderPtr;
+
 } // end of datasrc
 } // end of isc
 
