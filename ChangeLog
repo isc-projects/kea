@@ -1,3 +1,8 @@
+340.	[build]		jelte
+	Fixed several linker issues related to recent gcc versions, botan
+	and gtest.
+	(Trac #1442, git 91fb141bfb3aadfdf96f13e157a26636f6e9f9e3)
+
 339.	[bug]		jinmei
 	libxfr, used by b10-auth to share TCP sockets with b10-xfrout,
 	incorrectly propagated ASIO specific exceptions to the application
