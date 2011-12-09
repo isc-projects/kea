@@ -1,15 +1,15 @@
 #include <cassert>
 #include <stdexcept>
 #include <iterator>
+#include <map>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/unordered_map.hpp>
 
 #include <statistics/counter_dict.h>
 
 namespace {
 typedef boost::shared_ptr<isc::statistics::Counter> CounterPtr;
-typedef boost::unordered_map<std::string, CounterPtr> DictionaryMap;
+typedef std::map<std::string, CounterPtr> DictionaryMap;
 }
 
 namespace isc {
