@@ -1,0 +1,99 @@
+#!@PYTHON@
+
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+import isc
+from isc.dns import *
+from isc.config.ccsession import *
+from isc.cc import SessionError, SessionTimeout
+import isc.util.process
+
+from isc.log_messages.ddns_messages import *
+
+isc.log.init("b10-ddns")
+logger = isc.log.Logger("ddns")
+#DBG_DDNS_TRACE = logger.DBGLVL_TRACE_BASIC
+
+isc.util.process.rename()
+
+class DDNSConfigError(Exception):
+    """An exception indicating an error in updating ddns configuration.
+
+    This exception is raised when the ddns process encouters an error in
+    handling configuration updates.  Not all syntax error can be caught
+    at the module-CC layer, so ddns needs to (explicitly or implicitly)
+    validate the given configuration data itself.  When it finds an error
+    it raises this exception (either directly or by converting an exception
+    from other modules) as a unified error in configuration.
+    """
+    pass
+
+class DDNSSessionError(Exception):
+    '''An exception raised for some unexpected events during an ddns session.
+    '''
+    pass
+
+class DDNSServer:
+    def __init__(self):
+        pass
+    
+    def shutdown(self):
+        pass
+
+    def run(self):
+        pass
+
+ddns_server = None
+
+def signal_handler(signal, frame):
+    if ddns_server is not None:
+        ddns_server.shutdown()
+        sys.exit(0)
+
+def set_signal_handler():
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+def set_cmd_options(parser):
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+            help="display more about what is going on")
+
+if '__main__' == __name__:
+    try:
+        parser = OptionParser()
+        set_cmd_options(parser)
+        (options, args) = parser.parse_args()
+        VERBOSE_MODE = options.verbose
+
+        set_signal_handler()
+        ddns_server = DDNSServer()
+        ddns_server.run()
+    except KeyboardInterrupt:
+        logger.INFO(DDNS_STOPPED_BY_KEYBOARD)
+    except SessionError as e:
+        logger.error(DDNS_CC_SESSION_ERROR, str(e))
+    except ModuleCCSessionError as e:
+        logger.error(DDNS_MODULECC_SESSION_ERROR, str(e))
+    except DDNSConfigError as e:
+        logger.error(DDNS_CONFIG_ERROR, str(e))
+    except SessionTimeout as e:
+        logger.error(DDNS_CC_SESSION_TIMEOUT_ERROR)
+
+    if ddns_server:
+        ddns_server.shutdown()
+
