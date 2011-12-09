@@ -18,6 +18,7 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc
+import bind10_config
 from isc.dns import *
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
@@ -25,9 +26,19 @@ import isc.util.process
 
 from isc.log_messages.ddns_messages import *
 
+from optparse import OptionParser, OptionValueError
+import os
+import signal
+import threading
+
 isc.log.init("b10-ddns")
 logger = isc.log.Logger("ddns")
-#DBG_DDNS_TRACE = logger.DBGLVL_TRACE_BASIC
+
+DATA_PATH = bind10_config.DATA_PATH
+if "B10_FROM_BUILD" in os.environ:
+    DATA_PATH = DATA_PATH + "/src/bin/ddns"
+SPECFILE_LOCATION = DATA_PATH + "/ddns.spec"
+
 
 isc.util.process.rename()
 
@@ -50,13 +61,46 @@ class DDNSSessionError(Exception):
 
 class DDNSServer:
     def __init__(self):
-        pass
-    
+        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+                                              self.config_handler,
+                                              self.command_handler)
+        self._config_data = self._cc.get_full_config()
+        self._cc.start()
+        self._shutdown_event = threading.Event()
+
+    def config_handler(self, new_config):
+        '''Update config data.'''
+        answer = create_answer(0)
+        for key in new_config:
+            if key not in self._config_data:
+                answer = create_answer(1, "Unknown config data: " + str(key))
+                continue
+            self._config_data[key] = new_config[key]
+        return answer
+
+
+    def command_handler(self, cmd, args):
+        if cmd == "shutdown":
+            logger.info(DDNS_RECEIVED_SHUTDOWN_COMMAND)
+            self.shutdown()
+            answer = create_answer(0)
+        else:
+            answer = create_answer(1, "Unknown command:" + str(cmd))
+        return answer
+
     def shutdown(self):
-        pass
+        self._shutdown_event.set()
+        main_thread = threading.currentThread()
+        for th in threading.enumerate():
+            if th is main_thread:
+                continue
+            th.join()
 
     def run(self):
-        pass
+        '''Get and process all commands sent from cfgmgr or other modules. '''
+        logger.info(DDNS_RUNNING)
+        while not self._shutdown_event.is_set():
+            self._cc.check_command(False)
 
 ddns_server = None
 
