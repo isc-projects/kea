@@ -1,3 +1,10 @@
+342.	[bug]		stephen
+	In the resolver, a FORMERR received from an upstream nameserver
+	now rsults in a SERVFAIL being returned as a response to the original
+	query.  Additional debug messages added to distinguish between
+	different errors in packets received from upstream nameservers.
+	(Trac #1383, git 9b2b249d23576c999a65d8c338e008cabe45f0c9)
+
 341.	[func]		tomek
 	libdhcp++: Support for handling both IPv4 and IPv6 added.
 	Also added support for binding IPv4 sockets.
