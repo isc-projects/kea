@@ -89,6 +89,8 @@
 #define DHCP_OPT_DHCP_PRL	55
 #define DHCP_OPT_END		255
 
+#define DHCP_OPTLEN_SRVID	6
+
 /* DHCPv6 defines */
 
 #define DHCP6_OFF_MSGTYP	0
@@ -189,22 +191,27 @@ struct {								\
 struct exchange {				/* per exchange structure */
 	ISC_TAILQ_ENTRY(exchange) gchain;	/* global chaining */
 	ISC_TAILQ_ENTRY(exchange) hchain;	/* hash table chaining */
-	uint64_t order;				/* number of this exchange */
+	uint64_t order0, order2;		/* number of this exchange */
 	uint32_t xid;				/* transaction ID */
 	uint32_t rnd;				/* random part */
-	struct timespec ts0, ts1;		/* timespecs */
+	struct timespec ts0, ts1, ts2, ts3;	/* timespecs */
+	uint8_t *sid;				/* server ID */
+	size_t sidlen;				/* server ID length */
+	uint8_t *iana;				/* (IPv6) IA_NA */
+	size_t ianalen;				/* (IPv6) IA_NA length */
 };
-struct exchange *xnext;				/* next to be received */
+struct exchange *xnext0, *xnext2;		/* next to be received */
 ISC_TAILQ_HEAD(xlist, exchange);		/* exchange list */
-struct xlist xsent, xrcvd;			/* sent and received lists */
-uint64_t xscount, xrcount;			/* exchange counters */
-caddr_t exchanges;				/* hash table */
-uint32_t hashsize;				/* hash table size */
+struct xlist xsent0, xsent2, xrcvd0, xrcvd2;	/* sent and received lists */
+uint64_t xscount0, xscount2;			/* sent counters */
+uint64_t xrcount0, xrcount2;			/* received counters */
+caddr_t exchanges0, exchanges2;			/* hash tables */
+uint32_t hashsize0, hashsize2;			/* hash table sizes */
 uint64_t tooshort, orphans, locallimit;		/* error counters */
-double dmin = 999999999.;			/* minimum delay */
-double dmax = 0.;				/* maximum delay */
-double dsum = 0.;				/* delay sum */
-double dsumsq = 0.;				/* square delay sum */
+double dmin0 = 999999999., dmin2 = 999999999.;	/* minimum delays */
+double dmax0 = 0., dmax2 = 0.;			/* maximum delays */
+double dsum0 = 0., dsum2 = 0.;			/* delay sums */
+double dsumsq0 = 0., dsumsq2 = 0.;		/* square delay sums */
 
 int ipversion = 0;			/* IP version */
 int simple;				/* DO/SA in place of DORR/SARR */
@@ -214,22 +221,31 @@ uint32_t range;				/* randomization range */
 uint32_t maxrandom;			/* maximum random value */
 int basecnt;				/* base count */
 char *base[4];				/* bases */
-int numreq;				/* number of exchange */
+int gotnumreq;				/* numreq[0] was set */
+int numreq[2];				/* number of exchange */
 int period;				/* test period */
-double losttime = 1.0;			/* time after a request is lost  */
-int maxdrop;				/* maximum number of lost requests */
-int maxpdrop;				/* maximum percentage */
+int gotlosttime;			/* losttime[0] was set */
+double losttime[2] = {1., 1.};		/* time after a request is lost  */
+int gotmaxdrop;				/* max{p}drop[0] was set */
+int maxdrop[2];				/* maximum number of lost requests */
+double maxpdrop[2] = { 0., 0.};		/* maximum percentage */
 char *localname;			/* local address or interface */
 int isinterface;			/* interface vs local address */
 int preload;				/* preload exchanges */
 int aggressivity = 1;			/* back to back exchanges */
+int localport;				/* local port number (host endian) */
 int seeded;				/* is a seed provided */
 unsigned int seed;			/* randomization seed */
 int isbroadcast;			/* use broadcast */
 int rapidcommit;			/* add rapid commit option */
+int usefirst;				/* where to take the server-ID */
 char *diags;				/* diagnostic selectors */
-char *templatefile;			/* template file name */
-int xidoffset = -1, rndoffset = -1;	/* template offsets */
+char *templatefile[2];			/* template file name */
+int xidoffset[2] = {-1, -1};		/* template offsets (xid)*/
+int rndoffset[2] = {-1, -1};		/* template offsets (random) */
+int elpoffset = -1;			/* template offset (elapsed time) */
+int sidoffset = -1;			/* template offset (server ID) */
+int ripoffset = -1;			/* template offset (requested IP) */
 char *servername;			/* server */
 
 struct sockaddr_storage localaddr;
@@ -243,19 +259,37 @@ char tbuf[8200];
 
 struct timespec boot, last, due, dreport, finished;
 
+uint8_t *gsrvid;				/* global server id */
+size_t gsrvidlen;				/*  and its length */
+uint8_t gsrvidbuf[64];				/*  and its storage */
+
 uint8_t mac_prefix[6] = { 0x00, 0x0c, 0x01, 0x02, 0x03, 0x04 };
 uint8_t *duid_prefix;
 int duid_length;
-
 uint8_t dhcp_cookie[4] = { 0x63, 0x82, 0x53, 0x63 };
+
 size_t length_discover4;
 uint8_t template_discover4[4096];
 size_t xid_discover4;
 size_t random_discover4;
+size_t length_request4;
+uint8_t template_request4[4096];
+size_t xid_request4;
+size_t elapsed_request4;
+size_t random_request4;
+size_t serverid_request4;
+size_t reqaddr_request4;
 size_t length_solicit6;
 uint8_t template_solicit6[4096];
 size_t xid_solicit6;
 size_t random_solicit6;
+size_t length_request6;
+uint8_t template_request6[4096];
+size_t xid_request6;
+size_t elapsed_request6;
+size_t random_request6;
+size_t serverid_request6;
+size_t reqaddr_request6;
 
 void
 inits(void)
@@ -264,18 +298,33 @@ inits(void)
 	caddr_t p;
 	size_t len, i;
 
-	ISC_TAILQ_INIT(&xsent);
-	ISC_TAILQ_INIT(&xrcvd);
+	ISC_TAILQ_INIT(&xsent0);
+	ISC_TAILQ_INIT(&xsent2);
+	ISC_TAILQ_INIT(&xrcvd0);
+	ISC_TAILQ_INIT(&xrcvd2);
 
-	/// compute hashsize
-	hashsize = 1024;
-	len = sizeof(*bucket) * hashsize;
-	exchanges = malloc(len);
-	if (exchanges == NULL) {
-		perror("malloc(exchanges)");
+	/// compute hashsizes
+	hashsize0 = 1024;
+	len = sizeof(*bucket) * hashsize0;
+	exchanges0 = malloc(len);
+	if (exchanges0 == NULL) {
+		perror("malloc(exchanges0)");
 		exit(1);
 	}
-	for (i = 0, p = exchanges; i < hashsize; i++, p += sizeof(*bucket)) {
+	for (i = 0, p = exchanges0; i < hashsize0; i++, p += sizeof(*bucket)) {
+		bucket = (struct xlist *) p;
+		ISC_TAILQ_INIT(bucket);
+	}
+	if (simple != 0)
+		return;
+	hashsize2 = 1024;
+	len = sizeof(*bucket) * hashsize2;
+	exchanges2 = malloc(len);
+	if (exchanges2 == NULL) {
+		perror("malloc(exchanges2)");
+		exit(1);
+	}
+	for (i = 0, p = exchanges2; i < hashsize2; i++, p += sizeof(*bucket)) {
 		bucket = (struct xlist *) p;
 		ISC_TAILQ_INIT(bucket);
 	}
@@ -316,10 +365,67 @@ randomize(size_t offset, uint32_t r)
 }
 
 void
+receive_reply(uint32_t xid, struct timespec *now)
+{
+	struct exchange *x, *t;
+	struct xlist *bucket;
+	uint32_t hash;
+	int checklost;
+	double delta;
+
+	hash = (xid >> 1) & (hashsize2 - 1);
+	bucket = (struct xlist *) (exchanges2 + hash * sizeof(*bucket));
+	if ((xnext2 != NULL) && (xnext2->xid == xid)) {
+		x = xnext2;
+		goto found;
+	}
+	checklost = 1;
+	ISC_TAILQ_FOREACH_SAFE(x, bucket, hchain, t) {
+		double waited;
+
+		if (x->xid == xid)
+			goto found;
+		if (checklost <= 0)
+			continue;
+		checklost = 0;
+		waited = now->tv_sec - x->ts2.tv_sec;
+		waited += (now->tv_nsec - x->ts2.tv_nsec) / 1e9;
+		if (waited < losttime[1])
+			continue;
+		ISC_TAILQ_REMOVE(bucket, x, hchain);
+		ISC_TAILQ_REMOVE(&xsent2, x, gchain);
+		free(x);
+	}
+	orphans++;
+	return;
+
+    found:
+	xrcount2++;
+	x->ts3 = *now;
+	delta = x->ts3.tv_sec - x->ts2.tv_sec;
+	delta += (x->ts3.tv_nsec - x->ts2.tv_nsec) / 1e9;
+	if (delta < dmin2)
+		dmin2 = delta;
+	if (delta > dmax2)
+		dmax2 = delta;
+	dsum2 += delta;
+	dsumsq2 += delta * delta;
+	xnext2 = ISC_TAILQ_NEXT(x, gchain);
+	ISC_TAILQ_REMOVE(bucket, x, hchain);
+	ISC_TAILQ_REMOVE(&xsent2, x, gchain);
+	ISC_TAILQ_INSERT_TAIL(&xrcvd2, x, gchain);
+}
+
+void
 getsock4(void)
 {
 	int ret;
 
+	if (localport != 0) {
+		uint16_t lp = htons((uint16_t) localport);
+
+		((struct sockaddr_in *) &localaddr)->sin_port = lp;
+	}
 	sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock < 0) {
 		perror("socket");
@@ -352,6 +458,7 @@ build_template_discover4(void)
 
 	length_discover4 = BOOTP_MIN_LEN;
 	xid_discover4 = DHCP_OFF_XID;
+	random_discover4 = DHCP_OFF_CHADDR + 6;
 	/* opcode */
 	p[DHCP_OFF_OPCODE] = BOOTP_OP_REQUEST;
 	/* hardware address type */
@@ -366,7 +473,6 @@ build_template_discover4(void)
 	       4);
 	/* hardware address */
 	memcpy(p + DHCP_OFF_CHADDR, mac_prefix, 6);
-	random_discover4 = DHCP_OFF_CHADDR + 6;
 	/* cookie */
 	memcpy(p + DHCP_OFF_COOKIE, dhcp_cookie, 4);
 	/* options */
@@ -386,7 +492,7 @@ build_template_discover4(void)
 	*p++ = DHCP_OPT_DNS_SERVERS;
 	*p++ = DHCP_OPT_HOST_NAME;
 	/* end */
-	*p++ = DHCP_OPT_END;
+	*p = DHCP_OPT_END;
 }
 
 void
@@ -395,30 +501,26 @@ get_template_discover4(void)
 	uint8_t *p = template_discover4;
 	int fd, cc, i, j;
 
-	fd = open(templatefile, O_RDONLY);
+	fd = open(templatefile[0], O_RDONLY);
 	if (fd < 0) {
 		fprintf(stderr, "open(%s): %s\n",
-			templatefile, strerror(errno));
+			templatefile[0], strerror(errno));
 		exit(2);
 	}
 	cc = read(fd, tbuf, sizeof(tbuf));
 	(void) close(fd);
 	if (cc < 0) {
 		fprintf(stderr, "read(%s): %s\n",
-			templatefile, strerror(errno));
+			templatefile[0], strerror(errno));
 		exit(1);
 	}
 	if (cc < 100) {
-		fprintf(stderr, "file '%s' too short\n", templatefile);
+		fprintf(stderr, "file '%s' too short\n", templatefile[0]);
 		exit(2);
 	}
 	if (cc > 8193) {
-		fprintf(stderr,"file '%s' too large\n", templatefile);
+		fprintf(stderr,"file '%s' too large\n", templatefile[0]);
 		exit(2);
-	}
-	if (tbuf[cc - 1] == '\n') {
-		tbuf[cc - 1] = '\0';
-		cc--;
 	}
 	j = 0;
 	for (i = 0; i < cc; i++) {
@@ -427,7 +529,7 @@ get_template_discover4(void)
 		if (!isxdigit((int) tbuf[i])) {
 			fprintf(stderr,
 				"illegal char[%d]='%c' in file '%s'\n",
-				i, (int) tbuf[i], templatefile);
+				i, (int) tbuf[i], templatefile[0]);
 			exit(2);
 		}
 		tbuf[j] = tbuf[i];
@@ -437,14 +539,14 @@ get_template_discover4(void)
 	if ((cc & 1) != 0) {
 		fprintf(stderr,
 			"odd number of hexadecimal digits in file '%s'\n",
-			templatefile);
+			templatefile[0]);
 		exit(2);
 	}
 	length_discover4 = cc >> 1;
 	for (i = 0; i < cc; i += 2)
 		(void) sscanf(tbuf + i, "%02hhx", &p[i >> 1]);
-	if (xidoffset >= 0)
-		xid_discover4 = (size_t) xidoffset;
+	if (xidoffset[0] >= 0)
+		xid_discover4 = (size_t) xidoffset[0];
 	else
 		xid_discover4 = DHCP_OFF_XID;
 	if (xid_discover4 + 4 > length_discover4) {
@@ -453,16 +555,232 @@ get_template_discover4(void)
 			xid_discover4, length_discover4);
 		exit(2);
 	}
-	if (rndoffset >= 0)
-		random_discover4 = (size_t) rndoffset;
+	if (rndoffset[0] >= 0)
+		random_discover4 = (size_t) rndoffset[0];
 	else
-		random_discover4 = 0;
+		random_discover4 = DHCP_OFF_CHADDR + 6;
 	if (random_discover4 > length_discover4) {
 		fprintf(stderr,
 			"random (at %zu) outside the template (length %zu)?\n",
 			random_discover4, length_discover4);
 		exit(2);
 	}
+}
+
+void
+build_template_request4(void)
+{
+	uint8_t *p = template_request4;
+
+	length_request4 = BOOTP_MIN_LEN;
+	xid_request4 = DHCP_OFF_XID;
+	elapsed_request4 = DHCP_OFF_SECS;
+	random_request4 = DHCP_OFF_CHADDR + 6;
+	/* opcode */
+	p[DHCP_OFF_OPCODE] = BOOTP_OP_REQUEST;
+	/* hardware address type */
+	p[DHCP_OFF_HTYPE] = DHCP_HTYPE_ETHER;
+	/* hardware address length */
+	p[DHCP_OFF_HLEN] = 6;
+	/* hops */
+	p[DHCP_OFF_HOPS] = 1;
+	/* gateway address */
+	memcpy(p + DHCP_OFF_GIADDR,
+	       &((struct sockaddr_in *) &localaddr)->sin_addr,
+	       4);
+	/* hardware address */
+	memcpy(p + DHCP_OFF_CHADDR, mac_prefix, 6);
+	/* cookie */
+	memcpy(p + DHCP_OFF_COOKIE, dhcp_cookie, 4);
+	/* options */
+	p += DHCP_OFF_OPTIONS;
+	/* inline DHCP message type */
+	*p++ = DHCP_OPT_DHCP_MSGTYPE;
+	*p++ = 1;
+	*p++ = DHCP_OP_REQUEST;
+	/* place for DHCP server id (option) */
+	serverid_request4 = p - template_request4;
+	p += DHCP_OPTLEN_SRVID;
+	/* place for DHCP requested IP address (address) */
+	*p++ = DHCP_OPT_DHCP_ADDRESS;
+	*p++ = 4;
+	reqaddr_request4 = p - template_request4;
+	p += 4;
+	/* inline DHCP parameter request list (default) */
+	*p++ = DHCP_OPT_DHCP_PRL;
+	*p++ = 7;
+	*p++ = DHCP_OPT_SUBNET_MASK;
+	*p++ = DHCP_OPT_BROADCAST;
+	*p++ = DHCP_OPT_TIME_OFFSET;
+	*p++ = DHCP_OPT_ROUTERS;
+	*p++ = DHCP_OPT_DOMAIN_NAME;
+	*p++ = DHCP_OPT_DNS_SERVERS;
+	*p++ = DHCP_OPT_HOST_NAME;
+	/* end */
+	*p = DHCP_OPT_END;
+}
+
+void
+get_template_request4(void)
+{
+	uint8_t *p = template_request4;
+	int fd, cc, i, j;
+
+	fd = open(templatefile[1], O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "open(%s): %s\n",
+			templatefile[1], strerror(errno));
+		exit(2);
+	}
+	cc = read(fd, tbuf, sizeof(tbuf));
+	(void) close(fd);
+	if (cc < 0) {
+		fprintf(stderr, "read(%s): %s\n",
+			templatefile[1], strerror(errno));
+		exit(1);
+	}
+	if (cc < 100) {
+		fprintf(stderr, "file '%s' too short\n", templatefile[1]);
+		exit(2);
+	}
+	if (cc > 8193) {
+		fprintf(stderr,"file '%s' too large\n", templatefile[1]);
+		exit(2);
+	}
+	j = 0;
+	for (i = 0; i < cc; i++) {
+		if (isspace((int) tbuf[i]))
+			continue;
+		if (!isxdigit((int) tbuf[i])) {
+			fprintf(stderr,
+				"illegal char[%d]='%c' in file '%s'\n",
+				i, (int) tbuf[i], templatefile[1]);
+			exit(2);
+		}
+		tbuf[j] = tbuf[i];
+		j++;
+	}
+	cc = j;
+	if ((cc & 1) != 0) {
+		fprintf(stderr,
+			"odd number of hexadecimal digits in file '%s'\n",
+			templatefile[1]);
+		exit(2);
+	}
+	length_request4 = cc >> 1;
+	for (i = 0; i < cc; i += 2)
+		(void) sscanf(tbuf + i, "%02hhx", &p[i >> 1]);
+	if (xidoffset[1] >= 0)
+		xid_request4 = (size_t) xidoffset[1];
+	else
+		xid_request4 = DHCP_OFF_XID;
+	if (xid_request4 + 4 > length_request4) {
+		fprintf(stderr,
+			"xid (at %zu) outside the template (length %zu)?\n",
+			xid_request4, length_request4);
+		exit(2);
+	}
+	if (rndoffset[1] >= 0)
+		random_request4 = (size_t) rndoffset[1];
+	else
+		random_request4 = DHCP_OFF_CHADDR + 6;
+	if (random_request4 > length_request4) {
+		fprintf(stderr,
+			"random (at %zu) outside the template (length %zu)?\n",
+			random_request4, length_request4);
+		exit(2);
+	}
+	if (elpoffset >= 0)
+		elapsed_request4 = (size_t) elpoffset;
+	else
+		elapsed_request4 = DHCP_OFF_SECS;
+	if (elapsed_request4 + 2 > length_request4) {
+		fprintf(stderr,
+			"secs (at %zu) outside the template (length %zu)?\n",
+			elapsed_request4, length_request4);
+		exit(2);
+	}
+	serverid_request4 = (size_t) elpoffset;
+	if (serverid_request4 + 6 > length_request4) {
+		fprintf(stderr,
+			"server-id option (at %zu) outside the template "
+			"(length %zu)?\n",
+			serverid_request4, length_request4);
+		exit(2);
+	}
+	reqaddr_request4 = (size_t) ripoffset;
+	if (reqaddr_request4 + 4 > length_request4) {
+		fprintf(stderr,
+			"requested-ip-address option (at %zu) outside "
+			"the template (length %zu)?\n",
+			reqaddr_request4, length_request4);
+		exit(2);
+	}
+}
+
+void
+send_request4(struct exchange *x0)
+{
+	struct exchange *x;
+	struct xlist *bucket;
+	uint32_t hash;
+	ssize_t ret;
+
+	x = (struct exchange *) malloc(sizeof(*x));
+	if (x == NULL) {
+		locallimit++;
+		perror("send2");
+		return;
+	}
+
+	memcpy(x, x0, sizeof(*x));
+	x->order2 = xscount2++;
+	x->xid |= 1;
+	hash = x->xid >> 1;
+
+	ISC_TAILQ_INSERT_TAIL(&xsent2, x, gchain);
+	hash &= hashsize2 - 1;
+	bucket = (struct xlist *) (exchanges2 + hash * sizeof(*bucket));
+	ISC_TAILQ_INSERT_TAIL(bucket, x, hchain);
+
+	memcpy(obuf, template_request4, length_request4);
+	/* xid */
+	memcpy(obuf + xid_request4, &x->xid, 4);
+	/* random */
+	randomize(random_request4, x->rnd);
+	/* secs */
+	if (elapsed_request4 > 0) {
+		int secs;
+
+		secs = x->ts1.tv_sec - x->ts0.tv_sec;
+		if (x->ts1.tv_nsec < x->ts0.tv_nsec)
+			secs += 1;
+		if (secs > 0) {
+			obuf[elapsed_request4] = secs >> 8;
+			obuf[elapsed_request4 + 1] = secs & 0xff;
+		}
+	}
+	/* server ID */
+	memcpy(obuf + serverid_request4, x->sid, x->sidlen);
+	/* requested IP address */
+	memcpy(obuf + reqaddr_request4, ibuf + DHCP_OFF_YIADDR, 4);
+
+	/* timestamp */
+	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
+	if (ret < 0) {
+		perror("clock_gettime(send2)");
+		fatal = 1;
+		return;
+	}
+	ret = sendto(sock, obuf, length_request4, 0,
+		     (struct sockaddr *) &serveraddr,
+		     sizeof(struct sockaddr_in));
+	if (ret >= 0)
+		return;
+	if ((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
+	    (errno == ENOBUFS) || (errno == ENOMEM))
+		locallimit++;
+	perror("send2");
 }
 
 int
@@ -474,25 +792,27 @@ send4(void)
 	ssize_t ret;
 
 	x = (struct exchange *) malloc(sizeof(*x));
-	if (x == NULL) {
-		locallimit++;
+	if (x == NULL)
 		return -ENOMEM;
-	}
 
 	memset(x, 0, sizeof(*x));
-	x->order = xscount++;
-	hash = x->xid = (uint32_t) random();
+	x->order0 = xscount0++;
+	hash = x->rnd = (uint32_t) random();
+	if (simple == 0)
+		x->xid = hash << 1;
+	else
+		x->xid = hash;
 
-	ISC_TAILQ_INSERT_TAIL(&xsent, x, gchain);
-	hash &= hashsize - 1;
-	bucket = (struct xlist *) (exchanges + hash * sizeof(*bucket));
+	ISC_TAILQ_INSERT_TAIL(&xsent0, x, gchain);
+	hash &= hashsize0 - 1;
+	bucket = (struct xlist *) (exchanges0 + hash * sizeof(*bucket));
 	ISC_TAILQ_INSERT_TAIL(bucket, x, hchain);
 
 	memcpy(obuf, template_discover4, length_discover4);
 	/* xid */
 	memcpy(obuf + xid_discover4, &x->xid, 4);
 	/* random */
-	x->rnd = randomize(random_discover4, x->xid);
+	x->rnd = randomize(random_discover4, x->rnd);
 	/* timestamp */
 	ret = clock_gettime(CLOCK_REALTIME, &last);
 	if (ret < 0) {
@@ -509,6 +829,44 @@ send4(void)
 		return 0;
 	return -errno;
 }	
+
+int
+scan_for_srvid4(struct exchange *x, size_t cc)
+{
+	size_t off = DHCP_OFF_OPTIONS;
+
+	for (;;) {
+		if (off + DHCP_OPTLEN_SRVID > cc) {
+			fprintf(stderr, "truncated\n");
+			return -1;
+		}
+		if (ibuf[off] == DHCP_OPT_DHCP_SRVID)
+			break;
+		if (ibuf[off] == DHCP_OPT_END) {
+			fprintf(stderr, "server-id not found\n");
+			return -1;
+		}
+		if (ibuf[off] == DHCP_OPT_PAD) {
+			off++;
+			continue;
+		}
+		off += 2 + ibuf[off + 1];
+	}
+	if (ibuf[off + 1] != DHCP_OPTLEN_SRVID - 2) {
+		fprintf(stderr,
+			"bad server-id length (%hhu)\n",
+			ibuf[off + 1]);
+		return -1;
+	}
+	if ((usefirst != 0) && (gsrvid == NULL)) {
+		memcpy(gsrvidbuf, ibuf + off, DHCP_OPTLEN_SRVID);
+		gsrvid = gsrvidbuf;
+		gsrvidlen = DHCP_OPTLEN_SRVID;
+	}
+	x->sid = ibuf + off;
+	x->sidlen = DHCP_OPTLEN_SRVID;
+	return 0;
+}
 
 void
 receive4(void)
@@ -542,11 +900,18 @@ receive4(void)
 		fatal = 1;
 		return;
 	}
-	memcpy(&xid, ibuf + DHCP_OFF_XID, 4);
-	hash = xid & (hashsize - 1);
-	bucket = (struct xlist *) (exchanges + hash * sizeof(*bucket));
-	if ((xnext != NULL) && (xnext->xid == xid)) {
-		x = xnext;
+	memcpy(&xid, ibuf + xid_discover4, 4);
+	if (simple == 0) {
+		if ((xid & 1) != 0) {
+			receive_reply(xid, &now);
+			return;
+		}
+		hash = (xid >> 1) & (hashsize0 - 1);
+	} else
+		hash = xid & (hashsize0 - 1);
+	bucket = (struct xlist *) (exchanges0 + hash * sizeof(*bucket));
+	if ((xnext0 != NULL) && (xnext0->xid == xid)) {
+		x = xnext0;
 		goto found;
 	}
 	if (rate != 0)
@@ -560,33 +925,44 @@ receive4(void)
 			continue;
 		waited = now.tv_sec - x->ts0.tv_sec;
 		waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
-		if (waited < losttime) {
+		if (waited < losttime[0]) {
 			checklost = 0;
 			continue;
 		}
 		checklost--;
 		ISC_TAILQ_REMOVE(bucket, x, hchain);
-		ISC_TAILQ_REMOVE(&xsent, x, gchain);
+		ISC_TAILQ_REMOVE(&xsent0, x, gchain);
 		free(x);
 	}
 	orphans++;
 	return;
 
     found:
-	xrcount++;
+	xrcount0++;
 	x->ts1 = now;
 	delta = x->ts1.tv_sec - x->ts0.tv_sec;
 	delta += (x->ts1.tv_nsec - x->ts0.tv_nsec) / 1e9;
-	if (delta < dmin)
-		dmin = delta;
-	if (delta > dmax)
-		dmax = delta;
-	dsum += delta;
-	dsumsq += delta * delta;
-	xnext = ISC_TAILQ_NEXT(x, gchain);
+	if (delta < dmin0)
+		dmin0 = delta;
+	if (delta > dmax0)
+		dmax0 = delta;
+	dsum0 += delta;
+	dsumsq0 += delta * delta;
+	xnext0 = ISC_TAILQ_NEXT(x, gchain);
 	ISC_TAILQ_REMOVE(bucket, x, hchain);
-	ISC_TAILQ_REMOVE(&xsent, x, gchain);
-	ISC_TAILQ_INSERT_TAIL(&xrcvd, x, gchain);
+	ISC_TAILQ_REMOVE(&xsent0, x, gchain);
+	ISC_TAILQ_INSERT_TAIL(&xrcvd0, x, gchain);
+	if (simple == 0) {
+		int ret = 0;
+
+		if ((usefirst != 0) && (gsrvid != NULL)) {
+			x->sid = gsrvid;
+			x->sidlen = gsrvidlen;
+		} else
+			ret = scan_for_srvid4(x, cc);
+		if (ret >= 0)
+			send_request4(x);
+	}
 }
 
 void
@@ -595,6 +971,11 @@ getsock6(void)
 	struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) &serveraddr;
 	int ret;
 
+	if (localport != 0) {
+		uint16_t lp = htons((uint16_t) localport);
+
+		((struct sockaddr_in6 *) &localaddr)->sin6_port = lp;
+	}
 	sock = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock < 0) {
 		perror("socket");
@@ -678,51 +1059,54 @@ void
 get_template_solicit6(void)
 {
 	uint8_t *p = template_solicit6;
-	int fd, cc, i;
+	int fd, cc, i, j;
 
-	fd = open(templatefile, O_RDONLY);
+	fd = open(templatefile[0], O_RDONLY);
 	if (fd < 0) {
 		fprintf(stderr, "open(%s): %s\n",
-			templatefile, strerror(errno));
+			templatefile[0], strerror(errno));
 		exit(2);
 	}
 	cc = read(fd, tbuf, sizeof(tbuf));
 	(void) close(fd);
 	if (cc < 0) {
 		fprintf(stderr, "read(%s): %s\n",
-			templatefile, strerror(errno));
+			templatefile[0], strerror(errno));
 		exit(1);
 	}
 	if (cc < 10) {
-		fprintf(stderr, "file '%s' too short\n", templatefile);
+		fprintf(stderr, "file '%s' too short\n", templatefile[0]);
 		exit(2);
 	}
 	if (cc > 8193) {
-		fprintf(stderr,"file '%s' too large\n", templatefile);
+		fprintf(stderr,"file '%s' too large\n", templatefile[0]);
 		exit(2);
 	}
-	if (tbuf[cc - 1] == '\n') {
-		tbuf[cc - 1] = '\0';
-		cc--;
-	}
-	if ((cc & 1) != 0) {
-		fprintf(stderr,
-			"odd number of hexadecimal digits in file '%s'\n",
-			templatefile);
-		exit(2);
-	}
-	for (i = 0; i < cc; i++)
+	j = 0;
+	for (i = 0; i < cc; i++) {
+		if (isspace((int) tbuf[i]))
+			continue;
 		if (!isxdigit((int) tbuf[i])) {
 			fprintf(stderr,
 				"illegal char[%d]='%c' in file '%s'\n",
-				i, (int) tbuf[i], templatefile);
+				i, (int) tbuf[i], templatefile[0]);
 			exit(2);
 		}
+		tbuf[j] = tbuf[i];
+		j++;
+	}
+	cc = j;
+	if ((cc & 1) != 0) {
+		fprintf(stderr,
+			"odd number of hexadecimal digits in file '%s'\n",
+			templatefile[0]);
+		exit(2);
+	}
 	length_solicit6 = cc >> 1;
 	for (i = 0; i < cc; i += 2)
 		(void) sscanf(tbuf + i, "%02hhx", &p[i >> 1]);
-	if (xidoffset >= 0)
-		xid_solicit6 = (size_t) xidoffset;
+	if (xidoffset[0] >= 0)
+		xid_solicit6 = (size_t) xidoffset[0];
 	else
 		xid_solicit6 = DHCP6_OFF_XID;
 	if (xid_solicit6 + 3 > length_solicit6) {
@@ -731,8 +1115,8 @@ get_template_solicit6(void)
 			xid_solicit6, length_solicit6);
 		exit(2);
 	}
-	if (rndoffset >= 0)
-		random_solicit6 = (size_t) rndoffset;
+	if (rndoffset[0] >= 0)
+		random_solicit6 = (size_t) rndoffset[0];
 	else
 		random_solicit6 = 0;
 	if (random_solicit6 > length_solicit6) {
@@ -741,6 +1125,203 @@ get_template_solicit6(void)
 			random_solicit6, length_solicit6);
 		exit(2);
 	}
+}
+
+void
+build_template_request6(void)
+{
+	uint8_t *p = template_request6;
+
+	xid_request6 = DHCP6_OFF_XID;
+	/* message type */
+	p[DHCP6_OFF_MSGTYP] = DHCP6_OP_REQUEST;
+	/* options */
+	p += DHCP6_OFF_OPTIONS;
+	/* elapsed time */
+	p[1] = DHCP6_OPT_ELAPSED_TIME;
+	p[3] = 2;
+	p += 4;
+	elapsed_request6 = p - template_request6;
+	p += 2;
+	/* client ID */
+	p[1] = DHCP6_OPT_CLIENTID;
+	p[3] = duid_length;
+	memcpy(p + 4, duid_prefix, duid_length);
+	p += 4 + duid_length;
+	random_request6 = p - template_request6;
+	/* option request option */
+	p[1] = DHCP6_OPT_ORO;
+	p[3] = 4;
+	p[5] = DHCP6_OPT_NAME_SERVERS;
+	p[7] = DHCP6_OPT_DOMAIN_SEARCH;
+	p += 8;
+	/* server ID and IA_NA */
+	serverid_request6 = p - template_request6;
+	reqaddr_request6 = p - template_request6;
+	/* set length */
+	length_request6 = p - template_request6;
+}
+
+void
+get_template_request6(void)
+{
+	uint8_t *p = template_request6;
+	int fd, cc, i, j;
+
+	fd = open(templatefile[1], O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "open(%s): %s\n",
+			templatefile[1], strerror(errno));
+		exit(2);
+	}
+	cc = read(fd, tbuf, sizeof(tbuf));
+	(void) close(fd);
+	if (cc < 0) {
+		fprintf(stderr, "read(%s): %s\n",
+			templatefile[1], strerror(errno));
+		exit(1);
+	}
+	if (cc < 10) {
+		fprintf(stderr, "file '%s' too short\n", templatefile[1]);
+		exit(2);
+	}
+	if (cc > 8193) {
+		fprintf(stderr,"file '%s' too large\n", templatefile[1]);
+		exit(2);
+	}
+	j = 0;
+	for (i = 0; i < cc; i++) {
+		if (isspace((int) tbuf[i]))
+			continue;
+		if (!isxdigit((int) tbuf[i])) {
+			fprintf(stderr,
+				"illegal char[%d]='%c' in file '%s'\n",
+				i, (int) tbuf[i], templatefile[1]);
+			exit(2);
+		}
+		tbuf[j] = tbuf[i];
+		j++;
+	}
+	cc = j;
+	if ((cc & 1) != 0) {
+		fprintf(stderr,
+			"odd number of hexadecimal digits in file '%s'\n",
+			templatefile[1]);
+		exit(2);
+	}
+	length_request6 = cc >> 1;
+	for (i = 0; i < cc; i += 2)
+		(void) sscanf(tbuf + i, "%02hhx", &p[i >> 1]);
+	if (xidoffset[1] >= 0)
+		xid_request6 = (size_t) xidoffset[1];
+	else
+		xid_request6 = DHCP6_OFF_XID;
+	if (xid_request6 + 3 > length_request6) {
+		fprintf(stderr,
+			"xid (at %zu) is outside the template (length %zu)?\n",
+			xid_request6, length_request6);
+		exit(2);
+	}
+	if (rndoffset[1] >= 0)
+		random_request6 = (size_t) rndoffset[1];
+	else
+		random_request6 = 0;
+	if (random_request6 > length_request6) {
+		fprintf(stderr,
+			"random (at %zu) outside the template (length %zu)?\n",
+			random_request6, length_request6);
+		exit(2);
+	}
+}
+
+void
+send_request6(struct exchange *x0)
+{
+	struct exchange *x;
+	struct xlist *bucket;
+	size_t len;
+	uint32_t hash;
+	ssize_t ret;
+
+	x = (struct exchange *) malloc(sizeof(*x));
+	if (x == NULL) {
+		locallimit++;
+		perror("send2");
+		return;
+	}
+
+	memcpy(x, x0, sizeof(*x));
+	x->order2 = xscount2++;
+	x->xid |= 1;
+	hash = x->xid >> 1;
+
+	ISC_TAILQ_INSERT_TAIL(&xsent2, x, gchain);
+	hash &= hashsize2 - 1;
+	bucket = (struct xlist *) (exchanges2 + hash * sizeof(*bucket));
+	ISC_TAILQ_INSERT_TAIL(bucket, x, hchain);
+
+	len = length_request6;
+	memcpy(obuf, template_request6, len);
+	/* xid */
+	obuf[xid_request6] = x->xid >> 16;
+	obuf[xid_request6 + 1] = x->xid >> 8;
+	obuf[xid_request6 + 2] = x->xid;
+	/* random */
+	randomize(random_request6, x->rnd);
+	/* elapsed time */
+	if (elapsed_request6 > 0) {
+		int et;
+
+		et = (x->ts1.tv_sec - x->ts0.tv_sec) * 100;
+		et += (x->ts1.tv_nsec - x->ts0.tv_nsec) / 10000000;
+		if (et > 65535) {
+			obuf[elapsed_request6] = 0xff;
+			obuf[elapsed_request6 + 1] = 0xff;
+		} else if (et > 0) {
+			obuf[elapsed_request6] = et >> 8;
+			obuf[elapsed_request6 + 1] = et & 0xff;
+		}
+	}
+	/* server ID */
+	if (serverid_request6 < length_request6)
+		memmove(obuf + serverid_request6 + x->sidlen,
+			obuf + serverid_request6,
+			x->sidlen);
+	memcpy(obuf + serverid_request6, x->sid, x->sidlen);
+	len += x->sidlen;
+	/* IA_NA */
+	if (reqaddr_request6 < serverid_request6) {
+		memmove(obuf + reqaddr_request6 + x->ianalen,
+			obuf + reqaddr_request6,
+			x->ianalen);
+		memcpy(obuf + reqaddr_request6, x->iana, x->ianalen);
+	} else if (reqaddr_request6 < length_request6) {
+		memmove(obuf + reqaddr_request6 + x->sidlen + x->ianalen,
+			obuf + reqaddr_request6 + x->sidlen,
+			x->ianalen);
+		memcpy(obuf + reqaddr_request6+ x->sidlen,
+		       x->iana,
+		       x->ianalen);
+	} else
+		memcpy(obuf + len, x->iana, x->ianalen);
+	len += x->ianalen;
+
+	/* timestamp */
+	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
+	if (ret < 0) {
+		perror("clock_gettime(send2)");
+		fatal = 1;
+		return;
+	}
+	ret = sendto(sock, obuf, len, 0,
+		     (struct sockaddr *) &serveraddr,
+		     sizeof(struct sockaddr_in6));
+	if (ret >= 0)
+		return;
+	if ((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
+	    (errno == ENOBUFS) || (errno == ENOMEM))
+		locallimit++;
+	perror("send2");
 }
 
 int
@@ -752,18 +1333,20 @@ send6(void)
 	ssize_t ret;
 
 	x = (struct exchange *) malloc(sizeof(*x));
-	if (x == NULL) {
-		locallimit++;
+	if (x == NULL)
 		return -ENOMEM;
-	}
 
 	memset(x, 0, sizeof(*x));
-	x->order = xscount++;
-	hash = x->xid = (uint32_t) random() & 0x00ffffff;
+	x->order0 = xscount0++;
+	hash = x->rnd = (uint32_t) random();
+	if (simple == 0)
+		x->xid = (hash << 1) & 0x00ffffff;
+	else
+		x->xid = hash & 0x00ffffff;
 
-	ISC_TAILQ_INSERT_TAIL(&xsent, x, gchain);
-	hash &= hashsize - 1;
-	bucket = (struct xlist *) (exchanges + hash * sizeof(*bucket));
+	ISC_TAILQ_INSERT_TAIL(&xsent0, x, gchain);
+	hash &= hashsize0 - 1;
+	bucket = (struct xlist *) (exchanges0 + hash * sizeof(*bucket));
 	ISC_TAILQ_INSERT_TAIL(bucket, x, hchain);
 
 	memcpy(obuf, template_solicit6, length_solicit6);
@@ -772,7 +1355,7 @@ send6(void)
 	obuf[xid_solicit6 + 1] = x->xid >> 8;
 	obuf[xid_solicit6 + 2] = x->xid;
 	/* random */
-	x->rnd = randomize(random_solicit6, x->xid);
+	x->rnd = randomize(random_solicit6, x->rnd);
 
 	/* timestamp */
 	ret = clock_gettime(CLOCK_REALTIME, &last);
@@ -789,6 +1372,61 @@ send6(void)
 	if (ret == (ssize_t) length_solicit6)
 		return 0;
 	return -errno;
+}
+
+int
+scan_for_srvid6(struct exchange *x, size_t cc)
+{
+	size_t off = DHCP6_OFF_OPTIONS, len;
+
+	for (;;) {
+		if (off + 4 > cc) {
+			fprintf(stderr, "server-id not found\n");
+			return -1;
+		}
+		if ((ibuf[off] == 0) && (ibuf[off + 1] == DHCP6_OPT_SERVERID))
+			break;
+		off += 4 + (ibuf[off + 2] << 8) + ibuf[off + 3];
+	}
+	len = 4 + (ibuf[off + 2] << 8) + ibuf[off + 3];
+	if ((usefirst != 0) && (gsrvid == NULL)) {
+		if (len <= sizeof(gsrvidbuf)) {
+			memcpy(gsrvidbuf, ibuf + off, len);
+			gsrvid = gsrvidbuf;
+			gsrvidlen = len;
+		} else {
+			gsrvid = (uint8_t *) malloc(len);
+			if (gsrvid == NULL) {
+				perror("malloc(gsrvid");
+				return -1;
+			}
+			memcpy(gsrvid, ibuf + off, len);
+			gsrvidlen = len;
+		}
+	}
+	x->sid = ibuf + off;
+	x->sidlen = len;
+	return 0;
+}
+
+int
+scan_for_ia_na(struct exchange *x, size_t cc)
+{
+	size_t off = DHCP6_OFF_OPTIONS, len;
+
+	for (;;) {
+		if (off + 4 > cc) {
+			fprintf(stderr, "ia-na not found\n");
+			return -1;
+		}
+		if ((ibuf[off] == 0) && (ibuf[off + 1] == DHCP6_OPT_IA_NA))
+			break;
+		off += 4 + (ibuf[off + 2] << 8) + ibuf[off + 3];
+	}
+	len = 4 + (ibuf[off + 2] << 8) + ibuf[off + 3];
+	x->iana = ibuf + off;
+	x->ianalen = len;
+	return 0;
 }
 
 void
@@ -821,13 +1459,20 @@ receive6(void)
 		fatal = 1;
 		return;
 	}
-	xid = ibuf[DHCP6_OFF_XID] << 16;
-	xid |= ibuf[DHCP6_OFF_XID + 1] << 8;
-	xid |= ibuf[DHCP6_OFF_XID + 2];
-	hash = xid & (hashsize - 1);
-	bucket = (struct xlist *) (exchanges + hash * sizeof(*bucket));
-	if ((xnext != NULL) && (xnext->xid == xid)) {
-		x = xnext;
+	xid = ibuf[xid_solicit6] << 16;
+	xid |= ibuf[xid_solicit6 + 1] << 8;
+	xid |= ibuf[xid_solicit6 + 2];
+	if (simple == 0) {
+		if ((xid & 1) != 0) {
+			receive_reply(xid, &now);
+			return;
+		}
+		hash = (xid >> 1) & (hashsize0 - 1);
+	} else
+		hash = xid & (hashsize0 - 1);
+	bucket = (struct xlist *) (exchanges0 + hash * sizeof(*bucket));
+	if ((xnext0 != NULL) && (xnext0->xid == xid)) {
+		x = xnext0;
 		goto found;
 	}
 	if (rate != 0)
@@ -841,33 +1486,46 @@ receive6(void)
 			continue;
 		waited = now.tv_sec - x->ts0.tv_sec;
 		waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
-		if (waited < losttime) {
+		if (waited < losttime[0]) {
 			checklost = 0;
 			continue;
 		}
 		checklost--;
 		ISC_TAILQ_REMOVE(bucket, x, hchain);
-		ISC_TAILQ_REMOVE(&xsent, x, gchain);
+		ISC_TAILQ_REMOVE(&xsent0, x, gchain);
 		free(x);
 	}
 	orphans++;
 	return;
 
     found:
-	xrcount++;
+	xrcount0++;
 	x->ts1 = now;
 	delta = x->ts1.tv_sec - x->ts0.tv_sec;
 	delta += (x->ts1.tv_nsec - x->ts0.tv_nsec) / 1e9;
-	if (delta < dmin)
-		dmin = delta;
-	if (delta > dmax)
-		dmax = delta;
-	dsum += delta;
-	dsumsq += delta * delta;
-	xnext = ISC_TAILQ_NEXT(x, gchain);
+	if (delta < dmin0)
+		dmin0 = delta;
+	if (delta > dmax0)
+		dmax0 = delta;
+	dsum0 += delta;
+	dsumsq0 += delta * delta;
+	xnext0 = ISC_TAILQ_NEXT(x, gchain);
 	ISC_TAILQ_REMOVE(bucket, x, hchain);
-	ISC_TAILQ_REMOVE(&xsent, x, gchain);
-	ISC_TAILQ_INSERT_TAIL(&xrcvd, x, gchain);
+	ISC_TAILQ_REMOVE(&xsent0, x, gchain);
+	ISC_TAILQ_INSERT_TAIL(&xrcvd0, x, gchain);
+	if (simple == 0) {
+		int ret = 0;
+
+		if ((usefirst != 0) && (gsrvid != NULL)) {
+			x->sid = gsrvid;
+			x->sidlen = gsrvidlen;
+		} else
+			ret = scan_for_srvid6(x, cc);
+		if (ret >= 0)
+			ret = scan_for_ia_na(x, cc);
+		if (ret >= 0)
+			send_request6(x);
+	}
 }
 
 void
@@ -1123,15 +1781,37 @@ reporting(void)
 {
 	dreport.tv_sec += report;
 
-	printf("sent: %llu, received: %llu (drops: %lld)",
-	       (unsigned long long) xscount - 1,
-	       (unsigned long long) xrcount,
-	       (long long) (xscount - xrcount - 1));
-	if (!ISC_TAILQ_EMPTY(&xrcvd)) {
-		double avg;
+	if (xscount2 == 0) {
+		printf("sent: %llu, received: %llu (drops: %lld)",
+		       (unsigned long long) xscount0,
+		       (unsigned long long) xrcount0,
+		       (long long) (xscount0 - xrcount0));
+		if (!ISC_TAILQ_EMPTY(&xrcvd0)) {
+			double avg;
 
-		avg = dsum / xrcount;
-		printf(" average: %.3f ms", avg * 1e3);
+			avg = dsum0 / xrcount0;
+			printf(" average: %.3f ms", avg * 1e3);
+		}
+	} else {
+		printf("sent: %llu/%llu received: %llu/%llu "
+		       "(drops: %lld/%lld)",
+		       (unsigned long long) xscount0,
+		       (unsigned long long) xscount2,
+		       (unsigned long long) xrcount0,
+		       (unsigned long long) xrcount2,
+		       (long long) (xscount0 - xrcount0),
+		       (long long) (xscount2 - xrcount2));
+		if (!ISC_TAILQ_EMPTY(&xrcvd0)) {
+			double avg0, avg2;
+
+			avg0 = dsum0 / xrcount0;
+			if (xrcount2 != 0)
+				avg2 = dsum2 / xrcount2;
+			else
+				avg2 = 0.;
+			printf(" average: %.3f/%.3f ms",
+			       avg0 * 1e3, avg2 * 1e3);
+		}
 	}
 	printf("\n");
 }
@@ -1156,8 +1836,10 @@ usage(void)
 "perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
 "    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]\n"
 "    [-l<local-addr|interface>] [-P<preload>] [-a<aggressivity>]\n"
-"    [-s<seed>] [-i] [-B] [-c] [-x<diagnostic-selector>]\n"
-"    [-T<template-file>] [-X<xid-offset>] [-O<random-offset] [server]\n"
+"    [-L<local-port>] [-s<seed>] [-i] [-B] [-c] [-1]\n"
+"    [-T<template-file>] [-X<xid-offset>] [-O<random-offset]\n"
+"    [-E<time-offset>] [-S<srvid-offset>] [-I<ip-offset>]\n"
+"    [-x<diagnostic-selector>] [server]\n"
 "\f\n"
 "The [server] argument is the name/address of the DHCP server to\n"
 "contact.  For DHCPv4 operation, exchanges are initiated by\n"
@@ -1177,6 +1859,7 @@ usage(void)
 "it exchanges are initiated as fast as possible.\n"
 "\n"
 "Options:\n"
+"-1: Take the server-ID option from the first received message.\n"
 "-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
 "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
 "-a<aggressivity>: When the target sending rate is not yet reached,\n"
@@ -1188,15 +1871,22 @@ usage(void)
 "-d<drop-time>: Specify the time after which a request is treated as\n"
 "    having been lost.  The value is given in seconds and may contain a\n"
 "    fractional component.  The default is 1 second.\n"
+"-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
+"    elapsed-time option in the (second/request) template.\n"
+"    The value 0 disables it.\n"
 "-h: Print this help.\n"
 "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
 "    whether -6 is given.\n"
+"-I<ip-offset>: Offset of the (DHCPv4) IP address in the requested-IP\n"
+"    option / (DHCPv6) IA_NA option in the (second/request) template.\n"
 "-l<local-addr|interface>: For DHCPv4 operation, specify the local\n"
 "    hostname/address to use when communicating with the server.  By\n"
 "    default, the interface address through which traffic would\n"
 "    normally be routed to the server is used.\n"
 "    For DHCPv6 operation, specify the name of the network interface\n"
 "    via which exchanges are initiated.\n"
+"-L<local-port>: Specify the local port to use\n"
+"    (the value 0 means to use the default).\n"
 "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
 "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
 "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"
@@ -1207,6 +1897,8 @@ usage(void)
 "-R<range>: Specify how many different clients are used. With 1\n"
 "    (the default), all requests seem to come from the same client.\n"
 "-s<seed>: Specify the seed for randomization, making it repeatable.\n"
+"-S<srvid-offset>: Offset of the server-ID option in the\n"
+"    (second/request) template.\n"
 "-T<template-file>: The name of a file containing the template to use\n"
 "    as a stream of hexadecimal digits.\n"
 "-v: Report the version number of this program.\n"
@@ -1217,6 +1909,7 @@ usage(void)
 "   * 'a': print the decoded command line arguments\n"
 "   * 'e': print the exit reason\n"
 "   * 'r': print randomization details\n"
+"   * 's': print first server-id\n"
 "   * 't': when finished, print timers of all successful exchanges\n"
 "   * 'T': when finished, print templates\n"
 "-X<xid-offset>: Transaction ID (aka. xid) offset in the template.\n"
@@ -1244,6 +1937,12 @@ usage(void)
 "    testing is completed when either limit is reached.\n"
 "-t<report>: Delay in seconds between two periodic reports.\n"
 "\n"
+"Errors:\n"
+"- tooshort: received a too short message\n"
+"- orphans: received a message which doesn't match an exchange\n"
+"   (duplicate, late or not related)\n"
+"- locallimit: reached to local system limits when sending a message.\n"
+"\n"
 "Exit status:\n"
 "The exit status is:\n"
 "0 on complete success.\n"
@@ -1256,13 +1955,13 @@ usage(void)
 int
 main(const int argc, char * const argv[])
 {
-	int opt, flags, ret, i;
+	int opt, flags = 0, ret, i;
 	long long r;
 	char *pc;
 	extern char *optarg;
 	extern int optind;
 
-#define OPTIONS	"hv46r:t:R:b:n:p:d:D:l:P:a:s:iBcx:T:X:O:"
+#define OPTIONS	"hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:"
 
 	while ((opt = getopt(argc, argv, OPTIONS)) != -1)
 	switch (opt) {
@@ -1343,13 +2042,14 @@ main(const int argc, char * const argv[])
 		break;
 
 	case 'n':
-		numreq = atoi(optarg);
-		if (numreq <= 0) {
+		numreq[gotnumreq] = atoi(optarg);
+		if (numreq[gotnumreq] <= 0) {
 			fprintf(stderr,
 				"num-request must be a positive integer\n");
 			usage();
 			exit(2);
 		}
+		gotnumreq = 1;
 		break;
 
 	case 'p':
@@ -1363,35 +2063,39 @@ main(const int argc, char * const argv[])
 		break;
 
 	case 'd':
-		losttime = atof(optarg);
-		if (losttime <= 0.) {
+		losttime[gotlosttime] = atof(optarg);
+		if (losttime[gotlosttime] <= 0.) {
 			fprintf(stderr,
 				"drop-time must be a positive number\n");
 			usage();
 			exit(2);
 		}
+		gotlosttime = 1;
 		break;
 
 	case 'D':
 		pc = strchr(optarg, '%');
 		if (pc != NULL) {
 			*pc = '\0';
-			maxpdrop = atoi(optarg);
-			if ((maxpdrop <= 0) || (maxpdrop >= 100)) {
+			maxpdrop[gotmaxdrop] = atof(optarg);
+			if ((maxpdrop[gotmaxdrop] <= 0) ||
+			    (maxpdrop[gotmaxdrop] >= 100)) {
 				fprintf(stderr,
 					"invalid drop-time percentage\n");
 				usage();
 				exit(2);
 			}
+			gotmaxdrop = 1;
 			break;
 		}
-		maxdrop = atoi(optarg);
-		if (maxdrop < 0) {
+		maxdrop[gotmaxdrop] = atoi(optarg);
+		if (maxdrop[gotmaxdrop] <= 0) {
 			fprintf(stderr,
-				"max-drop must not be a negative integer\n");
+				"max-drop must be a positive integer\n");
 			usage();
 			exit(2);
 		}
+		gotmaxdrop = 1;
 		break;
 
 	case 'l':
@@ -1418,6 +2122,23 @@ main(const int argc, char * const argv[])
 		}
 		break;
 
+	case 'L':
+		localport = atoi(optarg);
+		if (localport < 0) {
+			fprintf(stderr,
+				"local-port must not be a negative integer\n");
+			usage();
+			exit(2);
+		}
+		if (localport > (int) UINT16_MAX) {
+			fprintf(stderr,
+				"local-port must be lower than %d\n",
+				(int) UINT16_MAX);
+			usage();
+			exit(2);
+		}
+		break;
+
 	case 's':
 		seeded = 1;
 		seed = (unsigned int) atol(optarg);
@@ -1435,24 +2156,30 @@ main(const int argc, char * const argv[])
 		rapidcommit = 1;
 		break;
 
-	case 'x':
-		diags = optarg;
+	case '1':
+		usefirst = 1;
 		break;
 
 	case 'T':
-		if (templatefile != NULL) {
-			fprintf(stderr,
-				"<template-file> was already set to '%s'\n",
-				templatefile);
-			usage();
-			exit(2);
-		}
-		templatefile = optarg;
+		if (templatefile[0] != NULL) {
+			if (templatefile[1] != NULL) {
+				fprintf(stderr,
+					"template-files are already set\n");
+				usage();
+				exit(2);
+			}
+			templatefile[1] = optarg;
+		} else
+			templatefile[0] = optarg;
 		break;
 
 	case 'X':
-		xidoffset = atoi(optarg);
-		if (xidoffset <= 0) {
+		if (xidoffset[0] >= 0)
+			i = 1;
+		else
+			i = 0;
+		xidoffset[i] = atoi(optarg);
+		if (xidoffset[i] <= 0) {
 			fprintf(stderr,
 				"xid-offset must be a positive integer\n");
 			usage();
@@ -1461,8 +2188,12 @@ main(const int argc, char * const argv[])
 		break;
 
 	case 'O':
-		rndoffset = atoi(optarg);
-		if (rndoffset < 3) {
+		if (rndoffset[0] >= 0)
+			i = 1;
+		else
+			i = 0;
+		rndoffset[i] = atoi(optarg);
+		if (rndoffset[i] < 3) {
 			fprintf(stderr,
 				"random-offset must be greater than 3\n");
 			usage();
@@ -1470,25 +2201,58 @@ main(const int argc, char * const argv[])
 		}
 		break;
 
-	default:
-		usage();
-		exit(2);
-	}
+	case 'E':
+		elpoffset = atoi(optarg);
+		if (elpoffset < 0) {
+			fprintf(stderr,
+				"time-offset must not be a "
+				"negative integer\n");
+			usage();
+			exit(2);
+		}
+		break;
 
-	if (simple == 0) {
-		fprintf(stderr,
-			"only the simple mode is currently supported:"
-			" please use -i\n");
+	case 'S':
+		sidoffset = atoi(optarg);
+		if (sidoffset <= 0) {
+			fprintf(stderr,
+				"srvid-offset must be a positive integer\n");
+			usage();
+			exit(2);
+		}
+		break;
+
+	case 'I':
+		ripoffset = atoi(optarg);
+		if (ripoffset <= 0) {
+			fprintf(stderr,
+				"ip-offset must be a positive integer\n");
+			usage();
+			exit(2);
+		}
+		break;
+
+	case 'x':
+		diags = optarg;
+		break;
+
+	default:
 		usage();
 		exit(2);
 	}
 
 	if (ipversion == 0)
 		ipversion = 4;
+	if (templatefile[1] != NULL) {
+		if (xidoffset[1] < 0)
+			xidoffset[1] = xidoffset[0];
+		if (rndoffset[1] < 0)
+			rndoffset[1] = rndoffset[0];
+	}
 
 	if ((diags != NULL) && (strchr(diags, 'a') != NULL)) {
 		printf("IPv%d", ipversion);
-		if (simple) {
+		if (simple != 0) {
 			if (ipversion == 4)
 				printf(" DO only");
 			else
@@ -1509,31 +2273,51 @@ main(const int argc, char * const argv[])
 		if (basecnt != 0)
 			for (i = 0; i < basecnt; i++)
 				printf(" base[%d]='%s'", i, base[i]);
-		if (numreq != 0)
-			printf(" num-request=%d", numreq);
+		if (gotnumreq != 0)
+			printf(" num-request=%d,%d", numreq[0], numreq[1]);
 		if (period != 0)
 			printf(" test-period=%d", period);
-		printf(" drop-time=%g", losttime);
-		if (maxdrop >= 0)
-			printf(" max-drop=%d", maxdrop);
-		if (maxpdrop != 0)
-			printf(" max-drop=%d%%", maxpdrop);
+		printf(" drop-time=%g,%g", losttime[0], losttime[1]);
+		if ((maxdrop[0] != 0) || (maxdrop[1] != 0))
+			printf(" max-drop=%d,%d", maxdrop[0], maxdrop[1]);
+		if ((maxpdrop[0] != 0.) || (maxpdrop[1] != 0.))
+			printf(" max-drop=%2.2f%%,%2.2f%%",
+			       maxpdrop[0], maxpdrop[1]);
 		if (preload != 0)
 			printf(" preload=%d", preload);
 		printf(" aggressivity=%d", aggressivity);
+		if (localport != 0)
+			printf(" local-port=%d", localport);
 		if (seeded)
 			printf(" seed=%u", seed);
 		if (isbroadcast != 0)
 			printf(" broadcast");
 		if (rapidcommit != 0)
 			printf(" rapid-commit");
+		if (usefirst != 0)
+			printf(" use-first");
+		if ((templatefile[0] != NULL) && (templatefile[1] == NULL))
+			printf(" template-file='%s'", templatefile[0]);
+		else if (templatefile[1] != NULL)
+			printf(" template-file='%s','%s'",
+			       templatefile[0], templatefile[1]);
+		if ((xidoffset[0] >= 0) && (xidoffset[1] < 0))
+			printf(" xid-offset=%d", xidoffset[0]);
+		else if (xidoffset[1] >= 0)
+			printf(" xid-offset=%d,%d",
+			       xidoffset[0], xidoffset[1]);
+		if ((rndoffset[0] >= 0) && (rndoffset[1] < 0))
+			printf(" xid-offset=%d", rndoffset[0]);
+		else if (rndoffset[1] >= 0)
+			printf(" xid-offset=%d,%d",
+			       rndoffset[0], rndoffset[1]);
+		if (elpoffset >= 0)
+			printf(" time-offset=%d", elpoffset);
+		if (sidoffset >= 0)
+			printf(" srvid-offset=%d", sidoffset);
+		if (ripoffset >= 0)
+			printf(" ip-offset=%d", ripoffset);
 		printf(" diagnotic-selectors='%s'", diags);
-		if (templatefile != NULL)
-			printf(" template-file='%s'", templatefile);
-		if (xidoffset >= 0)
-			printf(" xid-offset=%d", xidoffset);
-		if (rndoffset >= 0)
-			printf(" random-offset=%d", rndoffset);
 		printf("\n");
 	}
 
@@ -1545,6 +2329,69 @@ main(const int argc, char * const argv[])
 
 	if ((ipversion != 6) && (rapidcommit != 0)) {
 		fprintf(stderr, "-6 (IPv6) must be set to use -c\n");
+		usage();
+		exit(2);
+	}
+
+	if ((simple != 0) && (numreq[1] != 0)) {
+		fprintf(stderr,
+			"second -n<num-request> is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (losttime[1] != 1.)) {
+		fprintf(stderr,
+			"second -d<drop-time> is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) &&
+	    ((maxdrop[1] != 0) || (maxpdrop[1] != 0.))) {
+		fprintf(stderr,
+			"second -D<max-drop> is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (usefirst != 0)) {
+		fprintf(stderr,
+			"-1 is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (templatefile[1] != NULL)) {
+		fprintf(stderr,
+			"second -T<template-file> is not "
+			"compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (xidoffset[1] >= 0)) {
+		fprintf(stderr,
+			"second -X<xid-offset> is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (rndoffset[1] >= 0)) {
+		fprintf(stderr,
+			"second -O<random-offset is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (elpoffset >= 0)) {
+		fprintf(stderr,
+			"-E<time-offset> is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (sidoffset >= 0)) {
+		fprintf(stderr,
+			"-S<srvid-offset> is not compatible with -i\n");
+		usage();
+		exit(2);
+	}
+	if ((simple != 0) && (ripoffset >= 0)) {
+		fprintf(stderr,
+			"-I<ip-offset> is not compatible with -i\n");
 		usage();
 		exit(2);
 	}
@@ -1561,7 +2408,7 @@ main(const int argc, char * const argv[])
 		usage();
 		exit(2);
 	}
-	if ((rate == 0) && (numreq != 0)) {
+	if ((rate == 0) && ((numreq[0] != 0) || (numreq[1] != 0))) {
 		fprintf(stderr,
 			"-r<rate> must be set to use -n<num-request>\n");
 		usage();
@@ -1573,28 +2420,52 @@ main(const int argc, char * const argv[])
 		usage();
 		exit(2);
 	}
-	if ((rate == 0) && ((maxdrop != 0) || (maxpdrop != 0))) {
+	if ((rate == 0) &&
+	    ((maxdrop[0] != 0) || (maxdrop[1] != 0) ||
+	     (maxpdrop[0] != 0.) || (maxpdrop[1] != 0.))) {
 		fprintf(stderr,
 			"-r<rate> must be set to use -D<max-drop>\n");
 		usage();
 		exit(2);
 	}
 
-	if ((templatefile == NULL) && (xidoffset >= 0)) {
+	if ((templatefile[0] == NULL) && (xidoffset[0] >= 0)) {
 		fprintf(stderr,
 			"-T<template-file> must be set to "
 			"use -X<xid-offset>\n");
 		usage();
 		exit(2);
 	}
-	if ((templatefile == NULL) && (rndoffset >= 0)) {
+	if ((templatefile[0] == NULL) && (rndoffset[0] >= 0)) {
 		fprintf(stderr,
 			"-T<template-file> must be set to "
 			"use -O<random-offset>\n");
 		usage();
 		exit(2);
 	}
-	if ((templatefile != NULL) && (range > 0) && (rndoffset < 0)) {
+	if ((templatefile[1] == NULL) && (elpoffset >= 0)) {
+		fprintf(stderr,
+			"second/request -T<template-file> must be set to "
+			"use -E<time-offset>\n");
+		usage();
+		exit(2);
+	}
+	if ((templatefile[1] == NULL) && (sidoffset >= 0)) {
+		fprintf(stderr,
+			"second/request -T<template-file> must be set to "
+			"use -S<srvid-offset>\n");
+		usage();
+		exit(2);
+	}
+	if ((templatefile[1] == NULL) && (ripoffset >= 0)) {
+		fprintf(stderr,
+			"second/request -T<template-file> must be set to "
+			"use -I<ip-offset>\n");
+		usage();
+		exit(2);
+	}
+
+	if ((templatefile[0] != NULL) && (range > 0) && (rndoffset[0] < 0)) {
 		fprintf(stderr,
 			"-o<random-offset> must be set when "
 			"-T<template-file> and -R<range> are used\n");
@@ -1682,17 +2553,29 @@ main(const int argc, char * const argv[])
 
 	if (ipversion == 4) {
 		getsock4();
-		if (templatefile == NULL)
+		if (templatefile[0] == NULL)
 			build_template_discover4();
 		else
 			get_template_discover4();
+		if (simple == 0) {
+			if (templatefile[1] == NULL)
+				build_template_request4();
+			else
+				get_template_request4();
+		}
 	} else {
 		getsock6();
 		if (duid_prefix != NULL) {
-			if (templatefile == NULL)
+			if (templatefile[0] == NULL)
 				build_template_solicit6();
 			else
 				get_template_solicit6();
+			if (simple == 0) {
+				if (templatefile[1] == NULL)
+					build_template_request6();
+				else
+					get_template_request6();
+			}
 		}
 	}
 	if ((unsigned) sock > FD_SETSIZE) {
@@ -1735,10 +2618,16 @@ main(const int argc, char * const argv[])
 		curdate = htonl(boot.tv_sec - DHCP6_DUID_EPOCH);
 		memcpy(duid_prefix + 4, &curdate, 4);
 		memcpy(duid_prefix + 8, mac_prefix, 6);
-		if (templatefile == NULL)
+		if (templatefile[0] == NULL)
 			build_template_solicit6();
 		else
 			get_template_solicit6();
+		if (simple == 0) {
+			if (templatefile[1] == NULL)
+				build_template_request6();
+			else
+				get_template_request6();
+		}
 	}
 		
 	if (seeded == 0)
@@ -1845,21 +2734,44 @@ main(const int argc, char * const argv[])
 		}
 		if (fatal)
 			continue;
-		if ((numreq != 0) && ((int) xscount >= numreq)) {
+		if ((numreq[0] != 0) && ((int) xscount0 >= numreq[0])) {
 			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
-				printf("reached num-request\n");
+				printf("reached num-request0\n");
 			break;
 		}
-		if ((maxdrop != 0) && ((int) (xscount - xrcount) > maxdrop)) {
+		if ((numreq[1] != 0) && ((int) xscount2 >= numreq[1])) {
 			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
-				printf("reached max-drop (absolute)\n");
+				printf("reached num-request2\n");
 			break;
 		}
-		if ((maxpdrop != 0) &&
-		    (xscount > 10) &&
-		    ((int) (100 * (xscount - xrcount) / xscount) > maxpdrop)) {
+		if ((maxdrop[0] != 0) &&
+		    ((int) (xscount0 - xrcount0) > maxdrop[0])) {
 			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
-				printf("reached max-drop (percent)\n");
+				printf("reached max-drop%s (absolute)\n",
+				       simple != 0 ? "" : "0");
+			break;
+		}
+		if ((maxdrop[1] != 0) &&
+		    ((int) (xscount2 - xrcount2) > maxdrop[1])) {
+			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
+				printf("reached max-drop2 (absolute)\n");
+			break;
+		}
+		if ((maxpdrop[0] != 0.) &&
+		    (xscount0 > 10) &&
+		    (((100. * (xscount0 - xrcount0)) / xscount0)
+			> maxpdrop[0])) {
+			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
+				printf("reached max-drop%s (percent)\n",
+				       simple != 0 ? "" : "0");
+			break;
+		}
+		if ((maxpdrop[1] != 0.) &&
+		    (xscount2 > 10) &&
+		    (((100. * (xscount2 - xrcount2)) / xscount2)
+			> maxpdrop[1])) {
+			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
+				printf("reached max-drop2 (percent)\n");
 			break;
 		}
 		if ((now.tv_sec > due.tv_sec) ||
@@ -1910,10 +2822,20 @@ main(const int argc, char * const argv[])
 	if (clock_gettime(CLOCK_REALTIME, &finished) < 0)
 		perror("clock_gettime(finished)");
 
-	printf("sent: %llu, received: %llu (drops: %lld)\n",
-	       (unsigned long long) xscount,
-	       (unsigned long long) xrcount,
-	       (long long) (xscount - xrcount));
+	if (xscount2 == 0)
+		printf("sent: %llu, received: %llu (drops: %lld)\n",
+		       (unsigned long long) xscount0,
+		       (unsigned long long) xrcount0,
+		       (long long) (xscount0 - xrcount0));
+	else
+		printf("sent: %llu/%llu, received: %llu/%llu "
+		       "(drops: %lld/%lld)\n",
+		       (unsigned long long) xscount0,
+		       (unsigned long long) xscount2,
+		       (unsigned long long) xrcount0,
+		       (unsigned long long) xrcount2,
+		       (long long) (xscount0 - xrcount0),
+		       (long long) (xscount2 - xrcount2));
 	printf("tooshort: %llu, orphans: %llu, local limits: %llu\n",
 	       (unsigned long long) tooshort,
 	       (unsigned long long) orphans,
@@ -1924,32 +2846,77 @@ main(const int argc, char * const argv[])
 
 		dall = (finished.tv_nsec - boot.tv_nsec) / 1e9;
 		dall += finished.tv_sec - boot.tv_sec;
-		erate = xrcount / dall;
+		erate = xrcount0 / dall;
 		if (rate != 0)
 			printf("rate: %f (expected %d)\n", erate, rate);
 		else
 			printf("rate: %f\n", erate);
 	}
 
-	if (!ISC_TAILQ_EMPTY(&xrcvd)) {
+	if (xrcount2 != 0) {
+		double avg0, avg2, stddev0, stddev2;
+		
+		avg0 = dsum0 / xrcount0;
+		avg2 = dsum2 / xrcount2;
+		stddev0 = sqrt(dsumsq0 / xrcount0 - avg0 * avg0);
+		stddev2 = sqrt(dsumsq2 / xrcount2 - avg2 * avg2);
+		printf("RTT0: min/avg/max/stddef:  %.3f/%.3f/%.3f/%.3f ms\n",
+		       dmin0 * 1e3, avg0 * 1e3, dmax0 * 1e3, stddev0 * 1e3);
+		printf("RTT2: min/avg/max/stddef:  %.3f/%.3f/%.3f/%.3f ms\n",
+		       dmin2 * 1e3, avg2 * 1e3, dmax2 * 1e3, stddev2 * 1e3);
+	} else if (xrcount0 != 0) {
 		double avg, stddev;
 		
-		avg = dsum / xrcount;
-		stddev = sqrt(dsumsq / xrcount - avg * avg);
-		printf("RTT: min/avg/max/stddef:  %.3f/%.3f/%.3f/%.3f ms\n",
-		       dmin * 1e3, avg * 1e3, dmax * 1e3, stddev * 1e3);
+		avg = dsum0 / xrcount0;
+		stddev = sqrt(dsumsq0 / xrcount0 - avg * avg);
+		printf("RTT%s: min/avg/max/stddef:  %.3f/%.3f/%.3f/%.3f ms\n",
+		       simple != 0 ? "" : "0",
+		       dmin0 * 1e3, avg * 1e3, dmax0 * 1e3, stddev * 1e3);
+	}
+
+	if ((diags != NULL) && (strchr(diags, 's') != NULL) &&
+	    !ISC_TAILQ_EMPTY(&xrcvd0)) {
+		struct exchange *x;
+		size_t n;
+
+		printf("server-id: ");
+		x = ISC_TAILQ_FIRST(&xrcvd0);
+		if (ipversion == 4)
+			n = 2;
+		else
+			n = 4;
+		for (; n < x->sidlen; n++)
+			printf("%02hhx", x->sid[n]);
+		printf("\n");
 	}
 
 	if ((diags != NULL) && (strchr(diags, 't') != NULL) &&
-	    !ISC_TAILQ_EMPTY(&xrcvd)) {
+	    !ISC_TAILQ_EMPTY(&xrcvd0)) {
 		struct exchange *x;
 
 		printf("\n\n");
-		ISC_TAILQ_FOREACH(x, &xrcvd, gchain)
+		ISC_TAILQ_FOREACH(x, &xrcvd0, gchain)
 			printf("%ld.%09ld %ld.%09ld\n",
 			       (long) x->ts0.tv_sec, x->ts0.tv_nsec,
 			       (long) x->ts1.tv_sec, x->ts1.tv_nsec);
+
 	}
+	if ((diags != NULL) && (strchr(diags, 't') != NULL) &&
+	    !ISC_TAILQ_EMPTY(&xrcvd2)) {
+		struct exchange *x;
+
+		printf("--\n");
+		ISC_TAILQ_FOREACH(x, &xrcvd2, gchain)
+			printf("%ld.%09ld %ld.%09ld %ld.%09ld %ld.%09ld\n",
+			       (long) x->ts0.tv_sec, x->ts0.tv_nsec,
+			       (long) x->ts1.tv_sec, x->ts1.tv_nsec,
+			       (long) x->ts2.tv_sec, x->ts2.tv_nsec,
+			       (long) x->ts3.tv_sec, x->ts3.tv_nsec);
+
+	}
+	if ((diags != NULL) && (strchr(diags, 't') != NULL) &&
+	    !ISC_TAILQ_EMPTY(&xrcvd0))
+		printf("\n\n");
 
 	if ((diags != NULL) && (strchr(diags, 'T') != NULL)) {
 		size_t n;
@@ -1960,23 +2927,82 @@ main(const int argc, char * const argv[])
 			printf("xid length = 4\n");
 			printf("random offset = %zu\n", random_discover4);
 			printf("content:\n");
-			for (n = 0; n < length_discover4; n++)
-				printf("%02hhu", template_discover4[n]);
+			for (n = 0; n < length_discover4; n++) {
+				printf("%s%02hhx",
+				       (n & 15) == 0 ? "" : " ",
+				       template_discover4[n]);
+				if ((n & 15) == 15)
+					printf("\n");
+			}
+			if ((n & 15) != 15)
+				printf("\n");
+			if (simple != 0)
+				goto doneT;
+			printf("--\n");
+			printf("length = %zu\n", length_request4);
+			printf("xid offset = %d\n", DHCP_OFF_XID);
+			printf("xid length = 4\n");
+			printf("random offset = %zu\n", random_request4);
+			if (elapsed_request4 > 0)
+				printf("secs offset = %zu\n",
+				       elapsed_request4);
+			printf("server-id offset = %zu\n", serverid_request4);
+			printf("server-id length = %d\n", DHCP_OPTLEN_SRVID);
+			printf("content:\n");
+			printf("requested-ip-address offset = %zu\n",
+			       reqaddr_request4);
+			printf("requested-ip-address length = %d\n", 4);
+			for (n = 0; n < length_request4; n++) {
+				printf("%s%02hhx",
+				       (n & 15) == 0 ? "" : " ",
+				       template_request4[n]);
+				if ((n & 15) == 15)
+					printf("\n");
+			}
 			printf("\n");
 		} else {
 			printf("length = %zu\n", length_solicit6);
 			printf("xid offset = %d\n", DHCP6_OFF_XID);
 			printf("xid length = 3\n");
 			printf("random offset = %zu\n", random_solicit6);
-			for (n = 0; n < length_solicit6; n++)
-				printf("%02hhu", template_solicit6[n]);
+			for (n = 0; n < length_solicit6; n++) {
+				printf("%s%02hhx",
+				       (n & 15) == 0 ? "" : " ",
+				       template_solicit6[n]);
+				if ((n & 15) == 15)
+					printf("\n");
+			}
+			if ((n & 15) != 15)
+				printf("\n");
+			if (simple != 0)
+				goto doneT;
+			printf("--\n");
+			printf("length = %zu\n", length_request6);
+			printf("xid offset = %d\n", DHCP_OFF_XID);
+			printf("xid length = 4\n");
+			printf("random offset = %zu\n", random_request6);
+			if (elapsed_request6 > 0)
+				printf("secs offset = %zu\n",
+				       elapsed_request6);
+			printf("server-id offset = %zu\n", serverid_request6);
+			printf("content:\n");
+			printf("requested-ip-address offset = %zu\n",
+			       reqaddr_request6);
+			for (n = 0; n < length_request6; n++) {
+				printf("%s%02hhx",
+				       (n & 15) == 0 ? "" : " ",
+				       template_request6[n]);
+				if ((n & 15) == 15)
+					printf("\n");
+			}
 			printf("\n");
 		}
 	}
+    doneT:
 
 	if (fatal)
 		exit(1);
-	else if (xscount == xrcount)
+	else if ((xscount0 == xrcount0) && (xscount2 == xrcount2))
 		exit(0);
 	else
 		exit(3);
