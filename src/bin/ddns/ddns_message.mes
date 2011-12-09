@@ -1,0 +1,40 @@
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the ddns messages python module.
+
+% DDNS_CC_SESSION_ERROR error reading from cc channel: %1
+There was a problem reading from the command and control channel. The
+most likely cause is that the msgq daemon is not running.
+
+% DDNS_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response
+There was a problem reading a response from another module over the
+command and control channel. The most likely cause is that the
+configuration manager b10-cfgmgr is not running.
+
+% DDNS_CONFIG_ERROR error found in configuration data: %1
+The ddns process encountered an error when installing the configuration at
+startup time.  Details of the error are included in the log message.
+
+% DDNS_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
+There was a problem in the lower level module handling configuration and
+control commands.  This could happen for various reasons, but the most likely
+cause is that the configuration database contains a syntax error and ddns
+failed to start at initialization.  A detailed error message from the module
+will also be displayed.
+
+% DDNS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
+There was a keyboard interrupt signal to stop the ddns daemon. The
+daemon will now shut down.

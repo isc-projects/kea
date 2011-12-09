@@ -890,6 +890,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/ddns/Makefile
+                 src/bin/ddns/tests/Makefile
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/tests/Makefile
                  src/bin/resolver/Makefile
@@ -998,6 +1000,8 @@ AC_OUTPUT([doc/version.ent
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/tests/cmdctl_test
            src/bin/cmdctl/cmdctl.spec.pre
+           src/bin/ddns/ddns.py
+           src/bin/ddns/ddns.spec.pre
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
            src/bin/xfrin/run_b10-xfrin.sh
