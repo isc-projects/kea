@@ -25,8 +25,6 @@ check-local:
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
@@ -58,7 +56,6 @@ dhcp6_unittests_LDADD += $(SQLITE_LIBS)
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
