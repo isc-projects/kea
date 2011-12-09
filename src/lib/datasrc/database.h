@@ -782,6 +782,16 @@ public:
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
                                 const FindOptions options = FIND_DEFAULT);
+        /**
+         * \brief Implementation of the ZoneFinder::findAll method.
+         *
+         * In short, it is mostly the same thing as find, but it returns all
+         * RRsets in the named node through the target parameter in successful
+         * case. It acts the same in the unsuccessful one.
+         */
+        virtual FindResult findAll(const isc::dns::Name& name,
+                                   std::vector<isc::dns::ConstRRsetPtr>& target,
+                                   const FindOptions options = FIND_DEFAULT);
 
         /**
          * \brief Implementation of ZoneFinder::findPreviousName method.
