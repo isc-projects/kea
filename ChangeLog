@@ -1,3 +1,8 @@
+341.	[func]		tomek
+	libdhcp++: Support for handling both IPv4 and IPv6 added.
+	Also added support for binding IPv4 sockets.
+	(Trac #1238, git 86a4ce45115dab4d3978c36dd2dbe07edcac02ac)
+
 340.	[build]		jelte
 	Fixed several linker issues related to recent gcc versions, botan
 	and gtest.
