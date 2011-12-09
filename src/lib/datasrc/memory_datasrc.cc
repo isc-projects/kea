@@ -421,8 +421,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     }
 
     // Implementation of InMemoryZoneFinder::find
-    FindResult find(const Name& name, RRType type,
-                    RRsetList* target, const FindOptions options) const
+    FindResult find(const Name& name, RRType type, const FindOptions options)
+        const
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
@@ -566,6 +566,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             }
         }
 
+#if 0
+        TODO: Move this to some other place, new method
         // handle type any query
         if (target != NULL && !node->getData()->empty()) {
             // Empty domain will be handled as NXRRSET by normal processing
@@ -580,6 +582,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 arg(name);
             return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
+#endif
 
         found = node->getData()->find(type);
         if (found != node->getData()->end()) {
@@ -629,9 +632,9 @@ InMemoryZoneFinder::getClass() const {
 
 ZoneFinder::FindResult
 InMemoryZoneFinder::find(const Name& name, const RRType& type,
-                 RRsetList* target, const FindOptions options)
+                 const FindOptions options)
 {
-    return (impl_->find(name, type, target, options));
+    return (impl_->find(name, type, options));
 }
 
 result::Result

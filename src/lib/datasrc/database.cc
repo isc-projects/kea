@@ -393,7 +393,6 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
-                             isc::dns::RRsetList*,
                              const FindOptions options)
 {
     // This variable is used to determine the difference between
@@ -729,7 +728,7 @@ public:
         // Find the SOA of the zone (may or may not succeed).  Note that
         // this must be done before starting the iteration context.
         soa_ = DatabaseClient::Finder(accessor_, zone.second, zone_name).
-            find(zone_name, RRType::SOA(), NULL).rrset;
+            find(zone_name, RRType::SOA()).rrset;
 
         // Request the context
         context_ = accessor_->getAllRecords(zone.second);
