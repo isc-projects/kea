@@ -14,8 +14,9 @@ CLEANFILES = b10-ddns ddns.pyc ddns.spec
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/ddns_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/ddns_messages.pyc
 
+EXTRA_DIST =  ddns_messages.mes
 #man_MANS = b10-ddns.8
-#EXTRA_DIST = $(man_MANS) b10-ddns.xml ddns_messages.mes
+#EXTRA_DIST += $(man_MANS) b10-ddns.xml
 
 if ENABLE_MAN
 

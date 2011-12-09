@@ -1,6 +1,6 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = ddns_test.py
-noinst_SCRIPTS = $(PYTESTS)
+EXTRA_DIST = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -20,10 +20,9 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	chmod +x $(abs_builddir)/$$pytest ; \
 	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/ddns:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/util/io/.libs \
 	TESTDATASRCDIR=$(abs_srcdir)/testdata/ \
-	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
