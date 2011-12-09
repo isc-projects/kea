@@ -320,6 +320,9 @@ TEST_F(IfaceMgrTest, sendReceive6) {
         socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
     );
 
+    EXPECT_GT(socket1, 0);
+    EXPECT_GT(socket2, 0);
+
     boost::shared_ptr<Pkt6> sendPkt(new Pkt6(128) );
 
     // prepare dummy payload
