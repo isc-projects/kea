@@ -18,6 +18,7 @@ libdhcp_unittests_SOURCES += ../libdhcp.h ../libdhcp.cc libdhcp_unittest.cc
 libdhcp_unittests_SOURCES += ../option6_iaaddr.h ../option6_iaaddr.cc option6_iaaddr_unittest.cc
 libdhcp_unittests_SOURCES += ../option6_ia.h ../option6_ia.cc option6_ia_unittest.cc
 libdhcp_unittests_SOURCES += ../option6_addrlst.h ../option6_addrlst.cc option6_addrlst_unittest.cc
+libdhcp_unittests_SOURCES += ../option4_addrlst.cc ../option4_addrlst.h option4_addrlst_unittest.cc
 libdhcp_unittests_SOURCES += ../option.h ../option.cc option_unittest.cc
 libdhcp_unittests_SOURCES += ../pkt6.h ../pkt6.cc pkt6_unittest.cc
 libdhcp_unittests_SOURCES += ../pkt4.h ../pkt4.cc pkt4_unittest.cc

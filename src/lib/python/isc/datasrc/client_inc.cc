@@ -190,4 +190,60 @@ Parameters:\n\
   journaling The zone updater should store a journal of the changes.\n\
 \n\
 ";
+
+// Modifications from C++ doc:
+//   pointer -> (removed)
+//   Null -> None
+//   exception types
+const char* const DataSourceClient_getJournalReader_doc = "\
+get_journal_reader(zone, begin_serial, end_serial) ->\n\
+   (int, ZoneJournalReader)\n\
+\n\
+Return a journal reader to retrieve differences of a zone.\n\
+\n\
+A derived version of this method creates a concrete ZoneJournalReader\n\
+object specific to the underlying data source for the specified name\n\
+of zone and differences between the versions specified by the\n\
+beginning and ending serials of the corresponding SOA RRs. The RR\n\
+class of the zone is the one that the client is expected to handle\n\
+(see the detailed description of this class).\n\
+\n\
+Note that the SOA serials are compared by the semantics of the serial\n\
+number arithmetic. So, for example, begin_serial can be larger than\n\
+end_serial as bare unsigned integers. The underlying data source\n\
+implementation is assumed to keep track of sufficient history to\n\
+identify (if exist) the corresponding difference between the specified\n\
+versions.\n\
+\n\
+This method returns the result as a pair of a result code and a\n\
+ZoneJournalReader object. On success, the result code is\n\
+SUCCESS and the object must not be None; otherwise the result code is\n\
+something other than SUCCESS and the object must be None.\n\
+\n\
+If the specified zone is not found in the data source, the result code\n\
+is NO_SUCH_ZONE. Otherwise, if specified range of difference for the\n\
+zone is not found in the data source, the result code is\n\
+NO_SUCH_VERSION.\n\
+\n\
+Handling differences is an optional feature of data source. If the\n\
+underlying data source does not support difference handling, this\n\
+method for that type of data source can throw an exception of class\n\
+isc.datasrc.NotImplemented.\n\
+\n\
+Exceptions:\n\
+  isc.datasrc.NotImplemented The data source does not support differences.\n\
+  isc.datasrc.Error Other operational errors at the data source level.\n\
+  SystemError An unexpected error in the backend C++ code.  Either a rare\n\
+              system error such as short memory or an implementation bug.\n\
+\n\
+Parameters:\n\
+  zone       The name of the zone for which the difference should be\n\
+             retrieved.\n\
+  begin_serial The SOA serial of the beginning version of the\n\
+             differences.\n\
+  end_serial The SOA serial of the ending version of the differences.\n\
+\n\
+Return Value(s): A pair of result code and a ZoneJournalReader object\n\
+(which can be None)\n                                                  \
+";
 } // unnamed namespace

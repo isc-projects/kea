@@ -15,37 +15,6 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrout messages python module.
 
-% XFROUT_AXFR_TRANSFER_DONE %1 client %2: transfer of %3 complete
-The transfer of the given zone has been completed successfully, or was
-aborted due to a shutdown event.
-
-% XFROUT_AXFR_TRANSFER_ERROR %1 client %2: error transferring zone %3: %4
-An uncaught exception was encountered while sending the response to
-an AXFR query. The error message of the exception is included in the
-log message, but this error most likely points to incomplete exception
-handling in the code.
-
-% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
-Pre-response check for an incomding XFR request failed unexpectedly.
-The most likely cause of this is that some low level error in the data
-source, but it may also be other general (more unlikely) errors such
-as memory shortage.  Some detail of the error is also included in the
-message.  The xfrout server tries to return a SERVFAIL response in this case.
-
-% XFROUT_AXFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4
-A transfer out for the given zone failed. An error response is sent
-to the client. The given rcode is the rcode that is set in the error
-response. This is either NOTAUTH (we are not authoritative for the
-zone), SERVFAIL (our internal database is missing the SOA record for
-the zone), or REFUSED (the limit of simultaneous outgoing AXFR
-transfers, as specified by the configuration value
-Xfrout/max_transfers_out, has been reached).
-# Still a TODO, but when implemented, REFUSED can also mean
-# the client is not allowed to transfer the zone
-
-% XFROUT_AXFR_TRANSFER_STARTED %1 client %2: transfer of zone %3 has started
-A transfer out of the given zone has started.
-
 % XFROUT_BAD_TSIG_KEY_STRING bad TSIG key string: %1
 The TSIG key string as read from the configuration does not represent
 a valid TSIG key.
@@ -178,3 +147,72 @@ on, but the file is in use. The most likely cause is that another
 xfrout daemon process is still running. This xfrout daemon (the one
 printing this message) will not start.
 
+% XFROUT_XFR_TRANSFER_DONE %1 client %2: transfer of %3 complete
+The transfer of the given zone has been completed successfully, or was
+aborted due to a shutdown event.
+
+% XFROUT_XFR_TRANSFER_ERROR %1 client %2: error transferring zone %3: %4
+An uncaught exception was encountered while sending the response to
+an AXFR query. The error message of the exception is included in the
+log message, but this error most likely points to incomplete exception
+handling in the code.
+
+% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
+Pre-response check for an incomding XFR request failed unexpectedly.
+The most likely cause of this is that some low level error in the data
+source, but it may also be other general (more unlikely) errors such
+as memory shortage.  Some detail of the error is also included in the
+message.  The xfrout server tries to return a SERVFAIL response in this case.
+
+% XFROUT_XFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4
+A transfer out for the given zone failed. An error response is sent
+to the client. The given rcode is the rcode that is set in the error
+response. This is either NOTAUTH (we are not authoritative for the
+zone), SERVFAIL (our internal database is missing the SOA record for
+the zone), or REFUSED (the limit of simultaneous outgoing AXFR
+transfers, as specified by the configuration value
+Xfrout/max_transfers_out, has been reached).
+# Still a TODO, but when implemented, REFUSED can also mean
+# the client is not allowed to transfer the zone
+
+% XFROUT_XFR_TRANSFER_STARTED %1 client %2: transfer of zone %3 has started
+A transfer out of the given zone has started.
+
+% XFROUT_IXFR_MULTIPLE_SOA IXFR client %1: authority section has multiple SOAs
+An IXFR request was received with more than one SOA RRs in the authority
+section.  The xfrout daemon rejects the request with an RCODE of
+FORMERR.
+
+% XFROUT_IXFR_NO_SOA IXFR client %1: missing SOA
+An IXFR request was received with no SOA RR in the authority section.
+The xfrout daemon rejects the request with an RCODE of FORMERR.
+
+% XFROUT_IXFR_NO_JOURNAL_SUPPORT IXFR client %1, %2: journaling not supported in the data source, falling back to AXFR
+An IXFR request was received but the underlying data source did
+not support journaling.  The xfrout daemon fell back to AXFR-style
+IXFR.
+
+% XFROUT_IXFR_UPTODATE IXFR client %1, %2: client version is new enough (theirs=%3, ours=%4)
+An IXFR request was received, but the client's SOA version is the same as
+or newer than that of the server.  The xfrout server responds to the
+request with the answer section being just one SOA of that version.
+Note: as of this wrting the 'newer version' cannot be identified due to
+the lack of support for the serial number arithmetic.  This will soon
+be implemented.
+
+% XFROUT_IXFR_NO_VERSION IXFR client %1, %2: version (%3 to %4) not in journal, falling back to AXFR
+An IXFR request was received, but the requested range of differences
+were not found in the data source.  The xfrout daemon fell back to
+AXFR-style IXFR.
+
+% XFROUT_IXFR_NO_ZONE IXFR client %1, %2: zone not found with journal
+The requested zone in IXFR was not found in the data source
+even though the xfrout daemon sucessfully found the SOA RR of the zone
+in the data source.  This can happen if the administrator removed the
+zone from the data source within the small duration between these
+operations, but it's more likely to be a bug or broken data source.
+Unless you know why this message was logged, and especially if it
+happens often, it's advisable to check whether the data source is
+valid for this zone.  The xfrout daemon considers it a possible,
+though unlikely, event, and returns a response with an RCODE of
+NOTAUTH.

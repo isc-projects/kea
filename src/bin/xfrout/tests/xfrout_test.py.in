@@ -22,6 +22,7 @@ from isc.testutils.tsigctx_mock import MockTSIGContext
 from isc.cc.session import *
 import isc.config
 from isc.dns import *
+from isc.testutils.rrset_utils import *
 from xfrout import *
 import xfrout
 import isc.log
@@ -29,6 +30,16 @@ import isc.acl.dns
 
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
+
+#
+# Commonly used (mostly constant) test parameters
+#
+TEST_ZONE_NAME_STR = "example.com."
+TEST_ZONE_NAME = Name(TEST_ZONE_NAME_STR)
+TEST_RRCLASS = RRClass.IN()
+IXFR_OK_VERSION = 2011111802
+IXFR_NG_VERSION = 2011112800
+SOA_CURRENT_VERSION = 2011112001
 
 # our fake socket, where we can read and insert messages
 class MySocket():
@@ -56,10 +67,12 @@ class MySocket():
         self.sendqueue = self.sendqueue[size:]
         return result
 
-    def read_msg(self, parse_options=Message.PARSE_DEFAULT):
+    def read_msg(self, parse_options=Message.PARSE_DEFAULT, need_len=False):
         sent_data = self.readsent()
         get_msg = Message(Message.PARSE)
         get_msg.from_wire(bytes(sent_data[2:]), parse_options)
+        if need_len:
+            return (get_msg, len(sent_data) - 2)
         return get_msg
 
     def clear_send(self):
@@ -68,6 +81,38 @@ class MySocket():
 class MockDataSrcClient:
     def __init__(self, type, config):
         pass
+
+    def find_zone(self, zone_name):
+        '''Mock version of find_zone().
+
+        It returns itself (subsequently acting as a mock ZoneFinder) for
+        some test zone names.  For a special name it returns NOTFOUND to
+        emulate the condition where the specified zone doen't exist.
+
+        '''
+        self._zone_name = zone_name
+        if zone_name == Name('notauth.example.com'):
+            return (isc.datasrc.DataSourceClient.NOTFOUND, None)
+        return (isc.datasrc.DataSourceClient.SUCCESS, self)
+
+    def find(self, name, rrtype, target=None, options=ZoneFinder.FIND_DEFAULT):
+        '''Mock ZoneFinder.find().
+
+        (At the moment) this method only handles query for type SOA.
+        By default it returns a normal SOA RR(set) whose owner name is
+        the query name  It also emulates some unusual cases for special
+        zone names.
+
+        '''
+        if name == Name('nosoa.example.com') and rrtype == RRType.SOA():
+            return (ZoneFinder.NXDOMAIN, None)
+        elif name == Name('multisoa.example.com') and rrtype == RRType.SOA():
+            soa_rrset = create_soa(SOA_CURRENT_VERSION)
+            soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
+            return (ZoneFinder.SUCCESS, soa_rrset)
+        elif rrtype == RRType.SOA():
+            return (ZoneFinder.SUCCESS, create_soa(SOA_CURRENT_VERSION))
+        raise ValueError('Unexpected input to mock finder: bug in test case?')
 
     def get_iterator(self, zone_name, adjust_ttl=False):
         if zone_name == Name('notauth.example.com'):
@@ -78,18 +123,19 @@ class MockDataSrcClient:
     def get_soa(self):  # emulate ZoneIterator.get_soa()
         if self._zone_name == Name('nosoa.example.com'):
             return None
-        soa_rrset = RRset(self._zone_name, RRClass.IN(), RRType.SOA(),
-                          RRTTL(3600))
-        soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                  'master.example.com. ' +
-                                  'admin.example.com. 1234 ' +
-                                  '3600 1800 2419200 7200'))
+        soa_rrset = create_soa(SOA_CURRENT_VERSION)
         if self._zone_name == Name('multisoa.example.com'):
-            soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                      'master.example.com. ' +
-                                      'admin.example.com. 1300 ' +
-                                      '3600 1800 2419200 7200'))
+            soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
         return soa_rrset
+
+    def get_journal_reader(self, zone_name, begin_serial, end_serial):
+        if zone_name == Name('notauth2.example.com'):
+            return isc.datasrc.ZoneJournalReader.NO_SUCH_ZONE, None
+        if zone_name == Name('nojournal.example.com'):
+            raise isc.datasrc.NotImplemented('journaling not supported')
+        if begin_serial == IXFR_NG_VERSION:
+            return isc.datasrc.ZoneJournalReader.NO_SUCH_VERSION, None
+        return isc.datasrc.ZoneJournalReader.SUCCESS, self
 
 class MyCCSession(isc.config.ConfigData):
     def __init__(self):
@@ -159,15 +205,44 @@ class TestXfroutSessionBase(unittest.TestCase):
     def message_has_tsig(self, msg):
         return msg.get_tsig_record() is not None
 
-    def create_request_data(self, with_question=True, with_tsig=False):
+    def create_request_data(self, with_question=True, with_tsig=False,
+                            ixfr=None, qtype=None, zone_name=TEST_ZONE_NAME,
+                            soa_class=TEST_RRCLASS, num_soa=1):
+        '''Create a commonly used XFR request data.
+
+        By default the request type is AXFR; if 'ixfr' is an integer,
+        the request type will be IXFR and an SOA with the serial being
+        the value of the parameter will be included in the authority
+        section.
+
+        This method has various minor parameters only for creating bad
+        format requests for testing purposes:
+        qtype: the RR type of the question section.  By default automatically
+               determined by the value of ixfr, but could be an invalid type
+               for testing.
+        zone_name: the query (zone) name.  for IXFR, it's also used as
+                   the owner name of the SOA in the authority section.
+        soa_class: IXFR only.  The RR class of the SOA RR in the authority
+                   section.
+        num_soa: IXFR only.  The number of SOA RDATAs in the authority
+                 section.
+        '''
         msg = Message(Message.RENDER)
         query_id = 0x1035
         msg.set_qid(query_id)
         msg.set_opcode(Opcode.QUERY())
         msg.set_rcode(Rcode.NOERROR())
+        req_type = RRType.AXFR() if ixfr is None else RRType.IXFR()
         if with_question:
-            msg.add_question(Question(Name("example.com"), RRClass.IN(),
-                                      RRType.AXFR()))
+            msg.add_question(Question(zone_name, RRClass.IN(),
+                                      req_type if qtype is None else qtype))
+        if req_type == RRType.IXFR():
+            soa = RRset(zone_name, soa_class, RRType.SOA(), RRTTL(0))
+            # In the RDATA only the serial matters.
+            for i in range(0, num_soa):
+                soa.add_rdata(Rdata(RRType.SOA(), soa_class,
+                                    'm r ' + str(ixfr) + ' 1 1 1 1'))
+            msg.add_rrset(Message.SECTION_AUTHORITY, soa)
 
         renderer = MessageRenderer()
         if with_tsig:
@@ -177,6 +252,13 @@ class TestXfroutSessionBase(unittest.TestCase):
             msg.to_wire(renderer)
         request_data = renderer.get_data()
         return request_data
+
+    def set_request_type(self, type):
+        self.xfrsess._request_type = type
+        if type == RRType.AXFR():
+            self.xfrsess._request_typestr = 'AXFR'
+        else:
+            self.xfrsess._request_typestr = 'IXFR'
 
     def setUp(self):
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
@@ -188,13 +270,9 @@ class TestXfroutSessionBase(unittest.TestCase):
                                        isc.acl.dns.REQUEST_LOADER.load(
                                            [{"action": "ACCEPT"}]),
                                        {})
+        self.set_request_type(RRType.AXFR()) # test AXFR by default
         self.mdata = self.create_request_data()
-        self.soa_rrset = RRset(Name('example.com'), RRClass.IN(), RRType.SOA(),
-                               RRTTL(3600))
-        self.soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
-                                       'master.Example.com. ' +
-                                       'admin.exAmple.com. ' +
-                                       '1234 3600 1800 2419200 7200'))
+        self.soa_rrset = create_soa(SOA_CURRENT_VERSION)
         # some test replaces a module-wide function.  We should ensure the
         # original is used elsewhere.
         self.orig_get_rrset_len = xfrout.get_rrset_len
@@ -222,7 +300,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         # set up a bogus request, which should result in FORMERR. (it only
         # has to be something that is different from the previous case)
         self.xfrsess._request_data = \
-            self.create_request_data(with_question=False)
+            self.create_request_data(ixfr=IXFR_OK_VERSION, num_soa=2)
         # Replace the data source client to avoid datasrc related exceptions
         self.xfrsess.ClientClass = MockDataSrcClient
         XfroutSession._handle(self.xfrsess)
@@ -241,13 +319,29 @@ class TestXfroutSession(TestXfroutSessionBase):
         XfroutSession._handle(self.xfrsess)
 
     def test_parse_query_message(self):
+        # Valid AXFR
         [get_rcode, get_msg] = self.xfrsess._parse_query_message(self.mdata)
+        self.assertEqual(RRType.AXFR(), self.xfrsess._request_type)
         self.assertEqual(get_rcode.to_text(), "NOERROR")
 
-        # Broken request: no question
-        request_data = self.create_request_data(with_question=False)
+        # Valid IXFR
+        request_data = self.create_request_data(ixfr=2011111801)
         rcode, msg = self.xfrsess._parse_query_message(request_data)
-        self.assertEqual(Rcode.FORMERR(), rcode)
+        self.assertEqual(RRType.IXFR(), self.xfrsess._request_type)
+        self.assertEqual(Rcode.NOERROR(), rcode)
+
+        # Broken request: no question
+        self.assertRaises(RuntimeError, self.xfrsess._parse_query_message,
+                          self.create_request_data(with_question=False))
+
+        # Broken request: invalid RR type (neither AXFR nor IXFR)
+        self.assertRaises(RuntimeError, self.xfrsess._parse_query_message,
+                          self.create_request_data(qtype=RRType.A()))
+
+        # NOERROR
+        request_data = self.create_request_data(ixfr=IXFR_OK_VERSION)
+        rcode, msg = self.xfrsess._parse_query_message(request_data)
+        self.assertEqual(rcode.to_text(), "NOERROR")
 
         # tsig signed query message
         request_data = self.create_request_data(with_tsig=True)
@@ -436,7 +530,7 @@ class TestXfroutSession(TestXfroutSessionBase):
                                RRTTL(3600))
         soa_rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
                                   'master.Example.com. admin.exAmple.com. ' +
-                                  '1234 3600 1800 2419200 7200'))
+                                  '2011112001 3600 1800 2419200 7200'))
         msg.add_rrset(Message.SECTION_ANSWER, soa_rrset)
         self.xfrsess._send_message(self.sock, msg)
         send_out_data = self.sock.readsent()[2:]
@@ -470,34 +564,28 @@ class TestXfroutSession(TestXfroutSessionBase):
         msg = self.getmsg()
         msg.make_response()
 
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 packet_neet_not_sign)
+                                                 self.soa_rrset, 0)
         get_msg = self.sock.read_msg()
-        # tsig context is not exist
+        # tsig context does not exist
         self.assertFalse(self.message_has_tsig(get_msg))
 
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
 
-        #answer_rrset_iter = section_iter(get_msg, section.ANSWER())
-        answer = get_msg.get_section(Message.SECTION_ANSWER)[0]#answer_rrset_iter.get_rrset()
+        answer = get_msg.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(answer.get_name().to_text(), "example.com.")
         self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "SOA")
         rdata = answer.get_rdata()
         self.assertEqual(rdata[0], self.soa_rrset.get_rdata()[0])
 
-        # msg is the TSIG_SIGN_EVERY_NTH one
-        # sending the message with last soa together
+        # Sending the message with last soa together
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 TSIG_SIGN_EVERY_NTH)
+                                                 self.soa_rrset, 0)
         get_msg = self.sock.read_msg()
-        # tsig context is not exist
+        # tsig context does not exist
         self.assertFalse(self.message_has_tsig(get_msg))
 
     def test_send_message_with_last_soa_with_tsig(self):
@@ -507,27 +595,15 @@ class TestXfroutSession(TestXfroutSessionBase):
         msg = self.getmsg()
         msg.make_response()
 
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
-        # msg is not the TSIG_SIGN_EVERY_NTH one
-        # sending the message with last soa together
+        # Sending the message with last soa together
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 packet_neet_not_sign)
+                                                 self.soa_rrset, 0)
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
 
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
-
-        # msg is the TSIG_SIGN_EVERY_NTH one
-        # sending the message with last soa together
-        self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset, 0,
-                                                 TSIG_SIGN_EVERY_NTH)
-        get_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(get_msg))
 
     def test_trigger_send_message_with_last_soa(self):
         rrset_a = RRset(Name("example.com"), RRClass.IN(), RRType.A(), RRTTL(3600))
@@ -540,8 +616,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         # length larger than MAX-len(rrset)
         length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - \
             get_rrset_len(self.soa_rrset) + 1
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
 
         # give the function a value that is larger than MAX-len(rrset)
         # this should have triggered the sending of two messages
@@ -549,8 +623,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         # the sending in _with_last_soa)
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
                                                  self.soa_rrset,
-                                                 length_need_split,
-                                                 packet_neet_not_sign)
+                                                 length_need_split)
         get_msg = self.sock.read_msg()
         self.assertFalse(self.message_has_tsig(get_msg))
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
@@ -570,7 +643,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
         self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
 
-        #answer_rrset_iter = section_iter(get_msg, Message.SECTION_ANSWER)
         answer = get_msg.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(answer.get_name().to_text(), "example.com.")
         self.assertEqual(answer.get_class(), RRClass("IN"))
@@ -590,8 +662,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         # length larger than MAX-len(rrset)
         length_need_split = xfrout.XFROUT_MAX_MESSAGE_SIZE - \
             get_rrset_len(self.soa_rrset) + 1
-        # packet number less than TSIG_SIGN_EVERY_NTH
-        packet_neet_not_sign = xfrout.TSIG_SIGN_EVERY_NTH - 1
 
         # give the function a value that is larger than MAX-len(rrset)
         # this should have triggered the sending of two messages
@@ -599,26 +669,10 @@ class TestXfroutSession(TestXfroutSessionBase):
         # the sending in _with_last_soa)
         self.xfrsess._send_message_with_last_soa(msg, self.sock,
                                                  self.soa_rrset,
-                                                 length_need_split,
-                                                 packet_neet_not_sign)
-        get_msg = self.sock.read_msg()
-        # msg is not the TSIG_SIGN_EVERY_NTH one, it shouldn't be tsig signed
-        self.assertFalse(self.message_has_tsig(get_msg))
-        # the last packet should be tsig signed
+                                                 length_need_split)
+        # Both messages should have TSIG RRs
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
-        # and it should not have sent anything else
-        self.assertEqual(0, len(self.sock.sendqueue))
-
-
-        # msg is the TSIG_SIGN_EVERY_NTH one, it should be tsig signed
-        self.xfrsess._send_message_with_last_soa(msg, self.sock,
-                                                 self.soa_rrset,
-                                                 length_need_split,
-                                                 xfrout.TSIG_SIGN_EVERY_NTH)
-        get_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(get_msg))
-        # the last packet should be tsig signed
         get_msg = self.sock.read_msg()
         self.assertTrue(self.message_has_tsig(get_msg))
         # and it should not have sent anything else
@@ -627,16 +681,101 @@ class TestXfroutSession(TestXfroutSessionBase):
     def test_get_rrset_len(self):
         self.assertEqual(82, get_rrset_len(self.soa_rrset))
 
-    def test_check_xfrout_available(self):
+    def test_xfrout_axfr_setup(self):
         self.xfrsess.ClientClass = MockDataSrcClient
-        self.assertEqual(self.xfrsess._check_xfrout_available(
-                Name('example.com')), Rcode.NOERROR())
-        self.assertEqual(self.xfrsess._check_xfrout_available(
-                Name('notauth.example.com')), Rcode.NOTAUTH())
-        self.assertEqual(self.xfrsess._check_xfrout_available(
-                Name('nosoa.example.com')), Rcode.SERVFAIL())
-        self.assertEqual(self.xfrsess._check_xfrout_available(
-                Name('multisoa.example.com')), Rcode.SERVFAIL())
+        # Successful case.  A zone iterator should be set up.
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._iterator)
+
+        # Failure cases
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), Name('notauth.example.com'), TEST_RRCLASS),
+                         Rcode.NOTAUTH())
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), Name('nosoa.example.com'), TEST_RRCLASS),
+                         Rcode.SERVFAIL())
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), Name('multisoa.example.com'), TEST_RRCLASS),
+                         Rcode.SERVFAIL())
+
+    def test_xfrout_ixfr_setup(self):
+        self.xfrsess.ClientClass = MockDataSrcClient
+        self.set_request_type(RRType.IXFR())
+
+        # Successful case of pure IXFR.  A zone journal reader should be set
+        # up.
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._jnl_reader)
+
+        # Successful case, but as a result of falling back to AXFR-style
+        # IXFR.  A zone iterator should be set up instead of a journal reader.
+        self.mdata = self.create_request_data(ixfr=IXFR_NG_VERSION)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._iterator)
+        self.assertEqual(None, self.xfrsess._jnl_reader)
+
+        # Successful case, but the requested SOA serial is equal to that of
+        # the local SOA.  Both iterator and jnl_reader should be None,
+        # indicating that the response will contain just one SOA.
+        self.mdata = self.create_request_data(ixfr=SOA_CURRENT_VERSION)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
+        self.assertEqual(None, self.xfrsess._iterator)
+        self.assertEqual(None, self.xfrsess._jnl_reader)
+
+        # The data source doesn't support journaling.  Should fallback to AXFR.
+        zone_name = Name('nojournal.example.com')
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
+                                              zone_name=zone_name)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._iterator)
+
+        # Failure cases
+        zone_name = Name('notauth.example.com')
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
+                                              zone_name=zone_name)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.NOTAUTH())
+        # this is a strange case: zone's SOA will be found but the journal
+        # reader won't be created due to 'no such zone'.
+        zone_name = Name('notauth2.example.com')
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
+                                              zone_name=zone_name)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.NOTAUTH())
+        zone_name = Name('nosoa.example.com')
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
+                                              zone_name=zone_name)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.SERVFAIL())
+        zone_name = Name('multisoa.example.com')
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
+                                              zone_name=zone_name)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.SERVFAIL())
+
+        # query name doesn't match the SOA's owner
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.FORMERR())
+
+        # query's RR class doesn't match the SOA's class
+        zone_name = TEST_ZONE_NAME # make sure the name matches this time
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
+                                              soa_class=RRClass.CH())
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.FORMERR())
+
+        # multiple SOA RRs
+        self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
+                                              num_soa=2)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), zone_name, TEST_RRCLASS), Rcode.FORMERR())
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
@@ -644,13 +783,10 @@ class TestXfroutSession(TestXfroutSessionBase):
         sent_data = self.sock.readsent()
         self.assertEqual(len(sent_data), 0)
 
-    def default(self, param):
-        return "example.com"
-
     def test_dns_xfrout_start_notauth(self):
-        def notauth(formpara):
+        def notauth(msg, name, rrclass):
             return Rcode.NOTAUTH()
-        self.xfrsess._check_xfrout_available = notauth
+        self.xfrsess._xfrout_setup = notauth
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NOTAUTH")
@@ -663,9 +799,9 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.SERVFAIL())
 
     def test_dns_xfrout_start_noerror(self):
-        def noerror(form):
+        def noerror(msg, name, rrclass):
             return Rcode.NOERROR()
-        self.xfrsess._check_xfrout_available = noerror
+        self.xfrsess._xfrout_setup = noerror
 
         def myreply(msg, sock):
             self.sock.send(b"success")
@@ -674,14 +810,14 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
 
-    def test_reply_xfrout_query_noerror(self):
+    def test_reply_xfrout_query_axfr(self):
         self.xfrsess._soa = self.soa_rrset
         self.xfrsess._iterator = [self.soa_rrset]
         self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
         reply_msg = self.sock.read_msg()
         self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 2)
 
-    def test_reply_xfrout_query_noerror_with_tsig(self):
+    def test_reply_xfrout_query_axfr_with_tsig(self):
         rrset = RRset(Name('a.example.com'), RRClass.IN(), RRType.A(),
                       RRTTL(3600))
         rrset.add_rdata(Rdata(RRType.A(), RRClass.IN(), '192.0.2.1'))
@@ -697,28 +833,195 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
         self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
 
-        # tsig signed first package
-        reply_msg = self.sock.read_msg()
-        self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 1)
-        self.assertTrue(self.message_has_tsig(reply_msg))
-        # (TSIG_SIGN_EVERY_NTH - 1) packets have no tsig
-        for i in range(0, xfrout.TSIG_SIGN_EVERY_NTH - 1):
+        # All messages must have TSIG as we don't support the feature of
+        # skipping intermediate TSIG records (with bulk signing).
+        for i in range(0, 102): # 102 = all 100 RRs from iterator and 2 SOAs
             reply_msg = self.sock.read_msg()
-            self.assertFalse(self.message_has_tsig(reply_msg))
-        # TSIG_SIGN_EVERY_NTH packet has tsig
-        reply_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(reply_msg))
-
-        for i in range(0, 100 - TSIG_SIGN_EVERY_NTH):
-            reply_msg = self.sock.read_msg()
-            self.assertFalse(self.message_has_tsig(reply_msg))
-        # tsig signed last package
-        reply_msg = self.sock.read_msg()
-        self.assertTrue(self.message_has_tsig(reply_msg))
+            # With the hack of get_rrset_len() above, every message must have
+            # exactly one RR in the answer section.
+            self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 1)
+            self.assertTrue(self.message_has_tsig(reply_msg))
 
         # and it should not have sent anything else
         self.assertEqual(0, len(self.sock.sendqueue))
 
+    def test_reply_xfrout_query_ixfr(self):
+        # Creating a pure (incremental) IXFR response.  Intermediate SOA
+        # RRs won't be skipped.
+        self.xfrsess._soa = create_soa(SOA_CURRENT_VERSION)
+        self.xfrsess._iterator = [create_soa(IXFR_OK_VERSION),
+                                  create_a(Name('a.example.com'), '192.0.2.2'),
+                                  create_soa(SOA_CURRENT_VERSION),
+                                  create_aaaa(Name('a.example.com'),
+                                              '2001:db8::1')]
+        self.xfrsess._jnl_reader = self.xfrsess._iterator
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        reply_msg = self.sock.read_msg(Message.PRESERVE_ORDER)
+        actual_records = reply_msg.get_section(Message.SECTION_ANSWER)
+
+        expected_records = self.xfrsess._iterator[:]
+        expected_records.insert(0, create_soa(SOA_CURRENT_VERSION))
+        expected_records.append(create_soa(SOA_CURRENT_VERSION))
+
+        self.assertEqual(len(expected_records), len(actual_records))
+        for (expected_rr, actual_rr) in zip(expected_records, actual_records):
+            self.assertTrue(rrsets_equal(expected_rr, actual_rr))
+
+    def test_reply_xfrout_query_axfr_maxlen(self):
+        # The test RR(set) has the length of 65535 - 12 (size of hdr) bytes:
+        # owner name = 1 (root), fixed fields (type,class,TTL,RDLEN) = 10
+        # RDATA = 65512 (= 65535 - 12 - 1 - 10)
+        self.xfrsess._soa = self.soa_rrset
+        test_rr = create_generic(Name('.'), 65512)
+        self.xfrsess._iterator = [self.soa_rrset, test_rr]
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        # The first message should contain the beginning SOA, and only that RR
+        r = self.sock.read_msg()
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(self.soa_rrset,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+        # The second message should contain the beginning SOA, and only that RR
+        # The wire format data should have the possible maximum size.
+        r, rlen = self.sock.read_msg(need_len=True)
+        self.assertEqual(65535, rlen)
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(test_rr,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+        # The third message should contain the ending SOA, and only that RR
+        r = self.sock.read_msg()
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(self.soa_rrset,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+
+        # there should be no more message
+        self.assertEqual(0, len(self.sock.sendqueue))
+
+    def maxlen_test_common_setup(self, tsig=False):
+        '''Common initialization for some of the tests below
+
+        For those tests we use '.' for all owner names and names in RDATA
+        to avoid having unexpected results due to compression.  It returns
+        the created SOA for convenience.
+
+        If tsig is True, also setup TSIG (mock) context.  In our test cases
+        the size of the TSIG RR is 81 bytes (key name = example.com,
+        algorithm = hmac-md5)
+
+        '''
+        soa = RRset(Name('.'), RRClass.IN(), RRType.SOA(), RRTTL(3600))
+        soa.add_rdata(Rdata(RRType.SOA(), RRClass.IN(), '. . 0 0 0 0 0'))
+        self.mdata = self.create_request_data(zone_name=Name('.'))
+        self.xfrsess._soa = soa
+        if tsig:
+            self.xfrsess._tsig_ctx = \
+                self.create_mock_tsig_ctx(TSIGError.NOERROR)
+            self.xfrsess._tsig_len = 81
+        return soa
+
+    def maxlen_test_common_checks(self, soa_rr, test_rr, expected_n_rr):
+        '''A set of common assertion checks for some tests below.
+
+        In all cases two AXFR response messages should have been created.
+        expected_n_rr is a list of two elements, each specifies the expected
+        number of answer RRs for each message: expected_n_rr[0] is the expected
+        number of the first answer RRs; expected_n_rr[1] is the expected number
+        of the second answer RRs.  The message that contains two RRs should
+        have the maximum possible wire length (65535 bytes).  And, in all
+        cases, the resulting RRs should be in the order of SOA, another RR,
+        SOA.
+
+        '''
+        # Check the first message
+        r, rlen = self.sock.read_msg(need_len=True)
+        if expected_n_rr[0] == 2:
+            self.assertEqual(65535, rlen)
+        self.assertEqual(expected_n_rr[0],
+                         r.get_rr_count(Message.SECTION_ANSWER))
+        actual_rrs = r.get_section(Message.SECTION_ANSWER)[:]
+
+        # Check the second message
+        r, rlen = self.sock.read_msg(need_len=True)
+        if expected_n_rr[1] == 2:
+            self.assertEqual(65535, rlen)
+        self.assertEqual(expected_n_rr[1],
+                         r.get_rr_count(Message.SECTION_ANSWER))
+        actual_rrs.extend(r.get_section(Message.SECTION_ANSWER))
+        for (expected_rr, actual_rr) in zip([soa_rr, test_rr, soa_rr],
+                                            actual_rrs):
+            self.assertTrue(rrsets_equal(expected_rr, actual_rr))
+
+        # there should be no more message
+        self.assertEqual(0, len(self.sock.sendqueue))
+
+    def test_reply_xfrout_query_axfr_maxlen_with_soa(self):
+        # Similar to the 'maxlen' test, but the first message should be
+        # able to contain both SOA and the large RR.
+        soa = self.maxlen_test_common_setup()
+
+        # The first message will contain the question (5 bytes), so the
+        # test RDATA should allow a room for that.
+        test_rr = create_generic(Name('.'), 65512 - 5 - get_rrset_len(soa))
+        self.xfrsess._iterator = [soa, test_rr]
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        self.maxlen_test_common_checks(soa, test_rr, [2, 1])
+
+    def test_reply_xfrout_query_axfr_maxlen_with_soa_with_tsig(self):
+        # Similar to the previous case, but with TSIG (whose size is 81 bytes).
+        soa = self.maxlen_test_common_setup(True)
+        test_rr = create_generic(Name('.'), 65512 - 5 - 81 -
+                                 get_rrset_len(soa))
+        self.xfrsess._iterator = [soa, test_rr]
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        self.maxlen_test_common_checks(soa, test_rr, [2, 1])
+
+    def test_reply_xfrout_query_axfr_maxlen_with_endsoa(self):
+        # Similar to the max w/ soa test, but the first message cannot contain
+        # both SOA and the long RR due to the question section.  The second
+        # message should be able to contain both.
+        soa = self.maxlen_test_common_setup()
+        test_rr = create_generic(Name('.'), 65512 - get_rrset_len(soa))
+        self.xfrsess._iterator = [soa, test_rr]
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        self.maxlen_test_common_checks(soa, test_rr, [1, 2])
+
+    def test_reply_xfrout_query_axfr_maxlen_with_endsoa_with_tsig(self):
+        # Similar to the previous case, but with TSIG.
+        soa = self.maxlen_test_common_setup(True)
+        test_rr = create_generic(Name('.'), 65512 - 81 - get_rrset_len(soa))
+        self.xfrsess._iterator = [soa, test_rr]
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        self.maxlen_test_common_checks(soa, test_rr, [1, 2])
+
+    def test_reply_xfrout_query_axfr_toobigdata(self):
+        # Similar to the 'maxlen' test, but the RR doesn't even fit in a
+        # single message.
+        self.xfrsess._soa = self.soa_rrset
+        test_rr = create_generic(Name('.'), 65513) # 1 byte larger than 'max'
+        self.xfrsess._iterator = [self.soa_rrset, test_rr]
+        # the reply method should fail with exception
+        self.assertRaises(XfroutSessionError, self.xfrsess._reply_xfrout_query,
+                          self.getmsg(), self.sock)
+        # The first message should still have been sent and contain the
+        # beginning SOA, and only that RR
+        r = self.sock.read_msg()
+        self.assertEqual(1, r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertTrue(rrsets_equal(self.soa_rrset,
+                                     r.get_section(Message.SECTION_ANSWER)[0]))
+        # And there should have been no other messages sent
+        self.assertEqual(0, len(self.sock.sendqueue))
+
+    def test_reply_xfrout_query_ixfr_soa_only(self):
+        # Creating an IXFR response that contains only one RR, which is the
+        # SOA of the current version.
+        self.xfrsess._soa = create_soa(SOA_CURRENT_VERSION)
+        self.xfrsess._iterator = None
+        self.xfrsess._jnl_reader = None
+        self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock)
+        reply_msg = self.sock.read_msg(Message.PRESERVE_ORDER)
+        answer = reply_msg.get_section(Message.SECTION_ANSWER)
+        self.assertEqual(1, len(answer))
+        self.assertTrue(rrsets_equal(create_soa(SOA_CURRENT_VERSION),
+                                     answer[0]))
 
 class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
     '''Tests for XFR-out sessions using an SQLite3 DB.
@@ -734,19 +1037,82 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         self.xfrsess._request_data = self.mdata
         self.xfrsess._server.get_db_file = lambda : TESTDATA_SRCDIR + \
             'test.sqlite3'
+        self.ns_name = 'a.dns.example.com'
+
+    def check_axfr_stream(self, response):
+        '''Common checks for AXFR(-style) response for the test zone.
+        '''
+        # This zone contains two A RRs for the same name with different TTLs.
+        # These TTLs should be preseved in the AXFR stream.
+        actual_records = response.get_section(Message.SECTION_ANSWER)
+        self.assertEqual(5, len(actual_records))
+        # The first and last RR should be the expected SOA
+        expected_soa = create_soa(2011112001)
+        self.assertTrue(rrsets_equal(expected_soa, actual_records[0]))
+        self.assertTrue(rrsets_equal(expected_soa, actual_records[-1]))
+
+        # The ordering of the intermediate RRs can differ depending on the
+        # internal details of the SQLite3 library, so we sort them by a simple
+        # rule sufficient for the purpose here, and then compare them.
+        expected_others = [create_ns(self.ns_name),
+                           create_a(Name(self.ns_name), '192.0.2.1', 3600),
+                           create_a(Name(self.ns_name), '192.0.2.2', 7200)]
+        keyfn = lambda x: (x.get_type(), x.get_ttl())
+        for (expected_rr, actual_rr) in zip(sorted(expected_others, key=keyfn),
+                                            sorted(actual_records[1:4],
+                                                   key=keyfn)):
+            self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
     def test_axfr_normal_session(self):
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         self.assertEqual(Rcode.NOERROR(), response.get_rcode())
-        # This zone contains two A RRs for the same name with different TTLs.
-        # These TTLs should be preseved in the AXFR stream.
-        actual_ttls = []
-        for rr in response.get_section(Message.SECTION_ANSWER):
-            if rr.get_type() == RRType.A() and \
-                    not rr.get_ttl() in actual_ttls:
-                actual_ttls.append(rr.get_ttl().get_value())
-        self.assertEqual([3600, 7200], sorted(actual_ttls))
+        self.check_axfr_stream(response)
+
+    def test_ixfr_to_axfr(self):
+        self.xfrsess._request_data = \
+            self.create_request_data(ixfr=IXFR_NG_VERSION)
+        XfroutSession._handle(self.xfrsess)
+        response = self.sock.read_msg(Message.PRESERVE_ORDER);
+        self.assertEqual(Rcode.NOERROR(), response.get_rcode())
+        # This is an AXFR-style IXFR.  So the question section should indicate
+        # that it's an IXFR resposne.
+        self.assertEqual(RRType.IXFR(), response.get_question()[0].get_type())
+        self.check_axfr_stream(response)
+
+    def test_ixfr_normal_session(self):
+        # See testdata/creatediff.py.  There are 8 changes between two
+        # versions.  So the answer section should contain all of these and
+        # two beginning and trailing SOAs.
+        self.xfrsess._request_data = \
+            self.create_request_data(ixfr=IXFR_OK_VERSION)
+        XfroutSession._handle(self.xfrsess)
+        response = self.sock.read_msg(Message.PRESERVE_ORDER);
+        actual_records = response.get_section(Message.SECTION_ANSWER)
+        expected_records = [create_soa(2011112001), create_soa(2011111802),
+                            create_soa(2011111900),
+                            create_a(Name(self.ns_name), '192.0.2.2', 7200),
+                            create_soa(2011111900),
+                            create_a(Name(self.ns_name), '192.0.2.53'),
+                            create_aaaa(Name(self.ns_name), '2001:db8::1'),
+                            create_soa(2011112001),
+                            create_a(Name(self.ns_name), '192.0.2.1'),
+                            create_soa(2011112001)]
+        self.assertEqual(len(expected_records), len(actual_records))
+        for (expected_rr, actual_rr) in zip(expected_records, actual_records):
+            self.assertTrue(rrsets_equal(expected_rr, actual_rr))
+
+    def test_ixfr_soa_only(self):
+        # The requested SOA serial is the latest one.  The response should
+        # contain exactly one SOA of that serial.
+        self.xfrsess._request_data = \
+            self.create_request_data(ixfr=SOA_CURRENT_VERSION)
+        XfroutSession._handle(self.xfrsess)
+        response = self.sock.read_msg(Message.PRESERVE_ORDER);
+        answers = response.get_section(Message.SECTION_ANSWER)
+        self.assertEqual(1, len(answers))
+        self.assertTrue(rrsets_equal(create_soa(SOA_CURRENT_VERSION),
+                                     answers[0]))
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
