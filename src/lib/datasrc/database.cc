@@ -843,7 +843,7 @@ public:
         committed_(false), accessor_(accessor), zone_id_(zone_id),
         db_name_(accessor->getDBName()), zone_name_(zone_name.toText()),
         zone_class_(zone_class), journaling_(journaling),
-        diff_phase_(NOT_STARTED),
+        diff_phase_(NOT_STARTED), serial_(0),
         finder_(new DatabaseClient::Finder(accessor_, zone_id_, zone_name))
     {
         logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
@@ -896,7 +896,7 @@ private:
         ADD
     };
     DiffPhase diff_phase_;
-    uint32_t serial_;
+    Serial serial_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
 
     // This is a set of validation checks commonly used for addRRset() and
@@ -985,8 +985,8 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
         columns[Accessor::ADD_RDATA] = it->getCurrent().toText();
         if (journaling_) {
             journal[Accessor::DIFF_RDATA] = columns[Accessor::ADD_RDATA];
-            accessor_->addRecordDiff(zone_id_, serial_, Accessor::DIFF_ADD,
-                                     journal);
+            accessor_->addRecordDiff(zone_id_, serial_.getValue(),
+                                     Accessor::DIFF_ADD, journal);
         }
         accessor_->addRecordToZone(columns);
     }
@@ -1023,8 +1023,8 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
         params[Accessor::DEL_RDATA] = it->getCurrent().toText();
         if (journaling_) {
             journal[Accessor::DIFF_RDATA] = params[Accessor::DEL_RDATA];
-            accessor_->addRecordDiff(zone_id_, serial_, Accessor::DIFF_DELETE,
-                                     journal);
+            accessor_->addRecordDiff(zone_id_, serial_.getValue(),
+                                     Accessor::DIFF_DELETE, journal);
         }
         accessor_->deleteRecordInZone(params);
     }

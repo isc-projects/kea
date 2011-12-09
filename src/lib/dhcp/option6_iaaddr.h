@@ -126,8 +126,7 @@ public:
     getValid() const { return valid_; }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual unsigned short
-    len();
+    virtual uint16_t len();
 
 protected:
     /// contains an IPv6 address

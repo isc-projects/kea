@@ -284,14 +284,12 @@ class NotifyOut:
                          format_zone_str(zone_name, zone_class))
             return []
 
-        result, ns_rrset = finder.find(zone_name, RRType.NS(), None,
-                                       finder.FIND_DEFAULT)
+        result, ns_rrset = finder.find(zone_name, RRType.NS())
         if result is not finder.SUCCESS or ns_rrset is None:
             logger.warn(NOTIFY_OUT_ZONE_NO_NS,
                         format_zone_str(zone_name, zone_class))
             return []
-        result, soa_rrset = finder.find(zone_name, RRType.SOA(), None,
-                                        finder.FIND_DEFAULT)
+        result, soa_rrset = finder.find(zone_name, RRType.SOA())
         if result is not finder.SUCCESS or soa_rrset is None or \
                 soa_rrset.get_rdata_count() != 1:
             logger.warn(NOTIFY_OUT_ZONE_BAD_SOA,
@@ -304,13 +302,11 @@ class NotifyOut:
             ns_name = Name(ns_rdata.to_text())
             if soa_mname == ns_name:
                 continue
-            result, rrset = finder.find(ns_name, RRType.A(), None,
-                                        finder.FIND_DEFAULT)
+            result, rrset = finder.find(ns_name, RRType.A())
             if result is finder.SUCCESS and rrset is not None:
                 addrs.extend([a.to_text() for a in rrset.get_rdata()])
 
-            result, rrset = finder.find(ns_name, RRType.AAAA(), None,
-                                        finder.FIND_DEFAULT)
+            result, rrset = finder.find(ns_name, RRType.AAAA())
             if result is finder.SUCCESS and rrset is not None:
                 addrs.extend([aaaa.to_text() for aaaa in rrset.get_rdata()])
 
@@ -504,8 +500,7 @@ class NotifyOut:
                                            zone_name.to_text() + '/' +
                                            zone_class.to_text() + ' not found')
 
-        result, soa_rrset = finder.find(zone_name, RRType.SOA(), None,
-                                        finder.FIND_DEFAULT)
+        result, soa_rrset = finder.find(zone_name, RRType.SOA())
         if result is not finder.SUCCESS or soa_rrset is None or \
                 soa_rrset.get_rdata_count() != 1:
             raise NotifyOutDataSourceError('_get_zone_soa: Zone ' +

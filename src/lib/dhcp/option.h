@@ -178,20 +178,19 @@ public:
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
     /// @return option type
-    unsigned short
-    getType();
+    unsigned short getType() { return (type_); }
 
     /// Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
     ///
     /// @return length of the option
-    virtual unsigned short
+    virtual uint16_t
     len();
 
     /// @brief Returns length of header (2 for v4, 4 for v6)
     ///
     /// @return length of option header
-    virtual unsigned short
+    virtual uint16_t
     getHeaderLen();
 
     /// returns if option is valid (e.g. option may be truncated)
@@ -202,9 +201,9 @@ public:
 
     /// Returns pointer to actual data.
     ///
-    /// @return pointer to actual data (or NULL if there is no data)
-    virtual const std::vector<uint8_t>&
-    getData();
+    /// @return pointer to actual data (or reference to an empty vector
+    ///         if there is no data)
+    virtual const std::vector<uint8_t>& getData() { return (data_); }
 
     /// Adds a sub-option.
     ///
@@ -242,20 +241,6 @@ public:
     ~Option();
 
 protected:
-
-    /// Builds raw (over-wire) buffer of this option, including all
-    /// defined suboptions. Version for building DHCPv4 options.
-    ///
-    /// @param buf output buffer (built options will be stored here)
-    /// @param buf_len buffer length (used for buffer overflow checks)
-    /// @param offset offset from start of the buf buffer
-    ///
-    /// @return offset to the next byte after last used byte
-    virtual unsigned int
-    pack4(boost::shared_array<uint8_t>& buf,
-          unsigned int buf_len,
-          unsigned int offset);
-
     /// Builds raw (over-wire) buffer of this option, including all
     /// defined suboptions. Version for building DHCPv4 options.
     ///
