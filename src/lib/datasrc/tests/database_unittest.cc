@@ -1419,8 +1419,7 @@ doFindTest(ZoneFinder& finder,
            const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
-    const ZoneFinder::FindResult result = finder.find(name, type, NULL,
-                                                      options);
+    const ZoneFinder::FindResult result = finder.find(name, type, options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (!expected_rdatas.empty() && result.rrset) {
         checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
@@ -1670,58 +1669,58 @@ TYPED_TEST(DatabaseClientTest, find) {
 
     EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badcname2.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badcname3.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badrdata.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badtype.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badttl.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badsig.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 
     // Trigger the hardcoded exceptions and see if find() has cleaned up
     if (this->is_mock_) {
         EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      DataSourceError);
         EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      isc::Exception);
         EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      std::exception);
         EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      DataSourceError);
         EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      isc::Exception);
         EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      std::exception);
     }
 
@@ -1840,17 +1839,17 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
 
     // This is broken dname, it contains two targets
     EXPECT_THROW(finder->find(isc::dns::Name("below.baddname.example.org."),
-                              this->qtype_, NULL,
+                              this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 
     // Broken NS - it lives together with something else
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns1.example.org."),
-                              this->qtype_, NULL,
+                              this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns2.example.org."),
-                              this->qtype_, NULL,
+                              this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 }
