@@ -402,6 +402,8 @@ TEST_F(OptionTest, v6_addgetdel) {
 
     // let's try to delete - should fail
     EXPECT_TRUE(false ==  parent->delOption(2));
+
+    delete parent;
 }
 
 }

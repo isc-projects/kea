@@ -96,6 +96,8 @@ case "$host" in
 	# Solaris requires special definitions to get some standard libraries
 	# (e.g. getopt(3)) available with common used header files.
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
+	LDFLAGS="$LDFLAGS -z now"
 	;;
 *-apple-darwin*)
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
@@ -478,23 +480,33 @@ else
     fi
 fi
 
-BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
 BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
 # We expect botan-config --libs to contain -L<path_to_libbotan>, but
 # this is not always the case.  As a heuristics workaround we add
-# -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
-# (but using include instead of lib) below.
+# -L`botan-config --prefix/lib` in this case (if not present already).
+# Same for BOTAN_INCLUDES (but using include instead of lib) below.
 if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
-    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
-        BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
+    echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
+        BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
     echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
         BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
 fi
+
+# botan-config script (and the way we call pkg-config) returns -L and -l
+# as one string, but we need them in separate values
+BOTAN_LDFLAGS=
+BOTAN_NEWLIBS=
+for flag in ${BOTAN_LIBS}; do
+    BOTAN_LDFLAGS="${BOTAN_LDFLAGS} `echo $flag | sed -ne '/^\(\-L\)/p'`"
+    BOTAN_LIBS="${BOTAN_LIBS} `echo $flag | sed -ne '/^\(\-l\)/p'`"
+done
+
 # See python_rpath for some info on why we do this
 if test $rpath_available = yes; then
     BOTAN_RPATH=
-    for flag in ${BOTAN_LDFLAGS}; do
+    for flag in ${BOTAN_LIBS}; do
             BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
     done
 AC_SUBST(BOTAN_RPATH)
@@ -510,13 +522,13 @@ AC_SUBST(BOTAN_RPATH)
 fi
 
 AC_SUBST(BOTAN_LDFLAGS)
+AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
-
+LIBS_SAVED="$LIBS"
+LIBS="$LIBS $BOTAN_LIBS"
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
@@ -531,7 +543,7 @@ AC_LINK_IFELSE(
          AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
 )
 CPPFLAGS=$CPPFLAGS_SAVED
-LDFLAGS=$LDFLAGS_SAVED
+LIBS=$LIBS_SAVED
 
 # Check for log4cplus
 log4cplus_path="yes"
@@ -543,7 +555,7 @@ if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
-  LOG4CPLUS_LDFLAGS="-L${log4cplus_path}/lib"
+  LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
 	log4cplusdirs="/usr/local /usr/pkg /opt /opt/local"
@@ -551,21 +563,21 @@ else
 	do
 		if test -f $d/include/log4cplus/logger.h; then
 			LOG4CPLUS_INCLUDES="-I$d/include"
-			LOG4CPLUS_LDFLAGS="-L$d/lib"
+			LOG4CPLUS_LIBS="-L$d/lib"
 			break
 		fi
 	done
 fi
 
-LOG4CPLUS_LDFLAGS="$LOG4CPLUS_LDFLAGS -llog4cplus $MULTITHREADING_FLAG"
+LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus $MULTITHREADING_FLAG"
 
-AC_SUBST(LOG4CPLUS_LDFLAGS)
+AC_SUBST(LOG4CPLUS_LIBS)
 AC_SUBST(LOG4CPLUS_INCLUDES)
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LOG4CPLUS_LDFLAGS $LDFLAGS"
+LIBS_SAVED="$LIBS"
+LIBS="$LOG4CPLUS_LIBS $LIBS"
 
 AC_CHECK_HEADERS([log4cplus/logger.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
@@ -580,7 +592,7 @@ AC_LINK_IFELSE(
 )
 
 CPPFLAGS=$CPPFLAGS_SAVED
-LDFLAGS=$LDFLAGS_SAVED
+LIBS=$LIBS_SAVED
 
 #
 # Configure Boost header path
@@ -673,6 +685,13 @@ else
     AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test "${use_boost_threads}" = "yes")
 fi
 
+# I can't get some of the #include <asio.hpp> right without this
+# TODO: find the real cause of asio/boost wanting pthreads
+# (this currently only occurs for src/lib/cc/session_unittests)
+PTHREAD_LDFLAGS=
+AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
+AC_SUBST(PTHREAD_LDFLAGS)
+AC_SUBST(MULTITHREADING_FLAG)
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -709,6 +728,48 @@ then
 				GTEST_LDFLAGS="-L$dir/lib"
 				GTEST_LDADD="-lgtest"
 				GTEST_FOUND="true"
+				# There is no gtest-config script on this
+				# system, which is supposed to inform us
+				# whether we need pthreads as well (a 
+				# gtest compile-time option). So we still
+				# need to test that manually.
+				CPPFLAGS_SAVED="$CPPFLAGS"
+				CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
+				LDFLAGS_SAVED="$LDFLAGS"
+				LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
+				LIBS_SAVED=$LIBS
+				LIBS="$LIBS $GTEST_LDADD"
+				AC_MSG_CHECKING([Checking whether gtest tests need pthreads])
+				# First try to compile without pthreads
+				AC_TRY_LINK([
+					#include <gtest/gtest.h>
+					],[
+						int i = 0;
+						char* c = NULL;
+						::testing::InitGoogleTest(&i, &c);
+						return (0);
+					],
+					[ AC_MSG_RESULT(no) ],
+					[
+						LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
+						# Now try to compile with pthreads
+						AC_TRY_LINK([
+							#include <gtest/gtest.h>
+							],[
+								int i = 0;
+								char* c = NULL;
+								::testing::InitGoogleTest(&i, &c);
+								return (0);
+							],
+							[ AC_MSG_RESULT(yes)
+							  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+							],
+							# Apparently we can't compile it at all
+							[ AC_MSG_ERROR(unable to compile with gtest) ])
+				])
+				CPPFLAGS=$CPPFLAGS_SAVED
+				LDFLAGS=$LDFLAGS_SAVED
+				LIBS=$LIBS_SAVED
 				break
 			fi
 		done
@@ -734,15 +795,6 @@ if test "x$HAVE_PKG_CONFIG" = "xno" ; then
   AC_MSG_ERROR(Please install pkg-config)
 fi
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
-
-# I can't get some of the #include <asio.hpp> right without this
-# TODO: find the real cause of asio/boost wanting pthreads
-# (this currently only occurs for src/lib/cc/session_unittests)
-PTHREAD_LDFLAGS=
-AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
-AC_SUBST(PTHREAD_LDFLAGS)
-
-AC_SUBST(MULTITHREADING_FLAG)
 
 #
 # ASIO: we extensively use it as the C++ event management module.
@@ -910,6 +962,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/datasrc/tests/testdata/Makefile
                  src/lib/xfr/Makefile
+                 src/lib/xfr/tests/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
                  src/lib/log/tests/Makefile
@@ -990,6 +1043,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/bind10_config.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
+           src/lib/datasrc/datasrc_config.h.pre
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
@@ -1084,8 +1138,9 @@ dnl includes too
   Boost:         ${BOOST_INCLUDES}
   Botan:         ${BOTAN_INCLUDES}
                  ${BOTAN_LDFLAGS}
+                 ${BOTAN_LIBS}
   Log4cplus:     ${LOG4CPLUS_INCLUDES}
-                 ${LOG4CPLUS_LDFLAGS}
+                 ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

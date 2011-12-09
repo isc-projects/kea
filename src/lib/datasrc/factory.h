@@ -68,7 +68,7 @@ public:
     ///             the library path.
     ///
     /// \exception DataSourceLibraryError If the library cannot be found or
-    ///            cannot be loaded.
+    ///            cannot be loaded, or if name is an empty string.
     LibraryContainer(const std::string& name);
 
     /// \brief Destructor
@@ -115,6 +115,15 @@ private:
 /// easy recognition and to reduce potential mistakes.
 /// For example, the sqlite3 implementation has the type 'sqlite3', and the
 /// derived filename 'sqlite3_ds.so'
+/// The value of type can be a specific loadable library; if it already ends
+/// with '.so', the loader will not add '_ds.so'.
+/// It may also be an absolute path; if it starts with '/', nothing is
+/// prepended. If it does not, the loadable library will be taken from the
+/// installation directory, see the value of
+/// isc::datasrc::BACKEND_LIBRARY_PATH in datasrc_config.h for the exact path.
+///
+/// \note When 'B10_FROM_BUILD' is set in the environment, the build
+///       directory is used instead of the install directory.
 ///
 /// There are of course some demands to an implementation, not all of which
 /// can be verified compile-time. It must provide a creator and destructor
