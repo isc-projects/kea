@@ -1,5 +1,3 @@
-#! /bin/sh
-
 # Copyright (C) 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +13,15 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
-export PYTHON_EXEC
+'''Tests for the DDNS module'''
 
-TEST_PATH=@abs_top_srcdir@/src/bin/ddns/tests
-PYTHONPATH=@abs_top_srcdir@/src/bin/ddns:@abs_top_srcdir@/src/lib/python
-export PYTHONPATH
+import unittest
+import isc
 
-cd ${TEST_PATH}
-exec ${PYTHON_EXEC} -O ddns_test.py $*
+class TestInitialization(unittest.TestCase):
+    def test_noop(self):
+        self.assertTrue(True)
 
+if __name__== "__main__":
+    isc.log.resetUnitTestRootLogger()
+    unittest.main()
