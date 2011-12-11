@@ -159,7 +159,7 @@ protected:
         return (s);
     }
 
-    typedef pair<const struct sockaddr&, socklen_t> SockAddrInfo;
+    typedef pair<const struct sockaddr*, socklen_t> SockAddrInfo;
     SockAddrInfo getSockAddr(const string& addr_str, const string& port_str) {
         struct addrinfo hints, *res;
         memset(&hints, 0, sizeof(hints));
@@ -167,7 +167,7 @@ protected:
         EXPECT_EQ(0, getaddrinfo(addr_str.c_str(), port_str.c_str(), NULL,
                                  &res));
         addrinfo_list_.push_back(res);
-        return (SockAddrInfo(*res->ai_addr, res->ai_addrlen));
+        return (SockAddrInfo(res->ai_addr, res->ai_addrlen));
     }
 
     // A helper method that creates a specified type of socket that is
@@ -188,7 +188,7 @@ protected:
             isc_throw(isc::Unexpected, "setsockopt(SO_REUSEADDR) failed: " <<
                       strerror(errno));
         }
-        if (bind(s, &sainfo.first, sainfo.second) < 0) {
+        if (bind(s, sainfo.first, sainfo.second) < 0) {
             close(s);
             isc_throw(isc::Unexpected, "bind(2) failed: " <<
                       strerror(errno));
@@ -305,7 +305,7 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
                                        false));
         setNonBlock(client_sock.fd, true);
         // This connect would "fail" due to EINPROGRESS.  Ignore it for now.
-        connect(client_sock.fd, &local.first, local.second);
+        connect(client_sock.fd, local.first, local.second);
         sockaddr_storage ss;
         socklen_t salen = sizeof(ss);
         server_sock.reset(accept(sock.fd, convertSockAddr(&ss), &salen));
@@ -326,8 +326,8 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
     }
 
     // Then push one socket session via the forwarder.
-    forwarder_.push(fwd_fd, family, type, protocol, local.first, remote.first,
-                    data, data_len);
+    forwarder_.push(fwd_fd, family, type, protocol, *local.first,
+                    *remote.first, data, data_len);
 
     // Pop the socket session we just pushed from a local receptor, and
     // check the content
@@ -340,8 +340,8 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
     EXPECT_EQ(family, sock_session.getFamily());
     EXPECT_EQ(type, sock_session.getType());
     EXPECT_EQ(protocol, sock_session.getProtocol());
-    checkSockAddrs(local.first, sock_session.getLocalEndpoint());
-    checkSockAddrs(remote.first, sock_session.getRemoteEndpoint());
+    checkSockAddrs(*local.first, sock_session.getLocalEndpoint());
+    checkSockAddrs(*remote.first, sock_session.getRemoteEndpoint());
     ASSERT_EQ(data_len, sock_session.getDataLength());
     EXPECT_EQ(0, memcmp(data, sock_session.getData(), data_len));
 
@@ -350,7 +350,7 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
     if (protocol == IPPROTO_UDP) {
         EXPECT_EQ(sizeof(TEST_DATA),
                   sendto(passed_sock.fd, TEST_DATA, sizeof(TEST_DATA), 0,
-                         convertSockAddr(&local.first), local.second));
+                         convertSockAddr(local.first), local.second));
     } else {
         server_sock.reset(-1);
         EXPECT_EQ(sizeof(TEST_DATA),
