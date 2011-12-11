@@ -12,13 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
 #include <netinet/in.h>
 
+#include <errno.h>
 #include <stdint.h>
 #include <string.h>
 
