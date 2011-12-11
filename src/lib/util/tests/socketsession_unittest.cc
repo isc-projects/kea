@@ -14,9 +14,9 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/un.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <netdb.h>
