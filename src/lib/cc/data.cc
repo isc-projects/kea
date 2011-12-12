@@ -843,10 +843,14 @@ removeIdentical(ElementPtr a, ConstElementPtr b) {
         isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
 
-    const std::map<std::string, ConstElementPtr>& m = a->mapValue();
+    // As maps do not allow entries with multiple keys, we can either iterate
+    // over a checking for identical entries in b or vice-versa.  As elements
+    // are removed from a if a match is found, we choose to iterate over b to
+    // avoid problems with element removal affecting the iterator.
+    const std::map<std::string, ConstElementPtr>& m = b->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
-        if (b->contains((*it).first)) {
+        if (a->contains((*it).first)) {
             if (a->get((*it).first)->equals(*b->get((*it).first))) {
                 a->remove((*it).first);
             }
