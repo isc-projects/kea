@@ -35,7 +35,7 @@ namespace isc {
 namespace asiodns {
 
 // Forward declarations
-class IOFetchData;
+struct IOFetchData;
 
 /// \brief Upstream Fetch Processing
 ///
