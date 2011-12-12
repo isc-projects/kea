@@ -504,7 +504,7 @@ TEST(Pkt4Test, unpackOptions) {
 
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    for (int i=0; i < sizeof(v4Opts); i++) {
+    for (int i = 0; i < sizeof(v4Opts); i++) {
         expectedFormat.push_back(v4Opts[i]);
     }
 
@@ -557,6 +557,21 @@ TEST(Pkt4Test, unpackOptions) {
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+22, 3)); // data len=3
+}
+
+TEST(Pkt4Test, metaFields) {
+
+    Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
+    pkt->setIface("loooopback");
+    pkt->setIndex(42);
+    pkt->setRemoteAddr(IOAddress("1.2.3.4"));
+    pkt->setLocalAddr(IOAddress("4.3.2.1"));
+
+    EXPECT_EQ("loooopback", pkt->getIface());
+    EXPECT_EQ(42, pkt->getIndex());
+    EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
+    EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
+
 }
 
 } // end of anonymous namespace

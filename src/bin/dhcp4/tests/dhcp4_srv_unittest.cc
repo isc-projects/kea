@@ -30,17 +30,24 @@ using namespace isc::dhcp;
 namespace {
 
 class NakedDhcpv4Srv: public Dhcpv4Srv {
-    // "naked" Interface Manager, exposes internal fields
+    // "naked" DHCPv4 server, exposes internal fields
 public:
     NakedDhcpv4Srv() { }
 
-    boost::shared_ptr<Pkt4>
-    processDiscover(boost::shared_ptr<Pkt4>& discover) {
+    boost::shared_ptr<Pkt4> processDiscover(boost::shared_ptr<Pkt4>& discover) {
         return Dhcpv4Srv::processDiscover(discover);
     }
-    boost::shared_ptr<Pkt4>
-    processRequest(boost::shared_ptr<Pkt4>& request) {
+    boost::shared_ptr<Pkt4> processRequest(boost::shared_ptr<Pkt4>& request) {
         return Dhcpv4Srv::processRequest(request);
+    }
+    void processRelease(boost::shared_ptr<Pkt4>& release) {
+        return Dhcpv4Srv::processRelease(release);
+    }
+    void processDecline(boost::shared_ptr<Pkt4>& decline) {
+        Dhcpv4Srv::processDecline(decline);
+    }
+    boost::shared_ptr<Pkt4> processInform(boost::shared_ptr<Pkt4>& inform) {
+        return Dhcpv4Srv::processInform(inform);
     }
 };
 
@@ -48,19 +55,107 @@ class Dhcpv4SrvTest : public ::testing::Test {
 public:
     Dhcpv4SrvTest() {
     }
+
+    ~Dhcpv4SrvTest() {
+    };
 };
 
 TEST_F(Dhcpv4SrvTest, basic) {
-    // there's almost no code now. What's there provides echo capability
-    // that is just a proof of concept and will be removed soon
-    // No need to thoroughly test it
+    // nothing to test. DHCPv4_srv instance is created
+    // in test fixture. It is destroyed in destructor
 
-    EXPECT_NO_THROW( {
-        Dhcpv4Srv * srv = new Dhcpv4Srv();
+    Dhcpv4Srv* srv = 0;
+    ASSERT_NO_THROW({
+        srv = new Dhcpv4Srv();
+    });
 
-        delete srv;
-        });
+    delete srv;
+}
 
+TEST_F(Dhcpv4SrvTest, processDiscover) {
+    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDISCOVER, 1234));
+
+    // should not throw
+    EXPECT_NO_THROW(
+        srv->processDiscover(pkt);
+    );
+
+    // should return something
+    EXPECT_TRUE(srv->processDiscover(pkt));
+
+    // TODO: Implement more reasonable tests before starting
+    // work on processSomething() method.
+    delete srv;
+}
+
+TEST_F(Dhcpv4SrvTest, processRequest) {
+    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPREQUEST, 1234));
+
+    // should not throw
+    EXPECT_NO_THROW(
+        srv->processRequest(pkt);
+    );
+
+    // should return something
+    EXPECT_TRUE(srv->processRequest(pkt));
+
+    // TODO: Implement more reasonable tests before starting
+    // work on processSomething() method.
+    delete srv;
+}
+
+TEST_F(Dhcpv4SrvTest, processRelease) {
+    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPRELEASE, 1234));
+
+    // should not throw
+    EXPECT_NO_THROW(
+        srv->processRelease(pkt);
+    );
+
+    // TODO: Implement more reasonable tests before starting
+    // work on processSomething() method.
+
+    delete srv;
+}
+
+TEST_F(Dhcpv4SrvTest, processDecline) {
+    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDECLINE, 1234));
+
+    // should not throw
+    EXPECT_NO_THROW(
+        srv->processDecline(pkt);
+    );
+
+    // TODO: Implement more reasonable tests before starting
+    // work on processSomething() method.
+    delete srv;
+}
+
+TEST_F(Dhcpv4SrvTest, processInform) {
+    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPINFORM, 1234));
+
+    // should not throw
+    EXPECT_NO_THROW(
+        srv->processInform(pkt);
+    );
+
+    // should return something
+    EXPECT_TRUE(srv->processInform(pkt));
+
+    // TODO: Implement more reasonable tests before starting
+    // work on processSomething() method.
+
+    delete srv;
 }
 
 } // end of anonymous namespace
