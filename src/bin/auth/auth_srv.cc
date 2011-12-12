@@ -228,12 +228,13 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
-    impl_(new AuthSrvImpl(use_cache, xfrout_client)),
-    checkin_(new ConfigChecker(this)),
-    dns_lookup_(new MessageLookup(this)),
-    dns_answer_(new MessageAnswer(this))
-{}
+AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client)
+{
+    impl_ = new AuthSrvImpl(use_cache, xfrout_client);
+    checkin_ = new ConfigChecker(this);
+    dns_lookup_ = new MessageLookup(this);
+    dns_answer_ = new MessageAnswer(this);
+}
 
 void
 AuthSrv::stop() {

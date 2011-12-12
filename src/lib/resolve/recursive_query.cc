@@ -676,11 +676,14 @@ public:
         nsas_(nsas),
         cache_(cache),
         cur_zone_("."),
-        nsas_callback_(new ResolverNSASCallback(this)),
+        nsas_callback_(),
         nsas_callback_out_(false),
         outstanding_events_(0),
         rtt_recorder_(recorder)
     {
+        // Set here to avoid using "this" in initializer list.
+        nsas_callback_.reset(new ResolverNSASCallback(this));
+
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
             lookup_timer.expires_from_now(
