@@ -419,3 +419,41 @@ TEST_F(OptionTest, v6_toText) {
 
     EXPECT_EQ("type=258, len=3: 00:0f:ff", opt->toText());
 }
+
+TEST_F(OptionTest, getUintX) {
+    boost::shared_array<uint8_t> buf(new uint8_t[5]);
+    buf[0] = 0x5;
+    buf[1] = 0x4;
+    buf[2] = 0x3;
+    buf[3] = 0x2;
+    buf[4] = 0x1;
+
+    // five options with varying lengths
+    boost::shared_ptr<Option> opt1(new Option(Option::V6, 258, buf, 0, 1));
+    boost::shared_ptr<Option> opt2(new Option(Option::V6, 258, buf, 0, 2));
+    boost::shared_ptr<Option> opt3(new Option(Option::V6, 258, buf, 0, 3));
+    boost::shared_ptr<Option> opt4(new Option(Option::V6, 258, buf, 0, 4));
+    boost::shared_ptr<Option> opt5(new Option(Option::V6, 258, buf, 0, 5));
+
+    EXPECT_EQ(5, opt1->getUint8());
+    EXPECT_THROW(opt1->getUint16(), OutOfRange);
+    EXPECT_THROW(opt1->getUint32(), OutOfRange);
+
+    EXPECT_EQ(5, opt2->getUint8());
+    EXPECT_EQ(0x0504, opt2->getUint16());
+    EXPECT_THROW(opt2->getUint32(), OutOfRange);
+
+    EXPECT_EQ(5, opt3->getUint8());
+    EXPECT_EQ(0x0504, opt3->getUint16());
+    EXPECT_THROW(opt3->getUint32(), OutOfRange);
+
+    EXPECT_EQ(5, opt4->getUint8());
+    EXPECT_EQ(0x0504, opt4->getUint16());
+    EXPECT_EQ(0x05040302, opt4->getUint32());
+
+    // the same as for 4-byte long, just get first 1,2 or 4 bytes
+    EXPECT_EQ(5, opt5->getUint8());
+    EXPECT_EQ(0x0504, opt5->getUint16());
+    EXPECT_EQ(0x05040302, opt5->getUint32());
+
+}

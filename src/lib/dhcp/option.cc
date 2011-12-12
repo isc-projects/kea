@@ -341,7 +341,8 @@ uint16_t Option::getUint16() {
         isc_throw(OutOfRange, "Attempt to read uint16 from option " << type_
                   << " that has size " << data_.size());
     }
-    return ( ((uint16_t)data_[0]) << 8 ) + data_[1];
+
+    return ( readUint16(&data_[0]) );
 }
 
 uint32_t Option::getUint32() {
@@ -349,10 +350,7 @@ uint32_t Option::getUint32() {
         isc_throw(OutOfRange, "Attempt to read uint32 from option " << type_
                   << " that has size " << data_.size());
     }
-    return (((uint32_t)data_[0]) << 24)
-      + (((uint32_t)data_[1]) << 16)
-      + (((uint32_t)data_[2]) << 8)
-      + (((uint32_t)data_[3]));
+    return ( readUint32(&data_[0]) );
 }
 
 Option::~Option() {
