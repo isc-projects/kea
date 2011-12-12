@@ -191,7 +191,7 @@ tokenToNum(const std::string& num_token) {
     NumType num;
     try {
         num = boost::lexical_cast<NumType>(num_token);
-    } catch (const boost::bad_lexical_cast& ex) {
+    } catch (const boost::bad_lexical_cast&) {
         isc_throw(StringTokenError, "Invalid SRV numeric parameter: " <<
                   num_token);
     }
