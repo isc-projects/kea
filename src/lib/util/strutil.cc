@@ -120,7 +120,7 @@ format(const std::string& format, const std::vector<std::string>& args) {
     // Iterate through replacing all tokens
     result = format;
     size_t tokenpos = 0;    // Position of last token replaced
-    int i = 0;              // Index into argument array
+    std::vector<std::string>::size_type i = 0; // Index into argument array
 
     while ((i < args.size()) && (tokenpos != string::npos)) {
         tokenpos = result.find(flag, tokenpos);
