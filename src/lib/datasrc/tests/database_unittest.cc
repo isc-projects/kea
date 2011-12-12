@@ -442,7 +442,7 @@ private:
 
     private:
         const std::string searched_name_;
-        int cur_record_;
+        size_t cur_record_;
         std::vector< std::vector<std::string> > cur_name;
     };
 
