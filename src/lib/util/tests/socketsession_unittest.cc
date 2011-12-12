@@ -164,8 +164,15 @@ protected:
         struct addrinfo hints, *res;
         memset(&hints, 0, sizeof(hints));
         hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
-        EXPECT_EQ(0, getaddrinfo(addr_str.c_str(), port_str.c_str(), NULL,
-                                 &res));
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_DGRAM;
+        const int error = getaddrinfo(addr_str.c_str(), port_str.c_str(),
+                                      &hints, &res);
+        if (error != 0) {
+            isc_throw(isc::Unexpected, "getaddrinfo failed for " <<
+                      addr_str << ", " << port_str << ": " <<
+                      gai_strerror(error));
+        }
         addrinfo_list_.push_back(res);
         return (SockAddrInfo(res->ai_addr, res->ai_addrlen));
     }
