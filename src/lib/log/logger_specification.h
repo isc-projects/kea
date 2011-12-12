@@ -97,7 +97,7 @@ public:
     }
 
     /// \return Return additive flag.
-    int getAdditive() const {
+    bool getAdditive() const {
         return additive_;
     }
 
