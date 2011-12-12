@@ -1,3 +1,9 @@
+3XX.	[func]		tomek
+	dhcp4: Dummy DHCPv4 component implemented. Currently it does
+	nothing useful, except providing skeleton implementation that can
+	be expanded in the future.
+	(Trac #992, git TBD)
+
 328.	[func]		jelte
 	b10-auth now passes IXFR requests on to b10-xfrout, and no longer
 	responds to them with NOTIMPL.

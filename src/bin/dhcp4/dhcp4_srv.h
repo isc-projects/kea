@@ -35,13 +35,17 @@ namespace dhcp {
 /// appropriate responses.
 class Dhcpv4Srv : public boost::noncopyable {
 
-public:
+    public:
     /// @brief Default constructor.
     ///
     /// Instantiates necessary services, required to run DHCPv6 server.
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
-    /// old or create new DUID.
+    /// old or create new DUID. It is possible to specify alternate
+    /// port on which DHCPv4 server will listen on. That is mostly useful
+    /// for testing purposes.
+    ///
+    /// @param port specifies port number to listen on
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
@@ -68,13 +72,13 @@ protected:
     ///
     /// @return OFFER message or NULL
     boost::shared_ptr<Pkt4>
-    processDiscover(boost::shared_ptr<Pkt4> discover);
+    processDiscover(boost::shared_ptr<Pkt4>& discover);
 
     /// @brief Processes incoming REQUEST and returns REPLY response.
     ///
     /// Processes incoming REQUEST message and verifies that its sender
     /// should be served. In particular, verifies that requested lease
-    /// is valid, not expired, not reserved, not used by other client and 
+    /// is valid, not expired, not reserved, not used by other client and
     /// that requesting client is allowed to use it.
     ///
     /// Returns ACK message, NACK message, or NULL
@@ -82,7 +86,7 @@ protected:
     /// @param request a message received from client
     ///
     /// @return ACK or NACK message
-    boost::shared_ptr<Pkt4> processRequest(boost::shared_ptr<Pkt4> request);
+    boost::shared_ptr<Pkt4> processRequest(boost::shared_ptr<Pkt4>& request);
 
     /// @brief Stub function that will handle incoming RELEASE messages.
     ///
@@ -90,17 +94,17 @@ protected:
     /// this function does not return anything.
     ///
     /// @param release message received from client
-    void processRelease(boost::shared_ptr<Pkt4> release);
+    void processRelease(boost::shared_ptr<Pkt4>& release);
 
     /// @brief Stub function that will handle incoming DHCPDECLINE messages.
     ///
     /// @param decline message received from client
-    void processDecline(boost::shared_ptr<Pkt4> decline);
+    void processDecline(boost::shared_ptr<Pkt4>& decline);
 
     /// @brief Stub function that will handle incoming INFORM messages.
     ///
     /// @param infRequest message received from client
-    boost::shared_ptr<Pkt4> processInform(boost::shared_ptr<Pkt4> inform);
+    boost::shared_ptr<Pkt4> processInform(boost::shared_ptr<Pkt4>& inform);
 
     /// @brief Returns server-intentifier option
     ///
@@ -124,7 +128,7 @@ protected:
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
-    volatile bool shutdown;
+    volatile bool shutdown_;
 };
 
 }; // namespace isc::dhcp
