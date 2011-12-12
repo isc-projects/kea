@@ -35,10 +35,6 @@ b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/liblog.la
 
-# TODO: This is ugly hack. iface_mgr should be moved to src/lib/dhcp
-b10_dhcp4_LDADD += $(top_builddir)/src/bin/dhcp6/iface_mgr.o
-
-
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_dhcp4dir = $(pkgdatadir)
