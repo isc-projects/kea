@@ -44,6 +44,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
 
 Dhcpv4Srv::~Dhcpv4Srv() {
     cout << "DHCPv4 server shutdown." << endl;
+    IfaceMgr::instance().closeSockets();
 }
 
 bool
@@ -55,16 +56,16 @@ Dhcpv4Srv::run() {
         query = IfaceMgr::instance().receive4();
 
 #if defined(ECHO_SERVER)
-	query->repack();
+        query->repack();
         IfaceMgr::instance().send(query);
         continue;
 #endif
 
         if (query) {
-	    try {
-		query->unpack();
-	    } catch (const std::exception& e) {
-		/// TODO: Printout reasons of failed parsing
+            try {
+                query->unpack();
+            } catch (const std::exception& e) {
+                /// TODO: Printout reasons of failed parsing
                 cout << "Failed to parse incoming packet " << endl;
                 continue;
             }
@@ -104,7 +105,8 @@ Dhcpv4Srv::run() {
                 rsp->setIface(query->getIface());
                 rsp->setIndex(query->getIndex());
 
-                cout << "Replying with message type " << (int)rsp->getType() << ":" << endl;
+                cout << "Replying with message type "
+                     << static_cast<int>(rsp->getType()) << ":" << endl;
                 cout << rsp->toText();
                 cout << "----" << endl;
                 if (rsp->pack()) {
