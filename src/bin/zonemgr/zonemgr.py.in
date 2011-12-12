@@ -98,7 +98,7 @@ class ZonemgrRefresh:
     can be stopped by calling shutdown() in another thread.
     """
 
-    def __init__(self, cc, db_file, slave_socket, config_data):
+    def __init__(self, cc, db_file, slave_socket, module_cc_session):
         self._cc = cc
         self._check_sock = slave_socket
         self._db_file = db_file
@@ -108,7 +108,8 @@ class ZonemgrRefresh:
         self._max_transfer_timeout = None
         self._refresh_jitter = None
         self._reload_jitter = None
-        self.update_config_data(config_data)
+        self.update_config_data(module_cc_session.get_full_config(),
+                                module_cc_session)
         self._running = False
 
     def _random_jitter(self, max, jitter):
@@ -424,7 +425,7 @@ class ZonemgrRefresh:
         self._read_sock = None
         self._write_sock = None
 
-    def update_config_data(self, new_config):
+    def update_config_data(self, new_config, module_cc_session):
         """ update ZonemgrRefresh config """
         # Get a new value, but only if it is defined (commonly used below)
         # We don't use "value or default", because if value would be
@@ -456,11 +457,29 @@ class ZonemgrRefresh:
             if secondary_zones is not None:
                 # Add new zones
                 for secondary_zone in new_config.get('secondary_zones'):
+                    if 'name' not in secondary_zone:
+                        raise ZonemgrException("Secondary zone specified "
+                                               "without a name")
                     name = secondary_zone['name']
                     # Be tolerant to sclerotic users who forget the final dot
                     if name[-1] != '.':
                         name = name + '.'
-                    name_class = (name, secondary_zone['class'])
+                    # Currently we use an explicit get_default_value call
+                    # in case the class hasn't been set. Alternatively, we
+                    # could use
+                    # module_cc_session.get_value('secondary_zones[INDEX]/class')
+                    # To get either the value that was set, or the default if
+                    # it wasn't set.
+                    # But the real solution would be to make new_config a type
+                    # that contains default values itself
+                    # (then this entire method can be simplified a lot, and we
+                    # wouldn't need direct access to the ccsession object)
+                    if 'class' in secondary_zone:
+                        name_class = (name, secondary_zone['class'])
+                    else:
+                        name_class = (name,
+                                      module_cc_session.get_default_value(
+                                        'secondary_zones/class'))
                     required[name_class] = True
                     # Add it only if it isn't there already
                     if not name_class in self._zonemgr_refresh_info:
@@ -485,7 +504,7 @@ class Zonemgr:
         self._db_file = self.get_db_file()
         # Create socket pair for communicating between main thread and zonemgr timer thread
         self._master_socket, self._slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._zone_refresh = ZonemgrRefresh(self._cc, self._db_file, self._slave_socket, self._config_data)
+        self._zone_refresh = ZonemgrRefresh(self._cc, self._db_file, self._slave_socket, self._module_cc)
         self._zone_refresh.run_timer()
 
         self._lock = threading.Lock()
@@ -540,7 +559,7 @@ class Zonemgr:
         self._config_data_check(complete)
         if self._zone_refresh is not None:
             try:
-                self._zone_refresh.update_config_data(complete)
+                self._zone_refresh.update_config_data(complete, self._module_cc)
             except Exception as e:
                 answer = create_answer(1, str(e))
                 ok = False
