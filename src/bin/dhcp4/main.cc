@@ -81,8 +81,8 @@ main(int argc, char* argv[]) {
 
     int ret = 0;
 
-    // TODO remainder of auth to dhcp6 code copy. We need to enable this in
-    //      dhcp6 eventually
+    // TODO remainder of auth to dhcp4 code copy. We need to enable this in
+    //      dhcp4 eventually
 #if 0
     Session* cc_session = NULL;
     Session* statistics_session = NULL;
@@ -104,7 +104,7 @@ main(int argc, char* argv[]) {
         srv->run();
 
     } catch (const std::exception& ex) {
-        cerr << "[b10-dhcp6] Server failed: " << ex.what() << endl;
+        cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;
         ret = 1;
     }
 
