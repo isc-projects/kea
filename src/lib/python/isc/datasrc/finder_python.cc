@@ -74,7 +74,7 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
                 static_cast<ZoneFinder::FindOptions>(options_int);
             const ZoneFinder::FindResult find_result(
                 finder->find(PyName_ToName(name), PyRRType_ToRRType(rrtype),
-                             NULL, options));
+                             options));
             const ZoneFinder::Result r = find_result.code;
             isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
             if (rrsp) {

@@ -15,6 +15,8 @@
 #include <algorithm>            // for std::max
 #include <vector>
 #include <boost/foreach.hpp>
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 
 #include <dns/message.h>
 #include <dns/rcode.h>
@@ -67,7 +69,7 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
 
     // Find A rrset
     if (qname_ != qname || qtype_ != RRType::A()) {
-        ZoneFinder::FindResult a_result = zone.find(qname, RRType::A(), NULL,
+        ZoneFinder::FindResult a_result = zone.find(qname, RRType::A(),
                                                     options | dnssec_opt_);
         if (a_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
@@ -78,7 +80,7 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
     // Find AAAA rrset
     if (qname_ != qname || qtype_ != RRType::AAAA()) {
         ZoneFinder::FindResult aaaa_result =
-            zone.find(qname, RRType::AAAA(), NULL, options | dnssec_opt_);
+            zone.find(qname, RRType::AAAA(), options | dnssec_opt_);
         if (aaaa_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(aaaa_result.rrset),
@@ -90,7 +92,7 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
 void
 Query::addSOA(ZoneFinder& finder) {
     ZoneFinder::FindResult soa_result(finder.find(finder.getOrigin(),
-        RRType::SOA(), NULL, dnssec_opt_));
+        RRType::SOA(), dnssec_opt_));
     if (soa_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoSOA, "There's no SOA record in zone " <<
             finder.getOrigin().toText());
@@ -146,7 +148,7 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // otherwise we shouldn't have got NXDOMAIN for the original query in
     // the first place).
     const ZoneFinder::FindResult fresult = finder.find(wildname,
-                                                       RRType::NSEC(), NULL,
+                                                       RRType::NSEC(),
                                                        dnssec_opt_);
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
@@ -171,7 +173,7 @@ Query::addWildcardProof(ZoneFinder& finder) {
     // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
     // in NXDOMAIN and an NSEC RR that proves it should be returned.
     const ZoneFinder::FindResult fresult =
-        finder.find(qname_, RRType::NSEC(), NULL,
+        finder.find(qname_, RRType::NSEC(),
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
@@ -194,7 +196,7 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
                       boost::const_pointer_cast<RRset>(nsec), dnssec_);
     
     const ZoneFinder::FindResult fresult =
-        finder.find(qname_, RRType::NSEC(), NULL,
+        finder.find(qname_, RRType::NSEC(),
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
@@ -213,8 +215,7 @@ void
 Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
     ZoneFinder::FindResult ns_result = finder.find(finder.getOrigin(),
-                                                   RRType::NS(), NULL,
-                                                   dnssec_opt_);
+                                                   RRType::NS(), dnssec_opt_);
     // zone origin name should have NS records
     if (ns_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoApexNS, "There's no apex NS records in zone " <<
@@ -253,9 +254,16 @@ Query::process() {
     response_.setRcode(Rcode::NOERROR());
     while (keep_doing) {
         keep_doing = false;
-        std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
-        const ZoneFinder::FindResult db_result(
-            zfinder.find(qname_, qtype_, target.get(), dnssec_opt_));
+        std::vector<ConstRRsetPtr> target;
+        boost::function0<ZoneFinder::FindResult> find;
+        if (qtype_is_any) {
+            find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
+                               boost::ref(target), dnssec_opt_);
+        } else {
+            find = boost::bind(&ZoneFinder::find, &zfinder, qname_, qtype_,
+                               dnssec_opt_);
+        }
+        ZoneFinder::FindResult db_result(find());
         switch (db_result.code) {
             case ZoneFinder::DNAME: {
                 // First, put the dname into the answer
@@ -326,9 +334,9 @@ Query::process() {
                 if (qtype_is_any) {
                     // If quety type is ANY, insert all RRs under the domain
                     // into answer section.
-                    BOOST_FOREACH(RRsetPtr rrset, *target) {
-                        response_.addRRset(Message::SECTION_ANSWER, rrset,
-                                           dnssec_);
+                    BOOST_FOREACH(ConstRRsetPtr rrset, target) {
+                        response_.addRRset(Message::SECTION_ANSWER,
+                            boost::const_pointer_cast<RRset>(rrset), dnssec_);
                         // Handle additional for answer section
                         addAdditional(*result.zone_finder, *rrset.get());
                     }
