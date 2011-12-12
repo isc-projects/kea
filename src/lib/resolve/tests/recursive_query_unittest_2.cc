@@ -275,7 +275,9 @@ public:
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
     ///        by the "server" to receive data.
     /// \param length Amount of data received.
-    void udpReceiveHandler(error_code ec = error_code(), size_t length = 0) {
+    void udpReceiveHandler(asio::error_code ec = asio::error_code(),
+                           size_t length = 0)
+    {
         if (debug_) {
             cout << "udpReceiveHandler(): error = " << ec.value() <<
                     ", length = " << length << ", last state = " << last_ <<
@@ -368,7 +370,9 @@ public:
     ///
     /// \param ec Completion error code of the send.
     /// \param length Actual number of bytes sent.
-    void udpSendHandler(error_code ec = error_code(), size_t length = 0) {
+    void udpSendHandler(asio::error_code ec = asio::error_code(),
+                        size_t length = 0)
+    {
         if (debug_) {
             cout << "udpSendHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -392,7 +396,9 @@ public:
     ///
     /// \param socket Socket on which data will be received
     /// \param ec Boost error code, value should be zero.
-    void tcpAcceptHandler(error_code ec = error_code(), size_t length = 0) {
+    void tcpAcceptHandler(asio::error_code ec = asio::error_code(),
+                          size_t length = 0)
+    {
         if (debug_) {
             cout << "tcpAcceptHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -419,7 +425,9 @@ public:
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
     ///        by the "server" to receive data.
     /// \param length Amount of data received.
-    void tcpReceiveHandler(error_code ec = error_code(), size_t length = 0) {
+    void tcpReceiveHandler(asio::error_code ec = asio::error_code(),
+                           size_t length = 0)
+    {
         if (debug_) {
             cout << "tcpReceiveHandler(): error = " << ec.value() <<
                     ", length = " << length <<
@@ -506,7 +514,8 @@ public:
     /// \param expected_length Number of bytes that were expected to have been sent.
     /// \param ec Boost error code, value should be zero.
     /// \param length Number of bytes sent.
-    void tcpSendHandler(size_t expected_length = 0, error_code ec = error_code(),
+    void tcpSendHandler(size_t expected_length = 0,
+                        asio::error_code ec = asio::error_code(),
                         size_t length = 0)
     {
         if (debug_) {
