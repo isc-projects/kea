@@ -53,8 +53,10 @@ class FakeConfig:
         self.zone_list = []
         self.set_zone_list_from_name_classes([ZONE_NAME_CLASS1_IN,
                                               ZONE_NAME_CLASS2_CH])
+
     def set_zone_list_from_name_classes(self, zones):
         self.zone_list = map(lambda nc: {"name": nc[0], "class": nc[1]}, zones)
+
     def get(self, name):
         if name == 'lowerbound_refresh':
             return LOWERBOUND_REFRESH
@@ -70,6 +72,22 @@ class FakeConfig:
             return self.zone_list
         else:
             raise ValueError('Uknown config option')
+
+class FakeCCSession:
+    def __init__(self):
+        self.config = FakeConfig()
+
+    def get_full_config(self):
+        return {'lowerbound_refresh': LOWERBOUND_REFRESH,
+                'lowerbound_retry': LOWERBOUND_RETRY,
+                'max_transfer_timeout': MAX_TRANSFER_TIMEOUT,
+                'refresh_jitter': REFRESH_JITTER,
+                'reload_jitter': RELOAD_JITTER,
+                'secondary_zones': [] }
+
+    def get_default_value(self, identifier):
+        return "IN"
+
 
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
@@ -92,7 +110,7 @@ class MyZonemgrRefresh(ZonemgrRefresh):
         sqlite3_ds.get_zone_soa = get_zone_soa
 
         ZonemgrRefresh.__init__(self, MySession(), "initdb.file",
-            self._slave_socket, FakeConfig())
+            self._slave_socket, FakeCCSession())
         current_time = time.time()
         self._zonemgr_refresh_info = {
          ('example.net.', 'IN'): {
@@ -112,6 +130,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.stderr_backup = sys.stderr
         sys.stderr = open(os.devnull, 'w')
         self.zone_refresh = MyZonemgrRefresh()
+        self.cc_session = FakeCCSession()
 
     def test_random_jitter(self):
         max = 100025.120
@@ -458,7 +477,23 @@ class TestZonemgrRefresh(unittest.TestCase):
                     "secondary_zones": [ { "name": "example.net.",
                                            "class": "IN" } ]
                 }
-        self.zone_refresh.update_config_data(config_data)
+        self.zone_refresh.update_config_data(config_data, self.cc_session)
+        self.assertTrue(("example.net.", "IN") in
+                        self.zone_refresh._zonemgr_refresh_info)
+
+        # make sure it does fail if we don't provide a name
+        config_data = {
+                    "secondary_zones": [ { "class": "IN" } ]
+                }
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.update_config_data,
+                          config_data, self.cc_session)
+
+        # But not if we don't provide a class
+        config_data = {
+                    "secondary_zones": [ { "name": "example.net." } ]
+                }
+        self.zone_refresh.update_config_data(config_data, self.cc_session)
         self.assertTrue(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
 
@@ -471,7 +506,7 @@ class TestZonemgrRefresh(unittest.TestCase):
                     "reload_jitter" : 0.75,
                     "secondary_zones": []
                 }
-        self.zone_refresh.update_config_data(config_data)
+        self.zone_refresh.update_config_data(config_data, self.cc_session)
         self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
         self.assertEqual(30, self.zone_refresh._lowerbound_retry)
         self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
@@ -482,7 +517,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         config_data = {
                     "reload_jitter" : 0.35,
                 }
-        self.zone_refresh.update_config_data(config_data)
+        self.zone_refresh.update_config_data(config_data, self.cc_session)
         self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
         self.assertEqual(30, self.zone_refresh._lowerbound_retry)
         self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
@@ -500,7 +535,7 @@ class TestZonemgrRefresh(unittest.TestCase):
                     "secondary_zones": [ { "name": "doesnotexist",
                                            "class": "IN" } ]
                 }
-        self.zone_refresh.update_config_data(config_data)
+        self.zone_refresh.update_config_data(config_data, self.cc_session)
         name_class = ("doesnotexist.", "IN")
         self.assertTrue(self.zone_refresh._zonemgr_refresh_info[name_class]["zone_soa_rdata"]
                         is None)
@@ -520,7 +555,7 @@ class TestZonemgrRefresh(unittest.TestCase):
                     "reload_jitter" : 0.75,
                     "secondary_zones": []
                 }
-        self.zone_refresh.update_config_data(config_data)
+        self.zone_refresh.update_config_data(config_data, self.cc_session)
         self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
         self.assertEqual(30, self.zone_refresh._lowerbound_retry)
         self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
@@ -540,16 +575,16 @@ class TestZonemgrRefresh(unittest.TestCase):
         config = FakeConfig()
         config.zone_list = []
         # First, remove everything
-        self.zone_refresh.update_config_data(config)
+        self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertEqual(self.zone_refresh._zonemgr_refresh_info, {})
         # Put something in
         config.set_zone_list_from_name_classes([ZONE_NAME_CLASS1_IN])
-        self.zone_refresh.update_config_data(config)
+        self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertTrue(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
         # This one does not exist
         config.set_zone_list_from_name_classes(["example.net", "CH"])
-        self.zone_refresh.update_config_data(config)
+        self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertFalse(("example.net.", "CH") in
                         self.zone_refresh._zonemgr_refresh_info)
         # Simply skip loading soa for the zone, the other configs should be updated successful
@@ -557,7 +592,7 @@ class TestZonemgrRefresh(unittest.TestCase):
                         self.zone_refresh._zonemgr_refresh_info)
         # Make sure it works even when we "accidentally" forget the final dot
         config.set_zone_list_from_name_classes([("example.net", "IN")])
-        self.zone_refresh.update_config_data(config)
+        self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertTrue(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
 
@@ -622,7 +657,7 @@ class TestZonemgr(unittest.TestCase):
         self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
         # The zone doesn't exist in database, simply skip loading soa for it and log an warning
         self.zonemgr._zone_refresh = ZonemgrRefresh(None, "initdb.file", None,
-                                                    config_data1)
+                                                    FakeCCSession())
         config_data1["secondary_zones"] = [{"name": "nonexistent.example",
                                             "class": "IN"}]
         self.assertEqual(self.zonemgr.config_handler(config_data1),
