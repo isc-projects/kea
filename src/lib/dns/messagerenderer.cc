@@ -117,7 +117,7 @@ private:
                           uint16_t pos, uint16_t& llen) const
     {
         if (llen == 0) {
-            int i = 0;
+            size_t i = 0;
 
             while ((buffer[pos] & Name::COMPRESS_POINTER_MARK8) ==
                    Name::COMPRESS_POINTER_MARK8) {
