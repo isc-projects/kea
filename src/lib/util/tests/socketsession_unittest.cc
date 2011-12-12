@@ -159,13 +159,21 @@ protected:
         return (s);
     }
 
+    // A shortcut type that is convenient to be used for socket related
+    // system calls, which generally require this pair
     typedef pair<const struct sockaddr*, socklen_t> SockAddrInfo;
+
+    // A helper method to convert textual representation of IP address and port
+    // to a pair of sockaddr and its length (in the form of a SockAddrInfo
+    // pair).  It uses getaddrinfo(3) for the conversion and stores the result
+    // in the addrinfo_list_ vector until the caller test case is completed.
+    // They are freed in the destructor of the base test class.
     SockAddrInfo getSockAddr(const string& addr_str, const string& port_str) {
         struct addrinfo hints, *res;
         memset(&hints, 0, sizeof(hints));
         hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
         hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_socktype = SOCK_DGRAM; // could be either DGRAM or STREAM here
         const int error = getaddrinfo(addr_str.c_str(), port_str.c_str(),
                                       &hints, &res);
         if (error != 0) {
@@ -209,9 +217,10 @@ protected:
         return (s);
     }
 
+    // See below
     void checkPushAndPop(int family, int type, int protocoal,
                          const SockAddrInfo& local,
-                         const SockAddrInfo& remote, const char* const data,
+                         const SockAddrInfo& remote, const void* const data,
                          size_t data_len, bool new_connection);
 
 protected:
@@ -292,11 +301,34 @@ checkSockAddrs(const sockaddr& expected, const sockaddr& actual) {
     EXPECT_EQ(string(sbuf_expected), string(sbuf_actual));
 }
 
+// This is a commonly used test case that confirms normal behavior of
+// session passing.  It first creates a "local" socket (which is supposed
+// to act as a "server") bound to the 'local' parameter.  It then forwards
+// the descriptor of the FD of the local socket along with given data.
+// Next, it creates an Acceptor object to receive the forwarded FD itself,
+// receives the FD, and sends test data from the received FD.  The
+// test finally checks if it can receive the test data from the local socket
+// at the Forwarder side.  In the case of TCP it's a bit complicated because
+// it first needs to establish a new connection, but essentially the test
+// scenario is the same.  See the diagram below for more details.
+//
+// UDP:
+//   Forwarder          Acceptor
+//   sock -- (pass) --> passed_sock
+//   (check)  <-------- send TEST_DATA
+//
+// TCP:
+//   Forwarder               Acceptor
+//   server_sock---(pass)--->passed_sock
+//     ^                        |
+//     |(connect)               |
+//   client_sock                |
+//      (check)<---------send TEST_DATA
 void
 ForwarderTest::checkPushAndPop(int family, int type, int protocol,
                                const SockAddrInfo& local,
                                const SockAddrInfo& remote,
-                               const char* const data,
+                               const void* const data,
                                size_t data_len, bool new_connection)
 {
     // Create an original socket to be passed
@@ -339,7 +371,7 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
     // Pop the socket session we just pushed from a local receptor, and
     // check the content
     SocketSessionReceptor receptor(accept_sock_.fd);
-    SocketSession sock_session = receptor.pop();
+    const SocketSession sock_session = receptor.pop();
     const ScopedSocket passed_sock(sock_session.getSocket());
     EXPECT_LE(0, passed_sock.fd);
     // The passed FD should be different from the original FD
@@ -380,7 +412,7 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
     EXPECT_EQ(string(TEST_DATA), string(recvbuf));
 }
 
-TEST_F(ForwarderTest, pushAndPopUDP) {
+TEST_F(ForwarderTest, pushAndPop) {
     // Pass a UDP/IPv6 session.
     const SockAddrInfo sai_local6(getSockAddr("::1", TEST_PORT));
     const SockAddrInfo sai_remote6(getSockAddr("2001:db8::1", "5300"));
@@ -389,6 +421,7 @@ TEST_F(ForwarderTest, pushAndPopUDP) {
         checkPushAndPop(AF_INET6, SOCK_DGRAM, IPPROTO_UDP, sai_local6,
                         sai_remote6, TEST_DATA, sizeof(TEST_DATA), true);
     }
+    // Pass a TCP/IPv6 session.
     {
         SCOPED_TRACE("Passing TCP/IPv6 session");
         checkPushAndPop(AF_INET6, SOCK_STREAM, IPPROTO_TCP, sai_local6,
@@ -405,6 +438,7 @@ TEST_F(ForwarderTest, pushAndPopUDP) {
         checkPushAndPop(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local4,
                         sai_remote4, TEST_DATA, sizeof(TEST_DATA), false);
     }
+    // Pass a TCP/IPv4 session.
     {
         SCOPED_TRACE("Passing TCP/IPv4 session");
         checkPushAndPop(AF_INET, SOCK_STREAM, IPPROTO_TCP, sai_local4,
