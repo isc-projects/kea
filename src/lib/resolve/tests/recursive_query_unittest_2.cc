@@ -698,7 +698,7 @@ TEST_F(RecursiveQueryTest2, Resolve) {
     // weren't, we would expect some absurdly high answers.
     vector<uint32_t> rtt = recorder->getRtt();
     EXPECT_GT(rtt.size(), 0);
-    for (int i = 0; i < rtt.size(); ++i) {
+    for (vector<uint32_t>::size_type i = 0; i < rtt.size(); ++i) {
         EXPECT_LT(rtt[i], 2000);
     }
 }
