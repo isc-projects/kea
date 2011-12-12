@@ -780,11 +780,11 @@ StringElement::equals(const Element& other) const {
 bool
 ListElement::equals(const Element& other) const {
     if (other.getType() == Element::list) {
-        const int s = size();
+        const size_t s = size();
         if (s != other.size()) {
             return (false);
         }
-        for (int i = 0; i < s; ++i) {
+        for (size_t i = 0; i < s; ++i) {
             if (!get(i)->equals(*other.get(i))) {
                 return (false);
             }

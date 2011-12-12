@@ -167,7 +167,7 @@ LoggerManager::readLocalMessageFile(const char* file) {
         // Log the variable number of arguments.  The actual message will be
         // logged when the error_message variable is destroyed.
         Formatter<isc::log::Logger> error_message = logger.error(ident);
-        for (int i = 0; i < args.size(); ++i) {
+        for (vector<string>::size_type i = 0; i < args.size(); ++i) {
             error_message = error_message.arg(args[i]);
         }
     }
