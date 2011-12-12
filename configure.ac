@@ -1001,7 +1001,6 @@ AC_OUTPUT([doc/version.ent
            src/bin/cmdctl/tests/cmdctl_test
            src/bin/cmdctl/cmdctl.spec.pre
            src/bin/ddns/ddns.py
-           src/bin/ddns/ddns.spec.pre
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
            src/bin/xfrin/run_b10-xfrin.sh
