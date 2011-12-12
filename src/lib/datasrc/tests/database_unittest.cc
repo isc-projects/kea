@@ -311,7 +311,7 @@ struct JournalEntry {
     DatabaseAccessor::DiffOperation operation_;
     std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
     bool operator==(const JournalEntry& other) const {
-        for (size_t i(0); i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
+        for (size_t i = 0; i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
             if (data_[i] != other.data_[i]) {
                 return false;
             }
@@ -406,7 +406,7 @@ private:
                 cur_name.clear();
                 // Just walk everything and check if it is a subdomain.
                 // If it is, just copy all data from there.
-                for (Domains::const_iterator i(cur_records.begin());
+                for (Domains::const_iterator i = cur_records.begin();
                      i != cur_records.end(); ++i) {
                     const Name local(i->first);
                     if (local.compare(Name(name)).getRelation() ==
@@ -807,7 +807,7 @@ public:
         // Clean the journal, but keep local copy to check
         journal.swap(*journal_entries_);
         ASSERT_EQ(expected.size(), journal.size());
-        for (size_t i(0); i < expected.size(); ++ i) {
+        for (size_t i = 0; i < expected.size(); ++ i) {
             EXPECT_TRUE(expected[i] == journal[i]);
         }
     }
@@ -883,7 +883,7 @@ private:
         ASSERT_EQ(0, readonly_records_->count(name));
         // Append the name to all of them
         for (std::vector<std::vector<std::string> >::iterator
-             i(cur_name_.begin()); i != cur_name_.end(); ++ i) {
+             i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
             i->push_back(name);
         }
         (*readonly_records_)[name] = cur_name_;
@@ -2018,7 +2018,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
         "wild.*.foo.*.bar.example.org.",
         NULL
     };
-    for (const char** name(positive_names); *name != NULL; ++ name) {
+    for (const char** name = positive_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
                    this->expected_rdatas_,
@@ -2043,7 +2043,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     };
     // Unless FIND_DNSSEC is specified, this is no different from other
     // NXRRSET case.
-    for (const char** name(negative_names); *name != NULL; ++ name) {
+    for (const char** name = negative_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_);
@@ -2059,7 +2059,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("wild.*.foo.*.bar.example.org. NSEC");
     this->expected_sig_rdatas_.clear();
-    for (const char** name(negative_dnssec_names); *name != NULL; ++ name) {
+    for (const char** name = negative_dnssec_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    RRType::NSEC(), this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_,
@@ -2973,7 +2973,7 @@ TYPED_TEST(DatabaseClientTest, journalMultiple) {
     this->updater_ = this->client_->getUpdater(this->zname_, false, true);
     std::string soa_rdata = "ns1.example.org. admin.example.org. "
         "1234 3600 1800 2419200 7200";
-    for (size_t i(1); i < 100; ++ i) {
+    for (size_t i = 1; i < 100; ++ i) {
         // Remove the old SOA
         this->updater_->deleteRRset(*this->soa_);
         expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234 + i - 1,
