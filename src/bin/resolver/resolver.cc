@@ -354,13 +354,19 @@ private:
 Resolver::Resolver() :
     impl_(new ResolverImpl()),
     dnss_(NULL),
-    checkin_(new ConfigCheck(this)),
-    dns_lookup_(new MessageLookup(this)),
+    checkin_(NULL),
+    dns_lookup_(NULL),
     dns_answer_(new MessageAnswer),
     nsas_(NULL),
     cache_(NULL),
     configured_(false)
-{}
+{
+    // Operations referring to "this" must be done in the constructor body
+    // (some compilers will issue warnings if "this" is referred to in the
+    // initialization list).
+    checkin_ = new ConfigCheck(this);
+    dns_lookup_ = new MessageLookup(this);
+}
 
 Resolver::~Resolver() {
     delete impl_;
