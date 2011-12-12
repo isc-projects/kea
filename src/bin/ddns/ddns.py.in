@@ -59,6 +59,21 @@ class DDNSSessionError(Exception):
     '''
     pass
 
+class DDNSSession:
+    """Class to handle one DDNS update"""
+    
+    def __init__(self):
+        self._handle()
+
+    def _handle(self):
+        '''
+        Handle a DDNS update.
+        This should be called from the initializer, and should contain the
+        logic for doing the checks, handling the update, and responding with
+        the result.
+        '''
+        pass
+
 class DDNSServer:
     def __init__(self):
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
@@ -71,13 +86,7 @@ class DDNSServer:
     def config_handler(self, new_config):
         '''Update config data.'''
         answer = create_answer(0)
-        for key in new_config:
-            if key not in self._config_data:
-                answer = create_answer(1, "Unknown config data: " + str(key))
-                continue
-            self._config_data[key] = new_config[key]
         return answer
-
 
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
