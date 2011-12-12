@@ -59,7 +59,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                     result.push_back(AddressPair(addr->stringValue(),
                         port->intValue()));
                 }
-                catch (const TypeError &e) { // Better error message
+                catch (const TypeError&) { // Better error message
                     LOG_ERROR(logger, SRVCOMM_ADDRESS_TYPE).
                         arg(addrPair->str());
                     isc_throw(TypeError,
