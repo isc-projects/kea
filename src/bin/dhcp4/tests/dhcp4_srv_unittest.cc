@@ -30,7 +30,7 @@ using namespace isc::dhcp;
 namespace {
 
 class NakedDhcpv4Srv: public Dhcpv4Srv {
-    // "naked" Interface Manager, exposes internal fields
+    // "naked" DHCPv4 server, exposes internal fields
 public:
     NakedDhcpv4Srv() { }
 
@@ -69,11 +69,7 @@ TEST_F(Dhcpv4SrvTest, basic) {
         srv = new Dhcpv4Srv();
     });
 
-    if (srv) {
-        ASSERT_NO_THROW({
-            delete srv;
-        });
-    }
+    delete srv;
 }
 
 TEST_F(Dhcpv4SrvTest, processDiscover) {
@@ -91,7 +87,6 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
 
     // TODO: Implement more reasonable tests before starting
     // work on processSomething() method.
-
     delete srv;
 }
 
@@ -110,7 +105,6 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
 
     // TODO: Implement more reasonable tests before starting
     // work on processSomething() method.
-
     delete srv;
 }
 
@@ -142,7 +136,6 @@ TEST_F(Dhcpv4SrvTest, processDecline) {
 
     // TODO: Implement more reasonable tests before starting
     // work on processSomething() method.
-
     delete srv;
 }
 
