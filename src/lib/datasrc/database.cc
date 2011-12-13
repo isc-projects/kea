@@ -410,6 +410,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              const FindOptions options)
 {
+    if (type == RRType::ANY()) {
+        isc_throw(isc::Unexpected, "Use findAll to answer ANY");
+    }
     return (findInternal(name, type, NULL, options));
 }
 
