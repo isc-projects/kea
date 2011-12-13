@@ -25,7 +25,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
-Dhcpv6Srv::Dhcpv6Srv() {
+Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     cout << "Initialization" << endl;
 
     // first call to instance() will create IfaceMgr (it's a singleton)
@@ -41,6 +41,9 @@ Dhcpv6Srv::Dhcpv6Srv() {
 	cout << "Failed to detect any network interfaces. Aborting." << endl;
 	shutdown = true;
     }
+
+    // Now try to open IPv6 sockets on detected interfaces.
+    IfaceMgr::instance().openSockets6(port);
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
