@@ -822,12 +822,26 @@ public:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
-        //
         /// \brief Shortcut name for the result of getRRsets
         typedef std::pair<bool, std::map<dns::RRType, dns::RRsetPtr> >
             FoundRRsets;
         /// \brief Just shortcut for set of types
         typedef std::set<dns::RRType> WantedTypes;
+        /**
+         * \brief Internal logit of find and findAll methods.
+         *
+         * Most of their handling is in the "error" cases and delegations
+         * and so on. So they share the logic here and find and findAll provide
+         * just an interface for it.
+         *
+         * Parameters and behaviour is like of those combined together.
+         * Unexpected parameters, like type != ANY and having the target, are
+         * just that - unexpected and not checked.
+         */
+        FindResult findInternal(const isc::dns::Name& name,
+                                const isc::dns::RRType& type,
+                                std::vector<isc::dns::ConstRRsetPtr>* target,
+                                const FindOptions options = FIND_DEFAULT);
         /**
          * \brief Searches database for RRsets of one domain.
          *
@@ -846,6 +860,10 @@ public:
          *     their name set to name. If it is not NULL, it overrides the name
          *     and uses this one (this can be used for wildcard synthesized
          *     records).
+         * \param any If this is true, it records all the types, not only the
+         *     ones requested by types. It also puts a NULL pointer under the
+         *     ANY type into the result, if it finds any RRs at all, to easy the
+         *     identification of success.
          * \return A pair, where the first element indicates if the domain
          *     contains any RRs at all (not only the requested, it may happen
          *     this is set to true, but the second part is empty). The second
@@ -857,7 +875,8 @@ public:
          */
         FoundRRsets getRRsets(const std::string& name,
                               const WantedTypes& types, bool check_ns,
-                              const std::string* construct_name = NULL);
+                              const std::string* construct_name = NULL,
+                              bool any = false);
         /**
          * \brief Checks if something lives below this domain.
          *
