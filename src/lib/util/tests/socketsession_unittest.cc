@@ -532,6 +532,18 @@ TEST_F(ForwarderTest, badPush) {
                                  TEST_DATA, sizeof(TEST_DATA)),
                  SocketSessionError);
 
+    // Empty data: we reject them at least for now
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("192.0.2.1", "53").first,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 TEST_DATA, 0),
+                 SocketSessionError);
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("192.0.2.1", "53").first,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 NULL, sizeof(TEST_DATA)),
+                 SocketSessionError);
+
     // Close the acceptor before push.  It will result in SIGPIPE (should be
     // ignored) and EPIPE, which will be converted to SocketSessionError.
     const int receptor_fd = acceptForwarder();
@@ -540,6 +552,30 @@ TEST_F(ForwarderTest, badPush) {
                                  *getSockAddr("192.0.2.1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  TEST_DATA, sizeof(TEST_DATA)),
+                 SocketSessionError);
+}
+
+// A subroutine for pushTooFast.  Due to the fixed configuration of the
+// send buffer size, we shouldn't be able to forward 3 full-size DNS messages
+// without receiving them.  Exactly how many we can forward depends on the
+// internal system implementation, so we'll at least confirm we can't do for 3.
+void
+multiPush(SocketSessionForwarder& forwarder, const struct sockaddr& sa,
+          const void* data, size_t data_len)
+{
+    for (int i = 0; i < 3; ++i) {
+        forwarder.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, sa, sa,
+                       data, data_len);
+    }
+}
+
+TEST_F(ForwarderTest, pushTooFast) {
+    // Emulate the situation where the forwarder is pushing sessions too fast.
+    // It should eventually fail without blocking.
+    startListen();
+    forwarder_.connectToReceptor();
+    EXPECT_THROW(multiPush(forwarder_, *getSockAddr("192.0.2.1", "53").first,
+                           large_text_.c_str(), large_text_.length()),
                  SocketSessionError);
 }
 
