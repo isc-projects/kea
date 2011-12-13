@@ -19,6 +19,7 @@
 #include <netinet/in.h>
 
 #include <errno.h>
+#include <signal.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -53,6 +54,11 @@ struct SocketSessionForwarder::ForwarderImpl {
 SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     impl_(NULL)
 {
+    // We need to filter SIGPIPE for subsequent push().  See the description.
+    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+        isc_throw(Unexpected, "Failed to filter SIGPIPE: " << strerror(errno));
+    }
+
     ForwarderImpl impl;
     if (sizeof(impl.sock_un_.sun_path) - 1 < unix_file.length()) {
         isc_throw(SocketSessionError,
@@ -139,9 +145,9 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
                   << static_cast<int>(remote_end.sa_family) << " given");
     }
 
-    const int e = send_fd(impl_->fd_, sock);
-    if (e != 0) {
-        isc_throw(SocketSessionError, "FD passing failed: " << e);
+    if (send_fd(impl_->fd_, sock) != 0) {
+        isc_throw(SocketSessionError, "FD passing failed: " <<
+                  strerror(errno));
     }
 
     impl_->buf_.clear();

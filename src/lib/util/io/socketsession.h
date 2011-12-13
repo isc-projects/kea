@@ -33,7 +33,11 @@ public:
 
 class SocketSessionForwarder : boost::noncopyable {
 public:
+    // Note about SIGPIPE.  Assuming this class is not often instantiated
+    // (so the overhead of signal setting should be marginal) and could also be
+    // instantiated by multiple threads, it always set the filter.
     explicit SocketSessionForwarder(const std::string& unix_file);
+
     ~SocketSessionForwarder();
 
     void connectToReceptor();

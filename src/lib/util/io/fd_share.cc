@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <errno.h>
 #include <stdlib.h>             // for malloc and free
 #include "fd_share.h"
 
@@ -130,7 +131,9 @@ send_fd(const int sock, const int fd) {
     *(int*)CMSG_DATA(cmsg) = fd;
 
     const int ret = sendmsg(sock, &msghdr, 0);
+    const int e = errno;
     free(msghdr.msg_control);
+    errno = e;                  // recover errno in case free() changed it
     return (ret >= 0 ? 0 : FD_COMM_ERROR);
 }
 
