@@ -14,11 +14,13 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <sys/un.h>
 
 #include <netinet/in.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdint.h>
 #include <string.h>
@@ -50,6 +52,17 @@ struct SocketSessionForwarder::ForwarderImpl {
     int fd_;
     OutputBuffer buf_;
 };
+
+// The expected max size of the session header: 2-byte header length,
+// 6 32-bit fields, and 2 sockaddr structure.  sizeof sockaddr_storage
+// should be the possible max of any sockaddr structure.
+const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
+    sizeof(struct sockaddr_storage) * 2;
+
+// The (default) socket buffer size for the forwarder.  This is chosen to
+// be sufficiently large to store two full-size DNS messages.  We may want to
+// customize this value in future.
+const int FORWARDER_BUFSIZE = (DEFAULT_HEADER_BUFLEN + 65536) * 2;
 
 SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     impl_(NULL)
@@ -98,17 +111,29 @@ SocketSessionForwarder::connectToReceptor() {
         isc_throw(SocketSessionError, "Failed to create a UNIX domain socket: "
                   << strerror(errno));
     }
+    // Make the socket non blocking
+    int fcntl_flags = fcntl(impl_->fd_, F_GETFL, 0);
+    if (fcntl_flags != -1) {
+        fcntl_flags |= O_NONBLOCK;
+        fcntl_flags = fcntl(impl_->fd_, F_SETFL, fcntl_flags);
+    }
+    if (fcntl_flags == -1) {
+        close();   // note: this is the internal method, not ::close()
+        isc_throw(SocketSessionError,
+                  "Failed to make UNIX domain socket non blocking: " <<
+                  strerror(errno));
+    }
+    if (setsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &FORWARDER_BUFSIZE,
+                   sizeof(FORWARDER_BUFSIZE)) == -1) {
+        close();
+        isc_throw(SocketSessionError, "Failed to enlarge send buffer size");
+    }
     if (connect(impl_->fd_, convertSockAddr(&impl_->sock_un_),
                 impl_->sock_un_len_) == -1) {
-        close();   // note: this is the internal method, not ::close()
+        close();
         isc_throw(SocketSessionError, "Failed to connect to UNIX domain "
                   "endpoint " << impl_->sock_un_.sun_path << ": " <<
                   strerror(errno));
-    }
-    int bufsize = 65536 * 2;
-    if (setsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &bufsize,
-                   sizeof(bufsize)) == -1) {
-        isc_throw(SocketSessionError, "failed to enlarge receive buffer size");
     }
 }
 
@@ -144,6 +169,10 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
                   << static_cast<int>(local_end.sa_family) << ", "
                   << static_cast<int>(remote_end.sa_family) << " given");
     }
+    if (data_len == 0 || data == NULL) {
+        isc_throw(SocketSessionError,
+                  "Data for a socket session must not be empty");
+    }
 
     if (send_fd(impl_->fd_, sock) != 0) {
         isc_throw(SocketSessionError, "FD passing failed: " <<
@@ -168,12 +197,21 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
     // Write the resulting header length at the beginning of the buffer
     impl_->buf_.writeUint16At(impl_->buf_.getLength() - sizeof(uint16_t), 0);
 
-    const int cc = write(impl_->fd_, impl_->buf_.getData(),
-                         impl_->buf_.getLength());
-    assert(cc == impl_->buf_.getLength());
-
-    const int cc_data = write(impl_->fd_, data, data_len);
-    assert(cc_data == data_len);
+    const struct iovec iov[2] = {
+        { const_cast<void*>(impl_->buf_.getData()), impl_->buf_.getLength() },
+        { const_cast<void*>(data), data_len }
+    };
+    const int cc = writev(impl_->fd_, iov, 2);
+    if (cc != impl_->buf_.getLength() + data_len) {
+        if (cc < 0) {
+            isc_throw(SocketSessionError,
+                      "Write failed in forwarding a socket session: " <<
+                      strerror(errno));
+        }
+        isc_throw(SocketSessionError,
+                  "Incomplete write in forwarding a socket session: " << cc <<
+                  "/" << (impl_->buf_.getLength() + data_len));
+    }
 }
 
 SocketSession::SocketSession(int sock, int family, int type, int protocol,
@@ -194,9 +232,6 @@ SocketSession::SocketSession(int sock, int family, int type, int protocol,
         isc_throw(BadValue, "data must be non NULL for SocketSession");
     }
 }
-
-const size_t DEFAULT_HEADER_BUFLEN = sizeof(struct sockaddr_storage) * 2 +
-    sizeof(uint32_t) * 6;
 
 struct SocketSessionReceptor::ReceptorImpl {
     ReceptorImpl(int fd) : fd_(fd),
