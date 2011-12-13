@@ -127,7 +127,8 @@ class CounterDictionaryConstIteratorImpl {
             DictionaryMap::const_iterator iterator);
     public:
         void increment();
-        CounterDictionary::ValueType dereference() const;
+        const CounterDictionary::ConstIterator::value_type&
+            dereference() const;
         bool equal(const CounterDictionaryConstIteratorImpl& other) const;
     private:
         DictionaryMap::const_iterator iterator_;
@@ -174,10 +175,9 @@ CounterDictionaryConstIteratorImpl::increment() {
     return;
 }
 
-CounterDictionary::ValueType
+const CounterDictionary::ConstIterator::value_type&
 CounterDictionaryConstIteratorImpl::dereference() const {
-    return (CounterDictionary::ValueType(iterator_->first,
-                                         *(iterator_->second)));
+    return (iterator_->first);
 }
 
 bool
@@ -226,7 +226,7 @@ CounterDictionary::ConstIterator::ConstIterator(
     impl_(new CounterDictionaryConstIteratorImpl(source))
 {}
 
-const CounterDictionary::ValueType
+const CounterDictionary::ConstIterator::value_type&
 CounterDictionary::ConstIterator::dereference() const
 {
     return (impl_->dereference());
