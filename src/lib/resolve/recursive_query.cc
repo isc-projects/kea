@@ -568,7 +568,7 @@ private:
                 }
 
                 // TC should take care of non-EDNS over UDP, fall through to
-		// SERVFAIL if we get FORMERR instead
+                // SERVFAIL if we get FORMERR instead
             }
             goto SERVFAIL;
             
