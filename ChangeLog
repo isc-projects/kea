@@ -5,7 +5,7 @@
 
 342.	[bug]		stephen
 	In the resolver, a FORMERR received from an upstream nameserver
-	now rsults in a SERVFAIL being returned as a response to the original
+	now results in a SERVFAIL being returned as a response to the original
 	query.  Additional debug messages added to distinguish between
 	different errors in packets received from upstream nameservers.
 	(Trac #1383, git 9b2b249d23576c999a65d8c338e008cabe45f0c9)
@@ -74,12 +74,12 @@
 	potential problems and were fixed.
 	(Trac #1389, git 3fdce88046bdad392bd89ea656ec4ac3c858ca2f)
 
-333.    [bug]		dvv
-	Solaris needs "-z now" to force non-lazy binding and prevent g++ static
-	initialization code from deadlocking.
+333.	[bug]		dvv
+	Solaris needs "-z now" to force non-lazy binding and prevent
+	g++ static initialization code from deadlocking.
 	(Trac #1439, git c789138250b33b6b08262425a08a2a0469d90433)
 
-332.    [bug]		vorner
+332.	[bug]		vorner
 	C++ exceptions in the isc.dns.Rdata wrapper are now converted
 	to python ones instead of just aborting the interpretter.
 	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)
@@ -114,7 +114,7 @@ bind10-devel-20111128 released on November 28, 2011
 	always respond to IXFR requests according to RFC1995).
 	(Trac #1371 and #1372, git 80c131f5b0763753d199b0fb9b51f10990bcd92b)
 
-326.	[build]*	jinmei
+326.	[build]*		jinmei
 	Added a check script for the SQLite3 schema version.  It will be
 	run at the beginning of 'make install', and if it detects an old
 	version of schema, installation will stop.  You'll then need to
