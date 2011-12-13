@@ -175,12 +175,12 @@ struct IOFetchData {
 /// IOFetch Constructor - just initialize the private data
 
 IOFetch::IOFetch(Protocol protocol, IOService& service,
-    const isc::dns::Question& question, const IOAddress& address, uint16_t port,
-    OutputBufferPtr& buff, Callback* cb, int wait)
+    const isc::dns::Question& question, const IOAddress& address,
+    uint16_t port, OutputBufferPtr& buff, Callback* cb, int wait, bool edns)
 {
     MessagePtr query_msg(new Message(Message::RENDER));
     initIOFetch(query_msg, protocol, service, question, address, port, buff,
-                cb, wait);
+                cb, wait, edns);
 }
 
 IOFetch::IOFetch(Protocol protocol, IOService& service,
@@ -214,7 +214,7 @@ void
 IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& service,
                      const isc::dns::Question& question,
                      const IOAddress& address, uint16_t port,
-                     OutputBufferPtr& buff, Callback* cb, int wait)
+                     OutputBufferPtr& buff, Callback* cb, int wait, bool edns)
 {
     data_ = boost::shared_ptr<IOFetchData>(new IOFetchData(
         protocol, service, address, port, buff, cb, wait));
@@ -224,9 +224,13 @@ IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& servic
     query_msg->setRcode(Rcode::NOERROR());
     query_msg->setHeaderFlag(Message::HEADERFLAG_RD);
     query_msg->addQuestion(question);
-    EDNSPtr edns_query(new EDNS());
-    edns_query->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
-    query_msg->setEDNS(edns_query);
+
+    if (edns) {
+        EDNSPtr edns_query(new EDNS());
+        edns_query->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
+        query_msg->setEDNS(edns_query);
+    }
+
     MessageRenderer renderer(*data_->msgbuf);
     query_msg->toWire(renderer);
 }
