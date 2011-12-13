@@ -1,3 +1,7 @@
+xxx.	[bug]		dvv
+	resolver: EDNS fallback on FORMERR
+	(Trac #1386, git TBD)
+
 342.	[bug]		stephen
 	In the resolver, a FORMERR received from an upstream nameserver
 	now rsults in a SERVFAIL being returned as a response to the original
