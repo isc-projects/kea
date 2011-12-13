@@ -177,7 +177,8 @@ private:
 
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
-                                  bool check_ns, const string* construct_name)
+                                  bool check_ns, const string* construct_name,
+                                  bool any)
 {
     RRsigStore sig_store;
     bool records_found = false;
@@ -222,7 +223,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                      columns[DatabaseAccessor::RDATA_COLUMN]));
             }
 
-            if (types.find(cur_type) != types.end()) {
+            if (types.find(cur_type) != types.end() || any) {
                 // This type is requested, so put it into result
                 const RRTTL cur_ttl(columns[DatabaseAccessor::TTL_COLUMN]);
                 // Ths sigtype column was an optimization for finding the
@@ -285,6 +286,12 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
     for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
          i != result.end(); ++ i) {
         sig_store.appendSignatures(i->second);
+    }
+
+    if (records_found && any) {
+        result[RRType::ANY()] = RRsetPtr();
+        // These will be sitting on the other RRsets.
+        result.erase(RRType::RRSIG());
     }
 
     return (FoundRRsets(records_found, result));
@@ -391,11 +398,11 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
 }
 
 ZoneFinder::FindResult
-DatabaseClient::Finder::findAll(const isc::dns::Name&,
-                                std::vector<isc::dns::ConstRRsetPtr>&,
-                                const FindOptions)
+DatabaseClient::Finder::findAll(const isc::dns::Name& name,
+                                std::vector<isc::dns::ConstRRsetPtr>& target,
+                                const FindOptions options)
 {
-    isc_throw(isc::NotImplemented, "Not implemented");
+    return (findInternal(name, RRType::ANY(), &target, options));
 }
 
 ZoneFinder::FindResult
@@ -403,12 +410,23 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              const FindOptions options)
 {
+    return (findInternal(name, type, NULL, options));
+}
+
+ZoneFinder::FindResult
+DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
+                                     const isc::dns::RRType& type,
+                                     std::vector<isc::dns::ConstRRsetPtr>*
+                                     target,
+                                     const FindOptions options)
+{
     // This variable is used to determine the difference between
     // NXDOMAIN and NXRRSET
     bool records_found = false;
     bool glue_ok((options & FIND_GLUE_OK) != 0);
     const bool dnssec_data((options & FIND_DNSSEC) != 0);
     bool get_cover(false);
+    bool any(type == RRType::ANY());
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
     FoundRRsets found;
@@ -479,7 +497,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
         WantedTypes final_types(FINAL_TYPES());
         final_types.insert(type);
-        found = getRRsets(name.toText(), final_types, name != origin);
+        found = getRRsets(name.toText(), final_types, name != origin, NULL,
+                          any);
         records_found = found.first;
 
         // NS records, CNAME record and Wanted Type records
@@ -505,7 +524,18 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             }
         } else if (wti != found.second.end()) {
             // Just get the answer
+            // TODO update here
             result_rrset = wti->second;
+            if (any) {
+                for (FoundIterator it(found.second.begin());
+                     it != found.second.end(); ++it) {
+                    if (it->second) {
+                        // Skip over the empty ANY
+                        target->push_back(it->second);
+                    }
+                }
+                return (FindResult(result_status, result_rrset));
+            }
         } else if (!records_found) {
             // Nothing lives here.
             // But check if something lives below this
@@ -535,7 +565,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // TODO What do we do about DNAME here?
                     // The types are the same as with original query
                     found = getRRsets(wildcard, final_types, true,
-                                      &construct_name);
+                                      &construct_name, any);
                     if (found.first) {
                         if (first_ns) {
                             // In case we are under NS, we don't
@@ -572,7 +602,20 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                 result_status = DELEGATION;
                             } else if (wti != found.second.end()) {
                                 result_rrset = wti->second;
+                                // TODO Update here
                                 result_status = WILDCARD;
+                                if (any) {
+                                    for (FoundIterator
+                                         it(found.second.begin());
+                                         it != found.second.end(); ++it) {
+                                        if (it->second) {
+                                            // Skip over the empty ANY
+                                            target->push_back(it->second);
+                                        }
+                                    }
+                                    return (FindResult(result_status,
+                                                       result_rrset));
+                                }
                             } else {
                                 // NXRRSET case in the wildcard
                                 result_status = WILDCARD_NXRRSET;
