@@ -45,6 +45,23 @@ namespace io {
 
 using namespace internal;
 
+// The expected max size of the session header: 2-byte header length,
+// 6 32-bit fields, and 2 sockaddr structure.  sizeof sockaddr_storage
+// should be the possible max of any sockaddr structure.
+const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
+    sizeof(struct sockaddr_storage) * 2;
+
+// The allowable maximum size of data passed with the socket FD.  For now
+// we use a fixed value of 65535, the largest possible size of valid DNS
+// messages.  We may enlarge it or make it configurable as we see the need
+// for more flexibility.
+const int MAX_DATASIZE = 65535;
+
+// The (default) socket buffer size for the forwarder and receptor.  This is
+// chosen to be sufficiently large to store two full-size DNS messages.  We
+// may want to customize this value in future.
+const int SOCKSESSION_BUFSIZE = (DEFAULT_HEADER_BUFLEN + MAX_DATASIZE) * 2;
+
 struct SocketSessionForwarder::ForwarderImpl {
     ForwarderImpl() : buf_(512) {}
     struct sockaddr_un sock_un_;
@@ -52,17 +69,6 @@ struct SocketSessionForwarder::ForwarderImpl {
     int fd_;
     OutputBuffer buf_;
 };
-
-// The expected max size of the session header: 2-byte header length,
-// 6 32-bit fields, and 2 sockaddr structure.  sizeof sockaddr_storage
-// should be the possible max of any sockaddr structure.
-const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
-    sizeof(struct sockaddr_storage) * 2;
-
-// The (default) socket buffer size for the forwarder and receptor.  This is
-// chosen to be sufficiently large to store two full-size DNS messages.  We
-// may want to customize this value in future.
-const int SOCKSESSION_BUFSIZE = (DEFAULT_HEADER_BUFLEN + 65536) * 2;
 
 SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     impl_(NULL)
@@ -265,39 +271,100 @@ SocketSessionReceptor::~SocketSessionReceptor() {
     delete impl_;
 }
 
+namespace {
+// A shortcut to throw common exception on failure of recv(2)
+void
+readFail(int actual_len, int expected_len) {
+    if (expected_len < 0) {
+        isc_throw(SocketSessionError, "Failed to receive data from "
+                  "SocketSessionForwarder: " << strerror(errno));
+    }
+    isc_throw(SocketSessionError, "Incomplete data from "
+              "SocketSessionForwarder: " << actual_len << "/" <<
+              expected_len);
+}
+}
+
 SocketSession
 SocketSessionReceptor::pop() {
     const int passed_fd = recv_fd(impl_->fd_);
-    // TODO: error check
+    if (passed_fd == FD_SYSTEM_ERROR) {
+        isc_throw(SocketSessionError, "Receiving a forwarded FD failed: " <<
+                  strerror(errno));
+    } else if (passed_fd < 0) {
+        isc_throw(SocketSessionError, "No FD forwarded");
+    }
 
     uint16_t header_len;
-    const int cc = recv(impl_->fd_, &header_len, sizeof(header_len),
+    const int cc_hlen = recv(impl_->fd_, &header_len, sizeof(header_len),
                         MSG_WAITALL);
-    assert(cc == sizeof(header_len)); // XXX
+    if (cc_hlen < sizeof(header_len)) {
+        readFail(cc_hlen, sizeof(header_len));
+    }
     header_len = InputBuffer(&header_len, sizeof(header_len)).readUint16();
+    if (header_len > DEFAULT_HEADER_BUFLEN) {
+        isc_throw(SocketSessionError, "Too large header length: " <<
+                  header_len);
+    }
     impl_->header_buf_.clear();
     impl_->header_buf_.resize(header_len);
-    recv(impl_->fd_, &impl_->header_buf_[0], header_len, MSG_WAITALL);
+    const int cc_hdr = recv(impl_->fd_, &impl_->header_buf_[0], header_len,
+                            MSG_WAITALL);
+    if (cc_hdr < header_len) {
+        readFail(cc_hdr, header_len);
+    }
 
     InputBuffer ibuffer(&impl_->header_buf_[0], header_len);
-    const int family = static_cast<int>(ibuffer.readUint32());
-    const int type = static_cast<int>(ibuffer.readUint32());
-    const int protocol = static_cast<int>(ibuffer.readUint32());
-    const socklen_t local_end_len = ibuffer.readUint32();
-    assert(local_end_len <= sizeof(impl_->ss_local_)); // XXX
-    ibuffer.readData(&impl_->ss_local_, local_end_len);
-    const socklen_t remote_end_len = ibuffer.readUint32();
-    assert(remote_end_len <= sizeof(impl_->ss_remote_)); // XXX
-    ibuffer.readData(&impl_->ss_remote_, remote_end_len);
-    const size_t data_len = ibuffer.readUint32();
+    try {
+        const int family = static_cast<int>(ibuffer.readUint32());
+        if (family != AF_INET && family != AF_INET6) {
+            isc_throw(SocketSessionError,
+                      "Unsupported address family is passed: " << family);
+        }
+        const int type = static_cast<int>(ibuffer.readUint32());
+        const int protocol = static_cast<int>(ibuffer.readUint32());
+        const socklen_t local_end_len = ibuffer.readUint32();
+        if (local_end_len > sizeof(impl_->ss_local_)) {
+            isc_throw(SocketSessionError, "Local SA length too large: " <<
+                      local_end_len);
+        }
+        ibuffer.readData(&impl_->ss_local_, local_end_len);
+        const socklen_t remote_end_len = ibuffer.readUint32();
+        if (remote_end_len > sizeof(impl_->ss_remote_)) {
+            isc_throw(SocketSessionError, "Remote SA length too large: " <<
+                      remote_end_len);
+        }
+        ibuffer.readData(&impl_->ss_remote_, remote_end_len);
+        if (family != impl_->sa_local_->sa_family) {
+            isc_throw(SocketSessionError, "SA family inconsistent: " <<
+                      static_cast<int>(impl_->sa_local_->sa_family) << ", " <<
+                      static_cast<int>(impl_->sa_remote_->sa_family) <<
+                      " given, must be " << family);
+        }
+        const size_t data_len = ibuffer.readUint32();
+        if (data_len == 0 || data_len > MAX_DATASIZE) {
+            isc_throw(SocketSessionError,
+                      "Invalid socket session data size: " << data_len <<
+                      ", must be > 0 and <= " << MAX_DATASIZE);
+        }
 
-    impl_->data_buf_.clear();
-    impl_->data_buf_.resize(data_len);
-    recv(impl_->fd_, &impl_->data_buf_[0], data_len, MSG_WAITALL);
+        impl_->data_buf_.clear();
+        impl_->data_buf_.resize(data_len);
+        const int cc_data = recv(impl_->fd_, &impl_->data_buf_[0], data_len,
+                                 MSG_WAITALL);
+        if (cc_data < data_len) {
+            readFail(cc_data, data_len);
+        }
 
-    return (SocketSession(passed_fd, family, type, protocol,
-                          impl_->sa_local_, impl_->sa_remote_, data_len,
-                          &impl_->data_buf_[0]));
+        return (SocketSession(passed_fd, family, type, protocol,
+                              impl_->sa_local_, impl_->sa_remote_, data_len,
+                              &impl_->data_buf_[0]));
+    } catch (const InvalidBufferPosition& ex) {
+        // We catch the case where the given header is too short and convert
+        // the exception to SocketSessionError.
+        isc_throw(SocketSessionError, "bogus socket session header: " <<
+                  ex.what());
+    }
 }
 
 }

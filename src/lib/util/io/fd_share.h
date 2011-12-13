@@ -25,7 +25,7 @@ namespace isc {
 namespace util {
 namespace io {
 
-const int FD_COMM_ERROR = -2;
+const int FD_SYSTEM_ERROR = -2;
 const int FD_OTHER_ERROR = -1;
 
 /**
@@ -33,8 +33,11 @@ const int FD_OTHER_ERROR = -1;
  * This receives a file descriptor sent over an unix domain socket. This
  * is the counterpart of send_fd().
  *
- * \return FD_COMM_ERROR when there's error receiving the socket, FD_OTHER_ERROR
- *     when there's a different error.
+ * \return FD_SYSTEM_ERROR when there's an error at the operating system
+ * level (such as a system call failure).  The global 'errno' variable
+ * indicates the specific error.  FD_OTHER_ERROR when there's a different
+ * error.
+ *
  * \param sock The unix domain socket to read from. Tested and it does
  *     not work with a pipe.
  */
@@ -45,9 +48,9 @@ int recv_fd(const int sock);
  * This sends a file descriptor over an unix domain socket. This is the
  * counterpart of recv_fd().
  *
- * \return FD_COMM_ERROR when there's error sending the socket, FD_OTHER_ERROR
- *     for all other possible errors.  The global 'errno' variable indicates
- *     the corresponding system error.
+ * \return FD_SYSTEM_ERROR when there's an error at the operating system
+ * level (such as a system call failure).  The global 'errno' variable
+ * indicates the specific error.
  * \param sock The unix domain socket to send to. Tested and it does not
  *     work with a pipe.
  * \param fd The file descriptor to send. It should work with any valid
