@@ -551,19 +551,16 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertEqual(self.zone_refresh._zonemgr_refresh_info, {})
         # Put something in
-        #config.set_zone_list_from_name_classes([ZONE_NAME_CLASS1_IN])
         config['secondary_zones'] = \
             zone_list_from_name_classes([ZONE_NAME_CLASS1_IN])
         self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertTrue(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
-        # This one does not exist
+        # Reset the data, set to use a different class, and make sure
+        # it does not get set to IN
         config['secondary_zones'] = \
-            zone_list_from_name_classes(["example.net", "CH"])
+            zone_list_from_name_classes([ZONE_NAME_CLASS1_CH])
         self.zone_refresh.update_config_data(config, self.cc_session)
-        self.assertFalse(("example.net.", "CH") in
-                         self.zone_refresh._zonemgr_refresh_info)
-        # Simply skip loading soa for the zone, the other configs should be updated successful
         self.assertFalse(("example.net.", "IN") in
                          self.zone_refresh._zonemgr_refresh_info)
         # Make sure it works even when we "accidentally" forget the final dot
@@ -572,6 +569,17 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertTrue(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
+        # Try some bad names
+        config['secondary_zones'] = \
+            zone_list_from_name_classes([("example..net", "IN")])
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.update_config_data,
+                          config, self.cc_session)
+        config['secondary_zones'] = \
+            zone_list_from_name_classes([("", "IN")])
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.update_config_data,
+                          config, self.cc_session)
 
     def tearDown(self):
         sys.stderr= self.stderr_backup

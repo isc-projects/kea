@@ -28,6 +28,7 @@ import os
 import time
 import signal
 import isc
+import isc.dns
 import random
 import threading
 import select
@@ -461,9 +462,16 @@ class ZonemgrRefresh:
                         raise ZonemgrException("Secondary zone specified "
                                                "without a name")
                     name = secondary_zone['name']
-                    # Be tolerant to sclerotic users who forget the final dot
-                    if name[-1] != '.':
-                        name = name + '.'
+
+                    # Convert to Name and back (both to check and to normalize)
+                    try:
+                        name = isc.dns.Name(name, True).to_text()
+                    # Name() can raise a number of different exceptions, just
+                    # catch 'em all.
+                    except Exception as isce:
+                        raise ZonemgrException("Bad zone name '" + name +
+                                               "': " + str(isce))
+
                     # Currently we use an explicit get_default_value call
                     # in case the class hasn't been set. Alternatively, we
                     # could use
