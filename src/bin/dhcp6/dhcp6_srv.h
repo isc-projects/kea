@@ -41,7 +41,9 @@ public:
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID.
-    Dhcpv6Srv();
+    ///
+    /// @param port port on will all sockets will listen
+    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     ~Dhcpv6Srv();
