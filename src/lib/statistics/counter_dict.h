@@ -62,19 +62,8 @@ public:
     /// Same as getElement()
     Counter& operator[](const std::string &name) const;
 
-    /// \brief A helper structure to represent an element of
-    /// CounterDictionary. This type is used for the iterator.
-    struct ValueType {
-        public:
-        const std::string& name;
-        const Counter& element;
-        ValueType(const std::string& name_, const Counter& element_) :
-            name(name_), element(element_)
-        {}
-    };
-
     /// \brief \c ConstIterator is a constant iterator that provides an
-    /// interface for accessing elements stored in CounterDictionary.
+    /// interface for enumerating name of zones stored in CounterDictionary.
     ///
     /// This class is derived from boost::iterator_facade and uses pImpl
     /// idiom not to expose implementation detail of
@@ -84,7 +73,7 @@ public:
     /// counters to statistics module.
     class ConstIterator :
         public boost::iterator_facade<ConstIterator,
-                                const ValueType,
+                                const std::string,
                                 boost::forward_traversal_tag>
     {
         private:
@@ -128,7 +117,7 @@ public:
             /// \brief An internal method to check equality.
             bool equal(const ConstIterator& other) const;
             /// \brief An internal method to dereference this iterator.
-            const value_type dereference() const;
+            const value_type& dereference() const;
         private:
             friend class boost::iterator_core_access;
     };
