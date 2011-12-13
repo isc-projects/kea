@@ -131,11 +131,14 @@ public:
     ///        and deleting it if necessary.
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///        -1 indicates no timeout.
+    /// \param edns true if the request should be EDNS. The default value is
+    ///        true.
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
         const isc::dns::Question& question,
         const isc::asiolink::IOAddress& address,
         uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
-        int wait = -1);
+        int wait = -1,
+        bool edns = true);
 
     /// \brief Constructor
     ///  This constructor has one parameter "query_message", which
@@ -206,7 +209,8 @@ private:
     void initIOFetch(isc::dns::MessagePtr& query_message, Protocol protocol,
             isc::asiolink::IOService& service, const isc::dns::Question& question,
             const isc::asiolink::IOAddress& address, uint16_t port,
-            isc::util::OutputBufferPtr& buff, Callback* cb, int wait);
+            isc::util::OutputBufferPtr& buff, Callback* cb, int wait,
+	    bool edns = true);
 
     /// \brief Log I/O Failure
     ///
