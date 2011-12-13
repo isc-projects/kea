@@ -121,12 +121,28 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
                              const struct sockaddr& remote_end,
                              const void* data, size_t data_len)
 {
-    // check state (fd must be valid)
-    // family must be AF_INET or AF_INET6
-    // sa_family should match
+    if (impl_->fd_ == -1) {
+        isc_throw(SocketSessionError, "Attempt of push before connect");
+    }
+    if ((local_end.sa_family != AF_INET && local_end.sa_family != AF_INET6) ||
+        (remote_end.sa_family != AF_INET && remote_end.sa_family != AF_INET6))
+    {
+        isc_throw(SocketSessionError, "Invalid address family: must be "
+                  "AF_INET or AF_INET6; " <<
+                  static_cast<int>(local_end.sa_family) << ", " <<
+                  static_cast<int>(remote_end.sa_family) << " given");
+    }
+    if (family != local_end.sa_family || family != remote_end.sa_family) {
+        isc_throw(SocketSessionError, "Inconsistent address family: must be "
+                  << static_cast<int>(family) << "; "
+                  << static_cast<int>(local_end.sa_family) << ", "
+                  << static_cast<int>(remote_end.sa_family) << " given");
+    }
 
-    send_fd(impl_->fd_, sock);
-    // TODO: error check
+    const int e = send_fd(impl_->fd_, sock);
+    if (e != 0) {
+        isc_throw(SocketSessionError, "FD passing failed: " << e);
+    }
 
     impl_->buf_.clear();
     // Leave the space for the header length
@@ -162,7 +178,15 @@ SocketSession::SocketSession(int sock, int family, int type, int protocol,
     local_end_(local_end), remote_end_(remote_end),
     data_len_(data_len), data_(data)
 {
-    // TODO: local_end and remote_end must not be NULL; check it
+    if (local_end == NULL || remote_end == NULL) {
+        isc_throw(BadValue, "sockaddr must be non NULL for SocketSession");
+    }
+    if (data_len == 0) {
+        isc_throw(BadValue, "data_len must be non 0 for SocketSession");
+    }
+    if (data == NULL) {
+        isc_throw(BadValue, "data must be non NULL for SocketSession");
+    }
 }
 
 const size_t DEFAULT_HEADER_BUFLEN = sizeof(struct sockaddr_storage) * 2 +
