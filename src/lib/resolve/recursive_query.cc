@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -20,8 +22,6 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
-
-#include <config.h>
 
 #include <dns/question.h>
 #include <dns/message.h>
