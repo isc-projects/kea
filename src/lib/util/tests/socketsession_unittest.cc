@@ -532,14 +532,15 @@ TEST_F(ForwarderTest, badPush) {
                                  TEST_DATA, sizeof(TEST_DATA)),
                  SocketSessionError);
 
-#if 0
+    // Close the acceptor before push.  It will result in SIGPIPE (should be
+    // ignored) and EPIPE, which will be converted to SocketSessionError.
     const int receptor_fd = acceptForwarder();
     close(receptor_fd);
-    forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                    *getSockAddr("192.0.2.1", "53").first,
-                    *getSockAddr("192.0.2.2", "53").first,
-                    TEST_DATA, sizeof(TEST_DATA));
-#endif
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("192.0.2.1", "53").first,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 TEST_DATA, sizeof(TEST_DATA)),
+                 SocketSessionError);
 }
 
 TEST(SocketSession, badValue) {

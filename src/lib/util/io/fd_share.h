@@ -46,7 +46,8 @@ int recv_fd(const int sock);
  * counterpart of recv_fd().
  *
  * \return FD_COMM_ERROR when there's error sending the socket, FD_OTHER_ERROR
- *     for all other possible errors.
+ *     for all other possible errors.  The global 'errno' variable indicates
+ *     the corresponding system error.
  * \param sock The unix domain socket to send to. Tested and it does not
  *     work with a pipe.
  * \param fd The file descriptor to send. It should work with any valid
