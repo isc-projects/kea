@@ -110,7 +110,7 @@ class MyZonemgrRefresh(ZonemgrRefresh):
         sqlite3_ds.get_zone_soa = get_zone_soa
 
         ZonemgrRefresh.__init__(self, MySession(), "initdb.file",
-            self._slave_socket, FakeCCSession())
+                                self._slave_socket, FakeCCSession())
         current_time = time.time()
         self._zonemgr_refresh_info = {
          ('example.net.', 'IN'): {
@@ -695,4 +695,5 @@ class TestZonemgr(unittest.TestCase):
         pass
 
 if __name__== "__main__":
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
