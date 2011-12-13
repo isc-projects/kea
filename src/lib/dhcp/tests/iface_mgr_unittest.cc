@@ -30,7 +30,8 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 // name of loopback interface detection
-char LOOPBACK[32] = "lo";
+const size_t buf_size = 32;
+char LOOPBACK[buf_size] = "lo";
 
 namespace {
 const char* const INTERFACE_FILE = TEST_DATA_BUILDDIR "/interfaces.txt";
@@ -70,16 +71,16 @@ TEST_F(IfaceMgrTest, loDetect) {
     // poor man's interface detection
     // it will go away as soon as proper interface detection
     // is implemented
-    if (if_nametoindex("lo")>0) {
+    if (if_nametoindex("lo") > 0) {
         cout << "This is Linux, using lo as loopback." << endl;
-        sprintf(LOOPBACK, "lo");
-    } else if (if_nametoindex("lo0")>0) {
+        snprintf(LOOPBACK, buf_size - 1, "lo");
+    } else if (if_nametoindex("lo0") > 0) {
         cout << "This is BSD, using lo0 as loopback." << endl;
-        sprintf(LOOPBACK, "lo0");
+        snprintf(LOOPBACK, buf_size - 1, "lo0");
     } else {
         cout << "Failed to detect loopback interface. Neither "
-             << "lo or lo0 worked. I give up." << endl;
-        ASSERT_TRUE(false);
+             << "lo nor lo0 worked. I give up." << endl;
+        FAIL();
     }
 }
 
