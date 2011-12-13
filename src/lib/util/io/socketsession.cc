@@ -179,6 +179,10 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
         isc_throw(SocketSessionError,
                   "Data for a socket session must not be empty");
     }
+    if (data_len > MAX_DATASIZE) {
+        isc_throw(SocketSessionError, "Invalid socket session data size: " <<
+                  data_len << ", must not exceed " << MAX_DATASIZE);
+    }
 
     if (send_fd(impl_->fd_, sock) != 0) {
         isc_throw(SocketSessionError, "FD passing failed: " <<
@@ -198,8 +202,10 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
     // Remote endpoint
     impl_->buf_.writeUint32(static_cast<uint32_t>(getSALength(remote_end)));
     impl_->buf_.writeData(&remote_end, getSALength(remote_end));
-    // Data length
-    impl_->buf_.writeUint32(static_cast<uint32_t>(data_len));
+    // Data length.  Must be fit uint32 due to the range check above.
+    const uint32_t data_len32 = static_cast<uint32_t>(data_len);
+    assert(data_len == data_len32); // shouldn't cause overflow.
+    impl_->buf_.writeUint32(data_len32);
     // Write the resulting header length at the beginning of the buffer
     impl_->buf_.writeUint16At(impl_->buf_.getLength() - sizeof(uint16_t), 0);
 

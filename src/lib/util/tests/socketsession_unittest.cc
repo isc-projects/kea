@@ -626,6 +626,13 @@ TEST_F(ForwarderTest, badPush) {
                                  NULL, sizeof(TEST_DATA)),
                  SocketSessionError);
 
+    // Too big data: we reject them at least for now
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("192.0.2.1", "53").first,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 string(65536, 'd').c_str(), 65536),
+                 SocketSessionError);
+
     // Close the receptor before push.  It will result in SIGPIPE (should be
     // ignored) and EPIPE, which will be converted to SocketSessionError.
     const int receptor_fd = acceptForwarder();
