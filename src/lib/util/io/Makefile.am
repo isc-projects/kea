@@ -6,7 +6,6 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 lib_LTLIBRARIES = libutil_io.la
 libutil_io_la_SOURCES = fd.h fd.cc fd_share.h fd_share.cc
 libutil_io_la_SOURCES += socketsession.h socketsession.cc sockaddr_util.h
-libutil_io_la_CXXFLAGS = $(AM_CXXFLAGS) -fno-strict-aliasing
 
 CLEANFILES = *.gcno *.gcda
 
