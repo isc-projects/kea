@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <netdb.h>
+#include <unistd.h>
 
 #include <string>
 #include <utility>
@@ -379,7 +380,11 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
         startListen();
         forwarder_.connectToReceptor();
         accept_sock_.reset(acceptForwarder());
-        setNonBlock(accept_sock_.fd, true);
+
+        // Make sure the socket is *blocking*.  We may pass large data, through
+        // it, and apparently non blocking read could cause some unexpected
+        // partial read on some systems.
+        setNonBlock(accept_sock_.fd, false);
     }
 
     // Then push one socket session via the forwarder.
@@ -387,9 +392,13 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
                     *remote.first, data, data_len);
 
     // Pop the socket session we just pushed from a local receptor, and
-    // check the content
+    // check the content.  Since we do blocking read on the receptor's socket,
+    // we set up an alarm to prevent hangup in case there's a bug that really
+    // makes the blocking happen.
     SocketSessionReceptor receptor(accept_sock_.fd);
+    alarm(1);                   // set up 1-sec timer, an arbitrary choice.
     const SocketSession sock_session = receptor.pop();
+    alarm(0);                   // then cancel it.
     const ScopedSocket passed_sock(sock_session.getSocket());
     EXPECT_LE(0, passed_sock.fd);
     // The passed FD should be different from the original FD
@@ -451,7 +460,7 @@ TEST_F(ForwarderTest, pushAndPop) {
     }
 
     // Pass a UDP/IPv4 session.  This reuses the same pair of forwarder and
-    // acceptor, which should be usable for multiple attempts of passing,
+    // receptor, which should be usable for multiple attempts of passing,
     // regardless of family of the passed session
     const SockAddrInfo sai_local4(getSockAddr("127.0.0.1", TEST_PORT));
     const SockAddrInfo sai_remote4(getSockAddr("192.0.2.2", "5300"));
@@ -544,7 +553,7 @@ TEST_F(ForwarderTest, badPush) {
                                  NULL, sizeof(TEST_DATA)),
                  SocketSessionError);
 
-    // Close the acceptor before push.  It will result in SIGPIPE (should be
+    // Close the receptor before push.  It will result in SIGPIPE (should be
     // ignored) and EPIPE, which will be converted to SocketSessionError.
     const int receptor_fd = acceptForwarder();
     close(receptor_fd);
