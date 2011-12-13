@@ -97,9 +97,6 @@ IfaceMgr::IfaceMgr()
 
         detectIfaces();
 
-        if (!openSockets6()) {
-            isc_throw(Unexpected, "Failed to open/bind sockets.");
-        }
     } catch (const std::exception& ex) {
         cout << "IfaceMgr creation failed:" << ex.what() << endl;
 
@@ -209,20 +206,21 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
 
         out << "Detected interface " << iface->getFullName()
              << ", hwtype=" << iface->hardware_type_ << ", maclen=" << iface->mac_len_
-             << ", mac=" << iface->getPlainMac() << endl;
-        out << "flags=" << hex << iface->flags_ << dec << "("
+             << ", mac=" << iface->getPlainMac();
+        out << ", flags=" << hex << iface->flags_ << dec << "("
             << (iface->flag_loopback_?"LOOPBACK ":"")
             << (iface->flag_up_?"UP ":"")
             << (iface->flag_running_?"RUNNING ":"")
             << (iface->flag_multicast_?"MULTICAST ":"")
             << (iface->flag_broadcast_?"BROADCAST ":"")
             << ")" << endl;
-        out << "  " << iface->addrs_.size() << " addr(s):" << endl;
+        out << "  " << iface->addrs_.size() << " addr(s):";
         for (Addr6Lst::const_iterator addr=iface->addrs_.begin();
              addr != iface->addrs_.end();
              ++addr) {
-            out << "  " << addr->toText() << endl;
+            out << "  " << addr->toText();
         }
+        out << endl;
     }
 }
 
