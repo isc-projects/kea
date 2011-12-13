@@ -35,7 +35,6 @@
 
 using namespace isc::dns;
 using namespace std;
-using boost::shared_ptr;
 using namespace isc::dns::rdata;
 
 namespace isc {
@@ -874,7 +873,7 @@ namespace {
 /// for next time.
 class DatabaseIterator : public ZoneIterator {
 public:
-    DatabaseIterator(shared_ptr<DatabaseAccessor> accessor,
+    DatabaseIterator(boost::shared_ptr<DatabaseAccessor> accessor,
                      const Name& zone_name,
                      const RRClass& rrclass,
                      bool separate_rrs) :
@@ -970,7 +969,7 @@ private:
     }
 
     // The dedicated accessor
-    shared_ptr<DatabaseAccessor> accessor_;
+    boost::shared_ptr<DatabaseAccessor> accessor_;
     // The context
     DatabaseAccessor::IteratorContextPtr context_;
     // Class of the zone
@@ -1006,7 +1005,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
 //
 class DatabaseUpdater : public ZoneUpdater {
 public:
-    DatabaseUpdater(shared_ptr<DatabaseAccessor> accessor, int zone_id,
+    DatabaseUpdater(boost::shared_ptr<DatabaseAccessor> accessor, int zone_id,
             const Name& zone_name, const RRClass& zone_class,
             bool journaling) :
         committed_(false), accessor_(accessor), zone_id_(zone_id),
@@ -1052,7 +1051,7 @@ private:
     typedef DatabaseAccessor Accessor;
 
     bool committed_;
-    shared_ptr<DatabaseAccessor> accessor_;
+    boost::shared_ptr<DatabaseAccessor> accessor_;
     const int zone_id_;
     const string db_name_;
     const string zone_name_;
@@ -1229,7 +1228,7 @@ DatabaseClient::getUpdater(const isc::dns::Name& name, bool replace,
         isc_throw(isc::BadValue, "Can't store journal and replace the whole "
                   "zone at the same time");
     }
-    shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
+    boost::shared_ptr<DatabaseAccessor> update_accessor(accessor_->clone());
     const std::pair<bool, int> zone(update_accessor->startUpdateZone(
                                         name.toText(), replace));
     if (!zone.first) {
@@ -1249,7 +1248,7 @@ private:
     // A shortcut typedef to keep the code concise.
     typedef DatabaseAccessor Accessor;
 public:
-    DatabaseJournalReader(shared_ptr<Accessor> accessor, const Name& zone,
+    DatabaseJournalReader(boost::shared_ptr<Accessor> accessor, const Name& zone,
                           int zone_id, const RRClass& rrclass, uint32_t begin,
                           uint32_t end) :
         accessor_(accessor), zone_(zone), rrclass_(rrclass),
@@ -1297,7 +1296,7 @@ public:
     }
 
 private:
-    shared_ptr<Accessor> accessor_;
+    boost::shared_ptr<Accessor> accessor_;
     const Name zone_;
     const RRClass rrclass_;
     Accessor::IteratorContextPtr context_;
@@ -1312,7 +1311,7 @@ DatabaseClient::getJournalReader(const isc::dns::Name& zone,
                                  uint32_t begin_serial,
                                  uint32_t end_serial) const
 {
-    shared_ptr<DatabaseAccessor> jnl_accessor(accessor_->clone());
+    boost::shared_ptr<DatabaseAccessor> jnl_accessor(accessor_->clone());
     const pair<bool, int> zoneinfo(jnl_accessor->getZone(zone.toText()));
     if (!zoneinfo.first) {
         return (pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>(
