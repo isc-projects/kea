@@ -43,7 +43,11 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     }
 
     // Now try to open IPv6 sockets on detected interfaces.
+    cout << "Opening sockets on port " << port << endl;
+#if 0
+    // uncomment this once #1238, #992 and #1239 are merged
     IfaceMgr::instance().openSockets6(port);
+#endif
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
 

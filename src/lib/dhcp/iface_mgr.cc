@@ -159,7 +159,7 @@ void IfaceMgr::detectIfaces() {
 }
 #endif
 
-bool IfaceMgr::openSockets6() {
+bool IfaceMgr::openSockets6(uint16_t port) {
     int sock;
 
     for (IfaceLst::iterator iface=ifaces_.begin();
@@ -175,8 +175,7 @@ bool IfaceMgr::openSockets6() {
                 continue;
             }
 
-            sock = openSocket(iface->name_, *addr,
-                              DHCP6_SERVER_PORT);
+            sock = openSocket(iface->name_, *addr, port);
             if (sock<0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);

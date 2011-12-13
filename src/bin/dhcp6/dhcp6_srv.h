@@ -17,8 +17,9 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
-#include "dhcp/pkt6.h"
-#include "dhcp/option.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/pkt6.h>
+#include <dhcp/option.h>
 #include <iostream>
 
 namespace isc {

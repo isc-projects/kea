@@ -237,8 +237,9 @@ protected:
 
 private:
     /// Opens sockets on detected interfaces.
-    bool
-    openSockets6();
+    ///
+    /// @param port specifies port on which sockets will be open
+    bool openSockets6(uint16_t port);
 
     /// creates a single instance of this class (a singleton implementation)
     static void
