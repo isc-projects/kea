@@ -2287,6 +2287,12 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
                                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
 }
 
+TYPED_TEST(DatabaseClientTest, anyFromFind) {
+    // Find will reject answering an ANY query
+    EXPECT_THROW(this->getFinder()->find(isc::dns::Name("www2.example.org."),
+                                         RRType::ANY()), isc::Unexpected);
+}
+
 // Test the findAll method.
 TYPED_TEST(DatabaseClientTest, getAll) {
     // The domain doesn't exist, so we must get the right NSEC
