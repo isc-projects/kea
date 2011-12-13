@@ -59,10 +59,10 @@ struct SocketSessionForwarder::ForwarderImpl {
 const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
     sizeof(struct sockaddr_storage) * 2;
 
-// The (default) socket buffer size for the forwarder.  This is chosen to
-// be sufficiently large to store two full-size DNS messages.  We may want to
-// customize this value in future.
-const int FORWARDER_BUFSIZE = (DEFAULT_HEADER_BUFLEN + 65536) * 2;
+// The (default) socket buffer size for the forwarder and receptor.  This is
+// chosen to be sufficiently large to store two full-size DNS messages.  We
+// may want to customize this value in future.
+const int SOCKSESSION_BUFSIZE = (DEFAULT_HEADER_BUFLEN + 65536) * 2;
 
 SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     impl_(NULL)
@@ -123,10 +123,10 @@ SocketSessionForwarder::connectToReceptor() {
                   "Failed to make UNIX domain socket non blocking: " <<
                   strerror(errno));
     }
-    if (setsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &FORWARDER_BUFSIZE,
-                   sizeof(FORWARDER_BUFSIZE)) == -1) {
+    if (setsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &SOCKSESSION_BUFSIZE,
+                   sizeof(SOCKSESSION_BUFSIZE)) == -1) {
         close();
-        isc_throw(SocketSessionError, "Failed to enlarge send buffer size");
+        isc_throw(SocketSessionError, "Failed to set send buffer size");
     }
     if (connect(impl_->fd_, convertSockAddr(&impl_->sock_un_),
                 impl_->sock_un_len_) == -1) {
@@ -238,7 +238,13 @@ struct SocketSessionReceptor::ReceptorImpl {
                            sa_local_(convertSockAddr(&ss_local_)),
                            sa_remote_(convertSockAddr(&ss_remote_)),
                            header_buf_(DEFAULT_HEADER_BUFLEN), data_buf_(512)
-    {}
+    {
+        if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &SOCKSESSION_BUFSIZE,
+                       sizeof(SOCKSESSION_BUFSIZE)) == -1) {
+            isc_throw(SocketSessionError,
+                      "Failed to set receive buffer size");
+        }
+    }
 
     const int fd_;
     struct sockaddr_storage ss_local_; // placeholder
