@@ -271,12 +271,13 @@ SocketSessionReceptor::pop() {
     // TODO: error check
 
     uint16_t header_len;
-    const int cc = read(impl_->fd_, &header_len, sizeof(header_len));
+    const int cc = recv(impl_->fd_, &header_len, sizeof(header_len),
+                        MSG_WAITALL);
     assert(cc == sizeof(header_len)); // XXX
     header_len = InputBuffer(&header_len, sizeof(header_len)).readUint16();
     impl_->header_buf_.clear();
     impl_->header_buf_.resize(header_len);
-    read(impl_->fd_, &impl_->header_buf_[0], header_len);
+    recv(impl_->fd_, &impl_->header_buf_[0], header_len, MSG_WAITALL);
 
     InputBuffer ibuffer(&impl_->header_buf_[0], header_len);
     const int family = static_cast<int>(ibuffer.readUint32());
@@ -292,7 +293,7 @@ SocketSessionReceptor::pop() {
 
     impl_->data_buf_.clear();
     impl_->data_buf_.resize(data_len);
-    read(impl_->fd_, &impl_->data_buf_[0], data_len);
+    recv(impl_->fd_, &impl_->data_buf_[0], data_len, MSG_WAITALL);
 
     return (SocketSession(passed_fd, family, type, protocol,
                           impl_->sa_local_, impl_->sa_remote_, data_len,
