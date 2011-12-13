@@ -210,7 +210,7 @@ private:
             isc::asiolink::IOService& service, const isc::dns::Question& question,
             const isc::asiolink::IOAddress& address, uint16_t port,
             isc::util::OutputBufferPtr& buff, Callback* cb, int wait,
-	    bool edns = true);
+            bool edns = true);
 
     /// \brief Log I/O Failure
     ///
