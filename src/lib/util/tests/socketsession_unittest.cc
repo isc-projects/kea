@@ -35,6 +35,7 @@
 #include <util/io/sockaddr_util.h>
 
 using namespace std;
+using namespace isc;
 using namespace isc::util::io;
 using namespace isc::util::io::internal;
 
@@ -99,12 +100,55 @@ setRecvDelay(int s) {
     return (0);
 }
 
+// A shortcut type that is convenient to be used for socket related
+// system calls, which generally require this pair
+typedef pair<const struct sockaddr*, socklen_t> SockAddrInfo;
+
+// A helper class to convert textual representation of IP address and port
+// to a pair of sockaddr and its length (in the form of a SockAddrInfo
+// pair).  Its get method uses getaddrinfo(3) for the conversion and stores
+// the result in the addrinfo_list_ vector until the object is destructed.
+// The allocated resources will be automatically freed in an RAII manner.
+class SockAddrCreator {
+public:
+    ~SockAddrCreator() {
+        vector<struct addrinfo*>::const_iterator it;
+        for (it = addrinfo_list_.begin(); it != addrinfo_list_.end(); ++it) {
+            freeaddrinfo(*it);
+        }
+    }
+    SockAddrInfo get(const string& addr_str, const string& port_str) {
+        struct addrinfo hints, *res;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_DGRAM; // could be either DGRAM or STREAM here
+        const int error = getaddrinfo(addr_str.c_str(), port_str.c_str(),
+                                      &hints, &res);
+        if (error != 0) {
+            isc_throw(isc::Unexpected, "getaddrinfo failed for " <<
+                      addr_str << ", " << port_str << ": " <<
+                      gai_strerror(error));
+        }
+
+        // Technically, this is not entirely exception safe; if push_back
+        // throws, the resources allocated for 'res' will leak.  We prefer
+        // brevity here and ignore the minor failure mode.
+        addrinfo_list_.push_back(res);
+
+        return (SockAddrInfo(res->ai_addr, res->ai_addrlen));
+    }
+private:
+    vector<struct addrinfo*> addrinfo_list_;
+};
+
 class ForwarderTest : public ::testing::Test {
 protected:
     ForwarderTest() : listen_fd_(-1), forwarder_(TEST_UNIX_FILE),
                       large_text_(65535, 'a'),
                       test_un_len_(2 + strlen(TEST_UNIX_FILE))
     {
+        unlink(TEST_UNIX_FILE);
         test_un_.sun_family = AF_UNIX;
         strncpy(test_un_.sun_path, TEST_UNIX_FILE, sizeof(test_un_.sun_path));
 #ifdef HAVE_SA_LEN
@@ -117,11 +161,6 @@ protected:
             close(listen_fd_);
         }
         unlink(TEST_UNIX_FILE);
-
-        vector<struct addrinfo*>::const_iterator it;
-        for (it = addrinfo_list_.begin(); it != addrinfo_list_.end(); ++it) {
-            freeaddrinfo(*it);
-        }
     }
 
     // Start an internal "socket session server".
@@ -159,30 +198,9 @@ protected:
         return (s);
     }
 
-    // A shortcut type that is convenient to be used for socket related
-    // system calls, which generally require this pair
-    typedef pair<const struct sockaddr*, socklen_t> SockAddrInfo;
-
-    // A helper method to convert textual representation of IP address and port
-    // to a pair of sockaddr and its length (in the form of a SockAddrInfo
-    // pair).  It uses getaddrinfo(3) for the conversion and stores the result
-    // in the addrinfo_list_ vector until the caller test case is completed.
-    // They are freed in the destructor of the base test class.
+    // A convenient shortcut for the namespace-scope version of getSockAddr
     SockAddrInfo getSockAddr(const string& addr_str, const string& port_str) {
-        struct addrinfo hints, *res;
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_DGRAM; // could be either DGRAM or STREAM here
-        const int error = getaddrinfo(addr_str.c_str(), port_str.c_str(),
-                                      &hints, &res);
-        if (error != 0) {
-            isc_throw(isc::Unexpected, "getaddrinfo failed for " <<
-                      addr_str << ", " << port_str << ": " <<
-                      gai_strerror(error));
-        }
-        addrinfo_list_.push_back(res);
-        return (SockAddrInfo(res->ai_addr, res->ai_addrlen));
+        return (addr_creator_.get(addr_str, port_str));
     }
 
     // A helper method that creates a specified type of socket that is
@@ -232,7 +250,7 @@ protected:
 private:
     struct sockaddr_un test_un_;
     const socklen_t test_un_len_;
-    vector<struct addrinfo*> addrinfo_list_;
+    SockAddrCreator addr_creator_;
 };
 
 TEST_F(ForwarderTest, construct) {
@@ -305,7 +323,7 @@ checkSockAddrs(const sockaddr& expected, const sockaddr& actual) {
 // session passing.  It first creates a "local" socket (which is supposed
 // to act as a "server") bound to the 'local' parameter.  It then forwards
 // the descriptor of the FD of the local socket along with given data.
-// Next, it creates an Acceptor object to receive the forwarded FD itself,
+// Next, it creates an Receptor object to receive the forwarded FD itself,
 // receives the FD, and sends test data from the received FD.  The
 // test finally checks if it can receive the test data from the local socket
 // at the Forwarder side.  In the case of TCP it's a bit complicated because
@@ -313,12 +331,12 @@ checkSockAddrs(const sockaddr& expected, const sockaddr& actual) {
 // scenario is the same.  See the diagram below for more details.
 //
 // UDP:
-//   Forwarder          Acceptor
+//   Forwarder          Receptor
 //   sock -- (pass) --> passed_sock
 //   (check)  <-------- send TEST_DATA
 //
 // TCP:
-//   Forwarder               Acceptor
+//   Forwarder               Receptor
 //   server_sock---(pass)--->passed_sock
 //     ^                        |
 //     |(connect)               |
@@ -384,7 +402,7 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
     ASSERT_EQ(data_len, sock_session.getDataLength());
     EXPECT_EQ(0, memcmp(data, sock_session.getData(), data_len));
 
-    // Check if the passed FD is usable by sending some data from it
+    // Check if the passed FD is usable by sending some data from it.
     setNonBlock(passed_sock.fd, false);
     if (protocol == IPPROTO_UDP) {
         EXPECT_EQ(sizeof(TEST_DATA),
@@ -395,6 +413,10 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
         EXPECT_EQ(sizeof(TEST_DATA),
                   send(passed_sock.fd, TEST_DATA, sizeof(TEST_DATA), 0));
     }
+    // We don't use non blocking read below as it doesn't seem to be always
+    // reliable.  Instead we impose some reasonably large upper time limit of
+    // blocking (normally it shouldn't even block at all; the limit is to
+    // force the test to stop even if there's some bug and recv fails).
     char recvbuf[sizeof(TEST_DATA)];
     sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
@@ -472,4 +494,74 @@ TEST_F(ForwarderTest, pushAndPop) {
     }
 }
 
+TEST_F(ForwarderTest, badPush) {
+    // push before connect
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("192.0.2.1", "53").first,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 TEST_DATA, sizeof(TEST_DATA)),
+                 SocketSessionError);
+
+    // Now connect the forwarder for the rest of tests
+    startListen();
+    forwarder_.connectToReceptor();
+
+    // Invalid address family
+    struct sockaddr sockaddr_unspec;
+    sockaddr_unspec.sa_family = AF_UNSPEC;
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 sockaddr_unspec,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 TEST_DATA, sizeof(TEST_DATA)),
+                 SocketSessionError);
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 sockaddr_unspec, TEST_DATA,
+                                 sizeof(TEST_DATA)),
+                 SocketSessionError);
+
+    // Inconsistent address family
+    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("2001:db8::1", "53").first,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 TEST_DATA, sizeof(TEST_DATA)),
+                 SocketSessionError);
+    EXPECT_THROW(forwarder_.push(1, AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
+                                 *getSockAddr("2001:db8::1", "53").first,
+                                 *getSockAddr("192.0.2.2", "53").first,
+                                 TEST_DATA, sizeof(TEST_DATA)),
+                 SocketSessionError);
+
+#if 0
+    const int receptor_fd = acceptForwarder();
+    close(receptor_fd);
+    forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                    *getSockAddr("192.0.2.1", "53").first,
+                    *getSockAddr("192.0.2.2", "53").first,
+                    TEST_DATA, sizeof(TEST_DATA));
+#endif
+}
+
+TEST(SocketSession, badValue) {
+    // normal cases are confirmed in ForwarderTest.  We only check some
+    // abnormal cases here.
+
+    SockAddrCreator addr_creator;
+
+    EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL,
+                               addr_creator.get("192.0.2.1", "53").first,
+                               sizeof(TEST_DATA), TEST_DATA),
+                 BadValue);
+    EXPECT_THROW(SocketSession(42, AF_INET6, SOCK_STREAM, IPPROTO_TCP,
+                               addr_creator.get("2001:db8::1", "53").first,
+                               NULL, sizeof(TEST_DATA), TEST_DATA), BadValue);
+    EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                               addr_creator.get("192.0.2.1", "53").first,
+                               addr_creator.get("192.0.2.2", "5300").first,
+                               0, TEST_DATA), BadValue);
+    EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                               addr_creator.get("192.0.2.1", "53").first,
+                               addr_creator.get("192.0.2.2", "5300").first,
+                               sizeof(TEST_DATA), NULL), BadValue);
+}
 }
