@@ -1,3 +1,7 @@
+346.	[build]*		jreed
+	Renamed libdhcp to libdhcp++.
+	(Trac #1446, git d394e64f4c44f16027b1e62b4ac34e054b49221d)
+
 345.	[func]		tomek
 	dhcp4: Dummy DHCPv4 component implemented. Currently it does
 	nothing useful, except providing skeleton implementation that can
