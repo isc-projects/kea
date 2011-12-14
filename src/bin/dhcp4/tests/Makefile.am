@@ -30,7 +30,7 @@ if HAVE_GTEST
 
 TESTS += dhcp4_unittests
 
-dhcp4_unittests_SOURCES == ../dhcp4_srv.h ../dhcp4_srv.cc
+dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 
