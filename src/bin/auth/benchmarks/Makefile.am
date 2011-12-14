@@ -32,9 +32,9 @@ query_bench_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 query_bench_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 query_bench_LDADD += $(top_builddir)/src/lib/log/liblog.la
 query_bench_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
-query_bench_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 query_bench_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
+query_bench_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 query_bench_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
 query_bench_LDADD += $(SQLITE_LIBS)
 
