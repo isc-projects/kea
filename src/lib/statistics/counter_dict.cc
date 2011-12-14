@@ -75,9 +75,11 @@ CounterDictionaryImpl::deleteElement(const std::string& name) {
 
 Counter&
 CounterDictionaryImpl::getElement(const std::string& name) {
-    try {
-        return (*(dictionary_.at(name)));
-    } catch (const std::out_of_range&) {
+    DictionaryMap::const_iterator i = dictionary_.find(name);
+    if (i != dictionary_.end()) {
+        // the key was found. return the element.
+        return (*(i->second));
+    } else {
         // If an element with specified name does not exist, throw
         // isc::OutOfRange.
         isc_throw(isc::OutOfRange, "Element " << name << " does not exist");
