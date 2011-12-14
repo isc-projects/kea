@@ -355,10 +355,6 @@ IOFetch::stop(Result result) {
         // variable should be done inside a mutex (and the stopped_ variable
         // declared as "volatile").
         //
-        // The numeric arguments indicate the debug level, with the lower
-        // numbers indicating the most important information.  The relative
-        // values are somewhat arbitrary.
-        //
         // TODO: Update testing of stopped_ if threads are used.
         data_->stopped = true;
         switch (result) {

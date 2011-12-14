@@ -82,6 +82,18 @@ private:
     /// This corresponds to Section 3.1.3.3 of RFC 4035.
     void addWildcardProof(isc::datasrc::ZoneFinder& finder);
 
+    /// \brief Adds one NSEC RR proved no matched QNAME,one NSEC RR proved no
+    /// matched <QNAME,QTYPE> through wildcard extension.
+    ///
+    /// Add NSEC RRs that prove an WILDCARD_NXRRSET result.
+    /// This corresponds to Section 3.1.3.4 of RFC 4035.
+    /// \param finder The ZoneFinder through which the authority data for the
+    /// query is to be found.
+    /// \param nsec The RRset (NSEC RR) which proved that there is no matched 
+    /// <QNAME,QTTYPE>.
+    void addWildcardNXRRSETProof(isc::datasrc::ZoneFinder& finder,
+                                 isc::dns::ConstRRsetPtr nsec);
+    
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records) and add them to the additional section.
     ///

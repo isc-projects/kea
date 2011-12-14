@@ -15,22 +15,28 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/iface_mgr.h>
-#include "dhcp6/dhcp6_srv.h"
-#include "dhcp/option6_ia.h"
-#include "dhcp/option6_iaaddr.h"
-#include "asiolink/io_address.h"
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
-Dhcpv6Srv::Dhcpv6Srv() {
+Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
+
+//void Dhcpv6Srv::Dhcpv6Srv_impl(uint16_t port) {
     cout << "Initialization" << endl;
 
-    // first call to instance() will create IfaceMgr (it's a singleton)
-    // it may throw something if things go wrong
+    // First call to instance() will create IfaceMgr (it's a singleton).
+    // It may throw something if things go wrong.
     IfaceMgr::instance();
+
+    // Now try to open IPv6 sockets on detected interfaces.
+    IfaceMgr::instance().openSockets(port);
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
@@ -41,6 +47,8 @@ Dhcpv6Srv::Dhcpv6Srv() {
 
 Dhcpv6Srv::~Dhcpv6Srv() {
     cout << "DHCPv6 Srv shutdown." << endl;
+
+    IfaceMgr::instance().closeSockets();
 }
 
 bool
@@ -49,7 +57,7 @@ Dhcpv6Srv::run() {
         boost::shared_ptr<Pkt6> query; // client's message
         boost::shared_ptr<Pkt6> rsp;   // server's response
 
-        query = IfaceMgr::instance().receive();
+        query = IfaceMgr::instance().receive6();
 
         if (query) {
             if (!query->unpack()) {
