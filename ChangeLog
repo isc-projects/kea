@@ -2,7 +2,7 @@
 	src/lib/statistics: Added statistics counter library for entire server
 	items and per zone items. Also, modified b10-auth to use it. It is
 	also intended to use in the other modules such as b10-resolver.
-	(Trac #510, git TBD)
+	(Trac #510, git afddaf4c5718c2a0cc31f2eee79c4e0cc625499f)
 
 343.	[func]		jelte
 	Added IXFR-out system tests, based on the first two test sets of
