@@ -25,11 +25,10 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_error.h>
 
-using boost::shared_ptr;
 using namespace isc::asiolink;
 
 namespace {
-typedef shared_ptr<const IOEndpoint> ConstIOEndpointPtr;
+typedef boost::shared_ptr<const IOEndpoint> ConstIOEndpointPtr;
 
 TEST(IOEndpointTest, createUDPv4) {
     ConstIOEndpointPtr ep(IOEndpoint::create(IPPROTO_UDP,

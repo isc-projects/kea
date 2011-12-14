@@ -54,7 +54,6 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;
-using boost::shared_ptr;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -251,7 +250,7 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Run the message through the server
-    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     keyring->add(key);
     server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
@@ -285,7 +284,7 @@ TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Process the message, but use a different key there
-    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
                           &dnsserv);
@@ -317,7 +316,7 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Process the message, but use a different key there
-    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
     server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
@@ -353,7 +352,7 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Process the message, but use a different key there
-    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
     server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
