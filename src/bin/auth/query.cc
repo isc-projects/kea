@@ -117,7 +117,6 @@ void
 Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for NXDOMAIN is empty");
-        return;
     }
 
     // Add the NSEC proving NXDOMAIN to the authority section.
@@ -152,7 +151,6 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for wildcard NXDOMAIN proof");
-        return;
     }
 
     // Add the (no-) wildcard proof only when it's different from the NSEC
@@ -178,7 +176,6 @@ Query::addWildcardProof(ZoneFinder& finder) {
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for wildcard proof");
-        return;
     }
     response_.addRRset(Message::SECTION_AUTHORITY,
                        boost::const_pointer_cast<RRset>(fresult.rrset),
@@ -186,12 +183,11 @@ Query::addWildcardProof(ZoneFinder& finder) {
 }
 
 void
-Query::addWildcardNxrrsetProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
+Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // There should be one NSEC RR which was found in the zone to prove
     // that there is not matched <QNAME,QTYPE> via wildcard expansion.
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
-        return;
     }
     // Add this NSEC RR to authority section.
     response_.addRRset(Message::SECTION_AUTHORITY,
@@ -203,7 +199,6 @@ Query::addWildcardNxrrsetProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for no match QNAME proof");
-        return;
     }
    
     if (nsec->getName() != fresult.rrset->getName()) {
@@ -387,7 +382,7 @@ Query::process() {
             case ZoneFinder::WILDCARD_NXRRSET:
                 addSOA(*result.zone_finder);
                 if (dnssec_ && db_result.rrset) {
-                    addWildcardNxrrsetProof(zfinder,db_result.rrset);
+                    addWildcardNXRRSETProof(zfinder, db_result.rrset);
                 }
                 break;
             default:
