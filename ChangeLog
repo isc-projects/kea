@@ -1,15 +1,44 @@
-339.	[func]		y-aharen
+344.	[func]		y-aharen
 	src/lib/statistics: Added statistics counter library for entire server
 	items and per zone items. Also, modified b10-auth to use it. It is
 	also intended to use in the other modules such as b10-resolver.
 	(Trac #510, git TBD)
+
+343.	[func]		jelte
+	Added IXFR-out system tests, based on the first two test sets of
+	http://bind10.isc.org/wiki/IxfrSystemTests.
+	(Trac #1314, git 1655bed624866a766311a01214597db01b4c7cec)
+
+342.	[bug]		stephen
+	In the resolver, a FORMERR received from an upstream nameserver
+	now results in a SERVFAIL being returned as a response to the original
+	query.  Additional debug messages added to distinguish between
+	different errors in packets received from upstream nameservers.
+	(Trac #1383, git 9b2b249d23576c999a65d8c338e008cabe45f0c9)
+
+341.	[func]		tomek
+	libdhcp++: Support for handling both IPv4 and IPv6 added.
+	Also added support for binding IPv4 sockets.
+	(Trac #1238, git 86a4ce45115dab4d3978c36dd2dbe07edcac02ac)
+
+340.	[build]		jelte
+	Fixed several linker issues related to recent gcc versions, botan
+	and gtest.
+	(Trac #1442, git 91fb141bfb3aadfdf96f13e157a26636f6e9f9e3)
+
+339.	[bug]		jinmei
+	libxfr, used by b10-auth to share TCP sockets with b10-xfrout,
+	incorrectly propagated ASIO specific exceptions to the application
+	if the given file name was too long.  This could lead to
+	unexpected shut down of b10-auth.
+	(Trac #1387, git a5e9d9176e9c60ef20c0f5ef59eeb6838ed47ab2)
 
 338.	[bug]		jinmei
 	b10-xfrin didn't check SOA serials of SOA and IXFR responses,
 	which resulted in unnecessary transfer or unexpected IXFR
 	timeouts (these issues were not overlooked but deferred to be
 	fixed until #1278 was completed).  Validation on responses to SOA
-	queries were tighten, too.
+	queries were tightened, too.
 	(Trac #1299, git 6ff03bb9d631023175df99248e8cc0cda586c30a)
 
 337.	[func]		tomek
@@ -51,12 +80,12 @@
 	potential problems and were fixed.
 	(Trac #1389, git 3fdce88046bdad392bd89ea656ec4ac3c858ca2f)
 
-333.    [bug]		dvv
-	Solaris needs "-z now" to force non-lazy binding and prevent g++ static
-	initialization code from deadlocking.
+333.	[bug]		dvv
+	Solaris needs "-z now" to force non-lazy binding and prevent
+	g++ static initialization code from deadlocking.
 	(Trac #1439, git c789138250b33b6b08262425a08a2a0469d90433)
 
-332.    [bug]		vorner
+332.	[bug]		vorner
 	C++ exceptions in the isc.dns.Rdata wrapper are now converted
 	to python ones instead of just aborting the interpretter.
 	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)

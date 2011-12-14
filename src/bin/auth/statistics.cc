@@ -30,10 +30,10 @@ using namespace isc::auth;
 using namespace isc::statistics;
 
 // TODO: We need a namespace ("auth_server"?) to hold
-//        AuthSrv and AuthCounters.
+// AuthSrv and AuthCounters.
 
 // TODO: Make use of wrappers like isc::dns::Opcode
-//        for counter item type.
+// for counter item type.
 
 class AuthCountersImpl : boost::noncopyable {
 public:
