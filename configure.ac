@@ -984,8 +984,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/tests/Makefile
                  src/lib/acl/Makefile
                  src/lib/acl/tests/Makefile
-		 src/lib/statistics/Makefile
-		 src/lib/statistics/tests/Makefile
+                 src/lib/statistics/Makefile
+                 src/lib/statistics/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile
