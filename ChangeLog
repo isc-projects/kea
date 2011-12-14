@@ -2,7 +2,7 @@
 	dhcp4: Dummy DHCPv4 component implemented. Currently it does
 	nothing useful, except providing skeleton implementation that can
 	be expanded in the future.
-	(Trac #992, git TBD)
+	(Trac #992, git d6e33479365c8f8f62ef2b9aa5548efe6b194601)
 
 344.	[func]		y-aharen
 	src/lib/statistics: Added statistics counter library for entire server
