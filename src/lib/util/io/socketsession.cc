@@ -73,7 +73,8 @@ struct SocketSessionForwarder::ForwarderImpl {
 SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     impl_(NULL)
 {
-    // We need to filter SIGPIPE for subsequent push().  See the description.
+    // We need to filter SIGPIPE for subsequent push().  See the class
+    // description.
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
         isc_throw(Unexpected, "Failed to filter SIGPIPE: " << strerror(errno));
     }
@@ -108,7 +109,7 @@ SocketSessionForwarder::~SocketSessionForwarder() {
 void
 SocketSessionForwarder::connectToReceptor() {
     if (impl_->fd_ != -1) {
-        isc_throw(SocketSessionError, "Duplicate connect to UNIX domain "
+        isc_throw(BadValue, "Duplicate connect to UNIX domain "
                   "endpoint " << impl_->sock_un_.sun_path);
     }
 
@@ -146,41 +147,40 @@ SocketSessionForwarder::connectToReceptor() {
 void
 SocketSessionForwarder::close() {
     if (impl_->fd_ == -1) {
-        isc_throw(SocketSessionError, "Attempt of close before connect");
+        isc_throw(BadValue, "Attempt of close before connect");
     }
     ::close(impl_->fd_);
     impl_->fd_ = -1;
 }
 
 void
-SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
+SocketSessionForwarder::push(int sock, int family, int type, int protocol,
                              const struct sockaddr& local_end,
                              const struct sockaddr& remote_end,
                              const void* data, size_t data_len)
 {
     if (impl_->fd_ == -1) {
-        isc_throw(SocketSessionError, "Attempt of push before connect");
+        isc_throw(BadValue, "Attempt of push before connect");
     }
     if ((local_end.sa_family != AF_INET && local_end.sa_family != AF_INET6) ||
         (remote_end.sa_family != AF_INET && remote_end.sa_family != AF_INET6))
     {
-        isc_throw(SocketSessionError, "Invalid address family: must be "
+        isc_throw(BadValue, "Invalid address family: must be "
                   "AF_INET or AF_INET6; " <<
                   static_cast<int>(local_end.sa_family) << ", " <<
                   static_cast<int>(remote_end.sa_family) << " given");
     }
     if (family != local_end.sa_family || family != remote_end.sa_family) {
-        isc_throw(SocketSessionError, "Inconsistent address family: must be "
+        isc_throw(BadValue, "Inconsistent address family: must be "
                   << static_cast<int>(family) << "; "
                   << static_cast<int>(local_end.sa_family) << ", "
                   << static_cast<int>(remote_end.sa_family) << " given");
     }
     if (data_len == 0 || data == NULL) {
-        isc_throw(SocketSessionError,
-                  "Data for a socket session must not be empty");
+        isc_throw(BadValue, "Data for a socket session must not be empty");
     }
     if (data_len > MAX_DATASIZE) {
-        isc_throw(SocketSessionError, "Invalid socket session data size: " <<
+        isc_throw(BadValue, "Invalid socket session data size: " <<
                   data_len << ", must not exceed " << MAX_DATASIZE);
     }
 
@@ -194,7 +194,7 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
     impl_->buf_.skip(sizeof(uint16_t));
     // Socket properties: family, type, protocol
     impl_->buf_.writeUint32(static_cast<uint32_t>(family));
-    impl_->buf_.writeUint32(static_cast<uint32_t>(sock_type));
+    impl_->buf_.writeUint32(static_cast<uint32_t>(type));
     impl_->buf_.writeUint32(static_cast<uint32_t>(protocol));
     // Local endpoint
     impl_->buf_.writeUint32(static_cast<uint32_t>(getSALength(local_end)));
@@ -229,10 +229,10 @@ SocketSessionForwarder::push(int sock, int family, int sock_type, int protocol,
 SocketSession::SocketSession(int sock, int family, int type, int protocol,
                              const sockaddr* local_end,
                              const sockaddr* remote_end,
-                             size_t data_len, const void* data) :
+                             const void* data, size_t data_len) :
     sock_(sock), family_(family), type_(type), protocol_(protocol),
     local_end_(local_end), remote_end_(remote_end),
-    data_len_(data_len), data_(data)
+    data_(data), data_len_(data_len)
 {
     if (local_end == NULL || remote_end == NULL) {
         isc_throw(BadValue, "sockaddr must be non NULL for SocketSession");
@@ -264,8 +264,8 @@ struct SocketSessionReceptor::ReceptorImpl {
     struct sockaddr_storage ss_remote_; // placeholder
     struct sockaddr* const sa_remote_;
 
-    vector<char> header_buf_;
-    vector<char> data_buf_;
+    vector<uint8_t> header_buf_;
+    vector<uint8_t> data_buf_;
 };
 
 SocketSessionReceptor::SocketSessionReceptor(int fd) :
@@ -363,8 +363,8 @@ SocketSessionReceptor::pop() {
         }
 
         return (SocketSession(passed_fd, family, type, protocol,
-                              impl_->sa_local_, impl_->sa_remote_, data_len,
-                              &impl_->data_buf_[0]));
+                              impl_->sa_local_, impl_->sa_remote_,
+                              &impl_->data_buf_[0], data_len));
     } catch (const InvalidBufferPosition& ex) {
         // We catch the case where the given header is too short and convert
         // the exception to SocketSessionError.

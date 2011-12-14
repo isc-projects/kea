@@ -147,11 +147,11 @@ private:
     vector<struct addrinfo*> addrinfo_list_;
 };
 
-class ForwarderTest : public ::testing::Test {
+class ForwardTest : public ::testing::Test {
 protected:
-    ForwarderTest() : listen_fd_(-1), forwarder_(TEST_UNIX_FILE),
-                      large_text_(65535, 'a'),
-                      test_un_len_(2 + strlen(TEST_UNIX_FILE))
+    ForwardTest() : listen_fd_(-1), forwarder_(TEST_UNIX_FILE),
+                    large_text_(65535, 'a'),
+                    test_un_len_(2 + strlen(TEST_UNIX_FILE))
     {
         unlink(TEST_UNIX_FILE);
         test_un_.sun_family = AF_UNIX;
@@ -161,7 +161,7 @@ protected:
 #endif
     }
 
-    ~ForwarderTest() {
+    ~ForwardTest() {
         if (listen_fd_ != -1) {
             close(listen_fd_);
         }
@@ -287,12 +287,24 @@ protected:
         }
         obuffer.writeUint16(hdrlen);
         if (hdrlen_len > 0) {
-            send(dummy_forwarder_.fd, obuffer.getData(), hdrlen_len, 0);
+            if (send(dummy_forwarder_.fd, obuffer.getData(), hdrlen_len, 0) !=
+                hdrlen_len) {
+                isc_throw(isc::Unexpected,
+                          "Failed to pass session header len");
+            }
         }
         accept_sock_.reset(acceptForwarder());
         receptor_.reset(new SocketSessionReceptor(accept_sock_.fd));
     }
 
+    // A helper method to push some (normally bogus) socket session via a
+    // Unix domain socket pretending to be a valid SocketSessionForwarder.
+    // It internally calls pushSessionHeader() for setup and pushing the
+    // header, and pass (often bogus) header data and session data based
+    // on the function parameters.  The parameters are generally compatible
+    // to those for SocketSessionForwarder::push, but could be invalid for
+    // testing purposes.  For session data, we use TEST_DATA and its size
+    // by default for simplicity, but the size can be tweaked for testing.
     void pushSession(int family, int type, int protocol, socklen_t local_len,
                      const sockaddr& local, socklen_t remote_len,
                      const sockaddr& remote,
@@ -308,8 +320,14 @@ protected:
         obuffer.writeData(&remote, getSALength(remote));
         obuffer.writeUint32(static_cast<uint32_t>(data_len));
         pushSessionHeader(obuffer.getLength());
-        send(dummy_forwarder_.fd, obuffer.getData(), obuffer.getLength(), 0);
-        send(dummy_forwarder_.fd, TEST_DATA, sizeof(TEST_DATA), 0);
+        if (send(dummy_forwarder_.fd, obuffer.getData(), obuffer.getLength(),
+                 0) != obuffer.getLength()) {
+            isc_throw(isc::Unexpected, "Failed to pass session header");
+        }
+        if (send(dummy_forwarder_.fd, TEST_DATA, sizeof(TEST_DATA), 0) !=
+            sizeof(TEST_DATA)) {
+            isc_throw(isc::Unexpected, "Failed to pass session data");
+        }
     }
 
     // See below
@@ -332,7 +350,7 @@ private:
     SockAddrCreator addr_creator_;
 };
 
-TEST_F(ForwarderTest, construct) {
+TEST_F(ForwardTest, construct) {
     // On construction the existence of the file doesn't matter.
     SocketSessionForwarder("some_file");
 
@@ -344,13 +362,13 @@ TEST_F(ForwarderTest, construct) {
     SocketSessionForwarder(string(sizeof(s.sun_path) - 1, 'x'));
 }
 
-TEST_F(ForwarderTest, connect) {
+TEST_F(ForwardTest, connect) {
     // File doesn't exist (we assume the file "no_such_file" doesn't exist)
     SocketSessionForwarder forwarder("no_such_file");
     EXPECT_THROW(forwarder.connectToReceptor(), SocketSessionError);
     // The socket should be closed internally, so close() should result in
     // error.
-    EXPECT_THROW(forwarder.close(), SocketSessionError);
+    EXPECT_THROW(forwarder.close(), BadValue);
 
     // Set up the receptor and connect.  It should succeed.
     SocketSessionForwarder forwarder2(TEST_UNIX_FILE);
@@ -359,14 +377,14 @@ TEST_F(ForwarderTest, connect) {
     // And it can be closed successfully.
     forwarder2.close();
     // Duplicate close should fail
-    EXPECT_THROW(forwarder2.close(), SocketSessionError);
+    EXPECT_THROW(forwarder2.close(), BadValue);
     // Once closed, reconnect is okay.
     forwarder2.connectToReceptor();
     forwarder2.close();
 
     // Duplicate connect should be rejected
     forwarder2.connectToReceptor();
-    EXPECT_THROW(forwarder2.connectToReceptor(), SocketSessionError);
+    EXPECT_THROW(forwarder2.connectToReceptor(), BadValue);
 
     // Connect then destroy.  Should be internally closed, but unfortunately
     // it's not easy to test it directly.  We only check no disruption happens.
@@ -376,10 +394,9 @@ TEST_F(ForwarderTest, connect) {
     delete forwarderp;
 }
 
-TEST_F(ForwarderTest, close) {
+TEST_F(ForwardTest, close) {
     // can't close before connect
-    EXPECT_THROW(SocketSessionForwarder(TEST_UNIX_FILE).close(),
-                 SocketSessionError);
+    EXPECT_THROW(SocketSessionForwarder(TEST_UNIX_FILE).close(), BadValue);
 }
 
 void
@@ -422,11 +439,11 @@ checkSockAddrs(const sockaddr& expected, const sockaddr& actual) {
 //   client_sock                |
 //      (check)<---------send TEST_DATA
 void
-ForwarderTest::checkPushAndPop(int family, int type, int protocol,
-                               const SockAddrInfo& local,
-                               const SockAddrInfo& remote,
-                               const void* const data,
-                               size_t data_len, bool new_connection)
+ForwardTest::checkPushAndPop(int family, int type, int protocol,
+                             const SockAddrInfo& local,
+                             const SockAddrInfo& remote,
+                             const void* const data,
+                             size_t data_len, bool new_connection)
 {
     // Create an original socket to be passed
     const ScopedSocket sock(createSocket(family, type, protocol, local, true));
@@ -516,7 +533,7 @@ ForwarderTest::checkPushAndPop(int family, int type, int protocol,
     EXPECT_EQ(string(TEST_DATA), string(recvbuf));
 }
 
-TEST_F(ForwarderTest, pushAndPop) {
+TEST_F(ForwardTest, pushAndPop) {
     // Pass a UDP/IPv6 session.
     const SockAddrInfo sai_local6(getSockAddr("::1", TEST_PORT));
     const SockAddrInfo sai_remote6(getSockAddr("2001:db8::1", "5300"));
@@ -576,13 +593,13 @@ TEST_F(ForwarderTest, pushAndPop) {
     }
 }
 
-TEST_F(ForwarderTest, badPush) {
+TEST_F(ForwardTest, badPush) {
     // push before connect
     EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("192.0.2.1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  TEST_DATA, sizeof(TEST_DATA)),
-                 SocketSessionError);
+                 BadValue);
 
     // Now connect the forwarder for the rest of tests
     startListen();
@@ -595,43 +612,43 @@ TEST_F(ForwarderTest, badPush) {
                                  sockaddr_unspec,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  TEST_DATA, sizeof(TEST_DATA)),
-                 SocketSessionError);
+                 BadValue);
     EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  sockaddr_unspec, TEST_DATA,
                                  sizeof(TEST_DATA)),
-                 SocketSessionError);
+                 BadValue);
 
     // Inconsistent address family
     EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("2001:db8::1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  TEST_DATA, sizeof(TEST_DATA)),
-                 SocketSessionError);
+                 BadValue);
     EXPECT_THROW(forwarder_.push(1, AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("2001:db8::1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  TEST_DATA, sizeof(TEST_DATA)),
-                 SocketSessionError);
+                 BadValue);
 
     // Empty data: we reject them at least for now
     EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("192.0.2.1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  TEST_DATA, 0),
-                 SocketSessionError);
+                 BadValue);
     EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("192.0.2.1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  NULL, sizeof(TEST_DATA)),
-                 SocketSessionError);
+                 BadValue);
 
     // Too big data: we reject them at least for now
     EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("192.0.2.1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
                                  string(65536, 'd').c_str(), 65536),
-                 SocketSessionError);
+                 BadValue);
 
     // Close the receptor before push.  It will result in SIGPIPE (should be
     // ignored) and EPIPE, which will be converted to SocketSessionError.
@@ -658,7 +675,7 @@ multiPush(SocketSessionForwarder& forwarder, const struct sockaddr& sa,
     }
 }
 
-TEST_F(ForwarderTest, pushTooFast) {
+TEST_F(ForwardTest, pushTooFast) {
     // Emulate the situation where the forwarder is pushing sessions too fast.
     // It should eventually fail without blocking.
     startListen();
@@ -668,7 +685,7 @@ TEST_F(ForwarderTest, pushTooFast) {
                  SocketSessionError);
 }
 
-TEST_F(ForwarderTest, badPop) {
+TEST_F(ForwardTest, badPop) {
     startListen();
 
     // Close the forwarder socket before pop() without sending anything.
@@ -761,26 +778,26 @@ TEST_F(ForwarderTest, badPop) {
     EXPECT_THROW(receptor_->pop(), SocketSessionError);
 }
 
-TEST(SocketSession, badValue) {
-    // normal cases are confirmed in ForwarderTest.  We only check some
+TEST(SocketSessionTest, badValue) {
+    // normal cases are confirmed in ForwardTest.  We only check some
     // abnormal cases here.
 
     SockAddrCreator addr_creator;
 
     EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL,
                                addr_creator.get("192.0.2.1", "53").first,
-                               sizeof(TEST_DATA), TEST_DATA),
+                               TEST_DATA, sizeof(TEST_DATA)),
                  BadValue);
     EXPECT_THROW(SocketSession(42, AF_INET6, SOCK_STREAM, IPPROTO_TCP,
                                addr_creator.get("2001:db8::1", "53").first,
-                               NULL, sizeof(TEST_DATA), TEST_DATA), BadValue);
+                               NULL, TEST_DATA , sizeof(TEST_DATA)), BadValue);
     EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                addr_creator.get("192.0.2.1", "53").first,
                                addr_creator.get("192.0.2.2", "5300").first,
-                               0, TEST_DATA), BadValue);
+                               TEST_DATA, 0), BadValue);
     EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                addr_creator.get("192.0.2.1", "53").first,
                                addr_creator.get("192.0.2.2", "5300").first,
-                               sizeof(TEST_DATA), NULL), BadValue);
+                               NULL, sizeof(TEST_DATA)), BadValue);
 }
 }
