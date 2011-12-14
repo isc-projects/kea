@@ -50,7 +50,7 @@ will need to expand these, but we will look at them shortly.
 This file defines a feature, just under the feature name we can
 provide a description of the feature.
 
-The one scenario we have no has no steps, so if we run it we should
+The one scenario we have has no steps, so if we run it we should
 see something like:
 
 -- output
@@ -84,7 +84,7 @@ So let's add a step that starts bind10.
         When I start bind10 with configuration example.org.config
 --
 
-This is not good enough; it will fire of the process, but setting up
+This is not good enough; it will start the process, but setting up
 b10-auth may take a few moments, so we need to add a step to wait for
 it to be started before we continue.
 
@@ -121,7 +121,7 @@ regular expression itself), so if the step is defined with "do foo bar", the
 scenario can add words for readability "When I do foo bar".
 
 Each captured group will be passed as an argument to the function we define.
-For bind10, i defined a configuration file, a cmdctl port, and a process
+For bind10, I defined a configuration file, a cmdctl port, and a process
 name. The first two should be self-evident, and the process name is an
 optional name we give it, should we want to address it in the rest of the
 tests. This is most useful if we want to start multiple instances. In the
