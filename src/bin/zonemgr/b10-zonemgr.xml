@@ -224,14 +224,6 @@
 
   </refsect1>
 -->
-<!--
-  <refsect1>
-    <title>FILES</title>
-    <para>
-    <filename>/tmp/auth_xfrout_conn</filename>
-    </para>
-  </refsect1>
--->
 
   <refsect1>
     <title>SEE ALSO</title>
@@ -247,9 +239,6 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
