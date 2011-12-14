@@ -219,8 +219,9 @@ class ConfigChecker : public SimpleCallback {
 public:
     ConfigChecker(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage&) const {
-        if (server_->getConfigSession()->hasQueuedMsgs()) {
-            server_->getConfigSession()->checkCommand();
+        ModuleCCSession* cfg_session = server_->getConfigSession();
+        if (cfg_session != NULL && cfg_session->hasQueuedMsgs()) {
+            cfg_session->checkCommand();
         }
     }
 private:
@@ -670,9 +671,9 @@ void
 AuthSrvImpl::incCounter(const int protocol) {
     // Increment query counter.
     if (protocol == IPPROTO_UDP) {
-        counters_.inc(AuthCounters::COUNTER_UDP_QUERY);
+        counters_.inc(AuthCounters::SERVER_UDP_QUERY);
     } else if (protocol == IPPROTO_TCP) {
-        counters_.inc(AuthCounters::COUNTER_TCP_QUERY);
+        counters_.inc(AuthCounters::SERVER_TCP_QUERY);
     } else {
         // unknown protocol
         isc_throw(Unexpected, "Unknown protocol: " << protocol);
@@ -765,7 +766,7 @@ bool AuthSrv::submitStatistics() const {
 }
 
 uint64_t
-AuthSrv::getCounter(const AuthCounters::CounterType type) const {
+AuthSrv::getCounter(const AuthCounters::ServerCounterType type) const {
     return (impl_->counters_.getCounter(type));
 }
 
