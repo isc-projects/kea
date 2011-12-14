@@ -49,7 +49,6 @@ TEST_F(SerialTest, get_value) {
 
 TEST_F(SerialTest, equals) {
     EXPECT_EQ(one, one);
-    EXPECT_EQ(one, one);
     EXPECT_EQ(one, one_2);
     EXPECT_NE(one, two);
     EXPECT_NE(two, one);
@@ -65,6 +64,7 @@ TEST_F(SerialTest, comparison) {
     EXPECT_LE(one, two);
     EXPECT_GE(two, two);
     EXPECT_GT(two, one);
+    EXPECT_GE(two, one);
     EXPECT_LT(one, number_low);
     EXPECT_LT(number_low, number_medium);
     EXPECT_LT(number_medium, number_high);

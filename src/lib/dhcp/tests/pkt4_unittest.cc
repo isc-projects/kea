@@ -487,13 +487,15 @@ TEST(Pkt4Test, options) {
 
     const OutputBuffer& buf = pkt->getBuffer();
     // check that all options are stored, they should take sizeof(v4Opts)
-    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(v4Opts),
+    // there also should be OPTION_END added (just one byte)
+    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(v4Opts) + 1,
               buf.getLength());
 
     // that that this extra data actually contain our options
     const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
     ptr += Pkt4::DHCPV4_PKT_HDR_LEN; // rewind to end of fixed part
     EXPECT_EQ(0, memcmp(ptr, v4Opts, sizeof(v4Opts)));
+    EXPECT_EQ(DHO_END, static_cast<uint8_t>(*(ptr + sizeof(v4Opts))));
 
     EXPECT_NO_THROW(
         delete pkt;
@@ -504,7 +506,7 @@ TEST(Pkt4Test, unpackOptions) {
 
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    for (int i=0; i < sizeof(v4Opts); i++) {
+    for (int i = 0; i < sizeof(v4Opts); i++) {
         expectedFormat.push_back(v4Opts[i]);
     }
 
@@ -557,6 +559,23 @@ TEST(Pkt4Test, unpackOptions) {
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+22, 3)); // data len=3
+}
+
+// This test verifies methods that are used for manipulating meta fields
+// i.e. fields that are not part of DHCPv4 (e.g. interface name).
+TEST(Pkt4Test, metaFields) {
+
+    Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
+    pkt->setIface("loooopback");
+    pkt->setIndex(42);
+    pkt->setRemoteAddr(IOAddress("1.2.3.4"));
+    pkt->setLocalAddr(IOAddress("4.3.2.1"));
+
+    EXPECT_EQ("loooopback", pkt->getIface());
+    EXPECT_EQ(42, pkt->getIndex());
+    EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
+    EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
+
 }
 
 } // end of anonymous namespace
