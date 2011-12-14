@@ -101,9 +101,9 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
     interfaces << "eth0 fe80::21e:8cff:fe9b:7349";
     interfaces.close();
 
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
-    Pkt6 * pkt = 0;
+    Pkt6* pkt = NULL;
     int cnt = 0;
     cout << "---8X-----------------------------------------" << endl;
     while (true) {
@@ -155,7 +155,7 @@ TEST_F(IfaceMgrTest, basic) {
 TEST_F(IfaceMgrTest, ifaceClass) {
     // basic tests for Iface inner class
 
-    IfaceMgr::Iface * iface = new IfaceMgr::Iface("eth5", 7);
+    IfaceMgr::Iface* iface = new IfaceMgr::Iface("eth5", 7);
 
     EXPECT_STREQ("eth5/7", iface->getFullName().c_str());
 
@@ -168,7 +168,7 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 TEST_F(IfaceMgrTest, getIface) {
 
     cout << "Interface checks. Please ignore socket binding errors." << endl;
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // interface name, ifindex
     IfaceMgr::Iface iface1("lo1", 1);
@@ -192,7 +192,7 @@ TEST_F(IfaceMgrTest, getIface) {
 
 
     // check that interface can be retrieved by ifindex
-    IfaceMgr::Iface * tmp = ifacemgr->getIface(5);
+    IfaceMgr::Iface* tmp = ifacemgr->getIface(5);
     // ASSERT_NE(NULL, tmp); is not supported. hmmmm.
     ASSERT_TRUE( tmp != NULL );
 
@@ -225,11 +225,11 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     // interfaces. Nevertheless, this fake interface should
     // be on list, but if_nametoindex() will fail.
 
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     ASSERT_TRUE( ifacemgr->getIface("eth0") != NULL );
 
-    IfaceMgr::Iface * eth0 = ifacemgr->getIface("eth0");
+    IfaceMgr::Iface* eth0 = ifacemgr->getIface("eth0");
 
     // there should be one address
     IfaceMgr::AddressCollection addrs = eth0->getAddresses();
@@ -240,6 +240,7 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     EXPECT_STREQ( "fe80::1234", addr.toText().c_str() );
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 TEST_F(IfaceMgrTest, sockets6) {
@@ -248,7 +249,7 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     createLoInterfacesTxt();
 
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     IOAddress loAddr("::1");
 
@@ -272,6 +273,7 @@ TEST_F(IfaceMgrTest, sockets6) {
     close(socket2);
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 // TODO: disabled due to other naming on various systems
@@ -280,7 +282,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     IOAddress loAddr("::1");
     IOAddress mcastAddr("ff02::1:2");
@@ -358,6 +360,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_TRUE( (rcvPkt->remote_port_ == 10546) || (rcvPkt->remote_port_ == 10547) );
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 TEST_F(IfaceMgrTest, socket4) {
@@ -385,11 +388,12 @@ TEST_F(IfaceMgrTest, socket4) {
     close(socket1);
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 // Test the Iface structure itself
 TEST_F(IfaceMgrTest, iface) {
-    IfaceMgr::Iface* iface = 0;
+    IfaceMgr::Iface* iface = NULL;
     EXPECT_NO_THROW(
         iface = new IfaceMgr::Iface("eth0",1);
     );
@@ -446,7 +450,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     // now let's test if IfaceMgr handles socket info properly
     createLoInterfacesTxt();
-    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
     IfaceMgr::Iface* loopback = ifacemgr->getIface(LOOPBACK);
     ASSERT_TRUE(loopback);
     loopback->addSocket(sock1);
@@ -514,6 +518,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 }
