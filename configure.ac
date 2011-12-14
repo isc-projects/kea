@@ -730,7 +730,7 @@ then
 				GTEST_FOUND="true"
 				# There is no gtest-config script on this
 				# system, which is supposed to inform us
-				# whether we need pthreads as well (a 
+				# whether we need pthreads as well (a
 				# gtest compile-time option). So we still
 				# need to test that manually.
 				CPPFLAGS_SAVED="$CPPFLAGS"
