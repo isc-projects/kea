@@ -35,6 +35,7 @@ pkglibexec_LTLIBRARIES =  sqlite3_ds.la memory_ds.la
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_LDFLAGS = -module
+sqlite3_ds_la_LDFLAGS += -no-undefined -version-info 1:0:0
 sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 sqlite3_ds_la_LIBADD += libdatasrc.la
 sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)

@@ -47,11 +47,9 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferIn_(NULL, 0), // not used, this is TX packet
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(msg_type)
 {
-    /// TODO: fixed fields, uncomment in ticket #1224
     memset(chaddr_, 0, MAX_CHADDR_LEN);
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
@@ -64,7 +62,6 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       ifindex_(-1),
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
-      /// TODO Fixed fields, uncomment in ticket #1224
       op_(BOOTREQUEST),
       transid_(0),
       secs_(0),
@@ -73,7 +70,6 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferIn_(data, len),
       bufferOut_(0), // not used, this is RX packet
       msg_type_(DHCPDISCOVER)
 {
@@ -82,6 +78,9 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
                   << " received, at least " << DHCPV4_PKT_HDR_LEN
                   << "is expected");
     }
+
+    data_.resize(len);
+    memcpy(&data_[0], data, len);
 }
 
 size_t
@@ -117,35 +116,43 @@ Pkt4::pack() {
 
     LibDHCP::packOptions(bufferOut_, options_);
 
+    // add END option that indicates end of options
+    // (End option is very simple, just a 255 octet)
+    bufferOut_.writeUint8(DHO_END);
+
     return (true);
 }
 bool
 Pkt4::unpack() {
-    if (bufferIn_.getLength()<DHCPV4_PKT_HDR_LEN) {
+
+    // input buffer (used during message reception)
+    isc::util::InputBuffer bufferIn(&data_[0], data_.size());
+
+    if (bufferIn.getLength()<DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Received truncated DHCPv4 packet (len="
-                  << bufferIn_.getLength() << " received, at least "
+                  << bufferIn.getLength() << " received, at least "
                   << DHCPV4_PKT_HDR_LEN << "is expected");
     }
 
-    op_ = bufferIn_.readUint8();
-    htype_ = bufferIn_.readUint8();
-    hlen_ = bufferIn_.readUint8();
-    hops_ = bufferIn_.readUint8();
-    transid_ = bufferIn_.readUint32();
-    secs_ = bufferIn_.readUint16();
-    flags_ = bufferIn_.readUint16();
-    ciaddr_ = IOAddress(bufferIn_.readUint32());
-    yiaddr_ = IOAddress(bufferIn_.readUint32());
-    siaddr_ = IOAddress(bufferIn_.readUint32());
-    giaddr_ = IOAddress(bufferIn_.readUint32());
-    bufferIn_.readData(chaddr_, MAX_CHADDR_LEN);
-    bufferIn_.readData(sname_, MAX_SNAME_LEN);
-    bufferIn_.readData(file_, MAX_FILE_LEN);
+    op_ = bufferIn.readUint8();
+    htype_ = bufferIn.readUint8();
+    hlen_ = bufferIn.readUint8();
+    hops_ = bufferIn.readUint8();
+    transid_ = bufferIn.readUint32();
+    secs_ = bufferIn.readUint16();
+    flags_ = bufferIn.readUint16();
+    ciaddr_ = IOAddress(bufferIn.readUint32());
+    yiaddr_ = IOAddress(bufferIn.readUint32());
+    siaddr_ = IOAddress(bufferIn.readUint32());
+    giaddr_ = IOAddress(bufferIn.readUint32());
+    bufferIn.readData(chaddr_, MAX_CHADDR_LEN);
+    bufferIn.readData(sname_, MAX_SNAME_LEN);
+    bufferIn.readData(file_, MAX_FILE_LEN);
 
-    size_t opts_len = bufferIn_.getLength() - bufferIn_.getPosition();
+    size_t opts_len = bufferIn.getLength() - bufferIn.getPosition();
     vector<uint8_t> optsBuffer;
     // fist use of readVector
-    bufferIn_.readVector(optsBuffer, opts_len);
+    bufferIn.readVector(optsBuffer, opts_len);
     LibDHCP::unpackOptions4(optsBuffer, options_);
 
     return (true);
