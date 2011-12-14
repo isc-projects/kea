@@ -101,7 +101,7 @@ TEST_F(CounterDictionaryTest, invalidCounterItem) {
 
 TEST_F(CounterDictionaryTest, uniquenessCheck) {
     // Adding an element which already exists will cause an isc::OutOfRange
-    //  exception 
+    //  exception
     EXPECT_THROW(counters.addElement("test"), isc::InvalidParameter);
 }
 

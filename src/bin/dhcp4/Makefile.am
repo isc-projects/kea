@@ -39,4 +39,3 @@ b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/liblog.la
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_dhcp4dir = $(pkgdatadir)
 b10_dhcp4_DATA = dhcp4.spec
-
