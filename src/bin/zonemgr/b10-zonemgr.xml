@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>May 19, 2011</date>
+    <date>December 8, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -107,15 +107,20 @@
 
     <para>
       <varname>refresh_jitter</varname>
+      is used to provide a time range for randomizing the refresh
+      and retry timers to help avoid many zones needing to do a refresh
+      or retry at the same time.
       This value is a real number.
-      The maximum amount is 0.5.
-      The default is 0.25.
+      The maximum amount is 0.5 (the new timer will be within
+      half the original time).
+      The default is 0.25 (up to a quarter sooner).
+      Set to 0 to disable this jitter.
     </para>
-<!-- TODO: needs to be documented -->
-<!-- TODO:      Set to 0 to disable the jitter.   -->
 
     <para>
       <varname>reload_jitter</varname>
+<!--      is used to provide a slight random variation -->
+<!-- TODO: ask what the purpose of this is and why 0.75. -->
       This value is a real number.
       The default is 0.75.
     </para>
