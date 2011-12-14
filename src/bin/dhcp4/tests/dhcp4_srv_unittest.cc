@@ -64,7 +64,7 @@ TEST_F(Dhcpv4SrvTest, basic) {
     // nothing to test. DHCPv4_srv instance is created
     // in test fixture. It is destroyed in destructor
 
-    Dhcpv4Srv* srv = 0;
+    Dhcpv4Srv* srv = NULL;
     ASSERT_NO_THROW({
         srv = new Dhcpv4Srv();
     });

@@ -12,6 +12,8 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
+CLEANFILES = spec_config.h
+
 man_MANS = b10-dhcp4.8
 EXTRA_DIST = $(man_MANS) dhcp4.spec
 
