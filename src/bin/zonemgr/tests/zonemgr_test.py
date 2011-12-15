@@ -569,6 +569,14 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertTrue(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
+
+        # and with case-insensitive checking
+        config['secondary_zones'] = \
+            zone_list_from_name_classes([("Example.NeT.", "IN")])
+        self.zone_refresh.update_config_data(config, self.cc_session)
+        self.assertTrue(("example.net.", "IN") in
+                        self.zone_refresh._zonemgr_refresh_info)
+
         # Try some bad names
         config['secondary_zones'] = \
             zone_list_from_name_classes([("example..net", "IN")])
@@ -577,6 +585,17 @@ class TestZonemgrRefresh(unittest.TestCase):
                           config, self.cc_session)
         config['secondary_zones'] = \
             zone_list_from_name_classes([("", "IN")])
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.update_config_data,
+                          config, self.cc_session)
+        # Try a bad class
+        config['secondary_zones'] = \
+            zone_list_from_name_classes([("example.net", "BADCLASS")])
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.update_config_data,
+                          config, self.cc_session)
+        config['secondary_zones'] = \
+            zone_list_from_name_classes([("example.net", "")])
         self.assertRaises(ZonemgrException,
                           self.zone_refresh.update_config_data,
                           config, self.cc_session)
