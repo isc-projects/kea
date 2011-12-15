@@ -46,8 +46,9 @@ namespace io {
 using namespace internal;
 
 // The expected max size of the session header: 2-byte header length,
-// 6 32-bit fields, and 2 sockaddr structure.  sizeof sockaddr_storage
-// should be the possible max of any sockaddr structure.
+// 6 32-bit fields, and 2 sockaddr structure. (see the SocketSessionUtility
+// overview description in the header file).  sizeof sockaddr_storage
+// should be the possible max of any sockaddr structure
 const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
     sizeof(struct sockaddr_storage) * 2;
 
@@ -57,13 +58,25 @@ const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
 // for more flexibility.
 const int MAX_DATASIZE = 65535;
 
+// The initial buffer size for receiving socket session data in the receptor.
+// This value is the maximum message size of DNS messages carried over UDP
+// (without EDNS).  In our expected usage (at the moment) this should be
+// sufficiently large (the expected data is AXFR/IXFR query or an UPDATE
+// requests.  The former should be generally quite small.  While the latter
+// could be large, it would often be small enough for a single UDP message).
+// If it turns out that there are many exceptions, we may want to extend
+// the class so that this value can be customized.  Note that the buffer
+// will be automatically extended for longer data and this is only about
+// efficiency.
+const size_t INITIAL_BUFSIZE = 512;
+
 // The (default) socket buffer size for the forwarder and receptor.  This is
 // chosen to be sufficiently large to store two full-size DNS messages.  We
 // may want to customize this value in future.
 const int SOCKSESSION_BUFSIZE = (DEFAULT_HEADER_BUFLEN + MAX_DATASIZE) * 2;
 
 struct SocketSessionForwarder::ForwarderImpl {
-    ForwarderImpl() : buf_(512) {}
+    ForwarderImpl() : buf_(DEFAULT_HEADER_BUFLEN) {}
     struct sockaddr_un sock_un_;
     socklen_t sock_un_len_;
     int fd_;
@@ -249,7 +262,8 @@ struct SocketSessionReceptor::ReceptorImpl {
     ReceptorImpl(int fd) : fd_(fd),
                            sa_local_(convertSockAddr(&ss_local_)),
                            sa_remote_(convertSockAddr(&ss_remote_)),
-                           header_buf_(DEFAULT_HEADER_BUFLEN), data_buf_(512)
+                           header_buf_(DEFAULT_HEADER_BUFLEN),
+                           data_buf_(INITIAL_BUFSIZE)
     {
         if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &SOCKSESSION_BUFSIZE,
                        sizeof(SOCKSESSION_BUFSIZE)) == -1) {
@@ -259,11 +273,12 @@ struct SocketSessionReceptor::ReceptorImpl {
     }
 
     const int fd_;
-    struct sockaddr_storage ss_local_; // placeholder
+    struct sockaddr_storage ss_local_; // placeholder for local endpoint
     struct sockaddr* const sa_local_;
-    struct sockaddr_storage ss_remote_; // placeholder
+    struct sockaddr_storage ss_remote_; // placeholder for remote endpoint
     struct sockaddr* const sa_remote_;
 
+    // placeholder for session header and data
     vector<uint8_t> header_buf_;
     vector<uint8_t> data_buf_;
 };
