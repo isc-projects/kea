@@ -75,12 +75,12 @@ class DDNSSession:
         pass
 
 class DDNSServer:
-    def __init__(self, cc_session = None):
+    def __init__(self, cc_session=None):
         '''
         Initialize the DDNS Server.
         This sets up a ModuleCCSession for the BIND 10 system.
         Parameters:
-        cc_session: If None (default), a new ModuleCCSession will be set up
+        cc_session: If None (default), a new ModuleCCSession will be set up.
                     If specified, the given session will be used. This is
                     mainly used for testing.
         '''
