@@ -490,7 +490,7 @@ class ZonemgrRefresh:
                     # Convert rr_class to and from RRClass to check its value
                     try:
                         name_class = (name, isc.dns.RRClass(rr_class).to_text())
-                    except isc.dns.InvalidRRClass as irce:
+                    except isc.dns.InvalidRRClass:
                         raise ZonemgrException("Bad RR class '" +
                                                rr_class +
                                                "' for zone " + name)
