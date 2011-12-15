@@ -1502,6 +1502,49 @@ what if a NOTIFY is sent?
 
 -->
 
+    <section id="zonemgr">
+      <title>Secondary Manager</title>
+
+      <para>
+        The <command>b10-zonemgr</command> process is started by
+        <command>bind10</command>.
+        It keeps track of SOA refresh, retry, and expire timers
+        and other details for BIND 10 to perform as a slave.
+        When the <command>b10-auth</command> authoritative DNS server
+        receives a NOTIFY message, <command>b10-zonemgr</command>
+        may tell <command>b10-xfrin</command> to do a refresh
+        to start an inbound zone transfer.
+        The secondary manager resets its counters when a new zone is
+        transferred in.
+      </para>
+
+      <note><simpara>
+        Access control (such as allowing notifies) is not yet provided.
+        The primary/secondary service is not yet complete.
+      </simpara></note>
+
+      <para>
+        The following example shows using <command>bindctl</command>
+        to configure the server to be a secondary for the example zone:
+
+      <screen>&gt; <userinput>config add Zonemgr/secondary_zones</userinput>
+&gt; <userinput>config set Zonemgr/secondary_zones[0]/name "<option>example.com</option>"</userinput>
+&gt; <userinput>config set Zonemgr/secondary_zones[0]/class "<option>IN</option>"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+<!-- TODO: remove the IN class example above when it is the default -->
+
+      </para>
+
+      <para>
+        If the zone does not exist in the data source already
+        (i.e. no SOA record for it), <command>b10-zonemgr</command>
+        will automatically tell <command>b10-xfrin</command>
+        to transfer the zone in.
+      </para>
+
+    </section>
+
     <section>
       <title>Trigger an Incoming Zone Transfer Manually</title>
 
@@ -1513,7 +1556,6 @@ what if a NOTIFY is sent?
 	<screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
       </para>
     </section>
-
 
 <!-- TODO: can that retransfer be used to identify a new zone? -->
 <!-- TODO: what if doesn't exist at that master IP? -->
@@ -1603,31 +1645,6 @@ uses /tmp/auth_xfrout_conn which is a socket
 what is XfroutClient xfr_client??
 /tmp/auth_xfrout_conn is not removed
 -->
-
-  </chapter>
-
-  <chapter id="zonemgr">
-    <title>Secondary Manager</title>
-
-    <para>
-      The <command>b10-zonemgr</command> process is started by
-      <command>bind10</command>.
-      It keeps track of SOA refresh, retry, and expire timers
-      and other details for BIND 10 to perform as a slave.
-      When the <command>b10-auth</command> authoritative DNS server
-      receives a NOTIFY message, <command>b10-zonemgr</command>
-      may tell <command>b10-xfrin</command> to do a refresh
-      to start an inbound zone transfer.
-      The secondary manager resets its counters when a new zone is
-      transferred in.
-    </para>
-
-    <note><simpara>
-     Access control (such as allowing notifies) is not yet provided.
-     The primary/secondary service is not yet complete.
-    </simpara></note>
-
-<!-- TODO: lots to describe for zonemgr -->
 
   </chapter>
 

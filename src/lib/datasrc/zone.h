@@ -261,12 +261,15 @@ public:
     ///   proof of the non existence of any matching wildcard or non existence
     ///   of an exact match when a wildcard match is found.
     ///
-    /// A derived version of this method may involve internal resource
-    /// allocation, especially for constructing the resulting RRset, and may
-    /// throw an exception if it fails.
-    /// It throws DuplicateRRset exception if there are duplicate rrsets under
-    /// the same domain.
-    /// It should not throw other types of exceptions.
+    /// \exception std::bad_alloc Memory allocation such as for constructing
+    ///  the resulting RRset fails
+    /// \exception DataSourceError Derived class specific exception, e.g.
+    /// when encountering a bad zone configuration or database connection
+    /// failure.  Although these are considered rare, exceptional events,
+    /// it can happen under relatively usual conditions (unlike memory
+    /// allocation failure).  So, in general, the application is expected
+    /// to catch this exception, either specifically or as a result of
+    /// catching a base exception class, and handle it gracefully.
     ///
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
