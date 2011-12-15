@@ -1,6 +1,27 @@
+346.	[build]*		jreed
+	Renamed libdhcp to libdhcp++.
+	(Trac #1446, git d394e64f4c44f16027b1e62b4ac34e054b49221d)
+
+345.	[func]		tomek
+	dhcp4: Dummy DHCPv4 component implemented. Currently it does
+	nothing useful, except providing skeleton implementation that can
+	be expanded in the future.
+	(Trac #992, git d6e33479365c8f8f62ef2b9aa5548efe6b194601)
+
+344.	[func]		y-aharen
+	src/lib/statistics: Added statistics counter library for entire server
+	items and per zone items. Also, modified b10-auth to use it. It is
+	also intended to use in the other modules such as b10-resolver.
+	(Trac #510, git afddaf4c5718c2a0cc31f2eee79c4e0cc625499f)
+
+343.	[func]		jelte
+	Added IXFR-out system tests, based on the first two test sets of
+	http://bind10.isc.org/wiki/IxfrSystemTests.
+	(Trac #1314, git 1655bed624866a766311a01214597db01b4c7cec)
+
 342.	[bug]		stephen
 	In the resolver, a FORMERR received from an upstream nameserver
-	now rsults in a SERVFAIL being returned as a response to the original
+	now results in a SERVFAIL being returned as a response to the original
 	query.  Additional debug messages added to distinguish between
 	different errors in packets received from upstream nameservers.
 	(Trac #1383, git 9b2b249d23576c999a65d8c338e008cabe45f0c9)
@@ -69,12 +90,12 @@
 	potential problems and were fixed.
 	(Trac #1389, git 3fdce88046bdad392bd89ea656ec4ac3c858ca2f)
 
-333.    [bug]		dvv
-	Solaris needs "-z now" to force non-lazy binding and prevent g++ static
-	initialization code from deadlocking.
+333.	[bug]		dvv
+	Solaris needs "-z now" to force non-lazy binding and prevent
+	g++ static initialization code from deadlocking.
 	(Trac #1439, git c789138250b33b6b08262425a08a2a0469d90433)
 
-332.    [bug]		vorner
+332.	[bug]		vorner
 	C++ exceptions in the isc.dns.Rdata wrapper are now converted
 	to python ones instead of just aborting the interpretter.
 	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)
@@ -109,7 +130,7 @@ bind10-devel-20111128 released on November 28, 2011
 	always respond to IXFR requests according to RFC1995).
 	(Trac #1371 and #1372, git 80c131f5b0763753d199b0fb9b51f10990bcd92b)
 
-326.	[build]*	jinmei
+326.	[build]*		jinmei
 	Added a check script for the SQLite3 schema version.  It will be
 	run at the beginning of 'make install', and if it detects an old
 	version of schema, installation will stop.  You'll then need to
