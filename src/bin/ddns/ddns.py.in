@@ -61,7 +61,7 @@ class DDNSSessionError(Exception):
 
 class DDNSSession:
     """Class to handle one DDNS update"""
-    
+
     def __init__(self):
         self._handle()
 

@@ -14,7 +14,7 @@ endif
 # spec file.
 check-local:
 if ENABLE_PYTHON_COVERAGE
-	touch $(abs_top_srcdir)/.coverage 
+	touch $(abs_top_srcdir)/.coverage
 	rm -f .coverage
 	${LN_S} $(abs_top_srcdir)/.coverage .coverage
 endif
