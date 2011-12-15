@@ -65,6 +65,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

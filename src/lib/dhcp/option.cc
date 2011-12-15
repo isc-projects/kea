@@ -22,7 +22,7 @@
 #include "util/io_utilities.h"
 
 #include "dhcp/option.h"
-#include "dhcp/libdhcp.h"
+#include "dhcp/libdhcp++.h"
 
 using namespace std;
 using namespace isc::dhcp;
