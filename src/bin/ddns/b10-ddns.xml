@@ -44,15 +44,17 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>b10-ddns</command>
-      <arg><option>-v</option></arg>
-      <arg><option>--verbose</option></arg>
+        <group choice="opt">
+          <arg choice="plain"><option>-v</option></arg>
+          <arg choice="plain"><option>--verbose</option></arg>
+        </group>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>DESCRIPTION</title>
     <para>The <command>b10-ddns</command> daemon provides the BIND 10
-      DDNS update service.
+      Dynamic Update (DDNS) service, as specified in RFC 2136.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
@@ -75,16 +77,40 @@
   </refsect1>
 
   <refsect1>
+    <title>ARGUMENTS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>
+          <option>-v</option>,
+          <option>--verbose</option>
+        </term>
+        <listitem>
+          <para>
+            This value is ignored at this moment, but is provided for
+            compatibility with the bind10 Boss process
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
     <para>
       The configurable settings are:
     </para>
     <para>
-      <varname>TODO</varname>
-      TODO
+      <varname>zones</varname>
+      The zones option is a named set of zones that can be updated with
+      DDNS. Each entry has one element called update_acls, which itself
+      is a list of ACLs that define update permissions.
+      By default this is empty; DDNS must be explicitely enabled per zone.
     </para>
 
-<!-- TODO: formating -->
     <para>
       The module commands are:
     </para>
