@@ -29,7 +29,6 @@ from isc.log_messages.ddns_messages import *
 from optparse import OptionParser, OptionValueError
 import os
 import signal
-import threading
 
 isc.log.init("b10-ddns")
 logger = isc.log.Logger("ddns")
@@ -43,7 +42,7 @@ SPECFILE_LOCATION = DATA_PATH + "/ddns.spec"
 isc.util.process.rename()
 
 class DDNSConfigError(Exception):
-    """An exception indicating an error in updating ddns configuration.
+    '''An exception indicating an error in updating ddns configuration.
 
     This exception is raised when the ddns process encounters an error in
     handling configuration updates.  Not all syntax error can be caught
@@ -51,7 +50,7 @@ class DDNSConfigError(Exception):
     validate the given configuration data itself.  When it finds an error
     it raises this exception (either directly or by converting an exception
     from other modules) as a unified error in configuration.
-    """
+    '''
     pass
 
 class DDNSSessionError(Exception):
@@ -60,9 +59,10 @@ class DDNSSessionError(Exception):
     pass
 
 class DDNSSession:
-    """Class to handle one DDNS update"""
+    '''Class to handle one DDNS update'''
 
     def __init__(self):
+        '''Initialize a DDNS Session'''
         self._handle()
 
     def _handle(self):
@@ -76,12 +76,16 @@ class DDNSSession:
 
 class DDNSServer:
     def __init__(self):
+        '''
+        Initialize the DDNS Server.
+        This sets up a ModuleCCSession for the BIND 10 system.
+        '''
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
                                               self.command_handler)
         self._config_data = self._cc.get_full_config()
         self._cc.start()
-        self._shutdown_event = threading.Event()
+        self._shutdown = False
 
     def config_handler(self, new_config):
         '''Update config data.'''
@@ -89,6 +93,10 @@ class DDNSServer:
         return answer
 
     def command_handler(self, cmd, args):
+        '''
+        Handle a CC session command, as sent from bindctl or other
+        BIND 10 modules.
+        '''
         if cmd == "shutdown":
             logger.info(DDNS_RECEIVED_SHUTDOWN_COMMAND)
             self.shutdown()
@@ -98,31 +106,44 @@ class DDNSServer:
         return answer
 
     def shutdown(self):
-        self._shutdown_event.set()
-        main_thread = threading.currentThread()
-        for th in threading.enumerate():
-            if th is main_thread:
-                continue
-            th.join()
+        '''
+        Shut down the server. Perform any cleanup that is necessary.
+        Currently, this only sets the internal _shutdown value to true,
+        so the main loop in run() stops.
+        '''
+        self._shutdown = True
 
     def run(self):
-        '''Get and process all commands sent from cfgmgr or other modules. '''
+        '''
+        Get and process all commands sent from cfgmgr or other modules.
+        This loops waiting for events until self.shutdown() has been called.
+        '''
         logger.info(DDNS_RUNNING)
-        while not self._shutdown_event.is_set():
+        while not self._shutdown:
             self._cc.check_command(False)
 
 ddns_server = None
 
 def signal_handler(signal, frame):
+    '''
+    Handler for process signals. Since only signals to shut down are sent
+    here, the actual signal is not checked and the server is simply shut
+    down.
+    '''
     if ddns_server is not None:
         ddns_server.shutdown()
-        sys.exit(0)
 
 def set_signal_handler():
+    '''
+    Sets the signal handler(s).
+    '''
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
 def set_cmd_options(parser):
+    '''
+    Helper function to set command-line options
+    '''
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
             help="display more about what is going on")
 
@@ -133,8 +154,8 @@ if '__main__' == __name__:
         (options, args) = parser.parse_args()
         VERBOSE_MODE = options.verbose
 
-        set_signal_handler()
         ddns_server = DDNSServer()
+        set_signal_handler()
         ddns_server.run()
     except KeyboardInterrupt:
         logger.INFO(DDNS_STOPPED_BY_KEYBOARD)
