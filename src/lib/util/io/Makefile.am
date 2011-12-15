@@ -1,8 +1,11 @@
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
+
 lib_LTLIBRARIES = libutil_io.la
 libutil_io_la_SOURCES = fd.h fd.cc fd_share.h fd_share.cc
-libutil_io_la_CXXFLAGS = $(AM_CXXFLAGS) -fno-strict-aliasing
+libutil_io_la_SOURCES += socketsession.h socketsession.cc sockaddr_util.h
 
 CLEANFILES = *.gcno *.gcda
 

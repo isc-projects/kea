@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <errno.h>
 #include <stdlib.h>             // for malloc and free
 #include "fd_share.h"
 
@@ -87,12 +88,16 @@ recv_fd(const int sock) {
     msghdr.msg_controllen = cmsg_space(sizeof(int));
     msghdr.msg_control = malloc(msghdr.msg_controllen);
     if (msghdr.msg_control == NULL) {
-        return (FD_OTHER_ERROR);
+        return (FD_SYSTEM_ERROR);
     }
 
-    if (recvmsg(sock, &msghdr, 0) < 0) {
+    const int cc = recvmsg(sock, &msghdr, 0);
+    if (cc <= 0) {
         free(msghdr.msg_control);
-        return (FD_COMM_ERROR);
+        if (cc == 0) {
+            errno = ECONNRESET;
+        }
+        return (FD_SYSTEM_ERROR);
     }
     const struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
     int fd = FD_OTHER_ERROR;
@@ -131,7 +136,7 @@ send_fd(const int sock, const int fd) {
 
     const int ret = sendmsg(sock, &msghdr, 0);
     free(msghdr.msg_control);
-    return (ret >= 0 ? 0 : FD_COMM_ERROR);
+    return (ret >= 0 ? 0 : FD_SYSTEM_ERROR);
 }
 
 } // End for namespace io
