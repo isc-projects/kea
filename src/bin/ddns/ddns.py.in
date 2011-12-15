@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -45,7 +45,7 @@ isc.util.process.rename()
 class DDNSConfigError(Exception):
     """An exception indicating an error in updating ddns configuration.
 
-    This exception is raised when the ddns process encouters an error in
+    This exception is raised when the ddns process encounters an error in
     handling configuration updates.  Not all syntax error can be caught
     at the module-CC layer, so ddns needs to (explicitly or implicitly)
     validate the given configuration data itself.  When it finds an error
@@ -55,7 +55,7 @@ class DDNSConfigError(Exception):
     pass
 
 class DDNSSessionError(Exception):
-    '''An exception raised for some unexpected events during an ddns session.
+    '''An exception raised for some unexpected events during a ddns session.
     '''
     pass
 
