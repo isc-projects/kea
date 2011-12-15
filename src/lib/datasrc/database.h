@@ -925,6 +925,9 @@ public:
         ///        for ZoneFinder::FindOptions.
         /// \param dresult Result of the search through the zone for a
         ///        delegation.
+        /// \param target If the type happens to be ANY, it will insert all
+        ///        the RRsets of the found name (if any is found) here instead
+        ///        of being returned by the result.
         ///
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
@@ -1005,6 +1008,9 @@ public:
         ///        for ZoneFinder::FindOptions.
         /// \param dresult Result of the search through the zone for a
         ///        delegation.
+        /// \param target If the query is for type ANY, the successfull result,
+        ///        if there happens to be one, will be returned through the
+        ///        parameter, as it doesn't fit into the result.
         ///
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
