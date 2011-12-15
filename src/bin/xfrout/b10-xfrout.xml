@@ -117,7 +117,7 @@
       configuration concerning <command>b10-xfrout</command>.
       The supported names of each object are "origin" (the origin
       name of the zone), "class" (the RR class of the zone, optional,
-      default to "IN"), and "acl_element" (ACL only applicable to
+      default to "IN"), and "transfer_acl" (ACL only applicable to
       transfer requests for that zone).
       See the <citetitle>BIND 10 Guide</citetitle> for configuration examples.
       The default is an empty list, that is, no zone specific configuration.
