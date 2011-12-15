@@ -572,7 +572,7 @@ class TestZonemgrRefresh(unittest.TestCase):
 
         # and with case-insensitive checking
         config['secondary_zones'] = \
-            zone_list_from_name_classes([("Example.NeT.", "IN")])
+            zone_list_from_name_classes([("Example.NeT.", "in")])
         self.zone_refresh.update_config_data(config, self.cc_session)
         self.assertTrue(("example.net.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
