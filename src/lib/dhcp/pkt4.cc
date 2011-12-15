@@ -59,7 +59,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
      :local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
-      ifindex_(-1),
+      ifindex_(0),
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
       op_(BOOTREQUEST),
