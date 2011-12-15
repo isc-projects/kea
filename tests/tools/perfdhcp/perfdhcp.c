@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -40,7 +41,7 @@
 #include <time.h>
 #include <unistd.h>
 
-/* DHCPv4 defines */
+/* DHCPv4 defines (to be moved/shared) */
 
 #define DHCP_OFF_OPCODE		0
 #define DHCP_OFF_HTYPE		1
@@ -91,7 +92,7 @@
 
 #define DHCP_OPTLEN_SRVID	6
 
-/* DHCPv6 defines */
+/* DHCPv6 defines  (to be moved/shared) */
 
 #define DHCP6_OFF_MSGTYP	0
 #define DHCP6_OFF_XID		1
@@ -118,7 +119,7 @@
 #define DHCP6_DUID_LLT		1
 #define DHCP6_DUID_EPOCH	946684800
 
-/* tail queue macros */
+/* tail queue macros (from FreeBSD 8.2 /sys/sys/queue.h, to be moved/shared) */
 
 #define ISC_TAILQ_HEAD(name, type)					\
 struct name {								\
@@ -186,7 +187,24 @@ struct {								\
 	     (var) && ((tvar) = ISC_TAILQ_NEXT((var), field), 1);	\
 	     (var) = (tvar))
 
-/* exchanges */
+/*
+ * Data structures
+ */
+
+/*
+ * exchange:
+ *    - per exchange values:
+ *	* order (for debugging)
+ *	* xid (even/odd for 4 packet exchanges)
+ *	* random (for debugging)
+ *	* time-stamps
+ *	* server ID (for 3rd packet)
+ *	* IA_NA (for IPv6 3rd packet)
+ *
+ * sent/rcvd global chains, "next to be received" on entry cache,
+ * and hash table for xid -> data structure fast matching
+ * (using the assumption collisions are unlikely, cf birthday problem)
+ */
 
 struct exchange {				/* per exchange structure */
 	ISC_TAILQ_ENTRY(exchange) gchain;	/* global chaining */
@@ -207,11 +225,22 @@ uint64_t xscount0, xscount2;			/* sent counters */
 uint64_t xrcount0, xrcount2;			/* received counters */
 caddr_t exchanges0, exchanges2;			/* hash tables */
 uint32_t hashsize0, hashsize2;			/* hash table sizes */
+
+/*
+ * statictics counters and accumulators
+ */
+
 uint64_t tooshort, orphans, locallimit;		/* error counters */
+uint64_t latesent, compsend, latercvd;		/* rate stats */
+uint64_t multrcvd, shortwait, collected[2];	/* rate stats (cont) */
 double dmin0 = 999999999., dmin2 = 999999999.;	/* minimum delays */
 double dmax0 = 0., dmax2 = 0.;			/* maximum delays */
 double dsum0 = 0., dsum2 = 0.;			/* delay sums */
 double dsumsq0 = 0., dsumsq2 = 0.;		/* square delay sums */
+
+/*
+ * command line parameters
+ */
 
 int ipversion = 0;			/* IP version */
 int simple;				/* DO/SA in place of DORR/SARR */
@@ -239,34 +268,76 @@ unsigned int seed;			/* randomization seed */
 int isbroadcast;			/* use broadcast */
 int rapidcommit;			/* add rapid commit option */
 int usefirst;				/* where to take the server-ID */
-char *diags;				/* diagnostic selectors */
 char *templatefile[2];			/* template file name */
 int xidoffset[2] = {-1, -1};		/* template offsets (xid)*/
 int rndoffset[2] = {-1, -1};		/* template offsets (random) */
 int elpoffset = -1;			/* template offset (elapsed time) */
 int sidoffset = -1;			/* template offset (server ID) */
 int ripoffset = -1;			/* template offset (requested IP) */
+char *diags;				/* diagnostic selectors */
+char *wrapped;				/* wrapped command */
 char *servername;			/* server */
 
-struct sockaddr_storage localaddr;
-struct sockaddr_storage serveraddr;
+/*
+ * global variables
+ */
 
-int sock;
-int interrupted, fatal;
+struct sockaddr_storage localaddr;	/* local socket address */
+struct sockaddr_storage serveraddr;	/* server socket address */
 
-uint8_t obuf[4096], ibuf[4096];
-char tbuf[8200];
+int sock;				/* socket descriptor */
+int interrupted, fatal;			/* to finish flags */
 
-struct timespec boot, last, due, dreport, finished;
+uint8_t obuf[4096], ibuf[4096];		/* I/O buffers */
+char tbuf[8200];			/* template buffer */
 
-uint8_t *gsrvid;				/* global server id */
-size_t gsrvidlen;				/*  and its length */
-uint8_t gsrvidbuf[64];				/*  and its storage */
+struct timespec boot;			/* the date of boot */
+struct timespec last;			/* the date of last send */
+struct timespec due;			/* the date of next send */
+struct timespec dreport;		/* the date of next reporting */
+struct timespec finished;		/* the date of finish */
 
+uint8_t *gsrvid;			/* global server id */
+size_t gsrvidlen;			/*  and its length */
+uint8_t gsrvidbuf[64];			/*  and its storage */
+
+/* MAC address */
 uint8_t mac_prefix[6] = { 0x00, 0x0c, 0x01, 0x02, 0x03, 0x04 };
+
+/* DUID prefix */
 uint8_t *duid_prefix;
 int duid_length;
+
+/* magic cookie for BOOTP/DHCPv4 */
 uint8_t dhcp_cookie[4] = { 0x63, 0x82, 0x53, 0x63 };
+
+/*
+ * templates
+ *
+ * note: the only hard point is what are the offsets:
+ *   - xid_discover4 and xid_request4: first of the 4 octet long
+ *     transaction ID (default DHCP_OFF_XID = 4)
+ *   - random_discover4 and random_request4: last of the 6 octet long
+ *     MAC address (default DHCP_OFF_CHADDR + 6 = 28 + 6)
+ *   - elapsed_request4: first of the 2 octet long secs field
+ *     (default DHCP_OFF_SECS = 8, 0 means disabled)
+ *   - serverid_request4: first of the 6 octet long server ID option
+ *     (no default, required)
+ *   - reqaddr_request4: first of the 4 octet long requested IP address
+ *     option content (i.e., the address itself, btw OFFER yiaddr)
+ *     (no default, required)
+ *   - xid_solicit6 and xid_request6: first of the 3 octet long
+ *     transaction ID (default DHCP6_OFF_XID = 1)
+ *   - random_solicit6 and random_request6: last of the DUID in the
+ *     client ID option (no default, required when rate is set)
+ *   - elapsed_request6: first of the 2 octet long content of
+ *     the option elapsed time option (no default, 0 means disabled)
+ *   - serverid_request6: position where the variable length server ID
+ *     option is inserted (no default, required, set to length means append)
+ *   - reqaddr_request6: position where of the variable length requested
+ *     IP address option is inserted (no default, required, set to
+ *     length means append)
+ */
 
 size_t length_discover4;
 uint8_t template_discover4[4096];
@@ -290,6 +361,10 @@ size_t elapsed_request6;
 size_t random_request6;
 size_t serverid_request6;
 size_t reqaddr_request6;
+
+/*
+ * initialize data structures handling exchanges
+ */
 
 void
 inits(void)
@@ -330,6 +405,13 @@ inits(void)
 	}
 }
 
+/*
+ * randomize the value of the given field:
+ *   - offset of the field
+ *   - random seed (used as it when suitable)
+ *   - returns the random value which was used
+ */
+
 uint32_t
 randomize(size_t offset, uint32_t r)
 {
@@ -364,6 +446,13 @@ randomize(size_t offset, uint32_t r)
 	return r;
 }
 
+/*
+ * receive a reply (4th packet), shared between IPv4 and IPv6:
+ *   - transaction ID xid
+ *   - receiving time-stamp now
+ * called from receive[46]() when the xid is odd
+ */
+
 void
 receive_reply(uint32_t xid, struct timespec *now)
 {
@@ -373,13 +462,17 @@ receive_reply(uint32_t xid, struct timespec *now)
 	int checklost;
 	double delta;
 
+	/* bucket is needed even when the next cache matches */
 	hash = (xid >> 1) & (hashsize2 - 1);
 	bucket = (struct xlist *) (exchanges2 + hash * sizeof(*bucket));
+	/* try the 'next to be received' cache */
 	if ((xnext2 != NULL) && (xnext2->xid == xid)) {
 		x = xnext2;
 		goto found;
 	}
+	/* usually the lost probability is low for request/reply */
 	checklost = 1;
+	/* look for the exchange */
 	ISC_TAILQ_FOREACH_SAFE(x, bucket, hchain, t) {
 		double waited;
 
@@ -388,17 +481,22 @@ receive_reply(uint32_t xid, struct timespec *now)
 		if (checklost <= 0)
 			continue;
 		checklost = 0;
+		/* check for a timed-out exchange */
 		waited = now->tv_sec - x->ts2.tv_sec;
 		waited += (now->tv_nsec - x->ts2.tv_nsec) / 1e9;
 		if (waited < losttime[1])
 			continue;
+		/* garbage collect timed-out exchange */
 		ISC_TAILQ_REMOVE(bucket, x, hchain);
 		ISC_TAILQ_REMOVE(&xsent2, x, gchain);
 		free(x);
+		collected[1] += 1;
 	}
+	/* no match? very late or not for us */
 	orphans++;
 	return;
 
+	/* got it: update stats and move to the received queue */
     found:
 	xrcount2++;
 	x->ts3 = *now;
@@ -416,11 +514,18 @@ receive_reply(uint32_t xid, struct timespec *now)
 	ISC_TAILQ_INSERT_TAIL(&xrcvd2, x, gchain);
 }
 
+/*
+ * get the DHCPv4 socket descriptor
+ * (the only complexity is broadcast enabling: there is no easy way to
+ *  recognize broadcast addresses, so the command line -B flag)
+ */
+
 void
 getsock4(void)
 {
 	int ret;
 
+	/* update local port */
 	if (localport != 0) {
 		uint16_t lp = htons((uint16_t) localport);
 
@@ -438,6 +543,7 @@ getsock4(void)
 		perror("bind");
 		exit(1);
 	}
+	/* enable broadcast if needed or required */
 	if (isbroadcast != 0) {
 		int on = 1;
 
@@ -450,6 +556,12 @@ getsock4(void)
 		}
 	}
 }
+
+/*
+ * build a DHCPv4 DISCOVER from a relay template
+ * (implicit parameters are the local (giaddr) and MAC addresses (chaddr))
+ * (assume the link is Ethernet)
+ */
 
 void
 build_template_discover4(void)
@@ -494,6 +606,12 @@ build_template_discover4(void)
 	/* end */
 	*p = DHCP_OPT_END;
 }
+
+/*
+ * get a DHCPv4 client/relay first packet (usually a DISCOVER) template
+ * from the file given in the command line (-T<template-file>)
+ * and xid/rnd offsets (-X<xid-offset> and -O<random-offset>)
+ */
 
 void
 get_template_discover4(void)
@@ -567,6 +685,12 @@ get_template_discover4(void)
 	}
 }
 
+/*
+ * build a DHCPv4 REQUEST from a relay template
+ * (implicit parameters are the local (giaddr) and MAC addresses (chaddr))
+ * (assume the link is Ethernet)
+ */
+
 void
 build_template_request4(void)
 {
@@ -619,6 +743,12 @@ build_template_request4(void)
 	/* end */
 	*p = DHCP_OPT_END;
 }
+
+/*
+ * get a DHCPv4 client/relay third packet (usually a REQUEST) template
+ * from the file given in the command line (-T<template-file>)
+ * and offsets (-X,-O,-E,-S,-I).
+ */
 
 void
 get_template_request4(void)
@@ -700,7 +830,7 @@ get_template_request4(void)
 			elapsed_request4, length_request4);
 		exit(2);
 	}
-	serverid_request4 = (size_t) elpoffset;
+	serverid_request4 = (size_t) sidoffset;
 	if (serverid_request4 + 6 > length_request4) {
 		fprintf(stderr,
 			"server-id option (at %zu) outside the template "
@@ -717,6 +847,12 @@ get_template_request4(void)
 		exit(2);
 	}
 }
+
+/*
+ * send the DHCPv4 REQUEST third packet
+ * (the transaction ID is odd)
+ * (TODO: check for errors in the OFFER)
+ */
 
 void
 send_request4(struct exchange *x0)
@@ -783,6 +919,11 @@ send_request4(struct exchange *x0)
 	perror("send2");
 }
 
+/*
+ * send the DHCPv4 DISCOVER first packet
+ * (for 4-exchange, the transaction ID xid is even)
+ */
+
 int
 send4(void)
 {
@@ -830,6 +971,10 @@ send4(void)
 	return -errno;
 }	
 
+/*
+ * scan a DHCPv4 OFFER to get its server-id option
+ */
+
 int
 scan_for_srvid4(struct exchange *x, size_t cc)
 {
@@ -852,12 +997,14 @@ scan_for_srvid4(struct exchange *x, size_t cc)
 		}
 		off += 2 + ibuf[off + 1];
 	}
+	/* check length */
 	if (ibuf[off + 1] != DHCP_OPTLEN_SRVID - 2) {
 		fprintf(stderr,
 			"bad server-id length (%hhu)\n",
 			ibuf[off + 1]);
 		return -1;
 	}
+	/* cache it in the global variables when required and not yet done */
 	if ((usefirst != 0) && (gsrvid == NULL)) {
 		memcpy(gsrvidbuf, ibuf + off, DHCP_OPTLEN_SRVID);
 		gsrvid = gsrvidbuf;
@@ -868,6 +1015,10 @@ scan_for_srvid4(struct exchange *x, size_t cc)
 	return 0;
 }
 
+/*
+ * receive a DHCPv4 packet
+ */
+
 void
 receive4(void)
 {
@@ -876,7 +1027,7 @@ receive4(void)
 	struct timespec now;
 	ssize_t cc;
 	uint32_t xid, hash;
-	int checklost;
+	int checklost = 0;
 	double delta;
 
 	cc = recv(sock, ibuf, sizeof(ibuf), 0);
@@ -889,10 +1040,12 @@ receive4(void)
 		fatal = 1;
 		return;
 	}
+	/* enforce a reasonable length */
 	if (cc < BOOTP_MIN_LEN) {
 		tooshort++;
 		return;
 	}
+	/* must be a BOOTP REPLY */
 	if (ibuf[DHCP_OFF_OPCODE] != BOOTP_OP_REPLY)
 		return;
 	if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
@@ -901,6 +1054,7 @@ receive4(void)
 		return;
 	}
 	memcpy(&xid, ibuf + xid_discover4, 4);
+	/* 4-packet exchange even/odd xid */
 	if (simple == 0) {
 		if ((xid & 1) != 0) {
 			receive_reply(xid, &now);
@@ -909,13 +1063,18 @@ receive4(void)
 		hash = (xid >> 1) & (hashsize0 - 1);
 	} else
 		hash = xid & (hashsize0 - 1);
+	/* now it is the second packet, get the bucket which is needed */
 	bucket = (struct xlist *) (exchanges0 + hash * sizeof(*bucket));
+	/* try the 'next to be received' cache */
 	if ((xnext0 != NULL) && (xnext0->xid == xid)) {
 		x = xnext0;
 		goto found;
 	}
+	/* if the rate is not illimited, garbage collect up to 3
+	   timed-out exchanges */
 	if (rate != 0)
 		checklost = 3;
+	/* look for the exchange */
 	ISC_TAILQ_FOREACH_SAFE(x, bucket, hchain, t) {
 		double waited;
 
@@ -923,20 +1082,25 @@ receive4(void)
 			goto found;
 		if (checklost <= 0)
 			continue;
+		/* check for a timed-out exchange */
 		waited = now.tv_sec - x->ts0.tv_sec;
 		waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
 		if (waited < losttime[0]) {
 			checklost = 0;
 			continue;
 		}
+		/* garbage collect timed-out exchange */
 		checklost--;
 		ISC_TAILQ_REMOVE(bucket, x, hchain);
 		ISC_TAILQ_REMOVE(&xsent0, x, gchain);
 		free(x);
+		collected[0] += 1;
 	}
+	/* no match? very late or not for us */
 	orphans++;
 	return;
 
+	/* got it: update stats and move to the received queue */
     found:
 	xrcount0++;
 	x->ts1 = now;
@@ -952,9 +1116,11 @@ receive4(void)
 	ISC_TAILQ_REMOVE(bucket, x, hchain);
 	ISC_TAILQ_REMOVE(&xsent0, x, gchain);
 	ISC_TAILQ_INSERT_TAIL(&xrcvd0, x, gchain);
+	/* if the exchange is not finished, go to the second part */
 	if (simple == 0) {
 		int ret = 0;
 
+		/* the server-ID option is needed */
 		if ((usefirst != 0) && (gsrvid != NULL)) {
 			x->sid = gsrvid;
 			x->sidlen = gsrvidlen;
@@ -965,12 +1131,17 @@ receive4(void)
 	}
 }
 
+/*
+ * get the DHCPv6 socket descriptor
+ */
+
 void
 getsock6(void)
 {
 	struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) &serveraddr;
 	int ret;
 
+	/* update local port */
 	if (localport != 0) {
 		uint16_t lp = htons((uint16_t) localport);
 
@@ -981,6 +1152,7 @@ getsock6(void)
 		perror("socket");
 		exit(1);
 	}
+	/* perform the multicast stuff when the destination is multicast */
 	if (IN6_IS_ADDR_MULTICAST(&s6->sin6_addr)) {
 		int hops = 1;
 
@@ -1010,6 +1182,11 @@ getsock6(void)
 		}
 	}
 }
+
+/*
+ * build a DHCPv6 SOLICIT template
+ * (implicit parameter is the DUID, don't assume an Ethernet link)
+ */
 
 void
 build_template_solicit6(void)
@@ -1054,6 +1231,12 @@ build_template_solicit6(void)
 	/* set length */
 	length_solicit6 = p - template_solicit6;
 }
+
+/*
+ * get a DHCPv6 first packet (usually a SOLICIT) template
+ * from the file given in the command line (-T<template-file>)
+ * and xid/rnd offsets (-X<xid-offset> and -O<random-offset>)
+ */
 
 void
 get_template_solicit6(void)
@@ -1127,6 +1310,11 @@ get_template_solicit6(void)
 	}
 }
 
+/*
+ * build a DHCPv6 REQUEST template
+ * (implicit parameter is the DUID, don't assume an Ethernet link)
+ */
+
 void
 build_template_request6(void)
 {
@@ -1161,6 +1349,12 @@ build_template_request6(void)
 	/* set length */
 	length_request6 = p - template_request6;
 }
+
+/*
+ * get a DHCPv6 third packet (usually a REQUEST) template
+ * from the file given in the command line (-T<template-file>)
+ * and offsets (-X,-O,-E,-S,-I).
+ */
 
 void
 get_template_request6(void)
@@ -1232,7 +1426,37 @@ get_template_request6(void)
 			random_request6, length_request6);
 		exit(2);
 	}
+	if (elpoffset >= 0)
+		elapsed_request6 = (size_t) elpoffset;
+	if (elapsed_request6 + 2 > length_request6) {
+		fprintf(stderr,
+			"secs (at %zu) outside the template (length %zu)?\n",
+			elapsed_request6, length_request6);
+		exit(2);
+	}
+	serverid_request6 = (size_t) sidoffset;
+	if (serverid_request6 > length_request6) {
+		fprintf(stderr,
+			"server-id option (at %zu) outside the template "
+			"(length %zu)?\n",
+			serverid_request6, length_request6);
+		exit(2);
+	}
+	reqaddr_request6 = (size_t) ripoffset;
+	if (reqaddr_request6 > length_request6) {
+		fprintf(stderr,
+			"requested-ip-address option (at %zu) outside "
+			"the template (length %zu)?\n",
+			reqaddr_request6, length_request6);
+		exit(2);
+	}
 }
+
+/*
+ * send the DHCPv6 REQUEST third packet
+ * (the transaction ID is odd)
+ * (TODO: check for errors in the ADVERTISE)
+ */
 
 void
 send_request6(struct exchange *x0)
@@ -1324,6 +1548,11 @@ send_request6(struct exchange *x0)
 	perror("send2");
 }
 
+/*
+ * send the DHCPv6 SOLICIT first packet
+ * (for 4-exchange, the transaction ID xid is even)
+ */
+
 int
 send6(void)
 {
@@ -1374,6 +1603,10 @@ send6(void)
 	return -errno;
 }
 
+/*
+ * scan a DHCPv6 ADVERTISE to get its server-id option
+ */
+
 int
 scan_for_srvid6(struct exchange *x, size_t cc)
 {
@@ -1389,6 +1622,7 @@ scan_for_srvid6(struct exchange *x, size_t cc)
 		off += 4 + (ibuf[off + 2] << 8) + ibuf[off + 3];
 	}
 	len = 4 + (ibuf[off + 2] << 8) + ibuf[off + 3];
+	/* cache it in the global variables when required and not yet done */
 	if ((usefirst != 0) && (gsrvid == NULL)) {
 		if (len <= sizeof(gsrvidbuf)) {
 			memcpy(gsrvidbuf, ibuf + off, len);
@@ -1408,6 +1642,11 @@ scan_for_srvid6(struct exchange *x, size_t cc)
 	x->sidlen = len;
 	return 0;
 }
+
+/*
+ * scan a DHCPv6 ADVERTISE to get its IA_NA option
+ * (TODO: check for errors)
+ */
 
 int
 scan_for_ia_na(struct exchange *x, size_t cc)
@@ -1429,6 +1668,10 @@ scan_for_ia_na(struct exchange *x, size_t cc)
 	return 0;
 }
 
+/*
+ * receive a DHCPv6 packet
+ */
+
 void
 receive6(void)
 {
@@ -1437,7 +1680,7 @@ receive6(void)
 	struct timespec now;
 	ssize_t cc;
 	uint32_t xid, hash;
-	int checklost;
+	int checklost = 0;
 	double delta;
 
 	cc = recv(sock, ibuf, sizeof(ibuf), 0);
@@ -1450,6 +1693,7 @@ receive6(void)
 		fatal = 1;
 		return;
 	}
+	/* enforce a reasonable length */
 	if (cc < 22) {
 		tooshort++;
 		return;
@@ -1462,6 +1706,7 @@ receive6(void)
 	xid = ibuf[xid_solicit6] << 16;
 	xid |= ibuf[xid_solicit6 + 1] << 8;
 	xid |= ibuf[xid_solicit6 + 2];
+	/* 4-packet exchange even/odd xid */
 	if (simple == 0) {
 		if ((xid & 1) != 0) {
 			receive_reply(xid, &now);
@@ -1470,13 +1715,18 @@ receive6(void)
 		hash = (xid >> 1) & (hashsize0 - 1);
 	} else
 		hash = xid & (hashsize0 - 1);
+	/* now it is the second packet, get the bucket which is needed */
 	bucket = (struct xlist *) (exchanges0 + hash * sizeof(*bucket));
+	/* try the 'next to be received' cache */
 	if ((xnext0 != NULL) && (xnext0->xid == xid)) {
 		x = xnext0;
 		goto found;
 	}
+	/* if the rate is not illimited, garbage collect up to 3
+	   timed-out exchanges */
 	if (rate != 0)
 		checklost = 3;
+	/* look for the exchange */
 	ISC_TAILQ_FOREACH_SAFE(x, bucket, hchain, t) {
 		double waited;
 
@@ -1484,20 +1734,25 @@ receive6(void)
 			goto found;
 		if (checklost <= 0)
 			continue;
+		/* check for a timed-out exchange */
 		waited = now.tv_sec - x->ts0.tv_sec;
 		waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
 		if (waited < losttime[0]) {
 			checklost = 0;
 			continue;
 		}
+		/* garbage collect timed-out exchange */
 		checklost--;
 		ISC_TAILQ_REMOVE(bucket, x, hchain);
 		ISC_TAILQ_REMOVE(&xsent0, x, gchain);
 		free(x);
+		collected[0] += 1;
 	}
+	/* no match? very late or not for us */
 	orphans++;
 	return;
 
+	/* got it: update stats and move to the received queue */
     found:
 	xrcount0++;
 	x->ts1 = now;
@@ -1513,14 +1768,17 @@ receive6(void)
 	ISC_TAILQ_REMOVE(bucket, x, hchain);
 	ISC_TAILQ_REMOVE(&xsent0, x, gchain);
 	ISC_TAILQ_INSERT_TAIL(&xrcvd0, x, gchain);
+	/* if the exchange is not finished, go to the second part */
 	if (simple == 0) {
 		int ret = 0;
 
+		/* the server-ID option is needed */
 		if ((usefirst != 0) && (gsrvid != NULL)) {
 			x->sid = gsrvid;
 			x->sidlen = gsrvidlen;
 		} else
 			ret = scan_for_srvid6(x, cc);
+		/* and the IA_NA option too */
 		if (ret >= 0)
 			ret = scan_for_ia_na(x, cc);
 		if (ret >= 0)
@@ -1528,11 +1786,17 @@ receive6(void)
 	}
 }
 
+/*
+ * decode a base command line parameter
+ * (currently only MAC address and DUID are supported)
+ */
+
 void
 decodebase(void)
 {
 	char *b0 = base[basecnt];
 
+	/* MAC address (alias Ethernet address) */
 	if ((strncasecmp(b0, "mac=", 4) == 0) ||
 	    (strncasecmp(b0, "ether=", 6) == 0)) {
 		char *b;
@@ -1551,6 +1815,7 @@ decodebase(void)
 			(int) (b - b0 - 1), b0);
 			exit(2);
 	}
+	/* DUID */
 	if (strncasecmp(b0, "duid=", 5) == 0) {
 		char *b;
 		size_t i, l;
@@ -1597,10 +1862,16 @@ decodebase(void)
 		}
 		return;
 	}
+	/* other */
 	fprintf(stderr, "not yet supported base '%s'\n", b0);
 	exit(2);
 }
 			   
+/*
+ * get the server socket address from the command line:
+ *  - flags: inherited from main, 0 or AI_NUMERICHOST (for literals)
+ */
+
 void
 getserveraddr(const int flags)
 {
@@ -1633,6 +1904,13 @@ getserveraddr(const int flags)
 	memcpy(&serveraddr, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);
 }
+
+/*
+ * get the interface from the command line:
+ *   - name of the interface
+ *   - socket address to fill
+ * (in IPv6, get the first link-local address)
+ */
 
 void
 getinterface(const char *name, struct sockaddr_storage *ss)
@@ -1675,6 +1953,7 @@ getinterface(const char *name, struct sockaddr_storage *ss)
 		else
 			len = sizeof(struct sockaddr_in6);
 		memcpy(ss, ifa->ifa_addr, len);
+		/* fill the server port */
 		if (ipversion == 4)
 			((struct sockaddr_in *) ss)->sin_port = htons(67);
 		else
@@ -1684,6 +1963,11 @@ getinterface(const char *name, struct sockaddr_storage *ss)
 	fprintf(stderr, "can't find interface %s\n", name);
 	exit(1);
 }
+
+/*
+ * get the local socket address from the command line
+ * (if it doesn't work, try an interface name)
+ */
 
 void
 getlocaladdr(void)
@@ -1721,6 +2005,7 @@ getlocaladdr(void)
 			gai_strerror(ret));
 		exit(2);
 	}
+	/* refuse multiple addresses */
 	if (res->ai_next != NULL) {
 		fprintf(stderr,
 			"ambiguous -l<local-addr=%s>\n",
@@ -1731,6 +2016,10 @@ getlocaladdr(void)
 	freeaddrinfo(res);
 	return;
 }
+
+/*
+ * get the local socket address from the server one
+ */
 
 void
 getlocal(void)
@@ -1770,11 +2059,17 @@ getlocal(void)
 		exit(1);
 	}
 	(void) close(s);
+	/* fill the local port */
 	if (ipversion == 4)
 		((struct sockaddr_in *) &localaddr)->sin_port = htons(67);
 	else
 		((struct sockaddr_in6 *) &localaddr)->sin6_port = htons(546);
 }
+
+/*
+ * intermediate reporting
+ * (note: an in-transit packet can be reported as dropped)
+ */
 
 void
 reporting(void)
@@ -1816,6 +2111,24 @@ reporting(void)
 	printf("\n");
 }
 
+/*
+ * SIGCHLD handler
+ */
+
+void
+reapchild(int sig)
+{
+	int status;
+
+	sig = sig;
+	while (wait3(&status, WNOHANG, NULL) > 0)
+		/* continue */;
+}
+
+/*
+ * SIGINT handler
+ */
+
 void
 interrupt(int sig)
 {
@@ -1823,11 +2136,19 @@ interrupt(int sig)
 	interrupted = 1;
 }
 
+/*
+ * '-v' handler
+ */
+
 void
 version(void)
 {
 	fprintf(stderr, "version 0.01\n");
 }
+
+/*
+ * usage (from the wiki)
+ */
 
 void
 usage(void)
@@ -1839,7 +2160,7 @@ usage(void)
 "    [-L<local-port>] [-s<seed>] [-i] [-B] [-c] [-1]\n"
 "    [-T<template-file>] [-X<xid-offset>] [-O<random-offset]\n"
 "    [-E<time-offset>] [-S<srvid-offset>] [-I<ip-offset>]\n"
-"    [-x<diagnostic-selector>] [server]\n"
+"    [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
 "\f\n"
 "The [server] argument is the name/address of the DHCP server to\n"
 "contact.  For DHCPv4 operation, exchanges are initiated by\n"
@@ -1902,12 +2223,15 @@ usage(void)
 "-T<template-file>: The name of a file containing the template to use\n"
 "    as a stream of hexadecimal digits.\n"
 "-v: Report the version number of this program.\n"
+"-w<wrapped>: Command to call with start/stop at the beginning/end of\n"
+"    the program.\n"
 "-x<diagnostic-selector>: Include extended diagnostics in the output.\n"
 "    <diagnostic-selector> is a string of single-keywords specifying\n"
 "    the operations for which verbose output is desired.  The selector\n"
 "    keyletters are:\n"
 "   * 'a': print the decoded command line arguments\n"
 "   * 'e': print the exit reason\n"
+"   * 'i': print rate processing details\n"
 "   * 'r': print randomization details\n"
 "   * 's': print first server-id\n"
 "   * 't': when finished, print timers of all successful exchanges\n"
@@ -1952,6 +2276,10 @@ usage(void)
 "  exchanges are not successfully completed.\n");
 }
 
+/*
+ * main function / entry point
+ */
+
 int
 main(const int argc, char * const argv[])
 {
@@ -1961,8 +2289,9 @@ main(const int argc, char * const argv[])
 	extern char *optarg;
 	extern int optind;
 
-#define OPTIONS	"hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:"
+#define OPTIONS	"hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:"
 
+	/* decode options */
 	while ((opt = getopt(argc, argv, OPTIONS)) != -1)
 	switch (opt) {
 	case 'h':
@@ -2236,11 +2565,16 @@ main(const int argc, char * const argv[])
 		diags = optarg;
 		break;
 
+	case 'w':
+		wrapped = optarg;
+		break;
+
 	default:
 		usage();
 		exit(2);
 	}
 
+	/* adjust some global variables */
 	if (ipversion == 0)
 		ipversion = 4;
 	if (templatefile[1] != NULL) {
@@ -2250,6 +2584,7 @@ main(const int argc, char * const argv[])
 			rndoffset[1] = rndoffset[0];
 	}
 
+	/* when required, print the internal view of the command line */
 	if ((diags != NULL) && (strchr(diags, 'a') != NULL)) {
 		printf("IPv%d", ipversion);
 		if (simple != 0) {
@@ -2318,21 +2653,26 @@ main(const int argc, char * const argv[])
 		if (ripoffset >= 0)
 			printf(" ip-offset=%d", ripoffset);
 		printf(" diagnotic-selectors='%s'", diags);
+		if (wrapped != NULL)
+			printf(" wrapped='%s'", wrapped);
 		printf("\n");
 	}
 
+	/* check DHCPv4 only options */
 	if ((ipversion != 4) && (isbroadcast != 0)) {
 		fprintf(stderr, "-b is not compatible with IPv6 (-6)\n");
 		usage();
 		exit(2);
 	}
 
+	/* check DHCPv6 only options */
 	if ((ipversion != 6) && (rapidcommit != 0)) {
 		fprintf(stderr, "-6 (IPv6) must be set to use -c\n");
 		usage();
 		exit(2);
 	}
 
+	/* check 4-packet (aka not simple) mode options */
 	if ((simple != 0) && (numreq[1] != 0)) {
 		fprintf(stderr,
 			"second -n<num-request> is not compatible with -i\n");
@@ -2396,12 +2736,15 @@ main(const int argc, char * const argv[])
 		exit(2);
 	}
 
+
+	/* check simple mode options */
 	if ((simple == 0) && (rapidcommit != 0)) {
 		fprintf(stderr, "-i must be set to use -c\n");
 		usage();
 		exit(2);
 	}
 
+	/* check rate '-r' options */
 	if ((rate == 0) && (report != 0)) {
 		fprintf(stderr,
 			"-r<rate> must be set to use -t<report>\n");
@@ -2429,6 +2772,7 @@ main(const int argc, char * const argv[])
 		exit(2);
 	}
 
+	/* check (first) template file options */
 	if ((templatefile[0] == NULL) && (xidoffset[0] >= 0)) {
 		fprintf(stderr,
 			"-T<template-file> must be set to "
@@ -2443,6 +2787,8 @@ main(const int argc, char * const argv[])
 		usage();
 		exit(2);
 	}
+
+	/* check (second) template file options */
 	if ((templatefile[1] == NULL) && (elpoffset >= 0)) {
 		fprintf(stderr,
 			"second/request -T<template-file> must be set to "
@@ -2465,14 +2811,30 @@ main(const int argc, char * const argv[])
 		exit(2);
 	}
 
+	/* check various template file(s) and other condition(s) options */
 	if ((templatefile[0] != NULL) && (range > 0) && (rndoffset[0] < 0)) {
 		fprintf(stderr,
-			"-o<random-offset> must be set when "
+			"-O<random-offset> must be set when "
 			"-T<template-file> and -R<range> are used\n");
 		usage();
 		exit(2);
 	}
+	if ((templatefile[1] != NULL) && (sidoffset < 0)) {
+		fprintf(stderr,
+			"-S<srvid-offset> must be set when second "
+			"-T<template-file> is used\n");
+		usage();
+		exit(2);
+	}
+	if ((templatefile[1] != NULL) && (ripoffset < 0)) {
+		fprintf(stderr,
+			"-I<ip-offset> must be set when second "
+			"-T<template-file> is used\n");
+		usage();
+		exit(2);
+	}
 
+	/* get the server argument */
 	if (optind < argc - 1) {
 		fprintf(stderr, "extra arguments?\n");
 		usage();
@@ -2480,6 +2842,7 @@ main(const int argc, char * const argv[])
 	}
 	if (optind == argc - 1) {
 		servername = argv[optind];
+		/* decode special cases */
 		if ((ipversion == 4) &&
 		    (strcmp(servername, "all") == 0)) {
 			flags = AI_NUMERICHOST;
@@ -2496,7 +2859,9 @@ main(const int argc, char * const argv[])
 		}
 	}
 
+	/* handle the local '-l' address/interface */
 	if (localname != NULL) {
+		/* given */
 		getlocaladdr();
 		if ((diags != NULL) && (strchr(diags, 'a') != NULL)) {
 			if (isinterface)
@@ -2504,6 +2869,7 @@ main(const int argc, char * const argv[])
 			else
 				printf("local-addr='%s'\n", localname);
 		}
+		/* get the not given server from it */
 		if (servername == NULL) {
 			if (isinterface && (ipversion == 4)) {
 				flags = AI_NUMERICHOST;
@@ -2525,7 +2891,9 @@ main(const int argc, char * const argv[])
 		usage();
 		exit(2);
 	}
+	/* get the server socket address */
 	getserveraddr(flags);
+	/* finish local/server socket address stuff and print it */
 	if ((diags != NULL) && (strchr(diags, 'a') != NULL))
 		printf("server='%s'\n", servername);
 	if (localname == NULL)
@@ -2549,8 +2917,10 @@ main(const int argc, char * const argv[])
 		printf("local address='%s'\n", addr);
 	}
 
+	/* initialize exchange structures */
 	inits();
 
+	/* get the socket descriptor and template(s) */
 	if (ipversion == 4) {
 		getsock4();
 		if (templatefile[0] == NULL)
@@ -2578,10 +2948,12 @@ main(const int argc, char * const argv[])
 			}
 		}
 	}
+	/* sanity check */
 	if ((unsigned) sock > FD_SETSIZE) {
 		fprintf(stderr, "socket descriptor (%d) too large?!\n", sock);
 		exit(1);
 	}
+	/* make the socket descriptor not blocking */
 	flags = fcntl(sock, F_GETFL, 0);
 	if (flags < 0) {
 		perror("fcntl(F_GETFL)");
@@ -2592,16 +2964,32 @@ main(const int argc, char * const argv[])
 		exit(1);
 	}
 
+	/* wrapped start */
+	if (wrapped != NULL) {
+		pid_t pid;
+
+		(void) signal(SIGCHLD, reapchild);
+		pid = fork();
+		if (pid < 0) {
+			perror("fork");
+			exit(1);
+		} else if (pid == 0)
+			(void) execlp(wrapped, "start", (char *) NULL);
+	}
+
+	/* boot is done! */
 	if (clock_gettime(CLOCK_REALTIME, &boot) < 0) {
 		perror("clock_gettime(boot)");
 		exit(1);
 	}
 
+	/* compute the next intermediate reporting date */
 	if (report != 0) {
 		dreport.tv_sec = boot.tv_sec + report;
 		dreport.tv_nsec = boot.tv_nsec;
 	}
 
+	/* compute the DUID (the current date is needed) */
 	if ((ipversion == 6) && (duid_prefix == NULL)) {
 		uint32_t curdate;
 
@@ -2618,6 +3006,7 @@ main(const int argc, char * const argv[])
 		curdate = htonl(boot.tv_sec - DHCP6_DUID_EPOCH);
 		memcpy(duid_prefix + 4, &curdate, 4);
 		memcpy(duid_prefix + 8, mac_prefix, 6);
+		/* the DUID is in template(s) */
 		if (templatefile[0] == NULL)
 			build_template_solicit6();
 		else
@@ -2630,16 +3019,20 @@ main(const int argc, char * const argv[])
 		}
 	}
 		
+	/* seed the random generator */
 	if (seeded == 0)
 		seed = (unsigned int) (boot.tv_sec + boot.tv_nsec);
 	srandom(seed);
 
+	/* preload the server with at least one packet */
+	compsend = preload + 1;
 	for (i = 0; i <= preload; i++) {
 		if (ipversion == 4)
 			ret = send4();
 		else
 			ret = send6();
 		if (ret < 0) {
+			/* failure at the first packet is fatal */
 			if (i == 0) {
 				fprintf(stderr,
 					"initial send failed: %s\n",
@@ -2656,12 +3049,15 @@ main(const int argc, char * const argv[])
 		}
 	}
 
+	/* required only before the interrupted flag check */
 	(void) signal(SIGINT, interrupt);
 
+	/* main loop */
 	for (;;) {
 		struct timespec now, ts;
 		fd_set rfds;
 
+		/* immediate loop exit conditions */
 		if (interrupted) {
 			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
 				printf("interrupted\n");
@@ -2672,6 +3068,8 @@ main(const int argc, char * const argv[])
 				printf("got a fatal error\n");
 			break;
 		}
+
+		/* get the date and use it */
 		if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
 			perror("clock_gettime(now)");
 			fatal = 1;
@@ -2691,6 +3089,7 @@ main(const int argc, char * const argv[])
 		      (dreport.tv_nsec < now.tv_nsec))))
 			reporting();
 
+		/* compute the delay for the next send */
 		due = last;
 		if (rate == 1)
 			due.tv_sec += 1;
@@ -2709,8 +3108,13 @@ main(const int argc, char * const argv[])
 			ts.tv_sec -= 1;
 			ts.tv_nsec += 1000000000;
 		}
-		if (ts.tv_sec < 0)
+		/* the send was already due? */
+		if (ts.tv_sec < 0) {
 			ts.tv_sec = ts.tv_nsec = 0;
+			latesent++;
+		}
+
+		/* pselect() */
 		FD_ZERO(&rfds);
 		FD_SET(sock, &rfds);
 		ret = pselect(sock + 1, &rfds, NULL, NULL, &ts, NULL);
@@ -2721,19 +3125,22 @@ main(const int argc, char * const argv[])
 			fatal = 1;
 			continue;
 		}
-		if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-			perror("clock_gettime(now2)");
-			fatal = 1;
-			continue;
-		}
-		if (ret == 1) {
+
+		/* packet(s) to receive */
+		while (ret == 1) {
 			if (ipversion == 4)
 				receive4();
 			else
 				receive6();
+			if (recv(sock, ibuf, sizeof(ibuf), MSG_PEEK) <= 0)
+				ret = 0;
+			else
+				multrcvd++;
 		}
 		if (fatal)
 			continue;
+
+		/* check receive loop exit conditions */
 		if ((numreq[0] != 0) && ((int) xscount0 >= numreq[0])) {
 			if ((diags != NULL) && (strchr(diags, 'e') != NULL))
 				printf("reached num-request0\n");
@@ -2774,6 +3181,13 @@ main(const int argc, char * const argv[])
 				printf("reached max-drop2 (percent)\n");
 			break;
 		}
+
+		/* compute how many packets to send */
+		if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+			perror("clock_gettime(now2)");
+			fatal = 1;
+			continue;
+		}
 		if ((now.tv_sec > due.tv_sec) ||
 		    ((now.tv_sec == due.tv_sec) &&
 		     (now.tv_nsec >= due.tv_nsec))) {
@@ -2790,6 +3204,8 @@ main(const int argc, char * const argv[])
 					i = (int) tosend;
 			} else
 				i = aggressivity;
+			compsend += i;
+			/* send packets */
 			for (;;) {
 				if (ipversion == 4)
 					ret = send4();
@@ -2808,20 +3224,35 @@ main(const int argc, char * const argv[])
 				i--;
 				if (i == 0)
 					break;
+				/* check for late packets to receive */
 				if (recv(sock, ibuf, sizeof(ibuf),
 					 MSG_PEEK) > 0) {
+					latercvd++;
 					if (ipversion == 4)
 						receive4();
 					else
 						receive6();
 				}
 			}
-		}
+		} else
+			/* there was no packet to send */
+			shortwait++;
 	}
 
+	/* after main loop: finished */
 	if (clock_gettime(CLOCK_REALTIME, &finished) < 0)
 		perror("clock_gettime(finished)");
 
+	/* wrapped stop */
+	if (wrapped != NULL) {
+		pid_t pid;
+
+		pid = fork();
+		if (pid == 0)
+			(void) execlp(wrapped, "stop", (char *) NULL);
+	}
+
+	/* main statictics */
 	if (xscount2 == 0)
 		printf("sent: %llu, received: %llu (drops: %lld)\n",
 		       (unsigned long long) xscount0,
@@ -2841,6 +3272,7 @@ main(const int argc, char * const argv[])
 	       (unsigned long long) orphans,
 	       (unsigned long long) locallimit);
 
+	/* print the rate */
 	if (finished.tv_sec != 0) {
 		double dall, erate;
 
@@ -2853,6 +3285,20 @@ main(const int argc, char * const argv[])
 			printf("rate: %f\n", erate);
 	}
 
+	/* rate processing instrumentation */
+	if ((diags != NULL) && (strchr(diags, 'i') != NULL)) {
+		printf("latesent: %llu, compsend: %llu, shortwait: %llu\n"
+		       "multrcvd: %llu, latercvd: %llu, collected:%llu/%llu\n",
+		       (unsigned long long) latesent,
+		       (unsigned long long) compsend,
+		       (unsigned long long) shortwait,
+		       (unsigned long long) multrcvd,
+		       (unsigned long long) latercvd,
+		       (unsigned long long) collected[0],
+		       (unsigned long long) collected[1]);
+	}
+
+	/* round-time trip statistics */
 	if (xrcount2 != 0) {
 		double avg0, avg2, stddev0, stddev2;
 		
@@ -2860,20 +3306,21 @@ main(const int argc, char * const argv[])
 		avg2 = dsum2 / xrcount2;
 		stddev0 = sqrt(dsumsq0 / xrcount0 - avg0 * avg0);
 		stddev2 = sqrt(dsumsq2 / xrcount2 - avg2 * avg2);
-		printf("RTT0: min/avg/max/stddef:  %.3f/%.3f/%.3f/%.3f ms\n",
+		printf("RTT0: min/avg/max/stddev:  %.3f/%.3f/%.3f/%.3f ms\n",
 		       dmin0 * 1e3, avg0 * 1e3, dmax0 * 1e3, stddev0 * 1e3);
-		printf("RTT2: min/avg/max/stddef:  %.3f/%.3f/%.3f/%.3f ms\n",
+		printf("RTT2: min/avg/max/stddev:  %.3f/%.3f/%.3f/%.3f ms\n",
 		       dmin2 * 1e3, avg2 * 1e3, dmax2 * 1e3, stddev2 * 1e3);
 	} else if (xrcount0 != 0) {
 		double avg, stddev;
 		
 		avg = dsum0 / xrcount0;
 		stddev = sqrt(dsumsq0 / xrcount0 - avg * avg);
-		printf("RTT%s: min/avg/max/stddef:  %.3f/%.3f/%.3f/%.3f ms\n",
+		printf("RTT%s: min/avg/max/stddev:  %.3f/%.3f/%.3f/%.3f ms\n",
 		       simple != 0 ? "" : "0",
 		       dmin0 * 1e3, avg * 1e3, dmax0 * 1e3, stddev * 1e3);
 	}
 
+	/* (first) server-ID option content */
 	if ((diags != NULL) && (strchr(diags, 's') != NULL) &&
 	    !ISC_TAILQ_EMPTY(&xrcvd0)) {
 		struct exchange *x;
@@ -2890,6 +3337,7 @@ main(const int argc, char * const argv[])
 		printf("\n");
 	}
 
+	/* all time-stamps */
 	if ((diags != NULL) && (strchr(diags, 't') != NULL) &&
 	    !ISC_TAILQ_EMPTY(&xrcvd0)) {
 		struct exchange *x;
@@ -2918,6 +3366,7 @@ main(const int argc, char * const argv[])
 	    !ISC_TAILQ_EMPTY(&xrcvd0))
 		printf("\n\n");
 
+	/* template(s) */
 	if ((diags != NULL) && (strchr(diags, 'T') != NULL)) {
 		size_t n;
 
@@ -3000,6 +3449,7 @@ main(const int argc, char * const argv[])
 	}
     doneT:
 
+	/* compute the exit code (and exit) */
 	if (fatal)
 		exit(1);
 	else if ((xscount0 == xrcount0) && (xscount2 == xrcount2))
