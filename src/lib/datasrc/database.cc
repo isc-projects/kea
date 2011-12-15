@@ -597,7 +597,7 @@ DatabaseClient::Finder::findWildcardMatch(
         // RFC 4592 section 4.4).
         // Search for a match.  The types are the same as with original query.
         FoundRRsets found = getRRsets(wildcard, final_types, true,
-                                      &construct_name);
+                                      &construct_name, type == RRType::ANY());
         if (found.first) {
             // Found something - but what?
 
@@ -863,7 +863,8 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
-                                        !is_origin);
+                                        !is_origin, NULL,
+                                        type == RRType::ANY());
 
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
