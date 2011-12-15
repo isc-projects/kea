@@ -483,11 +483,17 @@ class ZonemgrRefresh:
                     # (then this entire method can be simplified a lot, and we
                     # wouldn't need direct access to the ccsession object)
                     if 'class' in secondary_zone:
-                        name_class = (name, secondary_zone['class'])
+                        rr_class = secondary_zone['class']
                     else:
-                        name_class = (name,
-                                      module_cc_session.get_default_value(
-                                        'secondary_zones/class'))
+                        rr_class = module_cc_session.get_default_value(
+                                        'secondary_zones/class')
+                    # Convert rr_class to and from RRClass to check its value
+                    try:
+                        name_class = (name, isc.dns.RRClass(rr_class).to_text())
+                    except isc.dns.InvalidRRClass:
+                        raise ZonemgrException("Bad RR class '" +
+                                               rr_class +
+                                               "' for zone " + name)
                     required[name_class] = True
                     # Add it only if it isn't there already
                     if not name_class in self._zonemgr_refresh_info:
