@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>December 1, 2010</date>
+    <date>December 15, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -52,7 +52,7 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>The <command>b10-xfrout</command> daemon provides the BIND 10
-      outgoing DNS zone transfer service.
+      outgoing DNS zone transfer service using AXFR or IXFR.
       It is also used to send outgoing NOTIFY messages.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -67,13 +67,13 @@
  process?, and then the socket and xfr request is sent to xfrout.
 -->
 
+<!-- TODO: IXFR from differences, DDNS, UDP socket passing -->
     <note><simpara>
-      This development prototype release only supports AXFR.
-      IXFR is not implemented.
+      Currently IXFR only works if it gets the zone via
+      <command>b10-xfrin</command> and only on TCP.
     </simpara></note>
 
     <para>
-<!-- TODO: does it really use msgq? what for? -->
       This daemon communicates with BIND 10 over a
       <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
@@ -100,15 +100,15 @@
     <para>
       <varname>tsig_key_ring</varname>
       A list of TSIG keys (each of which is in the form of
-      name:base64-key[:algorithm]) used for access control on transfer
-      requests.
+      <replaceable>name:base64-key[:algorithm]</replaceable>)
+      used for access control on transfer requests.
       The default is an empty list.
     </para>
     <para>
       <varname>transfer_acl</varname>
       A list of ACL elements that apply to all transfer requests by
-      default (unless overridden in zone_config).  See the BIND 10
-      guide for configuration examples.
+      default (unless overridden in <varname>zone_config</varname>).
+      See the <citetitle>BIND 10 Guide</citetitle> for configuration examples.
       The default is an element that allows any transfer requests.
     </para>
     <para>
@@ -119,7 +119,7 @@
       name of the zone), "class" (the RR class of the zone, optional,
       default to "IN"), and "acl_element" (ACL only applicable to
       transfer requests for that zone).
-      See the BIND 10 guide for configuration examples.
+      See the <citetitle>BIND 10 Guide</citetitle> for configuration examples.
       The default is an empty list, that is, no zone specific configuration.
     </para>
     <para>
