@@ -35,7 +35,7 @@ logger = isc.log.Logger("ddns")
 
 DATA_PATH = bind10_config.DATA_PATH
 if "B10_FROM_BUILD" in os.environ:
-    DATA_PATH = DATA_PATH + "/src/bin/ddns"
+    DATA_PATH = os.environ['B10_FROM_BUILD'] + "/src/bin/ddns"
 SPECFILE_LOCATION = DATA_PATH + "/ddns.spec"
 
 
@@ -75,14 +75,22 @@ class DDNSSession:
         pass
 
 class DDNSServer:
-    def __init__(self):
+    def __init__(self, cc_session = None):
         '''
         Initialize the DDNS Server.
         This sets up a ModuleCCSession for the BIND 10 system.
+        Parameters:
+        cc_session: If None (default), a new ModuleCCSession will be set up
+                    If specified, the given session will be used. This is
+                    mainly used for testing.
         '''
-        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
-                                              self.config_handler,
-                                              self.command_handler)
+        if cc_session is not None:
+            self._cc = cc_session
+        else:
+            self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+                                                  self.config_handler,
+                                                  self.command_handler)
+
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._shutdown = False
@@ -102,7 +110,7 @@ class DDNSServer:
             self.shutdown()
             answer = create_answer(0)
         else:
-            answer = create_answer(1, "Unknown command:" + str(cmd))
+            answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
 
     def shutdown(self):
@@ -122,18 +130,23 @@ class DDNSServer:
         while not self._shutdown:
             self._cc.check_command(False)
 
-ddns_server = None
-
-def signal_handler(signal, frame):
+def create_signal_handler(ddns_server):
     '''
-    Handler for process signals. Since only signals to shut down are sent
-    here, the actual signal is not checked and the server is simply shut
-    down.
+    This creates a signal_handler for use in set_signal_handler, which
+    shuts down the given DDNSServer (or any object that has a shutdown()
+    method)
     '''
-    if ddns_server is not None:
-        ddns_server.shutdown()
+    def signal_handler(signal, frame):
+        '''
+        Handler for process signals. Since only signals to shut down are sent
+        here, the actual signal is not checked and the server is simply shut
+        down.
+        '''
+        if ddns_server is not None:
+            ddns_server.shutdown()
+    return signal_handler
 
-def set_signal_handler():
+def set_signal_handler(signal_handler):
     '''
     Sets the signal handler(s).
     '''
@@ -152,13 +165,15 @@ if '__main__' == __name__:
         parser = OptionParser()
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
-        VERBOSE_MODE = options.verbose
+        if options.verbose:
+            print("[b10-ddns] Warning: -v verbose option is ignored at this point.")
 
         ddns_server = DDNSServer()
-        set_signal_handler()
+        logger.debug(10, DDNS_STOPPED_BY_KEYBOARD)
+        set_signal_handler(create_signal_handler(ddns_server))
         ddns_server.run()
     except KeyboardInterrupt:
-        logger.INFO(DDNS_STOPPED_BY_KEYBOARD)
+        logger.info(DDNS_STOPPED_BY_KEYBOARD)
     except SessionError as e:
         logger.error(DDNS_CC_SESSION_ERROR, str(e))
     except ModuleCCSessionError as e:
@@ -167,7 +182,3 @@ if '__main__' == __name__:
         logger.error(DDNS_CONFIG_ERROR, str(e))
     except SessionTimeout as e:
         logger.error(DDNS_CC_SESSION_TIMEOUT_ERROR)
-
-    if ddns_server:
-        ddns_server.shutdown()
-
