@@ -728,7 +728,10 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                    DATASRC_DATABASE_FOUND_CNAME));
 
     } else if (wti != found.second.end()) {
-        if (type == RRType::ANY()) {
+        bool any(type == RRType::ANY());
+        isc::log::MessageID lid(wild ? DATASRC_DATABASE_WILDCARD_MATCH :
+                                DATASRC_DATABASE_FOUND_RRSET);
+        if (any) {
             // An ANY query, copy everything to the target instead of returning
             // directly.
             for (FoundIterator it(found.second.begin());
@@ -738,6 +741,8 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                     target->push_back(it->second);
                 }
             }
+            lid = wild ? DATASRC_DATABASE_WILDCARD_ANY :
+                DATASRC_DATABASE_FOUND_ANY;
         }
         // Found an RR matching the query, so return it.  (Note that this
         // includes the case where we were explicitly querying for a CNAME and
@@ -745,8 +750,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // NS RRset and found it at the apex of the zone.)
         return (logAndCreateResult(name, wildname, type,
                                    wild ? WILDCARD : SUCCESS, wti->second,
-                                   wild ? DATASRC_DATABASE_WILDCARD_MATCH :
-                                   DATASRC_DATABASE_FOUND_RRSET));
+                                   lid));
     }
 
     // If we get here, we have found something at the requested name but not

@@ -78,6 +78,10 @@ different TTL values. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
 
+% DATASRC_DATABASE_FOUND_ANY search in datasource %1 resulted in returning all records of %2
+The data returned by the database backend contained data for the given domain
+name, so all the RRsets of the domain are returned.
+
 % DATASRC_DATABASE_FOUND_CNAME search in datasource %1 for %2/%3/%4 found CNAME, resulting in %5
 When searching the domain for a name a CNAME was found at that name.
 Even though it was not the RR type being sought, it is returned.  (The
@@ -177,6 +181,11 @@ examine the underlying data source to see what exactly happens and
 whether the data is still valid.  The zone name, its class, and the
 underlying database name as well as the error message thrown from the
 database module are shown in the log message.
+
+% DATASRC_DATABASE_WILDCARD_ANY search in datasource %1 resulted in wildcard match type ANY on %2
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a wildcard record matching the name of the query
+containing some RRsets was found. All the RRsets of the node are returned.
 
 % DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %3 because %2 contains NS (data source %1)
 The database was queried to provide glue data and it didn't find direct match.
