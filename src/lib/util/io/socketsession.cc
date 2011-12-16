@@ -19,13 +19,14 @@
 
 #include <netinet/in.h>
 
-#include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <stdint.h>
-#include <string.h>
 
+#include <cerrno>
+#include <csignal>
+#include <cstring>
 #include <cassert>
+
 #include <string>
 #include <vector>
 
