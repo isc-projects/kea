@@ -15,7 +15,7 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <util/buffer.h>
-#include <dhcp/libdhcp.h>
+#include <dhcp/libdhcp++.h>
 #include "config.h"
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>

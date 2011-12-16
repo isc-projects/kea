@@ -17,6 +17,7 @@ endif
 CLEANFILES = *.gcno *.gcda
 
 TESTS =
+noinst_PROGRAMS =
 if HAVE_GTEST
 TESTS += run_unittests run_unittests_sqlite3 run_unittests_memory
 
@@ -84,25 +85,7 @@ run_unittests_memory_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_memory_LDADD = $(common_ldadd)
 
-endif
-
-noinst_PROGRAMS = $(TESTS)
-
-EXTRA_DIST =  testdata/brokendb.sqlite3
-EXTRA_DIST += testdata/example.com.signed
-EXTRA_DIST += testdata/example.org
-EXTRA_DIST += testdata/example.org.sqlite3
-EXTRA_DIST += testdata/example2.com
-EXTRA_DIST += testdata/example2.com.sqlite3
-EXTRA_DIST += testdata/mkbrokendb.c
-EXTRA_DIST += testdata/root.zone
-EXTRA_DIST += testdata/sql1.example.com.signed
-EXTRA_DIST += testdata/sql2.example.com.signed
-EXTRA_DIST += testdata/test-root.sqlite3
-EXTRA_DIST += testdata/test.sqlite3
-EXTRA_DIST += testdata/test.sqlite3.nodiffs
-EXTRA_DIST += testdata/rwtest.sqlite3
-EXTRA_DIST += testdata/diffs.sqlite3
+noinst_PROGRAMS+= $(TESTS)
 
 # For the factory unit tests, we need to specify that we want
 # the loadable backend libraries from the build tree, and not from 
@@ -121,3 +104,21 @@ run_unittests_factory_LDADD = $(common_ldadd)
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests_factory
 endif
+
+endif
+
+EXTRA_DIST =  testdata/brokendb.sqlite3
+EXTRA_DIST += testdata/example.com.signed
+EXTRA_DIST += testdata/example.org
+EXTRA_DIST += testdata/example.org.sqlite3
+EXTRA_DIST += testdata/example2.com
+EXTRA_DIST += testdata/example2.com.sqlite3
+EXTRA_DIST += testdata/mkbrokendb.c
+EXTRA_DIST += testdata/root.zone
+EXTRA_DIST += testdata/sql1.example.com.signed
+EXTRA_DIST += testdata/sql2.example.com.signed
+EXTRA_DIST += testdata/test-root.sqlite3
+EXTRA_DIST += testdata/test.sqlite3
+EXTRA_DIST += testdata/test.sqlite3.nodiffs
+EXTRA_DIST += testdata/rwtest.sqlite3
+EXTRA_DIST += testdata/diffs.sqlite3

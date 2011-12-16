@@ -633,12 +633,15 @@ private:
 
             case ResponseClassifier::NOTSINGLE:
                 message_id = RESLIB_NOTSINGLE_RESPONSE;
+                break;
 
             case ResponseClassifier::OPCODE:
                 message_id = RESLIB_OPCODE_RESPONSE;
+                break;
 
             default:
                 message_id = RESLIB_ERROR_RESPONSE;
+                break;
             }
             LOG_DEBUG(logger, RESLIB_DBG_RESULTS, message_id).
                       arg(questionText(question_));
