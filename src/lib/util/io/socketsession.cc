@@ -144,10 +144,18 @@ SocketSessionForwarder::connectToReceiver() {
                   "Failed to make UNIX domain socket non blocking: " <<
                   strerror(errno));
     }
-    if (setsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &SOCKSESSION_BUFSIZE,
-                   sizeof(SOCKSESSION_BUFSIZE)) == -1) {
-        close();
-        isc_throw(SocketSessionError, "Failed to set send buffer size");
+    // Ensure the socket send buffer is large enough.  If we can't get the
+    // current size, simply set the sufficient size.
+    int sndbuf_size;
+    socklen_t sndbuf_size_len = sizeof(sndbuf_size);
+    if (getsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &sndbuf_size,
+                   &sndbuf_size_len) == -1 ||
+        sndbuf_size < SOCKSESSION_BUFSIZE) {
+        if (setsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &SOCKSESSION_BUFSIZE,
+                       sizeof(SOCKSESSION_BUFSIZE)) == -1) {
+            close();
+            isc_throw(SocketSessionError, "Failed to set send buffer size");
+        }
     }
     if (connect(impl_->fd_, convertSockAddr(&impl_->sock_un_),
                 impl_->sock_un_len_) == -1) {

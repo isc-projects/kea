@@ -662,15 +662,22 @@ TEST_F(ForwardTest, badPush) {
                  SocketSessionError);
 }
 
-// A subroutine for pushTooFast.  Due to the fixed configuration of the
-// send buffer size, we shouldn't be able to forward 3 full-size DNS messages
-// without receiving them.  Exactly how many we can forward depends on the
-// internal system implementation, so we'll at least confirm we can't do for 3.
+// A subroutine for pushTooFast, continuously pushing socket sessions
+// with full-size DNS messages (65535 bytes) without receiving them.  
+// the push attempts will eventually fill the socket send buffer and trigger
+// an exception.  Unfortunately exactly how many we can forward depends on
+// the internal system implementation; it should be close to 3, because
+// in our current implementation it sets the send buffer to a size that
+// is sufficiently large to hold 2 sessions (but not much larger than that),
+// but (for example) Linux internally doubles the specified upper limit.
+// Experimentally we know 10 is enough to produce a reliable result, but
+// if it turns out to be not the case, we should do it a bit harder, e.g.,
+// by probing the actual buffer size by getsockopt(SO_SNDBUF).
 void
 multiPush(SocketSessionForwarder& forwarder, const struct sockaddr& sa,
           const void* data, size_t data_len)
 {
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 10; ++i) {
         forwarder.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, sa, sa,
                        data, data_len);
     }
