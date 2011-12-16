@@ -33,7 +33,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     try {
 	IfaceMgr::instance();
     } catch (const std::exception &e) {
-	cout << "Failed to instantiate InterfaceManager. Aborting." << endl;
+	cout << "Failed to instantiate InterfaceManager:" << e.what() << ". Aborting." << endl;
 	shutdown = true;
     }
 

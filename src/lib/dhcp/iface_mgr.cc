@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <sstream>
 #include <fstream>
 #include <string.h>
@@ -73,7 +74,7 @@ IfaceMgr::Iface::getPlainMac() const {
     tmp << hex;
     for (int i = 0; i < mac_len_; i++) {
         tmp.width(2);
-        tmp <<  int(mac_[i]);
+        tmp <<  static_cast<int>(mac_[i]);
         if (i < mac_len_-1) {
             tmp << ":";
         }
