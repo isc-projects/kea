@@ -289,7 +289,7 @@ public:
     /// copied into the \c target parameter and the rrset member of the result
     /// is NULL. All the other (unsuccessful) cases are handled the same,
     /// including returning delegations, NSEC/NSEC3 proofs, etc. The options
-    /// parameter works the same way and it should comfort to the same exception
+    /// parameter works the same way and it should conform to the same exception
     /// restrictions.
     virtual FindResult findAll(const isc::dns::Name& name,
                                std::vector<isc::dns::ConstRRsetPtr> &target,
