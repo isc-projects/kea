@@ -710,12 +710,13 @@ class TestXfroutSession(TestXfroutSessionBase):
                 self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
         self.assertNotEqual(None, self.xfrsess._jnl_reader)
 
-        # Successful case, but as a result of falling back to AXFR-style
-        # IXFR.  A zone iterator should be set up instead of a journal reader.
+        # Successful case, but the requested SOA serial is greater than that of
+        # the local SOA.  Both iterator and jnl_reader should be None,
+        # indicating that the response will contain just one SOA.
         self.mdata = self.create_request_data(ixfr=IXFR_NG_VERSION)
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
-        self.assertNotEqual(None, self.xfrsess._iterator)
+        self.assertEqual(None, self.xfrsess._iterator)
         self.assertEqual(None, self.xfrsess._jnl_reader)
 
         # Successful case, but the requested SOA serial is equal to that of
@@ -1067,17 +1068,6 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         self.assertEqual(Rcode.NOERROR(), response.get_rcode())
-        self.check_axfr_stream(response)
-
-    def test_ixfr_to_axfr(self):
-        self.xfrsess._request_data = \
-            self.create_request_data(ixfr=IXFR_NG_VERSION)
-        XfroutSession._handle(self.xfrsess)
-        response = self.sock.read_msg(Message.PRESERVE_ORDER);
-        self.assertEqual(Rcode.NOERROR(), response.get_rcode())
-        # This is an AXFR-style IXFR.  So the question section should indicate
-        # that it's an IXFR resposne.
-        self.assertEqual(RRType.IXFR(), response.get_question()[0].get_type())
         self.check_axfr_stream(response)
 
     def test_ixfr_normal_session(self):
