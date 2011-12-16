@@ -58,7 +58,7 @@ const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
 // for more flexibility.
 const int MAX_DATASIZE = 65535;
 
-// The initial buffer size for receiving socket session data in the receptor.
+// The initial buffer size for receiving socket session data in the receiver.
 // This value is the maximum message size of DNS messages carried over UDP
 // (without EDNS).  In our expected usage (at the moment) this should be
 // sufficiently large (the expected data is AXFR/IXFR query or an UPDATE
@@ -70,7 +70,7 @@ const int MAX_DATASIZE = 65535;
 // efficiency.
 const size_t INITIAL_BUFSIZE = 512;
 
-// The (default) socket buffer size for the forwarder and receptor.  This is
+// The (default) socket buffer size for the forwarder and receiver.  This is
 // chosen to be sufficiently large to store two full-size DNS messages.  We
 // may want to customize this value in future.
 const int SOCKSESSION_BUFSIZE = (DEFAULT_HEADER_BUFLEN + MAX_DATASIZE) * 2;
@@ -120,7 +120,7 @@ SocketSessionForwarder::~SocketSessionForwarder() {
 }
 
 void
-SocketSessionForwarder::connectToReceptor() {
+SocketSessionForwarder::connectToReceiver() {
     if (impl_->fd_ != -1) {
         isc_throw(BadValue, "Duplicate connect to UNIX domain "
                   "endpoint " << impl_->sock_un_.sun_path);
@@ -258,8 +258,8 @@ SocketSession::SocketSession(int sock, int family, int type, int protocol,
     }
 }
 
-struct SocketSessionReceptor::ReceptorImpl {
-    ReceptorImpl(int fd) : fd_(fd),
+struct SocketSessionReceiver::ReceiverImpl {
+    ReceiverImpl(int fd) : fd_(fd),
                            sa_local_(convertSockAddr(&ss_local_)),
                            sa_remote_(convertSockAddr(&ss_remote_)),
                            header_buf_(DEFAULT_HEADER_BUFLEN),
@@ -283,12 +283,12 @@ struct SocketSessionReceptor::ReceptorImpl {
     vector<uint8_t> data_buf_;
 };
 
-SocketSessionReceptor::SocketSessionReceptor(int fd) :
-    impl_(new ReceptorImpl(fd))
+SocketSessionReceiver::SocketSessionReceiver(int fd) :
+    impl_(new ReceiverImpl(fd))
 {
 }
 
-SocketSessionReceptor::~SocketSessionReceptor() {
+SocketSessionReceiver::~SocketSessionReceiver() {
     delete impl_;
 }
 
@@ -307,7 +307,7 @@ readFail(int actual_len, int expected_len) {
 }
 
 SocketSession
-SocketSessionReceptor::pop() {
+SocketSessionReceiver::pop() {
     const int passed_fd = recv_fd(impl_->fd_);
     if (passed_fd == FD_SYSTEM_ERROR) {
         isc_throw(SocketSessionError, "Receiving a forwarded FD failed: " <<
