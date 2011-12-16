@@ -1,3 +1,11 @@
+347.	[bug]		jelte
+	Fixed a bug where adding Zonemgr/secondary_zones without explicitely
+	setting the class value of the added zone resulted in a cryptic
+	error in bindctl ("Error: class"). It will now correctly default to
+	IN if not set. This also adds better checks on the name and class
+	values, and better errors if they are bad.
+	(Trac #1414, git 7b122af8489acf0f28f935a19eca2c5509a3677f)
+
 346.	[build]*		jreed
 	Renamed libdhcp to libdhcp++.
 	(Trac #1446, git d394e64f4c44f16027b1e62b4ac34e054b49221d)
