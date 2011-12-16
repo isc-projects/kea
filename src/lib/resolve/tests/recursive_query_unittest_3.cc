@@ -229,7 +229,7 @@ public:
             break;
 
         case NON_EDNS_UDP:
-            EXPECT_TRUE(query.getEDNS());
+            EXPECT_FALSE(query.getEDNS());
             // Return the answer to the question.
             setAnswer(message);
             expected_ = COMPLETE;
