@@ -12,15 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <netdb.h>
 #include <unistd.h>
+
+#include <cerrno>
+#include <cstring>
 
 #include <string>
 #include <utility>
@@ -261,11 +264,11 @@ protected:
     // A helper method to push some (normally bogus) socket session header
     // via a Unix domain socket that pretends to be a valid
     // SocketSessionForwarder.  It first opens the Unix domain socket,
-    // and connect to the test receptor server (startListen() is expected to
+    // and connect to the test receiver server (startListen() is expected to
     // be called beforehand), forwards a valid file descriptor ("stdin" is
     // used for simplicity), the pushed a 2-byte header length field of the
-    // session header.  The internal receptor_ pointer will be set to a
-    // newly created receptor object for the connection.
+    // session header.  The internal receiver_ pointer will be set to a
+    // newly created receiver object for the connection.
     //
     // \param hdrlen: The header length to be pushed.  It may or may not be
     //                valid.
@@ -294,7 +297,7 @@ protected:
             }
         }
         accept_sock_.reset(acceptForwarder());
-        receptor_.reset(new SocketSessionReceptor(accept_sock_.fd));
+        receiver_.reset(new SocketSessionReceiver(accept_sock_.fd));
     }
 
     // A helper method to push some (normally bogus) socket session via a
@@ -340,7 +343,7 @@ protected:
     int listen_fd_;
     SocketSessionForwarder forwarder_;
     ScopedSocket dummy_forwarder_; // forwarder "like" socket to pass bad data
-    scoped_ptr<SocketSessionReceptor> receptor_;
+    scoped_ptr<SocketSessionReceiver> receiver_;
     ScopedSocket accept_sock_;
     const string large_text_;
 
@@ -365,32 +368,32 @@ TEST_F(ForwardTest, construct) {
 TEST_F(ForwardTest, connect) {
     // File doesn't exist (we assume the file "no_such_file" doesn't exist)
     SocketSessionForwarder forwarder("no_such_file");
-    EXPECT_THROW(forwarder.connectToReceptor(), SocketSessionError);
+    EXPECT_THROW(forwarder.connectToReceiver(), SocketSessionError);
     // The socket should be closed internally, so close() should result in
     // error.
     EXPECT_THROW(forwarder.close(), BadValue);
 
-    // Set up the receptor and connect.  It should succeed.
+    // Set up the receiver and connect.  It should succeed.
     SocketSessionForwarder forwarder2(TEST_UNIX_FILE);
     startListen();
-    forwarder2.connectToReceptor();
+    forwarder2.connectToReceiver();
     // And it can be closed successfully.
     forwarder2.close();
     // Duplicate close should fail
     EXPECT_THROW(forwarder2.close(), BadValue);
     // Once closed, reconnect is okay.
-    forwarder2.connectToReceptor();
+    forwarder2.connectToReceiver();
     forwarder2.close();
 
     // Duplicate connect should be rejected
-    forwarder2.connectToReceptor();
-    EXPECT_THROW(forwarder2.connectToReceptor(), BadValue);
+    forwarder2.connectToReceiver();
+    EXPECT_THROW(forwarder2.connectToReceiver(), BadValue);
 
     // Connect then destroy.  Should be internally closed, but unfortunately
     // it's not easy to test it directly.  We only check no disruption happens.
     SocketSessionForwarder* forwarderp =
         new SocketSessionForwarder(TEST_UNIX_FILE);
-    forwarderp->connectToReceptor();
+    forwarderp->connectToReceiver();
     delete forwarderp;
 }
 
@@ -419,7 +422,7 @@ checkSockAddrs(const sockaddr& expected, const sockaddr& actual) {
 // session passing.  It first creates a "local" socket (which is supposed
 // to act as a "server") bound to the 'local' parameter.  It then forwards
 // the descriptor of the FD of the local socket along with given data.
-// Next, it creates an Receptor object to receive the forwarded FD itself,
+// Next, it creates an Receiver object to receive the forwarded FD itself,
 // receives the FD, and sends test data from the received FD.  The
 // test finally checks if it can receive the test data from the local socket
 // at the Forwarder side.  In the case of TCP it's a bit complicated because
@@ -427,12 +430,12 @@ checkSockAddrs(const sockaddr& expected, const sockaddr& actual) {
 // scenario is the same.  See the diagram below for more details.
 //
 // UDP:
-//   Forwarder          Receptor
+//   Forwarder          Receiver
 //   sock -- (pass) --> passed_sock
 //   (check)  <-------- send TEST_DATA
 //
 // TCP:
-//   Forwarder               Receptor
+//   Forwarder               Receiver
 //   server_sock---(pass)--->passed_sock
 //     ^                        |
 //     |(connect)               |
@@ -473,7 +476,7 @@ ForwardTest::checkPushAndPop(int family, int type, int protocol,
     // internal forwarder connect to it, and then internally accept it.
     if (new_connection) {
         startListen();
-        forwarder_.connectToReceptor();
+        forwarder_.connectToReceiver();
         accept_sock_.reset(acceptForwarder());
     }
 
@@ -481,13 +484,13 @@ ForwardTest::checkPushAndPop(int family, int type, int protocol,
     forwarder_.push(fwd_fd, family, type, protocol, *local.first,
                     *remote.first, data, data_len);
 
-    // Pop the socket session we just pushed from a local receptor, and
-    // check the content.  Since we do blocking read on the receptor's socket,
+    // Pop the socket session we just pushed from a local receiver, and
+    // check the content.  Since we do blocking read on the receiver's socket,
     // we set up an alarm to prevent hangup in case there's a bug that really
     // makes the blocking happen.
-    SocketSessionReceptor receptor(accept_sock_.fd);
+    SocketSessionReceiver receiver(accept_sock_.fd);
     alarm(1);                   // set up 1-sec timer, an arbitrary choice.
-    const SocketSession sock_session = receptor.pop();
+    const SocketSession sock_session = receiver.pop();
     alarm(0);                   // then cancel it.
     const ScopedSocket passed_sock(sock_session.getSocket());
     EXPECT_LE(0, passed_sock.fd);
@@ -550,7 +553,7 @@ TEST_F(ForwardTest, pushAndPop) {
     }
 
     // Pass a UDP/IPv4 session.  This reuses the same pair of forwarder and
-    // receptor, which should be usable for multiple attempts of passing,
+    // receiver, which should be usable for multiple attempts of passing,
     // regardless of family of the passed session
     const SockAddrInfo sai_local4(getSockAddr("127.0.0.1", TEST_PORT));
     const SockAddrInfo sai_remote4(getSockAddr("192.0.2.2", "5300"));
@@ -603,7 +606,7 @@ TEST_F(ForwardTest, badPush) {
 
     // Now connect the forwarder for the rest of tests
     startListen();
-    forwarder_.connectToReceptor();
+    forwarder_.connectToReceiver();
 
     // Invalid address family
     struct sockaddr sockaddr_unspec;
@@ -650,10 +653,10 @@ TEST_F(ForwardTest, badPush) {
                                  string(65536, 'd').c_str(), 65536),
                  BadValue);
 
-    // Close the receptor before push.  It will result in SIGPIPE (should be
+    // Close the receiver before push.  It will result in SIGPIPE (should be
     // ignored) and EPIPE, which will be converted to SocketSessionError.
-    const int receptor_fd = acceptForwarder();
-    close(receptor_fd);
+    const int receiver_fd = acceptForwarder();
+    close(receiver_fd);
     EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("192.0.2.1", "53").first,
                                  *getSockAddr("192.0.2.2", "53").first,
@@ -661,15 +664,22 @@ TEST_F(ForwardTest, badPush) {
                  SocketSessionError);
 }
 
-// A subroutine for pushTooFast.  Due to the fixed configuration of the
-// send buffer size, we shouldn't be able to forward 3 full-size DNS messages
-// without receiving them.  Exactly how many we can forward depends on the
-// internal system implementation, so we'll at least confirm we can't do for 3.
+// A subroutine for pushTooFast, continuously pushing socket sessions
+// with full-size DNS messages (65535 bytes) without receiving them.  
+// the push attempts will eventually fill the socket send buffer and trigger
+// an exception.  Unfortunately exactly how many we can forward depends on
+// the internal system implementation; it should be close to 3, because
+// in our current implementation it sets the send buffer to a size that
+// is sufficiently large to hold 2 sessions (but not much larger than that),
+// but (for example) Linux internally doubles the specified upper limit.
+// Experimentally we know 10 is enough to produce a reliable result, but
+// if it turns out to be not the case, we should do it a bit harder, e.g.,
+// by probing the actual buffer size by getsockopt(SO_SNDBUF).
 void
 multiPush(SocketSessionForwarder& forwarder, const struct sockaddr& sa,
           const void* data, size_t data_len)
 {
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 10; ++i) {
         forwarder.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, sa, sa,
                        data, data_len);
     }
@@ -679,7 +689,7 @@ TEST_F(ForwardTest, pushTooFast) {
     // Emulate the situation where the forwarder is pushing sessions too fast.
     // It should eventually fail without blocking.
     startListen();
-    forwarder_.connectToReceptor();
+    forwarder_.connectToReceiver();
     EXPECT_THROW(multiPush(forwarder_, *getSockAddr("192.0.2.1", "53").first,
                            large_text_.c_str(), large_text_.length()),
                  SocketSessionError);
@@ -691,34 +701,34 @@ TEST_F(ForwardTest, badPop) {
     // Close the forwarder socket before pop() without sending anything.
     pushSessionHeader(0, 0, false);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Pretending to be a forwarder but don't actually pass FD.
     pushSessionHeader(0, 1, false);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Pass a valid FD (stdin), but provide short data for the hdrlen
     pushSessionHeader(0, 1);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Pass a valid FD, but provides too large hdrlen
     pushSessionHeader(0xffff);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Don't provide full header
     pushSessionHeader(sizeof(uint32_t));
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Pushed header is too short
     const uint8_t dummy_data = 0;
     pushSessionHeader(1);
     send(dummy_forwarder_.fd, &dummy_data, 1, 0);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // socket addresses commonly used below (the values don't matter).
     const SockAddrInfo sai_local(getSockAddr("192.0.2.1", "53535"));
@@ -729,13 +739,13 @@ TEST_F(ForwardTest, badPop) {
     pushSession(AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second, *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Pass inconsistent address family for local
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai6.second,
                 *sai6.first, sai_remote.second, *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Same for remote
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
@@ -747,35 +757,35 @@ TEST_F(ForwardTest, badPop) {
                 sizeof(struct sockaddr_storage) + 1, *sai_local.first,
                 sai_remote.second, *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Same for remote
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sizeof(struct sockaddr_storage) + 1,
                 *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Data length is too large
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second,
                 *sai_remote.first, 65536);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Empty data
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second,
                 *sai_remote.first, 0);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Not full data are passed
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second,
                 *sai_remote.first, sizeof(TEST_DATA) + 1);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receptor_->pop(), SocketSessionError);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 }
 
 TEST(SocketSessionTest, badValue) {

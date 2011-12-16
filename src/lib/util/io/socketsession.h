@@ -69,11 +69,11 @@ namespace io {
 ///
 /// We provide three classes to help applications forward socket sessions:
 /// \c SocketSessionForwarder is the sender of the UNIX domain connection,
-/// while \c SocketSessionReceptor is the receiver (this interface assumes
+/// while \c SocketSessionReceiver is the receiver (this interface assumes
 /// one direction of forwarding); \c SocketSession represents a single
 /// socket session.
 ///
-/// \c SocketSessionForwarder and \c SocketSessionReceptor objects use a
+/// \c SocketSessionForwarder and \c SocketSessionReceiver objects use a
 /// straightforward protocol to pass elements of socket sessions.
 /// Once the connection is established, the forwarder object first forwards
 /// the file descriptor with 1-byte dummy data.  It then forwards a
@@ -101,7 +101,7 @@ namespace io {
 /// integer elements such as address family do not necessarily be represented
 /// as an fixed-size value (i.e., 32-bit).  But fixed size fields are used
 /// in order to ensure maximum portability in such a (rare) case where the
-/// forwarder and the receptor are built with different compilers that have
+/// forwarder and the receiver are built with different compilers that have
 /// different definitions of \c int.  Also, since \c sockaddr fields are
 /// generally formatted in the network byte order, other fields are defined
 /// so to be consistent.
@@ -110,9 +110,9 @@ namespace io {
 /// be forwarded without blocking, thus eliminating the need for incremental
 /// read/write or blocking other important services such as responding to
 /// requests from the application's clients.  This assumption should be held
-/// as long as both the forwarder and receptor have sufficient resources
+/// as long as both the forwarder and receiver have sufficient resources
 /// to handle the forwarding process since the communication is local.
-/// But a forward attempt could still block if the receptor is busy (or even
+/// But a forward attempt could still block if the receiver is busy (or even
 /// hang up) and cannot keep up with the volume of incoming sessions.
 ///
 /// So, in this implementation, the forwarder uses non blocking writes to
@@ -120,23 +120,23 @@ namespace io {
 /// up the operation with an exception.  The corresponding application is
 /// expected to catch it, close the connection, and perform any necessary
 /// recovery for that application (that would normally be re-establish the
-/// connection with a new receptor, possibly after confirming the receiving
-/// side is still alive).  On the other hand, the receptor implementation
+/// connection with a new receiver, possibly after confirming the receiving
+/// side is still alive).  On the other hand, the receiver implementation
 /// assumes it's possible that it only receive incomplete elements of a
 /// session (such as in the case where the forwarder writes part of the
-/// entire session and gives up the connection).  The receptor implementation
+/// entire session and gives up the connection).  The receiver implementation
 /// throws an exception when it encounters an incomplete session.  Like the
-/// case of the forwarder application, the receptor application is expected
+/// case of the forwarder application, the receiver application is expected
 /// to catch it, close the connection, and perform any necessary recovery
 /// steps.
 ///
-/// Note that the receptor implementation uses blocking read.  So it's
+/// Note that the receiver implementation uses blocking read.  So it's
 /// application's responsibility to ensure that there's at least some data
-/// in the connection when the receptor object is requested to receive a
+/// in the connection when the receiver object is requested to receive a
 /// session (unless this operation can be blocking, e.g., by the use of
 /// a separate thread).  Also, if the forwarder implementation or application
 /// is malicious or extremely buggy and intentionally sends partial session
-/// and keeps the connection, the receptor could block in receiving a session.
+/// and keeps the connection, the receiver could block in receiving a session.
 /// In general, we assume the forwarder doesn't do intentional blocking
 /// as it's a local node and is generally a module of the same (BIND 10)
 /// system.  The minimum requirement for the forwarder implementation (and
@@ -159,8 +159,8 @@ public:
 /// The forwarder of socket sessions
 ///
 /// An object of this class maintains a UNIX domain socket (normally expected
-/// to be connected to a \c SocketSessionReceptor object) and forwards
-/// socket sessions to the receptor.
+/// to be connected to a \c SocketSessionReceiver object) and forwards
+/// socket sessions to the receiver.
 ///
 /// See the description of \ref SocketSessionUtility for other details of how
 /// the session forwarding works.
@@ -168,19 +168,19 @@ class SocketSessionForwarder : boost::noncopyable {
 public:
     /// The constructor.
     ///
-    /// It's constructed with path information of the intended receptor,
-    /// but does not immediately establish a connection to the receptor;
-    /// \c connectToReceptor() must be called to establish it.  These are
+    /// It's constructed with path information of the intended receiver,
+    /// but does not immediately establish a connection to the receiver;
+    /// \c connectToReceiver() must be called to establish it.  These are
     /// separated so that an object of class can be initialized (possibly
     /// as an attribute of a higher level application class object) without
-    /// knowing the receptor is ready for accepting new forwarders.  The
+    /// knowing the receiver is ready for accepting new forwarders.  The
     /// separate connect interface allows the object to be reused when it
     /// detects connection failure and tries to re-establish it after closing
     /// the failed one.
     ///
     /// On construction, it also installs a signal filter for SIGPIPE to
     /// ignore it.  Since this class uses a stream-type connected UNIX domain
-    /// socket, if the receptor (abruptly) closes the connection a subsequent
+    /// socket, if the receiver (abruptly) closes the connection a subsequent
     /// write operation on the socket would trigger a SIGPIPE signal, which
     /// kills the caller process by default.   This behavior would be
     /// undesirable in many cases, so this implementation always disables
@@ -205,7 +205,7 @@ public:
     /// \exception Unexpected Error in setting a filter for SIGPIPE (see above)
     /// \exception std::bad_alloc resource allocation failure
     ///
-    /// \param unix_file Path name of the receptor.
+    /// \param unix_file Path name of the receiver.
     explicit SocketSessionForwarder(const std::string& unix_file);
 
     /// The destructor.
@@ -214,9 +214,9 @@ public:
     /// the destructor.
     ~SocketSessionForwarder();
 
-    /// Establish a connection to the receptor.
+    /// Establish a connection to the receiver.
     ///
-    /// This method establishes a connection to the receptor at the path
+    /// This method establishes a connection to the receiver at the path
     /// given on construction.  It makes the underlying UNIX domain socket
     /// non blocking, so this method (or subsequent \c push() calls) does not
     /// block.
@@ -224,24 +224,24 @@ public:
     /// \exception BadValue The method is called while an already
     /// established connection is still active.
     /// \exception SocketSessionError A system error in socket operation.
-    void connectToReceptor();
+    void connectToReceiver();
 
-    /// Close the connection to the receptor.
+    /// Close the connection to the receiver.
     ///
-    /// The connection must have been established by \c connectToReceptor().
+    /// The connection must have been established by \c connectToReceiver().
     /// As long as it's met this method is exception free.
     ///
     /// \exception BadValue The connection hasn't been established.
     void close();
 
-    /// Forward a socket session to the receptor.
+    /// Forward a socket session to the receiver.
     ///
     /// This method takes a set of parameters that represent a single socket
     /// session, renders them in the "wire" format according to the internal
     /// protocol (see \ref SocketSessionUtility) and forwards them to
-    /// the receptor through the UNIX domain connection.
+    /// the receiver through the UNIX domain connection.
     ///
-    /// The connection must have been established by \c connectToReceptor().
+    /// The connection must have been established by \c connectToReceiver().
     ///
     /// For simplicity and for the convenience of detecting application
     /// errors, this method imposes some restrictions on the parameters:
@@ -294,13 +294,13 @@ private:
 /// accessors to the parameters to ensure data integrity.
 ///
 /// In the initial design and implementation it's only used as a return type
-/// of \c SocketSessionReceptor::pop(), but it could also be used by
+/// of \c SocketSessionReceiver::pop(), but it could also be used by
 /// the \c SocketSessionForwarder class or for other purposes.
 ///
 /// It is assumed that the original owner of a \c SocketSession object
 /// (e.g. a class or a function that constructs it) is responsible for validity
 /// of the data passed to the object.  See the description of
-/// \c SocketSessionReceptor::pop() for the specific case of that usage.
+/// \c SocketSessionReceiver::pop() for the specific case of that usage.
 class SocketSession {
 public:
     /// The constructor.
@@ -382,7 +382,7 @@ private:
 /// it's not a listening socket that is accepting connection requests from
 /// forwarders.  It's application's responsibility to create the listening
 /// socket, listen on it and accept connections.  Once the connection is
-/// established, the application would construct a \c SocketSessionReceptor
+/// established, the application would construct a \c SocketSessionReceiver
 /// object with the socket for the newly established connection.
 /// This behavior is based on the design decision that the application should
 /// decide when it performs (possibly) blocking operations (see \ref
@@ -390,7 +390,7 @@ private:
 ///
 /// See the description of \ref SocketSessionUtility for other details of how
 /// the session forwarding works.
-class SocketSessionReceptor : boost::noncopyable {
+class SocketSessionReceiver : boost::noncopyable {
 public:
     /// The constructor.
     ///
@@ -400,7 +400,7 @@ public:
     ///
     /// \param fd A UNIX domain socket for an established connection with
     /// a forwarder.
-    explicit SocketSessionReceptor(int fd);
+    explicit SocketSessionReceiver(int fd);
 
     /// The destructor.
     ///
@@ -408,7 +408,7 @@ public:
     /// It's up to the application what to do with it (note that the
     /// application would have to maintain the socket itself for detecting
     /// the existence of a new socket session asynchronously).
-    ~SocketSessionReceptor();
+    ~SocketSessionReceiver();
 
     /// Receive a socket session from the forwarder.
     ///
@@ -418,7 +418,7 @@ public:
     /// form of a \c SocketSession object.
     ///
     /// The returned SocketSession object is valid only until the next time
-    /// this method is called or until the \c SocketSessionReceptor object is
+    /// this method is called or until the \c SocketSessionReceiver object is
     /// destructed.
     ///
     /// It ensures the following:
@@ -443,8 +443,8 @@ public:
     SocketSession pop();
 
 private:
-    struct ReceptorImpl;
-    ReceptorImpl* impl_;
+    struct ReceiverImpl;
+    ReceiverImpl* impl_;
 };
 
 }
