@@ -412,11 +412,9 @@ class XfroutSession():
         # a single SOA record of the server's current version, just as
         # in AXFR".  The claim about AXFR is incorrect, but other than that,
         # we do as the RFC says.
-        # Note: until we complete #1278 we can only check equality of the
-        # two serials.  The "newer version" case would fall back to AXFR-style.
         begin_serial = get_soa_serial(remote_soa.get_rdata()[0])
         end_serial = get_soa_serial(self._soa.get_rdata()[0])
-        if begin_serial == end_serial:
+        if begin_serial >= end_serial:
             # clear both iterator and jnl_reader to signal we won't do
             # iteration in response generation
             self._iterator = None
