@@ -1,3 +1,10 @@
+348.	[bug]		stephen
+	By default the logging output stream is now flushed after each write.
+	This fixes a problem seen on some systems where the log output from
+	different processes was jumbled up.  Flushing can be disabled by setting
+	the appropriate option in the logging configuration.
+	(Trac #1405, git 2f0aa20b44604b671e6bde78815db39381e563bf)
+
 347.	[bug]		jelte
 	Fixed a bug where adding Zonemgr/secondary_zones without explicitely
 	setting the class value of the added zone resulted in a cryptic
