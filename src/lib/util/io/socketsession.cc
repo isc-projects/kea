@@ -50,7 +50,7 @@ using namespace internal;
 // 6 32-bit fields, and 2 sockaddr structure. (see the SocketSessionUtility
 // overview description in the header file).  sizeof sockaddr_storage
 // should be the possible max of any sockaddr structure
-const size_t DEFAULT_HEADER_BUFLEN = 2 + sizeof(uint32_t) * 6 +
+const size_t DEFAULT_HEADER_BUFLEN = sizeof(uint16_t) + sizeof(uint32_t) * 6 +
     sizeof(struct sockaddr_storage) * 2;
 
 // The allowable maximum size of data passed with the socket FD.  For now
