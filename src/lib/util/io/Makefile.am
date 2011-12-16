@@ -6,6 +6,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 lib_LTLIBRARIES = libutil_io.la
 libutil_io_la_SOURCES = fd.h fd.cc fd_share.h fd_share.cc
 libutil_io_la_SOURCES += socketsession.h socketsession.cc sockaddr_util.h
+libutil_io_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 CLEANFILES = *.gcno *.gcda
 
