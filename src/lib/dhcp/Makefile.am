@@ -18,14 +18,8 @@ libdhcp_la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libdhcp_la_SOURCES += dhcp6.h dhcp4.h
 libdhcp_la_SOURCES += pkt6.cc pkt6.h
 libdhcp_la_SOURCES += pkt4.cc pkt4.h
-
-if OS_LINUX
 libdhcp_la_SOURCES += iface_mgr_linux.cc
-endif
-
-if OS_BSD
 libdhcp_la_SOURCES += iface_mgr_bsd.cc
-endif
 
 
 EXTRA_DIST  = README
