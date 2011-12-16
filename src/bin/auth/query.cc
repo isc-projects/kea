@@ -230,7 +230,6 @@ Query::addAuthAdditional(ZoneFinder& finder) {
 
 void
 Query::process() {
-    bool keep_doing = true;
     const bool qtype_is_any = (qtype_ == RRType::ANY());
 
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
@@ -252,154 +251,151 @@ Query::process() {
     // Found a zone which is the nearest ancestor to QNAME, set the AA bit
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     response_.setRcode(Rcode::NOERROR());
-    while (keep_doing) {
-        keep_doing = false;
-        std::vector<ConstRRsetPtr> target;
-        boost::function0<ZoneFinder::FindResult> find;
-        if (qtype_is_any) {
-            find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
-                               boost::ref(target), dnssec_opt_);
-        } else {
-            find = boost::bind(&ZoneFinder::find, &zfinder, qname_, qtype_,
-                               dnssec_opt_);
-        }
-        ZoneFinder::FindResult db_result(find());
-        switch (db_result.code) {
-            case ZoneFinder::DNAME: {
-                // First, put the dname into the answer
-                response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(db_result.rrset),
-                    dnssec_);
+    std::vector<ConstRRsetPtr> target;
+    boost::function0<ZoneFinder::FindResult> find;
+    if (qtype_is_any) {
+        find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
+                           boost::ref(target), dnssec_opt_);
+    } else {
+        find = boost::bind(&ZoneFinder::find, &zfinder, qname_, qtype_,
+                           dnssec_opt_);
+    }
+    ZoneFinder::FindResult db_result(find());
+    switch (db_result.code) {
+        case ZoneFinder::DNAME: {
+            // First, put the dname into the answer
+            response_.addRRset(Message::SECTION_ANSWER,
+                boost::const_pointer_cast<RRset>(db_result.rrset),
+                dnssec_);
+            /*
+             * Empty DNAME should never get in, as it is impossible to
+             * create one in master file.
+             *
+             * FIXME: Other way to prevent this should be done
+             */
+            assert(db_result.rrset->getRdataCount() > 0);
+            // Get the data of DNAME
+            const rdata::generic::DNAME& dname(
+                dynamic_cast<const rdata::generic::DNAME&>(
+                db_result.rrset->getRdataIterator()->getCurrent()));
+            // The yet unmatched prefix dname
+            const Name prefix(qname_.split(0, qname_.getLabelCount() -
+                db_result.rrset->getName().getLabelCount()));
+            // If we put it together, will it be too long?
+            // (The prefix contains trailing ., which will be removed
+            if (prefix.getLength() - Name::ROOT_NAME().getLength() +
+                dname.getDname().getLength() > Name::MAX_WIRE) {
                 /*
-                 * Empty DNAME should never get in, as it is impossible to
-                 * create one in master file.
-                 *
-                 * FIXME: Other way to prevent this should be done
+                 * In case the synthesized name is too long, section 4.1
+                 * of RFC 2672 mandates we return YXDOMAIN.
                  */
-                assert(db_result.rrset->getRdataCount() > 0);
-                // Get the data of DNAME
-                const rdata::generic::DNAME& dname(
-                    dynamic_cast<const rdata::generic::DNAME&>(
-                    db_result.rrset->getRdataIterator()->getCurrent()));
-                // The yet unmatched prefix dname
-                const Name prefix(qname_.split(0, qname_.getLabelCount() -
-                    db_result.rrset->getName().getLabelCount()));
-                // If we put it together, will it be too long?
-                // (The prefix contains trailing ., which will be removed
-                if (prefix.getLength() - Name::ROOT_NAME().getLength() +
-                    dname.getDname().getLength() > Name::MAX_WIRE) {
-                    /*
-                     * In case the synthesized name is too long, section 4.1
-                     * of RFC 2672 mandates we return YXDOMAIN.
-                     */
-                    response_.setRcode(Rcode::YXDOMAIN());
-                    return;
-                }
-                // The new CNAME we are creating (it will be unsigned even
-                // with DNSSEC, the DNAME is signed and it can be validated
-                // by that)
-                RRsetPtr cname(new RRset(qname_, db_result.rrset->getClass(),
-                    RRType::CNAME(), db_result.rrset->getTTL()));
-                // Construct the new target by replacing the end
-                cname->addRdata(rdata::generic::CNAME(qname_.split(0,
-                    qname_.getLabelCount() -
-                    db_result.rrset->getName().getLabelCount()).
-                    concatenate(dname.getDname())));
-                response_.addRRset(Message::SECTION_ANSWER, cname, dnssec_);
-                break;
+                response_.setRcode(Rcode::YXDOMAIN());
+                return;
             }
-            case ZoneFinder::CNAME:
-            case ZoneFinder::WILDCARD_CNAME:
-                /*
-                 * We don't do chaining yet. Therefore handling a CNAME is
-                 * mostly the same as handling SUCCESS, but we didn't get
-                 * what we expected. It means no exceptions in ANY or NS
-                 * on the origin (though CNAME in origin is probably
-                 * forbidden anyway).
-                 *
-                 * So, just put it there.
-                 */
+            // The new CNAME we are creating (it will be unsigned even
+            // with DNSSEC, the DNAME is signed and it can be validated
+            // by that)
+            RRsetPtr cname(new RRset(qname_, db_result.rrset->getClass(),
+                RRType::CNAME(), db_result.rrset->getTTL()));
+            // Construct the new target by replacing the end
+            cname->addRdata(rdata::generic::CNAME(qname_.split(0,
+                qname_.getLabelCount() -
+                db_result.rrset->getName().getLabelCount()).
+                concatenate(dname.getDname())));
+            response_.addRRset(Message::SECTION_ANSWER, cname, dnssec_);
+            break;
+        }
+        case ZoneFinder::CNAME:
+        case ZoneFinder::WILDCARD_CNAME:
+            /*
+             * We don't do chaining yet. Therefore handling a CNAME is
+             * mostly the same as handling SUCCESS, but we didn't get
+             * what we expected. It means no exceptions in ANY or NS
+             * on the origin (though CNAME in origin is probably
+             * forbidden anyway).
+             *
+             * So, just put it there.
+             */
+            response_.addRRset(Message::SECTION_ANSWER,
+                boost::const_pointer_cast<RRset>(db_result.rrset),
+                dnssec_);
+
+            // If the answer is a result of wildcard substitution,
+            // add a proof that there's no closer name.
+            if (dnssec_ && db_result.code == ZoneFinder::WILDCARD_CNAME) {
+                addWildcardProof(*result.zone_finder);
+            }
+            break;
+        case ZoneFinder::SUCCESS:
+        case ZoneFinder::WILDCARD:
+            if (qtype_is_any) {
+                // If quety type is ANY, insert all RRs under the domain
+                // into answer section.
+                BOOST_FOREACH(ConstRRsetPtr rrset, target) {
+                    response_.addRRset(Message::SECTION_ANSWER,
+                        boost::const_pointer_cast<RRset>(rrset), dnssec_);
+                    // Handle additional for answer section
+                    addAdditional(*result.zone_finder, *rrset.get());
+                }
+            } else {
                 response_.addRRset(Message::SECTION_ANSWER,
                     boost::const_pointer_cast<RRset>(db_result.rrset),
                     dnssec_);
-
-                // If the answer is a result of wildcard substitution,
-                // add a proof that there's no closer name.
-                if (dnssec_ && db_result.code == ZoneFinder::WILDCARD_CNAME) {
-                    addWildcardProof(*result.zone_finder);
-                }
-                break;
-            case ZoneFinder::SUCCESS:
-            case ZoneFinder::WILDCARD:
-                if (qtype_is_any) {
-                    // If quety type is ANY, insert all RRs under the domain
-                    // into answer section.
-                    BOOST_FOREACH(ConstRRsetPtr rrset, target) {
-                        response_.addRRset(Message::SECTION_ANSWER,
-                            boost::const_pointer_cast<RRset>(rrset), dnssec_);
-                        // Handle additional for answer section
-                        addAdditional(*result.zone_finder, *rrset.get());
-                    }
-                } else {
-                    response_.addRRset(Message::SECTION_ANSWER,
-                        boost::const_pointer_cast<RRset>(db_result.rrset),
-                        dnssec_);
-                    // Handle additional for answer section
-                    addAdditional(*result.zone_finder, *db_result.rrset);
-                }
-                // If apex NS records haven't been provided in the answer
-                // section, insert apex NS records into the authority section
-                // and AAAA/A RRS of each of the NS RDATA into the additional
-                // section.
-                if (qname_ != result.zone_finder->getOrigin() ||
-                    db_result.code != ZoneFinder::SUCCESS ||
-                    (qtype_ != RRType::NS() && !qtype_is_any))
-                {
-                    addAuthAdditional(*result.zone_finder);
-                }
-
-                // If the answer is a result of wildcard substitution,
-                // add a proof that there's no closer name.
-                if (dnssec_ && db_result.code == ZoneFinder::WILDCARD) {
-                    addWildcardProof(*result.zone_finder);
-                }
-                break;
-            case ZoneFinder::DELEGATION:
-                response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-                response_.addRRset(Message::SECTION_AUTHORITY,
-                    boost::const_pointer_cast<RRset>(db_result.rrset),
-                    dnssec_);
+                // Handle additional for answer section
                 addAdditional(*result.zone_finder, *db_result.rrset);
-                break;
-            case ZoneFinder::NXDOMAIN:
-                response_.setRcode(Rcode::NXDOMAIN());
-                addSOA(*result.zone_finder);
-                if (dnssec_ && db_result.rrset) {
-                    addNXDOMAINProof(zfinder, db_result.rrset);
-                }
-                break;
-            case ZoneFinder::NXRRSET:
-                addSOA(*result.zone_finder);
-                if (dnssec_ && db_result.rrset) {
-                    response_.addRRset(Message::SECTION_AUTHORITY,
-                                       boost::const_pointer_cast<RRset>(
-                                           db_result.rrset),
-                                       dnssec_);
-                }
-                break;
-            case ZoneFinder::WILDCARD_NXRRSET:
-                addSOA(*result.zone_finder);
-                if (dnssec_ && db_result.rrset) {
-                    addWildcardNXRRSETProof(zfinder, db_result.rrset);
-                }
-                break;
-            default:
-                // This is basically a bug of the data source implementation,
-                // but could also happen in the middle of development where
-                // we try to add a new result code.
-                isc_throw(isc::NotImplemented, "Unknown result code");
-                break;
-        }
+            }
+            // If apex NS records haven't been provided in the answer
+            // section, insert apex NS records into the authority section
+            // and AAAA/A RRS of each of the NS RDATA into the additional
+            // section.
+            if (qname_ != result.zone_finder->getOrigin() ||
+                db_result.code != ZoneFinder::SUCCESS ||
+                (qtype_ != RRType::NS() && !qtype_is_any))
+            {
+                addAuthAdditional(*result.zone_finder);
+            }
+
+            // If the answer is a result of wildcard substitution,
+            // add a proof that there's no closer name.
+            if (dnssec_ && db_result.code == ZoneFinder::WILDCARD) {
+                addWildcardProof(*result.zone_finder);
+            }
+            break;
+        case ZoneFinder::DELEGATION:
+            response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
+            response_.addRRset(Message::SECTION_AUTHORITY,
+                boost::const_pointer_cast<RRset>(db_result.rrset),
+                dnssec_);
+            addAdditional(*result.zone_finder, *db_result.rrset);
+            break;
+        case ZoneFinder::NXDOMAIN:
+            response_.setRcode(Rcode::NXDOMAIN());
+            addSOA(*result.zone_finder);
+            if (dnssec_ && db_result.rrset) {
+                addNXDOMAINProof(zfinder, db_result.rrset);
+            }
+            break;
+        case ZoneFinder::NXRRSET:
+            addSOA(*result.zone_finder);
+            if (dnssec_ && db_result.rrset) {
+                response_.addRRset(Message::SECTION_AUTHORITY,
+                                   boost::const_pointer_cast<RRset>(
+                                       db_result.rrset),
+                                   dnssec_);
+            }
+            break;
+        case ZoneFinder::WILDCARD_NXRRSET:
+            addSOA(*result.zone_finder);
+            if (dnssec_ && db_result.rrset) {
+                addWildcardNXRRSETProof(zfinder, db_result.rrset);
+            }
+            break;
+        default:
+            // This is basically a bug of the data source implementation,
+            // but could also happen in the middle of development where
+            // we try to add a new result code.
+            isc_throw(isc::NotImplemented, "Unknown result code");
+            break;
     }
 }
 
