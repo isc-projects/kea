@@ -730,7 +730,7 @@ then
 				GTEST_FOUND="true"
 				# There is no gtest-config script on this
 				# system, which is supposed to inform us
-				# whether we need pthreads as well (a 
+				# whether we need pthreads as well (a
 				# gtest compile-time option). So we still
 				# need to test that manually.
 				CPPFLAGS_SAVED="$CPPFLAGS"
@@ -892,6 +892,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/benchmarks/Makefile
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/tests/Makefile
+		 src/bin/dhcp4/Makefile
+		 src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
@@ -984,6 +986,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/tests/Makefile
                  src/lib/acl/Makefile
                  src/lib/acl/tests/Makefile
+                 src/lib/statistics/Makefile
+                 src/lib/statistics/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile
@@ -1031,6 +1035,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h.pre
+           src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py
            src/lib/config/tests/data_def_unittests_config.h

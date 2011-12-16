@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/pkt4.h>
-#include <dhcp/libdhcp.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/dhcp4.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
@@ -59,7 +59,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
      :local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
-      ifindex_(-1),
+      ifindex_(0),
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
       op_(BOOTREQUEST),
