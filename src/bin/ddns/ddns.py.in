@@ -63,15 +63,6 @@ class DDNSSession:
 
     def __init__(self):
         '''Initialize a DDNS Session'''
-        self._handle()
-
-    def _handle(self):
-        '''
-        Handle a DDNS update.
-        This should be called from the initializer, and should contain the
-        logic for doing the checks, handling the update, and responding with
-        the result.
-        '''
         pass
 
 class DDNSServer:
@@ -120,6 +111,7 @@ class DDNSServer:
         so the main loop in run() stops.
         '''
         self._shutdown = True
+        logger.info(DDNS_SHUTDOWN)
 
     def run(self):
         '''
@@ -128,7 +120,13 @@ class DDNSServer:
         '''
         logger.info(DDNS_RUNNING)
         while not self._shutdown:
+            # We do not catch any exceptions here right now, but this would
+            # be a good place to catch any exceptions that b10-ddns can
+            # recover from. We currently have no exception hierarchy to
+            # make such a distinction easily, but once we do, this would
+            # be the place to catch.
             self._cc.check_command(False)
+        logger.info(DDNS_STOPPED)
 
 def create_signal_handler(ddns_server):
     '''
@@ -142,8 +140,7 @@ def create_signal_handler(ddns_server):
         here, the actual signal is not checked and the server is simply shut
         down.
         '''
-        if ddns_server is not None:
-            ddns_server.shutdown()
+        ddns_server.shutdown()
     return signal_handler
 
 def set_signal_handler(signal_handler):
@@ -160,7 +157,17 @@ def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
             help="display more about what is going on")
 
-if '__main__' == __name__:
+def main(ddns_server=None):
+    '''
+    The main function.
+    Parameters:
+    ddns_server: If None (default), a DDNSServer object is initialized.
+                 If specified, the given DDNSServer will be used. This is
+                 mainly used for testing.
+    cc_session: If None (default), a new ModuleCCSession will be set up.
+                If specified, the given session will be used. This is
+                mainly used for testing.
+    '''
     try:
         parser = OptionParser()
         set_cmd_options(parser)
@@ -168,8 +175,8 @@ if '__main__' == __name__:
         if options.verbose:
             print("[b10-ddns] Warning: -v verbose option is ignored at this point.")
 
-        ddns_server = DDNSServer()
-        logger.debug(10, DDNS_STOPPED_BY_KEYBOARD)
+        if ddns_server is None:
+            ddns_server = DDNSServer()
         set_signal_handler(create_signal_handler(ddns_server))
         ddns_server.run()
     except KeyboardInterrupt:
@@ -182,3 +189,8 @@ if '__main__' == __name__:
         logger.error(DDNS_CONFIG_ERROR, str(e))
     except SessionTimeout as e:
         logger.error(DDNS_CC_SESSION_TIMEOUT_ERROR)
+    except Exception as e:
+        logger.error(DDNS_UNCAUGHT_EXCEPTION, type(e).__name__, str(e))
+
+if '__main__' == __name__:
+    main()

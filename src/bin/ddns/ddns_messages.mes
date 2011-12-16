@@ -15,9 +15,13 @@
 # No namespace declaration - these constants go in the global namespace
 # of the ddns messages python module.
 
+# When you add a message to this file, it is a good idea to run
+# <topsrcdir>/tools/reorder_message_file.py to make sure the
+# messages are in the correct order.
+
 % DDNS_CC_SESSION_ERROR error reading from cc channel: %1
 There was a problem reading from the command and control channel. The
-most likely cause is that the msgq daemon is not running.
+most likely cause is that the msgq process is not running.
 
 % DDNS_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response
 There was a problem reading a response from another module over the
@@ -36,13 +40,27 @@ failed to start at initialization.  A detailed error message from the module
 will also be displayed.
 
 % DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received
-The ddns daemon received a shutdown command from the command channel
+The ddns process received a shutdown command from the command channel
 and will now shut down.
 
 % DDNS_RUNNING ddns server is running and listening for updates
-The ddns daemon has successfully started and is now ready to receive commands
+The ddns process has successfully started and is now ready to receive commands
 and updates.
 
+% DDNS_SHUTDOWN ddns server shutting down
+The ddns process is shutting down. It will no longer listen for new commands
+or updates. Any command or update that is being addressed at this moment will
+be completed, after which the process will exit.
+
+% DDNS_STOPPED ddns server has stopped
+The ddns process has successfully stopped and is no longer listening for or
+handling commands or updates, and will now exit.
+
 % DDNS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
-There was a keyboard interrupt signal to stop the ddns daemon. The
-daemon will now shut down.
+There was a keyboard interrupt signal to stop the ddns process. The
+process will now shut down.
+
+% DDNS_UNCAUGHT_EXCEPTION uncaught exception of type %1: %2
+The b10-ddns process encountered an uncaught exception and will now shut
+down. This is indicative of a programming error and should not happen under
+normal circumstances. The exception type and message are printed.
