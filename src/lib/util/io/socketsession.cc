@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -105,7 +107,7 @@ SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     assert(impl.sock_un_.sun_path[sizeof(impl.sock_un_.sun_path) - 1] == '\0');
     impl.sock_un_len_ = 2 + unix_file.length();
 #ifdef HAVE_SA_LEN
-    impl.sock_un_.sun_len = sock_un_len_;
+    impl.sock_un_.sun_len = impl.sock_un_len_;
 #endif
     impl.fd_ = -1;
 
