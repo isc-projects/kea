@@ -40,16 +40,16 @@ getSALength(const struct sockaddr& sa) {
 // sockaddr's, which is not friendly with C++.  The following templates
 // are a shortcut of common workaround conversion in such cases.
 
-template <typename SA_TYPE>
+template <typename SAType>
 const struct sockaddr*
-convertSockAddr(const SA_TYPE* sa) {
+convertSockAddr(const SAType* sa) {
     const void* p = sa;
     return (static_cast<const struct sockaddr*>(p));
 }
 
-template <typename SA_TYPE>
+template <typename SAType>
 struct sockaddr*
-convertSockAddr(SA_TYPE* sa) {
+convertSockAddr(SAType* sa) {
     void* p = sa;
     return (static_cast<struct sockaddr*>(p));
 }
