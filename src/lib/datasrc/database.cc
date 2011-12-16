@@ -412,7 +412,7 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
     // cut but the match we find for the glue is a wildcard match.  In that
     // case, we return the delegation instead (see RFC 1034, section 4.3.3).
     // To save a new search, we record the location of the delegation cut when
-    // we encounter it here. 
+    // we encounter it here.
     isc::dns::ConstRRsetPtr first_ns;
 
     // We want to search from the apex down.  We are given the full domain

@@ -1,7 +1,7 @@
 {
   "module_spec": {
     "module_name": "dhcp6",
-    "module_description": "DHCPv6 daemon",
+    "module_description": "DHCPv6 server daemon",
     "config_data": [
       { "item_name": "interface",
         "item_type": "string",
