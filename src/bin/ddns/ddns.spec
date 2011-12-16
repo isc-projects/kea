@@ -12,12 +12,12 @@
           "item_type": "map",
           "item_optional": true,
           "item_default": {
-            "update_acls": [{"action": "ACCEPT", "from": "127.0.0.1"},
-                            {"action": "ACCEPT", "from": "::1"}]
+            "update_acl": [{"action": "ACCEPT", "from": "127.0.0.1"},
+                           {"action": "ACCEPT", "from": "::1"}]
           },
           "map_item_spec": [
             {
-              "item_name": "update_acls",
+              "item_name": "update_acl",
               "item_type": "list",
               "item_optional": false,
               "list_item_spec": {

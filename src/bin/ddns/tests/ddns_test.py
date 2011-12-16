@@ -32,6 +32,32 @@ class MyCCSession(isc.config.ConfigData):
         '''Called by DDNSServer initialization, but not used in tests'''
         self._started = True
 
+class MyDDNSServer():
+    '''Fake DDNS server used to test the main() function'''
+    def __init__(self):
+        self.reset()
+
+    def run(self):
+        '''
+        Fake the run() method of the DDNS server. This will set
+        self._run_called to True.
+        If self._exception is not None, this is raised as an exception
+        '''
+        self.run_called = True
+        if self._exception is not None:
+            self.exception_raised = True
+            raise self._exception
+
+    def set_exception(self, exception):
+        '''Set an exception to be raised when run() is called'''
+        self._exception = exception
+
+    def reset(self):
+        '''(Re)set to initial values'''
+        self.run_called = False
+        self.exception_raised = False
+        self._exception = None
+
 class TestDDNSServer(unittest.TestCase):
     def setUp(self):
         cc_session = MyCCSession()
@@ -66,6 +92,65 @@ class TestDDNSServer(unittest.TestCase):
         self.assertFalse(self.ddns_server._shutdown)
         signal_handler(None, None)
         self.assertTrue(self.ddns_server._shutdown)
+
+class TestMain(unittest.TestCase):
+    def setUp(self):
+        self._server = MyDDNSServer()
+
+    def test_main(self):
+        self.assertFalse(self._server.run_called)
+        ddns.main(self._server)
+        self.assertTrue(self._server.run_called)
+
+    def test_exceptions(self):
+        '''
+        Test whether exceptions are caught in main()
+        These exceptions should not bubble up.
+        '''
+        self._server.set_exception(KeyboardInterrupt())
+        self.assertFalse(self._server.exception_raised)
+        ddns.main(self._server)
+        self.assertTrue(self._server.exception_raised)
+
+        # Should technically not be necessary, but reset server to be sure
+        self._server.reset()
+        self.assertFalse(self._server.exception_raised)
+        self._server.set_exception(isc.cc.SessionError("error"))
+        ddns.main(self._server)
+        self.assertTrue(self._server.exception_raised)
+
+        self._server.reset()
+        self.assertFalse(self._server.exception_raised)
+        self._server.set_exception(isc.config.ModuleCCSessionError("error"))
+        ddns.main(self._server)
+        self.assertTrue(self._server.exception_raised)
+
+        self._server.reset()
+        self.assertFalse(self._server.exception_raised)
+        self._server.set_exception(ddns.DDNSConfigError("error"))
+        ddns.main(self._server)
+        self.assertTrue(self._server.exception_raised)
+
+        self._server.reset()
+        self.assertFalse(self._server.exception_raised)
+        self._server.set_exception(isc.cc.SessionTimeout("error"))
+        ddns.main(self._server)
+        self.assertTrue(self._server.exception_raised)
+
+        self._server.reset()
+        self.assertFalse(self._server.exception_raised)
+        self._server.set_exception(Exception("error"))
+        ddns.main(self._server)
+        self.assertTrue(self._server.exception_raised)
+
+        # Add one that is not a subclass of Exception, and hence not
+        # caught. Misuse BaseException for that.
+        self._server.reset()
+        self.assertFalse(self._server.exception_raised)
+        self._server.set_exception(BaseException("error"))
+        self.assertRaises(BaseException, ddns.main, self._server)
+        self.assertTrue(self._server.exception_raised)
+        
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

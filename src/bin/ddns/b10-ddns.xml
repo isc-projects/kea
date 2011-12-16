@@ -106,8 +106,8 @@
     <para>
       <varname>zones</varname>
       The zones option is a named set of zones that can be updated with
-      DDNS. Each entry has one element called update_acls, which itself
-      is a list of ACLs that define update permissions.
+      DDNS. Each entry has one element called update_acl, which is
+      is a list of access control rules that define update permissions.
       By default this is empty; DDNS must be explicitely enabled per zone.
     </para>
 
