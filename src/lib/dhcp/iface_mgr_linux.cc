@@ -12,6 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+
+#include <config.h>
+
+#if defined(OS_LINUX)
+
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 
@@ -24,29 +29,20 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
-#if !defined(OS_LINUX)
-/// There are several detectIfaces() implementations for specific
-/// Operating Systems. This one is specific to Linux. It works on
-/// Linux only, so it does not make sense to try to compile it somewhere
-/// else. In particular, Makefile.am includes only one iface_mgr_{OS_TYPE}.cc
-/// file.
-
-#error "Attempt to compile iface_mgr_linux.cc on non-Linux system!"
-#endif
-
+/// This is a structure that defines context for netlink connection.
 struct rtnl_handle
 {
-	int			fd;
-	struct sockaddr_nl	local;
-	struct sockaddr_nl	peer;
-	__u32			seq;
-	__u32			dump;
+    int                fd;
+    struct sockaddr_nl local;
+    struct sockaddr_nl peer;
+    __u32              seq;
+    __u32              dump;
 };
 
 struct nlmsg_list
 {
-	struct nlmsg_list *next;
-	struct nlmsghdr	  h;
+    struct nlmsg_list *next;
+    struct nlmsghdr h;
 };
 
 const int sndbuf = 32768;
@@ -55,53 +51,61 @@ const int rcvbuf = 32768;
 namespace isc {
 
 
+/// @brief Opens netlink socket and initializes handle structure.
+///
+/// @exception Unexpected Thrown if socket configuration fails.
+///
+/// @param handle Context will be stored in this structure.
 void rtnl_open_socket(struct rtnl_handle& handle) {
     // equivalent of rtnl_open
     handle.fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (handle.fd < 0) {
-	isc_throw(Unexpected, "Failed to create NETLINK socket.");
+        isc_throw(Unexpected, "Failed to create NETLINK socket.");
     }
-    
+
     if (setsockopt(handle.fd, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)) < 0) {
-	isc_throw(Unexpected, "Failed to set send buffer in NETLINK socket.");
+        isc_throw(Unexpected, "Failed to set send buffer in NETLINK socket.");
     }
-    
+
     if (setsockopt(handle.fd, SOL_SOCKET, SO_RCVBUF, &sndbuf, sizeof(rcvbuf)) < 0) {
-	isc_throw(Unexpected, "Failed to set receive buffer in NETLINK socket.");
+        isc_throw(Unexpected, "Failed to set receive buffer in NETLINK socket.");
     }
-    
+
     memset(&handle.local, 0, sizeof(handle.local));
     handle.local.nl_family = AF_NETLINK;
     handle.local.nl_groups = 0;
 
     if (bind(handle.fd, (struct sockaddr*)&handle.local, sizeof(handle.local)) < 0) {
-	isc_throw(Unexpected, "Failed to bind netlink socket.");
+        isc_throw(Unexpected, "Failed to bind netlink socket.");
     }
 
     socklen_t addr_len = sizeof(handle.local);
     if (getsockname(handle.fd, (struct sockaddr*)&handle.local, &addr_len) < 0) {
-	isc_throw(Unexpected, "Getsockname for netlink socket failed.");
+        isc_throw(Unexpected, "Getsockname for netlink socket failed.");
     }
 
     // just 2 sanity checks and we are done
     if ( (addr_len != sizeof(handle.local)) ||
-	 (handle.local.nl_family != AF_NETLINK) ) {
-	isc_throw(Unexpected, "getsockname() returned unexpected data for netlink socket.");
+         (handle.local.nl_family != AF_NETLINK) ) {
+        isc_throw(Unexpected, "getsockname() returned unexpected data for netlink socket.");
     }
 }
 
-// sends request over NETLINK socket
-void rtnl_send_request(struct rtnl_handle& handle,
-		       int family, int type) {
+/// @brief Sends request over NETLINK socket.
+///
+/// @param handle context structure
+/// @param family requested information family
+/// @param type request type (RTM_GETLINK or RTM_GETADDR)
+void rtnl_send_request(struct rtnl_handle& handle, int family, int type) {
     struct {
-	struct nlmsghdr nlh;
-	struct rtgenmsg g;
+        struct nlmsghdr nlh;
+        struct rtgenmsg g;
     } req;
     struct sockaddr_nl nladdr;
-    
+
     memset(&nladdr, 0, sizeof(nladdr));
     nladdr.nl_family = AF_NETLINK;
-    
+
     memset(&req, 0, sizeof(req));
     req.nlh.nlmsg_len = sizeof(req);
     req.nlh.nlmsg_type = type;
@@ -109,98 +113,95 @@ void rtnl_send_request(struct rtnl_handle& handle,
     req.nlh.nlmsg_pid = 0;
     req.nlh.nlmsg_seq = handle.dump = ++handle.seq;
     req.g.rtgen_family = family;
-    
+
     int status =  sendto(handle.fd, (void*)&req, sizeof(req), 0,
-			 (struct sockaddr*)&nladdr, sizeof(nladdr));
+                         (struct sockaddr*)&nladdr, sizeof(nladdr));
 
     if (status<0) {
-	isc_throw(Unexpected, "Failed to send " << sizeof(nladdr) << " bytes over netlink socket.");
+        isc_throw(Unexpected, "Failed to send " << sizeof(nladdr) << " bytes over netlink socket.");
     }
 }
 
-void rtnl_store_reply(/*const struct sockaddr_nl *who,*/ struct nlmsghdr *n, struct nlmsg_list** linfo)
+/// @brief Appends nlmsg to a list
+///
+/// @param n a message to be added
+/// @param link_info a list
+void rtnl_store_reply(struct nlmsghdr *n, struct nlmsg_list** link_info)
 {
     struct nlmsg_list *h;
     struct nlmsg_list **lp;
-    
+
     h = (nlmsg_list*)malloc(n->nlmsg_len+sizeof(void*));
     if (h == NULL) {
-	isc_throw(Unexpected, "Failed to allocate " << n->nlmsg_len+sizeof(void*)
-		  << " bytes.");
+        isc_throw(Unexpected, "Failed to allocate " << n->nlmsg_len+sizeof(void*)
+                  << " bytes.");
     }
-    
+
     memcpy(&h->h, n, n->nlmsg_len);
     h->next = NULL;
-    
-    for (lp = linfo; *lp; lp = &(*lp)->next) /* NOTHING */;
+
+    for (lp = link_info; *lp; lp = &(*lp)->next) /* NOTHING */;
     *lp = h;
-    
-    // ll_remember_index(who, n, NULL);
-    // return 0;
 }
 
 void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {
     memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
     while (RTA_OK(rta, len)) {
-	if (rta->rta_type <= max)
-	    tb[rta->rta_type] = rta;
-	rta = RTA_NEXT(rta,len);
+        if (rta->rta_type <= max)
+            tb[rta->rta_type] = rta;
+        rta = RTA_NEXT(rta,len);
     }
     if (len) {
-	isc_throw(Unexpected, "Failed to parse RTATTR in netlink message.");
+        isc_throw(Unexpected, "Failed to parse RTATTR in netlink message.");
     }
 }
 
-
- void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *ainfo) {
+void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
     uint8_t addr[16];
     struct rtattr * rta_tb[IFA_MAX+1];
 
-    for ( ;ainfo ;  ainfo = ainfo->next) {
-	struct nlmsghdr *n = &ainfo->h;
-	struct ifaddrmsg *ifa = (ifaddrmsg*)NLMSG_DATA(n);
+    for ( ;addr_info ;  addr_info = addr_info->next) {
+        struct nlmsghdr *n = &addr_info->h;
+        struct ifaddrmsg *ifa = (ifaddrmsg*)NLMSG_DATA(n);
 
-	// these are not the addresses you are looking for
-	if ( ifa->ifa_index != iface.ifindex_) {
-	    continue;
-	}
+        // these are not the addresses you are looking for
+        if ( ifa->ifa_index != iface.ifindex_) {
+            continue;
+        }
 
-	if ( ifa->ifa_family == AF_INET6 ) {
-	    memset(rta_tb, 0, sizeof(rta_tb));
-	    parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
-	    if (!rta_tb[IFA_LOCAL])   
-		rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
-	    if (!rta_tb[IFA_ADDRESS]) 
-		rta_tb[IFA_ADDRESS] = rta_tb[IFA_LOCAL];
-	    
-	    memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]),16);
-	    IOAddress a = IOAddress::from_bytes(AF_INET6, addr);
-	    iface.addrs_.push_back(a);
+        if ( ifa->ifa_family == AF_INET6 ) {
+            memset(rta_tb, 0, sizeof(rta_tb));
+            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+            if (!rta_tb[IFA_LOCAL])
+                rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
+            if (!rta_tb[IFA_ADDRESS])
+                rta_tb[IFA_ADDRESS] = rta_tb[IFA_LOCAL];
 
-	    /// TODO: Read lifetimes of configured addresses
-	}
+            memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]),16);
+            IOAddress a = IOAddress::from_bytes(AF_INET6, addr);
+            iface.addrs_.push_back(a);
 
-	if ( ifa->ifa_family == AF_INET ) {
-	    memset(rta_tb, 0, sizeof(rta_tb));
-	    parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
-	    if (!rta_tb[IFA_LOCAL])   
-		rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
-	    if (!rta_tb[IFA_ADDRESS]) 
-		rta_tb[IFA_ADDRESS] = rta_tb[IFA_LOCAL];
-	    
-	    memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]),4);
-	    IOAddress a = IOAddress::from_bytes(AF_INET, addr);
-	    iface.addrs_.push_back(a);
-	}
+            /// TODO: Read lifetimes of configured addresses
+        }
 
+        if ( ifa->ifa_family == AF_INET ) {
+            memset(rta_tb, 0, sizeof(rta_tb));
+            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+            if (!rta_tb[IFA_LOCAL])
+                rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
+            if (!rta_tb[IFA_ADDRESS])
+                rta_tb[IFA_ADDRESS] = rta_tb[IFA_LOCAL];
 
+            memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]),4);
+            IOAddress a = IOAddress::from_bytes(AF_INET, addr);
+            iface.addrs_.push_back(a);
+        }
     }
 }
 
 
-void rtnl_process_reply(struct rtnl_handle &rth,
-		       struct nlmsg_list *&info) {
+void rtnl_process_reply(struct rtnl_handle &rth, struct nlmsg_list *&info) {
 
     struct sockaddr_nl nladdr;
     struct iovec iov;
@@ -212,91 +213,91 @@ void rtnl_process_reply(struct rtnl_handle &rth,
     msg.msg_iovlen = 1;
 
     char buf[rcvbuf];
-    
+
     iov.iov_base = buf;
     while (1) {
-	int status;
-	struct nlmsghdr *h;
-	
-	iov.iov_len = sizeof(buf);
-	status = recvmsg(rth.fd, &msg, 0);
-	
-	if (status < 0) {
-	    if (errno == EINTR)
-		continue;
-	    isc_throw(Unexpected, "Overrun while processing reply from netlink socket.");
-	}
-	
-	if (status == 0) {
-	    isc_throw(Unexpected, "EOF while reading netlink socket.");
-	}
-	
-	h = (struct nlmsghdr*)buf;
-	while (NLMSG_OK(h, status)) {
+        int status;
+        struct nlmsghdr *h;
 
-	    // why we received this anyway?
-	    if (nladdr.nl_pid != 0 ||
-		h->nlmsg_pid != rth.local.nl_pid ||
-		h->nlmsg_seq != rth.dump) {
-		h = NLMSG_NEXT(h, status);
-		continue;
-	    }
-		    
-	    if (h->nlmsg_type == NLMSG_DONE) {
-		// end of message
-		return;
-	    }
+        iov.iov_len = sizeof(buf);
+        status = recvmsg(rth.fd, &msg, 0);
 
-	    if (h->nlmsg_type == NLMSG_ERROR) {
-		struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
-		if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-		    // we are really out of luck here. We can't even say what is
-		    // wrong as error message is truncated. D'oh.
-		    isc_throw(Unexpected, "Netlink reply read failed.");
-		} else {
-		    isc_throw(Unexpected, "Netlink reply read error " << -err->error);
-		}
-		// never happens we throw before we reach here
-		return;
-	    }
+        if (status < 0) {
+            if (errno == EINTR)
+                continue;
+            isc_throw(Unexpected, "Overrun while processing reply from netlink socket.");
+        }
 
-	    // store the data 
-	    rtnl_store_reply(/*&nladdr,*/ h, &info);
-	    
-	    h = NLMSG_NEXT(h, status);
-	}
-	if (msg.msg_flags & MSG_TRUNC) {
-	    isc_throw(Unexpected, "Message received over netlink truncated.");
-	}
-	if (status) {
-	    isc_throw(Unexpected, "Trailing garbage of " << status << " bytes received over netlink.");
-	}
+        if (status == 0) {
+            isc_throw(Unexpected, "EOF while reading netlink socket.");
+        }
+
+        h = (struct nlmsghdr*)buf;
+        while (NLMSG_OK(h, status)) {
+
+            // why we received this anyway?
+            if (nladdr.nl_pid != 0 ||
+                h->nlmsg_pid != rth.local.nl_pid ||
+                h->nlmsg_seq != rth.dump) {
+                h = NLMSG_NEXT(h, status);
+                continue;
+            }
+
+            if (h->nlmsg_type == NLMSG_DONE) {
+                // end of message
+                return;
+            }
+
+            if (h->nlmsg_type == NLMSG_ERROR) {
+                struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
+                if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
+                    // we are really out of luck here. We can't even say what is
+                    // wrong as error message is truncated. D'oh.
+                    isc_throw(Unexpected, "Netlink reply read failed.");
+                } else {
+                    isc_throw(Unexpected, "Netlink reply read error " << -err->error);
+                }
+                // never happens we throw before we reach here
+                return;
+            }
+
+            // store the data
+            rtnl_store_reply(h, &info);
+
+            h = NLMSG_NEXT(h, status);
+        }
+        if (msg.msg_flags & MSG_TRUNC) {
+            isc_throw(Unexpected, "Message received over netlink truncated.");
+        }
+        if (status) {
+            isc_throw(Unexpected, "Trailing garbage of " << status << " bytes received over netlink.");
+        }
     }
 }
 
-void release_list(struct nlmsg_list *n) {
+/// @brief releases nlmsg list
+///
+/// @param head first element of the list to be released
+void release_list(struct nlmsg_list *head) {
     struct nlmsg_list *tmp;
-    while (n) {
-	tmp = n->next;
-	free(n);
-	n = tmp;
+    while (head) {
+        tmp = head->next;
+        free(head);
+        head = tmp;
     }
 }
 
-    
-void
-IfaceMgr::detectIfaces() {
-
+void IfaceMgr::detectIfaces() {
     cout << "Linux: detecting interfaces." << endl;
 
-    struct nlmsg_list *linfo = NULL;
-    struct nlmsg_list *ainfo = NULL;
-    struct nlmsg_list *l = NULL;
+    struct nlmsg_list* link_info = NULL; // link info list
+    struct nlmsg_list* addr_info = NULL; // address info list
+    struct nlmsg_list* l = NULL;
     struct rtnl_handle rth;
 
-    /* required to display information about interface */
-    struct ifinfomsg *ifi = NULL;
-    struct rtattr * tb[IFLA_MAX+1];
+    // required to display information about interface
+    struct ifinfomsg* ifi = NULL;
+    struct rtattr* tb[IFLA_MAX+1];
     int len = 0;
     memset(tb, 0, sizeof(tb));
     memset(&rth,0, sizeof(rth));
@@ -305,60 +306,66 @@ IfaceMgr::detectIfaces() {
     rtnl_open_socket(rth);
 
     // now we have open functional socket, let's use it!
+    // ask for list of interface...
     rtnl_send_request(rth, AF_PACKET, RTM_GETLINK);
 
-    // process reply
-    rtnl_process_reply(rth, linfo);
-    //rtnl_dump_filter(&rth, store_nlmsg, &linfo, NULL, NULL);
-    
-    /* 2nd attribute: AF_UNSPEC, AF_INET, AF_INET6 */
+    // Get reply and store it in link_info list.
+    rtnl_process_reply(rth, link_info);
+
+    // Now ask for list of addresses (AF_UNSPEC = of any family)
     rtnl_send_request(rth, AF_UNSPEC, RTM_GETADDR);
-    rtnl_process_reply(rth, ainfo);
 
-    /* build list with interface names */
-    for (l=linfo; l; l = l->next) {
-	ifi = (ifinfomsg*)NLMSG_DATA(&l->h);
-	len = (&l->h)->nlmsg_len;
-	len -= NLMSG_LENGTH(sizeof(*ifi));
-	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
+    // Get reply and store it in addr_info list.
+    rtnl_process_reply(rth, addr_info);
 
-	Iface* iface = new Iface(string( (char*)RTA_DATA(tb[IFLA_IFNAME])), ifi->ifi_index);
+    // Now build list with interface names
+    for (l=link_info; l; l = l->next) {
+        ifi = (ifinfomsg*)NLMSG_DATA(&l->h);
+        len = (&l->h)->nlmsg_len;
+        len -= NLMSG_LENGTH(sizeof(*ifi));
+        parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 
-	iface->hardware_type_ = ifi->ifi_type;
-	iface->setFlags(ifi->ifi_flags);
+        Iface* iface = new Iface(string( (char*)RTA_DATA(tb[IFLA_IFNAME])), ifi->ifi_index);
 
-	iface->mac_len_ = 0;
-	memset(iface->mac_, 0, IfaceMgr::MAX_MAC_LEN);
-	/* Does inetface has LL_ADDR? */
-	if (tb[IFLA_ADDRESS]) {
-  	    iface->mac_len_ = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
-	    if (iface->mac_len_ > IfaceMgr::MAX_MAC_LEN) {
-		iface->mac_len_ = 0;
-		isc_throw(Unexpected, "Interface " << iface->getFullName() 
-			  << " was detected to have link address of length " << RTA_PAYLOAD(tb[IFLA_ADDRESS])
-			  << ", but maximum supported length is " << IfaceMgr::MAX_MAC_LEN);
-	    }
-	    memcpy(iface->mac_, RTA_DATA(tb[IFLA_ADDRESS]), iface->mac_len_);
-	}
-	else {
-	    /* Tunnels can have no LL_ADDR. RTA_PAYLOAD doesn't check it and try to
-	     * dereference it in this manner
-	     * #define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
-	     */
-	    iface->mac_len_ = 0;
-	}
+        iface->hardware_type_ = ifi->ifi_type;
+        iface->setFlags(ifi->ifi_flags);
 
-	ipaddrs_get(*iface, ainfo);
-	ifaces_.push_back(*iface);
+        iface->mac_len_ = 0;
+        memset(iface->mac_, 0, IfaceMgr::MAX_MAC_LEN);
+        // Does inetface has LL_ADDR?
+        if (tb[IFLA_ADDRESS]) {
+            iface->mac_len_ = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
+            if (iface->mac_len_ > IfaceMgr::MAX_MAC_LEN) {
+                iface->mac_len_ = 0;
+                isc_throw(Unexpected, "Interface " << iface->getFullName()
+                          << " was detected to have link address of length " << RTA_PAYLOAD(tb[IFLA_ADDRESS])
+                          << ", but maximum supported length is " << IfaceMgr::MAX_MAC_LEN);
+            }
+            memcpy(iface->mac_, RTA_DATA(tb[IFLA_ADDRESS]), iface->mac_len_);
+        }
+        else {
+            // Tunnels can have no LL_ADDR. RTA_PAYLOAD doesn't check it and try to
+            // dereference it in this manner
+            // #define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
+            iface->mac_len_ = 0;
+        }
+
+        ipaddrs_get(*iface, addr_info);
+        ifaces_.push_back(*iface);
     }
 
-
-    release_list(linfo);
-    release_list(ainfo);
+    release_list(link_info);
+    release_list(addr_info);
 
     printIfaces();
 }
 
+/// @brief sets flag_*_ fields.
+///
+/// This implementation is OS-specific as bits have different meaning
+/// on different OSes.
+///
+/// @param flags flags bitfield read from OS
 void IfaceMgr::Iface::setFlags(uint32_t flags) {
     flags_ = flags;
 
@@ -370,3 +377,5 @@ void IfaceMgr::Iface::setFlags(uint32_t flags) {
 }
 
 }
+
+#endif // if defined(LINUX)

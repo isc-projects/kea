@@ -373,7 +373,7 @@ AC_MSG_CHECKING(OS family)
 system=`uname -s`
 case $system in
     Linux)
-      OS_TYPE="LINUX"
+      OS_TYPE="Linux"
       CPPFLAGS="$CPPFLAGS -DOS_LINUX"
       ;;
     Darwin | FreeBSD | NetBSD | OpenBSD)
@@ -390,10 +390,13 @@ case $system in
       ;;
 esac
 AC_MSG_RESULT($OS_TYPE)
-AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = LINUX)
-AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
-AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
 
+AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = Linux)
+AM_COND_IF([OS_LINUX], [AC_DEFINE([OS_LINUX], [1], [Running on Linux?])])
+AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
+AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
+AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
+AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([

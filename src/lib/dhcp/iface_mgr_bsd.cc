@@ -12,6 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
+#if defined(OS_BSD)
+
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 
@@ -19,17 +23,6 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
-
-#if !defined(OS_BSD)
-/// There are several detectIfaces() implementations for specific
-/// Operating Systems. This one is specific to BSD. It works on
-/// BSD only, so it does not make sense to try to compile it somewhere
-/// else. In particular, Makefile.am includes only one iface_mgr_{OS_TYPE}.cc
-/// file.
-
-#error "Attempt to compile iface_mgr_bsd.cc on non-BSD system!"
-
-#endif
 
 namespace isc {
 
@@ -41,3 +34,5 @@ IfaceMgr::detectIfaces() {
 }
 
 }
+
+#endif
