@@ -54,6 +54,12 @@ public:
         /// returns link-layer address a plain text
         std::string getPlainMac() const;
 
+        /// @brief Sets flag_*_ fields based on bitmask value returned by OS
+        ///
+        /// Note: Implementation of this method is OS-dependent as bits have
+        /// different meaning on each OS.
+        ///
+        /// @param flags bitmask value returned by OS in interface detection
         void setFlags(uint32_t flags);
 
         /// network interface name
