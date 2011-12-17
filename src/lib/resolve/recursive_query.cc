@@ -355,7 +355,7 @@ private:
             IOFetch query(protocol_, io_, question_,
                 test_server_.first,
                 test_server_.second, buffer_, this,
-                query_timeout_);
+                query_timeout_, edns_);
             io_.get_io_service().post(query);
         } else {
             IOFetch query(protocol_, io_, question_,
