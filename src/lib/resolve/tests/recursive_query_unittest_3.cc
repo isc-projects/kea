@@ -510,14 +510,15 @@ private:
 TEST_F(RecursiveQueryTest3, Resolve) {
     // Set up the UDP server and issue the first read.  The endpoint from which
     // the query is sent is put in udp_endpoint_ when the read completes, which
-    // is referenced in the callback as the place to which the response is sent.
+    // is referenced in the callback as the place to which the response is
+    // sent.
     udp_socket_.set_option(socket_base::reuse_address(true));
     udp_socket_.bind(udp::endpoint(address::from_string(TEST_ADDRESS3),
                                    TEST_PORT3));
     udp_socket_.async_receive_from(asio::buffer(udp_receive_buffer_,
                                                 sizeof(udp_receive_buffer_)),
                                    udp_remote_,
-                                   boost::bind(&RecursiveQueryTest3::udpReceiveHandler,
+                           boost::bind(&RecursiveQueryTest3::udpReceiveHandler,
                                                this, _1, _2));
 
     // Set up the TCP server and issue the accept.  Acceptance will cause the
@@ -528,8 +529,8 @@ TEST_F(RecursiveQueryTest3, Resolve) {
                           boost::bind(&RecursiveQueryTest3::tcpAcceptHandler,
                                       this, _1, 0));
 
-    // Set up the RecursiveQuery object. We will also test that it correctly records
-    // RTT times by setting up a RTT recorder object as well.
+    // Set up the RecursiveQuery object. We will also test that it correctly
+    // records RTT times by setting up a RTT recorder object as well.
     std::vector<std::pair<std::string, uint16_t> > upstream;         // Empty
     std::vector<std::pair<std::string, uint16_t> > upstream_root;    // Empty
     RecursiveQuery query(dns_service_, *nsas_, cache_,
@@ -551,7 +552,8 @@ TEST_F(RecursiveQueryTest3, Resolve) {
     // Check what ran. (We have to cast the callback to ResolverCallback3 as we
     // lost the information on the derived class when we used a
     // ResolverInterface::CallbackPtr to store a pointer to it.)
-    ResolverCallback3* rc = static_cast<ResolverCallback3*>(resolver_callback.get());
+    ResolverCallback3* rc
+                    = static_cast<ResolverCallback3*>(resolver_callback.get());
     EXPECT_TRUE(rc->getRun());
     EXPECT_TRUE(rc->getStatus());
 
