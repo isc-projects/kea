@@ -19,7 +19,7 @@
 #include <arpa/inet.h>
 
 #include <dhcp/dhcp6.h>
-#include <dhcp6/iface_mgr.h>
+#include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 
 using namespace std;
