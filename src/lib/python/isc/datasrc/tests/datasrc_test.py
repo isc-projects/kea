@@ -269,6 +269,43 @@ class DataSrcClient(unittest.TestCase):
         self.assertNotEqual(ZoneFinder.WILDCARD_CNAME,
                             ZoneFinder.WILDCARD_NXRRSET)
 
+    def test_findall(self):
+        """
+        A test for the find_all method.
+        """
+        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
+        result, finder = dsc.find_zone(isc.dns.Name("example.com"))
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual(isc.dns.RRClass.IN(), finder.get_class())
+        self.assertEqual("example.com.", finder.get_origin().to_text())
+
+        # Some "failure" responses
+        result, rrset = finder.find_all(isc.dns.Name("www.sql1.example.com"),
+                                        finder.FIND_DEFAULT)
+        self.assertEqual(finder.DELEGATION, result)
+        self.assertEqual("sql1.example.com. 3600 IN NS dns01.example.com.\n" +
+                         "sql1.example.com. 3600 IN NS dns02.example.com.\n" +
+                         "sql1.example.com. 3600 IN NS dns03.example.com.\n",
+                         rrset.to_text())
+
+        result, rrset = finder.find_all(isc.dns.Name("nxdomain.example.com"),
+                                        finder.FIND_DEFAULT)
+        self.assertEqual(finder.NXDOMAIN, result)
+        self.assertIsNone(None, rrset)
+
+        # A success. It should return the list now.
+        result, rrsets = finder.find_all(isc.dns.Name("mix.example.com."))
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(2, len(rrsets))
+        self.assertEqual(sort(map(lambda rrset: rrset.get_type().to_text(),
+                                  rrsets)), sort(["A", "AAAA"]))
+        rdatas = []
+        for rrset in rrsets:
+            rdatas.extend(rrset.get_rdata())
+        self.assertEqual(sort(map(lambda rdata: rdata.to_text(), rdatas)),
+                              sort(["192.0.2.1", "192.0.2.2", "2001:db8::1",
+                                    "2001:db8::2"]))
+
     def test_find(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
