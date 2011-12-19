@@ -98,20 +98,32 @@ class DDNSServer:
         '''
         if cmd == "shutdown":
             logger.info(DDNS_RECEIVED_SHUTDOWN_COMMAND)
-            self.shutdown()
+            self.trigger_shutdown()
             answer = create_answer(0)
         else:
             answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
 
-    def shutdown(self):
+    def trigger_shutdown(self):
+        '''Initiate a shutdown sequence.
+
+        This method is expected to be called in various ways including
+        in the middle of a signal handler, and is designed to be as simple
+        as possible to minimize side effects.  Actual shutdown will take
+        place in a normal control flow.
+
         '''
-        Shut down the server. Perform any cleanup that is necessary.
-        Currently, this only sets the internal _shutdown value to true,
-        so the main loop in run() stops.
-        '''
-        self._shutdown = True
         logger.info(DDNS_SHUTDOWN)
+        self._shutdown = True
+
+    def shutdown_cleanup(self):
+        '''
+        Perform any cleanup that is necessary when shutting down the server.
+        Do NOT call this to initialize shutdown, use trigger_shutdown().
+
+        Currently, it does nothing, but cleanup routines are expected.
+        '''
+        pass
 
     def run(self):
         '''
@@ -126,6 +138,7 @@ class DDNSServer:
             # make such a distinction easily, but once we do, this would
             # be the place to catch.
             self._cc.check_command(False)
+        self.shutdown_cleanup()
         logger.info(DDNS_STOPPED)
 
 def create_signal_handler(ddns_server):
@@ -140,7 +153,7 @@ def create_signal_handler(ddns_server):
         here, the actual signal is not checked and the server is simply shut
         down.
         '''
-        ddns_server.shutdown()
+        ddns_server.trigger_shutdown()
     return signal_handler
 
 def set_signal_handler(signal_handler):
