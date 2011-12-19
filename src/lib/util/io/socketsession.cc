@@ -361,18 +361,23 @@ SocketSessionReceiver::pop() {
         const int type = static_cast<int>(ibuffer.readUint32());
         const int protocol = static_cast<int>(ibuffer.readUint32());
         const socklen_t local_end_len = ibuffer.readUint32();
-        if (local_end_len > sizeof(impl_->ss_local_)) {
-            isc_throw(SocketSessionError, "Local SA length too large: " <<
+        const socklen_t endpoint_minlen = (family == AF_INET) ?
+            sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+        if (local_end_len < endpoint_minlen ||
+            local_end_len > sizeof(impl_->ss_local_)) {
+            isc_throw(SocketSessionError, "Invalid local SA length: " <<
                       local_end_len);
         }
         ibuffer.readData(&impl_->ss_local_, local_end_len);
         const socklen_t remote_end_len = ibuffer.readUint32();
-        if (remote_end_len > sizeof(impl_->ss_remote_)) {
-            isc_throw(SocketSessionError, "Remote SA length too large: " <<
+        if (remote_end_len < endpoint_minlen ||
+            remote_end_len > sizeof(impl_->ss_remote_)) {
+            isc_throw(SocketSessionError, "Invalid remote SA length: " <<
                       remote_end_len);
         }
         ibuffer.readData(&impl_->ss_remote_, remote_end_len);
-        if (family != impl_->sa_local_->sa_family) {
+        if (family != impl_->sa_local_->sa_family ||
+            family != impl_->sa_remote_->sa_family) {
             isc_throw(SocketSessionError, "SA family inconsistent: " <<
                       static_cast<int>(impl_->sa_local_->sa_family) << ", " <<
                       static_cast<int>(impl_->sa_remote_->sa_family) <<

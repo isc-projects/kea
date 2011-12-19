@@ -25,6 +25,7 @@
 #include <cerrno>
 #include <cstring>
 
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -318,9 +319,9 @@ protected:
         obuffer.writeUint32(static_cast<uint32_t>(type));
         obuffer.writeUint32(static_cast<uint32_t>(protocol));
         obuffer.writeUint32(static_cast<uint32_t>(local_len));
-        obuffer.writeData(&local, getSALength(local));
+        obuffer.writeData(&local, min(local_len, getSALength(local)));
         obuffer.writeUint32(static_cast<uint32_t>(remote_len));
-        obuffer.writeData(&remote, getSALength(remote));
+        obuffer.writeData(&remote, min(remote_len, getSALength(remote)));
         obuffer.writeUint32(static_cast<uint32_t>(data_len));
         pushSessionHeader(obuffer.getLength());
         if (send(dummy_forwarder_.fd, obuffer.getData(), obuffer.getLength(),
@@ -751,6 +752,7 @@ TEST_F(ForwardTest, badPop) {
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai6.second, *sai6.first);
     dummy_forwarder_.reset(-1);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
     // Pass too big sa length for local
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
@@ -763,6 +765,20 @@ TEST_F(ForwardTest, badPop) {
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sizeof(struct sockaddr_storage) + 1,
                 *sai_remote.first);
+    dummy_forwarder_.reset(-1);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+
+    // Pass too small sa length for local
+    pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                sizeof(struct sockaddr_in) - 1, *sai_local.first,
+                sai_remote.second, *sai_remote.first);
+    dummy_forwarder_.reset(-1);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+
+    // Same for remote
+    pushSession(AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
+                sai6.second, *sai6.first, sizeof(struct sockaddr_in6) - 1,
+                *sai6.first);
     dummy_forwarder_.reset(-1);
     EXPECT_THROW(receiver_->pop(), SocketSessionError);
 
