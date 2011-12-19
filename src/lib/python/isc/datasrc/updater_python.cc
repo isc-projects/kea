@@ -48,6 +48,7 @@ using namespace isc::datasrc::python;
 namespace isc_datasrc_internal {
 // See finder_python.cc
 PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args);
+PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args);
 }
 
 namespace {
@@ -185,6 +186,13 @@ ZoneUpdater_find(PyObject* po_self, PyObject* args) {
                                                     args));
 }
 
+PyObject*
+ZoneUpdater_find_all(PyObject* po_self, PyObject* args) {
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+    return (isc_datasrc_internal::ZoneFinder_helper_all(
+        &self->cppobj->getFinder(), args));
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -208,6 +216,7 @@ PyMethodDef ZoneUpdater_methods[] = {
       METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", reinterpret_cast<PyCFunction>(ZoneUpdater_find), METH_VARARGS,
       ZoneFinder_find_doc },
+    { "find_all", ZoneUpdater_find_all, METH_VARARGS, "TODO" },
     { NULL, NULL, 0, NULL }
 };
 
