@@ -584,7 +584,7 @@ class XfrinConnection(asyncore.dispatcher):
         if result != DataSourceClient.SUCCESS:
             return None
         result, soa_rrset = finder.find(self._zone_name, RRType.SOA(),
-                                        None, ZoneFinder.FIND_DEFAULT)
+                                        ZoneFinder.FIND_DEFAULT)
         if result != ZoneFinder.SUCCESS:
             logger.info(XFRIN_ZONE_NO_SOA, self.zone_str())
             return None

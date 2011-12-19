@@ -279,7 +279,6 @@ class DataSrcClient(unittest.TestCase):
 
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
@@ -292,20 +291,8 @@ class DataSrcClient(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
-        result, rrset = finder.find(isc.dns.Name("www.example.com"),
-                                    isc.dns.RRType.A(), None)
-        self.assertEqual(finder.SUCCESS, result)
-        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
-                         rrset.to_text())
-
-        # Invalid value for the "target"
-        self.assertRaises(TypeError, finder.find,
-                          isc.dns.Name("www.example.com"),
-                          isc.dns.RRType.A(), True)
-
         result, rrset = finder.find(isc.dns.Name("www.sql1.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.DELEGATION, result)
         self.assertEqual("sql1.example.com. 3600 IN NS dns01.example.com.\n" +
@@ -315,28 +302,24 @@ class DataSrcClient(unittest.TestCase):
 
         result, rrset = finder.find(isc.dns.Name("doesnotexist.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
 
         result, rrset = finder.find(isc.dns.Name("www.some.other.domain"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
 
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.TXT(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.NXRRSET, result)
         self.assertEqual(None, rrset)
 
         result, rrset = finder.find(isc.dns.Name("cname-ext.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.CNAME, result)
         self.assertEqual(
@@ -345,7 +328,6 @@ class DataSrcClient(unittest.TestCase):
 
         result, rrset = finder.find(isc.dns.Name("foo.wild.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.WILDCARD, result)
         self.assertEqual("foo.wild.example.com. 3600 IN A 192.0.2.255\n",
@@ -353,7 +335,6 @@ class DataSrcClient(unittest.TestCase):
 
         result, rrset = finder.find(isc.dns.Name("foo.wild.example.com"),
                                     isc.dns.RRType.TXT(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.WILDCARD_NXRRSET, result)
         self.assertEqual(None, rrset)
@@ -361,17 +342,14 @@ class DataSrcClient(unittest.TestCase):
         self.assertRaises(TypeError, finder.find,
                           "foo",
                           isc.dns.RRType.A(),
-                          None,
                           finder.FIND_DEFAULT)
         self.assertRaises(TypeError, finder.find,
                           isc.dns.Name("cname-ext.example.com"),
                           "foo",
-                          None,
                           finder.FIND_DEFAULT)
         self.assertRaises(TypeError, finder.find,
                           isc.dns.Name("cname-ext.example.com"),
                           isc.dns.RRType.A(),
-                          None,
                           "foo")
 
     def test_find_previous(self):
@@ -409,7 +387,6 @@ class DataSrcUpdater(unittest.TestCase):
         updater = dsc.get_updater(isc.dns.Name("example.com"), False)
         result, rrset = updater.find(isc.dns.Name("www.example.com"),
                                      isc.dns.RRType.A(),
-                                     None,
                                      ZoneFinder.FIND_DEFAULT)
         self.assertEqual(ZoneFinder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
@@ -421,17 +398,6 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(ZoneFinder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
-
-        result, rrset = updater.find(isc.dns.Name("www.example.com"),
-                                     isc.dns.RRType.A(), None)
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
-                         rrset.to_text())
-
-        # Invalid value for 'target'
-        self.assertRaises(TypeError, updater.find,
-                          isc.dns.Name("www.example.com"),
-                          isc.dns.RRType.A(), 1)
 
     def test_update_delete_commit(self):
 
@@ -445,7 +411,6 @@ class DataSrcUpdater(unittest.TestCase):
 
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
@@ -467,14 +432,12 @@ class DataSrcUpdater(unittest.TestCase):
         # finder (since we have not committed)
         result, rrset = updater.find(isc.dns.Name("www.example.com"),
                                      isc.dns.RRType.A(),
-                                     None,
                                      finder.FIND_DEFAULT)
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
 
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
@@ -487,7 +450,6 @@ class DataSrcUpdater(unittest.TestCase):
         # the record should be gone now in the 'real' finder as well
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
@@ -502,7 +464,6 @@ class DataSrcUpdater(unittest.TestCase):
 
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
@@ -527,7 +488,6 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("example.com.", finder.get_origin().to_text())
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
@@ -551,7 +511,6 @@ class DataSrcUpdater(unittest.TestCase):
 
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
@@ -573,7 +532,6 @@ class DataSrcUpdater(unittest.TestCase):
         # finder (since we have not committed)
         result, rrset = updater.find(isc.dns.Name("www.example.com"),
                                      isc.dns.RRType.A(),
-                                     None,
                                      finder.FIND_DEFAULT)
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
@@ -584,7 +542,6 @@ class DataSrcUpdater(unittest.TestCase):
         # the record should still be available in the 'real' finder as well
         result, rrset = finder.find(isc.dns.Name("www.example.com"),
                                     isc.dns.RRType.A(),
-                                    None,
                                     finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
