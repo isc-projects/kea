@@ -101,8 +101,7 @@ public:
     enum QueryStatus {
         NONE = 0,                   ///< Default
         EDNS_UDP = 1,               ///< EDNS query over UDP
-        EDNS_TCP = 2,               ///< EDNS query over TCP
-        NON_EDNS_UDP = 3,           ///< Non-EDNS query over UDP
+        NON_EDNS_UDP = 2,           ///< Non-EDNS query over UDP
         COMPLETE = 6                ///< Query is complete
     };
 
@@ -225,7 +224,7 @@ public:
             EXPECT_TRUE(query.getEDNS());
             // Return FORMERROR
             setFORMERR(message);
-            expected_ = EDNS_TCP;
+            expected_ = NON_EDNS_UDP;
             break;
 
         case NON_EDNS_UDP:
@@ -346,14 +345,7 @@ public:
 
         // Set up state-dependent bits:
         switch (expected_) {
-        case EDNS_TCP:
-            EXPECT_TRUE(query.getEDNS());
-            // Return FORMERROR
-            setFORMERR(message);
-            expected_ = NON_EDNS_UDP;
-            break;
-
-         default:
+        default:
             FAIL() << "TcpReceiveHandler called with unknown state";
         }
 

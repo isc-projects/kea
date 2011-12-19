@@ -1,5 +1,6 @@
 xxx.	[bug]		dvv
-	resolver: EDNS fallback on FORMERR
+	resolver: If an upstream server responds with FORMERR to an EDNS query,
+	try querying it without EDNS.
 	(Trac #1386, git TBD)
 
 342.	[bug]		stephen
