@@ -558,11 +558,9 @@ private:
             // see if it's a FORMERR and a potential EDNS problem
             if (incoming.getRcode() == Rcode::FORMERR()) {
                 if (protocol_ == IOFetch::UDP && edns_) {
-                    // try EDNS over TCP
-                    send(IOFetch::TCP, true);
-                    return (false);
-                } else if (protocol_ == IOFetch::TCP && edns_) {
-                    // try UDP, no EDNS
+                    // TODO: in case we absolutely need EDNS (i.e. for DNSSEC
+                    // aware queries), we might want to try TCP before we give
+                    // up. For now, just try UDP, no EDNS
                     send(IOFetch::UDP, false);
                     return (false);
                 }
