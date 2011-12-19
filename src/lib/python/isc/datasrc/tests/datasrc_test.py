@@ -297,14 +297,14 @@ class DataSrcClient(unittest.TestCase):
         result, rrsets = finder.find_all(isc.dns.Name("mix.example.com."))
         self.assertEqual(ZoneFinder.SUCCESS, result)
         self.assertEqual(2, len(rrsets))
-        self.assertEqual(sort(map(lambda rrset: rrset.get_type().to_text(),
-                                  rrsets)), sort(["A", "AAAA"]))
+        self.assertEqual(sorted(map(lambda rrset: rrset.get_type().to_text(),
+                                    rrsets)), sorted(["A", "AAAA"]))
         rdatas = []
         for rrset in rrsets:
             rdatas.extend(rrset.get_rdata())
-        self.assertEqual(sort(map(lambda rdata: rdata.to_text(), rdatas)),
-                              sort(["192.0.2.1", "192.0.2.2", "2001:db8::1",
-                                    "2001:db8::2"]))
+        self.assertEqual(sorted(map(lambda rdata: rdata.to_text(), rdatas)),
+                         sorted(["192.0.2.1", "192.0.2.2", "2001:db8::1",
+                                 "2001:db8::2"]))
 
     def test_find(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)

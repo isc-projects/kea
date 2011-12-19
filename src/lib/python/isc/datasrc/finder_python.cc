@@ -94,6 +94,62 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
     return Py_BuildValue("I", 1);
 }
 
+PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
+    if (finder == NULL) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Internal error in find_all() wrapper; "
+                        "finder object NULL");
+        return (NULL);
+    }
+    PyObject* name;
+    unsigned int options_int = ZoneFinder::FIND_DEFAULT;
+    if (PyArg_ParseTuple(args, "O!|I", &name_type, &name,
+                                         &options_int)) {
+        try {
+            ZoneFinder::FindOptions options =
+                static_cast<ZoneFinder::FindOptions>(options_int);
+            std::vector<isc::dns::ConstRRsetPtr> target;
+            const ZoneFinder::FindResult find_result(
+                finder->findAll(PyName_ToName(name), target, options));
+            const ZoneFinder::Result r = find_result.code;
+            isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
+            if (r == ZoneFinder::SUCCESS || r == ZoneFinder::WILDCARD) {
+                // Copy all the RRsets to the result list
+                PyObjectContainer list_container(PyList_New(target.size()));
+                for (size_t i(0); i < target.size(); ++i) {
+                    PyList_SET_ITEM(list_container.get(), i,
+                                    createRRsetObject(*target[i]));
+                }
+                // Construct the result with the list. The Py_BuildValue
+                // increases the refcount and the container decreases it
+                // later. This way, it feels safer in case the build function
+                // would fail.
+                return (Py_BuildValue("IO", r, list_container.get()));
+            } else {
+                if (rrsp) {
+                    // Use N instead of O so the refcount isn't increased twice
+                    return (Py_BuildValue("IN", r, createRRsetObject(*rrsp)));
+                } else {
+                    return (Py_BuildValue("IO", r, Py_None));
+                }
+            }
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
+            return (NULL);
+        }
+    } else {
+        return (NULL);
+    }
+    return Py_BuildValue("I", 1);
+}
+
 } // end namespace internal
 
 namespace {
@@ -167,6 +223,13 @@ ZoneFinder_find(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
+ZoneFinder_find_all(PyObject* po_self, PyObject* args) {
+    s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
+    return (isc_datasrc_internal::ZoneFinder_helper_all(self->cppobj.get(),
+                                                        args));
+}
+
+PyObject*
 ZoneFinder_findPreviousName(PyObject* po_self, PyObject* args) {
     s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
     PyObject* name_obj;
@@ -202,6 +265,7 @@ PyMethodDef ZoneFinder_methods[] = {
        ZoneFinder_getOrigin_doc },
     { "get_class", ZoneFinder_getClass, METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", ZoneFinder_find, METH_VARARGS, ZoneFinder_find_doc },
+    { "find_all", ZoneFinder_find_all, METH_VARARGS, "TODO" },
     { "find_previous_name", ZoneFinder_findPreviousName, METH_VARARGS,
       ZoneFinder_find_previous_name_doc },
     { NULL, NULL, 0, NULL }
