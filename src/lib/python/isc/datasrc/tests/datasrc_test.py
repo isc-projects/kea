@@ -305,6 +305,36 @@ class DataSrcClient(unittest.TestCase):
         self.assertEqual(sorted(map(lambda rdata: rdata.to_text(), rdatas)),
                          sorted(["192.0.2.1", "192.0.2.2", "2001:db8::1",
                                  "2001:db8::2"]))
+        # The same, but on an updater
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        updater = dsc.get_updater(isc.dns.Name("example.com"), False)
+
+        # Some "failure" responses
+        result, rrset = updater.find_all(isc.dns.Name("www.sql1.example.com"),
+                                        finder.FIND_DEFAULT)
+        self.assertEqual(finder.DELEGATION, result)
+        self.assertEqual("sql1.example.com. 3600 IN NS dns01.example.com.\n" +
+                         "sql1.example.com. 3600 IN NS dns02.example.com.\n" +
+                         "sql1.example.com. 3600 IN NS dns03.example.com.\n",
+                         rrset.to_text())
+
+        result, rrset = updater.find_all(isc.dns.Name("nxdomain.example.com"),
+                                         finder.FIND_DEFAULT)
+        self.assertEqual(finder.NXDOMAIN, result)
+        self.assertIsNone(None, rrset)
+
+        # A success. It should return the list now.
+        result, rrsets = updater.find_all(isc.dns.Name("mix.example.com."))
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(2, len(rrsets))
+        self.assertEqual(sorted(map(lambda rrset: rrset.get_type().to_text(),
+                                    rrsets)), sorted(["A", "AAAA"]))
+        rdatas = []
+        for rrset in rrsets:
+            rdatas.extend(rrset.get_rdata())
+        self.assertEqual(sorted(map(lambda rdata: rdata.to_text(), rdatas)),
+                         sorted(["192.0.2.1", "192.0.2.2", "2001:db8::1",
+                                 "2001:db8::2"]))
 
     def test_find(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
