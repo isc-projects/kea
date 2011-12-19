@@ -291,6 +291,11 @@ public:
     /// including returning delegations, NSEC/NSEC3 proofs, etc. The options
     /// parameter works the same way and it should conform to the same exception
     /// restrictions.
+    ///
+    /// \param name \see find, parameter name
+    /// \param target the successfull result is returned through this
+    /// \param options \see find, parameter options
+    /// \return \see find and it's result
     virtual FindResult findAll(const isc::dns::Name& name,
                                std::vector<isc::dns::ConstRRsetPtr> &target,
                                const FindOptions options = FIND_DEFAULT) = 0;
