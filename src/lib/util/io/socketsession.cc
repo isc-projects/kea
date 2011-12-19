@@ -26,6 +26,7 @@
 
 #include <cerrno>
 #include <csignal>
+#include <cstddef>
 #include <cstring>
 #include <cassert>
 
@@ -102,10 +103,14 @@ SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
                   unix_file);
     }
     impl.sock_un_.sun_family = AF_UNIX;
+    // the copy should be safe due to the above check, but we'd be rather
+    // paranoid about making it 100% sure even if the check has a bug (with
+    // triggering the assertion in the worse case)
     strncpy(impl.sock_un_.sun_path, unix_file.c_str(),
             sizeof(impl.sock_un_.sun_path));
     assert(impl.sock_un_.sun_path[sizeof(impl.sock_un_.sun_path) - 1] == '\0');
-    impl.sock_un_len_ = 2 + unix_file.length();
+    impl.sock_un_len_ = offsetof(struct sockaddr_un, sun_path) +
+        unix_file.length();
 #ifdef HAVE_SA_LEN
     impl.sock_un_.sun_len = impl.sock_un_len_;
 #endif
