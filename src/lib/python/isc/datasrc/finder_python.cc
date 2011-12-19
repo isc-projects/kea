@@ -59,17 +59,11 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
     }
     PyObject* name;
     PyObject* rrtype;
-    PyObject* target = Py_None;
     unsigned int options_int = ZoneFinder::FIND_DEFAULT;
-    if (PyArg_ParseTuple(args, "O!O!|OI", &name_type, &name,
+    if (PyArg_ParseTuple(args, "O!O!|I", &name_type, &name,
                                          &rrtype_type, &rrtype,
-                                         &target, &options_int)) {
+                                         &options_int)) {
         try {
-            if (target != Py_None) {
-                PyErr_SetString(PyExc_TypeError,
-                                "find(): target must be None in this version");
-                return (NULL);
-            }
             ZoneFinder::FindOptions options =
                 static_cast<ZoneFinder::FindOptions>(options_int);
             const ZoneFinder::FindResult find_result(
