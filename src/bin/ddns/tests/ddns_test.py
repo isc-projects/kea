@@ -102,6 +102,16 @@ class TestMain(unittest.TestCase):
         ddns.main(self._server)
         self.assertTrue(self._server.run_called)
 
+    def check_exception(self, ex):
+        '''Common test sequence to see if the given exception is caused.
+        '''
+        # Should technically not be necessary, but reset server to be sure
+        self._server.reset()
+        self.assertFalse(self._server.exception_raised)
+        self._server.set_exception(ex)
+        ddns.main(self._server)
+        self.assertTrue(self._server.exception_raised)
+
     def test_exceptions(self):
         '''
         Test whether exceptions are caught in main()
@@ -112,36 +122,11 @@ class TestMain(unittest.TestCase):
         ddns.main(self._server)
         self.assertTrue(self._server.exception_raised)
 
-        # Should technically not be necessary, but reset server to be sure
-        self._server.reset()
-        self.assertFalse(self._server.exception_raised)
-        self._server.set_exception(isc.cc.SessionError("error"))
-        ddns.main(self._server)
-        self.assertTrue(self._server.exception_raised)
-
-        self._server.reset()
-        self.assertFalse(self._server.exception_raised)
-        self._server.set_exception(isc.config.ModuleCCSessionError("error"))
-        ddns.main(self._server)
-        self.assertTrue(self._server.exception_raised)
-
-        self._server.reset()
-        self.assertFalse(self._server.exception_raised)
-        self._server.set_exception(ddns.DDNSConfigError("error"))
-        ddns.main(self._server)
-        self.assertTrue(self._server.exception_raised)
-
-        self._server.reset()
-        self.assertFalse(self._server.exception_raised)
-        self._server.set_exception(isc.cc.SessionTimeout("error"))
-        ddns.main(self._server)
-        self.assertTrue(self._server.exception_raised)
-
-        self._server.reset()
-        self.assertFalse(self._server.exception_raised)
-        self._server.set_exception(Exception("error"))
-        ddns.main(self._server)
-        self.assertTrue(self._server.exception_raised)
+        self.check_exception(isc.cc.SessionError("error"))
+        self.check_exception(isc.config.ModuleCCSessionError("error"))
+        self.check_exception(ddns.DDNSConfigError("error"))
+        self.check_exception(isc.cc.SessionTimeout("error"))
+        self.check_exception(Exception("error"))
 
         # Add one that is not a subclass of Exception, and hence not
         # caught. Misuse BaseException for that.
