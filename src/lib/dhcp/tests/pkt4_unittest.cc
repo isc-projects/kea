@@ -506,7 +506,7 @@ TEST(Pkt4Test, unpackOptions) {
 
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    for (int i=0; i < sizeof(v4Opts); i++) {
+    for (int i = 0; i < sizeof(v4Opts); i++) {
         expectedFormat.push_back(v4Opts[i]);
     }
 
@@ -563,15 +563,19 @@ TEST(Pkt4Test, unpackOptions) {
 
 // This test verifies methods that are used for manipulating meta fields
 // i.e. fields that are not part of DHCPv4 (e.g. interface name).
-TEST(Pkt4Ttest, metaFields) {
-    Pkt4 pkt(DHCPDISCOVER, 1234);
+TEST(Pkt4Test, metaFields) {
 
-    pkt.setIface("lo0");
+    Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
+    pkt->setIface("loooopback");
+    pkt->setIndex(42);
+    pkt->setRemoteAddr(IOAddress("1.2.3.4"));
+    pkt->setLocalAddr(IOAddress("4.3.2.1"));
 
-    EXPECT_EQ("lo0", pkt.getIface());
+    EXPECT_EQ("loooopback", pkt->getIface());
+    EXPECT_EQ(42, pkt->getIndex());
+    EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
+    EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
 
-    /// TODO: Expand this test once additonal getters/setters are
-    /// implemented.
 }
 
 } // end of anonymous namespace

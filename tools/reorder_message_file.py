@@ -191,6 +191,6 @@ if __name__ == "__main__":
 
     # Read the files and load the data
     if len(sys.argv) != 2:
-        print "Usage: python reorder.py message_file"
+        print("Usage: python reorder.py message_file")
     else:
         process_file(sys.argv[1])
