@@ -265,7 +265,7 @@ PyMethodDef ZoneFinder_methods[] = {
        ZoneFinder_getOrigin_doc },
     { "get_class", ZoneFinder_getClass, METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", ZoneFinder_find, METH_VARARGS, ZoneFinder_find_doc },
-    { "find_all", ZoneFinder_find_all, METH_VARARGS, "TODO" },
+    { "find_all", ZoneFinder_find_all, METH_VARARGS, ZoneFinder_find_all_doc },
     { "find_previous_name", ZoneFinder_findPreviousName, METH_VARARGS,
       ZoneFinder_find_previous_name_doc },
     { NULL, NULL, 0, NULL }
