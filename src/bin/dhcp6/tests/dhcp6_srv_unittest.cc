@@ -57,7 +57,7 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // interfaces.txt instead. It will pretend to have detected
     // fe80::1234 link-local address on eth0 interface. Obviously
     // an attempt to bind this socket will fail.
-    Dhcpv6Srv* srv = 0;
+    Dhcpv6Srv* srv = NULL;
     ASSERT_NO_THROW( {
         // open an unpriviledged port
         srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
@@ -67,7 +67,7 @@ TEST_F(Dhcpv6SrvTest, basic) {
 }
 
 TEST_F(Dhcpv6SrvTest, Solicit_basic) {
-    NakedDhcpv6Srv * srv = 0;
+    NakedDhcpv6Srv* srv = NULL;
     ASSERT_NO_THROW( srv = new NakedDhcpv6Srv(); );
 
     // a dummy content for client-id
@@ -116,7 +116,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     boost::shared_ptr<Option> tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE( tmp );
 
-    Option6IA * reply_ia = dynamic_cast<Option6IA*> ( tmp.get() );
+    Option6IA* reply_ia = dynamic_cast<Option6IA*> ( tmp.get() );
     EXPECT_EQ( 234, reply_ia->getIAID() );
 
     // check that there's an address included
