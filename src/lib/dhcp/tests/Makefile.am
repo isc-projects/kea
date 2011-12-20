@@ -21,6 +21,8 @@ libdhcp___unittests_SOURCES  = run_unittests.cc
 libdhcp___unittests_SOURCES += ../libdhcp++.h ../libdhcp++.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += ../iface_mgr.cc ../iface_mgr.h iface_mgr_unittest.cc
+libdhcp___unittests_SOURCES += ../iface_mgr_linux.cc
+libdhcp___unittests_SOURCES += ../iface_mgr_bsd.cc
 libdhcp___unittests_SOURCES += ../option6_iaaddr.h ../option6_iaaddr.cc option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += ../option6_ia.h ../option6_ia.cc option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += ../option6_addrlst.h ../option6_addrlst.cc option6_addrlst_unittest.cc
@@ -33,6 +35,7 @@ libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCL
 libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
+
 if USE_CLANGPP
 # This is to workaround unused variables tcout and tcerr in
 # log4cplus's streams.h.

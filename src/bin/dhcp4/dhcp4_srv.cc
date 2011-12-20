@@ -31,6 +31,12 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     IfaceMgr::instance();
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
+    IfaceMgr::instance().printIfaces();
+
+#if 0
+    // uncomment this once #1238, #992 and #1239 are merged
+    IfaceMgr::instance().openSockets4(port);
+#endif
 
     setServerID();
 
