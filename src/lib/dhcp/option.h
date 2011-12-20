@@ -236,9 +236,29 @@ public:
     bool
     delOption(unsigned short type);
 
+    /// @brief Returns content of first byte.
+    ///
+    /// @exception OutOfRange Thrown if the option has a length of 0.
+    ///
+    /// @return value of the first byte
+    uint8_t getUint8();
+
+    /// @brief Returns content of first word.
+    ///
+    /// @exception OutOfRange Thrown if the option has a length less than 2.
+    ///
+    /// @return uint16_t value stored on first two bytes
+    uint16_t getUint16();
+
+    /// @brief Returns content of first double word.
+    ///
+    /// @exception OutOfRange Thrown if the option has a length less than 4.
+    ///
+    /// @return uint32_t value stored on first four bytes
+    uint32_t getUint32();
+
     /// just to force that every option has virtual dtor
-    virtual
-    ~Option();
+    virtual ~Option();
 
 protected:
     /// Builds raw (over-wire) buffer of this option, including all

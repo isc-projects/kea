@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <arpa/inet.h>
@@ -28,11 +29,12 @@ using namespace isc;
 using namespace isc::dhcp;
 
 namespace {
+const char* const INTERFACE_FILE = "interfaces.txt";
 
 class NakedDhcpv4Srv: public Dhcpv4Srv {
     // "naked" DHCPv4 server, exposes internal fields
 public:
-    NakedDhcpv4Srv() { }
+    NakedDhcpv4Srv():Dhcpv4Srv(DHCP4_SERVER_PORT + 10000) { }
 
     boost::shared_ptr<Pkt4> processDiscover(boost::shared_ptr<Pkt4>& discover) {
         return Dhcpv4Srv::processDiscover(discover);
@@ -54,9 +56,18 @@ public:
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
     Dhcpv4SrvTest() {
+        unlink(INTERFACE_FILE);
+        fstream fakeifaces(INTERFACE_FILE, ios::out | ios::trunc);
+        if (if_nametoindex("lo") > 0) {
+            fakeifaces << "lo 127.0.0.1";
+        } else if (if_nametoindex("lo0") > 0) {
+            fakeifaces << "lo0 127.0.0.1";
+        }
+        fakeifaces.close();
     }
 
     ~Dhcpv4SrvTest() {
+        unlink(INTERFACE_FILE);
     };
 };
 
@@ -66,7 +77,7 @@ TEST_F(Dhcpv4SrvTest, basic) {
 
     Dhcpv4Srv* srv = NULL;
     ASSERT_NO_THROW({
-        srv = new Dhcpv4Srv();
+        srv = new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000);
     });
 
     delete srv;

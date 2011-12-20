@@ -23,6 +23,8 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
+// #define ECHO_SERVER
+
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     cout << "Initialization: opening sockets on port " << port << endl;
 
@@ -33,10 +35,8 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
     IfaceMgr::instance().printIfaces();
 
-#if 0
     // uncomment this once #1238, #992 and #1239 are merged
     IfaceMgr::instance().openSockets4(port);
-#endif
 
     setServerID();
 
@@ -45,6 +45,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
 
 Dhcpv4Srv::~Dhcpv4Srv() {
     cout << "DHCPv4 server shutdown." << endl;
+    IfaceMgr::instance().closeSockets();
 }
 
 bool
@@ -53,16 +54,23 @@ Dhcpv4Srv::run() {
         boost::shared_ptr<Pkt4> query; // client's message
         boost::shared_ptr<Pkt4> rsp;   // server's response
 
-#if 0
-        // uncomment this once ticket 1239 is merged.
         query = IfaceMgr::instance().receive4();
+
+#if defined(ECHO_SERVER)
+        query->repack();
+        IfaceMgr::instance().send(query);
+        continue;
 #endif
 
         if (query) {
-            if (!query->unpack()) {
-                cout << "Failed to parse incoming packet" << endl;
+            try {
+                query->unpack();
+            } catch (const std::exception& e) {
+                /// TODO: Printout reasons of failed parsing
+                cout << "Failed to parse incoming packet " << endl;
                 continue;
             }
+
             switch (query->getType()) {
             case DHCPDISCOVER:
                 rsp = processDiscover(query);
@@ -84,8 +92,7 @@ Dhcpv4Srv::run() {
                      << query->getType() << endl;
             }
 
-            cout << "Received " << query->len() << " bytes packet type="
-                 << query->getType() << endl;
+            cout << "Received message type " << int(query->getType()) << endl;
 
             // TODO: print out received packets only if verbose (or debug)
             // mode is enabled
@@ -99,15 +106,16 @@ Dhcpv4Srv::run() {
                 rsp->setIface(query->getIface());
                 rsp->setIndex(query->getIndex());
 
-                cout << "Replying with:" << rsp->getType() << endl;
+                cout << "Replying with message type "
+                     << static_cast<int>(rsp->getType()) << ":" << endl;
                 cout << rsp->toText();
                 cout << "----" << endl;
                 if (rsp->pack()) {
                     cout << "Packet assembled correctly." << endl;
                 }
-#if 0
+#if 1
                 // uncomment this once ticket 1240 is merged.
-                IfaceMgr::instance().send4(rsp);
+                IfaceMgr::instance().send(rsp);
 #endif
             }
         }
