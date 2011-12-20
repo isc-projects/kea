@@ -421,6 +421,14 @@ public:
     /// this method is called or until the \c SocketSessionReceiver object is
     /// destructed.
     ///
+    /// The caller is responsible for closing the received socket (whose
+    /// file descriptor is accessible via \c SocketSession::getSocket()).
+    /// If the caller copies the returned \c SocketSession object, it's also
+    /// responsible for making sure the descriptor is closed at most once.
+    /// On the other hand, the caller is not responsible for freeing the
+    /// socket session data (accessible via \c SocketSession::getData());
+    /// the \c SocketSessionReceiver object will clean it up automatically.
+    ///
     /// It ensures the following:
     /// - The address family is either \c AF_INET or \c AF_INET6
     /// - The address family (\c sa_family) member of the local and remote

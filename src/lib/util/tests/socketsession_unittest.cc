@@ -280,13 +280,14 @@ protected:
     //                 but can be false for testing.
     void pushSessionHeader(uint16_t hdrlen,
                            size_t hdrlen_len = sizeof(uint16_t),
-                           bool push_fd = true)
+                           bool push_fd = true,
+                           int fd = 0)
     {
         isc::util::OutputBuffer obuffer(0);
         obuffer.clear();
 
         dummy_forwarder_.reset(dummyConnect());
-        if (push_fd && send_fd(dummy_forwarder_.fd, 0) != 0) {
+        if (push_fd && send_fd(dummy_forwarder_.fd, fd) != 0) {
             isc_throw(isc::Unexpected, "Failed to pass FD");
         }
         obuffer.writeUint16(hdrlen);
@@ -802,6 +803,21 @@ TEST_F(ForwardTest, badPop) {
                 *sai_remote.first, sizeof(TEST_DATA) + 1);
     dummy_forwarder_.reset(-1);
     EXPECT_THROW(receiver_->pop(), SocketSessionError);
+
+    // Check the forwarded FD is closed on failure
+    ScopedSocket sock(createSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                   getSockAddr("127.0.0.1", TEST_PORT),
+                                   false));
+    pushSessionHeader(0, 1, true, sock.fd);
+    dummy_forwarder_.reset(-1);
+    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    // Close the original socket
+    sock.reset(-1);
+    // The passed one should have been closed, too, so we should be able
+    // to bind a new socket to the same port.
+    ScopedSocket(createSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                              getSockAddr("127.0.0.1", TEST_PORT),
+                              false));
 }
 
 TEST(SocketSessionTest, badValue) {
