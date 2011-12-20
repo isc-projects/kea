@@ -69,13 +69,19 @@ public:
     ///
     /// See documentation in \c Zone.
     ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET,
-    /// and also SUCCESS if target is not NULL(TYPE_ANY query).
-    /// (the base class documentation does not seem to require that).
+    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET.
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
-                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options = FIND_DEFAULT);
+
+    /// \brief Version of find that returns all types at once
+    ///
+    /// It acts the same as find, just that when the correct node is found,
+    /// all the RRsets are filled into the target parameter instead of being
+    /// returned by the result.
+    virtual FindResult findAll(const isc::dns::Name& name,
+                               std::vector<isc::dns::ConstRRsetPtr>& target,
+                               const FindOptions options = FIND_DEFAULT);
 
     /// \brief Imelementation of the ZoneFinder::findPreviousName method
     ///
