@@ -4,6 +4,14 @@
 	addresses, flags and configured IPv4 and IPv6 addresses.
 	(Trac #1237, git TBD)
 
+3XX.	[func]		tomek
+	libdhcp++: Transmission and reception of DHCPv4 packets is now
+	implemented. Low-level hacks are not implemented for transmission
+	to hosts that don't have IPv4 address yet, so currently the code
+	is usable for communication with relays only, not hosts on the
+	same link.
+	(Trac #1239, #1240, git TBD)
+
 349.	[bug]		dvv
 	resolver: If an upstream server responds with FORMERR to an EDNS query,
 	try querying it without EDNS.
