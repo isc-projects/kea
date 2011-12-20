@@ -129,7 +129,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     boost::shared_ptr<Option> tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE( tmp );
 
-    Option6IA* reply_ia = dynamic_cast<Option6IA*> ( tmp.get() );
+    Option6IA* reply_ia = dynamic_cast<Option6IA*>(tmp.get());
     EXPECT_EQ( 234, reply_ia->getIAID() );
 
     // check that there's an address included
