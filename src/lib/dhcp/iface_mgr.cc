@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <sstream>
 #include <fstream>
 #include <string.h>
@@ -52,8 +53,10 @@ IfaceMgr::instance() {
 }
 
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
-    :name_(name), ifindex_(ifindex), mac_len_(0) {
-
+    :name_(name), ifindex_(ifindex), mac_len_(0), flag_loopback_(false),
+     flag_up_(false), flag_running_(false), flag_multicast_(false),
+     flag_broadcast_(false), flags_(0), hardware_type_(0)
+{
     memset(mac_, 0, sizeof(mac_));
 }
 
@@ -71,7 +74,7 @@ IfaceMgr::Iface::getPlainMac() const {
     tmp << hex;
     for (int i = 0; i < mac_len_; i++) {
         tmp.width(2);
-        tmp << mac_[i];
+        tmp <<  static_cast<int>(mac_[i]);
         if (i < mac_len_-1) {
             tmp << ":";
         }
@@ -126,7 +129,7 @@ IfaceMgr::IfaceMgr()
         // interface detection is implemented. Otherwise
         // it is not possible to run tests in a portable
         // way (see detectIfaces() method).
-        // throw ex;
+        throw ex;
     }
 }
 
@@ -152,7 +155,7 @@ IfaceMgr::~IfaceMgr() {
 }
 
 void
-IfaceMgr::detectIfaces() {
+IfaceMgr::stubDetectIfaces() {
     string ifaceName, linkLocal;
 
     // TODO do the actual detection. Currently interface detection is faked
@@ -191,8 +194,13 @@ IfaceMgr::detectIfaces() {
     }
 }
 
-void
-IfaceMgr::openSockets(uint16_t port) {
+#if !defined(OS_LINUX) && !defined(OS_BSD)
+void IfaceMgr::detectIfaces() {
+    stubDetectIfaces();
+}
+#endif
+
+void IfaceMgr::openSockets6(uint16_t port) {
     int sock1, sock2;
 
     for (IfaceCollection::iterator iface = ifaces_.begin();
@@ -232,17 +240,29 @@ IfaceMgr::openSockets(uint16_t port) {
 
 void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
-    for (IfaceCollection::const_iterator iface = ifaces_.begin();
-         iface != ifaces_.end(); ++iface) {
-        out << "Detected interface " << iface->getFullName() << endl;
-        out << "  " << iface->getAddresses().size() << " addr(s):" << endl;
-        const AddressCollection addrs = iface->getAddresses();
+    for (IfaceCollection::const_iterator iface=ifaces_.begin();
+         iface!=ifaces_.end();
+         ++iface) {
+
+        const AddressCollection& addrs = iface->getAddresses();
+
+        out << "Detected interface " << iface->getFullName()
+             << ", hwtype=" << iface->hardware_type_ << ", maclen=" << iface->mac_len_
+             << ", mac=" << iface->getPlainMac();
+        out << ", flags=" << hex << iface->flags_ << dec << "("
+            << (iface->flag_loopback_?"LOOPBACK ":"")
+            << (iface->flag_up_?"UP ":"")
+            << (iface->flag_running_?"RUNNING ":"")
+            << (iface->flag_multicast_?"MULTICAST ":"")
+            << (iface->flag_broadcast_?"BROADCAST ":"")
+            << ")" << endl;
+        out << "  " << addrs.size() << " addr(s):";
 
         for (AddressCollection::const_iterator addr = addrs.begin();
              addr != addrs.end(); ++addr) {
-            out << "  " << addr->toText() << endl;
+            out << "  " << addr->toText();
         }
-        out << "  mac: " << iface->getPlainMac() << endl;
+        out << endl;
     }
 }
 

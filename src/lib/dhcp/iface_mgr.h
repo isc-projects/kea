@@ -85,6 +85,14 @@ public:
         /// @return MAC address as a plain text (string)
         std::string getPlainMac() const;
 
+        /// @brief Sets flag_*_ fields based on bitmask value returned by OS
+        ///
+        /// Note: Implementation of this method is OS-dependent as bits have
+        /// different meaning on each OS.
+        ///
+        /// @param flags bitmask value returned by OS in interface detection
+        void setFlags(uint32_t flags);
+
         /// @brief Returns interface index.
         ///
         /// @return interface index
@@ -157,11 +165,35 @@ public:
         /// list of assigned addresses
         AddressCollection addrs_;
 
+    public:
         /// link-layer address
         uint8_t mac_[MAX_MAC_LEN];
 
         /// length of link-layer address (usually 6)
         int mac_len_;
+
+        /// specifies if selected interface is loopback
+        bool flag_loopback_;
+
+        /// specifies if selected interface is up
+        bool flag_up_;
+
+        /// flag specifies if selected interface is running
+        /// (e.g. cable plugged in, wifi associated)
+        bool flag_running_;
+
+        /// flag specifies if selected interface is multicast capable
+        bool flag_multicast_;
+
+        /// flag specifies if selected interface is broadcast capable
+        bool flag_broadcast_;
+
+        /// interface flags (this value is as is returned by OS,
+        /// it may mean different things on different OSes)
+        uint32_t flags_;
+
+        /// hardware type
+        uint16_t hardware_type_;
     };
 
     // TODO performance improvement: we may change this into
@@ -293,17 +325,22 @@ public:
     int openSocket(const std::string& ifname,
                    const isc::asiolink::IOAddress& addr, int port);
 
-    /// Opens IPv6 sockets on detected interfaces.
+    /// Opens IPv4 sockets on detected interfaces.
     ///
     /// Will throw exception if socket creation fails.
     ///
-    /// @param port specifies port number (usually DHCP6_SERVER_PORT)
-    void openSockets(uint16_t port);
+    /// @param port specifies port number (usually DHCP4_SERVER_PORT)
+    void openSockets4(uint16_t port);
 
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
     void closeSockets();
+
+    /// @brief returns number of detected interfaces
+    ///
+    /// @return number of detected interfaces
+    uint16_t countIfaces() { return ifaces_.size(); }
 
     // don't use private, we need derived classes in tests
 protected:
@@ -357,6 +394,15 @@ protected:
     void
     detectIfaces();
 
+    /// @brief Stub implementation of network interface detection.
+    ///
+    /// This implementations reads a single line from interfaces.txt file
+    /// and pretends to detect such interface. First interface name and
+    /// link-local IPv6 address or IPv4 address is read from the
+    /// intefaces.txt file.
+    void
+    stubDetectIfaces();
+
     // TODO: having 2 maps (ifindex->iface and ifname->iface would)
     //      probably be better for performance reasons
 
@@ -383,6 +429,10 @@ protected:
     boost::scoped_array<char> control_buf_;
 
 private:
+    /// Opens IPv6 sockets on detected interfaces.
+    ///
+    /// @param port specifies port on which sockets will be open
+    void openSockets6(uint16_t port);
 
     /// creates a single instance of this class (a singleton implementation)
     static void

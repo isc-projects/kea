@@ -1,3 +1,9 @@
+3XX.	[func]		tomek
+	libdhcp++: Interface detection in Linux implemented. libdhcp++
+	if now able to detect available network interfaces, its link-layer
+	addresses, flags and configured IPv4 and IPv6 addresses.
+	(Trac #1237, git TBD)
+
 349.	[bug]		dvv
 	resolver: If an upstream server responds with FORMERR to an EDNS query,
 	try querying it without EDNS.
