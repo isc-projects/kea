@@ -14,6 +14,16 @@
 
 $NAMESPACE isc::nsas
 
+% NSAS_EMPTY_RESPONSE response to query for %1 returned an empty answer section
+The NSAS (nameserver address store - part of the resolver) made a query
+for information it needed.  The query completed successfully but the
+answer section in the response was empty.
+
+% NSAS_ERROR_RESPONSE error response of %1 returned in query for %2
+The NSAS (nameserver address store - part of the resolver) made a query
+for information it needed.  The query completed successfully but the
+RCODE in the response was something other than NOERROR.
+
 % NSAS_FIND_NS_ADDRESS asking resolver to obtain A and AAAA records for %1
 A debug message issued when the NSAS (nameserver address store - part
 of the resolver) is making a callback into the resolver to retrieve the
@@ -23,17 +33,6 @@ address records for the specified nameserver.
 A debug message issued when the NSAS (nameserver address store - part
 of the resolver) has retrieved the given address for the specified
 nameserver through an external query.
-
-% NSAS_INVALID_RESPONSE queried for %1 but got invalid response
-The NSAS (nameserver address store - part of the resolver) made a query
-for a RR for the specified nameserver but received an invalid response.
-Either the success function was called without a DNS message or the
-message was invalid on some way. (In the latter case, the error should
-have been picked up elsewhere in the processing logic, hence the raising
-of the error here.)
-
-This message indicates an internal error in the NSAS.  Please raise a
-bug report.
 
 % NSAS_LOOKUP_CANCEL lookup for zone %1 has been canceled
 A debug message issued when an NSAS (nameserver address store - part of
@@ -45,6 +44,14 @@ the resolver) has been unable to retrieve the specified resource record
 for the specified nameserver.  This is not necessarily a problem - the
 nameserver may be unreachable, in which case the NSAS will try other
 nameservers in the zone.
+
+% NSAS_NULL_RESPONSE got null message in success callback for query for %1
+The NSAS (nameserver address store - part of the resolver) made a query
+for information it needed.  The query completed successfully, but the
+message passed to the callback was null.
+
+This message indicates an internal error in the NSAS.  Please raise a
+bug report.
 
 % NSAS_SEARCH_ZONE_NS searching NSAS for nameservers for zone %1
 A debug message output when a call is made to the NSAS (nameserver 

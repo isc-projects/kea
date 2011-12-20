@@ -171,7 +171,7 @@ RdataFields::RdataFields(const void* fields, const unsigned int fields_length,
     }
 
     size_t total_length = 0;
-    for (int i = 0; i < nfields_; ++i) {
+    for (unsigned int i = 0; i < nfields_; ++i) {
         total_length += fields_[i].len;
     }
     if (total_length != data_length_) {
@@ -198,7 +198,7 @@ void
 RdataFields::toWire(AbstractMessageRenderer& renderer) const {
     size_t offset = 0;
 
-    for (int i = 0; i < nfields_; ++i) {
+    for (unsigned int i = 0; i < nfields_; ++i) {
         if (fields_[i].type == DATA) {
             renderer.writeData(data_ + offset, fields_[i].len);
         } else {

@@ -119,7 +119,7 @@ class BaseComponent:
 
         The extra parameters are:
         - `process` - which program should be started.
-        - `address` - the address on message buss, used to talk to the
+        - `address` - the address on message bus, used to talk to the
            component.
         - `params` - parameters to the program.
 
@@ -333,7 +333,7 @@ class BaseComponent:
         """
         pass
 
-    def kill(self, forcefull=False):
+    def kill(self, forceful=False):
         """
         Kills the component.
 
@@ -453,7 +453,7 @@ class Configurator:
     * `special` - Some components are started in a special way. If it is
       present, it specifies which class from the specials parameter should
       be used to create the component. In that case, some of the following
-      items might be irrelevant, depending on the special component choosen.
+      items might be irrelevant, depending on the special component chosen.
       If it is not there, the basic Component class is used.
     * `process` - Name of the executable to start. If it is not present,
       it defaults to the identifier of the component.
@@ -510,7 +510,7 @@ class Configurator:
 
         It is not expected that anyone would want to shutdown and then start
         the configurator again, so we don't explicitly make sure that would
-        work. However, we are not avare of anything that would make it not
+        work. However, we are not aware of anything that would make it not
         work either.
         """
         if not self._running:

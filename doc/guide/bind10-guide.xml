@@ -706,7 +706,7 @@ Debian and Ubuntu:
       BIND 10 provides the <command>bind10</command> command which
       starts up the required processes.
       <command>bind10</command>
-      will also restart processes that exit unexpectedly.
+      will also restart some processes that exit unexpectedly.
       This is the only command needed to start the BIND 10 system.
     </para>
 
@@ -718,17 +718,22 @@ Debian and Ubuntu:
     </para>
 
     <para>
-      The <command>b10-msgq</command> and <command>b10-cfgmgr</command>
+      The <command>b10-sockcreator</command>, <command>b10-msgq</command> and
+      <command>b10-cfgmgr</command>
       services make up the core. The <command>b10-msgq</command> daemon
       provides the communication channel between every part of the system.
       The <command>b10-cfgmgr</command> daemon is always needed by every
       module, if only to send information about themselves somewhere,
       but more importantly to ask about their own settings, and
-      about other modules.
-      The <command>bind10</command> master process will also start up
+      about other modules. The <command>b10-sockcreator</command> will
+      allocate sockets for the rest of the system.
+    </para>
+
+    <para>
+      In its default configuration, the <command>bind10</command>
+      master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
-      system, <command>b10-auth</command> for authoritative DNS service or
-      <command>b10-resolver</command> for recursive name service,
+      system, <command>b10-auth</command> for authoritative DNS service,
       <command>b10-stats</command> for statistics collection,
       <command>b10-xfrin</command> for inbound DNS zone transfers,
       <command>b10-xfrout</command> for outbound DNS zone transfers,
@@ -752,6 +757,159 @@ Debian and Ubuntu:
           This is not needed on some operating systems.
         </para>
       </note>
+
+    </section>
+    <section id="bind10.config">
+      <title>Configuration of started processes</title>
+      <para>
+        The processes to be started can be configured, with the exception
+        of the <command>b10-sockcreator</command>, <command>b10-msgq</command>
+        and <command>b10-cfgmgr</command>.
+      </para>
+
+      <para>
+        The configuration is in the Boss/components section. Each element
+        represents one component, which is an abstraction of a process
+        (currently there's also one component which doesn't represent
+        a process). If you didn't want to transfer out at all (your server
+        is a slave only), you would just remove the corresponding component
+        from the set, like this and the process would be stopped immediately
+        (and not started on the next startup):
+      <screen>&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>
+        To add a process to the set, let's say the resolver (which not started
+        by default), you would do this:
+        <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
+&gt; <userinput>config commit</userinput></screen></para>
+
+      <para>
+        Now, what it means. We add an entry called b10-resolver. It is both a
+        name used to reference this component in the configuration and the
+        name of the process to start. Then we set some parameters on how to
+        start it.
+      </para>
+
+      <para>
+        The special one is for components that need some kind of special care
+        during startup or shutdown. Unless specified, the component is started
+        in usual way. This is the list of components that need to be started
+        in a special way, with the value of special used for them:
+        <table>
+          <tgroup cols='3' align='left'>
+          <colspec colname='component'/>
+          <colspec colname='special'/>
+          <colspec colname='description'/>
+          <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
+          <tbody>
+            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative server</entry></row>
+            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>The resolver</entry></row>
+            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>The command control (remote control interface)</entry></row>
+            <row><entry>setuid</entry><entry>setuid</entry><entry>Virtual component, see below</entry></row>
+            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
+          </tbody>
+          </tgroup>
+        </table>
+      </para>
+
+      <para>
+	The kind specifies how a failure of the component should
+	be handled.  If it is set to <quote>dispensable</quote>
+	(the default unless you set something else), it will get
+	started again if it fails. If it is set to <quote>needed</quote>
+	and it fails at startup, the whole <command>bind10</command>
+	shuts down and exits with error exit code. But if it fails
+	some time later, it is just started again. If you set it
+	to <quote>core</quote>, you indicate that the system is
+	not usable without the component and if such component
+	fails, the system shuts down no matter when the failure
+	happened.  This is the behaviour of the core components
+	(the ones you can't turn off), but you can declare any
+	other components as core as well if you wish (but you can
+	turn these off, they just can't fail).
+      </para>
+
+      <para>
+        The priority defines order in which the components should start.
+        The ones with higher number are started sooner than the ones with
+        lower ones. If you don't set it, 0 (zero) is used as the priority.
+      </para>
+
+      <para>
+        There are other parameters we didn't use in our example.
+	One of them is <quote>address</quote>. It is the address
+	used by the component on the <command>b10-msgq</command>
+	message bus. The special components already know their
+	address, but the usual ones don't. The address is by
+	convention the thing after <emphasis>b10-</emphasis>, with
+	the first letter capital (eg. <command>b10-stats</command>
+	would have <quote>Stats</quote> as its address).
+<!-- TODO: this should be simplified so we don't even have to document it -->
+      </para>
+
+<!-- TODO: what does "The special components already know their
+address, but the usual ones don't." mean? -->
+
+<!-- TODO: document params when is enabled -->
+
+      <para>
+        The last one is process. It is the name of the process to be started.
+        It defaults to the name of the component if not set, but you can use
+        this to override it.
+      </para>
+
+      <!-- TODO Add parameters when they work, not implemented yet-->
+
+      <note>
+        <para>
+          This system allows you to start the same component multiple times
+          (by including it in the configuration with different names, but the
+          same process setting). However, the rest of the system doesn't expect
+          such situation, so it would probably not do what you want. Such
+          support is yet to be implemented.
+        </para>
+      </note>
+
+      <note>
+        <para>
+	  The configuration is quite powerful, but that includes
+	  a lot of space for mistakes. You could turn off the
+	  <command>b10-cmdctl</command>, but then you couldn't
+	  change it back the usual way, as it would require it to
+	  be running (you would have to find and edit the configuration
+	  directly).  Also, some modules might have dependencies
+	  -- <command>b10-stats-httpd</command> need
+	  <command>b10-stats</command>, <command>b10-xfrout</command>
+	  needs the <command>b10-auth</command> to be running, etc.
+
+<!-- TODO: should we define dependencies? -->
+
+        </para>
+        <para>
+          In short, you should think twice before disabling something here.
+        </para>
+      </note>
+
+      <para>
+	Now, to the mysterious setuid virtual component. If you
+	use the <command>-u</command> option to start the
+	<command>bind10</command> as root, but change the user
+	later, we need to start the <command>b10-auth</command> or
+	<command>b10-resolver</command> as root (until the socket
+	creator is finished).<!-- TODO --> So we need to specify
+	the time when the switch from root do the given user happens
+	and that's what the setuid component is for. The switch is
+	done at the time the setuid component would be started, if
+	it was a process. The default configuration contains the
+	setuid component with priority 5, <command>b10-auth</command>
+	has 10 to be started before the switch and everything else
+	is without priority, so it is started after the switch.
+      </para>
 
     </section>
 
@@ -1344,6 +1502,49 @@ what if a NOTIFY is sent?
 
 -->
 
+    <section id="zonemgr">
+      <title>Secondary Manager</title>
+
+      <para>
+        The <command>b10-zonemgr</command> process is started by
+        <command>bind10</command>.
+        It keeps track of SOA refresh, retry, and expire timers
+        and other details for BIND 10 to perform as a slave.
+        When the <command>b10-auth</command> authoritative DNS server
+        receives a NOTIFY message, <command>b10-zonemgr</command>
+        may tell <command>b10-xfrin</command> to do a refresh
+        to start an inbound zone transfer.
+        The secondary manager resets its counters when a new zone is
+        transferred in.
+      </para>
+
+      <note><simpara>
+        Access control (such as allowing notifies) is not yet provided.
+        The primary/secondary service is not yet complete.
+      </simpara></note>
+
+      <para>
+        The following example shows using <command>bindctl</command>
+        to configure the server to be a secondary for the example zone:
+
+      <screen>&gt; <userinput>config add Zonemgr/secondary_zones</userinput>
+&gt; <userinput>config set Zonemgr/secondary_zones[0]/name "<option>example.com</option>"</userinput>
+&gt; <userinput>config set Zonemgr/secondary_zones[0]/class "<option>IN</option>"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+<!-- TODO: remove the IN class example above when it is the default -->
+
+      </para>
+
+      <para>
+        If the zone does not exist in the data source already
+        (i.e. no SOA record for it), <command>b10-zonemgr</command>
+        will automatically tell <command>b10-xfrin</command>
+        to transfer the zone in.
+      </para>
+
+    </section>
+
     <section>
       <title>Trigger an Incoming Zone Transfer Manually</title>
 
@@ -1355,7 +1556,6 @@ what if a NOTIFY is sent?
 	<screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
       </para>
     </section>
-
 
 <!-- TODO: can that retransfer be used to identify a new zone? -->
 <!-- TODO: what if doesn't exist at that master IP? -->
@@ -1448,31 +1648,6 @@ what is XfroutClient xfr_client??
 
   </chapter>
 
-  <chapter id="zonemgr">
-    <title>Secondary Manager</title>
-
-    <para>
-      The <command>b10-zonemgr</command> process is started by
-      <command>bind10</command>.
-      It keeps track of SOA refresh, retry, and expire timers
-      and other details for BIND 10 to perform as a slave.
-      When the <command>b10-auth</command> authoritative DNS server
-      receives a NOTIFY message, <command>b10-zonemgr</command>
-      may tell <command>b10-xfrin</command> to do a refresh
-      to start an inbound zone transfer.
-      The secondary manager resets its counters when a new zone is
-      transferred in.
-    </para>
-
-    <note><simpara>
-     Access control (such as allowing notifies) is not yet provided.
-     The primary/secondary service is not yet complete.
-    </simpara></note>
-
-<!-- TODO: lots to describe for zonemgr -->
-
-  </chapter>
-
   <chapter id="resolverserver">
     <title>Recursive Name Server</title>
 
@@ -1494,8 +1669,13 @@ what is XfroutClient xfr_client??
       You may change this using <command>bindctl</command>, for example:
 
       <screen>
-&gt; <userinput>config set Boss/start_auth false</userinput>
-&gt; <userinput>config set Boss/start_resolver true</userinput>
+&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
+&gt; <userinput>config remove Boss/components b10-xfrin</userinput>
+&gt; <userinput>config remove Boss/components b10-auth</userinput>
+&gt; <userinput>config add Boss/components b10-resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
 

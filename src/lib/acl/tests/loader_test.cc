@@ -70,31 +70,30 @@ public:
     // Some convenience functions to set up
 
     // Create a NamedCreator, convert to shared pointer
-    shared_ptr<NamedCreator> namedCreator(const string& name,
+    boost::shared_ptr<NamedCreator> namedCreator(const string& name,
                                           bool abbreviatedList = true)
     {
-        return (shared_ptr<NamedCreator>(new NamedCreator(name,
-                                                          abbreviatedList)));
+        return (boost::shared_ptr<NamedCreator>(new NamedCreator(name,
+                                                    abbreviatedList)));
     }
     // Create and add a NamedCreator
     void addNamed(const string& name, bool abbreviatedList = true) {
         EXPECT_NO_THROW(loader_.registerCreator(
             namedCreator(name, abbreviatedList)));
     }
-    template<class Result> shared_ptr<Result> loadCheckAny(const string&
-                                                               definition)
+    template<class Result> boost::shared_ptr<Result> loadCheckAny(
+        const string& definition)
     {
         SCOPED_TRACE("Loading check " + definition);
-        shared_ptr<Check<Log> > loaded;
+        boost::shared_ptr<Check<Log> > loaded;
         EXPECT_NO_THROW(loaded = loader_.loadCheck(
                             Element::fromJSON(definition)));
-        shared_ptr<Result> result(dynamic_pointer_cast<Result>(
-            loaded));
+        boost::shared_ptr<Result> result(dynamic_pointer_cast<Result>(loaded));
         EXPECT_TRUE(result);
         return (result);
     }
     // Load a check and convert it to named check to examine it
-    shared_ptr<NamedCheck> loadCheck(const string& definition) {
+    boost::shared_ptr<NamedCheck> loadCheck(const string& definition) {
         return (loadCheckAny<NamedCheck>(definition));
     }
     // The loadCheck throws an exception
@@ -114,11 +113,12 @@ public:
     // Insert the throw, throwcheck and logcheck checks into the loader
     void aclSetup() {
         try {
-            loader_.registerCreator(shared_ptr<ThrowCreator>(new
-                                                             ThrowCreator()));
-            loader_.registerCreator(shared_ptr<ThrowCheckCreator>(
+            loader_.registerCreator(boost::shared_ptr<ThrowCreator>(
+                new ThrowCreator()));
+            loader_.registerCreator(boost::shared_ptr<ThrowCheckCreator>(
                 new ThrowCheckCreator()));
-            loader_.registerCreator(shared_ptr<LogCreator>(new LogCreator()));
+            loader_.registerCreator(boost::shared_ptr<LogCreator>(
+                new LogCreator()));
         }
         // We ignore this exception here, because it happens when we try to
         // insert the creators multiple times. This is harmless.
@@ -133,7 +133,7 @@ public:
     {
         SCOPED_TRACE("Running ACL for " + JSON);
         aclSetup();
-        shared_ptr<ACL<Log> > acl;
+        boost::shared_ptr<ACL<Log> > acl;
         EXPECT_NO_THROW(acl = loader_.load(Element::fromJSON(JSON)));
         EXPECT_EQ(expectedResult, acl->execute(log_));
         log_.checkFirst(logged);
@@ -174,7 +174,7 @@ TEST_F(LoaderTest, CreatorDuplicateUnchanged) {
     names.push_back("name1");
     names.push_back("name3");
     EXPECT_THROW(loader_.registerCreator(
-        shared_ptr<NamedCreator>(new NamedCreator(names))), LoaderError);
+        boost::shared_ptr<NamedCreator>(new NamedCreator(names))), LoaderError);
     // It should now reject both name2 and name3 as not known
     checkException("{\"name2\": null}");
     checkException("{\"name3\": null}");
@@ -183,7 +183,7 @@ TEST_F(LoaderTest, CreatorDuplicateUnchanged) {
 // Test that we can register a creator and load a check with the name
 TEST_F(LoaderTest, SimpleCheckLoad) {
     addNamed("name");
-    shared_ptr<NamedCheck> check(loadCheck("{\"name\": 42}"));
+    boost::shared_ptr<NamedCheck> check(loadCheck("{\"name\": 42}"));
     EXPECT_EQ("name", check->name_);
     EXPECT_TRUE(check->data_->equals(*Element::fromJSON("42")));
 }
@@ -192,7 +192,7 @@ TEST_F(LoaderTest, SimpleCheckLoad) {
 TEST_F(LoaderTest, MultiCreatorCheckLoad) {
     addNamed("name1");
     addNamed("name2");
-    shared_ptr<NamedCheck> check(loadCheck("{\"name2\": 42}"));
+    boost::shared_ptr<NamedCheck> check(loadCheck("{\"name2\": 42}"));
     EXPECT_EQ("name2", check->name_);
     EXPECT_TRUE(check->data_->equals(*Element::fromJSON("42")));
 }
@@ -203,9 +203,9 @@ TEST_F(LoaderTest, MultiNameCheckLoad) {
     vector<string> names;
     names.push_back("name2");
     names.push_back("name3");
-    EXPECT_NO_THROW(loader_.registerCreator(shared_ptr<NamedCreator>(
+    EXPECT_NO_THROW(loader_.registerCreator(boost::shared_ptr<NamedCreator>(
         new NamedCreator(names))));
-    shared_ptr<NamedCheck> check(loadCheck("{\"name3\": 42}"));
+    boost::shared_ptr<NamedCheck> check(loadCheck("{\"name3\": 42}"));
     EXPECT_EQ("name3", check->name_);
     EXPECT_TRUE(check->data_->equals(*Element::fromJSON("42")));
 }
@@ -230,7 +230,8 @@ TEST_F(LoaderTest, UnkownName) {
 
 // Exception from the creator is propagated
 TEST_F(LoaderTest, CheckPropagate) {
-    loader_.registerCreator(shared_ptr<ThrowCreator>(new ThrowCreator()));
+    loader_.registerCreator(boost::shared_ptr<ThrowCreator>(
+                                new ThrowCreator()));
     EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"throw\": null}")),
                  TestCreatorError);
 }
@@ -239,7 +240,7 @@ TEST_F(LoaderTest, CheckPropagate) {
 TEST_F(LoaderTest, AndAbbrev) {
     addNamed("name1");
     addNamed("name2");
-    shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
+    boost::shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
         loadCheckAny<LogicOperator<AllOfSpec, Log> >("{\"name1\": 1, \"name2\": 2}"));
     // If we don't have anything loaded, the rest would crash. It is already
     // reported from within loadCheckAny if it isn't loaded.
@@ -258,7 +259,7 @@ TEST_F(LoaderTest, AndAbbrev) {
 // The abbreviated form of parameters
 TEST_F(LoaderTest, OrAbbrev) {
     addNamed("name1");
-    shared_ptr<LogicOperator<AnyOfSpec, Log> > oper(
+    boost::shared_ptr<LogicOperator<AnyOfSpec, Log> > oper(
         loadCheckAny<LogicOperator<AnyOfSpec, Log> >("{\"name1\": [1, 2]}"));
     // If we don't have anything loaded, the rest would crash. It is already
     // reported from within loadCheckAny if it isn't loaded.
@@ -276,7 +277,7 @@ TEST_F(LoaderTest, OrAbbrev) {
 TEST_F(LoaderTest, BothAbbrev) {
     addNamed("name1");
     addNamed("name2");
-    shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
+    boost::shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
         loadCheckAny<LogicOperator<AllOfSpec, Log> >("{\"name1\": 1, \"name2\": [3, 4]}"));
     // If we don't have anything loaded, the rest would crash. It is already
     // reported from within loadCheckAny if it isn't loaded.
@@ -302,7 +303,7 @@ TEST_F(LoaderTest, BothAbbrev) {
 // creator
 TEST_F(LoaderTest, ListCheck) {
     addNamed("name1", false);
-    shared_ptr<NamedCheck> check(loadCheck("{\"name1\": [1, 2]}"));
+    boost::shared_ptr<NamedCheck> check(loadCheck("{\"name1\": [1, 2]}"));
     EXPECT_EQ("name1", check->name_);
     EXPECT_TRUE(check->data_->equals(*Element::fromJSON("[1, 2]")));
 }
@@ -310,7 +311,7 @@ TEST_F(LoaderTest, ListCheck) {
 // Check the action key is ignored as it should be
 TEST_F(LoaderTest, CheckNoAction) {
     addNamed("name1");
-    shared_ptr<NamedCheck> check(loadCheck("{\"name1\": 1, \"action\": 2}"));
+    boost::shared_ptr<NamedCheck> check(loadCheck("{\"name1\": 1, \"action\": 2}"));
     EXPECT_EQ("name1", check->name_);
     EXPECT_TRUE(check->data_->equals(*Element::fromJSON("1")));
 }
