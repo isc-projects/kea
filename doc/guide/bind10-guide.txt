@@ -2,7 +2,7 @@
 
 Administrator Reference for BIND 10
 
-   This is the reference guide for BIND 10 version 20110809.
+   This is the reference guide for BIND 10 version 20111021.
 
    Copyright (c) 2010-2011 Internet Systems Consortium, Inc.
 
@@ -12,7 +12,7 @@ Administrator Reference for BIND 10
    Consortium (ISC). It includes DNS libraries and modular components for
    controlling authoritative and recursive DNS servers.
 
-   This is the reference guide for BIND 10 version 20110809. The most
+   This is the reference guide for BIND 10 version 20111021. The most
    up-to-date version of this document (in PDF, HTML, and plain text
    formats), along with other documents for BIND 10, can be found at
    http://bind10.isc.org/docs.
@@ -54,6 +54,8 @@ Administrator Reference for BIND 10
    3. Starting BIND10 with bind10
 
                 Starting BIND 10
+
+                Configuration of started processes
 
    4. Command channel
 
@@ -105,6 +107,10 @@ Administrator Reference for BIND 10
 
                 Logging Message Format
 
+   List of Tables
+
+   3.1.
+
 Chapter 1. Introduction
 
    Table of Contents
@@ -124,7 +130,7 @@ Chapter 1. Introduction
 
   Note
 
-   This guide covers the experimental prototype of BIND 10 version 20110809.
+   This guide covers the experimental prototype of BIND 10 version 20111021.
 
   Note
 
@@ -427,24 +433,28 @@ Chapter 3. Starting BIND10 with bind10
 
    Starting BIND 10
 
+   Configuration of started processes
+
    BIND 10 provides the bind10 command which starts up the required
-   processes. bind10 will also restart processes that exit unexpectedly. This
-   is the only command needed to start the BIND 10 system.
+   processes. bind10 will also restart some processes that exit unexpectedly.
+   This is the only command needed to start the BIND 10 system.
 
    After starting the b10-msgq communications channel, bind10 connects to it,
    runs the configuration manager, and reads its own configuration. Then it
    starts the other modules.
 
-   The b10-msgq and b10-cfgmgr services make up the core. The b10-msgq daemon
-   provides the communication channel between every part of the system. The
-   b10-cfgmgr daemon is always needed by every module, if only to send
-   information about themselves somewhere, but more importantly to ask about
-   their own settings, and about other modules. The bind10 master process
-   will also start up b10-cmdctl for admins to communicate with the system,
-   b10-auth for authoritative DNS service or b10-resolver for recursive name
-   service, b10-stats for statistics collection, b10-xfrin for inbound DNS
-   zone transfers, b10-xfrout for outbound DNS zone transfers, and
-   b10-zonemgr for secondary service.
+   The b10-sockcreator, b10-msgq and b10-cfgmgr services make up the core.
+   The b10-msgq daemon provides the communication channel between every part
+   of the system. The b10-cfgmgr daemon is always needed by every module, if
+   only to send information about themselves somewhere, but more importantly
+   to ask about their own settings, and about other modules. The
+   b10-sockcreator will allocate sockets for the rest of the system.
+
+   In its default configuration, the bind10 master process will also start up
+   b10-cmdctl for admins to communicate with the system, b10-auth for
+   authoritative DNS service, b10-stats for statistics collection, b10-xfrin
+   for inbound DNS zone transfers, b10-xfrout for outbound DNS zone
+   transfers, and b10-zonemgr for secondary service.
 
 Starting BIND 10
 
@@ -456,6 +466,110 @@ Starting BIND 10
    If the setproctitle Python module is detected at start up, the process
    names for the Python-based daemons will be renamed to better identify them
    instead of just "python". This is not needed on some operating systems.
+
+Configuration of started processes
+
+   The processes to be started can be configured, with the exception of the
+   b10-sockcreator, b10-msgq and b10-cfgmgr.
+
+   The configuration is in the Boss/components section. Each element
+   represents one component, which is an abstraction of a process (currently
+   there's also one component which doesn't represent a process). If you
+   didn't want to transfer out at all (your server is a slave only), you
+   would just remove the corresponding component from the set, like this and
+   the process would be stopped immediately (and not started on the next
+   startup):
+
+ > config remove Boss/components b10-xfrout
+ > config commit
+
+   To add a process to the set, let's say the resolver (which not started by
+   default), you would do this:
+
+ > config add Boss/components b10-resolver
+ > config set Boss/components/b10-resolver/special resolver
+ > config set Boss/components/b10-resolver/kind needed
+ > config set Boss/components/b10-resolver/priority 10
+ > config commit
+
+   Now, what it means. We add an entry called b10-resolver. It is both a name
+   used to reference this component in the configuration and the name of the
+   process to start. Then we set some parameters on how to start it.
+
+   The special one is for components that need some kind of special care
+   during startup or shutdown. Unless specified, the component is started in
+   usual way. This is the list of components that need to be started in a
+   special way, with the value of special used for them:
+
+   Table 3.1.
+
+   +------------------------------------------------------------------------+
+   | Component    | Special  | Description                                  |
+   |--------------+----------+----------------------------------------------|
+   | b10-auth     | auth     | Authoritative server                         |
+   |--------------+----------+----------------------------------------------|
+   | b10-resolver | resolver | The resolver                                 |
+   |--------------+----------+----------------------------------------------|
+   | b10-cmdctl   | cmdctl   | The command control (remote control          |
+   |              |          | interface)                                   |
+   |--------------+----------+----------------------------------------------|
+   | setuid       | setuid   | Virtual component, see below                 |
+   +------------------------------------------------------------------------+
+
+   The kind specifies how a failure of the component should be handled. If it
+   is set to "dispensable" (the default unless you set something else), it
+   will get started again if it fails. If it is set to "needed" and it fails
+   at startup, the whole bind10 shuts down and exits with error exit code.
+   But if it fails some time later, it is just started again. If you set it
+   to "core", you indicate that the system is not usable without the
+   component and if such component fails, the system shuts down no matter
+   when the failure happened. This is the behaviour of the core components
+   (the ones you can't turn off), but you can declare any other components as
+   core as well if you wish (but you can turn these off, they just can't
+   fail).
+
+   The priority defines order in which the components should start. The ones
+   with higher number are started sooner than the ones with lower ones. If
+   you don't set it, 0 (zero) is used as the priority.
+
+   There are other parameters we didn't use in our example. One of them is
+   "address". It is the address used by the component on the b10-msgq message
+   bus. The special components already know their address, but the usual ones
+   don't. The address is by convention the thing after b10-, with the first
+   letter capital (eg. b10-stats would have "Stats" as its address).
+
+   The last one is process. It is the name of the process to be started. It
+   defaults to the name of the component if not set, but you can use this to
+   override it.
+
+  Note
+
+   This system allows you to start the same component multiple times (by
+   including it in the configuration with different names, but the same
+   process setting). However, the rest of the system doesn't expect such
+   situation, so it would probably not do what you want. Such support is yet
+   to be implemented.
+
+  Note
+
+   The configuration is quite powerful, but that includes a lot of space for
+   mistakes. You could turn off the b10-cmdctl, but then you couldn't change
+   it back the usual way, as it would require it to be running (you would
+   have to find and edit the configuration directly). Also, some modules
+   might have dependencies -- b10-stats-httpd need b10-stats, b10-xfrout
+   needs the b10-auth to be running, etc.
+
+   In short, you should think twice before disabling something here.
+
+   Now, to the mysterious setuid virtual component. If you use the -u option
+   to start the bind10 as root, but change the user later, we need to start
+   the b10-auth or b10-resolver as root (until the socket creator is
+   finished). So we need to specify the time when the switch from root do the
+   given user happens and that's what the setuid component is for. The switch
+   is done at the time the setuid component would be started, if it was a
+   process. The default configuration contains the setuid component with
+   priority 5, b10-auth has 10 to be started before the switch and everything
+   else is without priority, so it is started after the switch.
 
 Chapter 4. Command channel
 
@@ -739,15 +853,55 @@ Trigger an Incoming Zone Transfer Manually
 Chapter 10. Outbound Zone Transfers
 
    The b10-xfrout process is started by bind10. When the b10-auth
-   authoritative DNS server receives an AXFR request, b10-xfrout sends the
-   zone. This is used to provide master DNS service to share zones to
-   secondary name servers. The b10-xfrout is also used to send NOTIFY
-   messages to slaves.
+   authoritative DNS server receives an AXFR or IXFR request, b10-auth
+   internally forwards the request to b10-xfrout, which handles the rest of
+   request processing. This is used to provide primary DNS service to share
+   zones to secondary name servers. The b10-xfrout is also used to send
+   NOTIFY messages to secondary servers.
+
+   A global or per zone transfer_acl configuration can be used to control
+   accessibility of the outbound zone transfer service. By default,
+   b10-xfrout allows any clients to perform zone transfers for any zones:
+
+ > config show Xfrout/transfer_acl
+ Xfrout/transfer_acl[0]  {"action": "ACCEPT"}    any     (default)
+
+   You can change this to, for example, rejecting all transfer requests by
+   default while allowing requests for the transfer of zone "example.com"
+   from 192.0.2.1 and 2001:db8::1 as follows:
+
+ > config set Xfrout/transfer_acl[0] {"action": "REJECT"}
+ > config add Xfrout/zone_config
+ > config set Xfrout/zone_config[0]/origin "example.com"
+ > config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1"},
+                                                  {"action": "ACCEPT", "from": "2001:db8::1"}]
+ > config commit
 
   Note
 
-   The current development release of BIND 10 only supports AXFR. (IXFR is
-   not supported.) Access control is not yet provided.
+   In the above example the lines for transfer_acl were divided for
+   readability. In the actual input it must be in a single line.
+
+   If you want to require TSIG in access control, a separate TSIG "key ring"
+   must be configured specifically for b10-xfrout as well as a system wide
+   key ring, both containing a consistent set of keys. For example, to change
+   the previous example to allowing requests from 192.0.2.1 signed by a TSIG
+   with a key name of "key.example", you'll need to do this:
+
+ > config set tsig_keys/keys ["key.example:<base64-key>"]
+ > config set Xfrout/tsig_keys/keys ["key.example:<base64-key>"]
+ > config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]
+ > config commit
+
+   The first line of configuration defines a system wide key ring. This is
+   necessary because the b10-auth server also checks TSIGs and it uses the
+   system wide configuration.
+
+  Note
+
+   In a future version, b10-xfrout will also use the system wide TSIG
+   configuration. The way to specify zone specific configuration (ACLs, etc)
+   is likely to be changed, too.
 
 Chapter 11. Secondary Manager
 
@@ -777,8 +931,13 @@ Chapter 12. Recursive Name Server
    authoritative or resolver or both. By default, it starts the authoritative
    service. You may change this using bindctl, for example:
 
- > config set Boss/start_auth false
- > config set Boss/start_resolver true
+ > config remove Boss/components b10-xfrout
+ > config remove Boss/components b10-xfrin
+ > config remove Boss/components b10-auth
+ > config add Boss/components b10-resolver
+ > config set Boss/components/b10-resolver/special resolver
+ > config set Boss/components/b10-resolver/kind needed
+ > config set Boss/components/b10-resolver/priority 10
  > config commit
 
    The master bind10 will stop and start the desired services.

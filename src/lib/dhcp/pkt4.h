@@ -345,7 +345,7 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    uint32_t getIndex() { return (ifindex_); };
+    uint32_t getIndex() const { return (ifindex_); };
 
     /// @brief Sets remote address.
     ///

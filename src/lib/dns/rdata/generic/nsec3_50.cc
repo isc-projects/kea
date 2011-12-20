@@ -221,7 +221,7 @@ string
 NSEC3::toText() const {
     ostringstream s;
     int len = 0;
-    for (int i = 0; i < impl_->typebits_.size(); i += len) {
+    for (size_t i = 0; i < impl_->typebits_.size(); i += len) {
         assert(i + 2 <= impl_->typebits_.size());
         int window = impl_->typebits_[i];
         len = impl_->typebits_[i + 1];

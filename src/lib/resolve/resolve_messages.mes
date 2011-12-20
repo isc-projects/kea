@@ -15,22 +15,61 @@
 $NAMESPACE isc::resolve
 
 % RESLIB_ANSWER answer received in response to query for <%1>
-A debug message recording that an answer has been received to an upstream
-query for the specified question.  Previous debug messages will have indicated
-the server to which the question was sent.
+A debug message reporting that an answer has been received to an upstream
+query for the specified question.  Previous debug messages will have
+indicated the server to which the question was sent.
 
 % RESLIB_CNAME CNAME received in response to query for <%1>
-A debug message recording that CNAME response has been received to an upstream
-query for the specified question.  Previous debug messages will have indicated
-the server to which the question was sent.
+A debug message recording that CNAME response has been received to an
+upstream query for the specified question.  Previous debug messages will
+have indicated the server to which the question was sent.
 
 % RESLIB_DEEPEST did not find <%1> in cache, deepest delegation found is %2
-A debug message, a cache lookup did not find the specified <name, class,
-type> tuple in the cache; instead, the deepest delegation found is indicated.
+A debug message, a cache lookup did not find the specified <name,
+class, type> tuple in the cache; instead, the deepest delegation found
+is indicated.
+
+% RESLIB_EMPTY_RESPONSE empty response received to query for <%1>
+A debug message, the response to the specified query from an upstream
+nameserver did not contain anything in the answer or authority sections,
+although in all other respects it was a valid response.  A SERVFAIL will
+be returned to the system making the original query.
+
+% RESLIB_ERROR_RESPONSE unspecified error received in response to query for <%1>
+A debug message, the response to the specified query to an upstream
+nameserver indicated that the response was classified as an erroneous
+response, but that the nature of the error cannot be identified.
+A SERVFAIL will be returned to the system making the original query.
+
+% RESLIB_EXTRADATA_RESPONSE extra data in response to query for <%1>
+A debug message indicating that the response to the specified query
+from an upstream nameserver contained too much data.  This can happen if
+an ANY query was sent and the answer section in the response contained
+multiple RRs with different names.  A SERVFAIL will be returned to the
+system making the original query.
 
 % RESLIB_FOLLOW_CNAME following CNAME chain to <%1>
-A debug message, a CNAME response was received and another query is being issued
-for the <name, class, type> tuple.
+A debug message, a CNAME response was received and another query is
+being issued for the <name, class, type> tuple.
+
+% RESLIB_INVALID_NAMECLASS_RESPONSE invalid name or class in response to query for <%1>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) contained either
+an answer not matching the query name or an answer having a different
+class to that queried for.  A SERVFAIL will be returned to the system
+making the original query.
+
+% RESLIB_INVALID_QNAME_RESPONSE invalid name or class in response to query for <%1>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) contained a name
+in the question section that did not match that of the query. A SERVFAIL
+will be returned to the system making the original query.
+
+% RESLIB_INVALID_TYPE_RESPONSE invalid name or class in response to query for <%1>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) contained an
+invalid type field. A SERVFAIL will be returned to the system making
+the original query.
 
 % RESLIB_LONG_CHAIN CNAME received in response to query for <%1>: CNAME chain length exceeded
 A debug message recording that a CNAME response has been received to an upstream
@@ -39,15 +78,46 @@ the server to which the question was sent).  However, receipt of this CNAME
 has meant that the resolver has exceeded the CNAME chain limit (a CNAME chain
 is where on CNAME points to another) and so an error is being returned.
 
+% RESLIB_MULTIPLE_CLASS_RESPONSE response to query for <%1> contained multiple RRsets with different classes
+A debug message reporting that the response to an upstream query for
+the specified name contained multiple RRsets in the answer and not all
+were of the same class.  This is a violation of the standard and so a
+SERVFAIL will be returned.
+
 % RESLIB_NO_NS_RRSET no NS RRSet in referral response received to query for <%1>
 A debug message, this indicates that a response was received for the specified
 query and was categorized as a referral.  However, the received message did
 not contain any NS RRsets.  This may indicate a programming error in the
 response classification code.
 
+% RESLIB_NOT_ONE_QNAME_RESPONSE not one question in response to query for <%1>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) did not contain
+one name in the question section as required by the standard. A SERVFAIL
+will be returned to the system making the original query.
+
+% RESLIB_NOT_RESPONSE response to query for <%1> was not a response
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) did not have the QR
+bit set (thus indicating that the packet was a query, not a response).
+A SERVFAIL will be returned to the system making the original query.
+
+% RESLIB_NOTSINGLE_RESPONSE response to query for <%1> was not a response
+A debug message, the response to the specified query from an upstream
+nameserver was a CNAME that had mutiple RRs in the RRset.  This is
+an invalid response according to the standards so a SERVFAIL will be
+returned to the system making the original query.
+
 % RESLIB_NSAS_LOOKUP looking up nameserver for zone %1 in the NSAS
 A debug message, the RunningQuery object is querying the NSAS for the
 nameservers for the specified zone.
+
+% RESLIB_OPCODE_RESPONSE response to query for <%1> did not have query opcode
+A debug message, the response to the specified query from an upstream
+nameserver was a response that did not have the opcode set to that of
+a query.  According to the standards, this is an invalid response to
+the query that was made, so a SERVFAIL will be returned to the system
+making the original query.
 
 % RESLIB_NXDOM_NXRR NXDOMAIN/NXRRSET received in response to query for <%1>
 A debug message recording that either a NXDOMAIN or an NXRRSET response has
@@ -63,7 +133,7 @@ A debug message indicating that a protocol error was received and that
 the resolver is repeating the query to the same nameserver.  After this
 repeated query, there will be the indicated number of retries left.
 
-% RESLIB_RCODE_ERR RCODE indicates error in response to query for <%1>
+% RESLIB_RCODE_ERROR response to query for <%1> returns RCODE of %2
 A debug message, the response to the specified query indicated an error
 that is not covered by a specific code path.  A SERVFAIL will be returned.
 
@@ -121,6 +191,11 @@ called because all nameservers for the zone in question are unreachable.
 A debug message indicating that a RunningQuery's success callback has been
 called because a nameserver has been found, and that a query is being sent
 to the specified nameserver.
+
+% RESLIB_TCP_TRUNCATED TCP response to query for %1 was truncated
+This is a debug message logged when a response to the specified  query to an
+upstream nameserver returned a response with the TC (truncation) bit set.  This
+is treated as an error by the code.
 
 % RESLIB_TEST_SERVER setting test server to %1(%2)
 This is a warning message only generated in unit tests.  It indicates

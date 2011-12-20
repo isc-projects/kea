@@ -16,6 +16,7 @@
 #include <Python.h>
 #include <dns/rdata.h>
 #include <dns/messagerenderer.h>
+#include <dns/exceptions.h>
 #include <util/buffer.h>
 #include <util/python/pycppwrapper_util.h>
 
@@ -23,6 +24,7 @@
 #include "rrtype_python.h"
 #include "rrclass_python.h"
 #include "messagerenderer_python.h"
+#include "name_python.h"
 
 using namespace isc::dns;
 using namespace isc::dns::python;
@@ -31,6 +33,27 @@ using namespace isc::util::python;
 using namespace isc::dns::rdata;
 
 namespace {
+
+typedef PyObject* method(PyObject* self, PyObject* args);
+
+// Wrap a method into an exception handling, converting C++ exceptions
+// to python ones. The params and return value is just passed through.
+PyObject*
+exception_wrap(method* method, PyObject* self, PyObject* args) {
+    try {
+        return (method(self, args));
+    } catch (const std::exception& ex) {
+        // FIXME: These exceptions are not tested, I don't know how or if
+        // at all they can be triggered. But they are caught just in the case.
+        PyErr_SetString(PyExc_Exception, (std::string("Unknown exception: ") +
+                        ex.what()).c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_Exception, "Unknown exception");
+        return (NULL);
+    }
+}
+
 class s_Rdata : public PyObject {
 public:
     isc::dns::rdata::ConstRdataPtr cppobj;
@@ -44,16 +67,16 @@ typedef CPPPyObjectContainer<s_Rdata, Rdata> RdataContainer;
 //
 
 // General creation and destruction
-int Rdata_init(s_Rdata* self, PyObject* args);
-void Rdata_destroy(s_Rdata* self);
+int Rdata_init(PyObject* self, PyObject* args, PyObject*);
+void Rdata_destroy(PyObject* self);
 
 // These are the functions we export
-PyObject* Rdata_toText(s_Rdata* self);
+PyObject* Rdata_toText(PyObject* self, PyObject*);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
 PyObject* Rdata_str(PyObject* self);
-PyObject* Rdata_toWire(s_Rdata* self, PyObject* args);
-PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
+PyObject* Rdata_toWire(PyObject* self, PyObject* args);
+PyObject* RData_richcmp(PyObject* self, PyObject* other, int op);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -62,9 +85,9 @@ PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
 // 3. Argument type
 // 4. Documentation
 PyMethodDef Rdata_methods[] = {
-    { "to_text", reinterpret_cast<PyCFunction>(Rdata_toText), METH_NOARGS,
+    { "to_text", Rdata_toText, METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", reinterpret_cast<PyCFunction>(Rdata_toWire), METH_VARARGS,
+    { "to_wire", Rdata_toWire, METH_VARARGS,
       "Converts the Rdata object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
@@ -75,58 +98,89 @@ PyMethodDef Rdata_methods[] = {
 };
 
 int
-Rdata_init(s_Rdata* self, PyObject* args) {
+Rdata_init(PyObject* self_p, PyObject* args, PyObject*) {
     PyObject* rrtype;
     PyObject* rrclass;
     const char* s;
     const char* data;
     Py_ssize_t len;
+    s_Rdata* self(static_cast<s_Rdata*>(self_p));
 
-    // Create from string
-    if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
-                                        &rrclass_type, &rrclass,
-                                        &s)) {
-        self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
-                                   PyRRClass_ToRRClass(rrclass), s);
-        return (0);
-    } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
-                                &rrclass_type, &rrclass, &data, &len)) {
-        InputBuffer input_buffer(data, len);
-        self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
-                                   PyRRClass_ToRRClass(rrclass),
-                                   input_buffer, len);
-        return (0);
+    try {
+        // Create from string
+        if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
+                             &rrclass_type, &rrclass,
+                             &s)) {
+            self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
+                                       PyRRClass_ToRRClass(rrclass), s);
+            return (0);
+        } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
+                                    &rrclass_type, &rrclass, &data, &len)) {
+            InputBuffer input_buffer(data, len);
+            self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
+                                       PyRRClass_ToRRClass(rrclass),
+                                       input_buffer, len);
+            return (0);
+        }
+    } catch (const isc::dns::rdata::InvalidRdataText& irdt) {
+        PyErr_SetString(po_InvalidRdataText, irdt.what());
+        return (-1);
+    } catch (const isc::dns::rdata::InvalidRdataLength& irdl) {
+        PyErr_SetString(po_InvalidRdataLength, irdl.what());
+        return (-1);
+    } catch (const isc::dns::rdata::CharStringTooLong& cstl) {
+        PyErr_SetString(po_CharStringTooLong, cstl.what());
+        return (-1);
+    } catch (const isc::dns::DNSMessageFORMERR& dmfe) {
+        PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
+        return (-1);
+    } catch (const std::exception& ex) {
+        // FIXME: These exceptions are not tested, I don't know how or if
+        // at all they can be triggered. But they are caught just in the case.
+        PyErr_SetString(PyExc_Exception, (std::string("Unknown exception: ") +
+                        ex.what()).c_str());
+        return (-1);
+    } catch (...) {
+        PyErr_SetString(PyExc_Exception, "Unknown exception");
+        return (-1);
     }
 
     return (-1);
 }
 
 void
-Rdata_destroy(s_Rdata* self) {
+Rdata_destroy(PyObject* self) {
     // Clear the shared_ptr so that its reference count is zero
     // before we call tp_free() (there is no direct release())
-    self->cppobj.reset();
+    static_cast<s_Rdata*>(self)->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
-Rdata_toText(s_Rdata* self) {
+Rdata_toText_internal(PyObject* self, PyObject*) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+    return (Py_BuildValue("s", static_cast<const s_Rdata*>(self)->cppobj->
+                          toText().c_str()));
+}
+
+PyObject*
+Rdata_toText(PyObject* self, PyObject* args) {
+    return (exception_wrap(&Rdata_toText_internal, self, args));
 }
 
 PyObject*
 Rdata_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
-                               const_cast<char*>("to_text"),
+                                const_cast<char*>("to_text"),
                                 const_cast<char*>("")));
 }
 
 PyObject*
-Rdata_toWire(s_Rdata* self, PyObject* args) {
+Rdata_toWire_internal(PyObject* self_p, PyObject* args) {
     PyObject* bytes;
     PyObject* mr;
+    const s_Rdata* self(static_cast<const s_Rdata*>(self_p));
 
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
@@ -134,6 +188,11 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         OutputBuffer buffer(4);
         self->cppobj->toWire(buffer);
         PyObject* rd_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
+        // Make sure exceptions from here are propagated.
+        // The exception is already set, so we just return NULL
+        if (rd_bytes == NULL) {
+            return (NULL);
+        }
         PyObject* result = PySequence_InPlaceConcat(bytes_o, rd_bytes);
         // We need to release the object we temporarily created here
         // to prevent memory leak
@@ -152,45 +211,64 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
 }
 
 PyObject*
-RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
-    bool c;
+Rdata_toWire(PyObject* self, PyObject* args) {
+    return (exception_wrap(&Rdata_toWire_internal, self, args));
+}
 
-    // Check for null and if the types match. If different type,
-    // simply return False
-    if (!other || (self->ob_type != other->ob_type)) {
-        Py_RETURN_FALSE;
-    }
+PyObject*
+RData_richcmp(PyObject* self_p, PyObject* other_p, int op) {
+    try {
+        bool c;
+        const s_Rdata* self(static_cast<const s_Rdata*>(self_p)),
+              * other(static_cast<const s_Rdata*>(other_p));
 
-    switch (op) {
-    case Py_LT:
-        c = self->cppobj->compare(*other->cppobj) < 0;
-        break;
-    case Py_LE:
-        c = self->cppobj->compare(*other->cppobj) < 0 ||
-            self->cppobj->compare(*other->cppobj) == 0;
-        break;
-    case Py_EQ:
-        c = self->cppobj->compare(*other->cppobj) == 0;
-        break;
-    case Py_NE:
-        c = self->cppobj->compare(*other->cppobj) != 0;
-        break;
-    case Py_GT:
-        c = self->cppobj->compare(*other->cppobj) > 0;
-        break;
-    case Py_GE:
-        c = self->cppobj->compare(*other->cppobj) > 0 ||
-            self->cppobj->compare(*other->cppobj) == 0;
-        break;
-    default:
-        PyErr_SetString(PyExc_IndexError,
-                        "Unhandled rich comparison operator");
+        // Check for null and if the types match. If different type,
+        // simply return False
+        if (!other || (self->ob_type != other->ob_type)) {
+            Py_RETURN_FALSE;
+        }
+
+        switch (op) {
+            case Py_LT:
+                c = self->cppobj->compare(*other->cppobj) < 0;
+                break;
+            case Py_LE:
+                c = self->cppobj->compare(*other->cppobj) < 0 ||
+                    self->cppobj->compare(*other->cppobj) == 0;
+                break;
+            case Py_EQ:
+                c = self->cppobj->compare(*other->cppobj) == 0;
+                break;
+            case Py_NE:
+                c = self->cppobj->compare(*other->cppobj) != 0;
+                break;
+            case Py_GT:
+                c = self->cppobj->compare(*other->cppobj) > 0;
+                break;
+            case Py_GE:
+                c = self->cppobj->compare(*other->cppobj) > 0 ||
+                    self->cppobj->compare(*other->cppobj) == 0;
+                break;
+            default:
+                PyErr_SetString(PyExc_IndexError,
+                                "Unhandled rich comparison operator");
+                return (NULL);
+        }
+        if (c) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } catch (const std::exception& ex) {
+        // FIXME: These exceptions are not tested, I don't know how or if
+        // at all they can be triggered. But they are caught just in the case.
+        PyErr_SetString(PyExc_Exception, (std::string("Unknown exception: ") +
+                        ex.what()).c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_Exception, "Unknown exception");
         return (NULL);
     }
-    if (c)
-        Py_RETURN_TRUE;
-    else
-        Py_RETURN_FALSE;
 }
 
 } // end of unnamed namespace
@@ -217,7 +295,7 @@ PyTypeObject rdata_type = {
     "pydnspp.Rdata",
     sizeof(s_Rdata),                    // tp_basicsize
     0,                                  // tp_itemsize
-    (destructor)Rdata_destroy,          // tp_dealloc
+    Rdata_destroy,                      // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -237,7 +315,7 @@ PyTypeObject rdata_type = {
     "a set of common interfaces to manipulate concrete RDATA objects.",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
-    (richcmpfunc)RData_richcmp,         // tp_richcompare
+    RData_richcmp,                      // tp_richcompare
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
@@ -249,7 +327,7 @@ PyTypeObject rdata_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    (initproc)Rdata_init,               // tp_init
+    Rdata_init,                         // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free

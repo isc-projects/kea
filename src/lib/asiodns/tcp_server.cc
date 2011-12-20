@@ -70,7 +70,7 @@ TCPServer::TCPServer(io_service& io_service,
 }
 
 void
-TCPServer::operator()(error_code ec, size_t length) {
+TCPServer::operator()(asio::error_code ec, size_t length) {
     /// Because the coroutine reentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.

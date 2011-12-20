@@ -13,9 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This test file is generated .py.in -> .py just to be in the build dir,
-# same as the rest of the tests. Saves a lot of stuff in makefile.
-
 """
 Tests for the bind10.sockcreator module.
 """

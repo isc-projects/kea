@@ -151,7 +151,7 @@ private:
         size_t size);
 };
 
-#endif // __RESPONSE_CLASSIFIER_H
-
 } // namespace resolve
 } // namespace isc
+
+#endif // __RESPONSE_CLASSIFIER_H

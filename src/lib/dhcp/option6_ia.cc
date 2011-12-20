@@ -17,7 +17,7 @@
 #include <sstream>
 #include "exceptions/exceptions.h"
 
-#include "dhcp/libdhcp.h"
+#include "dhcp/libdhcp++.h"
 #include "dhcp/option6_ia.h"
 #include "dhcp/dhcp6.h"
 #include "util/io_utilities.h"
@@ -77,7 +77,7 @@ Option6IA::unpack(const boost::shared_array<uint8_t>& buf,
     if ( parse_len < OPTION6_IA_LEN || offset + OPTION6_IA_LEN > buf_len) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
-    
+
     iaid_ = readUint32(&buf[offset]);
     offset += sizeof(uint32_t);
 
@@ -121,9 +121,9 @@ std::string Option6IA::toText(int indent /* = 0*/) {
     return tmp.str();
 }
 
-unsigned short Option6IA::len() {
+uint16_t Option6IA::len() {
 
-    unsigned short length = OPTION6_HDR_LEN /*header (4)*/ +
+    uint16_t length = OPTION6_HDR_LEN /*header (4)*/ +
         OPTION6_IA_LEN  /* option content (12) */;
 
     // length of all suboptions

@@ -430,7 +430,7 @@ TEST_F(DNSServerTest, stopUDPServerDuringPrepareAnswer) {
 }
 
 static void stopServerManyTimes(DNSServer *server, unsigned int times) {
-    for (int i = 0; i < times; ++i) {
+    for (unsigned int i = 0; i < times; ++i) {
         server->stop();
     }
 }
