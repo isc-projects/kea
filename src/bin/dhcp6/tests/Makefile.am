@@ -53,6 +53,7 @@ dhcp6_unittests_LDADD = $(GTEST_LDADD)
 dhcp6_unittests_LDADD += $(SQLITE_LIBS)
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
