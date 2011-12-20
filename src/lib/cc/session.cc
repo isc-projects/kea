@@ -367,7 +367,7 @@ Session::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
     size_t length = impl_->readDataLength();
     if (hasQueuedMsgs()) {
         ConstElementPtr q_el;
-        for (int i = 0; i < impl_->queue_->size(); i++) {
+        for (size_t i = 0; i < impl_->queue_->size(); i++) {
             q_el = impl_->queue_->get(i);
             if (( seq == -1 &&
                   !q_el->get(0)->contains("reply")

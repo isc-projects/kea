@@ -38,7 +38,7 @@ namespace asiolink {
 // XXX: we cannot simply construct the address in the initialization list,
 // because we'd like to throw our own exception on failure.
 IOAddress::IOAddress(const string& address_str) {
-    error_code err;
+    asio::error_code err;
     asio_address_ = ip::address::from_string(address_str, err);
     if (err) {
         isc_throw(IOError, "Failed to convert string to address '"

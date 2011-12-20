@@ -17,6 +17,7 @@ endif
 CLEANFILES = *.gcno *.gcda
 
 TESTS =
+noinst_PROGRAMS =
 if HAVE_GTEST
 TESTS += run_unittests run_unittests_sqlite3 run_unittests_memory
 
@@ -55,13 +56,6 @@ run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 run_unittests_SOURCES += rbtree_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
-if !USE_STATIC_LINK
-# This test uses dynamically loadable module.  It will cause various
-# troubles with static link such as "missing" symbols in the static object
-# for the module.  As a workaround we disable this particualr test
-# in this case.
-run_unittests_SOURCES += factory_unittest.cc
-endif
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
@@ -91,9 +85,27 @@ run_unittests_memory_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_memory_LDADD = $(common_ldadd)
 
+noinst_PROGRAMS+= $(TESTS)
+
+# For the factory unit tests, we need to specify that we want
+# the loadable backend libraries from the build tree, and not from 
+# the installation directory. Therefore we build it into a separate
+# binary, and call that from check-local with B10_FROM_BUILD set.
+# Also, we only want to do this when static building is not used,
+# since it will cause various troubles with static link such as
+# "missing" symbols in the static object for the module.
+if !USE_STATIC_LINK
+noinst_PROGRAMS+=run_unittests_factory
+run_unittests_factory_SOURCES = $(common_sources)
+run_unittests_factory_SOURCES += factory_unittest.cc
+run_unittests_factory_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+run_unittests_factory_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+run_unittests_factory_LDADD = $(common_ldadd)
+check-local:
+	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests_factory
 endif
 
-noinst_PROGRAMS = $(TESTS)
+endif
 
 EXTRA_DIST =  testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.signed

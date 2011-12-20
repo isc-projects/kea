@@ -15,10 +15,11 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/iface_mgr.h>
-#include "dhcp6/dhcp6_srv.h"
-#include "dhcp/option6_ia.h"
-#include "dhcp/option6_iaaddr.h"
-#include "asiolink/io_address.h"
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -58,6 +59,8 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 
 Dhcpv6Srv::~Dhcpv6Srv() {
     cout << "DHCPv6 Srv shutdown." << endl;
+
+    IfaceMgr::instance().closeSockets();
 }
 
 bool
@@ -66,7 +69,7 @@ Dhcpv6Srv::run() {
         boost::shared_ptr<Pkt6> query; // client's message
         boost::shared_ptr<Pkt6> rsp;   // server's response
 
-        query = IfaceMgr::instance().receive();
+        query = IfaceMgr::instance().receive6();
 
         if (query) {
             if (!query->unpack()) {

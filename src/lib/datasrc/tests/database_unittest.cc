@@ -41,7 +41,6 @@ using namespace isc::datasrc;
 using namespace std;
 // don't import the entire boost namespace.  It will unexpectedly hide uint32_t
 // for some systems.
-using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 using boost::lexical_cast;
 using namespace isc::dns;
@@ -229,9 +228,9 @@ public:
         }
     }
 
-    virtual shared_ptr<DatabaseAccessor> clone() {
+    virtual boost::shared_ptr<DatabaseAccessor> clone() {
         // This accessor is stateless, so we can simply return a new instance.
-        return (shared_ptr<DatabaseAccessor>(new NopAccessor));
+        return (boost::shared_ptr<DatabaseAccessor>(new NopAccessor));
     }
 
     virtual std::pair<bool, int> startUpdateZone(const std::string&, bool) {
@@ -311,7 +310,7 @@ struct JournalEntry {
     DatabaseAccessor::DiffOperation operation_;
     std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
     bool operator==(const JournalEntry& other) const {
-        for (size_t i(0); i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
+        for (size_t i = 0; i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
             if (data_[i] != other.data_[i]) {
                 return false;
             }
@@ -350,8 +349,8 @@ public:
         fillData();
     }
 
-    virtual shared_ptr<DatabaseAccessor> clone() {
-        shared_ptr<MockAccessor> cloned_accessor(new MockAccessor());
+    virtual boost::shared_ptr<DatabaseAccessor> clone() {
+        boost::shared_ptr<MockAccessor> cloned_accessor(new MockAccessor());
         cloned_accessor->readonly_records_ = &readonly_records_master_;
         cloned_accessor->update_records_ = &update_records_master_;
         cloned_accessor->empty_records_ = &empty_records_master_;
@@ -406,7 +405,7 @@ private:
                 cur_name.clear();
                 // Just walk everything and check if it is a subdomain.
                 // If it is, just copy all data from there.
-                for (Domains::const_iterator i(cur_records.begin());
+                for (Domains::const_iterator i = cur_records.begin();
                      i != cur_records.end(); ++i) {
                     const Name local(i->first);
                     if (local.compare(Name(name)).getRelation() ==
@@ -442,7 +441,7 @@ private:
 
     private:
         const std::string searched_name_;
-        int cur_record_;
+        size_t cur_record_;
         std::vector< std::vector<std::string> > cur_name;
     };
 
@@ -706,7 +705,7 @@ public:
     }
 
     // This allows the test code to get the accessor used in an update context
-    shared_ptr<const MockAccessor> getLatestClone() const {
+    boost::shared_ptr<const MockAccessor> getLatestClone() const {
         return (latest_clone_);
     }
 
@@ -807,7 +806,7 @@ public:
         // Clean the journal, but keep local copy to check
         journal.swap(*journal_entries_);
         ASSERT_EQ(expected.size(), journal.size());
-        for (size_t i(0); i < expected.size(); ++ i) {
+        for (size_t i = 0; i < expected.size(); ++ i) {
             EXPECT_TRUE(expected[i] == journal[i]);
         }
     }
@@ -883,7 +882,7 @@ private:
         ASSERT_EQ(0, readonly_records_->count(name));
         // Append the name to all of them
         for (std::vector<std::vector<std::string> >::iterator
-             i(cur_name_.begin()); i != cur_name_.end(); ++ i) {
+             i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
             i->push_back(name);
         }
         (*readonly_records_)[name] = cur_name_;
@@ -992,7 +991,7 @@ public:
         current_accessor_ = new ACCESSOR_TYPE();
         is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_) != NULL);
         client_.reset(new DatabaseClient(qclass_,
-                                         shared_ptr<ACCESSOR_TYPE>(
+                                         boost::shared_ptr<ACCESSOR_TYPE>(
                                              current_accessor_)));
     }
 
@@ -1002,9 +1001,9 @@ public:
      */
     void checkZoneFinder(const DataSourceClient::FindResult& zone) {
         ASSERT_NE(ZoneFinderPtr(), zone.zone_finder) << "No zone finder";
-        shared_ptr<DatabaseClient::Finder> finder(
+        boost::shared_ptr<DatabaseClient::Finder> finder(
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-        ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
+        ASSERT_NE(boost::shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
         if (is_mock_) {
             EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
@@ -1012,10 +1011,10 @@ public:
         EXPECT_EQ(current_accessor_, &finder->getAccessor());
     }
 
-    shared_ptr<DatabaseClient::Finder> getFinder() {
+    boost::shared_ptr<DatabaseClient::Finder> getFinder() {
         DataSourceClient::FindResult zone(client_->findZone(zname_));
         EXPECT_EQ(result::SUCCESS, zone.code);
-        shared_ptr<DatabaseClient::Finder> finder(
+        boost::shared_ptr<DatabaseClient::Finder> finder(
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
         if (is_mock_) {
             EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
@@ -1102,11 +1101,11 @@ public:
 
     // Will be deleted by client_, just keep the current value for comparison.
     ACCESSOR_TYPE* current_accessor_;
-    shared_ptr<DatabaseClient> client_;
+    boost::shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
     // The zone finder of the test zone commonly used in various tests.
-    shared_ptr<DatabaseClient::Finder> finder_;
+    boost::shared_ptr<DatabaseClient::Finder> finder_;
 
     // Some shortcut variables for commonly used test parameters
     const Name zname_; // the zone name stored in the test data source
@@ -1120,7 +1119,7 @@ public:
 
     // update related objects to be tested
     ZoneUpdaterPtr updater_;
-    shared_ptr<const DatabaseAccessor> update_accessor_;
+    boost::shared_ptr<const DatabaseAccessor> update_accessor_;
 
     // placeholders
     const std::vector<std::string> empty_rdatas_; // for NXRRSET/NXDOMAIN
@@ -1194,7 +1193,7 @@ TEST(GenericDatabaseClientTest, noAccessorException) {
     // We need a dummy variable here; some compiler would regard it a mere
     // declaration instead of an instantiation and make the test fail.
     EXPECT_THROW(DatabaseClient dummy(RRClass::IN(),
-                                      shared_ptr<DatabaseAccessor>()),
+                                      boost::shared_ptr<DatabaseAccessor>()),
                  isc::InvalidParameter);
 }
 
@@ -1215,8 +1214,9 @@ TEST(GenericDatabaseClientTest, noZoneNotImplementedIterator) {
 }
 
 TEST(GenericDatabaseClientTest, notImplementedIterator) {
-    EXPECT_THROW(DatabaseClient(RRClass::IN(), shared_ptr<DatabaseAccessor>(
-        new NopAccessor())).getIterator(Name("example.org")),
+    EXPECT_THROW(DatabaseClient(RRClass::IN(),
+                    boost::shared_ptr<DatabaseAccessor>(
+                        new NopAccessor())).getIterator(Name("example.org")),
                  isc::NotImplemented);
 }
 
@@ -1499,7 +1499,7 @@ TEST_F(MockDatabaseClientTest, ttldiff_separate_rrs) {
 }
 
 TYPED_TEST(DatabaseClientTest, find) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
@@ -1738,7 +1738,7 @@ TYPED_TEST(DatabaseClientTest, find) {
 }
 
 TYPED_TEST(DatabaseClientTest, findDelegation) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // The apex should not be considered delegation point and we can access
     // data
@@ -1856,7 +1856,7 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
 }
 
 TYPED_TEST(DatabaseClientTest, emptyDomain) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // This domain doesn't exist, but a subdomain of it does.
     // Therefore we should pretend the domain is there, but contains no RRsets
@@ -1868,7 +1868,7 @@ TYPED_TEST(DatabaseClientTest, emptyDomain) {
 // Glue-OK mode. Just go through NS delegations down (but not through
 // DNAME) and pretend it is not there.
 TYPED_TEST(DatabaseClientTest, glueOK) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
@@ -1925,7 +1925,7 @@ TYPED_TEST(DatabaseClientTest, glueOK) {
 }
 
 TYPED_TEST(DatabaseClientTest, wildcard) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // First, simple wildcard match
     // Check also that the RRSIG is added from the wildcard (not modified)
@@ -2018,7 +2018,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
         "wild.*.foo.*.bar.example.org.",
         NULL
     };
-    for (const char** name(positive_names); *name != NULL; ++ name) {
+    for (const char** name = positive_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
                    this->expected_rdatas_,
@@ -2043,7 +2043,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     };
     // Unless FIND_DNSSEC is specified, this is no different from other
     // NXRRSET case.
-    for (const char** name(negative_names); *name != NULL; ++ name) {
+    for (const char** name = negative_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_);
@@ -2059,7 +2059,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("wild.*.foo.*.bar.example.org. NSEC");
     this->expected_sig_rdatas_.clear();
-    for (const char** name(negative_dnssec_names); *name != NULL; ++ name) {
+    for (const char** name = negative_dnssec_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    RRType::NSEC(), this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_,
@@ -2098,7 +2098,7 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
 TYPED_TEST(DatabaseClientTest, noWildcard) {
     // Tests with the NO_WILDCARD flag.
 
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // This would match *.wild.example.org, but with NO_WILDCARD should
     // result in NXDOMAIN.
@@ -2159,7 +2159,7 @@ TYPED_TEST(DatabaseClientTest, noWildcard) {
 TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
     // The domain exists, but doesn't have this RRType
     // So we should get its NSEC
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
     this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
@@ -2178,7 +2178,7 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
     //
     // The user will have to query us again to get the correct
     // answer (eg. prove there's not an exact match)
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.push_back("cancel.here.wild.example.org. A NSEC "
                                      "RRSIG");
@@ -2195,7 +2195,7 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
 
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     // The domain doesn't exist, so we must get the right NSEC
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
     this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
@@ -2232,7 +2232,7 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
 
 TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     // Same as NXDOMAIN_NSEC, but with empty non-terminal
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
     doFindTest(*finder, isc::dns::Name("nonterminal.example.org."),
@@ -2259,7 +2259,7 @@ TYPED_TEST(DatabaseClientTest, getOrigin) {
     DataSourceClient::FindResult
         zone(this->client_->findZone(Name("example.org")));
     ASSERT_EQ(result::SUCCESS, zone.code);
-    shared_ptr<DatabaseClient::Finder> finder(
+    boost::shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
     if (this->is_mock_) {
         EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
@@ -2301,7 +2301,7 @@ TYPED_TEST(DatabaseClientTest, updaterFinder) {
 
 TYPED_TEST(DatabaseClientTest, flushZone) {
     // A simple update case: flush the entire zone
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     // Before update, the name exists.
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
@@ -2420,7 +2420,7 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
 
 TYPED_TEST(DatabaseClientTest, addRRsetToCurrentZone) {
     // Similar to the previous test, but not replacing the existing data.
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->updater_->addRRset(*this->rrset_);
@@ -2577,7 +2577,7 @@ TYPED_TEST(DatabaseClientTest, addRRsetWithRRSIG) {
 }
 
 TYPED_TEST(DatabaseClientTest, deleteRRset) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     this->rrset_.reset(new RRset(this->qname_, this->qclass_, this->qtype_,
                                  this->rrttl_));
@@ -2849,7 +2849,7 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
 
     // Commit the changes, confirm the entire changes applied.
     this->updater_->commit();
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("192.0.2.2");
     this->expected_rdatas_.push_back("192.0.2.1");
@@ -2865,7 +2865,7 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
 }
 
 TYPED_TEST(DatabaseClientTest, previous) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     EXPECT_EQ(Name("www.example.org."),
               finder->findPreviousName(Name("www2.example.org.")));
@@ -2892,7 +2892,7 @@ TYPED_TEST(DatabaseClientTest, previous) {
 }
 
 TYPED_TEST(DatabaseClientTest, invalidRdata) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     EXPECT_THROW(finder->find(Name("invalidrdata.example.org."), RRType::A()),
                  DataSourceError);
@@ -2901,7 +2901,7 @@ TYPED_TEST(DatabaseClientTest, invalidRdata) {
 }
 
 TEST_F(MockDatabaseClientTest, missingNSEC) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     /*
      * FIXME: For now, we can't really distinguish this bogus input
@@ -2919,7 +2919,7 @@ TEST_F(MockDatabaseClientTest, missingNSEC) {
 }
 
 TEST_F(MockDatabaseClientTest, badName) {
-    shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
     EXPECT_THROW(finder->findPreviousName(Name("brokenname.example.org.")),
                  DataSourceError);
@@ -2973,7 +2973,7 @@ TYPED_TEST(DatabaseClientTest, journalMultiple) {
     this->updater_ = this->client_->getUpdater(this->zname_, false, true);
     std::string soa_rdata = "ns1.example.org. admin.example.org. "
         "1234 3600 1800 2419200 7200";
-    for (size_t i(1); i < 100; ++ i) {
+    for (size_t i = 1; i < 100; ++ i) {
         // Remove the old SOA
         this->updater_->deleteRRset(*this->soa_);
         expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234 + i - 1,

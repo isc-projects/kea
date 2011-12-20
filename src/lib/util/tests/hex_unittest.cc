@@ -110,7 +110,7 @@ TEST_F(HexTest, decodeMap) {
 }
 
 TEST_F(HexTest, encodeMap) {
-    for (int i = 0; i < 16; ++i) {
+    for (uint8_t i = 0; i < 16; ++i) {
         decoded_data.clear();
         decoded_data.push_back(i);
         EXPECT_EQ(encoding_chars[i], encodeHex(decoded_data)[1]);
