@@ -102,9 +102,8 @@ PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
         return (NULL);
     }
     PyObject* name;
-    unsigned int options_int = ZoneFinder::FIND_DEFAULT;
-    if (PyArg_ParseTuple(args, "O!|I", &name_type, &name,
-                                         &options_int)) {
+    const unsigned int options_int = ZoneFinder::FIND_DEFAULT;
+    if (PyArg_ParseTuple(args, "O!|I", &name_type, &name, &options_int)) {
         try {
             ZoneFinder::FindOptions options =
                 static_cast<ZoneFinder::FindOptions>(options_int);
@@ -171,7 +170,7 @@ typedef CPPPyObjectContainer<s_ZoneFinder, ZoneFinder> ZoneFinderContainer;
 
 // General creation and destruction
 int
-ZoneFinder_init(s_ZoneFinder* self, PyObject* args) {
+ZoneFinder_init(PyObject*, PyObject*, PyObject*) {
     // can't be called directly
     PyErr_SetString(PyExc_TypeError,
                     "ZoneFinder cannot be constructed directly");
@@ -180,7 +179,8 @@ ZoneFinder_init(s_ZoneFinder* self, PyObject* args) {
 }
 
 void
-ZoneFinder_destroy(s_ZoneFinder* const self) {
+ZoneFinder_destroy(PyObject* po_self) {
+    s_ZoneFinder* self = static_cast<s_ZoneFinder*>(po_self);
     // cppobj is a shared ptr, but to make sure things are not destroyed in
     // the wrong order, we reset it here.
     self->cppobj.reset();
@@ -282,7 +282,7 @@ PyTypeObject zonefinder_type = {
     "datasrc.ZoneFinder",
     sizeof(s_ZoneFinder),               // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(ZoneFinder_destroy),// tp_dealloc
+    ZoneFinder_destroy,                 // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -313,7 +313,7 @@ PyTypeObject zonefinder_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(ZoneFinder_init),// tp_init
+    ZoneFinder_init,                    // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
