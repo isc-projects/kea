@@ -19,7 +19,7 @@ from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM, IPPROTO_UDP, \
 from isc.util.io.socketsession import *
 
 TESTDATA_OBJDIR = os.getenv("TESTDATAOBJDIR")
-TEST_UNIX_FILE = TESTDATA_OBJDIR + '/test.unix'
+TEST_UNIX_FILE = TESTDATA_OBJDIR + '/ssessiontest.unix'
 TEST_DATA = b'BIND10 test'
 TEST_PORT = 53535
 
