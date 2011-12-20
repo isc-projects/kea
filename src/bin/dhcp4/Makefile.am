@@ -12,6 +12,8 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
+CLEANFILES = spec_config.h
+
 man_MANS = b10-dhcp4.8
 EXTRA_DIST = $(man_MANS) dhcp4.spec
 
@@ -30,7 +32,7 @@ pkglibexec_PROGRAMS = b10-dhcp4
 
 b10_dhcp4_SOURCES = main.cc dhcp4_srv.cc dhcp4_srv.h
 
-b10_dhcp4_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp.la
+b10_dhcp4_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp++.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/liblog.la
@@ -39,4 +41,3 @@ b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/liblog.la
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_dhcp4dir = $(pkgdatadir)
 b10_dhcp4_DATA = dhcp4.spec
-

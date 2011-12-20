@@ -15,18 +15,63 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrin messages python module.
 
+% XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly created
+On starting an xfrin session, it is identified that the zone to be
+transferred is not found in the data source.  This can happen if a
+secondary DNS server first tries to perform AXFR from a primary server
+without creating the zone image beforehand (e.g. by b10-loadzone).  As
+of this writing the xfrin process provides backward compatible
+behavior to previous versions: creating a new one in the data source
+not to surprise existing users too much.  This is probably not a good
+idea, however, in terms of who should be responsible for managing
+zones at a higher level.  In future it is more likely that a separate
+zone management framework is provided, and the situation where the
+given zone isn't found in xfrout will be treated as an error.
+
+% XFRIN_ZONE_NO_SOA Zone %1 does not have SOA
+On starting an xfrin session, it is identified that the zone to be
+transferred does not have an SOA RR in the data source.  This is not
+necessarily an error; if a secondary DNS server first tries to perform
+transfer from a primary server, the zone can be empty, and therefore
+doesn't have an SOA.  Subsequent AXFR will fill in the zone; if the
+attempt is IXFR it will fail in query creation.
+
+% XFRIN_ZONE_MULTIPLE_SOA Zone %1 has %2 SOA RRs
+On starting an xfrin session, it is identified that the zone to be
+transferred has multiple SOA RRs.  Such a zone is broken, but could be
+accidentally configured especially in a data source using "non
+captive" backend database.  The implementation ignores entire SOA RRs
+and tries to continue processing as if the zone were empty.  This
+means subsequent AXFR can succeed and possibly replace the zone with
+valid content, but an IXFR attempt will fail.
+
+% XFRIN_ZONE_SERIAL_AHEAD Serial number (%1) for %2 received from master %3 < ours (%4)
+The response to an SOA query prior to xfr indicated that the zone's
+SOA serial at the primary server is smaller than that of the xfrin
+client.  This is not necessarily an error especially if that
+particular primary server is another secondary server which hasn't got
+the latest version of the zone.  But if the primary server is known to
+be the real source of the zone, some unexpected inconsistency may have
+happened, and you may want to take a closer look.  In this case xfrin
+doesn't perform subsequent zone transfer.
+
 % XFRIN_XFR_OTHER_FAILURE %1 transfer of zone %2 failed: %3
 The XFR transfer for the given zone has failed due to a problem outside
 of the xfrin module.  Possible reasons are a broken DNS message or failure
 in database connection.  The error is shown in the log message.
 
-% XFRIN_AXFR_DATABASE_FAILURE AXFR transfer of zone %1 failed: %2
-The AXFR transfer for the given zone has failed due to a database problem.
-The error is shown in the log message.  Note: due to the code structure
-this can only happen for AXFR.
+% XFRIN_XFR_TRANSFER_PROTOCOL_ERROR %1 transfer of zone %2 with %3 failed: %4
+The XFR transfer for the given zone has failed due to a protocol
+error, such as an unexpected response from the primary server.  The
+error is shown in the log message.  It may be because the primary
+server implementation is broken or (although less likely) there was
+some attack attempt, but it can also happen due to configuration
+mismatch such as the remote server does not have authority for the
+zone any more but the local configuration hasn't been updated.  So it
+is recommended to check the primary server configuration.
 
-% XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 failed: %3
-The XFR transfer for the given zone has failed due to a protocol error.
+% XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 with %3 failed: %4
+The XFR transfer for the given zone has failed due to an internal error.
 The error is shown in the log message.
 
 % XFRIN_XFR_TRANSFER_FALLBACK falling back from IXFR to AXFR for %1
@@ -117,6 +162,16 @@ daemon will now shut down.
 % XFRIN_UNKNOWN_ERROR unknown error: %1
 An uncaught exception was raised while running the xfrin daemon. The
 exception message is printed in the log message.
+
+% XFRIN_IXFR_UPTODATE IXFR requested serial for %1 is %2, master has %3, not updating
+The first SOA record in an IXFR response indicates the zone's serial
+at the primary server is not newer than the client's.  This is
+basically unexpected event because normally the client first checks
+the SOA serial by an SOA query, but can still happen if the transfer
+is manually invoked or (although unlikely) there is a rapid change at
+the primary server between the SOA and IXFR queries.  The client
+implementation confirms the whole response is this single SOA, and
+aborts the transfer just like a successful case.
 
 % XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
 In an attempt of IXFR processing, the begenning SOA of the first difference

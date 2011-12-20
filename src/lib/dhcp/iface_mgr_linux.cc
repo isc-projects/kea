@@ -166,7 +166,7 @@ void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
         struct ifaddrmsg *ifa = (ifaddrmsg*)NLMSG_DATA(n);
 
         // these are not the addresses you are looking for
-        if ( ifa->ifa_index != iface.ifindex_) {
+        if ( ifa->ifa_index != iface.getIndex()) {
             continue;
         }
 
@@ -180,7 +180,7 @@ void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
 
             memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]),16);
             IOAddress a = IOAddress::from_bytes(AF_INET6, addr);
-            iface.addrs_.push_back(a);
+            iface.addAddress(a);
 
             /// TODO: Read lifetimes of configured addresses
         }
@@ -195,7 +195,7 @@ void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
 
             memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]),4);
             IOAddress a = IOAddress::from_bytes(AF_INET, addr);
-            iface.addrs_.push_back(a);
+            iface.addAddress(a);
         }
     }
 }

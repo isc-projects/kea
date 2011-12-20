@@ -35,6 +35,14 @@ class RdataTest(unittest.TestCase):
         self.assertRaises(TypeError, Rdata, "wrong", RRClass("IN"), "192.0.2.99")
         self.assertRaises(TypeError, Rdata, RRType("A"), "wrong", "192.0.2.99")
         self.assertRaises(TypeError, Rdata, RRType("A"), RRClass("IN"), 1)
+        self.assertRaises(InvalidRdataText, Rdata, RRType("A"), RRClass("IN"),
+                          "Invalid Rdata Text")
+        self.assertRaises(CharStringTooLong, Rdata, RRType("TXT"),
+                          RRClass("IN"), ' ' * 256)
+        self.assertRaises(InvalidRdataLength, Rdata, RRType("TXT"),
+                          RRClass("IN"), bytes(65536))
+        self.assertRaises(DNSMessageFORMERR, Rdata, RRType("TXT"),
+                          RRClass("IN"), b"\xff")
 
     def test_rdata_to_wire(self):
         b = bytearray()

@@ -76,7 +76,6 @@ using namespace isc::xfr;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
-using boost::shared_ptr;
 
 class AuthSrvImpl {
 private:
@@ -124,7 +123,7 @@ public:
     AddressList listen_addresses_;
 
     /// The TSIG keyring
-    const shared_ptr<TSIGKeyRing>* keyring_;
+    const boost::shared_ptr<TSIGKeyRing>* keyring_;
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -219,20 +218,22 @@ class ConfigChecker : public SimpleCallback {
 public:
     ConfigChecker(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage&) const {
-        if (server_->getConfigSession()->hasQueuedMsgs()) {
-            server_->getConfigSession()->checkCommand();
+        ModuleCCSession* cfg_session = server_->getConfigSession();
+        if (cfg_session != NULL && cfg_session->hasQueuedMsgs()) {
+            cfg_session->checkCommand();
         }
     }
 private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
-    impl_(new AuthSrvImpl(use_cache, xfrout_client)),
-    checkin_(new ConfigChecker(this)),
-    dns_lookup_(new MessageLookup(this)),
-    dns_answer_(new MessageAnswer(this))
-{}
+AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client)
+{
+    impl_ = new AuthSrvImpl(use_cache, xfrout_client);
+    checkin_ = new ConfigChecker(this);
+    dns_lookup_ = new MessageLookup(this);
+    dns_answer_ = new MessageAnswer(this);
+}
 
 void
 AuthSrv::stop() {
@@ -670,9 +671,9 @@ void
 AuthSrvImpl::incCounter(const int protocol) {
     // Increment query counter.
     if (protocol == IPPROTO_UDP) {
-        counters_.inc(AuthCounters::COUNTER_UDP_QUERY);
+        counters_.inc(AuthCounters::SERVER_UDP_QUERY);
     } else if (protocol == IPPROTO_TCP) {
-        counters_.inc(AuthCounters::COUNTER_TCP_QUERY);
+        counters_.inc(AuthCounters::SERVER_TCP_QUERY);
     } else {
         // unknown protocol
         isc_throw(Unexpected, "Unknown protocol: " << protocol);
@@ -765,7 +766,7 @@ bool AuthSrv::submitStatistics() const {
 }
 
 uint64_t
-AuthSrv::getCounter(const AuthCounters::CounterType type) const {
+AuthSrv::getCounter(const AuthCounters::ServerCounterType type) const {
     return (impl_->counters_.getCounter(type));
 }
 
@@ -785,6 +786,6 @@ AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
 }
 
 void
-AuthSrv::setTSIGKeyRing(const shared_ptr<TSIGKeyRing>* keyring) {
+AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
 }

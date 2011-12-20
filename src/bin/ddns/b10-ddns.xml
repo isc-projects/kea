@@ -1,0 +1,161 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<refentry>
+
+  <refentryinfo>
+    <date>December 9, 2011</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>b10-ddns</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND10</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>b10-ddns</refname>
+    <refpurpose>Dynamic DNS update service</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2011</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>b10-ddns</command>
+        <group choice="opt">
+          <arg choice="plain"><option>-v</option></arg>
+          <arg choice="plain"><option>--verbose</option></arg>
+        </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>The <command>b10-ddns</command> daemon provides the BIND 10
+      Dynamic Update (DDNS) service, as specified in RFC 2136.
+      Normally it is started by the
+      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      boss process.
+      When the <command>b10-auth</command> DNS server receives
+      a DDNS update, <command>b10-ddns</command> updates the zone
+      in the BIND 10 zone data store.
+    </para>
+
+    <para>
+      This daemon communicates with BIND 10 over a
+      <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      C-Channel connection.  If this connection is not established,
+      <command>b10-ddns</command> will exit.
+    </para>
+
+    <para>
+     <command>b10-ddns</command> receives its configurations from
+<citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>
+          <option>-v</option>,
+          <option>--verbose</option>
+        </term>
+        <listitem>
+          <para>
+            This value is ignored at this moment, but is provided for
+            compatibility with the bind10 Boss process
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>CONFIGURATION AND COMMANDS</title>
+    <para>
+      The configurable settings are:
+    </para>
+    <para>
+      <varname>zones</varname>
+      The zones option is a named set of zones that can be updated with
+      DDNS. Each entry has one element called update_acl, which is
+      a list of access control rules that define update permissions.
+      By default this is empty; DDNS must be explicitely enabled per zone.
+    </para>
+
+    <para>
+      The module commands are:
+    </para>
+    <para>
+      <command>shutdown</command> Exits <command>b10-ddns</command>.
+      (Note that the BIND 10 boss process will restart this service.)
+    </para>
+
+  </refsect1>
+
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 10 Guide</citetitle>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>HISTORY</title>
+    <para>
+      The <command>b10-ddns</command> daemon was first implemented
+      in December 2011 for the ISC BIND 10 project.
+    </para>
+  </refsect1>
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->

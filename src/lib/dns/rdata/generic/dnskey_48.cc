@@ -181,7 +181,7 @@ DNSKEY::getTag() const {
     ac += impl_->algorithm_;
     
     size_t size = impl_->keydata_.size();
-    for (int i = 0; i < size; i ++) {
+    for (size_t i = 0; i < size; i ++) {
         ac += (i & 1) ? impl_->keydata_[i] : (impl_->keydata_[i] << 8);
     }
     ac += (ac >> 16) & 0xffff;

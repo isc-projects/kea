@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -21,16 +23,14 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
-#include <config.h>
-
 #include <dns/question.h>
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <dns/exceptions.h>
 #include <dns/rdataclass.h>
-
 #include <resolve/resolve.h>
 #include <resolve/resolve_log.h>
+#include <resolve/resolve_messages.h>
 #include <cache/resolver_cache.h>
 #include <nsas/address_request_callback.h>
 #include <nsas/nameserver_address.h>
@@ -39,6 +39,7 @@
 #include <asiodns/dns_service.h>
 #include <asiodns/io_fetch.h>
 #include <asiolink/io_service.h>
+#include <resolve/response_classifier.h>
 #include <resolve/recursive_query.h>
 
 using namespace isc::dns;
@@ -228,6 +229,9 @@ private:
     // case of a TCP packet being returned with the TC bit set.
     IOFetch::Protocol protocol_;
 
+    // EDNS flag
+    bool edns_;
+
     // To prevent both unreasonably long cname chains and cname loops,
     // we simply keep a counter of the number of CNAMEs we have
     // followed so far (and error if it exceeds RESOLVER_MAX_CNAME_CHAIN
@@ -351,37 +355,40 @@ private:
             IOFetch query(protocol_, io_, question_,
                 test_server_.first,
                 test_server_.second, buffer_, this,
-                query_timeout_);
+                query_timeout_, edns_);
             io_.get_io_service().post(query);
         } else {
             IOFetch query(protocol_, io_, question_,
                 current_ns_address.getAddress(),
                 53, buffer_, this,
-                query_timeout_);
+                query_timeout_, edns_);
             io_.get_io_service().post(query);
         }
     }
     
     // 'general' send, ask the NSAS to give us an address.
-    void send(IOFetch::Protocol protocol = IOFetch::UDP) {
+    void send(IOFetch::Protocol protocol = IOFetch::UDP, bool edns = true) {
         protocol_ = protocol;   // Store protocol being used for this
+        edns_ = edns;
         if (test_server_.second != 0) {
             // Send query to test server
-            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_TEST_UPSTREAM)
+            LOG_DEBUG(isc::resolve::logger,
+                      RESLIB_DBG_TRACE, RESLIB_TEST_UPSTREAM)
                 .arg(questionText(question_)).arg(test_server_.first);
             gettimeofday(&current_ns_qsent_time, NULL);
             ++outstanding_events_;
             IOFetch query(protocol, io_, question_,
                 test_server_.first,
                 test_server_.second, buffer_, this,
-                query_timeout_);
+                query_timeout_, edns_);
             io_.get_io_service().post(query);
 
         } else {
             // Ask the NSAS for an address for the current zone,
             // the callback will call the actual sendTo()
-            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_NSAS_LOOKUP)
-                      .arg(cur_zone_);
+            LOG_DEBUG(isc::resolve::logger,
+                      RESLIB_DBG_TRACE, RESLIB_NSAS_LOOKUP)
+                .arg(cur_zone_);
 
             // Can we have multiple calls to nsas_out? Let's assume not
             // for now
@@ -430,7 +437,7 @@ private:
                       .arg(questionText(question_));
             isc::resolve::copyResponseMessage(incoming, answer_message_);
             cache_.update(*answer_message_);
-            return true;
+            return (true);
             break;
 
         case isc::resolve::ResponseClassifier::CNAME:
@@ -444,7 +451,7 @@ private:
                 LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_LONG_CHAIN)
                           .arg(questionText(question_));
                 makeSERVFAIL();
-                return true;
+                return (true);
             }
 
             LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_CNAME)
@@ -460,7 +467,7 @@ private:
             LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_FOLLOW_CNAME)
                       .arg(questionText(question_));
             doLookup();
-            return false;
+            return (false);
             break;
 
         case isc::resolve::ResponseClassifier::NXDOMAIN:
@@ -471,7 +478,7 @@ private:
             isc::resolve::copyResponseMessage(incoming, answer_message_);
             // no negcache yet
             //cache_.update(*answer_message_);
-            return true;
+            return (true);
             break;
 
         case isc::resolve::ResponseClassifier::REFERRAL:
@@ -520,7 +527,7 @@ private:
                 nsas_callback_out_ = true;
                 nsas_.lookup(cur_zone_, question_.getClass(),
                              nsas_callback_, ANY_OK, glue_hints);
-                return false;
+                return (false);
             } else {
                 // Referral was received but did not contain an NS RRset.
                 LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_NO_NS_RRSET)
@@ -528,48 +535,143 @@ private:
 
                 // TODO this will result in answering with the delegation. oh well
                 isc::resolve::copyResponseMessage(incoming, answer_message_);
-                return true;
+                return (true);
             }
             break;
+
         case isc::resolve::ResponseClassifier::TRUNCATED:
             // Truncated packet.  If the protocol we used for the last one is
             // UDP, re-query using TCP.  Otherwise regard it as an error.
             if (protocol_ == IOFetch::UDP) {
-                LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_TRUNCATED)
-                          .arg(questionText(question_));
+                LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS,
+                          RESLIB_TRUNCATED).arg(questionText(question_));
                 send(IOFetch::TCP);
-                return false;
+                return (false);
             }
-            // Was a TCP query so we have received a packet over TCP with the TC
-            // bit set: drop through to common error processing.
-            // TODO: Can we use what we have received instead of discarding it?
 
-        case isc::resolve::ResponseClassifier::EMPTY:
-        case isc::resolve::ResponseClassifier::EXTRADATA:
-        case isc::resolve::ResponseClassifier::INVNAMCLASS:
-        case isc::resolve::ResponseClassifier::INVTYPE:
-        case isc::resolve::ResponseClassifier::MISMATQUEST:
-        case isc::resolve::ResponseClassifier::MULTICLASS:
-        case isc::resolve::ResponseClassifier::NOTONEQUEST:
-        case isc::resolve::ResponseClassifier::NOTRESPONSE:
-        case isc::resolve::ResponseClassifier::NOTSINGLE:
-        case isc::resolve::ResponseClassifier::OPCODE:
+            // Was a TCP query so we have received a packet over TCP with the
+            // TC bit set: report an error by going to the common
+            // error code.
+            goto SERVFAIL;
+
         case isc::resolve::ResponseClassifier::RCODE:
-            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_RCODE_ERR)
-                      .arg(questionText(question_));
-            // Should we try a different server rather than SERVFAIL?
+            // see if it's a FORMERR and a potential EDNS problem
+            if (incoming.getRcode() == Rcode::FORMERR()) {
+                if (protocol_ == IOFetch::UDP && edns_) {
+                    // TODO: in case we absolutely need EDNS (i.e. for DNSSEC
+                    // aware queries), we might want to try TCP before we give
+                    // up. For now, just try UDP, no EDNS
+                    send(IOFetch::UDP, false);
+                    return (false);
+                }
+
+                // TC should take care of non-EDNS over UDP, fall through to
+                // SERVFAIL if we get FORMERR instead
+            }
+            goto SERVFAIL;
+            
+        default:
+SERVFAIL:
+            // Some error in received packet it.  Report it and return SERVFAIL
+            // to the caller.
+            if (logger.isDebugEnabled()) {
+                reportResponseClassifierError(category, incoming.getRcode());
+            }
             makeSERVFAIL();
-            return true;
-            break;
+            return (true);
         }
 
-        // Since we do not have a default in the switch above,
-        // the compiler should have errored on any missing case
-        // statements.
+        // If we get here, there is some serious logic error (or a missing
+        // "return").
         assert(false);
-        return true;
+        return (true);  // To keep the compiler happy
     }
-    
+
+    /// \brief Report classification-detected error
+    ///
+    /// When the response classifier has detected an error in the response from
+    /// an upstream query, this method is called to log a debug message giving
+    /// information about the problem.
+    ///
+    /// \param category Classification code for the packet
+    /// \param rcode RCODE value in the packet
+    void reportResponseClassifierError(ResponseClassifier::Category category,
+                                       const Rcode& rcode)
+    {
+        // We could set up a table of response classifications to message
+        // IDs here and index into that table.  But given that (a) C++ does
+        // not have C's named initializers, (b) the codes for the
+        // response classifier are in another module and (c) not all messages
+        // have the same number of arguments, the setup of the table would be
+        // almost as long as the code here: it would need to include a number
+        // of assertions to ensure that any change to the the response
+        // classifier codes was detected, and the checking logic would need to
+        // check that the numeric value of the code lay within the defined
+        // limits of the table.
+
+        if (category == ResponseClassifier::RCODE) {
+
+            // Special case as this message takes two arguments.
+            LOG_DEBUG(logger, RESLIB_DBG_RESULTS, RESLIB_RCODE_ERROR).
+                      arg(questionText(question_)).arg(rcode);
+
+        } else {
+
+            isc::log::MessageID message_id;
+            switch (category) {
+            case ResponseClassifier::TRUNCATED:
+                message_id = RESLIB_TCP_TRUNCATED;
+                break;
+
+            case ResponseClassifier::EMPTY:
+                message_id = RESLIB_EMPTY_RESPONSE;
+                break;
+
+            case ResponseClassifier::EXTRADATA:
+                message_id = RESLIB_EXTRADATA_RESPONSE;
+                break;
+
+            case ResponseClassifier::INVNAMCLASS:
+                message_id = RESLIB_INVALID_NAMECLASS_RESPONSE;
+                break;
+
+            case ResponseClassifier::INVTYPE:
+                message_id = RESLIB_INVALID_TYPE_RESPONSE;
+                break;
+
+            case ResponseClassifier::MISMATQUEST:
+                message_id = RESLIB_INVALID_QNAME_RESPONSE;
+                break;
+
+            case ResponseClassifier::MULTICLASS:
+                message_id = RESLIB_MULTIPLE_CLASS_RESPONSE;
+                break;
+
+            case ResponseClassifier::NOTONEQUEST:
+                message_id = RESLIB_NOT_ONE_QNAME_RESPONSE;
+                break;
+
+            case ResponseClassifier::NOTRESPONSE:
+                message_id = RESLIB_NOT_RESPONSE;
+                break;
+
+            case ResponseClassifier::NOTSINGLE:
+                message_id = RESLIB_NOTSINGLE_RESPONSE;
+                break;
+
+            case ResponseClassifier::OPCODE:
+                message_id = RESLIB_OPCODE_RESPONSE;
+                break;
+
+            default:
+                message_id = RESLIB_ERROR_RESPONSE;
+                break;
+            }
+            LOG_DEBUG(logger, RESLIB_DBG_RESULTS, message_id).
+                      arg(questionText(question_));
+        }
+    }
+
 public:
     RunningQuery(IOService& io,
         const Question& question,
@@ -601,11 +703,14 @@ public:
         nsas_(nsas),
         cache_(cache),
         cur_zone_("."),
-        nsas_callback_(new ResolverNSASCallback(this)),
+        nsas_callback_(),
         nsas_callback_out_(false),
         outstanding_events_(0),
         rtt_recorder_(recorder)
     {
+        // Set here to avoid using "this" in initializer list.
+        nsas_callback_.reset(new ResolverNSASCallback(this));
+
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
             lookup_timer.expires_from_now(
@@ -734,12 +839,7 @@ public:
                 incoming.fromWire(ibuf);
 
                 buffer_->clear();
-                if (incoming.getRcode() == Rcode::NOERROR()) {
-                    done_ = handleRecursiveAnswer(incoming);
-                } else {
-                    isc::resolve::copyResponseMessage(incoming, answer_message_);
-                    done_ = true;
-                }
+                done_ = handleRecursiveAnswer(incoming);
                 if (done_) {
                     callCallback(true);
                     stop();

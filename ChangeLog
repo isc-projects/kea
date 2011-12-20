@@ -4,11 +4,146 @@
 	addresses, flags and configured IPv4 and IPv6 addresses.
 	(Trac #1237, git TBD)
 
-3XX.	[func]		tomek
+349.	[bug]		dvv
+	resolver: If an upstream server responds with FORMERR to an EDNS query,
+	try querying it without EDNS.
+	(Trac #1386, git 99ad0292af284a246fff20b3702fbd7902c45418)
+
+348.	[bug]		stephen
+	By default the logging output stream is now flushed after each write.
+	This fixes a problem seen on some systems where the log output from
+	different processes was jumbled up.  Flushing can be disabled by setting
+	the appropriate option in the logging configuration.
+	(Trac #1405, git 2f0aa20b44604b671e6bde78815db39381e563bf)
+
+347.	[bug]		jelte
+	Fixed a bug where adding Zonemgr/secondary_zones without explicitely
+	setting the class value of the added zone resulted in a cryptic
+	error in bindctl ("Error: class"). It will now correctly default to
+	IN if not set. This also adds better checks on the name and class
+	values, and better errors if they are bad.
+	(Trac #1414, git 7b122af8489acf0f28f935a19eca2c5509a3677f)
+
+346.	[build]*		jreed
+	Renamed libdhcp to libdhcp++.
+	(Trac #1446, git d394e64f4c44f16027b1e62b4ac34e054b49221d)
+
+345.	[func]		tomek
 	dhcp4: Dummy DHCPv4 component implemented. Currently it does
 	nothing useful, except providing skeleton implementation that can
 	be expanded in the future.
-	(Trac #992, git TBD)
+	(Trac #992, git d6e33479365c8f8f62ef2b9aa5548efe6b194601)
+
+344.	[func]		y-aharen
+	src/lib/statistics: Added statistics counter library for entire server
+	items and per zone items. Also, modified b10-auth to use it. It is
+	also intended to use in the other modules such as b10-resolver.
+	(Trac #510, git afddaf4c5718c2a0cc31f2eee79c4e0cc625499f)
+
+343.	[func]		jelte
+	Added IXFR-out system tests, based on the first two test sets of
+	http://bind10.isc.org/wiki/IxfrSystemTests.
+	(Trac #1314, git 1655bed624866a766311a01214597db01b4c7cec)
+
+342.	[bug]		stephen
+	In the resolver, a FORMERR received from an upstream nameserver
+	now results in a SERVFAIL being returned as a response to the original
+	query.  Additional debug messages added to distinguish between
+	different errors in packets received from upstream nameservers.
+	(Trac #1383, git 9b2b249d23576c999a65d8c338e008cabe45f0c9)
+
+341.	[func]		tomek
+	libdhcp++: Support for handling both IPv4 and IPv6 added.
+	Also added support for binding IPv4 sockets.
+	(Trac #1238, git 86a4ce45115dab4d3978c36dd2dbe07edcac02ac)
+
+340.	[build]		jelte
+	Fixed several linker issues related to recent gcc versions, botan
+	and gtest.
+	(Trac #1442, git 91fb141bfb3aadfdf96f13e157a26636f6e9f9e3)
+
+339.	[bug]		jinmei
+	libxfr, used by b10-auth to share TCP sockets with b10-xfrout,
+	incorrectly propagated ASIO specific exceptions to the application
+	if the given file name was too long.  This could lead to
+	unexpected shut down of b10-auth.
+	(Trac #1387, git a5e9d9176e9c60ef20c0f5ef59eeb6838ed47ab2)
+
+338.	[bug]		jinmei
+	b10-xfrin didn't check SOA serials of SOA and IXFR responses,
+	which resulted in unnecessary transfer or unexpected IXFR
+	timeouts (these issues were not overlooked but deferred to be
+	fixed until #1278 was completed).  Validation on responses to SOA
+	queries were tightened, too.
+	(Trac #1299, git 6ff03bb9d631023175df99248e8cc0cda586c30a)
+
+337.	[func]		tomek
+	libdhcp++: Support for DHCPv4 option that can store a single
+	address or a list of IPv4 addresses added. Support for END option
+	added.
+	(Trac #1350, git cc20ff993da1ddb1c6e8a98370438b45a2be9e0a)
+
+336.	[func]		jelte
+	libdns++ (and its python wrapper) now includes a class Serial, for 
+	SOA SERIAL comparison and addition. Operations on instances of this 
+	class follow the specification from RFC 1982. 
+	Rdata::SOA::getSerial() now returns values of this type (and not 
+	uint32_t).
+	(Trac #1278, git 2ae72d76c74f61a67590722c73ebbf631388acbd)
+
+335.	[bug]*		jelte
+	The DataSourceClientContainer class that dynamically loads 
+	datasource backend libraries no longer provides just a .so file name 
+	to its call to dlopen(), but passes it an absolute path. This means 
+	that it is no longer an system implementation detail that depends on 
+	[DY]LD_LIBRARY_PATH which file is chosen, should there be multiple 
+	options (for instance, when test-running a new build while a 
+	different version is installed).
+	These loadable libraries are also no longer installed in the default 
+	library path, but in a subdirectory of the libexec directory of the 
+	target ($prefix/libexec/[version]/backends).
+	This also removes the need to handle b10-xfin and b10-xfrout as 
+	'special' hardcoded components, and they are now started as regular 
+	components as dictated by the configuration of the boss process.
+	(Trac #1292, git 83ce13c2d85068a1bec015361e4ef8c35590a5d0)
+
+334.	[bug]		jinmei
+	b10-xfrout could potentially create an overflow response message
+	(exceeding the 64KB max) or could create unnecessarily small
+	messages.  The former was actually unlikely to happen due to the
+	effect of name compression, and the latter was marginal and at least
+	shouldn't cause an interoperability problem, but these were still
+	potential problems and were fixed.
+	(Trac #1389, git 3fdce88046bdad392bd89ea656ec4ac3c858ca2f)
+
+333.	[bug]		dvv
+	Solaris needs "-z now" to force non-lazy binding and prevent
+	g++ static initialization code from deadlocking.
+	(Trac #1439, git c789138250b33b6b08262425a08a2a0469d90433)
+
+332.	[bug]		vorner
+	C++ exceptions in the isc.dns.Rdata wrapper are now converted
+	to python ones instead of just aborting the interpretter.
+	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)
+
+bind10-devel-20111128 released on November 28, 2011
+
+331.	[bug]		shane
+	Fixed a bug in data source library where a zone with more labels
+	than an out-of-bailiwick name server would cause an exception to
+	be raised.
+	(Trac #1430, git 81f62344db074bc5eea3aaf3682122fdec6451ad)
+
+330.	[bug]		jelte
+	Fixed a bug in b10-auth where it would sometimes fail because it
+	tried to check for queued msgq messages before the session was
+	fully running.
+	(git c35d0dde3e835fc5f0a78fcfcc8b76c74bc727ca)
+
+329.	[doc]		vorner, jreed
+	Document the bind10 run control configuration in guide and
+	manual page.
+	(Trac #1341, git c1171699a2b501321ab54207ad26e5da2b092d63)
 
 328.	[func]		jelte
 	b10-auth now passes IXFR requests on to b10-xfrout, and no longer
@@ -21,7 +156,7 @@
 	always respond to IXFR requests according to RFC1995).
 	(Trac #1371 and #1372, git 80c131f5b0763753d199b0fb9b51f10990bcd92b)
 
-326.	[build]*	jinmei
+326.	[build]*		jinmei
 	Added a check script for the SQLite3 schema version.  It will be
 	run at the beginning of 'make install', and if it detects an old
 	version of schema, installation will stop.  You'll then need to
@@ -75,29 +210,33 @@
 
 319.	[func]		naokikambe
 	b10-stats-httpd was updated. In addition of the access to all
-	statistics items of all modules, the specified item or the items of the
-	specified module name can be accessed. For example, the URI requested
-	by using the feature is showed as "/bind10/statistics/xml/Auth" or
+	statistics items of all modules, the specified item or the items
+	of the specified module name can be accessed.  For example, the
+	URI requested by using the feature is showed as
+	"/bind10/statistics/xml/Auth" or
 	"/bind10/statistics/xml/Auth/queries.tcp". The list of all possible
-	module names and all possible item names can be showed in the root
-	document, whose URI is "/bind10/statistics/xml". This change is not
-	only for the XML documents but also is for the XSD and XSL documents.
+	module names and all possible item names can be showed in the
+	root document, whose URI is "/bind10/statistics/xml".  This change
+	is not only for the XML documents but also is for the XSD and
+	XSL documents.
 	(Trac #917, git b34bf286c064d44746ec0b79e38a6177d01e6956)
 
-318.    [func]		stephen
-	Add C++ API for accessing zone difference information in database-based
-	data sources.
+318.	[func]		stephen
+	Add C++ API for accessing zone difference information in
+	database-based data sources.
 	(Trac #1330, git 78770f52c7f1e7268d99e8bfa8c61e889813bb33)
 
-317.    [func]		vorner
-	datasrc: the getUpdater method of DataSourceClient supports an optional
-	'journaling' parameter to indicate the generated updater to store diffs.
-	The database based derived class implements this extension.
+317.	[func]		vorner
+	datasrc: the getUpdater method of DataSourceClient supports an
+	optional 'journaling' parameter to indicate the generated updater
+	to store diffs.  The database based derived class implements this
+	extension.
 	(Trac #1331, git 713160c9bed3d991a00b2ea5e7e3e7714d79625d)
 
 316.	[func]*		vorner
-	The configuration of what parts of the system run is more flexible now.
-	Everything that should run must have an entry in Boss/components.
+	The configuration of what parts of the system run is more
+	flexible now.  Everything that should run must have an
+	entry in Boss/components.
 	(Trac #213, git 08e1873a3593b4fa06754654d22d99771aa388a6)
 
 315.	[func]		tomek

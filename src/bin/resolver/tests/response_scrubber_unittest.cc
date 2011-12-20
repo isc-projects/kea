@@ -12,14 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include <config.h>
 
 #include <string>
 #include <iostream>
 
 #include <gtest/gtest.h>
-
-#include <config.h>
 
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_address.h>

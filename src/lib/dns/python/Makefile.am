@@ -12,6 +12,7 @@ libpydnspp_la_SOURCES += rrclass_python.cc rrclass_python.h
 libpydnspp_la_SOURCES += rrtype_python.cc rrtype_python.h
 libpydnspp_la_SOURCES += rrttl_python.cc rrttl_python.h
 libpydnspp_la_SOURCES += rdata_python.cc rdata_python.h
+libpydnspp_la_SOURCES += serial_python.cc serial_python.h
 libpydnspp_la_SOURCES += messagerenderer_python.cc messagerenderer_python.h
 libpydnspp_la_SOURCES += rcode_python.cc rcode_python.h
 libpydnspp_la_SOURCES += opcode_python.cc opcode_python.h

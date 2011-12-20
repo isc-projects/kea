@@ -1,0 +1,31 @@
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+#ifndef __DATASRC_CONFIG_H
+#define __DATASRC_CONFIG_H 1
+
+namespace isc {
+namespace datasrc {
+
+/// \brief Default directory to find the loadable data source libraries
+///
+/// This is the directory where, once installed, loadable backend libraries
+/// such as memory_ds.so and sqlite3_ds.so are found. It is used by the
+/// DataSourceClient loader if no absolute path is used and
+/// B10_FROM_BUILD is not set in the environment.
+const char* const BACKEND_LIBRARY_PATH = "@@PKGLIBEXECDIR@@/";
+
+} // end namespace datasrc
+} // end namespace isc
+
+#endif // __DATASRC_CONFIG_H
