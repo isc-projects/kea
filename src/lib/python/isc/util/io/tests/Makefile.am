@@ -6,9 +6,7 @@ EXTRA_DIST = $(PYTESTS)
 # required by loadable python modules.
 LIBRARY_PATH_PLACEHOLDER =
 if SET_ENV_LIBRARY_PATH
-PATHS1 = $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs$$$(ENV_LIBRARY_PATH)
-PATHS2 = $(abs_top_builddir)/src/lib/dns/.libs
-LIBRARY_PATH_PLACEHOLDER += $(PATHS1):$(PATHS2)
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$(abs_top_builddir)/src/lib/datasrc/.libs:$$$(ENV_LIBRARY_PATH)
 endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -18,15 +16,18 @@ if ENABLE_PYTHON_COVERAGE
 	rm -f .coverage
 	${LN_S} $(abs_top_srcdir)/.coverage .coverage
 endif
+# XXX: we pollute the top builddir for creating a temporary test file
+# so we can minimize the risk of exceeding the limit of file name path size
+# for a UNIX domain socket.
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/isc/python/util/io/.libs \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	TESTDATAOBJDIR=$(abs_builddir) \
+	TESTDATAOBJDIR=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 
-CLEANFILES = *.unix
+CLEANFILES = $(abs_top_builddir)/ssessiontest.unix
 
 CLEANDIRS = __pycache__
 
