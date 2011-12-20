@@ -31,7 +31,8 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 // name of loopback interface detection
-char LOOPBACK[32] = "lo";
+const size_t buf_size = 32;
+char LOOPBACK[buf_size] = "lo";
 
 namespace {
 const char* const INTERFACE_FILE = TEST_DATA_BUILDDIR "/interfaces.txt";
@@ -73,16 +74,16 @@ TEST_F(IfaceMgrTest, loDetect) {
     // poor man's interface detection
     // it will go away as soon as proper interface detection
     // is implemented
-    if (if_nametoindex("lo")>0) {
+    if (if_nametoindex("lo") > 0) {
         cout << "This is Linux, using lo as loopback." << endl;
-        sprintf(LOOPBACK, "lo");
-    } else if (if_nametoindex("lo0")>0) {
+        snprintf(LOOPBACK, buf_size - 1, "lo");
+    } else if (if_nametoindex("lo0") > 0) {
         cout << "This is BSD, using lo0 as loopback." << endl;
-        sprintf(LOOPBACK, "lo0");
+        snprintf(LOOPBACK, buf_size - 1, "lo0");
     } else {
         cout << "Failed to detect loopback interface. Neither "
-             << "lo or lo0 worked. I give up." << endl;
-        ASSERT_TRUE(false);
+             << "lo nor lo0 worked. I give up." << endl;
+        FAIL();
     }
 }
 
@@ -247,6 +248,7 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     EXPECT_STREQ( "fe80::1234", addr.toText().c_str() );
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 TEST_F(IfaceMgrTest, sockets6) {
@@ -279,6 +281,7 @@ TEST_F(IfaceMgrTest, sockets6) {
     close(socket2);
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 // TODO: disabled due to other naming on various systems
@@ -328,6 +331,9 @@ TEST_F(IfaceMgrTest, sendReceive6) {
         socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
     );
 
+    EXPECT_GT(socket1, 0);
+    EXPECT_GT(socket2, 0);
+
     boost::shared_ptr<Pkt6> sendPkt(new Pkt6(128) );
 
     // prepare dummy payload
@@ -362,6 +368,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_TRUE( (rcvPkt->remote_port_ == 10546) || (rcvPkt->remote_port_ == 10547) );
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 TEST_F(IfaceMgrTest, sendReceive4) {
@@ -473,6 +480,7 @@ TEST_F(IfaceMgrTest, socket4) {
     close(socket1);
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 // Test the Iface structure itself
@@ -602,6 +610,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     delete ifacemgr;
+    unlink(INTERFACE_FILE);
 }
 
 }

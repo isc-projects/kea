@@ -17,7 +17,7 @@
 #include <sstream>
 #include "exceptions/exceptions.h"
 
-#include "dhcp/libdhcp.h"
+#include "dhcp/libdhcp++.h"
 #include "dhcp/option6_iaaddr.h"
 #include "dhcp/dhcp6.h"
 #include "asiolink/io_address.h"
@@ -116,9 +116,9 @@ std::string Option6IAAddr::toText(int indent /* =0 */) {
     return tmp.str();
 }
 
-unsigned short Option6IAAddr::len() {
+uint16_t Option6IAAddr::len() {
 
-    unsigned short length = OPTION6_HDR_LEN + OPTION6_IAADDR_LEN;
+    uint16_t length = OPTION6_HDR_LEN + OPTION6_IAADDR_LEN;
 
     // length of all suboptions
     // TODO implement:

@@ -34,5 +34,6 @@ endif
 	PYTHONPATH=:$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/python/isc/log:$(abs_top_builddir)/src/lib/python/isc/datasrc/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	TESTDATA_PATH=$(abs_srcdir)/testdata \
 	TESTDATA_WRITE_PATH=$(abs_builddir) \
+	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

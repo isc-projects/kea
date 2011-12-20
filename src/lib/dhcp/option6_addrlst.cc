@@ -19,7 +19,7 @@
 
 #include "asiolink/io_address.h"
 #include "util/io_utilities.h"
-#include "dhcp/libdhcp.h"
+#include "dhcp/libdhcp++.h"
 #include "dhcp/option6_addrlst.h"
 #include "dhcp/dhcp6.h"
 
@@ -50,6 +50,10 @@ Option6AddrLst::Option6AddrLst(unsigned short type,
 
 void
 Option6AddrLst::setAddress(const isc::asiolink::IOAddress& addr) {
+    if (addr.getFamily() != AF_INET6) {
+        isc_throw(BadValue, "Can't store non-IPv6 address in Option6AddrLst option");
+    }
+
     addrs_.clear();
     addrs_.push_back(addr);
 }
@@ -128,7 +132,7 @@ std::string Option6AddrLst::toText(int indent /* =0 */) {
     return tmp.str();
 }
 
-unsigned short Option6AddrLst::len() {
+uint16_t Option6AddrLst::len() {
 
     return (OPTION6_HDR_LEN + addrs_.size()*16);
 }

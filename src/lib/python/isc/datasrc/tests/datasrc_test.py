@@ -285,6 +285,24 @@ class DataSrcClient(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
+        # Check the optional parameters are optional
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A())
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        result, rrset = finder.find(isc.dns.Name("www.example.com"),
+                                    isc.dns.RRType.A(), None)
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # Invalid value for the "target"
+        self.assertRaises(TypeError, finder.find,
+                          isc.dns.Name("www.example.com"),
+                          isc.dns.RRType.A(), True)
+
         result, rrset = finder.find(isc.dns.Name("www.sql1.example.com"),
                                     isc.dns.RRType.A(),
                                     None,
@@ -384,6 +402,36 @@ class DataSrcUpdater(unittest.TestCase):
     def test_construct(self):
         # can't construct directly
         self.assertRaises(TypeError, isc.datasrc.ZoneUpdater)
+
+    def test_update_finder(self):
+        # Check basic behavior of updater's finder
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        updater = dsc.get_updater(isc.dns.Name("example.com"), False)
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A(),
+                                     None,
+                                     ZoneFinder.FIND_DEFAULT)
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # Omit optional parameters
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        result, rrset = updater.find(isc.dns.Name("www.example.com"),
+                                     isc.dns.RRType.A(), None)
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         rrset.to_text())
+
+        # Invalid value for 'target'
+        self.assertRaises(TypeError, updater.find,
+                          isc.dns.Name("www.example.com"),
+                          isc.dns.RRType.A(), 1)
 
     def test_update_delete_commit(self):
 

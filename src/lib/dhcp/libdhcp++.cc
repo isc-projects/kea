@@ -15,7 +15,7 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <util/buffer.h>
-#include <dhcp/libdhcp.h>
+#include <dhcp/libdhcp++.h>
 #include "config.h"
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
@@ -91,7 +91,7 @@ LibDHCP::unpackOptions4(const std::vector<uint8_t>& buf,
     size_t offset = 0;
 
     // 2 - header of DHCPv4 option
-    while (offset + 2 <= buf.size()) {
+    while (offset + 1 <= buf.size()) {
         uint8_t opt_type = buf[offset++];
 
         if (opt_type == DHO_END)
@@ -139,7 +139,7 @@ LibDHCP::packOptions6(boost::shared_array<uint8_t> data,
             offset = it->second->pack(data, data_len, offset);
         }
     }
-    catch (const Exception& e) {
+    catch (const Exception&) {
         cout << "Packet build failed (Option build failed)." << endl;
         throw;
     }

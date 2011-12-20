@@ -99,7 +99,7 @@ private:
      * This way the overhead of copying is lower, we copy only one shared
      * pointer instead of about 10 of them.
      */
-    class Data;
+    struct Data;
     boost::shared_ptr<Data> data_;
 };
 

@@ -343,7 +343,7 @@ public:
     /// \param type Type of a counter to get the value of
     ///
     /// \return the value of the counter.
-    uint64_t getCounter(const AuthCounters::CounterType type) const;
+    uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
 
     /**
      * \brief Set and get the addresses we listen on.

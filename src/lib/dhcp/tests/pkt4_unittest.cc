@@ -197,7 +197,7 @@ generateTestPacket2() {
 
 TEST(Pkt4Test, fixedFields) {
 
-    shared_ptr<Pkt4> pkt = generateTestPacket1();
+    boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
 
     // ok, let's check packet values
     EXPECT_EQ(dummyOp, pkt->getOp());
@@ -224,7 +224,7 @@ TEST(Pkt4Test, fixedFields) {
 }
 
 TEST(Pkt4Test, fixedFieldsPack) {
-    shared_ptr<Pkt4> pkt = generateTestPacket1();
+    boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
     EXPECT_NO_THROW(
@@ -244,8 +244,8 @@ TEST(Pkt4Test, fixedFieldsPack) {
 TEST(Pkt4Test, fixedFieldsUnpack) {
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                  Pkt4::DHCPV4_PKT_HDR_LEN));
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
+                                Pkt4::DHCPV4_PKT_HDR_LEN));
 
     EXPECT_NO_THROW(
         pkt->unpack()
@@ -495,6 +495,7 @@ TEST(Pkt4Test, options) {
     const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
     ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE); // rewind to end of fixed part
     EXPECT_EQ(0, memcmp(ptr, v4Opts, sizeof(v4Opts)));
+    EXPECT_EQ(DHO_END, static_cast<uint8_t>(*(ptr + sizeof(v4Opts))));
 
     EXPECT_NO_THROW(
         delete pkt;
@@ -516,8 +517,8 @@ TEST(Pkt4Test, unpackOptions) {
 
     // now expectedFormat contains fixed format and 5 options
 
-    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                  expectedFormat.size()));
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
+                                expectedFormat.size()));
 
     EXPECT_NO_THROW(
         pkt->unpack()
@@ -529,7 +530,7 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_TRUE(pkt->getOption(128));
     EXPECT_TRUE(pkt->getOption(254));
 
-    shared_ptr<Option> x = pkt->getOption(12);
+    boost::shared_ptr<Option> x = pkt->getOption(12);
     ASSERT_TRUE(x); // option 1 should exist
     EXPECT_EQ(12, x->getType());  // this should be option 12
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3

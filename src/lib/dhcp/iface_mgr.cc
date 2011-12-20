@@ -396,7 +396,8 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
     addr6.sin6_port = htons(port);
-    addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
+    if (addr.toText() != "::1")
+      addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
 
     memcpy(&addr6.sin6_addr,
            addr.getAddress().to_v6().to_bytes().data(),

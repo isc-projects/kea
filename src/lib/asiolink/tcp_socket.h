@@ -276,7 +276,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
             // ... and send it
             socket_.async_send(asio::buffer(send_buffer_->getData(),
                                send_buffer_->getLength()), callback);
-        } catch (boost::numeric::bad_numeric_cast& e) {
+        } catch (boost::numeric::bad_numeric_cast&) {
             isc_throw(BufferTooLarge,
                       "attempt to send buffer larger than 64kB");
         }

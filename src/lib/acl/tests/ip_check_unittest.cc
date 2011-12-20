@@ -162,7 +162,7 @@ TEST(IPFunctionCheck, SplitIPAddress) {
 
 TEST(IPAddress, constructIPv4) {
     IPAddress ipaddr(tests::getSockAddr("192.0.2.1"));
-    const char expected_data[4] = { 192, 0, 2, 1 };
+    const uint8_t expected_data[4] = { 192, 0, 2, 1 };
     EXPECT_EQ(AF_INET, ipaddr.getFamily());
     EXPECT_EQ(4, ipaddr.getLength());
     EXPECT_EQ(0, memcmp(expected_data, ipaddr.getData(), 4));
@@ -170,9 +170,9 @@ TEST(IPAddress, constructIPv4) {
 
 TEST(IPAddress, constructIPv6) {
     IPAddress ipaddr(tests::getSockAddr("2001:db8:1234:abcd::53"));
-    const char expected_data[16] = { 0x20, 0x01, 0x0d, 0xb8, 0x12, 0x34, 0xab,
-                                     0xcd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                     0x00, 0x53 };
+    const uint8_t expected_data[16] = { 0x20, 0x01, 0x0d, 0xb8, 0x12, 0x34, 0xab,
+                                        0xcd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                        0x00, 0x53 };
     EXPECT_EQ(AF_INET6, ipaddr.getFamily());
     EXPECT_EQ(16, ipaddr.getLength());
     EXPECT_EQ(0, memcmp(expected_data, ipaddr.getData(), 16));

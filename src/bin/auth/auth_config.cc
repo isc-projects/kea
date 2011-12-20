@@ -35,7 +35,6 @@
 #include <server_common/portconfig.h>
 
 using namespace std;
-using boost::shared_ptr;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
@@ -56,7 +55,7 @@ public:
     virtual void commit();
 private:
     AuthSrv& server_;
-    vector<shared_ptr<AuthConfigParser> > datasources_;
+    vector<boost::shared_ptr<AuthConfigParser> > datasources_;
     set<string> configured_sources_;
 };
 
@@ -86,8 +85,8 @@ DatasourcesConfig::build(ConstElementPtr config_value) {
                       datasrc_type->stringValue() << "' already configured");
         }
         
-        shared_ptr<AuthConfigParser> datasrc_config =
-            shared_ptr<AuthConfigParser>(
+        boost::shared_ptr<AuthConfigParser> datasrc_config =
+            boost::shared_ptr<AuthConfigParser>(
                 createAuthConfigParser(server_, string("datasources/") +
                                        datasrc_type->stringValue(),
                                        true));
@@ -109,7 +108,8 @@ DatasourcesConfig::commit() {
     // Currently memory data source for class IN is the only possibility.
     server_.setInMemoryClient(RRClass::IN(), AuthSrv::InMemoryClientPtr());
 
-    BOOST_FOREACH(shared_ptr<AuthConfigParser> datasrc_config, datasources_) {
+    BOOST_FOREACH(boost::shared_ptr<AuthConfigParser> datasrc_config,
+                  datasources_) {
         datasrc_config->commit();
     }
 }
@@ -163,7 +163,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin->str());
         }
-        shared_ptr<InMemoryZoneFinder> zone_finder(new
+        boost::shared_ptr<InMemoryZoneFinder> zone_finder(new
                                                    InMemoryZoneFinder(rrclass_,
             Name(origin->stringValue())));
         const result::Result result = memory_client_->addZone(zone_finder);
@@ -327,7 +327,7 @@ configureAuthServer(AuthSrv& server, ConstElementPtr config_set) {
                   "Null pointer is passed to configuration parser");
     }
 
-    typedef shared_ptr<AuthConfigParser> ParserPtr;
+    typedef boost::shared_ptr<AuthConfigParser> ParserPtr;
     vector<ParserPtr> parsers;
     typedef pair<string, ConstElementPtr> ConfigPair;
     try {

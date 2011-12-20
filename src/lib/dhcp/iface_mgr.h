@@ -186,8 +186,7 @@ public:
     /// @return interface with requested index (or NULL if no such
     ///         interface is present)
     ///
-    Iface*
-    getIface(int ifindex);
+    Iface* getIface(int ifindex);
 
     /// @brief Returns interface with specified interface name
     ///

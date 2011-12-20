@@ -39,7 +39,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
 
     setServerID();
 
-    shutdown = false;
+    shutdown_ = false;
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
@@ -49,7 +49,7 @@ Dhcpv4Srv::~Dhcpv4Srv() {
 
 bool
 Dhcpv4Srv::run() {
-    while (!shutdown) {
+    while (!shutdown_) {
         boost::shared_ptr<Pkt4> query; // client's message
         boost::shared_ptr<Pkt4> rsp;   // server's response
 
@@ -140,28 +140,28 @@ Dhcpv4Srv::setServerID() {
 }
 
 boost::shared_ptr<Pkt4>
-Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4> discover) {
+Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4>& discover) {
     /// TODO: Currently implemented echo mode. Implement this for real
     return (discover);
 }
 
 boost::shared_ptr<Pkt4>
-Dhcpv4Srv::processRequest(boost::shared_ptr<Pkt4> request) {
+Dhcpv4Srv::processRequest(boost::shared_ptr<Pkt4>& request) {
     /// TODO: Currently implemented echo mode. Implement this for real
     return (request);
 }
 
-void Dhcpv4Srv::processRelease(boost::shared_ptr<Pkt4> release) {
+void Dhcpv4Srv::processRelease(boost::shared_ptr<Pkt4>& release) {
     /// TODO: Implement this.
     cout << "Received RELEASE on " << release->getIface() << " interface." << endl;
 }
 
-void Dhcpv4Srv::processDecline(boost::shared_ptr<Pkt4> decline) {
+void Dhcpv4Srv::processDecline(boost::shared_ptr<Pkt4>& decline) {
     /// TODO: Implement this.
     cout << "Received DECLINE on " << decline->getIface() << " interface." << endl;
 }
 
-boost::shared_ptr<Pkt4> Dhcpv4Srv::processInform(boost::shared_ptr<Pkt4> inform) {
+boost::shared_ptr<Pkt4> Dhcpv4Srv::processInform(boost::shared_ptr<Pkt4>& inform) {
     /// TODO: Currently implemented echo mode. Implement this for real
     return (inform);
 }
