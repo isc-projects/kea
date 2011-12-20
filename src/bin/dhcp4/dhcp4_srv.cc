@@ -17,11 +17,16 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <asiolink/io_address.h>
+#include <dhcp/option4_addrlst.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+
+// This is the hardcoded lease. Currently this is a skeleton server that only
+// grants this option.
+#define HARDCODED_LEASE "10.3.2.222"
 
 // #define ECHO_SERVER
 
@@ -99,9 +104,16 @@ Dhcpv4Srv::run() {
             cout << query->toText();
 
             if (rsp) {
-                rsp->setRemoteAddr(query->getRemoteAddr());
+                if (rsp->getRemoteAddr().toText() == "0.0.0.0") {
+                    rsp->setRemoteAddr(query->getRemoteAddr());
+                }
+                if (!rsp->getHops()) {
+                    rsp->setRemotePort(DHCP4_CLIENT_PORT);
+                } else {
+                    rsp->setRemotePort(DHCP4_SERVER_PORT);
+                }
+
                 rsp->setLocalAddr(query->getLocalAddr());
-                rsp->setRemotePort(DHCP4_CLIENT_PORT);
                 rsp->setLocalPort(DHCP4_SERVER_PORT);
                 rsp->setIface(query->getIface());
                 rsp->setIndex(query->getIndex());
@@ -142,8 +154,66 @@ Dhcpv4Srv::setServerID() {
 
 boost::shared_ptr<Pkt4>
 Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4>& discover) {
-    /// TODO: Currently implemented echo mode. Implement this for real
-    return (discover);
+    boost::shared_ptr<Pkt4> offer = boost::shared_ptr<Pkt4>(new Pkt4(DHCPOFFER, discover->getTransid()));
+
+
+    offer->setIface(discover->getIface());
+    offer->setIndex(discover->getIndex());
+    offer->setCiaddr(discover->getCiaddr());
+
+    offer->setSiaddr(IOAddress("0.0.0.0")); // explictly set this to 0
+
+    offer->setHops(discover->getHops());
+
+    // copy MAC address
+    vector<uint8_t> mac;
+    mac.resize(Pkt4::MAX_CHADDR_LEN);
+    memcpy(&mac[0], discover->getChaddr(), Pkt4::MAX_CHADDR_LEN);
+    offer->setHWAddr(discover->getHtype(),
+                     discover->getHlen(),
+                     mac);
+
+    // relay address
+    offer->setGiaddr(discover->getGiaddr());
+    if (discover->getGiaddr().toText() != "0.0.0.0") {
+        // relayed traffic
+        offer->setRemoteAddr(discover->getGiaddr());
+    } else {
+        // direct traffic
+        offer->setRemoteAddr(discover->getRemoteAddr());
+    }
+
+    // TODO: Implement actual lease assignment here
+    offer->setYiaddr(IOAddress(HARDCODED_LEASE));
+
+    // add Message Type Option (type 53)
+    boost::shared_ptr<Option> opt;
+    std::vector<uint8_t> tmp;
+    tmp.push_back(static_cast<int>(DHCPOFFER));
+    opt = boost::shared_ptr<Option>(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
+    offer->addOption(opt);
+
+    // DHCP Server Identifier (type 54)
+    opt = boost::shared_ptr<Option>(new Option4AddrLst(54, IOAddress("10.3.1.1")));
+    offer->addOption(opt);
+
+    // IP Address Lease time (type 51)
+
+    // Subnet mask (type 1)
+    opt = boost::shared_ptr<Option>(new Option4AddrLst(1, IOAddress("255.255.255.0")));
+    offer->addOption(opt);
+
+    // Router (type 3)
+    opt = boost::shared_ptr<Option>(new Option4AddrLst(3, IOAddress("10.3.2.2")));
+    offer->addOption(opt);
+
+    // Domain name (type 15)
+
+    // DNS servers (type 6)
+    opt = boost::shared_ptr<Option>(new Option4AddrLst(6, IOAddress("8.8.8.8")));
+    offer->addOption(opt);
+
+    return (offer);
 }
 
 boost::shared_ptr<Pkt4>
