@@ -1419,8 +1419,7 @@ doFindTest(ZoneFinder& finder,
            const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
-    const ZoneFinder::FindResult result = finder.find(name, type, NULL,
-                                                      options);
+    const ZoneFinder::FindResult result = finder.find(name, type, options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (!expected_rdatas.empty() && result.rrset) {
         checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
@@ -1442,6 +1441,39 @@ doFindTest(ZoneFinder& finder,
     } else {
         ADD_FAILURE() << "Missing result";
     }
+}
+
+void
+doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
+                    ZoneFinder::Result expected_result,
+                    const isc::dns::RRType expected_type,
+                    std::vector<std::string> expected_rdata,
+                    const isc::dns::Name& expected_name =
+                    isc::dns::Name::ROOT_NAME(),
+                    const ZoneFinder::FindOptions options =
+                    ZoneFinder::FIND_DEFAULT)
+{
+    SCOPED_TRACE("All test for " + name.toText());
+    std::vector<ConstRRsetPtr> target;
+    ZoneFinder::FindResult result(finder.findAll(name, target, options));
+    EXPECT_TRUE(target.empty());
+    EXPECT_EQ(expected_result, result.code);
+    EXPECT_EQ(expected_type, result.rrset->getType());
+    RdataIteratorPtr it(result.rrset->getRdataIterator());
+    std::vector<std::string> rdata;
+    while (!it->isLast()) {
+        rdata.push_back(it->getCurrent().toText());
+        it->next();
+    }
+    std::sort(rdata.begin(), rdata.end());
+    std::sort(expected_rdata.begin(), expected_rdata.end());
+    ASSERT_EQ(expected_rdata.size(), rdata.size());
+    for (size_t i(0); i < expected_rdata.size(); ++ i) {
+        EXPECT_EQ(expected_rdata[i], rdata[i]);
+    }
+    EXPECT_TRUE(expected_rdata == rdata);
+    EXPECT_EQ(expected_name == isc::dns::Name::ROOT_NAME() ? name :
+              expected_name, result.rrset->getName());
 }
 
 // When asking for an RRset where RRs somehow have different TTLs, it should 
@@ -1670,58 +1702,58 @@ TYPED_TEST(DatabaseClientTest, find) {
 
     EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badcname2.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badcname3.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badrdata.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badtype.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badttl.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badsig.example.org."),
                                               this->qtype_,
-                                              NULL, ZoneFinder::FIND_DEFAULT),
+                                              ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 
     // Trigger the hardcoded exceptions and see if find() has cleaned up
     if (this->is_mock_) {
         EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      DataSourceError);
         EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      isc::Exception);
         EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      std::exception);
         EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      DataSourceError);
         EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      isc::Exception);
         EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
                                   this->qtype_,
-                                  NULL, ZoneFinder::FIND_DEFAULT),
+                                  ZoneFinder::FIND_DEFAULT),
                      std::exception);
     }
 
@@ -1840,17 +1872,17 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
 
     // This is broken dname, it contains two targets
     EXPECT_THROW(finder->find(isc::dns::Name("below.baddname.example.org."),
-                              this->qtype_, NULL,
+                              this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 
     // Broken NS - it lives together with something else
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns1.example.org."),
-                              this->qtype_, NULL,
+                              this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("brokenns2.example.org."),
-                              this->qtype_, NULL,
+                              this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 }
@@ -2253,6 +2285,100 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
                                this->rrttl_, ZoneFinder::NXRRSET,
                                this->empty_rdatas_, this->empty_rdatas_,
                                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+}
+
+TYPED_TEST(DatabaseClientTest, anyFromFind) {
+    // Find will reject answering an ANY query
+    EXPECT_THROW(this->getFinder()->find(isc::dns::Name("www2.example.org."),
+                                         RRType::ANY()), isc::Unexpected);
+}
+
+// Test the findAll method.
+TYPED_TEST(DatabaseClientTest, getAll) {
+    // The domain doesn't exist, so we must get the right NSEC
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    // It should act the same on the "failures"
+    std::vector<ConstRRsetPtr> target;
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              finder->findAll(isc::dns::Name("nothere.example.org."),
+                              target).code);
+    EXPECT_TRUE(target.empty());
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              finder->findAll(isc::dns::Name("here.wild.example.org."),
+                              target).code);
+    this->expected_rdatas_.push_back("ns.delegation.example.org.");
+    this->expected_rdatas_.push_back("ns.example.com.");
+    doFindAllTestResult(*finder, isc::dns::Name("xx.delegation.example.org."),
+                        ZoneFinder::DELEGATION, RRType::NS(),
+                        this->expected_rdatas_,
+                        isc::dns::Name("delegation.example.org."));
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("www.example.org.");
+    doFindAllTestResult(*finder, isc::dns::Name("cname.example.org"),
+                        ZoneFinder::CNAME, RRType::CNAME(),
+                        this->expected_rdatas_);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("dname.example.com.");
+    doFindAllTestResult(*finder, isc::dns::Name("a.dname.example.org"),
+                        ZoneFinder::DNAME, RRType::DNAME(),
+                        this->expected_rdatas_,
+                        isc::dns::Name("dname.example.org."));
+    // It should get the data on success
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              finder->findAll(isc::dns::Name("www2.example.org."),
+                              target).code);
+    ASSERT_EQ(2, target.size());
+    size_t a_idx(target[1]->getType() == RRType::A());
+    EXPECT_EQ(RRType::A(), target[a_idx]->getType());
+    std::string previous;
+    size_t count(0);
+    for (RdataIteratorPtr it(target[a_idx]->getRdataIterator());
+         !it->isLast(); it->next()) {
+        count ++;
+        EXPECT_NE(previous, it->getCurrent().toText());
+        EXPECT_TRUE(it->getCurrent().toText() == "192.0.2.1" ||
+                    it->getCurrent().toText() == "192.0.2.2");
+        previous = it->getCurrent().toText();
+    }
+    EXPECT_EQ(2, count);
+    EXPECT_EQ(RRType::AAAA(), target[1 - a_idx]->getType());
+    RdataIteratorPtr it(target[1 - a_idx]->getRdataIterator());
+    ASSERT_FALSE(it->isLast());
+    EXPECT_EQ("2001:db8::1", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    // And on wildcard. Check the signatures as well.
+    target.clear();
+    EXPECT_EQ(ZoneFinder::WILDCARD,
+              finder->findAll(isc::dns::Name("a.wild.example.org"),
+                              target, ZoneFinder::FIND_DNSSEC).code);
+    ASSERT_EQ(2, target.size());
+    a_idx = target[1]->getType() == RRType::A();
+    EXPECT_EQ(RRType::A(), target[a_idx]->getType());
+    it = target[a_idx]->getRdataIterator();
+    ASSERT_FALSE(it->isLast());
+    EXPECT_EQ("192.0.2.5", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+    ConstRRsetPtr sig(target[a_idx]->getRRsig());
+    ASSERT_TRUE(sig);
+    EXPECT_EQ(RRType::RRSIG(), sig->getType());
+    EXPECT_EQ("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE",
+              sig->getRdataIterator()->getCurrent().toText());
+    EXPECT_EQ(RRType::NSEC(), target[1 - a_idx]->getType());
+    it = target[1 - a_idx]->getRdataIterator();
+    ASSERT_FALSE(it->isLast());
+    EXPECT_EQ("cancel.here.wild.example.org. A RRSIG NSEC",
+              it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+    sig = target[1 - a_idx]->getRRsig();
+    ASSERT_TRUE(sig);
+    EXPECT_EQ(RRType::RRSIG(), sig->getType());
+    EXPECT_EQ("NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE",
+              sig->getRdataIterator()->getCurrent().toText());
 }
 
 TYPED_TEST(DatabaseClientTest, getOrigin) {
