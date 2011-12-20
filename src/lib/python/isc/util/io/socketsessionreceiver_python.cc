@@ -64,6 +64,11 @@ SocketSessionReceiver_init(PyObject* po_self, PyObject* args, PyObject*) {
         // The constructor expects a Python socket object.  We'll extract
         // the underlying file descriptor using the fileno method (in the
         // duck typing manner) and pass it to the C++ constructor.
+        // PyObject_CallMethod() could return NULL (especially if the given
+        // object is of the wrong type and doesn't have the "fileno" method),
+        // in which case PyObjectContainer will detect it and throw
+        // PyCPPWrapperException, which will be converted to the Python
+        // TypeError below.
         PyObject* po_sock;
         if (PyArg_ParseTuple(args, "O", &po_sock)) {
             PyObjectContainer fd_container(PyObject_CallMethod(
