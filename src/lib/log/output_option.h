@@ -60,7 +60,7 @@ struct OutputOption {
 
     /// \brief Constructor
     OutputOption() : destination(DEST_CONSOLE), stream(STR_STDERR),
-                     flush(false), facility("LOCAL0"), filename(""),
+                     flush(true), facility("LOCAL0"), filename(""),
                      maxsize(0), maxver(0)
     {}
 

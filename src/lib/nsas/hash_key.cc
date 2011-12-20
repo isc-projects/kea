@@ -35,7 +35,7 @@ bool HashKey::operator==(const isc::nsas::HashKey& other) {
             // variation (stops on the first null byte).
             //
             // TODO: Use a lookup table to map upper to lower case (for speed)
-            for (int i = 0; i < other.keylen; ++i) {
+            for (uint32_t i = 0; i < other.keylen; ++i) {
                 if (tolower(static_cast<unsigned char>(other.key[i])) !=
                     tolower(static_cast<unsigned char>(key[i]))) {
                     return false;   // Mismatch

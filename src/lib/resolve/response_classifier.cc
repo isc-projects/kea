@@ -119,7 +119,7 @@ ResponseClassifier::Category ResponseClassifier::classify(
         if (authority.empty()) {
             return (EMPTY);
         }
-        for (int i = 0; i < authority.size(); ++i) {
+        for (vector<RRsetPtr>::size_type i = 0; i < authority.size(); ++i) {
             if (authority[i]->getType() == RRType::NS()) {
                 return (REFERRAL);
             }
@@ -161,7 +161,7 @@ ResponseClassifier::Category ResponseClassifier::classify(
 
     // There are multiple RRsets in the answer. They should all have the same
     // QCLASS, else there is some error in the response.
-    for (int i = 1; i < answer.size(); ++i) {
+    for (vector<RRsetPtr>::size_type i = 1; i < answer.size(); ++i) {
         if (answer[0]->getClass() != answer[i]->getClass()) {
             return (MULTICLASS);
         }
@@ -173,7 +173,8 @@ ResponseClassifier::Category ResponseClassifier::classify(
     // CNAME - in which case there should no other record types at that QNAME.
     if (question.getType() == RRType::ANY()) {
         bool all_same = true;
-        for (int i = 1; (i < answer.size()) && all_same; ++i) {
+        for (vector<RRsetPtr>::size_type i = 1; (i < answer.size()) && all_same;
+             ++i) {
             all_same = (answer[0]->getName() == answer[i]->getName());
         }
         if (all_same) {
@@ -211,7 +212,7 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
 {
     // Search through the vector of RRset pointers until we find one with the
     // right QNAME.
-    for (int i = 0; i < ansrrset.size(); ++i) {
+    for (vector<RRsetPtr>::size_type i = 0; i < ansrrset.size(); ++i) {
         if (present[i]) {
 
             // This entry has not been logically removed, so look at it.

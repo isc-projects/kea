@@ -34,10 +34,10 @@ pkglibexec_PROGRAMS = b10-dhcp6
 
 b10_dhcp6_SOURCES = main.cc dhcp6_srv.cc dhcp6_srv.h
 
-b10_dhcp6_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+b10_dhcp6_LDADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/liblog.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}

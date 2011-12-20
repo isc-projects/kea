@@ -59,7 +59,13 @@ class TestDhcpv6Daemon(unittest.TestCase):
         # kill this process
         # XXX: b10-dhcp6 is too dumb to understand 'shutdown' command for now,
         #      so let's just kill the bastard
-        os.kill(pi.pid, signal.SIGTERM)
+
+        # TODO: Ignore errors for now. This test will be more thorough once ticket #1503
+        # (passing port number to b10-dhcp6 daemon) is implemented.
+        try:
+            os.kill(pi.pid, signal.SIGTERM)
+        except OSError:
+            print("Ignoring failed kill attempt. Process is dead already.")
 
 if __name__ == '__main__':
     unittest.main()

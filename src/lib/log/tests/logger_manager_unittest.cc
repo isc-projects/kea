@@ -315,7 +315,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     EXPECT_FALSE(file3.good());
 
     // Tidy up
-    for (int i = 0; i < prev_name.size(); ++i) {
+    for (vector<string>::size_type i = 0; i < prev_name.size(); ++i) {
        (void) unlink(prev_name[i].c_str());
     }
 }

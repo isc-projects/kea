@@ -57,8 +57,6 @@
 #include "resolver_log.h"
 
 using namespace std;
-using boost::shared_ptr;
-
 using namespace isc;
 using namespace isc::util;
 using namespace isc::acl;
@@ -167,7 +165,7 @@ public:
         return (*query_acl_);
     }
 
-    void setQueryACL(shared_ptr<const RequestACL> new_acl) {
+    void setQueryACL(boost::shared_ptr<const RequestACL> new_acl) {
         query_acl_ = new_acl;
     }
 
@@ -195,7 +193,7 @@ public:
 
 private:
     /// ACL on incoming queries
-    shared_ptr<const RequestACL> query_acl_;
+    boost::shared_ptr<const RequestACL> query_acl_;
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
@@ -354,13 +352,19 @@ private:
 Resolver::Resolver() :
     impl_(new ResolverImpl()),
     dnss_(NULL),
-    checkin_(new ConfigCheck(this)),
-    dns_lookup_(new MessageLookup(this)),
+    checkin_(NULL),
+    dns_lookup_(NULL),
     dns_answer_(new MessageAnswer),
     nsas_(NULL),
     cache_(NULL),
     configured_(false)
-{}
+{
+    // Operations referring to "this" must be done in the constructor body
+    // (some compilers will issue warnings if "this" is referred to in the
+    // initialization list).
+    checkin_ = new ConfigCheck(this);
+    dns_lookup_ = new MessageLookup(this);
+}
 
 Resolver::~Resolver() {
     delete impl_;
@@ -597,9 +601,9 @@ Resolver::updateConfig(ConstElementPtr config) {
         AddressList listenAddresses(parseAddresses(listenAddressesE,
                                                       "listen_on"));
         const ConstElementPtr query_acl_cfg(config->get("query_acl"));
-        const shared_ptr<const RequestACL> query_acl =
+        const boost::shared_ptr<const RequestACL> query_acl =
             query_acl_cfg ? acl::dns::getRequestLoader().load(query_acl_cfg) :
-            shared_ptr<RequestACL>();
+            boost::shared_ptr<RequestACL>();
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;
         int ctimeout = impl_->client_timeout_;
@@ -765,7 +769,7 @@ Resolver::getQueryACL() const {
 }
 
 void
-Resolver::setQueryACL(shared_ptr<const RequestACL> new_acl) {
+Resolver::setQueryACL(boost::shared_ptr<const RequestACL> new_acl) {
     if (!new_acl) {
         isc_throw(InvalidParameter, "NULL pointer is passed to setQueryACL");
     }
