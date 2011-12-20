@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/noncopyable.hpp>
+
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -320,15 +322,33 @@ readFail(int actual_len, int expected_len) {
               "SocketSessionForwarder: " << actual_len << "/" <<
               expected_len);
 }
+
+// A helper container for a (socket) file descriptor used in
+// SocketSessionReceiver::pop that ensures the socket is closed unless it
+// can be safely passed to the caller via release().
+struct ScopedSocket : boost::noncopyable {
+    ScopedSocket(int fd) : fd_(fd) {}
+    ~ScopedSocket() {
+        if (fd_ >= 0) {
+            close(fd_);
+        }
+    }
+    int release() {
+        const int fd = fd_;
+        fd_ = -1;
+        return (fd);
+    }
+    int fd_;
+};
 }
 
 SocketSession
 SocketSessionReceiver::pop() {
-    const int passed_fd = recv_fd(impl_->fd_);
-    if (passed_fd == FD_SYSTEM_ERROR) {
+    ScopedSocket passed_sock(recv_fd(impl_->fd_));
+    if (passed_sock.fd_ == FD_SYSTEM_ERROR) {
         isc_throw(SocketSessionError, "Receiving a forwarded FD failed: " <<
                   strerror(errno));
-    } else if (passed_fd < 0) {
+    } else if (passed_sock.fd_ < 0) {
         isc_throw(SocketSessionError, "No FD forwarded");
     }
 
@@ -398,7 +418,7 @@ SocketSessionReceiver::pop() {
             readFail(cc_data, data_len);
         }
 
-        return (SocketSession(passed_fd, family, type, protocol,
+        return (SocketSession(passed_sock.release(), family, type, protocol,
                               impl_->sa_local_, impl_->sa_remote_,
                               &impl_->data_buf_[0], data_len));
     } catch (const InvalidBufferPosition& ex) {
