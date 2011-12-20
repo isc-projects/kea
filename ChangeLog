@@ -1,7 +1,7 @@
 349.	[bug]		dvv
 	resolver: If an upstream server responds with FORMERR to an EDNS query,
 	try querying it without EDNS.
-	(Trac #1386, git TBD)
+	(Trac #1386, git 99ad0292af284a246fff20b3702fbd7902c45418)
 
 348.	[bug]		stephen
 	By default the logging output stream is now flushed after each write.
