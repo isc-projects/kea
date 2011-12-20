@@ -714,11 +714,6 @@ public:
         /// (this implementation is not complete, and currently only
         /// does full matches, CNAMES, and the signatures for matches and
         /// CNAMEs)
-        /// \note target was used in the original design to handle ANY
-        ///       queries. This is not implemented yet, and may use
-        ///       target again for that, but it might also use something
-        ///       different. It is left in for compatibility at the moment.
-        /// \note options are ignored at this moment
         ///
         /// \note Maybe counter intuitively, this method is not a const member
         /// function.  This is intentional; some of the underlying
@@ -741,13 +736,19 @@ public:
         ///
         /// \param name The name to find
         /// \param type The RRType to find
-        /// \param target Unused at this moment
         /// \param options Options about how to search.
         ///     See ZoneFinder::FindOptions.
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
-                                isc::dns::RRsetList* target = NULL,
                                 const FindOptions options = FIND_DEFAULT);
+        /// \brief Implementation of the ZoneFinder::findAll method.
+        ///
+        /// In short, it is mostly the same thing as find, but it returns all
+        /// RRsets in the named node through the target parameter in successful
+        /// case. It acts the same in the unsuccessful one.
+        virtual FindResult findAll(const isc::dns::Name& name,
+                                   std::vector<isc::dns::ConstRRsetPtr>& target,
+                                   const FindOptions options = FIND_DEFAULT);
 
         /// \brief Implementation of ZoneFinder::findPreviousName method.
         virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
@@ -773,12 +774,57 @@ public:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
-        //
         /// \brief Shortcut name for the result of getRRsets
         typedef std::pair<bool, std::map<dns::RRType, dns::RRsetPtr> >
             FoundRRsets;
         /// \brief Just shortcut for set of types
         typedef std::set<dns::RRType> WantedTypes;
+        /// \brief Internal logit of find and findAll methods.
+        ///
+        /// Most of their handling is in the "error" cases and delegations
+        /// and so on. So they share the logic here and find and findAll provide
+        /// just an interface for it.
+        ///
+        /// Parameters and behaviour is like of those combined together.
+        /// Unexpected parameters, like type != ANY and having the target, are
+        /// just that - unexpected and not checked.
+        FindResult findInternal(const isc::dns::Name& name,
+                                const isc::dns::RRType& type,
+                                std::vector<isc::dns::ConstRRsetPtr>* target,
+                                const FindOptions options = FIND_DEFAULT);
+        /// \brief Searches database for RRsets of one domain.
+        ///
+        /// This method scans RRs of single domain specified by name and
+        /// extracts any RRsets found and requested by parameters.
+        ///
+        /// It is used internally by find(), because it is called multiple
+        /// times (usually with different domains).
+        ///
+        /// \param name Which domain name should be scanned.
+        /// \param types List of types the caller is interested in.
+        /// \param check_ns If this is set to true, it checks nothing lives
+        ///     together with NS record (with few little exceptions, like RRSIG
+        ///     or NSEC). This check is meant for non-apex NS records.
+        /// \param construct_name If this is NULL, the resulting RRsets have
+        ///     their name set to name. If it is not NULL, it overrides the name
+        ///     and uses this one (this can be used for wildcard synthesized
+        ///     records).
+        /// \param any If this is true, it records all the types, not only the
+        ///     ones requested by types. It also puts a NULL pointer under the
+        ///     ANY type into the result, if it finds any RRs at all, to easy the
+        ///     identification of success.
+        /// \return A pair, where the first element indicates if the domain
+        ///     contains any RRs at all (not only the requested, it may happen
+        ///     this is set to true, but the second part is empty). The second
+        ///     part is map from RRtypes to RRsets of the corresponding types.
+        ///     If the RRset is not present in DB, the RRtype is not there at
+        ///     all (so you'll not find NULL pointer in the result).
+        /// \throw DataSourceError If there's a low-level error with the
+        ///     database or the database contains bad data.
+        FoundRRsets getRRsets(const std::string& name,
+                              const WantedTypes& types, bool check_ns,
+                              const std::string* construct_name = NULL,
+                              bool any = false);
 
         /// \brief Search result of \c findDelegationPoint().
         ///
@@ -812,35 +858,6 @@ public:
             const isc::dns::ConstRRsetPtr first_ns; ///< First NS found
             const size_t last_known; ///< No. labels in last non-empty domain
         };
-
-        /// \brief Searches database for RRsets of one domain.
-        ///
-        /// This method scans RRs of single domain specified by name and
-        /// extracts any RRsets found and requested by parameters.
-        ///
-        /// It is used internally by find(), because it is called multiple
-        /// times (usually with different domains).
-        ///
-        /// \param name Which domain name should be scanned.
-        /// \param types List of types the caller is interested in.
-        /// \param check_ns If this is set to true, it checks nothing lives
-        ///     together with NS record (with few little exceptions, like RRSIG
-        ///     or NSEC). This check is meant for non-apex NS records.
-        /// \param construct_name If this is NULL, the resulting RRsets have
-        ///     their name set to name. If it is not NULL, it overrides the name
-        ///     and uses this one (this can be used for wildcard synthesized
-        ///     records).
-        /// \return A pair, where the first element indicates if the domain
-        ///     contains any RRs at all (not only the requested, it may happen
-        ///     this is set to true, but the second part is empty). The second
-        ///     part is map from RRtypes to RRsets of the corresponding types.
-        ///     If the RRset is not present in DB, the RRtype is not there at
-        ///     all (so you'll not find NULL pointer in the result).
-        /// \throw DataSourceError If there's a low-level error with the
-        ///     database or the database contains bad data.
-        FoundRRsets getRRsets(const std::string& name,
-                              const WantedTypes& types, bool check_ns,
-                              const std::string* construct_name = NULL);
 
         /// \brief Find delegation point
         ///
@@ -908,6 +925,9 @@ public:
         ///        for ZoneFinder::FindOptions.
         /// \param dresult Result of the search through the zone for a
         ///        delegation.
+        /// \param target If the type happens to be ANY, it will insert all
+        ///        the RRsets of the found name (if any is found) here instead
+        ///        of being returned by the result.
         ///
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
@@ -919,49 +939,54 @@ public:
         FindResult findWildcardMatch(
             const isc::dns::Name& name,
             const isc::dns::RRType& type, const FindOptions options,
-            const DelegationSearchResult& dresult);
+            const DelegationSearchResult& dresult,
+            std::vector<isc::dns::ConstRRsetPtr>* target);
 
-	/// \brief Handle matching results for name
-	///
-	/// This is called when something is found in the underlying database
-	/// whose domain name is an exact match of the name to be searched for.
-	/// It explores four possible cases to decide the final lookup result:
-	/// - The name is a zone cut due to an NS RR.
-	/// - CNAME is found (while the requested RR type is not CNAME).
-	///   In this case multiple CNAMEs are checked and rejected with
-	///   a \c DataSourceError exception.
-	/// - Requested type is not found at that name.
-	/// - A record of the requested type is found.
-	/// and returns a corresponding find result.
-	///
-	/// This method is commonly used for normal (non wildcard) and wildcard
-	/// matches.
-	///
+        /// \brief Handle matching results for name
+        ///
+        /// This is called when something is found in the underlying database
+        /// whose domain name is an exact match of the name to be searched for.
+        /// It explores four possible cases to decide the final lookup result:
+        /// - The name is a zone cut due to an NS RR.
+        /// - CNAME is found (while the requested RR type is not CNAME).
+        ///   In this case multiple CNAMEs are checked and rejected with
+        ///   a \c DataSourceError exception.
+        /// - Requested type is not found at that name.
+        /// - A record of the requested type is found, or the query is ANY and
+        ///   some records were found.
+        /// and returns a corresponding find result.
+        ///
+        /// This method is commonly used for normal (non wildcard) and wildcard
+        /// matches.
+        ///
         /// \param name The name to find
         /// \param type The RRType to find
         /// \param options Options about how to search. See the documentation
         ///        for ZoneFinder::FindOptions.
-	/// \param is_origin If name is the zone's origin name.
-	/// \param found A set of found RRsets in the search for the name
-	///        and type.  It could contain one or more of the requested
-	///        type, CNAME, NS, and NSEC RRsets of the name.
-	/// \param wildname If non NULL, the method is called on a wildcard
-	///                 match, and points to a string object representing
-	///                 a textual form of the matched wildcard name;
-	///                 it's NULL in the case of non wildcard match.
-	///
+        /// \param is_origin If name is the zone's origin name.
+        /// \param found A set of found RRsets in the search for the name
+        ///        and type.  It could contain one or more of the requested
+        ///        type, CNAME, NS, and NSEC RRsets of the name.
+        /// \param wildname If non NULL, the method is called on a wildcard
+        ///                 match, and points to a string object representing
+        ///                 a textual form of the matched wildcard name;
+        ///                 it's NULL in the case of non wildcard match.
+        /// \param target When the query is any, this must be set to a vector
+        ///    where the result will be stored.
+        ///
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
-	///         indicating the match type (corresponding to the each of
-	///         the above 4 cases).  The return value is intended to be
-	///         usable as a return value of the caller of this helper
-	///         method.
+        ///         indicating the match type (corresponding to the each of
+        ///         the above 4 cases).  The return value is intended to be
+        ///         usable as a return value of the caller of this helper
+        ///         method.
         FindResult findOnNameResult(const isc::dns::Name& name,
 				    const isc::dns::RRType& type,
 				    const FindOptions options,
 				    const bool is_origin,
 				    const FoundRRsets& found,
-				    const std::string* wildname);
+				    const std::string* wildname,
+                    std::vector<isc::dns::ConstRRsetPtr>* target);
 
         /// \brief Handle no match for name
         ///
@@ -983,6 +1008,9 @@ public:
         ///        for ZoneFinder::FindOptions.
         /// \param dresult Result of the search through the zone for a
         ///        delegation.
+        /// \param target If the query is for type ANY, the successfull result,
+        ///        if there happens to be one, will be returned through the
+        ///        parameter, as it doesn't fit into the result.
         ///
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
@@ -992,17 +1020,19 @@ public:
         FindResult findNoNameResult(const isc::dns::Name& name,
                                     const isc::dns::RRType& type,
                                     FindOptions options,
-                                    const DelegationSearchResult& dresult);
+                                    const DelegationSearchResult& dresult,
+                                    std::vector<isc::dns::ConstRRsetPtr>*
+                                    target);
 
         /// Logs condition and creates result
         ///
         /// A convenience function used by findOnNameResult(), it both creates
-	/// the FindResult object that find() will return to its caller as well
+        /// the FindResult object that find() will return to its caller as well
         /// as logging a debug message for the information being returned.
         ///
         /// \param name Domain name of the RR that was being sought.
         /// \param wildname Domain name string of a matched wildcard name or
-	/// NULL for non wildcard match.
+        /// NULL for non wildcard match.
         /// \param type Type of RR being sought.
         /// \param code Result of the find operation
         /// \param rrset RRset found as a result of the find (which may be

@@ -211,8 +211,10 @@ public:
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
-                            RRsetList* target = NULL,
                             const FindOptions options = FIND_DEFAULT);
+    virtual FindResult findAll(const isc::dns::Name& name,
+                               std::vector<ConstRRsetPtr>& target,
+                               const FindOptions options = FIND_DEFAULT);
 
     // If false is passed, it makes the zone broken as if it didn't have the
     // SOA.
@@ -305,8 +307,29 @@ substituteWild(const RRset& wild_rrset, const Name& real_name) {
 }
 
 ZoneFinder::FindResult
+MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
+                        const FindOptions options)
+{
+    ZoneFinder::FindResult result(find(name, RRType::ANY(), options));
+    if (result.code == NXRRSET) {
+        const Domains::const_iterator found_domain = domains_.find(name);
+        if (!found_domain->second.empty()) {
+            for (RRsetStore::const_iterator found_rrset =
+                 found_domain->second.begin();
+                 found_rrset != found_domain->second.end(); ++found_rrset) {
+                // Insert RRs under the domain name into target
+                target.push_back(found_rrset->second);
+            }
+            return (FindResult(SUCCESS, RRsetPtr()));
+        }
+    }
+
+    return (result);
+}
+
+ZoneFinder::FindResult
 MockZoneFinder::find(const Name& name, const RRType& type,
-                     RRsetList* target, const FindOptions options)
+                     const FindOptions options)
 {
     // Emulating a broken zone: mandatory apex RRs are missing if specifically
     // configured so (which are rare cases).
@@ -356,17 +379,6 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                 rrset = noconst;
             }
             return (FindResult(SUCCESS, rrset));
-        }
-
-        // If not found but we have a target, fill it with all RRsets here
-        if (!found_domain->second.empty() && target != NULL) {
-            for (found_rrset = found_domain->second.begin();
-                 found_rrset != found_domain->second.end(); ++found_rrset) {
-                // Insert RRs under the domain name into target
-                target->addRRset(
-                    boost::const_pointer_cast<RRset>(found_rrset->second));
-            }
-            return (FindResult(SUCCESS, found_domain->second.begin()->second));
         }
 
         // Otherwise, if this domain name has CNAME, return it.

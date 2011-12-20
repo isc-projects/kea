@@ -176,7 +176,8 @@ private:
 
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
-                                  bool check_ns, const string* construct_name)
+                                  bool check_ns, const string* construct_name,
+                                  bool any)
 {
     RRsigStore sig_store;
     bool records_found = false;
@@ -221,7 +222,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                      columns[DatabaseAccessor::RDATA_COLUMN]));
             }
 
-            if (types.find(cur_type) != types.end()) {
+            if (types.find(cur_type) != types.end() || any) {
                 // This type is requested, so put it into result
                 const RRTTL cur_ttl(columns[DatabaseAccessor::TTL_COLUMN]);
                 // Ths sigtype column was an optimization for finding the
@@ -284,6 +285,12 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
     for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
          i != result.end(); ++ i) {
         sig_store.appendSignatures(i->second);
+    }
+
+    if (records_found && any) {
+        result[RRType::ANY()] = RRsetPtr();
+        // These will be sitting on the other RRsets.
+        result.erase(RRType::RRSIG());
     }
 
     return (FoundRRsets(records_found, result));
@@ -387,6 +394,25 @@ DatabaseClient::Finder::findNSECCover(const Name& name) {
     }
     // We didn't find it, return nothing
     return (ConstRRsetPtr());
+}
+
+ZoneFinder::FindResult
+DatabaseClient::Finder::findAll(const isc::dns::Name& name,
+                                std::vector<isc::dns::ConstRRsetPtr>& target,
+                                const FindOptions options)
+{
+    return (findInternal(name, RRType::ANY(), &target, options));
+}
+
+ZoneFinder::FindResult
+DatabaseClient::Finder::find(const isc::dns::Name& name,
+                             const isc::dns::RRType& type,
+                             const FindOptions options)
+{
+    if (type == RRType::ANY()) {
+        isc_throw(isc::Unexpected, "Use findAll to answer ANY");
+    }
+    return (findInternal(name, type, NULL, options));
 }
 
 DatabaseClient::Finder::DelegationSearchResult
@@ -550,7 +576,8 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
 ZoneFinder::FindResult
 DatabaseClient::Finder::findWildcardMatch(
     const isc::dns::Name& name, const isc::dns::RRType& type,
-    const FindOptions options, const DelegationSearchResult& dresult)
+    const FindOptions options, const DelegationSearchResult& dresult,
+    std::vector<isc::dns::ConstRRsetPtr>* target)
 {
     // Note that during the search we are going to search not only for the
     // requested type, but also for types that indicate a delegation -
@@ -569,7 +596,7 @@ DatabaseClient::Finder::findWildcardMatch(
         // RFC 4592 section 4.4).
         // Search for a match.  The types are the same as with original query.
         FoundRRsets found = getRRsets(wildcard, final_types, true,
-                                      &construct_name);
+                                      &construct_name, type == RRType::ANY());
         if (found.first) {
             // Found something - but what?
 
@@ -594,7 +621,7 @@ DatabaseClient::Finder::findWildcardMatch(
                 // The wildcard match is the best one, find the final result
                 // at it.  Note that wildcard should never be the zone origin.
                 return (findOnNameResult(name, type, options, false,
-                                         found, &wildcard));
+                                         found, &wildcard, target));
             } else {
 
                 // more specified match found, cancel wildcard match
@@ -660,7 +687,9 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                          const FindOptions options,
                                          const bool is_origin,
                                          const FoundRRsets& found,
-                                         const string* wildname)
+                                         const string* wildname,
+                                         std::vector<isc::dns::ConstRRsetPtr>*
+                                         target)
 {
     const bool wild = (wildname != NULL);
 
@@ -698,14 +727,29 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                    DATASRC_DATABASE_FOUND_CNAME));
 
     } else if (wti != found.second.end()) {
+        bool any(type == RRType::ANY());
+        isc::log::MessageID lid(wild ? DATASRC_DATABASE_WILDCARD_MATCH :
+                                DATASRC_DATABASE_FOUND_RRSET);
+        if (any) {
+            // An ANY query, copy everything to the target instead of returning
+            // directly.
+            for (FoundIterator it(found.second.begin());
+                 it != found.second.end(); ++it) {
+                if (it->second) {
+                    // Skip over the empty ANY
+                    target->push_back(it->second);
+                }
+            }
+            lid = wild ? DATASRC_DATABASE_WILDCARD_ANY :
+                DATASRC_DATABASE_FOUND_ANY;
+        }
         // Found an RR matching the query, so return it.  (Note that this
         // includes the case where we were explicitly querying for a CNAME and
         // found it.  It also includes the case where we were querying for an
         // NS RRset and found it at the apex of the zone.)
         return (logAndCreateResult(name, wildname, type,
                                    wild ? WILDCARD : SUCCESS, wti->second,
-                                   wild ? DATASRC_DATABASE_WILDCARD_MATCH :
-                                   DATASRC_DATABASE_FOUND_RRSET));
+                                   lid));
     }
 
     // If we get here, we have found something at the requested name but not
@@ -747,7 +791,9 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
 ZoneFinder::FindResult
 DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
                                          FindOptions options,
-                                         const DelegationSearchResult& dresult)
+                                         const DelegationSearchResult& dresult,
+                                         std::vector<isc::dns::ConstRRsetPtr>*
+                                         target)
 {
     const bool dnssec_data = ((options & FIND_DNSSEC) != 0);
 
@@ -771,7 +817,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
         // (i.e. all results except NXDOMAIN) return it; otherwise fall
         // through to the NXDOMAIN case below.
         const ZoneFinder::FindResult wresult =
-            findWildcardMatch(name, type, options, dresult);
+            findWildcardMatch(name, type, options, dresult, target);
         if (wresult.code != NXDOMAIN) {
             return (FindResult(wresult.code, wresult.rrset));
         }
@@ -786,9 +832,9 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
 }
 
 ZoneFinder::FindResult
-DatabaseClient::Finder::find(const isc::dns::Name& name,
+DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
-                             isc::dns::RRsetList*,
+                             std::vector<isc::dns::ConstRRsetPtr>* target,
                              const FindOptions options)
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
@@ -820,16 +866,18 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
-                                        !is_origin);
+                                        !is_origin, NULL,
+                                        type == RRType::ANY());
 
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
-        return (findOnNameResult(name, type, options, is_origin, found, NULL));
+        return (findOnNameResult(name, type, options, is_origin, found, NULL,
+                                 target));
     } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
-        return (findNoNameResult(name, type, options, dresult));
+        return (findNoNameResult(name, type, options, dresult, target));
     }
 }
 
@@ -897,7 +945,7 @@ public:
         // Find the SOA of the zone (may or may not succeed).  Note that
         // this must be done before starting the iteration context.
         soa_ = DatabaseClient::Finder(accessor_, zone.second, zone_name).
-            find(zone_name, RRType::SOA(), NULL).rrset;
+            find(zone_name, RRType::SOA()).rrset;
 
         // Request the context
         context_ = accessor_->getAllRecords(zone.second);
