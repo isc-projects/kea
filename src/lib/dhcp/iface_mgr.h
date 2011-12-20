@@ -20,6 +20,8 @@
 #include <boost/scoped_array.hpp>
 #include <boost/noncopyable.hpp>
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
@@ -325,13 +327,10 @@ public:
     int openSocket(const std::string& ifname,
                    const isc::asiolink::IOAddress& addr, int port);
 
-    /// Opens IPv4 sockets on detected interfaces.
+    /// @param port specifies port number (usually DHCP6_SERVER_PORT)
     ///
-    /// Will throw exception if socket creation fails.
-    ///
-    /// @param port specifies port number (usually DHCP4_SERVER_PORT)
-    void openSockets4(uint16_t port);
-
+    /// @return true if any sockets were open
+    bool openSockets6(uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
@@ -342,6 +341,14 @@ public:
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
 
+    /// Opens IPv4 sockets on detected interfaces.
+    /// Will throw exception if socket creation fails.
+    ///
+    /// @param port specifies port number (usually DHCP4_SERVER_PORT)
+    ///
+    /// @return true if any sockets were open
+    bool openSockets4(uint16_t port = DHCP4_SERVER_PORT);
+
     // don't use private, we need derived classes in tests
 protected:
 
@@ -351,7 +358,7 @@ protected:
     /// anyone to create instances of IfaceMgr. Use instance() method instead.
     IfaceMgr();
 
-    ~IfaceMgr();
+    virtual ~IfaceMgr();
 
     /// @brief Opens IPv4 socket.
     ///
@@ -429,10 +436,6 @@ protected:
     boost::scoped_array<char> control_buf_;
 
 private:
-    /// Opens IPv6 sockets on detected interfaces.
-    ///
-    /// @param port specifies port on which sockets will be open
-    void openSockets6(uint16_t port);
 
     /// creates a single instance of this class (a singleton implementation)
     static void
