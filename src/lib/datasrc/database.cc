@@ -840,6 +840,16 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
               .arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
 
+    // find() variants generally expect 'name' to be included in the zone.
+    // Otherwise the search algorithm below won't work correctly, so we
+    // reject the unexpected case first.
+    const NameComparisonResult::NameRelation reln =
+        name.compare(getOrigin()).getRelation();
+    if (reln != NameComparisonResult::SUBDOMAIN &&
+        reln != NameComparisonResult::EQUAL) {
+        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+    }
+
     // First, go through all superdomains from the origin down, searching for
     // nodes that indicate a delegation (i.e. NS or DNAME, ignoring NS records
     // at the apex).  If one is found, the search stops there.
