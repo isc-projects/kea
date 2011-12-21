@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <errno.h>
 #include <stdlib.h>             // for malloc and free
 #include "fd_share.h"
 
@@ -87,18 +88,22 @@ recv_fd(const int sock) {
     msghdr.msg_controllen = cmsg_space(sizeof(int));
     msghdr.msg_control = malloc(msghdr.msg_controllen);
     if (msghdr.msg_control == NULL) {
-        return (FD_OTHER_ERROR);
+        return (FD_SYSTEM_ERROR);
     }
 
-    if (recvmsg(sock, &msghdr, 0) < 0) {
+    const int cc = recvmsg(sock, &msghdr, 0);
+    if (cc <= 0) {
         free(msghdr.msg_control);
-        return (FD_COMM_ERROR);
+        if (cc == 0) {
+            errno = ECONNRESET;
+        }
+        return (FD_SYSTEM_ERROR);
     }
     const struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
     int fd = FD_OTHER_ERROR;
     if (cmsg != NULL && cmsg->cmsg_len == cmsg_len(sizeof(int)) &&
         cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
-        fd = *(const int*)CMSG_DATA(cmsg);
+        memcpy(&fd, CMSG_DATA(cmsg), sizeof(int));
     }
     free(msghdr.msg_control);
     return (fd);
@@ -127,11 +132,11 @@ send_fd(const int sock, const int fd) {
     cmsg->cmsg_len = cmsg_len(sizeof(int));
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
-    *(int*)CMSG_DATA(cmsg) = fd;
+    memcpy(CMSG_DATA(cmsg), &fd, sizeof(int));
 
     const int ret = sendmsg(sock, &msghdr, 0);
     free(msghdr.msg_control);
-    return (ret >= 0 ? 0 : FD_COMM_ERROR);
+    return (ret >= 0 ? 0 : FD_SYSTEM_ERROR);
 }
 
 } // End for namespace io
