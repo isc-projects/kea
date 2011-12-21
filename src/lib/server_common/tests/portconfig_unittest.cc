@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <server_common/portconfig.h>
+#include <server_common/socket_request.h>
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -21,13 +22,25 @@
 
 #include <gtest/gtest.h>
 #include <string>
+#include <boost/lexical_cast.hpp>
 
 using namespace isc::server_common::portconfig;
+using namespace isc::server_common;
 using namespace isc::data;
 using namespace isc;
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
+using boost::lexical_cast;
+
+// Access the private hidden flag
+namespace isc {
+namespace server_common {
+namespace portconfig {
+extern bool test_mode;
+}
+}
+}
 
 namespace {
 
@@ -127,12 +140,15 @@ TEST_F(ParseAddresses, invalid) {
 }
 
 // Test fixture for installListenAddresses
-struct InstallListenAddresses : public ::testing::Test {
+struct InstallListenAddresses : public ::testing::Test,
+    public SocketRequestor {
     InstallListenAddresses() :
-        dnss_(ios_, NULL, NULL, NULL)
+        dnss_(ios_, NULL, NULL, NULL),
+        last_token_(0)
     {
         valid_.push_back(AddressPair("127.0.0.1", 5288));
         valid_.push_back(AddressPair("::1", 5288));
+        invalid_.push_back(AddressPair("127.0.0.1", 5288));
         invalid_.push_back(AddressPair("192.0.2.2", 1));
     }
     IOService ios_;
@@ -142,6 +158,11 @@ struct InstallListenAddresses : public ::testing::Test {
     AddressList valid_;
     // But this shouldn't work
     AddressList invalid_;
+    // Store the tokens as they go in and out
+    vector<string> released_tokens_;
+    vector<string> given_tokens_;
+    // Last token number and fd given out
+    size_t last_token_;
     // Check that the store_ addresses are the same as expected
     void checkAddresses(const AddressList& expected, const string& name) {
         SCOPED_TRACE(name);
@@ -155,20 +176,91 @@ struct InstallListenAddresses : public ::testing::Test {
             EXPECT_EQ(ei->second, si->second);
         }
     }
+    void releaseSocket(const string& token) {
+        released_tokens_.push_back(token);
+    }
+    SocketID requestSocket(Protocol protocol, const string& address,
+                           uint16_t port, ShareMode mode, const string& name)
+    {
+        if (address == "192.0.2.2") {
+            isc_throw(SocketError, "This address is not allowed");
+        }
+        const string proto(protocol == TCP ? "TCP" : "UDP");
+        size_t number = ++ last_token_;
+        EXPECT_EQ(5288, port);
+        EXPECT_EQ(DONT_SHARE, mode);
+        EXPECT_EQ("dummy_app", name);
+        const string token(proto + ":" + address + ":" +
+                           lexical_cast<string>(port) + ":" +
+                           lexical_cast<string>(number));
+        given_tokens_.push_back(token);
+        return (SocketID(number, token));
+    }
+    void SetUp() {
+        // Prepare the requestor (us) for the test
+        SocketRequestor::initTest(this);
+        // Don't manipulate the real sockets
+        test_mode = true;
+    }
+    void TearDown() {
+        // Make sure no sockets are left inside
+        AddressList list;
+        installListenAddresses(list, store_, dnss_);
+        // Don't leave invalid pointers here
+        SocketRequestor::initTest(NULL);
+        // And return the mode
+        test_mode = false;
+    }
+    // This checks the set of tokens is the same
+    void checkTokens(const char** expected, const vector<string>& real,
+                     const char* scope)
+    {
+        SCOPED_TRACE(scope);
+        size_t position(0);
+        while (expected[position]) {
+            ASSERT_LT(position, real.size());
+            EXPECT_EQ(expected[position], real[position]) << position;
+            position ++;
+        }
+        EXPECT_EQ(position, real.size());
+    }
 };
 
 // Try switching valid addresses
+// Check the sockets are correctly requested and returned
 TEST_F(InstallListenAddresses, valid) {
     // First, bind to the valid addresses
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Valid addresses");
+    const char* tokens1[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        NULL
+    };
+    const char* no_tokens[] = { NULL };
+    checkTokens(tokens1, given_tokens_, "Valid given tokens 1");
+    checkTokens(no_tokens, released_tokens_, "Valid no released tokens 1");
     // TODO Maybe some test to actually connect to them
     // Try setting it back to nothing
+    given_tokens_.clear();
     EXPECT_NO_THROW(installListenAddresses(AddressList(), store_, dnss_));
     checkAddresses(AddressList(), "No addresses");
+    checkTokens(no_tokens, given_tokens_, "Valid no given tokens");
+    checkTokens(tokens1, released_tokens_, "Valid released tokens");
     // Try switching back again
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Valid addresses");
+    const char* tokens2[] = {
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:::1:5288:7",
+        "UDP:::1:5288:8",
+        NULL
+    };
+    checkTokens(tokens2, given_tokens_, "Valid given tokens 2");
+    checkTokens(tokens1, released_tokens_, "Valid released tokens");
 }
 
 // Try if rollback works
@@ -176,9 +268,44 @@ TEST_F(InstallListenAddresses, rollback) {
     // Set some addresses
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Before rollback");
+    const char* tokens1[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        NULL
+    };
+    const char* no_tokens[] = { NULL };
+    checkTokens(tokens1, given_tokens_, "Given before rollback");
+    checkTokens(no_tokens, released_tokens_, "Released before rollback");
+    given_tokens_.clear();
     // This should not bind them, but should leave the original addresses
     EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), exception);
     checkAddresses(valid_, "After rollback");
+    // Now, it should have requested first pair of sockets from the invalids
+    // and, as the second failed, it should have returned them right away.
+    const char* released1[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        NULL
+    };
+    // It should request the first pair of sockets, and then request the
+    // complete set of valid addresses to rollback
+    const char* tokens2[] = {
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:127.0.0.1:5288:7",
+        "UDP:127.0.0.1:5288:8",
+        "TCP:::1:5288:9",
+        "UDP:::1:5288:10",
+        NULL
+    };
+    checkTokens(tokens2, given_tokens_, "Given after rollback");
+    checkTokens(released1, released_tokens_, "Released after rollback");
 }
 
 }

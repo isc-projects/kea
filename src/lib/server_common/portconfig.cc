@@ -14,6 +14,7 @@
 
 #include <server_common/portconfig.h>
 #include <server_common/logger.h>
+#include <server_common/socket_request.h>
 
 #include <asiolink/io_address.h>
 #include <asiodns/dns_service.h>
@@ -29,6 +30,11 @@ using namespace isc::asiodns;
 namespace isc {
 namespace server_common {
 namespace portconfig {
+
+// This flags disables pushing the sockets to the DNSService. It prevents
+// the clearServers() method to close the file descriptors we made up.
+// It is not presented in any header, but we use it from the tests anyway.
+bool test_mode(false);
 
 AddressList
 parseAddresses(isc::data::ConstElementPtr addresses,
@@ -76,11 +82,35 @@ parseAddresses(isc::data::ConstElementPtr addresses,
 
 namespace {
 
+vector<string> current_sockets;
+
 void
 setAddresses(DNSService& service, const AddressList& addresses) {
     service.clearServers();
+    BOOST_FOREACH(const string& token, current_sockets) {
+        socketRequestor().releaseSocket(token);
+    }
+    current_sockets.clear();
     BOOST_FOREACH(const AddressPair &address, addresses) {
-        service.addServer(address.second, address.first);
+        // TODO: Support sharing somehow in future.
+        const SocketRequestor::SocketID
+            tcp(socketRequestor().requestSocket(SocketRequestor::TCP,
+                                                address.first, address.second,
+                                                SocketRequestor::DONT_SHARE,
+                                                "dummy_app"));
+        current_sockets.push_back(tcp.second);
+        if (!test_mode) {
+            service.addServerTCP(tcp.first, true); // FIXME: Correct the flag
+        }
+        const SocketRequestor::SocketID
+            udp(socketRequestor().requestSocket(SocketRequestor::UDP,
+                                                address.first, address.second,
+                                                SocketRequestor::DONT_SHARE,
+                                                "dummy_app"));
+        current_sockets.push_back(udp.second);
+        if (!test_mode) {
+            service.addServerUDP(udp.first, true); // FIXME: Correct the flag
+        }
     }
 }
 
