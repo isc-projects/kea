@@ -100,6 +100,10 @@ Their semantics is as follows (they are or bit-field):\n\
   of the non existence of any matching wildcard or non existence of an\n\
   exact match when a wildcard match is found.\n\
 \n\
+In general, name is expected to be included in the zone, that is, it\n\
+should be equal to or a subdomain of the zone origin. Otherwise this\n\
+method will return NXDOMAIN with an empty RRset. But such a case\n\
+should rather be considered a caller's bug.\n\
 \n\
 This method raises an isc.datasrc.Error exception if there is an\n\
 internal error in the datasource.\n\

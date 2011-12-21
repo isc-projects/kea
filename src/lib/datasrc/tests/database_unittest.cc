@@ -387,11 +387,11 @@ private:
             // 'hardcoded' names to trigger exceptions
             // On these names some exceptions are thrown, to test the robustness
             // of the find() method.
-            if (searched_name_ == "dsexception.in.search.") {
+            if (searched_name_ == "dsexception.example.org.") {
                 isc_throw(DataSourceError, "datasource exception on search");
-            } else if (searched_name_ == "iscexception.in.search.") {
+            } else if (searched_name_ == "iscexception.example.org.") {
                 isc_throw(isc::Exception, "isc exception on search");
-            } else if (searched_name_ == "basicexception.in.search.") {
+            } else if (searched_name_ == "basicexception.example.org.") {
                 throw std::exception();
             }
 
@@ -420,11 +420,12 @@ private:
         }
 
         virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) {
-            if (searched_name_ == "dsexception.in.getnext.") {
+            if (searched_name_ == "dsexception.getnext.example.org.") {
                 isc_throw(DataSourceError, "datasource exception on getnextrecord");
-            } else if (searched_name_ == "iscexception.in.getnext.") {
+            } else if (searched_name_ == "iscexception.getnext.example.org.") {
                 isc_throw(isc::Exception, "isc exception on getnextrecord");
-            } else if (searched_name_ == "basicexception.in.getnext.") {
+            } else if (searched_name_ ==
+                       "basicexception.getnext.example.org.") {
                 throw std::exception();
             }
 
@@ -1731,27 +1732,27 @@ TYPED_TEST(DatabaseClientTest, find) {
 
     // Trigger the hardcoded exceptions and see if find() has cleaned up
     if (this->is_mock_) {
-        EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
+        EXPECT_THROW(finder->find(Name("dsexception.example.org."),
                                   this->qtype_,
                                   ZoneFinder::FIND_DEFAULT),
                      DataSourceError);
-        EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
+        EXPECT_THROW(finder->find(Name("iscexception.example.org."),
                                   this->qtype_,
                                   ZoneFinder::FIND_DEFAULT),
                      isc::Exception);
-        EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
+        EXPECT_THROW(finder->find(Name("basicexception.example.org."),
                                   this->qtype_,
                                   ZoneFinder::FIND_DEFAULT),
                      std::exception);
-        EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
+        EXPECT_THROW(finder->find(Name("dsexception.getnext.example.org"),
                                   this->qtype_,
                                   ZoneFinder::FIND_DEFAULT),
                      DataSourceError);
-        EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
+        EXPECT_THROW(finder->find(Name("iscexception.getnext.example.org."),
                                   this->qtype_,
                                   ZoneFinder::FIND_DEFAULT),
                      isc::Exception);
-        EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
+        EXPECT_THROW(finder->find(Name("basicexception.getnext.example.org."),
                                   this->qtype_,
                                   ZoneFinder::FIND_DEFAULT),
                      std::exception);
@@ -1767,6 +1768,41 @@ TYPED_TEST(DatabaseClientTest, find) {
     doFindTest(*finder, isc::dns::Name("badsigtype.example.org."),
                this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
                this->expected_rdatas_, this->expected_sig_rdatas_);
+}
+
+TYPED_TEST(DatabaseClientTest, findOutOfZone) {
+    // If the query name is out-of-zone it should result in NXDOMAIN
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    vector<ConstRRsetPtr> target;
+
+    // Superdomain
+    doFindTest(*finder, Name("org"), this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->empty_rdatas_, this->empty_rdatas_);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("org"), target).code);
+    // sharing a common ancestor
+    doFindTest(*finder, Name("noexample.org"), this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->empty_rdatas_, this->empty_rdatas_);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("noexample.org"),
+                                                    target).code);
+    // totally unrelated domain, smaller number of labels
+    doFindTest(*finder, Name("com"), this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->empty_rdatas_, this->empty_rdatas_);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("com"), target).code);
+    // totally unrelated domain, same number of labels
+    doFindTest(*finder, Name("example.com"), this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->empty_rdatas_, this->empty_rdatas_);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("example.com"),
+                                                    target).code);
+    // totally unrelated domain, larger number of labels
+    doFindTest(*finder, Name("more.example.com"), this->qtype_, this->qtype_,
+               this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->empty_rdatas_, this->empty_rdatas_);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("more.example.com"),
+                                                    target).code);
 }
 
 TYPED_TEST(DatabaseClientTest, findDelegation) {
@@ -2673,12 +2709,13 @@ TYPED_TEST(DatabaseClientTest, addDeviantRR) {
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("192.0.2.100");
     {
-        // Note: with the find() implementation being more strict about
-        // zone cuts, this test may fail.  Then the test should be updated.
+        // Note: find() rejects out-of-zone query name with NXDOMAIN
+        // regardless of whether adding the RR succeeded, so this check
+        // actually doesn't confirm it.
         SCOPED_TRACE("add out-of-zone RR");
         doFindTest(this->updater_->getFinder(), Name("example.com"),
                    this->qtype_, this->qtype_, this->rrttl_,
-                   ZoneFinder::SUCCESS, this->expected_rdatas_,
+                   ZoneFinder::NXDOMAIN, this->empty_rdatas_,
                    this->empty_rdatas_);
     }
 }
