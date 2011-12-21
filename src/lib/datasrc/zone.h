@@ -261,6 +261,16 @@ public:
     ///   proof of the non existence of any matching wildcard or non existence
     ///   of an exact match when a wildcard match is found.
     ///
+    /// In general, \c name is expected to be included in the zone, that is,
+    /// it should be equal to or a subdomain of the zone origin.  Otherwise
+    /// this method will return \c NXDOMAIN with an empty RRset.  But such a
+    /// case should rather be considered a caller's bug.
+    ///
+    /// \note For this reason it's probably better to throw an exception
+    /// than returning \c NXDOMAIN.  This point should be revisited in a near
+    /// future version.  In any case applications shouldn't call this method
+    /// for an out-of-zone name.
+    ///
     /// \exception std::bad_alloc Memory allocation such as for constructing
     ///  the resulting RRset fails
     /// \exception DataSourceError Derived class specific exception, e.g.
