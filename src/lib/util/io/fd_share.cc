@@ -103,7 +103,7 @@ recv_fd(const int sock) {
     int fd = FD_OTHER_ERROR;
     if (cmsg != NULL && cmsg->cmsg_len == cmsg_len(sizeof(int)) &&
         cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
-        fd = *(const int*)CMSG_DATA(cmsg);
+        memcpy(&fd, CMSG_DATA(cmsg), sizeof(int));
     }
     free(msghdr.msg_control);
     return (fd);
@@ -132,7 +132,7 @@ send_fd(const int sock, const int fd) {
     cmsg->cmsg_len = cmsg_len(sizeof(int));
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
-    *(int*)CMSG_DATA(cmsg) = fd;
+    memcpy(CMSG_DATA(cmsg), &fd, sizeof(int));
 
     const int ret = sendmsg(sock, &msghdr, 0);
     free(msghdr.msg_control);
