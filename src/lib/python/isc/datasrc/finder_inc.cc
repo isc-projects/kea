@@ -72,10 +72,6 @@ answer for the search key. Specifically,\n\
 - If the search name matches a delegation point of DNAME, it returns\n\
   the code of DNAME and that DNAME RR.\n\
 \n\
-Note: This behavior is controversial as we discussed in\n\
-https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html We\n\
-should revisit the interface before we heavily rely on it.\n\
-\n\
 The options parameter specifies customized behavior of the search.\n\
 Their semantics is as follows (they are or bit-field):\n\
 \n\
