@@ -21,6 +21,7 @@ libserver_common_la_SOURCES = client.h client.cc
 libserver_common_la_SOURCES += keyring.h keyring.cc
 libserver_common_la_SOURCES += portconfig.h portconfig.cc
 libserver_common_la_SOURCES += logger.h logger.cc
+libserver_common_la_SOURCES += socket_request.h socket_request.cc
 nodist_libserver_common_la_SOURCES = server_common_messages.h
 nodist_libserver_common_la_SOURCES += server_common_messages.cc
 libserver_common_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
