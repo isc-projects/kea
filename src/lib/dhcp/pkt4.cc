@@ -176,6 +176,8 @@ Pkt4::unpack() {
     bufferIn.readVector(optsBuffer, opts_len);
     LibDHCP::unpackOptions4(optsBuffer, options_);
 
+    check();
+
     return (true);
 }
 

@@ -257,6 +257,27 @@ public:
     /// @return uint32_t value stored on first four bytes
     uint32_t getUint32();
 
+    /// @brief Sets content of this option to singe uint8 value.
+    ///
+    /// Option it resized appropriately (to length of 1 octet).
+    ///
+    /// @param value value to be set
+    void setUint8(uint8_t value);
+
+    /// @brief Sets content of this option to singe uint16 value.
+    ///
+    /// Option it resized appropriately (to length of 2 octets).
+    ///
+    /// @param value value to be set
+    void setUint16(uint16_t value);
+
+    /// @brief Sets content of this option to singe uint32 value.
+    ///
+    /// Option it resized appropriately (to length of 4 octets).
+    ///
+    /// @param value value to be set
+    void setUint32(uint32_t value);
+
     /// just to force that every option has virtual dtor
     virtual ~Option();
 
