@@ -144,7 +144,7 @@ struct InstallListenAddresses : public ::testing::Test,
     public SocketRequestor {
     InstallListenAddresses() :
         dnss_(ios_, NULL, NULL, NULL),
-        last_token_(0)
+        last_token_(0), break_rollback_(false)
     {
         valid_.push_back(AddressPair("127.0.0.1", 5288));
         valid_.push_back(AddressPair("::1", 5288));
@@ -163,6 +163,8 @@ struct InstallListenAddresses : public ::testing::Test,
     vector<string> given_tokens_;
     // Last token number and fd given out
     size_t last_token_;
+    // Should we break the rollback?
+    bool break_rollback_;
     // Check that the store_ addresses are the same as expected
     void checkAddresses(const AddressList& expected, const string& name) {
         SCOPED_TRACE(name);
@@ -184,6 +186,15 @@ struct InstallListenAddresses : public ::testing::Test,
     {
         if (address == "192.0.2.2") {
             isc_throw(SocketError, "This address is not allowed");
+        }
+        if (address == "::1" && break_rollback_) {
+            // This is valid address, but in case we need to break the
+            // rollback, it needs to be busy or whatever
+            //
+            // We break the second address to see the first one was
+            // allocated and then returned
+            isc_throw(SocketError,
+                      "This address is available, but not for you");
         }
         const string proto(protocol == TCP ? "TCP" : "UDP");
         size_t number = ++ last_token_;
@@ -308,7 +319,39 @@ TEST_F(InstallListenAddresses, rollback) {
     checkTokens(released1, released_tokens_, "Released after rollback");
 }
 
-// TODO: Test where rollback fails, test it does return whatever it
-// requested during the rollback.
+// Try it at last returns everything when even the rollback fails.
+TEST_F(InstallListenAddresses, brokenRollback) {
+    EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
+    checkAddresses(valid_, "Before rollback");
+    // Don't check the tokens now, we already do it in rollback and valid tests
+    given_tokens_.clear();
+    break_rollback_ = true;
+    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), exception);
+    // No addresses here
+    EXPECT_TRUE(store_.empty());
+    // These should be requested in the first part of the failure to bind
+    // and the second pair in the first part of rollback
+    const char* tokens[] = {
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:127.0.0.1:5288:7",
+        "UDP:127.0.0.1:5288:8",
+        NULL
+    };
+    // The first set should be returned, as well as all the ones we request now
+    const char* released[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:127.0.0.1:5288:7",
+        "UDP:127.0.0.1:5288:8",
+        NULL
+    };
+    checkTokens(tokens, given_tokens_, "given");
+    checkTokens(released, released_tokens_, "released");
+}
 
 }
