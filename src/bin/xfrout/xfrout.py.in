@@ -336,8 +336,7 @@ class XfroutSession():
         result, finder = self._datasrc_client.find_zone(zone_name)
         if result != DataSourceClient.SUCCESS:
             return (Rcode.NOTAUTH(), None)
-        result, soa_rrset = finder.find(zone_name, RRType.SOA(),
-                                        ZoneFinder.FIND_DEFAULT)
+        result, soa_rrset = finder.find(zone_name, RRType.SOA())
         if result != ZoneFinder.SUCCESS:
             return (Rcode.SERVFAIL(), None)
         # Especially for database-based zones, a working zone may be in
