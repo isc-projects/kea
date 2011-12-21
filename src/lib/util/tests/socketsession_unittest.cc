@@ -50,7 +50,7 @@ using namespace isc::util::io::internal;
 
 namespace {
 
-const char* const TEST_UNIX_FILE = TEST_DATA_BUILDDIR "/test.unix";
+const char* const TEST_UNIX_FILE = TEST_DATA_TOPBUILDDIR "/test.unix";
 const char* const TEST_PORT = "53535";
 const char TEST_DATA[] = "BIND10 test";
 
