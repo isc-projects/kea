@@ -308,4 +308,7 @@ TEST_F(InstallListenAddresses, rollback) {
     checkTokens(released1, released_tokens_, "Released after rollback");
 }
 
+// TODO: Test where rollback fails, test it does return whatever it
+// requested during the rollback.
+
 }
