@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cstring>
+// XXX: SunStudio compiler would complain about memcpy if we used cstring,
+// so we intentionally include the .h version here.
+#include <string.h>
 #include <cstdlib>
 
 #include <sys/types.h>
