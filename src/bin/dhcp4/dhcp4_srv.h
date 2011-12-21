@@ -106,6 +106,22 @@ protected:
     /// @param infRequest message received from client
     boost::shared_ptr<Pkt4> processInform(boost::shared_ptr<Pkt4>& inform);
 
+    /// @brief Copies default parameters from client's to server's message
+    ///
+    /// Some fields are copied from client's message into server's response,
+    /// e.g. client HW address, number of hops, transaction-id etc.
+    ///
+    /// @param question any message sent by client
+    /// @param answer any message server is going to send as response
+    void copyDefaultFields(const boost::shared_ptr<Pkt4>& question,
+                           boost::shared_ptr<Pkt4>& answer);
+
+    /// @brief Appends default options to a message
+    ///
+    /// @param msg message object (options will be added to it)
+    /// @param msg_type specifies message type
+    void appendDefaultOptions(boost::shared_ptr<Pkt4>& msg, uint8_t msg_type);
+
     /// @brief Returns server-intentifier option
     ///
     /// @return server-id option
