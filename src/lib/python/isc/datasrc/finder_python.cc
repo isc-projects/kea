@@ -91,7 +91,6 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
     } else {
         return (NULL);
     }
-    return (Py_BuildValue("I", 1));
 }
 
 PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
@@ -146,7 +145,6 @@ PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
     } else {
         return (NULL);
     }
-    return (Py_BuildValue("I", 1));
 }
 
 } // end namespace internal
