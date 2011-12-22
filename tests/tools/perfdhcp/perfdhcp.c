@@ -1918,7 +1918,13 @@ getserveraddr(const int flags)
 		service = "547";
 	}
 	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICSERV | flags;
+
+	hints.ai_flags = AI_NUMERICSERV | flags;
+#if defined(OS_LINUX)
+        /// TODO: Make this OS_LINUX | OS_MAC as this works on Mac
+        /// and possibly other BSDs.
+	hints.ai_flags |= AI_ADDRCONFIG;
+#endif
 	hints.ai_protocol = IPPROTO_UDP;
 	
 	ret = getaddrinfo(servername, service, &hints, &res);
@@ -2015,7 +2021,11 @@ getlocaladdr(void)
 		service = "546";
 	}
 	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICSERV;
+	hints.ai_flags =  AI_NUMERICSERV;
+#if defined(OS_LINUX)
+	// TODO: this will work on Mac as well (so it should be OS_LINUX | OS_MAC)
+	hints.ai_flags |= AI_ADDRCONFIG;
+#endif
 	hints.ai_protocol = IPPROTO_UDP;
 	
 	ret = getaddrinfo(localname, service, &hints, &res);
