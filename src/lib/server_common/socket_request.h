@@ -152,8 +152,6 @@ public:
     ///
     /// \param session the CC session that'll be used to talk to the
     ///                socket creator.
-    /// \param socket_path the path of the domain socket that is used to
-    ///        the pass the actual sockets around.
     /// \throw InvalidOperation when it is called more than once,
     ///                         when socket_path is empty
     static void init(config::ModuleCCSession& session);
