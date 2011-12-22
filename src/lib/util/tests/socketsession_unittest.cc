@@ -816,9 +816,9 @@ TEST_F(ForwardTest, badPop) {
     sock.reset(-1);
     // The passed one should have been closed, too, so we should be able
     // to bind a new socket to the same port.
-    ScopedSocket(createSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                              getSockAddr("127.0.0.1", TEST_PORT),
-                              false));
+    sock.reset(createSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                            getSockAddr("127.0.0.1", TEST_PORT),
+                            false));
 }
 
 TEST(SocketSessionTest, badValue) {
