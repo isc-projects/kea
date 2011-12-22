@@ -48,6 +48,7 @@ using namespace isc::datasrc::python;
 namespace isc_datasrc_internal {
 // See finder_python.cc
 PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args);
+PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args);
 }
 
 namespace {
@@ -74,7 +75,7 @@ typedef CPPPyObjectContainer<s_ZoneUpdater, ZoneUpdater> ZoneUpdaterContainer;
 
 // General creation and destruction
 int
-ZoneUpdater_init(s_ZoneUpdater* self, PyObject* args) {
+ZoneUpdater_init(PyObject*, PyObject*, PyObject*) {
     // can't be called directly
     PyErr_SetString(PyExc_TypeError,
                     "ZoneUpdater cannot be constructed directly");
@@ -83,7 +84,9 @@ ZoneUpdater_init(s_ZoneUpdater* self, PyObject* args) {
 }
 
 void
-ZoneUpdater_destroy(s_ZoneUpdater* const self) {
+ZoneUpdater_destroy(PyObject* po_self) {
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+
     // cppobj is a shared ptr, but to make sure things are not destroyed in
     // the wrong order, we reset it here.
     self->cppobj.reset();
@@ -185,6 +188,13 @@ ZoneUpdater_find(PyObject* po_self, PyObject* args) {
                                                     args));
 }
 
+PyObject*
+ZoneUpdater_find_all(PyObject* po_self, PyObject* args) {
+    s_ZoneUpdater* const self = static_cast<s_ZoneUpdater*>(po_self);
+    return (isc_datasrc_internal::ZoneFinder_helper_all(
+        &self->cppobj->getFinder(), args));
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -192,22 +202,22 @@ ZoneUpdater_find(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneUpdater_methods[] = {
-    { "add_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_addRRset),
+    { "add_rrset", ZoneUpdater_addRRset,
       METH_VARARGS, ZoneUpdater_addRRset_doc },
-    { "delete_rrset", reinterpret_cast<PyCFunction>(ZoneUpdater_deleteRRset),
+    { "delete_rrset", ZoneUpdater_deleteRRset,
       METH_VARARGS, ZoneUpdater_deleteRRset_doc },
-    { "commit", reinterpret_cast<PyCFunction>(ZoneUpdater_commit), METH_NOARGS,
-      ZoneUpdater_commit_doc },
+    { "commit", ZoneUpdater_commit, METH_NOARGS, ZoneUpdater_commit_doc },
     // Instead of a getFinder, we implement the finder functionality directly
     // This is because ZoneFinder is non-copyable, and we should not create
     // a ZoneFinder object from a reference only (which is what is returned
     // by getFinder(). Apart from that
-    { "get_origin", reinterpret_cast<PyCFunction>(ZoneUpdater_getOrigin),
+    { "get_origin", ZoneUpdater_getOrigin,
       METH_NOARGS, ZoneFinder_getOrigin_doc },
-    { "get_class", reinterpret_cast<PyCFunction>(ZoneUpdater_getClass),
+    { "get_class", ZoneUpdater_getClass,
       METH_NOARGS, ZoneFinder_getClass_doc },
-    { "find", reinterpret_cast<PyCFunction>(ZoneUpdater_find), METH_VARARGS,
-      ZoneFinder_find_doc },
+    { "find", ZoneUpdater_find, METH_VARARGS, ZoneFinder_find_doc },
+    { "find_all", ZoneUpdater_find_all, METH_VARARGS,
+      ZoneFinder_find_all_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -221,7 +231,7 @@ PyTypeObject zoneupdater_type = {
     "datasrc.ZoneUpdater",
     sizeof(s_ZoneUpdater),              // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(ZoneUpdater_destroy),// tp_dealloc
+    ZoneUpdater_destroy,                // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -252,7 +262,7 @@ PyTypeObject zoneupdater_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(ZoneUpdater_init),// tp_init
+    ZoneUpdater_init,                   // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free

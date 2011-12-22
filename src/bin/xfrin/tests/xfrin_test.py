@@ -158,7 +158,7 @@ class MockDataSourceClient():
             return (DataSourceClient.PARTIALMATCH, self)
         raise ValueError('Unexpected input to mock client: bug in test case?')
 
-    def find(self, name, rrtype, target=None, options=ZoneFinder.FIND_DEFAULT):
+    def find(self, name, rrtype, options=ZoneFinder.FIND_DEFAULT):
         '''Mock ZoneFinder.find().
 
         It returns the predefined SOA RRset to queries for SOA of the common
