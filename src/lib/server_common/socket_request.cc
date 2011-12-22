@@ -35,5 +35,11 @@ SocketRequestor::initTest(SocketRequestor* new_requestor) {
     requestor = new_requestor;
 }
 
+void
+SocketRequestor::init(config::ModuleCCSession&) {
+    isc_throw(NotImplemented,
+              "The socket requestor will be implemented in #1522");
+}
+
 }
 }
