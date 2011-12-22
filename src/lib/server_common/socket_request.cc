@@ -45,6 +45,11 @@ static const std::string CREATOR_SOCKET_UNAVAILABLE("0");
 // respective methods)
 static const std::string REQUEST_SOCKET_COMMAND("get_socket");
 
+// The name of the ccsession command to tell boss we no longer need
+// a socket (the actual format of command and response are hardcoded
+// in their respective methods)
+static const std::string RELEASE_SOCKET_COMMAND("drop_socket");
+
 // This implementation class for SocketRequestor uses
 // a ModuleCCSession for communication with the boss process,
 // and fd_share to read out the socket(s).
@@ -64,7 +69,6 @@ public:
                                    const std::string& address,
                                    uint16_t port, ShareMode share_mode,
                                    const std::string& share_name) {
-
         isc::data::ConstElementPtr request_msg =
             createRequestSocketMessage(protocol, address, port,
                                        share_mode, share_name);
@@ -93,7 +97,28 @@ public:
     };
 
     virtual void releaseSocket(const std::string& token) {
-        (void)token;
+        isc::data::ConstElementPtr release_msg =
+            createReleaseSocketMessage(token);
+
+        // Send it to boss
+        int seq = session_.groupSendMsg(release_msg, "Boss");
+
+        // Get the answer from the boss.
+        // Just do a blocking read, we can't really do much anyway
+        isc::data::ConstElementPtr env, recv_msg;
+        if (!session_.groupRecvMsg(env, recv_msg, false, seq)) {
+            isc_throw(isc::config::CCSessionError,
+                      "Incomplete response when sending drop socket command");
+        }
+
+        // Answer should just be success
+        int rcode;
+        isc::data::ConstElementPtr error = isc::config::parseAnswer(rcode,
+                                                                    recv_msg);
+        if (rcode != 0) {
+            isc_throw(SocketError,
+                      "Error requesting release of socket: " << error->str());
+        }
     };
 
 private:
@@ -136,6 +161,14 @@ private:
         return (isc::config::createCommand(REQUEST_SOCKET_COMMAND, request));
     }
 
+    isc::data::ConstElementPtr
+    createReleaseSocketMessage(const std::string& token) {
+        isc::data::ElementPtr release = isc::data::Element::createMap();
+        release->set("token", isc::data::Element::create(token));
+
+        return (isc::config::createCommand(RELEASE_SOCKET_COMMAND, release));
+    }
+
     // Checks and parses the response receive from Boss
     // If successful, token and path will be set to the values found in the
     // answer.
@@ -145,7 +178,8 @@ private:
                                  std::string& token,
                                  std::string& path) {
         int rcode;
-        isc::data::ConstElementPtr answer = isc::config::parseAnswer(rcode, recv_msg);
+        isc::data::ConstElementPtr answer = isc::config::parseAnswer(rcode,
+                                                                     recv_msg);
         if (rcode != 0) {
             isc_throw(isc::config::CCSessionError,
                       "Error response when requesting socket: " <<
