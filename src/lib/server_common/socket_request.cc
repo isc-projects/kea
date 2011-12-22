@@ -23,9 +23,6 @@
 #include <sys/socket.h>
 #include <cerrno>
 
-// XXX TODO remove
-#include <iostream>
-
 namespace isc {
 namespace server_common {
 
