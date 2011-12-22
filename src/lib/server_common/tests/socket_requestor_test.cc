@@ -73,7 +73,6 @@ TEST(SocketRequestorAccess, initialized) {
 }
 
 // This class contains a fake (module)ccsession to emulate answers from Boss
-// and creates a local domain socket to emulate fd_sharing
 class SocketRequestorTest : public ::testing::Test {
 public:
     SocketRequestorTest() : session(ElementPtr(new ListElement),
@@ -260,7 +259,9 @@ TEST_F(SocketRequestorTest, testBadSocketReleaseAnswers) {
                  SocketRequestor::SocketError);
 }
 
-// Helper test class that creates a random domain socket
+// Helper test class that creates a randomly named domain socket
+// Upon init, it will only reserve the name (and place an empty file in its
+// place).
 // When run() is called, it creates the socket, forks, and the child will
 // listen for a connection, then send all the data passed to run to that
 // connection, and then close the socket
@@ -292,7 +293,7 @@ public:
         return (path_);
     }
 
-    // create socket, fork, and serve if child
+    // create socket, fork, and serve if child (child will exit when done)
     void run(std::vector<int> data) {
         try {
             create();
@@ -349,8 +350,6 @@ private:
     // when the value is -2, it will send a byte signaling CREATOR_SOCKET_OK
     // first, and then one byte from some string (i.e. bad data, not using
     // send_fd())
-    // When it runs out of data, the socket is closed and the fork exists
-    // (it will exit too if there is any error on this side)
     void
     serve(std::vector<int> data) {
         struct sockaddr_un client_address;
@@ -436,14 +435,19 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     socket_id = doRequest();
     ASSERT_EQ("foo", socket_id.second);
 
-    // Now use first one again
+    // Now use first socket again
     addAnswer("foo", ts.getPath());
     socket_id = doRequest();
     ASSERT_EQ("foo", socket_id.second);
 
-    // Vector is now empty, so the socket should be gone
+    // Vector is of first socket is now empty, so the socket should be gone
     addAnswer("foo", ts.getPath());
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+
+    // Vector is of second socket is now empty too, so the socket should be gone
+    addAnswer("foo", ts2.getPath());
+    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+
 
 }
 
