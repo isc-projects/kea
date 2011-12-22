@@ -151,8 +151,11 @@ public:
     /// It can be called only once per the life of application.
     ///
     /// \param session the CC session that'll be used to talk to the
-    ///     socket creator.
-    /// \throw InvalidOperation when it is called more than once.
+    ///                socket creator.
+    /// \param socket_path the path of the domain socket that is used to
+    ///        the pass the actual sockets around.
+    /// \throw InvalidOperation when it is called more than once,
+    ///                         when socket_path is empty
     static void init(config::ModuleCCSession& session);
 
     /// \brief Initialization for tests
@@ -171,6 +174,16 @@ public:
     ///     an "virgin" state (which acts as if initTest or init was never
     ///     called before).
     static void initTest(SocketRequestor* requestor);
+
+    /// \brief Destroy the singleton instance
+    ///
+    /// Calling this function is not strictly necessary; the socket
+    /// requestor is a singleton anyway. However, for some tests it
+    /// is useful to destroy and recreate it, as well as for programs
+    /// that want to be completely clean on exit.
+    /// After this method has been called, all operations except init
+    /// will fail.
+    static void cleanup();
 };
 
 /// \brief Access the requestor object.
