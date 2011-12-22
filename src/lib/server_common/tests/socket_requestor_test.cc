@@ -374,7 +374,6 @@ private:
                 }
             } else {
                 // send 'CREATOR_SOCKET_OK' first
-                std::cout << "[XX] SENDING ON " << path_ << std::endl;
                 result = isc::util::io::write_data(client_fd, "1", 1);
                 if (result == 1) {
                     result = isc::util::io::send_fd(client_fd, cur_data);
