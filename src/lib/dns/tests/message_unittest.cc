@@ -207,7 +207,7 @@ TEST_F(MessageTest, fromWireWithTSIG) {
     EXPECT_THROW(message_render.getTSIGRecord(), InvalidMessageOperation);
 
     factoryFromFile(message_parse, "message_toWire2.wire");
-    const char expected_mac[] = {
+    const uint8_t expected_mac[] = {
         0x22, 0x70, 0x26, 0xad, 0x29, 0x7b, 0xee, 0xe7,
         0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
     };

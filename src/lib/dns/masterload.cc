@@ -40,8 +40,11 @@ void
 masterLoad(const char* const filename, const Name& origin,
            const RRClass& zone_class, MasterLoadCallback callback)
 {
-    ifstream ifs;
+    if ((filename == NULL) || (*filename == '\0')) {
+        isc_throw(MasterLoadError, "Name of master file must not be null");
+    }
 
+    ifstream ifs;
     ifs.open(filename, ios_base::in);
     if (ifs.fail()) {
         isc_throw(MasterLoadError, "Failed to open master file: " << filename);

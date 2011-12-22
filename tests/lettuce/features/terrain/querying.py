@@ -179,7 +179,7 @@ class QueryResult(object):
         """
         pass
 
-@step('A query for ([\w.]+) (?:type ([A-Z]+) )?(?:class ([A-Z]+) )?' +
+@step('A query for ([\w.]+) (?:type ([A-Z0-9]+) )?(?:class ([A-Z]+) )?' +
       '(?:to ([^:]+)(?::([0-9]+))? )?should have rcode ([\w.]+)')
 def query(step, query_name, qtype, qclass, addr, port, rcode):
     """

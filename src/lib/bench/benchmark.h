@@ -261,7 +261,7 @@ public:
 
         struct timeval beg, end;
         gettimeofday(&beg, NULL);
-        for (int i = 0; i < iterations_; ++i) {
+        for (unsigned int i = 0; i < iterations_; ++i) {
             sub_iterations_ += target_.run();
         }
         gettimeofday(&end, NULL);

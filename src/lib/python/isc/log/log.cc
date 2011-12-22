@@ -237,10 +237,10 @@ logConfigUpdate(PyObject*, PyObject* args) {
     } catch (const isc::data::JSONError& je) {
         std::string error_msg = std::string("JSON format error: ") + je.what();
         PyErr_SetString(PyExc_TypeError, error_msg.c_str());
-    } catch (const isc::data::TypeError& de) {
+    } catch (const isc::data::TypeError&) {
         PyErr_SetString(PyExc_TypeError, "argument 1 of log_config_update "
                                          "is not a map of config data");
-    } catch (const isc::config::ModuleSpecError& mse) {
+    } catch (const isc::config::ModuleSpecError&) {
         PyErr_SetString(PyExc_TypeError, "argument 2 of log_config_update "
                                          "is not a correct module specification");
     } catch (const std::exception& e) {

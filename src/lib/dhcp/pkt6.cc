@@ -15,7 +15,7 @@
 
 #include "dhcp/dhcp6.h"
 #include "dhcp/pkt6.h"
-#include "dhcp/libdhcp.h"
+#include "dhcp/libdhcp++.h"
 #include "exceptions/exceptions.h"
 #include <iostream>
 #include <sstream>

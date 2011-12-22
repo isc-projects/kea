@@ -68,7 +68,7 @@ The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
 in the answer as a result.
 
-% DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3
+% DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3/%4
 Debug information. The database data source is looking up records with the given
 name and type in the database.
 
@@ -78,11 +78,21 @@ different TTL values. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
 
+% DATASRC_DATABASE_FOUND_ANY search in datasource %1 resulted in returning all records of %2
+The data returned by the database backend contained data for the given domain
+name, so all the RRsets of the domain are returned.
+
+% DATASRC_DATABASE_FOUND_CNAME search in datasource %1 for %2/%3/%4 found CNAME, resulting in %5
+When searching the domain for a name a CNAME was found at that name.
+Even though it was not the RR type being sought, it is returned.  (The
+caller may want to continue the lookup by replacing the query name with
+the canonical name and restarting the query with the original RR type.)
+
 % DATASRC_DATABASE_FOUND_DELEGATION Found delegation at %2 in %1
 When searching for a domain, the program met a delegation to a different zone
 at the given domain name. It will return that one instead.
 
-% DATASRC_DATABASE_FOUND_DELEGATION_EXACT Found delegation at %2 (exact match) in %1
+% DATASRC_DATABASE_FOUND_DELEGATION_EXACT search in datasource %1 for %2/%3/%4 found delegation at %5
 The program found the domain requested, but it is a delegation point to a
 different zone, therefore it is not authoritative for this domain name.
 It will return the NS record instead.
@@ -93,19 +103,25 @@ place in the domain space at the given domain name. It will return that one
 instead.
 
 % DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL empty non-terminal %2 in %1
-The domain name doesn't have any RRs, so it doesn't exist in the database.
-However, it has a subdomain, so it exists in the DNS address space. So we
-return NXRRSET instead of NXDOMAIN.
+The domain name does not have any RRs associated with it, so it doesn't
+exist in the database.  However, it has a subdomain, so it does exist
+in the DNS address space. This type of domain is known an an "empty
+non-terminal" and so we return NXRRSET instead of NXDOMAIN.
 
 % DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
 The data returned by the database backend did not contain any data for the given
 domain name, class and type.
 
-% DATASRC_DATABASE_FOUND_NXRRSET search in datasource %1 resulted in NXRRSET for %2/%3/%4
+% DATASRC_DATABASE_FOUND_NXRRSET search in datasource %1 for %2/%3/%4 resulted in NXRRSET
 The data returned by the database backend contained data for the given domain
 name and class, but not for the given type.
 
-% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2
+% DATASRC_DATABASE_FOUND_NXRRSET_NSEC search in datasource %1 for %2/%3/%4 resulted in RRset %5
+A search in the database for RRs for the specified name, type and class has
+located RRs that match the name and class but not the type.  DNSSEC information
+has been requested and returned.
+
+% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %5
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
@@ -127,11 +143,51 @@ were found to be different. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
 
-% DATASRC_DATABASE_WILDCARD constructing RRset %3 from wildcard %2 in %1
-The database doesn't contain directly matching domain, but it does contain a
-wildcard one which is being used to synthesize the answer.
+% DATASRC_DATABASE_NO_MATCH not match for %2/%3/%4 in %1
+No match (not even a wildcard) was found in the named data source for the given
+name/type/class in the data source.
 
-% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %2 because %3 contains NS in %1
+% DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
+Debug information.  A set of updates to a zone has been successfully
+committed to the corresponding database backend.  The zone name,
+its class and the database name are printed.
+
+% DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3
+Debug information.  A zone updater object is created to make updates to
+the shown zone on the shown backend database.
+
+% DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3
+Debug information.  A zone updater object is destroyed, either successfully
+or after failure of, making updates to the shown zone on the shown backend
+database.
+
+% DATASRC_DATABASE_UPDATER_ROLLBACK zone updates roll-backed for '%1/%2' on %3
+A zone updater is being destroyed without committing the changes.
+This would typically mean the update attempt was aborted due to some
+error, but may also be a bug of the application that forgets committing
+the changes.  The intermediate changes made through the updater won't
+be applied to the underlying database.  The zone name, its class, and
+the underlying database name are shown in the log message.
+
+% DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4
+A zone updater is being destroyed without committing the changes to
+the database, and attempts to rollback incomplete updates, but it
+unexpectedly fails.  The higher level implementation does not expect
+it to fail, so this means either a serious operational error in the
+underlying data source (such as a system failure of a database) or
+software bug in the underlying data source implementation.  In either
+case if this message is logged the administrator should carefully
+examine the underlying data source to see what exactly happens and
+whether the data is still valid.  The zone name, its class, and the
+underlying database name as well as the error message thrown from the
+database module are shown in the log message.
+
+% DATASRC_DATABASE_WILDCARD_ANY search in datasource %1 resulted in wildcard match type ANY on %2
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a wildcard record matching the name of the query
+containing some RRsets was found. All the RRsets of the node are returned.
+
+% DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %3 because %2 contains NS (data source %1)
 The database was queried to provide glue data and it didn't find direct match.
 It could create it from given wildcard, but matching wildcards is forbidden
 under a zone cut, which was found. Therefore the delegation will be returned
@@ -143,11 +199,31 @@ exists, therefore this name is something like empty non-terminal (actually,
 from the protocol point of view, it is empty non-terminal, but the code
 discovers it differently).
 
-% DATASRC_DATABASE_WILDCARD_EMPTY implicit wildcard %2 used to construct %3 in %1
-The given wildcard exists implicitly in the domainspace, as empty nonterminal
-(eg. there's something like subdomain.*.example.org, so *.example.org exists
-implicitly, but is empty). This will produce NXRRSET, because the constructed
-domain is empty as well as the wildcard.
+% DATASRC_DATABASE_WILDCARD_CNAME search in datasource %1 for %2/%3/%4 found wildcard CNAME at %5, resulting in %6
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a CNAME RR was found at a wildcard record
+matching the name.  This is returned as the result of the search.
+
+% DATASRC_DATABASE_WILDCARD_EMPTY found subdomains of %2 which is a wildcard match for %3 in %1
+The given wildcard matches the name being sough but it as an empty
+nonterminal (e.g. there's nothing at *.example.com but something like
+subdomain.*.example.org, do exist: so *.example.org exists in the
+namespace but has no RRs assopciated with it). This will produce NXRRSET.
+
+% DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %5 with RRset %6
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a wildcard record matching the name and type of
+the query was found. The data at this point is returned.
+
+% DATASRC_DATABASE_WILDCARD_NS search in datasource %1 for %2/%3/%4 found wildcard delegation at %5, resulting in %6
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, an NS RR was found at a wildcard record matching
+the name.  This is returned as the result of the search.
+
+% DATASRC_DATABASE_WILDCARD_NXRRSET search in datasource %1 for %2/%3/%4 resulted in wildcard NXRRSET at %5
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a matching wildcard entry was found but it did
+not contain RRs the requested type.  AN NXRRSET indication is returned.
 
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
@@ -259,7 +335,7 @@ Debug information. The requested record was found.
 
 % DATASRC_MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty
 Debug information. The search stopped at a superdomain of the requested
-domain. The domain is a empty nonterminal, therefore it is treated  as NXRRSET
+domain. The domain is an empty nonterminal, therefore it is treated  as NXRRSET
 case (eg. the domain exists, but it doesn't have the requested record type).
 
 % DATASRC_MEM_SWAP swapping contents of two zone representations ('%1' and '%2')
@@ -487,11 +563,11 @@ enough information for it.  The code is 1 for error, 2 for not implemented.
 % DATASRC_SQLITE_CLOSE closing SQLite database
 Debug information. The SQLite data source is closing the database file.
 
-% DATASRC_SQLITE_CONNOPEN Opening sqlite database file '%1'
-The database file is being opened so it can start providing data.
-
 % DATASRC_SQLITE_CONNCLOSE Closing sqlite database
 The database file is no longer needed and is being closed.
+
+% DATASRC_SQLITE_CONNOPEN Opening sqlite database file '%1'
+The database file is being opened so it can start providing data.
 
 % DATASRC_SQLITE_CREATE SQLite data source created
 Debug information. An instance of SQLite data source is being created.

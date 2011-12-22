@@ -523,6 +523,12 @@ TEST(Element, removeIdentical) {
     removeIdentical(a, b);
     EXPECT_EQ(*a, *c);
 
+    a = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
+    b = Element::fromJSON("{ \"c\": 3, \"b\": 2 }");
+    c = Element::fromJSON("{ \"a\": 1 }");
+    removeIdentical(a, b);
+    EXPECT_EQ(*a, *c);
+
     EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)), TypeError);
 }
 
@@ -565,6 +571,11 @@ TEST(Element, constRemoveIdentical) {
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    EXPECT_EQ(*removeIdentical(a, b), *c);
+
+    a = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
+    b = Element::fromJSON("{ \"c\": 3, \"b\": 2 }");
+    c = Element::fromJSON("{ \"a\": 1 }");
     EXPECT_EQ(*removeIdentical(a, b), *c);
 
     EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)),
