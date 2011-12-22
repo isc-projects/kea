@@ -143,7 +143,7 @@ NSEC::toText() const {
     // and easier to find a bug (if any).  Note that this conversion method
     // is generally not expected to be very efficient, so the slight overhead
     // of at() should be acceptable.
-    for (int i = 0; i < impl_->typebits_.size(); i += len) {
+    for (size_t i = 0; i < impl_->typebits_.size(); i += len) {
         assert(i + 2 <= impl_->typebits_.size());
         const int block = impl_->typebits_.at(i);
         len = impl_->typebits_.at(i + 1);

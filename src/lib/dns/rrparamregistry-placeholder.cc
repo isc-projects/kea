@@ -77,7 +77,7 @@ struct RRTypeParam {
     static size_t UNKNOWN_MAXLEN();
 };
 
-typedef shared_ptr<RRTypeParam> RRTypeParamPtr;
+typedef boost::shared_ptr<RRTypeParam> RRTypeParamPtr;
 typedef map<string, RRTypeParamPtr, CIStringLess> StrRRTypeMap;
 typedef map<uint16_t, RRTypeParamPtr> CodeRRTypeMap;
 
@@ -119,7 +119,7 @@ struct RRClassParam {
     static size_t UNKNOWN_MAXLEN();
 };
 
-typedef shared_ptr<RRClassParam> RRClassParamPtr;
+typedef boost::shared_ptr<RRClassParam> RRClassParamPtr;
 typedef map<string, RRClassParamPtr, CIStringLess> StrRRClassMap;
 typedef map<uint16_t, RRClassParamPtr> CodeRRClassMap;
 
@@ -342,7 +342,7 @@ addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
         return (false);
     }
 
-    typedef shared_ptr<PT> ParamPtr;
+    typedef boost::shared_ptr<PT> ParamPtr;
     typedef pair<string, ParamPtr> StrParamPair;
     typedef pair<uint16_t, ParamPtr> CodeParamPair;
     ParamPtr param = ParamPtr(new PT(code_string, code));

@@ -197,7 +197,7 @@ generateTestPacket2() {
 
 TEST(Pkt4Test, fixedFields) {
 
-    shared_ptr<Pkt4> pkt = generateTestPacket1();
+    boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
 
     // ok, let's check packet values
     EXPECT_EQ(dummyOp, pkt->getOp());
@@ -224,7 +224,7 @@ TEST(Pkt4Test, fixedFields) {
 }
 
 TEST(Pkt4Test, fixedFieldsPack) {
-    shared_ptr<Pkt4> pkt = generateTestPacket1();
+    boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
     EXPECT_NO_THROW(
@@ -244,8 +244,8 @@ TEST(Pkt4Test, fixedFieldsPack) {
 TEST(Pkt4Test, fixedFieldsUnpack) {
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                  Pkt4::DHCPV4_PKT_HDR_LEN));
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
+                                Pkt4::DHCPV4_PKT_HDR_LEN));
 
     EXPECT_NO_THROW(
         pkt->unpack()
@@ -506,14 +506,14 @@ TEST(Pkt4Test, unpackOptions) {
 
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    for (int i=0; i < sizeof(v4Opts); i++) {
+    for (int i = 0; i < sizeof(v4Opts); i++) {
         expectedFormat.push_back(v4Opts[i]);
     }
 
     // now expectedFormat contains fixed format and 5 options
 
-    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                  expectedFormat.size()));
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
+                                expectedFormat.size()));
 
     EXPECT_NO_THROW(
         pkt->unpack()
@@ -525,7 +525,7 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_TRUE(pkt->getOption(128));
     EXPECT_TRUE(pkt->getOption(254));
 
-    shared_ptr<Option> x = pkt->getOption(12);
+    boost::shared_ptr<Option> x = pkt->getOption(12);
     ASSERT_TRUE(x); // option 1 should exist
     EXPECT_EQ(12, x->getType());  // this should be option 12
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
@@ -559,6 +559,23 @@ TEST(Pkt4Test, unpackOptions) {
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+22, 3)); // data len=3
+}
+
+// This test verifies methods that are used for manipulating meta fields
+// i.e. fields that are not part of DHCPv4 (e.g. interface name).
+TEST(Pkt4Test, metaFields) {
+
+    Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
+    pkt->setIface("loooopback");
+    pkt->setIndex(42);
+    pkt->setRemoteAddr(IOAddress("1.2.3.4"));
+    pkt->setLocalAddr(IOAddress("4.3.2.1"));
+
+    EXPECT_EQ("loooopback", pkt->getIface());
+    EXPECT_EQ(42, pkt->getIndex());
+    EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
+    EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
+
 }
 
 } // end of anonymous namespace
