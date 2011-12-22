@@ -362,6 +362,36 @@ size_t random_request6;
 size_t serverid_request6;
 size_t reqaddr_request6;
 
+
+// use definition of CLOCK_REALTIME (or lack of thereof) as an indicator
+// if the code is being compiled or Linux (or somewhere else)
+// Perhaps this should be based on OS_LINUX define?
+
+#if !defined (CLOCK_REALTIME)
+#define CLOCK_REALTIME 0
+
+/// @brief clock_gettime implementation for non-Linux systems
+///
+/// This implementation lacks nanosecond resolution. It is intended
+/// to be used on non-Linux systems that does not provide clock_gettime
+/// implementation.
+///
+/// @param clockid ignored (kept for Linux prototype compatibility)
+/// @param tp timespec structure
+///
+/// @return always zero (kept for compatibility reasons)
+int clock_gettime(int clockid, struct timespec *tp) {
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    tp->tv_sec = tv.tv_sec;
+    tp->tv_nsec = tv.tv_usec*1000;
+
+    return (0);
+}
+
+#endif
+
 /*
  * initialize data structures handling exchanges
  */
