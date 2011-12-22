@@ -126,11 +126,12 @@ public:
 
 // helper function to create the request packet as we expect the
 // socket requestor to send
-ConstElementPtr createExpectedRequest(const std::string& address,
-                                      int port,
-                                      const std::string& protocol,
-                                      const std::string& share_mode,
-                                      const std::string& share_name) {
+ConstElementPtr
+createExpectedRequest(const std::string& address,
+                      int port,
+                      const std::string& protocol,
+                      const std::string& share_mode,
+                      const std::string& share_name) {
     // create command arguments
     ElementPtr command_args = Element::createMap();
     command_args->set("address", Element::create(address));
@@ -149,9 +150,11 @@ ConstElementPtr createExpectedRequest(const std::string& address,
 }
 
 TEST_F(SocketRequestorTest, testSocketRequestMessages) {
-    // Should raise CCSessionError if there is no answer
+    // For each request, it will raise CCSessionError, since we don't
+    // answer here.
     // We are only testing the request messages that are sent,
     // so for this test that is no problem
+
     clearMsgQueue();
     ConstElementPtr expected_request;
 
@@ -189,6 +192,8 @@ TEST_F(SocketRequestorTest, testSocketRequestMessages) {
 }
 
 TEST_F(SocketRequestorTest, testBadRequestAnswers) {
+    // Test various scenarios where the requestor gets back bad answers
+
     // Should raise CCSessionError if there is no answer
     ASSERT_THROW(doRequest(), CCSessionError);
 
@@ -208,6 +213,51 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
     // Send back an error response
     session.getMessages()->add(createAnswer(1, "error"));
     ASSERT_THROW(doRequest(), CCSessionError);
+}
+
+// Helper function to create the release commands as we expect
+// them to be sent by the socketrequestor class
+ConstElementPtr
+createExpectedRelease(const std::string& token) {
+    // create command arguments
+    ElementPtr command_args = Element::createMap();
+    command_args->set("token", Element::create(token));
+
+    // create the envelope
+    ElementPtr packet = Element::createList();
+    packet->add(Element::create("Boss"));
+    packet->add(Element::create("*"));
+    packet->add(createCommand("drop_socket", command_args));
+
+    return (packet);
+}
+
+TEST_F(SocketRequestorTest, testSocketReleaseMessages) {
+    ConstElementPtr expected_release;
+
+    session.getMessages()->add(createAnswer());
+
+    clearMsgQueue();
+    expected_release = createExpectedRelease("foo");
+    socketRequestor().releaseSocket("foo");
+    ASSERT_EQ(1, session.getMsgQueue()->size());
+    ASSERT_EQ(*expected_release, *(session.getMsgQueue()->get(0)));
+
+    session.getMessages()->add(createAnswer());
+    clearMsgQueue();
+    expected_release = createExpectedRelease("bar");
+    socketRequestor().releaseSocket("bar");
+    ASSERT_EQ(1, session.getMsgQueue()->size());
+    ASSERT_EQ(*expected_release, *(session.getMsgQueue()->get(0)));
+}
+
+TEST_F(SocketRequestorTest, testBadSocketReleaseAnswers) {
+    ASSERT_THROW(socketRequestor().releaseSocket("bar"),
+                 CCSessionError);
+
+    session.getMessages()->add(createAnswer(1, "error"));
+    ASSERT_THROW(socketRequestor().releaseSocket("bar"),
+                 SocketRequestor::SocketError);
 }
 
 // Helper test class that creates a random domain socket
