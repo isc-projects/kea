@@ -441,8 +441,9 @@ static uint8_t v4Opts[] = {
     12,  3, 0,   1,  2,
     13,  3, 10, 11, 12,
     14,  3, 20, 21, 22,
+    53, 1, 1, // DHCP_MESSAGE_TYPE (required to not throw exception during unpack)
     128, 3, 30, 31, 32,
-    254, 3, 40, 41, 42
+    254, 3, 40, 41, 42,
 };
 
 TEST(Pkt4Test, options) {
@@ -458,14 +459,17 @@ TEST(Pkt4Test, options) {
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
     boost::shared_ptr<Option> opt2(new Option(Option::V4, 13, payload[1]));
     boost::shared_ptr<Option> opt3(new Option(Option::V4, 14, payload[2]));
+    boost::shared_ptr<Option> optMsgType(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE));
     boost::shared_ptr<Option> opt5(new Option(Option::V4,128, payload[3]));
     boost::shared_ptr<Option> opt4(new Option(Option::V4,254, payload[4]));
+    optMsgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
 
     pkt->addOption(opt1);
     pkt->addOption(opt2);
     pkt->addOption(opt3);
     pkt->addOption(opt4);
     pkt->addOption(opt5);
+    pkt->addOption(optMsgType);
 
     EXPECT_TRUE(pkt->getOption(12));
     EXPECT_TRUE(pkt->getOption(13));
@@ -556,14 +560,14 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(128, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+17, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+20, 3)); // data len=3
 
     x = pkt->getOption(254);
     ASSERT_TRUE(x); // option 3 should exist
     EXPECT_EQ(254, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+22, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+25, 3)); // data len=3
 }
 
 // This test verifies methods that are used for manipulating meta fields
