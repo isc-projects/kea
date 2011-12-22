@@ -23,6 +23,7 @@
 #include <server_common/tests/data_path.h>
 
 #include <cstdlib>
+#include <cstddef>
 #include <cerrno>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -321,14 +322,14 @@ private:
         }
         struct sockaddr_un socket_address;
         socket_address.sun_family = AF_UNIX;
-        int len = strlen(path_);
+        socklen_t len = strlen(path_);
         if (len > sizeof(socket_address.sun_path)) {
             isc_throw(Exception,
                       "mkstemp() created a filename too long for sun_path");
         }
         strncpy(socket_address.sun_path, path_, len);
 
-        len += sizeof(socket_address.sun_family);
+        len += offsetof(struct sockaddr_un, sun_path);
         // Remove the random file we created so we can reuse it for
         // a domain socket connection. This contains a minor race condition
         // but for the purposes of this test it should be small enough

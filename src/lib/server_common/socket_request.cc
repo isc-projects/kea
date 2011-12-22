@@ -22,6 +22,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <cerrno>
+#include <cstddef>
 
 namespace isc {
 namespace server_common {
@@ -231,8 +232,8 @@ private:
         }
 
         strcpy(sock_pass_addr.sun_path, path.c_str());
-        size_t len = strlen(sock_pass_addr.sun_path) +
-                     sizeof(sock_pass_addr.sun_family);
+        const socklen_t len = path.size() +
+            offsetof(struct sockaddr_un, sun_path);
         if (connect(sock_pass_fd,
                     (struct sockaddr *)&sock_pass_addr,
                     len) == -1) {
