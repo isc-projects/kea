@@ -1,3 +1,11 @@
+360.	[func] 		fdupont
+	Alpha version of DHCP benchmarking tool added.  "perfdhcp" is able to
+	test both IPv4 and IPv6 servers: it can time the four-packet exchange
+	(DORA and SARR) as well as time the initial two-packet exchange (DO and
+	SA).  More information can be obtained by invoking the utility (in
+	tests/tools/perfdhcp) with the "-h" flag.
+	(Trac #1450, git 85083a76107ba2236732b45524ce7018eefbaf90)
+
 359.	[func]*		vorner
 	The target parameter of ZoneFinder::find is no longer present, as the
 	interface was awkward. To get all the RRsets of a single domain, use
@@ -25,7 +33,7 @@
 	values, and better errors if they are bad.
 	(Trac #1414, git 7b122af8489acf0f28f935a19eca2c5509a3677f)
 
-346.	[build]*		jreed
+346.	[build]*	jreed
 	Renamed libdhcp to libdhcp++.
 	(Trac #1446, git d394e64f4c44f16027b1e62b4ac34e054b49221d)
 
