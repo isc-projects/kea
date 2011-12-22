@@ -369,36 +369,6 @@ AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 
-# Detect OS type (it may be used to do OS-specific things, e.g.
-# interface detection in DHCP)
-AC_MSG_CHECKING(OS family)
-system=`uname -s`
-case $system in
-    Linux)
-      OS_TYPE="Linux"
-      CPPFLAGS="$CPPFLAGS -DOS_LINUX"
-      ;;
-    Darwin | FreeBSD | NetBSD | OpenBSD)
-      OS_TYPE="BSD"
-      CPPFLAGS="$CPPFLAGS -DOS_BSD"
-      ;;
-    Solaris)
-      OS_TYPE="Solaris"
-      CPPFLAGS="$CPPFLAGS -DOS_SOLARIS"
-      ;;
-    *)
-      OS_TYPE="Unknown"
-      AC_MSG_WARN("Unsupported OS: uname returned $system")
-      ;;
-esac
-AC_MSG_RESULT($OS_TYPE)
-
-AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = Linux)
-AM_COND_IF([OS_LINUX], [AC_DEFINE([OS_LINUX], [1], [Running on Linux?])])
-AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
-AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
-AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
-AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
@@ -861,6 +831,10 @@ EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
 	])
 fi
 
+CLOCK_GETTIME_LDFLAGS=
+AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_GETTIME_LDFLAGS=-lrt], [])
+AC_SUBST([CLOCK_GETTIME_LDFLAGS])
+
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
 # trigger the gcc's "missing-field-initializers" warning, which would
@@ -1171,7 +1145,6 @@ Flags:
   CXXFLAGS:      $CXXFLAGS
   LDFLAGS:       $LDFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
-  OS Family:     $OS_TYPE
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_CXXFLAGS}
