@@ -25,7 +25,7 @@
 	values, and better errors if they are bad.
 	(Trac #1414, git 7b122af8489acf0f28f935a19eca2c5509a3677f)
 
-346.	[build]*		jreed
+346.	[build]*	jreed
 	Renamed libdhcp to libdhcp++.
 	(Trac #1446, git d394e64f4c44f16027b1e62b4ac34e054b49221d)
 
