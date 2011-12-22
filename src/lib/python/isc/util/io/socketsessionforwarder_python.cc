@@ -52,6 +52,17 @@ s_SocketSessionForwarder::s_SocketSessionForwarder() : cppobj(NULL) {
 // Import pydoc text
 #include "socketsessionforwarder_inc.cc"
 
+// See python/isc/log/log.cc for the use of namespace
+namespace clang_unnamed_namespace_workaround {
+// Internal exception class thrown when address parsing fails
+class AddressParseError: public isc::Exception {
+public:
+    AddressParseError(const char *file, size_t line, const char *what):
+        isc::Exception(file, line, what) {}
+};
+}
+using namespace clang_unnamed_namespace_workaround;
+
 namespace {
 
 int
@@ -86,13 +97,6 @@ SocketSessionForwarder_destroy(PyObject* po_self) {
     self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
-
-// Internal exception class thrown when address parsing fails
-class AddressParseError: public isc::Exception {
-public:
-    AddressParseError(const char *file, size_t line, const char *what):
-        isc::Exception(file, line, what) {}
-};
 
 // Convert a Python socket address object to an addrinfo structure by
 // getaddrinfo.
