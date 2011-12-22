@@ -46,9 +46,8 @@ Return the RR class of the zone.\n\
 // - Return type: use tuple instead of the dedicated FindResult type
 // - NULL->None
 // - exceptions
-// - description of the 'target' parameter (must be None for now)
 const char* const ZoneFinder_find_doc = "\
-find(name, type, target=None, options=FIND_DEFAULT) -> (integer, RRset)\n\
+find(name, type, options=FIND_DEFAULT) -> (integer, RRset)\n\
 \n\
 Search the zone for a given pair of domain name and RR type.\n\
 \n\
@@ -72,14 +71,6 @@ answer for the search key. Specifically,\n\
   and the code of SUCCESS will be returned.\n\
 - If the search name matches a delegation point of DNAME, it returns\n\
   the code of DNAME and that DNAME RR.\n\
-- If the target isn't None, all RRsets under the domain are inserted\n\
-  there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned\n\
-  instead of normall processing. This is intended to handle ANY query.\n\
-  (Note: the Python version doesn't support this feature yet)\n\
-\n\
-Note: This behavior is controversial as we discussed in\n\
-https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html We\n\
-should revisit the interface before we heavily rely on it.\n\
 \n\
 The options parameter specifies customized behavior of the search.\n\
 Their semantics is as follows (they are or bit-field):\n\
@@ -107,11 +98,30 @@ internal error in the datasource.\n\
 Parameters:\n\
   name       The domain name to be searched for.\n\
   type       The RR type to be searched for.\n\
-  target     Must be None.\n\
   options    The search options.\n\
 \n\
 Return Value(s): A tuple of a result code (integer) and an RRset object\n\
 enclosing the search result (see above).\n\
+";
+
+const char* const ZoneFinder_find_all_doc = "\
+find_all(isc.dns.Name, options=FIND_DEFAULT) -> (integer, RRset) | (integer, [RRset])\
+\n\
+This acts mostly the same as the find method. The main difference is,\n\
+when the lookup is successful (eg. the first part of the result is either\n\
+SUCCESS or WILDCARD), the second part is list of all RRsets in the given name\n\
+instead of a single RRset as in case of find.\n\
+\n\
+This method raises an isc.datasrc.Error exception if there is an\n\
+internal error in the datasource.\n\
+\n\
+Parameters:\n\
+  name       The domain name to be searched for.\n\
+  options    The search options.\n\
+\n\
+Return Value(s): A tuple of a result code (integer) and an either RRset object,\n\
+for cases where the result is some kind of delegation, CNAME or similar, or list\n\
+of RRset objects, containing all the results.\n\
 ";
 
 const char* const ZoneFinder_find_previous_name_doc = "\

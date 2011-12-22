@@ -36,7 +36,6 @@
 #include "dns_requestloader_python.h"
 
 using namespace std;
-using boost::shared_ptr;
 using namespace isc::util::python;
 using namespace isc::data;
 using namespace isc::acl::dns;
@@ -121,7 +120,7 @@ RequestLoader_load(PyObject* po_self, PyObject* args) {
             }
         }
         if (py_result) {
-            shared_ptr<RequestACL> acl(
+            boost::shared_ptr<RequestACL> acl(
                 self->cppobj->load(Element::fromJSON(acl_config)));
             s_RequestACL* py_acl = static_cast<s_RequestACL*>(
                 requestacl_type.tp_alloc(&requestacl_type, 0));

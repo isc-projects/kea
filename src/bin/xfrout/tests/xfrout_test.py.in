@@ -95,7 +95,7 @@ class MockDataSrcClient:
             return (isc.datasrc.DataSourceClient.NOTFOUND, None)
         return (isc.datasrc.DataSourceClient.SUCCESS, self)
 
-    def find(self, name, rrtype, target=None, options=ZoneFinder.FIND_DEFAULT):
+    def find(self, name, rrtype, options=ZoneFinder.FIND_DEFAULT):
         '''Mock ZoneFinder.find().
 
         (At the moment) this method only handles query for type SOA.

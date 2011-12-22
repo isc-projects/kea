@@ -224,7 +224,7 @@ writeOpeningNamespace(ostream& output, const vector<string>& ns) {
     if (!ns.empty()) {
 
         // Output namespaces in correct order
-        for (int i = 0; i < ns.size(); ++i) {
+        for (vector<string>::size_type i = 0; i < ns.size(); ++i) {
             output << "namespace " << ns[i] << " {\n";
         }
         output << "\n";

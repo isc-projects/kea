@@ -49,7 +49,9 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class
     /// should never be instantiated (except as part of a derived class).
-    SimpleCallback() : self_(this) {}
+    SimpleCallback() {
+        self_ = this;
+    }
 public:
     /// \brief The destructor
     virtual ~SimpleCallback() {}

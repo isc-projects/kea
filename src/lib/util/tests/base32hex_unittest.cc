@@ -154,7 +154,7 @@ TEST_F(Base32HexTest, decodeMap) {
 }
 
 TEST_F(Base32HexTest, encodeMap) {
-    for (int i = 0; i < 32; ++i) {
+    for (uint8_t i = 0; i < 32; ++i) {
         decoded_data.assign(4, 0);
         decoded_data.push_back(i);
         EXPECT_EQ(encoding_chars[i], encodeBase32Hex(decoded_data)[7]);
