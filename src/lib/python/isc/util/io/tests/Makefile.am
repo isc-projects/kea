@@ -16,18 +16,19 @@ if ENABLE_PYTHON_COVERAGE
 	rm -f .coverage
 	${LN_S} $(abs_top_srcdir)/.coverage .coverage
 endif
-# XXX: we pollute the top builddir for creating a temporary test file
-# so we can minimize the risk of exceeding the limit of file name path size
-# for a UNIX domain socket.
+# Note: below we intentionally use a non absolute path for TESTDATAOBJDIR.
+# It will be used as part of the path for a UNIX domain socket.  Due to the
+# relatively lower limit on the length it's better to keep it as short as
+# possible.
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/isc/python/util/io/.libs \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	TESTDATAOBJDIR=$(abs_top_builddir) \
+	TESTDATAOBJDIR=$(builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 
-CLEANFILES = $(abs_top_builddir)/ssessiontest.unix
+CLEANFILES = $(builddir)/ssessiontest.unix
 
 CLEANDIRS = __pycache__
 
