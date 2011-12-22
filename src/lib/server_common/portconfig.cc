@@ -92,6 +92,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
     }
     current_sockets.clear();
     BOOST_FOREACH(const AddressPair &address, addresses) {
+        bool is_v6(IOAddress(address.first).getFamily() == AF_INET6);
         // TODO: Support sharing somehow in future.
         const SocketRequestor::SocketID
             tcp(socketRequestor().requestSocket(SocketRequestor::TCP,
@@ -100,7 +101,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
                                                 "dummy_app"));
         current_sockets.push_back(tcp.second);
         if (!test_mode) {
-            service.addServerTCP(tcp.first, true); // FIXME: Correct the flag
+            service.addServerTCP(tcp.first, is_v6);
         }
         const SocketRequestor::SocketID
             udp(socketRequestor().requestSocket(SocketRequestor::UDP,
@@ -109,7 +110,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
                                                 "dummy_app"));
         current_sockets.push_back(udp.second);
         if (!test_mode) {
-            service.addServerUDP(udp.first, true); // FIXME: Correct the flag
+            service.addServerUDP(udp.first, is_v6);
         }
     }
 }
