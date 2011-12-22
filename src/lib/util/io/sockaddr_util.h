@@ -15,6 +15,9 @@
 #ifndef __SOCKADDR_UTIL_H_
 #define __SOCKADDR_UTIL_H_ 1
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include <cassert>
 
 // This definitions in this file are for the convenience of internal

@@ -120,7 +120,7 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1 python3.2])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
@@ -831,6 +831,10 @@ EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
 	])
 fi
 
+CLOCK_GETTIME_LDFLAGS=
+AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_GETTIME_LDFLAGS=-lrt], [])
+AC_SUBST([CLOCK_GETTIME_LDFLAGS])
+
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
 # trigger the gcc's "missing-field-initializers" warning, which would
@@ -997,6 +1001,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
+                 tests/tools/perfdhcp/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            compatcheck/sqlite3-difftbl-check.py
