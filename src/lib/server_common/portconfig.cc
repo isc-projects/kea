@@ -151,6 +151,10 @@ installListenAddresses(const AddressList& newAddresses,
         }
         catch (const exception& e2) {
             LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2.what());
+            // Releasing them should really work
+            AddressList empty;
+            setAddresses(service, empty);
+            addressStore.clear();
         }
         //Anyway the new configure has problem, we need to notify configure
         //manager the new configure doesn't work
