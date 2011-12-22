@@ -1920,9 +1920,7 @@ getserveraddr(const int flags)
 	hints.ai_socktype = SOCK_DGRAM;
 
 	hints.ai_flags = AI_NUMERICSERV | flags;
-#if defined(OS_LINUX)
-        /// TODO: Make this OS_LINUX | OS_MAC as this works on Mac
-        /// and possibly other BSDs.
+#if defined(AI_ADDRCONFIG)
 	hints.ai_flags |= AI_ADDRCONFIG;
 #endif
 	hints.ai_protocol = IPPROTO_UDP;
@@ -2022,8 +2020,7 @@ getlocaladdr(void)
 	}
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags =  AI_NUMERICSERV;
-#if defined(OS_LINUX)
-	// TODO: this will work on Mac as well (so it should be OS_LINUX | OS_MAC)
+#if defined(AI_ADDRCONFIG)
 	hints.ai_flags |= AI_ADDRCONFIG;
 #endif
 	hints.ai_protocol = IPPROTO_UDP;
