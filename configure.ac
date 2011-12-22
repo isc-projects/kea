@@ -997,6 +997,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
+                 tests/tools/perfdhcp/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            compatcheck/sqlite3-difftbl-check.py
