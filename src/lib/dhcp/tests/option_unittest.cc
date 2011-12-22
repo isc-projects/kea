@@ -33,8 +33,14 @@ using namespace isc::util;
 namespace {
 class OptionTest : public ::testing::Test {
 public:
-    OptionTest() {
+    OptionTest(): outBuffer_(255) {
+        buf_ = boost::shared_array<uint8_t>(new uint8_t[255]);
+        for (int i = 0; i < 255; i++) {
+            buf_[i] = 255 - i;
+        }
     }
+    boost::shared_array<uint8_t> buf_;
+    OutputBuffer outBuffer_;
 };
 
 // v4 is not really implemented yet. A simple test will do for now
@@ -421,6 +427,8 @@ TEST_F(OptionTest, v6_toText) {
 }
 
 TEST_F(OptionTest, getUintX) {
+
+    // TODO: Update this test to use buf_ instead of buf
     boost::shared_array<uint8_t> buf(new uint8_t[5]);
     buf[0] = 0x5;
     buf[1] = 0x4;
@@ -456,4 +464,39 @@ TEST_F(OptionTest, getUintX) {
     EXPECT_EQ(0x0504, opt5->getUint16());
     EXPECT_EQ(0x05040302, opt5->getUint32());
 
+}
+
+TEST_F(OptionTest, setUintX) {
+    boost::shared_ptr<Option> opt1(new Option(Option::V4, 125));
+    boost::shared_ptr<Option> opt2(new Option(Option::V4, 125));
+    boost::shared_ptr<Option> opt4(new Option(Option::V4, 125));
+
+    // verify setUint8
+    opt1->setUint8(255);
+    EXPECT_EQ(255, opt1->getUint8());
+    opt1->pack4(outBuffer_);
+    EXPECT_EQ(3, opt1->len());
+    EXPECT_EQ(3, outBuffer_.getLength());
+    uint8_t exp1[] = {125, 1, 255};
+    EXPECT_TRUE(0 == memcmp(exp1, outBuffer_.getData(), 3));
+
+    // verify getUint16
+    outBuffer_.clear();
+    opt2->setUint16(12345);
+    opt2->pack4(outBuffer_);
+    EXPECT_EQ(12345, opt2->getUint16());
+    EXPECT_EQ(4, opt2->len());
+    EXPECT_EQ(4, outBuffer_.getLength());
+    uint8_t exp2[] = {125, 2, 12345/256, 12345%256};
+    EXPECT_TRUE(0 == memcmp(exp2, outBuffer_.getData(), 4));
+
+    // verity getUint32
+    outBuffer_.clear();
+    opt4->setUint32(0x12345678);
+    opt4->pack4(outBuffer_);
+    EXPECT_EQ(0x12345678, opt4->getUint32());
+    EXPECT_EQ(6, opt4->len());
+    EXPECT_EQ(6, outBuffer_.getLength());
+    uint8_t exp4[] = {125, 4, 0x12, 0x34, 0x56, 0x78};
+    EXPECT_TRUE(0 == memcmp(exp4, outBuffer_.getData(), 6));
 }
