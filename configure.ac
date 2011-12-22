@@ -831,6 +831,10 @@ EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
 	])
 fi
 
+CLOCK_GETTIME_LDFLAGS=
+AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_GETTIME_LDFLAGS=-lrt], [])
+AC_SUBST([CLOCK_GETTIME_LDFLAGS])
+
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
 # trigger the gcc's "missing-field-initializers" warning, which would
