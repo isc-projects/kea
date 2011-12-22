@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <server_common/portconfig.h>
-#include <server_common/socket_request.h>
+#include <testutils/socket_request.h>
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -22,7 +22,6 @@
 
 #include <gtest/gtest.h>
 #include <string>
-#include <boost/lexical_cast.hpp>
 
 using namespace isc::server_common::portconfig;
 using namespace isc::server_common;
@@ -32,15 +31,6 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using boost::lexical_cast;
-
-// Access the private hidden flag
-namespace isc {
-namespace server_common {
-namespace portconfig {
-extern bool test_mode;
-}
-}
-}
 
 namespace {
 
@@ -140,11 +130,10 @@ TEST_F(ParseAddresses, invalid) {
 }
 
 // Test fixture for installListenAddresses
-struct InstallListenAddresses : public ::testing::Test,
-    public SocketRequestor {
+struct InstallListenAddresses : public testutils::TestSocketRequestor {
     InstallListenAddresses() :
-        dnss_(ios_, NULL, NULL, NULL),
-        last_token_(0), break_rollback_(false)
+        // The members aren't initialized yet, but we need to store refs only
+        TestSocketRequestor(dnss_, store_), dnss_(ios_, NULL, NULL, NULL)
     {
         valid_.push_back(AddressPair("127.0.0.1", 5288));
         valid_.push_back(AddressPair("::1", 5288));
@@ -158,13 +147,6 @@ struct InstallListenAddresses : public ::testing::Test,
     AddressList valid_;
     // But this shouldn't work
     AddressList invalid_;
-    // Store the tokens as they go in and out
-    vector<string> released_tokens_;
-    vector<string> given_tokens_;
-    // Last token number and fd given out
-    size_t last_token_;
-    // Should we break the rollback?
-    bool break_rollback_;
     // Check that the store_ addresses are the same as expected
     void checkAddresses(const AddressList& expected, const string& name) {
         SCOPED_TRACE(name);
@@ -177,63 +159,6 @@ struct InstallListenAddresses : public ::testing::Test,
             EXPECT_EQ(ei->first, si->first);
             EXPECT_EQ(ei->second, si->second);
         }
-    }
-    void releaseSocket(const string& token) {
-        released_tokens_.push_back(token);
-    }
-    SocketID requestSocket(Protocol protocol, const string& address,
-                           uint16_t port, ShareMode mode, const string& name)
-    {
-        if (address == "192.0.2.2") {
-            isc_throw(SocketError, "This address is not allowed");
-        }
-        if (address == "::1" && break_rollback_) {
-            // This is valid address, but in case we need to break the
-            // rollback, it needs to be busy or whatever
-            //
-            // We break the second address to see the first one was
-            // allocated and then returned
-            isc_throw(SocketError,
-                      "This address is available, but not for you");
-        }
-        const string proto(protocol == TCP ? "TCP" : "UDP");
-        size_t number = ++ last_token_;
-        EXPECT_EQ(5288, port);
-        EXPECT_EQ(DONT_SHARE, mode);
-        EXPECT_EQ("dummy_app", name);
-        const string token(proto + ":" + address + ":" +
-                           lexical_cast<string>(port) + ":" +
-                           lexical_cast<string>(number));
-        given_tokens_.push_back(token);
-        return (SocketID(number, token));
-    }
-    void SetUp() {
-        // Prepare the requestor (us) for the test
-        SocketRequestor::initTest(this);
-        // Don't manipulate the real sockets
-        test_mode = true;
-    }
-    void TearDown() {
-        // Make sure no sockets are left inside
-        AddressList list;
-        installListenAddresses(list, store_, dnss_);
-        // Don't leave invalid pointers here
-        SocketRequestor::initTest(NULL);
-        // And return the mode
-        test_mode = false;
-    }
-    // This checks the set of tokens is the same
-    void checkTokens(const char** expected, const vector<string>& real,
-                     const char* scope)
-    {
-        SCOPED_TRACE(scope);
-        size_t position(0);
-        while (expected[position]) {
-            ASSERT_LT(position, real.size());
-            EXPECT_EQ(expected[position], real[position]) << position;
-            position ++;
-        }
-        EXPECT_EQ(position, real.size());
     }
 };
 
