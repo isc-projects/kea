@@ -466,8 +466,8 @@ TYPED_TEST(DNSServerTest, stopUDPServerAfterOneQuery) {
 // Test whether udp server stopped successfully before server start to serve
 TYPED_TEST(DNSServerTest, stopUDPServerBeforeItStartServing) {
     this->udp_server_->stop();
-    testStopServerByStopper(this->udp_server_, this->udp_client_,
-                            this->udp_client_);
+    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+                                  this->udp_client_);
     EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
 }
@@ -546,16 +546,16 @@ TYPED_TEST(DNSServerTest, stopTCPServerDuringMessageCheck) {
 
 // Test whether tcp server stopped successfully during query lookup
 TYPED_TEST(DNSServerTest, stopTCPServerDuringQueryLookup) {
-    testStopServerByStopper(this->tcp_server_, this->tcp_client_,
-                            this->lookup_);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->lookup_);
     EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
 // Test whether tcp server stopped successfully during composing answer
 TYPED_TEST(DNSServerTest, stopTCPServerDuringPrepareAnswer) {
-    testStopServerByStopper(this->tcp_server_, this->tcp_client_,
-                            this->answer_);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->answer_);
     EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
 }
