@@ -1888,7 +1888,11 @@ getserveraddr(const int flags)
 		service = "547";
 	}
 	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICSERV | flags;
+
+	hints.ai_flags = AI_NUMERICSERV | flags;
+#if defined(AI_ADDRCONFIG)
+	hints.ai_flags |= AI_ADDRCONFIG;
+#endif
 	hints.ai_protocol = IPPROTO_UDP;
 	
 	ret = getaddrinfo(servername, service, &hints, &res);
@@ -1985,7 +1989,10 @@ getlocaladdr(void)
 		service = "546";
 	}
 	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICSERV;
+	hints.ai_flags =  AI_NUMERICSERV;
+#if defined(AI_ADDRCONFIG)
+	hints.ai_flags |= AI_ADDRCONFIG;
+#endif
 	hints.ai_protocol = IPPROTO_UDP;
 	
 	ret = getaddrinfo(localname, service, &hints, &res);
