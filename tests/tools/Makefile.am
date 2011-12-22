@@ -1,1 +1,1 @@
-SUBDIRS = badpacket
+SUBDIRS = badpacket perfdhcp
