@@ -140,10 +140,9 @@ def get_rrset_len(rrset):
     return len(bytes)
 
 def get_soa_serial(soa_rdata):
-    '''Extract the serial field of an SOA RDATA and returns it as an intger.
-    (borrowed from xfrin)
+    '''Extract the serial field of an SOA RDATA and returns it as an Serial object.
     '''
-    return int(soa_rdata.to_text().split()[2])
+    return Serial(int(soa_rdata.to_text().split()[2]))
 
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
@@ -423,11 +422,11 @@ class XfroutSession():
                         format_zone_str(zone_name, zone_class),
                         begin_serial, end_serial)
             return Rcode.NOERROR()
-
+        
         # Set up the journal reader or fall back to AXFR-style IXFR
         try:
             code, self._jnl_reader = self._datasrc_client.get_journal_reader(
-                zone_name, begin_serial, end_serial)
+                zone_name, begin_serial.get_value(), end_serial.get_value())
         except isc.datasrc.NotImplemented as ex:
             # The underlying data source doesn't support journaling.
             # Fall back to AXFR-style IXFR.
@@ -451,7 +450,7 @@ class XfroutSession():
 
         # Use the reader as the iterator to generate the response.
         self._iterator = self._jnl_reader
-
+        
         return Rcode.NOERROR()
 
     def _xfrout_setup(self, request_msg, zone_name, zone_class):
