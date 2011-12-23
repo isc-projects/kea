@@ -36,12 +36,15 @@ namespace testutils {
 // TODO Docs
 
 class TestSocketRequestor : public isc::server_common::SocketRequestor,
-    public ::testing::Test {
+    virtual public ::testing::Test {
 protected:
     TestSocketRequestor(asiodns::DNSService& dnss,
-                        server_common::portconfig::AddressList& store) :
-        last_token_(0), break_rollback_(false), dnss_(dnss), store_(store)
+                        server_common::portconfig::AddressList& store,
+                        uint16_t expect_port) :
+        last_token_(0), break_rollback_(false), dnss_(dnss), store_(store),
+        expect_port_(expect_port)
     {}
+    virtual ~ TestSocketRequestor() {}
     // Store the tokens as they go in and out
     std::vector<std::string> released_tokens_;
     std::vector<std::string> given_tokens_;
@@ -70,7 +73,7 @@ protected:
         }
         const std::string proto(protocol == TCP ? "TCP" : "UDP");
         size_t number = ++ last_token_;
-        EXPECT_EQ(5288, port);
+        EXPECT_EQ(expect_port_, port);
         EXPECT_EQ(DONT_SHARE, mode);
         EXPECT_EQ("dummy_app", name);
         const std::string token(proto + ":" + address + ":" +
@@ -112,6 +115,7 @@ protected:
 private:
     asiodns::DNSService& dnss_;
     server_common::portconfig::AddressList& store_;
+    uint16_t expect_port_;
 };
 
 }

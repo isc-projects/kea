@@ -41,6 +41,7 @@
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 #include <testutils/portconfig.h>
+#include <testutils/socket_request.h>
 
 using namespace std;
 using namespace isc::cc;
@@ -64,9 +65,10 @@ const char* const CONFIG_TESTDB =
 const char* const BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
 
-class AuthSrvTest : public SrvTestBase {
+class AuthSrvTest : public SrvTestBase, public TestSocketRequestor {
 protected:
     AuthSrvTest() :
+        TestSocketRequestor(dnss_, address_store_, 53210),
         dnss_(ios_, NULL, NULL, NULL),
         server(true, xfrout),
         rrclass(RRClass::IN())
@@ -86,6 +88,7 @@ protected:
     AuthSrv server;
     const RRClass rrclass;
     vector<uint8_t> response_data;
+    AddressList address_store_;
 };
 
 // A helper function that builds a response to version.bind/TXT/CH that
@@ -888,6 +891,18 @@ TEST_F(AuthSrvTest, stop) {
 
 TEST_F(AuthSrvTest, listenAddresses) {
     isc::testutils::portconfig::listenAddresses(server);
+    // Check it requests the correct addresses
+    const char* tokens[] = {
+        "TCP:127.0.0.1:53210:1",
+        "UDP:127.0.0.1:53210:2",
+        "TCP:::1:53210:3",
+        "UDP:::1:53210:4",
+        NULL
+    };
+    checkTokens(tokens, given_tokens_, "Given tokens");
+    // It returns back to empty set of addresses afterwards, so
+    // they should be released
+    checkTokens(tokens, released_tokens_, "Released tokens");
 }
 
 }
