@@ -801,7 +801,7 @@ IfaceMgr::receive4() {
     pkt = boost::shared_ptr<Pkt4>(new Pkt4(buf, result));
 
     pkt->setIface(iface->getName());
-    pkt->setIndex(iface->getIndex());
+    pkt->setIndex(ifindex);
     pkt->setLocalAddr(to);
     pkt->setRemoteAddr(from);
     pkt->setRemotePort(from_port);
