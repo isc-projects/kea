@@ -452,8 +452,8 @@ private:
     /// @return true if multicast join was successful
     ///
     bool
-    joinMcast(int sock, const std::string& ifname,
-              const std::string& mcast);
+    joinMulticast(int sock, const std::string& ifname,
+                  const std::string& mcast);
 
 };
 
