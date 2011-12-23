@@ -12,9 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// XXX: SunStudio compiler would complain about memcpy if we used cstring,
-// so we intentionally include the .h version here.
-#include <string.h>
+#include <cstring>
 #include <cstdlib>
 
 #include <sys/types.h>
@@ -105,7 +103,7 @@ recv_fd(const int sock) {
     int fd = FD_OTHER_ERROR;
     if (cmsg != NULL && cmsg->cmsg_len == cmsg_len(sizeof(int)) &&
         cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
-        memcpy(&fd, CMSG_DATA(cmsg), sizeof(int));
+        std::memcpy(&fd, CMSG_DATA(cmsg), sizeof(int));
     }
     free(msghdr.msg_control);
     return (fd);
@@ -134,7 +132,7 @@ send_fd(const int sock, const int fd) {
     cmsg->cmsg_len = cmsg_len(sizeof(int));
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
-    memcpy(CMSG_DATA(cmsg), &fd, sizeof(int));
+    std::memcpy(CMSG_DATA(cmsg), &fd, sizeof(int));
 
     const int ret = sendmsg(sock, &msghdr, 0);
     free(msghdr.msg_control);
