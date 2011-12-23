@@ -258,16 +258,21 @@ TEST_F(ResolverConfig, listenOnAndOtherConfig) {
     // Create and bind a socket that would make the subsequent listen_on fail
     ScopedSocket sock(createSocket(TEST_ADDRESS, TEST_PORT));
 
+    // We are going to install a pair of "root_addresses" and "listen_on"
+    // in a single update.
     const string config_str("{\"root_addresses\": ["
                             " {\"address\": \"192.0.2.1\","
                             "   \"port\": 53}], "
                             "\"listen_on\": ["
                             " {\"address\": \"" + string(TEST_ADDRESS) + "\","
                             "  \"port\": " + string(TEST_PORT) + "}]}");
+    // Normally, if listen_on fails the rest of the config parameters will
+    // be ignored.
     ConstElementPtr config(Element::fromJSON(config_str));
     configAnswerCheck(server.updateConfig(config), false);
     EXPECT_EQ(0, server.getRootAddresses().size());
 
+    // On startup the other parameters will be installed anyway.
     configAnswerCheck(server.updateConfig(config, true), false);
     EXPECT_EQ(1, server.getRootAddresses().size());
 }
