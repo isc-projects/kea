@@ -1,3 +1,9 @@
+362.	[func]		tomek
+	libdhcp++: Interface detection in Linux implemented. libdhcp++
+	if now able to detect available network interfaces, its link-layer
+	addresses, flags and configured IPv4 and IPv6 addresses.
+	(Trac #1237, git 8a040737426aece7cc92a795f2b712d7c3407513)
+
 361.	[func]		tomek
 	libdhcp++: Transmission and reception of DHCPv4 packets is now
 	implemented. Low-level hacks are not implemented for transmission
