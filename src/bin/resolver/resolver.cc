@@ -356,8 +356,7 @@ Resolver::Resolver() :
     dns_lookup_(NULL),
     dns_answer_(new MessageAnswer),
     nsas_(NULL),
-    cache_(NULL),
-    configured_(false)
+    cache_(NULL)
 {
     // Operations referring to "this" must be done in the constructor body
     // (some compilers will issue warnings if "this" is referred to in the
@@ -585,7 +584,7 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
 }
 
 ConstElementPtr
-Resolver::updateConfig(ConstElementPtr config) {
+Resolver::updateConfig(ConstElementPtr config, bool startup) {
     LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_CONFIG_UPDATED)
               .arg(*config);
 
@@ -658,7 +657,7 @@ Resolver::updateConfig(ConstElementPtr config) {
         // listenAddresses can fail to bind, so try them first
         bool need_query_restart = false;
         
-        if (listenAddressesE) {
+        if (!startup && listenAddressesE) {
             setListenAddresses(listenAddresses);
             need_query_restart = true;
         }
@@ -677,12 +676,15 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (query_acl) {
             setQueryACL(query_acl);
         }
+        if (startup && listenAddressesE) {
+            setListenAddresses(listenAddresses);
+            need_query_restart = true;
+        }
 
         if (need_query_restart) {
             impl_->queryShutdown();
             impl_->querySetup(*dnss_, *nsas_, *cache_);
         }
-        setConfigured();
         return (isc::config::createAnswer());
 
     } catch (const isc::Exception& error) {
