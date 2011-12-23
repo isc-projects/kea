@@ -133,7 +133,7 @@ TEST_F(ParseAddresses, invalid) {
 struct InstallListenAddresses : public testutils::TestSocketRequestor {
     InstallListenAddresses() :
         // The members aren't initialized yet, but we need to store refs only
-        TestSocketRequestor(dnss_, store_), dnss_(ios_, NULL, NULL, NULL)
+        TestSocketRequestor(dnss_, store_, 5288), dnss_(ios_, NULL, NULL, NULL)
     {
         valid_.push_back(AddressPair("127.0.0.1", 5288));
         valid_.push_back(AddressPair("::1", 5288));
