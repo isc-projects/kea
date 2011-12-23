@@ -162,12 +162,26 @@ class Diff:
         and do more merging, but such diffs should be rare in practice anyway,
         so we don't bother and do it this simple way.
         """
+        def same_type(rrset1, rrset2):
+            '''A helper routine to identify whether two RRsets are of the
+            same 'type'.  For RRSIGs we should consider type covered, too.
+            '''
+            if rrset1.get_type() != rrset2.get_type():
+                return False
+            if rrset1.get_type() != isc.dns.RRType.RRSIG():
+                return rrset1.get_type() == rrset2.get_type()
+            # RR type of the both RRsets is RRSIG.  Compare type covered.
+            # We know they have exactly one RDATA.
+            sigdata1 = rrset1.get_rdata()[0].to_text().split()[0]
+            sigdata2 = rrset2.get_rdata()[0].to_text().split()[0]
+            return sigdata1 == sigdata2
+
         buf = []
         for (op, rrset) in self.__buffer:
             old = buf[-1][1] if len(buf) > 0 else None
             if old is None or op != buf[-1][0] or \
                 rrset.get_name() != old.get_name() or \
-                rrset.get_type() != old.get_type():
+                (not same_type(rrset, old)):
                 buf.append((op, isc.dns.RRset(rrset.get_name(),
                                               rrset.get_class(),
                                               rrset.get_type(),

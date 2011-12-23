@@ -99,6 +99,8 @@ class DiffTest(unittest.TestCase):
         in the tested module.
         """
         self.__warn_called = True
+        # Also log the message so we can check the log format (manually)
+        self.orig_logger.warn(*args)
 
     def commit(self):
         """
@@ -430,7 +432,7 @@ class DiffTest(unittest.TestCase):
         Test the TTL handling. A warn function should have been called if they
         differ, but that's all, it should not crash or raise.
         """
-        orig_logger = isc.xfrin.diff.logger
+        self.orig_logger = isc.xfrin.diff.logger
         try:
             isc.xfrin.diff.logger = self
             diff = Diff(self, Name('example.org.'))
@@ -451,7 +453,30 @@ class DiffTest(unittest.TestCase):
             self.assertEqual(self.__ttl, diff.get_buffer()[0][1].get_ttl())
             self.assertTrue(self.__warn_called)
         finally:
-            isc.xfrin.diff.logger = orig_logger
+            isc.xfrin.diff.logger = self.orig_logger
+
+    def test_rrsig_ttl(self):
+        '''Similar to the previous test, but for RRSIGs of different covered
+        types.
+
+        They shouldn't be compacted.
+
+        '''
+        diff = Diff(self, Name('example.org.'))
+        rrsig1 = RRset(Name('example.org'), self.__rrclass,
+                       RRType.RRSIG(), RRTTL(3600))
+        rrsig1.add_rdata(Rdata(RRType.RRSIG(), self.__rrclass,
+                               'A 5 3 3600 20000101000000 20000201000000 ' +
+                               '0 example.org. FAKEFAKEFAKE'))
+        diff.add_data(rrsig1)
+        rrsig2 = RRset(Name('example.org'), self.__rrclass,
+                       RRType.RRSIG(), RRTTL(1800))
+        rrsig2.add_rdata(Rdata(RRType.RRSIG(), self.__rrclass,
+                               'AAAA 5 3 3600 20000101000000 20000201000000 ' +
+                               '1 example.org. FAKEFAKEFAKE'))
+        diff.add_data(rrsig2)
+        diff.compact()
+        self.assertEqual(2, len(diff.get_buffer()))
 
     def test_relpace(self):
         """
@@ -463,4 +488,5 @@ class DiffTest(unittest.TestCase):
 
 if __name__ == "__main__":
     isc.log.init("bind10")
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
