@@ -56,6 +56,10 @@ public:
         fakeifaces << LOOPBACK << " ::1";
         fakeifaces.close();
     }
+
+    ~IfaceMgrTest() {
+        unlink(INTERFACE_FILE);
+    }
 };
 
 // We need some known interface to work reliably. Loopback interface
@@ -147,6 +151,7 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
 
 TEST_F(IfaceMgrTest, basic) {
     // checks that IfaceManager can be instantiated
+    createLoInterfacesTxt();
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
@@ -166,6 +171,8 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 // TODO: Implement getPlainMac() test as soon as interface detection
 // is implemented.
 TEST_F(IfaceMgrTest, getIface) {
+
+    createLoInterfacesTxt();
 
     cout << "Interface checks. Please ignore socket binding errors." << endl;
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
@@ -241,7 +248,6 @@ TEST_F(IfaceMgrTest, detectIfaces_stub) {
     EXPECT_STREQ( "fe80::1234", addr.toText().c_str() );
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
 #endif
 
@@ -275,7 +281,6 @@ TEST_F(IfaceMgrTest, sockets6) {
     close(socket2);
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
 
 // TODO: disabled due to other naming on various systems
@@ -362,7 +367,6 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_TRUE( (rcvPkt->remote_port_ == 10546) || (rcvPkt->remote_port_ == 10547) );
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
 
 TEST_F(IfaceMgrTest, socket4) {
@@ -390,7 +394,6 @@ TEST_F(IfaceMgrTest, socket4) {
     close(socket1);
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
 
 // Test the Iface structure itself
@@ -520,7 +523,6 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
 
 /// @brief parses text representation of MAC address
@@ -775,14 +777,8 @@ TEST_F(IfaceMgrTest, detectIfaces_linux) {
                 cout << "Address " << addr->toText() << " on iterface " << detected->getFullName()
                      << " matched with 'ifconfig -a' output." << endl;
             }
-
         }
-
-
     }
-
-
-
 
     delete ifacemgr;
 }
