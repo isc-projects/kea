@@ -218,7 +218,7 @@ void IfaceMgr::openSockets6(uint16_t port) {
                           << " interface " << iface->getFullName());
             }
 
-            if ( !joinMcast(sock1, iface->getName(),
+            if ( !joinMulticast(sock1, iface->getName(),
                              string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
                 close(sock1);
                 isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
@@ -414,7 +414,7 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
         // are link and site-scoped, so there is no sense to join those groups
         // with global addresses.
 
-        if ( !joinMcast( sock, iface.getName(),
+        if ( !joinMulticast( sock, iface.getName(),
                          string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
             close(sock);
             isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
@@ -431,7 +431,7 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
 }
 
 bool
-IfaceMgr::joinMcast(int sock, const std::string& ifname,
+IfaceMgr::joinMulticast(int sock, const std::string& ifname,
 const std::string & mcast) {
 
     struct ipv6_mreq mreq;
