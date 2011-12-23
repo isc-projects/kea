@@ -426,7 +426,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
            addr.getAddress().to_v6().to_bytes().data(),
            sizeof(addr6.sin6_addr));
 #ifdef HAVE_SA_LEN
-    addr6->sin6_len = sizeof(addr6);
+    addr6.sin6_len = sizeof(addr6);
 #endif
 
     // TODO: use sockcreator once it becomes available
