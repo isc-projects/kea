@@ -116,6 +116,29 @@ protected:
     void copyDefaultFields(const boost::shared_ptr<Pkt4>& question,
                            boost::shared_ptr<Pkt4>& answer);
 
+
+    /// @brief Appends options requested by client.
+    ///
+    /// This method assigns options that were requested by client
+    /// or are enforced by server (sent out to all clients).
+    ///
+    /// @param msg outgoing message (options will be added here)
+    void appendRequestedOptions(boost::shared_ptr<Pkt4>& msg);
+
+
+    /// @brief Assigns a lease and appends corresponding options
+    ///
+    /// This method chooses the most appropriate lease for reqesting
+    /// client and assigning it. Options corresponding to the lease
+    /// are added to specific message.
+    ///
+    /// Note: Lease manager is not implemented yet, so this method
+    /// used fixed, hardcoded lease.
+    ///
+    /// @param msg OFFER or ACK message (lease options will be added here)
+    void assignLease(boost::shared_ptr<Pkt4>& msg);
+
+
     /// @brief Appends default options to a message
     ///
     /// @param msg message object (options will be added to it)
