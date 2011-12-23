@@ -867,6 +867,9 @@ TEST_F(IfaceMgrTest, detectIfaces_linux) {
                      << " matched with 'ifconfig -a' output." << endl;
             }
         }
+        if (!found) { // corresponding interface was not found
+            FAIL();
+        }
     }
 
     delete ifacemgr;
