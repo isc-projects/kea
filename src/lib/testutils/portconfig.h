@@ -95,12 +95,11 @@ listenAddressConfig(Server& server) {
     EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
     EXPECT_EQ(53210, server.getListenAddresses()[0].second);
 
-    // As this is example address, the machine should not have it on
-    // any interface
+    // This address is rejected by the test socket requestor
     config = Element::fromJSON("{"
                                "\"listen_on\": ["
                                "   {"
-                               "       \"address\": \"192.0.2.0\","
+                               "       \"address\": \"192.0.2.2\","
                                "       \"port\": 53210"
                                "   }"
                                "]"
