@@ -614,6 +614,8 @@ TEST_F(IfaceMgrTest, socketInfo) {
     delete ifacemgr;
 }
 
+#if defined(OS_LINUX)
+
 /// @brief parses text representation of MAC address
 ///
 /// This function parses text representation of a MAC address and stores
@@ -661,8 +663,6 @@ size_t parse_mac(const std::string& textMac, uint8_t* mac, size_t macLen) {
 
     return (i);
 }
-
-#if defined(OS_LINUX)
 
 /// @brief Parses 'ifconfig -a' output and creates list of interfaces
 ///
