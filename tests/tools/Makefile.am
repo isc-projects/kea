@@ -2,4 +2,4 @@
 # portable (at least not exist on our Solaris buildbot).  For a short term
 # workaround we stop building it until it's resolved.
 #SUBDIRS = badpacket perfdhcp
-SUBDIRS = badpacket
+SUBDIRS = badpacket perfdhcp

@@ -14,6 +14,31 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <config.h>
+
+#ifndef HAVE_GETIFADDRS
+
+/*
+ * Solaris 10 does not have the getifaddrs() function available (although it
+ * is present on Solaris 11 and later).  For the present we will not implement
+ * a replacement (as we do with clock_gettime) as the implementation is
+ * relatively complex.  Just output a message saying that the utility is not
+ * supported on this operating system.
+ */
+
+#include <stdio.h>
+
+int
+main(const int argc, char* const argv[])
+{
+    fprintf(stderr, "perfdhcp is not supported on this version of the operating system\n");
+    return (1);
+}
+
+#else
+
+/* getifaddrs() present, so the code should compile */
+
 #ifdef __linux__
 #define _GNU_SOURCE
 #endif
@@ -3494,3 +3519,5 @@ main(const int argc, char * const argv[])
 	else
 		exit(3);
 }
+
+#endif  /* HAVE_GETIFADDRS */
