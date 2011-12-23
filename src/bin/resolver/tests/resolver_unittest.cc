@@ -39,7 +39,6 @@ protected:
     ResolverTest() : server() {
         // By default queries from the "default remote address" will be
         // rejected, so we'll need to add an explicit ACL entry to allow that.
-        server.setConfigured();
         server.updateConfig(Element::fromJSON(
                                 "{ \"query_acl\": "
                                 "  [ {\"action\": \"ACCEPT\","
