@@ -443,7 +443,7 @@ AC_SUBST(USE_LCOV)
 botan_path="yes"
 AC_ARG_WITH([botan],
   AC_HELP_STRING([--with-botan=PATH],
-    [specify exact directory of Botan library]),
+    [specify the path to botan-config (PATH/bin/botan-config will be used)]),
     [botan_path="$withval"])
 if test "${botan_path}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
