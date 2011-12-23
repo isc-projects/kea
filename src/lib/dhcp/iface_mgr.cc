@@ -755,11 +755,12 @@ IfaceMgr::receive4() {
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 
+    unsigned int ifindex = iface->getIndex();
+
 // OS_LINUX defines are part of ticket #1237
 #if defined(OS_LINUX)
     struct cmsghdr* cmsg;
     struct in_pktinfo* pktinfo;
-    unsigned int ifindex = 0;
 
     int found_pktinfo = 0;
     cmsg = CMSG_FIRSTHDR(&m);
