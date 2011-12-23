@@ -15,10 +15,10 @@
 # No namespace declaration - these constants go in the global namespace
 # of the libxfrin_messages python module.
 
-% LIBXFRIN_DIFFERENT_TTL multiple data with different TTLs (%1, %2) on %3/%4. Adjusting %2 -> %1.
+% LIBXFRIN_DIFFERENT_TTL multiple data with different TTLs (%1, %2) on %3/%4/%5. Adjusting %2 -> %1.
 The xfrin module received an update containing multiple rdata changes for the
 same RRset. But the TTLs of these don't match each other. As we combine them
-together, the later one get's overwritten to the earlier one in the sequence.
+together, the latter one gets overwritten to the earlier one in the sequence.
 
 % LIBXFRIN_NO_JOURNAL disabled journaling for updates to %1 on %2
 An attempt was made to create a Diff object with journaling enabled, but
