@@ -4,7 +4,7 @@
 	to hosts that don't have IPv4 address yet, so currently the code
 	is usable for communication with relays only, not hosts on the
 	same link.
-	(Trac #1239, #1240, git TBD)
+	(Trac #1239, #1240, git f382050248b5b7ed1881b086d89be2d9dd8fe385)
 
 360.	[func] 		fdupont
 	Alpha version of DHCP benchmarking tool added.  "perfdhcp" is able to
