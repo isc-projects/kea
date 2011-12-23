@@ -14,11 +14,21 @@
 
 #include <config.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+#include <cerrno>
+#include <cstring>
 #include <string>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <gtest/gtest.h>
+
+#include <exceptions/exceptions.h>
 
 #include <cc/data.h>
 
@@ -52,6 +62,16 @@ using namespace isc::server_common;
 using isc::UnitTestUtil;
 
 namespace {
+const char* const TEST_ADDRESS = "127.0.0.1";
+const char* const TEST_PORT = "53535";
+
+// An internal exception class
+class TestConfigError : public isc::Exception {
+public:
+    TestConfigError(const char *file, size_t line, const char *what):
+        isc::Exception(file, line, what) {}
+};
+
 class ResolverConfig : public ::testing::Test {
 protected:
     IOService ios;
@@ -63,7 +83,6 @@ protected:
     scoped_ptr<const RequestContext> request;
     ResolverConfig() : dnss(ios, NULL, NULL, NULL) {
         server.setDNSService(dnss);
-        server.setConfigured();
     }
     const RequestContext& createRequest(const string& source_addr) {
         endpoint.reset(IOEndpoint::create(IPPROTO_UDP, IOAddress(source_addr),
@@ -153,6 +172,104 @@ TEST_F(ResolverConfig, rootAddressConfig) {
     result = server.updateConfig(config);
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
     EXPECT_EQ(0, server.getRootAddresses().size());
+}
+
+// The following two are helper classes to manage some temporary system
+// resources in an RAII manner.
+class ScopedAddrInfo : public boost::noncopyable {
+public:
+    ScopedAddrInfo(struct addrinfo* ai) : ai_(ai) {}
+    ~ScopedAddrInfo() { freeaddrinfo(ai_);}
+private:
+    struct addrinfo* ai_;
+};
+
+struct ScopedSocket : public boost::noncopyable {
+public:
+    ScopedSocket(int fd) : fd_(fd) {}
+    ~ScopedSocket() { close(fd_); }
+private:
+    const int fd_;
+};
+
+int
+createSocket(const char* address, const char* port) {
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+    const int error = getaddrinfo(address, port, &hints, &res);
+    if (error != 0) {
+        isc_throw(TestConfigError, "getaddrinfo failed: " <<
+                  gai_strerror(error));
+    }
+    ScopedAddrInfo scoped_res(res);
+    const int s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (s == -1) {
+        isc_throw(TestConfigError, "socket system call failed: " <<
+                  strerror(errno));
+    }
+    if (bind(s, res->ai_addr, res->ai_addrlen) == -1) {
+        close(s);
+        isc_throw(TestConfigError, "bind system call failed: " <<
+                  strerror(errno));
+    }
+    return (s);
+}
+
+void
+configAnswerCheck(ConstElementPtr config_answer, bool expect_success) {
+    EXPECT_EQ(Element::map, config_answer->getType());
+    EXPECT_TRUE(config_answer->contains("result"));
+
+    ConstElementPtr result = config_answer->get("result");
+    EXPECT_EQ(Element::list, result->getType());
+    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue());
+}
+
+TEST_F(ResolverConfig, listenOnConfig) {
+    ConstElementPtr config(Element::fromJSON("{"
+                                             "\"listen_on\": ["
+                                             " {"
+                                             "    \"address\": \"" +
+                                             string(TEST_ADDRESS) + "\","
+                                             "    \"port\": " +
+                                             string(TEST_PORT) + "}]}"));
+    configAnswerCheck(server.updateConfig(config), true);
+}
+
+TEST_F(ResolverConfig, listenOnConfigFail) {
+    // Create and bind a socket that would make the subsequent listen_on fail
+    ScopedSocket sock(createSocket(TEST_ADDRESS, TEST_PORT));
+
+    ConstElementPtr config(Element::fromJSON("{"
+                                             "\"listen_on\": ["
+                                             " {"
+                                             "    \"address\": \"" +
+                                             string(TEST_ADDRESS) + "\","
+                                             "    \"port\": " +
+                                             string(TEST_PORT) + "}]}"));
+    configAnswerCheck(server.updateConfig(config), false);
+}
+
+TEST_F(ResolverConfig, listenOnAndOtherConfig) {
+    // Create and bind a socket that would make the subsequent listen_on fail
+    ScopedSocket sock(createSocket(TEST_ADDRESS, TEST_PORT));
+
+    const string config_str("{\"root_addresses\": ["
+                            " {\"address\": \"192.0.2.1\","
+                            "   \"port\": 53}], "
+                            "\"listen_on\": ["
+                            " {\"address\": \"" + string(TEST_ADDRESS) + "\","
+                            "  \"port\": " + string(TEST_PORT) + "}]}");
+    ConstElementPtr config(Element::fromJSON(config_str));
+    configAnswerCheck(server.updateConfig(config), false);
+    EXPECT_EQ(0, server.getRootAddresses().size());
+
+    configAnswerCheck(server.updateConfig(config, true), false);
+    EXPECT_EQ(1, server.getRootAddresses().size());
 }
 
 void
