@@ -265,7 +265,7 @@ private:
                       "Unknown status code returned before recv_fd " << status);
         }
 
-        int passed_sock_fd = isc::util::io::recv_fd(sock_pass_fd);
+        const int passed_sock_fd = isc::util::io::recv_fd(sock_pass_fd);
 
         // check for error values of passed_sock_fd (see fd_share.h)
         if (passed_sock_fd <= 0) {
