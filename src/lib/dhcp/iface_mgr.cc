@@ -169,8 +169,8 @@ IfaceMgr::stubDetectIfaces() {
         ifstream interfaces("interfaces.txt");
 
         if (!interfaces.good()) {
-            cout << "Failed to read interfaces.txt file." << endl;
-            isc_throw(Unexpected, "Failed to read interfaces.txt");
+            cout << "interfaces.txt file is not available. Stub interface detection skipped." << endl;
+            return;
         }
         interfaces >> ifaceName;
         interfaces >> linkLocal;
