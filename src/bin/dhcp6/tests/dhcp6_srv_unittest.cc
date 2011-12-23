@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <arpa/inet.h>
@@ -29,7 +30,8 @@ using namespace isc::dhcp;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
 // Maybe it should be isc::test?
-namespace test {
+namespace {
+const char* const INTERFACE_FILE = "interfaces.txt";
 
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal fields
@@ -49,7 +51,18 @@ public:
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
     Dhcpv6SrvTest() {
+        unlink(INTERFACE_FILE);
+        fstream fakeifaces(INTERFACE_FILE, ios::out | ios::trunc);
+        if (if_nametoindex("lo") > 0) {
+            fakeifaces << "lo ::1";
+        } else if (if_nametoindex("lo0") > 0) {
+            fakeifaces << "lo0 ::1";
+        }
+        fakeifaces.close();
     }
+    ~Dhcpv6SrvTest() {
+        unlink(INTERFACE_FILE);
+    };
 };
 
 TEST_F(Dhcpv6SrvTest, basic) {
@@ -116,7 +129,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     boost::shared_ptr<Option> tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE( tmp );
 
-    Option6IA* reply_ia = dynamic_cast<Option6IA*> ( tmp.get() );
+    Option6IA* reply_ia = dynamic_cast<Option6IA*>(tmp.get());
     EXPECT_EQ( 234, reply_ia->getIAID() );
 
     // check that there's an address included
