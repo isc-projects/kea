@@ -27,13 +27,21 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
-
-//void Dhcpv6Srv::Dhcpv6Srv_impl(uint16_t port) {
     cout << "Initialization" << endl;
 
-    // First call to instance() will create IfaceMgr (it's a singleton).
-    // It may throw something if things go wrong.
-    IfaceMgr::instance();
+    // first call to instance() will create IfaceMgr (it's a singleton)
+    // it may throw something if things go wrong
+    try {
+	IfaceMgr::instance();
+    } catch (const std::exception &e) {
+	cout << "Failed to instantiate InterfaceManager:" << e.what() << ". Aborting." << endl;
+	shutdown = true;
+    }
+
+    if (IfaceMgr::instance().countIfaces() == 0) {
+	cout << "Failed to detect any network interfaces. Aborting." << endl;
+	shutdown = true;
+    }
 
     // Now try to open IPv6 sockets on detected interfaces.
     IfaceMgr::instance().openSockets6(port);

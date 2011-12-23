@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <sstream>
 #include <fstream>
 #include <string.h>
@@ -53,7 +54,9 @@ IfaceMgr::instance() {
 }
 
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
-    :name_(name), ifindex_(ifindex), mac_len_(0)
+    :name_(name), ifindex_(ifindex), mac_len_(0), flag_loopback_(false),
+     flag_up_(false), flag_running_(false), flag_multicast_(false),
+     flag_broadcast_(false), flags_(0), hardware_type_(0)
 {
     memset(mac_, 0, sizeof(mac_));
 }
@@ -72,7 +75,7 @@ IfaceMgr::Iface::getPlainMac() const {
     tmp << hex;
     for (int i = 0; i < mac_len_; i++) {
         tmp.width(2);
-        tmp <<  int(mac_[i]);
+        tmp <<  static_cast<int>(mac_[i]);
         if (i < mac_len_-1) {
             tmp << ":";
         }
@@ -153,7 +156,7 @@ IfaceMgr::~IfaceMgr() {
 }
 
 void
-IfaceMgr::detectIfaces() {
+IfaceMgr::stubDetectIfaces() {
     string ifaceName, linkLocal;
 
     // TODO do the actual detection. Currently interface detection is faked
@@ -167,8 +170,8 @@ IfaceMgr::detectIfaces() {
         ifstream interfaces("interfaces.txt");
 
         if (!interfaces.good()) {
-            cout << "Failed to read interfaces.txt file." << endl;
-            isc_throw(Unexpected, "Failed to read interfaces.txt");
+            cout << "interfaces.txt file is not available. Stub interface detection skipped." << endl;
+            return;
         }
         interfaces >> ifaceName;
         interfaces >> linkLocal;
@@ -191,6 +194,12 @@ IfaceMgr::detectIfaces() {
         throw ex;
     }
 }
+
+#if !defined(OS_LINUX) && !defined(OS_BSD)
+void IfaceMgr::detectIfaces() {
+    stubDetectIfaces();
+}
+#endif
 
 bool IfaceMgr::openSockets4(uint16_t port) {
     int sock;
@@ -259,8 +268,8 @@ bool IfaceMgr::openSockets6(uint16_t port) {
                 return (false);
             }
 
-            if ( !joinMcast(sock, iface->getName(),
-                             string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
+            if ( !joinMulticast(sock, iface->getName(),
+                                string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
                 close(sock);
                 isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
                           << " multicast group.");
@@ -289,15 +298,25 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
          iface!=ifaces_.end();
          ++iface) {
 
+        const AddressCollection& addrs = iface->getAddresses();
+
         out << "Detected interface " << iface->getFullName()
-             << ", mac=" << iface->getPlainMac() << endl;
-        out << "flags=" <<  endl;
-        out << "  " << iface->getAddresses().size() << " addr(s):" << endl;
-        for (AddressCollection::const_iterator addr=iface->getAddresses().begin();
-             addr != iface->getAddresses().end();
-             ++addr) {
-            out << "  " << addr->toText() << endl;
+             << ", hwtype=" << iface->hardware_type_ << ", maclen=" << iface->mac_len_
+             << ", mac=" << iface->getPlainMac();
+        out << ", flags=" << hex << iface->flags_ << dec << "("
+            << (iface->flag_loopback_?"LOOPBACK ":"")
+            << (iface->flag_up_?"UP ":"")
+            << (iface->flag_running_?"RUNNING ":"")
+            << (iface->flag_multicast_?"MULTICAST ":"")
+            << (iface->flag_broadcast_?"BROADCAST ":"")
+            << ")" << endl;
+        out << "  " << addrs.size() << " addr(s):";
+
+        for (AddressCollection::const_iterator addr = addrs.begin();
+             addr != addrs.end(); ++addr) {
+            out << "  " << addr->toText();
         }
+        out << endl;
     }
 }
 
@@ -403,7 +422,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
            addr.getAddress().to_v6().to_bytes().data(),
            sizeof(addr6.sin6_addr));
 #ifdef HAVE_SA_LEN
-    addr6->sin6_len = sizeof(addr6);
+    addr6.sin6_len = sizeof(addr6);
 #endif
 
     // TODO: use sockcreator once it becomes available
@@ -450,7 +469,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
         // are link and site-scoped, so there is no sense to join those groups
         // with global addresses.
 
-        if ( !joinMcast( sock, iface.getName(),
+        if ( !joinMulticast( sock, iface.getName(),
                          string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
             close(sock);
             isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
@@ -468,7 +487,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
 }
 
 bool
-IfaceMgr::joinMcast(int sock, const std::string& ifname,
+IfaceMgr::joinMulticast(int sock, const std::string& ifname,
 const std::string & mcast) {
 
     struct ipv6_mreq mreq;
