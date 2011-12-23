@@ -387,6 +387,9 @@ TEST_F(IfaceMgrTest, sendReceive4) {
         socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000 + 1);
     );
 
+    EXPECT_GE(socket1, 0);
+    EXPECT_GE(socket2, 0);
+
     boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
 
     sendPkt->setLocalAddr(IOAddress("127.0.0.1"));
