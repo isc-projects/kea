@@ -157,7 +157,7 @@ static const uint16_t DHCP4_SERVER_PORT = 67;
 
 /// Magic cookie validating dhcp options field (and bootp vendor
 /// extensions field).
-///static const char* DHCP_OPTIONS_COOKIE = "\143\202\123\143";
+static const uint32_t DHCP_OPTIONS_COOKIE = 0x63825363;
 
 // TODO: Following are leftovers from dhcp.h import from ISC DHCP
 // They will be converted to C++-style defines once they will start

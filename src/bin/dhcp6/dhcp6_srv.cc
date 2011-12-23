@@ -36,7 +36,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     IfaceMgr::instance();
 
     // Now try to open IPv6 sockets on detected interfaces.
-    IfaceMgr::instance().openSockets(port);
+    IfaceMgr::instance().openSockets6(port);
 
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
