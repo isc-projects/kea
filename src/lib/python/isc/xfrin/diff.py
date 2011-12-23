@@ -188,7 +188,8 @@ class Diff:
                                               rrset.get_ttl())))
             if rrset.get_ttl() != buf[-1][1].get_ttl():
                 logger.warn(LIBXFRIN_DIFFERENT_TTL, rrset.get_ttl(),
-                            buf[-1][1].get_ttl())
+                            buf[-1][1].get_ttl(), rrset.get_name(),
+                            rrset.get_class(), rrset.get_type())
             for rdatum in rrset.get_rdata():
                 buf[-1][1].add_rdata(rdatum)
         self.__buffer = buf
