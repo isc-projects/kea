@@ -210,6 +210,30 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
     addAnswer("foo", long_str);
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
 
+    // Test values around path boundary
+    struct sockaddr_un sock_un;
+    std::string max_len(sizeof(sock_un.sun_path) - 1, 'x');
+    addAnswer("foo", max_len);
+    // The failure should NOT contain 'too long'
+    // (explicitely checking for existance of nonexistence of 'too long',
+    // as opposed to the actual error, since 'too long' is a value we set.
+    try {
+        doRequest();
+        FAIL() << "doRequest did not throw an exception";
+    } catch (const SocketRequestor::SocketError& se) {
+        ASSERT_EQ(std::string::npos, std::string(se.what()).find("too long"));
+    }
+
+    std::string too_long(sizeof(sock_un.sun_path), 'x');
+    addAnswer("foo", too_long);
+    // The failure SHOULD contain 'too long'
+    try {
+        doRequest();
+        FAIL() << "doRequest did not throw an exception";
+    } catch (const SocketRequestor::SocketError& se) {
+        ASSERT_NE(std::string::npos, std::string(se.what()).find("too long"));
+    }
+
     // Send back an error response
     session.getMessages()->add(createAnswer(1, "error"));
     ASSERT_THROW(doRequest(), CCSessionError);
