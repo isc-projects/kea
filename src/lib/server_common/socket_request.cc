@@ -32,14 +32,14 @@ namespace {
 SocketRequestor* requestor(NULL);
 
 // Before the boss process calls send_fd, it first sends this
-// string to indicate success
+// string to indicate success, followed by the file descriptor
 const std::string& CREATOR_SOCKET_OK() {
     static const std::string str("1");
     return (str);
 }
 
-// Before the boss process calls send_fd, it first sends this
-// string to indicate failure
+// Before the boss process calls send_fd, it sends this
+// string to indicate failure. It will not send a file descriptor.
 const std::string& CREATOR_SOCKET_UNAVAILABLE() {
     static const std::string str("0");
     return (str);
@@ -276,7 +276,7 @@ private:
         // from its cache succeeded
         char status[2];
         memset(status, 0, 2);
-        if (isc::util::io::read_data(sock_pass_fd, &status, 1) < 1) {
+        if (isc::util::io::read_data(sock_pass_fd, &status, 2) < 2) {
             isc_throw(SocketError,
                       "Error reading status code while requesting socket");
         }
@@ -313,8 +313,10 @@ private:
     // Closes the sockets that has been used for fd_share
     void
     closeFdShareSockets() {
-        std::map<std::string, int>::iterator it;
-        for (it = fd_share_sockets_.begin(); it != fd_share_sockets_.end(); ++it ) {
+        for (std::map<std::string, int>::iterator it =
+                fd_share_sockets_.begin();
+             it != fd_share_sockets_.end();
+             ++it ) {
             close((*it).second);
         }
     }

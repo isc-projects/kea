@@ -110,7 +110,7 @@ public:
         session.getMessages()->add(createAnswer(0, answer_part));
     }
 
-    // Clears the messages the client sent to far on the fake msgq
+    // Clears the messages the client sent so far on the fake msgq
     // (for easier access to new messages later)
     void
     clearMsgQueue() {
@@ -154,7 +154,6 @@ TEST_F(SocketRequestorTest, testSocketRequestMessages) {
     // answer here.
     // We are only testing the request messages that are sent,
     // so for this test that is no problem
-
     clearMsgQueue();
     ConstElementPtr expected_request;
 
@@ -276,9 +275,11 @@ TEST_F(SocketRequestorTest, testSocketReleaseMessages) {
 }
 
 TEST_F(SocketRequestorTest, testBadSocketReleaseAnswers) {
+    // Should fail if there is no answer at all
     ASSERT_THROW(socketRequestor().releaseSocket("bar"),
                  CCSessionError);
 
+    // Should also fail if the answer is an error
     session.getMessages()->add(createAnswer(1, "error"));
     ASSERT_THROW(socketRequestor().releaseSocket("bar"),
                  SocketRequestor::SocketError);
@@ -377,11 +378,7 @@ private:
     // send_fd())
     void
     serve(std::vector<int> data) {
-        struct sockaddr_un client_address;
-        socklen_t ca_len = sizeof(client_address);
-        int client_fd = accept(fd_,
-                               (struct sockaddr*) &client_address,
-                               &ca_len);
+        int client_fd = accept(fd_, NULL, NULL);
         if (client_fd == -1) {
             isc_throw(Exception, "Error in accept(): " << strerror(errno));
         }
@@ -389,16 +386,16 @@ private:
             int result;
             if (cur_data == -1) {
                 // send 'CREATOR_SOCKET_UNAVAILABLE'
-                result = isc::util::io::write_data(client_fd, "0", 1);
+                result = isc::util::io::write_data(client_fd, "0", 2);
             } else if (cur_data == -2) {
                 // send 'CREATOR_SOCKET_OK' first
-                result = isc::util::io::write_data(client_fd, "1", 1);
+                result = isc::util::io::write_data(client_fd, "1", 2);
                 if (result == 1) {
                     result = send(client_fd, "a", 1, 0);
                 }
             } else {
                 // send 'CREATOR_SOCKET_OK' first
-                result = isc::util::io::write_data(client_fd, "1", 1);
+                result = isc::util::io::write_data(client_fd, "1", 2);
                 if (result == 1) {
                     result = isc::util::io::send_fd(client_fd, cur_data);
                 }
