@@ -74,11 +74,12 @@ using namespace isc::asiodns;
 using namespace asio;
 
 namespace {
-static const std::string server_ip = "127.0.0.1";
+const char* server_ip = "::1";
 const int server_port = 5553;
+const char* server_port_str = "5553";
 //message client send to udp server, which isn't dns package
 //just for simple testing
-static const std::string query_message("BIND10 is awesome");
+const std::string query_message("BIND10 is awesome");
 
 // \brief provide capacity to derived class the ability
 // to stop DNSServer at certern point
@@ -212,7 +213,7 @@ class UDPClient : public SimpleClient {
     {
         server_ = server;
         socket_.reset(new ip::udp::socket(service));
-        socket_->open(ip::udp::v4());
+        socket_->open(ip::udp::v6());
     }
 
 
@@ -253,7 +254,7 @@ class TCPClient : public SimpleClient {
     {
         server_ = server;
         socket_.reset(new ip::tcp::socket(service));
-        socket_->open(ip::tcp::v4());
+        socket_->open(ip::tcp::v6());
     }
 
 
@@ -407,26 +408,42 @@ private:
     // a raw file descriptor. It also is what the socket creator does and this
     // API is aimed to it.
     int getFd(int type) {
-        int result(socket(AF_INET, type, 0));
-        if (result == -1) {
-            return (-1);
+        struct addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = type;
+        hints.ai_protocol = (type == SOCK_STREAM) ? IPPROTO_TCP : IPPROTO_UDP;
+        hints.ai_flags = AI_NUMERICSERV | AI_NUMERICHOST;
+
+        struct addrinfo* res;
+        const int error = getaddrinfo(server_ip, server_port_str,
+                                      &hints, &res);
+        if (error != 0) {
+            freeaddrinfo(res);
+            isc_throw(IOError, "getaddrinfo failed: " << gai_strerror(error));
         }
+
+        int sock;
         int on(1);
-        if (setsockopt(result, SOL_SOCKET, SO_REUSEADDR, &on,
-                       sizeof on) == -1) {
+        // Go as far as you can and stop on failure
+        // Create the socket
+        // set the options
+        // and bind it
+        bool failed((sock = socket(res->ai_family, res->ai_socktype,
+                                   res->ai_protocol)) == -1 ||
+                    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on,
+                               sizeof on) == -1 ||
+                    bind(sock, res->ai_addr, res->ai_addrlen) == -1);
+        // No matter if it succeeded or not, free the address info
+        freeaddrinfo(res);
+        if (failed) {
+            if (sock != -1) {
+                close(sock);
+            }
             return (-1);
+        } else {
+            return (sock);
         }
-        struct sockaddr_in addr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(server_port);
-        if (inet_pton(AF_INET, server_ip.c_str(), &addr.sin_addr.s_addr) != 1) {
-            return (-1);
-        }
-        if (bind(result, reinterpret_cast<const sockaddr*>(&addr),
-                 sizeof addr) == -1) {
-            return (-1);
-        }
-        return (result);
     }
 protected:
     void SetUp() {
