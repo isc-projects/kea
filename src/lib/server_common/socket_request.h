@@ -152,8 +152,7 @@ public:
     ///
     /// \param session the CC session that'll be used to talk to the
     ///                socket creator.
-    /// \throw InvalidOperation when it is called more than once,
-    ///                         when socket_path is empty
+    /// \throw InvalidOperation when it is called more than once
     static void init(config::ModuleCCSession& session);
 
     /// \brief Initialization for tests
