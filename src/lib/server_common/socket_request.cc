@@ -11,6 +11,7 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+#include <config.h>
 
 #include "socket_request.h"
 
@@ -32,21 +33,33 @@ SocketRequestor* requestor(NULL);
 
 // Before the boss process calls send_fd, it first sends this
 // string to indicate success
-static const std::string CREATOR_SOCKET_OK("1");
+const std::string& CREATOR_SOCKET_OK() {
+    static const std::string str("1");
+    return (str);
+}
 
 // Before the boss process calls send_fd, it first sends this
 // string to indicate failure
-static const std::string CREATOR_SOCKET_UNAVAILABLE("0");
+const std::string& CREATOR_SOCKET_UNAVAILABLE() {
+    static const std::string str("0");
+    return (str);
+}
 
 // The name of the ccsession command to request a socket from boss
 // (the actual format of command and response are hardcoded in their
 // respective methods)
-static const std::string REQUEST_SOCKET_COMMAND("get_socket");
+const std::string& REQUEST_SOCKET_COMMAND() {
+    static const std::string str("get_socket");
+    return (str);
+}
 
 // The name of the ccsession command to tell boss we no longer need
 // a socket (the actual format of command and response are hardcoded
 // in their respective methods)
-static const std::string RELEASE_SOCKET_COMMAND("drop_socket");
+const std::string& RELEASE_SOCKET_COMMAND() {
+    static const std::string str("drop_socket");
+    return (str);
+}
 
 // This implementation class for SocketRequestor uses
 // a ModuleCCSession for communication with the boss process,
@@ -156,7 +169,7 @@ private:
         }
         request->set("share_name", isc::data::Element::create(share_name));
 
-        return (isc::config::createCommand(REQUEST_SOCKET_COMMAND, request));
+        return (isc::config::createCommand(REQUEST_SOCKET_COMMAND(), request));
     }
 
     isc::data::ConstElementPtr
@@ -164,7 +177,7 @@ private:
         isc::data::ElementPtr release = isc::data::Element::createMap();
         release->set("token", isc::data::Element::create(token));
 
-        return (isc::config::createCommand(RELEASE_SOCKET_COMMAND, release));
+        return (isc::config::createCommand(RELEASE_SOCKET_COMMAND(), release));
     }
 
     // Checks and parses the response receive from Boss
@@ -219,6 +232,11 @@ private:
     // \return the socket file descriptor
     int
     createFdShareSocket(const std::string& path) {
+        // TODO: Current master has socketsession code and better way
+        // of handling errors without potential leaks for this. It is
+        // not public there at this moment, but when this is merged
+        // we should make a ticket to move this functionality to the
+        // SocketSessionReceiver and use that.
         int sock_pass_fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (sock_pass_fd == -1) {
             isc_throw(SocketError, "Unable to open domain socket " << path <<
@@ -226,17 +244,23 @@ private:
         }
         struct sockaddr_un sock_pass_addr;
         sock_pass_addr.sun_family = AF_UNIX;
-        if (path.size() > sizeof(sock_pass_addr.sun_path)) {
+        if (path.size() >= sizeof(sock_pass_addr.sun_path)) {
+            close(sock_pass_fd);
             isc_throw(SocketError, "Unable to open domain socket " << path <<
                                    ": path too long");
         }
-
+#ifdef HAVE_SA_LEN
+        sock_pass_addr.sun_len = path.size();
+#endif
         strcpy(sock_pass_addr.sun_path, path.c_str());
         const socklen_t len = path.size() +
             offsetof(struct sockaddr_un, sun_path);
+        // Yes, C-style cast bad. See previous comment about
+        // SocketSessionReceiver.
         if (connect(sock_pass_fd,
                     (struct sockaddr *)&sock_pass_addr,
                     len) == -1) {
+            close(sock_pass_fd);
             isc_throw(SocketError, "Unable to open domain socket " << path <<
                                    ": " << strerror(errno));
         }
@@ -257,10 +281,10 @@ private:
                       "Error reading status code while requesting socket");
         }
         // Actual status value hardcoded by boss atm.
-        if (CREATOR_SOCKET_UNAVAILABLE == status) {
+        if (CREATOR_SOCKET_UNAVAILABLE() == status) {
             isc_throw(SocketError,
                       "CREATOR_SOCKET_UNAVAILABLE returned");
-        } else if (CREATOR_SOCKET_OK != status) {
+        } else if (CREATOR_SOCKET_OK() != status) {
             isc_throw(SocketError,
                       "Unknown status code returned before recv_fd " << status);
         }
@@ -268,7 +292,7 @@ private:
         const int passed_sock_fd = isc::util::io::recv_fd(sock_pass_fd);
 
         // check for error values of passed_sock_fd (see fd_share.h)
-        if (passed_sock_fd <= 0) {
+        if (passed_sock_fd < 0) {
             switch (passed_sock_fd) {
             case isc::util::io::FD_COMM_ERROR:
                 isc_throw(SocketError,
