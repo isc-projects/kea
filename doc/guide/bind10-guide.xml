@@ -810,7 +810,6 @@ Debian and Ubuntu:
             <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative server</entry></row>
             <row><entry>b10-resolver</entry><entry>resolver</entry><entry>The resolver</entry></row>
             <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>The command control (remote control interface)</entry></row>
-            <row><entry>setuid</entry><entry>setuid</entry><entry>Virtual component, see below</entry></row>
             <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
           </tbody>
           </tgroup>
@@ -838,6 +837,7 @@ Debian and Ubuntu:
         The priority defines order in which the components should start.
         The ones with higher number are started sooner than the ones with
         lower ones. If you don't set it, 0 (zero) is used as the priority.
+        Usually, leaving it at the default is enough.
       </para>
 
       <para>
@@ -894,22 +894,6 @@ address, but the usual ones don't." mean? -->
           In short, you should think twice before disabling something here.
         </para>
       </note>
-
-      <para>
-	Now, to the mysterious setuid virtual component. If you
-	use the <command>-u</command> option to start the
-	<command>bind10</command> as root, but change the user
-	later, we need to start the <command>b10-auth</command> or
-	<command>b10-resolver</command> as root (until the socket
-	creator is finished).<!-- TODO --> So we need to specify
-	the time when the switch from root do the given user happens
-	and that's what the setuid component is for. The switch is
-	done at the time the setuid component would be started, if
-	it was a process. The default configuration contains the
-	setuid component with priority 5, <command>b10-auth</command>
-	has 10 to be started before the switch and everything else
-	is without priority, so it is started after the switch.
-      </para>
 
     </section>
 
