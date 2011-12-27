@@ -169,9 +169,8 @@ void Dhcpv4Srv::copyDefaultFields(const boost::shared_ptr<Pkt4>& question,
     answer->setHops(question->getHops());
 
     // copy MAC address
-    vector<uint8_t> mac;
-    mac.resize(Pkt4::MAX_CHADDR_LEN);
-    memcpy(&mac[0], question->getChaddr(), Pkt4::MAX_CHADDR_LEN);
+    vector<uint8_t> mac(question->getChaddr(),
+                        question->getChaddr() + Pkt4::MAX_CHADDR_LEN);
     answer->setHWAddr(question->getHtype(), question->getHlen(), mac);
 
     // relay address
@@ -230,6 +229,7 @@ void Dhcpv4Srv::assignLease(boost::shared_ptr<Pkt4>& msg) {
     opt = boost::shared_ptr<Option>(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
     opt->setUint32(HARDCODED_LEASE_TIME);
     msg->addOption(opt);
+    // TODO: create Option_IntArray that holds list of integers, similar to Option4_AddrLst
 
     // Subnet mask (type 1)
     opt = boost::shared_ptr<Option>
@@ -247,8 +247,6 @@ Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4>& discover) {
     boost::shared_ptr<Pkt4> offer = boost::shared_ptr<Pkt4>
         (new Pkt4(DHCPOFFER, discover->getTransid()));
 
-    boost::shared_ptr<Option> opt;
-
     copyDefaultFields(discover, offer);
     appendDefaultOptions(offer, DHCPOFFER);
     appendRequestedOptions(offer);
@@ -263,29 +261,11 @@ Dhcpv4Srv::processRequest(boost::shared_ptr<Pkt4>& request) {
     boost::shared_ptr<Pkt4> ack = boost::shared_ptr<Pkt4>
         (new Pkt4(DHCPACK, request->getTransid()));
 
-    boost::shared_ptr<Option> opt;
-
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
     appendRequestedOptions(ack);
 
-    // TODO: Implement actual lease assignment here
-    ack->setYiaddr(IOAddress(HARDCODED_LEASE));
-
-    // IP Address Lease time (type 51)
-    opt = boost::shared_ptr<Option>(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
-    opt->setUint32(HARDCODED_LEASE_TIME);
-    ack->addOption(opt);
-    // TODO: create Option_IntArray that holds list of integers, similar to Option4_AddrLst
-
-    // Subnet mask (type 1)
-    opt = boost::shared_ptr<Option>
-        (new Option4AddrLst(DHO_SUBNET_MASK, IOAddress(HARDCODED_NETMASK)));
-    ack->addOption(opt);
-
-    // Router (type 3)
-    opt = boost::shared_ptr<Option>(new Option4AddrLst(DHO_ROUTERS, IOAddress(HARDCODED_GATEWAY)));
-    ack->addOption(opt);
+    assignLease(ack);
 
     return (ack);
 }

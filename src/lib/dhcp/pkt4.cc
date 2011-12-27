@@ -172,7 +172,7 @@ Pkt4::unpack() {
     size_t opts_len = bufferIn.getLength() - bufferIn.getPosition();
     vector<uint8_t> optsBuffer;
 
-    // fist use of readVector
+    // First use of readVector.
     bufferIn.readVector(optsBuffer, opts_len);
     LibDHCP::unpackOptions4(optsBuffer, options_);
 

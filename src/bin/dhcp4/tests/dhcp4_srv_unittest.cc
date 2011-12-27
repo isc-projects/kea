@@ -111,8 +111,7 @@ TEST_F(Dhcpv4SrvTest, basic) {
 
 TEST_F(Dhcpv4SrvTest, processDiscover) {
     NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-    vector<uint8_t> mac;
-    mac.resize(6);
+    vector<uint8_t> mac(6);
     for (int i = 0; i < 6; i++) {
         mac[i] = 255 - i;
     }
@@ -170,8 +169,7 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
 
 TEST_F(Dhcpv4SrvTest, processRequest) {
     NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-    vector<uint8_t> mac;
-    mac.resize(6);
+    vector<uint8_t> mac(6);
     for (int i = 0; i < 6; i++) {
         mac[i] = i*10;
     }
