@@ -1820,6 +1820,16 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     and DHCPv6. This chapter is about DHCP for IPv4. For description of
     DHCPv6 server, see <xref linkend="dhcp6"/>.</para>
 
+    <para>DHCPv6 server component is currently under intense
+    development. You may want to check out <ulink
+    url="http://bind10.isc.org/wiki/Kea">BIND10 DHCP (Kea) wiki</ulink>
+    and recent posts on <ulink
+    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND10
+    developers mailing list</ulink>.</para>
+
+    <para>DHCPv4 and DHCPv6 components in BIND10 architecture are
+    internally code named <quote>Kea</quote>.</para>
+
     <note>
       <para>
         As of December 2011, both DHCPv4 and DHCPv6 components are
@@ -1835,17 +1845,17 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     <section id="dhcp4-usage">
       <title>DHCPv4 Server Usage</title>
-      <para>BIND10 provides DHCPv4 server component since
-      December 2011. It is currently described as skeleton server and
-      can be described as an early prototype that is not yet fully
-      functional. It is mature enough to conduct first tests in lab
-      environment, but it has significant limitations. See <xref
-      linkend="dhcp4-limit"/> for details.
+      <para>BIND10 provides DHCPv4 server component since December
+      2011. It is a skeleton server and can be described as an early
+      prototype that is not fully functional yet. It is mature enough
+      to conduct first tests in lab environment, but it has
+      significant limitations. See <xref linkend="dhcp4-limit"/> for
+      details.
       </para>
 
       <para>
         DHCPv4 server is implemented as <command>b10-dhcp4</command>
-        daemon. As it is configurable yet, it is fully autonomous,
+        daemon. As it is not configurable yet, it is fully autonomous,
         i.e. it does not interact with <command>b10-cfgmgr</command>.
         To start DHCPv4 server, simply input:
 
@@ -1859,7 +1869,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         directory, in /usr/local/bin/b10-dhcp4 or other directory
         you specified during compilation.
 
-        Afre start, server will detect available network interfaces
+        After start, server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback and have IPv4 address
         assigned.
@@ -1869,8 +1879,18 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         will respond to them with OFFER and ACK, respectively.
 
         As DHCPv4 server opens privileged ports, it requires root
-        access. Make sure you run this daemon as root.
-      </para>
+        access. Make sure you run this daemon as root.</para>
+
+        <note>
+          <para>
+            Integration with <command>bind10</command> is
+            planned. Ultimately, <command>b10-dhcp4</command> will not
+            be started directly, but rather via
+            <command>bind10</command>. Please be aware of this planned
+            change.
+          </para>
+        </note>
+
     </section>
 
     <section id="dhcp4-config">
@@ -1883,8 +1903,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
       </para>
       <para>
         At this stage of development, the only way to alter server
-        configuration is to tweak its source code. To do so, please edit
-        src/bin/dhcp4/dhcp4_srv.cc file and modify following parameters:
+        configuration is to tweak its source code. To do so, please
+        edit src/bin/dhcp4/dhcp4_srv.cc file and modify following
+        parameters and recompile:
         <screen>
 const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
 const std::string HARDCODED_NETMASK = "255.255.255.0";
@@ -1898,21 +1919,38 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
     </section>
 
-    <section id="dhcp4-limit">
-      <title>DHCPv4 Server Limitations</title>
-      <para>
-        This are the current limitations of DHCPv4 server
-        software. Most of them are reflection of the early stage of
-        development.
-      </para>
+    <section id="dhcp4-std">
+      <title>Supported standards</title>
+      <para>The following standards and draft standards are currently
+      supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara>During initial IPv4 node configuration, where
-            server has to send packet to a node that does not have
-            IPv4 address assigned yet, server requires certain tricks
-            (or hacks) to transmit such packets. This is not
-            implemented yet, therefore DHCPv4 server supports relayed
-            traffic only.</simpara>
+            <simpara>RFC2131: Supported messages are DISCOVER, OFFER,
+            REQUEST, and ACK.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>RFC2132: Supported options are: PAD (0),
+            END(255), Message Type(53), DHCP Server Identifier (54),
+            Domain Name (15), DNS Servers (6), IP Address Lease Time
+            (51), Subnet mask (1), and Routers (3).</simpara>
+          </listitem>
+      </itemizedlist>
+    </section>
+
+    <section id="dhcp4-limit">
+      <title>DHCPv4 Server Limitations</title> 
+      <para> These are the current limitations of DHCPv4 server
+      software. Most of them are reflections of the early stage of
+      development and should be treated as <quote>not implemented
+      yet</quote>, rather than actual limitations.</para>
+      <itemizedlist>
+          <listitem>
+            <simpara>During initial IPv4 node configuration, server is
+            expected to send packets to a node that does not have IPv4
+            address assigned yet. Server requires certain tricks (or
+            hacks) to transmit such packets. This is not implemented
+            yet, therefore DHCPv4 server supports relayed traffic only
+            (that is normal point to point communication).</simpara>
           </listitem>
           <listitem>
             <simpara><command>b10-dhcp4</command> provides a single,
@@ -1936,13 +1974,13 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             this code on a machine that has many interfaces and
             <command>b10-dhcp4</command> happens to listen on wrong
             interface, the easiest way to work around this problem is
-            to down other interfaces. This limitation will be fixed
-            shortly.</simpara>
+            to turn down other interfaces. This limitation will be
+            fixed shortly.</simpara>
           </listitem>
           <listitem>
-            <simpara>PRL (Parameter Request List) is currently ignored
-            and server assigns DNS SERVER and DOMAIN NAME
-            options.</simpara>
+            <simpara>PRL (Parameter Request List, a list of options
+            requested by a client) is currently ignored and server
+            assigns DNS SERVER and DOMAIN NAME options.</simpara>
           </listitem>
           <listitem>
             <simpara><command>b10-dhcp4</command> does not support
@@ -1955,17 +1993,27 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             <simpara>Interface detection is currently working on Linux
             only. See <xref linkend="iface-detect"/> for details.</simpara>
           </listitem>
-        <listitem>
-          <simpara>Address renewal (RENEW), rebinding (REBIND),
-          confirmation (CONFIRM), duplication report (DECLINE) and
-          release (RELEASE) are not supported yet.</simpara>
-        </listitem>
-        <listitem>
-          <simpara>DNS Update is not supported yet.</simpara>
-        </listitem>
+          <listitem>
+            <simpara><command>b10-dhcp4</command> does not verify that
+            assigned address is unused. According to RFC2131, the
+            allocating server should verify that address is no used by
+            sending ICMP echo request.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Address renewal (RENEW), rebinding (REBIND),
+            confirmation (CONFIRM), duplication report (DECLINE) and
+            release (RELEASE) are not supported yet.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>DNS Update is not supported yet.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>-v (verbose) command line option is currently
+            permanently enabled.</simpara>
+          </listitem>
       </itemizedlist>
-
     </section>
+
   </chapter>
 
   <chapter id="dhcp6">
@@ -1975,6 +2023,16 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     that is described in this chapter. For DHCPv4 server
     implementation, see <xref linkend="dhcp4"/>.
     </para>
+
+    <para>DHCPv6 server component is currently under intense
+    development. You may want to check out <ulink
+    url="http://bind10.isc.org/wiki/Kea">BIND10 DHCP (Kea) wiki</ulink>
+    and recent posts on <ulink
+    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND10
+    developers mailing list</ulink>.</para>
+
+    <para>DHCPv4 and DHCPv6 components in BIND10 architecture are
+    internally code named <quote>Kea</quote>.</para>
 
     <note>
       <para>
@@ -1993,16 +2051,16 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       <title>DHCPv6 Server Usage</title>
       <para>
         BIND10 provides DHCPv6 server component since September
-        2011. It is currently described as skeleton server and can be
-        described as an early prototype that is not yet fully
-        functional. It is mature enough to conduct first tests in lab
-        environment, but it has significant limitations. See <xref
-        linkend="dhcp6-limit"/> for details.
+        2011. It is a skeleton server and can be described as an early
+        prototype that is not fully functional yet. It is mature
+        enough to conduct first tests in lab environment, but it has
+        significant limitations. See <xref linkend="dhcp6-limit"/> for
+        details.
       </para>
 
       <para>
         DHCPv6 server is implemented as <command>b10-dhcp6</command>
-        daemon. As it is configurable yet, it is fully autonomous,
+        daemon. As it is not configurable yet, it is fully autonomous,
         i.e. it does not interact with <command>b10-cfgmgr</command>.
         To start DHCPv6 server, simply input:
 
@@ -2016,10 +2074,10 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         directory, in /usr/local/bin/b10-dhcp6 or other directory
         you specified during compilation.
 
-        Afre start, server will detect available network interfaces
+        After start, server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
-        are up, running, are not loopback and have IPv4 address
-        assigned.
+        are up, running, are not loopback, are multicast-capable and
+        have IPv6 address assigned.
 
         Server will then listen to incoming traffic. Currently
         supported client messages are SOLICIT and REQUEST. Server
@@ -2028,6 +2086,17 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         As DHCPv6 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
+
+        <note>
+          <para>
+            Integration with <command>bind10</command> is
+            planned. Ultimately, <command>b10-dhcp6</command> will not
+            be started directly, but rather via
+            <command>bind10</command>. Please be aware of this planned
+            change.
+          </para>
+        </note>
+
     </section>
 
     <section id="dhcp6-config">
@@ -2040,8 +2109,9 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
       <para>
         At this stage of development, the only way to alter server
-        configuration is to tweak its source code. To do so, please edit
-        src/bin/dhcp6/dhcp6_srv.cc file and modify following parameters:
+        configuration is to tweak its source code. To do so, please
+        edit src/bin/dhcp6/dhcp6_srv.cc file and modify following
+        parameters and recompile:
         <screen>
 const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
 const uint32_t HARDCODED_T1 = 1500; // in seconds
@@ -2055,8 +2125,28 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
 
     </section>
 
+    <section id="dhcp6-std">
+      <title>Supported DHCPv6 Standards</title>
+      <para>The following standards and draft standards are currently
+      supported:</para>
+      <itemizedlist>
+          <listitem>
+            <simpara>RFC3315: Supported messages are SOLICIT,
+            ADVERTISE, REQUEST, and REPLY. Supported options are
+            SERVER_ID, CLIENT_ID, IA_NA, and IAADDRESS.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>RFC3646: Supported option is DNS_SERVERS.</simpara>
+          </listitem>
+      </itemizedlist>
+    </section>
+
     <section id="dhcp6-limit">
       <title>DHCPv6 Server Limitations</title>
+      <para> These are the current limitations of DHCPv6 server
+      software. Most of them are reflections of the early stage of
+      development and should be treated as <quote>not implemented
+      yet</quote>, rather than actual limitations.</para>
       <para>
       <itemizedlist>
         <listitem>
@@ -2083,8 +2173,13 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
           so if you are running this code on a machine that has many
           interfaces and <command>b10-dhcp6</command> happens to
           listen on wrong interface, the easiest way to work around
-          this problem is to down other interfaces. This limitation
-          will be fixed shortly.</simpara>
+          this problem is to turn down other interfaces. This
+          limitation will be fixed shortly.</simpara>
+        </listitem>
+        <listitem>
+          <simpara>ORO (Option Request Option, a list of options
+          requested by a client) is currently ignored and server
+          assigns DNS SERVER option.</simpara>
         </listitem>
         <listitem>
           <simpara>Temporary addresses are not supported yet.</simpara>
@@ -2104,6 +2199,10 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
           <simpara>Interface detection is currently working on Linux
           only. See <xref linkend="iface-detect"/> for details.</simpara>
         </listitem>
+        <listitem>
+          <simpara>-v (verbose) command line option is currently permanently
+          enabled.</simpara>
+        </listitem>
       </itemizedlist>
       </para>
     </section>
@@ -2112,17 +2211,19 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
 
   <chapter id="libdhcp">
     <title>libdhcp++ library</title>
-    <para>libdhcp++ is a common library written in C++ that is
-    handles many DHCP-related tasks, like DHCPv4 and DHCPv6 packets
-    parsing, manipulation and assembly, option parsing, manipulation
-    and assembly, network interface detection and socket operations.
+    <para>libdhcp++ is a common library written in C++ that handles
+    many DHCP-related tasks, like DHCPv4 and DHCPv6 packets parsing,
+    manipulation and assembly, option parsing, manipulation and
+    assembly, network interface detection and socket operations, like
+    socket creations, data transmission and reception and socket
+    closing.
     </para>
 
     <para>
     While this library is currently used by
-    <command>b10-dhcp6</command> and <command>b10-dhcp4</command>
-    only, it is designed to be portable, universal library useful
-    for any kind of DHCP-related software.
+    <command>b10-dhcp4</command> and <command>b10-dhcp6</command>
+    only, it is designed to be portable, universal library useful for
+    any kind of DHCP-related software.
     </para>
 
     <section id="iface-detect">
@@ -2132,14 +2233,14 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
       currently only supported on Linux systems.</para>
 
       <para>For non-linux systems, there is currently stub
-      implementation provided. As DHCP servers need to know
-      available addresses, there was a simple mechanism implemented
-      to provide that information. User is expected to create
-      interfaces.txt file. Format of this file is simple. It
-      contains list of interfaces along with available address on
-      each interface. This mechanism is temporary and is going to be
-      removed as soon as interface detection becomes available on
-      non-linux systems. Example of interfaces.txt file looks as follows:
+      implementation provided. As DHCP servers need to know available
+      addresses, there is a simple mechanism implemented to provide
+      that information. User is expected to create interfaces.txt
+      file. Format of this file is simple. It contains list of
+      interfaces along with available address on each interface. This
+      mechanism is temporary and is going to be removed as soon as
+      interface detection becomes available on non-linux
+      systems. Example of interfaces.txt file looks as follows:
       <screen>
 # For DHCPv6, please specify link-local address (starts with fe80::)
 # If in doubt, check output of 'ifconfig -a' command.
