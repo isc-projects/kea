@@ -107,14 +107,12 @@ class ProcessInfo:
     dev_null = open(os.devnull, "w")
 
     def __init__(self, name, args, env={}, dev_null_stdout=False,
-                 dev_null_stderr=False, uid=None, username=None):
-        self.name = name 
+                 dev_null_stderr=False):
+        self.name = name
         self.args = args
         self.env = env
         self.dev_null_stdout = dev_null_stdout
         self.dev_null_stderr = dev_null_stderr
-        self.uid = uid
-        self.username = username
         self.process = None
         self.pid = None
 
@@ -125,17 +123,6 @@ class ProcessInfo:
         # SIGINT signals on Ctrl-C (the boss will shut everthing down by
         # other means).
         os.setpgrp()
-        # Second, set the user ID if one has been specified
-        if self.uid is not None:
-            try:
-                posix.setuid(self.uid)
-            except OSError as e:
-                if e.errno == errno.EPERM:
-                    # if we failed to change user due to permission report that
-                    raise ProcessInfoError("Unable to change to user %s (uid %d)" % (self.username, self.uid))
-                else:
-                    # otherwise simply re-raise whatever error we found
-                    raise
 
     def _spawn(self):
         if self.dev_null_stdout:
@@ -439,8 +426,7 @@ class BoB:
         """
         self.log_starting("b10-msgq")
         msgq_proc = ProcessInfo("b10-msgq", ["b10-msgq"], self.c_channel_env,
-                                True, not self.verbose, uid=self.uid,
-                                username=self.username)
+                                True, not self.verbose)
         msgq_proc.spawn()
         self.log_started(msgq_proc.pid)
 
@@ -474,8 +460,7 @@ class BoB:
         if self.config_filename is not None:
             args.append("--config-filename=" + self.config_filename)
         bind_cfgd = ProcessInfo("b10-cfgmgr", args,
-                                self.c_channel_env, uid=self.uid,
-                                username=self.username)
+                                self.c_channel_env)
         bind_cfgd.spawn()
         self.log_started(bind_cfgd.pid)
 
