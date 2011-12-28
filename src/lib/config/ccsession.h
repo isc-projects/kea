@@ -330,7 +330,7 @@ public:
                      std::string group,
                      std::string instance = "*",
                      std::string to = "*") {
-        return session_.group_sendmsg(msg, group, instance, to);
+        return (session_.group_sendmsg(msg, group, instance, to));
     };
 
     /**
@@ -347,7 +347,7 @@ public:
                       isc::data::ConstElementPtr& msg,
                       bool nonblock = true,
                       int seq = -1) {
-        return session_.group_recvmsg(envelope, msg, nonblock, seq);
+        return (session_.group_recvmsg(envelope, msg, nonblock, seq));
     };
 
 private:
