@@ -42,7 +42,6 @@
 #include <auth/common.h>
 #include <auth/auth_config.h>
 #include <auth/command.h>
-#include <auth/change_user.h>
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
 #include <asiodns/asiodns.h>
@@ -85,7 +84,6 @@ usage() {
     cerr << "Usage:  b10-auth [-u user] [-nv]"
          << endl;
     cerr << "\t-n: do not cache answers in memory" << endl;
-    cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
@@ -95,7 +93,6 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    const char* uid = NULL;
     bool cache = true;
     bool verbose = false;
 
@@ -103,9 +100,6 @@ main(int argc, char* argv[]) {
         switch (ch) {
         case 'n':
             cache = false;
-            break;
-        case 'u':
-            uid = optarg;
             break;
         case 'v':
             verbose = true;
@@ -196,10 +190,6 @@ main(int argc, char* argv[]) {
             auth_server->updateConfig(ElementPtr());
         } catch (const AuthConfigError& ex) {
             LOG_ERROR(auth_logger, AUTH_CONFIG_LOAD_FAIL).arg(ex.what());
-        }
-
-        if (uid != NULL) {
-            changeUser(uid);
         }
 
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_LOAD_TSIG);
