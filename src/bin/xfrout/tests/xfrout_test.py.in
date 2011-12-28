@@ -727,7 +727,7 @@ class TestXfroutSession(TestXfroutSessionBase):
                 self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
         self.assertEqual(None, self.xfrsess._iterator)
         self.assertEqual(None, self.xfrsess._jnl_reader)
-        
+
         # The data source doesn't support journaling.  Should fallback to AXFR.
         zone_name = Name('nojournal.example.com')
         self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
