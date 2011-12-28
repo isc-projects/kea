@@ -166,9 +166,8 @@ class Diff:
             '''A helper routine to identify whether two RRsets are of the
             same 'type'.  For RRSIGs we should consider type covered, too.
             '''
-            if rrset1.get_type() != rrset2.get_type():
-                return False
-            if rrset1.get_type() != isc.dns.RRType.RRSIG():
+            if rrset1.get_type() != isc.dns.RRType.RRSIG() or \
+                    rrset2.get_type != isc.dns.RRType.RRSIG():
                 return rrset1.get_type() == rrset2.get_type()
             # RR type of the both RRsets is RRSIG.  Compare type covered.
             # We know they have exactly one RDATA.
