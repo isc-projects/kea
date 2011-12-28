@@ -802,6 +802,8 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           uccs.remove_value, "/Spec32/named_set_item",
                           "no_such_item")
+        self.assertRaises(isc.cc.data.DataAlreadyPresentError,
+                          uccs.add_value, "/Spec32/named_set_item", "c")
 
     def test_set_value_named_set(self):
         fake_conn = fakeUIConn()
