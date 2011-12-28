@@ -1872,7 +1872,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
       </para>
     </section>
 
-    <section>
+    <section id="dhcp4-config">
       <title>Server Configuration</title>
       <para>
         DHCPv4 server does not have lease database implemented yet
@@ -1900,12 +1900,59 @@ const std::string HARDCODED_SERVER_ID = "10.3.1.1";</screen>
     <section id="dhcp4-limit">
       <title>DHCPv4 Server Limitations</title>
       <para>
-        During initial IPv4 node configuration, where server has to
+        This are the current limitations of DHCPv4 server
+        software. Most of them are reflection of the early stage of
+        development.
+      </para>
+      <itemizedlist>
+          <listitem>
+            <simpara>During initial IPv4 node configuration, where server has to
         send packet to a node that does not have IPv4 address
         assigned yet, server requires certain tricks (or hacks) to
         transmit such packets. This is not implemented yet, therefore
-        DHCPv4 server supports relayed traffic only.
-      </para>
+        DHCPv4 server supports relayed traffic only.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>It provides a single, fixed, hardcoded lease to
+            any client that asks.  There is no lease manager
+            implemented. If two clients request addresses, they will
+            both get the same fixed address.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Server does not support any configuration
+            mechanisms yet. The whole configuration is currently
+            hardcoded. The only way to tweak configuration is to
+            directly modify source code. See see <xref
+            linkend="dhcp4-config"/> for details.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Upon start, server will open sockets on all
+            interfaces that are not loopback, are up and running and
+            have IPv4 address.  Support for multiple interfaces is not
+            coded in reception routines yet, so if you are running
+            this code on a machine that has many interfaces and
+            <command>b10-dhcp4</command> happens to listen on wrong
+            interface, the easiest way to is to down other
+            interfaces. This limitation will be fixed shortly.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>PRL (Parameter Request List) is currently ignored
+            and server assigns DNS SERVER and DOMAIN NAME
+            options.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>b10-dhcp4</command> does not support
+            BOOTP. That is a design choice. This limitation is
+            permanent. If have legacy nodes that can't use DHCP and
+            require BOOTP support, please use latest version of ISC DHCP
+            <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Interface detection is currently working on Linux
+            only. See <xref linkend="iface-detect"/> for details.</simpara>
+          </listitem>
+      </itemizedlist>
+
     </section>
   </chapter>
 
@@ -1936,11 +1983,10 @@ const std::string HARDCODED_SERVER_ID = "10.3.1.1";</screen>
     for any kind of DHCP-related software.
     </para>
 
-    <section>
+    <section id="iface-detect">
       <title>Interface detection</title>
       <para>Both DHCPv4 and DHCPv6 components share network
-      interface detection routines (see <xref
-      linkend="libdhcp++"/> for details). Interface detection is
+      interface detection routines. Interface detection is
       currently only supported on Linux systems.</para>
 
       <para>For non-linux systems, there is currently stub
