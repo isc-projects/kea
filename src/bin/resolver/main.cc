@@ -43,7 +43,6 @@
 
 #include <xfr/xfrout_client.h>
 
-#include <auth/change_user.h>
 #include <auth/common.h>
 
 #include <resolver/spec_config.h>
@@ -93,7 +92,6 @@ my_command_handler(const string& command, ConstElementPtr args) {
 void
 usage() {
     cerr << "Usage:  b10-resolver [-u user] [-v]" << endl;
-    cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
@@ -103,13 +101,9 @@ int
 main(int argc, char* argv[]) {
     bool verbose = false;
     int ch;
-    const char* uid = NULL;
 
     while ((ch = getopt(argc, argv, "u:v")) != -1) {
         switch (ch) {
-        case 'u':
-            uid = optarg;
-            break;
         case 'v':
             verbose = true;
             break;
@@ -210,11 +204,6 @@ main(int argc, char* argv[]) {
                                              my_config_handler,
                                              my_command_handler);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_CHANNEL);
-
-        // FIXME: This does not belong here, but inside Boss
-        if (uid != NULL) {
-            changeUser(uid);
-        }
 
         resolver->setConfigSession(config_session);
         // Install all initial configurations.  If loading configuration
