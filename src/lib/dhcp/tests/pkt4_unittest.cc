@@ -244,8 +244,18 @@ TEST(Pkt4Test, fixedFieldsPack) {
 TEST(Pkt4Test, fixedFieldsUnpack) {
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
+    expectedFormat.push_back(0x63); // magic cookie
+    expectedFormat.push_back(0x82);
+    expectedFormat.push_back(0x53);
+    expectedFormat.push_back(0x63);
+
+    expectedFormat.push_back(0x35); // message-type
+    expectedFormat.push_back(0x1);
+    expectedFormat.push_back(0x1);
+
     boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                Pkt4::DHCPV4_PKT_HDR_LEN));
+                                         expectedFormat.size()));;
+
 
     EXPECT_NO_THROW(
         pkt->unpack()

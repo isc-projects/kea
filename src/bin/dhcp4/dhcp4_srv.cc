@@ -24,8 +24,6 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
-// #define ECHO_SERVER
-
 // These are hardcoded parameters. Currently this is a skeleton server that only
 // grants those options and a single, fixed, hardcoded lease.
 const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
@@ -46,7 +44,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     /// @todo: instantiate LeaseMgr here once it is imlpemented.
     IfaceMgr::instance().printIfaces();
 
-    // uncomment this once #1238, #992 and #1239 are merged
     IfaceMgr::instance().openSockets4(port);
 
     setServerID();
@@ -66,12 +63,6 @@ Dhcpv4Srv::run() {
         boost::shared_ptr<Pkt4> rsp;   // server's response
 
         query = IfaceMgr::instance().receive4();
-
-#if defined(ECHO_SERVER)
-        query->repack();
-        IfaceMgr::instance().send(query);
-        continue;
-#endif
 
         if (query) {
             try {
@@ -131,10 +122,7 @@ Dhcpv4Srv::run() {
                 if (rsp->pack()) {
                     cout << "Packet assembled correctly." << endl;
                 }
-#if 1
-                // uncomment this once ticket 1240 is merged.
                 IfaceMgr::instance().send(rsp);
-#endif
             }
         }
 
@@ -219,7 +207,7 @@ void Dhcpv4Srv::appendRequestedOptions(boost::shared_ptr<Pkt4>& msg) {
     msg->addOption(opt);
 }
 
-void Dhcpv4Srv::assignLease(boost::shared_ptr<Pkt4>& msg) {
+void Dhcpv4Srv::tryAssignLease(boost::shared_ptr<Pkt4>& msg) {
     boost::shared_ptr<Option> opt;
 
     // TODO: Implement actual lease assignment here
@@ -251,7 +239,7 @@ Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4>& discover) {
     appendDefaultOptions(offer, DHCPOFFER);
     appendRequestedOptions(offer);
 
-    assignLease(offer);
+    tryAssignLease(offer);
 
     return (offer);
 }
@@ -265,7 +253,7 @@ Dhcpv4Srv::processRequest(boost::shared_ptr<Pkt4>& request) {
     appendDefaultOptions(ack, DHCPACK);
     appendRequestedOptions(ack);
 
-    assignLease(ack);
+    tryAssignLease(ack);
 
     return (ack);
 }

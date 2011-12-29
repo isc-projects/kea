@@ -120,7 +120,7 @@ protected:
     /// @brief Appends options requested by client.
     ///
     /// This method assigns options that were requested by client
-    /// or are enforced by server (sent out to all clients).
+    /// (sent in PRL) or are enforced by server.
     ///
     /// @param msg outgoing message (options will be added here)
     void appendRequestedOptions(boost::shared_ptr<Pkt4>& msg);
@@ -136,7 +136,7 @@ protected:
     /// used fixed, hardcoded lease.
     ///
     /// @param msg OFFER or ACK message (lease options will be added here)
-    void assignLease(boost::shared_ptr<Pkt4>& msg);
+    void tryAssignLease(boost::shared_ptr<Pkt4>& msg);
 
 
     /// @brief Appends default options to a message
