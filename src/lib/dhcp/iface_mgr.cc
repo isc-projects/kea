@@ -716,7 +716,7 @@ IfaceMgr::receive4() {
     struct in_addr to_addr;
     boost::shared_ptr<Pkt4> pkt;
     const uint32_t RCVBUFSIZE = 1500;
-    uint8_t* buf = (uint8_t*) malloc(RCVBUFSIZE);
+    static uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
     memset(&from_addr, 0, sizeof(from_addr));
@@ -747,7 +747,6 @@ IfaceMgr::receive4() {
 
     if (result < 0) {
         cout << "Failed to receive UDP4 data." << endl;
-        delete buf;
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 
@@ -784,7 +783,6 @@ IfaceMgr::receive4() {
     }
     if (!found_pktinfo) {
         cout << "Unable to find pktinfo" << endl;
-        delete buf;
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 #endif
