@@ -440,9 +440,9 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     data.push_back(1);
     data.push_back(2);
     data.push_back(3);
+    data.push_back(1);
     data.push_back(-1);
     data.push_back(-2);
-    data.push_back(1);
     ts.run(data);
 
     // 1 should be ok
@@ -463,14 +463,6 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     ASSERT_EQ("foo", socket_id.second);
     ASSERT_EQ(0, close(socket_id.first));
 
-    // -1 should not
-    addAnswer("foo", ts.getPath());
-    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
-
-    // -2 should not
-    addAnswer("foo", ts.getPath());
-    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
-
     // Create a second socket server, to test that multiple different
     // domains sockets would work as well (even though we don't actually
     // use that feature)
@@ -490,6 +482,15 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     ASSERT_EQ("foo", socket_id.second);
     ASSERT_EQ(0, close(socket_id.first));
 
+    // -1 is a "normal" error
+    addAnswer("foo", ts.getPath());
+    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+
+    // -2 is an unexpected error.  After this point it's not guaranteed the
+    // connection works as intended.
+    addAnswer("foo", ts.getPath());
+    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+
     // Vector is of first socket is now empty, so the socket should be gone
     addAnswer("foo", ts.getPath());
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
@@ -499,6 +500,5 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     addAnswer("foo", ts2.getPath());
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
 }
-
 
 }
