@@ -401,24 +401,28 @@ private:
             isc_throw(Exception, "Error in accept(): " << strerror(errno));
         }
         BOOST_FOREACH(int cur_data, data) {
-            int result;
+            bool result;
             if (cur_data == -1) {
                 // send 'CREATOR_SOCKET_UNAVAILABLE'
-                result = isc::util::io::write_data(client_fd, "0", 2);
+                result = isc::util::io::write_data(client_fd, "0\n", 2);
             } else if (cur_data == -2) {
                 // send 'CREATOR_SOCKET_OK' first
-                result = isc::util::io::write_data(client_fd, "1", 2);
-                if (result == 1) {
-                    result = send(client_fd, "a", 1, 0);
+                result = isc::util::io::write_data(client_fd, "1\n", 2);
+                if (result) {
+                    if (send(client_fd, "a", 1, 0) != 1) {
+                        result = false;
+                    }
                 }
             } else {
                 // send 'CREATOR_SOCKET_OK' first
-                result = isc::util::io::write_data(client_fd, "1", 2);
-                if (result == 1) {
-                    result = isc::util::io::send_fd(client_fd, cur_data);
+                result = isc::util::io::write_data(client_fd, "1\n", 2);
+                if (result) {
+                    if (isc::util::io::send_fd(client_fd, cur_data) != 0) {
+                        result = false;
+                    }
                 }
             }
-            if (result < 0) {
+            if (!result) {
                 isc_throw(Exception, "Error in send_fd(): " <<
                           strerror(errno));
             }
@@ -445,16 +449,19 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     addAnswer("foo", ts.getPath());
     SocketRequestor::SocketID socket_id = doRequest();
     ASSERT_EQ("foo", socket_id.second);
+    ASSERT_EQ(0, close(socket_id.first));
 
     // 2 should be ok too
     addAnswer("bar", ts.getPath());
     socket_id = doRequest();
     ASSERT_EQ("bar", socket_id.second);
+    ASSERT_EQ(0, close(socket_id.first));
 
     // 3 should be ok too (reuse earlier token)
     addAnswer("foo", ts.getPath());
     socket_id = doRequest();
     ASSERT_EQ("foo", socket_id.second);
+    ASSERT_EQ(0, close(socket_id.first));
 
     // -1 should not
     addAnswer("foo", ts.getPath());
@@ -475,21 +482,22 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     addAnswer("foo", ts2.getPath());
     socket_id = doRequest();
     ASSERT_EQ("foo", socket_id.second);
+    ASSERT_EQ(0, close(socket_id.first));
 
     // Now use first socket again
     addAnswer("foo", ts.getPath());
     socket_id = doRequest();
     ASSERT_EQ("foo", socket_id.second);
+    ASSERT_EQ(0, close(socket_id.first));
 
     // Vector is of first socket is now empty, so the socket should be gone
     addAnswer("foo", ts.getPath());
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
 
-    // Vector is of second socket is now empty too, so the socket should be gone
+    // Vector is of second socket is now empty too, so the socket should be
+    // gone
     addAnswer("foo", ts2.getPath());
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
-
-
 }
 
 

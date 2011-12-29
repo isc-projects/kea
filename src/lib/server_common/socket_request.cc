@@ -34,14 +34,14 @@ SocketRequestor* requestor(NULL);
 // Before the boss process calls send_fd, it first sends this
 // string to indicate success, followed by the file descriptor
 const std::string& CREATOR_SOCKET_OK() {
-    static const std::string str("1");
+    static const std::string str("1\n");
     return (str);
 }
 
 // Before the boss process calls send_fd, it sends this
 // string to indicate failure. It will not send a file descriptor.
 const std::string& CREATOR_SOCKET_UNAVAILABLE() {
-    static const std::string str("0");
+    static const std::string str("0\n");
     return (str);
 }
 
@@ -185,9 +185,9 @@ int
 getSocketFd(int sock_pass_fd) {
     // Boss first sends some data to signal that getting the socket
     // from its cache succeeded
-    char status[2];
-    memset(status, 0, 2);
-    if (isc::util::io::read_data(sock_pass_fd, &status, 2) < 2) {
+    char status[3];        // We need a space for trailing \0, hence 3
+    memset(status, 0, 3);
+    if (isc::util::io::read_data(sock_pass_fd, status, 2) < 2) {
         isc_throw(SocketRequestor::SocketError,
                   "Error reading status code while requesting socket");
     }
@@ -197,7 +197,8 @@ getSocketFd(int sock_pass_fd) {
                   "CREATOR_SOCKET_UNAVAILABLE returned");
     } else if (CREATOR_SOCKET_OK() != status) {
         isc_throw(SocketRequestor::SocketError,
-                  "Unknown status code returned before recv_fd " << status);
+                  "Unknown status code returned before recv_fd '" << status <<
+                  "'");
     }
 
     const int passed_sock_fd = isc::util::io::recv_fd(sock_pass_fd);
