@@ -123,6 +123,9 @@ class MockDataSrcClient:
     def get_soa(self):  # emulate ZoneIterator.get_soa()
         if self._zone_name == Name('nosoa.example.com'):
             return None
+        if self._zone_name == Name('serial.example.com'):
+            soa_rrset = create_soa(0xffffffff)
+            return soa_rrset
         soa_rrset = create_soa(SOA_CURRENT_VERSION)
         if self._zone_name == Name('multisoa.example.com'):
             soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
@@ -777,6 +780,12 @@ class TestXfroutSession(TestXfroutSessionBase):
                                               num_soa=2)
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), zone_name, TEST_RRCLASS), Rcode.FORMERR())
+    
+        # the request soa is newer than the server's current serial
+        zone_name = Name('serial.example.com')
+        self.mdata = self.create_request_data(ixfr=1,zone_name=zone_name)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                 self.getmsg(), zone_name, TEST_RRCLASS), Rcode.NOERROR())
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
@@ -1072,17 +1081,14 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
 
     def test_ixfr_to_axfr(self):
         self.xfrsess._request_data = \
-             self.create_request_data(ixfr=IXFR_NG_VERSION)
+             self.create_request_data(ixfr=2000000000)
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         self.assertEqual(Rcode.NOERROR(), response.get_rcode())
         # The SOA serial is greater than that of requested one.
         # So only the SOA was send.
-        answers = response.get_section(Message.SECTION_ANSWER)
-        self.assertEqual(1, len(answers))
-        self.assertTrue(rrsets_equal(create_soa(SOA_CURRENT_VERSION),
-                                     answers[0]))
         self.assertEqual(RRType.IXFR(), response.get_question()[0].get_type())
+        self.check_axfr_stream(response)
 
     def test_ixfr_normal_session(self):
         # See testdata/creatediff.py.  There are 8 changes between two
