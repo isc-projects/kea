@@ -43,7 +43,7 @@ namespace {
 // Check it throws an exception when it is not initialized
 TEST(SocketRequestorAccess, unitialized) {
     // Make sure it is not initialized
-    SocketRequestor::initTest(NULL);
+    initTestSocketRequestor(NULL);
     EXPECT_THROW(socketRequestor(), InvalidOperation);
 }
 
@@ -62,7 +62,7 @@ TEST(SocketRequestorAccess, initialized) {
     };
     DummyRequestor requestor;
     // Make sure it is initialized (the test way, of course)
-    SocketRequestor::initTest(&requestor);
+    initTestSocketRequestor(&requestor);
     // It returs the same "pointer" as inserted
     // The casts are there as the template system seemed to get confused
     // without them, the types should be correct even without them, but
@@ -70,7 +70,7 @@ TEST(SocketRequestorAccess, initialized) {
     EXPECT_EQ(static_cast<const SocketRequestor*>(&requestor),
               static_cast<const SocketRequestor*>(&socketRequestor()));
     // Just that we don't have an invalid pointer anyway
-    SocketRequestor::initTest(NULL);
+    initTestSocketRequestor(NULL);
 }
 
 // This class contains a fake (module)ccsession to emulate answers from Boss
@@ -79,16 +79,17 @@ public:
     SocketRequestorTest() : session(ElementPtr(new ListElement),
                                     ElementPtr(new ListElement),
                                     ElementPtr(new ListElement)),
-                            specfile(std::string(TEST_DATA_PATH) + "/spec.spec")
+                            specfile(std::string(TEST_DATA_PATH) +
+                                     "/spec.spec")
     {
         session.getMessages()->add(createAnswer());
         cc_session.reset(new ModuleCCSession(specfile, session, NULL, NULL,
                                              false, false));
-        SocketRequestor::init(*cc_session);
-    };
+        initSocketReqeustor(*cc_session);
+    }
 
     ~SocketRequestorTest() {
-        SocketRequestor::cleanup();
+        cleanupSocketRequestor();
     }
 
     // Do a standard request with some default values
