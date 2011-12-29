@@ -34,10 +34,12 @@
     </copyright>
 
     <abstract>
-      <para>BIND 10 is a Domain Name System (DNS) suite managed by
-        Internet Systems Consortium (ISC). It includes DNS libraries
-        and modular components for controlling authoritative and
-        recursive DNS servers.
+      <para>BIND 10 is a framework that features Domain Name System
+      (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
+      servers managed by Internet Systems Consortium (ISC). It
+      includes DNS libraries, modular components for controlling
+      authoritative and recursive DNS servers, and experimental DHCPv4
+      and DHCPv6 servers.
       </para>
       <para>
         This is the reference guide for BIND 10 version &__VERSION__;.
@@ -3008,6 +3010,18 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
     </section>
 
   </chapter>
+
+<!-- TODO: acknolwedgements must be unnumbered -->
+
+  <chapter>
+    <title>Acknowledgements</title>
+    <para>ISC would like to acknowledge generous support for
+    development of DHCPv4 and DHCPv6 components provided by <ulink
+    url="http://www.comcast.com">Comcast</ulink>.</para>
+  </chapter>
+
+<!-- TODO: Add bibliography section (mostly RFCs, probably) -->
+
 
 <!-- TODO: how to help: run unit tests, join lists, review trac tickets -->
 
