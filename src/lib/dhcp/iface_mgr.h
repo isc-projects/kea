@@ -343,7 +343,7 @@ public:
     /// Opens IPv4 sockets on detected interfaces.
     /// Will throw exception if socket creation fails.
     ///
-    /// @param port specifies port number (usually DHCP6_SERVER_PORT)
+    /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     ///
     /// @return true if any sockets were open
     bool openSockets4(uint16_t port = DHCP4_SERVER_PORT);

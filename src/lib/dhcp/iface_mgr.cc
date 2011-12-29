@@ -211,13 +211,11 @@ bool IfaceMgr::openSockets4(uint16_t port) {
 
         cout << "Trying interface " << iface->getFullName() << endl;
 
-#if 0
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
             !iface->flag_running_) {
             continue;
         }
-#endif
 
         AddressCollection addrs = iface->getAddresses();
 
@@ -225,7 +223,7 @@ bool IfaceMgr::openSockets4(uint16_t port) {
              addr != addrs.end();
              ++addr) {
 
-            // skip IPv4 addresses
+            // skip IPv6 addresses
             if (addr->getFamily() != AF_INET) {
                 continue;
             }
@@ -250,6 +248,12 @@ bool IfaceMgr::openSockets6(uint16_t port) {
     for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
+
+        if (iface->flag_loopback_ ||
+            !iface->flag_up_ ||
+            !iface->flag_running_) {
+            continue;
+        }
 
         AddressCollection addrs = iface->getAddresses();
 
@@ -276,15 +280,15 @@ bool IfaceMgr::openSockets6(uint16_t port) {
             }
 
             count++;
-#if 0
+#if defined(OS_LINUX)
             // this doesn't work too well on NetBSD
-            sock2 = openSocket(iface->getName(),
-                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                               DHCP6_SERVER_PORT);
+            int sock2 = openSocket(iface->getName(),
+                                   IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+                                   port);
             if (sock2<0) {
                 isc_throw(Unexpected, "Failed to open multicast socket on "
                           << " interface " << iface->getFullName());
-                iface->delSocket(sock1); // delete previously opened socket
+                iface->delSocket(sock); // delete previously opened socket
             }
 #endif
         }
@@ -876,25 +880,32 @@ IfaceMgr::receive6() {
     /// all available sockets. For now, we just take the
     /// first interface and use first socket from it.
     IfaceCollection::const_iterator iface = ifaces_.begin();
+    const SocketInfo* candidate = 0;
+    while (iface != ifaces_.end()) {
+        SocketCollection::const_iterator s = iface->sockets_.begin();
+        while (s != iface->sockets_.end()) {
+            if (s->addr_.getFamily() != AF_INET6) {
+                ++s;
+                continue;
+            }
+            if (s->addr_.getAddress().to_v6().is_multicast()) {
+                candidate = &(*s);
+                break;
+            }
+            if (!candidate) {
+                candidate = &(*s); // it's not multicast, but it's better than nothing
+            }
+            ++s;
+        }
+        if (candidate) {
+            break;
+        }
+        ++iface;
+    }
     if (iface == ifaces_.end()) {
         isc_throw(Unexpected, "No interfaces detected. Can't receive anything.");
     }
-    SocketCollection::const_iterator s = iface->sockets_.begin();
-    const SocketInfo* candidate = 0;
-    while (s != iface->sockets_.end()) {
-        if (s->addr_.getFamily() != AF_INET6) {
-            ++s;
-            continue;
-        }
-        if (s->addr_.getAddress().to_v6().is_multicast()) {
-            candidate = &(*s);
-            break;
-        }
-        if (!candidate) {
-            candidate = &(*s); // it's not multicast, but it's better than nothing
-        }
-        ++s;
-    }
+
     if (!candidate) {
         isc_throw(Unexpected, "Interface " << iface->getFullName()
                   << " does not have any sockets open.");
