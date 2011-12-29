@@ -79,6 +79,7 @@ class TestDDNSServer(unittest.TestCase):
         cc_session = MyCCSession()
         self.assertFalse(cc_session._started)
         self.ddns_server = ddns.DDNSServer(cc_session)
+        self.cc_session = cc_session
         self.assertTrue(cc_session._started)
         self.__select_expected = None
         self.__select_answer = None
@@ -124,12 +125,12 @@ class TestDDNSServer(unittest.TestCase):
         self.ddns_server._shutdown = True
         return answer
 
-    def __hook(self):
+    def __hook(self, param=None):
         """
-        A hook that can be installed to any unary function and see if it was
-        really called.
+        A hook that can be installed to any nullary or unary function and see
+        if it was really called.
         """
-        self.__hook_called = True
+        self.__hook_called = param
 
     def test_accept_called(self):
         """
@@ -140,10 +141,31 @@ class TestDDNSServer(unittest.TestCase):
         self.ddns_server.accept = self.__hook
         self.__select_expected = ([1, 2], [], [], None)
         self.__select_answer = ([2], [], [])
+        self.__hook_called = "Not called"
         self.ddns_server.run()
         self.assertTrue(self.ddns_server._shutdown)
         # The answer got used
         self.assertIsNone(self.__select_answer)
+        # Reset, when called without parameter
+        self.assertIsNone(self.__hook_called)
+        ddns.select.select = select.select
+
+    def test_check_command_called(self):
+        """
+        Test the check_command is called when there's something on the
+        socket.
+        """
+        self.ddns_server._listen_socket = FakeSocket(2)
+        ddns.select.select = self.__select
+        self.cc_session.check_command = self.__hook
+        self.__select_expected = ([1, 2], [], [], None)
+        self.__select_answer = ([1], [], [])
+        self.ddns_server.run()
+        self.assertTrue(self.ddns_server._shutdown)
+        # The answer got used
+        self.assertIsNone(self.__select_answer)
+        # And the check_command was called with true parameter (eg.
+        # non-blocking)
         self.assertTrue(self.__hook_called)
         ddns.select.select = select.select
 
