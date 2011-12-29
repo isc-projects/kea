@@ -406,6 +406,12 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     sendPkt->setYiaddr(IOAddress("192.0.2.3"));
     sendPkt->setGiaddr(IOAddress("192.0.2.4"));
 
+    // unpack() now checks if mandatory DHCP_MESSAGE_TYPE is present
+    boost::shared_ptr<Option> msgType(new Option(Option::V4,
+           static_cast<uint16_t>(DHO_DHCP_MESSAGE_TYPE)));
+    msgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
+    sendPkt->addOption(msgType);
+
     uint8_t sname[] = "That's just a string that will act as SNAME";
     sendPkt->setSname(sname, strlen((const char*)sname));
     uint8_t file[] = "/another/string/that/acts/as/a/file_name.txt";
@@ -761,7 +767,7 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
 // (check that each interface is reported, i.e. no missing or extra interfaces) and
 // address completeness is verified.
 //
-// Things that are not tested: 
+// Things that are not tested:
 // - ifindex (ifconfig does not print it out)
 // - address scopes and lifetimes (we don't need it, so it is not implemented in IfaceMgr)
 TEST_F(IfaceMgrTest, detectIfaces_linux) {
