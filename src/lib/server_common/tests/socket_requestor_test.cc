@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <server_common/socket_request.h>
 
 #include <gtest/gtest.h>
@@ -29,6 +31,7 @@
 #include <sys/un.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <util/io/fd.h>
 #include <util/io/fd_share.h>
@@ -115,14 +118,14 @@ public:
     // (for easier access to new messages later)
     void
     clearMsgQueue() {
-        while(session.getMsgQueue()->size() > 0) {
+        while (session.getMsgQueue()->size() > 0) {
             session.getMsgQueue()->remove(0);
         }
     }
 
     isc::cc::FakeSession session;
-    std::auto_ptr<ModuleCCSession> cc_session;
-    std::string specfile;
+    boost::scoped_ptr<ModuleCCSession> cc_session;
+    const std::string specfile;
 };
 
 // helper function to create the request packet as we expect the
@@ -132,9 +135,10 @@ createExpectedRequest(const std::string& address,
                       int port,
                       const std::string& protocol,
                       const std::string& share_mode,
-                      const std::string& share_name) {
+                      const std::string& share_name)
+{
     // create command arguments
-    ElementPtr command_args = Element::createMap();
+    const ElementPtr command_args = Element::createMap();
     command_args->set("address", Element::create(address));
     command_args->set("port", Element::create(port));
     command_args->set("protocol", Element::create(protocol));
@@ -142,7 +146,7 @@ createExpectedRequest(const std::string& address,
     command_args->set("share_name", Element::create(share_name));
 
     // create the envelope
-    ElementPtr packet = Element::createList();
+    const ElementPtr packet = Element::createList();
     packet->add(Element::create("Boss"));
     packet->add(Element::create("*"));
     packet->add(createCommand("get_socket", command_args));
@@ -206,17 +210,16 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
 
     // Another failure (domain socket path too long)
-    std::string long_str(1000, 'x');
-    addAnswer("foo", long_str);
+    addAnswer("foo", std::string(1000, 'x'));
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
 
     // Test values around path boundary
     struct sockaddr_un sock_un;
-    std::string max_len(sizeof(sock_un.sun_path) - 1, 'x');
+    const std::string max_len(sizeof(sock_un.sun_path) - 1, 'x');
     addAnswer("foo", max_len);
     // The failure should NOT contain 'too long'
-    // (explicitely checking for existance of nonexistence of 'too long',
-    // as opposed to the actual error, since 'too long' is a value we set.
+    // (explicitly checking for existance of nonexistence of 'too long',
+    // as opposed to the actual error, since 'too long' is a value we set).
     try {
         doRequest();
         FAIL() << "doRequest did not throw an exception";
@@ -224,7 +227,7 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
         ASSERT_EQ(std::string::npos, std::string(se.what()).find("too long"));
     }
 
-    std::string too_long(sizeof(sock_un.sun_path), 'x');
+    const std::string too_long(sizeof(sock_un.sun_path), 'x');
     addAnswer("foo", too_long);
     // The failure SHOULD contain 'too long'
     try {
@@ -240,15 +243,15 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
 }
 
 // Helper function to create the release commands as we expect
-// them to be sent by the socketrequestor class
+// them to be sent by the SocketRequestor class
 ConstElementPtr
 createExpectedRelease(const std::string& token) {
     // create command arguments
-    ElementPtr command_args = Element::createMap();
+    const ElementPtr command_args = Element::createMap();
     command_args->set("token", Element::create(token));
 
     // create the envelope
-    ElementPtr packet = Element::createList();
+    const ElementPtr packet = Element::createList();
     packet->add(Element::create("Boss"));
     packet->add(Element::create("*"));
     packet->add(createCommand("drop_socket", command_args));
@@ -297,7 +300,10 @@ public:
     TestSocket() : fd_(-1) {
         path_ = strdup("test_socket.XXXXXX");
         // Misuse mkstemp to generate a file name.
-        int f = mkstemp(path_);
+        const int f = mkstemp(path_);
+        if (f == -1) {
+            isc_throw(Unexpected, "mkstemp failed: " << strerror(errno));
+        }
         // Just need the name, so immediately close
         close(f);
     }
@@ -312,6 +318,7 @@ public:
         free(path_);
         if (fd_ != -1) {
             close(fd_);
+            fd_ = -1;
         }
     }
 
@@ -321,10 +328,10 @@ public:
     }
 
     // create socket, fork, and serve if child (child will exit when done)
-    void run(std::vector<int> data) {
+    void run(const std::vector<int>& data) {
         try {
             create();
-            int child_pid = fork();
+            const int child_pid = fork();
             if (child_pid == 0) {
                 serve(data);
                 exit(0);
@@ -344,29 +351,36 @@ private:
     create() {
         fd_ = socket(AF_UNIX, SOCK_STREAM, 0);
         if (fd_ == -1) {
-            isc_throw(Exception, "Unable to create socket");
+            isc_throw(Unexpected, "Unable to create socket");
         }
         struct sockaddr_un socket_address;
         socket_address.sun_family = AF_UNIX;
         socklen_t len = strlen(path_);
         if (len > sizeof(socket_address.sun_path)) {
-            isc_throw(Exception,
+            isc_throw(Unexpected,
                       "mkstemp() created a filename too long for sun_path");
         }
         strncpy(socket_address.sun_path, path_, len);
+#ifdef HAVE_SA_LEN
+        socket_address.sun_len = len;
+#endif
 
         len += offsetof(struct sockaddr_un, sun_path);
         // Remove the random file we created so we can reuse it for
         // a domain socket connection. This contains a minor race condition
         // but for the purposes of this test it should be small enough
         unlink(path_);
-        if (bind(fd_, (struct sockaddr *)&socket_address, len) == -1) {
-            isc_throw(Exception,
+        if (bind(fd_, (const struct sockaddr*)&socket_address, len) == -1) {
+            isc_throw(Unexpected,
                       "unable to bind to test domain socket " << path_ <<
                       ": " << strerror(errno));
         }
 
-        listen(fd_, 1);
+        if (listen(fd_, 1) == -1) {
+            isc_throw(Unexpected,
+                      "unable to listen on test domain socket " << path_ <<
+                      ": " << strerror(errno));
+        }
     }
 
     // Accept one connection, then send all values from the vector using
@@ -377,9 +391,12 @@ private:
     // when the value is -2, it will send a byte signaling CREATOR_SOCKET_OK
     // first, and then one byte from some string (i.e. bad data, not using
     // send_fd())
+    //
+    // NOTE: client_fd could leak on exception.  This should be cleaned up.
+    // See the note about SocketSessionReceiver in socket_request.cc.
     void
-    serve(std::vector<int> data) {
-        int client_fd = accept(fd_, NULL, NULL);
+    serve(const std::vector<int>& data) {
+        const int client_fd = accept(fd_, NULL, NULL);
         if (client_fd == -1) {
             isc_throw(Exception, "Error in accept(): " << strerror(errno));
         }
@@ -402,14 +419,15 @@ private:
                 }
             }
             if (result < 0) {
-                isc_throw(Exception, "Error in send_fd(): " << strerror(errno));
+                isc_throw(Exception, "Error in send_fd(): " <<
+                          strerror(errno));
             }
         }
         close(client_fd);
     }
 
     int fd_;
-    char *path_;
+    char* path_;
 };
 
 TEST_F(SocketRequestorTest, testSocketPassing) {
