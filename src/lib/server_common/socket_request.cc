@@ -167,7 +167,8 @@ createFdShareSocket(const std::string& path) {
     strcpy(sock_pass_addr.sun_path, path.c_str());
     const socklen_t len = path.size() + offsetof(struct sockaddr_un, sun_path);
     // Yes, C-style cast bad. See previous comment about SocketSessionReceiver.
-    if (connect(sock_pass_fd, (struct sockaddr*)&sock_pass_addr, len) == -1) {
+    if (connect(sock_pass_fd, (const struct sockaddr*)&sock_pass_addr,
+                len) == -1) {
         close(sock_pass_fd);
         isc_throw(SocketRequestor::SocketError,
                   "Unable to open domain socket " << path <<
