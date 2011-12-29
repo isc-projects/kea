@@ -146,7 +146,7 @@ class DDNSServer:
                 select.select([cc_fileno, listen_fileno], [], [])
             for fileno in reads:
                 if fileno == cc_fileno:
-                    self._cc.check_command(False)
+                    self._cc.check_command(True)
                 elif fileno == listen_fileno:
                     self.accept()
                 else:
