@@ -39,7 +39,7 @@ namespace server_common {
 /// sense to have two of them.
 ///
 /// This is actually an abstract base class. There'll be one with
-/// hidden implementation and we expect the tests to create it's own
+/// hidden implementation and we expect the tests to create its own
 /// subclass when needed.
 ///
 /// \see socketRequestor function to access the object of this class.
@@ -51,20 +51,21 @@ protected:
     /// (which it can't anyway, as it has pure virtual methods, but just to
     /// be sure).
     SocketRequestor() {}
+
 public:
     /// \brief virtual destructor
     ///
     /// A virtual destructor, as we have virtual methods, to make sure it is
     /// destroyed by the destructor of the subclass. This shouldn't matter, as
     /// a singleton class wouldn't get destroyed, but just to be sure.
-
     virtual ~ SocketRequestor() {}
+
     /// \brief A representation of received socket
     ///
     /// The pair holds two parts. The OS-level file descriptor acting as the
     /// socket (you might want to use it directly with functions like recv,
-    /// or fill it into an asio socket). The other part is the token representing
-    /// the socket, which allows it to be given up again.
+    /// or fill it into an asio socket). The other part is the token
+    /// representing the socket, which allows it to be given up again.
     typedef std::pair<int, std::string> SocketID;
 
     /// \brief The protocol of requested socket
@@ -98,7 +99,7 @@ public:
     /// else or ask for nonsense (releasing a socket we don't own).
     class SocketError : public Exception {
     public:
-        SocketError(const char* file, size_t line, const char *what) :
+        SocketError(const char* file, size_t line, const char* what) :
             Exception(file, line, what)
         { }
     };
