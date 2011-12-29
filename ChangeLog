@@ -1,3 +1,9 @@
+363.	[func]		tomek
+	dhcp4: Support for DISCOVER and OFFER implemented. b10-dhcp4 is
+	now able to offer hardcoded leases to DHCPv4 clients.
+	dhcp6: Code refactored to use the same approach as dhcp4.
+	(Trac #1230, git aac05f566c49daad4d3de35550cfaff31c124513)
+
 362.	[func]		tomek
 	libdhcp++: Interface detection in Linux implemented. libdhcp++
 	if now able to detect available network interfaces, its link-layer
