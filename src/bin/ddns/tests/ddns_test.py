@@ -19,6 +19,16 @@ import unittest
 import isc
 import ddns
 import isc.config
+import select
+
+class FakeSocket:
+    """
+    A fake socket. It only provides a file number.
+    """
+    def __init__(self, fileno):
+        self.__fileno = fileno
+    def fileno(self):
+        return self.__fileno
 
 class MyCCSession(isc.config.ConfigData):
     '''Fake session with minimal interface compliance'''
@@ -31,6 +41,12 @@ class MyCCSession(isc.config.ConfigData):
     def start(self):
         '''Called by DDNSServer initialization, but not used in tests'''
         self._started = True
+
+    def get_socket(self):
+        """
+        Used to get the file number for select.
+        """
+        return FakeSocket(1)
 
 class MyDDNSServer():
     '''Fake DDNS server used to test the main() function'''
@@ -64,6 +80,9 @@ class TestDDNSServer(unittest.TestCase):
         self.assertFalse(cc_session._started)
         self.ddns_server = ddns.DDNSServer(cc_session)
         self.assertTrue(cc_session._started)
+        self.__select_expected = None
+        self.__select_answer = None
+        self.__hook_called = False
 
     def test_config_handler(self):
         # Config handler does not do anything yet, but should at least
@@ -92,6 +111,41 @@ class TestDDNSServer(unittest.TestCase):
         self.assertFalse(self.ddns_server._shutdown)
         signal_handler(None, None)
         self.assertTrue(self.ddns_server._shutdown)
+
+    def __select(self, reads, writes, exceptions, timeout=None):
+        """
+        A fake select. It checks it was called with the correct parameters and
+        returns a preset answer.
+        """
+        self.assertEqual(self.__select_expected, (reads, writes, exceptions,
+                                                  timeout))
+        answer = self.__select_answer
+        self.__select_answer = None
+        self.ddns_server._shutdown = True
+        return answer
+
+    def __hook(self):
+        """
+        A hook that can be installed to any unary function and see if it was
+        really called.
+        """
+        self.__hook_called = True
+
+    def test_accept_called(self):
+        """
+        Test we call the accept function when a new connection comes.
+        """
+        self.ddns_server._listen_socket = FakeSocket(2)
+        ddns.select.select = self.__select
+        self.ddns_server.accept = self.__hook
+        self.__select_expected = ([1, 2], [], [], None)
+        self.__select_answer = ([2], [], [])
+        self.ddns_server.run()
+        self.assertTrue(self.ddns_server._shutdown)
+        # The answer got used
+        self.assertIsNone(self.__select_answer)
+        self.assertTrue(self.__hook_called)
+        ddns.select.select = select.select
 
 class TestMain(unittest.TestCase):
     def setUp(self):
@@ -135,7 +189,6 @@ class TestMain(unittest.TestCase):
         self._server.set_exception(BaseException("error"))
         self.assertRaises(BaseException, ddns.main, self._server)
         self.assertTrue(self._server.exception_raised)
-        
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

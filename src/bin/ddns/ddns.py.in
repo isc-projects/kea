@@ -23,6 +23,7 @@ from isc.dns import *
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
 import isc.util.process
+import select
 
 from isc.log_messages.ddns_messages import *
 
@@ -131,13 +132,25 @@ class DDNSServer:
         This loops waiting for events until self.shutdown() has been called.
         '''
         logger.info(DDNS_RUNNING)
+        cc_fileno = self._cc.get_socket().fileno()
+        listen_fileno = self._listen_socket.fileno()
         while not self._shutdown:
             # We do not catch any exceptions here right now, but this would
             # be a good place to catch any exceptions that b10-ddns can
             # recover from. We currently have no exception hierarchy to
             # make such a distinction easily, but once we do, this would
             # be the place to catch.
-            self._cc.check_command(False)
+
+            # TODO: Catch select exceptions, like EINTR
+            (reads, writes, exceptions) = \
+                select.select([cc_fileno, listen_fileno], [], [])
+            for fileno in reads:
+                if fileno == cc_fileno:
+                    self._cc.check_command(False)
+                elif fileno == listen_fileno:
+                    self.accept()
+                else:
+                    pass # TODO
         self.shutdown_cleanup()
         logger.info(DDNS_STOPPED)
 
