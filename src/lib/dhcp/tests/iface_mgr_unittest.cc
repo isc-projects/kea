@@ -675,7 +675,7 @@ size_t parse_mac(const std::string& textMac, uint8_t* mac, size_t macLen) {
 ///
 /// @param textFile name of a text file that holds output of ifconfig -a
 /// @param ifaces empty list of interfaces to be filled
-void parse_ifconfig(const std::string textFile, IfaceMgr::IfaceCollection& ifaces) {
+void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifaces) {
     fstream f(textFile.c_str());
 
     bool first_line = true;
