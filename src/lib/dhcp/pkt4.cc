@@ -125,7 +125,8 @@ Pkt4::pack() {
 
     return (true);
 }
-bool
+
+void
 Pkt4::unpack() {
 
     // input buffer (used during message reception)
@@ -156,7 +157,7 @@ Pkt4::unpack() {
         // this is *NOT* DHCP packet. It does not have any DHCPv4 options. In
         // particular, it does not have magic cookie, a 4 byte sequence that
         // differentiates between DHCP and BOOTP packets.
-        return (true);
+        isc_throw(InvalidOperation, "Recevied BOOTP packet. BOOTP is not supported.");
     }
 
     if (bufferIn.getLength() - bufferIn.getPosition() < 4) {
@@ -176,9 +177,9 @@ Pkt4::unpack() {
     bufferIn.readVector(optsBuffer, opts_len);
     LibDHCP::unpackOptions4(optsBuffer, options_);
 
+    // TODO: check will need to be called separately, so hooks can be called after
+    // packet is parsed, but before its content is verified
     check();
-
-    return (true);
 }
 
 void Pkt4::check() {

@@ -74,9 +74,8 @@ public:
     /// Will create a collection of option objects that will
     /// be stored in options_ container.
     ///
-    /// @return true, if parsing was successful
-    bool
-    unpack();
+    /// Method with throw exception if packet parsing fails.
+    void unpack();
 
     /// @brief performs sanity check on a packet.
     ///
@@ -85,6 +84,8 @@ public:
     /// For example verifies that DHCP_MESSAGE_TYPE is present and have
     /// reasonable value. This method is expected to grow significantly.
     /// It makes sense to separate unpack() and check() for testing purposes.
+    ///
+    /// TODO: It is called from unpack() directly. It should be separated.
     ///
     /// Method will throw exception if anomaly is found.
     void check();

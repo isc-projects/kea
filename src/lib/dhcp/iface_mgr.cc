@@ -223,7 +223,7 @@ bool IfaceMgr::openSockets4(uint16_t port) {
              addr != addrs.end();
              ++addr) {
 
-            // skip IPv4 addresses
+            // skip IPv6 addresses
             if (addr->getFamily() != AF_INET) {
                 continue;
             }
