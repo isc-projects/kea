@@ -335,13 +335,7 @@ socketRequestor() {
 }
 
 void
-SocketRequestor::initTest(SocketRequestor* new_requestor) {
-    requestor = new_requestor;
-}
-
-
-void
-SocketRequestor::init(config::ModuleCCSession& session) {
+initSocketReqeustor(config::ModuleCCSession& session) {
     if (requestor != NULL) {
         isc_throw(InvalidOperation,
                   "The socket requestor was already initialized");
@@ -351,7 +345,12 @@ SocketRequestor::init(config::ModuleCCSession& session) {
 }
 
 void
-SocketRequestor::cleanup() {
+initTestSocketRequestor(SocketRequestor* new_requestor) {
+    requestor = new_requestor;
+}
+
+void
+cleanupSocketRequestor() {
     if (requestor != NULL) {
         delete requestor;
         requestor = NULL;

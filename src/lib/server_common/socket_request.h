@@ -145,43 +145,6 @@ public:
     ///     release (like we're trying to release a socket that doesn't
     ///     belong to us or exist at all).
     virtual void releaseSocket(const std::string& token) = 0;
-
-    /// \brief Initialize the singleton object
-    ///
-    /// This creates the object that will be used to request sockets.
-    /// It can be called only once per the life of application.
-    ///
-    /// \param session the CC session that'll be used to talk to the
-    ///                socket creator.
-    /// \throw InvalidOperation when it is called more than once
-    static void init(config::ModuleCCSession& session);
-
-    /// \brief Initialization for tests
-    ///
-    /// This is to support different subclasses in tests. It replaces
-    /// the object used by socketRequestor() function by this one provided
-    /// as parameter. The ownership is not taken, eg. it's up to the caller
-    /// to delete it when necessary.
-    ///
-    /// This is not to be used in production applications. It is meant as
-    /// an replacement of init.
-    ///
-    /// This never throws.
-    ///
-    /// \param requestor the object to be used. It can be NULL to reset to
-    ///     an "virgin" state (which acts as if initTest or init was never
-    ///     called before).
-    static void initTest(SocketRequestor* requestor);
-
-    /// \brief Destroy the singleton instance
-    ///
-    /// Calling this function is not strictly necessary; the socket
-    /// requestor is a singleton anyway. However, for some tests it
-    /// is useful to destroy and recreate it, as well as for programs
-    /// that want to be completely clean on exit.
-    /// After this method has been called, all operations except init
-    /// will fail.
-    static void cleanup();
 };
 
 /// \brief Access the requestor object.
@@ -191,10 +154,46 @@ public:
 /// \return the active socket requestor object.
 /// \throw InvalidOperation if the object was not yet initialized.
 /// \see SocketRequestor::init to initialize the object.
-SocketRequestor&
-socketRequestor();
+SocketRequestor& socketRequestor();
+
+/// \brief Initialize the singleton object
+///
+/// This creates the object that will be used to request sockets.
+/// It can be called only once per the life of application.
+///
+/// \param session the CC session that'll be used to talk to the
+///                socket creator.
+/// \throw InvalidOperation when it is called more than once
+void initSocketReqeustor(config::ModuleCCSession& session);
+
+/// \brief Initialization for tests
+///
+/// This is to support different subclasses in tests. It replaces
+/// the object used by socketRequestor() function by this one provided
+/// as parameter. The ownership is not taken, eg. it's up to the caller
+/// to delete it when necessary.
+///
+/// This is not to be used in production applications. It is meant as
+/// an replacement of init.
+///
+/// This never throws.
+///
+/// \param requestor the object to be used. It can be NULL to reset to
+///     an "virgin" state (which acts as if initTest or init was never
+///     called before).
+void initTestSocketRequestor(SocketRequestor* requestor);
+
+/// \brief Destroy the singleton instance
+///
+/// Calling this function is not strictly necessary; the socket
+/// requestor is a singleton anyway. However, for some tests it
+/// is useful to destroy and recreate it, as well as for programs
+/// that want to be completely clean on exit.
+/// After this function has been called, all operations except init
+/// will fail.
+void cleanupSocketRequestor();
 
 }
 }
 
-#endif
+#endif  // __SOCKET_REQUEST_H
