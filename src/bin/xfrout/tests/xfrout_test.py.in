@@ -38,7 +38,7 @@ TEST_ZONE_NAME_STR = "example.com."
 TEST_ZONE_NAME = Name(TEST_ZONE_NAME_STR)
 TEST_RRCLASS = RRClass.IN()
 IXFR_OK_VERSION = 2011111802
-IXFR_NG_VERSION = 2011112800
+IXFR_NG_VERSION = 2011111803
 SOA_CURRENT_VERSION = 2011112001
 
 # our fake socket, where we can read and insert messages
@@ -713,10 +713,18 @@ class TestXfroutSession(TestXfroutSessionBase):
                 self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
         self.assertNotEqual(None, self.xfrsess._jnl_reader)
 
+        # Successful case, but as a result of falling back to AXFR-style
+        # IXFR.  A zone iterator should be set up instead of a journal reader.
+        self.mdata = self.create_request_data(ixfr=IXFR_NG_VERSION)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
+        self.assertNotEqual(None, self.xfrsess._iterator)
+        self.assertEqual(None, self.xfrsess._jnl_reader)
+
         # Successful case, but the requested SOA serial is greater than that of
         # the local SOA.  Both iterator and jnl_reader should be None,
         # indicating that the response will contain just one SOA.
-        self.mdata = self.create_request_data(ixfr=IXFR_NG_VERSION)
+        self.mdata = self.create_request_data(ixfr=SOA_CURRENT_VERSION+1)
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
         self.assertEqual(None, self.xfrsess._iterator)
