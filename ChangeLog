@@ -1,3 +1,9 @@
+3XX.	[doc]		tomek
+	BIND10 Guide updated. It now describes DHCPv4 and DHCPv6
+	components, including their overview, usage, supported standard
+	and limitations. libdhcp++ is also described.
+	(Trac #1367, git TBD)
+
 360.	[func] 		fdupont
 	Alpha version of DHCP benchmarking tool added.  "perfdhcp" is able to
 	test both IPv4 and IPv6 servers: it can time the four-packet exchange
