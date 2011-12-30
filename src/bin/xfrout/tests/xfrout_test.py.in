@@ -110,6 +110,9 @@ class MockDataSrcClient:
             soa_rrset = create_soa(SOA_CURRENT_VERSION)
             soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
             return (ZoneFinder.SUCCESS, soa_rrset)
+        elif name == Name('maxserial.example.com'):
+            soa_rrset = create_soa(0xffffffff)
+            return (ZoneFinder.SUCCESS, soa_rrset)
         elif rrtype == RRType.SOA():
             return (ZoneFinder.SUCCESS, create_soa(SOA_CURRENT_VERSION))
         raise ValueError('Unexpected input to mock finder: bug in test case?')
@@ -123,9 +126,6 @@ class MockDataSrcClient:
     def get_soa(self):  # emulate ZoneIterator.get_soa()
         if self._zone_name == Name('nosoa.example.com'):
             return None
-        if self._zone_name == Name('serial.example.com'):
-            soa_rrset = create_soa(0xffffffff)
-            return soa_rrset
         soa_rrset = create_soa(SOA_CURRENT_VERSION)
         if self._zone_name == Name('multisoa.example.com'):
             soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
@@ -738,6 +738,15 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(None, self.xfrsess._iterator)
         self.assertEqual(None, self.xfrsess._jnl_reader)
 
+        # Similar to the previous case, but the comparison should be done
+        # based on serial number arithmetic, not as integers.
+        zone_name = Name('maxserial.example.com') # whose SOA is 0xffffffff
+        self.mdata = self.create_request_data(ixfr=1, zone_name=zone_name)
+        self.assertEqual(self.xfrsess._xfrout_setup(
+                 self.getmsg(), zone_name, TEST_RRCLASS), Rcode.NOERROR())
+        self.assertEqual(None, self.xfrsess._iterator)
+        self.assertEqual(None, self.xfrsess._jnl_reader)
+
         # The data source doesn't support journaling.  Should fallback to AXFR.
         zone_name = Name('nojournal.example.com')
         self.mdata = self.create_request_data(ixfr=IXFR_OK_VERSION,
@@ -787,12 +796,6 @@ class TestXfroutSession(TestXfroutSessionBase):
                                               num_soa=2)
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), zone_name, TEST_RRCLASS), Rcode.FORMERR())
-
-        # the request soa is newer than the server's current serial
-        zone_name = Name('serial.example.com')
-        self.mdata = self.create_request_data(ixfr=1, zone_name=zone_name)
-        self.assertEqual(self.xfrsess._xfrout_setup(
-                 self.getmsg(), zone_name, TEST_RRCLASS), Rcode.NOERROR())
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
