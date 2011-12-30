@@ -1,3 +1,9 @@
+356.	[doc]		tomek
+	BIND10 Guide updated. It now describes DHCPv4 and DHCPv6
+	components, including their overview, usage, supported standard
+	and limitations. libdhcp++ is also described.
+	(Trac #1367, git 3758ab360efe1cdf616636b76f2e0fb41f2a62a0)
+
 355.	[bug]		jinmei
 	Python xfrin.diff module incorrectly combined RRSIGs of different
 	type covered, possibly merging different TTLs.  As a result a
