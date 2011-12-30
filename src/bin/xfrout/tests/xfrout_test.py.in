@@ -780,10 +780,10 @@ class TestXfroutSession(TestXfroutSessionBase):
                                               num_soa=2)
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), zone_name, TEST_RRCLASS), Rcode.FORMERR())
-    
+
         # the request soa is newer than the server's current serial
         zone_name = Name('serial.example.com')
-        self.mdata = self.create_request_data(ixfr=1,zone_name=zone_name)
+        self.mdata = self.create_request_data(ixfr=1, zone_name=zone_name)
         self.assertEqual(self.xfrsess._xfrout_setup(
                  self.getmsg(), zone_name, TEST_RRCLASS), Rcode.NOERROR())
 
