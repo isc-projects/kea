@@ -730,9 +730,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(None, self.xfrsess._iterator)
         self.assertEqual(None, self.xfrsess._jnl_reader)
 
-        # Successful case, but the requested SOA serial is equal to that of
-        # the local SOA.  Both iterator and jnl_reader should be None,
-        # indicating that the response will contain just one SOA.
+        # Similar to the previous case, but the requested serial is equal to
+        # the local SOA.
         self.mdata = self.create_request_data(ixfr=SOA_CURRENT_VERSION)
         self.assertEqual(self.xfrsess._xfrout_setup(
                 self.getmsg(), TEST_ZONE_NAME, TEST_RRCLASS), Rcode.NOERROR())
@@ -1120,17 +1119,25 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         for (expected_rr, actual_rr) in zip(expected_records, actual_records):
             self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
-    def test_ixfr_soa_only(self):
-        # The requested SOA serial is the latest one.  The response should
-        # contain exactly one SOA of that serial.
+    def ixfr_soa_only_common_checks(self, request_serial):
         self.xfrsess._request_data = \
-            self.create_request_data(ixfr=SOA_CURRENT_VERSION)
+            self.create_request_data(ixfr=request_serial)
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         answers = response.get_section(Message.SECTION_ANSWER)
         self.assertEqual(1, len(answers))
         self.assertTrue(rrsets_equal(create_soa(SOA_CURRENT_VERSION),
                                      answers[0]))
+
+    def test_ixfr_soa_only(self):
+        # The requested SOA serial is the latest one.  The response should
+        # contain exactly one SOA of that serial.
+        self.ixfr_soa_only_common_checks(SOA_CURRENT_VERSION)
+
+    def test_ixfr_soa_only2(self):
+        # Similar to the previous test, but the requested SOA is larger than
+        # the current.
+        self.ixfr_soa_only_common_checks(SOA_CURRENT_VERSION + 1)
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
