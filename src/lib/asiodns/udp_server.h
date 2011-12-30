@@ -51,6 +51,7 @@ public:
                        isc::asiolink::SimpleCallback* checkin = NULL,
                        DNSLookup* lookup = NULL,
                        DNSAnswer* answer = NULL);
+
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
@@ -59,8 +60,8 @@ public:
     /// \param lookup the callbackprovider for DNS lookup events
     /// \param answer the callbackprovider for DNS answer events
     UDPServer(asio::io_service& io_service, int fd, bool v6,
-                       isc::asiolink::SimpleCallback* checkin = NULL,
-                       DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
+              isc::asiolink::SimpleCallback* checkin = NULL,
+              DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
 
     /// \brief The function operator
     void operator()(asio::error_code ec = asio::error_code(),
