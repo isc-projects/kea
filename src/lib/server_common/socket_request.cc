@@ -252,7 +252,7 @@ protocolString(SocketRequestor::Protocol protocol) {
 // be closed during the lifetime of this class
 class SocketRequestorCCSession : public SocketRequestor {
 public:
-    SocketRequestorCCSession(config::ModuleCCSession& session) :
+    explicit SocketRequestorCCSession(config::ModuleCCSession& session) :
         session_(session)
     {
         // We need to filter SIGPIPE to prevent it from happening in
