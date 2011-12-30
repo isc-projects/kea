@@ -182,7 +182,14 @@ createFdShareSocket(const std::string& path) {
 // \exception SocketError if the socket cannot be read
 // \return the socket fd that has been read
 int
-getSocketFd(int sock_pass_fd) {
+getSocketFd(const std::string& token, int sock_pass_fd) {
+    // Tell the boss the socket token.
+    const std::string token_data = token + "\n";
+    if (!isc::util::io::write_data(sock_pass_fd, token_data.c_str(),
+                                   token_data.size())) {
+        isc_throw(SocketRequestor::SocketError, "Error writing socket token");
+    }
+
     // Boss first sends some data to signal that getting the socket
     // from its cache succeeded
     char status[3];        // We need a space for trailing \0, hence 3
@@ -240,7 +247,8 @@ public:
     virtual SocketID requestSocket(Protocol protocol,
                                    const std::string& address,
                                    uint16_t port, ShareMode share_mode,
-                                   const std::string& share_name) {
+                                   const std::string& share_name)
+    {
         const isc::data::ConstElementPtr request_msg =
             createRequestSocketMessage(protocol, address, port,
                                        share_mode, share_name);
@@ -264,7 +272,7 @@ public:
         const int sock_pass_fd = getFdShareSocket(path);
 
         // and finally get the socket itself
-        const int passed_sock_fd = getSocketFd(sock_pass_fd);
+        const int passed_sock_fd = getSocketFd(token, sock_pass_fd);
         return (SocketID(passed_sock_fd, token));
     }
 
