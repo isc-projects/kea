@@ -23,6 +23,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <cerrno>
+#include <csignal>
 #include <cstddef>
 
 namespace isc {
@@ -238,7 +239,19 @@ class SocketRequestorCCSession : public SocketRequestor {
 public:
     SocketRequestorCCSession(config::ModuleCCSession& session) :
         session_(session)
-    {}
+    {
+        // We need to filter SIGPIPE to prevent it from happening in
+        // getSocketFd() while writing to the UNIX domain socket after the
+        // remote end closed it.  See lib/util/io/socketsession for more
+        // background details.
+        // Note: we should eventually unify this level of details into a single
+        // module.  Setting a single filter here should be considered a short
+        // term workaround.
+        if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+            isc_throw(Unexpected, "Failed to filter SIGPIPE: " <<
+                      strerror(errno));
+        }
+    }
 
     ~SocketRequestorCCSession() {
         closeFdShareSockets();

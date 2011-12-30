@@ -540,7 +540,6 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
         ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
     }
 
-#if 0
     // Vector is of first socket is now empty, so the socket should be gone
     addAnswer("foo", ts.getPath());
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
@@ -549,7 +548,6 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
     // gone
     addAnswer("foo", ts2.getPath());
     ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
-#endif
 }
 
 }
