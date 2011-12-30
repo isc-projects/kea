@@ -42,9 +42,10 @@ public:
                        const isc::asiolink::SimpleCallback* checkin = NULL,
                        const DNSLookup* lookup = NULL,
                        const DNSAnswer* answer = NULL);
+
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with
-    /// \param fd the file descriptor of opened UDP socket
+    /// \param fd the file descriptor of opened TCP socket
     /// \param v6 the socket in fd is ipv6 one (if false, it is ipv4)
     /// \param checkin the callbackprovider for non-DNS events
     /// \param lookup the callbackprovider for DNS lookup events
