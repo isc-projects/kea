@@ -74,12 +74,12 @@ using namespace isc::asiodns;
 using namespace asio;
 
 namespace {
-const char* server_ip = "::1";
+const char* const server_ip = "::1";
 const int server_port = 5553;
-const char* server_port_str = "5553";
+const char* const server_port_str = "5553";
 //message client send to udp server, which isn't dns package
 //just for simple testing
-const std::string query_message("BIND10 is awesome");
+const char* const query_message = "BIND10 is awesome";
 
 // \brief provide capacity to derived class the ability
 // to stop DNSServer at certern point
@@ -205,7 +205,7 @@ class SimpleClient : public ServerStopper {
 
 class UDPClient : public SimpleClient {
     public:
-    //After 1 seconds without feedback client will stop wait
+    //After 1 second without feedback client will stop wait
     static const unsigned int server_time_out = 1;
 
     UDPClient(asio::io_service& service, const ip::udp::endpoint& server) :
@@ -310,12 +310,14 @@ class TCPClient : public SimpleClient {
     uint16_t data_to_send_len_;
 };
 
-// \brief provide the context which including two client and
-// two server, udp client will only communicate with udp server, same for tcp client
+// \brief provide the context which including two clients and
+// two servers, UDP client will only communicate with UDP server, same for TCP
+// client
 //
-// This is only the active part of the test. We run the test case twice, once for each
-// type of initialization (once when giving it the address and port, once when giving
-// the file descriptor), to ensure it works both ways exactly the same.
+// This is only the active part of the test. We run the test case twice, once
+// for each type of initialization (once when giving it the address and port,
+// once when giving the file descriptor), to ensure it works both ways exactly
+// the same.
 class DNSServerTestBase : public::testing::Test {
     protected:
         void TearDown() {
@@ -338,9 +340,9 @@ class DNSServerTestBase : public::testing::Test {
             stopper->setServerToStop(server);
             (*server)();
             client->sendDataThenWaitForFeedback(query_message);
-            // Since thread hasn't been introduced into the tool box, using signal
-            // to make sure run function will eventually return even server stop
-            // failed
+            // Since thread hasn't been introduced into the tool box, using
+            // signal to make sure run function will eventually return even
+            // server stop failed
             void (*prev_handler)(int) =
                 std::signal(SIGALRM, DNSServerTestBase::stopIOService);
             alarm(io_service_time_out);
