@@ -585,7 +585,8 @@ DatabaseClient::Finder::findWildcardMatch(
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
 
-    for (size_t i = 1; i <= (name.getLabelCount() - dresult.last_known); ++i) {
+    const size_t remove_labels = name.getLabelCount() - dresult.last_known;
+    for (size_t i = 1; i <= remove_labels; ++i) {
 
         // Strip off the left-more label(s) in the name and replace with a "*".
         const Name superdomain(name.split(i));
@@ -839,6 +840,16 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
               .arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
+
+    // find() variants generally expect 'name' to be included in the zone.
+    // Otherwise the search algorithm below won't work correctly, so we
+    // reject the unexpected case first.
+    const NameComparisonResult::NameRelation reln =
+        name.compare(getOrigin()).getRelation();
+    if (reln != NameComparisonResult::SUBDOMAIN &&
+        reln != NameComparisonResult::EQUAL) {
+        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+    }
 
     // First, go through all superdomains from the origin down, searching for
     // nodes that indicate a delegation (i.e. NS or DNAME, ignoring NS records
