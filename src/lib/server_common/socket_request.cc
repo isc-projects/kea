@@ -14,6 +14,7 @@
 #include <config.h>
 
 #include "socket_request.h"
+#include <server_common/logger.h>
 
 #include <config/ccsession.h>
 #include <cc/data.h>
@@ -230,6 +231,20 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
     return (passed_sock_fd);
 }
 
+namespace {
+inline const char*
+protocolString(SocketRequestor::Protocol protocol) {
+    switch (protocol) {
+    case SocketRequestor::TCP:
+        return ("TCP");
+    case SocketRequestor::UDP:
+        return ("UDP");
+    default:
+        return ("unknown protocol");
+    }
+}
+}
+
 // This implementation class for SocketRequestor uses
 // a ModuleCCSession for communication with the boss process,
 // and fd_share to read out the socket(s).
@@ -251,10 +266,12 @@ public:
             isc_throw(Unexpected, "Failed to filter SIGPIPE: " <<
                       strerror(errno));
         }
+        LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, SOCKETREQUESTOR_CREATED);
     }
 
     ~SocketRequestorCCSession() {
         closeFdShareSockets();
+        LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, SOCKETREQUESTOR_DESTROYED);
     }
 
     virtual SocketID requestSocket(Protocol protocol,
@@ -286,6 +303,9 @@ public:
 
         // and finally get the socket itself
         const int passed_sock_fd = getSocketFd(token, sock_pass_fd);
+        LOG_DEBUG(logger, DBGLVL_TRACE_DETAIL, SOCKETREQUESTOR_GETSOCKET).
+            arg(protocolString(protocol)).arg(address).arg(port).
+            arg(passed_sock_fd).arg(token).arg(path);
         return (SocketID(passed_sock_fd, token));
     }
 
@@ -295,6 +315,8 @@ public:
 
         // Send it to boss
         const int seq = session_.groupSendMsg(release_msg, "Boss");
+        LOG_DEBUG(logger, DBGLVL_TRACE_DETAIL, SOCKETREQUESTOR_RELEASESOCKET).
+            arg(token);
 
         // Get the answer from the boss.
         // Just do a blocking read, we can't really do much anyway
