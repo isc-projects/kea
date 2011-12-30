@@ -1817,17 +1817,17 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     clients. Even though principles of both DHCPv4 and DHCPv6 are
     somewhat similar, these are two radically different
     protocols. BIND10 offers server implementations for both DHCPv4
-    and DHCPv6. This chapter is about DHCP for IPv4. For description of
-    DHCPv6 server, see <xref linkend="dhcp6"/>.</para>
+    and DHCPv6. This chapter is about DHCP for IPv4. For a description
+    of the DHCPv6 server, see <xref linkend="dhcp6"/>.</para>
 
-    <para>DHCPv6 server component is currently under intense
+    <para>The DHCPv4 server component is currently under intense
     development. You may want to check out <ulink
     url="http://bind10.isc.org/wiki/Kea">BIND10 DHCP (Kea) wiki</ulink>
     and recent posts on <ulink
     url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND10
     developers mailing list</ulink>.</para>
 
-    <para>DHCPv4 and DHCPv6 components in BIND10 architecture are
+    <para>The DHCPv4 and DHCPv6 components in BIND10 architecture are
     internally code named <quote>Kea</quote>.</para>
 
     <note>
@@ -1835,7 +1835,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         As of December 2011, both DHCPv4 and DHCPv6 components are
         skeleton servers. That means that while they are capable of
         performing DHCP configuration, they are not fully functional
-        yet. In particular, both do not have functional lease
+        yet. In particular, neither has functional lease
         databases. This means that they will assign the same, fixed,
         hardcoded addresses to any client that will ask. See <xref
         linkend="dhcp4-limit"/> and <xref linkend="dhcp6-limit"/> for
@@ -1845,7 +1845,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     <section id="dhcp4-usage">
       <title>DHCPv4 Server Usage</title>
-      <para>BIND10 provides DHCPv4 server component since December
+      <para>BIND10 provides the DHCPv4 server component since December
       2011. It is a skeleton server and can be described as an early
       prototype that is not fully functional yet. It is mature enough
       to conduct first tests in lab environment, but it has
@@ -1854,9 +1854,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
       </para>
 
       <para>
-        DHCPv4 server is implemented as <command>b10-dhcp4</command>
+        The DHCPv4 server is implemented as <command>b10-dhcp4</command>
         daemon. As it is not configurable yet, it is fully autonomous,
-        i.e. it does not interact with <command>b10-cfgmgr</command>.
+        that is it does not interact with <command>b10-cfgmgr</command>.
         To start DHCPv4 server, simply input:
 
         <screen>
@@ -1869,16 +1869,16 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         directory, in /usr/local/bin/b10-dhcp4 or other directory
         you specified during compilation.
 
-        After start, server will detect available network interfaces
+        At start, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
-        are up, running, are not loopback and have IPv4 address
+        are up, running, are not loopback, and have IPv4 address
         assigned.
 
-        Server will then listen to incoming traffic. Currently
-        supported client messages are DISCOVER and REQUEST. Server
+        The server will then listen to incoming traffic. Currently
+        supported client messages are DISCOVER and REQUEST. The server
         will respond to them with OFFER and ACK, respectively.
 
-        As DHCPv4 server opens privileged ports, it requires root
+        Since the DHCPv4 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.</para>
 
         <note>
@@ -1896,13 +1896,13 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     <section id="dhcp4-config">
       <title>DHCPv4 Server Configuration</title>
       <para>
-        DHCPv4 server does not have lease database implemented yet
-        or any support for configuration, so every time the same set
+        The DHCPv4 server does not have a lease database implemented yet
+        nor any support for configuration, so every time the same set
         of configuration options (including the same fixed address)
         will be assigned every time.
       </para>
       <para>
-        At this stage of development, the only way to alter server
+        At this stage of development, the only way to alter the server
         configuration is to tweak its source code. To do so, please
         edit src/bin/dhcp4/dhcp4_srv.cc file and modify following
         parameters and recompile:
@@ -1939,18 +1939,19 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
 
     <section id="dhcp4-limit">
       <title>DHCPv4 Server Limitations</title> 
-      <para> These are the current limitations of DHCPv4 server
+      <para>These are the current limitations of the DHCPv4 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
           <listitem>
-            <simpara>During initial IPv4 node configuration, server is
-            expected to send packets to a node that does not have IPv4
-            address assigned yet. Server requires certain tricks (or
-            hacks) to transmit such packets. This is not implemented
-            yet, therefore DHCPv4 server supports relayed traffic only
-            (that is normal point to point communication).</simpara>
+            <simpara>During initial IPv4 node configuration, the
+            server is expected to send packets to a node that does not
+            have IPv4 address assigned yet. The server requires
+            certain tricks (or hacks) to transmit such packets. This
+            is not implemented yet, therefore DHCPv4 server supports
+            relayed traffic only (that is, normal point to point
+            communication).</simpara>
           </listitem>
           <listitem>
             <simpara><command>b10-dhcp4</command> provides a single,
@@ -1967,7 +1968,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             linkend="dhcp4-config"/> for details.</simpara>
           </listitem>
           <listitem>
-            <simpara>Upon start, server will open sockets on all
+            <simpara>Upon start, the server will open sockets on all
             interfaces that are not loopback, are up and running and
             have IPv4 address.  Support for multiple interfaces is not
             coded in reception routines yet, so if you are running
@@ -2009,7 +2010,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
           </listitem>
           <listitem>
             <simpara>-v (verbose) command line option is currently
-            permanently enabled.</simpara>
+            the default, and cannot be disabled.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -2020,18 +2021,18 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <title>DHCPv6 Server</title>
     <para>Dynamic Host Configuration Protocol for IPv6 (DHCPv6) is
     specified in RFC3315. BIND10 provides DHCPv6 server implementation
-    that is described in this chapter. For DHCPv4 server
-    implementation, see <xref linkend="dhcp4"/>.
+    that is described in this chapter. For a description of the DHCPv4
+    server implementation, see <xref linkend="dhcp4"/>.
     </para>
 
-    <para>DHCPv6 server component is currently under intense
+    <para>The DHCPv6 server component is currently under intense
     development. You may want to check out <ulink
     url="http://bind10.isc.org/wiki/Kea">BIND10 DHCP (Kea) wiki</ulink>
     and recent posts on <ulink
     url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND10
     developers mailing list</ulink>.</para>
 
-    <para>DHCPv4 and DHCPv6 components in BIND10 architecture are
+    <para>The DHCPv4 and DHCPv6 components in BIND10 architecture are
     internally code named <quote>Kea</quote>.</para>
 
     <note>
@@ -2039,7 +2040,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         As of December 2011, both DHCPv4 and DHCPv6 components are
         skeleton servers. That means that while they are capable of
         performing DHCP configuration, they are not fully functional
-        yet. In particular, both do not have functional lease
+        yet. In particular, neither has functional lease
         databases. This means that they will assign the same, fixed,
         hardcoded addresses to any client that will ask. See <xref
         linkend="dhcp4-limit"/> and <xref linkend="dhcp6-limit"/> for
@@ -2050,7 +2051,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp6-usage">
       <title>DHCPv6 Server Usage</title>
       <para>
-        BIND10 provides DHCPv6 server component since September
+        BIND10 provides the DHCPv6 server component since September
         2011. It is a skeleton server and can be described as an early
         prototype that is not fully functional yet. It is mature
         enough to conduct first tests in lab environment, but it has
@@ -2059,9 +2060,9 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
 
       <para>
-        DHCPv6 server is implemented as <command>b10-dhcp6</command>
+        The DHCPv6 server is implemented as <command>b10-dhcp6</command>
         daemon. As it is not configurable yet, it is fully autonomous,
-        i.e. it does not interact with <command>b10-cfgmgr</command>.
+        that is it does not interact with <command>b10-cfgmgr</command>.
         To start DHCPv6 server, simply input:
 
         <screen>
@@ -2074,16 +2075,16 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         directory, in /usr/local/bin/b10-dhcp6 or other directory
         you specified during compilation.
 
-        After start, server will detect available network interfaces
+        At start, server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
-        are up, running, are not loopback, are multicast-capable and
+        are up, running, are not loopback, are multicast-capable, and
         have IPv6 address assigned.
 
-        Server will then listen to incoming traffic. Currently
-        supported client messages are SOLICIT and REQUEST. Server
+        The server will then listen to incoming traffic. Currently
+        supported client messages are SOLICIT and REQUEST. The server
         will respond to them with ADVERTISE and REPLY, respectively.
 
-        As DHCPv6 server opens privileged ports, it requires root
+        Since the DHCPv6 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
 
@@ -2102,7 +2103,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp6-config">
       <title>DHCPv6 Server Configuration</title>
       <para>
-        DHCPv4 server does not have lease database implemented yet
+        The DHCPv6 server does not have lease database implemented yet
         or any support for configuration, so every time the same set
         of configuration options (including the same fixed address)
         will be assigned every time.
@@ -2143,7 +2144,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
 
     <section id="dhcp6-limit">
       <title>DHCPv6 Server Limitations</title>
-      <para> These are the current limitations of DHCPv6 server
+      <para> These are the current limitations of the DHCPv6 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
@@ -2166,7 +2167,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
             linkend="dhcp6-config"/> for details.</simpara>
         </listitem>
         <listitem>
-          <simpara>Upon start, server will open sockets on all
+          <simpara>Upon start, the server will open sockets on all
           interfaces that are not loopback, are up, running and are
           multicast capable and have IPv6 address.  Support for
           multiple interfaces is not coded in reception routines yet,
@@ -2200,8 +2201,8 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
           only. See <xref linkend="iface-detect"/> for details.</simpara>
         </listitem>
         <listitem>
-          <simpara>-v (verbose) command line option is currently permanently
-          enabled.</simpara>
+          <simpara>-v (verbose) command line option is currently the
+          default, and cannot be disabled.</simpara>
         </listitem>
       </itemizedlist>
       </para>
@@ -2232,15 +2233,15 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
       interface detection routines. Interface detection is
       currently only supported on Linux systems.</para>
 
-      <para>For non-linux systems, there is currently stub
+      <para>For non-Linux systems, there is currently stub
       implementation provided. As DHCP servers need to know available
       addresses, there is a simple mechanism implemented to provide
       that information. User is expected to create interfaces.txt
       file. Format of this file is simple. It contains list of
       interfaces along with available address on each interface. This
       mechanism is temporary and is going to be removed as soon as
-      interface detection becomes available on non-linux
-      systems. Example of interfaces.txt file looks as follows:
+      interface detection becomes available on non-Linux
+      systems. Here is an example of the interfaces.txt file:
       <screen>
 # For DHCPv6, please specify link-local address (starts with fe80::)
 # If in doubt, check output of 'ifconfig -a' command.
