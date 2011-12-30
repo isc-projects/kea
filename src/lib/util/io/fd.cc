@@ -23,23 +23,23 @@ namespace io {
 
 bool
 write_data(const int fd, const void *buffer_v, const size_t length) {
-    const unsigned char *buffer(static_cast<const unsigned char *>(buffer_v));
+    const unsigned char* buffer(static_cast<const unsigned char*>(buffer_v));
     size_t rest(length);
     // Just keep writing until all is written
     while (rest) {
-        ssize_t written(write(fd, buffer, rest));
-        if (rest == -1) {
+        const int written = write(fd, buffer, rest);
+        if (written == -1) {
             if (errno == EINTR) { // Just keep going
                 continue;
             } else {
-                return false;
+                return (false);
             }
         } else { // Wrote something
             rest -= written;
             buffer += written;
         }
     }
-    return true;
+    return (true);
 }
 
 ssize_t
@@ -47,22 +47,22 @@ read_data(const int fd, void *buffer_v, const size_t length) {
     unsigned char *buffer(static_cast<unsigned char *>(buffer_v));
     size_t rest(length), already(0);
     while (rest) { // Stil something to read
-        ssize_t amount(read(fd, buffer, rest));
-        if (rest == -1) {
+        const int amount = read(fd, buffer, rest);
+        if (amount == -1) {
             if (errno == EINTR) { // Continue on interrupted call
                 continue;
             } else {
-                return -1;
+                return (-1);
             }
         } else if (amount) {
             already += amount;
             rest -= amount;
             buffer += amount;
         } else { // EOF
-            return already;
+            return (already);
         }
     }
-    return already;
+    return (already);
 }
 
 }
