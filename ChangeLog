@@ -1,16 +1,23 @@
-363.	[func]		tomek
+355.	[bug]		jinmei
+	Python xfrin.diff module incorrectly combined RRSIGs of different
+	type covered, possibly merging different TTLs.  As a result a
+	secondary server could store different RRSIGs than those at the
+	primary server if it gets these records via IXFR.
+	(Trac #1502, git 57b06f8cb6681f591fa63f25a053eb6f422896ef)
+
+354.	[func]		tomek
 	dhcp4: Support for DISCOVER and OFFER implemented. b10-dhcp4 is
 	now able to offer hardcoded leases to DHCPv4 clients.
 	dhcp6: Code refactored to use the same approach as dhcp4.
 	(Trac #1230, git aac05f566c49daad4d3de35550cfaff31c124513)
 
-362.	[func]		tomek
+353.	[func]		tomek
 	libdhcp++: Interface detection in Linux implemented. libdhcp++
 	if now able to detect available network interfaces, its link-layer
 	addresses, flags and configured IPv4 and IPv6 addresses.
 	(Trac #1237, git 8a040737426aece7cc92a795f2b712d7c3407513)
 
-361.	[func]		tomek
+352.	[func]		tomek
 	libdhcp++: Transmission and reception of DHCPv4 packets is now
 	implemented. Low-level hacks are not implemented for transmission
 	to hosts that don't have IPv4 address yet, so currently the code
@@ -18,7 +25,7 @@
 	same link.
 	(Trac #1239, #1240, git f382050248b5b7ed1881b086d89be2d9dd8fe385)
 
-360.	[func] 		fdupont
+351.	[func] 		fdupont
 	Alpha version of DHCP benchmarking tool added.  "perfdhcp" is able to
 	test both IPv4 and IPv6 servers: it can time the four-packet exchange
 	(DORA and SARR) as well as time the initial two-packet exchange (DO and
@@ -26,7 +33,7 @@
 	tests/tools/perfdhcp) with the "-h" flag.
 	(Trac #1450, git 85083a76107ba2236732b45524ce7018eefbaf90)
 
-359.	[func]*		vorner
+350.	[func]*		vorner
 	The target parameter of ZoneFinder::find is no longer present, as the
 	interface was awkward. To get all the RRsets of a single domain, use
 	the new findAll method (the same applies to python version, the method
