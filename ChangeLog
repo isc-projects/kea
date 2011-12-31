@@ -1,3 +1,12 @@
+358.	[bug]		jinmei
+	b10-resolver ignored default configuration parameters if listen_on
+	failed (this can easily happen especially for a test environment
+	where the run time user doesn't have root privilege), and even if
+	listen_on was updated later the resolver wouldn't work correctly
+	unless it's fully restarted (for example, all queries would be
+	rejected due to an empty ACL).
+	(Trac #1424, git 2cba8cb83cde4f34842898a848c0b1182bc20597)
+
 357.	[bug]		jinmei
 	ZoneFinder::find() for database based data sources didn't
 	correctly identify out-of-zone query name and could return a
