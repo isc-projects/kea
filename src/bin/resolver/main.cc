@@ -220,7 +220,10 @@ main(int argc, char* argv[]) {
         // Install all initial configurations.  If loading configuration
         // fails, it will be logged, but we start the server anyway, giving
         // the user a second chance to correct the configuration.
-        resolver->updateConfig(config_session->getFullConfig());
+        // By setting the 'startup' parameter to true, we ensure most of
+        // the default configuration will be installed even if listen_on
+        // fails.
+        resolver->updateConfig(config_session->getFullConfig(), true);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_LOADED);
 
         LOG_INFO(resolver_logger, RESOLVER_STARTED);
