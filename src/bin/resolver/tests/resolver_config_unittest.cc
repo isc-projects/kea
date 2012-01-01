@@ -197,8 +197,8 @@ createSocket(const char* address, const char* port) {
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
     const int error = getaddrinfo(address, port, &hints, &res);
     if (error != 0) {
