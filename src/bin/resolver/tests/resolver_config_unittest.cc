@@ -63,7 +63,7 @@ using isc::UnitTestUtil;
 
 namespace {
 const char* const TEST_ADDRESS = "127.0.0.1";
-const char* const TEST_PORT = "53535";
+const char* const TEST_PORT = "53530";
 
 // An internal exception class
 class TestConfigError : public isc::Exception {
