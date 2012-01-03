@@ -12,7 +12,7 @@
 	correctly identify out-of-zone query name and could return a
 	confusing result such as NXRRSET.  It now returns NXDOMAIN with an
 	empty RRset.  Note: we should rather throw an exception in such a
-	case, which should be revisited later.
+	case, which should be revisited later (see Trac #1536).
 	(Trac #1430, git b35797ba1a49c78246abc8f2387901f9690b328d)
 
 356.	[doc]		tomek
