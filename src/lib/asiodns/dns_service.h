@@ -88,10 +88,34 @@ public:
     /// \brief Add another server to the service
     void addServer(uint16_t port, const std::string &address);
     void addServer(const char &port, const std::string &address);
-    /// \brief Add another server to the service from already opened file
-    /// descriptor
-    void addServerTCP(int fd, bool v6);
-    void addServerUDP(int fd, bool v6);
+    /// \brief Add another TCP server/listener to the service from already opened
+    ///    file descriptor
+    ///
+    /// Adds a new TCP server using an already opened file descriptor (eg. it
+    /// only wraps it so the file descriptor is usable within the event loop).
+    ///
+    /// If you pass bad data (eg. opened UDP socket as fd), this will not detect
+    /// it right away, but successfull operations might fail.
+    ///
+    /// \param fd the file descriptor to be used.
+    /// \param af the address family of the file descriptor. Must be either
+    ///     AF_INET or AF_INET6.
+    /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6.
+    void addServerTCPFromFD(int fd, int af);
+    /// \brief Add another UDP server to the service from already opened
+    ///    file descriptor
+    ///
+    /// Adds a new UDP server using an already opened file descriptor (eg. it
+    /// only wraps it so the file descriptor is usable within the event loop).
+    ///
+    /// If you pass bad data (eg. opened TCP socket as fd), this will not detect
+    /// it right away, but successfull operations might fail.
+    ///
+    /// \param fd the file descriptor to be used.
+    /// \param af the address family of the file descriptor. Must be either
+    ///     AF_INET or AF_INET6.
+    /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6.
+    void addServerUDPFromFD(int fd, int af);
     /// \brief Remove all servers from the service
     void clearServers();
 

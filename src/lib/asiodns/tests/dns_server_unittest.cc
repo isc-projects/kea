@@ -320,9 +320,17 @@ class TCPClient : public SimpleClient {
 // the same.
 class DNSServerTestBase : public::testing::Test {
     protected:
+        DNSServerTestBase() :
+            udp_server_(NULL),
+            tcp_server_(NULL)
+        { }
         void TearDown() {
-            udp_server_->stop();
-            tcp_server_->stop();
+            if (udp_server_) {
+                udp_server_->stop();
+            }
+            if (tcp_server_) {
+                tcp_server_->stop();
+            }
             delete checker_;
             delete lookup_;
             delete answer_;
@@ -360,7 +368,7 @@ class DNSServerTestBase : public::testing::Test {
             answer_ = new SimpleAnswer();
             udp_client_ = new UDPClient(service,
                                         ip::udp::endpoint(server_address_,
-                                                          server_port));
+                                                         server_port));
             tcp_client_ = new TCPClient(service,
                                         ip::tcp::endpoint(server_address_,
                                                           server_port));
@@ -452,12 +460,12 @@ protected:
         commonSetup();
         int fdUDP(getFd(SOCK_DGRAM));
         ASSERT_NE(-1, fdUDP) << strerror(errno);
-        udp_server_ = new UDPServer(service, fdUDP, false, checker_, lookup_,
-                                    answer_);
+        udp_server_ = new UDPServer(service, fdUDP, AF_INET6, checker_,
+                                    lookup_, answer_);
         int fdTCP(getFd(SOCK_STREAM));
         ASSERT_NE(-1, fdTCP) << strerror(errno);
-        tcp_server_ = new TCPServer(service, fdTCP, false, checker_, lookup_,
-                                    answer_);
+        tcp_server_ = new TCPServer(service, fdTCP, AF_INET6, checker_,
+                                    lookup_, answer_);
     }
 };
 
@@ -592,6 +600,18 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
         EXPECT_EQ(query_message, this->tcp_client_->getReceivedData());
     });
     EXPECT_TRUE(this->serverStopSucceed());
+}
+
+// It raises an exception when invalid address family is passed
+TEST_F(DNSServerTestBase, exceptions) {
+    // We abuse DNSServerTestBase for this test, as we don't need the
+    // initialization.
+    commonSetup();
+    // We use the 0 fd as it should not be touched anyway
+    EXPECT_THROW(UDPServer(service, 0, AF_UNIX, checker_, lookup_,
+                           answer_), isc::InvalidParameter);
+    EXPECT_THROW(TCPServer(service, 0, AF_UNIX, checker_, lookup_,
+                           answer_), isc::InvalidParameter);
 }
 
 }

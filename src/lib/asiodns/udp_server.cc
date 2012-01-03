@@ -74,15 +74,19 @@ struct UDPServer::Data {
         }
         socket_->bind(udp::endpoint(addr, port));
     }
-    Data(io_service& io_service, int fd, bool v6,
-        SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
-        io_(io_service), done_(false),
-        checkin_callback_(checkin),lookup_callback_(lookup),
-        answer_callback_(answer)
+    Data(io_service& io_service, int fd, int af, SimpleCallback* checkin,
+         DNSLookup* lookup, DNSAnswer* answer) :
+         io_(io_service), done_(false),
+         checkin_callback_(checkin),lookup_callback_(lookup),
+         answer_callback_(answer)
     {
+        if (af != AF_INET && af != AF_INET6) {
+            isc_throw(InvalidParameter, "Address family must be either AF_INET "
+                      "or AF_INET6, not " << af);
+        }
         // We must use different instantiations for v4 and v6;
         // otherwise ASIO will bind to both
-        udp proto = v6 ? udp::v6() : udp::v4();
+        udp proto = af == AF_INET6 ? udp::v6() : udp::v4();
         socket_.reset(new udp::socket(io_service));
         socket_->assign(proto, fd);
     }
@@ -179,10 +183,10 @@ UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
     data_(new Data(io_service, addr, port, checkin, lookup, answer))
 { }
 
-UDPServer::UDPServer(io_service& io_service, int fd, bool v6,
+UDPServer::UDPServer(io_service& io_service, int fd, int af,
                      SimpleCallback* checkin, DNSLookup* lookup,
                      DNSAnswer* answer) :
-    data_(new Data(io_service, fd, v6, checkin, lookup, answer))
+    data_(new Data(io_service, fd, af, checkin, lookup, answer))
 { }
 
 /// The function operator is implemented with the "stackless coroutine"
