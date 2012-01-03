@@ -36,8 +36,10 @@
 
 353.	[func]		tomek
 	libdhcp++: Interface detection in Linux implemented. libdhcp++
-	is now able to detect available network interfaces, its link-layer
-	addresses, flags and configured IPv4 and IPv6 addresses.
+	is now able (on Linux systems) to detect available network
+	interfaces, its link-layer addresses, flags and configured
+	IPv4 and IPv6 addresses. Interface detection on other
+	systems is planned.
 	(Trac #1237, git 8a040737426aece7cc92a795f2b712d7c3407513)
 
 352.	[func]		tomek
