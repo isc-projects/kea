@@ -55,11 +55,12 @@ public:
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
-    /// \param v6 the socket in fd is ipv6 one (if false, it is ipv4)
+    /// \param af address family, either AF_INET or AF_INET6
     /// \param checkin the callbackprovider for non-DNS events
     /// \param lookup the callbackprovider for DNS lookup events
     /// \param answer the callbackprovider for DNS answer events
-    UDPServer(asio::io_service& io_service, int fd, bool v6,
+    /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
+    UDPServer(asio::io_service& io_service, int fd, int af,
               isc::asiolink::SimpleCallback* checkin = NULL,
               DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
 
