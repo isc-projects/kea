@@ -88,11 +88,16 @@ public:
     /// \brief Add another server to the service
     void addServer(uint16_t port, const std::string &address);
     void addServer(const char &port, const std::string &address);
-    /// \brief Add another TCP server/listener to the service from already opened
-    ///    file descriptor
+
+    /// \brief Add another TCP server/listener to the service from already
+    /// opened file descriptor
     ///
     /// Adds a new TCP server using an already opened file descriptor (eg. it
     /// only wraps it so the file descriptor is usable within the event loop).
+    /// The file descriptor must be associated with a TCP socket of the given
+    /// address family that is bound to an appropriate port (and possibly a
+    /// specific address) and is ready for listening to new connection
+    /// requests but has not actually started listening.
     ///
     /// \param fd the file descriptor to be used.
     /// \param af the address family of the file descriptor. Must be either
@@ -101,11 +106,15 @@ public:
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor or it can't be listened on.
     void addServerTCPFromFD(int fd, int af);
+
     /// \brief Add another UDP server to the service from already opened
     ///    file descriptor
     ///
     /// Adds a new UDP server using an already opened file descriptor (eg. it
     /// only wraps it so the file descriptor is usable within the event loop).
+    /// The file descriptor must be associated with a UDP socket of the given
+    /// address family that is bound to an appropriate port (and possibly a
+    /// specific address).
     ///
     /// \param fd the file descriptor to be used.
     /// \param af the address family of the file descriptor. Must be either
@@ -114,6 +123,7 @@ public:
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor or it can't be listened on.
     void addServerUDPFromFD(int fd, int af);
+
     /// \brief Remove all servers from the service
     void clearServers();
 
