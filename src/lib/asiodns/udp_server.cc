@@ -29,6 +29,7 @@
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 #include "udp_server.h"
+#include "logger.h"
 
 #include <dns/opcode.h>
 
@@ -84,6 +85,7 @@ struct UDPServer::Data {
             isc_throw(InvalidParameter, "Address family must be either AF_INET "
                       "or AF_INET6, not " << af);
         }
+        logger.debug(DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP, fd);
         // We must use different instantiations for v4 and v6;
         // otherwise ASIO will bind to both
         udp proto = af == AF_INET6 ? udp::v6() : udp::v4();
