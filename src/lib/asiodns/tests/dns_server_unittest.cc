@@ -206,10 +206,10 @@ class SimpleClient : public ServerStopper {
 class UDPClient : public SimpleClient {
     public:
     //After 1 second without feedback client will stop wait
-    static const unsigned int server_time_out = 1;
+    static const unsigned int SERVER_TIME_OUT = 1;
 
     UDPClient(asio::io_service& service, const ip::udp::endpoint& server) :
-        SimpleClient(service, server_time_out)
+        SimpleClient(service, SERVER_TIME_OUT)
     {
         server_ = server;
         socket_.reset(new ip::udp::socket(service));
@@ -248,9 +248,9 @@ class TCPClient : public SimpleClient {
     public:
     // after 2 seconds without feedback client will stop wait,
     // this includes connect, send message and recevice message
-    static const unsigned int server_time_out = 2;
+    static const unsigned int SERVER_TIME_OUT = 2;
     TCPClient(asio::io_service& service, const ip::tcp::endpoint& server)
-        : SimpleClient(service, server_time_out)
+        : SimpleClient(service, SERVER_TIME_OUT)
     {
         server_ = server;
         socket_.reset(new ip::tcp::socket(service));
@@ -343,7 +343,7 @@ class DNSServerTestBase : public::testing::Test {
         void testStopServerByStopper(DNSServer* server, SimpleClient* client,
                 ServerStopper* stopper)
         {
-            static const unsigned int io_service_time_out = 5;
+            static const unsigned int IO_SERVICE_TIME_OUT = 5;
             io_service_is_time_out = false;
             stopper->setServerToStop(server);
             (*server)();
@@ -353,7 +353,7 @@ class DNSServerTestBase : public::testing::Test {
             // server stop failed
             void (*prev_handler)(int) =
                 std::signal(SIGALRM, DNSServerTestBase::stopIOService);
-            alarm(io_service_time_out);
+            alarm(IO_SERVICE_TIME_OUT);
             service.run();
             service.reset();
             //cancel scheduled alarm
@@ -434,16 +434,16 @@ private:
         }
 
         int sock;
-        int on(1);
+        const int on(1);
         // Go as far as you can and stop on failure
         // Create the socket
         // set the options
         // and bind it
-        bool failed((sock = socket(res->ai_family, res->ai_socktype,
-                                   res->ai_protocol)) == -1 ||
-                    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on,
-                               sizeof on) == -1 ||
-                    bind(sock, res->ai_addr, res->ai_addrlen) == -1);
+        const bool failed((sock = socket(res->ai_family, res->ai_socktype,
+                                         res->ai_protocol)) == -1 ||
+                          setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on,
+                                     sizeof(on)) == -1 ||
+                          bind(sock, res->ai_addr, res->ai_addrlen) == -1);
         // No matter if it succeeded or not, free the address info
         freeaddrinfo(res);
         if (failed) {
@@ -458,11 +458,11 @@ private:
 protected:
     void SetUp() {
         commonSetup();
-        int fdUDP(getFd(SOCK_DGRAM));
+        const int fdUDP(getFd(SOCK_DGRAM));
         ASSERT_NE(-1, fdUDP) << strerror(errno);
         udp_server_ = new UDPServer(service, fdUDP, AF_INET6, checker_,
                                     lookup_, answer_);
-        int fdTCP(getFd(SOCK_STREAM));
+        const int fdTCP(getFd(SOCK_STREAM));
         ASSERT_NE(-1, fdTCP) << strerror(errno);
         tcp_server_ = new TCPServer(service, fdTCP, AF_INET6, checker_,
                                     lookup_, answer_);
@@ -614,7 +614,7 @@ TEST_F(DNSServerTestBase, invalidFamily) {
 }
 
 // It raises an exception when invalid address family is passed
-TEST_F(DNSServerTestBase, invalidFD) {
+TEST_F(DNSServerTestBase, invalidTCPFD) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
     commonSetup();
@@ -628,6 +628,18 @@ TEST_F(DNSServerTestBase, invalidFD) {
                            answer_), isc::asiolink::IOError);
     */
     EXPECT_THROW(TCPServer(service, -1, AF_INET, checker_, lookup_,
+                           answer_), isc::asiolink::IOError);
+}
+
+TEST_F(DNSServerTestBase, DISABLED_invalidUDPFD) {
+    /*
+     FIXME: The UDP server doesn't fail reliably with an invalid FD.
+     We need to find a way to trigger it reliably (it seems epoll
+     asio backend does fail as it tries to insert it right away, but
+     not the others, maybe we could make it run this at least on epoll-based
+     systems).
+    */
+    EXPECT_THROW(UDPServer(service, -1, AF_INET, checker_, lookup_,
                            answer_), isc::asiolink::IOError);
 }
 
