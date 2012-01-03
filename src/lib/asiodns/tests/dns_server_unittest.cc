@@ -603,15 +603,25 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
 }
 
 // It raises an exception when invalid address family is passed
-TEST_F(DNSServerTestBase, exceptions) {
+TEST_F(DNSServerTestBase, invalidFamily) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
     commonSetup();
-    // We use the 0 fd as it should not be touched anyway
     EXPECT_THROW(UDPServer(service, 0, AF_UNIX, checker_, lookup_,
                            answer_), isc::InvalidParameter);
     EXPECT_THROW(TCPServer(service, 0, AF_UNIX, checker_, lookup_,
                            answer_), isc::InvalidParameter);
+}
+
+// It raises an exception when invalid address family is passed
+TEST_F(DNSServerTestBase, invalidFD) {
+    // We abuse DNSServerTestBase for this test, as we don't need the
+    // initialization.
+    commonSetup();
+    EXPECT_THROW(UDPServer(service, -1, AF_INET, checker_, lookup_,
+                           answer_), isc::asiolink::IOError);
+    EXPECT_THROW(TCPServer(service, -1, AF_INET, checker_, lookup_,
+                           answer_), isc::asiolink::IOError);
 }
 
 }
