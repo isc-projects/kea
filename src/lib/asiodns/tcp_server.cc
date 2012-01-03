@@ -69,7 +69,7 @@ TCPServer::TCPServer(io_service& io_service,
     acceptor_->listen();
 }
 
-TCPServer::TCPServer(io_service& io_service, int fd, bool v6,
+TCPServer::TCPServer(io_service& io_service, int fd, int af,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,
                      const DNSAnswer* answer) :
@@ -77,8 +77,12 @@ TCPServer::TCPServer(io_service& io_service, int fd, bool v6,
     checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer)
 {
+    if (af != AF_INET && af != AF_INET6) {
+        isc_throw(InvalidParameter, "Address family must be either AF_INET "
+                  "or AF_INET6, not " << af);
+    }
     acceptor_.reset(new tcp::acceptor(io_service));
-    acceptor_->assign(v6 ? tcp::v6() : tcp::v4(), fd);
+    acceptor_->assign(af == AF_INET6 ? tcp::v6() : tcp::v4(), fd);
     acceptor_->listen();
 }
 
