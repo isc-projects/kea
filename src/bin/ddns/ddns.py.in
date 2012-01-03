@@ -86,6 +86,8 @@ class DDNSServer:
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._shutdown = False
+        # List of the sessions where we get the packets to handle
+        self._socket_sessions = {}
 
     def config_handler(self, new_config):
         '''Update config data.'''
@@ -124,6 +126,12 @@ class DDNSServer:
 
         Currently, it does nothing, but cleanup routines are expected.
         '''
+        pass
+
+    def accept(self):
+        """
+        Accept another connection and create the session receiver.
+        """
         pass
 
     def run(self):

@@ -30,6 +30,19 @@ class FakeSocket:
     def fileno(self):
         return self.__fileno
 
+class FakeSession:
+    """
+    A fake socket session receiver, for our tests.
+    """
+    def __init__(self, socket):
+        self._socket = socket
+    def socket(self):
+        """
+        This method is not present in the real receiver, but we use it to
+        inspect the socket passed to the constructor.
+        """
+        return self._socket
+
 class MyCCSession(isc.config.ConfigData):
     '''Fake session with minimal interface compliance'''
     def __init__(self):
@@ -84,6 +97,11 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_expected = None
         self.__select_answer = None
         self.__hook_called = False
+        self.ddns_server._listen_socket = FakeSocket(2)
+        ddns.select.select = self.__select
+
+    def tearDown(self):
+        ddns.select.select = select.select
 
     def test_config_handler(self):
         # Config handler does not do anything yet, but should at least
@@ -136,8 +154,6 @@ class TestDDNSServer(unittest.TestCase):
         """
         Test we call the accept function when a new connection comes.
         """
-        self.ddns_server._listen_socket = FakeSocket(2)
-        ddns.select.select = self.__select
         self.ddns_server.accept = self.__hook
         self.__select_expected = ([1, 2], [], [], None)
         self.__select_answer = ([2], [], [])
@@ -148,15 +164,12 @@ class TestDDNSServer(unittest.TestCase):
         self.assertIsNone(self.__select_answer)
         # Reset, when called without parameter
         self.assertIsNone(self.__hook_called)
-        ddns.select.select = select.select
 
     def test_check_command_called(self):
         """
         Test the check_command is called when there's something on the
         socket.
         """
-        self.ddns_server._listen_socket = FakeSocket(2)
-        ddns.select.select = self.__select
         self.cc_session.check_command = self.__hook
         self.__select_expected = ([1, 2], [], [], None)
         self.__select_answer = ([1], [], [])
@@ -167,7 +180,21 @@ class TestDDNSServer(unittest.TestCase):
         # And the check_command was called with true parameter (eg.
         # non-blocking)
         self.assertTrue(self.__hook_called)
-        ddns.select.select = select.select
+
+    def test_accept(self):
+        """
+        Test that we can accept a new connection.
+        """
+        # There's nothing before the accept
+        self.assertEqual({}, self.ddns_server._socket_sessions)
+        self.ddns_server.accept()
+        # Now the new session socket receiver is stored in the dict
+        self.assertEqual([3], list(self.ddns_server._socket_sessions.keys()))
+        (socket, session) = self.ddns_server._socket_sessions[3]
+        self.assertTrue(isinstance(socket, FakeSocket))
+        self.assertEqual(3, socket.fileno())
+        self.assertTrue(isinstance(session, FakeSession))
+        self.assertEqual(socket, session.socket())
 
 class TestMain(unittest.TestCase):
     def setUp(self):
