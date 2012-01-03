@@ -202,6 +202,21 @@ class TestDDNSServer(unittest.TestCase):
         self.assertTrue(isinstance(session, FakeSession))
         self.assertEqual(socket, session.socket())
 
+    def test_incoming_called(self):
+        """
+        Test the run calls handle_incoming when there's something on the
+        socket.
+        """
+        socket = FakeSocket(3)
+        self.ddns_server._socket_sessions = {3: (socket, FakeSession(socket))}
+        self.ddns_server.handle_incoming = self.__hook
+        self.__select_expected = ([1, 2, 3], [], [], None)
+        self.__select_answer = ([3], [], [])
+        self.ddns_server.run()
+        self.assertTrue(self.ddns_server._shutdown)
+        self.assertIsNone(self.__select_answer)
+        self.assertEqual(3, self.__hook_called)
+
 class TestMain(unittest.TestCase):
     def setUp(self):
         self._server = MyDDNSServer()

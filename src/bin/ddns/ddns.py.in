@@ -138,6 +138,12 @@ class DDNSServer:
         session = isc.util.io.socketsession.SocketSessionReceiver(socket)
         self._socket_sessions[fileno] = (socket, session)
 
+    def handle_incoming(self, fileno):
+        """
+        Handle incoming event on the socket with given fileno.
+        """
+        pass
+
     def run(self):
         '''
         Get and process all commands sent from cfgmgr or other modules.
@@ -155,14 +161,15 @@ class DDNSServer:
 
             # TODO: Catch select exceptions, like EINTR
             (reads, writes, exceptions) = \
-                select.select([cc_fileno, listen_fileno], [], [])
+                select.select([cc_fileno, listen_fileno] +
+                              list(self._socket_sessions.keys()), [], [])
             for fileno in reads:
                 if fileno == cc_fileno:
                     self._cc.check_command(True)
                 elif fileno == listen_fileno:
                     self.accept()
                 else:
-                    pass # TODO
+                    self.handle_incoming(fileno)
         self.shutdown_cleanup()
         logger.info(DDNS_STOPPED)
 
