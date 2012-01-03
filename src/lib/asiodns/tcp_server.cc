@@ -29,8 +29,8 @@
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
-#include <tcp_server.h>
-
+#include <asiodns/tcp_server.h>
+#include <asiodns/logger.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -81,6 +81,8 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
                   "or AF_INET6, not " << af);
     }
+    logger.debug(DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_TCP, fd);
+
     acceptor_.reset(new tcp::acceptor(io_service));
     acceptor_->assign(af == AF_INET6 ? tcp::v6() : tcp::v4(), fd);
     acceptor_->listen();
