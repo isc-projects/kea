@@ -23,6 +23,7 @@ from isc.dns import *
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
 import isc.util.process
+import isc.util.io.socketsession
 import select
 
 from isc.log_messages.ddns_messages import *
@@ -86,7 +87,7 @@ class DDNSServer:
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._shutdown = False
-        # List of the sessions where we get the packets to handle
+        # List of the sessions where we get the packets
         self._socket_sessions = {}
 
     def config_handler(self, new_config):
@@ -132,7 +133,10 @@ class DDNSServer:
         """
         Accept another connection and create the session receiver.
         """
-        pass
+        socket = self._listen_socket.accept()
+        fileno = socket.fileno()
+        session = isc.util.io.socketsession.SocketSessionReceiver(socket)
+        self._socket_sessions[fileno] = (socket, session)
 
     def run(self):
         '''

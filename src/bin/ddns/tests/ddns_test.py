@@ -20,6 +20,7 @@ import isc
 import ddns
 import isc.config
 import select
+import isc.util.io.socketsession
 
 class FakeSocket:
     """
@@ -29,6 +30,8 @@ class FakeSocket:
         self.__fileno = fileno
     def fileno(self):
         return self.__fileno
+    def accept(self):
+        return FakeSocket(self.__fileno + 1)
 
 class FakeSession:
     """
@@ -102,6 +105,8 @@ class TestDDNSServer(unittest.TestCase):
 
     def tearDown(self):
         ddns.select.select = select.select
+        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
+            isc.util.io.socketsession.SocketSessionReceiver
 
     def test_config_handler(self):
         # Config handler does not do anything yet, but should at least
@@ -186,6 +191,7 @@ class TestDDNSServer(unittest.TestCase):
         Test that we can accept a new connection.
         """
         # There's nothing before the accept
+        ddns.isc.util.io.socketsession.SocketSessionReceiver = FakeSession
         self.assertEqual({}, self.ddns_server._socket_sessions)
         self.ddns_server.accept()
         # Now the new session socket receiver is stored in the dict
