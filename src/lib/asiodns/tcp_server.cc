@@ -81,11 +81,18 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
                   "or AF_INET6, not " << af);
     }
-    logger.debug(DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_TCP, fd);
+    logger.debug(DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_TCP).arg(fd);
 
     acceptor_.reset(new tcp::acceptor(io_service));
-    acceptor_->assign(af == AF_INET6 ? tcp::v6() : tcp::v4(), fd);
-    acceptor_->listen();
+    try {
+        acceptor_->assign(af == AF_INET6 ? tcp::v6() : tcp::v4(), fd);
+        acceptor_->listen();
+    }
+    // Whatever the thing throws, it is something from ASIO and we convert
+    // it
+    catch (const std::exception& exception) {
+        isc_throw(IOError, exception.what());
+    }
 }
 
 void

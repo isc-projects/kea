@@ -51,6 +51,8 @@ public:
     /// \param lookup the callbackprovider for DNS lookup events
     /// \param answer the callbackprovider for DNS answer events
     /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
+    /// \throw isc::asiolink::IOError when a low-level error happens, like the
+    ///     fd is not a valid descriptor or it can't be listened on.
     TCPServer(asio::io_service& io_service, int fd, int af,
               const isc::asiolink::SimpleCallback* checkin = NULL,
               const DNSLookup* lookup = NULL, const DNSAnswer* answer = NULL);
