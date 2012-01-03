@@ -217,6 +217,50 @@ class TestDDNSServer(unittest.TestCase):
         self.assertIsNone(self.__select_answer)
         self.assertEqual(3, self.__hook_called)
 
+    def test_handle_incoming_ok(self):
+        """
+        Test the handle_incoming pops the session and calls handle_request
+        when everything is OK.
+        """
+        socket = FakeSocket(3)
+        session = FakeSession(socket)
+        # It doesn't really matter what data we use here, it is only passed
+        # through the code
+        param = (FakeSocket(4), ('127.0.0.1', 1234), ('127.0.0.1', 1235),
+                 'Some data')
+        def pop():
+            return param
+        # Prepare data into the session
+        session.pop = pop
+        self.ddns_server._socket_sessions = {3: (socket, session)}
+        self.ddns_server.handle_request = self.__hook
+        # Call it
+        self.ddns_server.handle_incoming(3)
+        # The popped data are passed into the handle_request
+        self.assertEqual(param, self.__hook_called)
+        # The sessions are kept the same
+        self.assertEqual({3: (socket, session)},
+                         self.ddns_server._socket_sessions)
+
+    def test_handle_incoming_fail(self):
+        """
+        Test the handle_incoming removes (and closes) the socket and session
+        when the session complains.
+        """
+        socket = FakeSocket(3)
+        session = FakeSession(socket)
+        def pop():
+            raise isc.util.io.socketsession.SocketSessionError('Test error')
+        session.pop = pop
+        socket.close = self.__hook
+        self.__hook_called = False
+        self.ddns_server._socket_sessions = {3: (socket, session)}
+        self.ddns_server.handle_incoming(3)
+        # The "dead" session is removed
+        self.assertEqual({}, self.ddns_server._socket_sessions)
+        # Close is called with no parameter, so the default None
+        self.assertIsNone(self.__hook_called)
+
 class TestMain(unittest.TestCase):
     def setUp(self):
         self._server = MyDDNSServer()

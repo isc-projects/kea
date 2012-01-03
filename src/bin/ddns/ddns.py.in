@@ -138,11 +138,32 @@ class DDNSServer:
         session = isc.util.io.socketsession.SocketSessionReceiver(socket)
         self._socket_sessions[fileno] = (socket, session)
 
+    def handle_request(self, request):
+        """
+        This is called whenever a new DDNS request comes. Here the magic
+        happens, the rest is either subroutines of the magic or the accounting
+        around it that calls it from time to time.
+
+        It is called with the request being session as received from
+        SocketSessionReceiver, eg. tupple
+        (socket, local_address, remote_address, data).
+        """
+        # TODO: Implement the magic
+        pass
+
     def handle_incoming(self, fileno):
         """
         Handle incoming event on the socket with given fileno.
         """
-        pass
+        (socket, session) = self._socket_sessions[fileno]
+        try:
+            request = session.pop()
+            self.handle_request(request)
+        except isc.util.io.socketsession.SocketSessionError:
+            # No matter why this failed, the connection is in unknown, possibly
+            # broken state. So, we close the socket and remove the session.
+            del self._socket_sessions[fileno]
+            socket.close()
 
     def run(self):
         '''
