@@ -195,6 +195,24 @@ TEST_F(SocketRequestorTest, testSocketRequestMessages) {
     ASSERT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
 }
 
+TEST_F(SocketRequestorTest, invalidParameterForSocketRequest) {
+    // Bad protocol
+    EXPECT_THROW(socketRequestor().
+                 requestSocket(static_cast<SocketRequestor::Protocol>(2),
+                               "192.0.2.1", 12345,
+                               SocketRequestor::DONT_SHARE,
+                               "test"),
+                 InvalidParameter);
+
+    // Bad share mode
+    EXPECT_THROW(socketRequestor().
+                 requestSocket(SocketRequestor::UDP,
+                               "192.0.2.1", 12345,
+                               static_cast<SocketRequestor::ShareMode>(3),
+                               "test"),
+                 InvalidParameter);
+}
+
 TEST_F(SocketRequestorTest, testBadRequestAnswers) {
     // Test various scenarios where the requestor gets back bad answers
 
