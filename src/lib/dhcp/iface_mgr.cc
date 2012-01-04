@@ -574,12 +574,12 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
 
     result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
-        cout << "Send packet failed." << endl;
+        isc_throw(Unexpected, "Pkt6 send failed: sendmsg() returned " << result);
     }
     cout << "Sent " << pkt->data_len_ << " bytes over socket " << getSocket(*pkt)
          << " on " << iface->getFullName() << " interface: "
-         << " dst=" << pkt->remote_addr_.toText()
-         << ", src=" << pkt->local_addr_.toText()
+         << " dst=[" << pkt->remote_addr_.toText() << "]:" << pkt->remote_port_
+         << ", src=" << pkt->local_addr_.toText() << "]:" << pkt->remote_port_
          << endl;
 
     return (result);
@@ -1019,9 +1019,10 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     SocketCollection::const_iterator s;
     for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
         if (s->family_ != AF_INET) {
-            // don't use IPv4 sockets
+            // don't use IPv6 sockets
             continue;
         }
+
         /// TODO: Add more checks here later. If remote address is
         /// not link-local, we can't use link local bound socket
         /// to send data.
