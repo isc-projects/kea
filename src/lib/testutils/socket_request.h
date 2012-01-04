@@ -72,12 +72,15 @@ protected:
         last_token_(0), break_rollback_(false), dnss_(dnss), store_(store),
         expect_port_(expect_port)
     {}
+
     /// \brief Destructor
     virtual ~ TestSocketRequestor() {}
+
     /// \brief Tokens released by releaseSocket
     ///
     /// They are stored here by this class and you can examine them.
     std::vector<std::string> released_tokens_;
+
     /// \brief Tokens returned from requestSocket
     ///
     /// They are stored here by this class and you can examine them.
@@ -91,6 +94,7 @@ protected:
     /// If this is set to true, the requestSocket will throw when the
     /// ::1 address is requested.
     bool break_rollback_;
+
     /// \brief Release a socket
     ///
     /// This only stores the token passed.
@@ -98,9 +102,10 @@ protected:
     void releaseSocket(const std::string& token) {
         released_tokens_.push_back(token);
     }
+
     /// \brief Request a socket
     ///
-    /// This creates a new token and fakes a new socket and returs it.
+    /// This creates a new token and fakes a new socket and returns it.
     /// The token is stored.
     ///
     /// In case the address is 192.0.2.2 or if the break_rollback_ is true
@@ -133,7 +138,7 @@ protected:
                       "This address is available, but not for you");
         }
         const std::string proto(protocol == TCP ? "TCP" : "UDP");
-        size_t number = ++ last_token_;
+        const size_t number = ++ last_token_;
         EXPECT_EQ(expect_port_, port);
         EXPECT_EQ(DONT_SHARE, mode);
         EXPECT_EQ("dummy_app", name);
@@ -143,6 +148,7 @@ protected:
         given_tokens_.push_back(token);
         return (SocketID(number, token));
     }
+
     /// \brief Initialize the test
     ///
     /// It installs itself as the socket requestor. It also turns on portconfig
@@ -156,6 +162,7 @@ protected:
         // Don't manipulate the real sockets
         server_common::portconfig::test_mode = true;
     }
+
     /// \brief Cleanup after the test
     ///
     /// Removes the addresses (if any) installed by installListenAddresses,
@@ -173,6 +180,7 @@ protected:
         // And return the mode
         server_common::portconfig::test_mode = false;
     }
+
     /// \brief Check the list of tokens is as expected
     ///
     /// Compares the expected and real tokens.
@@ -186,21 +194,22 @@ protected:
     ///     It is printed as a part of failure message.
     void checkTokens(const char** expected,
                      const std::vector<std::string>& real,
-                     const char* scope)
+                     const char* scope) const
     {
         SCOPED_TRACE(scope);
         size_t position(0);
-        while (expected[position]) {
+        while (expected[position] != NULL) {
             ASSERT_LT(position, real.size());
             EXPECT_EQ(expected[position], real[position]) << position;
             position ++;
         }
         EXPECT_EQ(position, real.size());
     }
+
 private:
     asiodns::DNSService& dnss_;
     server_common::portconfig::AddressList& store_;
-    uint16_t expect_port_;
+    const uint16_t expect_port_;
 };
 
 }
