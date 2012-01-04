@@ -63,6 +63,20 @@ const std::string& RELEASE_SOCKET_COMMAND() {
     return (str);
 }
 
+// A helper converter from numeric protocol ID to the corresponding string.
+// used both for generating a message for the boss process and for logging.
+inline const char*
+protocolString(SocketRequestor::Protocol protocol) {
+    switch (protocol) {
+    case SocketRequestor::TCP:
+        return ("TCP");
+    case SocketRequestor::UDP:
+        return ("UDP");
+    default:
+        return ("unknown protocol");
+    }
+}
+
 // Creates the cc session message to request a socket.
 // The actual command format is hardcoded, and should match
 // the format as read in bind10_src.py.in
@@ -75,14 +89,11 @@ createRequestSocketMessage(SocketRequestor::Protocol protocol,
     const isc::data::ElementPtr request = isc::data::Element::createMap();
     request->set("address", isc::data::Element::create(address));
     request->set("port", isc::data::Element::create(port));
-    switch (protocol) {
-    case SocketRequestor::UDP:
-        request->set("protocol", isc::data::Element::create("UDP"));
-        break;
-    case SocketRequestor::TCP:
-        request->set("protocol", isc::data::Element::create("TCP"));
-        break;
+    if (protocol != SocketRequestor::TCP && protocol != SocketRequestor::UDP) {
+        isc_throw(InvalidParameter, "invalid protocol: " << protocol);
     }
+    request->set("protocol",
+                 isc::data::Element::create(protocolString(protocol)));
     switch (share_mode) {
     case SocketRequestor::DONT_SHARE:
         request->set("share_mode", isc::data::Element::create("NO"));
@@ -93,6 +104,8 @@ createRequestSocketMessage(SocketRequestor::Protocol protocol,
     case SocketRequestor::SHARE_ANY:
         request->set("share_mode", isc::data::Element::create("ANY"));
         break;
+    default:
+        isc_throw(InvalidParameter, "invalid share mode: " << share_mode);
     }
     request->set("share_name", isc::data::Element::create(share_name));
 
@@ -229,20 +242,6 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
         }
     }
     return (passed_sock_fd);
-}
-
-namespace {
-inline const char*
-protocolString(SocketRequestor::Protocol protocol) {
-    switch (protocol) {
-    case SocketRequestor::TCP:
-        return ("TCP");
-    case SocketRequestor::UDP:
-        return ("UDP");
-    default:
-        return ("unknown protocol");
-    }
-}
 }
 
 // This implementation class for SocketRequestor uses

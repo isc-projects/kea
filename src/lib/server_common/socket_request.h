@@ -109,15 +109,19 @@ public:
     /// Asks the socket creator to give us a socket. The socket will be bound
     /// to the given address and port.
     ///
-    /// \param protocol specifies the protocol of the socket.
+    /// \param protocol specifies the protocol of the socket.  This must be
+    /// either UDP or TCP.
     /// \param address to which the socket should be bound.
     /// \param port the port to which the socket should be bound (native endian,
     ///     not network byte order).
     /// \param share_mode how the socket can be shared with other requests.
+    /// This must be one of the defined values of ShareMode.
     /// \param share_name the name of sharing group, relevant for SHARE_SAME
     ///     (specified by us or someone else).
     /// \return the socket, as a file descriptor and token representing it on
     ///     the socket creator side.
+    ///
+    /// \throw InvalidParameter protocol or share_mode is invalid
     /// \throw CCSessionError when we have a problem talking over the CC
     ///     session.
     /// \throw SocketError in case the other side doesn't want to give us
