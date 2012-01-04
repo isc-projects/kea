@@ -338,10 +338,10 @@ class DNSServerTestBase : public::testing::Test {
         }
 
         ~ DNSServerTestBase() {
-            if (udp_server_) {
+            if (udp_server_ != NULL) {
                 udp_server_->stop();
             }
-            if (tcp_server_) {
+            if (tcp_server_ != NULL) {
                 tcp_server_->stop();
             }
             delete checker_;
