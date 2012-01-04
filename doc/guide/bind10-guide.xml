@@ -53,6 +53,20 @@
 
   </bookinfo>
 
+  <preface>
+    <title>Preface</title>
+
+    <section id="acknowledgements">
+      <title>Acknowledgements</title>
+
+      <para>ISC would like to acknowledge generous support for
+      BIND 10 development of DHCPv4 and DHCPv6 components provided
+      by <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
+
+    </section>
+
+  </preface>
+
   <chapter id="intro">
     <title>Introduction</title>
     <para>
@@ -3013,15 +3027,6 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
 
     </section>
 
-  </chapter>
-
-<!-- TODO: acknolwedgements must be unnumbered -->
-
-  <chapter>
-    <title>Acknowledgements</title>
-    <para>ISC would like to acknowledge generous support for
-    development of DHCPv4 and DHCPv6 components provided by <ulink
-    url="http://www.comcast.com">Comcast</ulink>.</para>
   </chapter>
 
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
