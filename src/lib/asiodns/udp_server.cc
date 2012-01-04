@@ -85,7 +85,7 @@ struct UDPServer::Data {
             isc_throw(InvalidParameter, "Address family must be either AF_INET "
                       "or AF_INET6, not " << af);
         }
-        logger.debug(DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
+        LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
         // We must use different instantiations for v4 and v6;
         // otherwise ASIO will bind to both
         udp proto = af == AF_INET6 ? udp::v6() : udp::v4();
