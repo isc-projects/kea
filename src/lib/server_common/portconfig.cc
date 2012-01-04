@@ -94,6 +94,11 @@ setAddresses(DNSService& service, const AddressList& addresses) {
     BOOST_FOREACH(const AddressPair &address, addresses) {
         const int af(IOAddress(address.first).getFamily());
         // TODO: Support sharing somehow in future.
+
+        // As for now, we hardcode the application name as dummy_app, because:
+        // * we don't have a name available in our interface, which will change
+        //   soon anyway
+        // * we use the DONT_SHARE mode, so the name is irrelevant anyway
         const SocketRequestor::SocketID
             tcp(socketRequestor().requestSocket(SocketRequestor::TCP,
                                                 address.first, address.second,
@@ -151,7 +156,9 @@ installListenAddresses(const AddressList& newAddresses,
         }
         catch (const exception& e2) {
             LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2.what());
-            // Releasing them should really work
+            // If we can't set the new ones, nor the old ones, at last
+            // releasing everything should work. If it doesn't, there isn't
+            // anything else we could do.
             AddressList empty;
             setAddresses(service, empty);
             addressStore.clear();

@@ -257,7 +257,7 @@ TEST_F(InstallListenAddresses, rollback) {
                                 "Released after rollback");
 }
 
-// Try it at least returns everything when even the rollback fails.
+// Try it at least releases everything when even the rollback fails.
 TEST_F(InstallListenAddresses, brokenRollback) {
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Before rollback");
@@ -268,8 +268,8 @@ TEST_F(InstallListenAddresses, brokenRollback) {
                  SocketRequestor::SocketError);
     // No addresses here
     EXPECT_TRUE(store_.empty());
-    // These should be requested in the first part of the failure to bind
-    // and the second pair in the first part of rollback
+    // The first pair should be requested in the first part of the failure to
+    // bind and the second pair in the first part of rollback
     const char* tokens[] = {
         "TCP:127.0.0.1:5288:5",
         "UDP:127.0.0.1:5288:6",
