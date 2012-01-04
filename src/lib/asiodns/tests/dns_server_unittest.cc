@@ -333,7 +333,10 @@ class DNSServerTestBase : public::testing::Test {
                                                         server_port))),
             udp_server_(NULL),
             tcp_server_(NULL)
-        { }
+        {
+            current_service = &service;
+        }
+
         ~ DNSServerTestBase() {
             if (udp_server_) {
                 udp_server_->stop();
@@ -348,6 +351,9 @@ class DNSServerTestBase : public::testing::Test {
             delete udp_client_;
             delete tcp_server_;
             delete tcp_client_;
+            // No delete here. The service is not allocated by new, but as our
+            // member. This only references it, so just cleaning the pointer.
+            current_service = NULL;
         }
 
         void testStopServerByStopper(DNSServer* server, SimpleClient* client,
@@ -363,6 +369,7 @@ class DNSServerTestBase : public::testing::Test {
             // server stop failed
             void (*prev_handler)(int) =
                 std::signal(SIGALRM, DNSServerTestBase::stopIOService);
+            current_service = &service;
             alarm(IO_SERVICE_TIME_OUT);
             service.run();
             service.reset();
@@ -373,13 +380,16 @@ class DNSServerTestBase : public::testing::Test {
 
         static void stopIOService(int _no_use_parameter) {
             io_service_is_time_out = true;
-            service.stop();
+            if (current_service != NULL) {
+                current_service->stop();
+            }
         }
 
         bool serverStopSucceed() const {
             return (!io_service_is_time_out);
         }
 
+        asio::io_service service;
         const ip::address server_address_;
         DummyChecker* const checker_;
         DummyLookup*  const lookup_;
@@ -391,7 +401,7 @@ class DNSServerTestBase : public::testing::Test {
 
         // To access them in signal handle function, the following
         // variables have to be static.
-        static asio::io_service service;
+        static asio::io_service* current_service;
         static bool io_service_is_time_out;
 };
 
@@ -472,7 +482,7 @@ typedef ::testing::Types<AddrPortInit, FdInit> ServerTypes;
 TYPED_TEST_CASE(DNSServerTest, ServerTypes);
 
 bool DNSServerTestBase::io_service_is_time_out = false;
-asio::io_service DNSServerTestBase::service;
+asio::io_service* DNSServerTestBase::current_service(NULL);
 
 // Test whether server stopped successfully after client get response
 // client will send query and start to wait for response, once client
