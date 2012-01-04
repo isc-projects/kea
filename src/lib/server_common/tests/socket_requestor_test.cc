@@ -420,8 +420,13 @@ private:
         }
     }
 
-    // Accept one connection, then send all values from the vector using
-    // send_fd() (prepended by a status code 'ok').
+    // Accept one connection, then for each value of the vector,
+    // read the socket token from the connection and match the string
+    // part of the vector element, and send the integer part of the element
+    // using send_fd() (prepended by a status code 'ok').  For simplicity
+    // we assume the tokens are 4 bytes long; if the test case uses a
+    // different size of token the test will fail.
+    //
     // There are a few specific exceptions;
     // when the value is -1, it will send back an error value (signaling
     // CREATOR_SOCKET_UNAVAILABLE)
