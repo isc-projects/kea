@@ -321,10 +321,20 @@ class TCPClient : public SimpleClient {
 class DNSServerTestBase : public::testing::Test {
     protected:
         DNSServerTestBase() :
+            server_address_(ip::address::from_string(server_ip)),
+            checker_(new DummyChecker()),
+            lookup_(new DummyLookup()),
+            answer_(new SimpleAnswer()),
+            udp_client_(new UDPClient(service,
+                                      ip::udp::endpoint(server_address_,
+                                                         server_port))),
+            tcp_client_(new TCPClient(service,
+                                      ip::tcp::endpoint(server_address_,
+                                                        server_port))),
             udp_server_(NULL),
             tcp_server_(NULL)
         { }
-        void TearDown() {
+        ~ DNSServerTestBase() {
             if (udp_server_) {
                 udp_server_->stop();
             }
@@ -361,19 +371,6 @@ class DNSServerTestBase : public::testing::Test {
             std::signal(SIGALRM, prev_handler);
         }
 
-        void commonSetup() {
-            server_address_ = ip::address::from_string(server_ip);
-            checker_ = new DummyChecker();
-            lookup_ = new DummyLookup();
-            answer_ = new SimpleAnswer();
-            udp_client_ = new UDPClient(service,
-                                        ip::udp::endpoint(server_address_,
-                                                         server_port));
-            tcp_client_ = new TCPClient(service,
-                                        ip::tcp::endpoint(server_address_,
-                                                          server_port));
-        }
-
         static void stopIOService(int _no_use_parameter) {
             io_service_is_time_out = true;
             service.stop();
@@ -383,14 +380,14 @@ class DNSServerTestBase : public::testing::Test {
             return (!io_service_is_time_out);
         }
 
-        DummyChecker* checker_;
-        DummyLookup*  lookup_;
-        SimpleAnswer* answer_;
+        const ip::address server_address_;
+        DummyChecker* const checker_;
+        DummyLookup*  const lookup_;
+        SimpleAnswer* const answer_;
+        UDPClient*    const udp_client_;
+        TCPClient*    const tcp_client_;
         UDPServer*    udp_server_;
-        UDPClient*    udp_client_;
-        TCPClient*    tcp_client_;
         TCPServer*    tcp_server_;
-        ip::address server_address_;
 
         // To access them in signal handle function, the following
         // variables have to be static.
@@ -401,8 +398,7 @@ class DNSServerTestBase : public::testing::Test {
 // Initialization with name and port
 class AddrPortInit : public DNSServerTestBase {
 protected:
-    void SetUp() {
-        commonSetup();
+    AddrPortInit() {
         udp_server_ = new UDPServer(service, server_address_, server_port,
                                     checker_, lookup_, answer_);
         tcp_server_ = new TCPServer(service, server_address_, server_port,
@@ -456,8 +452,8 @@ private:
         }
     }
 protected:
+    // Using SetUp here so we can ASSERT_*
     void SetUp() {
-        commonSetup();
         const int fdUDP(getFd(SOCK_DGRAM));
         ASSERT_NE(-1, fdUDP) << strerror(errno);
         udp_server_ = new UDPServer(service, fdUDP, AF_INET6, checker_,
@@ -606,7 +602,6 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
 TEST_F(DNSServerTestBase, invalidFamily) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
-    commonSetup();
     EXPECT_THROW(UDPServer(service, 0, AF_UNIX, checker_, lookup_,
                            answer_), isc::InvalidParameter);
     EXPECT_THROW(TCPServer(service, 0, AF_UNIX, checker_, lookup_,
@@ -617,7 +612,6 @@ TEST_F(DNSServerTestBase, invalidFamily) {
 TEST_F(DNSServerTestBase, invalidTCPFD) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
-    commonSetup();
     /*
      FIXME: The UDP server doesn't fail reliably with an invalid FD.
      We need to find a way to trigger it reliably (it seems epoll
