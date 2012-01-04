@@ -226,7 +226,8 @@ TEST_F(InstallListenAddresses, rollback) {
                                 "Released before rollback");
     sock_requestor_.given_tokens_.clear();
     // This should not bind them, but should leave the original addresses
-    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), exception);
+    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_),
+                 SocketRequestor::SocketError);
     checkAddresses(valid_, "After rollback");
     // Now, it should have requested first pair of sockets from the invalids
     // and, as the second failed, it should have returned them right away.
@@ -263,7 +264,8 @@ TEST_F(InstallListenAddresses, brokenRollback) {
     // Don't check the tokens now, we already do it in rollback and valid tests
     sock_requestor_.given_tokens_.clear();
     sock_requestor_.break_rollback_ = true;
-    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), exception);
+    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_),
+                 SocketRequestor::SocketError);
     // No addresses here
     EXPECT_TRUE(store_.empty());
     // These should be requested in the first part of the failure to bind
