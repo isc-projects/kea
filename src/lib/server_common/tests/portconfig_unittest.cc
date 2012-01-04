@@ -148,12 +148,13 @@ struct InstallListenAddresses : public testutils::TestSocketRequestor {
     // But this shouldn't work
     AddressList invalid_;
     // Check that the store_ addresses are the same as expected
-    void checkAddresses(const AddressList& expected, const string& name) {
+    void checkAddresses(const AddressList& expected, const string& name) const
+    {
         SCOPED_TRACE(name);
 
         ASSERT_EQ(expected.size(), store_.size()) <<
             "Different amount of elements, not checking content";
-        // Run in parallel trough the vectors
+        // Run in parallel through the vectors
         for (AddressList::const_iterator ei(expected.begin()),
              si(store_.begin()); ei != expected.end(); ++ei, ++si) {
             EXPECT_EQ(ei->first, si->first);
@@ -244,7 +245,7 @@ TEST_F(InstallListenAddresses, rollback) {
     checkTokens(released1, released_tokens_, "Released after rollback");
 }
 
-// Try it at last returns everything when even the rollback fails.
+// Try it at least returns everything when even the rollback fails.
 TEST_F(InstallListenAddresses, brokenRollback) {
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Before rollback");
