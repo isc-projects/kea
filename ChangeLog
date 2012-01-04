@@ -1,3 +1,11 @@
+359.	[bug]		kevin
+	Corrected SOA serial check in xfrout.  It now compares the SOA
+	serial of an IXFR query with that of the server based serial
+	number arithmetic, and replies with a single SOA record of the
+	server's current version if the former is equal to or newer
+	than the latter.
+	(Trac #1462, git ceeb87f6d539c413ebdc66e4cf718e7eb8559c45)
+
 358.	[bug]		jinmei
 	b10-resolver ignored default configuration parameters if listen_on
 	failed (this can easily happen especially for a test environment
