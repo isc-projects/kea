@@ -594,6 +594,8 @@ TEST(Pkt4Test, metaFields) {
     EXPECT_EQ(42, pkt->getIndex());
     EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
     EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
+
+    delete pkt;
 }
 
 } // end of anonymous namespace
