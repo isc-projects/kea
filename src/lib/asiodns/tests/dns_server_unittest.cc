@@ -425,7 +425,6 @@ private:
         const int error = getaddrinfo(server_ip, server_port_str,
                                       &hints, &res);
         if (error != 0) {
-            freeaddrinfo(res);
             isc_throw(IOError, "getaddrinfo failed: " << gai_strerror(error));
         }
 
