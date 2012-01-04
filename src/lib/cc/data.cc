@@ -742,7 +742,7 @@ MapElement::find(const std::string& id, ConstElementPtr t) const {
             t = p;
             return (true);
         }
-    } catch (const TypeError& e) {
+    } catch (const TypeError&) {
         // ignore
     }
     return (false);
@@ -780,11 +780,11 @@ StringElement::equals(const Element& other) const {
 bool
 ListElement::equals(const Element& other) const {
     if (other.getType() == Element::list) {
-        const int s = size();
+        const size_t s = size();
         if (s != other.size()) {
             return (false);
         }
-        for (int i = 0; i < s; ++i) {
+        for (size_t i = 0; i < s; ++i) {
             if (!get(i)->equals(*other.get(i))) {
                 return (false);
             }
@@ -843,10 +843,14 @@ removeIdentical(ElementPtr a, ConstElementPtr b) {
         isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
 
-    const std::map<std::string, ConstElementPtr>& m = a->mapValue();
+    // As maps do not allow entries with multiple keys, we can either iterate
+    // over a checking for identical entries in b or vice-versa.  As elements
+    // are removed from a if a match is found, we choose to iterate over b to
+    // avoid problems with element removal affecting the iterator.
+    const std::map<std::string, ConstElementPtr>& m = b->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
-        if (b->contains((*it).first)) {
+        if (a->contains((*it).first)) {
             if (a->get((*it).first)->equals(*b->get((*it).first))) {
                 a->remove((*it).first);
             }

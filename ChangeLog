@@ -1,3 +1,90 @@
+358.	[bug]		jinmei
+	b10-resolver ignored default configuration parameters if listen_on
+	failed (this can easily happen especially for a test environment
+	where the run time user doesn't have root privilege), and even if
+	listen_on was updated later the resolver wouldn't work correctly
+	unless it's fully restarted (for example, all queries would be
+	rejected due to an empty ACL).
+	(Trac #1424, git 2cba8cb83cde4f34842898a848c0b1182bc20597)
+
+357.	[bug]		jinmei
+	ZoneFinder::find() for database based data sources didn't
+	correctly identify out-of-zone query name and could return a
+	confusing result such as NXRRSET.  It now returns NXDOMAIN with an
+	empty RRset.  Note: we should rather throw an exception in such a
+	case, which should be revisited later (see Trac #1536).
+	(Trac #1430, git b35797ba1a49c78246abc8f2387901f9690b328d)
+
+356.	[doc]		tomek
+	BIND10 Guide updated. It now describes DHCPv4 and DHCPv6
+	components, including their overview, usage, supported standard
+	and limitations. libdhcp++ is also described.
+	(Trac #1367, git 3758ab360efe1cdf616636b76f2e0fb41f2a62a0)
+
+355.	[bug]		jinmei
+	Python xfrin.diff module incorrectly combined RRSIGs of different
+	type covered, possibly merging different TTLs.  As a result a
+	secondary server could store different RRSIGs than those at the
+	primary server if it gets these records via IXFR.
+	(Trac #1502, git 57b06f8cb6681f591fa63f25a053eb6f422896ef)
+
+354.	[func]		tomek
+	dhcp4: Support for DISCOVER and OFFER implemented. b10-dhcp4 is
+	now able to offer hardcoded leases to DHCPv4 clients.
+	dhcp6: Code refactored to use the same approach as dhcp4.
+	(Trac #1230, git aac05f566c49daad4d3de35550cfaff31c124513)
+
+353.	[func]		tomek
+	libdhcp++: Interface detection in Linux implemented. libdhcp++
+	is now able (on Linux systems) to detect available network
+	interfaces, its link-layer addresses, flags and configured
+	IPv4 and IPv6 addresses. Interface detection on other
+	systems is planned.
+	(Trac #1237, git 8a040737426aece7cc92a795f2b712d7c3407513)
+
+352.	[func]		tomek
+	libdhcp++: Transmission and reception of DHCPv4 packets is now
+	implemented. Low-level hacks are not implemented for transmission
+	to hosts that don't have IPv4 address yet, so currently the code
+	is usable for communication with relays only, not hosts on the
+	same link.
+	(Trac #1239, #1240, git f382050248b5b7ed1881b086d89be2d9dd8fe385)
+
+351.	[func]		fdupont
+	Alpha version of DHCP benchmarking tool added.  "perfdhcp" is able to
+	test both IPv4 and IPv6 servers: it can time the four-packet exchange
+	(DORA and SARR) as well as time the initial two-packet exchange (DO
+	and SA).  More information can be obtained by invoking the utility
+	(in tests/tools/perfdhcp) with the "-h" flag.
+	(Trac #1450, git 85083a76107ba2236732b45524ce7018eefbaf90)
+
+350.	[func]*		vorner
+	The target parameter of ZoneFinder::find is no longer present, as the
+	interface was awkward. To get all the RRsets of a single domain, use
+	the new findAll method (the same applies to python version, the method
+	is named find_all).
+	(Trac #1483,#1484, git 0020456f8d118c9f3fd6fc585757c822b79a96f6)
+
+349.	[bug]		dvv
+	resolver: If an upstream server responds with FORMERR to an EDNS
+	query, try querying it without EDNS.
+	(Trac #1386, git 99ad0292af284a246fff20b3702fbd7902c45418)
+
+348.	[bug]		stephen
+	By default the logging output stream is now flushed after each write.
+	This fixes a problem seen on some systems where the log output from
+	different processes was jumbled up.  Flushing can be disabled by
+	setting the appropriate option in the logging configuration.
+	(Trac #1405, git 2f0aa20b44604b671e6bde78815db39381e563bf)
+
+347.	[bug]		jelte
+	Fixed a bug where adding Zonemgr/secondary_zones without explicitely
+	setting the class value of the added zone resulted in a cryptic
+	error in bindctl ("Error: class"). It will now correctly default to
+	IN if not set. This also adds better checks on the name and class
+	values, and better errors if they are bad.
+	(Trac #1414, git 7b122af8489acf0f28f935a19eca2c5509a3677f)
+
 346.	[build]*		jreed
 	Renamed libdhcp to libdhcp++.
 	(Trac #1446, git d394e64f4c44f16027b1e62b4ac34e054b49221d)

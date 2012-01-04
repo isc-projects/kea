@@ -422,7 +422,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
     // Implementation of InMemoryZoneFinder::find
     FindResult find(const Name& name, RRType type,
-                    RRsetList* target, const FindOptions options) const
+                    std::vector<ConstRRsetPtr> *target,
+                    const FindOptions options) const
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
@@ -572,9 +573,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             for (found = node->getData()->begin();
                  found != node->getData()->end(); ++found)
             {
-                target->addRRset(
-                    boost::const_pointer_cast<RRset>(prepareRRset(name,
-                    found->second, rename)));
+                target->push_back(prepareRRset(name, found->second, rename));
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
@@ -629,9 +628,17 @@ InMemoryZoneFinder::getClass() const {
 
 ZoneFinder::FindResult
 InMemoryZoneFinder::find(const Name& name, const RRType& type,
-                 RRsetList* target, const FindOptions options)
+                 const FindOptions options)
 {
-    return (impl_->find(name, type, target, options));
+    return (impl_->find(name, type, NULL, options));
+}
+
+ZoneFinder::FindResult
+InMemoryZoneFinder::findAll(const Name& name,
+                            std::vector<ConstRRsetPtr>& target,
+                            const FindOptions options)
+{
+    return (impl_->find(name, RRType::ANY(), &target, options));
 }
 
 result::Result

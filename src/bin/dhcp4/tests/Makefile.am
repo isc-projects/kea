@@ -41,6 +41,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

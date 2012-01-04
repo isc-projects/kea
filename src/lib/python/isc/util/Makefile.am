@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . io tests
 
 python_PYTHON = __init__.py process.py socketserver_mixin.py file.py
 

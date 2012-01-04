@@ -2,6 +2,11 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
+# XXX: we'll pollute the top builddir for creating a temporary test file
+# used to bind a UNIX domain socket so we can minimize the risk of exceeding
+# the limit of file name path size.
+AM_CPPFLAGS += -DTEST_DATA_TOPBUILDDIR=\"$(abs_top_builddir)\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -26,6 +31,7 @@ run_unittests_SOURCES += lru_list_unittest.cc
 run_unittests_SOURCES += qid_gen_unittest.cc
 run_unittests_SOURCES += random_number_generator_unittest.cc
 run_unittests_SOURCES += sha1_unittest.cc
+run_unittests_SOURCES += socketsession_unittest.cc
 run_unittests_SOURCES += strutil_unittest.cc
 run_unittests_SOURCES += time_utilities_unittest.cc
 

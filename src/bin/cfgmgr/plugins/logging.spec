@@ -57,7 +57,7 @@
                       { "item_name": "flush",
                         "item_type": "boolean",
                         "item_optional": false,
-                        "item_default": false
+                        "item_default": true
                       },
                       { "item_name": "maxsize",
                         "item_type": "integer",

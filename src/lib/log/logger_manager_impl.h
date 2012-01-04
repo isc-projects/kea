@@ -31,7 +31,7 @@ namespace log {
 
 // Forward declarations
 class LoggerSpecification;
-class OutputOption;
+struct OutputOption;
 
 /// \brief Logger Manager Implementation
 ///

@@ -12,13 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/lexical_cast.hpp>
-
-#include <config.h>
 
 #include <log/dummylog.h>
 
