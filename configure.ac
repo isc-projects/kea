@@ -120,7 +120,7 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1 python3.2])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
@@ -369,6 +369,36 @@ AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 
+# Detect OS type (it may be used to do OS-specific things, e.g.
+# interface detection in DHCP)
+AC_MSG_CHECKING(OS family)
+system=`uname -s`
+case $system in
+    Linux)
+      OS_TYPE="Linux"
+      CPPFLAGS="$CPPFLAGS -DOS_LINUX"
+      ;;
+    Darwin | FreeBSD | NetBSD | OpenBSD)
+      OS_TYPE="BSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    Solaris)
+      OS_TYPE="Solaris"
+      CPPFLAGS="$CPPFLAGS -DOS_SOLARIS"
+      ;;
+    *)
+      OS_TYPE="Unknown"
+      AC_MSG_WARN("Unsupported OS: uname returned $system")
+      ;;
+esac
+AC_MSG_RESULT($OS_TYPE)
+
+AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = Linux)
+AM_COND_IF([OS_LINUX], [AC_DEFINE([OS_LINUX], [1], [Running on Linux?])])
+AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
+AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
+AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
+AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
@@ -443,7 +473,7 @@ AC_SUBST(USE_LCOV)
 botan_path="yes"
 AC_ARG_WITH([botan],
   AC_HELP_STRING([--with-botan=PATH],
-    [specify exact directory of Botan library]),
+    [specify the path to botan-config (PATH/bin/botan-config will be used)]),
     [botan_path="$withval"])
 if test "${botan_path}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
@@ -831,6 +861,20 @@ EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
 	])
 fi
 
+# perfdhcp: If the clock_gettime() function does not exist on the system,
+# use an alternative supplied in the code based on gettimeofday().
+CLOCK_GETTIME_LDFLAGS=
+AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_GETTIME_LDFLAGS=-lrt], [])
+AC_SUBST([CLOCK_GETTIME_LDFLAGS])
+
+# perfdhcp: if getifaddrs() does not exist, have the code output a message
+# that it can't be run on this version of the operating system.  For the
+# systems on which BIND 10 is built, this means Solaris 10. (Replacements
+# for this function are long and involved, and the function is reported present
+# on Solaris 11 and later, either in the libsocket or libnsl libraries.)
+AC_SEARCH_LIBS([getifaddrs], [socket nsl],
+               [AC_DEFINE([HAVE_GETIFADDRS], [1], [getifaddrs() present])])
+
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
 # trigger the gcc's "missing-field-initializers" warning, which would
@@ -890,6 +934,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/ddns/Makefile
+                 src/bin/ddns/tests/Makefile
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/tests/Makefile
 		 src/bin/dhcp4/Makefile
@@ -925,6 +971,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/acl/tests/Makefile
                  src/lib/python/isc/util/Makefile
                  src/lib/python/isc/util/tests/Makefile
+                 src/lib/python/isc/util/io/Makefile
+                 src/lib/python/isc/util/io/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/dns/Makefile
@@ -993,6 +1041,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
+                 tests/tools/perfdhcp/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            compatcheck/sqlite3-difftbl-check.py
@@ -1002,6 +1051,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/tests/cmdctl_test
            src/bin/cmdctl/cmdctl.spec.pre
+           src/bin/ddns/ddns.py
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
            src/bin/xfrin/run_b10-xfrin.sh
@@ -1135,6 +1185,7 @@ Flags:
   CXXFLAGS:      $CXXFLAGS
   LDFLAGS:       $LDFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
+  OS Family:     $OS_TYPE
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_CXXFLAGS}

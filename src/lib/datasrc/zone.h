@@ -237,13 +237,6 @@ public:
     ///   a successful match, and the code of \c SUCCESS will be returned.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
-    /// - If the target isn't NULL, all RRsets under the domain are inserted
-    ///   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned
-    ///   instead of normall processing. This is intended to handle ANY query.
-    ///
-    /// \note This behavior is controversial as we discussed in
-    /// https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html
-    /// We should revisit the interface before we heavily rely on it.
     ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows (they are or bit-field):
@@ -264,6 +257,16 @@ public:
     ///   proof of the non existence of any matching wildcard or non existence
     ///   of an exact match when a wildcard match is found.
     ///
+    /// In general, \c name is expected to be included in the zone, that is,
+    /// it should be equal to or a subdomain of the zone origin.  Otherwise
+    /// this method will return \c NXDOMAIN with an empty RRset.  But such a
+    /// case should rather be considered a caller's bug.
+    ///
+    /// \note For this reason it's probably better to throw an exception
+    /// than returning \c NXDOMAIN.  This point should be revisited in a near
+    /// future version.  In any case applications shouldn't call this method
+    /// for an out-of-zone name.
+    ///
     /// \exception std::bad_alloc Memory allocation such as for constructing
     ///  the resulting RRset fails
     /// \exception DataSourceError Derived class specific exception, e.g.
@@ -276,15 +279,32 @@ public:
     ///
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
-    /// \param target If target is not NULL, insert all RRs under the domain
-    /// into it.
     /// \param options The search options.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
-                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options
                             = FIND_DEFAULT) = 0;
+
+    ///
+    /// \brief Finds all RRsets in the given name.
+    ///
+    /// This function works almost exactly in the same way as the find one. The
+    /// only difference is, when the lookup is successful (eg. the code is
+    /// SUCCESS or WILDCARD), all the RRsets residing in the named node are
+    /// copied into the \c target parameter and the rrset member of the result
+    /// is NULL. All the other (unsuccessful) cases are handled the same,
+    /// including returning delegations, NSEC/NSEC3 proofs, etc. The options
+    /// parameter works the same way and it should conform to the same exception
+    /// restrictions.
+    ///
+    /// \param name \see find, parameter name
+    /// \param target the successfull result is returned through this
+    /// \param options \see find, parameter options
+    /// \return \see find and it's result
+    virtual FindResult findAll(const isc::dns::Name& name,
+                               std::vector<isc::dns::ConstRRsetPtr> &target,
+                               const FindOptions options = FIND_DEFAULT) = 0;
 
     /// \brief Get previous name in the zone
     ///

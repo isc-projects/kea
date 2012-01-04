@@ -52,7 +52,7 @@ testCheck(bool emptyResult) {
     EXPECT_EQ(emptyResult, oper.matches(log));
     log.checkFirst(0);
     // Fill it with some subexpressions
-    typedef shared_ptr<ConstCheck> CheckPtr;
+    typedef boost::shared_ptr<ConstCheck> CheckPtr;
     oper.addSubexpression(CheckPtr(new ConstCheck(emptyResult, 0)));
     oper.addSubexpression(CheckPtr(new ConstCheck(emptyResult, 1)));
     // Check what happens when only the default-valued are there
@@ -80,7 +80,7 @@ TEST(LogicOperators, AnyOf) {
 // Fixture for the tests of the creators
 class LogicCreatorTest : public ::testing::Test {
 private:
-    typedef shared_ptr<Loader<Log>::CheckCreator> CreatorPtr;
+    typedef boost::shared_ptr<Loader<Log>::CheckCreator> CreatorPtr;
 public:
     // Register some creators, both tested ones and some auxiliary ones for
     // help
@@ -102,12 +102,12 @@ public:
     // Some convenience shortcut names
     typedef LogicOperator<AnyOfSpec, Log> AnyOf;
     typedef LogicOperator<AllOfSpec, Log> AllOf;
-    typedef shared_ptr<AnyOf> AnyOfPtr;
-    typedef shared_ptr<AllOf> AllOfPtr;
+    typedef boost::shared_ptr<AnyOf> AnyOfPtr;
+    typedef boost::shared_ptr<AllOf> AllOfPtr;
     // Loads the JSON as a check and tries to convert it to the given check
     // subclass
-    template<typename Result> shared_ptr<Result> load(const string& JSON) {
-        shared_ptr<Check<Log> > result;
+    template<typename Result> boost::shared_ptr<Result> load(const string& JSON) {
+        boost::shared_ptr<Check<Log> > result;
         EXPECT_NO_THROW(result = loader_.loadCheck(Element::fromJSON(JSON)));
         /*
          * Optimally, we would use a dynamic_pointer_cast here to both
@@ -122,9 +122,9 @@ public:
          * multiple inheritance.
          */
         EXPECT_STREQ(typeid(Result).name(), typeid(*result.get()).name());
-        shared_ptr<Result>
+        boost::shared_ptr<Result>
             resultConverted(static_pointer_cast<Result>(result));
-        EXPECT_NE(shared_ptr<Result>(), resultConverted);
+        EXPECT_NE(boost::shared_ptr<Result>(), resultConverted);
         return (resultConverted);
     }
 };
@@ -244,7 +244,8 @@ TEST_F(LogicCreatorTest, nested) {
 }
 
 void notTest(bool value) {
-    NotOperator<Log> notOp(shared_ptr<Check<Log> >(new ConstCheck(value, 0)));
+    NotOperator<Log> notOp(boost::shared_ptr<Check<Log> >(
+                                new ConstCheck(value, 0)));
     Log log;
     // It returns negated value
     EXPECT_EQ(!value, notOp.matches(log));
@@ -281,7 +282,7 @@ TEST_F(LogicCreatorTest, notInvalid) {
 }
 
 TEST_F(LogicCreatorTest, notValid) {
-    shared_ptr<NotOperator<Log> > notOp(load<NotOperator<Log> >("{\"NOT\":"
+    boost::shared_ptr<NotOperator<Log> > notOp(load<NotOperator<Log> >("{\"NOT\":"
                                                                 "  {\"logcheck\":"
                                                                 "     [0, true]}}"));
     EXPECT_FALSE(notOp->matches(log_));

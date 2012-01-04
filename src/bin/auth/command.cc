@@ -32,7 +32,6 @@
 #include <auth/command.h>
 
 using boost::scoped_ptr;
-using boost::shared_ptr;
 using namespace isc::auth;
 using namespace isc::config;
 using namespace isc::data;
@@ -136,7 +135,7 @@ public:
         // that doesn't block other server operations.
         // TODO: we may (should?) want to check the "last load time" and
         // the timestamp of the file and skip loading if the file isn't newer.
-        shared_ptr<InMemoryZoneFinder> zone_finder(
+        boost::shared_ptr<InMemoryZoneFinder> zone_finder(
             new InMemoryZoneFinder(old_zone_finder->getClass(),
                                    old_zone_finder->getOrigin()));
         zone_finder->load(old_zone_finder->getFileName());
@@ -147,7 +146,7 @@ public:
 
 private:
     // zone finder to be updated with the new file.
-    shared_ptr<InMemoryZoneFinder> old_zone_finder;
+    boost::shared_ptr<InMemoryZoneFinder> old_zone_finder;
 
     // A helper private method to parse and validate command parameters.
     // On success, it sets 'old_zone_finder' to the zone to be updated.

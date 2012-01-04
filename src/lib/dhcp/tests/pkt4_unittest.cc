@@ -197,7 +197,7 @@ generateTestPacket2() {
 
 TEST(Pkt4Test, fixedFields) {
 
-    shared_ptr<Pkt4> pkt = generateTestPacket1();
+    boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
 
     // ok, let's check packet values
     EXPECT_EQ(dummyOp, pkt->getOp());
@@ -224,7 +224,7 @@ TEST(Pkt4Test, fixedFields) {
 }
 
 TEST(Pkt4Test, fixedFieldsPack) {
-    shared_ptr<Pkt4> pkt = generateTestPacket1();
+    boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
     EXPECT_NO_THROW(
@@ -244,8 +244,18 @@ TEST(Pkt4Test, fixedFieldsPack) {
 TEST(Pkt4Test, fixedFieldsUnpack) {
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                  Pkt4::DHCPV4_PKT_HDR_LEN));
+    expectedFormat.push_back(0x63); // magic cookie
+    expectedFormat.push_back(0x82);
+    expectedFormat.push_back(0x53);
+    expectedFormat.push_back(0x63);
+
+    expectedFormat.push_back(0x35); // message-type
+    expectedFormat.push_back(0x1);
+    expectedFormat.push_back(0x1);
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
+                                         expectedFormat.size()));;
+
 
     EXPECT_NO_THROW(
         pkt->unpack()
@@ -441,8 +451,9 @@ static uint8_t v4Opts[] = {
     12,  3, 0,   1,  2,
     13,  3, 10, 11, 12,
     14,  3, 20, 21, 22,
+    53, 1, 1, // DHCP_MESSAGE_TYPE (required to not throw exception during unpack)
     128, 3, 30, 31, 32,
-    254, 3, 40, 41, 42
+    254, 3, 40, 41, 42,
 };
 
 TEST(Pkt4Test, options) {
@@ -458,14 +469,17 @@ TEST(Pkt4Test, options) {
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
     boost::shared_ptr<Option> opt2(new Option(Option::V4, 13, payload[1]));
     boost::shared_ptr<Option> opt3(new Option(Option::V4, 14, payload[2]));
+    boost::shared_ptr<Option> optMsgType(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE));
     boost::shared_ptr<Option> opt5(new Option(Option::V4,128, payload[3]));
     boost::shared_ptr<Option> opt4(new Option(Option::V4,254, payload[4]));
+    optMsgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
 
     pkt->addOption(opt1);
     pkt->addOption(opt2);
     pkt->addOption(opt3);
     pkt->addOption(opt4);
     pkt->addOption(opt5);
+    pkt->addOption(optMsgType);
 
     EXPECT_TRUE(pkt->getOption(12));
     EXPECT_TRUE(pkt->getOption(13));
@@ -486,14 +500,14 @@ TEST(Pkt4Test, options) {
     );
 
     const OutputBuffer& buf = pkt->getBuffer();
-    // check that all options are stored, they should take sizeof(v4Opts)
-    // there also should be OPTION_END added (just one byte)
-    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(v4Opts) + 1,
-              buf.getLength());
+    // check that all options are stored, they should take sizeof(v4Opts),
+    // DHCP magic cookie (4 bytes), and OPTION_END added (just one byte)
+    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(DHCP_OPTIONS_COOKIE)
+              + sizeof(v4Opts) + 1, buf.getLength());
 
     // that that this extra data actually contain our options
     const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
-    ptr += Pkt4::DHCPV4_PKT_HDR_LEN; // rewind to end of fixed part
+    ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE); // rewind to end of fixed part
     EXPECT_EQ(0, memcmp(ptr, v4Opts, sizeof(v4Opts)));
     EXPECT_EQ(DHO_END, static_cast<uint8_t>(*(ptr + sizeof(v4Opts))));
 
@@ -506,14 +520,19 @@ TEST(Pkt4Test, unpackOptions) {
 
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
+    expectedFormat.push_back(0x63);
+    expectedFormat.push_back(0x82);
+    expectedFormat.push_back(0x53);
+    expectedFormat.push_back(0x63);
+
     for (int i = 0; i < sizeof(v4Opts); i++) {
         expectedFormat.push_back(v4Opts[i]);
     }
 
     // now expectedFormat contains fixed format and 5 options
 
-    shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                  expectedFormat.size()));
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
+                                expectedFormat.size()));
 
     EXPECT_NO_THROW(
         pkt->unpack()
@@ -525,7 +544,7 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_TRUE(pkt->getOption(128));
     EXPECT_TRUE(pkt->getOption(254));
 
-    shared_ptr<Option> x = pkt->getOption(12);
+    boost::shared_ptr<Option> x = pkt->getOption(12);
     ASSERT_TRUE(x); // option 1 should exist
     EXPECT_EQ(12, x->getType());  // this should be option 12
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
@@ -551,14 +570,14 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(128, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+17, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+20, 3)); // data len=3
 
     x = pkt->getOption(254);
     ASSERT_TRUE(x); // option 3 should exist
     EXPECT_EQ(254, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+22, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+25, 3)); // data len=3
 }
 
 // This test verifies methods that are used for manipulating meta fields
@@ -575,7 +594,6 @@ TEST(Pkt4Test, metaFields) {
     EXPECT_EQ(42, pkt->getIndex());
     EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
     EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
-
 }
 
 } // end of anonymous namespace

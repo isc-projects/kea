@@ -170,7 +170,7 @@ UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
 /// The function operator is implemented with the "stackless coroutine"
 /// pattern; see internal/coroutine.h for details.
 void
-UDPServer::operator()(error_code ec, size_t length) {
+UDPServer::operator()(asio::error_code ec, size_t length) {
     /// Because the coroutine reentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.

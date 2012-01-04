@@ -67,14 +67,15 @@ PyInit_libutil_io_python(void) {
         return (NULL);
     }
 
-    PyObject* FD_COMM_ERROR = Py_BuildValue("i", isc::util::io::FD_COMM_ERROR);
-    if (FD_COMM_ERROR == NULL) {
+    PyObject* FD_SYSTEM_ERROR = Py_BuildValue("i",
+                                              isc::util::io::FD_SYSTEM_ERROR);
+    if (FD_SYSTEM_ERROR == NULL) {
         Py_XDECREF(mod);
         return (NULL);
     }
-    int ret = PyModule_AddObject(mod, "FD_COMM_ERROR", FD_COMM_ERROR);
-    if (-1 == ret) {
-        Py_XDECREF(FD_COMM_ERROR);
+    int ret = PyModule_AddObject(mod, "FD_SYSTEM_ERROR", FD_SYSTEM_ERROR);
+    if (ret == -1) {
+        Py_XDECREF(FD_SYSTEM_ERROR);
         Py_XDECREF(mod);
         return (NULL);
     }

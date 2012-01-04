@@ -81,7 +81,7 @@ protected:
     ///
     /// @return ADVERTISE, REPLY message or NULL
     boost::shared_ptr<Pkt6>
-    processSolicit(boost::shared_ptr<Pkt6> solicit);
+    processSolicit(const boost::shared_ptr<Pkt6>& solicit);
 
     /// @brief Processes incoming REQUEST and returns REPLY response.
     ///
@@ -95,43 +95,87 @@ protected:
     ///
     /// @return REPLY message or NULL
     boost::shared_ptr<Pkt6>
-    processRequest(boost::shared_ptr<Pkt6> request);
+    processRequest(const boost::shared_ptr<Pkt6>& request);
 
     /// @brief Stub function that will handle incoming RENEW messages.
     ///
     /// @param renew message received from client
     boost::shared_ptr<Pkt6>
-    processRenew(boost::shared_ptr<Pkt6> renew);
+    processRenew(const boost::shared_ptr<Pkt6>& renew);
 
     /// @brief Stub function that will handle incoming REBIND messages.
     ///
     /// @param rebind message received from client
     boost::shared_ptr<Pkt6>
-    processRebind(boost::shared_ptr<Pkt6> rebind);
+    processRebind(const boost::shared_ptr<Pkt6>& rebind);
 
     /// @brief Stub function that will handle incoming CONFIRM messages.
     ///
     /// @param confirm message received from client
     boost::shared_ptr<Pkt6>
-    processConfirm(boost::shared_ptr<Pkt6> confirm);
+    processConfirm(const boost::shared_ptr<Pkt6>& confirm);
 
     /// @brief Stub function that will handle incoming RELEASE messages.
     ///
     /// @param release message received from client
     boost::shared_ptr<Pkt6>
-    processRelease(boost::shared_ptr<Pkt6> release);
+    processRelease(const boost::shared_ptr<Pkt6>& release);
 
     /// @brief Stub function that will handle incoming DECLINE messages.
     ///
     /// @param decline message received from client
     boost::shared_ptr<Pkt6>
-    processDecline(boost::shared_ptr<Pkt6> decline);
+    processDecline(const boost::shared_ptr<Pkt6>& decline);
 
     /// @brief Stub function that will handle incoming INF-REQUEST messages.
     ///
     /// @param infRequest message received from client
     boost::shared_ptr<Pkt6>
-    processInfRequest(boost::shared_ptr<Pkt6> infRequest);
+    processInfRequest(const boost::shared_ptr<Pkt6>& infRequest);
+
+    /// @brief Copies required options from client message to server answer
+    ///
+    /// Copies options that must appear in any server response (ADVERTISE, REPLY)
+    /// to client's messages (SOLICIT, REQUEST, RENEW, REBIND, DECLINE, RELEASE).
+    /// One notable example is client-id. Other options may be copied as required.
+    ///
+    /// @param question client's message (options will be copied from here)
+    /// @param answer server's message (options will be copied here)
+    void copyDefaultOptions(const boost::shared_ptr<Pkt6>& question,
+                            boost::shared_ptr<Pkt6>& answer);
+
+    /// @brief Appends default options to server's answer.
+    ///
+    /// Adds required options to server's answer. In particular, server-id
+    /// is added. Possibly other mandatory options will be added, depending
+    /// on type (or content) of client message.
+    ///
+    /// @param question client's message
+    /// @param answer server's message (options will be added here)
+    void appendDefaultOptions(const boost::shared_ptr<Pkt6>& question,
+                              boost::shared_ptr<Pkt6>& answer);
+
+    /// @brief Appends requested options to server's answer.
+    ///
+    /// Appends options requested by client to the server's answer.
+    /// TODO: This method is currently a stub. It just appends DNS-SERVERS
+    /// option.
+    ///
+    /// @param question client's message
+    /// @param answer server's message (options will be added here)
+    void appendRequestedOptions(const boost::shared_ptr<Pkt6>& question,
+                                boost::shared_ptr<Pkt6>& answer);
+
+    /// @brief Assigns leases.
+    ///
+    /// TODO: This method is currently a stub. It just appends one
+    /// hardcoded lease. It supports addresses (IA_NA) only. It does NOT
+    /// support temporary addresses (IA_TA) nor prefixes (IA_PD).
+    ///
+    /// @param question client's message (with requested IA_NA)
+    /// @param answer server's message (IA_NA options will be added here)
+    void assignLeases(const boost::shared_ptr<Pkt6>& question,
+                      boost::shared_ptr<Pkt6>& answer);
 
     /// @brief Sets server-identifier.
     ///

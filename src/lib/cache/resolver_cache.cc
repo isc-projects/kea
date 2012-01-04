@@ -164,14 +164,16 @@ ResolverCache::ResolverCache()
 
 ResolverCache::ResolverCache(std::vector<CacheSizeInfo> caches_info)
 {
-    for (int i = 0; i < caches_info.size(); ++i) {
+    for (std::vector<CacheSizeInfo>::size_type i = 0;
+         i < caches_info.size(); ++i) {
         class_caches_.push_back(new ResolverClassCache(caches_info[i]));
     }
 }
 
 ResolverCache::~ResolverCache()
 {
-    for (int i = 0; i < class_caches_.size(); ++i) {
+    for (std::vector<ResolverClassCache*>::size_type i = 0;
+         i < class_caches_.size(); ++i) {
         delete class_caches_[i];
     }
 }
@@ -261,7 +263,8 @@ ResolverCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
 
 ResolverClassCache*
 ResolverCache::getClassCache(const isc::dns::RRClass& cache_class) const {
-    for (int i = 0; i < class_caches_.size(); ++i) {
+    for (std::vector<ResolverClassCache*>::size_type i = 0;
+         i < class_caches_.size(); ++i) {
         if (class_caches_[i]->getClass() == cache_class) {
             return (class_caches_[i]);
         }

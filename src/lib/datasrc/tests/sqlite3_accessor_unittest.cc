@@ -29,7 +29,6 @@
 
 using namespace std;
 using namespace isc::datasrc;
-using boost::shared_ptr;
 using boost::lexical_cast;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
@@ -527,7 +526,7 @@ TEST_F(SQLite3Create, lockedtest) {
 }
 
 TEST_F(SQLite3AccessorTest, clone) {
-    shared_ptr<DatabaseAccessor> cloned = accessor->clone();
+    boost::shared_ptr<DatabaseAccessor> cloned = accessor->clone();
     EXPECT_EQ(accessor->getDBName(), cloned->getDBName());
 
     // The cloned accessor should have a separate connection and search
@@ -604,7 +603,7 @@ protected:
     vector<const char* const*> empty_stored; // indicate no corresponding data
 
     // Another accessor, emulating one running on a different process/thread
-    shared_ptr<SQLite3Accessor> another_accessor;
+    boost::shared_ptr<SQLite3Accessor> another_accessor;
     DatabaseAccessor::IteratorContextPtr iterator;
 };
 
