@@ -53,7 +53,7 @@ using namespace isc::server_common;
 using isc::UnitTestUtil;
 
 namespace {
-class ResolverConfig : public TestSocketRequestor {
+class ResolverConfig : public ::testing::Test {
 protected:
     IOService ios;
     DNSService dnss;
@@ -63,8 +63,8 @@ protected:
     scoped_ptr<const Client> client;
     scoped_ptr<const RequestContext> request;
     ResolverConfig() :
-        TestSocketRequestor(dnss, address_store_, 53210),
-        dnss(ios, NULL, NULL, NULL)
+        dnss(ios, NULL, NULL, NULL),
+        sock_requestor_(dnss, address_store_, 53210)
     {
         server.setDNSService(dnss);
         server.setConfigured();
@@ -82,6 +82,7 @@ protected:
     }
     void invalidTest(const string &JSON, const string& name);
     isc::server_common::portconfig::AddressList address_store_;
+    isc::testutils::TestSocketRequestor sock_requestor_;
 };
 
 TEST_F(ResolverConfig, forwardAddresses) {
@@ -201,10 +202,12 @@ TEST_F(ResolverConfig, listenAddresses) {
         "UDP:::1:53210:4",
         NULL
     };
-    checkTokens(tokens, given_tokens_, "Given tokens");
+    sock_requestor_.checkTokens(tokens, sock_requestor_.given_tokens_,
+                                "Given tokens");
     // It returns back to empty set of addresses afterwards, so
     // they should be released
-    checkTokens(tokens, released_tokens_, "Released tokens");
+    sock_requestor_.checkTokens(tokens, sock_requestor_.released_tokens_,
+                                "Released tokens");
 }
 
 // Try setting some addresses and a rollback

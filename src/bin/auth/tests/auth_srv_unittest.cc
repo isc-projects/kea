@@ -65,13 +65,13 @@ const char* const CONFIG_TESTDB =
 const char* const BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
 
-class AuthSrvTest : public SrvTestBase, public TestSocketRequestor {
+class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
-        TestSocketRequestor(dnss_, address_store_, 53210),
         dnss_(ios_, NULL, NULL, NULL),
         server(true, xfrout),
-        rrclass(RRClass::IN())
+        rrclass(RRClass::IN()),
+        sock_requestor_(dnss_, address_store_, 53210)
     {
         server.setDNSService(dnss_);
         server.setXfrinSession(&notify_session);
@@ -89,6 +89,7 @@ protected:
     const RRClass rrclass;
     vector<uint8_t> response_data;
     AddressList address_store_;
+    TestSocketRequestor sock_requestor_;
 };
 
 // A helper function that builds a response to version.bind/TXT/CH that
@@ -899,10 +900,12 @@ TEST_F(AuthSrvTest, listenAddresses) {
         "UDP:::1:53210:4",
         NULL
     };
-    checkTokens(tokens, given_tokens_, "Given tokens");
+    sock_requestor_.checkTokens(tokens, sock_requestor_.given_tokens_,
+                                "Given tokens");
     // It returns back to empty set of addresses afterwards, so
     // they should be released
-    checkTokens(tokens, released_tokens_, "Released tokens");
+    sock_requestor_.checkTokens(tokens, sock_requestor_.released_tokens_,
+                                "Released tokens");
 }
 
 }

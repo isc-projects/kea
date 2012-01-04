@@ -45,10 +45,7 @@ extern const unsigned int AD_FLAG;
 extern const unsigned int CD_FLAG;
 
 /// \brief The base class for Auth and Recurse test case
-///
-/// The Test is inherited virtually because some tests are built of more
-/// test-base-components, all of which need to inherit Test.
-class SrvTestBase : virtual public ::testing::Test {
+class SrvTestBase : public ::testing::Test {
 protected:
     SrvTestBase();
     virtual ~SrvTestBase();
