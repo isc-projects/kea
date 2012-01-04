@@ -83,14 +83,13 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
     }
     LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_TCP).arg(fd);
 
-    acceptor_.reset(new tcp::acceptor(io_service));
     try {
+        acceptor_.reset(new tcp::acceptor(io_service));
         acceptor_->assign(af == AF_INET6 ? tcp::v6() : tcp::v4(), fd);
         acceptor_->listen();
-    }
-    // Whatever the thing throws, it is something from ASIO and we convert
-    // it
-    catch (const std::exception& exception) {
+    } catch (const std::exception& exception) {
+        // Whatever the thing throws, it is something from ASIO and we convert
+        // it
         isc_throw(IOError, exception.what());
     }
 }

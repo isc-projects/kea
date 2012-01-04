@@ -86,16 +86,12 @@ struct UDPServer::Data {
                       "or AF_INET6, not " << af);
         }
         LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
-        // We must use different instantiations for v4 and v6;
-        // otherwise ASIO will bind to both
-        udp proto = af == AF_INET6 ? udp::v6() : udp::v4();
-        socket_.reset(new udp::socket(io_service));
         try {
-            socket_->assign(proto, fd);
-        }
-        // Whatever the thing throws, it is something from ASIO and we convert
-        // it
-        catch (const std::exception& exception) {
+            socket_.reset(new udp::socket(io_service));
+            socket_->assign(AF_INET6 ? udp::v6() : udp::v4(), fd);
+        } catch (const std::exception& exception) {
+            // Whatever the thing throws, it is something from ASIO and we convert
+            // it
             isc_throw(IOError, exception.what());
         }
     }
