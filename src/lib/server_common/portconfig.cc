@@ -92,7 +92,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
     }
     current_sockets.clear();
     BOOST_FOREACH(const AddressPair &address, addresses) {
-        int af(IOAddress(address.first).getFamily());
+        const int af(IOAddress(address.first).getFamily());
         // TODO: Support sharing somehow in future.
         const SocketRequestor::SocketID
             tcp(socketRequestor().requestSocket(SocketRequestor::TCP,
