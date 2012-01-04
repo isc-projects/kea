@@ -738,7 +738,6 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertEqual({}, uccs._local_changes)
         uccs.add_value("Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['a', 'b', 'foo']}}, uccs._local_changes)
-        self.assertEqual({'Spec2': {'item5': ['a', 'b', 'foo']}}, uccs._local_changes)
         uccs.remove_value("Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['a', 'b']}}, uccs._local_changes)
         uccs._local_changes = {'Spec2': {'item5': []}}
