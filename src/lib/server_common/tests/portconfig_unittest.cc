@@ -277,7 +277,7 @@ TEST_F(InstallListenAddresses, brokenRollback) {
         "UDP:127.0.0.1:5288:8",
         NULL
     };
-    // The first set should be returned, as well as all the ones we request now
+    // The first set should be released, as well as all the ones we request now
     const char* released[] = {
         "TCP:127.0.0.1:5288:1",
         "UDP:127.0.0.1:5288:2",
