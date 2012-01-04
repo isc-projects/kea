@@ -60,29 +60,22 @@
       interfaces, and DNS tools.
       BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
       and provides a modular environment for serving and maintaining DNS.
+      BIND 10 provides a EDNS0- and DNSSEC-capable authoritative
+      DNS server and a caching recursive name server which also
+      provides forwarding.
     </para>
 
-    <note>
-      <para>
-        This guide covers the experimental prototype of
-        BIND 10 version &__VERSION__;.
-      </para>
-    </note>
-
-    <note>
-      <para>
-        BIND 10 provides a EDNS0- and DNSSEC-capable
-        authoritative DNS server and a caching recursive name server
-        which also provides forwarding.
-      </para>
-    </note>
+    <para>
+      This guide covers the experimental prototype of
+      BIND 10 version &__VERSION__;.
+    </para>
 
     <section>
       <title>Supported Platforms</title>
       <para>
-  BIND 10 builds have been tested on Debian GNU/Linux 5,
-  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, and CentOS
-  Linux 5.3.
+  BIND 10 builds have been tested on Debian GNU/Linux 5 and unstable,
+  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, CentOS
+  Linux 5.3, and MacOS 10.6.
 
   It has been tested on Sparc, i386, and amd64 hardware
   platforms.
@@ -92,32 +85,41 @@
       </para>
     </section>
 
-    <section>
+    <section id="required-software">
       <title>Required Software</title>
       <para>
-        BIND 10 requires Python 3.1.  Later versions may work, but Python
-        3.1 is the minimum version which will work.
+        BIND 10 requires at least Python 3.1
+        (<ulink url="http://www.python.org/"/>).
+        It has also been tested with Python 3.2.
       </para>
 
       <para>
-        BIND 10 uses the Botan crypto library for C++. It requires
-        at least Botan version 1.8.
+        BIND 10 uses the Botan crypto library for C++
+        (<ulink url="http://botan.randombit.net/"/>).
+        It requires at least Botan version 1.8.
       </para>
 
       <para>
-        BIND 10 uses the log4cplus C++ logging library. It requires
-        at least log4cplus version 1.0.3.
+        BIND 10 uses the log4cplus C++ logging library
+        (<ulink url="http://log4cplus.sourceforge.net/"/>).
+        It requires at least log4cplus version 1.0.3.
       </para>
 
       <para>
-        The authoritative server requires SQLite 3.3.9 or newer.
+        The authoritative DNS server uses SQLite3
+        (<ulink url="http://www.sqlite.org/"/>).
+<!-- TODO: is this still required? -->
+        It needs at least SQLite version 3.3.9.
+      </para>
+
+      <para>
         The <command>b10-xfrin</command>, <command>b10-xfrout</command>,
-        and <command>b10-zonemgr</command> modules require the
-        libpython3 library and the Python _sqlite3.so module.
+        and <command>b10-zonemgr</command> components require the
+        libpython3 library and the Python _sqlite3.so module
+        (which is included with Python).
+        The Python module needs to be built for the corresponding Python 3.
       </para>
 <!-- TODO: this will change ... -->
-
-<!-- TODO: list where to get these from -->
 
       <note>
         <para>
@@ -319,7 +321,7 @@ var/
   <chapter id="installation">
     <title>Installation</title>
 
-    <section>
+    <section id="build-requirements">
       <title>Building Requirements</title>
 
         <para>
@@ -338,7 +340,9 @@ var/
 
         <para>
           Building from source code requires the Boost
-          build-time headers. At least Boost version 1.35 is required.
+          build-time headers
+          (<ulink url="http://www.boost.org/"/>).
+          At least Boost version 1.35 is required.
   <!-- TODO: we don't check for this version -->
   <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
         </para>
@@ -355,16 +359,8 @@ Debian and Ubuntu:
  libgmp3-dev and libbz2-dev required for botan too
 -->
 
-        <para>
-<!-- TODO: is this needed at build time? test time? -->
-          The Python Library and Python _sqlite3 module are required to
-          enable the Xfrout and Xfrin support.
-        </para>
-
-        <note><simpara>
-          The Python related libraries and modules need to be built
-          for Python 3.1.
-        </simpara></note>
+<!-- NOTE: _sqlite3 is only needed at test time; it is already listed
+as a dependency earlier -->
 
         <para>
           Building BIND 10 also requires a C++ compiler and
@@ -372,6 +368,13 @@ Debian and Ubuntu:
           BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
           4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
         </para>
+
+        <para>
+          Visit the wiki at <ulink
+          url="http://bind10.isc.org/wiki/SystemSpecificNotes" />
+          for system-specific installation tips.
+        </para>
+
     </section>
 
     <section id="quickstart">
@@ -393,7 +396,7 @@ Debian and Ubuntu:
 
         <listitem>
           <simpara>
-            Install required build dependencies.
+            Install required run-time and build dependencies.
           </simpara>
         </listitem>
 
