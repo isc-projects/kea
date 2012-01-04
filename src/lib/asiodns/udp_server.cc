@@ -88,10 +88,10 @@ struct UDPServer::Data {
         LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
         try {
             socket_.reset(new udp::socket(io_service));
-            socket_->assign(AF_INET6 ? udp::v6() : udp::v4(), fd);
+            socket_->assign(af == AF_INET6 ? udp::v6() : udp::v4(), fd);
         } catch (const std::exception& exception) {
-            // Whatever the thing throws, it is something from ASIO and we convert
-            // it
+            // Whatever the thing throws, it is something from ASIO and we
+            // convert it
             isc_throw(IOError, exception.what());
         }
     }
