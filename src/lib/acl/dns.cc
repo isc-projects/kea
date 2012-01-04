@@ -32,7 +32,6 @@
 #include <acl/logic_check.h>
 
 using namespace std;
-using boost::shared_ptr;
 using namespace isc::dns;
 using namespace isc::data;
 
@@ -78,7 +77,7 @@ internal::RequestCheckCreator::names() const {
     return (supported_names);
 }
 
-shared_ptr<RequestCheck>
+boost::shared_ptr<RequestCheck>
 internal::RequestCheckCreator::create(const string& name,
                                       ConstElementPtr definition,
                                       // unused:
@@ -90,10 +89,10 @@ internal::RequestCheckCreator::create(const string& name,
     }
 
     if (name == "from") {
-        return (shared_ptr<internal::RequestIPCheck>(
+        return (boost::shared_ptr<internal::RequestIPCheck>(
                     new internal::RequestIPCheck(definition->stringValue())));
     } else if (name == "key") {
-        return (shared_ptr<internal::RequestKeyCheck>(
+        return (boost::shared_ptr<internal::RequestKeyCheck>(
                     new internal::RequestKeyCheck(
                         Name(definition->stringValue()))));
     } else {
@@ -116,16 +115,17 @@ getRequestLoader() {
             auto_ptr<RequestLoader>(new RequestLoader(REJECT));
 
         // Register default check creator(s)
-        loader_ptr->registerCreator(shared_ptr<internal::RequestCheckCreator>(
-                                        new internal::RequestCheckCreator()));
         loader_ptr->registerCreator(
-            shared_ptr<NotCreator<RequestContext> >(
+            boost::shared_ptr<internal::RequestCheckCreator>(
+                new internal::RequestCheckCreator()));
+        loader_ptr->registerCreator(
+            boost::shared_ptr<NotCreator<RequestContext> >(
                 new NotCreator<RequestContext>("NOT")));
         loader_ptr->registerCreator(
-            shared_ptr<LogicCreator<AnyOfSpec, RequestContext> >(
+            boost::shared_ptr<LogicCreator<AnyOfSpec, RequestContext> >(
                 new LogicCreator<AnyOfSpec, RequestContext>("ANY")));
         loader_ptr->registerCreator(
-            shared_ptr<LogicCreator<AllOfSpec, RequestContext> >(
+            boost::shared_ptr<LogicCreator<AllOfSpec, RequestContext> >(
                 new LogicCreator<AllOfSpec, RequestContext>("ALL")));
 
         // From this point there shouldn't be any exception thrown

@@ -11,6 +11,8 @@ bind10-guide.html: bind10-guide.xml
 	xsltproc --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
+		--stringparam section.autolabel 1 \
+		--stringparam section.label.includes.component.label 1 \
 		--stringparam html.stylesheet $(srcdir)/bind10-guide.css \
 		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
 		$(srcdir)/bind10-guide.xml

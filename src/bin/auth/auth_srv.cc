@@ -76,7 +76,6 @@ using namespace isc::xfr;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
-using boost::shared_ptr;
 
 class AuthSrvImpl {
 private:
@@ -124,7 +123,7 @@ public:
     AddressList listen_addresses_;
 
     /// The TSIG keyring
-    const shared_ptr<TSIGKeyRing>* keyring_;
+    const boost::shared_ptr<TSIGKeyRing>* keyring_;
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -228,12 +227,13 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
-    impl_(new AuthSrvImpl(use_cache, xfrout_client)),
-    checkin_(new ConfigChecker(this)),
-    dns_lookup_(new MessageLookup(this)),
-    dns_answer_(new MessageAnswer(this))
-{}
+AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client)
+{
+    impl_ = new AuthSrvImpl(use_cache, xfrout_client);
+    checkin_ = new ConfigChecker(this);
+    dns_lookup_ = new MessageLookup(this);
+    dns_answer_ = new MessageAnswer(this);
+}
 
 void
 AuthSrv::stop() {
@@ -786,6 +786,6 @@ AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
 }
 
 void
-AuthSrv::setTSIGKeyRing(const shared_ptr<TSIGKeyRing>* keyring) {
+AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
 }

@@ -56,6 +56,10 @@ public:
         fakeifaces << LOOPBACK << " ::1";
         fakeifaces.close();
     }
+
+    ~IfaceMgrTest() {
+        unlink(INTERFACE_FILE);
+    }
 };
 
 // We need some known interface to work reliably. Loopback interface
@@ -147,6 +151,9 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
 
 TEST_F(IfaceMgrTest, basic) {
     // checks that IfaceManager can be instantiated
+    createLoInterfacesTxt();
+
+    createLoInterfacesTxt();
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
@@ -160,12 +167,13 @@ TEST_F(IfaceMgrTest, ifaceClass) {
     EXPECT_STREQ("eth5/7", iface->getFullName().c_str());
 
     delete iface;
-
 }
 
 // TODO: Implement getPlainMac() test as soon as interface detection
 // is implemented.
 TEST_F(IfaceMgrTest, getIface) {
+
+    createLoInterfacesTxt();
 
     cout << "Interface checks. Please ignore socket binding errors." << endl;
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
@@ -210,9 +218,11 @@ TEST_F(IfaceMgrTest, getIface) {
     EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi0") );
 
     delete ifacemgr;
+
 }
 
-TEST_F(IfaceMgrTest, detectIfaces) {
+#if !defined(OS_LINUX)
+TEST_F(IfaceMgrTest, detectIfaces_stub) {
 
     // test detects that interfaces can be detected
     // there is no code for that now, but interfaces are
@@ -240,8 +250,8 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     EXPECT_STREQ( "fe80::1234", addr.toText().c_str() );
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
+#endif
 
 TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
@@ -273,7 +283,6 @@ TEST_F(IfaceMgrTest, sockets6) {
     close(socket2);
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
 
 // TODO: disabled due to other naming on various systems
@@ -360,8 +369,100 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_TRUE( (rcvPkt->remote_port_ == 10546) || (rcvPkt->remote_port_ == 10547) );
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
+
+TEST_F(IfaceMgrTest, sendReceive4) {
+
+    // testing socket operation in a portable way is tricky
+    // without interface detection implemented
+    createLoInterfacesTxt();
+
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    // let's assume that every supported OS have lo interface
+    IOAddress loAddr("127.0.0.1");
+    int socket1 = 0, socket2 = 0;
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+        socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000 + 1);
+    );
+
+    EXPECT_GE(socket1, 0);
+    EXPECT_GE(socket2, 0);
+
+    boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
+
+    sendPkt->setLocalAddr(IOAddress("127.0.0.1"));
+
+    sendPkt->setLocalPort(DHCP4_SERVER_PORT + 10000 + 1);
+    sendPkt->setRemotePort(DHCP4_SERVER_PORT + 10000);
+    sendPkt->setRemoteAddr(IOAddress("127.0.0.1"));
+    sendPkt->setIndex(1);
+    sendPkt->setIface(string(LOOPBACK));
+    sendPkt->setHops(6);
+    sendPkt->setSecs(42);
+    sendPkt->setCiaddr(IOAddress("192.0.2.1"));
+    sendPkt->setSiaddr(IOAddress("192.0.2.2"));
+    sendPkt->setYiaddr(IOAddress("192.0.2.3"));
+    sendPkt->setGiaddr(IOAddress("192.0.2.4"));
+
+    // unpack() now checks if mandatory DHCP_MESSAGE_TYPE is present
+    boost::shared_ptr<Option> msgType(new Option(Option::V4,
+           static_cast<uint16_t>(DHO_DHCP_MESSAGE_TYPE)));
+    msgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
+    sendPkt->addOption(msgType);
+
+    uint8_t sname[] = "That's just a string that will act as SNAME";
+    sendPkt->setSname(sname, strlen((const char*)sname));
+    uint8_t file[] = "/another/string/that/acts/as/a/file_name.txt";
+    sendPkt->setFile(file, strlen((const char*)file));
+
+    ASSERT_NO_THROW(
+        sendPkt->pack();
+    );
+
+    boost::shared_ptr<Pkt4> rcvPkt;
+
+    EXPECT_EQ(true, ifacemgr->send(sendPkt));
+
+    rcvPkt = ifacemgr->receive4();
+
+    ASSERT_TRUE( rcvPkt ); // received our own packet
+
+    ASSERT_NO_THROW(
+        rcvPkt->unpack();
+    );
+
+    // let's check that we received what was sent
+    EXPECT_EQ(sendPkt->len(), rcvPkt->len());
+
+    EXPECT_EQ("127.0.0.1", rcvPkt->getRemoteAddr().toText());
+    EXPECT_EQ(sendPkt->getRemotePort(), rcvPkt->getLocalPort());
+
+    // now let's check content
+    EXPECT_EQ(sendPkt->getHops(), rcvPkt->getHops());
+    EXPECT_EQ(sendPkt->getOp(),   rcvPkt->getOp());
+    EXPECT_EQ(sendPkt->getSecs(), rcvPkt->getSecs());
+    EXPECT_EQ(sendPkt->getFlags(), rcvPkt->getFlags());
+    EXPECT_EQ(sendPkt->getCiaddr(), rcvPkt->getCiaddr());
+    EXPECT_EQ(sendPkt->getSiaddr(), rcvPkt->getSiaddr());
+    EXPECT_EQ(sendPkt->getYiaddr(), rcvPkt->getYiaddr());
+    EXPECT_EQ(sendPkt->getGiaddr(), rcvPkt->getGiaddr());
+    EXPECT_EQ(sendPkt->getTransid(), rcvPkt->getTransid());
+    EXPECT_EQ(sendPkt->getType(), rcvPkt->getType());
+    EXPECT_TRUE(sendPkt->getSname() == rcvPkt->getSname());
+    EXPECT_TRUE(sendPkt->getFile() == rcvPkt->getFile());
+    EXPECT_EQ(sendPkt->getHtype(), rcvPkt->getHtype());
+    EXPECT_EQ(sendPkt->getHlen(), rcvPkt->getHlen());
+
+    // since we opened 2 sockets on the same interface and none of them is multicast,
+    // none is preferred over the other for sending data, so we really should not
+    // assume the one or the other will always be choosen for sending data. We should
+    // skip checking source port of sent address.
+
+    delete ifacemgr;
+}
+
 
 TEST_F(IfaceMgrTest, socket4) {
 
@@ -388,7 +489,6 @@ TEST_F(IfaceMgrTest, socket4) {
     close(socket1);
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
 
 // Test the Iface structure itself
@@ -518,7 +618,268 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     delete ifacemgr;
-    unlink(INTERFACE_FILE);
 }
+
+#if defined(OS_LINUX)
+
+/// @brief parses text representation of MAC address
+///
+/// This function parses text representation of a MAC address and stores
+/// it in binary format. Text format is expecte to be separate with
+/// semicolons, e.g. f4:6d:04:96:58:f2
+///
+/// TODO: IfaceMgr::Iface::mac_ uses uint8_t* type, should be vector<uint8_t>
+///
+/// @param textMac string with MAC address to parse
+/// @param mac pointer to output buffer
+/// @param macLen length of output buffer
+///
+/// @return number of bytes filled in output buffer
+size_t parse_mac(const std::string& textMac, uint8_t* mac, size_t macLen) {
+    stringstream tmp(textMac);
+    tmp.flags(ios::hex);
+    int i = 0;
+    uint8_t octet = 0; // output octet
+    uint8_t byte;  // parsed charater from text representation
+    while (!tmp.eof()) {
+
+        tmp >> byte; // hex value
+        if (byte == ':') {
+            mac[i++] = octet;
+
+            if (i == macLen) {
+                // parsing aborted. We hit output buffer size
+                return(i);
+            }
+            octet = 0;
+            continue;
+        }
+        if (isalpha(byte)) {
+            byte = toupper(byte) - 'A' + 10;
+        } else if (isdigit(byte)) {
+            byte -= '0';
+        } else {
+            // parse error. Let's return what we were able to parse so far
+            break;
+        }
+        octet <<= 4;
+        octet += byte;
+    }
+    mac[i++] = octet;
+
+    return (i);
+}
+
+/// @brief Parses 'ifconfig -a' output and creates list of interfaces
+///
+/// This method tries to parse ifconfig output. Note that there are some
+/// oddities in recent versions of ifconfig, like putting extra spaces
+/// after MAC address, inconsistent naming and spacing between inet and inet6.
+/// This is an attempt to find a balance between tight parsing of every piece
+/// of text that ifconfig prints and robustness to handle slight differences
+/// in ifconfig output.
+///
+/// @param textFile name of a text file that holds output of ifconfig -a
+/// @param ifaces empty list of interfaces to be filled
+void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifaces) {
+    fstream f(textFile.c_str());
+
+    bool first_line = true;
+    IfaceMgr::IfaceCollection::iterator iface;
+    while (!f.eof()) {
+        string line;
+        getline(f, line);
+
+        // interfaces are separated by empty line
+        if (line.length() == 0) {
+            first_line = true;
+            continue;
+        }
+
+        // uncomment this for ifconfig output debug
+        // cout << "line[" << line << "]" << endl;
+
+        // this is first line of a new interface
+        if (first_line) {
+            first_line = false;
+
+            size_t offset;
+            offset = line.find_first_of(" ");
+            if (offset == string::npos) {
+                isc_throw(BadValue, "Malformed output of ifconfig");
+            }
+            string name = line.substr(0, offset);
+
+            // sadly, ifconfig does not return ifindex
+            ifaces.push_back(IfaceMgr::Iface(name, 0));
+            iface = ifaces.end();
+            --iface; // points to the last element
+
+            offset = line.find(string("HWaddr"));
+
+            string mac = "";
+            if (offset != string::npos) { // some interfaces don't have MAC (e.g. lo)
+                offset += 7;
+                mac = line.substr(offset, string::npos);
+                mac = mac.substr(0, mac.find_first_of(" "));
+
+                iface->mac_len_ = parse_mac(mac, iface->mac_, IfaceMgr::MAX_MAC_LEN);
+            }
+        }
+
+        if (line.find("inet6") != string::npos) {
+            // IPv6 address
+            string addr = line.substr(line.find("inet6")+12, string::npos);
+            addr = addr.substr(0, addr.find("/"));
+            IOAddress a(addr);
+            iface->addAddress(a);
+        } else if(line.find("inet") != string::npos) {
+            // IPv4 address
+            string addr = line.substr(line.find("inet")+10, string::npos);
+            addr = addr.substr(0, addr.find_first_of(" "));
+            IOAddress a(addr);
+            iface->addAddress(a);
+        } else if(line.find("Metric")) {
+            // flags
+            if (line.find("UP") != string::npos) {
+                iface->flag_up_ = true;
+            }
+            if (line.find("LOOPBACK") != string::npos) {
+                iface->flag_loopback_ = true;
+            }
+            if (line.find("RUNNING") != string::npos) {
+                iface->flag_running_ = true;
+            }
+            if (line.find("BROADCAST") != string::npos) {
+                iface->flag_broadcast_ = true;
+            }
+            if (line.find("MULTICAST") != string::npos) {
+                iface->flag_multicast_ = true;
+            }
+        }
+    }
+}
+
+
+// This test compares implemented detection routines to output of "ifconfig -a" command.
+// It is far from perfect, but it is able to verify that interface names, flags,
+// MAC address, IPv4 and IPv6 addresses are detected properly. Interface list completeness
+// (check that each interface is reported, i.e. no missing or extra interfaces) and
+// address completeness is verified.
+//
+// Things that are not tested:
+// - ifindex (ifconfig does not print it out)
+// - address scopes and lifetimes (we don't need it, so it is not implemented in IfaceMgr)
+TEST_F(IfaceMgrTest, detectIfaces_linux) {
+
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    IfaceMgr::IfaceCollection& detectedIfaces = ifacemgr->getIfacesLst();
+
+    const std::string textFile = "ifconfig.txt";
+
+    unlink(textFile.c_str());
+    int result = system( ("/sbin/ifconfig -a > " + textFile).c_str());
+
+    ASSERT_EQ(0, result);
+
+    // list of interfaces parsed from ifconfig
+    IfaceMgr::IfaceCollection parsedIfaces;
+
+    EXPECT_NO_THROW(
+        parse_ifconfig(textFile, parsedIfaces);
+    );
+    unlink(textFile.c_str());
+
+    cout << "------Parsed interfaces---" << endl;
+    for (IfaceMgr::IfaceCollection::iterator i = parsedIfaces.begin();
+         i != parsedIfaces.end(); ++i) {
+        cout << i->getName() << ": ifindex=" << i->getIndex() << ", mac=" << i->getPlainMac();
+        cout << ", flags:";
+        if (i->flag_up_) {
+            cout << " UP";
+        }
+        if (i->flag_running_) {
+            cout << " RUNNING";
+        }
+        if (i->flag_multicast_) {
+            cout << " MULTICAST";
+        }
+        if (i->flag_broadcast_) {
+            cout << " BROADCAST";
+        }
+        cout << ", addrs:";
+        const IfaceMgr::AddressCollection& addrs = i->getAddresses();
+        for (IfaceMgr::AddressCollection::const_iterator a= addrs.begin();
+             a != addrs.end(); ++a) {
+            cout << a->toText() << " ";
+        }
+        cout << endl;
+    }
+
+    // Ok, now we have 2 lists of interfaces. Need to compare them
+    ASSERT_EQ(detectedIfaces.size(), parsedIfaces.size());
+
+    // TODO: This could could probably be written simple with find()
+    for (IfaceMgr::IfaceCollection::iterator detected = detectedIfaces.begin();
+         detected != detectedIfaces.end(); ++detected) {
+        // let's find out if this interface is
+
+        bool found = false;
+        for (IfaceMgr::IfaceCollection::iterator i = parsedIfaces.begin();
+             i != parsedIfaces.end(); ++i) {
+            if (detected->getName() != i->getName()) {
+                continue;
+            }
+            found = true;
+
+            cout << "Checking interface " << detected->getName() << endl;
+
+            // start with checking flags
+            EXPECT_EQ(detected->flag_loopback_, i->flag_loopback_);
+            EXPECT_EQ(detected->flag_up_, i->flag_up_);
+            EXPECT_EQ(detected->flag_running_, i->flag_running_);
+            EXPECT_EQ(detected->flag_multicast_, i->flag_multicast_);
+            EXPECT_EQ(detected->flag_broadcast_, i->flag_broadcast_);
+
+            // skip MAC comparison for loopback as netlink returns MAC
+            // 00:00:00:00:00:00 for lo
+            if (!detected->flag_loopback_) {
+                ASSERT_EQ(detected->mac_len_, i->mac_len_);
+                EXPECT_EQ(0, memcmp(detected->mac_, i->mac_, i->mac_len_));
+            }
+
+            EXPECT_EQ(detected->getAddresses().size(), i->getAddresses().size());
+
+            // now compare addresses
+            const IfaceMgr::AddressCollection& addrs = detected->getAddresses();
+            for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
+                 addr != addrs.end(); ++addr) {
+                bool addr_found = false;
+
+                const IfaceMgr::AddressCollection& addrs2 = detected->getAddresses();
+                for (IfaceMgr::AddressCollection::const_iterator a = addrs2.begin();
+                     a != addrs2.end(); ++a) {
+                    if (*addr != *a) {
+                        continue;
+                    }
+                    addr_found = true;
+                }
+                if (!addr_found) {
+                    cout << "ifconfig does not seem to report " << addr->toText()
+                         << " address on " << detected->getFullName() << " interface." << endl;
+                    FAIL();
+                }
+                cout << "Address " << addr->toText() << " on iterface " << detected->getFullName()
+                     << " matched with 'ifconfig -a' output." << endl;
+            }
+        }
+        if (!found) { // corresponding interface was not found
+            FAIL();
+        }
+    }
+
+    delete ifacemgr;
+}
+#endif
 
 }

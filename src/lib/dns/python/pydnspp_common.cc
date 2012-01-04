@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <Python.h>
-#include <pydnspp_common.h>
 
 #include <exceptions/exceptions.h>
 

@@ -18,7 +18,6 @@
 
 using namespace isc::acl;
 using namespace isc::acl::tests;
-using boost::shared_ptr;
 
 namespace {
 
@@ -46,8 +45,8 @@ public:
     Log log_;
     size_t next_check_;
     boost::shared_ptr<Check<Log> > getCheck(bool accepts) {
-        return (shared_ptr<Check<Log> >(new ConstCheck(accepts,
-                                                       next_check_++)));
+        return (boost::shared_ptr<Check<Log> >(new ConstCheck(accepts,
+                                                              next_check_++)));
     }
 };
 

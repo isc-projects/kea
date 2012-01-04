@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -20,8 +22,6 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
-
-#include <config.h>
 
 #include <dns/question.h>
 #include <dns/message.h>
@@ -229,6 +229,9 @@ private:
     // case of a TCP packet being returned with the TC bit set.
     IOFetch::Protocol protocol_;
 
+    // EDNS flag
+    bool edns_;
+
     // To prevent both unreasonably long cname chains and cname loops,
     // we simply keep a counter of the number of CNAMEs we have
     // followed so far (and error if it exceeds RESOLVER_MAX_CNAME_CHAIN
@@ -352,37 +355,40 @@ private:
             IOFetch query(protocol_, io_, question_,
                 test_server_.first,
                 test_server_.second, buffer_, this,
-                query_timeout_);
+                query_timeout_, edns_);
             io_.get_io_service().post(query);
         } else {
             IOFetch query(protocol_, io_, question_,
                 current_ns_address.getAddress(),
                 53, buffer_, this,
-                query_timeout_);
+                query_timeout_, edns_);
             io_.get_io_service().post(query);
         }
     }
     
     // 'general' send, ask the NSAS to give us an address.
-    void send(IOFetch::Protocol protocol = IOFetch::UDP) {
+    void send(IOFetch::Protocol protocol = IOFetch::UDP, bool edns = true) {
         protocol_ = protocol;   // Store protocol being used for this
+        edns_ = edns;
         if (test_server_.second != 0) {
             // Send query to test server
-            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_TEST_UPSTREAM)
+            LOG_DEBUG(isc::resolve::logger,
+                      RESLIB_DBG_TRACE, RESLIB_TEST_UPSTREAM)
                 .arg(questionText(question_)).arg(test_server_.first);
             gettimeofday(&current_ns_qsent_time, NULL);
             ++outstanding_events_;
             IOFetch query(protocol, io_, question_,
                 test_server_.first,
                 test_server_.second, buffer_, this,
-                query_timeout_);
+                query_timeout_, edns_);
             io_.get_io_service().post(query);
 
         } else {
             // Ask the NSAS for an address for the current zone,
             // the callback will call the actual sendTo()
-            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_NSAS_LOOKUP)
-                      .arg(cur_zone_);
+            LOG_DEBUG(isc::resolve::logger,
+                      RESLIB_DBG_TRACE, RESLIB_NSAS_LOOKUP)
+                .arg(cur_zone_);
 
             // Can we have multiple calls to nsas_out? Let's assume not
             // for now
@@ -544,10 +550,28 @@ private:
             }
 
             // Was a TCP query so we have received a packet over TCP with the
-            // TC bit set: report an error by dropping down to the common
+            // TC bit set: report an error by going to the common
             // error code.
+            goto SERVFAIL;
 
+        case isc::resolve::ResponseClassifier::RCODE:
+            // see if it's a FORMERR and a potential EDNS problem
+            if (incoming.getRcode() == Rcode::FORMERR()) {
+                if (protocol_ == IOFetch::UDP && edns_) {
+                    // TODO: in case we absolutely need EDNS (i.e. for DNSSEC
+                    // aware queries), we might want to try TCP before we give
+                    // up. For now, just try UDP, no EDNS
+                    send(IOFetch::UDP, false);
+                    return (false);
+                }
+
+                // TC should take care of non-EDNS over UDP, fall through to
+                // SERVFAIL if we get FORMERR instead
+            }
+            goto SERVFAIL;
+            
         default:
+SERVFAIL:
             // Some error in received packet it.  Report it and return SERVFAIL
             // to the caller.
             if (logger.isDebugEnabled()) {
@@ -679,11 +703,14 @@ public:
         nsas_(nsas),
         cache_(cache),
         cur_zone_("."),
-        nsas_callback_(new ResolverNSASCallback(this)),
+        nsas_callback_(),
         nsas_callback_out_(false),
         outstanding_events_(0),
         rtt_recorder_(recorder)
     {
+        // Set here to avoid using "this" in initializer list.
+        nsas_callback_.reset(new ResolverNSASCallback(this));
+
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
             lookup_timer.expires_from_now(
