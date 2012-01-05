@@ -39,7 +39,7 @@ namespace server_common {
 /// sense to have two of them.
 ///
 /// This is actually an abstract base class. There'll be one with
-/// hidden implementation and we expect the tests to create it's own
+/// hidden implementation and we expect the tests to create its own
 /// subclass when needed.
 ///
 /// \see socketRequestor function to access the object of this class.
@@ -51,20 +51,21 @@ protected:
     /// (which it can't anyway, as it has pure virtual methods, but just to
     /// be sure).
     SocketRequestor() {}
+
 public:
     /// \brief virtual destructor
     ///
     /// A virtual destructor, as we have virtual methods, to make sure it is
     /// destroyed by the destructor of the subclass. This shouldn't matter, as
     /// a singleton class wouldn't get destroyed, but just to be sure.
-
     virtual ~ SocketRequestor() {}
+
     /// \brief A representation of received socket
     ///
     /// The pair holds two parts. The OS-level file descriptor acting as the
     /// socket (you might want to use it directly with functions like recv,
-    /// or fill it into an asio socket). The other part is the token representing
-    /// the socket, which allows it to be given up again.
+    /// or fill it into an asio socket). The other part is the token
+    /// representing the socket, which allows it to be given up again.
     typedef std::pair<int, std::string> SocketID;
 
     /// \brief The protocol of requested socket
@@ -98,7 +99,7 @@ public:
     /// else or ask for nonsense (releasing a socket we don't own).
     class SocketError : public Exception {
     public:
-        SocketError(const char* file, size_t line, const char *what) :
+        SocketError(const char* file, size_t line, const char* what) :
             Exception(file, line, what)
         { }
     };
@@ -108,15 +109,19 @@ public:
     /// Asks the socket creator to give us a socket. The socket will be bound
     /// to the given address and port.
     ///
-    /// \param protocol specifies the protocol of the socket.
+    /// \param protocol specifies the protocol of the socket.  This must be
+    /// either UDP or TCP.
     /// \param address to which the socket should be bound.
     /// \param port the port to which the socket should be bound (native endian,
     ///     not network byte order).
     /// \param share_mode how the socket can be shared with other requests.
+    /// This must be one of the defined values of ShareMode.
     /// \param share_name the name of sharing group, relevant for SHARE_SAME
     ///     (specified by us or someone else).
     /// \return the socket, as a file descriptor and token representing it on
     ///     the socket creator side.
+    ///
+    /// \throw InvalidParameter protocol or share_mode is invalid
     /// \throw CCSessionError when we have a problem talking over the CC
     ///     session.
     /// \throw SocketError in case the other side doesn't want to give us
@@ -144,33 +149,6 @@ public:
     ///     release (like we're trying to release a socket that doesn't
     ///     belong to us or exist at all).
     virtual void releaseSocket(const std::string& token) = 0;
-
-    /// \brief Initialize the singleton object
-    ///
-    /// This creates the object that will be used to request sockets.
-    /// It can be called only once per the life of application.
-    ///
-    /// \param session the CC session that'll be used to talk to the
-    ///     socket creator.
-    /// \throw InvalidOperation when it is called more than once.
-    static void init(config::ModuleCCSession& session);
-
-    /// \brief Initialization for tests
-    ///
-    /// This is to support different subclasses in tests. It replaces
-    /// the object used by socketRequestor() function by this one provided
-    /// as parameter. The ownership is not taken, eg. it's up to the caller
-    /// to delete it when necessary.
-    ///
-    /// This is not to be used in production applications. It is meant as
-    /// an replacement of init.
-    ///
-    /// This never throws.
-    ///
-    /// \param requestor the object to be used. It can be NULL to reset to
-    ///     an "virgin" state (which acts as if initTest or init was never
-    ///     called before).
-    static void initTest(SocketRequestor* requestor);
 };
 
 /// \brief Access the requestor object.
@@ -180,10 +158,46 @@ public:
 /// \return the active socket requestor object.
 /// \throw InvalidOperation if the object was not yet initialized.
 /// \see SocketRequestor::init to initialize the object.
-SocketRequestor&
-socketRequestor();
+SocketRequestor& socketRequestor();
+
+/// \brief Initialize the singleton object
+///
+/// This creates the object that will be used to request sockets.
+/// It can be called only once per the life of application.
+///
+/// \param session the CC session that'll be used to talk to the
+///                socket creator.
+/// \throw InvalidOperation when it is called more than once
+void initSocketReqeustor(config::ModuleCCSession& session);
+
+/// \brief Initialization for tests
+///
+/// This is to support different subclasses in tests. It replaces
+/// the object used by socketRequestor() function by this one provided
+/// as parameter. The ownership is not taken, eg. it's up to the caller
+/// to delete it when necessary.
+///
+/// This is not to be used in production applications. It is meant as
+/// an replacement of init.
+///
+/// This never throws.
+///
+/// \param requestor the object to be used. It can be NULL to reset to
+///     an "virgin" state (which acts as if initTest or init was never
+///     called before).
+void initTestSocketRequestor(SocketRequestor* requestor);
+
+/// \brief Destroy the singleton instance
+///
+/// Calling this function is not strictly necessary; the socket
+/// requestor is a singleton anyway. However, for some tests it
+/// is useful to destroy and recreate it, as well as for programs
+/// that want to be completely clean on exit.
+/// After this function has been called, all operations except init
+/// will fail.
+void cleanupSocketRequestor();
 
 }
 }
 
-#endif
+#endif  // __SOCKET_REQUEST_H
