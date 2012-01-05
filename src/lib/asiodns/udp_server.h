@@ -52,6 +52,20 @@ public:
                        DNSLookup* lookup = NULL,
                        DNSAnswer* answer = NULL);
 
+    /// \brief Constructor
+    /// \param io_service the asio::io_service to work with
+    /// \param fd the file descriptor of opened UDP socket
+    /// \param af address family, either AF_INET or AF_INET6
+    /// \param checkin the callbackprovider for non-DNS events
+    /// \param lookup the callbackprovider for DNS lookup events
+    /// \param answer the callbackprovider for DNS answer events
+    /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
+    /// \throw isc::asiolink::IOError when a low-level error happens, like the
+    ///     fd is not a valid descriptor.
+    UDPServer(asio::io_service& io_service, int fd, int af,
+              isc::asiolink::SimpleCallback* checkin = NULL,
+              DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
+
     /// \brief The function operator
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);

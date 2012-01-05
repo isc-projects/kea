@@ -25,6 +25,7 @@ libasiodns_la_SOURCES += dns_service.cc dns_service.h
 libasiodns_la_SOURCES += tcp_server.cc tcp_server.h
 libasiodns_la_SOURCES += udp_server.cc udp_server.h
 libasiodns_la_SOURCES += io_fetch.cc io_fetch.h
+libasiodns_la_SOURCES += logger.h logger.cc
 
 nodist_libasiodns_la_SOURCES = asiodns_messages.cc asiodns_messages.h
 

@@ -38,15 +38,13 @@
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
-#include <log/logger.h>
-#include <log/macros.h>
 
-#include <asiodns/asiodns_messages.h>
 #include <asiodns/io_fetch.h>
 
 #include <util/buffer.h>
 #include <util/random/qid_gen.h>
 
+#include <asiodns/logger.h>
 
 using namespace asio;
 using namespace isc::asiolink;
@@ -58,10 +56,6 @@ using namespace std;
 
 namespace isc {
 namespace asiodns {
-
-/// Use the ASIO logger
-
-isc::log::Logger logger("asiolink");
 
 // Log debug verbosity
 
