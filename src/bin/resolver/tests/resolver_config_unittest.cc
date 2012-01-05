@@ -49,6 +49,7 @@
 #include <dns/tests/unittest_util.h>
 #include <testutils/srv_test.h>
 #include <testutils/portconfig.h>
+#include <testutils/socket_request.h>
 
 using namespace std;
 using boost::scoped_ptr;
@@ -81,7 +82,10 @@ protected:
     scoped_ptr<const IOMessage> query_message;
     scoped_ptr<const Client> client;
     scoped_ptr<const RequestContext> request;
-    ResolverConfig() : dnss(ios, NULL, NULL, NULL) {
+    ResolverConfig() :
+        dnss(ios, NULL, NULL, NULL),
+        sock_requestor_(dnss, address_store_, 53210)
+    {
         server.setDNSService(dnss);
     }
     const RequestContext& createRequest(const string& source_addr) {
@@ -96,6 +100,8 @@ protected:
         return (*request);
     }
     void invalidTest(const string &JSON, const string& name);
+    isc::server_common::portconfig::AddressList address_store_;
+    isc::testutils::TestSocketRequestor sock_requestor_;
 };
 
 TEST_F(ResolverConfig, forwardAddresses) {
@@ -310,6 +316,20 @@ TEST_F(ResolverConfig, invalidForwardAddresses) {
 // Try setting the addresses directly
 TEST_F(ResolverConfig, listenAddresses) {
     isc::testutils::portconfig::listenAddresses(server);
+    // Check it requests the correct addresses
+    const char* tokens[] = {
+        "TCP:127.0.0.1:53210:1",
+        "UDP:127.0.0.1:53210:2",
+        "TCP:::1:53210:3",
+        "UDP:::1:53210:4",
+        NULL
+    };
+    sock_requestor_.checkTokens(tokens, sock_requestor_.given_tokens_,
+                                "Given tokens");
+    // It returns back to empty set of addresses afterwards, so
+    // they should be released
+    sock_requestor_.checkTokens(tokens, sock_requestor_.released_tokens_,
+                                "Released tokens");
 }
 
 // Try setting some addresses and a rollback
