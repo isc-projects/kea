@@ -85,8 +85,8 @@ DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
 DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 
 # Messages sent over the unix domain socket to indicate if it is followed by a real socket
-CREATOR_SOCKET_OK = "1\n"
-CREATOR_SOCKET_UNAVAILABLE = "0\n"
+CREATOR_SOCKET_OK = b"1\n"
+CREATOR_SOCKET_UNAVAILABLE = b"0\n"
 
 # Assign this process some longer name
 isc.util.process.rename(sys.argv[0])
@@ -836,6 +836,7 @@ class BoB:
         identified by the token back over the unix_socket.
         """
         try:
+            token = str(token, 'ASCII') # Convert from bytes to str
             fd = self._socket_cache.get_socket(token, unix_socket.fileno())
             # FIXME: These two calls are blocking in their nature. An OS-level
             # buffer is likely to be large enough to hold all these data, but
