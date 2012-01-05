@@ -35,6 +35,10 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
     if (sock == -1) {
         return -1;
     }
+    const int on(1);
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
+        return -2; // This is part of the binding process, so it's a bind error
+    }
     if (bind(sock, bind_addr, addr_len) == -1) {
         return -2;
     }
@@ -124,6 +128,8 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                     WRITE("S", 1);
                     // FIXME: Check the output and write a test for it
                     send_fd(output_fd, result);
+                    // Don't leak the socket
+                    close(result);
                 } else {
                     WRITE("E", 1);
                     switch (result) {
