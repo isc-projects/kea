@@ -211,7 +211,7 @@ main(int argc, char* argv[]) {
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler);
-        isc::server_common::SocketRequestor::init(*config_session);
+        isc::server_common::initSocketReqeustor(*config_session);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_CHANNEL);
 
         // FIXME: This does not belong here, but inside Boss
