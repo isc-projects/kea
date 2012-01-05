@@ -914,7 +914,7 @@ class BoB:
         Accept a socket from the unix domain socket server and put it to the
         others we care about.
         """
-        socket = self._srv_socket.accept()
+        (socket, conn) = self._srv_socket.accept()
         self._unix_sockets[socket.fileno()] = (socket, b'')
 
     def _socket_data(self, socket_fileno):

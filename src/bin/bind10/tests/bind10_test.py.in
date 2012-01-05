@@ -1235,7 +1235,7 @@ class SocketSrvTest(unittest.TestCase):
             return self.__fileno
 
         def accept(self):
-            return self.__class__(self.__owner, 13)
+            return (self.__class__(self.__owner, 13), "/path/to/socket")
 
         def recv(self, bufsize, flags=0):
             self.__owner.assertEqual(1, bufsize)
