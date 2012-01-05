@@ -29,8 +29,8 @@
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
-#include <tcp_server.h>
-
+#include <asiodns/tcp_server.h>
+#include <asiodns/logger.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -67,6 +67,31 @@ TCPServer::TCPServer(io_service& io_service,
     acceptor_->set_option(tcp::acceptor::reuse_address(true));
     acceptor_->bind(endpoint);
     acceptor_->listen();
+}
+
+TCPServer::TCPServer(io_service& io_service, int fd, int af,
+                     const SimpleCallback* checkin,
+                     const DNSLookup* lookup,
+                     const DNSAnswer* answer) :
+    io_(io_service), done_(false),
+    checkin_callback_(checkin), lookup_callback_(lookup),
+    answer_callback_(answer)
+{
+    if (af != AF_INET && af != AF_INET6) {
+        isc_throw(InvalidParameter, "Address family must be either AF_INET "
+                  "or AF_INET6, not " << af);
+    }
+    LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_TCP).arg(fd);
+
+    try {
+        acceptor_.reset(new tcp::acceptor(io_service));
+        acceptor_->assign(af == AF_INET6 ? tcp::v6() : tcp::v4(), fd);
+        acceptor_->listen();
+    } catch (const std::exception& exception) {
+        // Whatever the thing throws, it is something from ASIO and we convert
+        // it
+        isc_throw(IOError, exception.what());
+    }
 }
 
 void

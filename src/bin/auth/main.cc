@@ -49,6 +49,7 @@
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
+#include <server_common/socket_request.h>
 
 using namespace std;
 using namespace isc::asiodns;
@@ -168,6 +169,8 @@ main(int argc, char* argv[]) {
                                              my_config_handler,
                                              my_command_handler, false);
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_ESTABLISHED);
+        // Initialize the Socket Requestor
+        isc::server_common::SocketRequestor::init(*config_session);
 
         xfrin_session = new Session(io_service.get_io_service());
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_XFRIN_CHANNEL_CREATED);

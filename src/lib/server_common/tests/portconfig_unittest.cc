@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <server_common/portconfig.h>
+#include <testutils/socket_request.h>
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -23,11 +24,13 @@
 #include <string>
 
 using namespace isc::server_common::portconfig;
+using namespace isc::server_common;
 using namespace isc::data;
 using namespace isc;
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
+using boost::lexical_cast;
 
 namespace {
 
@@ -129,26 +132,30 @@ TEST_F(ParseAddresses, invalid) {
 // Test fixture for installListenAddresses
 struct InstallListenAddresses : public ::testing::Test {
     InstallListenAddresses() :
-        dnss_(ios_, NULL, NULL, NULL)
+        dnss_(ios_, NULL, NULL, NULL),
+        sock_requestor_(dnss_, store_, 5288)
     {
         valid_.push_back(AddressPair("127.0.0.1", 5288));
         valid_.push_back(AddressPair("::1", 5288));
+        invalid_.push_back(AddressPair("127.0.0.1", 5288));
         invalid_.push_back(AddressPair("192.0.2.2", 1));
     }
     IOService ios_;
     DNSService dnss_;
     AddressList store_;
+    isc::testutils::TestSocketRequestor sock_requestor_;
     // We should be able to bind to these addresses
     AddressList valid_;
     // But this shouldn't work
     AddressList invalid_;
     // Check that the store_ addresses are the same as expected
-    void checkAddresses(const AddressList& expected, const string& name) {
+    void checkAddresses(const AddressList& expected, const string& name) const
+    {
         SCOPED_TRACE(name);
 
         ASSERT_EQ(expected.size(), store_.size()) <<
             "Different amount of elements, not checking content";
-        // Run in parallel trough the vectors
+        // Run in parallel through the vectors
         for (AddressList::const_iterator ei(expected.begin()),
              si(store_.begin()); ei != expected.end(); ++ei, ++si) {
             EXPECT_EQ(ei->first, si->first);
@@ -158,17 +165,46 @@ struct InstallListenAddresses : public ::testing::Test {
 };
 
 // Try switching valid addresses
+// Check the sockets are correctly requested and returned
 TEST_F(InstallListenAddresses, valid) {
     // First, bind to the valid addresses
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Valid addresses");
+    const char* tokens1[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        NULL
+    };
+    const char* no_tokens[] = { NULL };
+    sock_requestor_.checkTokens(tokens1, sock_requestor_.given_tokens_,
+                                "Valid given tokens 1");
+    sock_requestor_.checkTokens(no_tokens, sock_requestor_.released_tokens_,
+                                "Valid no released tokens 1");
     // TODO Maybe some test to actually connect to them
     // Try setting it back to nothing
+    sock_requestor_.given_tokens_.clear();
     EXPECT_NO_THROW(installListenAddresses(AddressList(), store_, dnss_));
     checkAddresses(AddressList(), "No addresses");
+    sock_requestor_.checkTokens(no_tokens, sock_requestor_.given_tokens_,
+                                "Valid no given tokens");
+    sock_requestor_.checkTokens(tokens1, sock_requestor_.released_tokens_,
+                                "Valid released tokens");
     // Try switching back again
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Valid addresses");
+    const char* tokens2[] = {
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:::1:5288:7",
+        "UDP:::1:5288:8",
+        NULL
+    };
+    sock_requestor_.checkTokens(tokens2, sock_requestor_.given_tokens_,
+                                "Valid given tokens 2");
+    sock_requestor_.checkTokens(tokens1, sock_requestor_.released_tokens_,
+                                "Valid released tokens");
 }
 
 // Try if rollback works
@@ -176,9 +212,87 @@ TEST_F(InstallListenAddresses, rollback) {
     // Set some addresses
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Before rollback");
+    const char* tokens1[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        NULL
+    };
+    const char* no_tokens[] = { NULL };
+    sock_requestor_.checkTokens(tokens1, sock_requestor_.given_tokens_,
+                                "Given before rollback");
+    sock_requestor_.checkTokens(no_tokens, sock_requestor_.released_tokens_,
+                                "Released before rollback");
+    sock_requestor_.given_tokens_.clear();
     // This should not bind them, but should leave the original addresses
-    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), exception);
+    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_),
+                 SocketRequestor::SocketError);
     checkAddresses(valid_, "After rollback");
+    // Now, it should have requested first pair of sockets from the invalids
+    // and, as the second failed, it should have returned them right away.
+    const char* released1[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        NULL
+    };
+    // It should request the first pair of sockets, and then request the
+    // complete set of valid addresses to rollback
+    const char* tokens2[] = {
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:127.0.0.1:5288:7",
+        "UDP:127.0.0.1:5288:8",
+        "TCP:::1:5288:9",
+        "UDP:::1:5288:10",
+        NULL
+    };
+    sock_requestor_.checkTokens(tokens2, sock_requestor_.given_tokens_,
+                                "Given after rollback");
+    sock_requestor_.checkTokens(released1, sock_requestor_.released_tokens_,
+                                "Released after rollback");
+}
+
+// Try it at least releases everything when even the rollback fails.
+TEST_F(InstallListenAddresses, brokenRollback) {
+    EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
+    checkAddresses(valid_, "Before rollback");
+    // Don't check the tokens now, we already do it in rollback and valid tests
+    sock_requestor_.given_tokens_.clear();
+    sock_requestor_.break_rollback_ = true;
+    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_),
+                 SocketRequestor::SocketError);
+    // No addresses here
+    EXPECT_TRUE(store_.empty());
+    // The first pair should be requested in the first part of the failure to
+    // bind and the second pair in the first part of rollback
+    const char* tokens[] = {
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:127.0.0.1:5288:7",
+        "UDP:127.0.0.1:5288:8",
+        NULL
+    };
+    // The first set should be released, as well as all the ones we request now
+    const char* released[] = {
+        "TCP:127.0.0.1:5288:1",
+        "UDP:127.0.0.1:5288:2",
+        "TCP:::1:5288:3",
+        "UDP:::1:5288:4",
+        "TCP:127.0.0.1:5288:5",
+        "UDP:127.0.0.1:5288:6",
+        "TCP:127.0.0.1:5288:7",
+        "UDP:127.0.0.1:5288:8",
+        NULL
+    };
+    sock_requestor_.checkTokens(tokens, sock_requestor_.given_tokens_,
+                                "given");
+    sock_requestor_.checkTokens(released, sock_requestor_.released_tokens_,
+                                "released");
 }
 
 }

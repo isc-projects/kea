@@ -31,6 +31,7 @@
 
 #include <testutils/mockups.h>
 #include <testutils/portconfig.h>
+#include <testutils/socket_request.h>
 
 using namespace isc::dns;
 using namespace isc::data;
@@ -44,7 +45,8 @@ protected:
     AuthConfigTest() :
         dnss_(ios_, NULL, NULL, NULL),
         rrclass(RRClass::IN()),
-        server(true, xfrout)
+        server(true, xfrout),
+        sock_requestor_(dnss_, address_store_, 53210)
     {
         server.setDNSService(dnss_);
     }
@@ -53,6 +55,9 @@ protected:
     const RRClass rrclass;
     MockXfroutClient xfrout;
     AuthSrv server;
+    isc::server_common::portconfig::AddressList address_store_;
+private:
+    isc::testutils::TestSocketRequestor sock_requestor_;
 };
 
 TEST_F(AuthConfigTest, datasourceConfig) {
