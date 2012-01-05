@@ -159,6 +159,8 @@ main(int argc, char* argv[]) {
 
         cc_session = new Session(io_service.get_io_service());
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_CREATED);
+        // Initialize the Socket Requestor
+        isc::server_common::initSocketReqeustor(*cc_session);
 
         // We delay starting listening to new commands/config just before we
         // go into the main loop to avoid confusion due to mixture of
@@ -169,8 +171,6 @@ main(int argc, char* argv[]) {
                                              my_config_handler,
                                              my_command_handler, false);
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_ESTABLISHED);
-        // Initialize the Socket Requestor
-        isc::server_common::initSocketReqeustor(*config_session);
 
         xfrin_session = new Session(io_service.get_io_service());
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_XFRIN_CHANNEL_CREATED);
