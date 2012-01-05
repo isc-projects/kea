@@ -228,9 +228,9 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
     // check for error values of passed_sock_fd (see fd_share.h)
     if (passed_sock_fd < 0) {
         switch (passed_sock_fd) {
-        case isc::util::io::FD_COMM_ERROR:
+        case isc::util::io::FD_SYSTEM_ERROR:
             isc_throw(SocketRequestor::SocketError,
-                      "FD_COMM_ERROR while requesting socket");
+                      "FD_SYSTEM_ERROR while requesting socket");
             break;
         case isc::util::io::FD_OTHER_ERROR:
             isc_throw(SocketRequestor::SocketError,

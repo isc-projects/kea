@@ -66,7 +66,7 @@ public:
         expect_port_(expect_port)
     {
         // Prepare the requestor (us) for the test
-        SocketRequestor::initTest(this);
+        server_common::initTestSocketRequestor(this);
         // Don't manipulate the real sockets
         server_common::portconfig::test_mode = true;
     }
@@ -82,7 +82,7 @@ public:
         server_common::portconfig::AddressList list;
         server_common::portconfig::installListenAddresses(list, store_, dnss_);
         // Don't leave invalid pointers here
-        SocketRequestor::initTest(NULL);
+        server_common::initTestSocketRequestor(NULL);
         // And return the mode
         server_common::portconfig::test_mode = false;
     }

@@ -64,7 +64,8 @@ using isc::UnitTestUtil;
 
 namespace {
 const char* const TEST_ADDRESS = "127.0.0.1";
-const char* const TEST_PORT = "53530";
+const char* const TEST_ADDRESS_FAIL = "192.0.2.2";
+const char* const TEST_PORT = "53210";
 
 // An internal exception class
 class TestConfigError : public isc::Exception {
@@ -254,7 +255,7 @@ TEST_F(ResolverConfig, listenOnConfigFail) {
                                              "\"listen_on\": ["
                                              " {"
                                              "    \"address\": \"" +
-                                             string(TEST_ADDRESS) + "\","
+                                             string(TEST_ADDRESS_FAIL) + "\","
                                              "    \"port\": " +
                                              string(TEST_PORT) + "}]}"));
     configAnswerCheck(server.updateConfig(config), false);
@@ -270,7 +271,7 @@ TEST_F(ResolverConfig, listenOnAndOtherConfig) {
                             " {\"address\": \"192.0.2.1\","
                             "   \"port\": 53}], "
                             "\"listen_on\": ["
-                            " {\"address\": \"" + string(TEST_ADDRESS) + "\","
+                            " {\"address\": \"" + string(TEST_ADDRESS_FAIL) + "\","
                             "  \"port\": " + string(TEST_PORT) + "}]}");
     // Normally, if listen_on fails the rest of the config parameters will
     // be ignored.
