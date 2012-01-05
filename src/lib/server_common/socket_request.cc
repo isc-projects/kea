@@ -17,6 +17,7 @@
 #include <server_common/logger.h>
 
 #include <config/ccsession.h>
+#include <cc/session.h>
 #include <cc/data.h>
 #include <util/io/fd.h>
 #include <util/io/fd_share.h>
@@ -245,13 +246,13 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
 }
 
 // This implementation class for SocketRequestor uses
-// a ModuleCCSession for communication with the boss process,
+// a CC session for communication with the boss process,
 // and fd_share to read out the socket(s).
 // Since we only use a reference to the session, it must never
 // be closed during the lifetime of this class
 class SocketRequestorCCSession : public SocketRequestor {
 public:
-    explicit SocketRequestorCCSession(config::ModuleCCSession& session) :
+    explicit SocketRequestorCCSession(cc::AbstractSession& session) :
         session_(session)
     {
         // We need to filter SIGPIPE to prevent it from happening in
@@ -283,12 +284,12 @@ public:
                                        share_mode, share_name);
 
         // Send it to boss
-        const int seq = session_.groupSendMsg(request_msg, "Boss");
+        const int seq = session_.group_sendmsg(request_msg, "Boss");
 
         // Get the answer from the boss.
         // Just do a blocking read, we can't really do much anyway
         isc::data::ConstElementPtr env, recv_msg;
-        if (!session_.groupRecvMsg(env, recv_msg, false, seq)) {
+        if (!session_.group_recvmsg(env, recv_msg, false, seq)) {
             isc_throw(isc::config::CCSessionError,
                       "Incomplete response when requesting socket");
         }
@@ -313,14 +314,14 @@ public:
             createReleaseSocketMessage(token);
 
         // Send it to boss
-        const int seq = session_.groupSendMsg(release_msg, "Boss");
+        const int seq = session_.group_sendmsg(release_msg, "Boss");
         LOG_DEBUG(logger, DBGLVL_TRACE_DETAIL, SOCKETREQUESTOR_RELEASESOCKET).
             arg(token);
 
         // Get the answer from the boss.
         // Just do a blocking read, we can't really do much anyway
         isc::data::ConstElementPtr env, recv_msg;
-        if (!session_.groupRecvMsg(env, recv_msg, false, seq)) {
+        if (!session_.group_recvmsg(env, recv_msg, false, seq)) {
             isc_throw(isc::config::CCSessionError,
                       "Incomplete response when sending drop socket command");
         }
@@ -363,7 +364,7 @@ private:
         }
     }
 
-    config::ModuleCCSession& session_;
+    cc::AbstractSession& session_;
     std::map<std::string, int> fd_share_sockets_;
 };
 
@@ -379,7 +380,7 @@ socketRequestor() {
 }
 
 void
-initSocketReqeustor(config::ModuleCCSession& session) {
+initSocketReqeustor(cc::AbstractSession& session) {
     if (requestor != NULL) {
         isc_throw(InvalidOperation,
                   "The socket requestor was already initialized");
