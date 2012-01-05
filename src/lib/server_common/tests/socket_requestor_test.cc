@@ -81,14 +81,9 @@ class SocketRequestorTest : public ::testing::Test {
 public:
     SocketRequestorTest() : session(ElementPtr(new ListElement),
                                     ElementPtr(new ListElement),
-                                    ElementPtr(new ListElement)),
-                            specfile(std::string(TEST_DATA_PATH) +
-                                     "/spec.spec")
+                                    ElementPtr(new ListElement))
     {
-        session.getMessages()->add(createAnswer());
-        cc_session.reset(new ModuleCCSession(specfile, session, NULL, NULL,
-                                             false, false));
-        initSocketReqeustor(*cc_session);
+        initSocketReqeustor(session);
     }
 
     ~SocketRequestorTest() {
@@ -124,7 +119,6 @@ public:
     }
 
     isc::cc::FakeSession session;
-    boost::scoped_ptr<ModuleCCSession> cc_session;
     const std::string specfile;
 };
 

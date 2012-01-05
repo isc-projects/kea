@@ -24,8 +24,8 @@
 
 namespace isc {
 
-namespace config {
-class ModuleCCSession;
+namespace cc {
+class AbstractSession;
 };
 
 namespace server_common {
@@ -168,7 +168,7 @@ SocketRequestor& socketRequestor();
 /// \param session the CC session that'll be used to talk to the
 ///                socket creator.
 /// \throw InvalidOperation when it is called more than once
-void initSocketReqeustor(config::ModuleCCSession& session);
+void initSocketReqeustor(cc::AbstractSession& session);
 
 /// \brief Initialization for tests
 ///
