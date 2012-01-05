@@ -63,7 +63,7 @@ message. A valid specification contains an address part (which must be a string
 and must represent a valid IPv4 or IPv6 address) and port (which must be an
 integer in the range valid for TCP/UDP ports on your system).
 
-% SRVCOMM_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%2)
+% SRVCOMM_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%1)
 The recovery of old addresses after SRVCOMM_ADDRESS_FAIL also failed for
 the reason listed.
 
