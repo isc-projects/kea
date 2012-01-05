@@ -315,7 +315,41 @@ public:
     isc::data::ConstElementPtr getRemoteConfigValue(
         const std::string& module_name,
         const std::string& identifier) const;
-    
+
+    /**
+     * Send a message to the underlying CC session.
+     * This has the same interface as isc::cc::Session::group_sendmsg()
+     *
+     * \param msg see isc::cc::Session::group_sendmsg()
+     * \param group see isc::cc::Session::group_sendmsg()
+     * \param instance see isc::cc::Session::group_sendmsg()
+     * \param to see isc::cc::Session::group_sendmsg()
+     * \return see isc::cc::Session::group_sendmsg()
+     */
+    int groupSendMsg(isc::data::ConstElementPtr msg,
+                     std::string group,
+                     std::string instance = "*",
+                     std::string to = "*") {
+        return (session_.group_sendmsg(msg, group, instance, to));
+    };
+
+    /**
+     * Receive a message from the underlying CC session.
+     * This has the same interface as isc::cc::Session::group_recvmsg()
+     *
+     * \param envelope see isc::cc::Session::group_recvmsg()
+     * \param msg see isc::cc::Session::group_recvmsg()
+     * \param nonblock see isc::cc::Session::group_recvmsg()
+     * \param seq see isc::cc::Session::group_recvmsg()
+     * \return see isc::cc::Session::group_recvmsg()
+     */
+    bool groupRecvMsg(isc::data::ConstElementPtr& envelope,
+                      isc::data::ConstElementPtr& msg,
+                      bool nonblock = true,
+                      int seq = -1) {
+        return (session_.group_recvmsg(envelope, msg, nonblock, seq));
+    };
+
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
