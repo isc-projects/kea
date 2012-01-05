@@ -146,7 +146,7 @@ class TestCacheCommands(unittest.TestCase):
         socket.
         """
         def __init__(self):
-            self.send = ""
+            self.send = b""
         def fileno(self):
             """
             The file number. Used for identifying the remote application.
@@ -207,17 +207,17 @@ class TestCacheCommands(unittest.TestCase):
         socket = self.FalseSocket()
         # An exception from the cache
         self.__raise_exception = ValueError("Test value error")
-        self.__boss.socket_request_handler("token", socket)
+        self.__boss.socket_request_handler(b"token", socket)
         # It was called, but it threw, so it is not noted here
         self.assertIsNone(self.__get_socket_called)
-        self.assertEqual("0\n", socket.send)
+        self.assertEqual(b"0\n", socket.send)
         # It should not have sent any socket.
         self.assertIsNone(self.__send_fd_called)
         # Now prepare a valid scenario
         self.__raise_exception = None
-        socket.send = ""
-        self.__boss.socket_request_handler("token", socket)
-        self.assertEqual("1\n", socket.send)
+        socket.send = b""
+        self.__boss.socket_request_handler(b"token", socket)
+        self.assertEqual(b"1\n", socket.send)
         self.assertEqual((42, 13), self.__send_fd_called)
         self.assertEqual(("token", 42), self.__get_socket_called)
 
