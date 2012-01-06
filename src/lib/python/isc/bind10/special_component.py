@@ -15,7 +15,7 @@
 
 from isc.bind10.component import Component, BaseComponent
 import isc.bind10.sockcreator
-from bind10_config import LIBEXECDIR
+from bind10_config import LIBEXECPATH
 import os
 import posix
 import isc.log
@@ -39,7 +39,7 @@ class SockCreator(BaseComponent):
 
     def _start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
-        self.__creator = isc.bind10.sockcreator.Creator(LIBEXECDIR + ':' +
+        self.__creator = isc.bind10.sockcreator.Creator(LIBEXECPATH + ':' +
                                                         os.environ['PATH'])
         self._boss.register_process(self.pid(), self)
         self._boss.set_creator(self.__creator)
