@@ -61,12 +61,12 @@ namespace {
         CHECK_SOCK(ADDR_TYPE, socket); \
         int on; \
         socklen_t len(sizeof(on)); \
-        ASSERT_EQ(0, getsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, &len));\
-        ASSERT_EQ(1, on); \
+        EXPECT_EQ(0, getsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, &len));\
+        EXPECT_NE(0, on); \
         if (ADDR_FAMILY == AF_INET6) { \
-            ASSERT_EQ(0, getsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, &on, \
+            EXPECT_EQ(0, getsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, &on, \
                                     &len)); \
-            ASSERT_EQ(1, on); \
+            EXPECT_NE(0, on); \
         } \
         EXPECT_EQ(0, close(socket)); \
     } while (0)
@@ -201,7 +201,7 @@ send_fd_dummy(const int destination, const int what)
 
 // Just ignore the fd and pretend success. We close invalid fds in the tests.
 int
-close_ignore(int) {
+closeIgnore(int) {
     return (0);
 }
 
@@ -213,7 +213,7 @@ close_ignore(int) {
  */
 void run_test(const char *input_data, const size_t input_size,
     const char *output_data, const size_t output_size,
-    bool should_succeed = true, const close_t test_close = close_ignore,
+    bool should_succeed = true, const close_t test_close = closeIgnore,
     const send_fd_t send_fd = send_fd_dummy)
 {
     // Prepare the input feeder and output checker processes
@@ -288,23 +288,23 @@ TEST(run, bad_sockets) {
 
 // A close that fails
 int
-close_fail(int) {
+closeFail(int) {
     return (-1);
 }
 
 TEST(run, cant_close) {
     run_test("SU4\xff\xff\0\0\0\0", // This has 9 bytes
-             9, "S\x07", 2, false, close_fail);
+             9, "S\x07", 2, false, closeFail);
 }
 
 int
-send_fd_fail(const int, const int) {
+sendFDFail(const int, const int) {
     return (FD_SYSTEM_ERROR);
 }
 
 TEST(run, cant_send_fd) {
     run_test("SU4\xff\xff\0\0\0\0", // This has 9 bytes
-             9, "S", 1, false, close_ignore, send_fd_fail);
+             9, "S", 1, false, closeIgnore, sendFDFail);
 }
 
 }
