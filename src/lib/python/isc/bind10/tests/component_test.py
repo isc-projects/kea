@@ -633,8 +633,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         Some tests around the SockCreator component.
         """
-        component = isc.bind10.special_component.SockCreator(None, self, 'needed',
-                                                             None)
+        component = isc.bind10.special_component.SockCreator(None, self,
+                                                             'needed', None)
         orig_setuid = isc.bind10.special_component.posix.setuid
         isc.bind10.special_component.posix.setuid = self.setuid
         orig_creator = \
@@ -650,8 +650,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.kill()
         component.kill(True)
         self.uid = 42
-        component = isc.bind10.special_component.SockCreator(None, self, 'needed',
-                                                             None)
+        component = isc.bind10.special_component.SockCreator(None, self,
+                                                             'needed', None)
         component.start()
         # This time, it get's called
         self.assertEqual(42, self.__uid_set)
