@@ -39,6 +39,10 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
         return -2; // This is part of the binding process, so it's a bind error
     }
+    if (bind_addr->sa_family == AF_INET6 &&
+        setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) == -1) {
+        return -2; // This is part of the binding process, so it's a bind error
+    }
     if (bind(sock, bind_addr, addr_len) == -1) {
         return -2;
     }

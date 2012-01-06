@@ -59,6 +59,15 @@ namespace {
             #SOCK_TYPE " and family " #ADDR_FAMILY ", failed with " \
             << socket << " and error " << strerror(errno); \
         CHECK_SOCK(ADDR_TYPE, socket); \
+        int on; \
+        socklen_t len(sizeof(on)); \
+        ASSERT_EQ(0, getsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, &len));\
+        ASSERT_EQ(1, on); \
+        if (ADDR_FAMILY == AF_INET6) { \
+            ASSERT_EQ(0, getsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, &on, \
+                                    &len)); \
+            ASSERT_EQ(1, on); \
+        } \
         EXPECT_EQ(0, close(socket)); \
     } while (0)
 
