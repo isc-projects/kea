@@ -44,12 +44,10 @@ import os
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + "/src/bin/bind10/bob.spec"
-    ADD_LIBEXEC_PATH = False
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    ADD_LIBEXEC_PATH = True
     
 import subprocess
 import signal
@@ -65,6 +63,7 @@ import pwd
 import posix
 import copy
 
+from bind10_config import LIBEXECPATH
 import isc.cc
 import isc.util.process
 import isc.net.parse
@@ -151,8 +150,7 @@ class ProcessInfo:
         # on construction (self.env).
         spawn_env = copy.deepcopy(os.environ)
         spawn_env.update(self.env)
-        if ADD_LIBEXEC_PATH:
-            spawn_env['PATH'] = "@@LIBEXECDIR@@:" + spawn_env['PATH']
+        spawn_env['PATH'] = LIBEXECPATH + spawn_env['PATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=spawn_stdout,
