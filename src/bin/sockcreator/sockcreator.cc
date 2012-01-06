@@ -70,7 +70,7 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
 
 int
 run(const int input_fd, const int output_fd, const get_sock_t get_sock,
-    const send_fd_t send_fd)
+    const send_fd_t send_fd, const close_t close)
 {
     for (;;) {
         // Read the command
@@ -131,9 +131,13 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                 if (result >= 0) { // We got the socket
                     WRITE("S", 1);
                     // FIXME: Check the output and write a test for it
-                    send_fd(output_fd, result);
+                    if(send_fd(output_fd, result) == FD_SYSTEM_ERROR) {
+                        return 3;
+                    }
                     // Don't leak the socket
-                    close(result);
+                    if (close(result) == -1) {
+                        return 4;
+                    }
                 } else {
                     WRITE("E", 1);
                     switch (result) {
