@@ -701,6 +701,12 @@ class TestUIModuleCCSession(unittest.TestCase):
         fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
         return UIModuleCCSession(fake_conn)
 
+    def create_uccs_listtest(self, fake_conn):
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec39.spec"))
+        fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
+        fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
+        return UIModuleCCSession(fake_conn)
+
     def test_init(self):
         fake_conn = fakeUIConn()
         fake_conn.set_get_answer('/module_spec', {})
@@ -751,6 +757,14 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError,
                           uccs.remove_value, "Spec2/item5", None)
 
+    def test_add_dup_value(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs_listtest(fake_conn)
+
+        uccs.add_value("Spec39/list")
+        self.assertRaises(isc.cc.data.DataAlreadyPresentError, uccs.add_value,
+                          "Spec39/list")
+
     def test_add_remove_value_named_set(self):
         fake_conn = fakeUIConn()
         uccs = self.create_uccs_named_set(fake_conn)
@@ -787,6 +801,8 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           uccs.remove_value, "/Spec32/named_set_item",
                           "no_such_item")
+        self.assertRaises(isc.cc.data.DataAlreadyPresentError,
+                          uccs.add_value, "/Spec32/named_set_item", "c")
 
     def test_set_value_named_set(self):
         fake_conn = fakeUIConn()

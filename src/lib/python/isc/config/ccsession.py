@@ -451,9 +451,9 @@ class UIModuleCCSession(MultiConfigData):
             cur_list.append(value)
             self.set_value(identifier, cur_list)
         else:
-            raise isc.cc.data.DataAlreadyPresentError(value +
+            raise isc.cc.data.DataAlreadyPresentError(str(value) +
                                                       " already in "
-                                                      + identifier)
+                                                      + str(identifier))
 
     def _add_value_to_named_set(self, identifier, value, item_value):
         if type(value) != str:
