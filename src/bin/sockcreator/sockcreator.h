@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 namespace isc {
 namespace socket_creator {
@@ -62,6 +63,11 @@ typedef
 int
 (*send_fd_t)(const int, const int);
 
+/// \brief Type of the close() function, so it can be passed as a parameter.
+typedef
+int
+(*close_t)(int);
+
 /**
  * \short Infinite loop parsing commands and returning the sockets.
  *
@@ -88,11 +94,14 @@ int
  * \param send_fd_fun The function that is used to send the socket over
  *     a file descriptor. This should be left on the default value, it is
  *     here for testing purposes.
+ * \param close The close function used to close sockets, coming from
+ *     unistd.h. It can be overriden in tests.
  */
 int
 run(const int input_fd, const int output_fd,
     const get_sock_t get_sock_fun = get_sock,
-    const send_fd_t send_fd_fun = isc::util::io::send_fd);
+    const send_fd_t send_fd_fun = isc::util::io::send_fd,
+    const close_t close = close);
 
 } // End of the namespaces
 }

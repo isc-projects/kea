@@ -199,6 +199,12 @@ send_fd_dummy(const int destination, const int what)
     }
 }
 
+// Just ignore the fd and pretend success. We close invalid fds in the tests.
+int
+close_ignore(int) {
+    return (0);
+}
+
 /*
  * Generic test that it works, with various inputs and outputs.
  * It uses different functions to create the socket and send it and pass
@@ -207,7 +213,8 @@ send_fd_dummy(const int destination, const int what)
  */
 void run_test(const char *input_data, const size_t input_size,
     const char *output_data, const size_t output_size,
-    bool should_succeed = true)
+    bool should_succeed = true, const close_t test_close = close_ignore,
+    const send_fd_t send_fd = send_fd_dummy)
 {
     // Prepare the input feeder and output checker processes
     int input_fd(0), output_fd(0);
@@ -216,7 +223,7 @@ void run_test(const char *input_data, const size_t input_size,
     ASSERT_NE(-1, input) << "Couldn't start input feeder";
     ASSERT_NE(-1, output) << "Couldn't start output checker";
     // Run the body
-    int result(run(input_fd, output_fd, get_sock_dummy, send_fd_dummy));
+    int result(run(input_fd, output_fd, get_sock_dummy, send_fd, test_close));
     // Close the pipes
     close(input_fd);
     close(output_fd);
@@ -277,6 +284,27 @@ TEST(run, bad_sockets) {
         "SU4\xcc\xcc\0\0\0\0"
         "T", 19,
         result, result_len);
+}
+
+// A close that fails
+int
+close_fail(int) {
+    return (-1);
+}
+
+TEST(run, cant_close) {
+    run_test("SU4\xff\xff\0\0\0\0", // This has 9 bytes
+             9, "S\x07", 2, false, close_fail);
+}
+
+int
+send_fd_fail(const int, const int) {
+    return (FD_SYSTEM_ERROR);
+}
+
+TEST(run, cant_send_fd) {
+    run_test("SU4\xff\xff\0\0\0\0", // This has 9 bytes
+             9, "S", 1, false, close_ignore, send_fd_fail);
 }
 
 }
