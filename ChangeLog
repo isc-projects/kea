@@ -1,3 +1,8 @@
+360.	[bug]		vorner
+	Fixed problem where bindctl crashed when a duplicate non-string
+	item was added  to a list.  This error is now properly reported.
+	(Trac #1515, git a3cf5322a73e8a97b388c6f8025b92957e5d8986)
+
 359.	[bug]		kevin
 	Corrected SOA serial check in xfrout.  It now compares the SOA
 	serial of an IXFR query with that of the server based serial
