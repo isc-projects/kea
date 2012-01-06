@@ -94,14 +94,14 @@ int
  * \param send_fd_fun The function that is used to send the socket over
  *     a file descriptor. This should be left on the default value, it is
  *     here for testing purposes.
- * \param close The close function used to close sockets, coming from
+ * \param close_fun The close function used to close sockets, coming from
  *     unistd.h. It can be overriden in tests.
  */
 int
 run(const int input_fd, const int output_fd,
     const get_sock_t get_sock_fun = get_sock,
     const send_fd_t send_fd_fun = isc::util::io::send_fd,
-    const close_t close = close);
+    const close_t close_fun = close);
 
 } // End of the namespaces
 }
