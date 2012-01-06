@@ -131,7 +131,11 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                 if (result >= 0) { // We got the socket
                     WRITE("S", 1);
                     // FIXME: Check the output and write a test for it
-                    if (send_fd_fun(output_fd, result) == FD_SYSTEM_ERROR) {
+                    if (send_fd_fun(output_fd, result) != 0) {
+                        // We'll soon abort ourselves, but make sure we still
+                        // close the socket; don't bother if it fails as the
+                        // higher level result (abort) is the same.
+                        close_fun(result);
                         return 3;
                     }
                     // Don't leak the socket
