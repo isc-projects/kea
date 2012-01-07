@@ -262,7 +262,7 @@ public:
         // Note: we should eventually unify this level of details into a single
         // module.  Setting a single filter here should be considered a short
         // term workaround.
-        if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+        if (std::signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
             isc_throw(Unexpected, "Failed to filter SIGPIPE: " <<
                       strerror(errno));
         }
