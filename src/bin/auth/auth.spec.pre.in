@@ -139,6 +139,134 @@
         "item_default": 0,
         "item_title": "Queries UDP",
         "item_description": "A number of total query counts which all auth servers receive over UDP since they started initially"
+      },
+      {
+        "item_name": "opcode.query",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received query requests",
+        "item_description": "The number of total request counts whose opcode is query"
+      },
+      {
+        "item_name": "opcode.iquery",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received inverse query requests",
+        "item_description": "The number of total request counts whose opcode is inverse query"
+      },
+      {
+        "item_name": "opcode.status",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received status requests",
+        "item_description": "The number of total request counts whose opcode is status"
+      },
+      {
+        "item_name": "opcode.reserved3",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode 3",
+        "item_description": "The number of total request counts whose opcode is 3 (reserved)"
+      },
+      {
+        "item_name": "opcode.notify",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received notify requests",
+        "item_description": "The number of total request counts whose opcode is notify"
+      },
+      {
+        "item_name": "opcode.update",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received update requests",
+        "item_description": "The number of total request counts whose opcode is update"
+      },
+      {
+        "item_name": "opcode.reserved6",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode 6",
+        "item_description": "The number of total request counts whose opcode is 6 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved7",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode 7",
+        "item_description": "The number of total request counts whose opcode is 7 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved8",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode8",
+        "item_description": "The number of total request counts whose opcode is8 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved9",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode9",
+        "item_description": "The number of total request counts whose opcode is9 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved10",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode10",
+        "item_description": "The number of total request counts whose opcode is10 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved11",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode11",
+        "item_description": "The number of total request counts whose opcode is11 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved12",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode12",
+        "item_description": "The number of total request counts whose opcode is12 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved13",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode13",
+        "item_description": "The number of total request counts whose opcode is13 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved14",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode14",
+        "item_description": "The number of total request counts whose opcode is14 (reserved)"
+      },
+      {
+        "item_name": "opcode.reserved15",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Received requests opcode15",
+        "item_description": "The number of total request counts whose opcode is15 (reserved)"
       }
     ]
   }
