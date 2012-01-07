@@ -24,6 +24,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <dns/message.h>
+#include <dns/opcode.h>
 #include <util/buffer.h>
 
 #include <asiodns/dns_server.h>
@@ -344,6 +345,20 @@ public:
     ///
     /// \return the value of the counter.
     uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
+
+    /// \brief Get the value of per Opcode counter in the Auth Counters.
+    ///
+    /// This function calls AuthCounters::getCounter(isc::dns::Opcode) and
+    /// returns its return value.
+    ///
+    /// \note This is a tentative interface as an attempt of experimentally
+    /// supporting more statistics counters.  This should eventually be more
+    /// generalized.  In any case, this method is mainly for testing.
+    ///
+    /// \throw None
+    /// \param opcode The opcode of the counter to get the value of
+    /// \return the value of the counter.
+    uint64_t getCounter(const isc::dns::Opcode opcode) const;
 
     /**
      * \brief Set and get the addresses we listen on.

@@ -15,6 +15,8 @@
 #ifndef __STATISTICS_H
 #define __STATISTICS_H 1
 
+#include <dns/opcode.h>
+
 #include <cc/session.h>
 #include <stdint.h>
 #include <boost/scoped_ptr.hpp>
@@ -87,6 +89,15 @@ public:
     /// 
     void inc(const ServerCounterType type);
 
+    /// \brief Increment the counter of a per opcode counter.
+    ///
+    /// \note This is a tentative interface.  See \c getCounter().
+    ///
+    /// \param opcode The opcode of the counter to increment.
+    ///
+    /// \throw None
+    void inc(const isc::dns::Opcode opcode);
+
     /// \brief Submit statistics counters to statistics module.
     ///
     /// This method is desinged to be called periodically
@@ -125,7 +136,7 @@ public:
     ///
     void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
 
-    /// \brief Get a value of a counter in the AuthCounters.
+    /// \brief Get the value of a counter in the AuthCounters.
     ///
     /// This function returns a value of the counter specified by \a type.
     /// This method never throws an exception.
@@ -135,8 +146,21 @@ public:
     /// \param type Type of a counter to get the value of
     ///
     /// \return the value of the counter specified by \a type.
-    ///
     uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
+
+    /// \brief Get the value of a per opcode counter.
+    ///
+    /// This method returns the value of the per opcode counter for the
+    /// specified \c opcode.
+    ///
+    /// \note This is a tentative interface as an attempt of experimentally
+    /// supporting more statistics counters.  This should eventually be more
+    /// generalized.  In any case, this method is mainly for testing.
+    ///
+    /// \throw None
+    /// \param opcode The opcode of the counter to get the value of
+    /// \return the value of the counter.
+    uint64_t getCounter(const isc::dns::Opcode opcode) const;
 
     /// \brief A type of validation function for the specification in
     /// isc::config::ModuleSpec.
