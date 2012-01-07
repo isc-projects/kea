@@ -150,7 +150,7 @@ class ProcessInfo:
         # on construction (self.env).
         spawn_env = copy.deepcopy(os.environ)
         spawn_env.update(self.env)
-        spawn_env['PATH'] = LIBEXECPATH + spawn_env['PATH']
+        spawn_env['PATH'] = LIBEXECPATH + ':' + spawn_env['PATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=spawn_stdout,
