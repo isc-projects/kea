@@ -23,6 +23,7 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
@@ -372,6 +373,9 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig->getRdata().getError());
     EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
         "It should be unsigned with this error";
+    // TSIG should have failed, and so the per opcode counter shouldn't be
+    // incremented.
+    EXPECT_EQ(0, server.getCounter(Opcode::RESERVED14()));
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
@@ -833,6 +837,30 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing TCP IXFR query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+}
+
+TEST_F(AuthSrvTest, queryCounterOpcodes) {
+    for (int i = 0; i < 16; ++i) {
+        // The counter should be initialized to 0.
+        EXPECT_EQ(0, server.getCounter(Opcode(i)));
+
+        // For each possible opcode, create a request message and send it
+        UnitTestUtil::createRequestMessage(request_message, Opcode(i),
+                                           default_qid, Name("example.com"),
+                                           RRClass::IN(), RRType::NS());
+        createRequestPacket(request_message, IPPROTO_UDP);
+
+        // "send" the request N-th times where N is i + 1 for i-th code.
+        // we intentionally use different values for each code
+        for (int j = 0; j <= i; ++j) {
+            parse_message->clear(Message::PARSE);
+            server.processMessage(*io_message, parse_message, response_obuffer,
+                                  &dnsserv);
+        }
+
+        // Confirm the counter.
+        EXPECT_EQ(i + 1, server.getCounter(Opcode(i)));
+    }
 }
 
 // class for queryCounterUnexpected test
