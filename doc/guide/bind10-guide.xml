@@ -2285,6 +2285,10 @@ eth0 fe80::21e:8cff:fe9b:7349
 &gt; <userinput>Stats show</userinput>
 {
     "Auth": {
+        "opcode.iquery": 0,
+        "opcode.notify": 10,
+        "opcode.query": 869617,
+        ...
         "queries.tcp": 1749,
         "queries.udp": 867868
     },
