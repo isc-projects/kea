@@ -41,6 +41,8 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
+#include <server_common/socket_request.h>
+
 #include <xfr/xfrout_client.h>
 
 #include <auth/change_user.h>
@@ -206,6 +208,7 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
+        isc::server_common::initSocketReqeustor(*cc_session);
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler);

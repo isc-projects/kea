@@ -49,6 +49,7 @@
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
+#include <server_common/socket_request.h>
 
 using namespace std;
 using namespace isc::asiodns;
@@ -158,6 +159,8 @@ main(int argc, char* argv[]) {
 
         cc_session = new Session(io_service.get_io_service());
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_CREATED);
+        // Initialize the Socket Requestor
+        isc::server_common::initSocketReqeustor(*cc_session);
 
         // We delay starting listening to new commands/config just before we
         // go into the main loop to avoid confusion due to mixture of

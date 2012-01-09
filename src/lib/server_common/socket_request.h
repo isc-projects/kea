@@ -1,0 +1,203 @@
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#ifndef __SOCKET_REQUEST_H
+#define __SOCKET_REQUEST_H 1
+
+#include <exceptions/exceptions.h>
+
+#include <boost/noncopyable.hpp>
+#include <utility>
+#include <string>
+#include <stdint.h>
+
+namespace isc {
+
+namespace cc {
+class AbstractSession;
+};
+
+namespace server_common {
+
+/// \brief A singleton class for requesting sockets
+///
+/// This class allows requesting sockets from the socket creator.
+///
+/// It is considered to be a singleton - a class which is instantiated
+/// at most once in the whole application. This is because it makes no
+/// sense to have two of them.
+///
+/// This is actually an abstract base class. There'll be one with
+/// hidden implementation and we expect the tests to create its own
+/// subclass when needed.
+///
+/// \see socketRequestor function to access the object of this class.
+class SocketRequestor : boost::noncopyable {
+protected:
+    /// \brief Protected constructor
+    ///
+    /// The constructor is protected so this class is not created by accident
+    /// (which it can't anyway, as it has pure virtual methods, but just to
+    /// be sure).
+    SocketRequestor() {}
+
+public:
+    /// \brief virtual destructor
+    ///
+    /// A virtual destructor, as we have virtual methods, to make sure it is
+    /// destroyed by the destructor of the subclass. This shouldn't matter, as
+    /// a singleton class wouldn't get destroyed, but just to be sure.
+    virtual ~ SocketRequestor() {}
+
+    /// \brief A representation of received socket
+    ///
+    /// The pair holds two parts. The OS-level file descriptor acting as the
+    /// socket (you might want to use it directly with functions like recv,
+    /// or fill it into an asio socket). The other part is the token
+    /// representing the socket, which allows it to be given up again.
+    typedef std::pair<int, std::string> SocketID;
+
+    /// \brief The protocol of requested socket
+    ///
+    /// This describes which protocol the socket should have when created.
+    enum Protocol {
+        UDP,
+        TCP
+    };
+
+    /// \brief The share mode of the requested socket
+    ///
+    /// The socket creator is able to "borrow" the same socket to multiple
+    /// applications at once. However, it isn't always what is required. This
+    /// describes the restrains we want to have on our socket regarding the
+    /// sharing. Union of restriction of all requests on the given socket
+    /// is taken (so you still don't have to get your socket even if you
+    /// say SHARE_ANY, because someone else might already asked for the socket
+    /// with DONT_SHARE).
+    enum ShareMode {
+        DONT_SHARE, //< Request an exclusive ownership of the socket.
+        SHARE_SAME, //< It is possible to share the socket with anybody who
+                    //< provided the same share_name.
+        SHARE_ANY   //< Any sharing is allowed.
+    };
+
+    /// \brief Exception when we can't manipulate a socket
+    ///
+    /// This is thrown if the other side doesn't want to comply to our
+    /// requests, like when we ask for a socket already held by someone
+    /// else or ask for nonsense (releasing a socket we don't own).
+    class SocketError : public Exception {
+    public:
+        SocketError(const char* file, size_t line, const char* what) :
+            Exception(file, line, what)
+        { }
+    };
+
+    /// \brief Ask for a socket
+    ///
+    /// Asks the socket creator to give us a socket. The socket will be bound
+    /// to the given address and port.
+    ///
+    /// \param protocol specifies the protocol of the socket.  This must be
+    /// either UDP or TCP.
+    /// \param address to which the socket should be bound.
+    /// \param port the port to which the socket should be bound (native endian,
+    ///     not network byte order).
+    /// \param share_mode how the socket can be shared with other requests.
+    /// This must be one of the defined values of ShareMode.
+    /// \param share_name the name of sharing group, relevant for SHARE_SAME
+    ///     (specified by us or someone else).
+    /// \return the socket, as a file descriptor and token representing it on
+    ///     the socket creator side.
+    ///
+    /// \throw InvalidParameter protocol or share_mode is invalid
+    /// \throw CCSessionError when we have a problem talking over the CC
+    ///     session.
+    /// \throw SocketError in case the other side doesn't want to give us
+    ///     the socket for some reason (common cases are when the socket
+    ///     can't be allocated or bound, or when the socket is claimed by
+    ///     some other application and the sharing parameters don't allow
+    ///     sharing it).
+    virtual SocketID requestSocket(Protocol protocol,
+                                   const std::string& address,
+                                   uint16_t port, ShareMode share_mode,
+                                   const std::string& share_name) = 0;
+
+    /// \brief Tell the socket creator we no longer need the socket
+    ///
+    /// Releases the identified socket. This must be called *after*
+    /// the file descriptor was closed on our side. This will allow
+    /// the remote side to either give it to some other application
+    /// or close it, depending on the situation.
+    ///
+    /// \param token the token representing the socket, as received
+    ///     in the second part of the requestSocket result.
+    /// \throw CCSessionError when we have a problem talking over the CC
+    ///     session.
+    /// \throw SocketError in case the other side doesn't like the
+    ///     release (like we're trying to release a socket that doesn't
+    ///     belong to us or exist at all).
+    virtual void releaseSocket(const std::string& token) = 0;
+};
+
+/// \brief Access the requestor object.
+///
+/// This returns the singleton object for the Requestor.
+///
+/// \return the active socket requestor object.
+/// \throw InvalidOperation if the object was not yet initialized.
+/// \see SocketRequestor::init to initialize the object.
+SocketRequestor& socketRequestor();
+
+/// \brief Initialize the singleton object
+///
+/// This creates the object that will be used to request sockets.
+/// It can be called only once per the life of application.
+///
+/// \param session the CC session that'll be used to talk to the
+///                socket creator.
+/// \throw InvalidOperation when it is called more than once
+void initSocketReqeustor(cc::AbstractSession& session);
+
+/// \brief Initialization for tests
+///
+/// This is to support different subclasses in tests. It replaces
+/// the object used by socketRequestor() function by this one provided
+/// as parameter. The ownership is not taken, eg. it's up to the caller
+/// to delete it when necessary.
+///
+/// This is not to be used in production applications. It is meant as
+/// an replacement of init.
+///
+/// This never throws.
+///
+/// \param requestor the object to be used. It can be NULL to reset to
+///     an "virgin" state (which acts as if initTest or init was never
+///     called before).
+void initTestSocketRequestor(SocketRequestor* requestor);
+
+/// \brief Destroy the singleton instance
+///
+/// Calling this function is not strictly necessary; the socket
+/// requestor is a singleton anyway. However, for some tests it
+/// is useful to destroy and recreate it, as well as for programs
+/// that want to be completely clean on exit.
+/// After this function has been called, all operations except init
+/// will fail.
+void cleanupSocketRequestor();
+
+}
+}
+
+#endif  // __SOCKET_REQUEST_H
