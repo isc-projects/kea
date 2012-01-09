@@ -130,7 +130,6 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                 int result(get_sock(sock_type, addr, addr_len));
                 if (result >= 0) { // We got the socket
                     WRITE("S", 1);
-                    // FIXME: Check the output and write a test for it
                     if (send_fd_fun(output_fd, result) != 0) {
                         // We'll soon abort ourselves, but make sure we still
                         // close the socket; don't bother if it fails as the
