@@ -96,10 +96,12 @@ parseAddresses(isc::data::ConstElementPtr addresses,
  *
  * If it fails to set up the new addresses, it attempts to roll back to the
  * previous addresses (but it still propagates the exception). If the rollback
- * fails as well, it aborts the application (it assumes if it can't listen
- * on the new addresses nor on the old ones, the application is useless anyway
- * and should be restarted by Boss, not to mention that the internal state is
- * probably broken).
+ * fails as well, it doesn't abort the application (to allow reconfiguration),
+ * but removes all the sockets it listened on. One of the exceptions is
+ * propagated.
+ *
+ * The ports are requested from the socket creator through boss. Therefore
+ * you need to initialize the SocketRequestor before using this function.
  *
  * \param newAddresses are the addresses you want to listen on.
  * \param addressStore is the place you store your current addresses. It is
@@ -109,7 +111,11 @@ parseAddresses(isc::data::ConstElementPtr addresses,
  *     the new sockets are handled using this dnsService (and all current
  *     sockets on the service are closed first).
  * \throw asiolink::IOError when initialization or closing of socket fails.
+ * \throw isc::server_common::SocketRequestor::Socket error when the
+ *     boss/socket creator doesn't want to give us the socket.
  * \throw std::bad_alloc when allocation fails.
+ * \throw isc::InvalidOperation when the function is called and the
+ *     SocketRequestor isn't initialized yet.
  */
 void
 installListenAddresses(const AddressList& newAddresses,

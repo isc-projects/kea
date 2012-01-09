@@ -46,7 +46,7 @@ template<class Server>
 void
 listenAddresses(Server& server) {
     using namespace isc::server_common::portconfig;
-    // Default value should be fully recursive
+    // In this test we assume the address list is originally empty.
     EXPECT_TRUE(server.getListenAddresses().empty());
 
     // Try putting there some addresses
@@ -61,7 +61,8 @@ listenAddresses(Server& server) {
     addresses.clear();
     EXPECT_EQ(2, server.getListenAddresses().size());
 
-    // Did it return to fully recursive?
+    // If we set to an empty list next, the server configuration should
+    // become empty, too.
     server.setListenAddresses(addresses);
     EXPECT_TRUE(server.getListenAddresses().empty());
 }
@@ -95,12 +96,11 @@ listenAddressConfig(Server& server) {
     EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
     EXPECT_EQ(53210, server.getListenAddresses()[0].second);
 
-    // As this is example address, the machine should not have it on
-    // any interface
+    // This address is rejected by the test socket requestor
     config = Element::fromJSON("{"
                                "\"listen_on\": ["
                                "   {"
-                               "       \"address\": \"192.0.2.0\","
+                               "       \"address\": \"192.0.2.2\","
                                "       \"port\": 53210"
                                "   }"
                                "]"

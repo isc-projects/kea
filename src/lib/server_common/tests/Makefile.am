@@ -29,6 +29,7 @@ run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += portconfig_unittest.cc
 run_unittests_SOURCES += keyring_test.cc
+run_unittests_SOURCES += socket_requestor_test.cc
 nodist_run_unittests_SOURCES = data_path.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

@@ -16,6 +16,31 @@ $NAMESPACE isc::server_common
 
 # \brief Messages for the server_common library
 
+% SOCKETREQUESTOR_CREATED Socket requestor created
+Debug message.  A socket requesor (client of the socket creator) is created
+for the corresponding application.  Normally this should happen at most
+one time throughout the lifetime of the application.
+
+% SOCKETREQUESTOR_DESTROYED Socket requestor destoryed
+Debug message.  The socket requestor created at SOCKETREQUESTOR_CREATED
+has been destroyed.  This event is generally unexpected other than in
+test cases.
+
+% SOCKETREQUESTOR_GETSOCKET Received a %1 socket for [%2]:%3, FD=%4, token=%5, path=%6
+Debug message. The socket requestor for the corresponding application
+has requested a socket for a set of address, port and protocol (shown
+in the log message) and successfully got it from the creator.  The
+corresponding file descriptor and the associated "token" (an internal
+ID used between the creator and requestor) are shown in the log
+message.
+
+% SOCKETREQUESTOR_RELEASESOCKET Released a socket of token %1
+Debug message.  The socket requestor has released a socket passed by
+the creator.  The associated token of the socket is shown in the
+log message.  If the corresponding SOCKETREQUESTOR_GETSOCKET was logged
+more detailed information of the socket can be identified by matching
+the token.
+
 % SRVCOMM_ADDRESSES_NOT_LIST the address and port specification is not a list in %1
 This points to an error in configuration. What was supposed to be a list of
 IP address - port pairs isn't a list at all but something else.
@@ -38,7 +63,7 @@ message. A valid specification contains an address part (which must be a string
 and must represent a valid IPv4 or IPv6 address) and port (which must be an
 integer in the range valid for TCP/UDP ports on your system).
 
-% SRVCOMM_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%2)
+% SRVCOMM_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%1)
 The recovery of old addresses after SRVCOMM_ADDRESS_FAIL also failed for
 the reason listed.
 

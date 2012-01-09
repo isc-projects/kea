@@ -205,9 +205,9 @@ class Cache:
             raise ShareError("Cached socket not compatible with mode " +
                              share_mode + " and name " + share_name)
         # Grab yet unused token
-        token = 't' + str(random.randint(0, 2^32-1))
+        token = 't' + str(random.randint(0, 2 ** 32-1))
         while token in self._live_tokens:
-            token = 't' + str(random.randint(0, 2^32-1))
+            token = 't' + str(random.randint(0, 2 ** 32-1))
         self._waiting_tokens[token] = socket
         self._live_tokens.add(token)
         socket.shares[token] = (share_mode, share_name)
