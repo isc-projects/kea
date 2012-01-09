@@ -35,6 +35,14 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
     if (sock == -1) {
         return -1;
     }
+    const int on(1);
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
+        return -2; // This is part of the binding process, so it's a bind error
+    }
+    if (bind_addr->sa_family == AF_INET6 &&
+        setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) == -1) {
+        return -2; // This is part of the binding process, so it's a bind error
+    }
     if (bind(sock, bind_addr, addr_len) == -1) {
         return -2;
     }
@@ -62,7 +70,7 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
 
 int
 run(const int input_fd, const int output_fd, const get_sock_t get_sock,
-    const send_fd_t send_fd)
+    const send_fd_t send_fd_fun, const close_t close_fun)
 {
     for (;;) {
         // Read the command
@@ -122,8 +130,17 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                 int result(get_sock(sock_type, addr, addr_len));
                 if (result >= 0) { // We got the socket
                     WRITE("S", 1);
-                    // FIXME: Check the output and write a test for it
-                    send_fd(output_fd, result);
+                    if (send_fd_fun(output_fd, result) != 0) {
+                        // We'll soon abort ourselves, but make sure we still
+                        // close the socket; don't bother if it fails as the
+                        // higher level result (abort) is the same.
+                        close_fun(result);
+                        return 3;
+                    }
+                    // Don't leak the socket
+                    if (close_fun(result) == -1) {
+                        return 4;
+                    }
                 } else {
                     WRITE("E", 1);
                     switch (result) {

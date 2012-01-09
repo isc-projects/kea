@@ -43,6 +43,20 @@ public:
                        const DNSLookup* lookup = NULL,
                        const DNSAnswer* answer = NULL);
 
+    /// \brief Constructor
+    /// \param io_service the asio::io_service to work with
+    /// \param fd the file descriptor of opened TCP socket
+    /// \param af address family of the socket, either AF_INET or AF_INET6
+    /// \param checkin the callbackprovider for non-DNS events
+    /// \param lookup the callbackprovider for DNS lookup events
+    /// \param answer the callbackprovider for DNS answer events
+    /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
+    /// \throw isc::asiolink::IOError when a low-level error happens, like the
+    ///     fd is not a valid descriptor or it can't be listened on.
+    TCPServer(asio::io_service& io_service, int fd, int af,
+              const isc::asiolink::SimpleCallback* checkin = NULL,
+              const DNSLookup* lookup = NULL, const DNSAnswer* answer = NULL);
+
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
     void asyncLookup();

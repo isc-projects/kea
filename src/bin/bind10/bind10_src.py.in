@@ -44,12 +44,10 @@ import os
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + "/src/bin/bind10/bob.spec"
-    ADD_LIBEXEC_PATH = False
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    ADD_LIBEXEC_PATH = True
     
 import subprocess
 import signal
@@ -65,6 +63,7 @@ import pwd
 import posix
 import copy
 
+from bind10_config import LIBEXECPATH
 import isc.cc
 import isc.util.process
 import isc.net.parse
@@ -85,8 +84,8 @@ DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
 DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 
 # Messages sent over the unix domain socket to indicate if it is followed by a real socket
-CREATOR_SOCKET_OK = "1\n"
-CREATOR_SOCKET_UNAVAILABLE = "0\n"
+CREATOR_SOCKET_OK = b"1\n"
+CREATOR_SOCKET_UNAVAILABLE = b"0\n"
 
 # Assign this process some longer name
 isc.util.process.rename(sys.argv[0])
@@ -151,8 +150,7 @@ class ProcessInfo:
         # on construction (self.env).
         spawn_env = copy.deepcopy(os.environ)
         spawn_env.update(self.env)
-        if ADD_LIBEXEC_PATH:
-            spawn_env['PATH'] = "@@LIBEXECDIR@@:" + spawn_env['PATH']
+        spawn_env['PATH'] = LIBEXECPATH + ':' + spawn_env['PATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=spawn_stdout,
@@ -836,6 +834,7 @@ class BoB:
         identified by the token back over the unix_socket.
         """
         try:
+            token = str(token, 'ASCII') # Convert from bytes to str
             fd = self._socket_cache.get_socket(token, unix_socket.fileno())
             # FIXME: These two calls are blocking in their nature. An OS-level
             # buffer is likely to be large enough to hold all these data, but
@@ -914,7 +913,7 @@ class BoB:
         Accept a socket from the unix domain socket server and put it to the
         others we care about.
         """
-        socket = self._srv_socket.accept()
+        (socket, conn) = self._srv_socket.accept()
         self._unix_sockets[socket.fileno()] = (socket, b'')
 
     def _socket_data(self, socket_fileno):

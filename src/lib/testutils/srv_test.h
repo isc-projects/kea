@@ -44,7 +44,7 @@ extern const unsigned int RA_FLAG;
 extern const unsigned int AD_FLAG;
 extern const unsigned int CD_FLAG;
 
-// The base class for Auth and Recurse test case
+/// \brief The base class for Auth and Recurse test case
 class SrvTestBase : public ::testing::Test {
 protected:
     SrvTestBase();
