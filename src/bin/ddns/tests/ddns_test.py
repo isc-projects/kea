@@ -194,7 +194,7 @@ class TestDDNSServer(unittest.TestCase):
         ddns.isc.util.io.socketsession.SocketSessionReceiver = FakeSession
         self.assertEqual({}, self.ddns_server._socket_sessions)
         self.ddns_server.accept()
-        # Now the new session socket receiver is stored in the dict
+        # Now the new socket session receiver is stored in the dict
         self.assertEqual([3], list(self.ddns_server._socket_sessions.keys()))
         (socket, session) = self.ddns_server._socket_sessions[3]
         self.assertTrue(isinstance(socket, FakeSocket))
