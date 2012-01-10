@@ -147,7 +147,7 @@ class DDNSServer:
         around it that calls it from time to time.
 
         It is called with the request being session as received from
-        SocketSessionReceiver, eg. tupple
+        SocketSessionReceiver, eg. tuple
         (socket, local_address, remote_address, data).
         """
         # TODO: Implement the magic
