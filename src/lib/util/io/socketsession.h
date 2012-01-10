@@ -156,6 +156,35 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// The "base" class of \c SocketSessionForwarder
+///
+/// This class defines abstract interfaces of the \c SocketSessionForwarder
+/// class.  Although \c SocketSessionForwarder is not intended to be used in
+/// a polymorphic way, it's not easy to use in tests because it will require
+/// various low level network operations.  So it would be useful if we
+/// provide a framework for defining a fake or mock version of it.
+/// An application that needs to use \c SocketSessionForwarder would actually
+/// refer to this base class, and tests for the application would define
+/// and use a fake version of the forwarder class.
+///
+/// Normal applications are not expected to define and use their own derived
+/// version of this base class, while it's not prohibited at the API level.
+///
+/// See description of \c SocketSessionForwarder for the expected interface.
+class BaseSocketSessionForwarder  {
+protected:
+    BaseSocketSessionForwarder() {}
+
+public:
+    virtual ~BaseSocketSessionForwarder() {}
+    virtual void connectToReceiver() = 0;
+    virtual void close() = 0;
+    virtual void push(int sock, int family, int type, int protocol,
+                      const struct sockaddr& local_end,
+                      const struct sockaddr& remote_end,
+                      const void* data, size_t data_len) = 0;
+};
+
 /// The forwarder of socket sessions
 ///
 /// An object of this class maintains a UNIX domain socket (normally expected
@@ -164,7 +193,9 @@ public:
 ///
 /// See the description of \ref SocketSessionUtility for other details of how
 /// the session forwarding works.
-class SocketSessionForwarder : boost::noncopyable {
+class SocketSessionForwarder : boost::noncopyable,
+                               public BaseSocketSessionForwarder
+{
 public:
     /// The constructor.
     ///
@@ -212,7 +243,7 @@ public:
     ///
     /// If a connection has been established, it's automatically closed in
     /// the destructor.
-    ~SocketSessionForwarder();
+    virtual ~SocketSessionForwarder();
 
     /// Establish a connection to the receiver.
     ///
@@ -224,7 +255,7 @@ public:
     /// \exception BadValue The method is called while an already
     /// established connection is still active.
     /// \exception SocketSessionError A system error in socket operation.
-    void connectToReceiver();
+    virtual void connectToReceiver();
 
     /// Close the connection to the receiver.
     ///
@@ -232,7 +263,7 @@ public:
     /// As long as it's met this method is exception free.
     ///
     /// \exception BadValue The connection hasn't been established.
-    void close();
+    virtual void close();
 
     /// Forward a socket session to the receiver.
     ///
@@ -276,10 +307,10 @@ public:
     /// \param data A pointer to the beginning of the memory region for the
     ///             session data
     /// \param data_len The size of the session data in bytes.
-    void push(int sock, int family, int type, int protocol,
-              const struct sockaddr& local_end,
-              const struct sockaddr& remote_end,
-              const void* data, size_t data_len);
+    virtual void push(int sock, int family, int type, int protocol,
+                      const struct sockaddr& local_end,
+                      const struct sockaddr& remote_end,
+                      const void* data, size_t data_len);
 
 private:
     struct ForwarderImpl;
