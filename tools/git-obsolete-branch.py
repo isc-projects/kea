@@ -17,6 +17,11 @@
 #
 # This script lists obsolete (fully merged) branches. It is useful for periodic maintenance
 # of our GIT tree.
+
+# It is good to use following command before running this script:
+#
+# git pull
+# git remote prune origin
 #
 # This script requires python 2.7 or 3.
 #
