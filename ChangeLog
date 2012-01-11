@@ -1,7 +1,7 @@
-361.	[vorner]	vorner,jelte,jinmei
+361.	[func]	vorner,jelte,jinmei
 	The socket creator is now used to provide sockets. It means you can
-	reconfigure the ports and addresses at runtime even when the rest of the
-	bind10 runs as non root user.
+	reconfigure the ports and addresses at runtime even when the rest
+	of the bind10 runs as non root user.
 	(Trac #805,#1522, git 1830215f884e3b5efda52bd4dbb120bdca863a6a)
 
 360.	[bug]		vorner
