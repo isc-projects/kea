@@ -163,11 +163,7 @@ main(int argc, char* argv[]) {
         isc::server_common::initSocketRequestor(*cc_session);
 
         // We delay starting listening to new commands/config just before we
-        // go into the main loop to avoid confusion due to mixture of
-        // synchronous and asynchronous operations (this would happen in
-        // initializing TSIG keys below, and initial communication with the
-        // socket creator that takes place in updateConfig()).  Until then all
-        // operations on the CC session will take place synchronously.
+        // go into the main loop.   See auth/main.cc for the rationale.
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler, false);
