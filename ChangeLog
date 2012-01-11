@@ -1,4 +1,11 @@
-361.	[func]	vorner,jelte,jinmei
+362.	[func]*		vorner
+	Due to the socket creator changes, b10-auth and b10-resolver are no longer
+	needed to start as root. They are started as the user they should be
+	running, so they no longer have the -u flag for switching the user after
+	initialization.
+	(Trac #1508-#1510, git edc5b3c12eb45437361484c843794416ad86bb00)
+
+361.	[func]		vorner,jelte,jinmei
 	The socket creator is now used to provide sockets. It means you can
 	reconfigure the ports and addresses at runtime even when the rest
 	of the bind10 runs as non root user.
