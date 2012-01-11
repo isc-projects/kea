@@ -36,6 +36,7 @@ class SockCreator(BaseComponent):
     def __init__(self, process, boss, kind, address=None, params=None):
         BaseComponent.__init__(self, boss, kind)
         self.__creator = None
+        self.__uid = boss.uid
 
     def _start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
@@ -44,6 +45,9 @@ class SockCreator(BaseComponent):
         self._boss.register_process(self.pid(), self)
         self._boss.set_creator(self.__creator)
         self._boss.log_started(self.pid())
+        if self.__uid is not None:
+            logger.info(BIND10_SETUID, self.__uid)
+            posix.setuid(self.__uid)
 
     def _stop_internal(self):
         self.__creator.terminate()
@@ -108,32 +112,6 @@ class CmdCtl(Component):
     def __init__(self, process, boss, kind, address=None, params=None):
         Component.__init__(self, process, boss, kind, 'Cmdctl', None,
                            boss.start_cmdctl)
-
-class SetUID(BaseComponent):
-    """
-    This is a pseudo-component which drops root privileges when started
-    and sets the uid stored in boss.
-
-    This component does nothing when stopped.
-    """
-    def __init__(self, process, boss, kind, address=None, params=None):
-        BaseComponent.__init__(self, boss, kind)
-        self.uid = boss.uid
-
-    def _start_internal(self):
-        if self.uid is not None:
-            logger.info(BIND10_SETUID, self.uid)
-            posix.setuid(self.uid)
-
-    def _stop_internal(self): pass
-    def kill(self, forceful=False): pass
-
-    def name(self):
-        return "Set UID"
-
-    def pid(self):
-        return None
-
 def get_specials():
     """
     List of specially started components. Each one should be the class than can
@@ -147,7 +125,5 @@ def get_specials():
         # They should not have any parameters anyway
         'auth': Auth,
         'resolver': Resolver,
-        'cmdctl': CmdCtl,
-        # TODO: Remove when not needed, workaround before sockcreator works
-        'setuid': SetUID
+        'cmdctl': CmdCtl
     }
