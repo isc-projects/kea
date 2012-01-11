@@ -570,8 +570,6 @@ class BoB:
         authargs = ['b10-auth']
         if self.nocache:
             authargs += ['-n']
-        if self.uid:
-            authargs += ['-u', str(self.uid)]
         if self.verbose:
             authargs += ['-v']
 
@@ -589,8 +587,6 @@ class BoB:
         self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future
         resargs = ['b10-resolver']
-        if self.uid:
-            resargs += ['-u', str(self.uid)]
         if self.verbose:
             resargs += ['-v']
 
