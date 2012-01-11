@@ -24,7 +24,6 @@ run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../auth_srv.h ../auth_srv.cc
 run_unittests_SOURCES += ../auth_log.h ../auth_log.cc
 run_unittests_SOURCES += ../query.h ../query.cc
-run_unittests_SOURCES += ../change_user.h ../change_user.cc
 run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
 run_unittests_SOURCES += ../command.h ../command.cc
 run_unittests_SOURCES += ../common.h ../common.cc
@@ -34,7 +33,6 @@ run_unittests_SOURCES += config_unittest.cc
 run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
-run_unittests_SOURCES += change_user_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 # This is a temporary workaround for #1206, where the InMemoryClient has been

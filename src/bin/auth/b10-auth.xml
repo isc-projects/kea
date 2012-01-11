@@ -45,7 +45,6 @@
     <cmdsynopsis>
       <command>b10-auth</command>
       <arg><option>-n</option></arg>
-      <arg><option>-u <replaceable>username</replaceable></option></arg>
       <arg><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -90,20 +89,6 @@
 	  the data source, such as SQLite3 database, each time).
         </para></listitem>
 <!-- TODO: this is SQLite3 only -->
-      </varlistentry>
-
-      <varlistentry>
-        <term><option>-u <replaceable>username</replaceable></option></term>
-        <listitem>
-	  <para>
-	    The user name of the <command>b10-auth</command> daemon.
-	    If specified, the daemon changes the process owner to the
-	    specified user.
-	    The <replaceable>username</replaceable> must be either a
-	    valid numeric user ID or a valid user name.
-	    By default the daemon runs as the user who invokes it.
-	  </para>
-        </listitem>
       </varlistentry>
 
       <varlistentry>
