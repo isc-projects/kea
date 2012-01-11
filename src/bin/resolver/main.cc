@@ -209,9 +209,16 @@ main(int argc, char* argv[]) {
 
         cc_session = new Session(io_service.get_io_service());
         isc::server_common::initSocketReqeustor(*cc_session);
+
+        // We delay starting listening to new commands/config just before we
+        // go into the main loop to avoid confusion due to mixture of
+        // synchronous and asynchronous operations (this would happen in
+        // initial communication with the socket creator that takes place in
+        // updateConfig()).  Until then all operations on the CC session will
+        // take place synchronously.
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
-                                             my_command_handler);
+                                             my_command_handler, false);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_CHANNEL);
 
         // FIXME: This does not belong here, but inside Boss
@@ -228,6 +235,9 @@ main(int argc, char* argv[]) {
         // fails.
         resolver->updateConfig(config_session->getFullConfig(), true);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_LOADED);
+
+        // Now start asynchronous read.
+        config_session->start();
 
         LOG_INFO(resolver_logger, RESOLVER_STARTED);
         io_service.run();
