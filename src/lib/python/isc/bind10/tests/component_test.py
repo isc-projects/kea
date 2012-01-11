@@ -507,8 +507,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
                                isc.bind10.special_component.CfgMgr,
                                isc.bind10.special_component.Auth,
                                isc.bind10.special_component.Resolver,
-                               isc.bind10.special_component.CmdCtl,
-                               isc.bind10.special_component.SetUID]:
+                               isc.bind10.special_component.CmdCtl]:
             component = component_type('none', self, 'needed')
             self.assertIsNone(component.pid())
 
@@ -611,14 +610,38 @@ class ComponentTests(BossUtils, unittest.TestCase):
     def setuid(self, uid):
         self.__uid_set = uid
 
-    def test_setuid(self):
+    class FakeCreator:
+        def pid(self):
+            return 42
+        def terminate(self): pass
+        def kill(self): pass
+
+    def set_creator(self, creator):
         """
-        Some tests around the SetUID pseudo-component.
+        Part of faking being the boss. Check the creator (faked as well)
+        is passed here.
         """
-        component = isc.bind10.special_component.SetUID(None, self, 'needed',
-                                                        None)
+        self.assertTrue(isinstance(creator, self.FakeCreator))
+
+    def log_started(self, pid):
+        """
+        Part of faking the boss. Check the pid is the one of the fake creator.
+        """
+        self.assertEqual(42, pid)
+
+    def test_creator(self):
+        """
+        Some tests around the SockCreator component.
+        """
+        component = isc.bind10.special_component.SockCreator(None, self,
+                                                             'needed', None)
         orig_setuid = isc.bind10.special_component.posix.setuid
         isc.bind10.special_component.posix.setuid = self.setuid
+        orig_creator = \
+            isc.bind10.special_component.isc.bind10.sockcreator.Creator
+        # Just ignore the creator call
+        isc.bind10.special_component.isc.bind10.sockcreator.Creator = \
+            lambda path: self.FakeCreator()
         component.start()
         # No uid set in boss, nothing called.
         self.assertIsNone(self.__uid_set)
@@ -627,11 +650,14 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.kill()
         component.kill(True)
         self.uid = 42
-        component = isc.bind10.special_component.SetUID(None, self, 'needed',
-                                                        None)
+        component = isc.bind10.special_component.SockCreator(None, self,
+                                                             'needed', None)
         component.start()
         # This time, it get's called
         self.assertEqual(42, self.__uid_set)
+        isc.bind10.special_component.posix.setuid = orig_setuid
+        isc.bind10.special_component.isc.bind10.sockcreator.Creator = \
+            orig_creator
 
 class TestComponent(BaseComponent):
     """
