@@ -44,7 +44,6 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>b10-resolver</command>
-      <arg><option>-u <replaceable>username</replaceable></option></arg>
       <arg><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -84,20 +83,6 @@
     <para>The arguments are as follows:</para>
 
     <variablelist>
-
-      <varlistentry>
-        <term><option>-u <replaceable>username</replaceable></option></term>
-        <listitem>
-	  <para>
-	    The user name of the <command>b10-resolver</command> daemon.
-	    If specified, the daemon changes the process owner to the
-	    specified user.
-	    The <replaceable>username</replaceable> must be either a
-	    valid numeric user ID or a valid user name.
-	    By default the daemon runs as the user who invokes it.
-	  </para>
-        </listitem>
-      </varlistentry>
 
 <!-- TODO: this needs to be fixed as -v on command line
 should imply stdout or stderr output also -->
