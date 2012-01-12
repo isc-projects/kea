@@ -31,6 +31,7 @@ libserver_common_la_LIBADD += $(top_builddir)/src/lib/config/libcfgclient.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/acl/libacl.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
+libserver_common_la_LIBADD += $(top_builddir)/src/lib/util/io/libutil_io.la
 BUILT_SOURCES = server_common_messages.h server_common_messages.cc
 server_common_messages.h server_common_messages.cc: server_common_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/server_common/server_common_messages.mes
