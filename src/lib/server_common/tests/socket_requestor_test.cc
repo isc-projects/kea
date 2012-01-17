@@ -83,7 +83,7 @@ public:
                                     ElementPtr(new ListElement),
                                     ElementPtr(new ListElement))
     {
-        initSocketReqeustor(session);
+        initSocketRequestor(session);
     }
 
     ~SocketRequestorTest() {
