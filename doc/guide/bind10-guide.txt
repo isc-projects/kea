@@ -2,17 +2,19 @@
 
 Administrator Reference for BIND 10
 
-   This is the reference guide for BIND 10 version 20111021.
+   This is the reference guide for BIND 10 version 20111129.
 
    Copyright (c) 2010-2011 Internet Systems Consortium, Inc.
 
    Abstract
 
-   BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems
-   Consortium (ISC). It includes DNS libraries and modular components for
-   controlling authoritative and recursive DNS servers.
+   BIND 10 is a framework that features Domain Name System (DNS) suite and
+   Dynamic Host Configuration Protocol (DHCP) servers managed by Internet
+   Systems Consortium (ISC). It includes DNS libraries, modular components
+   for controlling authoritative and recursive DNS servers, and experimental
+   DHCPv4 and DHCPv6 servers.
 
-   This is the reference guide for BIND 10 version 20111021. The most
+   This is the reference guide for BIND 10 version 20111129. The most
    up-to-date version of this document (in PDF, HTML, and plain text
    formats), along with other documents for BIND 10, can be found at
    http://bind10.isc.org/docs.
@@ -21,41 +23,45 @@ Administrator Reference for BIND 10
 
    Table of Contents
 
+   Preface
+
+                1. Acknowledgements
+
    1. Introduction
 
-                Supported Platforms
+                1.1. Supported Platforms
 
-                Required Software
+                1.2. Required Software
 
-                Starting and Stopping the Server
+                1.3. Starting and Stopping the Server
 
-                Managing BIND 10
+                1.4. Managing BIND 10
 
    2. Installation
 
-                Building Requirements
+                2.1. Building Requirements
 
-                Quick start
+                2.2. Quick start
 
-                Installation from source
+                2.3. Installation from source
 
-                             Download Tar File
+                             2.3.1. Download Tar File
 
-                             Retrieve from Git
+                             2.3.2. Retrieve from Git
 
-                             Configure before the build
+                             2.3.3. Configure before the build
 
-                             Build
+                             2.3.4. Build
 
-                             Install
+                             2.3.5. Install
 
-                             Install Hierarchy
+                             2.3.6. Install Hierarchy
 
    3. Starting BIND10 with bind10
 
-                Starting BIND 10
+                3.1. Starting BIND 10
 
-                Configuration of started processes
+                3.2. Configuration of started processes
 
    4. Command channel
 
@@ -63,101 +69,138 @@ Administrator Reference for BIND 10
 
    6. Remote control daemon
 
-                Configuration specification for b10-cmdctl
+                6.1. Configuration specification for b10-cmdctl
 
    7. Control and configure user interface
 
    8. Authoritative Server
 
-                Server Configurations
+                8.1. Server Configurations
 
-                Data Source Backends
+                8.2. Data Source Backends
 
-                Loading Master Zones Files
+                8.3. Loading Master Zones Files
 
    9. Incoming Zone Transfers
 
-                Configuration for Incoming Zone Transfers
+                9.1. Configuration for Incoming Zone Transfers
 
-                Enabling IXFR
+                9.2. Enabling IXFR
 
-                Trigger an Incoming Zone Transfer Manually
+                9.3. Secondary Manager
+
+                9.4. Trigger an Incoming Zone Transfer Manually
 
    10. Outbound Zone Transfers
 
-   11. Secondary Manager
+   11. Recursive Name Server
 
-   12. Recursive Name Server
+                11.1. Access Control
 
-                Access Control
+                11.2. Forwarding
 
-                Forwarding
+   12. DHCPv4 Server
 
-   13. Statistics
+                12.1. DHCPv4 Server Usage
 
-   14. Logging
+                12.2. DHCPv4 Server Configuration
 
-                Logging configuration
+                12.3. Supported standards
 
-                             Loggers
+                12.4. DHCPv4 Server Limitations
 
-                             Output Options
+   13. DHCPv6 Server
 
-                             Example session
+                13.1. DHCPv6 Server Usage
 
-                Logging Message Format
+                13.2. DHCPv6 Server Configuration
+
+                13.3. Supported DHCPv6 Standards
+
+                13.4. DHCPv6 Server Limitations
+
+   14. libdhcp++ library
+
+                14.1. Interface detection
+
+                14.2. DHCPv4/DHCPv6 packet handling
+
+   15. Statistics
+
+   16. Logging
+
+                16.1. Logging configuration
+
+                             16.1.1. Loggers
+
+                             16.1.2. Output Options
+
+                             16.1.3. Example session
+
+                16.2. Logging Message Format
 
    List of Tables
 
    3.1.
 
+Preface
+
+   Table of Contents
+
+   1. Acknowledgements
+
+1. Acknowledgements
+
+   ISC would like to acknowledge generous support for BIND 10 development of
+   DHCPv4 and DHCPv6 components provided by Comcast.
+
 Chapter 1. Introduction
 
    Table of Contents
 
-   Supported Platforms
+   1.1. Supported Platforms
 
-   Required Software
+   1.2. Required Software
 
-   Starting and Stopping the Server
+   1.3. Starting and Stopping the Server
 
-   Managing BIND 10
+   1.4. Managing BIND 10
 
    BIND is the popular implementation of a DNS server, developer interfaces,
    and DNS tools. BIND 10 is a rewrite of BIND 9. BIND 10 is written in C++
    and Python and provides a modular environment for serving and maintaining
-   DNS.
+   DNS. BIND 10 provides a EDNS0- and DNSSEC-capable authoritative DNS server
+   and a caching recursive name server which also provides forwarding.
 
-  Note
+   This guide covers the experimental prototype of BIND 10 version 20111129.
 
-   This guide covers the experimental prototype of BIND 10 version 20111021.
+1.1. Supported Platforms
 
-  Note
+   BIND 10 builds have been tested on Debian GNU/Linux 5 and unstable, Ubuntu
+   9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, CentOS Linux 5.3, and MacOS
+   10.6. It has been tested on Sparc, i386, and amd64 hardware platforms. It
+   is planned for BIND 10 to build, install and run on Windows and standard
+   Unix-type platforms.
 
-   BIND 10 provides a EDNS0- and DNSSEC-capable authoritative DNS server and
-   a caching recursive name server which also provides forwarding.
+1.2. Required Software
 
-Supported Platforms
+   BIND 10 requires at least Python 3.1 (http://www.python.org/). It has also
+   been tested with Python 3.2.
 
-   BIND 10 builds have been tested on Debian GNU/Linux 5, Ubuntu 9.10, NetBSD
-   5, Solaris 10, FreeBSD 7 and 8, and CentOS Linux 5.3. It has been tested
-   on Sparc, i386, and amd64 hardware platforms. It is planned for BIND 10 to
-   build, install and run on Windows and standard Unix-type platforms.
+   BIND 10 uses the Botan crypto library for C++
+   (http://botan.randombit.net/). It requires at least Botan version 1.8.
 
-Required Software
+   BIND 10 uses the log4cplus C++ logging library
+   (http://log4cplus.sourceforge.net/). It requires at least log4cplus
+   version 1.0.3.
 
-   BIND 10 requires Python 3.1. Later versions may work, but Python 3.1 is
-   the minimum version which will work.
+   The authoritative DNS server uses SQLite3 (http://www.sqlite.org/). It
+   needs at least SQLite version 3.3.9.
 
-   BIND 10 uses the Botan crypto library for C++. It requires at least Botan
-   version 1.8.
-
-   BIND 10 uses the log4cplus C++ logging library. It requires at least
-   log4cplus version 1.0.3.
-
-   The authoritative server requires SQLite 3.3.9 or newer. The b10-xfrin,
-   b10-xfrout, and b10-zonemgr modules require the libpython3 library and the
-   Python _sqlite3.so module.
+   The b10-xfrin, b10-xfrout, and b10-zonemgr components require the
+   libpython3 library and the Python _sqlite3.so module (which is included
+   with Python). The Python module needs to be built for the corresponding
+   Python 3.
 
   Note
 
@@ -165,7 +208,7 @@ Required Software
    installation nor standard packages collections. You may need to install
    them separately.
 
-Starting and Stopping the Server
+1.3. Starting and Stopping the Server
 
    BIND 10 is modular. Part of this modularity is accomplished using multiple
    cooperating processes which, together, provide the server functionality.
@@ -201,7 +244,7 @@ Starting and Stopping the Server
 
    These are ran automatically by bind10 and do not need to be run manually.
 
-Managing BIND 10
+1.4. Managing BIND 10
 
    Once BIND 10 is running, a few commands are used to interact directly with
    the system:
@@ -224,25 +267,25 @@ Chapter 2. Installation
 
    Table of Contents
 
-   Building Requirements
+   2.1. Building Requirements
 
-   Quick start
+   2.2. Quick start
 
-   Installation from source
+   2.3. Installation from source
 
-                Download Tar File
+                2.3.1. Download Tar File
 
-                Retrieve from Git
+                2.3.2. Retrieve from Git
 
-                Configure before the build
+                2.3.3. Configure before the build
 
-                Build
+                2.3.4. Build
 
-                Install
+                2.3.5. Install
 
-                Install Hierarchy
+                2.3.6. Install Hierarchy
 
-Building Requirements
+2.1. Building Requirements
 
    In addition to the run-time requirements, building BIND 10 from source
    code requires various development include headers.
@@ -254,25 +297,21 @@ Building Requirements
    development package versions, which include header files and libraries, to
    build BIND 10 from source code.
 
-   Building from source code requires the Boost build-time headers. At least
-   Boost version 1.35 is required.
+   Building from source code requires the Boost build-time headers
+   (http://www.boost.org/). At least Boost version 1.35 is required.
 
    To build BIND 10, also install the Botan (at least version 1.8) and the
    log4cplus (at least version 1.0.3) development include headers.
-
-   The Python Library and Python _sqlite3 module are required to enable the
-   Xfrout and Xfrin support.
-
-  Note
-
-   The Python related libraries and modules need to be built for Python 3.1.
 
    Building BIND 10 also requires a C++ compiler and standard development
    headers, make, and pkg-config. BIND 10 builds have been tested with GCC
    g++ 3.4.3, 4.1.2, 4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++
    5.10.
 
-Quick start
+   Visit the wiki at http://bind10.isc.org/wiki/SystemSpecificNotes for
+   system-specific installation tips.
+
+2.2. Quick start
 
   Note
 
@@ -283,7 +322,7 @@ Quick start
 
    To quickly get started with BIND 10, follow these steps.
 
-    1. Install required build dependencies.
+    1. Install required run-time and build dependencies.
     2. Download the BIND 10 source tar file from
        ftp://ftp.isc.org/isc/bind10/.
     3. Extract the tar file:
@@ -317,14 +356,14 @@ Quick start
 
    10. Test the new zone.
 
-Installation from source
+2.3. Installation from source
 
    BIND 10 is open source software written in C++ and Python. It is freely
    available in source code form from ISC via the Git code revision control
    system or as a downloadable tar file. It may also be available in
    pre-compiled ready-to-use packages from operating system vendors.
 
-  Download Tar File
+  2.3.1. Download Tar File
 
    Downloading a release tar file is the recommended method to obtain the
    source code.
@@ -333,7 +372,7 @@ Installation from source
    ftp://ftp.isc.org/isc/bind10/. Periodic development snapshots may also be
    available.
 
-  Retrieve from Git
+  2.3.2. Retrieve from Git
 
    Downloading this "bleeding edge" code is recommended only for developers
    or advanced users. Using development code in a production environment is
@@ -360,7 +399,7 @@ Installation from source
    the --install switch. This will run autoconf, aclocal, libtoolize,
    autoheader, automake, and related commands.
 
-  Configure before the build
+  2.3.3. Configure before the build
 
    BIND 10 uses the GNU Build System to discover build environment details.
    To generate the makefiles using the defaults, simply run:
@@ -395,14 +434,14 @@ Installation from source
 
    If the configure fails, it may be due to missing or old dependencies.
 
-  Build
+  2.3.4. Build
 
    After the configure step is complete, to build the executables from the
    C++ code and prepare the Python scripts, run:
 
  $ make
 
-  Install
+  2.3.5. Install
 
    To install the BIND 10 executables, support files, and documentation, run:
 
@@ -412,7 +451,7 @@ Installation from source
 
    The install step may require superuser privileges.
 
-  Install Hierarchy
+  2.3.6. Install Hierarchy
 
    The following is the layout of the complete BIND 10 installation:
 
@@ -431,9 +470,9 @@ Chapter 3. Starting BIND10 with bind10
 
    Table of Contents
 
-   Starting BIND 10
+   3.1. Starting BIND 10
 
-   Configuration of started processes
+   3.2. Configuration of started processes
 
    BIND 10 provides the bind10 command which starts up the required
    processes. bind10 will also restart some processes that exit unexpectedly.
@@ -456,7 +495,7 @@ Chapter 3. Starting BIND10 with bind10
    for inbound DNS zone transfers, b10-xfrout for outbound DNS zone
    transfers, and b10-zonemgr for secondary service.
 
-Starting BIND 10
+3.1. Starting BIND 10
 
    To start the BIND 10 service, simply run bind10. Run it with the --verbose
    switch to get additional debugging or diagnostic output.
@@ -467,7 +506,7 @@ Starting BIND 10
    names for the Python-based daemons will be renamed to better identify them
    instead of just "python". This is not needed on some operating systems.
 
-Configuration of started processes
+3.2. Configuration of started processes
 
    The processes to be started can be configured, with the exception of the
    b10-sockcreator, b10-msgq and b10-cfgmgr.
@@ -512,8 +551,6 @@ Configuration of started processes
    |--------------+----------+----------------------------------------------|
    | b10-cmdctl   | cmdctl   | The command control (remote control          |
    |              |          | interface)                                   |
-   |--------------+----------+----------------------------------------------|
-   | setuid       | setuid   | Virtual component, see below                 |
    +------------------------------------------------------------------------+
 
    The kind specifies how a failure of the component should be handled. If it
@@ -530,7 +567,8 @@ Configuration of started processes
 
    The priority defines order in which the components should start. The ones
    with higher number are started sooner than the ones with lower ones. If
-   you don't set it, 0 (zero) is used as the priority.
+   you don't set it, 0 (zero) is used as the priority. Usually, leaving it at
+   the default is enough.
 
    There are other parameters we didn't use in our example. One of them is
    "address". It is the address used by the component on the b10-msgq message
@@ -560,16 +598,6 @@ Configuration of started processes
    needs the b10-auth to be running, etc.
 
    In short, you should think twice before disabling something here.
-
-   Now, to the mysterious setuid virtual component. If you use the -u option
-   to start the bind10 as root, but change the user later, we need to start
-   the b10-auth or b10-resolver as root (until the socket creator is
-   finished). So we need to specify the time when the switch from root do the
-   given user happens and that's what the setuid component is for. The switch
-   is done at the time the setuid component would be started, if it was a
-   process. The default configuration contains the setuid component with
-   priority 5, b10-auth has 10 to be started before the switch and everything
-   else is without priority, so it is started after the switch.
 
 Chapter 4. Command channel
 
@@ -628,7 +656,7 @@ Chapter 6. Remote control daemon
 
    Table of Contents
 
-   Configuration specification for b10-cmdctl
+   6.1. Configuration specification for b10-cmdctl
 
    b10-cmdctl is the gateway between administrators and the BIND 10 system.
    It is a HTTPS server that uses standard HTTP Digest Authentication for
@@ -675,7 +703,7 @@ Chapter 6. Remote control daemon
    connection is stateless and timesout in 1200 seconds by default. This can
    be redefined by using the --idle-timeout command line argument.
 
-Configuration specification for b10-cmdctl
+6.1. Configuration specification for b10-cmdctl
 
    The configuration items for b10-cmdctl are: key_file cert_file
    accounts_file
@@ -706,17 +734,17 @@ Chapter 8. Authoritative Server
 
    Table of Contents
 
-   Server Configurations
+   8.1. Server Configurations
 
-   Data Source Backends
+   8.2. Data Source Backends
 
-   Loading Master Zones Files
+   8.3. Loading Master Zones Files
 
    The b10-auth is the authoritative DNS server. It supports EDNS0 and
    DNSSEC. It supports IPv6. Normally it is started by the bind10 master
    process.
 
-Server Configurations
+8.1. Server Configurations
 
    b10-auth is configured via the b10-cfgmgr configuration manager. The
    module name is "Auth". The configuration data item is:
@@ -731,7 +759,7 @@ Server Configurations
    shutdown
            Stop the authoritative DNS server.
 
-Data Source Backends
+8.2. Data Source Backends
 
   Note
 
@@ -746,7 +774,7 @@ Data Source Backends
    /usr/local/var/.) This data file location may be changed by defining the
    "database_file" configuration.
 
-Loading Master Zones Files
+8.3. Loading Master Zones Files
 
    RFC 1035 style DNS master zone files may imported into a BIND 10 data
    source by using the b10-loadzone utility.
@@ -781,11 +809,13 @@ Chapter 9. Incoming Zone Transfers
 
    Table of Contents
 
-   Configuration for Incoming Zone Transfers
+   9.1. Configuration for Incoming Zone Transfers
 
-   Enabling IXFR
+   9.2. Enabling IXFR
 
-   Trigger an Incoming Zone Transfer Manually
+   9.3. Secondary Manager
+
+   9.4. Trigger an Incoming Zone Transfer Manually
 
    Incoming zones are transferred using the b10-xfrin process which is
    started by bind10. When received, the zone is stored in the corresponding
@@ -803,7 +833,7 @@ Chapter 9. Incoming Zone Transfers
    only available for SQLite3-based data sources, that is, they don't work
    for an in-memory data source.
 
-Configuration for Incoming Zone Transfers
+9.1. Configuration for Incoming Zone Transfers
 
    In practice, you need to specify a list of secondary zones to enable
    incoming zone transfers for these zones (you can still trigger a zone
@@ -820,7 +850,7 @@ Configuration for Incoming Zone Transfers
 
    (We assume there has been no zone configuration before).
 
-Enabling IXFR
+9.2. Enabling IXFR
 
    As noted above, b10-xfrin uses AXFR for zone transfers by default. To
    enable IXFR for zone transfers for a particular zone, set the use_ixfr
@@ -843,7 +873,33 @@ Enabling IXFR
    be implemented in a near future version, at which point we will enable
    IXFR by default.
 
-Trigger an Incoming Zone Transfer Manually
+9.3. Secondary Manager
+
+   The b10-zonemgr process is started by bind10. It keeps track of SOA
+   refresh, retry, and expire timers and other details for BIND 10 to perform
+   as a slave. When the b10-auth authoritative DNS server receives a NOTIFY
+   message, b10-zonemgr may tell b10-xfrin to do a refresh to start an
+   inbound zone transfer. The secondary manager resets its counters when a
+   new zone is transferred in.
+
+  Note
+
+   Access control (such as allowing notifies) is not yet provided. The
+   primary/secondary service is not yet complete.
+
+   The following example shows using bindctl to configure the server to be a
+   secondary for the example zone:
+
+ > config add Zonemgr/secondary_zones
+ > config set Zonemgr/secondary_zones[0]/name "example.com"
+ > config set Zonemgr/secondary_zones[0]/class "IN"
+ > config commit
+
+   If the zone does not exist in the data source already (i.e. no SOA record
+   for it), b10-zonemgr will automatically tell b10-xfrin to transfer the
+   zone in.
+
+9.4. Trigger an Incoming Zone Transfer Manually
 
    To manually trigger a zone transfer to retrieve a remote zone, you may use
    the bindctl utility. For example, at the bindctl prompt run:
@@ -903,27 +959,13 @@ Chapter 10. Outbound Zone Transfers
    configuration. The way to specify zone specific configuration (ACLs, etc)
    is likely to be changed, too.
 
-Chapter 11. Secondary Manager
-
-   The b10-zonemgr process is started by bind10. It keeps track of SOA
-   refresh, retry, and expire timers and other details for BIND 10 to perform
-   as a slave. When the b10-auth authoritative DNS server receives a NOTIFY
-   message, b10-zonemgr may tell b10-xfrin to do a refresh to start an
-   inbound zone transfer. The secondary manager resets its counters when a
-   new zone is transferred in.
-
-  Note
-
-   Access control (such as allowing notifies) is not yet provided. The
-   primary/secondary service is not yet complete.
-
-Chapter 12. Recursive Name Server
+Chapter 11. Recursive Name Server
 
    Table of Contents
 
-   Access Control
+   11.1. Access Control
 
-   Forwarding
+   11.2. Forwarding
 
    The b10-resolver process is started by bind10.
 
@@ -954,7 +996,7 @@ Chapter 12. Recursive Name Server
    (Replace the "2" as needed; run "config show Resolver/listen_on" if
    needed.)
 
-Access Control
+11.1. Access Control
 
    By default, the b10-resolver daemon only accepts DNS queries from the
    localhost (127.0.0.1 and ::1). The Resolver/query_acl configuration may be
@@ -987,7 +1029,7 @@ Access Control
 
    This prototype access control configuration syntax may be changed.
 
-Forwarding
+11.2. Forwarding
 
    To enable forwarding, the upstream address and port must be configured to
    forward queries to, such as:
@@ -1003,7 +1045,326 @@ Forwarding
  > config set Resolver/forward_addresses []
  > config commit
 
-Chapter 13. Statistics
+Chapter 12. DHCPv4 Server
+
+   Table of Contents
+
+   12.1. DHCPv4 Server Usage
+
+   12.2. DHCPv4 Server Configuration
+
+   12.3. Supported standards
+
+   12.4. DHCPv4 Server Limitations
+
+   Dynamic Host Configuration Protocol for IPv4 (DHCP or DHCPv4) and Dynamic
+   Host Configuration Protocol for IPv6 (DHCPv6) are protocols that allow one
+   node (server) to provision configuration parameters to many hosts and
+   devices (clients). To ease deployment in larger networks, additional nodes
+   (relays) may be deployed that facilitate communication between servers and
+   clients. Even though principles of both DHCPv4 and DHCPv6 are somewhat
+   similar, these are two radically different protocols. BIND10 offers server
+   implementations for both DHCPv4 and DHCPv6. This chapter is about DHCP for
+   IPv4. For a description of the DHCPv6 server, see Chapter 13, DHCPv6
+   Server.
+
+   The DHCPv4 server component is currently under intense development. You
+   may want to check out BIND10 DHCP (Kea) wiki and recent posts on BIND10
+   developers mailing list.
+
+   The DHCPv4 and DHCPv6 components in BIND10 architecture are internally
+   code named "Kea".
+
+  Note
+
+   As of December 2011, both DHCPv4 and DHCPv6 components are skeleton
+   servers. That means that while they are capable of performing DHCP
+   configuration, they are not fully functional yet. In particular, neither
+   has functional lease databases. This means that they will assign the same,
+   fixed, hardcoded addresses to any client that will ask. See Section 12.4,
+   "DHCPv4 Server Limitations" and Section 13.4, "DHCPv6 Server Limitations"
+   for detailed description.
+
+12.1. DHCPv4 Server Usage
+
+   BIND10 provides the DHCPv4 server component since December 2011. It is a
+   skeleton server and can be described as an early prototype that is not
+   fully functional yet. It is mature enough to conduct first tests in lab
+   environment, but it has significant limitations. See Section 12.4, "DHCPv4
+   Server Limitations" for details.
+
+   The DHCPv4 server is implemented as b10-dhcp4 daemon. As it is not
+   configurable yet, it is fully autonomous, that is it does not interact
+   with b10-cfgmgr. To start DHCPv4 server, simply input:
+
+ #cd src/bin/dhcp4
+ #./b10-dhcp4
+
+   Depending on your installation, b10-dhcp4 binary may reside in
+   src/bin/dhcp4 in your source code directory, in /usr/local/bin/b10-dhcp4
+   or other directory you specified during compilation. At start, the server
+   will detect available network interfaces and will attempt to open UDP
+   sockets on all interfaces that are up, running, are not loopback, and have
+   IPv4 address assigned. The server will then listen to incoming traffic.
+   Currently supported client messages are DISCOVER and REQUEST. The server
+   will respond to them with OFFER and ACK, respectively. Since the DHCPv4
+   server opens privileged ports, it requires root access. Make sure you run
+   this daemon as root.
+
+  Note
+
+   Integration with bind10 is planned. Ultimately, b10-dhcp4 will not be
+   started directly, but rather via bind10. Please be aware of this planned
+   change.
+
+12.2. DHCPv4 Server Configuration
+
+   The DHCPv4 server does not have a lease database implemented yet nor any
+   support for configuration, so every time the same set of configuration
+   options (including the same fixed address) will be assigned every time.
+
+   At this stage of development, the only way to alter the server
+   configuration is to tweak its source code. To do so, please edit
+   src/bin/dhcp4/dhcp4_srv.cc file and modify following parameters and
+   recompile:
+
+ const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
+ const std::string HARDCODED_NETMASK = "255.255.255.0";
+ const uint32_t    HARDCODED_LEASE_TIME = 60; // in seconds
+ const std::string HARDCODED_GATEWAY = "192.0.2.1";
+ const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
+ const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
+ const std::string HARDCODED_SERVER_ID = "192.0.2.1";
+
+   Lease database and configuration support is planned for 2012.
+
+12.3. Supported standards
+
+   The following standards and draft standards are currently supported:
+
+     o RFC2131: Supported messages are DISCOVER, OFFER, REQUEST, and ACK.
+     o RFC2132: Supported options are: PAD (0), END(255), Message Type(53),
+       DHCP Server Identifier (54), Domain Name (15), DNS Servers (6), IP
+       Address Lease Time (51), Subnet mask (1), and Routers (3).
+
+12.4. DHCPv4 Server Limitations
+
+   These are the current limitations of the DHCPv4 server software. Most of
+   them are reflections of the early stage of development and should be
+   treated as "not implemented yet", rather than actual limitations.
+
+     o During initial IPv4 node configuration, the server is expected to send
+       packets to a node that does not have IPv4 address assigned yet. The
+       server requires certain tricks (or hacks) to transmit such packets.
+       This is not implemented yet, therefore DHCPv4 server supports relayed
+       traffic only (that is, normal point to point communication).
+     o b10-dhcp4 provides a single, fixed, hardcoded lease to any client that
+       asks. There is no lease manager implemented. If two clients request
+       addresses, they will both get the same fixed address.
+     o b10-dhcp4 does not support any configuration mechanisms yet. The whole
+       configuration is currently hardcoded. The only way to tweak
+       configuration is to directly modify source code. See see Section 12.2,
+       "DHCPv4 Server Configuration" for details.
+     o Upon start, the server will open sockets on all interfaces that are
+       not loopback, are up and running and have IPv4 address. Support for
+       multiple interfaces is not coded in reception routines yet, so if you
+       are running this code on a machine that has many interfaces and
+       b10-dhcp4 happens to listen on wrong interface, the easiest way to
+       work around this problem is to turn down other interfaces. This
+       limitation will be fixed shortly.
+     o PRL (Parameter Request List, a list of options requested by a client)
+       is currently ignored and server assigns DNS SERVER and DOMAIN NAME
+       options.
+     o b10-dhcp4 does not support BOOTP. That is a design choice. This
+       limitation is permanent. If you have legacy nodes that can't use DHCP
+       and require BOOTP support, please use latest version of ISC DHCP
+       http://www.isc.org/software/dhcp.
+     o Interface detection is currently working on Linux only. See
+       Section 14.1, "Interface detection" for details.
+     o b10-dhcp4 does not verify that assigned address is unused. According
+       to RFC2131, the allocating server should verify that address is no
+       used by sending ICMP echo request.
+     o Address renewal (RENEW), rebinding (REBIND), confirmation (CONFIRM),
+       duplication report (DECLINE) and release (RELEASE) are not supported
+       yet.
+     o DNS Update is not supported yet.
+     o -v (verbose) command line option is currently the default, and cannot
+       be disabled.
+
+Chapter 13. DHCPv6 Server
+
+   Table of Contents
+
+   13.1. DHCPv6 Server Usage
+
+   13.2. DHCPv6 Server Configuration
+
+   13.3. Supported DHCPv6 Standards
+
+   13.4. DHCPv6 Server Limitations
+
+   Dynamic Host Configuration Protocol for IPv6 (DHCPv6) is specified in
+   RFC3315. BIND10 provides DHCPv6 server implementation that is described in
+   this chapter. For a description of the DHCPv4 server implementation, see
+   Chapter 12, DHCPv4 Server.
+
+   The DHCPv6 server component is currently under intense development. You
+   may want to check out BIND10 DHCP (Kea) wiki and recent posts on BIND10
+   developers mailing list.
+
+   The DHCPv4 and DHCPv6 components in BIND10 architecture are internally
+   code named "Kea".
+
+  Note
+
+   As of December 2011, both DHCPv4 and DHCPv6 components are skeleton
+   servers. That means that while they are capable of performing DHCP
+   configuration, they are not fully functional yet. In particular, neither
+   has functional lease databases. This means that they will assign the same,
+   fixed, hardcoded addresses to any client that will ask. See Section 12.4,
+   "DHCPv4 Server Limitations" and Section 13.4, "DHCPv6 Server Limitations"
+   for detailed description.
+
+13.1. DHCPv6 Server Usage
+
+   BIND10 provides the DHCPv6 server component since September 2011. It is a
+   skeleton server and can be described as an early prototype that is not
+   fully functional yet. It is mature enough to conduct first tests in lab
+   environment, but it has significant limitations. See Section 13.4, "DHCPv6
+   Server Limitations" for details.
+
+   The DHCPv6 server is implemented as b10-dhcp6 daemon. As it is not
+   configurable yet, it is fully autonomous, that is it does not interact
+   with b10-cfgmgr. To start DHCPv6 server, simply input:
+
+ #cd src/bin/dhcp6
+ #./b10-dhcp6
+
+   Depending on your installation, b10-dhcp6 binary may reside in
+   src/bin/dhcp6 in your source code directory, in /usr/local/bin/b10-dhcp6
+   or other directory you specified during compilation. At start, server will
+   detect available network interfaces and will attempt to open UDP sockets
+   on all interfaces that are up, running, are not loopback, are
+   multicast-capable, and have IPv6 address assigned. The server will then
+   listen to incoming traffic. Currently supported client messages are
+   SOLICIT and REQUEST. The server will respond to them with ADVERTISE and
+   REPLY, respectively. Since the DHCPv6 server opens privileged ports, it
+   requires root access. Make sure you run this daemon as root.
+
+  Note
+
+   Integration with bind10 is planned. Ultimately, b10-dhcp6 will not be
+   started directly, but rather via bind10. Please be aware of this planned
+   change.
+
+13.2. DHCPv6 Server Configuration
+
+   The DHCPv6 server does not have lease database implemented yet or any
+   support for configuration, so every time the same set of configuration
+   options (including the same fixed address) will be assigned every time.
+
+   At this stage of development, the only way to alter server configuration
+   is to tweak its source code. To do so, please edit
+   src/bin/dhcp6/dhcp6_srv.cc file and modify following parameters and
+   recompile:
+
+ const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
+ const uint32_t HARDCODED_T1 = 1500; // in seconds
+ const uint32_t HARDCODED_T2 = 2600; // in seconds
+ const uint32_t HARDCODED_PREFERRED_LIFETIME = 3600; // in seconds
+ const uint32_t HARDCODED_VALID_LIFETIME = 7200; // in seconds
+ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";
+
+   Lease database and configuration support is planned for 2012.
+
+13.3. Supported DHCPv6 Standards
+
+   The following standards and draft standards are currently supported:
+
+     o RFC3315: Supported messages are SOLICIT, ADVERTISE, REQUEST, and
+       REPLY. Supported options are SERVER_ID, CLIENT_ID, IA_NA, and
+       IAADDRESS.
+     o RFC3646: Supported option is DNS_SERVERS.
+
+13.4. DHCPv6 Server Limitations
+
+   These are the current limitations of the DHCPv6 server software. Most of
+   them are reflections of the early stage of development and should be
+   treated as "not implemented yet", rather than actual limitations.
+
+     o Relayed traffic is not supported.
+     o b10-dhcp6 provides a single, fixed, hardcoded lease to any client that
+       asks. There is no lease manager implemented. If two clients request
+       addresses, they will both get the same fixed address.
+     o b10-dhcp6 does not support any configuration mechanisms yet. The whole
+       configuration is currently hardcoded. The only way to tweak
+       configuration is to directly modify source code. See see Section 13.2,
+       "DHCPv6 Server Configuration" for details.
+     o Upon start, the server will open sockets on all interfaces that are
+       not loopback, are up, running and are multicast capable and have IPv6
+       address. Support for multiple interfaces is not coded in reception
+       routines yet, so if you are running this code on a machine that has
+       many interfaces and b10-dhcp6 happens to listen on wrong interface,
+       the easiest way to work around this problem is to turn down other
+       interfaces. This limitation will be fixed shortly.
+     o ORO (Option Request Option, a list of options requested by a client)
+       is currently ignored and server assigns DNS SERVER option.
+     o Temporary addresses are not supported yet.
+     o Prefix delegation is not supported yet.
+     o Address renewal (RENEW), rebinding (REBIND), confirmation (CONFIRM),
+       duplication report (DECLINE) and release (RELEASE) are not supported
+       yet.
+     o DNS Update is not supported yet.
+     o Interface detection is currently working on Linux only. See
+       Section 14.1, "Interface detection" for details.
+     o -v (verbose) command line option is currently the default, and cannot
+       be disabled.
+
+Chapter 14. libdhcp++ library
+
+   Table of Contents
+
+   14.1. Interface detection
+
+   14.2. DHCPv4/DHCPv6 packet handling
+
+   libdhcp++ is a common library written in C++ that handles many
+   DHCP-related tasks, like DHCPv4 and DHCPv6 packets parsing, manipulation
+   and assembly, option parsing, manipulation and assembly, network interface
+   detection and socket operations, like socket creations, data transmission
+   and reception and socket closing.
+
+   While this library is currently used by b10-dhcp4 and b10-dhcp6 only, it
+   is designed to be portable, universal library useful for any kind of
+   DHCP-related software.
+
+14.1. Interface detection
+
+   Both DHCPv4 and DHCPv6 components share network interface detection
+   routines. Interface detection is currently only supported on Linux
+   systems.
+
+   For non-Linux systems, there is currently stub implementation provided. As
+   DHCP servers need to know available addresses, there is a simple mechanism
+   implemented to provide that information. User is expected to create
+   interfaces.txt file. Format of this file is simple. It contains list of
+   interfaces along with available address on each interface. This mechanism
+   is temporary and is going to be removed as soon as interface detection
+   becomes available on non-Linux systems. Here is an example of the
+   interfaces.txt file:
+
+ # For DHCPv6, please specify link-local address (starts with fe80::)
+ # If in doubt, check output of 'ifconfig -a' command.
+ eth0 fe80::21e:8cff:fe9b:7349
+
+ # For DHCPv4, please use following format:
+ #eth0 192.0.2.5
+
+14.2. DHCPv4/DHCPv6 packet handling
+
+   TODO: Describe packet handling here, with pointers to wiki
+
+Chapter 15. Statistics
 
    The b10-stats process is started by bind10. It periodically collects
    statistics data from various modules and aggregates it.
@@ -1031,27 +1392,27 @@ Chapter 13. Statistics
  }
 
 
-Chapter 14. Logging
+Chapter 16. Logging
 
    Table of Contents
 
-   Logging configuration
+   16.1. Logging configuration
 
-                Loggers
+                16.1.1. Loggers
 
-                Output Options
+                16.1.2. Output Options
 
-                Example session
+                16.1.3. Example session
 
-   Logging Message Format
+   16.2. Logging Message Format
 
-Logging configuration
+16.1. Logging configuration
 
    The logging system in BIND 10 is configured through the Logging module.
    All BIND 10 modules will look at the configuration in Logging to see what
    should be logged and to where.
 
-  Loggers
+  16.1.1. Loggers
 
    Within BIND 10, a message is logged through a component called a "logger".
    Different parts of BIND 10 log messages through different loggers, and
@@ -1064,7 +1425,7 @@ Logging configuration
    (the component that is generating the messages), the severity (what to
    log), and the output_options (where to log).
 
-    name (string)
+    16.1.1.1. name (string)
 
    Each logger in the system has a name, the name being that of the component
    using it to log messages. For instance, if you want to configure logging
@@ -1111,7 +1472,7 @@ Logging configuration
    generated by the "Auth.cache" logger will appear in the output with a
    logger name of "b10-auth.cache").
 
-    severity (string)
+    16.1.1.2. severity (string)
 
    This specifies the category of messages logged. Each message is logged
    with an associated severity which may be one of the following (in
@@ -1128,14 +1489,14 @@ Logging configuration
    may also be set to NONE, in which case all messages from that logger are
    inhibited.
 
-    output_options (list)
+    16.1.1.3. output_options (list)
 
    Each logger can have zero or more output_options. These specify where log
    messages are sent to. These are explained in detail below.
 
    The other options for a logger are:
 
-    debuglevel (integer)
+    16.1.1.4. debuglevel (integer)
 
    When a logger's severity is set to DEBUG, this value specifies what debug
    messages should be printed. It ranges from 0 (least verbose) to 99 (most
@@ -1143,7 +1504,7 @@ Logging configuration
 
    If severity for the logger is not DEBUG, this value is ignored.
 
-    additive (true or false)
+    16.1.1.5. additive (true or false)
 
    If this is true, the output_options from the parent will be used. For
    example, if there are two loggers configured; "Resolver" and
@@ -1152,13 +1513,13 @@ Logging configuration
    but also to the destinations as specified in the output_options in the
    logger named "Resolver".
 
-  Output Options
+  16.1.2. Output Options
 
    The main settings for an output option are the destination and a value
    called output, the meaning of which depends on the destination that is
    set.
 
-    destination (string)
+    16.1.2.1. destination (string)
 
    The destination is the type of output. It can be one of:
 
@@ -1166,7 +1527,7 @@ Logging configuration
      o file
      o syslog
 
-    output (string)
+    16.1.2.2. output (string)
 
    Depending on what is set as the output destination, this value is
    interpreted as follows:
@@ -1185,13 +1546,13 @@ Logging configuration
 
    The other options for output_options are:
 
-      flush (true of false)
+      16.1.2.2.1. flush (true of false)
 
    Flush buffers after each log message. Doing this will reduce performance
    but will ensure that if the program terminates abnormally, all messages up
    to the point of termination are output.
 
-      maxsize (integer)
+      16.1.2.2.2. maxsize (integer)
 
    Only relevant when destination is file, this is maximum file size of
    output files in bytes. When the maximum size is reached, the file is
@@ -1200,12 +1561,12 @@ Logging configuration
 
    If this is 0, no maximum file size is used.
 
-      maxver (integer)
+      16.1.2.2.3. maxver (integer)
 
    Maximum number of old log files to keep around when rolling the output
    file. Only relevant when destination is "file".
 
-  Example session
+  16.1.3. Example session
 
    In this example we want to set the global logging to write to the file
    /var/log/my_bind10.log, at severity WARN. We want the authoritative server
@@ -1306,7 +1667,7 @@ Logging configuration
 
    And every module will now be using the values from the logger named "*".
 
-Logging Message Format
+16.2. Logging Message Format
 
    Each message written by BIND 10 to the configured logging destinations
    comprises a number of components that identify the origin of the message
