@@ -2,12 +2,12 @@
 .\"     Title: b10-resolver
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: August 17, 2011
+.\"      Date: December 28, 2011
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-RESOLVER" "8" "August 17, 2011" "BIND10" "BIND10"
+.TH "B10\-RESOLVER" "8" "December 28, 2011" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 b10-resolver \- Recursive DNS server
 .SH "SYNOPSIS"
 .HP \w'\fBb10\-resolver\fR\ 'u
-\fBb10\-resolver\fR [\fB\-u\ \fR\fB\fIusername\fR\fR] [\fB\-v\fR]
+\fBb10\-resolver\fR [\fB\-v\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -42,15 +42,6 @@ It also receives its configurations from
 .SH "OPTIONS"
 .PP
 The arguments are as follows:
-.PP
-\fB\-u \fR\fB\fIusername\fR\fR
-.RS 4
-The user name of the
-\fBb10\-resolver\fR
-daemon\&. If specified, the daemon changes the process owner to the specified user\&. The
-\fIusername\fR
-must be either a valid numeric user ID or a valid user name\&. By default the daemon runs as the user who invokes it\&.
-.RE
 .PP
 \fB\-v\fR
 .RS 4
