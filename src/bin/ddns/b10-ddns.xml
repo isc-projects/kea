@@ -63,6 +63,13 @@
       in the BIND 10 zone data store.
     </para>
 
+    <note><para>
+      Currently installed is a dummy component. It does not provide
+      any functionality. It is a skeleton implementation that
+      will be expanded later.
+<!-- TODO: #1458 -->
+    </para></note>
+
     <para>
       This daemon communicates with BIND 10 over a
       <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -133,12 +140,6 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
