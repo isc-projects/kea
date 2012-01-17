@@ -1,3 +1,7 @@
+363.	[func]		jelte
+	Added dummy DDNS module b10-ddns. Currently it does not provide any functionality, but it is a skeleton implementation that will be expanded later.
+	(Trac #1451, git b0d0bf39fbdc29a7879315f9b8e6d602ef3afb1b)
+
 362.	[func]*		vorner
 	Due to the socket creator changes, b10-auth and b10-resolver are no longer
 	needed to start as root. They are started as the user they should be
