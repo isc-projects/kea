@@ -202,10 +202,13 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
-        isc::server_common::initSocketReqeustor(*cc_session);
+        isc::server_common::initSocketRequestor(*cc_session);
+
+        // We delay starting listening to new commands/config just before we
+        // go into the main loop.   See auth/main.cc for the rationale.
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
-                                             my_command_handler);
+                                             my_command_handler, false);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_CHANNEL);
 
         resolver->setConfigSession(config_session);
@@ -217,6 +220,9 @@ main(int argc, char* argv[]) {
         // fails.
         resolver->updateConfig(config_session->getFullConfig(), true);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_LOADED);
+
+        // Now start asynchronous read.
+        config_session->start();
 
         LOG_INFO(resolver_logger, RESOLVER_STARTED);
         io_service.run();
