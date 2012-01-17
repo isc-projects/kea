@@ -9,6 +9,10 @@
 	are no longer needed to start as root. They are started as
 	the user they should be running, so they no longer have
 	the -u flag for switching the user after initialization.
+	Note: this change broke backward compatibility to boss component
+	configuration.  If your b10-config.db contains "setuid" for
+	Boss.components, you'll need to remove that entry by hand before
+	starting BIND 10.
 	(Trac #1508-#1510, git edc5b3c12eb45437361484c843794416ad86bb00)
 
 361.	[func]		vorner,jelte,jinmei
