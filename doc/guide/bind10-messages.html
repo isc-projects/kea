@@ -1,10 +1,10 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20111021. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
-        20111021.</p></div><div><p class="copyright">Copyright © 2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20111129. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
+        20111129.</p></div><div><p class="copyright">Copyright © 2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
 	  Internet Systems Consortium (ISC). It includes DNS libraries
 	  and modular components for controlling authoritative and
 	  recursive DNS servers.
       </p><p>
-        This is the messages manual for BIND 10 version 20111021.
+        This is the messages manual for BIND 10 version 20111129.
 	    The most up-to-date version of this document, along with
 	    other documents for BIND 10, can be found at
         <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
@@ -26,7 +26,13 @@
       For information on configuring and using BIND 10 logging,
       refer to the <a class="ulink" href="bind10-guide.html" target="_top">BIND 10 Guide</a>.
     </p></div><div class="chapter" title="Chapter 2. BIND 10 Messages"><div class="titlepage"><div><div><h2 class="title"><a name="messages"></a>Chapter 2. BIND 10 Messages</h2></div></div></div><p>
-      </p><div class="variablelist"><dl><dt><a name="ASIODNS_FETCH_COMPLETED"></a><span class="term">ASIODNS_FETCH_COMPLETED upstream fetch to %1(%2) has now completed</span></dt><dd><p>
+      </p><div class="variablelist"><dl><dt><a name="ASIODNS_FD_ADD_TCP"></a><span class="term">ASIODNS_FD_ADD_TCP adding a new TCP server by opened fd %1</span></dt><dd><p>
+A debug message informing about installing a file descriptor as a server.
+The file descriptor number is noted.
+</p></dd><dt><a name="ASIODNS_FD_ADD_UDP"></a><span class="term">ASIODNS_FD_ADD_UDP adding a new UDP server by opened fd %1</span></dt><dd><p>
+A debug message informing about installing a file descriptor as a server.
+The file descriptor number is noted.
+</p></dd><dt><a name="ASIODNS_FETCH_COMPLETED"></a><span class="term">ASIODNS_FETCH_COMPLETED upstream fetch to %1(%2) has now completed</span></dt><dd><p>
 A debug message, this records that the upstream fetch (a query made by the
 resolver on behalf of its client) to the specified address has completed.
 </p></dd><dt><a name="ASIODNS_FETCH_STOPPED"></a><span class="term">ASIODNS_FETCH_STOPPED upstream fetch to %1(%2) has been stopped</span></dt><dd><p>
@@ -328,6 +334,11 @@ during startup, and will now kill the processes that did get started.
 The boss module is sending a kill signal to process with the given name,
 as part of the process of killing all started processes during a failed
 startup, as described for BIND10_KILLING_ALL_PROCESSES
+</p></dd><dt><a name="BIND10_LOST_SOCKET_CONSUMER"></a><span class="term">BIND10_LOST_SOCKET_CONSUMER consumer %1 of sockets disconnected, considering all its sockets closed</span></dt><dd><p>
+A connection from one of the applications which requested a socket was
+closed. This means the application has terminated, so all the sockets it was
+using are now closed and bind10 process can release them as well, unless the
+same sockets are used by yet another application.
 </p></dd><dt><a name="BIND10_MSGQ_ALREADY_RUNNING"></a><span class="term">BIND10_MSGQ_ALREADY_RUNNING msgq daemon already running, cannot start</span></dt><dd><p>
 There already appears to be a message bus daemon running. Either an
 old process was not shut down correctly, and needs to be killed, or
@@ -337,6 +348,10 @@ running, which needs to be stopped.
 While listening on the message bus channel for messages, it suddenly
 disappeared. The msgq daemon may have died. This might lead to an
 inconsistent state of the system, and BIND 10 will now shut down.
+</p></dd><dt><a name="BIND10_NO_SOCKET"></a><span class="term">BIND10_NO_SOCKET couldn't send a socket for token %1 because of error: %2</span></dt><dd><p>
+An error occurred when the bind10 process was asked to send a socket file
+descriptor. The error is mentioned, most common reason is that the request
+is invalid and may not come from bind10 process at all.
 </p></dd><dt><a name="BIND10_PROCESS_ENDED"></a><span class="term">BIND10_PROCESS_ENDED process %2 of %1 ended with status %3</span></dt><dd><p>
 This indicates a process started previously terminated. The process id
 and component owning the process are indicated, as well as the exit code.
@@ -830,7 +845,7 @@ means no limit.
 The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
 in the answer as a result.
-</p></dd><dt><a name="DATASRC_DATABASE_FIND_RECORDS"></a><span class="term">DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_DATABASE_FIND_RECORDS"></a><span class="term">DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3/%4</span></dt><dd><p>
 Debug information. The database data source is looking up records with the given
 name and type in the database.
 </p></dd><dt><a name="DATASRC_DATABASE_FIND_TTL_MISMATCH"></a><span class="term">DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ in %1 for elements of %2/%3/%4, setting to %5</span></dt><dd><p>
@@ -838,10 +853,18 @@ The datasource backend provided resource records for the given RRset with
 different TTL values. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
+</p></dd><dt><a name="DATASRC_DATABASE_FOUND_ANY"></a><span class="term">DATASRC_DATABASE_FOUND_ANY search in datasource %1 resulted in returning all records of %2</span></dt><dd><p>
+The data returned by the database backend contained data for the given domain
+name, so all the RRsets of the domain are returned.
+</p></dd><dt><a name="DATASRC_DATABASE_FOUND_CNAME"></a><span class="term">DATASRC_DATABASE_FOUND_CNAME search in datasource %1 for %2/%3/%4 found CNAME, resulting in %5</span></dt><dd><p>
+When searching the domain for a name a CNAME was found at that name.
+Even though it was not the RR type being sought, it is returned.  (The
+caller may want to continue the lookup by replacing the query name with
+the canonical name and restarting the query with the original RR type.)
 </p></dd><dt><a name="DATASRC_DATABASE_FOUND_DELEGATION"></a><span class="term">DATASRC_DATABASE_FOUND_DELEGATION Found delegation at %2 in %1</span></dt><dd><p>
 When searching for a domain, the program met a delegation to a different zone
 at the given domain name. It will return that one instead.
-</p></dd><dt><a name="DATASRC_DATABASE_FOUND_DELEGATION_EXACT"></a><span class="term">DATASRC_DATABASE_FOUND_DELEGATION_EXACT Found delegation at %2 (exact match) in %1</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_DATABASE_FOUND_DELEGATION_EXACT"></a><span class="term">DATASRC_DATABASE_FOUND_DELEGATION_EXACT search in datasource %1 for %2/%3/%4 found delegation at %5</span></dt><dd><p>
 The program found the domain requested, but it is a delegation point to a
 different zone, therefore it is not authoritative for this domain name.
 It will return the NS record instead.
@@ -850,16 +873,21 @@ When searching for a domain, the program met a DNAME redirection to a different
 place in the domain space at the given domain name. It will return that one
 instead.
 </p></dd><dt><a name="DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL"></a><span class="term">DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL empty non-terminal %2 in %1</span></dt><dd><p>
-The domain name doesn't have any RRs, so it doesn't exist in the database.
-However, it has a subdomain, so it exists in the DNS address space. So we
-return NXRRSET instead of NXDOMAIN.
+The domain name does not have any RRs associated with it, so it doesn't
+exist in the database.  However, it has a subdomain, so it does exist
+in the DNS address space. This type of domain is known an an "empty
+non-terminal" and so we return NXRRSET instead of NXDOMAIN.
 </p></dd><dt><a name="DATASRC_DATABASE_FOUND_NXDOMAIN"></a><span class="term">DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4</span></dt><dd><p>
 The data returned by the database backend did not contain any data for the given
 domain name, class and type.
-</p></dd><dt><a name="DATASRC_DATABASE_FOUND_NXRRSET"></a><span class="term">DATASRC_DATABASE_FOUND_NXRRSET search in datasource %1 resulted in NXRRSET for %2/%3/%4</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_DATABASE_FOUND_NXRRSET"></a><span class="term">DATASRC_DATABASE_FOUND_NXRRSET search in datasource %1 for %2/%3/%4 resulted in NXRRSET</span></dt><dd><p>
 The data returned by the database backend contained data for the given domain
 name and class, but not for the given type.
-</p></dd><dt><a name="DATASRC_DATABASE_FOUND_RRSET"></a><span class="term">DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_DATABASE_FOUND_NXRRSET_NSEC"></a><span class="term">DATASRC_DATABASE_FOUND_NXRRSET_NSEC search in datasource %1 for %2/%3/%4 resulted in RRset %5</span></dt><dd><p>
+A search in the database for RRs for the specified name, type and class has
+located RRs that match the name and class but not the type.  DNSSEC information
+has been requested and returned.
+</p></dd><dt><a name="DATASRC_DATABASE_FOUND_RRSET"></a><span class="term">DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %5</span></dt><dd><p>
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
@@ -900,18 +928,39 @@ The zone's name and class, database name, and the start and end
 serials, and an additional detail of the error are shown in the
 message.  The administrator should examine the diff in the database
 to find any invalid data and fix it.
+</p></dd><dt><a name="DATASRC_DATABASE_NO_MATCH"></a><span class="term">DATASRC_DATABASE_NO_MATCH not match for %2/%3/%4 in %1</span></dt><dd><p>
+No match (not even a wildcard) was found in the named data source for the given
+name/type/class in the data source.
 </p></dd><dt><a name="DATASRC_DATABASE_UPDATER_COMMIT"></a><span class="term">DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3</span></dt><dd><p>
+Debug information.  A set of updates to a zone has been successfully
+committed to the corresponding database backend.  The zone name,
+its class and the database name are printed.
+</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_COMMIT%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_COMMIT (1) updates committed for '%1/%2' on %3</span></dt><dd><p>
 Debug information.  A set of updates to a zone has been successfully
 committed to the corresponding database backend.  The zone name,
 its class and the database name are printed.
 </p></dd><dt><a name="DATASRC_DATABASE_UPDATER_CREATED"></a><span class="term">DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3</span></dt><dd><p>
 Debug information.  A zone updater object is created to make updates to
 the shown zone on the shown backend database.
+</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_CREATED%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_CREATED (1) zone updater created for '%1/%2' on %3</span></dt><dd><p>
+Debug information.  A zone updater object is created to make updates to
+the shown zone on the shown backend database.
 </p></dd><dt><a name="DATASRC_DATABASE_UPDATER_DESTROYED"></a><span class="term">DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3</span></dt><dd><p>
 Debug information.  A zone updater object is destroyed, either successfully
 or after failure of, making updates to the shown zone on the shown backend
 database.
+</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_DESTROYED%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_DESTROYED (1) zone updater destroyed for '%1/%2' on %3</span></dt><dd><p>
+Debug information.  A zone updater object is destroyed, either successfully
+or after failure of, making updates to the shown zone on the shown backend
+database.
 </p></dd><dt><a name="DATASRC_DATABASE_UPDATER_ROLLBACK"></a><span class="term">DATASRC_DATABASE_UPDATER_ROLLBACK zone updates roll-backed for '%1/%2' on %3</span></dt><dd><p>
+A zone updater is being destroyed without committing the changes.
+This would typically mean the update attempt was aborted due to some
+error, but may also be a bug of the application that forgets committing
+the changes.  The intermediate changes made through the updater won't
+be applied to the underlying database.  The zone name, its class, and
+the underlying database name are shown in the log message.
+</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_ROLLBACK%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_ROLLBACK (1) zone updates roll-backed for '%1/%2' on %3</span></dt><dd><p>
 A zone updater is being destroyed without committing the changes.
 This would typically mean the update attempt was aborted due to some
 error, but may also be a bug of the application that forgets committing
@@ -930,10 +979,23 @@ examine the underlying data source to see what exactly happens and
 whether the data is still valid.  The zone name, its class, and the
 underlying database name as well as the error message thrown from the
 database module are shown in the log message.
-</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD"></a><span class="term">DATASRC_DATABASE_WILDCARD constructing RRset %3 from wildcard %2 in %1</span></dt><dd><p>
-The database doesn't contain directly matching domain, but it does contain a
-wildcard one which is being used to synthesize the answer.
-</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_CANCEL_NS"></a><span class="term">DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %2 because %3 contains NS in %1</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_ROLLBACKFAIL%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_ROLLBACKFAIL (1) failed to roll back zone updates for '%1/%2' on %3: %4</span></dt><dd><p>
+A zone updater is being destroyed without committing the changes to
+the database, and attempts to rollback incomplete updates, but it
+unexpectedly fails.  The higher level implementation does not expect
+it to fail, so this means either a serious operational error in the
+underlying data source (such as a system failure of a database) or
+software bug in the underlying data source implementation.  In either
+case if this message is logged the administrator should carefully
+examine the underlying data source to see what exactly happens and
+whether the data is still valid.  The zone name, its class, and the
+underlying database name as well as the error message thrown from the
+database module are shown in the log message.
+</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_ANY"></a><span class="term">DATASRC_DATABASE_WILDCARD_ANY search in datasource %1 resulted in wildcard match type ANY on %2</span></dt><dd><p>
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a wildcard record matching the name of the query
+containing some RRsets was found. All the RRsets of the node are returned.
+</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_CANCEL_NS"></a><span class="term">DATASRC_DATABASE_WILDCARD_CANCEL_NS canceled wildcard match on %3 because %2 contains NS (data source %1)</span></dt><dd><p>
 The database was queried to provide glue data and it didn't find direct match.
 It could create it from given wildcard, but matching wildcards is forbidden
 under a zone cut, which was found. Therefore the delegation will be returned
@@ -943,11 +1005,27 @@ The answer could be constructed using the wildcard, but the given subdomain
 exists, therefore this name is something like empty non-terminal (actually,
 from the protocol point of view, it is empty non-terminal, but the code
 discovers it differently).
-</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_EMPTY"></a><span class="term">DATASRC_DATABASE_WILDCARD_EMPTY implicit wildcard %2 used to construct %3 in %1</span></dt><dd><p>
-The given wildcard exists implicitly in the domainspace, as empty nonterminal
-(eg. there's something like subdomain.*.example.org, so *.example.org exists
-implicitly, but is empty). This will produce NXRRSET, because the constructed
-domain is empty as well as the wildcard.
+</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_CNAME"></a><span class="term">DATASRC_DATABASE_WILDCARD_CNAME search in datasource %1 for %2/%3/%4 found wildcard CNAME at %5, resulting in %6</span></dt><dd><p>
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a CNAME RR was found at a wildcard record
+matching the name.  This is returned as the result of the search.
+</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_EMPTY"></a><span class="term">DATASRC_DATABASE_WILDCARD_EMPTY found subdomains of %2 which is a wildcard match for %3 in %1</span></dt><dd><p>
+The given wildcard matches the name being sough but it as an empty
+nonterminal (e.g. there's nothing at *.example.com but something like
+subdomain.*.example.org, do exist: so *.example.org exists in the
+namespace but has no RRs assopciated with it). This will produce NXRRSET.
+</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_MATCH"></a><span class="term">DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %5 with RRset %6</span></dt><dd><p>
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a wildcard record matching the name and type of
+the query was found. The data at this point is returned.
+</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_NS"></a><span class="term">DATASRC_DATABASE_WILDCARD_NS search in datasource %1 for %2/%3/%4 found wildcard delegation at %5, resulting in %6</span></dt><dd><p>
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, an NS RR was found at a wildcard record matching
+the name.  This is returned as the result of the search.
+</p></dd><dt><a name="DATASRC_DATABASE_WILDCARD_NXRRSET"></a><span class="term">DATASRC_DATABASE_WILDCARD_NXRRSET search in datasource %1 for %2/%3/%4 resulted in wildcard NXRRSET at %5</span></dt><dd><p>
+The database doesn't contain directly matching name.  When searching
+for a wildcard match, a matching wildcard entry was found but it did
+not contain RRs the requested type.  AN NXRRSET indication is returned.
 </p></dd><dt><a name="DATASRC_DO_QUERY"></a><span class="term">DATASRC_DO_QUERY handling query for '%1/%2'</span></dt><dd><p>
 A debug message indicating that a query for the given name and RR type is being
 processed.
@@ -1031,7 +1109,7 @@ Some resource types are singletons -- only one is allowed in a domain
 Debug information. The requested record was found.
 </p></dd><dt><a name="DATASRC_MEM_SUPER_STOP"></a><span class="term">DATASRC_MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty</span></dt><dd><p>
 Debug information. The search stopped at a superdomain of the requested
-domain. The domain is a empty nonterminal, therefore it is treated  as NXRRSET
+domain. The domain is an empty nonterminal, therefore it is treated  as NXRRSET
 case (eg. the domain exists, but it doesn't have the requested record type).
 </p></dd><dt><a name="DATASRC_MEM_SWAP"></a><span class="term">DATASRC_MEM_SWAP swapping contents of two zone representations ('%1' and '%2')</span></dt><dd><p>
 Debug information. The contents of two in-memory zones are being exchanged.
@@ -1287,10 +1365,46 @@ data source.
 </p></dd><dt><a name="DATASRC_UNEXPECTED_QUERY_STATE"></a><span class="term">DATASRC_UNEXPECTED_QUERY_STATE unexpected query state</span></dt><dd><p>
 This indicates a programming error. An internal task of unknown type was
 generated.
-</p></dd><dt><a name="LIBXFRIN_DIFFERENT_TTL"></a><span class="term">LIBXFRIN_DIFFERENT_TTL multiple data with different TTLs (%1, %2) on %3/%4. Adjusting %2 -&gt; %1.</span></dt><dd><p>
+</p></dd><dt><a name="DDNS_CC_SESSION_ERROR"></a><span class="term">DDNS_CC_SESSION_ERROR error reading from cc channel: %1</span></dt><dd><p>
+There was a problem reading from the command and control channel. The
+most likely cause is that the msgq process is not running.
+</p></dd><dt><a name="DDNS_CC_SESSION_TIMEOUT_ERROR"></a><span class="term">DDNS_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response</span></dt><dd><p>
+There was a problem reading a response from another module over the
+command and control channel. The most likely cause is that the
+configuration manager b10-cfgmgr is not running.
+</p></dd><dt><a name="DDNS_CONFIG_ERROR"></a><span class="term">DDNS_CONFIG_ERROR error found in configuration data: %1</span></dt><dd><p>
+The ddns process encountered an error when installing the configuration at
+startup time.  Details of the error are included in the log message.
+</p></dd><dt><a name="DDNS_MODULECC_SESSION_ERROR"></a><span class="term">DDNS_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1</span></dt><dd><p>
+There was a problem in the lower level module handling configuration and
+control commands.  This could happen for various reasons, but the most likely
+cause is that the configuration database contains a syntax error and ddns
+failed to start at initialization.  A detailed error message from the module
+will also be displayed.
+</p></dd><dt><a name="DDNS_RECEIVED_SHUTDOWN_COMMAND"></a><span class="term">DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received</span></dt><dd><p>
+The ddns process received a shutdown command from the command channel
+and will now shut down.
+</p></dd><dt><a name="DDNS_RUNNING"></a><span class="term">DDNS_RUNNING ddns server is running and listening for updates</span></dt><dd><p>
+The ddns process has successfully started and is now ready to receive commands
+and updates.
+</p></dd><dt><a name="DDNS_SHUTDOWN"></a><span class="term">DDNS_SHUTDOWN ddns server shutting down</span></dt><dd><p>
+The ddns process is shutting down. It will no longer listen for new commands
+or updates. Any command or update that is being addressed at this moment will
+be completed, after which the process will exit.
+</p></dd><dt><a name="DDNS_STOPPED"></a><span class="term">DDNS_STOPPED ddns server has stopped</span></dt><dd><p>
+The ddns process has successfully stopped and is no longer listening for or
+handling commands or updates, and will now exit.
+</p></dd><dt><a name="DDNS_STOPPED_BY_KEYBOARD"></a><span class="term">DDNS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down</span></dt><dd><p>
+There was a keyboard interrupt signal to stop the ddns process. The
+process will now shut down.
+</p></dd><dt><a name="DDNS_UNCAUGHT_EXCEPTION"></a><span class="term">DDNS_UNCAUGHT_EXCEPTION uncaught exception of type %1: %2</span></dt><dd><p>
+The b10-ddns process encountered an uncaught exception and will now shut
+down. This is indicative of a programming error and should not happen under
+normal circumstances. The exception type and message are printed.
+</p></dd><dt><a name="LIBXFRIN_DIFFERENT_TTL"></a><span class="term">LIBXFRIN_DIFFERENT_TTL multiple data with different TTLs (%1, %2) on %3/%4/%5. Adjusting %2 -&gt; %1.</span></dt><dd><p>
 The xfrin module received an update containing multiple rdata changes for the
 same RRset. But the TTLs of these don't match each other. As we combine them
-together, the later one get's overwritten to the earlier one in the sequence.
+together, the latter one gets overwritten to the earlier one in the sequence.
 </p></dd><dt><a name="LIBXFRIN_NO_JOURNAL"></a><span class="term">LIBXFRIN_NO_JOURNAL disabled journaling for updates to %1 on %2</span></dt><dd><p>
 An attempt was made to create a Diff object with journaling enabled, but
 the underlying data source didn't support journaling (while still allowing
@@ -1494,6 +1608,14 @@ be sent to such a zone.
 </p></dd><dt><a name="NOTIFY_OUT_ZONE_NO_NS"></a><span class="term">NOTIFY_OUT_ZONE_NO_NS Zone %1 doesn't have NS RR</span></dt><dd><p>
 This is a warning issued when the notify_out module finds a zone that
 doesn't have an NS RR.  Notify message won't be sent to such a zone.
+</p></dd><dt><a name="NSAS_EMPTY_RESPONSE"></a><span class="term">NSAS_EMPTY_RESPONSE response to query for %1 returned an empty answer section</span></dt><dd><p>
+The NSAS (nameserver address store - part of the resolver) made a query
+for information it needed.  The query completed successfully but the
+answer section in the response was empty.
+</p></dd><dt><a name="NSAS_ERROR_RESPONSE"></a><span class="term">NSAS_ERROR_RESPONSE error response of %1 returned in query for %2</span></dt><dd><p>
+The NSAS (nameserver address store - part of the resolver) made a query
+for information it needed.  The query completed successfully but the
+RCODE in the response was something other than NOERROR.
 </p></dd><dt><a name="NSAS_FIND_NS_ADDRESS"></a><span class="term">NSAS_FIND_NS_ADDRESS asking resolver to obtain A and AAAA records for %1</span></dt><dd><p>
 A debug message issued when the NSAS (nameserver address store - part
 of the resolver) is making a callback into the resolver to retrieve the
@@ -1502,16 +1624,6 @@ address records for the specified nameserver.
 A debug message issued when the NSAS (nameserver address store - part
 of the resolver) has retrieved the given address for the specified
 nameserver through an external query.
-</p></dd><dt><a name="NSAS_INVALID_RESPONSE"></a><span class="term">NSAS_INVALID_RESPONSE queried for %1 but got invalid response</span></dt><dd><p>
-The NSAS (nameserver address store - part of the resolver) made a query
-for a RR for the specified nameserver but received an invalid response.
-Either the success function was called without a DNS message or the
-message was invalid on some way. (In the latter case, the error should
-have been picked up elsewhere in the processing logic, hence the raising
-of the error here.)
-</p><p>
-This message indicates an internal error in the NSAS.  Please raise a
-bug report.
 </p></dd><dt><a name="NSAS_LOOKUP_CANCEL"></a><span class="term">NSAS_LOOKUP_CANCEL lookup for zone %1 has been canceled</span></dt><dd><p>
 A debug message issued when an NSAS (nameserver address store - part of
 the resolver) lookup for a zone has been canceled.
@@ -1521,6 +1633,13 @@ the resolver) has been unable to retrieve the specified resource record
 for the specified nameserver.  This is not necessarily a problem - the
 nameserver may be unreachable, in which case the NSAS will try other
 nameservers in the zone.
+</p></dd><dt><a name="NSAS_NULL_RESPONSE"></a><span class="term">NSAS_NULL_RESPONSE got null message in success callback for query for %1</span></dt><dd><p>
+The NSAS (nameserver address store - part of the resolver) made a query
+for information it needed.  The query completed successfully, but the
+message passed to the callback was null.
+</p><p>
+This message indicates an internal error in the NSAS.  Please raise a
+bug report.
 </p></dd><dt><a name="NSAS_SEARCH_ZONE_NS"></a><span class="term">NSAS_SEARCH_ZONE_NS searching NSAS for nameservers for zone %1</span></dt><dd><p>
 A debug message output when a call is made to the NSAS (nameserver
 address store - part of the resolver) to obtain the nameservers for
@@ -1541,25 +1660,78 @@ an answer with a different given type and class.
 This message indicates an internal error in the NSAS.  Please raise a
 bug report.
 </p></dd><dt><a name="RESLIB_ANSWER"></a><span class="term">RESLIB_ANSWER answer received in response to query for &lt;%1&gt;</span></dt><dd><p>
-A debug message recording that an answer has been received to an upstream
-query for the specified question.  Previous debug messages will have indicated
-the server to which the question was sent.
+A debug message reporting that an answer has been received to an upstream
+query for the specified question.  Previous debug messages will have
+indicated the server to which the question was sent.
 </p></dd><dt><a name="RESLIB_CNAME"></a><span class="term">RESLIB_CNAME CNAME received in response to query for &lt;%1&gt;</span></dt><dd><p>
-A debug message recording that CNAME response has been received to an upstream
-query for the specified question.  Previous debug messages will have indicated
-the server to which the question was sent.
+A debug message recording that CNAME response has been received to an
+upstream query for the specified question.  Previous debug messages will
+have indicated the server to which the question was sent.
 </p></dd><dt><a name="RESLIB_DEEPEST"></a><span class="term">RESLIB_DEEPEST did not find &lt;%1&gt; in cache, deepest delegation found is %2</span></dt><dd><p>
-A debug message, a cache lookup did not find the specified &lt;name, class,
-type&gt; tuple in the cache; instead, the deepest delegation found is indicated.
+A debug message, a cache lookup did not find the specified &lt;name,
+class, type&gt; tuple in the cache; instead, the deepest delegation found
+is indicated.
+</p></dd><dt><a name="RESLIB_EMPTY_RESPONSE"></a><span class="term">RESLIB_EMPTY_RESPONSE empty response received to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver did not contain anything in the answer or authority sections,
+although in all other respects it was a valid response.  A SERVFAIL will
+be returned to the system making the original query.
+</p></dd><dt><a name="RESLIB_ERROR_RESPONSE"></a><span class="term">RESLIB_ERROR_RESPONSE unspecified error received in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, the response to the specified query to an upstream
+nameserver indicated that the response was classified as an erroneous
+response, but that the nature of the error cannot be identified.
+A SERVFAIL will be returned to the system making the original query.
+</p></dd><dt><a name="RESLIB_EXTRADATA_RESPONSE"></a><span class="term">RESLIB_EXTRADATA_RESPONSE extra data in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message indicating that the response to the specified query
+from an upstream nameserver contained too much data.  This can happen if
+an ANY query was sent and the answer section in the response contained
+multiple RRs with different names.  A SERVFAIL will be returned to the
+system making the original query.
 </p></dd><dt><a name="RESLIB_FOLLOW_CNAME"></a><span class="term">RESLIB_FOLLOW_CNAME following CNAME chain to &lt;%1&gt;</span></dt><dd><p>
-A debug message, a CNAME response was received and another query is being issued
-for the &lt;name, class, type&gt; tuple.
+A debug message, a CNAME response was received and another query is
+being issued for the &lt;name, class, type&gt; tuple.
+</p></dd><dt><a name="RESLIB_INVALID_NAMECLASS_RESPONSE"></a><span class="term">RESLIB_INVALID_NAMECLASS_RESPONSE invalid name or class in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) contained either
+an answer not matching the query name or an answer having a different
+class to that queried for.  A SERVFAIL will be returned to the system
+making the original query.
+</p></dd><dt><a name="RESLIB_INVALID_QNAME_RESPONSE"></a><span class="term">RESLIB_INVALID_QNAME_RESPONSE invalid name or class in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) contained a name
+in the question section that did not match that of the query. A SERVFAIL
+will be returned to the system making the original query.
+</p></dd><dt><a name="RESLIB_INVALID_TYPE_RESPONSE"></a><span class="term">RESLIB_INVALID_TYPE_RESPONSE invalid name or class in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) contained an
+invalid type field. A SERVFAIL will be returned to the system making
+the original query.
 </p></dd><dt><a name="RESLIB_LONG_CHAIN"></a><span class="term">RESLIB_LONG_CHAIN CNAME received in response to query for &lt;%1&gt;: CNAME chain length exceeded</span></dt><dd><p>
 A debug message recording that a CNAME response has been received to an upstream
 query for the specified question (Previous debug messages will have indicated
 the server to which the question was sent).  However, receipt of this CNAME
 has meant that the resolver has exceeded the CNAME chain limit (a CNAME chain
 is where on CNAME points to another) and so an error is being returned.
+</p></dd><dt><a name="RESLIB_MULTIPLE_CLASS_RESPONSE"></a><span class="term">RESLIB_MULTIPLE_CLASS_RESPONSE response to query for &lt;%1&gt; contained multiple RRsets with different classes</span></dt><dd><p>
+A debug message reporting that the response to an upstream query for
+the specified name contained multiple RRsets in the answer and not all
+were of the same class.  This is a violation of the standard and so a
+SERVFAIL will be returned.
+</p></dd><dt><a name="RESLIB_NOTSINGLE_RESPONSE"></a><span class="term">RESLIB_NOTSINGLE_RESPONSE response to query for &lt;%1&gt; was not a response</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver was a CNAME that had mutiple RRs in the RRset.  This is
+an invalid response according to the standards so a SERVFAIL will be
+returned to the system making the original query.
+</p></dd><dt><a name="RESLIB_NOT_ONE_QNAME_RESPONSE"></a><span class="term">RESLIB_NOT_ONE_QNAME_RESPONSE not one question in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) did not contain
+one name in the question section as required by the standard. A SERVFAIL
+will be returned to the system making the original query.
+</p></dd><dt><a name="RESLIB_NOT_RESPONSE"></a><span class="term">RESLIB_NOT_RESPONSE response to query for &lt;%1&gt; was not a response</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver (as identified by the ID of the response) did not have the QR
+bit set (thus indicating that the packet was a query, not a response).
+A SERVFAIL will be returned to the system making the original query.
 </p></dd><dt><a name="RESLIB_NO_NS_RRSET"></a><span class="term">RESLIB_NO_NS_RRSET no NS RRSet in referral response received to query for &lt;%1&gt;</span></dt><dd><p>
 A debug message, this indicates that a response was received for the specified
 query and was categorized as a referral.  However, the received message did
@@ -1572,6 +1744,12 @@ nameservers for the specified zone.
 A debug message recording that either a NXDOMAIN or an NXRRSET response has
 been received to an upstream query for the specified question.  Previous debug
 messages will have indicated the server to which the question was sent.
+</p></dd><dt><a name="RESLIB_OPCODE_RESPONSE"></a><span class="term">RESLIB_OPCODE_RESPONSE response to query for &lt;%1&gt; did not have query opcode</span></dt><dd><p>
+A debug message, the response to the specified query from an upstream
+nameserver was a response that did not have the opcode set to that of
+a query.  According to the standards, this is an invalid response to
+the query that was made, so a SERVFAIL will be returned to the system
+making the original query.
 </p></dd><dt><a name="RESLIB_PROTOCOL"></a><span class="term">RESLIB_PROTOCOL protocol error in answer for %1:  %3</span></dt><dd><p>
 A debug message indicating that a protocol error was received.  As there
 are no retries left, an error will be reported.
@@ -1579,7 +1757,7 @@ are no retries left, an error will be reported.
 A debug message indicating that a protocol error was received and that
 the resolver is repeating the query to the same nameserver.  After this
 repeated query, there will be the indicated number of retries left.
-</p></dd><dt><a name="RESLIB_RCODE_ERR"></a><span class="term">RESLIB_RCODE_ERR RCODE indicates error in response to query for &lt;%1&gt;</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RCODE_ERROR"></a><span class="term">RESLIB_RCODE_ERROR response to query for &lt;%1&gt; returns RCODE of %2</span></dt><dd><p>
 A debug message, the response to the specified query indicated an error
 that is not covered by a specific code path.  A SERVFAIL will be returned.
 </p></dd><dt><a name="RESLIB_RECQ_CACHE_FIND"></a><span class="term">RESLIB_RECQ_CACHE_FIND found &lt;%1&gt; in the cache (resolve() instance %2)</span></dt><dd><p>
@@ -1626,6 +1804,10 @@ called because all nameservers for the zone in question are unreachable.
 A debug message indicating that a RunningQuery's success callback has been
 called because a nameserver has been found, and that a query is being sent
 to the specified nameserver.
+</p></dd><dt><a name="RESLIB_TCP_TRUNCATED"></a><span class="term">RESLIB_TCP_TRUNCATED TCP response to query for %1 was truncated</span></dt><dd><p>
+This is a debug message logged when a response to the specified  query to an
+upstream nameserver returned a response with the TC (truncation) bit set.  This
+is treated as an error by the code.
 </p></dd><dt><a name="RESLIB_TEST_SERVER"></a><span class="term">RESLIB_TEST_SERVER setting test server to %1(%2)</span></dt><dd><p>
 This is a warning message only generated in unit tests.  It indicates
 that all upstream queries from the resolver are being routed to the
@@ -1840,6 +2022,27 @@ has been ignored.
 This is debug message output when the resolver received a message with an
 unsupported opcode (it can only process QUERY opcodes).  It will return
 a message to the sender with the RCODE set to NOTIMP.
+</p></dd><dt><a name="SOCKETREQUESTOR_CREATED"></a><span class="term">SOCKETREQUESTOR_CREATED Socket requestor created</span></dt><dd><p>
+Debug message.  A socket requesor (client of the socket creator) is created
+for the corresponding application.  Normally this should happen at most
+one time throughout the lifetime of the application.
+</p></dd><dt><a name="SOCKETREQUESTOR_DESTROYED"></a><span class="term">SOCKETREQUESTOR_DESTROYED Socket requestor destoryed</span></dt><dd><p>
+Debug message.  The socket requestor created at SOCKETREQUESTOR_CREATED
+has been destroyed.  This event is generally unexpected other than in
+test cases.
+</p></dd><dt><a name="SOCKETREQUESTOR_GETSOCKET"></a><span class="term">SOCKETREQUESTOR_GETSOCKET Received a %1 socket for [%2]:%3, FD=%4, token=%5, path=%6</span></dt><dd><p>
+Debug message. The socket requestor for the corresponding application
+has requested a socket for a set of address, port and protocol (shown
+in the log message) and successfully got it from the creator.  The
+corresponding file descriptor and the associated "token" (an internal
+ID used between the creator and requestor) are shown in the log
+message.
+</p></dd><dt><a name="SOCKETREQUESTOR_RELEASESOCKET"></a><span class="term">SOCKETREQUESTOR_RELEASESOCKET Released a socket of token %1</span></dt><dd><p>
+Debug message.  The socket requestor has released a socket passed by
+the creator.  The associated token of the socket is shown in the
+log message.  If the corresponding SOCKETREQUESTOR_GETSOCKET was logged
+more detailed information of the socket can be identified by matching
+the token.
 </p></dd><dt><a name="SRVCOMM_ADDRESSES_NOT_LIST"></a><span class="term">SRVCOMM_ADDRESSES_NOT_LIST the address and port specification is not a list in %1</span></dt><dd><p>
 This points to an error in configuration. What was supposed to be a list of
 IP address - port pairs isn't a list at all but something else.
@@ -1858,7 +2061,7 @@ configuration malformed. The specification causing the error is given in the
 message. A valid specification contains an address part (which must be a string
 and must represent a valid IPv4 or IPv6 address) and port (which must be an
 integer in the range valid for TCP/UDP ports on your system).
-</p></dd><dt><a name="SRVCOMM_ADDRESS_UNRECOVERABLE"></a><span class="term">SRVCOMM_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%2)</span></dt><dd><p>
+</p></dd><dt><a name="SRVCOMM_ADDRESS_UNRECOVERABLE"></a><span class="term">SRVCOMM_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%1)</span></dt><dd><p>
 The recovery of old addresses after SRVCOMM_ADDRESS_FAIL also failed for
 the reason listed.
 </p><p>
@@ -1995,10 +2198,6 @@ is unknown in the implementation. The most likely cause is an
 installation problem, where the specification file stats.spec is
 from a different version of BIND 10 than the stats module itself.
 Please check your installation.
-</p></dd><dt><a name="XFRIN_AXFR_DATABASE_FAILURE"></a><span class="term">XFRIN_AXFR_DATABASE_FAILURE AXFR transfer of zone %1 failed: %2</span></dt><dd><p>
-The AXFR transfer for the given zone has failed due to a database problem.
-The error is shown in the log message.  Note: due to the code structure
-this can only happen for AXFR.
 </p></dd><dt><a name="XFRIN_AXFR_INCONSISTENT_SOA"></a><span class="term">XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received</span></dt><dd><p>
 The serial fields of the first and last SOAs of AXFR (including AXFR-style
 IXFR) are not the same.  According to RFC 5936 these two SOAs must be the
@@ -2046,6 +2245,15 @@ is not equal to the requested SOA serial.
 </p></dd><dt><a name="XFRIN_IMPORT_DNS"></a><span class="term">XFRIN_IMPORT_DNS error importing python DNS module: %1</span></dt><dd><p>
 There was an error importing the python DNS module pydnspp. The most
 likely cause is a PYTHONPATH problem.
+</p></dd><dt><a name="XFRIN_IXFR_UPTODATE"></a><span class="term">XFRIN_IXFR_UPTODATE IXFR requested serial for %1 is %2, master has %3, not updating</span></dt><dd><p>
+The first SOA record in an IXFR response indicates the zone's serial
+at the primary server is not newer than the client's.  This is
+basically unexpected event because normally the client first checks
+the SOA serial by an SOA query, but can still happen if the transfer
+is manually invoked or (although unlikely) there is a rapid change at
+the primary server between the SOA and IXFR queries.  The client
+implementation confirms the whole response is this single SOA, and
+aborts the transfer just like a successful case.
 </p></dd><dt><a name="XFRIN_MSGQ_SEND_ERROR"></a><span class="term">XFRIN_MSGQ_SEND_ERROR error while contacting %1 and %2</span></dt><dd><p>
 There was a problem sending a message to the xfrout module or the
 zone manager. This most likely means that the msgq daemon has quit or
@@ -2089,19 +2297,64 @@ message continuously appears, system resource consumption should be
 checked, and you may even want to disable the corresponding transfers.
 You may also want to file a bug report if this message appears so
 often.
-</p></dd><dt><a name="XFRIN_XFR_TRANSFER_FAILURE"></a><span class="term">XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 failed: %3</span></dt><dd><p>
-The XFR transfer for the given zone has failed due to a protocol error.
+</p></dd><dt><a name="XFRIN_XFR_TRANSFER_FAILURE"></a><span class="term">XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 with %3 failed: %4</span></dt><dd><p>
+The XFR transfer for the given zone has failed due to an internal error.
 The error is shown in the log message.
 </p></dd><dt><a name="XFRIN_XFR_TRANSFER_FALLBACK"></a><span class="term">XFRIN_XFR_TRANSFER_FALLBACK falling back from IXFR to AXFR for %1</span></dt><dd><p>
 The IXFR transfer of the given zone failed. This might happen in many cases,
 such that the remote server doesn't support IXFR, we don't have the SOA record
 (or the zone at all), we are out of sync, etc. In many of these situations,
 AXFR could still work. Therefore we try that one in case it helps.
+</p></dd><dt><a name="XFRIN_XFR_TRANSFER_PROTOCOL_ERROR"></a><span class="term">XFRIN_XFR_TRANSFER_PROTOCOL_ERROR %1 transfer of zone %2 with %3 failed: %4</span></dt><dd><p>
+The XFR transfer for the given zone has failed due to a protocol
+error, such as an unexpected response from the primary server.  The
+error is shown in the log message.  It may be because the primary
+server implementation is broken or (although less likely) there was
+some attack attempt, but it can also happen due to configuration
+mismatch such as the remote server does not have authority for the
+zone any more but the local configuration hasn't been updated.  So it
+is recommended to check the primary server configuration.
 </p></dd><dt><a name="XFRIN_XFR_TRANSFER_STARTED"></a><span class="term">XFRIN_XFR_TRANSFER_STARTED %1 transfer of zone %2 started</span></dt><dd><p>
 A connection to the master server has been made, the serial value in
 the SOA record has been checked, and a zone transfer has been started.
 </p></dd><dt><a name="XFRIN_XFR_TRANSFER_SUCCESS"></a><span class="term">XFRIN_XFR_TRANSFER_SUCCESS %1 transfer of zone %2 succeeded</span></dt><dd><p>
 The XFR transfer of the given zone was successfully completed.
+</p></dd><dt><a name="XFRIN_ZONE_CREATED"></a><span class="term">XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly created</span></dt><dd><p>
+On starting an xfrin session, it is identified that the zone to be
+transferred is not found in the data source.  This can happen if a
+secondary DNS server first tries to perform AXFR from a primary server
+without creating the zone image beforehand (e.g. by b10-loadzone).  As
+of this writing the xfrin process provides backward compatible
+behavior to previous versions: creating a new one in the data source
+not to surprise existing users too much.  This is probably not a good
+idea, however, in terms of who should be responsible for managing
+zones at a higher level.  In future it is more likely that a separate
+zone management framework is provided, and the situation where the
+given zone isn't found in xfrout will be treated as an error.
+</p></dd><dt><a name="XFRIN_ZONE_MULTIPLE_SOA"></a><span class="term">XFRIN_ZONE_MULTIPLE_SOA Zone %1 has %2 SOA RRs</span></dt><dd><p>
+On starting an xfrin session, it is identified that the zone to be
+transferred has multiple SOA RRs.  Such a zone is broken, but could be
+accidentally configured especially in a data source using "non
+captive" backend database.  The implementation ignores entire SOA RRs
+and tries to continue processing as if the zone were empty.  This
+means subsequent AXFR can succeed and possibly replace the zone with
+valid content, but an IXFR attempt will fail.
+</p></dd><dt><a name="XFRIN_ZONE_NO_SOA"></a><span class="term">XFRIN_ZONE_NO_SOA Zone %1 does not have SOA</span></dt><dd><p>
+On starting an xfrin session, it is identified that the zone to be
+transferred does not have an SOA RR in the data source.  This is not
+necessarily an error; if a secondary DNS server first tries to perform
+transfer from a primary server, the zone can be empty, and therefore
+doesn't have an SOA.  Subsequent AXFR will fill in the zone; if the
+attempt is IXFR it will fail in query creation.
+</p></dd><dt><a name="XFRIN_ZONE_SERIAL_AHEAD"></a><span class="term">XFRIN_ZONE_SERIAL_AHEAD Serial number (%1) for %2 received from master %3 &lt; ours (%4)</span></dt><dd><p>
+The response to an SOA query prior to xfr indicated that the zone's
+SOA serial at the primary server is smaller than that of the xfrin
+client.  This is not necessarily an error especially if that
+particular primary server is another secondary server which hasn't got
+the latest version of the zone.  But if the primary server is known to
+be the real source of the zone, some unexpected inconsistency may have
+happened, and you may want to take a closer look.  In this case xfrin
+doesn't perform subsequent zone transfer.
 </p></dd><dt><a name="XFROUT_BAD_TSIG_KEY_STRING"></a><span class="term">XFROUT_BAD_TSIG_KEY_STRING bad TSIG key string: %1</span></dt><dd><p>
 The TSIG key string as read from the configuration does not represent
 a valid TSIG key.
