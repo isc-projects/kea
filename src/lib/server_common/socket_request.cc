@@ -380,7 +380,7 @@ socketRequestor() {
 }
 
 void
-initSocketReqeustor(cc::AbstractSession& session) {
+initSocketRequestor(cc::AbstractSession& session) {
     if (requestor != NULL) {
         isc_throw(InvalidOperation,
                   "The socket requestor was already initialized");

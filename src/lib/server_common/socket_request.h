@@ -168,7 +168,7 @@ SocketRequestor& socketRequestor();
 /// \param session the CC session that'll be used to talk to the
 ///                socket creator.
 /// \throw InvalidOperation when it is called more than once
-void initSocketReqeustor(cc::AbstractSession& session);
+void initSocketRequestor(cc::AbstractSession& session);
 
 /// \brief Initialization for tests
 ///
