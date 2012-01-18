@@ -15,11 +15,13 @@
 #ifndef __SOCKETSESSION_H_
 #define __SOCKETSESSION_H_ 1
 
-#include <string>
-
 #include <boost/noncopyable.hpp>
 
 #include <exceptions/exceptions.h>
+
+#include <string>
+
+#include <sys/socket.h>
 
 namespace isc {
 namespace util {

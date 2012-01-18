@@ -98,7 +98,8 @@ SrvTestBase::unsupportedRequest() {
         // set Opcode to 'i', which iterators over all possible codes except
         // the standard query and notify 
         if (i == isc::dns::Opcode::QUERY().getCode() ||
-            i == isc::dns::Opcode::NOTIFY().getCode()) {
+            i == isc::dns::Opcode::NOTIFY().getCode() ||
+            i == isc::dns::Opcode::UPDATE().getCode()) {
             continue;
         }
         createDataFromFile("simplequery_fromWire.wire");

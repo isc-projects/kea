@@ -52,7 +52,7 @@ protected:
     AuthConfigTest() :
         dnss_(),
         rrclass(RRClass::IN()),
-        server(true, xfrout),
+        server(true, xfrout, ddns_forwarder),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
         // the empty string is passed).
@@ -63,6 +63,7 @@ protected:
     MockDNSService dnss_;
     const RRClass rrclass;
     MockXfroutClient xfrout;
+    MockSocketSessionForwarder ddns_forwarder;
     AuthSrv server;
     isc::server_common::portconfig::AddressList address_store_;
 private:

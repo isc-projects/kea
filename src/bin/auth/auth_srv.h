@@ -40,6 +40,11 @@
 #include <auth/statistics.h>
 
 namespace isc {
+namespace util {
+namespace io {
+class BaseSocketSessionForwarder;
+}
+}
 namespace datasrc {
 class InMemoryClient;
 }
@@ -96,7 +101,8 @@ public:
     /// but can refer to a local mock object for testing (or other
     /// experimental) purposes.
     AuthSrv(const bool use_cache,
-            isc::xfr::AbstractXfroutClient& xfrout_client);
+            isc::xfr::AbstractXfroutClient& xfrout_client,
+            isc::util::io::BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrv();
     //@}
 

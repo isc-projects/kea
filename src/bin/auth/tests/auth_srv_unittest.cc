@@ -77,7 +77,7 @@ class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
         dnss_(),
-        server(true, xfrout),
+        server(true, xfrout, ddns_forwarder),
         rrclass(RRClass::IN()),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
@@ -139,6 +139,7 @@ protected:
     MockDNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
+    MockSocketSessionForwarder ddns_forwarder;
     AuthSrv server;
     const RRClass rrclass;
     vector<uint8_t> response_data;
@@ -1383,6 +1384,22 @@ TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
     parse_message->fromWire(ibuffer);
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
+//
+// DDNS related tests
+//
+TEST_F(AuthSrvTest, DDNSForward) {
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
 }
 
 }
