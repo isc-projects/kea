@@ -31,8 +31,9 @@
 #include <dns/rrclass.h>
 
 #include <log/logger_support.h>
-
 #include <xfr/xfrout_client.h>
+
+#include <testutils/mockups.h>
 
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
@@ -52,6 +53,7 @@ using namespace isc::xfr;
 using namespace isc::bench;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
+using namespace isc::testutils;
 
 namespace {
 // Commonly used constant:
@@ -78,7 +80,7 @@ protected:
     QueryBenchMark(const bool enable_cache,
                    const BenchQueries& queries, Message& query_message,
                    OutputBuffer& buffer) :
-        server_(new AuthSrv(enable_cache, xfrout_client)),
+        server_(new AuthSrv(enable_cache, xfrout_client, ddns_forwarder)),
         queries_(queries),
         query_message_(query_message),
         buffer_(buffer),
@@ -103,6 +105,8 @@ public:
 
         return (queries_.size());
     }
+private:
+    MockSocketSessionForwarder ddns_forwarder;
 protected:
     AuthSrvPtr server_;
 private:
