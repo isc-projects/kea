@@ -209,7 +209,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode8",
+        "item_title": "Received requests opcode 8",
         "item_description": "The number of total request counts whose opcode is8 (reserved)"
       },
       {
@@ -217,7 +217,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode9",
+        "item_title": "Received requests opcode 9",
         "item_description": "The number of total request counts whose opcode is9 (reserved)"
       },
       {
@@ -225,7 +225,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode10",
+        "item_title": "Received requests opcode 10",
         "item_description": "The number of total request counts whose opcode is10 (reserved)"
       },
       {
@@ -233,7 +233,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode11",
+        "item_title": "Received requests opcode 11",
         "item_description": "The number of total request counts whose opcode is11 (reserved)"
       },
       {
@@ -241,7 +241,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode12",
+        "item_title": "Received requests opcode 12",
         "item_description": "The number of total request counts whose opcode is12 (reserved)"
       },
       {
@@ -249,7 +249,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode13",
+        "item_title": "Received requests opcode 13",
         "item_description": "The number of total request counts whose opcode is13 (reserved)"
       },
       {
@@ -257,7 +257,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode14",
+        "item_title": "Received requests opcode 14",
         "item_description": "The number of total request counts whose opcode is14 (reserved)"
       },
       {
@@ -265,7 +265,7 @@
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode15",
+        "item_title": "Received requests opcode 15",
         "item_description": "The number of total request counts whose opcode is15 (reserved)"
       }
     ]
