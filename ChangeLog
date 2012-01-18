@@ -1,3 +1,14 @@
+364.	[func]		jinmei
+	b10-auth experimentally supports statistics counters of incoming
+	requests per opcode.  The counters can be (e.g.) shown as
+	opcode.<code name> in the output of the bindctl "Stats show"
+	command, where <code name> is lower-cased textual representation
+	of opcodes ("query", "notify", etc).
+	Note: This is an experimental attempt of supporting more
+	statistics counters for b10-auth, and the interface and output may
+	change in future versions.
+	(Trac #1399, git 07206ec76e2834de35f2e1304a274865f8f8c1a5)
+
 bind10-devel-20120119 released on January 19, 2012
 
 363.	[func]		jelte
