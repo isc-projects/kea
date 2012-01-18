@@ -1,3 +1,5 @@
+bind10-devel-20120119 released on January 19, 2012
+
 363.	[func]		jelte
 	Added dummy DDNS module b10-ddns. Currently it does not
 	provide any functionality, but it is a skeleton implementation
