@@ -28,6 +28,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/io/socketsession.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -60,6 +61,7 @@ using namespace isc::data;
 using namespace isc::dns;
 using namespace isc::log;
 using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::xfr;
 
 namespace {
@@ -130,6 +132,7 @@ main(int argc, char* argv[]) {
     bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
     XfroutClient xfrout_client(getXfroutSocketPath());
+    SocketSessionForwarder ddns_forwarder("dummy");
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -139,7 +142,7 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(cache, xfrout_client);
+        auth_server = new AuthSrv(cache, xfrout_client, ddns_forwarder);
         LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
         SimpleCallback* checkin = auth_server->getCheckinProvider();

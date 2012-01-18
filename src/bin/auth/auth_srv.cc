@@ -25,6 +25,8 @@
 
 #include <boost/bind.hpp>
 
+#include <util/io/socketsession.h>
+
 #include <asiolink/asiolink.h>
 
 #include <config/ccsession.h>
@@ -71,6 +73,7 @@ using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
 using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::auth;
 using namespace isc::dns::rdata;
 using namespace isc::data;
@@ -115,7 +118,8 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client);
+    AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client,
+                BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrvImpl();
     isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
 
@@ -126,6 +130,9 @@ public:
                          OutputBuffer& buffer,
                          auto_ptr<TSIGContext> tsig_context);
     bool processNotify(const IOMessage& io_message, Message& message,
+                       OutputBuffer& buffer,
+                       auto_ptr<TSIGContext> tsig_context);
+    bool processUpdate(const IOMessage& io_message, Message& message,
                        OutputBuffer& buffer,
                        auto_ptr<TSIGContext> tsig_context);
 
@@ -189,6 +196,8 @@ private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
 
+    BaseSocketSessionForwarder& ddns_forwarder_;
+
     /// Increment query counter
     void incCounter(const int protocol);
 
@@ -199,7 +208,8 @@ private:
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
-                         AbstractXfroutClient& xfrout_client) :
+                         AbstractXfroutClient& xfrout_client,
+                         BaseSocketSessionForwarder& ddns_forwarder) :
     config_session_(NULL),
     xfrin_session_(NULL),
     memory_client_class_(RRClass::IN()),
@@ -207,7 +217,8 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     counters_(),
     keyring_(NULL),
     xfrout_connected_(false),
-    xfrout_client_(xfrout_client)
+    xfrout_client_(xfrout_client),
+    ddns_forwarder_(ddns_forwarder)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -277,9 +288,10 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client)
+AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client,
+                 BaseSocketSessionForwarder& ddns_forwarder)
 {
-    impl_ = new AuthSrvImpl(use_cache, xfrout_client);
+    impl_ = new AuthSrvImpl(use_cache, xfrout_client, ddns_forwarder);
     checkin_ = new ConfigChecker(this);
     dns_lookup_ = new MessageLookup(this);
     dns_answer_ = new MessageAnswer(this);
@@ -515,16 +527,20 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return;
     }
 
+    const Opcode opcode = message.getOpcode();
     bool send_answer = true;
     try {
         // update per opcode statistics counter.  This can only be reliable
         // after TSIG check succeeds.
         impl_->counters_.inc(message.getOpcode());
 
-        if (message.getOpcode() == Opcode::NOTIFY()) {
+        if (opcode == Opcode::NOTIFY()) {
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
-        } else if (message.getOpcode() != Opcode::QUERY()) {
+        } else if (opcode == Opcode::UPDATE()) {
+            send_answer = impl_->processUpdate(io_message, message, buffer,
+                                               tsig_context);
+        } else if (opcode != Opcode::QUERY()) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                       .arg(message.getOpcode().toText());
             makeErrorMessage(impl_->renderer_, message, buffer,
@@ -534,7 +550,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                              Rcode::FORMERR(), tsig_context);
         } else {
             ConstQuestionPtr question = *message.beginQuestion();
-            const RRType &qtype = question->getType();
+            const RRType& qtype = question->getType();
             if (qtype == RRType::AXFR()) {
                 send_answer = impl_->processXfrQuery(io_message, message,
                                                      buffer, tsig_context);
@@ -738,6 +754,17 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         message.toWire(renderer_);
     }
     return (true);
+}
+
+bool
+AuthSrvImpl::processUpdate(const IOMessage& /*io_message*/,
+                           Message& /*message*/, 
+                           OutputBuffer& /*buffer*/,
+                           std::auto_ptr<TSIGContext> /*tsig_context*/)
+{
+    // hardcode for initial test
+    ddns_forwarder_.connectToReceiver();
+    return (false);
 }
 
 void
