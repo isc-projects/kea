@@ -21,7 +21,6 @@
 #include <exceptions/exceptions.h>
 
 #include <net/if.h>
-#include <linux/if_link.h>
 #include <linux/rtnetlink.h>
 
 using namespace std;
