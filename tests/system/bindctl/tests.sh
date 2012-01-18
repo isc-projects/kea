@@ -27,6 +27,7 @@ n=0
 # TODO: consider consistency with statistics definition in auth.spec
 auth_queries_tcp="\<queries\.tcp\>"
 auth_queries_udp="\<queries\.udp\>"
+auth_opcode_queries="\<opcode\.query\>"
 
 echo "I:Checking b10-auth is working by default ($n)"
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
@@ -46,6 +47,7 @@ echo 'Stats show
 # sent from the server startup script)
 grep $auth_queries_tcp".*\<1\>" bindctl.out.$n > /dev/null || status=1
 grep $auth_queries_udp".*\<1\>" bindctl.out.$n > /dev/null || status=1
+grep $auth_opcode_queries".*\<2\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
@@ -80,6 +82,7 @@ echo 'Stats show
 # The statistics counters should have been reset while stop/start.
 grep $auth_queries_tcp".*\<0\>" bindctl.out.$n > /dev/null || status=1
 grep $auth_queries_udp".*\<1\>" bindctl.out.$n > /dev/null || status=1
+grep $auth_opcode_queries".*\<1\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
@@ -104,6 +107,7 @@ echo 'Stats show
 # The statistics counters shouldn't be reset due to hot-swapping datasource.
 grep $auth_queries_tcp".*\<0\>" bindctl.out.$n > /dev/null || status=1
 grep $auth_queries_udp".*\<2\>" bindctl.out.$n > /dev/null || status=1
+grep $auth_opcode_queries".*\<2\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
