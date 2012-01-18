@@ -30,6 +30,8 @@
 #include <dns/question.h>
 #include <dns/rrclass.h>
 
+#include <log/logger_support.h>
+
 #include <xfr/xfrout_client.h>
 
 #include <auth/auth_srv.h>
@@ -44,6 +46,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::auth;
 using namespace isc::dns;
+using namespace isc::log;
 using namespace isc::util;
 using namespace isc::xfr;
 using namespace isc::bench;
@@ -230,6 +233,10 @@ main(int argc, char* argv[]) {
     }
     const char* const datasrc_file = argv[0];
     const char* const query_data_file = argv[1];
+
+    // We disable logging to avoid unwanted noise. (We may eventually want to
+    // make it more configurable)
+    initLogger("query-bench", isc::log::NONE);
 
     DataSrcType datasrc_type = SQLITE3;
     if (strcmp(opt_datasrc_type, "sqlite3") == 0) {
