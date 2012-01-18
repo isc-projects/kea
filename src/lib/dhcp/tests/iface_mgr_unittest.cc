@@ -770,7 +770,8 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
 // Things that are not tested:
 // - ifindex (ifconfig does not print it out)
 // - address scopes and lifetimes (we don't need it, so it is not implemented in IfaceMgr)
-TEST_F(IfaceMgrTest, detectIfaces_linux) {
+// TODO: temporarily disabled, see ticket #1529
+TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
     IfaceMgr::IfaceCollection& detectedIfaces = ifacemgr->getIfacesLst();
