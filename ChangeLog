@@ -116,7 +116,7 @@ bind10-devel-20120119 released on January 19, 2012
 	(Trac #1405, git 2f0aa20b44604b671e6bde78815db39381e563bf)
 
 347.	[bug]		jelte
-	Fixed a bug where adding Zonemgr/secondary_zones without explicitely
+	Fixed a bug where adding Zonemgr/secondary_zones without explicitly
 	setting the class value of the added zone resulted in a cryptic
 	error in bindctl ("Error: class"). It will now correctly default to
 	IN if not set. This also adds better checks on the name and class
@@ -222,7 +222,7 @@ bind10-devel-20120119 released on January 19, 2012
 
 332.	[bug]		vorner
 	C++ exceptions in the isc.dns.Rdata wrapper are now converted
-	to python ones instead of just aborting the interpretter.
+	to python ones instead of just aborting the interpreter.
 	(Trac #1407, git 5b64e839be2906b8950f5b1e42a3fadd72fca033)
 
 bind10-devel-20111128 released on November 28, 2011
@@ -1331,7 +1331,7 @@ bind10-devel-20110224 released on February 24, 2011
 163.	[func]		vorner
 	The pimpl design pattern is used in UDPServer, with a shared
 	pointer. This makes it smaller to copy (which is done a lot as a
-	sideeffect of being coroutine) and speeds applications of this
+	side effect of being coroutine) and speeds applications of this
 	class (notably b10-auth) up by around 10%.
 	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
 
