@@ -457,12 +457,20 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
                                           io_message.getDataSize());
     }
 
-    bool sendAnswer = true;
     if (tsig_error != TSIGError::NOERROR()) {
         makeErrorMessage(message, buffer, tsig_error.toRcode(), tsig_context);
-    } else if (message->getOpcode() == Opcode::NOTIFY()) {
-        sendAnswer = impl_->processNotify(io_message, message, buffer,
-                                          tsig_context);
+        server->resume(true);
+        return;
+    }
+
+    // update per opcode statistics counter.  This can only be reliable after
+    // TSIG check succeeds.
+    impl_->counters_.inc(message->getOpcode());
+
+    bool send_answer = true;
+    if (message->getOpcode() == Opcode::NOTIFY()) {
+        send_answer = impl_->processNotify(io_message, message, buffer,
+                                           tsig_context);
     } else if (message->getOpcode() != Opcode::QUERY()) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                   .arg(message->getOpcode().toText());
@@ -473,18 +481,18 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         ConstQuestionPtr question = *message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
-            sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
-                                                tsig_context);
+            send_answer = impl_->processXfrQuery(io_message, message, buffer,
+                                                 tsig_context);
         } else if (qtype == RRType::IXFR()) {
-            sendAnswer = impl_->processXfrQuery(io_message, message, buffer,
-                                                tsig_context);
+            send_answer = impl_->processXfrQuery(io_message, message, buffer,
+                                                 tsig_context);
         } else {
-            sendAnswer = impl_->processNormalQuery(io_message, message, buffer,
-                                                   tsig_context);
+            send_answer = impl_->processNormalQuery(io_message, message,
+                                                    buffer, tsig_context);
         }
     }
 
-    server->resume(sendAnswer);
+    server->resume(send_answer);
 }
 
 bool
@@ -768,6 +776,11 @@ bool AuthSrv::submitStatistics() const {
 uint64_t
 AuthSrv::getCounter(const AuthCounters::ServerCounterType type) const {
     return (impl_->counters_.getCounter(type));
+}
+
+uint64_t
+AuthSrv::getCounter(const Opcode opcode) const {
+    return (impl_->counters_.getCounter(opcode));
 }
 
 const AddressList&
