@@ -25,16 +25,18 @@ import isc.util.io.socketsession
 
 class FakeSocket:
     """
-    A fake socket. It only provides a file number.
+    A fake socket. It only provides a file number, peer name and accept method.
     """
     def __init__(self, fileno):
         self.__fileno = fileno
     def fileno(self):
         return self.__fileno
+    def getpeername(self):
+        return "fake_unix_socket"
     def accept(self):
         return FakeSocket(self.__fileno + 1)
 
-class FakeSession:
+class FakeSessionReceiver:
     """
     A fake socket session receiver, for our tests.
     """
@@ -96,7 +98,7 @@ class TestDDNSServer(unittest.TestCase):
         cc_session = MyCCSession()
         self.assertFalse(cc_session._started)
         self.ddns_server = ddns.DDNSServer(cc_session)
-        self.cc_session = cc_session
+        self.__cc_session = cc_session
         self.assertTrue(cc_session._started)
         self.__select_expected = None
         self.__select_answer = None
@@ -184,7 +186,7 @@ class TestDDNSServer(unittest.TestCase):
         Test the check_command is called when there's something on the
         socket.
         """
-        self.cc_session.check_command = self.__hook
+        self.__cc_session.check_command = self.__hook
         self.__select_expected = ([1, 2], [], [], None)
         self.__select_answer = ([1], [], [])
         self.ddns_server.run()
@@ -200,25 +202,30 @@ class TestDDNSServer(unittest.TestCase):
         Test that we can accept a new connection.
         """
         # There's nothing before the accept
-        ddns.isc.util.io.socketsession.SocketSessionReceiver = FakeSession
-        self.assertEqual({}, self.ddns_server._socket_sessions)
+        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
+            FakeSessionReceiver
+        self.assertEqual({}, self.ddns_server._socksession_receivers)
         self.ddns_server.accept()
         # Now the new socket session receiver is stored in the dict
-        self.assertEqual([3], list(self.ddns_server._socket_sessions.keys()))
-        (socket, session) = self.ddns_server._socket_sessions[3]
+        # The 3 comes from _listen_socket.accept() - _listen_socket has
+        # fileno 2 and accept returns socket with fileno increased by one.
+        self.assertEqual([3],
+                         list(self.ddns_server._socksession_receivers.keys()))
+        (socket, receiver) = self.ddns_server._socksession_receivers[3]
         self.assertTrue(isinstance(socket, FakeSocket))
         self.assertEqual(3, socket.fileno())
-        self.assertTrue(isinstance(session, FakeSession))
-        self.assertEqual(socket, session.socket())
+        self.assertTrue(isinstance(receiver, FakeSessionReceiver))
+        self.assertEqual(socket, receiver.socket())
 
     def test_incoming_called(self):
         """
-        Test the run calls handle_incoming when there's something on the
+        Test the run calls handle_session when there's something on the
         socket.
         """
         socket = FakeSocket(3)
-        self.ddns_server._socket_sessions = {3: (socket, FakeSession(socket))}
-        self.ddns_server.handle_incoming = self.__hook
+        self.ddns_server._socksession_receivers = \
+            {3: (socket, FakeSessionReceiver(socket))}
+        self.ddns_server.handle_session = self.__hook
         self.__select_expected = ([1, 2, 3], [], [], None)
         self.__select_answer = ([3], [], [])
         self.ddns_server.run()
@@ -226,47 +233,47 @@ class TestDDNSServer(unittest.TestCase):
         self.assertIsNone(self.__select_answer)
         self.assertEqual(3, self.__hook_called)
 
-    def test_handle_incoming_ok(self):
+    def test_handle_session_ok(self):
         """
-        Test the handle_incoming pops the session and calls handle_request
+        Test the handle_session pops the receiver and calls handle_request
         when everything is OK.
         """
         socket = FakeSocket(3)
-        session = FakeSession(socket)
+        receiver = FakeSessionReceiver(socket)
         # It doesn't really matter what data we use here, it is only passed
         # through the code
         param = (FakeSocket(4), ('127.0.0.1', 1234), ('127.0.0.1', 1235),
                  'Some data')
         def pop():
             return param
-        # Prepare data into the session
-        session.pop = pop
-        self.ddns_server._socket_sessions = {3: (socket, session)}
+        # Prepare data into the receiver
+        receiver.pop = pop
+        self.ddns_server._socksession_receivers = {3: (socket, receiver)}
         self.ddns_server.handle_request = self.__hook
         # Call it
-        self.ddns_server.handle_incoming(3)
+        self.ddns_server.handle_session(3)
         # The popped data are passed into the handle_request
         self.assertEqual(param, self.__hook_called)
-        # The sessions are kept the same
-        self.assertEqual({3: (socket, session)},
-                         self.ddns_server._socket_sessions)
+        # The receivers are kept the same
+        self.assertEqual({3: (socket, receiver)},
+                         self.ddns_server._socksession_receivers)
 
-    def test_handle_incoming_fail(self):
+    def test_handle_session_fail(self):
         """
-        Test the handle_incoming removes (and closes) the socket and session
-        when the session complains.
+        Test the handle_session removes (and closes) the socket and receiver
+        when the receiver complains.
         """
         socket = FakeSocket(3)
-        session = FakeSession(socket)
+        receiver = FakeSessionReceiver(socket)
         def pop():
             raise isc.util.io.socketsession.SocketSessionError('Test error')
-        session.pop = pop
+        receiver.pop = pop
         socket.close = self.__hook
         self.__hook_called = False
-        self.ddns_server._socket_sessions = {3: (socket, session)}
-        self.ddns_server.handle_incoming(3)
-        # The "dead" session is removed
-        self.assertEqual({}, self.ddns_server._socket_sessions)
+        self.ddns_server._socksession_receivers = {3: (socket, receiver)}
+        self.ddns_server.handle_session(3)
+        # The "dead" receiver is removed
+        self.assertEqual({}, self.ddns_server._socksession_receivers)
         # Close is called with no parameter, so the default None
         self.assertIsNone(self.__hook_called)
 
