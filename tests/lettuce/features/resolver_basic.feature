@@ -2,7 +2,7 @@ Feature: Basic Resolver
     This feature set is just testing the execution of the b10-resolver
     module. It sees whether it starts up, takes configuration, and
     answers queries.
-    
+
     Scenario: Listen for and answer query
         # This scenario starts a server that runs a real resolver.
         # In order not to send out queries into the wild, we only
