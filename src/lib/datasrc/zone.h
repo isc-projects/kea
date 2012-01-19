@@ -15,6 +15,9 @@
 #ifndef __ZONE_H
 #define __ZONE_H 1
 
+#include <utility>
+#include <vector>
+
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
 
@@ -305,6 +308,10 @@ public:
     virtual FindResult findAll(const isc::dns::Name& name,
                                std::vector<isc::dns::ConstRRsetPtr> &target,
                                const FindOptions options = FIND_DEFAULT) = 0;
+
+    /// TBD
+    virtual std::pair<bool, isc::dns::ConstRRsetPtr>
+    findNSEC3(const isc::dns::Name& name, bool recursive) = 0;
 
     /// \brief Get previous name in the zone
     ///
