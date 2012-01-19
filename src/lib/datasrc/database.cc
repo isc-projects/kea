@@ -892,6 +892,12 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
     }
 }
 
+pair<bool, isc::dns::ConstRRsetPtr>
+DatabaseClient::Finder::findNSEC3(const isc::dns::Name&, bool) {
+    isc_throw(NotImplemented, "findNSEC3 is not yet implemented for database "
+              "data source");
+}
+
 Name
 DatabaseClient::Finder::findPreviousName(const Name& name) const {
     const string str(accessor_->findPreviousName(zone_id_,

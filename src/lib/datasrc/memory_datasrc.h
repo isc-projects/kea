@@ -83,6 +83,10 @@ public:
                                std::vector<isc::dns::ConstRRsetPtr>& target,
                                const FindOptions options = FIND_DEFAULT);
 
+    /// TBD
+    virtual std::pair<bool, isc::dns::ConstRRsetPtr>
+    findNSEC3(const isc::dns::Name& name, bool recursive);
+
     /// \brief Imelementation of the ZoneFinder::findPreviousName method
     ///
     /// This one throws NotImplemented exception, as InMemory doesn't

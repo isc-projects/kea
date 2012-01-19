@@ -754,6 +754,10 @@ public:
         virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
             const;
 
+        /// TBD
+	virtual std::pair<bool, isc::dns::ConstRRsetPtr>
+		findNSEC3(const isc::dns::Name& name, bool recursive);
+
         /// \brief The zone ID
         ///
         /// This function provides the stored zone ID as passed to the
