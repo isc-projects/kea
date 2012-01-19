@@ -20,6 +20,7 @@ import isc
 import ddns
 import isc.config
 import select
+import errno
 import isc.util.io.socketsession
 
 class FakeSocket:
@@ -99,6 +100,7 @@ class TestDDNSServer(unittest.TestCase):
         self.assertTrue(cc_session._started)
         self.__select_expected = None
         self.__select_answer = None
+        self.__select_exception = None
         self.__hook_called = False
         self.ddns_server._listen_socket = FakeSocket(2)
         ddns.select.select = self.__select
@@ -140,9 +142,16 @@ class TestDDNSServer(unittest.TestCase):
         """
         A fake select. It checks it was called with the correct parameters and
         returns a preset answer.
+
+        If there's an exception stored in __select_exception, it is raised
+        instead and the exception is cleared.
         """
         self.assertEqual(self.__select_expected, (reads, writes, exceptions,
                                                   timeout))
+        if self.__select_exception is not None:
+            (self.__select_exception, exception) = (None,
+                                                    self.__select_exception)
+            raise exception
         answer = self.__select_answer
         self.__select_answer = None
         self.ddns_server._shutdown = True
@@ -260,6 +269,25 @@ class TestDDNSServer(unittest.TestCase):
         self.assertEqual({}, self.ddns_server._socket_sessions)
         # Close is called with no parameter, so the default None
         self.assertIsNone(self.__hook_called)
+
+    def test_select_exception_ignored(self):
+        """
+        Test that the EINTR is ignored in select.
+        """
+        # Prepare the EINTR exception
+        self.__select_exception = select.error(errno.EINTR)
+        # We reuse the test here, as it should act the same. The exception
+        # should just get ignored.
+        self.test_check_command_called()
+
+    def test_select_exception_fatal(self):
+        """
+        Test that other exceptions are fatal to the run.
+        """
+        # Prepare a different exception
+        self.__select_exception = select.error(errno.EBADF)
+        self.__select_expected = ([1, 2], [], [], None)
+        self.assertRaises(select.error, self.ddns_server.run)
 
 class TestMain(unittest.TestCase):
     def setUp(self):
