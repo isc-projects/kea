@@ -39,11 +39,6 @@ authoritative server shuts down, the connection would get closed. It also
 can mean the system is busy and can't keep up or that the other side got
 confused and sent bad data.
 
-% DDNS_INCOMING incoming activity on file descriptor %1
-A debug message, informing there's some activity on the given file descriptor.
-It will be either a request or the file descriptor will be closed. See
-following log messages to see what of it.
-
 % DDNS_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
 There was a problem in the lower level module handling configuration and
 control commands.  This could happen for various reasons, but the most likely
@@ -51,9 +46,11 @@ cause is that the configuration database contains a syntax error and ddns
 failed to start at initialization.  A detailed error message from the module
 will also be displayed.
 
-% DDNS_NEW_CONN new connection on file descriptor %1
+% DDNS_NEW_CONN new connection on file descriptor %1 from %2
 Debug message. We received a connection and we are going to start handling
-requests from it.
+requests from it. The file descriptor number and the address where the request
+comes from is logged. The connection is over a unix domain socket and is likely
+coming from a b10-auth process.
 
 % DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received
 The ddns process received a shutdown command from the command channel
@@ -62,6 +59,11 @@ and will now shut down.
 % DDNS_RUNNING ddns server is running and listening for updates
 The ddns process has successfully started and is now ready to receive commands
 and updates.
+
+% DDNS_SESSION session arrived on file descriptor %1
+A debug message, informing there's some activity on the given file descriptor.
+It will be either a request or the file descriptor will be closed. See
+following log messages to see what of it.
 
 % DDNS_SHUTDOWN ddns server shutting down
 The ddns process is shutting down. It will no longer listen for new commands
