@@ -25,6 +25,7 @@ from isc.cc import SessionError, SessionTimeout
 import isc.util.process
 import isc.util.io.socketsession
 import select
+import errno
 
 from isc.log_messages.ddns_messages import *
 
@@ -184,10 +185,18 @@ class DDNSServer:
             # make such a distinction easily, but once we do, this would
             # be the place to catch.
 
-            # TODO: Catch select exceptions, like EINTR
-            (reads, writes, exceptions) = \
-                select.select([cc_fileno, listen_fileno] +
-                              list(self._socket_sessions.keys()), [], [])
+            try:
+                (reads, writes, exceptions) = \
+                    select.select([cc_fileno, listen_fileno] +
+                                  list(self._socksession_receivers.keys()), [],
+                                  [])
+            except select.error as se:
+                # In case it is just interrupted, we continue like nothing
+                # happened
+                if se.args[0] == errno.EINTR:
+                    (reads, writes, exceptions) = ([], [], [])
+                else:
+                    raise
             for fileno in reads:
                 if fileno == cc_fileno:
                     self._cc.check_command(True)
