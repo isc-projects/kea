@@ -216,6 +216,11 @@ public:
                                std::vector<ConstRRsetPtr>& target,
                                const FindOptions options = FIND_DEFAULT);
 
+    virtual pair<bool, ConstRRsetPtr>
+    findNSEC3(const Name& /*name*/, bool /*recursive*/) {
+        throw 42;                // temporary
+    }
+
     // If false is passed, it makes the zone broken as if it didn't have the
     // SOA.
     void setSOAFlag(bool on) { has_SOA_ = on; }
