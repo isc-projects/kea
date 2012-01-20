@@ -387,24 +387,6 @@ public:
     /// extend this method so that, e.g., the caller can specify the parameter
     /// set.
     ///
-    /// This method takes an optional parameter \c known_encloser.  If it's
-    /// non NULL, its owner name must be the closest encloser of \c name.
-    /// Its RR type is expected to be NSEC3, but other attributes other than
-    /// the owner name is not important for this method and will generally be
-    /// ignored.  When this parameter is provided, the actual implementation
-    /// of the derived class can use it as a hint for identifying the closest
-    /// provable encloser (it can be helpful if \c name is known to be non
-    /// existent and possibly contains many labels below the closest encloser).
-    /// The underlying data source may also specialize the RRset to hold
-    /// some information specific to the data source implementation to allow
-    /// further optimization.  Whether or not this parameter is non NULL,
-    /// the result of this method should be the same; this parameter is only
-    /// provided to possibly enable some implementation specific optimization.
-    /// When it's non NULL, however, its owner name must be equal to \c name
-    /// when \c recursive is false and must be a real (non equal) super domain
-    /// of \c name when \c recursive is true; otherwise
-    /// \c isc::InvalidParameter exception will be thrown.
-    ///
     /// In general, this method expects the zone is properly signed with NSEC3
     /// RRs.  Specifically, it assumes at least the apex node has a matching
     /// NSEC3 RR (so the search in the recursive mode must always succeed);
@@ -412,8 +394,7 @@ public:
     /// algorithm, and salt) from the zone as noted above.  If these
     /// assumptions aren't met, \c DataSourceError exception will be thrown.
     ///
-    /// \exception InvalidParameter name is not a subdomain of the zone origin;
-    /// known_encloser does not meet the requirement (see above)
+    /// \exception InvalidParameter name is not a subdomain of the zone origin
     /// \exception DataSourceError Low-level or internal datasource errors
     /// happened, or the zone isn't properly signed with NSEC3
     /// (NSEC3 parameters cannot be found, no NSEC3s are available, etc).
@@ -424,15 +405,11 @@ public:
     /// be a subdomain of the zone.
     /// \param recursive Whether or not search should continue until it finds
     /// a provable encloser (see above).
-    /// \param known_encloser If non NULL, specifies the closest encloser
-    /// (may or may not be provable) of \c name via its owner name.
     ///
     /// \return The search result and whether or not the closest_proof is
     /// a matching NSEC3, in the form of \c FindNSEC3Result object.
     virtual FindNSEC3Result
-    findNSEC3(const isc::dns::Name& name, bool recursive,
-              const isc::dns::ConstRRsetPtr known_encloser =
-              isc::dns::ConstRRsetPtr()) = 0;
+    findNSEC3(const isc::dns::Name& name, bool recursive) = 0;
 
     /// \brief Get previous name in the zone
     ///
