@@ -310,7 +310,20 @@ public:
                                const FindOptions options = FIND_DEFAULT) = 0;
 
     /// TBD
-    virtual std::pair<bool, isc::dns::ConstRRsetPtr>
+    struct FindNSEC3Result {
+        FindNSEC3Result(bool param_matched,
+                        isc::dns::ConstRRsetPtr param_closest_proof,
+                        isc::dns::ConstRRsetPtr param_next_proof) :
+            matched(param_matched), closest_proof(param_closest_proof),
+            next_proof(param_next_proof)
+        {}
+        const bool matched;
+        const isc::dns::ConstRRsetPtr closest_proof;
+        const isc::dns::ConstRRsetPtr next_proof;
+    };
+
+    /// TBD
+    virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive) = 0;
 
     /// \brief Get previous name in the zone

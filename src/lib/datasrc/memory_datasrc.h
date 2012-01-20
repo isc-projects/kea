@@ -84,7 +84,7 @@ public:
                                const FindOptions options = FIND_DEFAULT);
 
     /// TBD
-    virtual std::pair<bool, isc::dns::ConstRRsetPtr>
+    virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive);
 
     /// \brief Imelementation of the ZoneFinder::findPreviousName method

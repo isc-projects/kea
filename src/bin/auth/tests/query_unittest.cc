@@ -19,6 +19,8 @@
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/masterload.h>
 #include <dns/message.h>
 #include <dns/name.h>
@@ -153,6 +155,14 @@ const char* const nsec_www_txt =
 // Authoritative data without NSEC
 const char* const nonsec_a_txt = "nonsec.example.com. 3600 IN A 192.0.2.0\n";
 
+// NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
+const char* const nsec3_apex_txt =
+    "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG\n";
+const char* const nsec3_www_txt =
+    "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+
 // A helper function that generates a textual representation of RRSIG RDATA
 // for the given covered type.  The resulting RRSIG may not necessarily make
 // sense in terms of the DNSSEC protocol, but for our testing purposes it's
@@ -197,7 +207,8 @@ public:
             wild_txt << nsec_wild_txt << cnamewild_txt << nsec_cnamewild_txt <<
             wild_txt_nxrrset << nsec_wild_txt_nxrrset << wild_txt_next <<
             nsec_wild_txt_next << empty_txt << nsec_empty_txt <<
-            empty_prev_txt << nsec_empty_prev_txt;
+            empty_prev_txt << nsec_empty_prev_txt <<
+            nsec3_apex_txt << nsec3_www_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -206,6 +217,17 @@ public:
                                                     RRClass::IN(),
                                                     RRType::NSEC(),
                                                     RRTTL(3600)));
+
+        // (Faked) NSEC3 hash map.  For convenience we use hardcoded built-in
+        // map instead of calculating and using actual hash.
+        // The used hash values are borrowed from RFC5155 examples.
+        hash_map_[Name("example.com")] = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("nxdomain.example.com")] =
+            "v644ebqk9bibcna874givr6joj62mlhv";
+        hash_map_[Name("nxdomain2.example.com")] =
+            "q00jkcevqvmu85r014c7dkba38o0ji5r";
+        hash_map_[Name("nxdomain3.example.com")] =
+            "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
@@ -216,10 +238,8 @@ public:
                                std::vector<ConstRRsetPtr>& target,
                                const FindOptions options = FIND_DEFAULT);
 
-    virtual pair<bool, ConstRRsetPtr>
-    findNSEC3(const Name& /*name*/, bool /*recursive*/) {
-        throw 42;                // temporary
-    }
+    virtual ZoneFinder::FindNSEC3Result
+    findNSEC3(const Name& name, bool recursive);
 
     // If false is passed, it makes the zone broken as if it didn't have the
     // SOA.
@@ -254,7 +274,19 @@ private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
     typedef map<Name, RRsetStore> Domains;
     Domains domains_;
+    Domains nsec3_domains_;
     void loadRRset(RRsetPtr rrset) {
+        if (rrset->getType() == RRType::NSEC3()) {
+            // NSEC3 should go to the dedicated table
+            nsec3_domains_[rrset->getName()][rrset->getType()] = rrset;
+
+            // By nature it should have RRSIG.  (We may want to selectively
+            // omit this to test pathological cases).
+            rrset->addRRsig(RdataPtr(new generic::RRSIG(
+                                         getCommonRRSIGText(rrset->getType().
+                                                            toText()))));
+            return;
+        }
         domains_[rrset->getName()][rrset->getType()] = rrset;
         if (rrset->getName() == delegation_name_ &&
             rrset->getType() == RRType::NS()) {
@@ -291,6 +323,7 @@ private:
     // The following two will be used for faked NSEC cases
     Name nsec_name_;
     boost::scoped_ptr<ZoneFinder::FindResult> nsec_result_;
+    map<Name, string> hash_map_;
 };
 
 // A helper function that generates a new RRset based on "wild_rrset",
@@ -332,6 +365,49 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
     return (result);
 }
 
+ZoneFinder::FindNSEC3Result
+MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    ConstRRsetPtr covering_proof;
+    const int labels = name.getLabelCount();
+
+    // For brevity, we assume several things below: maps should have an
+    // expected entry when operator[] is used; maps are not empty.
+    for (int i = 0; i < labels; ++i) {
+        const string hlabel = hash_map_[name.split(i, labels - i)];
+        const Name hname = Name(hlabel + ".example.com");
+        // We don't use const_iterator so that we can use operator[] below
+        Domains::iterator found_domain = nsec3_domains_.lower_bound(hname);
+
+        // If the given hash is larger than the largest stored hash or
+        // the first label doesn't match the target, identify the "previous"
+        // hash value and remember it as the candidate next closer proof.
+        if (found_domain == nsec3_domains_.end() ||
+            found_domain->first.split(0, 1).toText(true) != hlabel) {
+            // If the given hash is larger or smaller than everything,
+            // the covering proof is the NSEC3 that has the largest hash.
+            if (found_domain == nsec3_domains_.end() ||
+                found_domain == nsec3_domains_.begin()) {
+                covering_proof =
+                    nsec3_domains_.rbegin()->second[RRType::NSEC3()];
+            } else {
+                // Otherwise, H(found_domain-1) < given_hash < H(found_domain)
+                // The covering proof is the first one.
+                covering_proof = (--found_domain)->second[RRType::NSEC3()];
+            }
+            if (!recursive) {   // in non recursive mode, we are done.
+                return (ZoneFinder::FindNSEC3Result(false, covering_proof,
+                                                    ConstRRsetPtr()));
+            }
+        } else {                // exact match
+            return (ZoneFinder::FindNSEC3Result(
+                        true,
+                        found_domain->second[RRType::NSEC3()],
+                        covering_proof));
+        }
+    }
+    isc_throw(isc::Unexpected, "findNSEC3() isn't expected to fail");
+}
+
 ZoneFinder::FindResult
 MockZoneFinder::find(const Name& name, const RRType& type,
                      const FindOptions options)
@@ -367,7 +443,7 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             ConstRRsetPtr rrset;
             // Strip whatever signature there is in case DNSSEC is not required
             // Just to make sure the Query asks for it when it is needed
-            if (options & ZoneFinder::FIND_DNSSEC ||
+            if ((options & ZoneFinder::FIND_DNSSEC) != 0 ||
                 include_rrsig_anyway_ ||
                 !found_rrset->second->getRRsig()) {
                 rrset = found_rrset->second;
@@ -1320,6 +1396,67 @@ TEST_F(QueryTest, MaxLenDNAME) {
         }
     }
     EXPECT_TRUE(ok) << "The synthetized CNAME not found";
+}
+
+// Test for this test module itself
+TEST_F(QueryTest, findNSEC3) {
+    typedef ZoneFinder::FindNSEC3Result FindNSEC3Result; // for brevity
+    vector<ConstRRsetPtr> actual;
+
+    // Apex name.  It should have a matching NSEC3
+    const FindNSEC3Result result1 =
+        mock_finder->findNSEC3(Name("example.com"), false);
+    ASSERT_TRUE(result1.matched);
+    actual.push_back(result1.closest_proof);
+    rrsetsCheck(nsec3_apex_txt, actual.begin(), actual.end());
+    EXPECT_FALSE(result1.next_proof);
+
+    // Recursive mode doesn't change the result in this case.
+    actual.clear();
+    const FindNSEC3Result result2 =
+        mock_finder->findNSEC3(Name("example.com"), true);
+    ASSERT_TRUE(result2.matched);
+    actual.push_back(result2.closest_proof);
+    rrsetsCheck(nsec3_apex_txt, actual.begin(), actual.end());
+    EXPECT_FALSE(result2.next_proof);
+
+    // Non existent name.  Disabling recursive, a covering NSEC3 should be
+    // returned.
+    actual.clear();
+    const FindNSEC3Result result3 =
+        mock_finder->findNSEC3(Name("nxdomain.example.com"), false);
+    ASSERT_FALSE(result3.matched);
+    actual.push_back(result3.closest_proof);
+    rrsetsCheck(nsec3_www_txt, actual.begin(), actual.end());
+    EXPECT_FALSE(result3.next_proof);
+
+    // Non existent name.  The closest provable enclosure is the apex,
+    // and next closer is the query name.
+    actual.clear();
+    const FindNSEC3Result result4 =
+        mock_finder->findNSEC3(Name("nxdomain.example.com"), true);
+    ASSERT_TRUE(result4.matched);
+    actual.push_back(result4.closest_proof);
+    actual.push_back(result4.next_proof);
+    rrsetsCheck(string(nsec3_apex_txt) + string(nsec3_www_txt), actual.begin(),
+                actual.end());
+
+    // In the rest of test we check hash comparison for wrap around cases.
+    actual.clear();
+    const FindNSEC3Result result5 =
+        mock_finder->findNSEC3(Name("nxdomain2.example.com"), false);
+    ASSERT_FALSE(result5.matched);
+    actual.push_back(result5.closest_proof);
+    rrsetsCheck(nsec3_apex_txt, actual.begin(), actual.end());
+    EXPECT_FALSE(result5.next_proof);
+
+    actual.clear();
+    const FindNSEC3Result result6 =
+        mock_finder->findNSEC3(Name("nxdomain3.example.com"), false);
+    ASSERT_FALSE(result6.matched);
+    actual.push_back(result6.closest_proof);
+    rrsetsCheck(nsec3_www_txt, actual.begin(), actual.end());
+    EXPECT_FALSE(result6.next_proof);
 }
 
 }
