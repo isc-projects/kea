@@ -641,7 +641,7 @@ InMemoryZoneFinder::findAll(const Name& name,
     return (impl_->find(name, RRType::ANY(), &target, options));
 }
 
-pair<bool, isc::dns::ConstRRsetPtr>
+ZoneFinder::FindNSEC3Result
 InMemoryZoneFinder::findNSEC3(const isc::dns::Name&, bool) {
     isc_throw(NotImplemented, "findNSEC3 is not yet implemented for in memory "
               "data source");

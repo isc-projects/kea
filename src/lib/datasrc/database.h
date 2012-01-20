@@ -755,8 +755,8 @@ public:
             const;
 
         /// TBD
-	virtual std::pair<bool, isc::dns::ConstRRsetPtr>
-		findNSEC3(const isc::dns::Name& name, bool recursive);
+	virtual FindNSEC3Result
+        findNSEC3(const isc::dns::Name& name, bool recursive);
 
         /// \brief The zone ID
         ///
