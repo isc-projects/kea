@@ -517,34 +517,36 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                 domain = domains_.find(Name("*").concatenate(wild_suffix));
                 // Matched the QNAME
                 if (domain != domains_.end()) {
-                   RRsetStore::const_iterator found_rrset =
-                       domain->second.find(type);
-                   // Matched the QTYPE
-                   if(found_rrset != domain->second.end()) {
-                    return (FindResult(WILDCARD,
-                            substituteWild(*found_rrset->second, name)));
-                   } else {
-                   // No matched QTYPE, this case is for WILDCARD_NXRRSET
-                     found_rrset = domain->second.find(RRType::NSEC());
-                     assert(found_rrset != domain->second.end());
-                     Name newName = Name("*").concatenate(wild_suffix);
-                     return (FindResult(WILDCARD_NXRRSET,
-                           substituteWild(*found_rrset->second,newName)));
-                   }
-                 } else {
+                    RRsetStore::const_iterator found_rrset =
+                        domain->second.find(type);
+                    // Matched the QTYPE
+                    if(found_rrset != domain->second.end()) {
+                        return (FindResult(WILDCARD,
+                                           substituteWild(
+                                               *found_rrset->second, name)));
+                    } else {
+                        // No matched QTYPE, this case is for WILDCARD_NXRRSET
+                        found_rrset = domain->second.find(RRType::NSEC());
+                        assert(found_rrset != domain->second.end());
+                        Name newName = Name("*").concatenate(wild_suffix);
+                        return (FindResult(WILDCARD_NXRRSET,
+                                           substituteWild(
+                                               *found_rrset->second,newName)));
+                    }
+                } else {
                     // This is empty non terminal name case on wildcard.
                     Name emptyName = Name("*").concatenate(wild_suffix);
                     for (Domains::reverse_iterator it = domains_.rbegin();
-                        it != domains_.rend();
-                        ++it) {
-                            RRsetStore::const_iterator nsec_it;
-                            if ((*it).first < emptyName &&
+                         it != domains_.rend();
+                         ++it) {
+                        RRsetStore::const_iterator nsec_it;
+                        if ((*it).first < emptyName &&
                             (nsec_it = (*it).second.find(RRType::NSEC()))
                             != (*it).second.end()) {
-                                return (FindResult(WILDCARD_NXRRSET,
-                                                   (*nsec_it).second));
-                            }
+                            return (FindResult(WILDCARD_NXRRSET,
+                                               (*nsec_it).second));
                         }
+                    }
                 }
                 return (FindResult(WILDCARD_NXRRSET,RRsetPtr()));
              }
