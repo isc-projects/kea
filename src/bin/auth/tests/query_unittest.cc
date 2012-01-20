@@ -224,6 +224,10 @@ public:
         hash_map_[Name("example.com")] = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
         hash_map_[Name("nxdomain.example.com")] =
             "v644ebqk9bibcna874givr6joj62mlhv";
+        hash_map_[Name("nx.domain.example.com")] =
+            "v644ebqk9bibcna874givr6joj62mlhv";
+        hash_map_[Name("domain.example.com")] =
+            "v644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("nxdomain2.example.com")] =
             "q00jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain3.example.com")] =
@@ -239,10 +243,8 @@ public:
                                const FindOptions options = FIND_DEFAULT);
 
     virtual ZoneFinder::FindNSEC3Result
-    findNSEC3(const Name& name, bool recursive);
-
-    ZoneFinder::FindNSEC3Result
-    findNSEC3Helper(const Name& name, bool recursive);
+    findNSEC3(const Name& name, bool recursive,
+              ConstRRsetPtr known_enclosure = ConstRRsetPtr());
 
     // If false is passed, it makes the zone broken as if it didn't have the
     // SOA.
@@ -313,6 +315,9 @@ private:
                                                             toText()))));
         }
     }
+
+    ZoneFinder::FindNSEC3Result
+    findNSEC3Helper(const Name& name, bool recursive);
 
     const Name origin_;
     // Names where we delegate somewhere else
@@ -412,8 +417,25 @@ MockZoneFinder::findNSEC3Helper(const Name& name, bool recursive) {
 }
 
 ZoneFinder::FindNSEC3Result
-MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
-    return (findNSEC3Helper(name, recursive));
+MockZoneFinder::findNSEC3(const Name& name, bool recursive,
+                          ConstRRsetPtr known_enclosure)
+{
+    if (!known_enclosure || known_enclosure->getName() == name) {
+        return (findNSEC3Helper(name, recursive));
+    }
+
+    // If it's recursive mode and we are given a know enclosure that is a
+    // real ancestor of name, we may possibly be able to skip some intermediate
+    // level.  The split below returns the immediate child of the owner name
+    // of the known ancestor toward the query name.
+    if (!recursive) {
+        isc_throw(isc::InvalidParameter, "Enclosure cannot be an ancestor "
+                  "in non recursive mode");
+    }
+    return (findNSEC3Helper(name.split(
+                                name.getLabelCount() -
+                                known_enclosure->getName().getLabelCount() -
+                                1), true));
 }
 
 ZoneFinder::FindResult
@@ -1426,9 +1448,17 @@ nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
 }
 
 TEST_F(QueryTest, findNSEC3) {
+    RRsetPtr apex_nsec3 = RRsetPtr(new RRset(Name("example.com"),
+                                             RRClass::IN(), RRType::NSEC3(),
+                                             RRTTL(0)));
+
     // Apex name.  It should have a matching NSEC3
     nsec3Check(true, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("example.com"), false)); 
+               mock_finder->findNSEC3(Name("example.com"), false));
+    // giving an RRset as a hint shouldn't change the result.
+    nsec3Check(true, nsec3_apex_txt,
+               mock_finder->findNSEC3(Name("example.com"), false,
+                                      apex_nsec3));
 
     // Recursive mode doesn't change the result in this case.
     nsec3Check(true, nsec3_apex_txt,
@@ -1438,11 +1468,27 @@ TEST_F(QueryTest, findNSEC3) {
     // returned.
     nsec3Check(false, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
+    // In non recursive mode we cannot give a higher level hint
+    EXPECT_THROW(mock_finder->findNSEC3(Name("nxdomain.example.com"), false,
+                                        apex_nsec3),
+                 isc::InvalidParameter);
 
     // Non existent name.  The closest provable enclosure is the apex,
     // and next closer is the query name.
     nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
                mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
+    // Giving the hint should produce the same result
+    nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
+               mock_finder->findNSEC3(Name("nxdomain.example.com"), true,
+                                      apex_nsec3));
+
+    // Similar to the previous case, but next closer name is different
+    // (is the parent) of the non existent name.
+    nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
+               mock_finder->findNSEC3(Name("nx.domain.example.com"), true));
+    nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
+               mock_finder->findNSEC3(Name("nx.domain.example.com"), true,
+                                      apex_nsec3));
 
     // In the rest of test we check hash comparison for wrap around cases.
     nsec3Check(false, nsec3_apex_txt,
