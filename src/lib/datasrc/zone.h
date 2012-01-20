@@ -324,7 +324,9 @@ public:
 
     /// TBD
     virtual FindNSEC3Result
-    findNSEC3(const isc::dns::Name& name, bool recursive) = 0;
+    findNSEC3(const isc::dns::Name& name, bool recursive,
+              const isc::dns::ConstRRsetPtr known_enclosure =
+              isc::dns::ConstRRsetPtr()) = 0;
 
     /// \brief Get previous name in the zone
     ///
