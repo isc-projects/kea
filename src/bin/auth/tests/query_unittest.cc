@@ -241,6 +241,9 @@ public:
     virtual ZoneFinder::FindNSEC3Result
     findNSEC3(const Name& name, bool recursive);
 
+    ZoneFinder::FindNSEC3Result
+    findNSEC3Helper(const Name& name, bool recursive);
+
     // If false is passed, it makes the zone broken as if it didn't have the
     // SOA.
     void setSOAFlag(bool on) { has_SOA_ = on; }
@@ -366,7 +369,7 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
 }
 
 ZoneFinder::FindNSEC3Result
-MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
+MockZoneFinder::findNSEC3Helper(const Name& name, bool recursive) {
     ConstRRsetPtr covering_proof;
     const int labels = name.getLabelCount();
 
@@ -406,6 +409,11 @@ MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
         }
     }
     isc_throw(isc::Unexpected, "findNSEC3() isn't expected to fail");
+}
+
+ZoneFinder::FindNSEC3Result
+MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    return (findNSEC3Helper(name, recursive));
 }
 
 ZoneFinder::FindResult
@@ -1401,64 +1409,46 @@ TEST_F(QueryTest, MaxLenDNAME) {
 }
 
 // Test for this test module itself
-TEST_F(QueryTest, findNSEC3) {
-    typedef ZoneFinder::FindNSEC3Result FindNSEC3Result; // for brevity
-    vector<ConstRRsetPtr> actual;
+void
+nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
+           const ZoneFinder::FindNSEC3Result& result)
+{
+    vector<ConstRRsetPtr> actual_rrsets;
+    EXPECT_EQ(expected_matched, result.matched);
+    if (result.closest_proof) {
+        actual_rrsets.push_back(result.closest_proof);
+    }
+    if (result.next_proof) {
+        actual_rrsets.push_back(result.next_proof);
+    }
+    rrsetsCheck(expected_rrsets_txt, actual_rrsets.begin(),
+                actual_rrsets.end());
+}
 
+TEST_F(QueryTest, findNSEC3) {
     // Apex name.  It should have a matching NSEC3
-    const FindNSEC3Result result1 =
-        mock_finder->findNSEC3(Name("example.com"), false);
-    ASSERT_TRUE(result1.matched);
-    actual.push_back(result1.closest_proof);
-    rrsetsCheck(nsec3_apex_txt, actual.begin(), actual.end());
-    EXPECT_FALSE(result1.next_proof);
+    nsec3Check(true, nsec3_apex_txt,
+               mock_finder->findNSEC3(Name("example.com"), false)); 
 
     // Recursive mode doesn't change the result in this case.
-    actual.clear();
-    const FindNSEC3Result result2 =
-        mock_finder->findNSEC3(Name("example.com"), true);
-    ASSERT_TRUE(result2.matched);
-    actual.push_back(result2.closest_proof);
-    rrsetsCheck(nsec3_apex_txt, actual.begin(), actual.end());
-    EXPECT_FALSE(result2.next_proof);
+    nsec3Check(true, nsec3_apex_txt,
+               mock_finder->findNSEC3(Name("example.com"), true)); 
 
     // Non existent name.  Disabling recursive, a covering NSEC3 should be
     // returned.
-    actual.clear();
-    const FindNSEC3Result result3 =
-        mock_finder->findNSEC3(Name("nxdomain.example.com"), false);
-    ASSERT_FALSE(result3.matched);
-    actual.push_back(result3.closest_proof);
-    rrsetsCheck(nsec3_www_txt, actual.begin(), actual.end());
-    EXPECT_FALSE(result3.next_proof);
+    nsec3Check(false, nsec3_www_txt,
+               mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
 
     // Non existent name.  The closest provable enclosure is the apex,
     // and next closer is the query name.
-    actual.clear();
-    const FindNSEC3Result result4 =
-        mock_finder->findNSEC3(Name("nxdomain.example.com"), true);
-    ASSERT_TRUE(result4.matched);
-    actual.push_back(result4.closest_proof);
-    actual.push_back(result4.next_proof);
-    rrsetsCheck(string(nsec3_apex_txt) + string(nsec3_www_txt), actual.begin(),
-                actual.end());
+    nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
+               mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
 
     // In the rest of test we check hash comparison for wrap around cases.
-    actual.clear();
-    const FindNSEC3Result result5 =
-        mock_finder->findNSEC3(Name("nxdomain2.example.com"), false);
-    ASSERT_FALSE(result5.matched);
-    actual.push_back(result5.closest_proof);
-    rrsetsCheck(nsec3_apex_txt, actual.begin(), actual.end());
-    EXPECT_FALSE(result5.next_proof);
-
-    actual.clear();
-    const FindNSEC3Result result6 =
-        mock_finder->findNSEC3(Name("nxdomain3.example.com"), false);
-    ASSERT_FALSE(result6.matched);
-    actual.push_back(result6.closest_proof);
-    rrsetsCheck(nsec3_www_txt, actual.begin(), actual.end());
-    EXPECT_FALSE(result6.next_proof);
+    nsec3Check(false, nsec3_apex_txt,
+               mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
+    nsec3Check(false, nsec3_www_txt,
+               mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
 }
 
 }
