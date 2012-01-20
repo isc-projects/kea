@@ -22,6 +22,8 @@ import isc.config
 import select
 import errno
 import isc.util.io.socketsession
+import socket
+import os.path
 
 class FakeSocket:
     """
@@ -111,6 +113,28 @@ class TestDDNSServer(unittest.TestCase):
         ddns.select.select = select.select
         ddns.isc.util.io.socketsession.SocketSessionReceiver = \
             isc.util.io.socketsession.SocketSessionReceiver
+
+    def test_listen(self):
+        '''
+        Test the old socket file is removed (if any) and a new socket
+        is created when the ddns server is created.
+        '''
+        # Make sure the socket does not exist now
+        ddns.clear_socket()
+        # Hook the call for clearing the socket
+        orig_clear = ddns.clear_socket
+        ddns.clear_socket = self.__hook
+        # Create the server
+        ddnss = ddns.DDNSServer(MyCCSession())
+        ddns.clear_socket = orig_clear
+        # The socket is created
+        self.assertTrue(os.path.exists(ddns.SOCKET_FILE))
+        self.assertTrue(isinstance(ddnss._listen_socket, socket.socket))
+        # And deletion of the socket was requested
+        self.assertIsNone(self.__hook_called)
+        # Now make sure the clear_socket really works
+        ddns.clear_socket()
+        self.assertFalse(os.path.exists(ddns.SOCKET_FILE))
 
     def test_config_handler(self):
         # Config handler does not do anything yet, but should at least
@@ -299,11 +323,21 @@ class TestDDNSServer(unittest.TestCase):
 class TestMain(unittest.TestCase):
     def setUp(self):
         self._server = MyDDNSServer()
+        self.__orig_clear = ddns.clear_socket
+        ddns.clear_socket = self.__clear_socket
+        self.__clear_called = False
+
+    def tearDown(self):
+        ddns.clear_socket = self.__orig_clear
 
     def test_main(self):
         self.assertFalse(self._server.run_called)
         ddns.main(self._server)
         self.assertTrue(self._server.run_called)
+        self.assertTrue(self.__clear_called)
+
+    def __clear_socket(self):
+        self.__clear_called = True
 
     def check_exception(self, ex):
         '''Common test sequence to see if the given exception is caused.
