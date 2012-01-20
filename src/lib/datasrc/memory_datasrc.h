@@ -83,7 +83,9 @@ public:
                                std::vector<isc::dns::ConstRRsetPtr>& target,
                                const FindOptions options = FIND_DEFAULT);
 
-    /// TBD
+    /// Look for NSEC3 for proving (non)existence of given name.
+    ///
+    /// See documentation in \c Zone.
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive,
               const isc::dns::ConstRRsetPtr known_encloser);
