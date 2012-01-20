@@ -48,7 +48,8 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
-# check -R rather than gcc specific -rpath to be as portable as possible.
+# check -R and -Wl,-R rather than gcc specific -rpath to be as portable
+# as possible.
 AC_MSG_CHECKING([whether -R flag is available in linker])
 LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS="$LDFLAGS -R/usr/lib"
