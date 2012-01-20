@@ -893,7 +893,7 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
 }
 
 ZoneFinder::FindNSEC3Result
-DatabaseClient::Finder::findNSEC3(const isc::dns::Name&, bool) {
+DatabaseClient::Finder::findNSEC3(const Name&, bool, ConstRRsetPtr) {
     isc_throw(NotImplemented, "findNSEC3 is not yet implemented for database "
               "data source");
 }
