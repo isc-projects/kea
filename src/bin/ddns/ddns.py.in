@@ -31,13 +31,16 @@ from isc.log_messages.ddns_messages import *
 
 from optparse import OptionParser, OptionValueError
 import os
+import os.path
 import signal
+import socket
 
 isc.log.init("b10-ddns")
 logger = isc.log.Logger("ddns")
 TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
 
 DATA_PATH = bind10_config.DATA_PATH
+SOCKET_FILE = DATA_PATH + '/ddns_socket'
 if "B10_FROM_SOURCE" in os.environ:
     DATA_PATH = os.environ['B10_FROM_SOURCE'] + "/src/bin/ddns"
 SPECFILE_LOCATION = DATA_PATH + "/ddns.spec"
@@ -69,6 +72,13 @@ class DDNSSession:
         '''Initialize a DDNS Session'''
         pass
 
+def clear_socket():
+    '''
+    Removes the socket file, if it exists.
+    '''
+    if os.path.exists(SOCKET_FILE):
+        os.remove(SOCKET_FILE)
+
 class DDNSServer:
     def __init__(self, cc_session=None):
         '''
@@ -91,6 +101,10 @@ class DDNSServer:
         self._shutdown = False
         # List of the session receivers where we get the requests
         self._socksession_receivers = {}
+        clear_socket()
+        self._listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._listen_socket.bind(SOCKET_FILE)
+        self._listen_socket.listen(16)
 
     def config_handler(self, new_config):
         '''Update config data.'''
@@ -270,6 +284,7 @@ def main(ddns_server=None):
         logger.error(DDNS_CC_SESSION_TIMEOUT_ERROR)
     except Exception as e:
         logger.error(DDNS_UNCAUGHT_EXCEPTION, type(e).__name__, str(e))
+    clear_socket()
 
 if '__main__' == __name__:
     main()
