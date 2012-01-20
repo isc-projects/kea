@@ -407,13 +407,16 @@ public:
     ///
     /// In general, this method expects the zone is properly signed with NSEC3
     /// RRs.  Specifically, it assumes at least the apex node has a matching
-    /// NSEC3 RR.  So the search must always succeed; if the assumption isn't
-    /// met, \c DataSourceError exception will be thrown.
+    /// NSEC3 RR (so the search in the recursive mode must always succeed);
+    /// it also assumes that it can retrieve NSEC parameters (iterations,
+    /// algorithm, and salt) from the zone as noted above.  If these
+    /// assumptions aren't met, \c DataSourceError exception will be thrown.
     ///
     /// \exception InvalidParameter name is not a subdomain of the zone origin;
     /// known_encloser does not meet the requirement (see above)
-    /// \exception DataSourceError The zone isn't properly signed with NSEC3
-    /// (NSEC3 parameters cannot be found; no NSEC3s are available, etc).
+    /// \exception DataSourceError Low-level or internal datasource errors
+    /// happened, or the zone isn't properly signed with NSEC3
+    /// (NSEC3 parameters cannot be found, no NSEC3s are available, etc).
     /// \exception std::bad_alloc The underlying implementation involves
     /// memory allocation and it fails
     ///
