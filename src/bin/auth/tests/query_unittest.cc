@@ -245,7 +245,7 @@ public:
 
     virtual ZoneFinder::FindNSEC3Result
     findNSEC3(const Name& name, bool recursive,
-              ConstRRsetPtr known_enclosure = ConstRRsetPtr());
+              ConstRRsetPtr known_encloser = ConstRRsetPtr());
 
     // If false is passed, it makes the zone broken as if it didn't have the
     // SOA.
@@ -424,23 +424,23 @@ MockZoneFinder::findNSEC3Helper(const Name& name, bool recursive) {
 
 ZoneFinder::FindNSEC3Result
 MockZoneFinder::findNSEC3(const Name& name, bool recursive,
-                          ConstRRsetPtr known_enclosure)
+                          ConstRRsetPtr known_encloser)
 {
-    if (!known_enclosure || known_enclosure->getName() == name) {
+    if (!known_encloser || known_encloser->getName() == name) {
         return (findNSEC3Helper(name, recursive));
     }
 
-    // If it's recursive mode and we are given a know enclosure that is a
+    // If it's recursive mode and we are given a know encloser that is a
     // real ancestor of name, we may possibly be able to skip some intermediate
     // level.  The split below returns the immediate child of the owner name
     // of the known ancestor toward the query name.
     if (!recursive) {
-        isc_throw(isc::InvalidParameter, "Enclosure cannot be an ancestor "
+        isc_throw(isc::InvalidParameter, "Encloser cannot be an ancestor "
                   "in non recursive mode");
     }
     return (findNSEC3Helper(name.split(
                                 name.getLabelCount() -
-                                known_enclosure->getName().getLabelCount() -
+                                known_encloser->getName().getLabelCount() -
                                 1), true));
 }
 
@@ -640,7 +640,7 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // than the origin)
     if ((options & FIND_DNSSEC) != 0) {
         if (use_nsec3_) {
-            // In many cases the closest enclosure should be the apex name.
+            // In many cases the closest encloser should be the apex name.
             // So for now we always return it.
             return (FindResult(NXDOMAIN,
                                RRsetPtr(new RRset(Name("example.com"),
@@ -1521,7 +1521,7 @@ TEST_F(QueryTest, findNSEC3) {
                                         apex_nsec3),
                  isc::InvalidParameter);
 
-    // Non existent name.  The closest provable enclosure is the apex,
+    // Non existent name.  The closest provable encloser is the apex,
     // and next closer is the query name.
     nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
                mock_finder->findNSEC3(Name("nxdomain.example.com"), true));

@@ -229,10 +229,20 @@ public:
     ///   of \c DELEGATION and the NS RRset at the zone cut.
     /// - If there is no matching name, it returns the code of \c NXDOMAIN,
     ///   and, if DNSSEC is requested, the NSEC RRset that proves the
-    ///   non-existence.
+    ///   non-existence if the zone is signed with NSEC; if it's signed with
+    ///   NSEC3, an empty NSEC3 RRset (an RRset that doesn't have RDATA)
+    ///   whose name is the closest encloser of the given name.
     /// - If there is a matching name but no RRset of the search type, it
     ///   returns the code of \c NXRRSET, and, if DNSSEC is required,
-    ///   the NSEC RRset for that name.
+    ///   the NSEC RRset for that name if the zone is signed with NSEC;
+    ///   if it's signed with NSEC3, an empty NSEC3 RRset whose name is the
+    ///   given name.
+    /// - If there is no matching name but there is a matching wild card name,
+    ///   but it doesn't have a requested type of RR, and if DNSSEC is
+    ///   required, then it returns the code of \c WILDCARD_NXRRSET.
+    ///   If the zone is signed with NSEC, it returns corresponding NSEC
+    ///   (see the description of \c Result); if it's signed with NSEC3,
+    ///   it returns an empty NSEC3 RRset whose name is the matching wildcard.
     /// - If there is a CNAME RR of the searched name but there is no
     ///   RR of the searched type of the name (so this type is different from
     ///   CNAME), it returns the code of \c CNAME and that CNAME RR.
@@ -309,7 +319,11 @@ public:
                                std::vector<isc::dns::ConstRRsetPtr> &target,
                                const FindOptions options = FIND_DEFAULT) = 0;
 
-    /// TBD
+    /// A helper structure to represent the search result of \c findNSEC3().
+    ///
+    /// The idea is similar to that of \c FindResult, but \c findNSEC3() has
+    /// special interface and semantics, we use a different structure to
+    /// represent the result.
     struct FindNSEC3Result {
         FindNSEC3Result(bool param_matched,
                         isc::dns::ConstRRsetPtr param_closest_proof,
@@ -317,15 +331,104 @@ public:
             matched(param_matched), closest_proof(param_closest_proof),
             next_proof(param_next_proof)
         {}
+
+        /// true iff closest_proof is a matching NSEC3
         const bool matched;
+
+        /// Either the NSEC3 for the closest provable encloser of the given
+        /// name or NSEC3 that covers the name
         const isc::dns::ConstRRsetPtr closest_proof;
+
+        /// When non NULL, NSEC3 for the next closer name.
         const isc::dns::ConstRRsetPtr next_proof;
     };
 
-    /// TBD
+    /// Search the zone for the NSEC3 RR(s) that prove existence or non
+    /// existence of a give name.
+    ///
+    /// It searches the NSEC3 namespace of the zone (how that namespace is
+    /// implemented can vary in specific data source implementation) for NSEC3
+    /// RRs that match or cover the NSEC3 hash value for the given name.
+    ///
+    /// If \c recursive is false, it will first look for the NSEC3 that has
+    /// a matching hash.  If it doesn't exist, it identifies the covering NSEC3
+    /// for the hash.  In either case the search stops at that point and the
+    /// found NSEC3 RR(set) will be returned in the closest_proof member of
+    /// \c FindNSEC3Result.  \c matched is true or false depending on
+    /// the found NSEC3 is a matched one or covering one.  \c next_proof
+    /// is always NULL.
+    ///
+    /// If \c recursive is true, it will continue the search toward the zone
+    /// apex (origin name) until it finds a provable encloser, that is,
+    /// an ancestor of \c name that has a matching NSEC3.  This is the closest
+    /// provable encloser of \c name as defined in RFC5155.  In this case,
+    /// if the found encloser is not equal to \c name, the search should
+    /// have seen a covering NSEC3 for the immediate child of the found
+    /// encloser.  That child name is the next closer name as defined in
+    /// RFC5155.  In this case, this method returns the NSEC3 for the
+    /// closest encloser in \c closest_proof, and the NSEC3 for the next
+    /// closer name in \c next_proof of \c FindNSEC3Result.  This set of
+    /// NSEC3 RRs provide the closest encloser proof as defined in RFC5155.
+    /// If, on the other hand, the found closest name is equal to \c name,
+    /// this method simply returns it in \c closest_proof.  \c next_proof
+    /// is set to NULL.  In all cases \c matched is set to true.
+    ///
+    /// When looking for NSEC3, this method retrieves NSEC3 parameters from
+    /// the corresponding zone to calculate hash values.  Actual implementation
+    /// of how to do this will defer in different data sources.  If the
+    /// NSEC3 parameters are not available \c DataSourceError exception
+    /// will be thrown.
+    ///
+    /// \note This implicitly means this method assumes the zone does not
+    /// have more than one set of parameters.  This assumption should be
+    /// reasonable in actual deployment and will help simplify the interface
+    /// and implementation.  But if there's a real need for supporting
+    /// multiple sets of parameters in a single zone, we will have to
+    /// extend this method so that, e.g., the caller can specify the parameter
+    /// set.
+    ///
+    /// This method takes an optional parameter \c known_encloser.  If it's
+    /// non NULL, its owner name must be the closest encloser of \c name.
+    /// Its RR type is expected to be NSEC3, but other attributes other than
+    /// the owner name is not important for this method and will generally be
+    /// ignored.  When this parameter is provided, the actual implementation
+    /// of the derived class can use it as a hint for identifying the closest
+    /// provable encloser (it can be helpful if \c name is known to be non
+    /// existent and possibly contains many labels below the closest encloser).
+    /// The underlying data source may also specialize the RRset to hold
+    /// some information specific to the data source implementation to allow
+    /// further optimization.  Whether or not this parameter is non NULL,
+    /// the result of this method should be the same; this parameter is only
+    /// provided to possibly enable some implementation specific optimization.
+    /// When it's non NULL, however, its owner name must be equal to \c name
+    /// when \c recursive is false and must be a real (non equal) super domain
+    /// of \c name when \c recursive is true; otherwise
+    /// \c isc::InvalidParameter exception will be thrown.
+    ///
+    /// In general, this method expects the zone is properly signed with NSEC3
+    /// RRs.  Specifically, it assumes at least the apex node has a matching
+    /// NSEC3 RR.  So the search must always succeed; if the assumption isn't
+    /// met, \c DataSourceError exception will be thrown.
+    ///
+    /// \exception InvalidParameter name is not a subdomain of the zone origin;
+    /// known_encloser does not meet the requirement (see above)
+    /// \exception DataSourceError The zone isn't properly signed with NSEC3
+    /// (NSEC3 parameters cannot be found; no NSEC3s are available, etc).
+    /// \exception std::bad_alloc The underlying implementation involves
+    /// memory allocation and it fails
+    ///
+    /// \param name The name for which NSEC3 RRs are to be found.  It must
+    /// be a subdomain of the zone.
+    /// \param recursive Whether or not search should continue until it finds
+    /// a provable encloser (see above).
+    /// \param known_encloser If non NULL, specifies the closest encloser
+    /// (may or may not be provable) of \c name via its owner name.
+    ///
+    /// \return The search result and whether or not the closest_proof is
+    /// a matching NSEC3, in the form of \c FindNSEC3Result object.
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive,
-              const isc::dns::ConstRRsetPtr known_enclosure =
+              const isc::dns::ConstRRsetPtr known_encloser =
               isc::dns::ConstRRsetPtr()) = 0;
 
     /// \brief Get previous name in the zone
