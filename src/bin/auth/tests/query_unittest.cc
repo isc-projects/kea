@@ -195,6 +195,7 @@ public:
         has_apex_NS_(true),
         rrclass_(RRClass::IN()),
         include_rrsig_anyway_(false),
+        use_nsec3_(false),
         nsec_name_(origin_)
     {
         stringstream zone_stream;
@@ -266,6 +267,10 @@ public:
         nsec_result_.reset(new ZoneFinder::FindResult(code, rrset));
     }
 
+    // If true is passed return an empty NSEC3 RRset for some negative
+    // answers when DNSSEC is required.
+    void setNSEC3Flag(bool on) { use_nsec3_ = on; }
+
     Name findPreviousName(const Name&) const {
         isc_throw(isc::NotImplemented, "Mock doesn't support previous name");
     }
@@ -328,6 +333,7 @@ private:
     ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
     bool include_rrsig_anyway_;
+    bool use_nsec3_;
     // The following two will be used for faked NSEC cases
     Name nsec_name_;
     boost::scoped_ptr<ZoneFinder::FindResult> nsec_result_;
@@ -500,6 +506,13 @@ MockZoneFinder::find(const Name& name, const RRType& type,
 
         // Otherwise it's NXRRSET case.
         if ((options & FIND_DNSSEC) != 0) {
+            if (use_nsec3_) {
+                return (FindResult(NXRRSET,
+                                   RRsetPtr(new RRset(found_domain->first,
+                                                      RRClass::IN(),
+                                                      RRType::NSEC3(),
+                                                      RRTTL(0)))));
+            }
             found_rrset = found_domain->second.find(RRType::NSEC());
             if (found_rrset != found_domain->second.end()) {
                 return (FindResult(NXRRSET, found_rrset->second));
@@ -524,6 +537,12 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         // the origin of the zone)
         --domain;               // reset domain to the "previous name"
         if ((options & FIND_DNSSEC) != 0) {
+            if (use_nsec3_) {
+                return (FindResult(NXRRSET,
+                                   RRsetPtr(new RRset(name, RRClass::IN(),
+                                                      RRType::NSEC3(),
+                                                      RRTTL(0)))));
+            }
             RRsetStore::const_iterator found_rrset =
                 (*domain).second.find(RRType::NSEC());
             if (found_rrset != (*domain).second.end()) {
@@ -556,21 +575,39 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                                                *found_rrset->second, name)));
                     } else {
                         // No matched QTYPE, this case is for WILDCARD_NXRRSET
+                        const Name new_name =
+                            Name("*").concatenate(wild_suffix);
+                        if (use_nsec3_) {
+                            return (FindResult(WILDCARD_NXRRSET,
+                                               RRsetPtr(new RRset(
+                                                            new_name,
+                                                            RRClass::IN(),
+                                                            RRType::NSEC3(),
+                                                            RRTTL(0)))));
+                        }
                         found_rrset = domain->second.find(RRType::NSEC());
                         assert(found_rrset != domain->second.end());
-                        Name newName = Name("*").concatenate(wild_suffix);
                         return (FindResult(WILDCARD_NXRRSET,
                                            substituteWild(
-                                               *found_rrset->second,newName)));
+                                               *found_rrset->second,
+                                               new_name)));
                     }
                 } else {
                     // This is empty non terminal name case on wildcard.
-                    Name emptyName = Name("*").concatenate(wild_suffix);
+                    const Name empty_name = Name("*").concatenate(wild_suffix);
+                    if (use_nsec3_) {
+                        return (FindResult(WILDCARD_NXRRSET,
+                                           RRsetPtr(new RRset(
+                                                        empty_name,
+                                                        RRClass::IN(),
+                                                        RRType::NSEC3(),
+                                                        RRTTL(0)))));
+                    }
                     for (Domains::reverse_iterator it = domains_.rbegin();
                          it != domains_.rend();
                          ++it) {
                         RRsetStore::const_iterator nsec_it;
-                        if ((*it).first < emptyName &&
+                        if ((*it).first < empty_name &&
                             (nsec_it = (*it).second.find(RRType::NSEC()))
                             != (*it).second.end()) {
                             return (FindResult(WILDCARD_NXRRSET,
@@ -602,6 +639,16 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // we don't care about pathological cases such as the name is "smaller"
     // than the origin)
     if ((options & FIND_DNSSEC) != 0) {
+        if (use_nsec3_) {
+            // In many cases the closest enclosure should be the apex name.
+            // So for now we always return it.
+            return (FindResult(NXDOMAIN,
+                               RRsetPtr(new RRset(Name("example.com"),
+                                                  RRClass::IN(),
+                                                  RRType::NSEC3(),
+                                                  RRTTL(0)))));
+        }
+
         // Emulate a broken DataSourceClient for some special names.
         if (nsec_result_ && nsec_name_ == name) {
             return (*nsec_result_);
@@ -1448,9 +1495,10 @@ nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
 }
 
 TEST_F(QueryTest, findNSEC3) {
-    RRsetPtr apex_nsec3 = RRsetPtr(new RRset(Name("example.com"),
-                                             RRClass::IN(), RRType::NSEC3(),
-                                             RRTTL(0)));
+    ConstRRsetPtr apex_nsec3 = ConstRRsetPtr(new RRset(Name("example.com"),
+                                                       RRClass::IN(),
+                                                       RRType::NSEC3(),
+                                                       RRTTL(0)));
 
     // Apex name.  It should have a matching NSEC3
     nsec3Check(true, nsec3_apex_txt,
@@ -1464,11 +1512,11 @@ TEST_F(QueryTest, findNSEC3) {
     nsec3Check(true, nsec3_apex_txt,
                mock_finder->findNSEC3(Name("example.com"), true)); 
 
-    // Non existent name.  Disabling recursive, a covering NSEC3 should be
+    // Non existent name.  Disabling recursion, a covering NSEC3 should be
     // returned.
     nsec3Check(false, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
-    // In non recursive mode we cannot give a higher level hint
+    // In non recursion mode we cannot give a higher level hint
     EXPECT_THROW(mock_finder->findNSEC3(Name("nxdomain.example.com"), false,
                                         apex_nsec3),
                  isc::InvalidParameter);
@@ -1497,4 +1545,57 @@ TEST_F(QueryTest, findNSEC3) {
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
 }
 
+// The following are tentative tests until we really add tests for the
+// query logic for these cases.  At that point it's probably better to
+// clean them up.
+TEST_F(QueryTest, nxdomainWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindResult result = mock_finder->find(
+        Name("nxdomain.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, result.code);
+    ASSERT_TRUE(result.rrset);
+    EXPECT_EQ(RRType::NSEC3(), result.rrset->getType());
+    EXPECT_EQ(Name("example.com"), result.rrset->getName());
+}
+
+TEST_F(QueryTest, nxrrsetWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindResult result = mock_finder->find(
+        Name("www.example.com"), RRType::TXT(), ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
+    ASSERT_TRUE(result.rrset);
+    EXPECT_EQ(RRType::NSEC3(), result.rrset->getType());
+    EXPECT_EQ(Name("www.example.com"), result.rrset->getName());
+}
+
+TEST_F(QueryTest, emptyNameWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindResult result = mock_finder->find(
+        Name("no.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
+    ASSERT_TRUE(result.rrset);
+    EXPECT_EQ(RRType::NSEC3(), result.rrset->getType());
+    EXPECT_EQ(Name("no.example.com"), result.rrset->getName());
+}
+
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindResult result = mock_finder->find(
+        Name("www1.uwild.example.com"), RRType::TXT(),
+        ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::WILDCARD_NXRRSET, result.code);
+    ASSERT_TRUE(result.rrset);
+    EXPECT_EQ(RRType::NSEC3(), result.rrset->getType());
+    EXPECT_EQ(Name("*.uwild.example.com"), result.rrset->getName());
+}
+
+TEST_F(QueryTest, wildcardEmptyWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindResult result = mock_finder->find(
+        Name("a.t.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::WILDCARD_NXRRSET, result.code);
+    ASSERT_TRUE(result.rrset);
+    EXPECT_EQ(RRType::NSEC3(), result.rrset->getType());
+    EXPECT_EQ(Name("*.t.example.com"), result.rrset->getName());
+}
 }
