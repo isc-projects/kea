@@ -642,7 +642,7 @@ InMemoryZoneFinder::findAll(const Name& name,
 }
 
 ZoneFinder::FindNSEC3Result
-InMemoryZoneFinder::findNSEC3(const Name&, bool, ConstRRsetPtr) {
+InMemoryZoneFinder::findNSEC3(const Name&, bool) {
     isc_throw(NotImplemented, "findNSEC3 is not yet implemented for in memory "
               "data source");
 }

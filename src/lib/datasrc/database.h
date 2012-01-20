@@ -758,8 +758,7 @@ public:
 	///
 	/// See documentation in \c Zone.
 	virtual FindNSEC3Result
-        findNSEC3(const isc::dns::Name& name, bool recursive,
-                  const isc::dns::ConstRRsetPtr known_encloser);
+        findNSEC3(const isc::dns::Name& name, bool recursive);
 
         /// \brief The zone ID
         ///
