@@ -370,15 +370,20 @@ public:
     /// special interface and semantics, we use a different structure to
     /// represent the result.
     struct FindNSEC3Result {
-        FindNSEC3Result(bool param_matched,
+        FindNSEC3Result(bool param_matched, uint8_t param_closest_labels,
                         isc::dns::ConstRRsetPtr param_closest_proof,
                         isc::dns::ConstRRsetPtr param_next_proof) :
-            matched(param_matched), closest_proof(param_closest_proof),
+            matched(param_matched), closest_labels(param_closest_labels),
+            closest_proof(param_closest_proof),
             next_proof(param_next_proof)
         {}
 
         /// true iff closest_proof is a matching NSEC3
         const bool matched;
+
+        /// The number of labels of the identified closest encloser.
+        ///
+        const uint8_t closest_labels;
 
         /// Either the NSEC3 for the closest provable encloser of the given
         /// name or NSEC3 that covers the name
@@ -401,7 +406,8 @@ public:
     /// found NSEC3 RR(set) will be returned in the closest_proof member of
     /// \c FindNSEC3Result.  \c matched is true or false depending on
     /// the found NSEC3 is a matched one or covering one.  \c next_proof
-    /// is always NULL.
+    /// is always NULL.  closest_labels must be equal to the number of
+    /// labels of \c name (and therefore meaningless).
     ///
     /// If \c recursive is true, it will continue the search toward the zone
     /// apex (origin name) until it finds a provable encloser, that is,
@@ -414,9 +420,13 @@ public:
     /// closest encloser in \c closest_proof, and the NSEC3 for the next
     /// closer name in \c next_proof of \c FindNSEC3Result.  This set of
     /// NSEC3 RRs provide the closest encloser proof as defined in RFC5155.
+    /// closest_labels will be set to the number of labels of the identified
+    /// closest encloser.  This will be useful when the caller needs to
+    /// construct the closest encloser name from the original \c name.
     /// If, on the other hand, the found closest name is equal to \c name,
     /// this method simply returns it in \c closest_proof.  \c next_proof
     /// is set to NULL.  In all cases \c matched is set to true.
+    /// closest_labels will be set to the number of labels of \c name.
     ///
     /// When looking for NSEC3, this method retrieves NSEC3 parameters from
     /// the corresponding zone to calculate hash values.  Actual implementation
