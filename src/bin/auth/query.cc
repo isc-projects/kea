@@ -30,6 +30,30 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::dns::rdata;
 
+namespace {
+// This is a temporary wrapper to convert old format of FindResult to new
+// one, until we update all supported data source implementations.
+ZoneFinder::FindResult
+findWrapper(const ZoneFinder::FindResult& orig_result) {
+    ZoneFinder::FindResultFlags flags = ZoneFinder::RESULT_DEFAULT;
+    ZoneFinder::Result code = orig_result.code;
+    if (code == ZoneFinder::WILDCARD) {
+        code = ZoneFinder::SUCCESS;
+        flags = flags | ZoneFinder::RESULT_WILDCARD;
+    } else if (code == ZoneFinder::WILDCARD_CNAME) {
+        code = ZoneFinder::CNAME;
+        flags = flags | ZoneFinder::RESULT_WILDCARD;
+    } else if (code == ZoneFinder::WILDCARD_NXRRSET) {
+        code = ZoneFinder::NXRRSET;
+        flags = flags | ZoneFinder::RESULT_WILDCARD;
+    }
+    if (orig_result.rrset && orig_result.rrset->getType() == RRType::NSEC()) {
+        flags = flags | ZoneFinder::RESULT_NSEC_SIGNED;
+    }
+    return (ZoneFinder::FindResult(code, orig_result.rrset, flags));
+}
+}
+
 namespace isc {
 namespace auth {
 
@@ -69,8 +93,8 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
 
     // Find A rrset
     if (qname_ != qname || qtype_ != RRType::A()) {
-        ZoneFinder::FindResult a_result = zone.find(qname, RRType::A(),
-                                                    options | dnssec_opt_);
+        ZoneFinder::FindResult a_result =
+            findWrapper(zone.find(qname, RRType::A(), options | dnssec_opt_));
         if (a_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(a_result.rrset), dnssec_);
@@ -80,7 +104,8 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
     // Find AAAA rrset
     if (qname_ != qname || qtype_ != RRType::AAAA()) {
         ZoneFinder::FindResult aaaa_result =
-            zone.find(qname, RRType::AAAA(), options | dnssec_opt_);
+            findWrapper(zone.find(qname, RRType::AAAA(),
+                                  options | dnssec_opt_));
         if (aaaa_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(aaaa_result.rrset),
@@ -91,8 +116,9 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
 
 void
 Query::addSOA(ZoneFinder& finder) {
-    ZoneFinder::FindResult soa_result(finder.find(finder.getOrigin(),
-        RRType::SOA(), dnssec_opt_));
+    ZoneFinder::FindResult soa_result =
+        findWrapper(finder.find(finder.getOrigin(),
+                                RRType::SOA(), dnssec_opt_));
     if (soa_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoSOA, "There's no SOA record in zone " <<
             finder.getOrigin().toText());
@@ -147,9 +173,8 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // Confirm the wildcard doesn't exist (this should result in NXDOMAIN;
     // otherwise we shouldn't have got NXDOMAIN for the original query in
     // the first place).
-    const ZoneFinder::FindResult fresult = finder.find(wildname,
-                                                       RRType::NSEC(),
-                                                       dnssec_opt_);
+    const ZoneFinder::FindResult fresult =
+        findWrapper(finder.find(wildname, RRType::NSEC(), dnssec_opt_));
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for wildcard NXDOMAIN proof");
@@ -173,8 +198,8 @@ Query::addWildcardProof(ZoneFinder& finder) {
     // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
     // in NXDOMAIN and an NSEC RR that proves it should be returned.
     const ZoneFinder::FindResult fresult =
-        finder.find(qname_, RRType::NSEC(),
-                    dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+        findWrapper(finder.find(qname_, RRType::NSEC(),
+                                dnssec_opt_ | ZoneFinder::NO_WILDCARD));
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for wildcard proof");
@@ -191,13 +216,10 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
     }
-    // Add this NSEC RR to authority section.
-    response_.addRRset(Message::SECTION_AUTHORITY,
-                      boost::const_pointer_cast<RRset>(nsec), dnssec_);
     
     const ZoneFinder::FindResult fresult =
-        finder.find(qname_, RRType::NSEC(),
-                    dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+        findWrapper(finder.find(qname_, RRType::NSEC(),
+                                dnssec_opt_ | ZoneFinder::NO_WILDCARD));
     if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
         fresult.rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for no match QNAME proof");
@@ -214,8 +236,9 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 void
 Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
-    ZoneFinder::FindResult ns_result = finder.find(finder.getOrigin(),
-                                                   RRType::NS(), dnssec_opt_);
+    ZoneFinder::FindResult ns_result =
+        findWrapper(finder.find(finder.getOrigin(), RRType::NS(),
+                                dnssec_opt_));
     // zone origin name should have NS records
     if (ns_result.code != ZoneFinder::SUCCESS) {
         isc_throw(NoApexNS, "There's no apex NS records in zone " <<
@@ -260,7 +283,7 @@ Query::process() {
         find = boost::bind(&ZoneFinder::find, &zfinder, qname_, qtype_,
                            dnssec_opt_);
     }
-    ZoneFinder::FindResult db_result(find());
+    ZoneFinder::FindResult db_result(findWrapper(find()));
     switch (db_result.code) {
         case ZoneFinder::DNAME: {
             // First, put the dname into the answer
@@ -306,7 +329,6 @@ Query::process() {
             break;
         }
         case ZoneFinder::CNAME:
-        case ZoneFinder::WILDCARD_CNAME:
             /*
              * We don't do chaining yet. Therefore handling a CNAME is
              * mostly the same as handling SUCCESS, but we didn't get
@@ -322,12 +344,11 @@ Query::process() {
 
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
-            if (dnssec_ && db_result.code == ZoneFinder::WILDCARD_CNAME) {
+            if (dnssec_ && db_result.isWildcard()) {
                 addWildcardProof(*result.zone_finder);
             }
             break;
         case ZoneFinder::SUCCESS:
-        case ZoneFinder::WILDCARD:
             if (qtype_is_any) {
                 // If quety type is ANY, insert all RRs under the domain
                 // into answer section.
@@ -357,7 +378,7 @@ Query::process() {
 
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
-            if (dnssec_ && db_result.code == ZoneFinder::WILDCARD) {
+            if (dnssec_ && db_result.isWildcard()) {
                 addWildcardProof(*result.zone_finder);
             }
             break;
@@ -377,17 +398,16 @@ Query::process() {
             break;
         case ZoneFinder::NXRRSET:
             addSOA(*result.zone_finder);
-            if (dnssec_ && db_result.rrset) {
-                response_.addRRset(Message::SECTION_AUTHORITY,
-                                   boost::const_pointer_cast<RRset>(
-                                       db_result.rrset),
-                                   dnssec_);
-            }
-            break;
-        case ZoneFinder::WILDCARD_NXRRSET:
-            addSOA(*result.zone_finder);
-            if (dnssec_ && db_result.rrset) {
-                addWildcardNXRRSETProof(zfinder, db_result.rrset);
+            if (dnssec_) {
+                if (db_result.isNSECSigned()) {
+                    response_.addRRset(Message::SECTION_AUTHORITY,
+                                       boost::const_pointer_cast<RRset>(
+                                           db_result.rrset),
+                                       dnssec_);
+                    if (db_result.isWildcard()) {
+                        addWildcardNXRRSETProof(zfinder, db_result.rrset);
+                    }
+                }
             }
             break;
         default:
