@@ -142,19 +142,41 @@ public:
         WILDCARD_NXRRSET ///< NXRRSET on wildcard, for DNSSEC
     };
 
+    /// Special attribute flags on the result of the \c find() method
+    ///
+    /// The flag values defined here are intended to signal to the caller
+    /// that it may need special handling on the result.  This is particularly
+    /// of concern when DNSSEC is requested.  For example, for negative
+    /// responses the caller would want to know whether the zone is signed
+    /// with NSEC or NSEC3 so that it can subsequently provide necessary
+    /// proof of the result.
+    ///
+    /// The caller is generally expected to get access to the information
+    /// via read-only getter methods of \c FindResult so that it won't rely
+    /// on specific details of the representation of the flags.  So these
+    /// definitions are basically only meaningful for data source
+    /// implementations.
+    enum FindResultFlags {
+        RESULT_DEFAULT = 0,       ///< The default flags
+        RESULT_WILDCARD = 1,      ///< find() resulted in a wildcard match
+        RESULT_NSEC_SIGNED = 2,   ///< The zone is signed with NSEC RRs
+        RESULT_NSEC3_SIGNED = 4   ///< The zone is signed with NSEC3 RRs
+    };
+
     /// A helper structure to represent the search result of \c find().
     ///
     /// This is a straightforward tuple of the result code and a pointer
-    /// to the found RRset to represent the result of \c find()
-    /// (there will be more members in the future - see the class
-    /// description).
+    /// (and optionally special flags) to the found RRset to represent the
+    /// result of \c find() (there will be more members in the future -
+    /// see the class description).
     /// We use this in order to avoid overloading the return value for both
     /// the result code ("success" or "not found") and the found object,
     /// i.e., avoid using \c NULL to mean "not found", etc.
     ///
     /// This is a simple value class whose internal state never changes,
-    /// so for convenience we allow the applications to refer to the members
-    /// directly.
+    /// so for convenience we allow the applications to refer to some of the
+    /// members directly.  For others we provide read-only accessor methods
+    /// to hide specific representation.
     ///
     /// Note: we should eventually include a notion of "zone node", which
     /// corresponds to a particular domain name of the zone, so that we can
@@ -165,11 +187,39 @@ public:
     /// optimize including the NSEC for no-wildcard proof (FWIW NSD does that).
     struct FindResult {
         FindResult(Result param_code,
-                   const isc::dns::ConstRRsetPtr param_rrset) :
-            code(param_code), rrset(param_rrset)
+                   const isc::dns::ConstRRsetPtr param_rrset,
+                   FindResultFlags param_flags = RESULT_DEFAULT) :
+            code(param_code), rrset(param_rrset), flags(param_flags)
         {}
         const Result code;
         const isc::dns::ConstRRsetPtr rrset;
+
+        /// Return true iff find() results in a wildcard match.
+        bool isWildcard() const { return ((flags & RESULT_WILDCARD) != 0); }
+
+        /// Return true when the underlying zone is signed with NSEC.
+        ///
+        /// The \c find() implementation allow this to return false if
+        /// \c FIND_DNSSEC isn't specified regardless of whether the zone
+        /// is signed or which of NSEC/NSEC3 is used.
+        ///
+        /// When this is returned, the implementation of find() must ensure
+        /// that \c rrset be a valid NSEC RRset as described in \c find()
+        /// documentation.
+        bool isNSECSigned() const {
+            return ((flags & RESULT_NSEC_SIGNED) != 0);
+        }
+
+        /// Return true when the underlying zone is signed with NSEC3.
+        ///
+        /// The \c find() implementation allow this to return false if
+        /// \c FIND_DNSSEC isn't specified regardless of whether the zone
+        /// is signed or which of NSEC/NSEC3 is used.
+        bool isNSEC3Signed() const {
+            return ((flags & RESULT_NSEC3_SIGNED) != 0);
+        }
+    private:
+        FindResultFlags flags;
     };
 
     /// Find options.
@@ -375,7 +425,7 @@ public:
     ///
     /// When looking for NSEC3, this method retrieves NSEC3 parameters from
     /// the corresponding zone to calculate hash values.  Actual implementation
-    /// of how to do this will defer in different data sources.  If the
+    /// of how to do this will differ in different data sources.  If the
     /// NSEC3 parameters are not available \c DataSourceError exception
     /// will be thrown.
     ///
@@ -449,6 +499,18 @@ inline ZoneFinder::FindOptions operator |(ZoneFinder::FindOptions a,
 {
     return (static_cast<ZoneFinder::FindOptions>(static_cast<unsigned>(a) |
                                                  static_cast<unsigned>(b)));
+}
+
+/// \brief Operator to combine FindResultFlags
+///
+/// Similar to the same operator for \c FindOptions.  Refer to the description
+/// of that function.
+inline ZoneFinder::FindResultFlags operator |(
+    ZoneFinder::FindResultFlags a,
+    ZoneFinder::FindResultFlags b)
+{
+    return (static_cast<ZoneFinder::FindResultFlags>(
+                static_cast<unsigned>(a) | static_cast<unsigned>(b)));
 }
 
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
