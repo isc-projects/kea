@@ -35,7 +35,19 @@ namespace {
 // one, until we update all supported data source implementations.
 ZoneFinder::FindResult
 findWrapper(const ZoneFinder::FindResult& orig_result) {
+    // Retrieve the original flags
     ZoneFinder::FindResultFlags flags = ZoneFinder::RESULT_DEFAULT;
+    if (orig_result.isWildcard()) {
+        flags = flags | ZoneFinder::RESULT_WILDCARD;
+    }
+    if (orig_result.isNSECSigned()) {
+        flags = flags | ZoneFinder::RESULT_NSEC_SIGNED;
+    }
+    if (orig_result.isNSEC3Signed()) {
+        flags = flags | ZoneFinder::RESULT_NSEC3_SIGNED;
+    }
+
+    // Convert older code to new one, adjusting flags if necessary
     ZoneFinder::Result code = orig_result.code;
     if (code == ZoneFinder::WILDCARD) {
         code = ZoneFinder::SUCCESS;
@@ -399,7 +411,7 @@ Query::process() {
         case ZoneFinder::NXRRSET:
             addSOA(*result.zone_finder);
             if (dnssec_) {
-                if (db_result.isNSECSigned()) {
+                if (db_result.isNSECSigned() && db_result.rrset) {
                     response_.addRRset(Message::SECTION_AUTHORITY,
                                        boost::const_pointer_cast<RRset>(
                                            db_result.rrset),
