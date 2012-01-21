@@ -279,20 +279,15 @@ public:
     ///   of \c DELEGATION and the NS RRset at the zone cut.
     /// - If there is no matching name, it returns the code of \c NXDOMAIN,
     ///   and, if DNSSEC is requested, the NSEC RRset that proves the
-    ///   non-existence if the zone is signed with NSEC; if it's signed with
-    ///   NSEC3, an empty NSEC3 RRset (an RRset that doesn't have RDATA)
-    ///   whose name is the closest encloser of the given name.
+    ///   non-existence if the zone is signed with NSEC.
     /// - If there is a matching name but no RRset of the search type, it
     ///   returns the code of \c NXRRSET, and, if DNSSEC is required,
-    ///   the NSEC RRset for that name if the zone is signed with NSEC;
-    ///   if it's signed with NSEC3, an empty NSEC3 RRset whose name is the
-    ///   given name.
+    ///   the NSEC RRset for that name if the zone is signed with NSEC.
     /// - If there is no matching name but there is a matching wild card name,
     ///   but it doesn't have a requested type of RR, and if DNSSEC is
     ///   required, then it returns the code of \c WILDCARD_NXRRSET.
     ///   If the zone is signed with NSEC, it returns corresponding NSEC
-    ///   (see the description of \c Result); if it's signed with NSEC3,
-    ///   it returns an empty NSEC3 RRset whose name is the matching wildcard.
+    ///   (see the description of \c Result).
     /// - If there is a CNAME RR of the searched name but there is no
     ///   RR of the searched type of the name (so this type is different from
     ///   CNAME), it returns the code of \c CNAME and that CNAME RR.
