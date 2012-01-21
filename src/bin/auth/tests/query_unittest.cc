@@ -405,12 +405,14 @@ MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
                 covering_proof = (--found_domain)->second[RRType::NSEC3()];
             }
             if (!recursive) {   // in non recursive mode, we are done.
-                return (ZoneFinder::FindNSEC3Result(false, covering_proof,
+                return (ZoneFinder::FindNSEC3Result(false,
+                                                    name.getLabelCount(),
+                                                    covering_proof,
                                                     ConstRRsetPtr()));
             }
         } else {                // exact match
             return (ZoneFinder::FindNSEC3Result(
-                        true,
+                        true, name.getLabelCount() - i,
                         found_domain->second[RRType::NSEC3()],
                         covering_proof));
         }
@@ -1447,11 +1449,15 @@ TEST_F(QueryTest, MaxLenDNAME) {
 
 // Test for this test module itself
 void
-nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
+nsec3Check(bool expected_matched, uint8_t expected_labels,
+           const string& expected_rrsets_txt,
            const ZoneFinder::FindNSEC3Result& result)
 {
     vector<ConstRRsetPtr> actual_rrsets;
     EXPECT_EQ(expected_matched, result.matched);
+    // Convert to int so the error messages would be more readable:
+    EXPECT_EQ(static_cast<int>(expected_labels),
+              static_cast<int>(result.closest_labels));
     if (result.closest_proof) {
         actual_rrsets.push_back(result.closest_proof);
     }
@@ -1463,33 +1469,42 @@ nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
 }
 
 TEST_F(QueryTest, findNSEC3) {
+    // In all test cases in the recursive mode, the closest encloser is the
+    // apex, and result's closest_labels should be the number of apex labels.
+    // (In non recursive mode closest_labels should be the # labels of the
+    // query name)
+    const uint8_t expected_closest_labels =
+        Name("example.com").getLabelCount();
+
     // Apex name.  It should have a matching NSEC3
-    nsec3Check(true, nsec3_apex_txt,
+    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
                mock_finder->findNSEC3(Name("example.com"), false));
 
     // Recursive mode doesn't change the result in this case.
-    nsec3Check(true, nsec3_apex_txt,
+    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
                mock_finder->findNSEC3(Name("example.com"), true)); 
 
     // Non existent name.  Disabling recursion, a covering NSEC3 should be
     // returned.
-    nsec3Check(false, nsec3_www_txt,
+    nsec3Check(false, 4, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
 
     // Non existent name.  The closest provable encloser is the apex,
     // and next closer is the query name.
-    nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
+    nsec3Check(true, expected_closest_labels,
+               string(nsec3_apex_txt) + string(nsec3_www_txt),
                mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
 
     // Similar to the previous case, but next closer name is different
     // (is the parent) of the non existent name.
-    nsec3Check(true, string(nsec3_apex_txt) + string(nsec3_www_txt),
+    nsec3Check(true, expected_closest_labels,
+               string(nsec3_apex_txt) + string(nsec3_www_txt),
                mock_finder->findNSEC3(Name("nx.domain.example.com"), true));
 
     // In the rest of test we check hash comparison for wrap around cases.
-    nsec3Check(false, nsec3_apex_txt,
+    nsec3Check(false, 4, nsec3_apex_txt,
                mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
-    nsec3Check(false, nsec3_www_txt,
+    nsec3Check(false, 4, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
 }
 
