@@ -105,16 +105,16 @@ class MockDataSrcClient:
 
         '''
         if name == Name('nosoa.example.com') and rrtype == RRType.SOA():
-            return (ZoneFinder.NXDOMAIN, None)
+            return (ZoneFinder.NXDOMAIN, None, 0)
         elif name == Name('multisoa.example.com') and rrtype == RRType.SOA():
             soa_rrset = create_soa(SOA_CURRENT_VERSION)
             soa_rrset.add_rdata(soa_rrset.get_rdata()[0])
-            return (ZoneFinder.SUCCESS, soa_rrset)
+            return (ZoneFinder.SUCCESS, soa_rrset, 0)
         elif name == Name('maxserial.example.com'):
             soa_rrset = create_soa(0xffffffff)
-            return (ZoneFinder.SUCCESS, soa_rrset)
+            return (ZoneFinder.SUCCESS, soa_rrset, 0)
         elif rrtype == RRType.SOA():
-            return (ZoneFinder.SUCCESS, create_soa(SOA_CURRENT_VERSION))
+            return (ZoneFinder.SUCCESS, create_soa(SOA_CURRENT_VERSION), 0)
         raise ValueError('Unexpected input to mock finder: bug in test case?')
 
     def get_iterator(self, zone_name, adjust_ttl=False):
