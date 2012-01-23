@@ -171,7 +171,7 @@ class DDNSServer:
 
     def handle_session(self, fileno):
         """
-        Handle incoming event on the socket with given fileno.
+        Handle incoming session on the socket with given fileno.
         """
         logger.debug(TRACE_BASIC, DDNS_SESSION, fileno)
         (socket, receiver) = self._socksession_receivers[fileno]
