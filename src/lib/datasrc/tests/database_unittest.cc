@@ -2115,16 +2115,10 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     this->expected_rdatas_.clear();
     const char* negative_names[] = {
         "a.foo.example.org.",
-        //"*.foo.example.org.", => should be an exact (empty) match
-        //"foo.example.org.", => WILDCARD should be canceled
         "wild.bar.foo.example.org.",
         "baz.foo.*.bar.example.org",
         "baz.foo.baz.bar.example.org",
         "*.foo.baz.bar.example.org",
-        //"*.foo.*.bar.example.org", => exact (empty) match
-        //"foo.*.bar.example.org", => exact (empty) match
-        //"*.bar.example.org", => exact (empty) match
-        //"bar.example.org", => exact (empty) match
         NULL
     };
     // Unless FIND_DNSSEC is specified, this is no different from other
