@@ -382,7 +382,6 @@ public:
         const bool matched;
 
         /// The number of labels of the identified closest encloser.
-        ///
         const uint8_t closest_labels;
 
         /// Either the NSEC3 for the closest provable encloser of the given
