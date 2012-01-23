@@ -83,6 +83,12 @@ public:
                                std::vector<isc::dns::ConstRRsetPtr>& target,
                                const FindOptions options = FIND_DEFAULT);
 
+    /// Look for NSEC3 for proving (non)existence of given name.
+    ///
+    /// See documentation in \c Zone.
+    virtual FindNSEC3Result
+    findNSEC3(const isc::dns::Name& name, bool recursive);
+
     /// \brief Imelementation of the ZoneFinder::findPreviousName method
     ///
     /// This one throws NotImplemented exception, as InMemory doesn't
