@@ -241,7 +241,7 @@ class TestDDNSServer(unittest.TestCase):
         self.assertTrue(isinstance(receiver, FakeSessionReceiver))
         self.assertEqual(socket, receiver.socket())
 
-    def test_incoming_called(self):
+    def test_session_called(self):
         """
         Test the run calls handle_session when there's something on the
         socket.
