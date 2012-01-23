@@ -136,10 +136,7 @@ public:
         NXDOMAIN, ///< There is no domain name that matches the search name
         NXRRSET,  ///< There is a matching name but no RRset of the search type
         CNAME,    ///< The search encounters and returns a CNAME RR
-        DNAME,    ///< The search encounters and returns a DNAME RR
-        WILDCARD, ///< Succes by wildcard match, for DNSSEC
-        WILDCARD_CNAME, ///< CNAME on wildcard, search returns CNAME, for DNSSEC
-        WILDCARD_NXRRSET ///< NXRRSET on wildcard, for DNSSEC
+        DNAME    ///< The search encounters and returns a DNAME RR
     };
 
     /// Special attribute flags on the result of the \c find() method
