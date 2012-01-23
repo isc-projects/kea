@@ -15,6 +15,9 @@
 #ifndef __ZONE_H
 #define __ZONE_H 1
 
+#include <utility>
+#include <vector>
+
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
 
@@ -139,19 +142,41 @@ public:
         WILDCARD_NXRRSET ///< NXRRSET on wildcard, for DNSSEC
     };
 
+    /// Special attribute flags on the result of the \c find() method
+    ///
+    /// The flag values defined here are intended to signal to the caller
+    /// that it may need special handling on the result.  This is particularly
+    /// of concern when DNSSEC is requested.  For example, for negative
+    /// responses the caller would want to know whether the zone is signed
+    /// with NSEC or NSEC3 so that it can subsequently provide necessary
+    /// proof of the result.
+    ///
+    /// The caller is generally expected to get access to the information
+    /// via read-only getter methods of \c FindResult so that it won't rely
+    /// on specific details of the representation of the flags.  So these
+    /// definitions are basically only meaningful for data source
+    /// implementations.
+    enum FindResultFlags {
+        RESULT_DEFAULT = 0,       ///< The default flags
+        RESULT_WILDCARD = 1,      ///< find() resulted in a wildcard match
+        RESULT_NSEC_SIGNED = 2,   ///< The zone is signed with NSEC RRs
+        RESULT_NSEC3_SIGNED = 4   ///< The zone is signed with NSEC3 RRs
+    };
+
     /// A helper structure to represent the search result of \c find().
     ///
     /// This is a straightforward tuple of the result code and a pointer
-    /// to the found RRset to represent the result of \c find()
-    /// (there will be more members in the future - see the class
-    /// description).
+    /// (and optionally special flags) to the found RRset to represent the
+    /// result of \c find() (there will be more members in the future -
+    /// see the class description).
     /// We use this in order to avoid overloading the return value for both
     /// the result code ("success" or "not found") and the found object,
     /// i.e., avoid using \c NULL to mean "not found", etc.
     ///
     /// This is a simple value class whose internal state never changes,
-    /// so for convenience we allow the applications to refer to the members
-    /// directly.
+    /// so for convenience we allow the applications to refer to some of the
+    /// members directly.  For others we provide read-only accessor methods
+    /// to hide specific representation.
     ///
     /// Note: we should eventually include a notion of "zone node", which
     /// corresponds to a particular domain name of the zone, so that we can
@@ -162,11 +187,39 @@ public:
     /// optimize including the NSEC for no-wildcard proof (FWIW NSD does that).
     struct FindResult {
         FindResult(Result param_code,
-                   const isc::dns::ConstRRsetPtr param_rrset) :
-            code(param_code), rrset(param_rrset)
+                   const isc::dns::ConstRRsetPtr param_rrset,
+                   FindResultFlags param_flags = RESULT_DEFAULT) :
+            code(param_code), rrset(param_rrset), flags(param_flags)
         {}
         const Result code;
         const isc::dns::ConstRRsetPtr rrset;
+
+        /// Return true iff find() results in a wildcard match.
+        bool isWildcard() const { return ((flags & RESULT_WILDCARD) != 0); }
+
+        /// Return true when the underlying zone is signed with NSEC.
+        ///
+        /// The \c find() implementation allow this to return false if
+        /// \c FIND_DNSSEC isn't specified regardless of whether the zone
+        /// is signed or which of NSEC/NSEC3 is used.
+        ///
+        /// When this is returned, the implementation of find() must ensure
+        /// that \c rrset be a valid NSEC RRset as described in \c find()
+        /// documentation.
+        bool isNSECSigned() const {
+            return ((flags & RESULT_NSEC_SIGNED) != 0);
+        }
+
+        /// Return true when the underlying zone is signed with NSEC3.
+        ///
+        /// The \c find() implementation allow this to return false if
+        /// \c FIND_DNSSEC isn't specified regardless of whether the zone
+        /// is signed or which of NSEC/NSEC3 is used.
+        bool isNSEC3Signed() const {
+            return ((flags & RESULT_NSEC3_SIGNED) != 0);
+        }
+    private:
+        FindResultFlags flags;
     };
 
     /// Find options.
@@ -226,10 +279,15 @@ public:
     ///   of \c DELEGATION and the NS RRset at the zone cut.
     /// - If there is no matching name, it returns the code of \c NXDOMAIN,
     ///   and, if DNSSEC is requested, the NSEC RRset that proves the
-    ///   non-existence.
+    ///   non-existence if the zone is signed with NSEC.
     /// - If there is a matching name but no RRset of the search type, it
     ///   returns the code of \c NXRRSET, and, if DNSSEC is required,
-    ///   the NSEC RRset for that name.
+    ///   the NSEC RRset for that name if the zone is signed with NSEC.
+    /// - If there is no matching name but there is a matching wild card name,
+    ///   but it doesn't have a requested type of RR, and if DNSSEC is
+    ///   required, then it returns the code of \c WILDCARD_NXRRSET.
+    ///   If the zone is signed with NSEC, it returns corresponding NSEC
+    ///   (see the description of \c Result).
     /// - If there is a CNAME RR of the searched name but there is no
     ///   RR of the searched type of the name (so this type is different from
     ///   CNAME), it returns the code of \c CNAME and that CNAME RR.
@@ -306,6 +364,108 @@ public:
                                std::vector<isc::dns::ConstRRsetPtr> &target,
                                const FindOptions options = FIND_DEFAULT) = 0;
 
+    /// A helper structure to represent the search result of \c findNSEC3().
+    ///
+    /// The idea is similar to that of \c FindResult, but \c findNSEC3() has
+    /// special interface and semantics, we use a different structure to
+    /// represent the result.
+    struct FindNSEC3Result {
+        FindNSEC3Result(bool param_matched, uint8_t param_closest_labels,
+                        isc::dns::ConstRRsetPtr param_closest_proof,
+                        isc::dns::ConstRRsetPtr param_next_proof) :
+            matched(param_matched), closest_labels(param_closest_labels),
+            closest_proof(param_closest_proof),
+            next_proof(param_next_proof)
+        {}
+
+        /// true iff closest_proof is a matching NSEC3
+        const bool matched;
+
+        /// The number of labels of the identified closest encloser.
+        ///
+        const uint8_t closest_labels;
+
+        /// Either the NSEC3 for the closest provable encloser of the given
+        /// name or NSEC3 that covers the name
+        const isc::dns::ConstRRsetPtr closest_proof;
+
+        /// When non NULL, NSEC3 for the next closer name.
+        const isc::dns::ConstRRsetPtr next_proof;
+    };
+
+    /// Search the zone for the NSEC3 RR(s) that prove existence or non
+    /// existence of a give name.
+    ///
+    /// It searches the NSEC3 namespace of the zone (how that namespace is
+    /// implemented can vary in specific data source implementation) for NSEC3
+    /// RRs that match or cover the NSEC3 hash value for the given name.
+    ///
+    /// If \c recursive is false, it will first look for the NSEC3 that has
+    /// a matching hash.  If it doesn't exist, it identifies the covering NSEC3
+    /// for the hash.  In either case the search stops at that point and the
+    /// found NSEC3 RR(set) will be returned in the closest_proof member of
+    /// \c FindNSEC3Result.  \c matched is true or false depending on
+    /// the found NSEC3 is a matched one or covering one.  \c next_proof
+    /// is always NULL.  closest_labels must be equal to the number of
+    /// labels of \c name (and therefore meaningless).
+    ///
+    /// If \c recursive is true, it will continue the search toward the zone
+    /// apex (origin name) until it finds a provable encloser, that is,
+    /// an ancestor of \c name that has a matching NSEC3.  This is the closest
+    /// provable encloser of \c name as defined in RFC5155.  In this case,
+    /// if the found encloser is not equal to \c name, the search should
+    /// have seen a covering NSEC3 for the immediate child of the found
+    /// encloser.  That child name is the next closer name as defined in
+    /// RFC5155.  In this case, this method returns the NSEC3 for the
+    /// closest encloser in \c closest_proof, and the NSEC3 for the next
+    /// closer name in \c next_proof of \c FindNSEC3Result.  This set of
+    /// NSEC3 RRs provide the closest encloser proof as defined in RFC5155.
+    /// closest_labels will be set to the number of labels of the identified
+    /// closest encloser.  This will be useful when the caller needs to
+    /// construct the closest encloser name from the original \c name.
+    /// If, on the other hand, the found closest name is equal to \c name,
+    /// this method simply returns it in \c closest_proof.  \c next_proof
+    /// is set to NULL.  In all cases \c matched is set to true.
+    /// closest_labels will be set to the number of labels of \c name.
+    ///
+    /// When looking for NSEC3, this method retrieves NSEC3 parameters from
+    /// the corresponding zone to calculate hash values.  Actual implementation
+    /// of how to do this will differ in different data sources.  If the
+    /// NSEC3 parameters are not available \c DataSourceError exception
+    /// will be thrown.
+    ///
+    /// \note This implicitly means this method assumes the zone does not
+    /// have more than one set of parameters.  This assumption should be
+    /// reasonable in actual deployment and will help simplify the interface
+    /// and implementation.  But if there's a real need for supporting
+    /// multiple sets of parameters in a single zone, we will have to
+    /// extend this method so that, e.g., the caller can specify the parameter
+    /// set.
+    ///
+    /// In general, this method expects the zone is properly signed with NSEC3
+    /// RRs.  Specifically, it assumes at least the apex node has a matching
+    /// NSEC3 RR (so the search in the recursive mode must always succeed);
+    /// it also assumes that it can retrieve NSEC parameters (iterations,
+    /// algorithm, and salt) from the zone as noted above.  If these
+    /// assumptions aren't met, \c DataSourceError exception will be thrown.
+    ///
+    /// \exception InvalidParameter name is not a subdomain of the zone origin
+    /// \exception DataSourceError Low-level or internal datasource errors
+    /// happened, or the zone isn't properly signed with NSEC3
+    /// (NSEC3 parameters cannot be found, no NSEC3s are available, etc).
+    /// \exception std::bad_alloc The underlying implementation involves
+    /// memory allocation and it fails
+    ///
+    /// \param name The name for which NSEC3 RRs are to be found.  It must
+    /// be a subdomain of the zone.
+    /// \param recursive Whether or not search should continue until it finds
+    /// a provable encloser (see above).
+    ///
+    /// \return The search result and whether or not the closest_proof is
+    /// a matching NSEC3, in the form of \c FindNSEC3Result object.
+    virtual FindNSEC3Result
+    findNSEC3(const isc::dns::Name& name, bool recursive) = 0;
+
     /// \brief Get previous name in the zone
     ///
     /// Gets the previous name in the DNSSEC order. This can be used
@@ -344,6 +504,18 @@ inline ZoneFinder::FindOptions operator |(ZoneFinder::FindOptions a,
 {
     return (static_cast<ZoneFinder::FindOptions>(static_cast<unsigned>(a) |
                                                  static_cast<unsigned>(b)));
+}
+
+/// \brief Operator to combine FindResultFlags
+///
+/// Similar to the same operator for \c FindOptions.  Refer to the description
+/// of that function.
+inline ZoneFinder::FindResultFlags operator |(
+    ZoneFinder::FindResultFlags a,
+    ZoneFinder::FindResultFlags b)
+{
+    return (static_cast<ZoneFinder::FindResultFlags>(
+                static_cast<unsigned>(a) | static_cast<unsigned>(b)));
 }
 
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
