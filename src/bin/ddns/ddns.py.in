@@ -193,11 +193,12 @@ class DDNSServer:
         cc_fileno = self._cc.get_socket().fileno()
         listen_fileno = self._listen_socket.fileno()
         while not self._shutdown:
-            # We do not catch any exceptions here right now, but this would
-            # be a good place to catch any exceptions that b10-ddns can
-            # recover from. We currently have no exception hierarchy to
-            # make such a distinction easily, but once we do, this would
-            # be the place to catch.
+            # In this event loop we propage most of exceptions, which will
+            # subsequently kill the b10-ddns process, but ideally it would be
+            # better to catch any exceptions that b10-ddns can recover from.
+            # We currently have no exception hierarchy to make such a
+            # distinction easily, but once we do, we should catch and handle
+            # non fatal exceptions here and continue the process.
 
             try:
                 (reads, writes, exceptions) = \
