@@ -180,9 +180,9 @@ class DDNSServer:
         except isc.util.io.socketsession.SocketSessionError as se:
             # No matter why this failed, the connection is in unknown, possibly
             # broken state. So, we close the socket and remove the receiver.
-            logger.warn(DDNS_DROP_CONN, fileno, se)
-            socket.close()
             del self._socksession_receivers[fileno]
+            socket.close()
+            logger.warn(DDNS_DROP_CONN, fileno, se)
 
     def run(self):
         '''
