@@ -47,7 +47,7 @@ Return the RR class of the zone.\n\
 // - NULL->None
 // - exceptions
 const char* const ZoneFinder_find_doc = "\
-find(name, type, options=FIND_DEFAULT) -> (integer, RRset)\n\
+find(name, type, options=FIND_DEFAULT) -> (integer, RRset, flags)\n\
 \n\
 Search the zone for a given pair of domain name and RR type.\n\
 \n\
@@ -58,12 +58,10 @@ answer for the search key. Specifically,\n\
 \n\
 - If the search name belongs under a zone cut, it returns the code of\n\
   DELEGATION and the NS RRset at the zone cut.\n\
-- If there is no matching name, it returns the code of NXDOMAIN, and,\n\
-  if DNSSEC is requested, the NSEC RRset that proves the non-\n\
-  existence.\n\
+- If there is no matching name, it returns the code of NXDOMAIN.\n\
 - If there is a matching name but no RRset of the search type, it\n\
-  returns the code of NXRRSET, and, if DNSSEC is required, the NSEC\n\
-  RRset for that name.\n\
+  returns the code of NXRRSET. This case includes the search name\n\
+  matches an empty node of the zone.\n\
 - If there is a CNAME RR of the searched name but there is no RR of\n\
   the searched type of the name (so this type is different from\n\
   CNAME), it returns the code of CNAME and that CNAME RR. Note that if\n\
@@ -71,6 +69,16 @@ answer for the search key. Specifically,\n\
   and the code of SUCCESS will be returned.\n\
 - If the search name matches a delegation point of DNAME, it returns\n\
   the code of DNAME and that DNAME RR.\n\
+\n\
+No RRset will be returned in the NXDOMAIN and NXRRSET cases (rrset\n\
+member of FindResult will be None), unless DNSSEC data are required.\n\
+See below for the cases with DNSSEC.\n\
+\n\
+The returned FindResult object can also provide supplemental\n\
+information about the search result via its methods returning a\n\
+boolean value. Such information may be useful for the caller if the\n\
+caller wants to collect additional DNSSEC proofs based on the search\n\
+result.\n\
 \n\
 The options parameter specifies customized behavior of the search.\n\
 Their semantics is as follows (they are or bit-field):\n\
@@ -96,6 +104,91 @@ should be equal to or a subdomain of the zone origin. Otherwise this\n\
 method will return NXDOMAIN with an empty RRset. But such a case\n\
 should rather be considered a caller's bug.\n\
 \n\
+Note: For this reason it's probably better to throw an exception than\n\
+returning NXDOMAIN. This point should be revisited in a near future\n\
+version. In any case applications shouldn't call this method for an\n\
+out-of-zone name.\n\
+\n\
+DNSSEC considerations: The result when DNSSEC data are required can be\n\
+very complicated, especially if it involves negative result or\n\
+wildcard match. Specifically, if an application calls this method for\n\
+DNS query processing with DNSSEC data, and if the search result code\n\
+is either NXDOMAIN or NXRRRSET, and/or RESULT_WILDCARD\n\
+flag is set in the returned flags value,\n\
+then the application will need to find additional NSEC or NSEC3\n\
+records for supplemental proofs. This method helps the application for\n\
+such post search processing.\n\
+\n\
+First, it tells the application whether the zone is signed with NSEC\n\
+or NSEC3 via the RESULT_NSEC_SIGNED and RESULT_NSEC3_SIGNED flags\n\
+in the returned flags value. Any sanely signed zone\n\
+should be signed with either (and only one) of these two types of RRs;\n\
+however, the application should expect that the zone could be broken\n\
+and these methods could both return false. But this method should\n\
+ensure that not both of these methods return true.\n\
+\n\
+In case it's signed with NSEC3, there is no further information\n\
+returned from this method.\n\
+\n\
+In case it's signed with NSEC, this method will possibly return a\n\
+related NSEC RRset in the rrset member of FindResult. What kind of\n\
+NSEC is returned depends on the result code (NXDOMAIN or NXRRSET) and\n\
+on whether it's a wildcard match:\n\
+\n\
+- In case of NXDOMAIN, the returned NSEC covers the queried domain\n\
+  that proves that the query name does not exist in the zone. Note\n\
+  that this does not necessarily prove it doesn't even match a\n\
+  wildcard (even if the result of NXDOMAIN can only happen when\n\
+  there's no matching wildcard either). It is caller's responsibility\n\
+  to provide a proof that there is no matching wildcard if that proof\n\
+  is necessary.\n\
+- In case of NXRRSET, we need to consider the following cases\n\
+  referring to Section 3.1.3 of RFC4035:\n\
+\n\
+1. (Normal) no data: there is a matching non-wildcard name with a\n\
+   different RR type. This is the \"No Data\" case of the RFC.\n\
+2. (Normal) empty non terminal: there is no matching (exact or\n\
+   wildcard) name, but there is a subdomain with an RR of the query\n\
+   name. This is one case of \"Name Error\" of the RFC.\n\
+3. Wildcard empty non terminal: similar to 2, but the empty name is\n\
+   a wildcard, and matches the query name by wildcard expansion. This\n\
+   is a special case of \"Name Error\" of the RFC.\n\
+4. Wildcard no data: there is no exact match name, but there is a\n\
+   wildcard name that matches the query name with a different type of RR.\n\
+   This is the \"Wildcard No Data\" case of the RFC.\n\
+\n\
+In case 1, find() returns NSEC of the matching name.\n\
+\n\
+In case 2, find() will return NSEC for the interval where the empty\n\
+nonterminal lives. The end of the interval is the subdomain causing\n\
+existence of the empty nonterminal (if there's sub.x.example.com, and\n\
+no record in x.example.com, then x.example.com exists implicitly - is\n\
+the empty nonterminal and sub.x.example.com is the subdomain causing\n\
+it). Note that this NSEC proves not only the existence of empty non\n\
+terminal name but also the non existence of possibly matching wildcard\n\
+name, because there can be no better wildcard match than the exact\n\
+matching empty name.\n\
+\n\
+In case 3, find() will return NSEC for the interval where the wildcard\n\
+empty nonterminal lives. Cases 2 and 3 are especially complicated and\n\
+confusing. See the examples below.\n\
+\n\
+In case 4, find() will return NSEC of the matching wildcard name.\n\
+\n\
+Examples: if zone \"example.com\" has the following record:\n\
+\n\
+a.example.com. NSEC a.b.example.com.\n\
+\n\
+a call to  find() for \"b.example.com.\" with the FIND_DNSSEC option\n\
+will result in NXRRSET, and this NSEC will be returned.\n\
+Likewise, if zone \"example.org\" has the following record,\n\
+\n\
+a.example.org. NSEC x.*.b.example.org.\n\
+\n\
+a call to  find() for \"y.b.example.org\" with FIND_DNSSEC will\n\
+result in NXRRSET and this NSEC;  isWildcard() on the returned\n\
+FindResult object will return true.\n\
+\n\
 This method raises an isc.datasrc.Error exception if there is an\n\
 internal error in the datasource.\n\
 \n\
@@ -104,28 +197,34 @@ Parameters:\n\
   type       The RR type to be searched for.\n\
   options    The search options.\n\
 \n\
-Return Value(s): A tuple of a result code (integer) and an RRset object\n\
-enclosing the search result (see above).\n\
+Return Value(s): A tuple of a result code (integer), an RRset object\n\
+and supplemental integer.\n\
 ";
 
-const char* const ZoneFinder_find_all_doc = "\
-find_all(isc.dns.Name, options=FIND_DEFAULT) -> (integer, RRset) | (integer, [RRset])\
+const char* const ZoneFinder_findAll_doc = "\
+find_all(isc.dns.Name, options=FIND_DEFAULT) ->\n\
+   (integer, RRset, flags) | (integer, [RRset], flags)\
 \n\
-This acts mostly the same as the find method. The main difference is,\n\
-when the lookup is successful (eg. the first part of the result is either\n\
-SUCCESS or WILDCARD), the second part is list of all RRsets in the given name\n\
-instead of a single RRset as in case of find.\n\
+Finds all RRsets in the given name.\n\
 \n\
-This method raises an isc.datasrc.Error exception if there is an\n\
-internal error in the datasource.\n\
+This function works almost exactly in the same way as the find one.\n\
+The only difference is, when the lookup is successful (eg. the code is\n\
+SUCCESS), all the RRsets residing in the named node are returned in the\n\
+second element of the returned tuple. All\n\
+the other (unsuccessful) cases are handled the same, including\n\
+returning delegations, NSEC/NSEC3 availability and NSEC proofs,\n\
+wildcard information etc. The options parameter works the same way and\n\
+it should conform to the same exception restrictions.\n\
 \n\
 Parameters:\n\
-  name       The domain name to be searched for.\n\
+  target     the successfull result is returned through this\n\
   options    The search options.\n\
 \n\
-Return Value(s): A tuple of a result code (integer) and an either RRset object,\n\
-for cases where the result is some kind of delegation, CNAME or similar, or list\n\
-of RRset objects, containing all the results.\n\
+Return Value(s): A tuple of a result code (integer), an either\n\
+RRset object or a list of RRsets, and flags (integer).\n\
+In the second element a single RRset is returned for cases where the\n\
+result is some kind of delegation, CNAME or similar; in other cases\n\
+a list of RRsets is returned, containing all the results.\n\
 ";
 
 const char* const ZoneFinder_find_previous_name_doc = "\
