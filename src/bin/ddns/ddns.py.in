@@ -108,6 +108,8 @@ class DDNSServer:
 
     def config_handler(self, new_config):
         '''Update config data.'''
+        # TODO: Handle exceptions and turn them to an error response
+        # (once we have any configuration)
         answer = create_answer(0)
         return answer
 
@@ -116,6 +118,7 @@ class DDNSServer:
         Handle a CC session command, as sent from bindctl or other
         BIND 10 modules.
         '''
+        # TODO: Handle exceptions and turn them to an error response
         if cmd == "shutdown":
             logger.info(DDNS_RECEIVED_SHUTDOWN_COMMAND)
             self.trigger_shutdown()
@@ -149,6 +152,7 @@ class DDNSServer:
         """
         Accept another connection and create the session receiver.
         """
+        # TODO: Handle some exceptions
         socket = self._listen_socket.accept()
         fileno = socket.fileno()
         logger.debug(TRACE_BASIC, DDNS_NEW_CONN, fileno, socket.getpeername())
@@ -167,6 +171,9 @@ class DDNSServer:
         (socket, local_address, remote_address, data).
         """
         # TODO: Implement the magic
+
+        # TODO: Don't propagate most of the exceptions (like datasrc errors),
+        # just drop the packet.
         pass
 
     def handle_session(self, fileno):
@@ -193,12 +200,12 @@ class DDNSServer:
         cc_fileno = self._cc.get_socket().fileno()
         listen_fileno = self._listen_socket.fileno()
         while not self._shutdown:
-            # In this event loop we propage most of exceptions, which will
-            # subsequently kill the b10-ddns process, but ideally it would be
-            # better to catch any exceptions that b10-ddns can recover from.
-            # We currently have no exception hierarchy to make such a
-            # distinction easily, but once we do, we should catch and handle
-            # non fatal exceptions here and continue the process.
+            # In this event loop, we propagate most of exceptions, which will
+            # subsequently kill the process. We expect the handling functions
+            # to catch their own exceptions which they can recover from
+            # (malformed packets, lost connections, etc). The rationale behind
+            # this is they know best which exceptions are recoverable there
+            # and an exception may be recoverable somewhere, but not elsewhere.
 
             try:
                 (reads, writes, exceptions) = \
