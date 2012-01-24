@@ -152,12 +152,18 @@ class DDNSServer:
         """
         Accept another connection and create the session receiver.
         """
-        # TODO: Handle some exceptions
-        socket = self._listen_socket.accept()
-        fileno = socket.fileno()
-        logger.debug(TRACE_BASIC, DDNS_NEW_CONN, fileno, socket.getpeername())
-        receiver = isc.util.io.socketsession.SocketSessionReceiver(socket)
-        self._socksession_receivers[fileno] = (socket, receiver)
+        try:
+            sock = self._listen_socket.accept()
+            fileno = sock.fileno()
+            logger.debug(TRACE_BASIC, DDNS_NEW_CONN, fileno,
+                         sock.getpeername())
+            receiver = isc.util.io.socketsession.SocketSessionReceiver(sock)
+            self._socksession_receivers[fileno] = (sock, receiver)
+        except (socket.error, isc.util.io.socketsession.SocketSessionError) \
+            as e:
+            # These exceptions mean the connection didn't work, but we can
+            # continue with the rest
+            logger.error(DDNS_ACCEPT_FAILURE, e)
 
     def handle_request(self, request):
         """

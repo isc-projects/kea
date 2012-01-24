@@ -19,6 +19,12 @@
 # <topsrcdir>/tools/reorder_message_file.py to make sure the
 # messages are in the correct order.
 
+% DDNS_ACCEPT_FAILURE error accepting a connection: %1
+There was a low-level error when we tried to accept an incoming connection
+(probably coming from b10-auth). We continue serving on whanever other
+connections we already have, but this connection is dropped. The reason
+is logged.
+
 % DDNS_CC_SESSION_ERROR error reading from cc channel: %1
 There was a problem reading from the command and control channel. The
 most likely cause is that the msgq process is not running.

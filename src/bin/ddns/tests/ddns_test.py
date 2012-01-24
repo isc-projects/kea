@@ -241,6 +241,41 @@ class TestDDNSServer(unittest.TestCase):
         self.assertTrue(isinstance(receiver, FakeSessionReceiver))
         self.assertEqual(socket, receiver.socket())
 
+    def test_accept_fail(self):
+        """
+        Test we don't crash if an accept fails and that we don't modify the
+        internals.
+        """
+        # Make the accept fail
+        def accept_failure():
+            raise socket.error(errno.ECONNABORTED)
+        orig = self.ddns_server._listen_socket.accept
+        self.ddns_server._listen_socket.accept = accept_failure
+        self.assertEqual({}, self.ddns_server._socksession_receivers)
+        # Doesn't raise the exception
+        self.ddns_server.accept()
+        # And nothing is stored
+        self.assertEqual({}, self.ddns_server._socksession_receivers)
+        # Now make the socket receiver fail
+        self.ddns_server._listen_socket.accept = orig
+        def receiver_failure(sock):
+            raise isc.util.io.socketsession.SocketSessionError('Test error')
+        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
+            receiver_failure
+        # Doesn't raise the exception
+        self.ddns_server.accept()
+        # And nothing is stored
+        self.assertEqual({}, self.ddns_server._socksession_receivers)
+        # Check we don't catch everything, so raise just an exception
+        def unexpected_failure(sock):
+            raise Exception('Test error')
+        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
+            unexpected_failure
+        # This one gets through
+        self.assertRaises(Exception, self.ddns_server.accept)
+        # Nothing is stored as well
+        self.assertEqual({}, self.ddns_server._socksession_receivers)
+
     def test_session_called(self):
         """
         Test the run calls handle_session when there's something on the
