@@ -58,78 +58,8 @@ public:
     /// Note: the codes are tentative.  We may need more, or we may find
     /// some of them unnecessary as we implement more details.
     ///
-    /// Some are synonyms of others in terms of RCODE returned to user.
-    /// But they help the logic to decide if it should ask for a NSEC
-    /// that covers something or not (for example, in case of NXRRSET,
-    /// the directly returned NSEC is sufficient, but with wildcard one,
-    /// we need to add one proving there's no exact match and this is
-    /// actually the best wildcard we have). Data sources that don't
-    /// support DNSSEC don't need to distinguish them.
-    ///
-    /// In case of CNAME, if the CNAME is a wildcard (i.e., its owner name
-    /// starts with the label "*"), WILDCARD_CNAME will be returned instead
-    /// of CNAME.
-    ///
-    /// In case of NXDOMAIN, the returned NSEC covers the queried domain
-    /// that proves that the query name does not exist in the zone.  Note that
-    /// this does not necessarily prove it doesn't even match a wildcard
-    /// (even if the result of NXDOMAIN can only happen when there's no
-    /// matching wildcard either).  It is caller's responsibility to provide
-    /// a proof that there is no matching wildcard if that proof is necessary.
-    ///
-    /// Various variants of "no data" cases are complicated, when involves
-    /// DNSSEC and wildcard processing.  Referring to Section 3.1.3 of
-    /// RFC4035, we need to consider the following cases:
-    /// -# (Normal) no data: there is a matching non-wildcard name with a
-    ///    different RR type.  This is the "No Data" case of the RFC.
-    /// -# (Normal) empty non terminal: there is no matching (exact or
-    ///    wildcard) name, but there is a subdomain with an RR of the query
-    ///    name.  This is one case of "Name Error" of the RFC.
-    /// -# Wildcard empty non terminal: similar to 2a, but the empty name
-    ///    is a wildcard, and matches the query name by wildcard expansion.
-    ///    This is a special case of "Name Error" of the RFC.
-    /// -# Wildcard no data: there is no exact match name, but there is a
-    ///    wildcard name that matches the query name with a different type
-    ///    of RR.  This is the "Wildcard No Data" case of the RFC.
-    ///
-    /// In any case, \c find() will result in \c NXRRSET with no RRset
-    /// unless the \c FIND_DNSSEC option is specified.  The rest of the
-    /// discussion only applies to the case where this option is specified.
-    ///
-    /// In case 1, \c find() will result in NXRRSET, and return NSEC of the
-    /// matching name.
-    ///
-    /// In case 2, \c find() will result in NXRRSET, and return NSEC for the
-    /// interval where the empty nonterminal lives. The end of the interval
-    /// is the subdomain causing existence of the empty nonterminal (if
-    /// there's sub.x.example.com, and no record in x.example.com, then
-    /// x.example.com exists implicitly - is the empty nonterminal and
-    /// sub.x.example.com is the subdomain causing it).  Note that this NSEC
-    /// proves not only the existence of empty non terminal name but also
-    /// the non existence of possibly matching wildcard name, because
-    /// there can be no better wildcard match than the exact matching empty
-    /// name.
-    ///
-    /// In case 3, \c find() will result in WILDCARD_NXRRSET, and return NSEC
-    /// for the interval where the wildcard empty nonterminal lives.
-    /// Cases 2 and 3 are especially complicated and confusing.  See the
-    /// examples below.
-    ///
-    /// In case 4, \c find() will result in WILDCARD_NXRRSET, and return
-    /// NSEC of the matching wildcard name.
-    ///
-    /// Examples: if zone "example.com" has the following record:
-    /// \code
-    /// a.example.com. NSEC a.b.example.com.
-    /// \endcode
-    /// a call to \c find() for "b.example.com." with the FIND_DNSSEC option
-    /// will result in NXRRSET, and this NSEC will be returned.
-    /// Likewise, if zone "example.org" has the following record,
-    /// \code
-    /// a.example.org. NSEC x.*.b.example.org.
-    /// \endcode
-    /// a call to \c find() for "y.b.example.org" with FIND_DNSSEC will
-    /// result in NXRRSET_NXRRSET, and this NSEC will be returned.
+    /// See the description of \c find() for further details of how
+    /// these results should be interpreted.
     enum Result {
         SUCCESS,                ///< An exact match is found.
         DELEGATION,             ///< The search encounters a zone cut.
@@ -196,7 +126,7 @@ public:
 
         /// Return true when the underlying zone is signed with NSEC.
         ///
-        /// The \c find() implementation allow this to return false if
+        /// The \c find() implementation allows this to return false if
         /// \c FIND_DNSSEC isn't specified regardless of whether the zone
         /// is signed or which of NSEC/NSEC3 is used.
         ///
@@ -209,7 +139,7 @@ public:
 
         /// Return true when the underlying zone is signed with NSEC3.
         ///
-        /// The \c find() implementation allow this to return false if
+        /// The \c find() implementation allows this to return false if
         /// \c FIND_DNSSEC isn't specified regardless of whether the zone
         /// is signed or which of NSEC/NSEC3 is used.
         bool isNSEC3Signed() const {
@@ -274,17 +204,10 @@ public:
     ///
     /// - If the search name belongs under a zone cut, it returns the code
     ///   of \c DELEGATION and the NS RRset at the zone cut.
-    /// - If there is no matching name, it returns the code of \c NXDOMAIN,
-    ///   and, if DNSSEC is requested, the NSEC RRset that proves the
-    ///   non-existence if the zone is signed with NSEC.
+    /// - If there is no matching name, it returns the code of \c NXDOMAIN.
     /// - If there is a matching name but no RRset of the search type, it
-    ///   returns the code of \c NXRRSET, and, if DNSSEC is required,
-    ///   the NSEC RRset for that name if the zone is signed with NSEC.
-    /// - If there is no matching name but there is a matching wild card name,
-    ///   but it doesn't have a requested type of RR, and if DNSSEC is
-    ///   required, then it returns the code of \c WILDCARD_NXRRSET.
-    ///   If the zone is signed with NSEC, it returns corresponding NSEC
-    ///   (see the description of \c Result).
+    ///   returns the code of \c NXRRSET.  This case includes the search name
+    ///   matches an empty node of the zone.
     /// - If there is a CNAME RR of the searched name but there is no
     ///   RR of the searched type of the name (so this type is different from
     ///   CNAME), it returns the code of \c CNAME and that CNAME RR.
@@ -292,6 +215,16 @@ public:
     ///   a successful match, and the code of \c SUCCESS will be returned.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
+    ///
+    /// No RRset will be returned in the \c NXDOMAIN and \c NXRRSET cases
+    /// (\c rrset member of \c FindResult will be NULL), unless DNSSEC data
+    /// are required.  See below for the cases with DNSSEC.
+    ///
+    /// The returned \c FindResult object can also provide supplemental
+    /// information about the search result via its methods returning a
+    /// boolean value.  Such information may be useful for the caller if
+    /// the caller wants to collect additional DNSSEC proofs based on the
+    /// search result.
     ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows (they are or bit-field):
@@ -322,6 +255,86 @@ public:
     /// future version.  In any case applications shouldn't call this method
     /// for an out-of-zone name.
     ///
+    /// <b>DNSSEC considerations:</b>
+    /// The result when DNSSEC data are required can be very complicated,
+    /// especially if it involves negative result or wildcard match.
+    /// Specifically, if an application calls this method for DNS query
+    /// processing with DNSSEC data, and if the search result code is
+    /// either \c NXDOMAIN or \c NXRRRSET, and/or \c isWildcard() returns
+    /// true, then the application will need to find additional NSEC or
+    /// NSEC3 records for supplemental proofs.  This method helps the
+    /// application for such post search processing.
+    ///
+    /// First, it tells the application whether the zone is signed with
+    /// NSEC or NSEC3 via the \c isNSEC(3)Signed() method.  Any sanely signed
+    /// zone should be signed with either (and only one) of these two types
+    /// of RRs; however, the application should expect that the zone could
+    /// be broken and these methods could both return false.  But this method
+    /// should ensure that not both of these methods return true.
+    ///
+    /// In case it's signed with NSEC3, there is no further information
+    /// returned from this method.
+    ///
+    /// In case it's signed with NSEC, this method will possibly return
+    /// a related NSEC RRset in the \c rrset member of \c FindResult.
+    /// What kind of NSEC is returned depends on the result code
+    /// (\c NXDOMAIN or \c NXRRSET) and on whether it's a wildcard match:
+    ///
+    /// - In case of NXDOMAIN, the returned NSEC covers the queried domain
+    ///   that proves that the query name does not exist in the zone.  Note
+    ///   that this does not necessarily prove it doesn't even match a
+    ///   wildcard (even if the result of NXDOMAIN can only happen when
+    ///   there's no matching wildcard either).  It is caller's
+    ///   responsibility to provide a proof that there is no matching
+    ///   wildcard if that proof is necessary.
+    /// - In case of NXRRSET, we need to consider the following cases
+    ///   referring to Section 3.1.3 of RFC4035:
+    ///
+    /// -# (Normal) no data: there is a matching non-wildcard name with a
+    ///    different RR type.  This is the "No Data" case of the RFC.
+    /// -# (Normal) empty non terminal: there is no matching (exact or
+    ///    wildcard) name, but there is a subdomain with an RR of the query
+    ///    name.  This is one case of "Name Error" of the RFC.
+    /// -# Wildcard empty non terminal: similar to 2a, but the empty name
+    ///    is a wildcard, and matches the query name by wildcard expansion.
+    ///    This is a special case of "Name Error" of the RFC.
+    /// -# Wildcard no data: there is no exact match name, but there is a
+    ///    wildcard name that matches the query name with a different type
+    ///    of RR.  This is the "Wildcard No Data" case of the RFC.
+    ///
+    /// In case 1, \c find() returns NSEC of the matching name.
+    ///
+    /// In case 2, \c find() will return NSEC for the interval where the
+    /// empty nonterminal lives. The end of the interval is the subdomain
+    /// causing existence of the empty nonterminal (if there's
+    /// sub.x.example.com, and no record in x.example.com, then
+    /// x.example.com exists implicitly - is the empty nonterminal and
+    /// sub.x.example.com is the subdomain causing it).  Note that this NSEC
+    /// proves not only the existence of empty non terminal name but also
+    /// the non existence of possibly matching wildcard name, because
+    /// there can be no better wildcard match than the exact matching empty
+    /// name.
+    ///
+    /// In case 3, \c find() will return NSEC for the interval where the
+    /// wildcard empty nonterminal lives.   Cases 2 and 3 are especially
+    /// complicated and confusing.  See the examples below.
+    ///
+    /// In case 4, \c find() will return NSEC of the matching wildcard name.
+    ///
+    /// Examples: if zone "example.com" has the following record:
+    /// \code
+    /// a.example.com. NSEC a.b.example.com.
+    /// \endcode
+    /// a call to \c find() for "b.example.com." with the FIND_DNSSEC option
+    /// will result in NXRRSET, and this NSEC will be returned.
+    /// Likewise, if zone "example.org" has the following record,
+    /// \code
+    /// a.example.org. NSEC x.*.b.example.org.
+    /// \endcode
+    /// a call to \c find() for "y.b.example.org" with FIND_DNSSEC will
+    /// result in NXRRSET and this NSEC; \c isWildcard() on the returned
+    /// \c FindResult object will return true.
+    ///
     /// \exception std::bad_alloc Memory allocation such as for constructing
     ///  the resulting RRset fails
     /// \exception DataSourceError Derived class specific exception, e.g.
@@ -346,12 +359,12 @@ public:
     ///
     /// This function works almost exactly in the same way as the find one. The
     /// only difference is, when the lookup is successful (eg. the code is
-    /// SUCCESS or WILDCARD), all the RRsets residing in the named node are
+    /// SUCCESS), all the RRsets residing in the named node are
     /// copied into the \c target parameter and the rrset member of the result
     /// is NULL. All the other (unsuccessful) cases are handled the same,
-    /// including returning delegations, NSEC/NSEC3 proofs, etc. The options
-    /// parameter works the same way and it should conform to the same exception
-    /// restrictions.
+    /// including returning delegations, NSEC/NSEC3 availability and NSEC
+    /// proofs, wildcard information etc. The options parameter works the
+    /// same way and it should conform to the same exception restrictions.
     ///
     /// \param name \see find, parameter name
     /// \param target the successfull result is returned through this
