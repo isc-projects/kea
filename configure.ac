@@ -979,8 +979,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/acl/tests/Makefile
                  src/lib/python/isc/util/Makefile
                  src/lib/python/isc/util/tests/Makefile
-                 src/lib/python/isc/util/io/Makefile
-                 src/lib/python/isc/util/io/tests/Makefile
+                 src/lib/python/isc/util/cio/Makefile
+                 src/lib/python/isc/util/cio/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/dns/Makefile

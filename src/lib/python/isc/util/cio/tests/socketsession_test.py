@@ -16,7 +16,7 @@
 import os, signal, socket, unittest
 from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM, IPPROTO_UDP, \
     IPPROTO_TCP
-from isc.util.io.socketsession import *
+from isc.util.cio.socketsession import *
 
 TESTDATA_OBJDIR = os.getenv("TESTDATAOBJDIR")
 TEST_UNIX_FILE = TESTDATA_OBJDIR + '/ssessiontest.unix'
