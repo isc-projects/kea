@@ -666,8 +666,17 @@ TEST_F(InMemoryZoneFinderTest, delegationWithDS) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ns_));
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ds_));
 
+    // Normal types of query should result in delegation, but DS query
+    // should be considered in-zone.
+    findTest(Name("child.example.org"), RRType::A(), ZoneFinder::DELEGATION,
+             true, rr_child_ns_);
     findTest(Name("child.example.org"), RRType::DS(), ZoneFinder::SUCCESS,
              true, rr_child_ds_);
+
+    // There's nothing special for DS query at the zone apex.  It would
+    // normally result in NXRRSET.
+    findTest(Name("example.org"), RRType::DS(), ZoneFinder::NXRRSET,
+             true, ConstRRsetPtr());
 }
 
 TEST_F(InMemoryZoneFinderTest, findAny) {
