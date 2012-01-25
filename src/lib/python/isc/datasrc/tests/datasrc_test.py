@@ -321,10 +321,13 @@ class DataSrcClient(unittest.TestCase):
         self.assertNotEqual(ZoneFinder.CNAME, ZoneFinder.DNAME)
 
     def test_findresultflags(self):
+        '''A simple test just confirming the flags are all different.'''
         self.assertNotEqual(ZoneFinder.RESULT_WILDCARD,
                             ZoneFinder.RESULT_NSEC_SIGNED)
         self.assertNotEqual(ZoneFinder.RESULT_NSEC_SIGNED,
                             ZoneFinder.RESULT_NSEC3_SIGNED)
+        self.assertNotEqual(ZoneFinder.RESULT_NSEC3_SIGNED,
+                            ZoneFinder.RESULT_WILDCARD)
 
     def test_findall(self):
         """
