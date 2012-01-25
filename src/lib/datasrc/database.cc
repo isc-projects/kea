@@ -704,6 +704,9 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // For wildcard case with DNSSEC required, the caller would need to know
     // whether it's NSEC or NSEC3 signed.  So we need to do an additional
     // search here, even though the NSEC RR may not be returned.
+    // TODO: this part should be revised when we support NSEC3; ideally we
+    // should use more effective and efficient way to identify (whether and)
+    // in which way the zone is signed.
     if (wild && (options & FIND_DNSSEC) != 0 &&
         found.second.find(RRType::NSEC()) != found.second.end()) {
         flags = flags | RESULT_NSEC_SIGNED;
