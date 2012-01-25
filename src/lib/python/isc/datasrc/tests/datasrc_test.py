@@ -403,7 +403,7 @@ class DataSrcClient(unittest.TestCase):
             finder.find(isc.dns.Name("foo.wild.example.com"),
                         isc.dns.RRType.A(), finder.FIND_DEFAULT)
         self.assertEqual(finder.SUCCESS, result)
-        self.assertTrue((flags & finder.RESULT_WILDCARD) != 0)
+        self.assertEqual(finder.RESULT_WILDCARD, flags)
         self.assertEqual("foo.wild.example.com. 3600 IN A 192.0.2.255\n",
                          rrset.to_text())
 
@@ -411,7 +411,7 @@ class DataSrcClient(unittest.TestCase):
                                        isc.dns.RRType.TXT(),
                                        finder.FIND_DEFAULT)
         self.assertEqual(finder.NXRRSET, result)
-        self.assertTrue((flags & finder.RESULT_WILDCARD) != 0)
+        self.assertTrue(finder.RESULT_WILDCARD, flags)
         self.assertEqual(None, rrset)
 
         self.assertRaises(TypeError, finder.find,
