@@ -21,7 +21,7 @@
 
 % DDNS_ACCEPT_FAILURE error accepting a connection: %1
 There was a low-level error when we tried to accept an incoming connection
-(probably coming from b10-auth). We continue serving on whanever other
+(probably coming from b10-auth). We continue serving on whatever other
 connections we already have, but this connection is dropped. The reason
 is logged.
 
