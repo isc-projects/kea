@@ -72,6 +72,13 @@ const char* const a_rr2 = "www.example.com. 60 IN A 192.0.2.2\n";
 const char* const a_rr3 = "ftp.example.com. 60 IN A 192.0.2.3\n";
 // multi-field RR case
 const char* const soa_rr = "example.com. 7200 IN SOA . . 0 0 0 0 0\n";
+// A couple of RRSIGs, different type covered
+const char* const rrsig_rr1 =
+    "www.example.com. 60 IN RRSIG A 5 3 3600 20000101000000 20000201000000 "
+    "12345 example.com. FAKEFAKEFAKE\n";
+const char* const rrsig_rr2 =
+    "www.example.com. 60 IN RRSIG AAAA 5 3 3600 20000101000000 20000201000000 "
+    "12345 example.com. FAKEFAKEFAKE\n";
 
 TEST_F(MasterLoadTest, loadRRs) {
     // a simple case: loading 3 RRs, each consists of a single RRset.
@@ -145,6 +152,13 @@ TEST_F(MasterLoadTest, loadRRsetsInterleaved) {
     EXPECT_EQ(a_rr1, results[0]->toText());
     EXPECT_EQ(a_rr3, results[1]->toText());
     EXPECT_EQ(a_rr2, results[2]->toText());
+}
+
+TEST_F(MasterLoadTest, loadRRsigs) {
+    // RRSIGs of different types covered should be separated
+    rr_stream << rrsig_rr1 << rrsig_rr2;
+    masterLoad(rr_stream, origin, zclass, callback);
+    EXPECT_EQ(2, results.size());
 }
 
 TEST_F(MasterLoadTest, loadWithNoEOF) {
