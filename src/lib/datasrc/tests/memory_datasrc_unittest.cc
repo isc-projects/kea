@@ -291,6 +291,8 @@ public:
             {"example.org. 300 IN DNAME example.com.", &rr_dname_apex_},
             {"child.example.org. 300 IN NS ns.child.example.org.",
              &rr_child_ns_},
+            {"child.example.org. 300 IN DS 12345 5 1 DEADBEEF",
+             &rr_child_ds_},
             {"ns.child.example.org. 300 IN A 192.0.2.153",
              &rr_child_glue_},
             {"grand.child.example.org. 300 IN NS ns.grand.child.example.org.",
@@ -353,6 +355,7 @@ public:
     RRsetPtr rr_dname_ns_; // for mixed DNAME + NS case
     RRsetPtr rr_dname_apex_; // for mixed DNAME + NS case in the apex
     RRsetPtr rr_child_ns_; // NS of a child domain (for delegation)
+    RRsetPtr rr_child_ds_; // DS of a child domain (for delegation, auth data)
     RRsetPtr rr_child_glue_; // glue RR of the child domain
     RRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
     RRsetPtr rr_grandchild_glue_; // glue RR below a deeper zone cut
@@ -654,6 +657,26 @@ TEST_F(InMemoryZoneFinderTest, delegationNS) {
     findTest(Name("www.grand.child.example.org"), RRType::A(),
              // note: !rr_grandchild_ns_
              ZoneFinder::DELEGATION, true, rr_child_ns_);
+}
+
+TEST_F(InMemoryZoneFinderTest, delegationWithDS) {
+    // Similar setup to the previous one, but with DS RR at the delegation
+    // point.
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ns_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ds_));
+
+    // Normal types of query should result in delegation, but DS query
+    // should be considered in-zone.
+    findTest(Name("child.example.org"), RRType::A(), ZoneFinder::DELEGATION,
+             true, rr_child_ns_);
+    findTest(Name("child.example.org"), RRType::DS(), ZoneFinder::SUCCESS,
+             true, rr_child_ds_);
+
+    // There's nothing special for DS query at the zone apex.  It would
+    // normally result in NXRRSET.
+    findTest(Name("example.org"), RRType::DS(), ZoneFinder::NXRRSET,
+             true, ConstRRsetPtr());
 }
 
 TEST_F(InMemoryZoneFinderTest, findAny) {
