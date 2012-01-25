@@ -237,7 +237,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject socketsessionreceiver_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "isc.util.io.SocketSessionReceiver",
+    "isc.util.cio.SocketSessionReceiver",
     sizeof(s_SocketSessionReceiver),                 // tp_basicsize
     0,                                  // tp_itemsize
     SocketSessionReceiver_destroy,                 // tp_dealloc
@@ -311,7 +311,7 @@ initModulePart_SocketSessionReceiver(PyObject* mod) {
         Py_INCREF(socket_fromfd_obj);
     } else {
         PyErr_SetString(PyExc_RuntimeError,
-                        "isc.util.io.SocketSessionReceiver needs "
+                        "isc.util.cio.SocketSessionReceiver needs "
                         "socket.fromfd(), but it's missing");
         return (false);
     }

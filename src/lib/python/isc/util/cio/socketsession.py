@@ -19,7 +19,7 @@ import os
 import sys
 
 for base in sys.path[:]:
-    libdir = os.path.join(base, 'isc/util/io/.libs')
+    libdir = os.path.join(base, 'isc/util/cio/.libs')
     if os.path.exists(libdir):
         sys.path.insert(0, libdir)
 
