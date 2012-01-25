@@ -43,6 +43,12 @@ DATA_PATH = bind10_config.DATA_PATH
 SOCKET_FILE = DATA_PATH + '/ddns_socket'
 if "B10_FROM_SOURCE" in os.environ:
     DATA_PATH = os.environ['B10_FROM_SOURCE'] + "/src/bin/ddns"
+if "B10_FROM_BUILD" in os.environ:
+    if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
+        SOCKET_FILE = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"] + \
+            "/ddns_socket"
+    else:
+        SOCKET_FILE = os.environ["B10_FROM_BUILD"] + "/ddns_socket"
 SPECFILE_LOCATION = DATA_PATH + "/ddns.spec"
 
 
