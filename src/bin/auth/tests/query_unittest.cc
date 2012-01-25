@@ -305,7 +305,7 @@ private:
             rrset->getType() == RRType::NS()) {
             delegation_rrset_ = rrset;
         } else if (rrset->getName() == delegation_name_ &&
-            rrset->getType() == RRType::DS()) {
+                   rrset->getType() == RRType::DS()) {
             delegation_ds_rrset_ = rrset;
             // Like NSEC(3), by nature it should have an RRSIG.
             rrset->addRRsig(RdataPtr(new generic::RRSIG(
