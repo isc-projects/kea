@@ -33,12 +33,15 @@
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 
+#include <testutils/dnsmessage_test.h>
+
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
+using namespace isc::testutils;
 
 namespace {
 // Commonly used result codes (Who should write the prefix all the time)
@@ -251,6 +254,20 @@ TEST_F(InMemoryClientTest, startUpdateZone) {
                  isc::NotImplemented);
 }
 
+// Commonly used RRSIG data
+const char* const rrsig_a_txt =
+    "example.org. 300 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 "
+    "example.org. FAKEFAKEFAKE\n";
+const char* const rrsig_ns_txt =
+    "example.org. 300 IN RRSIG NS 5 3 3600 20000101000000 20000201000000 "
+    "54321 example.org. FAKEFAKEFAKEFAKE\n";
+// This RRset has two RRSIGs
+const char* const rrsig_aaaa_txt =
+    "ns.example.org. 300 IN RRSIG AAAA 5 3 3600 20000101000000 20000201000000 "
+    "12345 example.org. FAKEFAKEFAKE\n"
+    "ns.example.org. 300 IN RRSIG AAAA 5 3 3600 20000101000000 20000201000000 "
+    "54321 example.org. FAKEFAKEFAKEFAKE\n";
+
 // A helper callback of masterLoad() used in InMemoryZoneFinderTest.
 void
 setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
@@ -322,15 +339,17 @@ public:
             rrsets.push_back(zone_data[i].rrset);
         }
 
-        vector<RRsetPtr*>::iterator it = rrsets.begin();
         masterLoad(zone_data_stream, Name::ROOT_NAME(), class_,
-                   boost::bind(setRRset, _1, it));
+                   boost::bind(setRRset, _1, rrsets.begin()));
     }
     // Some data to test with
     const RRClass class_;
     const Name origin_;
     // The zone finder to torture by tests
     InMemoryZoneFinder zone_finder_;
+
+    // Placeholder for storing RRsets to be checked with rrsetsCheck()
+    vector<ConstRRsetPtr> actual_rrsets_;
 
     /*
      * Some RRsets to put inside the zone.
@@ -466,6 +485,18 @@ public:
     }
     // Internal part of the cancelWildcard test that is multiple times
     void doCancelWildcardTest();
+
+    ConstRRsetPtr textToRRset(const string& text_rrset,
+                              const RRClass& rrclass = RRClass::IN()) const
+    {
+        stringstream ss(text_rrset);
+        RRsetPtr rrset;
+        vector<RRsetPtr*> rrsets;
+        rrsets.push_back(&rrset);
+        masterLoad(ss, Name::ROOT_NAME(), rrclass,
+                   boost::bind(setRRset, _1, rrsets.begin()));
+        return (rrset);
+    }
 };
 
 /**
@@ -543,9 +574,8 @@ TEST_F(InMemoryZoneFinderTest, findCNAMEUnderZoneCut) {
     // (with FIND_GLUE_OK).  The behavior is different from BIND 9,
     // so we test this case explicitly.
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ns_));
-    RRsetPtr rr_cname_under_cut_(new RRset(Name("cname.child.example.org"),
-                                           class_, RRType::CNAME(),
-                                           RRTTL(300)));
+    ConstRRsetPtr rr_cname_under_cut_ = textToRRset(
+        "cname.child.example.org. 300 IN CNAME target.child.example.org.");
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_under_cut_));
     findTest(Name("cname.child.example.org"), RRType::AAAA(),
              ZoneFinder::CNAME, true, rr_cname_under_cut_, NULL,
@@ -776,11 +806,11 @@ TEST_F(InMemoryZoneFinderTest, emptyNode) {
 
     // Construct the test zone
     const char* const names[] = {
-        "bar.example.org", "x.foo.example.org", "aaa.baz.example.org",
+        "bar.example.org.", "x.foo.example.org.", "aaa.baz.example.org.",
         "bbb.baz.example.org.", NULL};
     for (int i = 0; names[i] != NULL; ++i) {
-        ConstRRsetPtr rrset(new RRset(Name(names[i]), class_, RRType::A(),
-                                      RRTTL(300)));
+        ConstRRsetPtr rrset = textToRRset(string(names[i]) +
+                                          " 300 IN A 192.0.2.1");
         EXPECT_EQ(SUCCESS, zone_finder_.add(rrset));
     }
 
@@ -1120,9 +1150,8 @@ TEST_F(InMemoryZoneFinderTest, swap) {
     ASSERT_NE(origin_, other_origin); // make sure these two are different
     InMemoryZoneFinder finder2(RRClass::CH(), other_origin);
     EXPECT_EQ(result::SUCCESS,
-              finder2.add(RRsetPtr(new RRset(Name("version.bind"),
-                                           RRClass::CH(), RRType::TXT(),
-                                           RRTTL(0)))));
+              finder2.add(textToRRset("version.bind. 0 CH TXT \"test\"",
+                                      RRClass::CH())));
 
     finder1.swap(finder2);
     EXPECT_EQ(other_origin, finder1.getOrigin());
@@ -1163,5 +1192,91 @@ TEST_F(InMemoryZoneFinderTest, getFileName) {
     zone_finder_.swap(rootzone);
     EXPECT_EQ(TEST_DATA_DIR "/root.zone", zone_finder_.getFileName());
     EXPECT_TRUE(rootzone.getFileName().empty());
+}
+
+TEST_F(InMemoryZoneFinderTest, addRRsig) {
+    // A simple valid case: adding an RRset to be signed followed by an RRSIG
+    // that covers the first RRset
+    zone_finder_.add(rr_a_);
+    zone_finder_.add(textToRRset(rrsig_a_txt));
+    ZoneFinder::FindResult result = zone_finder_.find(origin_, RRType::A(),
+                                                      ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result.code);
+    ASSERT_TRUE(result.rrset);
+    ASSERT_TRUE(result.rrset->getRRsig());
+    actual_rrsets_.push_back(result.rrset->getRRsig());
+    rrsetsCheck(rrsig_a_txt, actual_rrsets_.begin(), actual_rrsets_.end());
+
+    // Confirm a separate RRISG for a different type can be added
+    actual_rrsets_.clear();
+    zone_finder_.add(rr_ns_);
+    zone_finder_.add(textToRRset(rrsig_ns_txt));
+    ZoneFinder::FindResult result2 =
+        zone_finder_.find(origin_, RRType::NS(), ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result2.code);
+    ASSERT_TRUE(result2.rrset);
+    ASSERT_TRUE(result2.rrset->getRRsig());
+    actual_rrsets_.push_back(result2.rrset->getRRsig());
+    rrsetsCheck(rrsig_ns_txt, actual_rrsets_.begin(), actual_rrsets_.end());
+
+    // Check a case with multiple RRSIGs
+    actual_rrsets_.clear();
+    zone_finder_.add(rr_ns_aaaa_);
+    zone_finder_.add(textToRRset(rrsig_aaaa_txt));
+    ZoneFinder::FindResult result3 =
+        zone_finder_.find(Name("ns.example.org"), RRType::AAAA(),
+                          ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result3.code);
+    ASSERT_TRUE(result3.rrset);
+    ASSERT_TRUE(result3.rrset->getRRsig());
+    actual_rrsets_.push_back(result3.rrset->getRRsig());
+    rrsetsCheck(rrsig_aaaa_txt, actual_rrsets_.begin(), actual_rrsets_.end());
+}
+
+TEST_F(InMemoryZoneFinderTest, addRRsigWithoutCovered) {
+    // The current implementation rejects attempts of adding RRSIG without
+    // covered RRsets already in the zone.
+
+    // Name doesn't exist
+    EXPECT_THROW(zone_finder_.add(
+                     textToRRset("notexist.example.org. 300 IN RRSIG A 5 3 "
+                                 "3600 20000101000000 20000201000000 12345 "
+                                 "example.org. FAKEFAKEFAKE\n")),
+                 InMemoryZoneFinder::AddError);
+
+    // Name exists, but is empty.
+    zone_finder_.add(rr_emptywild_);
+    EXPECT_THROW(zone_finder_.add(
+                     textToRRset("foo.example.org. 300 IN RRSIG A 5 3 "
+                                 "3600 20000101000000 20000201000000 12345 "
+                                 "example.org. FAKEFAKEFAKE\n")),
+                 InMemoryZoneFinder::AddError);
+
+    // Add RRSIG RRset without covered RR
+    zone_finder_.add(rr_a_);
+    EXPECT_THROW(zone_finder_.add(textToRRset(rrsig_ns_txt)),
+                 InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
+    // Tests with other types of bogus input
+
+    // Empty RRSIG RRset.
+    EXPECT_THROW(zone_finder_.add(RRsetPtr(new RRset(origin_, class_,
+                                                     RRType::RRSIG(),
+                                                     RRTTL(300)))),
+                                  InMemoryZoneFinder::AddError);
+
+    // RRSIG with mixed covered types
+    zone_finder_.add(rr_a_);    // make sure the covered name exists
+    EXPECT_THROW(zone_finder_.add(textToRRset(string(rrsig_a_txt) +
+                                              string(rrsig_ns_txt))),
+                 InMemoryZoneFinder::AddError);
+
+    // An attempt of overriding an existing RRSIG.  The current implementation
+    // prohibits that.
+    zone_finder_.add(textToRRset(rrsig_a_txt));
+    EXPECT_THROW(zone_finder_.add(textToRRset(rrsig_a_txt)),
+                 InMemoryZoneFinder::AddError);
 }
 }
