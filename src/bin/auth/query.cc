@@ -246,7 +246,7 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 }
 
 void
-Query::addDS(ZoneFinder &zone, const Name& dname) {
+Query::addDS(ZoneFinder& zone, const Name& dname) {
     ZoneFinder::FindResult ds_result =
         zone.find(dname, RRType::DS(), dnssec_opt_);
     if (ds_result.code == ZoneFinder::SUCCESS) {
