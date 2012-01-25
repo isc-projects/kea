@@ -66,6 +66,9 @@ const char* const delegation_txt =
     "delegation.example.com. 3600 IN NS noglue.example.com.\n"
     "delegation.example.com. 3600 IN NS cname.example.com.\n"
     "delegation.example.com. 3600 IN NS example.org.\n";
+const char* const delegation_ds_txt =
+    "delegation.example.com. 3600 IN DS 12345 8 2 "
+    "764501411DE58E8618945054A3F620B36202E115D015A7773F4B78E0F952CECA\n";
 const char* const mx_txt =
     "mx.example.com. 3600 IN MX 10 www.example.com.\n"
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
@@ -200,9 +203,9 @@ public:
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << mx_txt << www_a_txt << cname_txt <<
-            cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
-            other_zone_rrs << no_txt << nz_txt <<
+            delegation_txt << delegation_ds_txt << mx_txt << www_a_txt <<
+            cname_txt << cname_nxdom_txt << cname_out_txt << dname_txt <<
+            dname_a_txt << other_zone_rrs << no_txt << nz_txt <<
             nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
             nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt <<
             wild_txt << nsec_wild_txt << cnamewild_txt << nsec_cnamewild_txt <<
@@ -277,6 +280,7 @@ public:
 public:
     // We allow the tests to use these for convenience
     ConstRRsetPtr delegation_rrset_;
+    ConstRRsetPtr delegation_ds_rrset_;
     ConstRRsetPtr empty_nsec_rrset_;
 
 private:
@@ -300,6 +304,13 @@ private:
         if (rrset->getName() == delegation_name_ &&
             rrset->getType() == RRType::NS()) {
             delegation_rrset_ = rrset;
+        } else if (rrset->getName() == delegation_name_ &&
+            rrset->getType() == RRType::DS()) {
+            delegation_ds_rrset_ = rrset;
+            // Like NSEC(3), by nature it should have an RRSIG.
+            rrset->addRRsig(RdataPtr(new generic::RRSIG(
+                                         getCommonRRSIGText(rrset->getType().
+                                                            toText()))));
         } else if (rrset->getName() == dname_name_ &&
             rrset->getType() == RRType::DNAME()) {
             dname_rrset_ = rrset;
@@ -437,7 +448,11 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         (name == delegation_name_ ||
          name.compare(delegation_name_).getRelation() ==
          NameComparisonResult::SUBDOMAIN)) {
-        return (FindResult(DELEGATION, delegation_rrset_));
+        if (type != RRType::DS()) {
+            return (FindResult(DELEGATION, delegation_rrset_));
+        } else {
+            return (FindResult(SUCCESS, delegation_ds_rrset_));
+        }
     // And under DNAME
     } else if (name.compare(dname_name_).getRelation() ==
         NameComparisonResult::SUBDOMAIN) {
@@ -863,6 +878,35 @@ TEST_F(QueryTest, delegation) {
     responseCheck(response, Rcode::NOERROR(), 0, 0, 4, 3,
                   NULL, delegation_txt, ns_addrs_txt);
 }
+
+TEST_F(QueryTest, secureDelegation) {
+    // find match rrset, omit additional data which has already been provided
+    // in the answer section from the additional.
+    EXPECT_NO_THROW(Query(memory_client, Name("foo.delegation.example.com"),
+                          qtype, response, true).process());
+
+    // Should now contain RRSIG and DS record as well.
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 6, 6,
+                  NULL,
+                  (string(delegation_txt) +
+                   string(delegation_ds_txt) +
+                   string("delegation.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("DS")).c_str(),
+                  // No easy way to get these strings, so entered them
+                  // manually
+                  "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
+                  "glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 "
+                    "20000101000000 20000201000000 12345 example.com. "
+                    "FAKEFAKEFAKE\n"
+                  "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n"
+                  "glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 "
+                    "20000101000000 20000201000000 12345 example.com. "
+                    "FAKEFAKEFAKE\n"
+                  "noglue.example.com. 3600 IN A 192.0.2.53\n"
+                  "noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
+                  "20000201000000 12345 example.com. FAKEFAKEFAKE\n");
+}
+
 
 TEST_F(QueryTest, nxdomain) {
     EXPECT_NO_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,

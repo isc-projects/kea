@@ -71,6 +71,17 @@ private:
     ///
     void addSOA(isc::datasrc::ZoneFinder& finder);
 
+    /// \brief Adds the DS rrset for the given name, if available
+    ///
+    /// This is intended to be called when returning a delegation, and
+    /// if DNSSEC data is requested. If the DS record is not found, nothing
+    /// happens.
+    ///
+    /// \param zone The ZoneFinder The zonefinder where the delegation was
+    ///               found
+    /// \param ds_name The name of the delegation RRset
+    void addDS(isc::datasrc::ZoneFinder& zone, const isc::dns::Name& ds_name);
+
     /// Add NSEC RRs that prove an NXDOMAIN result.
     ///
     /// This corresponds to Section 3.1.3.2 of RFC 4035.
