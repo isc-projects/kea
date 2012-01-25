@@ -47,7 +47,7 @@ Return the RR class of the zone.\n\
 // - NULL->None
 // - exceptions
 const char* const ZoneFinder_find_doc = "\
-find(name, type, options=FIND_DEFAULT) -> (integer, RRset, flags)\n\
+find(name, type, options=FIND_DEFAULT) -> (integer, RRset, integer)\n\
 \n\
 Search the zone for a given pair of domain name and RR type.\n\
 \n\
@@ -70,13 +70,13 @@ answer for the search key. Specifically,\n\
 - If the search name matches a delegation point of DNAME, it returns\n\
   the code of DNAME and that DNAME RR.\n\
 \n\
-No RRset will be returned in the NXDOMAIN and NXRRSET cases (rrset\n\
-member of FindResult will be None), unless DNSSEC data are required.\n\
-See below for the cases with DNSSEC.\n\
+No RRset will be returned in the NXDOMAIN and NXRRSET cases (the\n\
+second element of the tuple will be None), unless DNSSEC data are\n\
+required. See below for the cases with DNSSEC.\n\
 \n\
-The returned FindResult object can also provide supplemental\n\
-information about the search result via its methods returning a\n\
-boolean value. Such information may be useful for the caller if the\n\
+The third element of the returned tuple provides supplemental\n\
+information about the search result in the form of a bitmask (called\n\
+\"flags\"). Such information may be useful for the caller if the\n\
 caller wants to collect additional DNSSEC proofs based on the search\n\
 result.\n\
 \n\
@@ -131,7 +131,7 @@ In case it's signed with NSEC3, there is no further information\n\
 returned from this method.\n\
 \n\
 In case it's signed with NSEC, this method will possibly return a\n\
-related NSEC RRset in the rrset member of FindResult. What kind of\n\
+related NSEC RRset in the second element of the tuple. What kind of\n\
 NSEC is returned depends on the result code (NXDOMAIN or NXRRSET) and\n\
 on whether it's a wildcard match:\n\
 \n\
@@ -186,8 +186,8 @@ Likewise, if zone \"example.org\" has the following record,\n\
 a.example.org. NSEC x.*.b.example.org.\n\
 \n\
 a call to  find() for \"y.b.example.org\" with FIND_DNSSEC will\n\
-result in NXRRSET and this NSEC;  isWildcard() on the returned\n\
-FindResult object will return true.\n\
+result in NXRRSET and this NSEC;  RESULT_WILDCARD bit is set in the\n\
+returned flags.\n\
 \n\
 This method raises an isc.datasrc.Error exception if there is an\n\
 internal error in the datasource.\n\
@@ -198,12 +198,12 @@ Parameters:\n\
   options    The search options.\n\
 \n\
 Return Value(s): A tuple of a result code (integer), an RRset object\n\
-and supplemental integer.\n\
+and flags bitmask (integer).\n\
 ";
 
 const char* const ZoneFinder_findAll_doc = "\
 find_all(isc.dns.Name, options=FIND_DEFAULT) ->\n\
-   (integer, RRset, flags) | (integer, [RRset], flags)\
+   (integer, RRset, integer) | (integer, [RRset], integer)\
 \n\
 Finds all RRsets in the given name.\n\
 \n\
@@ -217,7 +217,7 @@ wildcard information etc. The options parameter works the same way and\n\
 it should conform to the same exception restrictions.\n\
 \n\
 Parameters:\n\
-  target     the successfull result is returned through this\n\
+  name       The domain name to be searched for.\n\
   options    The search options.\n\
 \n\
 Return Value(s): A tuple of a result code (integer), an either\n\
