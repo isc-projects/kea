@@ -85,7 +85,7 @@ public:
     /// -# (Normal) empty non terminal: there is no matching (exact or
     ///    wildcard) name, but there is a subdomain with an RR of the query
     ///    name.  This is one case of "Name Error" of the RFC.
-    /// -# Wildcard empty non terminal: similar to 2a, but the empty name
+    /// -# Wildcard empty non terminal: similar to 2, but the empty name
     ///    is a wildcard, and matches the query name by wildcard expansion.
     ///    This is a special case of "Name Error" of the RFC.
     /// -# Wildcard no data: there is no exact match name, but there is a

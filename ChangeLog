@@ -1,3 +1,8 @@
+365.	[bug]		jinmei
+	libdatasrc: in-memory datasource incorrectly returned delegation
+	for DS lookups.
+	(Trac #1571, git d22e90b5ef94880183cd652e112399b3efb9bd67)
+
 364.	[func]		jinmei
 	b10-auth experimentally supports statistics counters of incoming
 	requests per opcode.  The counters can be (e.g.) shown as
