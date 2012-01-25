@@ -557,7 +557,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         // If the node callback is enabled, this may be a zone cut.  If it
         // has a NS RR, we should return a delegation, but not in the apex.
-        if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_) {
+        // There is one exception: the case for DS query, which should always
+        // be considered in-zone lookup.
+        if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_ &&
+            type != RRType::DS()) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
