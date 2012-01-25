@@ -21,6 +21,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
+#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrsetlist.h>
 #include <dns/masterload.h>
@@ -36,6 +37,7 @@
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::data;
 
 namespace isc {
@@ -181,8 +183,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
+        if (rrset->getRdataCount() == 0) {
+            isc_throw(AddError, "The rrset provided is empty: " <<
+                      rrset->getName() << "/" << rrset->getType());
+        }
         // Check for singleton RRs. It should probably handled at a different
-        // in future.
+        // layer in future.
         if ((rrset->getType() == RRType::CNAME() ||
             rrset->getType() == RRType::DNAME()) &&
             rrset->getRdataCount() > 1)
@@ -230,6 +236,61 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    result::Result addRRsig(const ConstRRsetPtr sig_rrset,
+                            DomainTree& domains)
+    {
+        DomainNode* node = NULL;
+        if (domains.find(sig_rrset->getName(), &node) !=
+            DomainTree::EXACTMATCH || node == NULL || !node->getData()) {
+            isc_throw(AddError,
+                      "RRSIG is being added, but no RR to be covered: "
+                      << sig_rrset->getName());
+        }
+
+        // Check consistency of the type covered.
+        // We know the RRset isn't empty, so the following check is safe.
+        RdataIteratorPtr rit = sig_rrset->getRdataIterator();
+        const RRType covered = dynamic_cast<const generic::RRSIG&>(
+            rit->getCurrent()).typeCovered();
+        for (rit->next(); !rit->isLast(); rit->next()) {
+            if (dynamic_cast<const generic::RRSIG&>(
+                    rit->getCurrent()).typeCovered() != covered) {
+                isc_throw(AddError, "RRSIG contains mixed covered types: "
+                          << sig_rrset->toText());
+            }
+        }
+
+        // Find the RRset to be covered; if not found, treat it as an error
+        // for now.
+        const Domain::const_iterator it = node->getData()->find(covered);
+        if (it == node->getData()->end()) {
+            isc_throw(AddError,
+                      "RRSIG is being added, but no RR of covered type found: "
+                      << sig_rrset->toText());
+        }
+
+        // The current implementation doesn't allow an existing RRSIG to be
+        // overridden (or updated with additional ones).
+        if ((it->second)->getRRsig()) {
+            isc_throw(AddError,
+                      "RRSIG is being added to override an existing one: "
+                      << sig_rrset->toText());
+        }
+
+        // All okay, setting the RRSIG.
+        // XXX: we break const-ness of the covered RRsets.  In practice the
+        // ownership of these RRsets would have been given to us so it should
+        // be safe, but it's still a very bad practice.
+        // We'll fix this problem anyway when we update the underlying
+        // representation so that it's more space efficient.
+        // Note: there's a slight chance of getting an exception.
+        // As noted in add(), we give up strong exception guarantee in such
+        // cases.
+        boost::const_pointer_cast<RRset>(it->second)->addRRsig(sig_rrset);
+
+        return (result::SUCCESS);
+    }
+
     /*
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
@@ -243,6 +304,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // OK, can add the RRset.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
             arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
+
+        // RRSIGs are special in various points, so we handle it in a
+        // separate dedicated method.
+        if (rrset->getType() == RRType::RRSIG()) {
+            return (addRRsig(rrset, *domains));
+        }
 
         // Add wildcards possibly contained in the owner name to the domain
         // tree.
@@ -283,7 +350,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             if (rrset->getType() == RRType::NS() &&
                 rrset->getName() != origin_) {
                 node->setFlag(DomainNode::FLAG_CALLBACK);
-            // If it is DNAME, we have a callback as well here
+                // If it is DNAME, we have a callback as well here
             } else if (rrset->getType() == RRType::DNAME()) {
                 node->setFlag(DomainNode::FLAG_CALLBACK);
             }
