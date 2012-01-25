@@ -244,6 +244,16 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
                            dnssec_);
     }
 }
+
+void
+Query::addDS(ZoneFinder &zone, const Name& dname) {
+    ZoneFinder::FindResult ds_result =
+        zone.find(dname, RRType::DS(), dnssec_opt_);
+    if (ds_result.code == ZoneFinder::SUCCESS) {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                boost::const_pointer_cast<RRset>(ds_result.rrset), dnssec_);
+    }
+}
     
 void
 Query::addAuthAdditional(ZoneFinder& finder) {
@@ -399,6 +409,11 @@ Query::process() {
             response_.addRRset(Message::SECTION_AUTHORITY,
                 boost::const_pointer_cast<RRset>(db_result.rrset),
                 dnssec_);
+            // If DNSSEC is requested, see whether there is a DS
+            // record for this delegation.
+            if (dnssec_) {
+                addDS(*result.zone_finder, db_result.rrset->getName());
+            }
             addAdditional(*result.zone_finder, *db_result.rrset);
             break;
         case ZoneFinder::NXDOMAIN:
