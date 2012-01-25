@@ -1269,9 +1269,14 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
 
     // RRSIG with mixed covered types
     zone_finder_.add(rr_a_);    // make sure the covered name exists
-    EXPECT_THROW(zone_finder_.add(textToRRset(string(rrsig_a_txt) +
-                                              string(rrsig_ns_txt))),
-                 InMemoryZoneFinder::AddError);
+    // textToRRset() doesn't work as intended for this pathological case,
+    // so we need to construct the RRset by hand.
+    RRsetPtr rrset(new RRset(origin_, class_, RRType::RRSIG(), RRTTL(300)));
+    rrset->addRdata(generic::RRSIG("A 5 3 3600 20000101000000 20000201000000 "
+                                   "12345 example.org. FAKEFAKEFAKE"));
+    rrset->addRdata(generic::RRSIG("NS 5 3 3600 20000101000000 20000201000000 "
+                                   "54321 example.org. FAKEFAKEFAKEFAKE"));
+    EXPECT_THROW(zone_finder_.add(rrset), InMemoryZoneFinder::AddError);
 
     // An attempt of overriding an existing RRSIG.  The current implementation
     // prohibits that.
