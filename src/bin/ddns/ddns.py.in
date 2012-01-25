@@ -23,7 +23,7 @@ from isc.dns import *
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
 import isc.util.process
-import isc.util.io.socketsession
+import isc.util.cio.socketsession
 import select
 import errno
 
@@ -163,9 +163,9 @@ class DDNSServer:
             fileno = sock.fileno()
             logger.debug(TRACE_BASIC, DDNS_NEW_CONN, fileno,
                          sock.getpeername())
-            receiver = isc.util.io.socketsession.SocketSessionReceiver(sock)
+            receiver = isc.util.cio.socketsession.SocketSessionReceiver(sock)
             self._socksession_receivers[fileno] = (sock, receiver)
-        except (socket.error, isc.util.io.socketsession.SocketSessionError) \
+        except (socket.error, isc.util.cio.socketsession.SocketSessionError) \
             as e:
             # These exceptions mean the connection didn't work, but we can
             # continue with the rest
@@ -196,7 +196,7 @@ class DDNSServer:
         (socket, receiver) = self._socksession_receivers[fileno]
         try:
             self.handle_request(receiver.pop())
-        except isc.util.io.socketsession.SocketSessionError as se:
+        except isc.util.cio.socketsession.SocketSessionError as se:
             # No matter why this failed, the connection is in unknown, possibly
             # broken state. So, we close the socket and remove the receiver.
             del self._socksession_receivers[fileno]
