@@ -119,6 +119,6 @@ private:
 }
 #endif  // __NSEC3HASH_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
