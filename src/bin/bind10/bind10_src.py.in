@@ -805,6 +805,10 @@ class BoB:
                 'token': token,
                 'path': self._socket_path
             })
+        except isc.bind10.socket_cache.SocketError as e:
+            return isc.config.ccsession.create_answer(2, str(e))
+        except isc.bind10.socket_cache.ShareError as e:
+            return isc.config.ccsession.create_answer(3, str(e))
         except Exception as e:
             return isc.config.ccsession.create_answer(1, str(e))
 
