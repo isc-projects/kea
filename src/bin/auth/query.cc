@@ -246,15 +246,34 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 }
 
 void
-Query::addDS(ZoneFinder& zone, const Name& dname) {
+Query::addDS(ZoneFinder& finder, const Name& dname) {
     ZoneFinder::FindResult ds_result =
-        zone.find(dname, RRType::DS(), dnssec_opt_);
+        finder.find(dname, RRType::DS(), dnssec_opt_);
     if (ds_result.code == ZoneFinder::SUCCESS) {
         response_.addRRset(Message::SECTION_AUTHORITY,
                 boost::const_pointer_cast<RRset>(ds_result.rrset), dnssec_);
+    } else if (ds_result.code == ZoneFinder::NXRRSET) {
+        addNXRRsetDenial(finder, ds_result);
+    } else {
+        // Any other case should be an error
+        isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
     }
 }
-    
+
+void
+Query::addNXRRsetDenial(ZoneFinder& finder,
+                        const ZoneFinder::FindResult& db_result) {
+    if (db_result.isNSECSigned() && db_result.rrset) {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<RRset>(
+                               db_result.rrset),
+                           dnssec_);
+        if (db_result.isWildcard()) {
+            addWildcardNXRRSETProof(finder, db_result.rrset);
+        }
+    }
+}
+
 void
 Query::addAuthAdditional(ZoneFinder& finder) {
     // Fill in authority and addtional sections.
@@ -426,15 +445,7 @@ Query::process() {
         case ZoneFinder::NXRRSET:
             addSOA(*result.zone_finder);
             if (dnssec_) {
-                if (db_result.isNSECSigned() && db_result.rrset) {
-                    response_.addRRset(Message::SECTION_AUTHORITY,
-                                       boost::const_pointer_cast<RRset>(
-                                           db_result.rrset),
-                                       dnssec_);
-                    if (db_result.isWildcard()) {
-                        addWildcardNXRRSETProof(zfinder, db_result.rrset);
-                    }
-                }
+                addNXRRsetDenial(zfinder, db_result);
             }
             break;
         default:
