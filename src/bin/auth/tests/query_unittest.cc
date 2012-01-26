@@ -329,13 +329,13 @@ private:
             rrset->getType() == RRType::NS()) {
             delegation_rrset_ = rrset;
         } else if (rrset->getName() == signed_delegation_name_ &&
-            rrset->getType() == RRType::NS()) {
+                   rrset->getType() == RRType::NS()) {
             signed_delegation_rrset_ = rrset;
         } else if (rrset->getName() == bad_signed_delegation_name_ &&
-            rrset->getType() == RRType::NS()) {
+                   rrset->getType() == RRType::NS()) {
             bad_signed_delegation_rrset_ = rrset;
         } else if (rrset->getName() == unsigned_delegation_name_ &&
-            rrset->getType() == RRType::NS()) {
+                   rrset->getType() == RRType::NS()) {
             unsigned_delegation_rrset_ = rrset;
         } else if (rrset->getName() == signed_delegation_name_ &&
                    rrset->getType() == RRType::DS()) {
