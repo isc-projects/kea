@@ -104,6 +104,50 @@ public:
         { }
     };
 
+    /// \brief Exception when we can't return a requested socket, but we're
+    ///     sure we could return others
+    ///
+    /// This is thrown if the requested socket can't be granted, but it is only
+    /// that one socket, not that the system would be broken or anything. This
+    /// exception is a common base class for the concrete exceptions actually
+    /// thrown.
+    ///
+    /// \see ShareError
+    /// \see SocketAllocateError
+    class NonFatalSocketError : public SocketError {
+    public:
+        NonFatalSocketError(const char* file, size_t line, const char* what) :
+            SocketError(file, line, what)
+        { }
+    };
+
+    /// \brief Exception when the socke is allocated by other bind10 module
+    ///    and it doesn't want to share it.
+    ///
+    /// This is thrown if a socket is requested and the socket is already
+    /// allocated by bind10, but other bind10 module(s) is using it and
+    /// the sharing parameters are incompatible (the socket can't be shared
+    /// between the module and our module).
+    class ShareError : public NonFatalSocketError {
+    public:
+        ShareError(const char* file, size_t line, const char* what) :
+            NonFatalSocketError(file, line, what)
+        { }
+    };
+
+    /// \brief Exception when the operation system doesn't allow us to create
+    ///    the requested socket.
+    ///
+    /// This happens when the socket() or bind() call fails in the socket
+    /// creator. This can happen when the address/port pair is already taken
+    /// by a different application, the socket creator doesn't have enough
+    /// privileges, or for some kind of similar reason.
+    class SocketAllocateError : public NonFatalSocketError {
+        SocketAllocateError(const char* file, size_t line, const char* what) :
+            NonFatalSocketError(file, line, what)
+        { }
+    };
+
     /// \brief Ask for a socket
     ///
     /// Asks the socket creator to give us a socket. The socket will be bound
