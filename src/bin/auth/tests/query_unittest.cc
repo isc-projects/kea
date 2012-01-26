@@ -515,7 +515,6 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         }
     }
 
-
     // normal cases.  names are searched for only per exact-match basis
     // for simplicity.
     const Domains::const_iterator found_domain = domains_.find(name);
@@ -937,9 +936,8 @@ TEST_F(QueryTest, delegation) {
 }
 
 TEST_F(QueryTest, secureDelegation) {
-    // find match rrset, omit additional data which has already been provided
-    // in the answer section from the additional.
-    EXPECT_NO_THROW(Query(memory_client, Name("foo.signed-delegation.example.com"),
+    EXPECT_NO_THROW(Query(memory_client,
+                          Name("foo.signed-delegation.example.com"),
                           qtype, response, true).process());
 
     // Should now contain RRSIG and DS record as well.
@@ -957,7 +955,7 @@ TEST_F(QueryTest, secureUnsignedDelegation) {
                           Name("foo.unsigned-delegation.example.com"),
                           qtype, response, true).process());
 
-    // Should now contain RRSIG and DS record as well.
+    // Should now contain RRSIG and NSEC record as well.
     responseCheck(response, Rcode::NOERROR(), 0, 0, 3, 0,
                   NULL,
                   (string(unsigned_delegation_txt) +
