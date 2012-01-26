@@ -121,7 +121,7 @@ public:
         { }
     };
 
-    /// \brief Exception when the socke is allocated by other bind10 module
+    /// \brief Exception when the socket is allocated by other bind10 module
     ///    and it doesn't want to share it.
     ///
     /// This is thrown if a socket is requested and the socket is already
