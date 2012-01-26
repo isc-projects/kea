@@ -237,7 +237,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject socketsessionforwarder_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "isc.util.io.SocketSessionForwarder",
+    "isc.util.cio.SocketSessionForwarder",
     sizeof(s_SocketSessionForwarder),                 // tp_basicsize
     0,                                  // tp_itemsize
     SocketSessionForwarder_destroy,                 // tp_dealloc
