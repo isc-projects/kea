@@ -1,3 +1,9 @@
+366.	[bug]		vorner
+	Fixed problem where a directory named "io" conflicted with the python3
+	standard module "io" and caused the installation to fail.  The offending
+	directory has been renamed to "cio".
+	(Trac #1561, git d81cf24b9e37773ba9a0d5061c779834ff7d62b9)
+
 365.	[bug]		jinmei
 	libdatasrc: in-memory datasource incorrectly returned delegation
 	for DS lookups.
