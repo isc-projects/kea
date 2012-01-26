@@ -76,7 +76,7 @@ private:
     /// This is intended to be called when returning a delegation, and
     /// if DNSSEC data is requested. If the DS record is not found
     /// (signaled by find() returning NXRRSET), and the zone is signed
-    /// with NSEC, an NSEC denial of existance proof is added.
+    /// with NSEC, an NSEC denial of existence proof is added.
     ///
     /// \exception BadDS raised if find() returns anything other than
     ///                  SUCCESS or NXRRSET when searching for the DS
