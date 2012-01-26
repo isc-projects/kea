@@ -133,6 +133,14 @@ readRequestSocketAnswer(isc::data::ConstElementPtr recv_msg,
     int rcode;
     isc::data::ConstElementPtr answer = isc::config::parseAnswer(rcode,
                                                                  recv_msg);
+    // Translate known rcodes to the corresponding exceptions
+    if (rcode == 2) {
+        isc_throw(SocketRequestor::SocketAllocateError, answer->str());
+    }
+    if (rcode == 3) {
+        isc_throw(SocketRequestor::ShareError, answer->str());
+    }
+    // The unknown exceptions
     if (rcode != 0) {
         isc_throw(isc::config::CCSessionError,
                   "Error response when requesting socket: " << answer->str());
