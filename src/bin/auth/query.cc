@@ -251,7 +251,8 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
         finder.find(dname, RRType::DS(), dnssec_opt_);
     if (ds_result.code == ZoneFinder::SUCCESS) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                boost::const_pointer_cast<RRset>(ds_result.rrset), dnssec_);
+                           boost::const_pointer_cast<RRset>(ds_result.rrset),
+                           dnssec_);
     } else if (ds_result.code == ZoneFinder::NXRRSET) {
         addNXRRsetDenial(finder, ds_result);
     } else {
@@ -262,7 +263,8 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
 
 void
 Query::addNXRRsetDenial(ZoneFinder& finder,
-                        const ZoneFinder::FindResult& db_result) {
+                        const ZoneFinder::FindResult& db_result)
+{
     if (db_result.isNSECSigned() && db_result.rrset) {
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<RRset>(
