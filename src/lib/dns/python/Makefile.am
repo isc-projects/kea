@@ -7,6 +7,7 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 lib_LTLIBRARIES = libpydnspp.la
 libpydnspp_la_SOURCES = pydnspp_common.cc pydnspp_common.h pydnspp_towire.h
 libpydnspp_la_SOURCES += name_python.cc name_python.h
+libpydnspp_la_SOURCES += nsec3hash_python.cc nsec3hash_python.h
 libpydnspp_la_SOURCES += rrset_python.cc rrset_python.h
 libpydnspp_la_SOURCES += rrclass_python.cc rrclass_python.h
 libpydnspp_la_SOURCES += rrtype_python.cc rrtype_python.h
@@ -41,6 +42,7 @@ pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 
 EXTRA_DIST = tsigerror_python_inc.cc
 EXTRA_DIST += message_python_inc.cc
+EXTRA_DIST += nsec3hash_python_inc.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
