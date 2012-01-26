@@ -78,6 +78,9 @@ private:
     /// (signaled by find() returning NXRRSET), and the zone is signed
     /// with NSEC, an NSEC denial of existance proof is added.
     ///
+    /// \exception BadDS raised if find() returns anything other than
+    ///                  SUCCESS or NXRRSET when searching for the DS
+    ///                  record.
     /// \param finder The ZoneFinder where the delegation was found
     /// \param ds_name The name of the delegation RRset
     void addDS(isc::datasrc::ZoneFinder& finder,
