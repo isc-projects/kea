@@ -1,3 +1,12 @@
+368.	[func]*		jinmei
+	libdatasrc: the interface of ZoneFinder() was changed: WILDCARD
+	related result codes were deprecated and removed, and the
+	corresponding information is now provided via a separate accessor
+	method on FindResult.  Other separate FindResult methods will
+	also tell the caller whether the zone is signed with NSEC or NSEC3
+	(when necessary and applicable).
+	(Trac #1611, git c175c9c06034b4118e0dfdbccd532c2ebd4ba7e8)
+
 367.	[bug]		jinmei
 	libdatasrc: in-memory data source could incorrectly reject to load
 	zones containing RRSIG records.  For example, it didn't allow
