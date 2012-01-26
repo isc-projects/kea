@@ -99,6 +99,15 @@ public:
     ///
     /// It puts another RRset into the zone.
     ///
+    /// In the current implementation, this method doesn't allow an existing
+    /// RRset to be updated or overridden.  So the caller must make sure that
+    /// all RRs of the same type and name must be given in the form of a
+    /// single RRset.  The current implementation will also require that
+    /// when an RRSIG is added the RRset to be covered has already been
+    /// added.  These restrictions are probably too strict when this data
+    /// source accepts various forms of input, so they should be revisited
+    /// later.
+    ///
     /// Except for NullRRset and OutOfZone, this method does not guarantee
     /// strong exception safety (it is currently not needed, if it is needed
     /// in future, it should be implemented).
