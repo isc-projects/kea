@@ -21,7 +21,7 @@ import ddns
 import isc.config
 import select
 import errno
-import isc.util.io.socketsession
+import isc.util.cio.socketsession
 import socket
 import os.path
 
@@ -111,8 +111,8 @@ class TestDDNSServer(unittest.TestCase):
 
     def tearDown(self):
         ddns.select.select = select.select
-        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
-            isc.util.io.socketsession.SocketSessionReceiver
+        ddns.isc.util.cio.socketsession.SocketSessionReceiver = \
+            isc.util.cio.socketsession.SocketSessionReceiver
 
     def test_listen(self):
         '''
@@ -226,7 +226,7 @@ class TestDDNSServer(unittest.TestCase):
         Test that we can accept a new connection.
         """
         # There's nothing before the accept
-        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
+        ddns.isc.util.cio.socketsession.SocketSessionReceiver = \
             FakeSessionReceiver
         self.assertEqual({}, self.ddns_server._socksession_receivers)
         self.ddns_server.accept()
@@ -259,8 +259,8 @@ class TestDDNSServer(unittest.TestCase):
         # Now make the socket receiver fail
         self.ddns_server._listen_socket.accept = orig
         def receiver_failure(sock):
-            raise isc.util.io.socketsession.SocketSessionError('Test error')
-        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
+            raise isc.util.cio.socketsession.SocketSessionError('Test error')
+        ddns.isc.util.cio.socketsession.SocketSessionReceiver = \
             receiver_failure
         # Doesn't raise the exception
         self.ddns_server.accept()
@@ -269,7 +269,7 @@ class TestDDNSServer(unittest.TestCase):
         # Check we don't catch everything, so raise just an exception
         def unexpected_failure(sock):
             raise Exception('Test error')
-        ddns.isc.util.io.socketsession.SocketSessionReceiver = \
+        ddns.isc.util.cio.socketsession.SocketSessionReceiver = \
             unexpected_failure
         # This one gets through
         self.assertRaises(Exception, self.ddns_server.accept)
@@ -325,7 +325,7 @@ class TestDDNSServer(unittest.TestCase):
         socket = FakeSocket(3)
         receiver = FakeSessionReceiver(socket)
         def pop():
-            raise isc.util.io.socketsession.SocketSessionError('Test error')
+            raise isc.util.cio.socketsession.SocketSessionError('Test error')
         receiver.pop = pop
         socket.close = self.__hook
         self.__hook_called = False
