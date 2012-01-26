@@ -143,6 +143,7 @@ public:
     /// by a different application, the socket creator doesn't have enough
     /// privileges, or for some kind of similar reason.
     class SocketAllocateError : public NonFatalSocketError {
+    public:
         SocketAllocateError(const char* file, size_t line, const char* what) :
             NonFatalSocketError(file, line, what)
         { }
