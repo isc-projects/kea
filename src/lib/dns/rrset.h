@@ -693,7 +693,7 @@ public:
     }
 
     /// \brief Adds an RRSIG RR to this RRset's signatures
-    virtual void addRRsig(const rdata::RdataPtr rdata) {
+    virtual void addRRsig(const rdata::ConstRdataPtr rdata) {
         if (!rrsig_) {
             rrsig_ = RRsetPtr(new RRset(getName(), getClass(),
                                         RRType::RRSIG(), getTTL()));
@@ -702,7 +702,7 @@ public:
     }
 
     /// \brief Adds an RRSIG RRset to this RRset
-    void addRRsig(AbstractRRset& sigs) {
+    void addRRsig(const AbstractRRset& sigs) {
         RdataIteratorPtr it = sigs.getRdataIterator();
 
         if (!rrsig_) {
@@ -715,7 +715,7 @@ public:
         }
     }
 
-    void addRRsig(RRsetPtr sigs) { addRRsig(*sigs); }
+    void addRRsig(ConstRRsetPtr sigs) { addRRsig(*sigs); }
 
     /// \brief Clear the RRSIGs for this RRset
     void removeRRsig() { rrsig_ = RRsetPtr(); }

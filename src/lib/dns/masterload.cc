@@ -25,6 +25,7 @@
 #include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
@@ -58,6 +59,7 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
            MasterLoadCallback callback)
 {
     RRsetPtr rrset;
+    ConstRdataPtr prev_rdata;   // placeholder for special case of RRSIGs
     string line;
     unsigned int line_count = 1;
 
@@ -145,8 +147,20 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
         // Everything is okay.  Now create/update RRset with the new RR.
         // If this is the first RR or the RR type/name is new, we are seeing
         // a new RRset.
+        bool new_rrset = false;
         if (!rrset || rrset->getType() != *rrtype ||
             rrset->getName() != *owner) {
+            new_rrset = true;
+        } else if (rrset->getType() == RRType::RRSIG()) {
+            // We are seeing two consecutive RRSIGs of the same name.
+            // They can be combined iff they have the same type covered.
+            if (dynamic_cast<const generic::RRSIG&>(*rdata).typeCovered() !=
+                dynamic_cast<const generic::RRSIG&>(*prev_rdata).typeCovered())
+            {
+                new_rrset = true;
+            }
+        }
+        if (new_rrset) {
             // Commit the previous RRset, if any.
             if (rrset) {
                 callback(rrset);
@@ -154,6 +168,7 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
             rrset = RRsetPtr(new RRset(*owner, *rrclass, *rrtype, *ttl));
         }
         rrset->addRdata(rdata);
+        prev_rdata = rdata;
     } while (++line_count, !input.eof());
 
     // Commit the last RRset, if any.
