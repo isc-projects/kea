@@ -38,7 +38,7 @@ namespace {
 
 PyModuleDef socketsession = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
-    "isc.util.io.socketsession",
+    "isc.util.cio.socketsession",
     socketsession_doc,
     -1,
     NULL,
@@ -58,7 +58,7 @@ PyInit_socketsession(void) {
 
     try {
         po_SocketSessionError =
-            PyErr_NewException("isc.util.io.SocketSessionError", NULL, NULL);
+            PyErr_NewException("isc.util.cio.SocketSessionError", NULL, NULL);
         PyObjectContainer(po_SocketSessionError).
             installToModule(mod, "SocketSessionError");
     } catch (...) {
