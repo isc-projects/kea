@@ -169,11 +169,13 @@ public:
     /// \throw InvalidParameter protocol or share_mode is invalid
     /// \throw CCSessionError when we have a problem talking over the CC
     ///     session.
-    /// \throw SocketError in case the other side doesn't want to give us
-    ///     the socket for some reason (common cases are when the socket
-    ///     can't be allocated or bound, or when the socket is claimed by
-    ///     some other application and the sharing parameters don't allow
-    ///     sharing it).
+    /// \throw SocketError in case we have some other problems receiving the
+    ///     socket (eg. inconsistency in the protocol, the socket got stuck
+    ///     in the transport, etc). If the exception is not of the following
+    ///     derived ones, it usualy means something serious happened.
+    /// \throw SocketAllocateError if the other side can't create the socket.
+    /// \throw ShareError if the socket is used by other bind10 module and
+    ///     that one doesn't want to share it with us.
     virtual SocketID requestSocket(Protocol protocol,
                                    const std::string& address,
                                    uint16_t port, ShareMode share_mode,
