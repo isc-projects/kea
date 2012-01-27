@@ -263,10 +263,11 @@ class TestCacheCommands(unittest.TestCase):
             """
             [rcode, ranswer] = self.__boss._get_socket(args)['result']
             self.assertEqual(code, rcode)
-            if code == 1:
+            if code != 0:
                 # This should be an error message. The exact formatting
                 # is unknown, but we check it is string at least
                 self.assertTrue(isinstance(ranswer, str))
+
         def mod_args(name, value):
             """
             Override a parameter in the args.
@@ -296,6 +297,13 @@ class TestCacheCommands(unittest.TestCase):
         # to an error, not propagated
         self.__raise_exception = Exception("Test exception")
         check_code(1, self.__socket_args)
+        # The special "expected" exceptions
+        self.__raise_exception = \
+            isc.bind10.socket_cache.ShareError("Not shared")
+        check_code(3, self.__socket_args)
+        self.__raise_exception = \
+            isc.bind10.socket_cache.SocketError("Not shared", 13)
+        check_code(2, self.__socket_args)
 
     def drop_socket(self, token):
         """
