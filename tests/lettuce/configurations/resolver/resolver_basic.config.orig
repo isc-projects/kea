@@ -1,0 +1,1 @@
+{"version": 2, "Resolver": {"query_acl": [{"action": "REJECT", "from": "127.0.0.1"}], "listen_on": [{"port": 47806, "address": "127.0.0.1"}]}, "Boss": {"components": {"b10-resolver": {"kind": "needed"}, "b10-cmdctl": {"kind": "needed", "special": "cmdctl"}}}}

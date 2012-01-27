@@ -1,3 +1,37 @@
+369.	[func]		vorner
+	The SocketRequestor provides more information about what error happened
+	when it throws, by using subclasses of the original exception. This way
+	a user not interested in the difference can still use the original
+	exception, while it can be recognized if necessary.
+	(Trac #1542, git 2080e0316a339fa3cadea00e10b1ec4bc322ada0)
+
+368.	[func]*		jinmei
+	libdatasrc: the interface of ZoneFinder() was changed: WILDCARD
+	related result codes were deprecated and removed, and the
+	corresponding information is now provided via a separate accessor
+	method on FindResult.  Other separate FindResult methods will
+	also tell the caller whether the zone is signed with NSEC or NSEC3
+	(when necessary and applicable).
+	(Trac #1611, git c175c9c06034b4118e0dfdbccd532c2ebd4ba7e8)
+
+367.	[bug]		jinmei
+	libdatasrc: in-memory data source could incorrectly reject to load
+	zones containing RRSIG records.  For example, it didn't allow
+	RRSIG that covers a CNAME RR.  This fix also makes sure find()
+	will return RRsets with RRSIGs if they are signed.
+	(Trac #1614, git e8241ea5a4adea1b42a60ee7f2c5cfb87301734c)
+
+366.	[bug]		vorner
+	Fixed problem where a directory named "io" conflicted with the python3
+	standard module "io" and caused the installation to fail.  The
+	offending directory has been renamed to "cio".
+	(Trac #1561, git d81cf24b9e37773ba9a0d5061c779834ff7d62b9)
+
+365.	[bug]		jinmei
+	libdatasrc: in-memory datasource incorrectly returned delegation
+	for DS lookups.
+	(Trac #1571, git d22e90b5ef94880183cd652e112399b3efb9bd67)
+
 364.	[func]		jinmei
 	b10-auth experimentally supports statistics counters of incoming
 	requests per opcode.  The counters can be (e.g.) shown as
