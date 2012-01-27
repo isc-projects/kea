@@ -47,9 +47,6 @@ s_NSEC3Hash::s_NSEC3Hash() : cppobj(NULL) {
 }
 
 namespace {
-// This is a template of typical code logic of python class initialization
-// with C++ backend.  You'll need to adjust it according to details of the
-// actual C++ class.
 int
 NSEC3Hash_init(PyObject* po_self, PyObject* args, PyObject*) {
     s_NSEC3Hash* const self = static_cast<s_NSEC3Hash*>(po_self);
