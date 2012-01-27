@@ -45,6 +45,23 @@ using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
 
+namespace  {
+ZoneFinder::FindResultFlags
+getFindResultFlags(const ZoneFinder::FindResult& result) {
+    ZoneFinder::FindResultFlags result_flags = ZoneFinder::RESULT_DEFAULT;
+    if (result.isWildcard()) {
+        result_flags = result_flags | ZoneFinder::RESULT_WILDCARD;
+    }
+    if (result.isNSECSigned()) {
+        result_flags = result_flags | ZoneFinder::RESULT_NSEC_SIGNED;
+    }
+    if (result.isNSEC3Signed()) {
+        result_flags = result_flags | ZoneFinder::RESULT_NSEC3_SIGNED;
+    }
+    return (result_flags);
+}
+}
+
 namespace isc_datasrc_internal {
 // This is the shared code for the find() call in the finder and the updater
 // Is is intentionally not available through any header, nor at our standard
@@ -71,11 +88,14 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
                              options));
             const ZoneFinder::Result r = find_result.code;
             isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
+            ZoneFinder::FindResultFlags result_flags =
+                getFindResultFlags(find_result);
             if (rrsp) {
                 // Use N instead of O so the refcount isn't increased twice
-                return (Py_BuildValue("IN", r, createRRsetObject(*rrsp)));
+                return (Py_BuildValue("INI", r, createRRsetObject(*rrsp),
+                                      result_flags));
             } else {
-                return (Py_BuildValue("IO", r, Py_None));
+                return (Py_BuildValue("IOI", r, Py_None, result_flags));
             }
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
@@ -111,7 +131,9 @@ PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
                 finder->findAll(PyName_ToName(name), target, options));
             const ZoneFinder::Result r = find_result.code;
             isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
-            if (r == ZoneFinder::SUCCESS || r == ZoneFinder::WILDCARD) {
+            ZoneFinder::FindResultFlags result_flags =
+                getFindResultFlags(find_result);
+            if (r == ZoneFinder::SUCCESS) {
                 // Copy all the RRsets to the result list
                 PyObjectContainer list_container(PyList_New(target.size()));
                 for (size_t i(0); i < target.size(); ++i) {
@@ -126,9 +148,10 @@ PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
             } else {
                 if (rrsp) {
                     // Use N instead of O so the refcount isn't increased twice
-                    return (Py_BuildValue("IN", r, createRRsetObject(*rrsp)));
+                    return (Py_BuildValue("INI", r, createRRsetObject(*rrsp),
+                                          result_flags));
                 } else {
-                    return (Py_BuildValue("IO", r, Py_None));
+                    return (Py_BuildValue("IOI", r, Py_None, result_flags));
                 }
             }
         } catch (const DataSourceError& dse) {
@@ -263,7 +286,7 @@ PyMethodDef ZoneFinder_methods[] = {
        ZoneFinder_getOrigin_doc },
     { "get_class", ZoneFinder_getClass, METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", ZoneFinder_find, METH_VARARGS, ZoneFinder_find_doc },
-    { "find_all", ZoneFinder_find_all, METH_VARARGS, ZoneFinder_find_all_doc },
+    { "find_all", ZoneFinder_find_all, METH_VARARGS, ZoneFinder_findAll_doc },
     { "find_previous_name", ZoneFinder_findPreviousName, METH_VARARGS,
       ZoneFinder_find_previous_name_doc },
     { NULL, NULL, 0, NULL }

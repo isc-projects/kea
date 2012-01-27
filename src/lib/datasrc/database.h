@@ -1056,7 +1056,8 @@ public:
                                       const isc::dns::RRType& type,
                                       ZoneFinder::Result code,
                                       isc::dns::ConstRRsetPtr rrset,
-                                      const isc::log::MessageID& log_id) const;
+                                      const isc::log::MessageID& log_id,
+                                      FindResultFlags flags) const;
 
         /// \brief Checks if something lives below this domain.
         ///
