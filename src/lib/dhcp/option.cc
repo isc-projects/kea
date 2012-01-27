@@ -25,8 +25,10 @@
 #include "dhcp/libdhcp++.h"
 
 using namespace std;
-using namespace isc::dhcp;
 using namespace isc::util;
+
+namespace isc {
+namespace dhcp {
 
 Option::Option(Universe u, unsigned short type)
     :universe_(u), type_(type) {
@@ -54,8 +56,8 @@ Option::Option(Universe u, unsigned short type, std::vector<uint8_t>& data)
     check();
 }
 
-Option::Option(Universe u, uint16_t type, vector<uint8_t>::const_iterator first,
-               vector<uint8_t>::const_iterator last)
+Option::Option(Universe u, uint16_t type, std::vector<uint8_t>::const_iterator first,
+               std::vector<uint8_t>::const_iterator last)
     :universe_(u), type_(type), data_(std::vector<uint8_t>(first,last)) {
     check();
 }
@@ -344,3 +346,6 @@ void Option::setUint32(uint32_t value) {
 Option::~Option() {
 
 }
+
+} // end of isc::dhcp namespace
+} // end of isc namespace
