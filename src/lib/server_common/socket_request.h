@@ -110,7 +110,8 @@ public:
     /// This is thrown if the requested socket can't be granted, but it is only
     /// that one socket, not that the system would be broken or anything. This
     /// exception is a common base class for the concrete exceptions actually
-    /// thrown.
+    /// thrown. You can safely keep using the SocketRequestor after this
+    /// exception (or anything derived from it) is thrown.
     ///
     /// \see ShareError
     /// \see SocketAllocateError
@@ -135,7 +136,7 @@ public:
         { }
     };
 
-    /// \brief Exception when the operation system doesn't allow us to create
+    /// \brief Exception when the operating system doesn't allow us to create
     ///    the requested socket.
     ///
     /// This happens when the socket() or bind() call fails in the socket
