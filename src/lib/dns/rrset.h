@@ -706,7 +706,7 @@ public:
     // revisit the interface of managing RRset signatures, at which point this
     // problem may go away.
     void addRRsig(const rdata::RdataPtr rdata) {
-        static_cast<rdata::ConstRdataPtr>(rdata);
+        addRRsig(static_cast<rdata::ConstRdataPtr>(rdata));
     }
 
     /// \brief Adds an RRSIG RRset to this RRset
