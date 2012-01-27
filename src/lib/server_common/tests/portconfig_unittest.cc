@@ -308,11 +308,33 @@ TEST_F(InstallListenAddressesDeathTest, inconsistent) {
     EXPECT_DEATH({
                     try {
                         installListenAddresses(deathAddresses, store_, dnss_);
-                    }
-                    // Prevent exceptions killing the application, we need to
-                    // make sure it dies the real hard way
-                    catch (...) {};
+                    } catch (...) {
+                        // Prevent exceptions killing the application, we need
+                        // to make sure it dies the real hard way
+                    };
                  }, "");
+}
+
+// If we are unable to tell the boss we closed a socket, we abort, as we are
+// not consistent with the boss most probably.
+TEST_F(InstallListenAddressesDeathTest, cantClose) {
+    installListenAddresses(valid_, store_, dnss_);
+    AddressList empty;
+    // Instruct it to fail on close
+    sock_requestor_.break_release_ = true;
+    EXPECT_DEATH({
+                    try {
+                        // Setting to empty will close all current sockets.
+                        // And thanks to the break_release_, the close will
+                        // throw, which will make it crash.
+                        installListenAddresses(empty, store_, dnss_);
+                    } catch (...) {
+                        // To make sure it is killed by abort, not by some
+                        // (unhandled) exception
+                    };
+                }, "");
+    // And reset it back, so it can safely clean up itself.
+    sock_requestor_.break_release_ = false;
 }
 
 }
