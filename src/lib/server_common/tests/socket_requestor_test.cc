@@ -250,8 +250,14 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
     }
 
     // Send back an error response
+    // A generic one first
     session.getMessages()->add(createAnswer(1, "error"));
     ASSERT_THROW(doRequest(), CCSessionError);
+    // Now some with specific exceptions
+    session.getMessages()->add(createAnswer(2, "error"));
+    ASSERT_THROW(doRequest(), SocketRequestor::SocketAllocateError);
+    session.getMessages()->add(createAnswer(3, "error"));
+    ASSERT_THROW(doRequest(), SocketRequestor::ShareError);
 }
 
 // Helper function to create the release commands as we expect

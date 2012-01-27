@@ -42,7 +42,10 @@ import time
 # The first element is the original, the second is the target that will be
 # used by the tests that need them
 copylist = [
-["configurations/example.org.config.orig", "configurations/example.org.config"]
+    ["configurations/example.org.config.orig",
+     "configurations/example.org.config"],
+    ["configurations/resolver/resolver_basic.config.orig",
+     "configurations/resolver/resolver_basic.config"]
 ]
 
 # This is a list of files that, if present, will be removed before a scenario
