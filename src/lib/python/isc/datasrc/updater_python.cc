@@ -217,7 +217,7 @@ PyMethodDef ZoneUpdater_methods[] = {
       METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", ZoneUpdater_find, METH_VARARGS, ZoneFinder_find_doc },
     { "find_all", ZoneUpdater_find_all, METH_VARARGS,
-      ZoneFinder_find_all_doc },
+      ZoneFinder_findAll_doc },
     { NULL, NULL, 0, NULL }
 };
 
