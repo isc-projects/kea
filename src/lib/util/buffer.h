@@ -212,9 +212,8 @@ public:
     /// If specified buffer is too short, it will be expanded
     /// using vector::resize() method.
     ///
-    /// @param Reference to a buffer (data will be stored there).
-    /// @param Size specified number of bytes to read in a vector.
-    ///
+    /// @param data Reference to a buffer (data will be stored there).
+    /// @param len Size specified number of bytes to read in a vector.
     void readVector(std::vector<uint8_t>& data, size_t len)
     {
         if (position_ + len > len_) {
