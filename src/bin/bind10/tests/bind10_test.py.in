@@ -263,10 +263,11 @@ class TestCacheCommands(unittest.TestCase):
             """
             [rcode, ranswer] = self.__boss._get_socket(args)['result']
             self.assertEqual(code, rcode)
-            if code == 1:
+            if code != 0:
                 # This should be an error message. The exact formatting
                 # is unknown, but we check it is string at least
                 self.assertTrue(isinstance(ranswer, str))
+
         def mod_args(name, value):
             """
             Override a parameter in the args.
