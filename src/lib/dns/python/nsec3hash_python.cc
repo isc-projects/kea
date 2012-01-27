@@ -57,8 +57,9 @@ NSEC3Hash_init(PyObject* po_self, PyObject* args, PyObject*) {
         PyObject* po_rdata;
         if (PyArg_ParseTuple(args, "O", &po_rdata)) {
             if (!PyRdata_Check(po_rdata)) {
-                PyErr_SetString(PyExc_TypeError,
-                                "function must be given NSEC3HASH Rdata");
+                PyErr_Format(PyExc_TypeError,
+                             "param must be an Rdata of type NSEC3HASH, "
+                             "not %.200s", po_rdata->ob_type->tp_name);
                 return (-1);
             }
             self->cppobj = new NSEC3Hash(
@@ -98,8 +99,9 @@ NSEC3Hash_calculate(PyObject* po_self, PyObject* args) {
         PyObject* po_name;
         if (PyArg_ParseTuple(args, "O", &po_name)) {
             if (!PyName_Check(po_name)) {
-                PyErr_SetString(PyExc_TypeError,
-                                "function must be given Name object");
+                PyErr_Format(PyExc_TypeError,
+                             "name must be a Name, not %.200s",
+                             po_name->ob_type->tp_name);
                 return (NULL);
             }
             const string hash =
