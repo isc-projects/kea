@@ -62,8 +62,8 @@ public:
     TestSocketRequestor(asiodns::DNSService& dnss,
                         server_common::portconfig::AddressList& store,
                         uint16_t expect_port) :
-        last_token_(0), break_rollback_(false), dnss_(dnss), store_(store),
-        expect_port_(expect_port)
+        last_token_(0), break_rollback_(false), break_release_(false),
+        dnss_(dnss), store_(store), expect_port_(expect_port)
     {
         // Prepare the requestor (us) for the test
         server_common::initTestSocketRequestor(this);
@@ -106,11 +106,23 @@ public:
     /// ::1 address is requested.
     bool break_rollback_;
 
+    /// \brief Throw on releaseSocket
+    ///
+    /// If this is set to true, the releaseSocket will throw SocketError.
+    /// Defaults to false.
+    bool break_release_;
+
     /// \brief Release a socket
     ///
     /// This only stores the token passed.
     /// \param token The socket to release
+    ///
+    /// \throw SocketError in case the break_release_ is set to true. This is
+    ///     to test exception handling.
     void releaseSocket(const std::string& token) {
+        if (break_release_) {
+            isc_throw(SocketError, "Fatal test socket error");
+        }
         released_tokens_.push_back(token);
     }
 
