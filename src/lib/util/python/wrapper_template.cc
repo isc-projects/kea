@@ -33,14 +33,6 @@ using namespace isc::@MODULE@;
 using namespace isc::@MODULE@::python;
 
 //
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
 // @CPPCLASS@
 //
 
@@ -52,6 +44,7 @@ namespace {
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_@CPPCLASS@, @CPPCLASS@> @CPPCLASS@Container;
 
+@REMOVE_THIS_ON_RELEASE@
 // This is a template of typical code logic of python class initialization
 // with C++ backend.  You'll need to adjust it according to details of the
 // actual C++ class.
@@ -60,6 +53,7 @@ int
     s_@CPPCLASS@* self = static_cast<s_@CPPCLASS@*>(po_self);
     try {
         if (PyArg_ParseTuple(args, "REPLACE ME")) {
+            @REMOVE_THIS_ON_RELEASE@
             // YOU'LL NEED SOME VALIDATION, PREPARATION, ETC, HERE.
             self->cppobj = new @CPPCLASS@(/*NECESSARY PARAMS*/);
             return (0);
@@ -74,6 +68,7 @@ int
         return (-1);
     }
 
+    @REMOVE_THIS_ON_RELEASE@
     // If we are here PyArg_ParseTuple() failed and TypeError should have
     // been set.  If the constructor is more complicated and the control
     // could reach this point for other reasons, an appropriate Python
@@ -82,6 +77,7 @@ int
     return (-1);
 }
 
+@REMOVE_THIS_ON_RELEASE@
 // This is a template of typical code logic of python object destructor.
 // In many cases you can use it without modification, but check that carefully.
 void
@@ -92,6 +88,7 @@ void
     Py_TYPE(self)->tp_free(self);
 }
 
+@REMOVE_THIS_ON_RELEASE@
 // This should be able to be used without modification as long as the
 // underlying C++ class has toText().
 PyObject*
@@ -119,6 +116,7 @@ PyObject*
                                 const_cast<char*>("")));
 }
 
+@REMOVE_THIS_ON_RELEASE@
 // This is quite specific isc.dns.  For other wrappers this should probably
 // be removed.
 PyObject* @CPPCLASS@_toWire(PyObject* self, PyObject* args) {
@@ -175,6 +173,8 @@ PyObject*
 PyMethodDef @CPPCLASS@_methods[] = {
     { "to_text", @CPPCLASS@_toText, METH_NOARGS,
       @CPPCLASS@_toText_doc },
+
+    @REMOVE_THIS_ON_RELEASE@
     // This is quite specific isc.dns.  For other wrappers this should probably
     // be removed:
     { "to_wire", @CPPCLASS@_toWire, METH_VARARGS,
@@ -256,6 +256,7 @@ initModulePart_@CPPCLASS@(PyObject* mod) {
     }
     Py_INCREF(&@cppclass@_type);
 
+    @REMOVE_THIS_ON_RELEASE@
     // The following template is the typical procedure for installing class
     // variables.  If the class doesn't have a class variable, remove the
     // entire try-catch clauses.
