@@ -1416,12 +1416,20 @@ doFindTest(ZoneFinder& finder,
            ZoneFinder::Result expected_result,
            const std::vector<std::string>& expected_rdatas,
            const std::vector<std::string>& expected_sig_rdatas,
+           ZoneFinder::FindResultFlags expected_flags =
+           ZoneFinder::RESULT_DEFAULT,
            const isc::dns::Name& expected_name = isc::dns::Name::ROOT_NAME(),
            const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
     const ZoneFinder::FindResult result = finder.find(name, type, options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
+    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+              result.isWildcard());
+    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+              result.isNSECSigned());
+    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+              result.isNSEC3Signed());
     if (!expected_rdatas.empty() && result.rrset) {
         checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
                    name, finder.getClass(), expected_type, expected_ttl,
@@ -1838,17 +1846,17 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
     doFindTest(*finder, isc::dns::Name("ns.delegation.example.org."),
                this->qtype_, isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("delegation.example.org."));
     doFindTest(*finder, isc::dns::Name("ns.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("delegation.example.org."));
     doFindTest(*finder, isc::dns::Name("deep.below.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("delegation.example.org."));
 
     // Even when we check directly at the delegation point, we should get
@@ -1876,15 +1884,18 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
                this->qtype_, isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
-               this->expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               isc::dns::Name("dname.example.org."));
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
-               this->expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               isc::dns::Name("dname.example.org."));
     doFindTest(*finder, isc::dns::Name("really.deep.below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
-               this->expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               isc::dns::Name("dname.example.org."));
 
     // Asking direcly for DNAME should give SUCCESS
     doFindTest(*finder, isc::dns::Name("dname.example.org."),
@@ -1944,12 +1955,14 @@ TYPED_TEST(DatabaseClientTest, glueOK) {
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                this->rrttl_, ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("ns.delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
     doFindTest(*finder, isc::dns::Name("nothere.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("nothere.delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
     this->expected_rdatas_.push_back("192.0.2.1");
@@ -1957,6 +1970,7 @@ TYPED_TEST(DatabaseClientTest, glueOK) {
                this->qtype_, this->qtype_,
                this->rrttl_, ZoneFinder::SUCCESS,
                this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("ns.delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
     this->expected_rdatas_.clear();
@@ -1972,6 +1986,7 @@ TYPED_TEST(DatabaseClientTest, glueOK) {
                isc::dns::RRType::NS(), isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::SUCCESS,
                this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("delegation.example.org."),
                ZoneFinder::FIND_GLUE_OK);
     this->expected_rdatas_.clear();
@@ -1983,12 +1998,12 @@ TYPED_TEST(DatabaseClientTest, glueOK) {
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
                this->qtype_, isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("dname.example.org."), ZoneFinder::FIND_GLUE_OK);
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("dname.example.org."), ZoneFinder::FIND_GLUE_OK);
 }
 
@@ -2003,21 +2018,24 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
                                          "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
                this->qtype_, this->qtype_, this->rrttl_,
-               ZoneFinder::WILDCARD, this->expected_rdatas_,
-               this->expected_sig_rdatas_);
+               ZoneFinder::SUCCESS, this->expected_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_WILDCARD);
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
-               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::WILDCARD,
-               this->expected_rdatas_, this->expected_sig_rdatas_);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_WILDCARD);
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
-               this->expected_rdatas_, this->expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_WILDCARD);
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
-               this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
-               this->expected_rdatas_, this->expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_WILDCARD);
 
     // Direct request for this wildcard
     this->expected_rdatas_.push_back("192.0.2.5");
@@ -2067,14 +2085,14 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     doFindTest(*finder, isc::dns::Name("below.delegatedwild.example.org"),
                this->qtype_, isc::dns::RRType::NS(), this->rrttl_,
                ZoneFinder::DELEGATION, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("delegatedwild.example.org"));
     // FIXME: This doesn't look logically OK, GLUE_OK should make it transparent,
     // so the match should either work or be canceled, but return NXDOMAIN
     doFindTest(*finder, isc::dns::Name("below.delegatedwild.example.org"),
                this->qtype_, isc::dns::RRType::NS(), this->rrttl_,
                ZoneFinder::DELEGATION, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("delegatedwild.example.org"),
                ZoneFinder::FIND_GLUE_OK);
 
@@ -2097,16 +2115,10 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     this->expected_rdatas_.clear();
     const char* negative_names[] = {
         "a.foo.example.org.",
-        "*.foo.example.org.",
-        "foo.example.org.",
         "wild.bar.foo.example.org.",
         "baz.foo.*.bar.example.org",
         "baz.foo.baz.bar.example.org",
         "*.foo.baz.bar.example.org",
-        "*.foo.*.bar.example.org",
-        "foo.*.bar.example.org",
-        "*.bar.example.org",
-        "bar.example.org",
         NULL
     };
     // Unless FIND_DNSSEC is specified, this is no different from other
@@ -2114,10 +2126,11 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     for (const char** name = negative_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
                    this->qtype_, this->rrttl_, ZoneFinder::NXRRSET,
-                   this->expected_rdatas_, this->expected_sig_rdatas_);
+                   this->expected_rdatas_, this->expected_sig_rdatas_,
+                   ZoneFinder::RESULT_WILDCARD);
     }
 
-    // With FIND_DNSSEC, it should result in WILDCARD_NXRRSET.
+    // With FIND_DNSSEC, it should have NSEC_SIGNED flag.
     const char* negative_dnssec_names[] = {
         "a.bar.example.org.",
         "foo.baz.bar.example.org.",
@@ -2129,8 +2142,9 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     this->expected_sig_rdatas_.clear();
     for (const char** name = negative_dnssec_names; *name != NULL; ++ name) {
         doFindTest(*finder, isc::dns::Name(*name), this->qtype_,
-                   RRType::NSEC(), this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
+                   RRType::NSEC(), this->rrttl_, ZoneFinder::NXRRSET,
                    this->expected_rdatas_, this->expected_sig_rdatas_,
+                   ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED,
                    Name("bao.example.org."), ZoneFinder::FIND_DNSSEC);
     }
 
@@ -2140,19 +2154,18 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     this->expected_sig_rdatas_.clear();
     doFindTest(*finder, isc::dns::Name("a.cnamewild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::CNAME(),
-               this->rrttl_, ZoneFinder::WILDCARD_CNAME,
-               this->expected_rdatas_, this->expected_sig_rdatas_);
+               this->rrttl_, ZoneFinder::CNAME,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_WILDCARD);
 
     // DNAME on a wildcard.  In our implementation we ignore DNAMEs on a
     // wildcard, but at a higher level we say the behavior is "unspecified".
     // rfc2672bis strongly discourages the mixture of DNAME and wildcard
     // (with SHOULD NOT).
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
     doFindTest(*finder, Name("a.dnamewild.example.org."),
                this->qtype_, this->qtype_, this->rrttl_,
-               ZoneFinder::WILDCARD_NXRRSET, this->expected_rdatas_,
-               this->expected_sig_rdatas_);
+               ZoneFinder::NXRRSET, this->empty_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_WILDCARD);
 
     // Some strange things in the wild node
     this->expected_rdatas_.clear();
@@ -2160,7 +2173,8 @@ TYPED_TEST(DatabaseClientTest, wildcard) {
     doFindTest(*finder, isc::dns::Name("a.nswild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::DELEGATION,
-               this->expected_rdatas_, this->expected_sig_rdatas_);
+               this->expected_rdatas_, this->empty_rdatas_,
+               ZoneFinder::RESULT_WILDCARD);
 }
 
 TYPED_TEST(DatabaseClientTest, noWildcard) {
@@ -2178,7 +2192,8 @@ TYPED_TEST(DatabaseClientTest, noWildcard) {
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
                RRType::NSEC(), RRType::NSEC(), this->rrttl_,
                ZoneFinder::NXDOMAIN, this->expected_rdatas_,
-               this->expected_sig_rdatas_, Name("*.wild.example.org."),
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("*.wild.example.org."),
                ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
 
     // Should be the same without FIND_DNSSEC (but in this case no RRsets
@@ -2186,7 +2201,8 @@ TYPED_TEST(DatabaseClientTest, noWildcard) {
     doFindTest(*finder, isc::dns::Name("a.wild.example.org"),
                RRType::NSEC(), RRType::NSEC(), this->rrttl_,
                ZoneFinder::NXDOMAIN, this->empty_rdatas_,
-               this->empty_rdatas_, Name::ROOT_NAME(), // name is dummy
+               this->empty_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               Name::ROOT_NAME(), // name is dummy
                ZoneFinder::NO_WILDCARD);
 
     // Same for wildcard empty non terminal.
@@ -2195,7 +2211,8 @@ TYPED_TEST(DatabaseClientTest, noWildcard) {
     doFindTest(*finder, isc::dns::Name("a.bar.example.org"),
                RRType::NSEC(), RRType::NSEC(), this->rrttl_,
                ZoneFinder::NXDOMAIN, this->expected_rdatas_,
-               this->empty_rdatas_, Name("wild.*.foo.*.bar.example.org"),
+               this->empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("wild.*.foo.*.bar.example.org"),
                ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
 
     // Search for a wildcard name with NO_WILDCARD.  There should be no
@@ -2206,7 +2223,8 @@ TYPED_TEST(DatabaseClientTest, noWildcard) {
     doFindTest(*finder, isc::dns::Name("*.nonterminal.example.org"),
                RRType::NSEC(), RRType::NSEC(), this->rrttl_,
                ZoneFinder::NXDOMAIN, this->expected_rdatas_,
-               this->empty_rdatas_, Name("l.example.org"),
+               this->empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("l.example.org"),
                ZoneFinder::FIND_DNSSEC | ZoneFinder::NO_WILDCARD);
 
     // On the other hand, if there's exact match for the wildcard name
@@ -2220,8 +2238,8 @@ TYPED_TEST(DatabaseClientTest, noWildcard) {
     doFindTest(*finder, isc::dns::Name("*.wild.example.org"),
                this->qtype_, this->qtype_, this->rrttl_,
                ZoneFinder::SUCCESS, this->expected_rdatas_,
-               this->expected_sig_rdatas_, Name("*.wild.example.org"),
-               ZoneFinder::NO_WILDCARD);
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               Name("*.wild.example.org"), ZoneFinder::NO_WILDCARD);
 }
 
 TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
@@ -2237,7 +2255,8 @@ TYPED_TEST(DatabaseClientTest, NXRRSET_NSEC) {
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
                this->rrttl_, ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
-               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
+               ZoneFinder::RESULT_NSEC_SIGNED, Name::ROOT_NAME(),
+               ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
@@ -2256,8 +2275,9 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
     // Note that the NSEC name should NOT be synthesized.
     doFindTest(*finder, isc::dns::Name("a.wild.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               this->rrttl_, ZoneFinder::WILDCARD_NXRRSET,
+               this->rrttl_, ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED,
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
@@ -2273,7 +2293,8 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_,
-               Name("www.example.org."), ZoneFinder::FIND_DNSSEC);
+               ZoneFinder::RESULT_NSEC_SIGNED, Name("www.example.org."),
+               ZoneFinder::FIND_DNSSEC);
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("acnamesig1.example.org. NS A NSEC RRSIG");
     // This tests it works correctly in apex (there was a bug, where a check
@@ -2282,7 +2303,8 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_,
-               Name("example.org."), ZoneFinder::FIND_DNSSEC);
+               ZoneFinder::RESULT_NSEC_SIGNED, Name("example.org."),
+               ZoneFinder::FIND_DNSSEC);
 
     // Check that if the DB doesn't support it, the exception from there
     // is not propagated and it only does not include the NSEC
@@ -2294,8 +2316,9 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
                                isc::dns::RRType::TXT(),
                                isc::dns::RRType::NSEC(), this->rrttl_,
                                ZoneFinder::NXDOMAIN, this->empty_rdatas_,
-                               this->empty_rdatas_, Name::ROOT_NAME(),
-                               ZoneFinder::FIND_DNSSEC));
+                               this->empty_rdatas_,
+                               ZoneFinder::RESULT_DEFAULT,
+                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
 }
 
 TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
@@ -2305,9 +2328,10 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     this->expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
     doFindTest(*finder, isc::dns::Name("nonterminal.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(), this->rrttl_,
-               ZoneFinder::NXRRSET,
-               this->expected_rdatas_, this->expected_sig_rdatas_,
-               Name("l.example.org."), ZoneFinder::FIND_DNSSEC);
+               ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_NSEC_SIGNED, Name("l.example.org."),
+               ZoneFinder::FIND_DNSSEC);
 
     // Check that if the DB doesn't support it, the exception from there
     // is not propagated and it only does not include the NSEC
@@ -2320,6 +2344,7 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
                                isc::dns::RRType::NSEC(),
                                this->rrttl_, ZoneFinder::NXRRSET,
                                this->empty_rdatas_, this->empty_rdatas_,
+                               ZoneFinder::RESULT_DEFAULT,
                                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
 }
 
@@ -2387,9 +2412,13 @@ TYPED_TEST(DatabaseClientTest, getAll) {
 
     // And on wildcard. Check the signatures as well.
     target.clear();
-    EXPECT_EQ(ZoneFinder::WILDCARD,
-              finder->findAll(isc::dns::Name("a.wild.example.org"),
-                              target, ZoneFinder::FIND_DNSSEC).code);
+    const ZoneFinder::FindResult result =
+        finder->findAll(Name("a.wild.example.org"), target,
+                        ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result.code);
+    EXPECT_TRUE(result.isWildcard());
+    EXPECT_TRUE(result.isNSECSigned());
+    EXPECT_FALSE(result.isNSEC3Signed());
     ASSERT_EQ(2, target.size());
     a_idx = target[1]->getType() == RRType::A();
     EXPECT_EQ(RRType::A(), target[a_idx]->getType());
