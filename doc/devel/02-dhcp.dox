@@ -1,0 +1,32 @@
+/**
+ * @page dhcpv4 DHCPv4 Component
+ *
+ * BIND10 offers DHCPv4 server implementation. It is implemented as b10-dhcp4 component.
+ * It's primary code is located in isc::dhcp::Dhcpv4Srv class. It uses \ref libdhcp extensively,
+ * especially isc::dhcp::Pkt4, isc::dhcp::Option and isc::dhcp::IfaceMgr classes.
+ *
+ * @todo Describe DHCPv4 component properly.
+ * 
+ * @page dhcpv6 DHCPv6 Component
+ *
+ * @todo DHCPv6 component will be described here.
+ * 
+ * @page libdhcp libdhcp++ library
+ *
+ * @section libdhcpIntro Libdhcp++ Introduction
+ *
+ * libdhcp++ is an all-purpose DHCP-manipulation library, written in C++. It offers packet 
+ * parsing and assembly, DHCPv4 and DHCPv6 options parsing and assembly, interface detection
+ * (currently on Linux systems only) and socket operations. Following classes are implemented:
+ *
+ * - isc::dhcp::Pkt4 - represents DHCPv4 packet.
+ * - isc::dhcp::Pkt6 - represents DHCPv6 packet.
+ *
+ * @section lidhcpIfaceMgr Interface Manager
+ *
+ * Interface Manager (or IfaceMgr) is an abstraction layer about low-level network operations.
+ * In particlar, it provides information about existing network interfaces See isc::dhcp::IfaceMgr::Iface 
+ * class and isc::dhcp::IfaceMgr::detectIfaces() and isc::dhcp::IfaceMgr::getIface().
+ * Another useful methods are dedicated to transmission (isc::dhcp::IfaceMgr::send(), 2 overloads) 
+ * and reception (isc::dhcp::IfaceMgr::receive4() and isc::dhcp::IfaceMgr::receive6()).
+ */
