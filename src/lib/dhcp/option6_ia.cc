@@ -24,14 +24,16 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::util;
 
-Option6IA::Option6IA(unsigned short type, unsigned int iaid)
+namespace isc {
+namespace dhcp {
+
+Option6IA::Option6IA(uint16_t type, uint32_t iaid)
     :Option(Option::V6, type), iaid_(iaid) {
 }
 
-Option6IA::Option6IA(unsigned short type,
+Option6IA::Option6IA(uint16_t type,
                      const boost::shared_array<uint8_t>& buf,
                      unsigned int buf_len,
                      unsigned int offset,
@@ -134,3 +136,6 @@ uint16_t Option6IA::len() {
     }
     return (length);
 }
+
+} // end of isc::dhcp namespace
+} // end of isc namespace

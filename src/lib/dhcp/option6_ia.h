@@ -31,7 +31,7 @@ public:
     ///
     /// @param type option type (usually 4 for IA_NA, 25 for IA_PD)
     /// @param iaid identity association identifier (id of IA)
-    Option6IA(uint16_t type, unsigned int iaid);
+    Option6IA(uint16_t type, uint32_t iaid);
 
     /// @brief ctor, used for received options
     ///

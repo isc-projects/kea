@@ -23,9 +23,11 @@
 #include <dhcp/option4_addrlst.h>
 
 using namespace std;
-using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::asiolink;
+
+namespace isc {
+namespace dhcp {
 
 Option4AddrLst::Option4AddrLst(uint8_t type)
     :Option(V4, type) {
@@ -39,8 +41,8 @@ Option4AddrLst::Option4AddrLst(uint8_t type, const AddressContainer& addrs)
 
 
 Option4AddrLst::Option4AddrLst(uint8_t type,
-                               vector<uint8_t>::const_iterator first,
-                               vector<uint8_t>::const_iterator last)
+                               std::vector<uint8_t>::const_iterator first,
+                               std::vector<uint8_t>::const_iterator last)
     :Option(V4, type) {
     if ( (distance(first, last) % V4ADDRESS_LEN) ) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_
@@ -133,3 +135,6 @@ std::string Option4AddrLst::toText(int indent /* =0 */ ) {
 
     return tmp.str();
 }
+
+} // end of isc::dhcp namespace
+} // end of isc namespace

@@ -30,6 +30,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace isc {
+namespace dhcp {
 
 /// IfaceMgr is a singleton implementation
 IfaceMgr* IfaceMgr::instance_ = 0;
@@ -94,7 +95,7 @@ bool IfaceMgr::Iface::delAddress(const isc::asiolink::IOAddress& addr) {
     return (false);
 }
 
-bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
+bool IfaceMgr::Iface::delSocket(int sockfd) {
     list<SocketInfo>::iterator sock = sockets_.begin();
     while (sock!=sockets_.end()) {
         if (sock->sockfd_ == sockfd) {
@@ -1034,5 +1035,5 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
 }
 
 
-
+}
 }
