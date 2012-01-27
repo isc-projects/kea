@@ -1308,14 +1308,53 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
                  InMemoryZoneFinder::AddError);
 }
 
+//
+// (Faked) NSEC3 hash data.  Arbitrarily borrowed from RFC515 examples.
+//
+// Commonly used NSEC3 suffix.  It's incorrect to use it for all NSEC3s, but
+// doesn't matter for the purpose of our tests.
+const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
+// For apex (example.org)
+const char* const apex_hash = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+const char* const apex_hash_down = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
+
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
-    zone_finder_.add(textToRRset(
-                         "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM.example.org. "
-                         "300 IN NSEC3 1 1 12 aabbccdd "
-                         "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"));
+    const string nsec3_text = string(apex_hash) + ".example.org." +
+        string(nsec3_common);
+    // This name shouldn't be found in the normal domain tree.
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              zone_finder_.find(
-                  Name("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM.example.org"),
-                  RRType::NSEC3()).code);
+              zone_finder_.find(Name(string(apex_hash) + ".example.org"),
+                                RRType::NSEC3()).code);
+    // Dedicated NSEC3 find should be able to find it.
+    ZoneFinder::FindNSEC3Result result =
+        zone_finder_.findNSEC3Tmp(Name("example.org"), false);
+    EXPECT_TRUE(result.matched);
+    ASSERT_TRUE(result.closest_proof);
+    actual_rrsets_.push_back(result.closest_proof);
+    rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
+}
+
+TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
+    // Similar to the previous case, but NSEC3 owner name is lower-cased.
+    const string nsec3_text = string(apex_hash_down) + ".example.org." +
+        string(nsec3_common);
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
+    ZoneFinder::FindNSEC3Result result =
+        zone_finder_.findNSEC3Tmp(Name("example.org"), false);
+    EXPECT_TRUE(result.matched);
+    ASSERT_TRUE(result.closest_proof);
+    actual_rrsets_.push_back(result.closest_proof);
+    rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
+
+    // - duplicate
+    // - adding RRSIG for NSEC3
+    // - bogus NSEC3 owner name: redundant labels, wildcard
+    // - case where the main tree has NSEC3 name
+    // - parameter consistency
+    // - existence of NSEC3PARAM
+    // - parameter consistency with NSEC3PARAM
+    // - add NSEC3PARAM first/second
 }
 }

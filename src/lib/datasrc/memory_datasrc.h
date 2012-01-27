@@ -89,6 +89,10 @@ public:
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive);
 
+    /// TBD
+    FindNSEC3Result
+    findNSEC3Tmp(const isc::dns::Name& name, bool recursive);
+
     /// \brief Imelementation of the ZoneFinder::findPreviousName method
     ///
     /// This one throws NotImplemented exception, as InMemory doesn't
