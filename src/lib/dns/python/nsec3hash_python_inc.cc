@@ -33,8 +33,8 @@ Calculate the NSEC3 hash.\n\
 This method calculates the NSEC3 hash value for the given name with\n\
 the hash parameters (algorithm, iterations and salt) given at\n\
 construction, and returns the value in a base32hex-encoded string\n\
-(without containing any white spaces). All alphabets in the string\n\
-will be upper cased.\n\
+(without containing any white spaces). All US-ASCII letters in the\n\
+string will be upper cased.\n\
 \n\
 Parameters:\n\
   name       The domain name for which the hash value is to be\n\
