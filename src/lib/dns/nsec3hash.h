@@ -44,34 +44,32 @@ public:
 
 /// \brief A calculator of NSEC3 hashes.
 ///
-/// This is a simple class that encapsulates the algorithm of calculating
-/// NSEC3 hash values as defined in RFC5155.
+/// This is an abstract base class that defines a simple interface to
+/// calculating NSEC3 hash values as defined in RFC5155.
 ///
-/// This class is designed to be "stateless" in that it basically doesn't
-/// hold mutable state once constructed, and hash calculation solely depends
-/// on the parameters given on construction and input to the \c calculate()
-/// method.  In that sense this could be a single free function rather than
-/// a class, but we decided to provide the functionality as a class for
-/// two reasons: NSEC3 hash calculations would often take place more than one
-/// time in a single query or validation process, so it would be more
-/// efficient if we could hold some internal resources used for the
-/// calculation and reuse it over multiple calls to \c calculate() (this
-/// implementation actually does this); Second, for testing purposes we may
-/// want to use a fake calculator that returns pre-defined hash values
-/// (so a slight change to the test input wouldn't affect the test result).
-/// Using a class would make it possible by introducing a common base class
-/// and having the application depend on that base class (then the fake
-/// calculator will be defined as a separate subclass of the base).
+/// (Derived classes of) this class is designed to be "stateless" in that it
+/// basically doesn't hold mutable state once constructed, and hash
+/// calculation solely depends on the parameters given on construction and
+/// input to the \c calculate() method.  In that sense this could be a
+/// single free function rather than  a class, but we decided to provide the
+/// functionality as a class for two reasons: NSEC3 hash calculations would
+/// often take place more than one time in a single query or validation
+/// process, so it would be more efficient if we could hold some internal
+/// resources used for the calculation and reuse it over multiple calls to
+/// \c calculate() (a concrete implementation in this library actually does
+/// this); Second, we may want to customize the hash calculation logic for
+/// testing purposes or for other future extensions.  For example, we may
+/// want to use a fake calculator for tests that returns pre-defined hash
+/// values (so a slight change to the test input wouldn't affect the test
+/// result).  Using classes from this base would make it possible more
+/// transparently to the application.
 ///
-/// The initial implementation makes this class non copyable as it wouldn't
-/// used be passed from one place to another, especially if and when it's
-/// used via a base class abstraction.  But there's no fundamental reason
-/// this cannot be copied, so if we see a specific need for it, this
-/// restriction can be revisited.
+/// A specific derived class instance must be created by the factory method,
+/// \c create().
 ///
 /// There can be several ways to extend this class in future.  Those include:
-/// - Introduce a base class and make it derived from it (mainly for testing
-///   purposes as noted above)
+/// - Allow customizing the factory method so the application change the
+///   behavior dynamically.
 /// - Allow to construct the class from a tuple of parameters, that is,
 ///   integers for algorithm, iterations and flags, and opaque salt data.
 ///   For example, we might want to use that version for validators.
@@ -80,20 +78,34 @@ public:
 ///   the internal resources for different sets of parameters.
 class NSEC3Hash {
 protected:
+    /// \brief The default constructor.
+    ///
+    /// This is defined as protected to prevent this class from being directly
+    /// instantiated even if the class definition is modified (accidentally
+    /// or intentionally) to have no pure virtual methods.
     NSEC3Hash() {}
 
 public:
-    /// \brief Constructor from NSEC3PARAM RDATA.
+    /// \brief Factory method of NSECHash from NSEC3PARAM RDATA.
     ///
     /// The hash algorithm given via \c param must be known to the
     /// implementation.  Otherwise \c UnknownNSEC3HashAlgorithm exception
     /// will be thrown.
+    ///
+    /// This method creates an \c NSEC3Hash object using \c new.  The caller
+    /// is responsible for releasing it with \c delete that is compatible to
+    /// the one used in this library.  In practice, the application would
+    /// generally need to store the returned pointer in some form of smart
+    /// pointer; otherwise the resulting code will be quite fragile against
+    /// exceptions (and in this case the application doesn't have to worry
+    /// about explicit \c delete).
     ///
     /// \throw UnknownNSEC3HashAlgorithm The specified algorithm in \c param
     /// is unknown.
     /// \throw std::bad_alloc Internal resource allocation failure.
     ///
     /// \param param NSEC3 parameters used for subsequent calculation.
+    /// \return A pointer to a concrete derived object of \c NSEC3Hash.
     static NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param);
 
     /// \brief The destructor.

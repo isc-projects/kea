@@ -38,13 +38,22 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace {
-// This is the algorithm number for SHA1/NSEC3 as defined in RFC5155.
-// Currently the only pre-defined algorithm is SHA1.  So we don't
-// over-generalize it at the moment, and rather hardocde it and
-// assume that specific algorithm.
-const uint8_t NSEC3_HASH_SHA1 = 1;
 
+/// \brief A derived class of \c NSEC3Hash that implements the standard hash
+/// calculation specified in RFC5155.
+///
+/// Currently the only pre-defined algorithm in the RFC is SHA1.  So we don't
+/// over-generalize it at the moment, and rather hardocde it and assume that
+/// specific algorithm.
+///
+/// The implementation details are only open within this file, but to avoid
+/// an accidental error in this implementation we explicitly make it non
+/// copyable.
 class NSEC3HashRFC5155 : boost::noncopyable, public NSEC3Hash {
+private:
+    // This is the algorithm number for SHA1/NSEC3 as defined in RFC5155.
+    static const uint8_t NSEC3_HASH_SHA1 = 1;
+
 public:
     NSEC3HashRFC5155(const generic::NSEC3PARAM& param) :
         algorithm_(param.getHashalg()),
