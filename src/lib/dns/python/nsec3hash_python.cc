@@ -192,7 +192,7 @@ PyTypeObject nsec3hash_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
+// Module Initialization, all statics (nothing right now) are initialized here
 bool
 initModulePart_NSEC3Hash(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
