@@ -12,9 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <functional>
+#include <algorithm>
 #include <map>
-#include <set>
+#include <utility>
+#include <cctype>
 #include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -67,14 +68,13 @@ typedef boost::shared_ptr<Domain> DomainPtr;
 typedef RBTree<Domain> DomainTree;
 typedef RBNode<Domain> DomainNode;
 
-// Separate storage for NSEC3 RRs (and their RRSIGs)
-struct NameCompare : public binary_function<ConstRRsetPtr, ConstRRsetPtr, bool>
-{
-    bool operator()(const ConstRRsetPtr& n1, const ConstRRsetPtr& n2) const {
-        return (n1->getName().compare(n2->getName()).getOrder() < 0);
-    }
-};
-typedef set<ConstRRsetPtr, NameCompare> NSEC3Set;
+// Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
+// from string to the NSEC3 RRset.  The map key is the first label
+// (upper cased) of the owner name of the corresponding NSEC3 (i.e., map
+// value).  We can use  the standard string comparison (if the comparison
+// target is also upper cased) due to the nature of NSEC3 owner names.
+typedef map<string, ConstRRsetPtr> NSEC3Map;
+typedef NSEC3Map::value_type NSEC3Pair;
 
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
 // a separate structure so that it'll be replaceable on reload.
@@ -85,7 +85,7 @@ struct ZoneData {
     DomainTree domains_;
 
     // The optional NSEC3 storage (TBD: should allocate it on demand)
-    NSEC3Set nsec3_set_;
+    NSEC3Map nsec3_map_;
 };
 }
 
@@ -111,7 +111,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
     // The actual zone data
     scoped_ptr<ZoneData> zone_data_;
-    //DomainTree domains_;
 
     // Add the necessary magic for any wildcard contained in 'name'
     // (including itself) to be found in the zone.
@@ -316,6 +315,15 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         return (result::SUCCESS);
     }
 
+    // A helper functor to convert the 1st NSEC3 label to all upper-cased
+    // characters.  Note: technically there's a subtle issue when char
+    // is signed, but in practice the label should consist of all positive
+    // character values for a valid NSEC3 hash name (if it's invalid the
+    // resulting zone doesn't work correctly anyway).
+    struct ToUpper {
+        char operator()(char ch) { return (toupper(ch)); }
+    };
+
     /*
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
@@ -331,8 +339,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
 
         if (rrset->getType() == RRType::NSEC3()) {
-            // TBD: Duplicate check
-            zone_data.nsec3_set_.insert(rrset);
+            string fst_label = rrset->getName().split(0, 1).toText(true);
+            transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
+                      ToUpper());
+            zone_data.nsec3_map_.insert(NSEC3Pair(fst_label, rrset));
             return (result::SUCCESS);
         }
 
@@ -749,6 +759,30 @@ ZoneFinder::FindNSEC3Result
 InMemoryZoneFinder::findNSEC3(const Name&, bool) {
     isc_throw(NotImplemented, "findNSEC3 is not yet implemented for in memory "
               "data source");
+}
+
+ZoneFinder::FindNSEC3Result
+InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
+    if (recursive) {
+        isc_throw(Unexpected, "recursive mode isn't expected in tests");
+    }
+
+    // A temporary workaround for testing: convert the original name to
+    // NSEC3-hashed name using hardcoded mapping.
+    string hname_text;
+    if (name == Name("example.org")) {
+        hname_text = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else {
+        isc_throw(Unexpected, "unexpected name for NSEC3 test: " << name);
+    }
+
+    NSEC3Map::const_iterator found =
+        impl_->zone_data_->nsec3_map_.find(hname_text);
+    if (found != impl_->zone_data_->nsec3_map_.end()) {
+        return (FindNSEC3Result(true, 2, found->second, ConstRRsetPtr()));
+    }
+
+    isc_throw(Unexpected, "unexpected NSEC3 search result for " << name);
 }
 
 result::Result
