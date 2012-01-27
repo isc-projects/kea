@@ -104,6 +104,52 @@ public:
         { }
     };
 
+    /// \brief Exception when we can't return a requested socket, but we're
+    ///     sure we could return others
+    ///
+    /// This is thrown if the requested socket can't be granted, but it is only
+    /// that one socket, not that the system would be broken or anything. This
+    /// exception is a common base class for the concrete exceptions actually
+    /// thrown. You can safely keep using the SocketRequestor after this
+    /// exception (or anything derived from it) is thrown.
+    ///
+    /// \see ShareError
+    /// \see SocketAllocateError
+    class NonFatalSocketError : public SocketError {
+    public:
+        NonFatalSocketError(const char* file, size_t line, const char* what) :
+            SocketError(file, line, what)
+        { }
+    };
+
+    /// \brief Exception when the socket is allocated by other bind10 module
+    ///    and it doesn't want to share it.
+    ///
+    /// This is thrown if a socket is requested and the socket is already
+    /// allocated by bind10, but other bind10 module(s) is using it and
+    /// the sharing parameters are incompatible (the socket can't be shared
+    /// between the module and our module).
+    class ShareError : public NonFatalSocketError {
+    public:
+        ShareError(const char* file, size_t line, const char* what) :
+            NonFatalSocketError(file, line, what)
+        { }
+    };
+
+    /// \brief Exception when the operating system doesn't allow us to create
+    ///    the requested socket.
+    ///
+    /// This happens when the socket() or bind() call fails in the socket
+    /// creator. This can happen when the address/port pair is already taken
+    /// by a different application, the socket creator doesn't have enough
+    /// privileges, or for some kind of similar reason.
+    class SocketAllocateError : public NonFatalSocketError {
+    public:
+        SocketAllocateError(const char* file, size_t line, const char* what) :
+            NonFatalSocketError(file, line, what)
+        { }
+    };
+
     /// \brief Ask for a socket
     ///
     /// Asks the socket creator to give us a socket. The socket will be bound
@@ -124,11 +170,13 @@ public:
     /// \throw InvalidParameter protocol or share_mode is invalid
     /// \throw CCSessionError when we have a problem talking over the CC
     ///     session.
-    /// \throw SocketError in case the other side doesn't want to give us
-    ///     the socket for some reason (common cases are when the socket
-    ///     can't be allocated or bound, or when the socket is claimed by
-    ///     some other application and the sharing parameters don't allow
-    ///     sharing it).
+    /// \throw SocketError in case we have some other problems receiving the
+    ///     socket (eg. inconsistency in the protocol, the socket got stuck
+    ///     in the transport, etc). If the exception is not of the following
+    ///     derived ones, it usualy means something serious happened.
+    /// \throw SocketAllocateError if the other side can't create the socket.
+    /// \throw ShareError if the socket is used by other bind10 module and
+    ///     that one doesn't want to share it with us.
     virtual SocketID requestSocket(Protocol protocol,
                                    const std::string& address,
                                    uint16_t port, ShareMode share_mode,
