@@ -102,9 +102,9 @@ public:
     ///
     /// This method calculates the NSEC3 hash value for the given \c name
     /// with the hash parameters (algorithm, iterations and salt) given at
-    /// construction, and returns the value in a base32hex-encoded string
-    /// (without containing any white spaces).  All alphabets in the string
-    /// will be upper cased.
+    /// construction, and returns the value as a base32hex-encoded string
+    /// (without containing any white spaces).  All US-ASCII letters in the
+    /// string will be upper cased.
     ///
     /// \param name The domain name for which the hash value is to be
     /// calculated.
