@@ -31,8 +31,8 @@ class NSEC3PARAM;
 }
 }
 
-/// An exception that is thrown for when an \c NSEC3Hash object is constructed
-/// with an unknown hash algorithm.
+/// \brief An exception that is thrown for when an \c NSEC3Hash object is
+/// constructed with an unknown hash algorithm.
 ///
 /// A specific exception class is used so that the caller can selectively
 /// catch this exception, e.g., while loading a zone, and handle it
@@ -44,7 +44,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// A calculator of NSEC3 hashes.
+/// \brief A calculator of NSEC3 hashes.
 ///
 /// This is a simple class that encapsulates the algorithm of calculating
 /// NSEC3 hash values as defined in RFC5155.
@@ -82,7 +82,7 @@ public:
 ///   the internal resources for different sets of parameters.
 class NSEC3Hash : public boost::noncopyable {
 public:
-    /// Constructor from NSEC3PARAM RDATA.
+    /// \brief Constructor from NSEC3PARAM RDATA.
     ///
     /// The hash algorithm given via \c param must be known to the
     /// implementation.  Otherwise \c UnknownNSEC3HashAlgorithm exception
@@ -95,10 +95,10 @@ public:
     /// \param param NSEC3 parameters used for subsequent calculation.
     NSEC3Hash(const rdata::generic::NSEC3PARAM& param);
 
-    /// The destructor.
+    /// \brief The destructor.
     ~NSEC3Hash();
 
-    /// Calculate the NSEC3 hash.
+    /// \brief Calculate the NSEC3 hash.
     ///
     /// This method calculates the NSEC3 hash value for the given \c name
     /// with the hash parameters (algorithm, iterations and salt) given at
