@@ -1,3 +1,10 @@
+369.	[func]		vorner
+	The SocketRequestor provides more information about what error happened
+	when it throws, by using subclasses of the original exception. This way
+	a user not interested in the difference can still use the original
+	exception, while it can be recognized if necessary.
+	(Trac #1542, git 2080e0316a339fa3cadea00e10b1ec4bc322ada0)
+
 368.	[func]*		jinmei
 	libdatasrc: the interface of ZoneFinder() was changed: WILDCARD
 	related result codes were deprecated and removed, and the
