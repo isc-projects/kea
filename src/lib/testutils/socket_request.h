@@ -119,8 +119,9 @@ public:
     /// This creates a new token and fakes a new socket and returns it.
     /// The token is stored.
     ///
-    /// In case the address is 192.0.2.2 or if the break_rollback_ is true
-    /// and address is ::1, it throws.
+    /// In case the address is 192.0.2.2, it throws SocketAllocateError
+    /// or if the break_rollback_ is true and address is ::1, it throws
+    /// ShareError. If the address is 192.0.2.3, it throws SocketError.
     ///
     /// The tokens produced are in form of protocol:address:port:fd. The fds
     /// start at 1 and increase by each successfull call.
@@ -131,13 +132,18 @@ public:
     /// \param mode checked to be DONT_SHARE for now
     /// \param name checked to be dummy_app for now
     /// \return The token and FD
+    /// \throw SocketAllocateError as described above, to test error handling
+    /// \throw ShareError as described above, to test error handling
     /// \throw SocketError as described above, to test error handling
     SocketID requestSocket(Protocol protocol, const std::string& address,
                            uint16_t port, ShareMode mode,
                            const std::string& name)
     {
         if (address == "192.0.2.2") {
-            isc_throw(SocketError, "This address is not allowed");
+            isc_throw(SocketAllocateError, "This address is not allowed");
+        }
+        if (address == "192.0.2.3") {
+            isc_throw(SocketError, "Fatal test error");
         }
         if (address == "::1" && break_rollback_) {
             // This is valid address, but in case we need to break the
@@ -145,7 +151,7 @@ public:
             //
             // We break the second address to see the first one was
             // allocated and then returned
-            isc_throw(SocketError,
+            isc_throw(ShareError,
                       "This address is available, but not for you");
         }
         const std::string proto(protocol == TCP ? "TCP" : "UDP");
