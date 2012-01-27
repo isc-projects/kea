@@ -1307,4 +1307,15 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
     EXPECT_THROW(zone_finder_.add(textToRRset(rrsig_a_txt)),
                  InMemoryZoneFinder::AddError);
 }
+
+TEST_F(InMemoryZoneFinderTest, addNSEC3) {
+    zone_finder_.add(textToRRset(
+                         "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM.example.org. "
+                         "300 IN NSEC3 1 1 12 aabbccdd "
+                         "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"));
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              zone_finder_.find(
+                  Name("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM.example.org"),
+                  RRType::NSEC3()).code);
+}
 }
