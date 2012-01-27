@@ -701,6 +701,14 @@ public:
         rrsig_->addRdata(rdata);
     }
 
+    // Workaround for older versions of boost: some don't support implicit
+    // conversion from shared_ptr<X> to shared_ptr<const X>.  Note: we should
+    // revisit the interface of managing RRset signatures, at which point this
+    // problem may go away.
+    void addRRsig(const rdata::RdataPtr rdata) {
+        static_cast<rdata::ConstRdataPtr>(rdata);
+    }
+
     /// \brief Adds an RRSIG RRset to this RRset
     void addRRsig(const AbstractRRset& sigs) {
         RdataIteratorPtr it = sigs.getRdataIterator();
@@ -716,6 +724,9 @@ public:
     }
 
     void addRRsig(ConstRRsetPtr sigs) { addRRsig(*sigs); }
+
+    // Another workaround for older boost (see above)
+    void addRRsig(RRsetPtr sigs) { addRRsig(*sigs); }
 
     /// \brief Clear the RRSIGs for this RRset
     void removeRRsig() { rrsig_ = RRsetPtr(); }
