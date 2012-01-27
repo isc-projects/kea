@@ -265,7 +265,7 @@ TEST_F(InstallListenAddresses, brokenRollback) {
     sock_requestor_.given_tokens_.clear();
     sock_requestor_.break_rollback_ = true;
     EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_),
-                 SocketRequestor::SocketError);
+                 SocketRequestor::NonFatalSocketError);
     // No addresses here
     EXPECT_TRUE(store_.empty());
     // The first pair should be requested in the first part of the failure to
@@ -293,6 +293,26 @@ TEST_F(InstallListenAddresses, brokenRollback) {
                                 "given");
     sock_requestor_.checkTokens(released, sock_requestor_.released_tokens_,
                                 "released");
+}
+
+// Make sure the death tests are filterable away.
+typedef InstallListenAddresses InstallListenAddressesDeathTest;
+
+// We make the socket requestor throw a "fatal" exception, one where we can't be
+// sure the state between processes is consistent. So we abort in that case.
+TEST_F(InstallListenAddressesDeathTest, inconsistent) {
+    AddressList deathAddresses;
+    deathAddresses.push_back(AddressPair("192.0.2.3", 5288));
+    // Make sure it actually kills the application (there should be an abort
+    // in this case)
+    EXPECT_DEATH({
+                    try {
+                        installListenAddresses(deathAddresses, store_, dnss_);
+                    }
+                    // Prevent exceptions killing the application, we need to
+                    // make sure it dies the real hard way
+                    catch (...) {};
+                 }, "");
 }
 
 }
