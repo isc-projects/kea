@@ -87,6 +87,10 @@ DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 CREATOR_SOCKET_OK = b"1\n"
 CREATOR_SOCKET_UNAVAILABLE = b"0\n"
 
+# RCodes of known exceptions for the get_token command
+CREATOR_SOCKET_ERROR = 2
+CREATOR_SHARE_ERROR = 3
+
 # Assign this process some longer name
 isc.util.process.rename(sys.argv[0])
 
@@ -805,6 +809,12 @@ class BoB:
                 'token': token,
                 'path': self._socket_path
             })
+        except isc.bind10.socket_cache.SocketError as e:
+            return isc.config.ccsession.create_answer(CREATOR_SOCKET_ERROR,
+                                                      str(e))
+        except isc.bind10.socket_cache.ShareError as e:
+            return isc.config.ccsession.create_answer(CREATOR_SHARE_ERROR,
+                                                      str(e))
         except Exception as e:
             return isc.config.ccsession.create_answer(1, str(e))
 

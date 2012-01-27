@@ -754,6 +754,12 @@ public:
         virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
             const;
 
+        /// Look for NSEC3 for proving (non)existence of given name.
+        ///
+        /// See documentation in \c Zone.
+        virtual FindNSEC3Result
+        findNSEC3(const isc::dns::Name& name, bool recursive);
+
         /// \brief The zone ID
         ///
         /// This function provides the stored zone ID as passed to the
@@ -1050,7 +1056,8 @@ public:
                                       const isc::dns::RRType& type,
                                       ZoneFinder::Result code,
                                       isc::dns::ConstRRsetPtr rrset,
-                                      const isc::log::MessageID& log_id) const;
+                                      const isc::log::MessageID& log_id,
+                                      FindResultFlags flags) const;
 
         /// \brief Checks if something lives below this domain.
         ///

@@ -23,19 +23,32 @@ from isc.dns import *
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
 import isc.util.process
+import isc.util.cio.socketsession
+import select
+import errno
 
 from isc.log_messages.ddns_messages import *
 
 from optparse import OptionParser, OptionValueError
 import os
+import os.path
 import signal
+import socket
 
 isc.log.init("b10-ddns")
 logger = isc.log.Logger("ddns")
+TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
 
 DATA_PATH = bind10_config.DATA_PATH
+SOCKET_FILE = DATA_PATH + '/ddns_socket'
 if "B10_FROM_SOURCE" in os.environ:
     DATA_PATH = os.environ['B10_FROM_SOURCE'] + "/src/bin/ddns"
+if "B10_FROM_BUILD" in os.environ:
+    if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
+        SOCKET_FILE = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"] + \
+            "/ddns_socket"
+    else:
+        SOCKET_FILE = os.environ["B10_FROM_BUILD"] + "/ddns_socket"
 SPECFILE_LOCATION = DATA_PATH + "/ddns.spec"
 
 
@@ -65,6 +78,13 @@ class DDNSSession:
         '''Initialize a DDNS Session'''
         pass
 
+def clear_socket():
+    '''
+    Removes the socket file, if it exists.
+    '''
+    if os.path.exists(SOCKET_FILE):
+        os.remove(SOCKET_FILE)
+
 class DDNSServer:
     def __init__(self, cc_session=None):
         '''
@@ -85,9 +105,17 @@ class DDNSServer:
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._shutdown = False
+        # List of the session receivers where we get the requests
+        self._socksession_receivers = {}
+        clear_socket()
+        self._listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._listen_socket.bind(SOCKET_FILE)
+        self._listen_socket.listen(16)
 
     def config_handler(self, new_config):
         '''Update config data.'''
+        # TODO: Handle exceptions and turn them to an error response
+        # (once we have any configuration)
         answer = create_answer(0)
         return answer
 
@@ -96,6 +124,7 @@ class DDNSServer:
         Handle a CC session command, as sent from bindctl or other
         BIND 10 modules.
         '''
+        # TODO: Handle exceptions and turn them to an error response
         if cmd == "shutdown":
             logger.info(DDNS_RECEIVED_SHUTDOWN_COMMAND)
             self.trigger_shutdown()
@@ -125,19 +154,90 @@ class DDNSServer:
         '''
         pass
 
+    def accept(self):
+        """
+        Accept another connection and create the session receiver.
+        """
+        try:
+            sock = self._listen_socket.accept()
+            fileno = sock.fileno()
+            logger.debug(TRACE_BASIC, DDNS_NEW_CONN, fileno,
+                         sock.getpeername())
+            receiver = isc.util.cio.socketsession.SocketSessionReceiver(sock)
+            self._socksession_receivers[fileno] = (sock, receiver)
+        except (socket.error, isc.util.cio.socketsession.SocketSessionError) \
+            as e:
+            # These exceptions mean the connection didn't work, but we can
+            # continue with the rest
+            logger.error(DDNS_ACCEPT_FAILURE, e)
+
+    def handle_request(self, request):
+        """
+        This is the place where the actual DDNS processing is done. Other
+        methods are either subroutines of this method or methods doing the
+        uninteresting "accounting" stuff, like accepting socket,
+        initialization, etc.
+
+        It is called with the request being session as received from
+        SocketSessionReceiver, i.e. tuple
+        (socket, local_address, remote_address, data).
+        """
+        # TODO: Implement the magic
+
+        # TODO: Don't propagate most of the exceptions (like datasrc errors),
+        # just drop the packet.
+        pass
+
+    def handle_session(self, fileno):
+        """
+        Handle incoming session on the socket with given fileno.
+        """
+        logger.debug(TRACE_BASIC, DDNS_SESSION, fileno)
+        (socket, receiver) = self._socksession_receivers[fileno]
+        try:
+            self.handle_request(receiver.pop())
+        except isc.util.cio.socketsession.SocketSessionError as se:
+            # No matter why this failed, the connection is in unknown, possibly
+            # broken state. So, we close the socket and remove the receiver.
+            del self._socksession_receivers[fileno]
+            socket.close()
+            logger.warn(DDNS_DROP_CONN, fileno, se)
+
     def run(self):
         '''
         Get and process all commands sent from cfgmgr or other modules.
         This loops waiting for events until self.shutdown() has been called.
         '''
         logger.info(DDNS_RUNNING)
+        cc_fileno = self._cc.get_socket().fileno()
+        listen_fileno = self._listen_socket.fileno()
         while not self._shutdown:
-            # We do not catch any exceptions here right now, but this would
-            # be a good place to catch any exceptions that b10-ddns can
-            # recover from. We currently have no exception hierarchy to
-            # make such a distinction easily, but once we do, this would
-            # be the place to catch.
-            self._cc.check_command(False)
+            # In this event loop, we propagate most of exceptions, which will
+            # subsequently kill the process. We expect the handling functions
+            # to catch their own exceptions which they can recover from
+            # (malformed packets, lost connections, etc). The rationale behind
+            # this is they know best which exceptions are recoverable there
+            # and an exception may be recoverable somewhere, but not elsewhere.
+
+            try:
+                (reads, writes, exceptions) = \
+                    select.select([cc_fileno, listen_fileno] +
+                                  list(self._socksession_receivers.keys()), [],
+                                  [])
+            except select.error as se:
+                # In case it is just interrupted, we continue like nothing
+                # happened
+                if se.args[0] == errno.EINTR:
+                    (reads, writes, exceptions) = ([], [], [])
+                else:
+                    raise
+            for fileno in reads:
+                if fileno == cc_fileno:
+                    self._cc.check_command(True)
+                elif fileno == listen_fileno:
+                    self.accept()
+                else:
+                    self.handle_session(fileno)
         self.shutdown_cleanup()
         logger.info(DDNS_STOPPED)
 
@@ -204,6 +304,7 @@ def main(ddns_server=None):
         logger.error(DDNS_CC_SESSION_TIMEOUT_ERROR)
     except Exception as e:
         logger.error(DDNS_UNCAUGHT_EXCEPTION, type(e).__name__, str(e))
+    clear_socket()
 
 if '__main__' == __name__:
     main()

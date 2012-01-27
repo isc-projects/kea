@@ -5,10 +5,10 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 python_PYTHON = __init__.py
-pythondir = $(PYTHON_SITEPKG_DIR)/isc/util/io
+pythondir = $(PYTHON_SITEPKG_DIR)/isc/util/cio
 
 pyexec_LTLIBRARIES = socketsession.la
-pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/util/io
+pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/util/cio
 
 socketsession_la_SOURCES = socketsession_python.cc socketsession_python.h
 socketsession_la_SOURCES += socketsessionforwarder_python.cc
