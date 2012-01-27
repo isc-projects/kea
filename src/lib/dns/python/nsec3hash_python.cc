@@ -59,7 +59,7 @@ NSEC3Hash_init(PyObject* po_self, PyObject* args, PyObject*) {
                              "not %.200s", po_rdata->ob_type->tp_name);
                 return (-1);
             }
-            self->cppobj = new NSEC3Hash(
+            self->cppobj = NSEC3Hash::create(
                 dynamic_cast<const generic::NSEC3PARAM&>(
                     PyRdata_ToRdata(po_rdata)));
             return (0);
