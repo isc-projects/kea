@@ -693,7 +693,7 @@ public:
     }
 
     /// \brief Adds an RRSIG RR to this RRset's signatures
-    virtual void addRRsig(const rdata::RdataPtr rdata) {
+    virtual void addRRsig(const rdata::ConstRdataPtr rdata) {
         if (!rrsig_) {
             rrsig_ = RRsetPtr(new RRset(getName(), getClass(),
                                         RRType::RRSIG(), getTTL()));
@@ -701,8 +701,16 @@ public:
         rrsig_->addRdata(rdata);
     }
 
+    // Workaround for older versions of boost: some don't support implicit
+    // conversion from shared_ptr<X> to shared_ptr<const X>.  Note: we should
+    // revisit the interface of managing RRset signatures, at which point this
+    // problem may go away.
+    void addRRsig(const rdata::RdataPtr rdata) {
+        addRRsig(static_cast<rdata::ConstRdataPtr>(rdata));
+    }
+
     /// \brief Adds an RRSIG RRset to this RRset
-    void addRRsig(AbstractRRset& sigs) {
+    void addRRsig(const AbstractRRset& sigs) {
         RdataIteratorPtr it = sigs.getRdataIterator();
 
         if (!rrsig_) {
@@ -715,6 +723,9 @@ public:
         }
     }
 
+    void addRRsig(ConstRRsetPtr sigs) { addRRsig(*sigs); }
+
+    // Another workaround for older boost (see above)
     void addRRsig(RRsetPtr sigs) { addRRsig(*sigs); }
 
     /// \brief Clear the RRSIGs for this RRset

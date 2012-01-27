@@ -167,14 +167,14 @@ class MockDataSourceClient():
 
         '''
         if name == TEST_ZONE_NAME and rrtype == RRType.SOA():
-            return (ZoneFinder.SUCCESS, begin_soa_rrset)
+            return (ZoneFinder.SUCCESS, begin_soa_rrset, 0)
         if name == Name('no-soa.example'):
-            return (ZoneFinder.NXDOMAIN, None)
+            return (ZoneFinder.NXDOMAIN, None, 0)
         if name == Name('dup-soa.example'):
             dup_soa_rrset = RRset(name, TEST_RRCLASS, RRType.SOA(), RRTTL(0))
             dup_soa_rrset.add_rdata(begin_soa_rdata)
             dup_soa_rrset.add_rdata(soa_rdata)
-            return (ZoneFinder.SUCCESS, dup_soa_rrset)
+            return (ZoneFinder.SUCCESS, dup_soa_rrset, 0)
         raise ValueError('Unexpected input to mock finder: bug in test case?')
 
     def get_updater(self, zone_name, replace, journaling=False):
@@ -1751,7 +1751,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
     def get_zone_serial(self):
         result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
         self.assertEqual(DataSourceClient.SUCCESS, result)
-        result, soa = finder.find(TEST_ZONE_NAME, RRType.SOA())
+        result, soa, _ = finder.find(TEST_ZONE_NAME, RRType.SOA())
         self.assertEqual(ZoneFinder.SUCCESS, result)
         self.assertEqual(1, soa.get_rdata_count())
         return get_soa_serial(soa.get_rdata()[0])
@@ -1759,7 +1759,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
     def record_exist(self, name, type):
         result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
         self.assertEqual(DataSourceClient.SUCCESS, result)
-        result, soa = finder.find(name, type)
+        result, soa, _ = finder.find(name, type)
         return result == ZoneFinder.SUCCESS
 
     def test_do_ixfrin_sqlite3(self):
