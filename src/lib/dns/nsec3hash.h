@@ -17,8 +17,6 @@
 
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -80,7 +78,10 @@ public:
 /// - Allow producing hash value as binary data
 /// - Allow updating NSEC3 parameters of a class object so we can still reuse
 ///   the internal resources for different sets of parameters.
-class NSEC3Hash : public boost::noncopyable {
+class NSEC3Hash {
+protected:
+    NSEC3Hash() {}
+
 public:
     /// \brief Constructor from NSEC3PARAM RDATA.
     ///
@@ -93,10 +94,10 @@ public:
     /// \throw std::bad_alloc Internal resource allocation failure.
     ///
     /// \param param NSEC3 parameters used for subsequent calculation.
-    NSEC3Hash(const rdata::generic::NSEC3PARAM& param);
+    static NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param);
 
     /// \brief The destructor.
-    ~NSEC3Hash();
+    virtual ~NSEC3Hash() {}
 
     /// \brief Calculate the NSEC3 hash.
     ///
@@ -109,12 +110,9 @@ public:
     /// \param name The domain name for which the hash value is to be
     /// calculated.
     /// \return Base32hex-encoded string of the hash value.
-    std::string calculate(const Name& name) const;
-
-private:
-    struct NSEC3HashImpl;
-    NSEC3HashImpl* impl_;
+    virtual std::string calculate(const Name& name) const = 0;
 };
+
 }
 }
 #endif  // __NSEC3HASH_H

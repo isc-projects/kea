@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/noncopyable.hpp>
+
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -32,19 +34,19 @@ using namespace std;
 using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::util::hash;
+using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace {
+// This is the algorithm number for SHA1/NSEC3 as defined in RFC5155.
 // Currently the only pre-defined algorithm is SHA1.  So we don't
 // over-generalize it at the moment, and rather hardocde it and
 // assume that specific algorithm.
 const uint8_t NSEC3_HASH_SHA1 = 1;
-}
 
-namespace isc {
-namespace dns {
-struct NSEC3Hash::NSEC3HashImpl {
-    NSEC3HashImpl(const generic::NSEC3PARAM& param) :
+class NSEC3HashRFC5155 : boost::noncopyable, public NSEC3Hash {
+public:
+    NSEC3HashRFC5155(const generic::NSEC3PARAM& param) :
         algorithm_(param.getHashalg()),
         iterations_(param.getIterations()),
         salt_(param.getSalt()), digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
@@ -55,6 +57,10 @@ struct NSEC3Hash::NSEC3HashImpl {
         }
         SHA1Reset(&sha1_ctx_);
     }
+
+    virtual std::string calculate(const Name& name) const;
+
+private:
     const uint8_t algorithm_;
     const uint16_t iterations_;
     const vector<uint8_t> salt_;
@@ -67,15 +73,6 @@ struct NSEC3Hash::NSEC3HashImpl {
     mutable OutputBuffer obuf_;
 };
 
-NSEC3Hash::NSEC3Hash(const generic::NSEC3PARAM& param) :
-    impl_(new NSEC3HashImpl(param))
-{}
-
-NSEC3Hash::~NSEC3Hash() {
-    delete impl_;
-}
-
-namespace {
 inline void
 iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
             const uint8_t* salt, size_t saltlen,
@@ -86,31 +83,37 @@ iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
     SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
     SHA1Result(ctx, output);
 }
-}
 
 string
-NSEC3Hash::calculate(const Name& name) const {
+NSEC3HashRFC5155::calculate(const Name& name) const {
     // We first need to normalize the name by converting all upper case
     // characters in the labels to lower ones.
-    impl_->obuf_.clear();
+    obuf_.clear();
     Name name_copy(name);
     name_copy.downcase();
-    name_copy.toWire(impl_->obuf_);
+    name_copy.toWire(obuf_);
 
-    const uint8_t saltlen = impl_->salt_.size();
-    const uint8_t* const salt = (saltlen > 0) ? &impl_->salt_[0] : NULL;
-    uint8_t* const digest = &impl_->digest_[0];
-    assert(impl_->digest_.size() == SHA1_HASHSIZE);
+    const uint8_t saltlen = salt_.size();
+    const uint8_t* const salt = (saltlen > 0) ? &salt_[0] : NULL;
+    uint8_t* const digest = &digest_[0];
+    assert(digest_.size() == SHA1_HASHSIZE);
 
-    iterateSHA1(&impl_->sha1_ctx_,
-                static_cast<const uint8_t*>(impl_->obuf_.getData()),
-                impl_->obuf_.getLength(), salt, saltlen, digest);
-    for (unsigned int n = 0; n < impl_->iterations_; ++n) {
-        iterateSHA1(&impl_->sha1_ctx_, digest, SHA1_HASHSIZE,
-                    salt, saltlen, digest);
+    iterateSHA1(&sha1_ctx_, static_cast<const uint8_t*>(obuf_.getData()),
+                obuf_.getLength(), salt, saltlen, digest);
+    for (unsigned int n = 0; n < iterations_; ++n) {
+        iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE, salt, saltlen, digest);
     }
 
-    return (encodeBase32Hex(impl_->digest_));
+    return (encodeBase32Hex(digest_));
+}
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+
+NSEC3Hash*
+NSEC3Hash::create(const generic::NSEC3PARAM& param) {
+    return (new NSEC3HashRFC5155(param));
 }
 
 } // namespace dns
