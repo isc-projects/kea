@@ -64,6 +64,10 @@ const std::string& RELEASE_SOCKET_COMMAND() {
     return (str);
 }
 
+// RCode constants for the get_token command
+const size_t SOCKET_ERROR_CODE = 2;
+const size_t SHARE_ERROR_CODE = 3;
+
 // A helper converter from numeric protocol ID to the corresponding string.
 // used both for generating a message for the boss process and for logging.
 inline const char*
@@ -133,6 +137,14 @@ readRequestSocketAnswer(isc::data::ConstElementPtr recv_msg,
     int rcode;
     isc::data::ConstElementPtr answer = isc::config::parseAnswer(rcode,
                                                                  recv_msg);
+    // Translate known rcodes to the corresponding exceptions
+    if (rcode == SOCKET_ERROR_CODE) {
+        isc_throw(SocketRequestor::SocketAllocateError, answer->str());
+    }
+    if (rcode == SHARE_ERROR_CODE) {
+        isc_throw(SocketRequestor::ShareError, answer->str());
+    }
+    // The unknown exceptions
     if (rcode != 0) {
         isc_throw(isc::config::CCSessionError,
                   "Error response when requesting socket: " << answer->str());
