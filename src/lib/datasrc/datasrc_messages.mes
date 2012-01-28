@@ -362,6 +362,13 @@ explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
 
+% DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad own name '%1'
+The software refuses to load NSEC3 records into a wildcard domain or
+the owner name has two or more labels below the zone origin.
+It isn't explicitly forbidden, but no sane zone wouldn have such names
+for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
+compatible with BIND 9.
+
 % DATASRC_META_ADD adding a data source into meta data source
 This is a debug message issued during startup or reconfiguration.
 Another data source is being added into the meta data source.

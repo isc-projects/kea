@@ -1334,6 +1334,18 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     ASSERT_TRUE(result.closest_proof);
     actual_rrsets_.push_back(result.closest_proof);
     rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
+
+    // This implementation rejects duplicate/update add of the same hash name
+    EXPECT_EQ(result::EXIST,
+              zone_finder_.add(textToRRset(
+                                   string(apex_hash) + ".example.org." +
+                                   string(nsec3_common) + " AAAA")));
+    // The original NSEC3 should be intact
+    actual_rrsets_.clear();
+    ZoneFinder::FindNSEC3Result result2 =
+        zone_finder_.findNSEC3Tmp(Name("example.org"), false);
+    actual_rrsets_.push_back(result2.closest_proof);
+    rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
@@ -1347,10 +1359,21 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
     ASSERT_TRUE(result.closest_proof);
     actual_rrsets_.push_back(result.closest_proof);
     rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
+}
 
-    // - duplicate
+TEST_F(InMemoryZoneFinderTest, badNSEC3Name) {
+    // Our implementation refuses to load NSEC3 at a wildcard name
+    EXPECT_THROW(zone_finder_.add(textToRRset("*.example.org." +
+                                              string(nsec3_common))),
+                 InMemoryZoneFinder::AddError);
+
+    // Likewise, if the owner name of NSEC3 has too many labels, it's refused.
+    EXPECT_THROW(zone_finder_.add(textToRRset("a." + string(apex_hash) +
+                                              ".example.org." +
+                                              string(nsec3_common))),
+                 InMemoryZoneFinder::AddError);
+
     // - adding RRSIG for NSEC3
-    // - bogus NSEC3 owner name: redundant labels, wildcard
     // - case where the main tree has NSEC3 name
     // - parameter consistency
     // - existence of NSEC3PARAM
