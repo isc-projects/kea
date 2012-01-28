@@ -85,7 +85,11 @@ struct ZoneData {
     DomainTree domains_;
 
     // The optional NSEC3 storage (TBD: should allocate it on demand)
-    NSEC3Map nsec3_map_;
+    struct NSEC3Data {
+        //generic::NSEC3PARAM param_; or have separate params?
+        NSEC3Map map_;
+    };
+    scoped_ptr<NSEC3Data> nsec3_data_;
 };
 }
 
@@ -259,6 +263,21 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                           rrset->getName());
             }
         }
+
+        // Owner names of NSEC3 have special format as defined in RFC5155,
+        // and cannot be a wildcard name or must be one label longer than
+        // the zone origin.  While the RFC doesn't prohibit other forms of
+        // names, no sane zone wouldn't have such names for NSEC3.
+        // BIND 9 also refuses NSEC3 at wildcard.
+        if (rrset->getType() == RRType::NSEC3() &&
+            (rrset->getName().isWildcard() ||
+             rrset->getName().getLabelCount() !=
+             origin_.getLabelCount() + 1)) {
+            LOG_ERROR(logger, DATASRC_BAD_NSEC3_NAME).
+                arg(rrset->getName());
+            isc_throw(AddError, "Invalid NSEC3 owner name (wildcard): " <<
+                      rrset->getName());
+        }
     }
 
     result::Result addRRsig(const ConstRRsetPtr sig_rrset, ZoneData& zone_data)
@@ -324,6 +343,25 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         char operator()(char ch) { return (toupper(ch)); }
     };
 
+    result::Result addNSEC3(const ConstRRsetPtr rrset, ZoneData& zone_data) {
+        if (!zone_data.nsec3_data_) {
+            zone_data.nsec3_data_.reset(new ZoneData::NSEC3Data);
+        }
+        string fst_label = rrset->getName().split(0, 1).toText(true);
+        transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
+                  ToUpper());
+
+        // Our current implementation doesn't allow an existing NSEC3 to be
+        // updated/overridden.
+        if (zone_data.nsec3_data_->map_.find(fst_label) !=
+            zone_data.nsec3_data_->map_.end()) {
+            return (result::EXIST);
+        }
+
+        zone_data.nsec3_data_->map_.insert(NSEC3Pair(fst_label, rrset));
+        return (result::SUCCESS);
+    }
+
     /*
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
@@ -339,11 +377,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
 
         if (rrset->getType() == RRType::NSEC3()) {
-            string fst_label = rrset->getName().split(0, 1).toText(true);
-            transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
-                      ToUpper());
-            zone_data.nsec3_map_.insert(NSEC3Pair(fst_label, rrset));
-            return (result::SUCCESS);
+            return (addNSEC3(rrset, zone_data));
         }
 
         // RRSIGs are special in various points, so we handle it in a
@@ -763,6 +797,9 @@ InMemoryZoneFinder::findNSEC3(const Name&, bool) {
 
 ZoneFinder::FindNSEC3Result
 InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
+    if (!impl_->zone_data_->nsec3_data_) {
+        isc_throw(Unexpected, "findNSEC3 is called for non NSEC3 zone");
+    }
     if (recursive) {
         isc_throw(Unexpected, "recursive mode isn't expected in tests");
     }
@@ -777,8 +814,8 @@ InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
     }
 
     NSEC3Map::const_iterator found =
-        impl_->zone_data_->nsec3_map_.find(hname_text);
-    if (found != impl_->zone_data_->nsec3_map_.end()) {
+        impl_->zone_data_->nsec3_data_->map_.find(hname_text);
+    if (found != impl_->zone_data_->nsec3_data_->map_.end()) {
         return (FindNSEC3Result(true, 2, found->second, ConstRRsetPtr()));
     }
 
