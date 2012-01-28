@@ -1346,6 +1346,12 @@ nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
                 actual_rrsets.end());
 }
 
+// In the following tests we use a temporary faked version of findNSEC3
+// as the real version isn't implemented yet (it's a task for #1577).
+// When #1577 is done the tests should be updated using the real version.
+// If we can use fake hash calculator (see #1575), we should be able to
+// just replace findNSEC3Tmp with findNSEC3.
+
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     const string nsec3_text = string(apex_hash) + ".example.org." +
         string(nsec3_common);
