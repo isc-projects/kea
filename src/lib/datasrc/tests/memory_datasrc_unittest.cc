@@ -1323,7 +1323,28 @@ const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
 const char* const apex_hash = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
 const char* const apex_hash_lower = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
 // For ns1.example.org
-const char* const ns1_hash = "2t7b4g4vsa5smi47k61mv5bv1a22bojr";
+const char* const ns1_hash = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
+// For x.y.w.example.org (lower-cased)
+const char* const xrw_hash = "2vptu5timamqttgl4luu9kg21e0aor3s";
+
+void
+nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
+           const ZoneFinder::FindNSEC3Result& result,
+           bool expected_sig = false)
+{
+    vector<ConstRRsetPtr> actual_rrsets;
+    EXPECT_EQ(expected_matched, result.matched);
+    ASSERT_TRUE(result.closest_proof);
+    if (expected_sig) {
+        ASSERT_TRUE(result.closest_proof->getRRsig());
+    }
+    actual_rrsets.push_back(result.closest_proof);
+    if (expected_sig) {
+        actual_rrsets.push_back(result.closest_proof->getRRsig());
+    }
+    rrsetsCheck(expected_rrsets_txt, actual_rrsets.begin(),
+                actual_rrsets.end());
+}
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     const string nsec3_text = string(apex_hash) + ".example.org." +
@@ -1334,12 +1355,8 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
               zone_finder_.find(Name(string(apex_hash) + ".example.org"),
                                 RRType::NSEC3()).code);
     // Dedicated NSEC3 find should be able to find it.
-    ZoneFinder::FindNSEC3Result result =
-        zone_finder_.findNSEC3Tmp(Name("example.org"), false);
-    EXPECT_TRUE(result.matched);
-    ASSERT_TRUE(result.closest_proof);
-    actual_rrsets_.push_back(result.closest_proof);
-    rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
+    nsec3Check(true, nsec3_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
 
     // This implementation rejects duplicate/update add of the same hash name
     EXPECT_EQ(result::EXIST,
@@ -1347,11 +1364,8 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
                                    string(apex_hash) + ".example.org." +
                                    string(nsec3_common) + " AAAA")));
     // The original NSEC3 should be intact
-    actual_rrsets_.clear();
-    ZoneFinder::FindNSEC3Result result2 =
-        zone_finder_.findNSEC3Tmp(Name("example.org"), false);
-    actual_rrsets_.push_back(result2.closest_proof);
-    rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
+    nsec3Check(true, nsec3_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
 
     // NSEC3-like name but of ordinary RR type should go to normal tree.
     const string nonsec3_text = string(apex_hash) + ".example.org. " +
@@ -1367,12 +1381,36 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
     const string nsec3_text = string(apex_hash_lower) + ".example.org." +
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
-    ZoneFinder::FindNSEC3Result result =
-        zone_finder_.findNSEC3Tmp(Name("example.org"), false);
-    EXPECT_TRUE(result.matched);
-    ASSERT_TRUE(result.closest_proof);
-    actual_rrsets_.push_back(result.closest_proof);
-    rrsetsCheck(nsec3_text, actual_rrsets_.begin(), actual_rrsets_.end());
+    nsec3Check(true, nsec3_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
+}
+
+TEST_F(InMemoryZoneFinderTest, addNSEC3Ordering) {
+    // Check that the internal storage ensures comparison based on the NSEC3
+    // semantics, regardless of the add order or the letter-case of hash.
+
+    // Adding "0P..", "2v..", then "2T..".
+    const string smallest = string(apex_hash) + ".example.org." +
+        string(nsec3_common);
+    const string middle = string(ns1_hash) + ".example.org." +
+        string(nsec3_common);
+    const string largest = string(xrw_hash) + ".example.org." +
+        string(nsec3_common);
+    zone_finder_.add(textToRRset(smallest));
+    zone_finder_.add(textToRRset(largest));
+    zone_finder_.add(textToRRset(middle));
+
+    // Then look for NSEC3 that covers a name whose hash is "2S.."
+    // The covering NSEC3 should be "0P.."
+    nsec3Check(false, smallest,
+               zone_finder_.findNSEC3Tmp(Name("www.example.org"), false));
+
+    // Look for NSEC3 that covers names whose hash are "Q0.." and "0A.."
+    // The covering NSEC3 should be "2v.." in both cases
+    nsec3Check(false, largest,
+               zone_finder_.findNSEC3Tmp(Name("xxx.example.org"), false));
+    nsec3Check(false, largest,
+               zone_finder_.findNSEC3Tmp(Name("yyy.example.org"), false));
 }
 
 TEST_F(InMemoryZoneFinderTest, badNSEC3Name) {
@@ -1398,15 +1436,8 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_rrsig_text)));
 
     // Then look for it.  The NSEC3 should have the RRSIG that was just added.
-    ZoneFinder::FindNSEC3Result result =
-        zone_finder_.findNSEC3Tmp(Name("example.org"), false);
-    EXPECT_TRUE(result.matched);
-    ASSERT_TRUE(result.closest_proof);
-    ASSERT_TRUE(result.closest_proof->getRRsig());
-    actual_rrsets_.push_back(result.closest_proof);
-    actual_rrsets_.push_back(result.closest_proof->getRRsig());
-    rrsetsCheck(nsec3_text + "\n" + nsec3_rrsig_text, actual_rrsets_.begin(),
-                actual_rrsets_.end());
+    nsec3Check(true, nsec3_text + "\n" + nsec3_rrsig_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false), true);
 
     // Duplicate add of RRSIG for the same NSEC3 is prohibited.
     EXPECT_THROW(zone_finder_.add(textToRRset(nsec3_rrsig_text)),
@@ -1441,8 +1472,9 @@ TEST_F(InMemoryZoneFinderTest, badRRsigForNSEC3) {
                  InMemoryZoneFinder::AddError);
 }
 
-    // - parameter consistency
-    // - existence of NSEC3PARAM
-    // - parameter consistency with NSEC3PARAM
-    // - add NSEC3PARAM first/second
+// TODO
+// - parameter consistency
+// - existence of NSEC3PARAM
+// - parameter consistency with NSEC3PARAM
+// - add NSEC3PARAM first/second
 }
