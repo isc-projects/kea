@@ -362,7 +362,7 @@ explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
 
-% DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad own name '%1'
+% DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'
 The software refuses to load NSEC3 records into a wildcard domain or
 the owner name has two or more labels below the zone origin.
 It isn't explicitly forbidden, but no sane zone wouldn have such names
