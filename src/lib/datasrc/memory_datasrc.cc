@@ -267,7 +267,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // Owner names of NSEC3 have special format as defined in RFC5155,
         // and cannot be a wildcard name or must be one label longer than
         // the zone origin.  While the RFC doesn't prohibit other forms of
-        // names, no sane zone wouldn't have such names for NSEC3.
+        // names, no sane zone would have such names for NSEC3.
         // BIND 9 also refuses NSEC3 at wildcard.
         if (rrset->getType() == RRType::NSEC3() &&
             (rrset->getName().isWildcard() ||
@@ -282,14 +282,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
     result::Result addRRsig(const ConstRRsetPtr sig_rrset, ZoneData& zone_data)
     {
-        DomainNode* node = NULL;
-        if (zone_data.domains_.find(sig_rrset->getName(), &node) !=
-            DomainTree::EXACTMATCH || node == NULL || !node->getData()) {
-            isc_throw(AddError,
-                      "RRSIG is being added, but no RR to be covered: "
-                      << sig_rrset->getName());
-        }
-
         // Check consistency of the type covered.
         // We know the RRset isn't empty, so the following check is safe.
         RdataIteratorPtr rit = sig_rrset->getRdataIterator();
@@ -305,16 +297,43 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         // Find the RRset to be covered; if not found, treat it as an error
         // for now.
-        const Domain::const_iterator it = node->getData()->find(covered);
-        if (it == node->getData()->end()) {
-            isc_throw(AddError,
-                      "RRSIG is being added, but no RR of covered type found: "
-                      << sig_rrset->toText());
+        ConstRRsetPtr covered_rrset;
+        if (covered != RRType::NSEC3()) {
+            DomainNode* node = NULL;
+            if (zone_data.domains_.find(sig_rrset->getName(), &node) !=
+                DomainTree::EXACTMATCH || node == NULL || !node->getData()) {
+                isc_throw(AddError,
+                          "RRSIG is being added, but no RR to be covered: "
+                          << sig_rrset->getName());
+            }
+            const Domain::const_iterator it = node->getData()->find(covered);
+            if (it != node->getData()->end()) {
+                covered_rrset = it->second;
+            }
+        } else {
+            // In case of NSEC3 if something is found it must be NSEC3 RRset
+            // under the assumption of our current implementation.
+            if (zone_data.nsec3_data_) {
+                string fst_label = sig_rrset->getName().split(0, 1).
+                    toText(true);
+                transform(fst_label.begin(), fst_label.end(),
+                          fst_label.begin(), ToUpper());
+                NSEC3Map::const_iterator found =
+                    zone_data.nsec3_data_->map_.find(fst_label);
+                if (found != zone_data.nsec3_data_->map_.end()) {
+                    covered_rrset = found->second;
+                    assert(covered_rrset->getType() == covered);
+                }
+            }
+        }
+        if (!covered_rrset) {
+            isc_throw(AddError, "RRSIG is being added, but no RR of "
+                      "covered type found: " << sig_rrset->toText());
         }
 
         // The current implementation doesn't allow an existing RRSIG to be
         // overridden (or updated with additional ones).
-        if ((it->second)->getRRsig()) {
+        if (covered_rrset->getRRsig()) {
             isc_throw(AddError,
                       "RRSIG is being added to override an existing one: "
                       << sig_rrset->toText());
@@ -329,7 +348,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // Note: there's a slight chance of getting an exception.
         // As noted in add(), we give up strong exception guarantee in such
         // cases.
-        boost::const_pointer_cast<RRset>(it->second)->addRRsig(sig_rrset);
+        boost::const_pointer_cast<RRset>(covered_rrset)->addRRsig(sig_rrset);
 
         return (result::SUCCESS);
     }
