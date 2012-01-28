@@ -84,12 +84,12 @@ struct ZoneData {
     // The main data (name + RRsets)
     DomainTree domains_;
 
-    // The optional NSEC3 storage (TBD: should allocate it on demand)
+    // The optional NSEC3 related data
     struct NSEC3Data {
-        //generic::NSEC3PARAM param_; or have separate params?
-        NSEC3Map map_;
+        NSEC3Map map_;          // Actual NSEC3 RRs
+        // We should also have hash parameters here (maybe hold NSEC3Hash?)
     };
-    scoped_ptr<NSEC3Data> nsec3_data_;
+    scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
 };
 }
 
@@ -828,17 +828,38 @@ InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
     string hname_text;
     if (name == Name("example.org")) {
         hname_text = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else if (name == Name("www.example.org")) {
+        hname_text = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else if (name == Name("xxx.example.org")) {
+        hname_text = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else if (name == Name("yyy.example.org")) {
+        hname_text = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
     } else {
         isc_throw(Unexpected, "unexpected name for NSEC3 test: " << name);
     }
 
+    // Below we assume the map is not empty for simplicity.
     NSEC3Map::const_iterator found =
-        impl_->zone_data_->nsec3_data_->map_.find(hname_text);
-    if (found != impl_->zone_data_->nsec3_data_->map_.end()) {
+        impl_->zone_data_->nsec3_data_->map_.lower_bound(hname_text);
+    if (found != impl_->zone_data_->nsec3_data_->map_.end() &&
+        found->first == hname_text) {
+        // exact match
         return (FindNSEC3Result(true, 2, found->second, ConstRRsetPtr()));
+    } else if (found == impl_->zone_data_->nsec3_data_->map_.end() ||
+               found == impl_->zone_data_->nsec3_data_->map_.begin()) {
+        // the search key is "smaller" than the smallest or "larger" than
+        // largest.  In either case "previous" is the largest one.
+        return (FindNSEC3Result(false, 2,
+                                impl_->zone_data_->nsec3_data_->map_.
+                                rbegin()->second, ConstRRsetPtr()));
+    } else {
+        // Otherwise, H(found_domain-1) < given_hash < H(found_domain)
+        // The covering proof is the first one.
+        return (FindNSEC3Result(false, 2, (--found)->second, ConstRRsetPtr()));
     }
 
-    isc_throw(Unexpected, "unexpected NSEC3 search result for " << name);
+    // We should have covered all cases.
+    isc_throw(Unexpected, "Impossible NSEC3 search result for " << name);
 }
 
 result::Result
