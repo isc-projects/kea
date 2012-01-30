@@ -40,9 +40,20 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_NSEC3PARAM_Test : public RdataTest {
-    // there's nothing to specialize
+public:
+    Rdata_NSEC3PARAM_Test() : nsec3param_txt("1 0 1 D399EAAB") {}
+    const string nsec3param_txt;
 };
-string nsec3param_txt("1 0 1 D399EAAB");
+
+TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
+    // With a salt
+    EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getHashalg());
+    EXPECT_EQ(0, generic::NSEC3PARAM(nsec3param_txt).getFlags());
+    // (salt is checked in the toText test)
+
+    // With an empty salt
+    EXPECT_EQ(0, generic::NSEC3PARAM("1 0 0 -").getSalt().size());
+}
 
 TEST_F(Rdata_NSEC3PARAM_Test, toText) {
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
