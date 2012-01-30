@@ -230,6 +230,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             isc_throw(AddError, "multiple RRs of singleton type for "
                       << rrset->getName());
         }
+        // NSEC3PARAM is not a "singleton" per protocol, but this
+        // implementation doesn't request it be so at the moment.
+        if (rrset->getType() == RRType::NSEC3PARAM() &&
+            rrset->getRdataCount() > 1) {
+            isc_throw(AddError, "Multiple NSEC3PARAM RDATA is given for "
+                      << rrset->getName() << " which isn't supported");
+        }
 
         NameComparisonResult compare(origin_.compare(rrset->getName()));
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
