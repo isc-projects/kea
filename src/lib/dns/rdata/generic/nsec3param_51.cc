@@ -67,8 +67,11 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
         isc_throw(InvalidRdataText, "NSEC3PARAM flags out of range");
     }
 
+    const string salt_str = saltbuf.str();
     vector<uint8_t> salt;
-    decodeHex(saltbuf.str(), salt);
+    if (salt_str != "-") { // "-" means an empty salt, no need to touch vector
+        decodeHex(saltbuf.str(), salt);
+    }
 
     impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
 }
