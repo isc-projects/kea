@@ -25,6 +25,7 @@ class Name;
 
 namespace rdata {
 namespace generic {
+class NSEC3;
 class NSEC3PARAM;
 }
 }
@@ -123,6 +124,22 @@ public:
     /// calculated.
     /// \return Base32hex-encoded string of the hash value.
     virtual std::string calculate(const Name& name) const = 0;
+
+    /// \brief Match given NSEC3 parameters with that of the hash.
+    ///
+    /// This method compares NSEC3 parameters used for hash calculation
+    /// in the object with those in the given NSEC3 RDATA, and return
+    /// true iff they completely match.  In the current implementation
+    /// only the algorithm, iterations and salt are compared; the flags
+    /// are ignored (as they don't affect hash calculation per RFC5155).
+    ///
+    /// \throw None
+    ///
+    /// \param nsec3 An NSEC3 RDATA object whose hash parameters are to be
+    /// matched
+    /// \return true If the given parameters match the local ones; false
+    /// otherwise.
+    virtual bool match(const rdata::generic::NSEC3& nsec3) const = 0;
 };
 
 }

@@ -25,6 +25,7 @@ class NSEC3HashTest(unittest.TestCase):
     def setUp(self):
         self.test_hash = NSEC3Hash(Rdata(RRType.NSEC3PARAM(), RRClass.IN(),
                                          "1 0 12 aabbccdd"))
+        self.nsec3_common = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"
 
     def test_bad_construct(self):
         # missing parameter
@@ -72,6 +73,47 @@ class NSEC3HashTest(unittest.TestCase):
         self.assertRaises(TypeError, self.test_hash.calculate, "example")
         self.assertRaises(TypeError, self.test_hash.calculate)
         self.assertRaises(TypeError, self.test_hash.calculate, Name("."), 1)
+
+    def test_match_with_nsec3(self):
+        # If all parameters match, it's considered to be matched.
+        self.assertTrue(self.test_hash.match(Rdata(RRType.NSEC3(),
+                                                   RRClass.IN(),
+                                                   "1 0 12 aabbccdd " +
+                                                   self.nsec3_common)))
+        # Algorithm doesn't match
+        self.assertFalse(self.test_hash.match(Rdata(RRType.NSEC3(),
+                                                    RRClass.IN(),
+                                                    "2 0 12 aabbccdd " +
+                                                    self.nsec3_common)))
+        # Iterations doesn't match
+        self.assertFalse(self.test_hash.match(Rdata(RRType.NSEC3(),
+                                                    RRClass.IN(),
+                                                    "1 0 1 aabbccdd " +
+                                                    self.nsec3_common)))
+        # Salt doesn't match
+        self.assertFalse(self.test_hash.match(Rdata(RRType.NSEC3(),
+                                                    RRClass.IN(),
+                                                    "1 0 12 aabbccde " +
+                                                    self.nsec3_common)))
+        # Salt doesn't match: the other has an empty salt
+        self.assertFalse(self.test_hash.match(Rdata(RRType.NSEC3(),
+                                                    RRClass.IN(),
+                                                    "1 0 12 - " +
+                                                    self.nsec3_common)))
+        # Flags doesn't matter
+        self.assertTrue(self.test_hash.match(Rdata(RRType.NSEC3(),
+                                                   RRClass.IN(),
+                                                   "1 1 12 aabbccdd " +
+                                                   self.nsec3_common)))
+
+        # bad parameter checks
+        self.assertRaises(TypeError, self.test_hash.match, 1)
+        self.assertRaises(TypeError, self.test_hash.match,
+                          Rdata(RRType.NSEC3(), RRClass.IN(),
+                                "1 0 12 aabbccdd " + self.nsec3_common), 1)
+        # this would result in bad_cast
+        self.assertRaises(IscException, self.test_hash.match,
+                          Rdata(RRType.A(), RRClass.IN(), "192.0.2.1"))
 
 if __name__ == '__main__':
     unittest.main()

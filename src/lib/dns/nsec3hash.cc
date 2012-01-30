@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include <cassert>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -69,6 +70,8 @@ public:
 
     virtual std::string calculate(const Name& name) const;
 
+    virtual bool match(const generic::NSEC3& nsec3) const;
+
 private:
     const uint8_t algorithm_;
     const uint16_t iterations_;
@@ -114,6 +117,15 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
     }
 
     return (encodeBase32Hex(digest_));
+}
+
+bool
+NSEC3HashRFC5155::match(const generic::NSEC3& nsec3) const {
+    return (algorithm_ == nsec3.getHashalg() &&
+            iterations_ == nsec3.getIterations() &&
+            salt_.size() == nsec3.getSalt().size() &&
+            (salt_.empty() ||
+             memcmp(&salt_[0], &nsec3.getSalt()[0], salt_.size()) == 0));
 }
 } // end of unnamed namespace
 
