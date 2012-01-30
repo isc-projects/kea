@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
+
 #include <gtest/gtest.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -20,11 +22,15 @@
 #include <dns/rdataclass.h>
 
 using boost::scoped_ptr;
+using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace {
 typedef scoped_ptr<NSEC3Hash> NSEC3HashPtr;
+
+// Commonly used NSEC3 suffix, defined to reduce amount of type
+const char* const nsec3_common = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
 
 class NSEC3HashTest : public ::testing::Test {
 protected:
@@ -68,6 +74,27 @@ TEST_F(NSEC3HashTest, calculate) {
               NSEC3HashPtr(NSEC3Hash::create(
                                generic::NSEC3PARAM("1 0 256 AABBCCDD")))
               ->calculate(Name("example.org")));
+}
+
+TEST_F(NSEC3HashTest, matchWithNSEC3) {
+    // If all parameters match, it's considered to be matched.
+    EXPECT_TRUE(test_hash->match(generic::NSEC3("1 0 12 aabbccdd " +
+                                                string(nsec3_common))));
+    // Algorithm doesn't match
+    EXPECT_FALSE(test_hash->match(generic::NSEC3("2 0 12 aabbccdd " +
+                                                 string(nsec3_common))));
+    // Iterations doesn't match
+    EXPECT_FALSE(test_hash->match(generic::NSEC3("1 0 1 aabbccdd " +
+                                                 string(nsec3_common))));
+    // Salt doesn't match
+    EXPECT_FALSE(test_hash->match(generic::NSEC3("1 0 12 aabbccde " +
+                                                 string(nsec3_common))));
+    // Salt doesn't match: the other has an empty salt
+    EXPECT_FALSE(test_hash->match(generic::NSEC3("1 0 12 - " +
+                                                 string(nsec3_common))));
+    // Flags doesn't matter
+    EXPECT_TRUE(test_hash->match(generic::NSEC3("1 1 12 aabbccdd " +
+                                                 string(nsec3_common))));
 }
 
 } // end namespace
