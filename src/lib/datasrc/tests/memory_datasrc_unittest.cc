@@ -1478,6 +1478,15 @@ TEST_F(InMemoryZoneFinderTest, badRRsigForNSEC3) {
                  InMemoryZoneFinder::AddError);
 }
 
+TEST_F(InMemoryZoneFinderTest, multiNSEC3PARAM) {
+    // In this current implementation multiple NSEC3PARAM isn't supported.
+    RRsetPtr nsec3param(new RRset(Name("example.org"), RRClass::IN(),
+                                  RRType::NSEC3PARAM(), RRTTL(300)));
+    nsec3param->addRdata(generic::NSEC3PARAM("1 0 12 aabbccdd"));
+    nsec3param->addRdata(generic::NSEC3PARAM("1 1 1 ddccbbaa"));
+    EXPECT_THROW(zone_finder_.add(nsec3param), InMemoryZoneFinder::AddError);
+}
+
 // TODO
 // - parameter consistency
 // - existence of NSEC3PARAM
