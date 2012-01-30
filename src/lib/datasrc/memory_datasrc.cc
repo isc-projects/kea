@@ -12,9 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <algorithm>
 #include <map>
+#include <utility>
+#include <cctype>
 #include <cassert>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
@@ -39,6 +43,7 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
+using boost::scoped_ptr;
 
 namespace isc {
 namespace datasrc {
@@ -62,6 +67,30 @@ typedef boost::shared_ptr<Domain> DomainPtr;
 // The tree stores domains
 typedef RBTree<Domain> DomainTree;
 typedef RBNode<Domain> DomainNode;
+
+// Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
+// from string to the NSEC3 RRset.  The map key is the first label
+// (upper cased) of the owner name of the corresponding NSEC3 (i.e., map
+// value).  We can use  the standard string comparison (if the comparison
+// target is also upper cased) due to the nature of NSEC3 owner names.
+typedef map<string, ConstRRsetPtr> NSEC3Map;
+typedef NSEC3Map::value_type NSEC3Pair;
+
+// Actual zone data: Essentially a set of zone's RRs.  This is defined as
+// a separate structure so that it'll be replaceable on reload.
+struct ZoneData {
+    ZoneData() : domains_(true) {}
+
+    // The main data (name + RRsets)
+    DomainTree domains_;
+
+    // The optional NSEC3 related data
+    struct NSEC3Data {
+        NSEC3Map map_;          // Actual NSEC3 RRs
+        // We should also have hash parameters here (maybe hold NSEC3Hash?)
+    };
+    scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
+};
 }
 
 // Private data and hidden methods of InMemoryZoneFinder
@@ -69,10 +98,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // Constructor
     InMemoryZoneFinderImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin), origin_data_(NULL),
-        domains_(true)
+        zone_data_(new ZoneData)
     {
         // We create the node for origin (it needs to exist anyway in future)
-        domains_.insert(origin, &origin_data_);
+        zone_data_->domains_.insert(origin, &origin_data_);
         DomainPtr origin_domain(new Domain);
         origin_data_->setData(origin_domain);
     }
@@ -85,7 +114,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     string file_name_;
 
     // The actual zone data
-    DomainTree domains_;
+    scoped_ptr<ZoneData> zone_data_;
 
     // Add the necessary magic for any wildcard contained in 'name'
     // (including itself) to be found in the zone.
@@ -234,19 +263,34 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                           rrset->getName());
             }
         }
+
+        // Owner names of NSEC3 have special format as defined in RFC5155,
+        // and cannot be a wildcard name or must be one label longer than
+        // the zone origin.  While the RFC doesn't prohibit other forms of
+        // names, no sane zone would have such names for NSEC3.
+        // BIND 9 also refuses NSEC3 at wildcard.
+        if (rrset->getType() == RRType::NSEC3() &&
+            (rrset->getName().isWildcard() ||
+             rrset->getName().getLabelCount() !=
+             origin_.getLabelCount() + 1)) {
+            LOG_ERROR(logger, DATASRC_BAD_NSEC3_NAME).
+                arg(rrset->getName());
+            isc_throw(AddError, "Invalid NSEC3 owner name (wildcard): " <<
+                      rrset->getName());
+        }
     }
 
-    result::Result addRRsig(const ConstRRsetPtr sig_rrset,
-                            DomainTree& domains)
-    {
-        DomainNode* node = NULL;
-        if (domains.find(sig_rrset->getName(), &node) !=
-            DomainTree::EXACTMATCH || node == NULL || !node->getData()) {
-            isc_throw(AddError,
-                      "RRSIG is being added, but no RR to be covered: "
-                      << sig_rrset->getName());
-        }
+    // A helper functor to convert the 1st NSEC3 label to all upper-cased
+    // characters.  Note: technically there's a subtle issue when char
+    // is signed, but in practice the label should consist of all positive
+    // character values for a valid NSEC3 hash name (if it's invalid the
+    // resulting zone doesn't work correctly anyway).
+    struct ToUpper {
+        char operator()(char ch) { return (toupper(ch)); }
+    };
 
+    result::Result addRRsig(const ConstRRsetPtr sig_rrset, ZoneData& zone_data)
+    {
         // Check consistency of the type covered.
         // We know the RRset isn't empty, so the following check is safe.
         RdataIteratorPtr rit = sig_rrset->getRdataIterator();
@@ -262,16 +306,43 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         // Find the RRset to be covered; if not found, treat it as an error
         // for now.
-        const Domain::const_iterator it = node->getData()->find(covered);
-        if (it == node->getData()->end()) {
-            isc_throw(AddError,
-                      "RRSIG is being added, but no RR of covered type found: "
-                      << sig_rrset->toText());
+        ConstRRsetPtr covered_rrset;
+        if (covered != RRType::NSEC3()) {
+            DomainNode* node = NULL;
+            if (zone_data.domains_.find(sig_rrset->getName(), &node) !=
+                DomainTree::EXACTMATCH || node == NULL || !node->getData()) {
+                isc_throw(AddError,
+                          "RRSIG is being added, but no RR to be covered: "
+                          << sig_rrset->getName());
+            }
+            const Domain::const_iterator it = node->getData()->find(covered);
+            if (it != node->getData()->end()) {
+                covered_rrset = it->second;
+            }
+        } else {
+            // In case of NSEC3 if something is found it must be NSEC3 RRset
+            // under the assumption of our current implementation.
+            if (zone_data.nsec3_data_) {
+                string fst_label = sig_rrset->getName().split(0, 1).
+                    toText(true);
+                transform(fst_label.begin(), fst_label.end(),
+                          fst_label.begin(), ToUpper());
+                NSEC3Map::const_iterator found =
+                    zone_data.nsec3_data_->map_.find(fst_label);
+                if (found != zone_data.nsec3_data_->map_.end()) {
+                    covered_rrset = found->second;
+                    assert(covered_rrset->getType() == covered);
+                }
+            }
+        }
+        if (!covered_rrset) {
+            isc_throw(AddError, "RRSIG is being added, but no RR of "
+                      "covered type found: " << sig_rrset->toText());
         }
 
         // The current implementation doesn't allow an existing RRSIG to be
         // overridden (or updated with additional ones).
-        if ((it->second)->getRRsig()) {
+        if (covered_rrset->getRRsig()) {
             isc_throw(AddError,
                       "RRSIG is being added to override an existing one: "
                       << sig_rrset->toText());
@@ -286,8 +357,27 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // Note: there's a slight chance of getting an exception.
         // As noted in add(), we give up strong exception guarantee in such
         // cases.
-        boost::const_pointer_cast<RRset>(it->second)->addRRsig(sig_rrset);
+        boost::const_pointer_cast<RRset>(covered_rrset)->addRRsig(sig_rrset);
 
+        return (result::SUCCESS);
+    }
+
+    result::Result addNSEC3(const ConstRRsetPtr rrset, ZoneData& zone_data) {
+        if (!zone_data.nsec3_data_) {
+            zone_data.nsec3_data_.reset(new ZoneData::NSEC3Data);
+        }
+        string fst_label = rrset->getName().split(0, 1).toText(true);
+        transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
+                  ToUpper());
+
+        // Our current implementation doesn't allow an existing NSEC3 to be
+        // updated/overridden.
+        if (zone_data.nsec3_data_->map_.find(fst_label) !=
+            zone_data.nsec3_data_->map_.end()) {
+            return (result::EXIST);
+        }
+
+        zone_data.nsec3_data_->map_.insert(NSEC3Pair(fst_label, rrset));
         return (result::SUCCESS);
     }
 
@@ -296,7 +386,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of InMemoryZoneFinder::add
-    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
+    result::Result add(const ConstRRsetPtr& rrset, ZoneData& zone_data) {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
         addValidation(rrset);
@@ -305,21 +395,26 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
             arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
 
+        if (rrset->getType() == RRType::NSEC3()) {
+            return (addNSEC3(rrset, zone_data));
+        }
+
         // RRSIGs are special in various points, so we handle it in a
         // separate dedicated method.
         if (rrset->getType() == RRType::RRSIG()) {
-            return (addRRsig(rrset, *domains));
+            return (addRRsig(rrset, zone_data));
         }
 
         // Add wildcards possibly contained in the owner name to the domain
         // tree.
         // Note: this can throw an exception, breaking strong exception
         // guarantee.  (see also the note for contextCheck() below).
-        addWildcards(*domains, rrset->getName());
+        addWildcards(zone_data.domains_, rrset->getName());
 
         // Get the node
         DomainNode* node;
-        DomainTree::Result result = domains->insert(rrset->getName(), &node);
+        DomainTree::Result result = zone_data.domains_.insert(rrset->getName(),
+                                                              &node);
         // Just check it returns reasonable results
         assert((result == DomainTree::SUCCESS ||
                 result == DomainTree::ALREADYEXISTS) && node!= NULL);
@@ -366,18 +461,18 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * Same as above, but it checks the return value and if it already exists,
      * it throws.
      */
-    void addFromLoad(const ConstRRsetPtr& set, DomainTree* domains) {
-            switch (add(set, domains)) {
-                case result::EXIST:
-                    LOG_ERROR(logger, DATASRC_MEM_DUP_RRSET).
-                        arg(set->getName()).arg(set->getType());
-                    isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
-                        set->toText());
-                case result::SUCCESS:
-                    return;
-                default:
-                    assert(0);
-            }
+    void addFromLoad(const ConstRRsetPtr& set, ZoneData* zone_data) {
+        switch (add(set, *zone_data)) {
+        case result::EXIST:
+            LOG_ERROR(logger, DATASRC_MEM_DUP_RRSET).
+                arg(set->getName()).arg(set->getType());
+            isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
+                      set->toText());
+        case result::SUCCESS:
+            return;
+        default:
+            assert(0);
+        }
     }
 
     // Maintain intermediate data specific to the search context used in
@@ -499,7 +594,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         FindState state(options);
         RBTreeNodeChain<Domain> node_path;
         bool rename(false);
-        switch (domains_.find(name, &node, node_path, cutCallback, &state)) {
+        switch (zone_data_->domains_.find(name, &node, node_path, cutCallback,
+                                          &state)) {
             case DomainTree::PARTIALMATCH:
                 /*
                  * In fact, we could use a single variable instead of
@@ -584,7 +680,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     }
                     Name wildcard(Name("*").concatenate(
                         node_path.getAbsoluteName()));
-                    DomainTree::Result result(domains_.find(wildcard, &node));
+                    DomainTree::Result result =
+                        zone_data_->domains_.find(wildcard, &node);
                     /*
                      * Otherwise, why would the DOMAINFLAG_WILD be there if
                      * there was no wildcard under it?
@@ -717,9 +814,57 @@ InMemoryZoneFinder::findNSEC3(const Name&, bool) {
               "data source");
 }
 
+ZoneFinder::FindNSEC3Result
+InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
+    if (!impl_->zone_data_->nsec3_data_) {
+        isc_throw(Unexpected, "findNSEC3 is called for non NSEC3 zone");
+    }
+    if (recursive) {
+        isc_throw(Unexpected, "recursive mode isn't expected in tests");
+    }
+
+    // A temporary workaround for testing: convert the original name to
+    // NSEC3-hashed name using hardcoded mapping.
+    string hname_text;
+    if (name == Name("example.org")) {
+        hname_text = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else if (name == Name("www.example.org")) {
+        hname_text = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else if (name == Name("xxx.example.org")) {
+        hname_text = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else if (name == Name("yyy.example.org")) {
+        hname_text = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+    } else {
+        isc_throw(Unexpected, "unexpected name for NSEC3 test: " << name);
+    }
+
+    // Below we assume the map is not empty for simplicity.
+    NSEC3Map::const_iterator found =
+        impl_->zone_data_->nsec3_data_->map_.lower_bound(hname_text);
+    if (found != impl_->zone_data_->nsec3_data_->map_.end() &&
+        found->first == hname_text) {
+        // exact match
+        return (FindNSEC3Result(true, 2, found->second, ConstRRsetPtr()));
+    } else if (found == impl_->zone_data_->nsec3_data_->map_.end() ||
+               found == impl_->zone_data_->nsec3_data_->map_.begin()) {
+        // the search key is "smaller" than the smallest or "larger" than
+        // largest.  In either case "previous" is the largest one.
+        return (FindNSEC3Result(false, 2,
+                                impl_->zone_data_->nsec3_data_->map_.
+                                rbegin()->second, ConstRRsetPtr()));
+    } else {
+        // Otherwise, H(found_domain-1) < given_hash < H(found_domain)
+        // The covering proof is the first one.
+        return (FindNSEC3Result(false, 2, (--found)->second, ConstRRsetPtr()));
+    }
+
+    // We should have covered all cases.
+    isc_throw(Unexpected, "Impossible NSEC3 search result for " << name);
+}
+
 result::Result
 InMemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
-    return (impl_->add(rrset, &impl_->domains_));
+    return (impl_->add(rrset, *impl_->zone_data_));
 }
 
 
@@ -727,13 +872,14 @@ void
 InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
-    // Load it into a temporary tree
-    DomainTree tmp;
+    // Load it into temporary zone data
+    scoped_ptr<ZoneData> tmp(new ZoneData);
     masterLoad(filename.c_str(), getOrigin(), getClass(),
-        boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_, _1, &tmp));
+               boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
+                           _1, tmp.get()));
     // If it went well, put it inside
     impl_->file_name_ = filename;
-    tmp.swap(impl_->domains_);
+    tmp.swap(impl_->zone_data_);
     // And let the old data die with tmp
 }
 
@@ -924,8 +1070,9 @@ InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
         isc_throw(Unexpected, "The zone at " + name.toText() +
                   " is not InMemoryZoneFinder");
     }
-    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name,
-                                               separate_rrs)));
+    return (ZoneIteratorPtr(new MemoryIterator(
+                                zone->impl_->zone_data_->domains_, name,
+                                separate_rrs)));
 }
 
 ZoneUpdaterPtr

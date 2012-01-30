@@ -16,6 +16,13 @@ $NAMESPACE isc::datasrc
 
 # \brief Messages for the data source library
 
+% DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'
+The software refuses to load NSEC3 records into a wildcard domain or
+the owner name has two or more labels below the zone origin.
+It isn't explicitly forbidden, but no sane zone wouldn have such names
+for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
+compatible with BIND 9.
+
 % DATASRC_CACHE_CREATE creating the hotspot cache
 This is a debug message issued during startup when the hotspot cache
 is created.
@@ -142,6 +149,34 @@ While iterating through the zone, the time to live for RRs of the given RRset
 were found to be different. This isn't allowed on the wire and is considered
 an error, so we set it to the lowest value we found (but we don't modify the
 database). The data in database should be checked and fixed.
+
+% DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
+This is a debug message indicating that the program (successfully)
+reaches the end of sequences of a zone's differences.  The zone's name
+and class, database name, and the start and end serials are shown in
+the message.
+
+% DATASRC_DATABASE_JOURNALREADER_NEXT %1/%2 in %3/%4 on %5
+This is a debug message indicating that the program retrieves one
+difference in difference sequences of a zone and successfully converts
+it to an RRset.  The zone's name and class, database name, and the
+name and RR type of the retrieved diff are shown in the message.
+
+% DATASRC_DATABASE_JOURNALREADER_START %1/%2 on %3 from %4 to %5
+This is a debug message indicating that the program starts reading
+a zone's difference sequences from a database-based data source.  The
+zone's name and class, database name, and the start and end serials
+are shown in the message.
+
+% DATASRC_DATABASE_JOURNALREADR_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
+This is an error message indicating that a zone's diff is broken and
+the data source library failed to convert it to a valid RRset.  The
+most likely cause of this is that someone has manually modified the
+zone's diff in the database and inserted invalid data as a result.
+The zone's name and class, database name, and the start and end
+serials, and an additional detail of the error are shown in the
+message.  The administrator should examine the diff in the database
+to find any invalid data and fix it.
 
 % DATASRC_DATABASE_NO_MATCH not match for %2/%3/%4 in %1
 No match (not even a wildcard) was found in the named data source for the given
@@ -671,66 +706,3 @@ data source.
 % DATASRC_UNEXPECTED_QUERY_STATE unexpected query state
 This indicates a programming error. An internal task of unknown type was
 generated.
-
-% DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3
-Debug information.  A zone updater object is created to make updates to
-the shown zone on the shown backend database.
-
-% DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3
-Debug information.  A zone updater object is destroyed, either successfully
-or after failure of, making updates to the shown zone on the shown backend
-database.
-
-%DATASRC_DATABASE_UPDATER_ROLLBACK zone updates roll-backed for '%1/%2' on %3
-A zone updater is being destroyed without committing the changes.
-This would typically mean the update attempt was aborted due to some
-error, but may also be a bug of the application that forgets committing
-the changes.  The intermediate changes made through the updater won't
-be applied to the underlying database.  The zone name, its class, and
-the underlying database name are shown in the log message.
-
-%DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4
-A zone updater is being destroyed without committing the changes to
-the database, and attempts to rollback incomplete updates, but it
-unexpectedly fails.  The higher level implementation does not expect
-it to fail, so this means either a serious operational error in the
-underlying data source (such as a system failure of a database) or
-software bug in the underlying data source implementation.  In either
-case if this message is logged the administrator should carefully
-examine the underlying data source to see what exactly happens and
-whether the data is still valid.  The zone name, its class, and the
-underlying database name as well as the error message thrown from the
-database module are shown in the log message.
-
-% DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
-Debug information.  A set of updates to a zone has been successfully
-committed to the corresponding database backend.  The zone name,
-its class and the database name are printed.
-
-% DATASRC_DATABASE_JOURNALREADER_START %1/%2 on %3 from %4 to %5
-This is a debug message indicating that the program starts reading
-a zone's difference sequences from a database-based data source.  The
-zone's name and class, database name, and the start and end serials
-are shown in the message.
-
-% DATASRC_DATABASE_JOURNALREADER_NEXT %1/%2 in %3/%4 on %5
-This is a debug message indicating that the program retrieves one
-difference in difference sequences of a zone and successfully converts
-it to an RRset.  The zone's name and class, database name, and the
-name and RR type of the retrieved diff are shown in the message.
-
-% DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
-This is a debug message indicating that the program (successfully)
-reaches the end of sequences of a zone's differences.  The zone's name
-and class, database name, and the start and end serials are shown in
-the message.
-
-% DATASRC_DATABASE_JOURNALREADR_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
-This is an error message indicating that a zone's diff is broken and
-the data source library failed to convert it to a valid RRset.  The
-most likely cause of this is that someone has manually modified the
-zone's diff in the database and inserted invalid data as a result.
-The zone's name and class, database name, and the start and end
-serials, and an additional detail of the error are shown in the
-message.  The administrator should examine the diff in the database
-to find any invalid data and fix it.
