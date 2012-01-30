@@ -118,6 +118,37 @@ NSEC3Hash_calculate(PyObject* po_self, PyObject* args) {
     return (NULL);
 }
 
+PyObject*
+NSEC3Hash_match(PyObject* po_self, PyObject* args) {
+    s_NSEC3Hash* const self = static_cast<s_NSEC3Hash*>(po_self);
+
+    try {
+        PyObject* po_rdata;
+        if (PyArg_ParseTuple(args, "O", &po_rdata)) {
+            if (!PyRdata_Check(po_rdata)) {
+                PyErr_Format(PyExc_TypeError,
+                             "param must be an Rdata of type NSEC3, "
+                             "not %.200s", po_rdata->ob_type->tp_name);
+                return (NULL);
+            }
+            const bool matched = self->cppobj->match(
+                dynamic_cast<const generic::NSEC3&>(
+                    PyRdata_ToRdata(po_rdata)));
+            return (matched ? Py_True : Py_False);
+        }
+    } catch (const exception& ex) {
+        const string ex_what = "Unexpected failure in NSEC3Hash.match: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected C++ exception");
+        return (NULL);
+    }
+
+    return (NULL);
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -126,6 +157,7 @@ NSEC3Hash_calculate(PyObject* po_self, PyObject* args) {
 // 4. Documentation
 PyMethodDef NSEC3Hash_methods[] = {
     { "calculate", NSEC3Hash_calculate, METH_VARARGS, NSEC3Hash_calculate_doc },
+    { "match", NSEC3Hash_match, METH_VARARGS, NSEC3Hash_match_doc },
     { NULL, NULL, 0, NULL }
 };
 } // end of unnamed namespace
