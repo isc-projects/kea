@@ -280,6 +280,15 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // A helper functor to convert the 1st NSEC3 label to all upper-cased
+    // characters.  Note: technically there's a subtle issue when char
+    // is signed, but in practice the label should consist of all positive
+    // character values for a valid NSEC3 hash name (if it's invalid the
+    // resulting zone doesn't work correctly anyway).
+    struct ToUpper {
+        char operator()(char ch) { return (toupper(ch)); }
+    };
+
     result::Result addRRsig(const ConstRRsetPtr sig_rrset, ZoneData& zone_data)
     {
         // Check consistency of the type covered.
@@ -352,15 +361,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         return (result::SUCCESS);
     }
-
-    // A helper functor to convert the 1st NSEC3 label to all upper-cased
-    // characters.  Note: technically there's a subtle issue when char
-    // is signed, but in practice the label should consist of all positive
-    // character values for a valid NSEC3 hash name (if it's invalid the
-    // resulting zone doesn't work correctly anyway).
-    struct ToUpper {
-        char operator()(char ch) { return (toupper(ch)); }
-    };
 
     result::Result addNSEC3(const ConstRRsetPtr rrset, ZoneData& zone_data) {
         if (!zone_data.nsec3_data_) {
