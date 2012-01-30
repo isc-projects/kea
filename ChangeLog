@@ -1,3 +1,11 @@
+370.	[func]		jinmei
+	libdns++: a new class NSEC3Hash was introduced as a utility for
+	calculating NSEC3 hashes for various purposes.  Python binding was
+	provided, too.  Also fixed a small bug in the NSEC3PARAM RDATA
+	implementation that empty salt in text representation was
+	rejected.
+	(Trac #1575, git 2c421b58e810028b303d328e4e2f5b74ea124839)
+
 369.	[func]		vorner
 	The SocketRequestor provides more information about what error happened
 	when it throws, by using subclasses of the original exception. This way
