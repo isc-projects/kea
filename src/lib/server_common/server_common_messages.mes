@@ -81,17 +81,17 @@ be hidden, as it has higher debug level.
 % SRVCOMM_EXCEPTION_ALLOC exception when allocating a socket: %1
 The process tried to allocate a socket using the socket creator, but an error
 occurred. But it is not one of the errors we are sure are "safe". In this case
-it is unclear if the unsuccessful communication left us and the bind10 process
-in inconsistent state, so we're going to abort to prevent further problems in
-that area.
+it is unclear if the unsuccessful communication left the process and the bind10
+process in inconsistent state, so the process is going to abort to prevent
+further problems in that area.
 
 This is probably a bug in the code, but it could be caused by other unusual
 conditions (like insufficient memory, deleted socket file used for
 communication).
 
 % SRVCOMM_UNKNOWN_EXCEPTION_ALLOC unknown exception when allocating a socket
-The situation is the same as in the SRVCOMM_EXCEPTION_ALLOC case, but we don't
-know further details about the error, because it was signaled by throwing
+The situation is the same as in the SRVCOMM_EXCEPTION_ALLOC case, but further
+details about the error are unknown, because it was signaled by throwing
 something not being an exception. This is definitely a bug.
 
 % SRVCOMM_KEYS_DEINIT deinitializing TSIG keyring
