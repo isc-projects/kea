@@ -254,7 +254,7 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
                            boost::const_pointer_cast<RRset>(ds_result.rrset),
                            dnssec_);
     } else if (ds_result.code == ZoneFinder::NXRRSET) {
-        addNXRRsetDenial(finder, ds_result);
+        addNXRRsetProof(finder, ds_result);
     } else {
         // Any other case should be an error
         isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
@@ -262,8 +262,8 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
 }
 
 void
-Query::addNXRRsetDenial(ZoneFinder& finder,
-                        const ZoneFinder::FindResult& db_result)
+Query::addNXRRsetProof(ZoneFinder& finder,
+                       const ZoneFinder::FindResult& db_result)
 {
     if (db_result.isNSECSigned() && db_result.rrset) {
         response_.addRRset(Message::SECTION_AUTHORITY,
@@ -447,7 +447,7 @@ Query::process() {
         case ZoneFinder::NXRRSET:
             addSOA(*result.zone_finder);
             if (dnssec_) {
-                addNXRRsetDenial(zfinder, db_result);
+                addNXRRsetProof(zfinder, db_result);
             }
             break;
         default:

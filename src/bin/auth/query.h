@@ -94,7 +94,7 @@ private:
     /// \param finder The ZoneFinder that was used to search for the missing
     ///               data
     /// \param db_result The ZoneFinder::FindResult returned by find()
-    void addNXRRsetDenial(isc::datasrc::ZoneFinder& finder,
+    void addNXRRsetProof(isc::datasrc::ZoneFinder& finder,
         const isc::datasrc::ZoneFinder::FindResult& db_result);
 
     /// Add NSEC RRs that prove an NXDOMAIN result.
