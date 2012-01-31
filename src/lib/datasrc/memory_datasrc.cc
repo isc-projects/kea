@@ -927,7 +927,10 @@ InMemoryZoneFinder::load(const string& filename) {
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (tmp->nsec3_data_) {
-        assert(!tmp->origin_data_->isEmpty());
+        // Note: origin_data_ is set on creation of ZoneData, and the load
+        // process only adds new nodes (and their data), so this assertion
+        // should hold.
+        assert(tmp->origin_data_ != NULL && !tmp->origin_data_->isEmpty());
         if (tmp->origin_data_->getData()->find(RRType::NSEC3PARAM()) ==
             tmp->origin_data_->getData()->end()) {
             LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
