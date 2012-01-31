@@ -58,14 +58,14 @@ class RRset;
 ///
 /// This type is commonly used as an argument of various functions defined
 /// in this library in order to handle RRsets in a polymorphic manner.
-typedef boost::shared_ptr<RRset> RRsetPtr;
+typedef boost::shared_ptr<AbstractRRset> RRsetPtr;
 
 /// \brief A pointer-like type pointing to an (immutable) \c RRset
 /// object.
 ///
 /// This type is commonly used as an argument of various functions defined
 /// in this library in order to handle RRsets in a polymorphic manner.
-typedef boost::shared_ptr<const RRset> ConstRRsetPtr;
+typedef boost::shared_ptr<const AbstractRRset> ConstRRsetPtr;
 
 /// \brief A pointer-like type point to an \c RdataIterator object.
 typedef boost::shared_ptr<RdataIterator> RdataIteratorPtr;
@@ -400,6 +400,82 @@ public:
     /// object.
     virtual RdataIteratorPtr getRdataIterator() const = 0;
     //@}
+
+    ///
+    /// \name Associated RRSIG methods
+    ///
+    /// These methods access an "associated" RRset, that containing the DNSSEC
+    /// signatures for this RRset.  It can be argued that this is not a
+    /// fundamental part of the RRset abstraction, since RFC 2181 defined an
+    /// RRset as a group of records with the same label, class and type but
+    /// different data.  However, BIND 10 has to deal with DNSSEC and in
+    /// practice, including the information at the AbstractRRset level makes
+    /// implementation easier.  (If a class is ever needed that must be
+    /// ignorant of the idea of an associated RRSIG RRset - e.g. a specialised
+    /// RRSIG RRset class - these methods can just throw a "NotImplemented"
+    /// exception.)
+    //@{
+    /// \brief Return pointer to this RRset's RRSIG RRset
+    ///
+    /// \return Pointer to the associated RRSIG RRset or null if there is none.
+    virtual RRsetPtr getRRsig() const = 0;
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Adds the (assumed) RRSIG rdata the RRSIG RRset associated with this
+    /// RRset.  If one does not exist, it is created using the data given.
+    ///
+    /// \param rdata Pointer to RRSIG rdata to be added.
+    virtual void addRRsig(const rdata::ConstRdataPtr rdata) = 0;
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Adds the (assumed) RRSIG rdata the RRSIG RRset associated with this
+    /// RRset.  If one does not exist, it is created using the data given.
+    ///
+    /// (This overload is for an older version of boost that doesn't support
+    /// conversion from shared_ptr<X> to shared_ptr<const X>.)
+    ///
+    /// \param rdata Pointer to RRSIG rdata to be added.
+    virtual void addRRsig(const rdata::RdataPtr rdata) = 0;
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Adds the signatures in the given (assumed) RRSIG RRset to the RRSIG
+    /// RRset associated with this RRset.  If one does not exist, it is created
+    /// using the data given.
+    ///
+    /// \param sigs RRSIG RRset containing signatures to be added to the
+    ///             RRSIG RRset associated with this class.
+    virtual void addRRsig(const AbstractRRset& sigs) = 0;
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Adds the signatures in the given (assumed) RRSIG RRset to the RRSIG
+    /// RRset associated with this RRset.  If one does not exist, it is created
+    /// using the data given.
+    ///
+    /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
+    ///             to the RRSIG RRset associated with this class.
+    virtual void addRRsig(ConstRRsetPtr sigs) = 0;
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Adds the signatures in the given (assumed) RRSIG RRset to the RRSIG
+    /// RRset associated with this RRset.  If one does not exist, it is created
+    /// using the data given.
+    ///
+    /// (This overload is for an older version of boost that doesn't support
+    /// conversion from shared_ptr<X> to shared_ptr<const X>.)
+    ///
+    /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
+    ///             to the RRSIG RRset associated with this class.
+    virtual void addRRsig(RRsetPtr sigs) = 0;
+
+    /// \brief Clear the RRSIGs for this RRset
+    virtual void removeRRsig() = 0;
+
+    //@}
 };
 
 /// \brief The \c RdataIterator class is an abstract base class that
@@ -660,6 +736,103 @@ public:
     /// object for the \c BasicRRset class.
     virtual RdataIteratorPtr getRdataIterator() const;
     //@}
+
+    ///
+    /// \name Associated RRSIG methods
+    ///
+    /// The associated RRSIG RRset is not supported in BasicRRset, so these
+    /// methods throw a NotImplemented exception.
+    //@{
+    /// \brief Return pointer to this RRset's RRSIG RRset
+    ///
+    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
+    ///            not supported in this class.
+    ///
+    /// \return Never returns normally - always throws a NotImplemented
+    ///         exception.
+    virtual RRsetPtr getRRsig() const {
+        isc_throw(NotImplemented,
+                  "BasicRRset does not implement the getRRsig() method");
+    }
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Not implemented in this class.
+    ///
+    /// \param rdata RRSIG rdata to be added to this RRset
+    ///
+    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
+    ///            not supported in this class.
+    virtual void addRRsig(const rdata::ConstRdataPtr) {
+        isc_throw(NotImplemented,
+                  "BasicRRset does not implement the addRRsig() method");
+    }
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Not implemented in this class.
+    /// (This overload is for an older version of boost that doesn't support
+    /// conversion from shared_ptr<X> to shared_ptr<const X>.)
+    ///
+    /// \param rdata RRSIG rdata to be added to this RRset
+    ///
+    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
+    ///            not supported in this class.
+    virtual void addRRsig(const rdata::RdataPtr) {
+        isc_throw(NotImplemented,
+                  "BasicRRset does not implement the addRRsig() method");
+    }
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Not implemented in this class.
+    ///
+    /// \param sigs RRSIG RRset containing signatures to be added to the
+    ///             RRSIG RRset associated with this class.
+    ///
+    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
+    ///            not supported in this class.
+    virtual void addRRsig(const AbstractRRset&) {
+        isc_throw(NotImplemented,
+                  "BasicRRset does not implement the addRRsig() method");
+    }
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Not implemented in this class.
+    ///
+    /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
+    ///             to the RRSIG RRset associated with this class.
+    ///
+    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
+    ///            not supported in this class.
+    virtual void addRRsig(ConstRRsetPtr) {
+        isc_throw(NotImplemented,
+                  "BasicRRset does not implement the addRRsig() method");
+    }
+
+    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
+    ///
+    /// Not implemented in this class.
+    /// (This overload is for an older version of boost that doesn't support
+    /// conversion from shared_ptr<X> to shared_ptr<const X>.)
+    ///
+    /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
+    ///             to the RRSIG RRset associated with this class.
+    ///
+    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
+    ///            not supported in this class.
+    virtual void addRRsig(RRsetPtr) {
+        isc_throw(NotImplemented,
+                  "BasicRRset does not implement the addRRsig() method");
+    }
+
+    /// \brief Clear the RRSIGs for this RRset
+    virtual void removeRRsig() {
+        isc_throw(NotImplemented,
+                  "BasicRRset does not implement the removeRRsig() method");
+    }
+    //@}
 private:
     BasicRRsetImpl* impl_;
 };
@@ -705,12 +878,12 @@ public:
     // conversion from shared_ptr<X> to shared_ptr<const X>.  Note: we should
     // revisit the interface of managing RRset signatures, at which point this
     // problem may go away.
-    void addRRsig(const rdata::RdataPtr rdata) {
+    virtual void addRRsig(const rdata::RdataPtr rdata) {
         addRRsig(static_cast<rdata::ConstRdataPtr>(rdata));
     }
 
     /// \brief Adds an RRSIG RRset to this RRset
-    void addRRsig(const AbstractRRset& sigs) {
+    virtual void addRRsig(const AbstractRRset& sigs) {
         RdataIteratorPtr it = sigs.getRdataIterator();
 
         if (!rrsig_) {
@@ -723,13 +896,13 @@ public:
         }
     }
 
-    void addRRsig(ConstRRsetPtr sigs) { addRRsig(*sigs); }
+    virtual void addRRsig(ConstRRsetPtr sigs) { addRRsig(*sigs); }
 
     // Another workaround for older boost (see above)
-    void addRRsig(RRsetPtr sigs) { addRRsig(*sigs); }
+    virtual void addRRsig(RRsetPtr sigs) { addRRsig(*sigs); }
 
     /// \brief Clear the RRSIGs for this RRset
-    void removeRRsig() { rrsig_ = RRsetPtr(); }
+    virtual void removeRRsig() { rrsig_ = RRsetPtr(); }
 
     /// \brief Return a pointer to this RRset's RRSIG RRset
     RRsetPtr getRRsig() const { return (rrsig_); }

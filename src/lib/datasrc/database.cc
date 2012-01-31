@@ -1120,8 +1120,8 @@ public:
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
 
-    virtual void addRRset(const RRset& rrset);
-    virtual void deleteRRset(const RRset& rrset);
+    virtual void addRRset(const AbstractRRset& rrset);
+    virtual void deleteRRset(const AbstractRRset& rrset);
     virtual void commit();
 
 private:
@@ -1148,14 +1148,15 @@ private:
     // This is a set of validation checks commonly used for addRRset() and
     // deleteRRset to minimize duplicate code logic and to make the main
     // code concise.
-    void validateAddOrDelete(const char* const op_str, const RRset& rrset,
+    void validateAddOrDelete(const char* const op_str,
+                             const AbstractRRset& rrset,
                              DiffPhase prev_phase,
                              DiffPhase current_phase) const;
 };
 
 void
 DatabaseUpdater::validateAddOrDelete(const char* const op_str,
-                                     const RRset& rrset,
+                                     const AbstractRRset& rrset,
                                      DiffPhase prev_phase,
                                      DiffPhase current_phase) const
 {
@@ -1193,7 +1194,7 @@ DatabaseUpdater::validateAddOrDelete(const char* const op_str,
 }
 
 void
-DatabaseUpdater::addRRset(const RRset& rrset) {
+DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
     validateAddOrDelete("add", rrset, DELETE, ADD);
 
     // It's guaranteed rrset has at least one RDATA at this point.
@@ -1239,7 +1240,7 @@ DatabaseUpdater::addRRset(const RRset& rrset) {
 }
 
 void
-DatabaseUpdater::deleteRRset(const RRset& rrset) {
+DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
     // If this is the first operation, pretend we are starting a new delete
     // sequence after adds.  This will simplify the validation below.
     if (diff_phase_ == NOT_STARTED) {

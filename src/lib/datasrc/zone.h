@@ -667,7 +667,7 @@ public:
     /// \exception std::bad_alloc Resource allocation failure
     ///
     /// \param rrset The RRset to be added
-    virtual void addRRset(const isc::dns::RRset& rrset) = 0;
+    virtual void addRRset(const isc::dns::AbstractRRset& rrset) = 0;
 
     /// Delete an RRset from a zone via the updater
     ///
@@ -739,7 +739,7 @@ public:
     /// \exception std::bad_alloc Resource allocation failure
     ///
     /// \param rrset The RRset to be deleted
-    virtual void deleteRRset(const isc::dns::RRset& rrset) = 0;
+    virtual void deleteRRset(const isc::dns::AbstractRRset& rrset) = 0;
 
     /// Commit the updates made in the updater to the zone
     ///

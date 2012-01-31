@@ -433,7 +433,7 @@ private:
 };
 
 typedef SectionInserter<ConstQuestionPtr, Question> QuestionInserter;
-typedef SectionInserter<ConstRRsetPtr, RRset> RRsetInserter;
+typedef SectionInserter<ConstRRsetPtr, AbstractRRset> RRsetInserter;
 
 // TODO use direct iterators for these? (or simply lists for now?)
 PyObject*
