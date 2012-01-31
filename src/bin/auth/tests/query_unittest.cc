@@ -57,6 +57,9 @@ const char* const zone_ns_txt =
     "example.com. 3600 IN NS glue.delegation.example.com.\n"
     "example.com. 3600 IN NS noglue.example.com.\n"
     "example.com. 3600 IN NS example.net.\n";
+const char* const zone_ds_txt =
+    "example.com. 3600 IN DS 57855 5 1 "
+        "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
 const char* const ns_addrs_txt =
     "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
     "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n"
@@ -66,6 +69,10 @@ const char* const delegation_txt =
     "delegation.example.com. 3600 IN NS noglue.example.com.\n"
     "delegation.example.com. 3600 IN NS cname.example.com.\n"
     "delegation.example.com. 3600 IN NS example.org.\n";
+// Borrowed from the RFC4035
+const char* const delegation_ds_txt =
+    "delegation.example.com. 3600 IN DS 57855 5 1 "
+        "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
 const char* const mx_txt =
     "mx.example.com. 3600 IN MX 10 www.example.com.\n"
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
@@ -223,9 +230,11 @@ public:
         nsec_name_(origin_)
     {
         stringstream zone_stream;
-        zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
+        zone_stream << soa_txt << zone_ns_txt << zone_ds_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
             cname_nxdom_txt << cname_out_txt << dname_txt <<
+            delegation_txt << delegation_ds_txt << mx_txt << www_a_txt <<
+            cname_txt << cname_nxdom_txt << cname_out_txt << dname_txt <<
             dname_a_txt << other_zone_rrs << no_txt << nz_txt <<
             nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
             nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt <<
@@ -1623,6 +1632,40 @@ TEST_F(QueryTest, findNSEC3) {
                mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
     nsec3Check(false, 4, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
+}
+
+// TODO: Check the additional/authority sections are correct. The first one
+// probably misses some of the RRSigs anyway, they need to be added.
+
+// This tests that the DS is returned above the delegation point as
+// an authoritative answer, not a delegation. This is as described in
+// RFC 4035, section 3.1.4.1.
+TEST_F(QueryTest, dsAboveDelegation) {
+    EXPECT_NO_THROW(Query(memory_client, Name("delegation.example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 2,
+                  delegation_ds_txt,
+                  zone_ns_txt,
+                  "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
+                  "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n");
+}
+
+// This one checks a DS record at the apex is not returned even if it exists,
+// as it is authoritative above the delegation and does not exist below it,
+// as described in RFC 4035, section 3.1.4.1. The example is inspired by the
+// B.8. example from the RFC.
+TEST_F(QueryTest, dsBelowDelegation) {
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec_www_txt) + "\n" +
+                   string("www.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
 }
 
 // The following are tentative tests until we really add tests for the
