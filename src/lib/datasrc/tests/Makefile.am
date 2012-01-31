@@ -110,6 +110,8 @@ endif
 EXTRA_DIST =  testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.signed
 EXTRA_DIST += testdata/example.org
+EXTRA_DIST += testdata/example.org.nsec3-signed
+EXTRA_DIST += testdata/example.org.nsec3-signed-noparam
 EXTRA_DIST += testdata/example.org.sqlite3
 EXTRA_DIST += testdata/example2.com
 EXTRA_DIST += testdata/example2.com.sqlite3
