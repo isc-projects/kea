@@ -55,8 +55,8 @@ NSEC3Hash_init(PyObject* po_self, PyObject* args, PyObject*) {
         if (PyArg_ParseTuple(args, "O", &po_rdata)) {
             if (!PyRdata_Check(po_rdata)) {
                 PyErr_Format(PyExc_TypeError,
-                             "param must be an Rdata of type NSEC3/NSEC3HASH, "
-                             "not %.200s", po_rdata->ob_type->tp_name);
+                             "param must be an Rdata of type NSEC3/NSEC3PARAM,"
+                             " not %.200s", po_rdata->ob_type->tp_name);
                 return (-1);
             }
             const Rdata& rdata = PyRdata_ToRdata(po_rdata);
@@ -138,13 +138,25 @@ NSEC3Hash_match(PyObject* po_self, PyObject* args) {
         if (PyArg_ParseTuple(args, "O", &po_rdata)) {
             if (!PyRdata_Check(po_rdata)) {
                 PyErr_Format(PyExc_TypeError,
-                             "param must be an Rdata of type NSEC3, "
-                             "not %.200s", po_rdata->ob_type->tp_name);
+                             "param must be an Rdata of type NSEC3/NSEC3PARAM,"
+                             " not %.200s", po_rdata->ob_type->tp_name);
                 return (NULL);
             }
-            const bool matched = self->cppobj->match(
-                dynamic_cast<const generic::NSEC3&>(
-                    PyRdata_ToRdata(po_rdata)));
+            const Rdata& rdata = PyRdata_ToRdata(po_rdata);
+            const generic::NSEC3PARAM* nsec3param =
+                dynamic_cast<const generic::NSEC3PARAM*>(&rdata);
+            const generic::NSEC3* nsec3 =
+                dynamic_cast<const generic::NSEC3*>(&rdata);
+            bool matched;
+            if (nsec3param != NULL) {
+                matched = self->cppobj->match(*nsec3param);
+            } else if (nsec3 != NULL) {
+                matched = self->cppobj->match(*nsec3);
+            } else {
+                PyErr_Format(PyExc_TypeError,
+                             "param must be an Rdata of type NSEC3/NSEC3HASH");
+                return (NULL);
+            }
             PyObject* ret = matched ? Py_True : Py_False;
             Py_INCREF(ret);
             return (ret);

@@ -100,37 +100,45 @@ TEST_F(NSEC3HashTest, calculate) {
               ->calculate(Name("example.org")));
 }
 
-// Common checks for match against NSEC3 parameters
+// Common checks for match cases
+template <typename RDATAType>
 void
-matchWithNSEC3Check(NSEC3Hash& hash) {
+matchCheck(NSEC3Hash& hash, const string& postfix) {
     // If all parameters match, it's considered to be matched.
-    EXPECT_TRUE(hash.match(generic::NSEC3("1 0 12 aabbccdd " +
-                                          string(nsec3_common))));
+    EXPECT_TRUE(hash.match(RDATAType("1 0 12 aabbccdd" + postfix)));
+
     // Algorithm doesn't match
-    EXPECT_FALSE(hash.match(generic::NSEC3("2 0 12 aabbccdd " +
-                                           string(nsec3_common))));
+    EXPECT_FALSE(hash.match(RDATAType("2 0 12 aabbccdd" + postfix)));
     // Iterations doesn't match
-    EXPECT_FALSE(hash.match(generic::NSEC3("1 0 1 aabbccdd " +
-                                           string(nsec3_common))));
+    EXPECT_FALSE(hash.match(RDATAType("1 0 1 aabbccdd" + postfix)));
     // Salt doesn't match
-    EXPECT_FALSE(hash.match(generic::NSEC3("1 0 12 aabbccde " +
-                                           string(nsec3_common))));
+    EXPECT_FALSE(hash.match(RDATAType("1 0 12 aabbccde" + postfix)));
     // Salt doesn't match: the other has an empty salt
-    EXPECT_FALSE(hash.match(generic::NSEC3("1 0 12 - " +
-                                           string(nsec3_common))));
+    EXPECT_FALSE(hash.match(RDATAType("1 0 12 -" + postfix)));
     // Flags doesn't matter
-    EXPECT_TRUE(hash.match(generic::NSEC3("1 1 12 aabbccdd " +
-                                          string(nsec3_common))));
+    EXPECT_TRUE(hash.match(RDATAType("1 1 12 aabbccdd" + postfix)));
 }
 
 TEST_F(NSEC3HashTest, matchWithNSEC3) {
     {
         SCOPED_TRACE("match NSEC3PARAM based hash against NSEC3 parameters");
-        matchWithNSEC3Check(*test_hash);
+        matchCheck<generic::NSEC3>(*test_hash, " " + string(nsec3_common));
     }
     {
         SCOPED_TRACE("match NSEC3 based hash against NSEC3 parameters");
-        matchWithNSEC3Check(*test_hash_nsec3);
+        matchCheck<generic::NSEC3>(*test_hash_nsec3,
+                                   " " + string(nsec3_common));
+    }
+}
+
+TEST_F(NSEC3HashTest, matchWithNSEC3PARAM) {
+    {
+        SCOPED_TRACE("match NSEC3PARAM based hash against NSEC3 parameters");
+        matchCheck<generic::NSEC3PARAM>(*test_hash, "");
+    }
+    {
+        SCOPED_TRACE("match NSEC3 based hash against NSEC3 parameters");
+        matchCheck<generic::NSEC3PARAM>(*test_hash_nsec3, "");
     }
 }
 

@@ -146,6 +146,12 @@ public:
     /// \return true If the given parameters match the local ones; false
     /// otherwise.
     virtual bool match(const rdata::generic::NSEC3& nsec3) const = 0;
+
+    /// \brief Match given NSEC3PARAM parameters with that of the hash.
+    ///
+    /// This is similar to the other version, but extracts the parameters
+    /// to compare from an NSEC3PARAM RDATA object.
+    virtual bool match(const rdata::generic::NSEC3PARAM& nsec3param) const = 0;
 };
 
 }
