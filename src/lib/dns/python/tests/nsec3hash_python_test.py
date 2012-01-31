@@ -88,42 +88,40 @@ class NSEC3HashTest(unittest.TestCase):
         self.assertRaises(TypeError, self.test_hash.calculate)
         self.assertRaises(TypeError, self.test_hash.calculate, Name("."), 1)
 
-    def check_match_with_nsec3(self, hash):
+    def check_match(self, hash, rrtype, postfix):
         # If all parameters match, it's considered to be matched.
-        self.assertTrue(hash.match(Rdata(RRType.NSEC3(), RRClass.IN(),
-                                         "1 0 12 aabbccdd " +
-                                         self.nsec3_common)))
+        self.assertTrue(hash.match(Rdata(rrtype, RRClass.IN(),
+                                         "1 0 12 aabbccdd" + postfix)))
         # Algorithm doesn't match
-        self.assertFalse(hash.match(Rdata(RRType.NSEC3(), RRClass.IN(),
-                                          "2 0 12 aabbccdd " +
-                                          self.nsec3_common)))
+        self.assertFalse(hash.match(Rdata(rrtype, RRClass.IN(),
+                                          "2 0 12 aabbccdd" + postfix)))
         # Iterations doesn't match
-        self.assertFalse(hash.match(Rdata(RRType.NSEC3(), RRClass.IN(),
-                                          "1 0 1 aabbccdd " +
-                                          self.nsec3_common)))
+        self.assertFalse(hash.match(Rdata(rrtype, RRClass.IN(),
+                                          "1 0 1 aabbccdd" + postfix)))
         # Salt doesn't match
-        self.assertFalse(hash.match(Rdata(RRType.NSEC3(), RRClass.IN(),
-                                          "1 0 12 aabbccde " +
-                                          self.nsec3_common)))
+        self.assertFalse(hash.match(Rdata(rrtype, RRClass.IN(),
+                                          "1 0 12 aabbccde" + postfix)))
         # Salt doesn't match: the other has an empty salt
-        self.assertFalse(hash.match(Rdata(RRType.NSEC3(), RRClass.IN(),
-                                          "1 0 12 - " + self.nsec3_common)))
+        self.assertFalse(hash.match(Rdata(rrtype, RRClass.IN(),
+                                          "1 0 12 -" + postfix)))
         # Flags doesn't matter
-        self.assertTrue(hash.match(Rdata(RRType.NSEC3(), RRClass.IN(),
-                                         "1 1 12 aabbccdd " +
-                                         self.nsec3_common)))
+        self.assertTrue(hash.match(Rdata(rrtype, RRClass.IN(),
+                                         "1 1 12 aabbccdd" + postfix)))
 
-    def test_match_with_nsec3(self):
-        self.check_match_with_nsec3(self.test_hash)
-        self.check_match_with_nsec3(self.test_hash_nsec3)
+    def test_match(self):
+        self.check_match(self.test_hash, RRType.NSEC3(),
+                         " " + self.nsec3_common)
+        self.check_match(self.test_hash_nsec3, RRType.NSEC3(),
+                         " " + self.nsec3_common)
+        self.check_match(self.test_hash, RRType.NSEC3PARAM(), "")
+        self.check_match(self.test_hash_nsec3, RRType.NSEC3PARAM(), "")
 
         # bad parameter checks
         self.assertRaises(TypeError, self.test_hash.match, 1)
         self.assertRaises(TypeError, self.test_hash.match,
                           Rdata(RRType.NSEC3(), RRClass.IN(),
                                 "1 0 12 aabbccdd " + self.nsec3_common), 1)
-        # this would result in bad_cast
-        self.assertRaises(IscException, self.test_hash.match,
+        self.assertRaises(TypeError, self.test_hash.match,
                           Rdata(RRType.A(), RRClass.IN(), "192.0.2.1"))
 
 if __name__ == '__main__':

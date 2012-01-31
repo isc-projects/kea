@@ -45,12 +45,12 @@ Return Value(s): Base32hex-encoded string of the hash value.\n\
 ";
 
 const char* const NSEC3Hash_match_doc = "\
-match(nsec3) -> bool\n                   \
+match(rdata) -> bool\n                   \
 \n\
-Match given NSEC3 parameters with that of the hash.\n\
+Match given NSEC3 or NSEC3PARAM parameters with that of the hash.\n\
 \n\
 This method compares NSEC3 parameters used for hash calculation in the\n\
-object with those in the given NSEC3 RDATA, and return true iff they\n\
+object with those in the given RDATA, and return true iff they\n\
 completely match. In the current implementation only the algorithm,\n\
 iterations and salt are compared; the flags are ignored (as they don't\n\
 affect hash calculation per RFC5155).\n\
@@ -59,8 +59,8 @@ Exceptions:\n\
   None\n\
 \n\
 Parameters:\n\
-  nsec3      An NSEC3 RDATA object whose hash parameters are to be\n\
-             matched\n\
+  rdata      An NSEC3 or NSEC3PARAM Rdata object whose hash parameters\n\
+             are to be matched\n\
 \n\
 Return Value(s): true If the given parameters match the local ones;\n\
 false otherwise.\n\

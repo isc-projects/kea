@@ -71,6 +71,9 @@ public:
     virtual std::string calculate(const Name& name) const;
 
     virtual bool match(const generic::NSEC3& nsec3) const;
+    virtual bool match(const generic::NSEC3PARAM& nsec3param) const;
+    bool match(uint8_t algorithm, uint16_t iterations,
+               const vector<uint8_t>& salt) const;
 
 private:
     const uint8_t algorithm_;
@@ -120,12 +123,24 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
 }
 
 bool
+NSEC3HashRFC5155::match(uint8_t algorithm, uint16_t iterations,
+                        const vector<uint8_t>& salt) const
+{
+    return (algorithm_ == algorithm && iterations_ == iterations &&
+            salt_.size() == salt.size() &&
+            (salt_.empty() || memcmp(&salt_[0], &salt[0], salt_.size()) == 0));
+}
+
+bool
 NSEC3HashRFC5155::match(const generic::NSEC3& nsec3) const {
-    return (algorithm_ == nsec3.getHashalg() &&
-            iterations_ == nsec3.getIterations() &&
-            salt_.size() == nsec3.getSalt().size() &&
-            (salt_.empty() ||
-             memcmp(&salt_[0], &nsec3.getSalt()[0], salt_.size()) == 0));
+    return (match(nsec3.getHashalg(), nsec3.getIterations(),
+                  nsec3.getSalt()));
+}
+
+bool
+NSEC3HashRFC5155::match(const generic::NSEC3PARAM& nsec3param) const {
+    return (match(nsec3param.getHashalg(), nsec3param.getIterations(),
+                  nsec3param.getSalt()));
 }
 } // end of unnamed namespace
 
