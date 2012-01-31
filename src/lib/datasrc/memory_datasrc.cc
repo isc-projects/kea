@@ -917,11 +917,27 @@ InMemoryZoneFinder::load(const string& filename) {
         arg(filename);
     // Load it into temporary zone data
     scoped_ptr<ZoneData> tmp(new ZoneData);
+
+    // Create the new origin node
+    DomainNode* origin_data;
+    tmp->domains_.insert(getOrigin(), &origin_data);
+    DomainPtr origin_domain(new Domain);
+    origin_data->setData(origin_domain);
+
     masterLoad(filename.c_str(), getOrigin(), getClass(),
                boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
                            _1, tmp.get()));
+
+    // If the zone is NSEC3-signed, check if it has NSEC3PARAM
+    if (tmp->nsec3_data_ &&
+        origin_domain->find(RRType::NSEC3PARAM()) == origin_domain->end()) {
+        LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
+            arg(getOrigin()).arg(getClass());
+    }
+
     // If it went well, put it inside
     impl_->file_name_ = filename;
+    impl_->origin_data_ = origin_data;
     tmp.swap(impl_->zone_data_);
     // And let the old data die with tmp
 }

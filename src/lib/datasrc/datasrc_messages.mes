@@ -342,6 +342,14 @@ Debug information. The content of master file is being loaded into the memory.
 % DATASRC_MEM_NOT_FOUND requested domain '%1' not found
 Debug information. The requested domain does not exist.
 
+% DATASRC_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2
+The in-memory data source has loaded a zone signed with NSEC3 RRs,
+but it doesn't have a NSEC3PARAM RR at the zone origin.  It's likely that
+the zone is somehow broken, but this RR is not necessarily needed for
+handling lookups with NSEC3 in this data source, so it accepts the given
+content of the zone.  Nevertheless the administrator should look into
+the integrity of the zone data.
+
 % DATASRC_MEM_NS_ENCOUNTERED encountered a NS
 Debug information. While searching for the requested domain, a NS was
 encountered on the way (a delegation). This may lead to stop of the search.
