@@ -190,7 +190,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 isc_throw(AddError, "CNAME can't be added with other data for "
                           << rrset->getName());
             }
-        } else if (domain->find(RRType::CNAME()) != domain->end()) {
+        } else if (rrset->getType() != RRType::NSEC() &&
+                   domain->find(RRType::CNAME()) != domain->end()) {
             LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset->getName());
             isc_throw(AddError, "CNAME and " << rrset->getType() <<
                       " can't coexist for " << rrset->getName());
