@@ -386,11 +386,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // otherwise check parameter consistency.
         if (!zone_data.nsec3_data_) {
             zone_data.nsec3_data_.reset(new ZoneData::NSEC3Data(nsec3_rdata));
-        } else {
-            if (!zone_data.nsec3_data_->hash_->match(nsec3_rdata)) {
-                isc_throw(AddError, "NSEC3 with inconsistent parameters: " <<
-                          rrset->toText());
-            }
+        } else if (!zone_data.nsec3_data_->hash_->match(nsec3_rdata)) {
+            isc_throw(AddError, "NSEC3 with inconsistent parameters: " <<
+                      rrset->toText());
         }
 
         string fst_label = rrset->getName().split(0, 1).toText(true);
@@ -477,17 +475,22 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 node->setFlag(DomainNode::FLAG_CALLBACK);
             }
 
-            // If we've added NSEC3PARAM and the zone isn't yet NSEC3-ready
-            // set it up (note: this part doesn't ensure strong exception
-            // guarantee)
-            if (rrset->getType() == RRType::NSEC3PARAM() &&
-                !zone_data.nsec3_data_) {
-                zone_data.nsec3_data_.reset(
-                    new ZoneData::NSEC3Data(
-                        dynamic_cast<const generic::NSEC3PARAM&>(
-                            rrset->getRdataIterator()->getCurrent())));
-            }
+            // If we've added NSEC3PARAM, set up NSEC3 specific data or check
+            // consistency with already set up parameters.
+            if (rrset->getType() == RRType::NSEC3PARAM()) {
+                // We know rrset has exactly one RDATA
+                const generic::NSEC3PARAM& param =
+                    dynamic_cast<const generic::NSEC3PARAM&>(
+                        rrset->getRdataIterator()->getCurrent());
 
+                if (!zone_data.nsec3_data_) {
+                    zone_data.nsec3_data_.reset(
+                        new ZoneData::NSEC3Data(param));
+                } else if (!zone_data.nsec3_data_->hash_->match(param)) {
+                    isc_throw(AddError, "NSEC3PARAM with inconsistent "
+                              "parameters: " << rrset->toText());
+                }
+            }
             return (result::SUCCESS);
         } else {
             // The RRSet of given type was already there
