@@ -104,7 +104,7 @@ class NSEC3HashTest(unittest.TestCase):
         # Salt doesn't match: the other has an empty salt
         self.assertFalse(hash.match(Rdata(rrtype, RRClass.IN(),
                                           "1 0 12 -" + postfix)))
-        # Flags doesn't matter
+        # Flag doesn't matter
         self.assertTrue(hash.match(Rdata(rrtype, RRClass.IN(),
                                          "1 1 12 aabbccdd" + postfix)))
 
