@@ -401,6 +401,8 @@ public:
      * \param check_answer Should a check against equality of the answer be
      *     done?
      * \param answer The expected rrset, if any should be returned.
+     * \param expected_flags The expected result flags returned via find().
+     *     These can be tested using isWildcard() etc.
      * \param zone_finder Check different InMemoryZoneFinder object than
      *     zone_finder_ (if NULL, uses zone_finder_)
      * \param check_wild_answer Checks that the answer has the same RRs, type
@@ -425,8 +427,7 @@ public:
         // we can't assign to FindResult
         EXPECT_NO_THROW({
                 ZoneFinder::FindResult find_result(zone_finder->find(
-                                                       name, rrtype,
-                                                       options));
+                                                       name, rrtype, options));
                 // Check it returns correct answers
                 EXPECT_EQ(result, find_result.code);
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
@@ -436,35 +437,28 @@ public:
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
                           != 0, find_result.isNSEC3Signed());
                 if (check_answer) {
-                    EXPECT_EQ(answer, find_result.rrset);
+                    if (!answer) {
+                        ASSERT_FALSE(find_result.rrset);
+                    } else {
+                        ASSERT_TRUE(find_result.rrset);
+                        rrsetCheck(answer, find_result.rrset);
+                    }
                 } else if (check_wild_answer) {
                     ASSERT_NE(ConstRRsetPtr(), answer) <<
                         "Wrong test, don't check for wild names if you expect "
                         "empty answer";
                     ASSERT_NE(ConstRRsetPtr(), find_result.rrset) <<
                         "No answer found";
+                    // Build the expected answer using the given name and
+                    // other parameter of the base wildcard RRset.
+                    RRsetPtr wildanswer(new RRset(name, answer->getClass(),
+                                                  answer->getType(),
+                                                  answer->getTTL()));
                     RdataIteratorPtr expectedIt(answer->getRdataIterator());
-                    RdataIteratorPtr actualIt(
-                        find_result.rrset->getRdataIterator());
-                    while (!expectedIt->isLast() && !actualIt->isLast()) {
-                        EXPECT_EQ(0, expectedIt->getCurrent().compare(
-                            actualIt->getCurrent())) << "The RRs differ ('" <<
-                            expectedIt->getCurrent().toText() << "', '" <<
-                            actualIt->getCurrent().toText() << "')";
-                        expectedIt->next();
-                        actualIt->next();
+                    for (; !expectedIt->isLast(); expectedIt->next()) {
+                        wildanswer->addRdata(expectedIt->getCurrent());
                     }
-                    EXPECT_TRUE(expectedIt->isLast()) <<
-                        "Result has less RRs than expected";
-                    EXPECT_TRUE(actualIt->isLast()) <<
-                        "Result has more RRs than expected";
-                    EXPECT_EQ(answer->getClass(),
-                        find_result.rrset->getClass());
-                    EXPECT_EQ(answer->getType(),
-                        find_result.rrset->getType());
-                    EXPECT_EQ(answer->getTTL(),
-                        find_result.rrset->getTTL());
-                    EXPECT_EQ(name, find_result.rrset->getName());
+                    rrsetCheck(wildanswer, find_result.rrset);
                 }
             });
     }
