@@ -71,6 +71,32 @@ private:
     ///
     void addSOA(isc::datasrc::ZoneFinder& finder);
 
+    /// \brief Adds the DS rrset for the given name, if available
+    ///
+    /// This is intended to be called when returning a delegation, and
+    /// if DNSSEC data is requested. If the DS record is not found
+    /// (signaled by find() returning NXRRSET), and the zone is signed
+    /// with NSEC, an NSEC denial of existence proof is added.
+    ///
+    /// \exception BadDS raised if find() returns anything other than
+    ///                  SUCCESS or NXRRSET when searching for the DS
+    ///                  record.
+    /// \param finder The ZoneFinder where the delegation was found
+    /// \param ds_name The name of the delegation RRset
+    void addDS(isc::datasrc::ZoneFinder& finder,
+               const isc::dns::Name& ds_name);
+
+    /// \brief Adds NSEC denial proof for the given NXRRset result
+    ///
+    /// NSEC records, if available (signaled by isNSECSigned(), are added
+    /// to the authority section.
+    ///
+    /// \param finder The ZoneFinder that was used to search for the missing
+    ///               data
+    /// \param db_result The ZoneFinder::FindResult returned by find()
+    void addNXRRsetProof(isc::datasrc::ZoneFinder& finder,
+        const isc::datasrc::ZoneFinder::FindResult& db_result);
+
     /// Add NSEC RRs that prove an NXDOMAIN result.
     ///
     /// This corresponds to Section 3.1.3.2 of RFC 4035.
@@ -235,11 +261,23 @@ public:
 
     /// An invalid result is given when a valid NSEC is expected
     ///
-    // This can only happen when the underlying data source implementation or
+    /// This can only happen when the underlying data source implementation or
     /// the zone is broken.  By throwing an exception we treat such cases
     /// as SERVFAIL.
     struct BadNSEC : public BadZone {
         BadNSEC(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
+    /// An invalid result is given when a valid DS records (or NXRRSET) is
+    /// expected
+    ///
+    /// This can only happen when the underlying data source implementation
+    /// or the zone is broken. A DS query for a known delegation point should
+    /// either result in SUCCESS (if available) or NXRRSET
+    struct BadDS : public BadZone {
+        BadDS(const char* file, size_t line, const char* what) :
             BadZone(file, line, what)
         {}
     };
