@@ -320,6 +320,8 @@ public:
              &rr_child_dname_},
             {"example.com. 300 IN A 192.0.2.10", &rr_out_},
             {"*.wild.example.org. 300 IN A 192.0.2.1", &rr_wild_},
+            {"*.cnamewild.example.org. 300 IN CNAME canonial.example.org.",
+             &rr_cnamewild_},
             {"foo.wild.example.org. 300 IN A 192.0.2.3", &rr_under_wild_},
             {"wild.*.foo.example.org. 300 IN A 192.0.2.1", &rr_emptywild_},
             {"wild.*.foo.*.bar.example.org. 300 IN A 192.0.2.1",
@@ -379,7 +381,8 @@ public:
     RRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
     RRsetPtr rr_grandchild_glue_; // glue RR below a deeper zone cut
     RRsetPtr rr_child_dname_; // A DNAME under NS
-    RRsetPtr rr_wild_;
+    RRsetPtr rr_wild_;        // Wildcard record
+    RRsetPtr rr_cnamewild_;     // CNAME at a wildcard
     RRsetPtr rr_emptywild_;
     RRsetPtr rr_nested_emptywild_;
     RRsetPtr rr_nswild_, rr_dnamewild_;
@@ -465,14 +468,12 @@ public:
     /**
      * \brief Calls the findAll on the finder and checks the result.
      */
-    std::vector<ConstRRsetPtr> findAllTest(const Name& name,
-                                           ZoneFinder::Result result,
-                                           size_t expected_size,
-                                           InMemoryZoneFinder* finder = NULL,
-                                           const ConstRRsetPtr &rrset_result =
-                                           ConstRRsetPtr(),
-                                           ZoneFinder::FindOptions options =
-                                           ZoneFinder::FIND_DEFAULT)
+    void findAllTest(const Name& name, ZoneFinder::Result result,
+                     const vector<ConstRRsetPtr>& expected_rrsets,
+                     InMemoryZoneFinder* finder = NULL,
+                     const ConstRRsetPtr &rrset_result = ConstRRsetPtr(),
+                     ZoneFinder::FindOptions options =
+                     ZoneFinder::FIND_DEFAULT)
     {
         if (finder == NULL) {
             finder = &zone_finder_;
@@ -482,11 +483,8 @@ public:
                                                           options));
         EXPECT_EQ(result, findResult.code);
         EXPECT_EQ(rrset_result, findResult.rrset);
-        BOOST_FOREACH(const ConstRRsetPtr& rrset, target) {
-            EXPECT_EQ(name, rrset->getName());
-        }
-        EXPECT_EQ(expected_size, target.size());
-        return (target);
+        rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
+                    target.begin(), target.end());
     }
     // Internal part of the cancelWildcard test that is multiple times
     void doCancelWildcardTest();
@@ -716,20 +714,20 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_glue_)));
 
+    vector<ConstRRsetPtr> expected_sets;
+
     // origin
-    std::vector<ConstRRsetPtr> rrsets(findAllTest(origin_, ZoneFinder::SUCCESS,
-                                                  2));
-    EXPECT_FALSE(rrsets.end() == std::find(rrsets.begin(), rrsets.end(),
-                                           rr_a_));
-    EXPECT_FALSE(rrsets.end() == std::find(rrsets.begin(), rrsets.end(),
-                                           rr_ns_));
+    expected_sets.push_back(rr_a_);
+    expected_sets.push_back(rr_ns_);
+    findAllTest(origin_, ZoneFinder::SUCCESS, expected_sets);
 
     // out zone name
-    findAllTest(Name("example.com"), ZoneFinder::NXDOMAIN, 0);
+    findAllTest(Name("example.com"), ZoneFinder::NXDOMAIN,
+                vector<ConstRRsetPtr>());
 
-    rrsets = findAllTest(rr_child_glue_->getName(), ZoneFinder::SUCCESS, 1);
-    EXPECT_FALSE(rrsets.end() == std::find(rrsets.begin(), rrsets.end(),
-                                           rr_child_glue_));
+    expected_sets.clear();
+    expected_sets.push_back(rr_child_glue_);
+    findAllTest(rr_child_glue_->getName(), ZoneFinder::SUCCESS, expected_sets);
 
     // TODO: test NXRRSET case after rbtree non-terminal logic has
     // been implemented
@@ -738,12 +736,12 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ns_)));
 
     // zone cut
-    findAllTest(rr_child_ns_->getName(), ZoneFinder::DELEGATION, 0, NULL,
-                rr_child_ns_);
+    findAllTest(rr_child_ns_->getName(), ZoneFinder::DELEGATION,
+                vector<ConstRRsetPtr>(), NULL, rr_child_ns_);
 
     // glue for this zone cut
-    findAllTest(rr_child_glue_->getName(),ZoneFinder::DELEGATION, 0, NULL,
-                rr_child_ns_);
+    findAllTest(rr_child_glue_->getName(),ZoneFinder::DELEGATION,
+                vector<ConstRRsetPtr>(), NULL, rr_child_ns_);
 }
 
 TEST_F(InMemoryZoneFinderTest, glue) {
@@ -897,11 +895,12 @@ TEST_F(InMemoryZoneFinderTest, wildcard) {
     /*
      *            example.org.
      *                 |
-     *                wild (not *.wild, should have wild mark)
+     *             [cname]wild (not *.wild, should have wild mark)
      *                 |
      *                 *
      */
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cnamewild_));
 
     // Search at the parent. The parent will not have the A, but it will
     // be in the wildcard (so check the wildcard isn't matched at the parent)
@@ -926,6 +925,15 @@ TEST_F(InMemoryZoneFinderTest, wildcard) {
         findTest(Name("a.wild.example.org"), RRType::AAAA(),
                  ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
                  ZoneFinder::RESULT_WILDCARD);
+    }
+
+    // Search name that has CNAME.
+    {
+        SCOPED_TRACE("Matching CNAME");
+        findTest(Name("a.cnamewild.example.org"), RRType::A(),
+                 ZoneFinder::CNAME, false, rr_cnamewild_,
+                 ZoneFinder::RESULT_WILDCARD, NULL, ZoneFinder::FIND_DEFAULT,
+                 true);
     }
 
     // Search another created name, this time little bit lower
@@ -974,25 +982,27 @@ TEST_F(InMemoryZoneFinderTest, delegatedWildcard) {
 TEST_F(InMemoryZoneFinderTest, anyWildcard) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
 
+    vector<ConstRRsetPtr> expected_sets;
+
     // First try directly the name (normal match)
     {
         SCOPED_TRACE("Asking direcly for *");
-        const std::vector<ConstRRsetPtr>
-            target(findAllTest(Name("*.wild.example.org"), ZoneFinder::SUCCESS,
-                               1));
-        ASSERT_EQ(1, target.size());
-        EXPECT_EQ(RRType::A(), (*target.begin())->getType());
-        EXPECT_EQ(Name("*.wild.example.org"), (*target.begin())->getName());
+        expected_sets.push_back(rr_wild_);
+        findAllTest(Name("*.wild.example.org"), ZoneFinder::SUCCESS,
+                    expected_sets);
     }
 
     // Then a wildcard match
     {
         SCOPED_TRACE("Asking in the wild way");
-        const std::vector<ConstRRsetPtr>
-            target(findAllTest(Name("a.wild.example.org"), ZoneFinder::SUCCESS,
-                               1));
-        EXPECT_EQ(RRType::A(), (*target.begin())->getType());
-        EXPECT_EQ(Name("a.wild.example.org"), (*target.begin())->getName());
+        expected_sets.clear();
+        RRsetPtr expected(new RRset(Name("a.wild.example.org"),
+                                    rr_wild_->getClass(), rr_wild_->getType(),
+                                    rr_wild_->getTTL()));
+        expected->addRdata(rr_wild_->getRdataIterator()->getCurrent());
+        expected_sets.push_back(expected);
+        findAllTest(Name("a.wild.example.org"), ZoneFinder::SUCCESS,
+                    expected_sets);
     }
 }
 
@@ -1023,9 +1033,11 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
 
     {
         SCOPED_TRACE("Asking for ANY record");
-        findAllTest(Name("*.foo.example.org"), ZoneFinder::NXRRSET, 0);
+        findAllTest(Name("*.foo.example.org"), ZoneFinder::NXRRSET,
+                    vector<ConstRRsetPtr>());
 
-        findAllTest(Name("a.foo.example.org"), ZoneFinder::NXRRSET, 0);
+        findAllTest(Name("a.foo.example.org"), ZoneFinder::NXRRSET,
+                    vector<ConstRRsetPtr>());
     }
 
     {
@@ -1087,7 +1099,8 @@ TEST_F(InMemoryZoneFinderTest, nestedEmptyWildcard) {
         for (const char** name = names; *name != NULL; ++ name) {
             SCOPED_TRACE(string("Node ") + *name);
 
-            findAllTest(Name(*name), ZoneFinder::NXRRSET, 0);
+            findAllTest(Name(*name), ZoneFinder::NXRRSET,
+                        vector<ConstRRsetPtr>());
         }
     }
 }
