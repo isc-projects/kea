@@ -55,13 +55,24 @@ NSEC3Hash_init(PyObject* po_self, PyObject* args, PyObject*) {
         if (PyArg_ParseTuple(args, "O", &po_rdata)) {
             if (!PyRdata_Check(po_rdata)) {
                 PyErr_Format(PyExc_TypeError,
-                             "param must be an Rdata of type NSEC3HASH, "
+                             "param must be an Rdata of type NSEC3/NSEC3HASH, "
                              "not %.200s", po_rdata->ob_type->tp_name);
                 return (-1);
             }
-            self->cppobj = NSEC3Hash::create(
-                dynamic_cast<const generic::NSEC3PARAM&>(
-                    PyRdata_ToRdata(po_rdata)));
+            const Rdata& rdata = PyRdata_ToRdata(po_rdata);
+            const generic::NSEC3PARAM* nsec3param =
+                dynamic_cast<const generic::NSEC3PARAM*>(&rdata);
+            const generic::NSEC3* nsec3 =
+                dynamic_cast<const generic::NSEC3*>(&rdata);
+            if (nsec3param != NULL) {
+                self->cppobj = NSEC3Hash::create(*nsec3param);
+            } else if (nsec3 != NULL) {
+                self->cppobj = NSEC3Hash::create(*nsec3);
+            } else {
+                PyErr_Format(PyExc_TypeError,
+                             "param must be an Rdata of type NSEC3/NSEC3HASH");
+                return (-1);
+            }
             return (0);
         }
     } catch (const UnknownNSEC3HashAlgorithm& ex) {
