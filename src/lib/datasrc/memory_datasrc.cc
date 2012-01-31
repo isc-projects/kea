@@ -626,6 +626,16 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    FindResult createFindResult(Result code, ConstRRsetPtr rrset,
+                                bool wild) const
+    {
+        FindResultFlags flags = RESULT_DEFAULT;
+        if (wild) {
+            flags = flags | RESULT_WILDCARD;
+        }
+        return (FindResult(code, rrset, flags));
+    }
+
     // Implementation of InMemoryZoneFinder::find
     FindResult find(const Name& name, RRType type,
                     std::vector<ConstRRsetPtr> *target,
@@ -665,13 +675,14 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
                     return (FindResult(DNAME, prepareRRset(name, state.rrset_,
-                        rename)));
+                                                           false)));
                 }
                 if (state.zonecut_node_ != NULL) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                         arg(state.rrset_->getName());
-                    return (FindResult(DELEGATION, prepareRRset(name,
-                        state.rrset_, rename)));
+                    return (FindResult(DELEGATION,
+                                       prepareRRset(name, state.rrset_,
+                                                    false)));
                 }
 
                 // If the RBTree search stopped at a node for a super domain
@@ -722,7 +733,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                                      DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                         return (FindResult(NXDOMAIN, ConstRRsetPtr()));
                     }
-                    Name wildcard(Name("*").concatenate(
+                    const Name wildcard(Name("*").concatenate(
                         node_path.getAbsoluteName()));
                     DomainTree::Result result =
                         zone_data_->domains_.find(wildcard, &node);
@@ -773,8 +784,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_EXACT_DELEGATION).arg(name);
-                return (FindResult(DELEGATION, prepareRRset(name,
-                    found->second, rename)));
+                return (FindResult(DELEGATION,
+                                   prepareRRset(name, found->second, rename)));
             }
         }
 
@@ -796,15 +807,16 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             // Good, it is here
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUCCESS).arg(name).
                 arg(type);
-            return (FindResult(SUCCESS, prepareRRset(name, found->second,
-                rename)));
+            return (createFindResult(SUCCESS, prepareRRset(name,
+                                                           found->second,
+                                                           rename), rename));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
                 return (FindResult(CNAME, prepareRRset(name, found->second,
-                    rename)));
+                                                       rename)));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
