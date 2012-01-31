@@ -415,7 +415,7 @@ PyTypeObject rrset_type = {
 };
 
 PyObject*
-createRRsetObject(const RRset& source) {
+createRRsetObject(const AbstractRRset& source) {
 
     // RRsets are noncopyable, so as a workaround we recreate a new one
     // and copy over all content
@@ -450,7 +450,7 @@ PyRRset_Check(PyObject* obj) {
     return (PyObject_TypeCheck(obj, &rrset_type));
 }
 
-RRset&
+AbstractRRset&
 PyRRset_ToRRset(PyObject* rrset_obj) {
     s_RRset* rrset = static_cast<s_RRset*>(rrset_obj);
     return (*rrset->cppobj);

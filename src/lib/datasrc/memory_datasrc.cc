@@ -286,7 +286,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // Note: there's a slight chance of getting an exception.
         // As noted in add(), we give up strong exception guarantee in such
         // cases.
-        boost::const_pointer_cast<RRset>(it->second)->addRRsig(sig_rrset);
+        boost::const_pointer_cast<AbstractRRset>(it->second)->addRRsig(sig_rrset);
 
         return (result::SUCCESS);
     }

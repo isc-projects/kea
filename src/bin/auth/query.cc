@@ -34,7 +34,7 @@ namespace isc {
 namespace auth {
 
 void
-Query::addAdditional(ZoneFinder& zone, const RRset& rrset) {
+Query::addAdditional(ZoneFinder& zone, const AbstractRRset& rrset) {
     RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         const Rdata& rdata(rdata_iterator->getCurrent());
@@ -73,7 +73,7 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
                                                     options | dnssec_opt_);
         if (a_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
-                    boost::const_pointer_cast<RRset>(a_result.rrset), dnssec_);
+                    boost::const_pointer_cast<AbstractRRset>(a_result.rrset), dnssec_);
         }
     }
 
@@ -83,7 +83,7 @@ Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
                                                        options | dnssec_opt_);
         if (aaaa_result.code == ZoneFinder::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
-                    boost::const_pointer_cast<RRset>(aaaa_result.rrset),
+                    boost::const_pointer_cast<AbstractRRset>(aaaa_result.rrset),
                     dnssec_);
         }
     }
@@ -104,7 +104,7 @@ Query::addSOA(ZoneFinder& finder) {
          * to insist.
          */
         response_.addRRset(Message::SECTION_AUTHORITY,
-            boost::const_pointer_cast<RRset>(soa_result.rrset), dnssec_);
+            boost::const_pointer_cast<AbstractRRset>(soa_result.rrset), dnssec_);
     }
 }
 
@@ -124,7 +124,7 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 
     // Add the NSEC proving NXDOMAIN to the authority section.
     response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<RRset>(nsec), dnssec_);
+                       boost::const_pointer_cast<AbstractRRset>(nsec), dnssec_);
 
     // Next, identify the best possible wildcard name that would match
     // the query name.  It's the longer common suffix with the qname
@@ -162,7 +162,7 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // for some optimized data source implementations.
     if (nsec->getName() != fresult.rrset->getName()) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(fresult.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(fresult.rrset),
                            dnssec_);
     }
 }
@@ -180,7 +180,7 @@ Query::addWildcardProof(ZoneFinder& finder) {
         isc_throw(BadNSEC, "Unexpected result for wildcard proof");
     }
     response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<RRset>(fresult.rrset),
+                       boost::const_pointer_cast<AbstractRRset>(fresult.rrset),
                        dnssec_);
 }
 
@@ -203,7 +203,7 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getName() != fresult.rrset->getName()) {
         // one NSEC RR proves wildcard_nxrrset that no matched QNAME.
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(fresult.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(fresult.rrset),
                            dnssec_);
     }
 }
@@ -214,7 +214,7 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
         finder.find(dname, RRType::DS(), dnssec_opt_);
     if (ds_result.code == ZoneFinder::SUCCESS) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(ds_result.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(ds_result.rrset),
                            dnssec_);
     } else if (ds_result.code == ZoneFinder::NXRRSET) {
         addNXRRsetProof(finder, ds_result);
@@ -230,7 +230,7 @@ Query::addNXRRsetProof(ZoneFinder& finder,
 {
     if (db_result.isNSECSigned() && db_result.rrset) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(
+                           boost::const_pointer_cast<AbstractRRset>(
                                db_result.rrset),
                            dnssec_);
         if (db_result.isWildcard()) {
@@ -251,7 +251,7 @@ Query::addAuthAdditional(ZoneFinder& finder) {
                 finder.getOrigin().toText());
     } else {
         response_.addRRset(Message::SECTION_AUTHORITY,
-            boost::const_pointer_cast<RRset>(ns_result.rrset), dnssec_);
+            boost::const_pointer_cast<AbstractRRset>(ns_result.rrset), dnssec_);
         // Handle additional for authority section
         addAdditional(finder, *ns_result.rrset);
     }
@@ -294,7 +294,7 @@ Query::process() {
         case ZoneFinder::DNAME: {
             // First, put the dname into the answer
             response_.addRRset(Message::SECTION_ANSWER,
-                boost::const_pointer_cast<RRset>(db_result.rrset),
+                boost::const_pointer_cast<AbstractRRset>(db_result.rrset),
                 dnssec_);
             /*
              * Empty DNAME should never get in, as it is impossible to
@@ -345,7 +345,7 @@ Query::process() {
              * So, just put it there.
              */
             response_.addRRset(Message::SECTION_ANSWER,
-                boost::const_pointer_cast<RRset>(db_result.rrset),
+                boost::const_pointer_cast<AbstractRRset>(db_result.rrset),
                 dnssec_);
 
             // If the answer is a result of wildcard substitution,
@@ -360,13 +360,13 @@ Query::process() {
                 // into answer section.
                 BOOST_FOREACH(ConstRRsetPtr rrset, target) {
                     response_.addRRset(Message::SECTION_ANSWER,
-                        boost::const_pointer_cast<RRset>(rrset), dnssec_);
+                        boost::const_pointer_cast<AbstractRRset>(rrset), dnssec_);
                     // Handle additional for answer section
                     addAdditional(*result.zone_finder, *rrset.get());
                 }
             } else {
                 response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(db_result.rrset),
+                    boost::const_pointer_cast<AbstractRRset>(db_result.rrset),
                     dnssec_);
                 // Handle additional for answer section
                 addAdditional(*result.zone_finder, *db_result.rrset);
@@ -391,7 +391,7 @@ Query::process() {
         case ZoneFinder::DELEGATION:
             response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
             response_.addRRset(Message::SECTION_AUTHORITY,
-                boost::const_pointer_cast<RRset>(db_result.rrset),
+                boost::const_pointer_cast<AbstractRRset>(db_result.rrset),
                 dnssec_);
             // If DNSSEC is requested, see whether there is a DS
             // record for this delegation.
