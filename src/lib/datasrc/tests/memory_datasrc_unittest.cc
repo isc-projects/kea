@@ -1478,6 +1478,34 @@ TEST_F(InMemoryZoneFinderTest, badRRsigForNSEC3) {
                  InMemoryZoneFinder::AddError);
 }
 
+TEST_F(InMemoryZoneFinderTest, paramConsistencyWithNSEC3PARAM) {
+    // First, add an NSEC3PARAM RR
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                           "1 0 12 aabbccdd")));
+    // Adding an NSEC3 that has matching parameters is okay.
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(
+                  textToRRset(string(apex_hash) + ".example.org." +
+                              string(nsec3_common))));
+    // NSEC3 with inconsistent parameter will be rejected
+    EXPECT_THROW(zone_finder_.add(
+                     textToRRset("a.example.org. 300 IN NSEC3 1 0 1 aabbccdd "
+                                 "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG")),
+                 InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, paramConsistencyWithNSEC3) {
+    // Add an NSEC3 without adding NSEC3PARAM
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(
+                  textToRRset(string(apex_hash) + ".example.org." +
+                              string(nsec3_common))));
+    // Adding an NSEC3 with inconsistent parameter will be rejected at this pt.
+    EXPECT_THROW(zone_finder_.add(
+                     textToRRset("a.example.org. 300 IN NSEC3 1 0 1 aabbccdd "
+                                 "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG")),
+                 InMemoryZoneFinder::AddError);
+}
+
 TEST_F(InMemoryZoneFinderTest, multiNSEC3PARAM) {
     // In this current implementation multiple NSEC3PARAM isn't supported.
     RRsetPtr nsec3param(new RRset(Name("example.org"), RRClass::IN(),
@@ -1488,8 +1516,7 @@ TEST_F(InMemoryZoneFinderTest, multiNSEC3PARAM) {
 }
 
 // TODO
-// - parameter consistency
 // - existence of NSEC3PARAM
-// - parameter consistency with NSEC3PARAM
-// - add NSEC3PARAM first/second
+// - add NSEC3PARAM second, check consistency
+// - add NSEC3PARAM at non origin (should be ignored)
 }
