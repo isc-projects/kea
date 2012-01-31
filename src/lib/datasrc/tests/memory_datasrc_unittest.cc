@@ -1543,6 +1543,13 @@ TEST_F(InMemoryZoneFinderTest, nonOriginNSEC3PARAM) {
                                            "1 1 1 aabbccdd")));
 }
 
-// TODO
-// - existence of NSEC3PARAM
+TEST_F(InMemoryZoneFinderTest, loadNSEC3Zone) {
+    // Check if it can load validly NSEC3-signed zone.  At this moment
+    // it's sufficient to see it doesn't crash
+    zone_finder_.load(TEST_DATA_DIR "/example.org.nsec3-signed");
+
+    // Reload the zone with a version that doesn't have NSEC3PARAM.
+    // This is an abnormal case, but the implementation accepts it.
+    zone_finder_.load(TEST_DATA_DIR "/example.org.nsec3-signed-noparam");
+}
 }
