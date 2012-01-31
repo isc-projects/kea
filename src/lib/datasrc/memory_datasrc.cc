@@ -241,7 +241,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                       << rrset->getName());
         }
         // NSEC3/NSEC3PARAM is not a "singleton" per protocol, but this
-        // implementation doesn't request it be so at the moment.
+        // implementation requests it be so at the moment.
         if ((rrset->getType() == RRType::NSEC3() ||
              rrset->getType() == RRType::NSEC3PARAM()) &&
             rrset->getRdataCount() > 1) {
@@ -386,7 +386,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             dynamic_cast<const generic::NSEC3&>(
                 rrset->getRdataIterator()->getCurrent());
 
-        // If we've not done any NSEC3 setup for the zone, do it know;
+        // If we've not done any NSEC3 setup for the zone, do it now;
         // otherwise check parameter consistency.
         if (!zone_data.nsec3_data_) {
             zone_data.nsec3_data_.reset(new ZoneData::NSEC3Data(nsec3_rdata));
