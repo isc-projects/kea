@@ -1,3 +1,10 @@
+371.	[bug]		jelte
+	The new query handling module of b10-auth (currently only used with
+	the in-memory data source) now correctly includes the DS record (or
+	the denial of its existence if NSEC is used) when returning a
+	delegation from a signed zone.
+	(Trac #1573, bd7a3ac98177573263950303d4b2ea7400781d0f)
+
 370.	[func]		jinmei
 	libdns++: a new class NSEC3Hash was introduced as a utility for
 	calculating NSEC3 hashes for various purposes.  Python binding was
