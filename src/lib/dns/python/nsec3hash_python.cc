@@ -134,7 +134,9 @@ NSEC3Hash_match(PyObject* po_self, PyObject* args) {
             const bool matched = self->cppobj->match(
                 dynamic_cast<const generic::NSEC3&>(
                     PyRdata_ToRdata(po_rdata)));
-            return (matched ? Py_True : Py_False);
+            PyObject* ret = matched ? Py_True : Py_False;
+            Py_INCREF(ret);
+            return (ret);
         }
     } catch (const exception& ex) {
         const string ex_what = "Unexpected failure in NSEC3Hash.match: " +
