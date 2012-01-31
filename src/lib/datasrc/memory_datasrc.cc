@@ -237,11 +237,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             isc_throw(AddError, "multiple RRs of singleton type for "
                       << rrset->getName());
         }
-        // NSEC3PARAM is not a "singleton" per protocol, but this
+        // NSEC3/NSEC3PARAM is not a "singleton" per protocol, but this
         // implementation doesn't request it be so at the moment.
-        if (rrset->getType() == RRType::NSEC3PARAM() &&
+        if ((rrset->getType() == RRType::NSEC3() ||
+             rrset->getType() == RRType::NSEC3PARAM()) &&
             rrset->getRdataCount() > 1) {
-            isc_throw(AddError, "Multiple NSEC3PARAM RDATA is given for "
+            isc_throw(AddError, "Multiple NSEC3/NSEC3PARAM RDATA is given for "
                       << rrset->getName() << " which isn't supported");
         }
 
@@ -289,7 +290,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
              origin_.getLabelCount() + 1)) {
             LOG_ERROR(logger, DATASRC_BAD_NSEC3_NAME).
                 arg(rrset->getName());
-            isc_throw(AddError, "Invalid NSEC3 owner name (wildcard): " <<
+            isc_throw(AddError, "Invalid NSEC3 owner name: " <<
                       rrset->getName());
         }
     }

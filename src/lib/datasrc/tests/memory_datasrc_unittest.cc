@@ -1432,6 +1432,17 @@ TEST_F(InMemoryZoneFinderTest, badNSEC3Name) {
                  InMemoryZoneFinder::AddError);
 }
 
+TEST_F(InMemoryZoneFinderTest, addMultiNSEC3) {
+    // In this current implementation multiple NSEC3 RDATA isn't supported.
+    RRsetPtr nsec3(new RRset(Name(string(apex_hash) + ".example.org"),
+                             RRClass::IN(), RRType::NSEC3(), RRTTL(300)));
+    nsec3->addRdata(
+        generic::NSEC3("1 0 12 aabbccdd 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A"));
+    nsec3->addRdata(
+        generic::NSEC3("1 1 1 ddccbbaa 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A"));
+    EXPECT_THROW(zone_finder_.add(nsec3), InMemoryZoneFinder::AddError);
+}
+
 TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
     // Adding NSEC3 and its RRSIG
     const string nsec3_text = string(apex_hash) + ".example.org." +
@@ -1521,7 +1532,6 @@ TEST_F(InMemoryZoneFinderTest, multiNSEC3PARAM) {
 }
 
 // TODO
-// - multiple NSEC3 RDATA
 // - existence of NSEC3PARAM
 // - add NSEC3PARAM at non origin (should be ignored)
 }
