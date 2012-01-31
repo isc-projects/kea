@@ -25,6 +25,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
+#include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrsetlist.h>
@@ -86,8 +87,14 @@ struct ZoneData {
 
     // The optional NSEC3 related data
     struct NSEC3Data {
-        NSEC3Map map_;          // Actual NSEC3 RRs
-        // We should also have hash parameters here (maybe hold NSEC3Hash?)
+        NSEC3Data(const generic::NSEC3PARAM& nsec3param) :
+            hash_(NSEC3Hash::create(nsec3param))
+        {}
+        NSEC3Data(const generic::NSEC3& nsec3) :
+            hash_(NSEC3Hash::create(nsec3))
+        {}
+        NSEC3Map map_;    // Actual NSEC3 RRs
+        const scoped_ptr<NSEC3Hash> hash_; // hash parameter/calculator
     };
     scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
 };
@@ -370,9 +377,22 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     }
 
     result::Result addNSEC3(const ConstRRsetPtr rrset, ZoneData& zone_data) {
+        // We know rrset has exactly one RDATA
+        const generic::NSEC3& nsec3_rdata =
+            dynamic_cast<const generic::NSEC3&>(
+                rrset->getRdataIterator()->getCurrent());
+
+        // If we've not done any NSEC3 setup for the zone, do it know;
+        // otherwise check parameter consistency.
         if (!zone_data.nsec3_data_) {
-            zone_data.nsec3_data_.reset(new ZoneData::NSEC3Data);
+            zone_data.nsec3_data_.reset(new ZoneData::NSEC3Data(nsec3_rdata));
+        } else {
+            if (!zone_data.nsec3_data_->hash_->match(nsec3_rdata)) {
+                isc_throw(AddError, "NSEC3 with inconsistent parameters: " <<
+                          rrset->toText());
+            }
         }
+
         string fst_label = rrset->getName().split(0, 1).toText(true);
         transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
                   ToUpper());
@@ -455,6 +475,17 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 // If it is DNAME, we have a callback as well here
             } else if (rrset->getType() == RRType::DNAME()) {
                 node->setFlag(DomainNode::FLAG_CALLBACK);
+            }
+
+            // If we've added NSEC3PARAM and the zone isn't yet NSEC3-ready
+            // set it up (note: this part doesn't ensure strong exception
+            // guarantee)
+            if (rrset->getType() == RRType::NSEC3PARAM() &&
+                !zone_data.nsec3_data_) {
+                zone_data.nsec3_data_.reset(
+                    new ZoneData::NSEC3Data(
+                        dynamic_cast<const generic::NSEC3PARAM&>(
+                            rrset->getRdataIterator()->getCurrent())));
             }
 
             return (result::SUCCESS);
