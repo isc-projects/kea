@@ -922,6 +922,10 @@ TEST_F(InMemoryZoneFinderTest, wildcard) {
         findTest(Name("a.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
                  false, rr_wild_, ZoneFinder::RESULT_WILDCARD, NULL,
                  ZoneFinder::FIND_DEFAULT, true);
+        // Wildcard match, but no data
+        findTest(Name("a.wild.example.org"), RRType::AAAA(),
+                 ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                 ZoneFinder::RESULT_WILDCARD);
     }
 
     // Search another created name, this time little bit lower
