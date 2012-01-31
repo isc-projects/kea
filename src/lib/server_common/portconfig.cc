@@ -64,8 +64,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                     }
                     result.push_back(AddressPair(addr->stringValue(),
                         port->intValue()));
-                }
-                catch (const TypeError&) { // Better error message
+                } catch (const TypeError&) { // Better error message
                     LOG_ERROR(logger, SRVCOMM_ADDRESS_TYPE).
                         arg(addrPair->str());
                     isc_throw(TypeError,
@@ -135,8 +134,7 @@ installListenAddresses(const AddressList& newAddresses,
         }
         setAddresses(service, newAddresses);
         addressStore = newAddresses;
-    }
-    catch (const exception& e) {
+    } catch (const SocketRequestor::NonFatalSocketError& e) {
         /*
          * If one of the addresses isn't set successfully, we will restore
          * the old addresses, the behavior is that either all address are
@@ -153,7 +151,7 @@ installListenAddresses(const AddressList& newAddresses,
         LOG_ERROR(logger, SRVCOMM_ADDRESS_FAIL).arg(e.what());
         try {
             setAddresses(service, addressStore);
-        } catch (const exception& e2) {
+        } catch (const SocketRequestor::NonFatalSocketError& e2) {
             LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2.what());
             // If we can't set the new ones, nor the old ones, at least
             // releasing everything should work. If it doesn't, there isn't
@@ -164,6 +162,16 @@ installListenAddresses(const AddressList& newAddresses,
         //Anyway the new configure has problem, we need to notify configure
         //manager the new configure doesn't work
         throw;
+    } catch (const exception& e) {
+        // Any other kind of exception is fatal. It might mean we are in
+        // inconsistent state with the boss/socket creator, so we abort
+        // to make sure it doesn't last.
+        LOG_FATAL(logger, SRVCOMM_EXCEPTION_ALLOC).arg(e.what());
+        abort();
+    } catch (...) {
+        // As the previous one, but we know even less info
+        LOG_FATAL(logger, SRVCOMM_UNKNOWN_EXCEPTION_ALLOC);
+        abort();
     }
 }
 
