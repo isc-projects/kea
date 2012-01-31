@@ -559,6 +559,18 @@ TEST_F(InMemoryZoneFinderTest, addOtherThenCNAME) {
     EXPECT_THROW(zone_finder_.add(rr_cname_), InMemoryZoneFinder::AddError);
 }
 
+TEST_F(InMemoryZoneFinderTest, addCNAMEThenDNSSECRecords) {
+    // CNAME and RRSIG can coexist
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_));
+    zone_finder_.add(textToRRset("cname.example.org. 300 IN RRSIG CNAME 5 3 "
+                                 "3600 20000101000000 20000201000000 12345 "
+                                 "example.org. FAKEFAKEFAKE"));
+
+    // Same for NSEC
+    zone_finder_.add(textToRRset("cname.example.org. 300 IN NSEC "
+                                 "dname.example.org. CNAME RRSIG NSEC"));
+}
+
 TEST_F(InMemoryZoneFinderTest, findCNAME) {
     // install CNAME RR
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_));
