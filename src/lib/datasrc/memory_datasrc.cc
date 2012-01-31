@@ -179,12 +179,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     void contextCheck(const ConstRRsetPtr& rrset,
                       const DomainPtr& domain) const {
         // Ensure CNAME and other type of RR don't coexist for the same
-        // owner name.
+        // owner name except with NSEC, which is the only RR that can coexist
+        // with CNAME (and also RRSIG, which is handled separately)
         if (rrset->getType() == RRType::CNAME()) {
-            // TODO: this check will become incorrect when we support DNSSEC
-            // (depending on how we support DNSSEC).  We should revisit it
-            // at that point.
-            if (!domain->empty()) {
+            if (!domain->empty() &&
+                (domain->size() > 1 ||
+                 (domain->begin()->second->getType() != RRType::NSEC()))) {
                 LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
                     arg(rrset->getName());
                 isc_throw(AddError, "CNAME can't be added with other data for "

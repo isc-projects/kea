@@ -559,16 +559,35 @@ TEST_F(InMemoryZoneFinderTest, addOtherThenCNAME) {
     EXPECT_THROW(zone_finder_.add(rr_cname_), InMemoryZoneFinder::AddError);
 }
 
-TEST_F(InMemoryZoneFinderTest, addCNAMEThenDNSSECRecords) {
+TEST_F(InMemoryZoneFinderTest, addCNAMEAndDNSSECRecords) {
     // CNAME and RRSIG can coexist
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_));
-    zone_finder_.add(textToRRset("cname.example.org. 300 IN RRSIG CNAME 5 3 "
-                                 "3600 20000101000000 20000201000000 12345 "
-                                 "example.org. FAKEFAKEFAKE"));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(
+                  textToRRset("cname.example.org. 300 IN RRSIG CNAME 5 3 "
+                              "3600 20000101000000 20000201000000 12345 "
+                              "example.org. FAKEFAKEFAKE")));
 
     // Same for NSEC
-    zone_finder_.add(textToRRset("cname.example.org. 300 IN NSEC "
-                                 "dname.example.org. CNAME RRSIG NSEC"));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(
+                  textToRRset("cname.example.org. 300 IN NSEC "
+                              "dname.example.org. CNAME RRSIG NSEC")));
+
+    // Same as above, but adding NSEC first.
+    EXPECT_EQ(SUCCESS, zone_finder_.add(
+                  textToRRset("cname2.example.org. 300 IN NSEC "
+                              "dname.example.org. CNAME RRSIG NSEC")));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(
+                  textToRRset("cname2.example.org. 300 IN CNAME c.example.")));
+
+    // If there's another type of RRset with NSEC, it should still fail.
+    EXPECT_EQ(SUCCESS, zone_finder_.add(
+                  textToRRset("cname3.example.org. 300 IN A 192.0.2.1")));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(
+                  textToRRset("cname3.example.org. 300 IN NSEC "
+                              "dname.example.org. CNAME RRSIG NSEC")));
+    EXPECT_THROW(zone_finder_.add(textToRRset("cname3.example.org. 300 "
+                                              "IN CNAME c.example.")),
+                 InMemoryZoneFinder::AddError);
 }
 
 TEST_F(InMemoryZoneFinderTest, findCNAME) {
