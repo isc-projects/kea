@@ -176,22 +176,21 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      *
      * If such condition is found, it throws AddError.
      */
-    void contextCheck(const ConstRRsetPtr& rrset,
-                      const DomainPtr& domain) const {
+    void contextCheck(const ConstRRsetPtr& rrset, const Domain& domain) const {
         // Ensure CNAME and other type of RR don't coexist for the same
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
         if (rrset->getType() == RRType::CNAME()) {
-            if (!domain->empty() &&
-                (domain->size() > 1 ||
-                 (domain->begin()->second->getType() != RRType::NSEC()))) {
+            if (!domain.empty() &&
+                (domain.size() > 1 ||
+                 (domain.begin()->second->getType() != RRType::NSEC()))) {
                 LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
                     arg(rrset->getName());
                 isc_throw(AddError, "CNAME can't be added with other data for "
                           << rrset->getName());
             }
         } else if (rrset->getType() != RRType::NSEC() &&
-                   domain->find(RRType::CNAME()) != domain->end()) {
+                   domain.find(RRType::CNAME()) != domain.end()) {
             LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset->getName());
             isc_throw(AddError, "CNAME and " << rrset->getType() <<
                       " can't coexist for " << rrset->getName());
@@ -205,10 +204,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (rrset->getName() != origin_ &&
             // Adding DNAME, NS already there
             ((rrset->getType() == RRType::DNAME() &&
-            domain->find(RRType::NS()) != domain->end()) ||
+            domain.find(RRType::NS()) != domain.end()) ||
             // Adding NS, DNAME already there
             (rrset->getType() == RRType::NS() &&
-            domain->find(RRType::DNAME()) != domain->end())))
+            domain.find(RRType::DNAME()) != domain.end())))
         {
             LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset->getName());
             isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
@@ -462,7 +461,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // break strong exception guarantee.  At the moment we prefer
         // code simplicity and don't bother to introduce complicated
         // recovery code.
-        contextCheck(rrset, domain);
+        contextCheck(rrset, *domain);
 
         // Try inserting the rrset there
         if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
