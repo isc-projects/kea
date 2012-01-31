@@ -115,7 +115,7 @@ matchCheck(NSEC3Hash& hash, const string& postfix) {
     EXPECT_FALSE(hash.match(RDATAType("1 0 12 aabbccde" + postfix)));
     // Salt doesn't match: the other has an empty salt
     EXPECT_FALSE(hash.match(RDATAType("1 0 12 -" + postfix)));
-    // Flags doesn't matter
+    // Flags don't matter
     EXPECT_TRUE(hash.match(RDATAType("1 1 12 aabbccdd" + postfix)));
 }
 
