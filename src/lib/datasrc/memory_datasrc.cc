@@ -822,7 +822,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // No exact match or CNAME.  Return NXRRSET.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
             arg(name);
-        return (FindResult(NXRRSET, ConstRRsetPtr()));
+        return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
     }
 };
 
