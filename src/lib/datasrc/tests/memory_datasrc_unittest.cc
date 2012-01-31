@@ -470,6 +470,8 @@ public:
      */
     void findAllTest(const Name& name, ZoneFinder::Result result,
                      const vector<ConstRRsetPtr>& expected_rrsets,
+                     ZoneFinder::FindResultFlags expected_flags =
+                     ZoneFinder::RESULT_DEFAULT,
                      InMemoryZoneFinder* finder = NULL,
                      const ConstRRsetPtr &rrset_result = ConstRRsetPtr(),
                      ZoneFinder::FindOptions options =
@@ -479,10 +481,21 @@ public:
             finder = &zone_finder_;
         }
         std::vector<ConstRRsetPtr> target;
-        ZoneFinder::FindResult findResult(finder->findAll(name, target,
-                                                          options));
-        EXPECT_EQ(result, findResult.code);
-        EXPECT_EQ(rrset_result, findResult.rrset);
+        ZoneFinder::FindResult find_result(finder->findAll(name, target,
+                                                           options));
+        EXPECT_EQ(result, find_result.code);
+        if (!rrset_result) {
+            EXPECT_FALSE(find_result.rrset);
+        } else {
+            ASSERT_TRUE(find_result.rrset);
+            rrsetCheck(rrset_result, find_result.rrset);
+        }
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+                  find_result.isWildcard());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
+                  != 0, find_result.isNSECSigned());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
+                  != 0, find_result.isNSEC3Signed());
         rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
                     target.begin(), target.end());
     }
@@ -737,11 +750,13 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
 
     // zone cut
     findAllTest(rr_child_ns_->getName(), ZoneFinder::DELEGATION,
-                vector<ConstRRsetPtr>(), NULL, rr_child_ns_);
+                vector<ConstRRsetPtr>(), ZoneFinder::RESULT_DEFAULT,
+                NULL, rr_child_ns_);
 
     // glue for this zone cut
     findAllTest(rr_child_glue_->getName(),ZoneFinder::DELEGATION,
-                vector<ConstRRsetPtr>(), NULL, rr_child_ns_);
+                vector<ConstRRsetPtr>(), ZoneFinder::RESULT_DEFAULT,
+                NULL, rr_child_ns_);
 }
 
 TEST_F(InMemoryZoneFinderTest, glue) {
@@ -1002,7 +1017,7 @@ TEST_F(InMemoryZoneFinderTest, anyWildcard) {
         expected->addRdata(rr_wild_->getRdataIterator()->getCurrent());
         expected_sets.push_back(expected);
         findAllTest(Name("a.wild.example.org"), ZoneFinder::SUCCESS,
-                    expected_sets);
+                    expected_sets, ZoneFinder::RESULT_WILDCARD);
     }
 }
 
@@ -1037,7 +1052,7 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
                     vector<ConstRRsetPtr>());
 
         findAllTest(Name("a.foo.example.org"), ZoneFinder::NXRRSET,
-                    vector<ConstRRsetPtr>());
+                    vector<ConstRRsetPtr>(), ZoneFinder::RESULT_WILDCARD);
     }
 
     {
