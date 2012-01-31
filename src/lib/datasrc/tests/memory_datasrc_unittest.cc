@@ -920,7 +920,7 @@ TEST_F(InMemoryZoneFinderTest, wildcard) {
     {
         SCOPED_TRACE("Search at created child");
         findTest(Name("a.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
-                 false, rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
+                 false, rr_wild_, ZoneFinder::RESULT_WILDCARD, NULL,
                  ZoneFinder::FIND_DEFAULT, true);
     }
 
@@ -929,7 +929,7 @@ TEST_F(InMemoryZoneFinderTest, wildcard) {
         SCOPED_TRACE("Search at created grand-child");
         findTest(Name("a.b.wild.example.org"), RRType::A(),
                  ZoneFinder::SUCCESS, false, rr_wild_,
-                 ZoneFinder::RESULT_DEFAULT, NULL,
+                 ZoneFinder::RESULT_WILDCARD, NULL,
                  ZoneFinder::FIND_DEFAULT, true);
     }
 
@@ -1120,7 +1120,7 @@ InMemoryZoneFinderTest::doCancelWildcardTest() {
             SCOPED_TRACE(string("Node ") + *name);
 
             findTest(Name(*name), RRType::A(), ZoneFinder::SUCCESS, false,
-                     rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
+                     rr_wild_, ZoneFinder::RESULT_WILDCARD, NULL,
                      ZoneFinder::FIND_DEFAULT, true);
         }
     }
