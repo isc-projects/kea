@@ -801,7 +801,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
-            return (FindResult(SUCCESS, ConstRRsetPtr()));
+            return (createFindResult(SUCCESS, ConstRRsetPtr(), rename));
         }
 
         found = node->getData()->find(type);
