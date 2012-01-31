@@ -298,6 +298,10 @@ TEST_F(InstallListenAddresses, brokenRollback) {
 // Make sure the death tests are filterable away.
 typedef InstallListenAddresses InstallListenAddressesDeathTest;
 
+// There are systems which don't have EXPECT_DEATH. We skip the tests there.
+// We're lucky, EXPECT_DEATH is a macro, so we can test for its existence this
+// easily.
+#ifdef EXPECT_DEATH
 // We make the socket requestor throw a "fatal" exception, one where we can't be
 // sure the state between processes is consistent. So we abort in that case.
 TEST_F(InstallListenAddressesDeathTest, inconsistent) {
@@ -336,5 +340,6 @@ TEST_F(InstallListenAddressesDeathTest, cantClose) {
     // And reset it back, so it can safely clean up itself.
     sock_requestor_.break_release_ = false;
 }
+#endif // EXPECT_DEATH
 
 }
