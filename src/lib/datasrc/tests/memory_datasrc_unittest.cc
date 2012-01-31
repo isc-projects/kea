@@ -412,6 +412,8 @@ public:
                   ZoneFinder::Result result,
                   bool check_answer = true,
                   const ConstRRsetPtr& answer = ConstRRsetPtr(),
+                  ZoneFinder::FindResultFlags expected_flags =
+                  ZoneFinder::RESULT_DEFAULT,
                   InMemoryZoneFinder* zone_finder = NULL,
                   ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT,
                   bool check_wild_answer = false)
@@ -427,6 +429,12 @@ public:
                                                        options));
                 // Check it returns correct answers
                 EXPECT_EQ(result, find_result.code);
+                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+                          find_result.isWildcard());
+                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
+                          != 0, find_result.isNSECSigned());
+                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
+                          != 0, find_result.isNSEC3Signed());
                 if (check_answer) {
                     EXPECT_EQ(answer, find_result.rrset);
                 } else if (check_wild_answer) {
@@ -581,8 +589,8 @@ TEST_F(InMemoryZoneFinderTest, findCNAMEUnderZoneCut) {
         "cname.child.example.org. 300 IN CNAME target.child.example.org.");
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_under_cut_));
     findTest(Name("cname.child.example.org"), RRType::AAAA(),
-             ZoneFinder::CNAME, true, rr_cname_under_cut_, NULL,
-             ZoneFinder::FIND_GLUE_OK);
+             ZoneFinder::CNAME, true, rr_cname_under_cut_,
+             ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
 }
 
 // Two DNAMEs at single domain are disallowed by RFC 2672, section 3)
@@ -657,7 +665,7 @@ TEST_F(InMemoryZoneFinderTest, DNAMEUnderNS) {
 
     findTest(lowName, RRType::A(), ZoneFinder::DELEGATION, true, rr_child_ns_);
     findTest(lowName, RRType::A(), ZoneFinder::DNAME, true, rr_child_dname_,
-             NULL, ZoneFinder::FIND_GLUE_OK);
+             ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
 }
 
 // Test adding child zones and zone cut handling
@@ -762,27 +770,30 @@ TEST_F(InMemoryZoneFinderTest, glue) {
 
     // If we do it in the "glue OK" mode, we should find the exact match.
     findTest(rr_child_glue_->getName(), RRType::A(), ZoneFinder::SUCCESS, true,
-             rr_child_glue_, NULL, ZoneFinder::FIND_GLUE_OK);
+             rr_child_glue_, ZoneFinder::RESULT_DEFAULT, NULL,
+             ZoneFinder::FIND_GLUE_OK);
 
     // glue OK + NXRRSET case
     findTest(rr_child_glue_->getName(), RRType::AAAA(), ZoneFinder::NXRRSET,
-             true, ConstRRsetPtr(), NULL, ZoneFinder::FIND_GLUE_OK);
+             true, ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, NULL,
+             ZoneFinder::FIND_GLUE_OK);
 
     // glue OK + NXDOMAIN case
     findTest(Name("www.child.example.org"), RRType::A(),
-             ZoneFinder::DELEGATION, true, rr_child_ns_, NULL,
-             ZoneFinder::FIND_GLUE_OK);
+             ZoneFinder::DELEGATION, true, rr_child_ns_,
+             ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
 
     // nested cut case.  The glue should be found.
     findTest(rr_grandchild_glue_->getName(), RRType::AAAA(),
              ZoneFinder::SUCCESS,
-             true, rr_grandchild_glue_, NULL, ZoneFinder::FIND_GLUE_OK);
+             true, rr_grandchild_glue_, ZoneFinder::RESULT_DEFAULT, NULL,
+             ZoneFinder::FIND_GLUE_OK);
 
     // A non-existent name in nested cut.  This should result in delegation
     // at the highest zone cut.
     findTest(Name("www.grand.child.example.org"), RRType::TXT(),
-             ZoneFinder::DELEGATION, true, rr_child_ns_, NULL,
-             ZoneFinder::FIND_GLUE_OK);
+             ZoneFinder::DELEGATION, true, rr_child_ns_,
+             ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
 }
 
 /**
@@ -870,14 +881,14 @@ TEST_F(InMemoryZoneFinderTest, load) {
 
     // Now see there are some rrsets (we don't look inside, though)
     findTest(Name("."), RRType::SOA(), ZoneFinder::SUCCESS, false,
-             ConstRRsetPtr(), &rootzone);
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &rootzone);
     findTest(Name("."), RRType::NS(), ZoneFinder::SUCCESS, false,
-             ConstRRsetPtr(), &rootzone);
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &rootzone);
     findTest(Name("a.root-servers.net."), RRType::A(), ZoneFinder::SUCCESS,
-             false, ConstRRsetPtr(), &rootzone);
+             false, ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &rootzone);
     // But this should no longer be here
     findTest(rr_ns_a_->getName(), RRType::AAAA(), ZoneFinder::NXDOMAIN, true,
-             ConstRRsetPtr(), &rootzone);
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &rootzone);
 
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_finder_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
@@ -915,14 +926,16 @@ TEST_F(InMemoryZoneFinderTest, wildcard) {
     {
         SCOPED_TRACE("Search at created child");
         findTest(Name("a.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
-                 false, rr_wild_, NULL, ZoneFinder::FIND_DEFAULT, true);
+                 false, rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
+                 ZoneFinder::FIND_DEFAULT, true);
     }
 
     // Search another created name, this time little bit lower
     {
         SCOPED_TRACE("Search at created grand-child");
         findTest(Name("a.b.wild.example.org"), RRType::A(),
-                 ZoneFinder::SUCCESS, false, rr_wild_, NULL,
+                 ZoneFinder::SUCCESS, false, rr_wild_,
+                 ZoneFinder::RESULT_DEFAULT, NULL,
                  ZoneFinder::FIND_DEFAULT, true);
     }
 
@@ -954,8 +967,8 @@ TEST_F(InMemoryZoneFinderTest, delegatedWildcard) {
     {
         SCOPED_TRACE("Looking under delegation point in GLUE_OK mode");
         findTest(Name("a.child.example.org"), RRType::A(),
-                 ZoneFinder::DELEGATION, true, rr_child_ns_, NULL,
-                 ZoneFinder::FIND_GLUE_OK);
+                 ZoneFinder::DELEGATION, true, rr_child_ns_,
+                 ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
     }
 }
 
@@ -1113,7 +1126,8 @@ InMemoryZoneFinderTest::doCancelWildcardTest() {
             SCOPED_TRACE(string("Node ") + *name);
 
             findTest(Name(*name), RRType::A(), ZoneFinder::SUCCESS, false,
-                     rr_wild_, NULL, ZoneFinder::FIND_DEFAULT, true);
+                     rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
         }
     }
 
@@ -1183,13 +1197,13 @@ TEST_F(InMemoryZoneFinderTest, swap) {
     EXPECT_EQ(RRClass::IN(), finder2.getClass());
     // make sure the zone data is swapped, too
     findTest(origin_, RRType::NS(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), &finder1);
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder1);
     findTest(other_origin, RRType::TXT(), ZoneFinder::SUCCESS, false,
-             ConstRRsetPtr(), &finder1);
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder1);
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, false,
-             ConstRRsetPtr(), &finder2);
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder2);
     findTest(other_origin, RRType::TXT(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), &finder2);
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder2);
 }
 
 TEST_F(InMemoryZoneFinderTest, getFileName) {
