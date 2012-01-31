@@ -476,9 +476,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 node->setFlag(DomainNode::FLAG_CALLBACK);
             }
 
-            // If we've added NSEC3PARAM, set up NSEC3 specific data or check
-            // consistency with already set up parameters.
-            if (rrset->getType() == RRType::NSEC3PARAM()) {
+            // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
+            // data or check consistency with already set up parameters.
+            if (rrset->getType() == RRType::NSEC3PARAM() &&
+                rrset->getName() == origin_) {
                 // We know rrset has exactly one RDATA
                 const generic::NSEC3PARAM& param =
                     dynamic_cast<const generic::NSEC3PARAM&>(
