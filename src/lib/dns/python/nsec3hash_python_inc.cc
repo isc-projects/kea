@@ -10,7 +10,7 @@ NSEC3 hash values as defined in RFC5155.\n\
 \n\
 NSEC3Hash(param)\n\
 \n\
-    Constructor from NSEC3PARAM RDATA.\n\
+    Constructor.\n\
 \n\
     The hash algorithm given via param must be known to the\n\
     implementation. Otherwise UnknownNSEC3HashAlgorithm exception will\n\
@@ -21,7 +21,8 @@ NSEC3Hash(param)\n\
                  unknown.\n\
 \n\
     Parameters:\n\
-      param      NSEC3 parameters used for subsequent calculation.\n\
+      param      NSEC3PARAM or NSEC3 Rdata object whose parameters are\n\
+                 to be used for subsequent calculation.\n\
 \n\
 ";
 

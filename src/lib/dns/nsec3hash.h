@@ -109,6 +109,12 @@ public:
     /// \return A pointer to a concrete derived object of \c NSEC3Hash.
     static NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param);
 
+    /// \brief Factory method of NSECHash from NSEC3 RDATA.
+    ///
+    /// This is similar to the other version, but extracts the parameters
+    /// for hash calculation from an NSEC3 RDATA object.
+    static NSEC3Hash* create(const rdata::generic::NSEC3& nsec3);
+
     /// \brief The destructor.
     virtual ~NSEC3Hash() {}
 

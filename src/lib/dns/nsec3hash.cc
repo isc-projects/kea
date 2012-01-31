@@ -56,10 +56,10 @@ private:
     static const uint8_t NSEC3_HASH_SHA1 = 1;
 
 public:
-    NSEC3HashRFC5155(const generic::NSEC3PARAM& param) :
-        algorithm_(param.getHashalg()),
-        iterations_(param.getIterations()),
-        salt_(param.getSalt()), digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
+    NSEC3HashRFC5155(uint8_t algorithm, uint16_t iterations,
+                     const vector<uint8_t>& salt) :
+        algorithm_(algorithm), iterations_(iterations),
+        salt_(salt), digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
     {
         if (algorithm_ != NSEC3_HASH_SHA1) {
             isc_throw(UnknownNSEC3HashAlgorithm, "Unknown NSEC3 algorithm: " <<
@@ -134,7 +134,14 @@ namespace dns {
 
 NSEC3Hash*
 NSEC3Hash::create(const generic::NSEC3PARAM& param) {
-    return (new NSEC3HashRFC5155(param));
+    return (new NSEC3HashRFC5155(param.getHashalg(), param.getIterations(),
+                                 param.getSalt()));
+}
+
+NSEC3Hash*
+NSEC3Hash::create(const generic::NSEC3& nsec3) {
+    return (new NSEC3HashRFC5155(nsec3.getHashalg(), nsec3.getIterations(),
+                                 nsec3.getSalt()));
 }
 
 } // namespace dns
