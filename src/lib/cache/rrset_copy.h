@@ -33,7 +33,7 @@ namespace cache {
 ///       we have to do the copy.
 
 void
-rrsetCopy(const isc::dns::RRset& src, isc::dns::RRset& dst);
+rrsetCopy(const isc::dns::AbstractRRset& src, isc::dns::AbstractRRset& dst);
 
 } // namespace cache
 } // namespace isc

@@ -389,7 +389,7 @@ private:
 // A helper function that generates a new RRset based on "wild_rrset",
 // replacing its owner name with 'real_name'.
 ConstRRsetPtr
-substituteWild(const RRset& wild_rrset, const Name& real_name) {
+substituteWild(const AbstractRRset& wild_rrset, const Name& real_name) {
     RRsetPtr rrset(new RRset(real_name, wild_rrset.getClass(),
                              wild_rrset.getType(), wild_rrset.getTTL()));
     // For simplicity we only consider the case with one RDATA (for now)
