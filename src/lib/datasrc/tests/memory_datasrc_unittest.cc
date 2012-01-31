@@ -1531,7 +1531,18 @@ TEST_F(InMemoryZoneFinderTest, multiNSEC3PARAM) {
     EXPECT_THROW(zone_finder_.add(nsec3param), InMemoryZoneFinder::AddError);
 }
 
+TEST_F(InMemoryZoneFinderTest, nonOriginNSEC3PARAM) {
+    // This is a normal NSEC3PARAM at the zone origin
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                           "1 0 12 aabbccdd")));
+    // Add another (with different param) at a non origin node.  This is
+    // awkward, but the implementation accepts it as an ordinary RR.
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("a.example.org. 300 IN NSEC3PARAM "
+                                           "1 1 1 aabbccdd")));
+}
+
 // TODO
 // - existence of NSEC3PARAM
-// - add NSEC3PARAM at non origin (should be ignored)
 }
