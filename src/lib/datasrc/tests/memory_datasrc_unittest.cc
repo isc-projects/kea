@@ -1011,7 +1011,8 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
 
     {
         SCOPED_TRACE("Asking for A record");
-        findTest(Name("a.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET);
+        findTest(Name("a.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET,
+                 true, ConstRRsetPtr(), ZoneFinder::RESULT_WILDCARD);
         findTest(Name("*.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET);
         findTest(Name("foo.example.org"), RRType::A(), ZoneFinder::NXRRSET);
     }
@@ -1026,7 +1027,8 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
     {
         SCOPED_TRACE("Asking on the non-terminal");
         findTest(Name("wild.bar.foo.example.org"), RRType::A(),
-            ZoneFinder::NXRRSET);
+                 ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                 ZoneFinder::RESULT_WILDCARD);
     }
 }
 
@@ -1052,7 +1054,8 @@ TEST_F(InMemoryZoneFinderTest, nestedEmptyWildcard) {
 
         for (const char** name = names; *name != NULL; ++ name) {
             SCOPED_TRACE(string("Node ") + *name);
-            findTest(Name(*name), RRType::A(), ZoneFinder::NXRRSET);
+            findTest(Name(*name), RRType::A(), ZoneFinder::NXRRSET, true,
+                     ConstRRsetPtr(), ZoneFinder::RESULT_WILDCARD);
         }
     }
 

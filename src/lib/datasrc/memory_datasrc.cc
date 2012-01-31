@@ -769,7 +769,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (node->isEmpty()) {
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
                 arg(name);
-            return (FindResult(NXRRSET, ConstRRsetPtr()));
+            return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
         }
 
         Domain::const_iterator found;
