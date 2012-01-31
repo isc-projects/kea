@@ -80,10 +80,18 @@ typedef NSEC3Map::value_type NSEC3Pair;
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
 // a separate structure so that it'll be replaceable on reload.
 struct ZoneData {
-    ZoneData() : domains_(true) {}
+    ZoneData(const Name& origin) : domains_(true), origin_data_(NULL) {
+        // We create the node for origin (it needs to exist anyway in future)
+        domains_.insert(origin, &origin_data_);
+        DomainPtr origin_domain(new Domain);
+        origin_data_->setData(origin_domain);
+    }
 
     // The main data (name + RRsets)
     DomainTree domains_;
+
+    // Shortcut to the origin node, which should always exist
+    DomainNode* origin_data_;
 
     // The optional NSEC3 related data
     struct NSEC3Data {
@@ -104,20 +112,15 @@ struct ZoneData {
 struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // Constructor
     InMemoryZoneFinderImpl(const RRClass& zone_class, const Name& origin) :
-        zone_class_(zone_class), origin_(origin), origin_data_(NULL),
-        zone_data_(new ZoneData)
-    {
-        // We create the node for origin (it needs to exist anyway in future)
-        zone_data_->domains_.insert(origin, &origin_data_);
-        DomainPtr origin_domain(new Domain);
-        origin_data_->setData(origin_domain);
-    }
+        zone_class_(zone_class), origin_(origin),
+        zone_data_(new ZoneData(origin_))
+    {}
+
     static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
     // Information about the zone
     RRClass zone_class_;
     Name origin_;
-    DomainNode* origin_data_;
     string file_name_;
 
     // The actual zone data
@@ -766,8 +769,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // has a NS RR, we should return a delegation, but not in the apex.
         // There is one exception: the case for DS query, which should always
         // be considered in-zone lookup.
-        if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_ &&
-            type != RRType::DS()) {
+        if (node->getFlag(DomainNode::FLAG_CALLBACK) &&
+            node != zone_data_->origin_data_ && type != RRType::DS()) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
@@ -916,28 +919,24 @@ InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
     // Load it into temporary zone data
-    scoped_ptr<ZoneData> tmp(new ZoneData);
-
-    // Create the new origin node
-    DomainNode* origin_data;
-    tmp->domains_.insert(getOrigin(), &origin_data);
-    DomainPtr origin_domain(new Domain);
-    origin_data->setData(origin_domain);
+    scoped_ptr<ZoneData> tmp(new ZoneData(getOrigin()));
 
     masterLoad(filename.c_str(), getOrigin(), getClass(),
                boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
                            _1, tmp.get()));
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
-    if (tmp->nsec3_data_ &&
-        origin_domain->find(RRType::NSEC3PARAM()) == origin_domain->end()) {
-        LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
-            arg(getOrigin()).arg(getClass());
+    if (tmp->nsec3_data_) {
+        assert(!tmp->origin_data_->isEmpty());
+        if (tmp->origin_data_->getData()->find(RRType::NSEC3PARAM()) ==
+            tmp->origin_data_->getData()->end()) {
+            LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
+                arg(getOrigin()).arg(getClass());
+        }
     }
 
     // If it went well, put it inside
     impl_->file_name_ = filename;
-    impl_->origin_data_ = origin_data;
     tmp.swap(impl_->zone_data_);
     // And let the old data die with tmp
 }
