@@ -626,6 +626,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // Set up FindResult object as a return value of find(), taking into
+    // account wildcard matches and DNSSEC information.
     FindResult createFindResult(Result code, ConstRRsetPtr rrset,
                                 bool wild) const
     {
@@ -815,8 +817,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
-                return (FindResult(CNAME, prepareRRset(name, found->second,
-                                                       rename)));
+                return (createFindResult(CNAME,
+                                         prepareRRset(name, found->second,
+                                                      rename), rename));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
