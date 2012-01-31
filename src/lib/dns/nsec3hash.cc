@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include <cassert>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -55,10 +56,10 @@ private:
     static const uint8_t NSEC3_HASH_SHA1 = 1;
 
 public:
-    NSEC3HashRFC5155(const generic::NSEC3PARAM& param) :
-        algorithm_(param.getHashalg()),
-        iterations_(param.getIterations()),
-        salt_(param.getSalt()), digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
+    NSEC3HashRFC5155(uint8_t algorithm, uint16_t iterations,
+                     const vector<uint8_t>& salt) :
+        algorithm_(algorithm), iterations_(iterations),
+        salt_(salt), digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
     {
         if (algorithm_ != NSEC3_HASH_SHA1) {
             isc_throw(UnknownNSEC3HashAlgorithm, "Unknown NSEC3 algorithm: " <<
@@ -68,6 +69,11 @@ public:
     }
 
     virtual std::string calculate(const Name& name) const;
+
+    virtual bool match(const generic::NSEC3& nsec3) const;
+    virtual bool match(const generic::NSEC3PARAM& nsec3param) const;
+    bool match(uint8_t algorithm, uint16_t iterations,
+               const vector<uint8_t>& salt) const;
 
 private:
     const uint8_t algorithm_;
@@ -115,6 +121,27 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
 
     return (encodeBase32Hex(digest_));
 }
+
+bool
+NSEC3HashRFC5155::match(uint8_t algorithm, uint16_t iterations,
+                        const vector<uint8_t>& salt) const
+{
+    return (algorithm_ == algorithm && iterations_ == iterations &&
+            salt_.size() == salt.size() &&
+            (salt_.empty() || memcmp(&salt_[0], &salt[0], salt_.size()) == 0));
+}
+
+bool
+NSEC3HashRFC5155::match(const generic::NSEC3& nsec3) const {
+    return (match(nsec3.getHashalg(), nsec3.getIterations(),
+                  nsec3.getSalt()));
+}
+
+bool
+NSEC3HashRFC5155::match(const generic::NSEC3PARAM& nsec3param) const {
+    return (match(nsec3param.getHashalg(), nsec3param.getIterations(),
+                  nsec3param.getSalt()));
+}
 } // end of unnamed namespace
 
 namespace isc {
@@ -122,7 +149,14 @@ namespace dns {
 
 NSEC3Hash*
 NSEC3Hash::create(const generic::NSEC3PARAM& param) {
-    return (new NSEC3HashRFC5155(param));
+    return (new NSEC3HashRFC5155(param.getHashalg(), param.getIterations(),
+                                 param.getSalt()));
+}
+
+NSEC3Hash*
+NSEC3Hash::create(const generic::NSEC3& nsec3) {
+    return (new NSEC3HashRFC5155(nsec3.getHashalg(), nsec3.getIterations(),
+                                 nsec3.getSalt()));
 }
 
 } // namespace dns
