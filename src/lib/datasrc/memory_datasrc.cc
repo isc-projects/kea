@@ -298,15 +298,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
-    // A helper functor to convert the 1st NSEC3 label to all upper-cased
-    // characters.  Note: technically there's a subtle issue when char
-    // is signed, but in practice the label should consist of all positive
-    // character values for a valid NSEC3 hash name (if it's invalid the
-    // resulting zone doesn't work correctly anyway).
-    struct ToUpper {
-        char operator()(char ch) { return (toupper(ch)); }
-    };
-
     result::Result addRRsig(const ConstRRsetPtr sig_rrset, ZoneData& zone_data)
     {
         // Check consistency of the type covered.
@@ -341,10 +332,17 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             // In case of NSEC3 if something is found it must be NSEC3 RRset
             // under the assumption of our current implementation.
             if (zone_data.nsec3_data_) {
-                string fst_label = sig_rrset->getName().split(0, 1).
-                    toText(true);
+                // Convert the first label to upper-cased text.  Note that
+                // for a valid NSEC3 RR the label should only consist of
+                // positive 8-bit char values, so using toupper(int) should be
+                // safe (if it's a bogus label for NSEC3 the zone won't work
+                // anyway).  Also note the '::' below: g++'s STL implementation
+                // seems to require it to toupper to make this compile.
+                string fst_label =
+                    sig_rrset->getName().split(0, 1).toText(true);
                 transform(fst_label.begin(), fst_label.end(),
-                          fst_label.begin(), ToUpper());
+                          fst_label.begin(), ::toupper);
+
                 NSEC3Map::const_iterator found =
                     zone_data.nsec3_data_->map_.find(fst_label);
                 if (found != zone_data.nsec3_data_->map_.end()) {
@@ -397,7 +395,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         string fst_label = rrset->getName().split(0, 1).toText(true);
         transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
-                  ToUpper());
+                  ::toupper);
 
         // Our current implementation doesn't allow an existing NSEC3 to be
         // updated/overridden.
