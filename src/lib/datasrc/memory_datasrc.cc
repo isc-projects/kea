@@ -17,6 +17,7 @@
 #include <utility>
 #include <cctype>
 #include <cassert>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -169,6 +170,14 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // A helper predicate used in contextCheck() to check if a given domain
+    // name has a RRset of type different than NSEC.
+    struct IsNotNSEC {
+        bool operator()(const DomainPair& element) const {
+            return (element.second->getType() != RRType::NSEC());
+        }
+    };
+
     /*
      * Does some checks in context of the data that are already in the zone.
      * Currently checks for forbidden combinations of RRsets in the same
@@ -181,9 +190,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
         if (rrset.getType() == RRType::CNAME()) {
-            if (!domain.empty() &&
-                (domain.size() > 1 ||
-                 (domain.begin()->second->getType() != RRType::NSEC()))) {
+            if (find_if(domain.begin(), domain.end(), IsNotNSEC())
+                != domain.end()) {
                 LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
                     arg(rrset.getName());
                 isc_throw(AddError, "CNAME can't be added with other data for "
