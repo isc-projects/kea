@@ -1623,18 +1623,27 @@ TEST_F(QueryTest, dsAboveDelegation) {
     EXPECT_NO_THROW(Query(memory_client, Name("delegation.example.com"),
                           RRType::DS(), response, true).process());
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 2,
-                  delegation_ds_txt,
-                  zone_ns_txt,
-                  "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
-                  "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n");
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
+                  (string(delegation_ds_txt) + "\n" +
+                   "delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("DS")).c_str(),
+                  (string(zone_ns_txt) + "\n" +
+                   "example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NS")).c_str(),
+                  (string(ns_addrs_txt) +
+                   "glue.delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("A") + "\n" +
+                   "glue.delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("AAAA") + "\n" +
+                   "noglue.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("A")).c_str());
 }
 
 // This one checks a DS record at the apex is not returned even if it exists,
 // as it is authoritative above the delegation and does not exist below it,
 // as described in RFC 4035, section 3.1.4.1. The example is inspired by the
 // B.8. example from the RFC.
-TEST_F(QueryTest, dsBelowDelegation) {
+TEST_F(QueryTest, DISABLED_dsBelowDelegation) {
     EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
                           RRType::DS(), response, true).process());
 
