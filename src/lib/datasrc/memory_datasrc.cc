@@ -627,7 +627,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     }
 
     // Set up FindResult object as a return value of find(), taking into
-    // account wildcard matches and DNSSEC information.
+    // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
+    // flag when applicable regardless of the find option; the caller would
+    // simply ignore these when then didn't request DNSSEC related results.
     FindResult createFindResult(Result code, ConstRRsetPtr rrset,
                                 bool wild) const
     {
