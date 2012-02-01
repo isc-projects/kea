@@ -97,6 +97,7 @@ COMMAND_SET_CONFIG = "set_config"
 COMMAND_GET_MODULE_SPEC = "get_module_spec"
 COMMAND_MODULE_SPEC = "module_spec"
 COMMAND_SHUTDOWN = "shutdown"
+COMMAND_MODULE_STOPPING = "stopping"
 
 def parse_command(msg):
     """Parses what may be a command message. If it looks like one,
@@ -209,6 +210,13 @@ class ModuleCCSession(ConfigData):
            The config_handler will be called with that configuration"""
         self.__send_spec()
         self.__request_config()
+
+    def stop(self):
+        """Inform the system that the module using this ModuleCCSession
+           is stopping. This call will only cause a 'stopping'
+           message to be sent to the ConfigManager, it does not clear or
+           free any resources."""
+        self.__send_stopping()
 
     def get_socket(self):
         """Returns the socket from the command channel session. This
@@ -371,7 +379,22 @@ class ModuleCCSession(ConfigData):
         except isc.cc.SessionTimeout:
             # TODO: log an error?
             pass
-        
+
+    def __send_stopping(self):
+        """Sends a 'stopping' message to the configuration manager. This
+           message is just an FYI, and no response is expected. Any errors
+           when sending this message (for instance if the msgq session has
+           previously been closed) are logged, but ignored."""
+        msg = create_command(COMMAND_MODULE_STOPPING,
+                             self.get_module_spec().get_full_spec())
+        try:
+            self._session.group_sendmsg(msg, "ConfigManager")
+        except isc.cc.session.SessionError as se:
+            # If the session was previously closed, obvously trying to send
+            # a message fails. (TODO: check if session is open so we can
+            # error on real problems?)
+            logger.error(CONFIG_SESSION_STOPPING_FAILED, str(se))
+
     def __request_config(self):
         """Asks the configuration manager for the current configuration, and call the config handler if set.
            Raises a ModuleCCSessionError if there is no answer from the configuration manager"""
@@ -419,6 +442,7 @@ class UIModuleCCSession(MultiConfigData):
         # so changes are needed there to make this clean (we need a command to simply get the
         # full specs for everything, including commands etc, not separate gets for that)
         specs = self._conn.send_GET('/module_spec')
+        self.clear_specifications()
         for module in specs.keys():
             self.set_specification(isc.config.ModuleSpec(specs[module]))
 

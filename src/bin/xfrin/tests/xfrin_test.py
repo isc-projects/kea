@@ -106,6 +106,9 @@ class XfrinTestTimeoutException(Exception):
     pass
 
 class MockCC():
+    def __init__(self):
+        self.stop_called = False
+
     def get_default_value(self, identifier):
         # The returned values should be identical to the spec file
         # XXX: these should be retrieved from the spec file
@@ -116,6 +119,9 @@ class MockCC():
             return TEST_RRCLASS_STR
         if identifier == "zones/use_ixfr":
             return False
+
+    def stop(self):
+        self.stop_called = True
 
 class MockDataSourceClient():
     '''A simple mock data source client.
@@ -2052,7 +2058,9 @@ class TestXfrin(unittest.TestCase):
         self.args['tsig_key'] = ''
 
     def tearDown(self):
+        self.assertFalse(self.xfr._module_cc.stop_called);
         self.xfr.shutdown()
+        self.assertTrue(self.xfr._module_cc.stop_called);
         sys.stderr= self.stderr_backup
 
     def _do_parse_zone_name_class(self):
