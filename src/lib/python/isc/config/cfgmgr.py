@@ -456,13 +456,34 @@ class ConfigManager:
         # todo: error checking (like keyerrors)
         answer = {}
         self.set_module_spec(spec)
-
-        # We should make one general 'spec update for module' that
-        # passes both specification and commands at once
-        spec_update = ccsession.create_command(ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
-                                               [ spec.get_module_name(), spec.get_full_spec() ])
-        self.cc.group_sendmsg(spec_update, "Cmdctl")
+        self._send_module_spec_to_cmdctl(spec.get_module_name(),
+                                         spec.get_full_spec())
         return ccsession.create_answer(0)
+
+    def _handle_module_stopping(self, arg):
+        """Private function that handles a 'stopping' command;
+           The argument is of the form { 'module_name': <name> }.
+           If the module is known, it is removed from the known list,
+           and a message is sent to the Cmdctl channel to remove it as well.
+           If it is unknown, the message is ignored."""
+        if arg['module_name'] in self.module_specs:
+            del self.module_specs[arg['module_name']]
+            self._send_module_spec_to_cmdctl(arg['module_name'], None)
+        # This command is not expected to be answered
+        return None
+
+    def _send_module_spec_to_cmdctl(self, module_name, spec):
+        """Sends the given module spec for the given module name to Cmdctl.
+           Parameters:
+           module_name: A string with the name of the module
+           spec: dict containing full module specification, as returned by
+                 ModuleSpec.get_full_spec(). This argument may also be None,
+                 in which case it signals Cmdctl to remove said module from
+                 its list.
+           No response from Cmdctl is expected."""
+        spec_update = ccsession.create_command(ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
+                                               [ module_name, spec ])
+        self.cc.group_sendmsg(spec_update, "Cmdctl")
 
     def handle_msg(self, msg):
         """Handle a command from the cc channel to the configuration manager"""
@@ -479,6 +500,8 @@ class ConfigManager:
                 answer = self._handle_get_config(arg)
             elif cmd == ccsession.COMMAND_SET_CONFIG:
                 answer = self._handle_set_config(arg)
+            elif cmd == ccsession.COMMAND_MODULE_STOPPING:
+                answer = self._handle_module_stopping(arg)
             elif cmd == ccsession.COMMAND_SHUTDOWN:
                 self.running = False
                 answer = ccsession.create_answer(0)

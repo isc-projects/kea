@@ -150,9 +150,10 @@ class DDNSServer:
         Perform any cleanup that is necessary when shutting down the server.
         Do NOT call this to initialize shutdown, use trigger_shutdown().
 
-        Currently, it does nothing, but cleanup routines are expected.
+        Currently, it only causes the ModuleCCSession to send a message that
+        this module is stopping.
         '''
-        pass
+        self._cc.stop()
 
     def accept(self):
         """

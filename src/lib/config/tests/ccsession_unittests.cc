@@ -190,6 +190,33 @@ TEST_F(CCSessionTest, session2) {
     EXPECT_EQ(0, session.getMsgQueue()->size());
 }
 
+TEST_F(CCSessionTest, session_close) {
+    // Test whether ModuleCCSession automatically sends a 'stopping'
+    // message when it is destroyed
+    ConstElementPtr msg;
+    std::string group, to;
+
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
+    {
+        ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL,
+                             true, false);
+        EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
+        // The initial message is irrelevant for this test 
+        // (see session2 test), drop it
+        session.getFirstMessage(group, to);
+        // Queue should now be empty
+        ASSERT_EQ(0, session.getMsgQueue()->size());
+    }
+    // Destructor should have cause a new message
+    ASSERT_EQ(1, session.getMsgQueue()->size());
+    msg = session.getFirstMessage(group, to);
+    EXPECT_EQ("{ \"command\": [ \"stopping\", "
+              "{ \"module_name\": \"Spec2\" } ] }", msg->str());
+    EXPECT_EQ("ConfigManager", group);
+    EXPECT_EQ("*", to);
+    EXPECT_EQ(0, session.getMsgQueue()->size());
+}
+
 ConstElementPtr my_config_handler(ConstElementPtr new_config) {
     if (new_config && new_config->contains("item1") &&
         new_config->get("item1")->intValue() == 5) {

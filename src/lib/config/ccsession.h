@@ -192,6 +192,14 @@ public:
                     bool handle_logging = true
                     );
 
+    /**
+     * Destructor
+     *
+     * The desctructor automatically calls sendStopping(), which sends
+     * a message to the ConfigManager that this module is stopping
+     */
+    ~ModuleCCSession();
+
     /// Start receiving new commands and configuration changes asynchronously.
     ///
     /// This method must be called only once, and only when the ModuleCCSession
@@ -353,6 +361,7 @@ public:
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
+    void sendStopping();
 
     bool started_;
     std::string module_name_;

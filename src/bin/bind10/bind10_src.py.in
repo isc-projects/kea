@@ -674,6 +674,8 @@ class BoB:
         if not self.__started:
             raise Exception("Component failed during startup");
         else:
+            if self.ccs is not None:
+                self.ccs.stop()
             self.runnable = False
 
     def shutdown(self):
