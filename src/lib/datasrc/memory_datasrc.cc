@@ -635,7 +635,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (wild) {
             flags = flags | RESULT_WILDCARD;
         }
-        if ((code == NXRRSET || code == NXDOMAIN) && zone_data_->nsec3_data_) {
+        if ((code == NXRRSET || code == NXDOMAIN || wild) &&
+            zone_data_->nsec3_data_) {
             flags = flags | RESULT_NSEC3_SIGNED;
         }
         return (FindResult(code, rrset, flags));
