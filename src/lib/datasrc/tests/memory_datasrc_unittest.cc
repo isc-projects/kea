@@ -289,10 +289,14 @@ protected:
     // expected_flags is set to either RESULT_NSEC_SIGNED or
     // RESULT_NSEC3_SIGNED when it's NSEC/NSEC3 signed respectively and
     // find() is expected to set the corresponding flags.
-    void wildcardTest(ZoneFinder::FindResultFlags expected_flags =
-                      ZoneFinder::RESULT_DEFAULT);
-    void doCancelWildcardTest(ZoneFinder::FindResultFlags expected_flags =
-                              ZoneFinder::RESULT_DEFAULT);
+    void findCheck(ZoneFinder::FindResultFlags expected_flags =
+                   ZoneFinder::RESULT_DEFAULT);
+    void emptyNodeCheck(ZoneFinder::FindResultFlags expected_flags =
+                        ZoneFinder::RESULT_DEFAULT);
+    void wildcardCheck(ZoneFinder::FindResultFlags expected_flags =
+                       ZoneFinder::RESULT_DEFAULT);
+    void doCancelWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
+                               ZoneFinder::RESULT_DEFAULT);
 
 public:
     InMemoryZoneFinderTest() :
@@ -823,13 +827,17 @@ TEST_F(InMemoryZoneFinderTest, glue) {
  * \todo This doesn't do any kind of CNAME and so on. If it isn't
  *     directly there, it just tells it doesn't exist.
  */
-TEST_F(InMemoryZoneFinderTest, find) {
+void
+InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     // Fill some data inside
     // Now put all the data we have there. It should throw nothing
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_a_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_aaaa_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_a_)));
+    if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
+    }
 
     // These two should be successful
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_);
@@ -837,15 +845,30 @@ TEST_F(InMemoryZoneFinderTest, find) {
              rr_ns_a_);
 
     // These domain exist but don't have the provided RRType
-    findTest(origin_, RRType::AAAA(), ZoneFinder::NXRRSET);
-    findTest(rr_ns_a_->getName(), RRType::NS(), ZoneFinder::NXRRSET);
+    findTest(origin_, RRType::AAAA(), ZoneFinder::NXRRSET, true,
+             ConstRRsetPtr(), expected_flags);
+    findTest(rr_ns_a_->getName(), RRType::NS(), ZoneFinder::NXRRSET, true,
+             ConstRRsetPtr(), expected_flags);
 
     // These domains don't exist (and one is out of the zone)
-    findTest(Name("nothere.example.org"), RRType::A(), ZoneFinder::NXDOMAIN);
-    findTest(Name("example.net"), RRType::A(), ZoneFinder::NXDOMAIN);
+    findTest(Name("nothere.example.org"), RRType::A(), ZoneFinder::NXDOMAIN,
+             true, ConstRRsetPtr(), expected_flags);
+    findTest(Name("example.net"), RRType::A(), ZoneFinder::NXDOMAIN, true,
+             ConstRRsetPtr(), expected_flags);
 }
 
-TEST_F(InMemoryZoneFinderTest, emptyNode) {
+TEST_F(InMemoryZoneFinderTest, find) {
+    findCheck();
+}
+
+TEST_F(InMemoryZoneFinderTest, findNSEC3) {
+    findCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+void
+InMemoryZoneFinderTest::emptyNodeCheck(
+    ZoneFinder::FindResultFlags expected_flags)
+{
     /*
      * The backend RBTree for this test should look like as follows:
      *          example.org
@@ -867,21 +890,35 @@ TEST_F(InMemoryZoneFinderTest, emptyNode) {
                                           " 300 IN A 192.0.2.1");
         EXPECT_EQ(SUCCESS, zone_finder_.add(rrset));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
+    }
 
     // empty node matching, easy case: the node for 'baz' exists with
     // no data.
-    findTest(Name("baz.example.org"), RRType::A(), ZoneFinder::NXRRSET);
+    findTest(Name("baz.example.org"), RRType::A(), ZoneFinder::NXRRSET, true,
+             ConstRRsetPtr(), expected_flags);
 
     // empty node matching, a trickier case: the node for 'foo' is part of
     // "x.foo", which should be considered an empty node.
-    findTest(Name("foo.example.org"), RRType::A(), ZoneFinder::NXRRSET);
+    findTest(Name("foo.example.org"), RRType::A(), ZoneFinder::NXRRSET, true,
+             ConstRRsetPtr(), expected_flags);
 
     // "org" is contained in "example.org", but it shouldn't be treated as
     // NXRRSET because it's out of zone.
     // Note: basically we don't expect such a query to be performed (the common
     // operation is to identify the best matching zone first then perform
     // search it), but we shouldn't be confused even in the unexpected case.
-    findTest(Name("org"), RRType::A(), ZoneFinder::NXDOMAIN);
+    findTest(Name("org"), RRType::A(), ZoneFinder::NXDOMAIN, true,
+             ConstRRsetPtr(), expected_flags);
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyNode) {
+    emptyNodeCheck();
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyNodeNSEC3) {
+    emptyNodeCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
 TEST_F(InMemoryZoneFinderTest, load) {
@@ -920,7 +957,7 @@ TEST_F(InMemoryZoneFinderTest, load) {
  * correctly find the data.
  */
 void
-InMemoryZoneFinderTest::wildcardTest(
+InMemoryZoneFinderTest::wildcardCheck(
     ZoneFinder::FindResultFlags expected_flags)
 {
     /*
@@ -993,12 +1030,12 @@ InMemoryZoneFinderTest::wildcardTest(
 
 TEST_F(InMemoryZoneFinderTest, wildcard) {
     // Normal case
-    wildcardTest();
+    wildcardCheck();
 }
 
 TEST_F(InMemoryZoneFinderTest, wildcardNSEC3) {
     // Similar to the previous one, but the zone signed with NSEC3
-    wildcardTest(ZoneFinder::RESULT_NSEC3_SIGNED);
+    wildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
 /*
@@ -1156,7 +1193,7 @@ TEST_F(InMemoryZoneFinderTest, nestedEmptyWildcard) {
 // We run this part twice from the below test, in two slightly different
 // situations
 void
-InMemoryZoneFinderTest::doCancelWildcardTest(
+InMemoryZoneFinderTest::doCancelWildcardCheck(
     ZoneFinder::FindResultFlags expected_flags)
 {
     // These should be canceled
@@ -1220,7 +1257,7 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
 
     {
         SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
-        doCancelWildcardTest();
+        doCancelWildcardCheck();
     }
 
     // Try putting another one under foo.wild....
@@ -1229,7 +1266,7 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_not_wild_another_));
     {
         SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
-        doCancelWildcardTest();
+        doCancelWildcardCheck();
     }
 }
 
@@ -1240,12 +1277,12 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC3) {
 
     {
         SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
-        doCancelWildcardTest(ZoneFinder::RESULT_NSEC3_SIGNED);
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
     }
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_not_wild_another_));
     {
         SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
-        doCancelWildcardTest(ZoneFinder::RESULT_NSEC3_SIGNED);
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
     }
 }
 
