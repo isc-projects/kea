@@ -103,6 +103,14 @@ class TestProcessInfo(unittest.TestCase):
         self.assertTrue(type(pi.pid) is int)
         self.assertNotEqual(pi.pid, old_pid)
 
+class MockCCSession:
+    """Simple test class to check whether 'shutdown' calls stop()"""
+    def __init__(self):
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+
 class TestCacheCommands(unittest.TestCase):
     """
     Test methods of boss related to the socket cache and socket handling.
@@ -1171,8 +1179,12 @@ class TestBossComponents(unittest.TestCase):
         bob._component_configurator.shutdown = self.__nullary_hook
         self.__called = False
 
+        bob.ccs = MockCCSession()
+        self.assertFalse(bob.ccs.stopped)
+
         bob.shutdown()
 
+        self.assertTrue(bob.ccs.stopped)
         self.assertEqual([False, True], killed)
         self.assertTrue(self.__called)
 
