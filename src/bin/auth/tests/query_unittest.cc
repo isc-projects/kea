@@ -348,9 +348,7 @@ private:
         domains_[rrset->getName()][rrset->getType()] = rrset;
 
         // Remember delegation (NS/DNAME) related RRsets separately.
-        if ((rrset->getType() == RRType::NS() ||
-             rrset->getType() == RRType::DS()) &&
-            rrset->getName() != origin_) {
+        if (rrset->getType() == RRType::NS() && rrset->getName() != origin_) {
             delegations_[rrset->getName()][rrset->getType()] = rrset;
         } else if (rrset->getName() == dname_name_ &&
             rrset->getType() == RRType::DNAME()) {
@@ -491,16 +489,9 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         ConstRRsetPtr delegation_ns = it->second[RRType::NS()];
         assert(delegation_ns); // should be ensured by how we construct it
         if (type != RRType::DS()) {
+            // DS query will be handled just like an in-zone case below.
             return (FindResult(DELEGATION, delegation_ns));
         }
-        RRsetStore::const_iterator it_rrset = it->second.find(RRType::DS());
-        if (it_rrset != it->second.end()) {
-            return (FindResult(SUCCESS, it_rrset->second));
-        }
-        if (it->first == bad_signed_delegation_name_) {
-            return (FindResult(NXDOMAIN, RRsetPtr()));
-        }
-        // Treat as a normal in-zone case.
     } else if (name.compare(dname_name_).getRelation() ==
                NameComparisonResult::SUBDOMAIN) {
         // And under DNAME
@@ -543,7 +534,13 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             return (FindResult(CNAME, found_rrset->second));
         }
 
-        // Otherwise it's NXRRSET case.
+        // Otherwise it's NXRRSET case...
+        // ...but a special pathological case first:
+        if (found_domain->first == bad_signed_delegation_name_ &&
+            type == RRType::DS()) {
+            return (FindResult(NXDOMAIN, RRsetPtr()));
+        }
+        // normal cases follow.
         if ((options & FIND_DNSSEC) != 0) {
             if (use_nsec3_) {
                 return (FindResult(NXRRSET, RRsetPtr(), RESULT_NSEC3_SIGNED));
