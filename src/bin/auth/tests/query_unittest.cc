@@ -232,8 +232,6 @@ public:
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << mx_txt << www_a_txt << cname_txt <<
-            cname_nxdom_txt << cname_out_txt << dname_txt <<
             delegation_txt << delegation_ds_txt << mx_txt << www_a_txt <<
             cname_txt << cname_nxdom_txt << cname_out_txt << dname_txt <<
             dname_a_txt << other_zone_rrs << no_txt << nz_txt <<
