@@ -956,7 +956,8 @@ InMemoryZoneFinderTest::wildcardTest(
     {
         SCOPED_TRACE("Search at created child");
         findTest(Name("a.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
-                 false, rr_wild_, ZoneFinder::RESULT_WILDCARD, NULL,
+                 false, rr_wild_,
+                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
                  ZoneFinder::FIND_DEFAULT, true);
         // Wildcard match, but no data
         findTest(Name("a.wild.example.org"), RRType::AAAA(),
@@ -969,8 +970,8 @@ InMemoryZoneFinderTest::wildcardTest(
         SCOPED_TRACE("Matching CNAME");
         findTest(Name("a.cnamewild.example.org"), RRType::A(),
                  ZoneFinder::CNAME, false, rr_cnamewild_,
-                 ZoneFinder::RESULT_WILDCARD, NULL, ZoneFinder::FIND_DEFAULT,
-                 true);
+                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
+                 ZoneFinder::FIND_DEFAULT, true);
     }
 
     // Search another created name, this time little bit lower
@@ -978,7 +979,7 @@ InMemoryZoneFinderTest::wildcardTest(
         SCOPED_TRACE("Search at created grand-child");
         findTest(Name("a.b.wild.example.org"), RRType::A(),
                  ZoneFinder::SUCCESS, false, rr_wild_,
-                 ZoneFinder::RESULT_WILDCARD, NULL,
+                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
                  ZoneFinder::FIND_DEFAULT, true);
     }
 
@@ -1189,7 +1190,8 @@ InMemoryZoneFinderTest::doCancelWildcardTest(
             SCOPED_TRACE(string("Node ") + *name);
 
             findTest(Name(*name), RRType::A(), ZoneFinder::SUCCESS, false,
-                     rr_wild_, ZoneFinder::RESULT_WILDCARD, NULL,
+                     rr_wild_,
+                     ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
                      ZoneFinder::FIND_DEFAULT, true);
         }
     }
