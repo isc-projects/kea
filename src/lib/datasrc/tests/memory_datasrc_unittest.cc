@@ -759,9 +759,6 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
     expected_sets.push_back(rr_child_glue_);
     findAllTest(rr_child_glue_->getName(), ZoneFinder::SUCCESS, expected_sets);
 
-    // TODO: test NXRRSET case after rbtree non-terminal logic has
-    // been implemented
-
     // add zone cut
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ns_)));
 
