@@ -1307,4 +1307,249 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
     EXPECT_THROW(zone_finder_.add(textToRRset(rrsig_a_txt)),
                  InMemoryZoneFinder::AddError);
 }
+
+//
+// (Faked) NSEC3 hash data.  Arbitrarily borrowed from RFC515 examples.
+//
+// Commonly used NSEC3 suffix.  It's incorrect to use it for all NSEC3s, but
+// doesn't matter for the purpose of our tests.
+const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
+// Likewise, common RRSIG suffix for NSEC3s.
+const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
+    "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
+
+// For apex (example.org)
+const char* const apex_hash = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+const char* const apex_hash_lower = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
+// For ns1.example.org
+const char* const ns1_hash = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
+// For x.y.w.example.org (lower-cased)
+const char* const xrw_hash = "2vptu5timamqttgl4luu9kg21e0aor3s";
+
+void
+nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
+           const ZoneFinder::FindNSEC3Result& result,
+           bool expected_sig = false)
+{
+    vector<ConstRRsetPtr> actual_rrsets;
+    EXPECT_EQ(expected_matched, result.matched);
+    ASSERT_TRUE(result.closest_proof);
+    if (expected_sig) {
+        ASSERT_TRUE(result.closest_proof->getRRsig());
+    }
+    actual_rrsets.push_back(result.closest_proof);
+    if (expected_sig) {
+        actual_rrsets.push_back(result.closest_proof->getRRsig());
+    }
+    rrsetsCheck(expected_rrsets_txt, actual_rrsets.begin(),
+                actual_rrsets.end());
+}
+
+// In the following tests we use a temporary faked version of findNSEC3
+// as the real version isn't implemented yet (it's a task for #1577).
+// When #1577 is done the tests should be updated using the real version.
+// If we can use fake hash calculator (see #1575), we should be able to
+// just replace findNSEC3Tmp with findNSEC3.
+
+TEST_F(InMemoryZoneFinderTest, addNSEC3) {
+    const string nsec3_text = string(apex_hash) + ".example.org." +
+        string(nsec3_common);
+    // This name shouldn't be found in the normal domain tree.
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              zone_finder_.find(Name(string(apex_hash) + ".example.org"),
+                                RRType::NSEC3()).code);
+    // Dedicated NSEC3 find should be able to find it.
+    nsec3Check(true, nsec3_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
+
+    // This implementation rejects duplicate/update add of the same hash name
+    EXPECT_EQ(result::EXIST,
+              zone_finder_.add(textToRRset(
+                                   string(apex_hash) + ".example.org." +
+                                   string(nsec3_common) + " AAAA")));
+    // The original NSEC3 should be intact
+    nsec3Check(true, nsec3_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
+
+    // NSEC3-like name but of ordinary RR type should go to normal tree.
+    const string nonsec3_text = string(apex_hash) + ".example.org. " +
+        "300 IN A 192.0.2.1";
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nonsec3_text)));
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              zone_finder_.find(Name(string(apex_hash) + ".example.org"),
+                                RRType::A()).code);
+}
+
+TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
+    // Similar to the previous case, but NSEC3 owner name is lower-cased.
+    const string nsec3_text = string(apex_hash_lower) + ".example.org." +
+        string(nsec3_common);
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
+    nsec3Check(true, nsec3_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
+}
+
+TEST_F(InMemoryZoneFinderTest, addNSEC3Ordering) {
+    // Check that the internal storage ensures comparison based on the NSEC3
+    // semantics, regardless of the add order or the letter-case of hash.
+
+    // Adding "0P..", "2v..", then "2T..".
+    const string smallest = string(apex_hash) + ".example.org." +
+        string(nsec3_common);
+    const string middle = string(ns1_hash) + ".example.org." +
+        string(nsec3_common);
+    const string largest = string(xrw_hash) + ".example.org." +
+        string(nsec3_common);
+    zone_finder_.add(textToRRset(smallest));
+    zone_finder_.add(textToRRset(largest));
+    zone_finder_.add(textToRRset(middle));
+
+    // Then look for NSEC3 that covers a name whose hash is "2S.."
+    // The covering NSEC3 should be "0P.."
+    nsec3Check(false, smallest,
+               zone_finder_.findNSEC3Tmp(Name("www.example.org"), false));
+
+    // Look for NSEC3 that covers names whose hash are "Q0.." and "0A.."
+    // The covering NSEC3 should be "2v.." in both cases
+    nsec3Check(false, largest,
+               zone_finder_.findNSEC3Tmp(Name("xxx.example.org"), false));
+    nsec3Check(false, largest,
+               zone_finder_.findNSEC3Tmp(Name("yyy.example.org"), false));
+}
+
+TEST_F(InMemoryZoneFinderTest, badNSEC3Name) {
+    // Our implementation refuses to load NSEC3 at a wildcard name
+    EXPECT_THROW(zone_finder_.add(textToRRset("*.example.org." +
+                                              string(nsec3_common))),
+                 InMemoryZoneFinder::AddError);
+
+    // Likewise, if the owner name of NSEC3 has too many labels, it's refused.
+    EXPECT_THROW(zone_finder_.add(textToRRset("a." + string(apex_hash) +
+                                              ".example.org." +
+                                              string(nsec3_common))),
+                 InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, addMultiNSEC3) {
+    // In this current implementation multiple NSEC3 RDATA isn't supported.
+    RRsetPtr nsec3(new RRset(Name(string(apex_hash) + ".example.org"),
+                             RRClass::IN(), RRType::NSEC3(), RRTTL(300)));
+    nsec3->addRdata(
+        generic::NSEC3("1 0 12 aabbccdd 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A"));
+    nsec3->addRdata(
+        generic::NSEC3("1 1 1 ddccbbaa 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A"));
+    EXPECT_THROW(zone_finder_.add(nsec3), InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
+    // Adding NSEC3 and its RRSIG
+    const string nsec3_text = string(apex_hash) + ".example.org." +
+        string(nsec3_common);
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
+    const string nsec3_rrsig_text = string(apex_hash) + ".example.org." +
+        string(nsec3_rrsig_common);
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_rrsig_text)));
+
+    // Then look for it.  The NSEC3 should have the RRSIG that was just added.
+    nsec3Check(true, nsec3_text + "\n" + nsec3_rrsig_text,
+               zone_finder_.findNSEC3Tmp(Name("example.org"), false), true);
+
+    // Duplicate add of RRSIG for the same NSEC3 is prohibited.
+    EXPECT_THROW(zone_finder_.add(textToRRset(nsec3_rrsig_text)),
+                 InMemoryZoneFinder::AddError);
+
+    // Same check using the lower-cased name.  This also confirms matching
+    // is case-insensitive.
+    EXPECT_THROW(zone_finder_.add(textToRRset(string(apex_hash_lower) +
+                                              ".example.org."
+                                              + string(nsec3_rrsig_common))),
+                 InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, badRRsigForNSEC3) {
+    // adding RRSIG for NSEC3 even before adding any NSEC3 (internally,
+    // a space for NSEC3 namespace isn't yet allocated)
+    EXPECT_THROW(zone_finder_.add(textToRRset(string(apex_hash) +
+                                              ".example.org." +
+                                              string(nsec3_rrsig_common))),
+                 InMemoryZoneFinder::AddError);
+
+    // Add an NSEC3
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(
+                  textToRRset(string(apex_hash) + ".example.org." +
+                              string(nsec3_common))));
+
+    // Then add an NSEC3 for a non existent NSEC3.  It should fail in the
+    // current implementation.
+    EXPECT_THROW(zone_finder_.add(textToRRset(string(ns1_hash) +
+                                              ".example.org." +
+                                              string(nsec3_rrsig_common))),
+                 InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, paramConsistencyWithNSEC3PARAM) {
+    // First, add an NSEC3PARAM RR
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                           "1 0 12 aabbccdd")));
+    // Adding an NSEC3 that has matching parameters is okay.
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(
+                  textToRRset(string(apex_hash) + ".example.org." +
+                              string(nsec3_common))));
+    // NSEC3 with inconsistent parameter will be rejected
+    EXPECT_THROW(zone_finder_.add(
+                     textToRRset("a.example.org. 300 IN NSEC3 1 0 1 aabbccdd "
+                                 "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG")),
+                 InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, paramConsistencyWithNSEC3) {
+    // Add an NSEC3 without adding NSEC3PARAM
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(
+                  textToRRset(string(apex_hash) + ".example.org." +
+                              string(nsec3_common))));
+    // Adding an NSEC3 with inconsistent parameter will be rejected at this pt.
+    EXPECT_THROW(zone_finder_.add(
+                     textToRRset("a.example.org. 300 IN NSEC3 1 0 1 aabbccdd "
+                                 "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG")),
+                 InMemoryZoneFinder::AddError);
+
+    // Likewise, NSEC3PARAM with inconsistent parameter will be rejected.
+    EXPECT_THROW(zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                              "1 0 1 aabbccdd")),
+                 InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, multiNSEC3PARAM) {
+    // In this current implementation multiple NSEC3PARAM isn't supported.
+    RRsetPtr nsec3param(new RRset(Name("example.org"), RRClass::IN(),
+                                  RRType::NSEC3PARAM(), RRTTL(300)));
+    nsec3param->addRdata(generic::NSEC3PARAM("1 0 12 aabbccdd"));
+    nsec3param->addRdata(generic::NSEC3PARAM("1 1 1 ddccbbaa"));
+    EXPECT_THROW(zone_finder_.add(nsec3param), InMemoryZoneFinder::AddError);
+}
+
+TEST_F(InMemoryZoneFinderTest, nonOriginNSEC3PARAM) {
+    // This is a normal NSEC3PARAM at the zone origin
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                           "1 0 12 aabbccdd")));
+    // Add another (with different param) at a non origin node.  This is
+    // awkward, but the implementation accepts it as an ordinary RR.
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("a.example.org. 300 IN NSEC3PARAM "
+                                           "1 1 1 aabbccdd")));
+}
+
+TEST_F(InMemoryZoneFinderTest, loadNSEC3Zone) {
+    // Check if it can load validly NSEC3-signed zone.  At this moment
+    // it's sufficient to see it doesn't crash
+    zone_finder_.load(TEST_DATA_DIR "/example.org.nsec3-signed");
+
+    // Reload the zone with a version that doesn't have NSEC3PARAM.
+    // This is an abnormal case, but the implementation accepts it.
+    zone_finder_.load(TEST_DATA_DIR "/example.org.nsec3-signed-noparam");
+}
 }
