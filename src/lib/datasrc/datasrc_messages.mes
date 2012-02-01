@@ -376,7 +376,7 @@ Some resource types are singletons -- only one is allowed in a domain
 % DATASRC_MEM_SUCCESS query for '%1/%2' successful
 Debug information. The requested record was found.
 
-% DATASRC_MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty
+% DATASRC_MEM_SUPER_STOP stopped at subdomain of '%1', meaning it's empty
 Debug information. The search stopped at a superdomain of the requested
 domain. The domain is an empty nonterminal, therefore it is treated  as NXRRSET
 case (eg. the domain exists, but it doesn't have the requested record type).

@@ -697,7 +697,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 if (node_path.getLastComparisonResult().getRelation() ==
                     NameComparisonResult::SUPERDOMAIN) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
-                        arg(node_path.getAbsoluteName()).arg(name);
+                        arg(name);
                     return (createFindResult(NXRRSET, ConstRRsetPtr(), false));
                 }
 
