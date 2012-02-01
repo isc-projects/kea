@@ -358,6 +358,29 @@ class TestConfigManager(unittest.TestCase):
         #                 self.fake_session.get_message("Cmdctl", None))
         #self.assertEqual({'commands_update': [ self.name, self.commands ] },
         #                 self.fake_session.get_message("Cmdctl", None))
+        # drop the two messages for now
+        self.assertEqual(len(self.fake_session.message_queue), 2)
+        self.fake_session.get_message("Cmdctl", None)
+        self.fake_session.get_message("TestModule", None)
+
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        # A stopping message should get no response, but should cause another
+        # message to be sent, if it is a known module
+        self._handle_msg_helper({ "command": [ "stopping",
+                                               { "module_name": "Spec2"}] },
+                                None)
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual({'command': [ 'module_specification_update',
+                                       ['Spec2', None] ] },
+                         self.fake_session.get_message("Cmdctl", None))
+
+        # but not if it is either unknown or not running
+        self._handle_msg_helper({ "command":
+                                  [ "stopping",
+                                    { "module_name": "NoSuchModule" } ] },
+                                None)
+        self.assertEqual(len(self.fake_session.message_queue), 0)
 
         self._handle_msg_helper({ "command":
                                   ["shutdown"]

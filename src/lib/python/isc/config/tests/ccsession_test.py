@@ -250,6 +250,18 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
                          fake_session.get_message('ConfigManager', None))
 
+    def test_stop(self):
+        fake_session = FakeModuleCCSession()
+        self.assertFalse("Spec1" in fake_session.subscriptions)
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        self.assertTrue("Spec1" in fake_session.subscriptions)
+
+        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.stop()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'command': ['stopping', {'module_name': 'Spec1'}]},
+                         fake_session.get_message('ConfigManager', None))
+
     def test_get_socket(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
@@ -723,6 +735,38 @@ class TestUIModuleCCSession(unittest.TestCase):
 
         fake_conn.set_get_answer('/config_data', { 'version': 123123 })
         self.assertRaises(ModuleCCSessionError, UIModuleCCSession, fake_conn)
+
+    def test_request_specifications(self):
+        module_spec1 = isc.config.module_spec_from_file(
+                          self.spec_file("spec1.spec"))
+        module_spec_dict1 = { "module_spec": module_spec1.get_full_spec() }
+        module_spec2 = isc.config.module_spec_from_file(
+                          self.spec_file("spec2.spec"))
+        module_spec_dict2 = { "module_spec": module_spec2.get_full_spec() }
+
+        fake_conn = fakeUIConn()
+        # Set the first one in the answer
+        fake_conn.set_get_answer('/module_spec', module_spec_dict1)
+        fake_conn.set_get_answer('/config_data',
+                                 { 'version': BIND10_CONFIG_DATA_VERSION })
+        uccs = UIModuleCCSession(fake_conn)
+
+        # We should now have the first one, but not the second.
+        self.assertTrue("Spec1" in uccs._specifications)
+        self.assertEqual(module_spec1.get_full_spec(),
+                         uccs._specifications["Spec1"].get_full_spec())
+        self.assertFalse("Spec2" in uccs._specifications)
+
+        # Now set an answer where only the second one is present
+        fake_conn.set_get_answer('/module_spec', module_spec_dict2)
+
+        uccs.request_specifications()
+
+        # Now Spec1 should have been removed, and spec2 should be there
+        self.assertFalse("Spec1" in uccs._specifications)
+        self.assertTrue("Spec2" in uccs._specifications)
+        self.assertEqual(module_spec2.get_full_spec(),
+                         uccs._specifications["Spec2"].get_full_spec())
 
     def test_add_remove_value(self):
         fake_conn = fakeUIConn()

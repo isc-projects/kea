@@ -311,11 +311,15 @@ class CommandControl():
         answer = ccsession.create_answer(0)
         if command == ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
             with self._lock:
-                self.modules_spec[args[0]] = args[1]
+                if args[1] is None and args[0] in self.modules_spec:
+                    del self.modules_spec[args[0]]
+                else:
+                    self.modules_spec[args[0]] = args[1]
 
         elif command == ccsession.COMMAND_SHUTDOWN:
             #When cmdctl get 'shutdown' command from boss,
             #shutdown the outer httpserver.
+            self._module_cc.stop()
             self._httpserver.shutdown()
             self._serving = False
 

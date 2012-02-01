@@ -30,6 +30,18 @@ but will not send back an answer.
 The most likely cause of this error is a programming error.  Please raise
 a bug report.
 
+% CONFIG_CCSESSION_STOPPING error sending stopping message: %1
+There was a problem when sending a message signaling that the module using
+this CCSession is stopping. This message is sent so that the rest of the
+system is aware that the module is no longer running. Apart from logging
+this message, the error itself is ignored, and the ModuleCCSession is
+still stopped. The specific exception message is printed.
+
+% CONFIG_CCSESSION_STOPPING_UNKNOWN unknown error sending stopping message
+Similar to CONFIG_CCSESSION_STOPPING, but in this case the exception that
+is seen is not a standard exception, and further information is unknown.
+This is a bug.
+
 % CONFIG_GET_FAIL error getting configuration from cfgmgr: %1
 The configuration manager returned an error when this module requested
 the configuration. The full error message answer from the configuration

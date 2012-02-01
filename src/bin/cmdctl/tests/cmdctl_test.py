@@ -345,6 +345,29 @@ class TestCommandControl(unittest.TestCase):
         self.assertEqual(rcode, 0)
         self.assertTrue(msg != None)
 
+    def test_command_handler_spec_update(self):
+        # Should not be present
+        self.assertFalse("foo" in self.cmdctl.modules_spec)
+
+        answer = self.cmdctl.command_handler(
+            ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE, [ "foo", {} ])
+        rcode, msg = ccsession.parse_answer(answer)
+        self.assertEqual(rcode, 0)
+        self.assertEqual(msg, None)
+
+        # Should now be present
+        self.assertTrue("foo" in self.cmdctl.modules_spec)
+
+        # When sending specification 'None', it should be removed
+        answer = self.cmdctl.command_handler(
+            ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE, [ "foo", None ])
+        rcode, msg = ccsession.parse_answer(answer)
+        self.assertEqual(rcode, 0)
+        self.assertEqual(msg, None)
+
+        # Should no longer be present
+        self.assertFalse("foo" in self.cmdctl.modules_spec)
+
     def test_check_config_handler(self):
         answer = self.cmdctl.config_handler({'non-exist': 123})
         self._check_answer(answer, 1, 'unknown config item: non-exist')
