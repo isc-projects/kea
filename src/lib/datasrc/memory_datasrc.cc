@@ -635,6 +635,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (wild) {
             flags = flags | RESULT_WILDCARD;
         }
+        if ((code == NXRRSET || code == NXDOMAIN) && zone_data_->nsec3_data_) {
+            flags = flags | RESULT_NSEC3_SIGNED;
+        }
         return (FindResult(code, rrset, flags));
     }
 
@@ -694,7 +697,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     NameComparisonResult::SUPERDOMAIN) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
                         arg(node_path.getAbsoluteName()).arg(name);
-                    return (FindResult(NXRRSET, ConstRRsetPtr()));
+                    return (createFindResult(NXRRSET, ConstRRsetPtr(), false));
                 }
 
                 /*
@@ -733,7 +736,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                         getLastComparisonResult().getCommonLabels() > 1) {
                         LOG_DEBUG(logger, DBG_TRACE_DATA,
                                      DATASRC_MEM_WILDCARD_CANCEL).arg(name);
-                        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                        return (createFindResult(NXDOMAIN, ConstRRsetPtr(),
+                                                 false));
                     }
                     const Name wildcard(Name("*").concatenate(
                         node_path.getAbsoluteName()));
@@ -758,7 +762,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             case DomainTree::NOTFOUND:
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
                     arg(name);
-                return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                return (createFindResult(NXDOMAIN, ConstRRsetPtr(), false));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
                 break;
             default:
