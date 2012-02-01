@@ -626,6 +626,24 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // Set up FindResult object as a return value of find(), taking into
+    // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
+    // flag when applicable regardless of the find option; the caller would
+    // simply ignore these when they didn't request DNSSEC related results.
+    FindResult createFindResult(Result code, ConstRRsetPtr rrset,
+                                bool wild) const
+    {
+        FindResultFlags flags = RESULT_DEFAULT;
+        if (wild) {
+            flags = flags | RESULT_WILDCARD;
+        }
+        if ((code == NXRRSET || code == NXDOMAIN || wild) &&
+            zone_data_->nsec3_data_) {
+            flags = flags | RESULT_NSEC3_SIGNED;
+        }
+        return (FindResult(code, rrset, flags));
+    }
+
     // Implementation of InMemoryZoneFinder::find
     FindResult find(const Name& name, RRType type,
                     std::vector<ConstRRsetPtr> *target,
@@ -665,13 +683,14 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
                     return (FindResult(DNAME, prepareRRset(name, state.rrset_,
-                        rename)));
+                                                           false)));
                 }
                 if (state.zonecut_node_ != NULL) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                         arg(state.rrset_->getName());
-                    return (FindResult(DELEGATION, prepareRRset(name,
-                        state.rrset_, rename)));
+                    return (FindResult(DELEGATION,
+                                       prepareRRset(name, state.rrset_,
+                                                    false)));
                 }
 
                 // If the RBTree search stopped at a node for a super domain
@@ -680,8 +699,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 if (node_path.getLastComparisonResult().getRelation() ==
                     NameComparisonResult::SUPERDOMAIN) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
-                        arg(node_path.getAbsoluteName()).arg(name);
-                    return (FindResult(NXRRSET, ConstRRsetPtr()));
+                        arg(name);
+                    return (createFindResult(NXRRSET, ConstRRsetPtr(), false));
                 }
 
                 /*
@@ -720,9 +739,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                         getLastComparisonResult().getCommonLabels() > 1) {
                         LOG_DEBUG(logger, DBG_TRACE_DATA,
                                      DATASRC_MEM_WILDCARD_CANCEL).arg(name);
-                        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                        return (createFindResult(NXDOMAIN, ConstRRsetPtr(),
+                                                 false));
                     }
-                    Name wildcard(Name("*").concatenate(
+                    const Name wildcard(Name("*").concatenate(
                         node_path.getAbsoluteName()));
                     DomainTree::Result result =
                         zone_data_->domains_.find(wildcard, &node);
@@ -745,7 +765,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             case DomainTree::NOTFOUND:
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
                     arg(name);
-                return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                return (createFindResult(NXDOMAIN, ConstRRsetPtr(), false));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
                 break;
             default:
@@ -758,7 +778,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (node->isEmpty()) {
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
                 arg(name);
-            return (FindResult(NXRRSET, ConstRRsetPtr()));
+            return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
         }
 
         Domain::const_iterator found;
@@ -773,8 +793,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_EXACT_DELEGATION).arg(name);
-                return (FindResult(DELEGATION, prepareRRset(name,
-                    found->second, rename)));
+                return (FindResult(DELEGATION,
+                                   prepareRRset(name, found->second, rename)));
             }
         }
 
@@ -788,7 +808,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
-            return (FindResult(SUCCESS, ConstRRsetPtr()));
+            return (createFindResult(SUCCESS, ConstRRsetPtr(), rename));
         }
 
         found = node->getData()->find(type);
@@ -796,21 +816,23 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             // Good, it is here
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUCCESS).arg(name).
                 arg(type);
-            return (FindResult(SUCCESS, prepareRRset(name, found->second,
-                rename)));
+            return (createFindResult(SUCCESS, prepareRRset(name,
+                                                           found->second,
+                                                           rename), rename));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
-                return (FindResult(CNAME, prepareRRset(name, found->second,
-                    rename)));
+                return (createFindResult(CNAME,
+                                         prepareRRset(name, found->second,
+                                                      rename), rename));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
             arg(name);
-        return (FindResult(NXRRSET, ConstRRsetPtr()));
+        return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
     }
 };
 
