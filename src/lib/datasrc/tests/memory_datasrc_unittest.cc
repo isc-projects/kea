@@ -297,6 +297,10 @@ protected:
                        ZoneFinder::RESULT_DEFAULT);
     void doCancelWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
                                ZoneFinder::RESULT_DEFAULT);
+    void anyWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
+                          ZoneFinder::RESULT_DEFAULT);
+    void emptyWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
+                            ZoneFinder::RESULT_DEFAULT);
 
 public:
     InMemoryZoneFinderTest() :
@@ -1061,8 +1065,14 @@ TEST_F(InMemoryZoneFinderTest, delegatedWildcard) {
 }
 
 // Tests combination of wildcard and ANY.
-TEST_F(InMemoryZoneFinderTest, anyWildcard) {
+void
+InMemoryZoneFinderTest::anyWildcardCheck(
+    ZoneFinder::FindResultFlags expected_flags)
+{
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
+    if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
+    }
 
     vector<ConstRRsetPtr> expected_sets;
 
@@ -1084,13 +1094,25 @@ TEST_F(InMemoryZoneFinderTest, anyWildcard) {
         expected->addRdata(rr_wild_->getRdataIterator()->getCurrent());
         expected_sets.push_back(expected);
         findAllTest(Name("a.wild.example.org"), ZoneFinder::SUCCESS,
-                    expected_sets, ZoneFinder::RESULT_WILDCARD);
+                    expected_sets,
+                    ZoneFinder::RESULT_WILDCARD | expected_flags);
     }
+}
+
+TEST_F(InMemoryZoneFinderTest, anyWildcard) {
+    anyWildcardCheck();
+}
+
+TEST_F(InMemoryZoneFinderTest, anyWildcardNSEC3) {
+    anyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
 // Test there's nothing in the wildcard in the middle if we load
 // wild.*.foo.example.org.
-TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
+void
+InMemoryZoneFinderTest::emptyWildcardCheck(
+    ZoneFinder::FindResultFlags expected_flags)
+{
     /*
      *            example.org.
      *                foo
@@ -1098,6 +1120,9 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
      *               wild
      */
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_emptywild_));
+    if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
+    }
 
     {
         SCOPED_TRACE("Asking for the original record under wildcard");
@@ -1108,26 +1133,38 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
     {
         SCOPED_TRACE("Asking for A record");
         findTest(Name("a.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET,
-                 true, ConstRRsetPtr(), ZoneFinder::RESULT_WILDCARD);
-        findTest(Name("*.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET);
-        findTest(Name("foo.example.org"), RRType::A(), ZoneFinder::NXRRSET);
+                 true, ConstRRsetPtr(),
+                 ZoneFinder::RESULT_WILDCARD | expected_flags);
+        findTest(Name("*.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET,
+                 true, ConstRRsetPtr(), expected_flags);
+        findTest(Name("foo.example.org"), RRType::A(), ZoneFinder::NXRRSET,
+                 true, ConstRRsetPtr(), expected_flags);
     }
 
     {
         SCOPED_TRACE("Asking for ANY record");
         findAllTest(Name("*.foo.example.org"), ZoneFinder::NXRRSET,
-                    vector<ConstRRsetPtr>());
+                    vector<ConstRRsetPtr>(), expected_flags);
 
         findAllTest(Name("a.foo.example.org"), ZoneFinder::NXRRSET,
-                    vector<ConstRRsetPtr>(), ZoneFinder::RESULT_WILDCARD);
+                    vector<ConstRRsetPtr>(),
+                    ZoneFinder::RESULT_WILDCARD | expected_flags);
     }
 
     {
         SCOPED_TRACE("Asking on the non-terminal");
         findTest(Name("wild.bar.foo.example.org"), RRType::A(),
                  ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
-                 ZoneFinder::RESULT_WILDCARD);
+                 ZoneFinder::RESULT_WILDCARD | expected_flags);
     }
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
+    emptyWildcardCheck();
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC3) {
+    emptyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
 // Same as emptyWildcard, but with multiple * in the path.
