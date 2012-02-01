@@ -57,6 +57,7 @@ const char* const zone_ns_txt =
     "example.com. 3600 IN NS glue.delegation.example.com.\n"
     "example.com. 3600 IN NS noglue.example.com.\n"
     "example.com. 3600 IN NS example.net.\n";
+// TBD: CHECK IF IT IS REALLY USED
 const char* const zone_ds_txt =
     "example.com. 3600 IN DS 57855 5 1 "
         "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
@@ -230,7 +231,7 @@ public:
         nsec_name_(origin_)
     {
         stringstream zone_stream;
-        zone_stream << soa_txt << zone_ns_txt << zone_ds_txt << ns_addrs_txt <<
+        zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
             cname_nxdom_txt << cname_out_txt << dname_txt <<
             delegation_txt << delegation_ds_txt << mx_txt << www_a_txt <<
