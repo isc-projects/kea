@@ -83,7 +83,7 @@ public:
                                     ElementPtr(new ListElement),
                                     ElementPtr(new ListElement))
     {
-        initSocketRequestor(session);
+        initSocketRequestor(session, "tests");
     }
 
     ~SocketRequestorTest() {
@@ -184,6 +184,17 @@ TEST_F(SocketRequestorTest, testSocketRequestMessages) {
                                    "::1", 2,
                                    SocketRequestor::SHARE_SAME,
                                    "test3"),
+                 CCSessionError);
+    ASSERT_EQ(1, session.getMsgQueue()->size());
+    ASSERT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
+
+    // A default share name equal to the app name passed on construction
+    clearMsgQueue();
+    expected_request = createExpectedRequest("::1", 2, "UDP",
+                                             "SAMEAPP", "tests");
+    ASSERT_THROW(socketRequestor().requestSocket(SocketRequestor::UDP,
+                                   "::1", 2,
+                                   SocketRequestor::SHARE_SAME),
                  CCSessionError);
     ASSERT_EQ(1, session.getMsgQueue()->size());
     ASSERT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));

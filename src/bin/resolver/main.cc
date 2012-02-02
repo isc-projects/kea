@@ -202,7 +202,7 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
-        isc::server_common::initSocketRequestor(*cc_session);
+        isc::server_common::initSocketRequestor(*cc_session, "resolver");
 
         // We delay starting listening to new commands/config just before we
         // go into the main loop.   See auth/main.cc for the rationale.

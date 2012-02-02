@@ -163,7 +163,8 @@ public:
     /// \param share_mode how the socket can be shared with other requests.
     /// This must be one of the defined values of ShareMode.
     /// \param share_name the name of sharing group, relevant for SHARE_SAME
-    ///     (specified by us or someone else).
+    ///     (specified by us or someone else). If left empty (the default),
+    ///     the app_name parameter of initSocketRequestor is used.
     /// \return the socket, as a file descriptor and token representing it on
     ///     the socket creator side.
     ///
@@ -180,7 +181,7 @@ public:
     virtual SocketID requestSocket(Protocol protocol,
                                    const std::string& address,
                                    uint16_t port, ShareMode share_mode,
-                                   const std::string& share_name) = 0;
+                                   const std::string& share_name = "") = 0;
 
     /// \brief Tell the socket creator we no longer need the socket
     ///
@@ -215,8 +216,11 @@ SocketRequestor& socketRequestor();
 ///
 /// \param session the CC session that'll be used to talk to the
 ///                socket creator.
+/// \param app_name default share name if one is not provided with
+///                 requestSocket
 /// \throw InvalidOperation when it is called more than once
-void initSocketRequestor(cc::AbstractSession& session);
+void initSocketRequestor(cc::AbstractSession& session,
+                         const std::string& app_name);
 
 /// \brief Initialization for tests
 ///
