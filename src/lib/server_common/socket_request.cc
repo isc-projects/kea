@@ -264,8 +264,10 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
 // be closed during the lifetime of this class
 class SocketRequestorCCSession : public SocketRequestor {
 public:
-    explicit SocketRequestorCCSession(cc::AbstractSession& session) :
-        session_(session)
+    explicit SocketRequestorCCSession(cc::AbstractSession& session,
+                                      const std::string& app_name) :
+        session_(session),
+        app_name_(app_name)
     {
         // We need to filter SIGPIPE to prevent it from happening in
         // getSocketFd() while writing to the UNIX domain socket after the
@@ -278,7 +280,8 @@ public:
             isc_throw(Unexpected, "Failed to filter SIGPIPE: " <<
                       strerror(errno));
         }
-        LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, SOCKETREQUESTOR_CREATED);
+        LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, SOCKETREQUESTOR_CREATED).
+            arg(app_name);
     }
 
     ~SocketRequestorCCSession() {
@@ -293,7 +296,9 @@ public:
     {
         const isc::data::ConstElementPtr request_msg =
             createRequestSocketMessage(protocol, address, port,
-                                       share_mode, share_name);
+                                       share_mode,
+                                       share_name.empty() ? app_name_ :
+                                       share_name);
 
         // Send it to boss
         const int seq = session_.group_sendmsg(request_msg, "Boss");
@@ -377,6 +382,7 @@ private:
     }
 
     cc::AbstractSession& session_;
+    const std::string app_name_;
     std::map<std::string, int> fd_share_sockets_;
 };
 
@@ -392,12 +398,14 @@ socketRequestor() {
 }
 
 void
-initSocketRequestor(cc::AbstractSession& session) {
+initSocketRequestor(cc::AbstractSession& session,
+                    const std::string& app_name)
+{
     if (requestor != NULL) {
         isc_throw(InvalidOperation,
                   "The socket requestor was already initialized");
     } else {
-        requestor = new SocketRequestorCCSession(session);
+        requestor = new SocketRequestorCCSession(session, app_name);
     }
 }
 
