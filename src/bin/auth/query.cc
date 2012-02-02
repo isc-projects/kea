@@ -283,6 +283,9 @@ Query::process() {
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
     if (result.code != result::SUCCESS &&
         result.code != result::PARTIALMATCH) {
+        if (qtype_ == RRType::DS() && processDSAtChild()) {
+            return;
+        }
         response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_.setRcode(Rcode::REFUSED());
         return;
@@ -434,6 +437,38 @@ Query::process() {
             isc_throw(isc::NotImplemented, "Unknown result code");
             break;
     }
+}
+
+bool
+Query::processDSAtChild() {
+    const DataSourceClient::FindResult zresult =
+        datasrc_client_.findZone(qname_);
+
+    if (zresult.code != result::SUCCESS) {
+        return (false);
+    }
+
+    // We are receiving a DS query at the child side of the owner name,
+    // where the DS isn't supposed to belong.  We should return a "no data"
+    // response as described in Section 3.1.4.1 of RFC4035 and Section
+    // 2.2.1.1 of RFC 3658.  find(DS) should result in NXRRSET, in which
+    // case (and if DNSSEC is required) we also add the proof for that,
+    // but even if find() returns an unexpected result, we don't bother.
+    // The important point in this case is to return SOA so that the resolver
+    // that happens to contact us can hunt for the appropriate parent zone
+    // by seeing the SOA.
+    response_.setHeaderFlag(Message::HEADERFLAG_AA);
+    response_.setRcode(Rcode::NOERROR());
+    addSOA(*zresult.zone_finder);
+    const ZoneFinder::FindResult ds_result =
+        zresult.zone_finder->find(qname_, RRType::DS(), dnssec_opt_);
+    if (ds_result.code == ZoneFinder::NXRRSET) {
+        if (dnssec_) {
+            addNXRRsetProof(*zresult.zone_finder, ds_result);
+        }
+    }
+
+    return (true);
 }
 
 }

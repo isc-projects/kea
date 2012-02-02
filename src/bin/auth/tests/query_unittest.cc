@@ -57,7 +57,6 @@ const char* const zone_ns_txt =
     "example.com. 3600 IN NS glue.delegation.example.com.\n"
     "example.com. 3600 IN NS noglue.example.com.\n"
     "example.com. 3600 IN NS example.net.\n";
-// TBD: CHECK IF IT IS REALLY USED
 const char* const zone_ds_txt =
     "example.com. 3600 IN DS 57855 5 1 "
         "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
@@ -302,8 +301,18 @@ public:
     // answers when DNSSEC is required.
     void setNSEC3Flag(bool on) { use_nsec3_ = on; }
 
-    Name findPreviousName(const Name&) const {
+    virtual Name findPreviousName(const Name&) const {
         isc_throw(isc::NotImplemented, "Mock doesn't support previous name");
+    }
+
+    // This method allows tests to insert new record in the middle of the test.
+    //
+    // \param record_txt textual RR representation of RR (such as soa_txt, etc)
+    void addRecord(const string& record_txt) {
+        stringstream record_stream;
+        record_stream << record_txt;
+        masterLoad(record_stream, origin_, rrclass_,
+                   boost::bind(&MockZoneFinder::loadRRset, this, _1));
     }
 
 public:
@@ -1662,21 +1671,44 @@ TEST_F(QueryTest, dsAboveDelegation) {
                    getCommonRRSIGText("A")).c_str());
 }
 
-// This one checks a DS record at the apex is not returned even if it exists,
-// as it is authoritative above the delegation and does not exist below it,
+// This one checks a DS record at the apex is not returned, as it is
+// authoritative above the delegation and does not exist below it,
 // as described in RFC 4035, section 3.1.4.1. The example is inspired by the
 // B.8. example from the RFC.
-TEST_F(QueryTest, DISABLED_dsBelowDelegation) {
+TEST_F(QueryTest, dsBelowDelegation) {
     EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
                           RRType::DS(), response, true).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
-                   string(nsec_www_txt) + "\n" +
-                   string("www.example.com. 3600 IN RRSIG ") +
-                   getCommonRRSIGText("NSEC")).c_str(),
-                  NULL, mock_finder->getOrigin());
+                   string(nsec_apex_txt) + "\n" +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL,
+                  mock_finder->getOrigin());
+}
+
+// Similar to the previous case, but even more pathological: the DS somehow
+// exists in the child zone.  The Query module should still return SOA.
+// In our implementation NSEC/NSEC3 isn't attached in this case.
+TEST_F(QueryTest, dsBelowDelegationWithDS) {
+    mock_finder->addRecord(zone_ds_txt); // add the DS to the child's apex
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA")).c_str(), NULL,
+                  mock_finder->getOrigin());
+}
+
+// DS query received at a completely irrelevant (neither parent nor child)
+// server.  It should just like the "noZone" test case, but DS query involves
+// special processing, so we test it explicitly.
+TEST_F(QueryTest, dsNoZone) {
+    Query(memory_client, Name("example"), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::REFUSED(), 0, 0, 0, 0, NULL, NULL, NULL);
 }
 
 // The following are tentative tests until we really add tests for the

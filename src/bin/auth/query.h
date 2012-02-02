@@ -178,6 +178,9 @@ private:
     /// data for the query are to be found.
     void addAuthAdditional(isc::datasrc::ZoneFinder& finder);
 
+    /// TBD
+    bool processDSAtChild();
+
 public:
     /// Constructor from query parameters.
     ///
