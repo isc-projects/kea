@@ -64,7 +64,7 @@ class MyCCSession(isc.config.ConfigData):
         '''Called by DDNSServer initialization, but not used in tests'''
         self._started = True
 
-    def stop(self):
+    def send_stopping(self):
         '''Called by shutdown code'''
         self._stopped = True
 

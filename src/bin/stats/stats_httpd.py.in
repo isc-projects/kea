@@ -203,7 +203,7 @@ class StatsHttpd:
         """Closes a ModuleCCSession object"""
         if self.mccs is None:
             return
-        self.mccs.stop()
+        self.mccs.send_stopping()
 
         logger.debug(DBG_STATHTTPD_INIT, STATHTTPD_CLOSING_CC_SESSION)
         self.mccs.close()

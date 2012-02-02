@@ -188,7 +188,7 @@ class Stats:
             while self.running:
                 self.mccs.check_command(False)
         finally:
-            self.mccs.stop()
+            self.mccs.send_stopping()
 
     def config_handler(self, new_config):
         """
