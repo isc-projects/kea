@@ -649,14 +649,17 @@ class BoB:
         self.__started = True
         return None
 
-    def stop_process(self, process, recipient):
+    def stop_process(self, process, recipient, pid):
         """
         Stop the given process, friendly-like. The process is the name it has
-        (in logs, etc), the recipient is the address on msgq.
+        (in logs, etc), the recipient is the address on msgq. The pid is the
+        pid of the process (if we have multiple processes of the same name,
+        it might want to choose if it is for this one).
         """
         logger.info(BIND10_STOP_PROCESS, process)
-        self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
-            recipient)
+        self.cc_session.group_sendmsg(isc.config.ccsession.
+                                      create_command('shutdown', {'pid': pid}),
+                                      recipient, recipient)
 
     def component_shutdown(self, exitcode=0):
         """
