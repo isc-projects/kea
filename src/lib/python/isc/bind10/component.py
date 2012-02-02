@@ -408,7 +408,7 @@ class Component(BaseComponent):
         self._boss.register_process(self.pid(), self)
 
     def _stop_internal(self):
-        self._boss.stop_process(self._process, self._address)
+        self._boss.stop_process(self._process, self._address, self.pid())
         # TODO Some way to wait for the process that doesn't want to
         # terminate and kill it would prove nice (or add it to boss somewhere?)
 
