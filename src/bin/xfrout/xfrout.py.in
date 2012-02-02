@@ -969,7 +969,7 @@ class XfroutServer:
 
         global xfrout_server
         xfrout_server = None #Avoid shutdown is called twice
-        self._cc.stop()
+        self._cc.send_stopping()
         self._shutdown_event.set()
         self._notifier.shutdown()
         if self._unix_socket_server:

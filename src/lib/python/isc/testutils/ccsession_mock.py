@@ -19,7 +19,7 @@ class MockModuleCCSession():
         self.stopped = False
         self.closed = False
 
-    def stop(self):
+    def send_stopping(self):
         self.stopped = True
 
     def close(self):

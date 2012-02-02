@@ -319,7 +319,7 @@ class CommandControl():
         elif command == ccsession.COMMAND_SHUTDOWN:
             #When cmdctl get 'shutdown' command from boss,
             #shutdown the outer httpserver.
-            self._module_cc.stop()
+            self._module_cc.send_stopping()
             self._httpserver.shutdown()
             self._serving = False
 
