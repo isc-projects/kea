@@ -1745,6 +1745,9 @@ TEST_F(QueryTest, dsAtGrandParent) {
                   ns_addrs_and_sig_txt.c_str());
 }
 
+// DS query for a "grandchild" zone, and the server has authority of the
+// child zone, too.  In this case the query should be handled in the child
+// side and should result in no data with SOA.
 TEST_F(QueryTest, dsAtGrandParentAndChild) {
     // Pretending to have authority for the grandchild zone, too.
     const Name childname("grand.delegation.example.com");
