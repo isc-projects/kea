@@ -2,9 +2,9 @@
 
 Administrator Reference for BIND 10
 
-   This is the reference guide for BIND 10 version 20111129.
+   This is the reference guide for BIND 10 version 20120127.
 
-   Copyright (c) 2010-2011 Internet Systems Consortium, Inc.
+   Copyright (c) 2010-2012 Internet Systems Consortium, Inc.
 
    Abstract
 
@@ -14,7 +14,7 @@ Administrator Reference for BIND 10
    for controlling authoritative and recursive DNS servers, and experimental
    DHCPv4 and DHCPv6 servers.
 
-   This is the reference guide for BIND 10 version 20111129. The most
+   This is the reference guide for BIND 10 version 20120127. The most
    up-to-date version of this document (in PDF, HTML, and plain text
    formats), along with other documents for BIND 10, can be found at
    http://bind10.isc.org/docs.
@@ -172,7 +172,7 @@ Chapter 1. Introduction
    DNS. BIND 10 provides a EDNS0- and DNSSEC-capable authoritative DNS server
    and a caching recursive name server which also provides forwarding.
 
-   This guide covers the experimental prototype of BIND 10 version 20111129.
+   This guide covers the experimental prototype of BIND 10 version 20120127.
 
 1.1. Supported Platforms
 
@@ -389,9 +389,10 @@ Chapter 2. Installation
    system. This is powered by Git and all the BIND 10 development is public.
    The leading development is done in the "master".
 
-   The code can be checked out from git://bind10.isc.org/bind10; for example:
+   The code can be checked out from git://git.bind10.isc.org/bind10; for
+   example:
 
- $ git clone git://bind10.isc.org/bind10
+ $ git clone git://git.bind10.isc.org/bind10
 
    When checking out the code from the code version control system, it
    doesn't include the generated configure script, Makefile.in files, nor the
@@ -1376,6 +1377,10 @@ Chapter 15. Statistics
  > Stats show
  {
      "Auth": {
+         "opcode.iquery": 0,
+         "opcode.notify": 10,
+         "opcode.query": 869617,
+         ...
          "queries.tcp": 1749,
          "queries.udp": 867868
      },
