@@ -257,13 +257,24 @@ Query::addAuthAdditional(ZoneFinder& finder) {
     }
 }
 
+namespace {
+// A simple wrapper for DataSourceClient::findZone().  Normally we can simply
+// check the closest zone to the qname, but for type DS query we need to
+// look into the parent zone.
+DataSourceClient::FindResult
+findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
+    if (qtype != RRType::DS()) {
+        return (client.findZone(qname));
+    }
+    return (client.findZone(qname.split(1)));
+}
+}
+
 void
 Query::process() {
-    const bool qtype_is_any = (qtype_ == RRType::ANY());
-
-    response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-    const DataSourceClient::FindResult result =
-        datasrc_client_.findZone(qname_);
+    // Found a zone which is the nearest ancestor to QNAME
+    const DataSourceClient::FindResult result = findZone(datasrc_client_,
+                                                         qname_, qtype_);
 
     // If we have no matching authoritative zone for the query name, return
     // REFUSED.  In short, this is to be compatible with BIND 9, but the
@@ -272,16 +283,19 @@ Query::process() {
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
     if (result.code != result::SUCCESS &&
         result.code != result::PARTIALMATCH) {
+        response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_.setRcode(Rcode::REFUSED());
         return;
     }
     ZoneFinder& zfinder = *result.zone_finder;
 
-    // Found a zone which is the nearest ancestor to QNAME, set the AA bit
+    // We have authority for a zone that contain the query name (possibly
+    // indirectly via delegation).  Look into the zone.
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     response_.setRcode(Rcode::NOERROR());
     std::vector<ConstRRsetPtr> target;
     boost::function0<ZoneFinder::FindResult> find;
+    const bool qtype_is_any = (qtype_ == RRType::ANY());
     if (qtype_is_any) {
         find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
                            boost::ref(target), dnssec_opt_);
