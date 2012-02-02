@@ -153,7 +153,7 @@ class DDNSServer:
         Currently, it only causes the ModuleCCSession to send a message that
         this module is stopping.
         '''
-        self._cc.stop()
+        self._cc.send_stopping()
 
     def accept(self):
         """

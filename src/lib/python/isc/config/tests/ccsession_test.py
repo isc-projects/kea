@@ -257,7 +257,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertTrue("Spec1" in fake_session.subscriptions)
 
         self.assertEqual(len(fake_session.message_queue), 0)
-        mccs.stop()
+        mccs.send_stopping()
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'command': ['stopping', {'module_name': 'Spec1'}]},
                          fake_session.get_message('ConfigManager', None))

@@ -1224,7 +1224,7 @@ class Xfrin:
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
         terminated.
         '''
-        self._module_cc.stop()
+        self._module_cc.send_stopping()
         self._shutdown_event.set()
         main_thread = threading.currentThread()
         for th in threading.enumerate():
