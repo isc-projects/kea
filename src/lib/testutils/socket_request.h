@@ -145,8 +145,9 @@ public:
     /// \param protocol The protocol to request
     /// \param address to bind to
     /// \param port to bind to
-    /// \param mode checked to be DONT_SHARE for now
-    /// \param name checked to be dummy_app for now
+    /// \param mode checked to be SHARE_SAME for now
+    /// \param name checked to be the same as expected_app parameter of the
+    ///      constructor
     /// \return The token and FD
     /// \throw SocketAllocateError as described above, to test error handling
     /// \throw ShareError as described above, to test error handling
@@ -173,7 +174,7 @@ public:
         const std::string proto(protocol == TCP ? "TCP" : "UDP");
         const size_t number = ++ last_token_;
         EXPECT_EQ(expect_port_, port);
-        EXPECT_EQ(DONT_SHARE, mode);
+        EXPECT_EQ(SHARE_SAME, mode);
         EXPECT_EQ(expected_app_, name);
         const std::string token(proto + ":" + address + ":" +
                                 boost::lexical_cast<std::string>(port) + ":" +
