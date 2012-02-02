@@ -71,7 +71,7 @@ protected:
         dnss_(ios_, NULL, NULL, NULL),
         server(true, xfrout),
         rrclass(RRClass::IN()),
-        sock_requestor_(dnss_, address_store_, 53210)
+        sock_requestor_(dnss_, address_store_, 53210, "")
     {
         server.setDNSService(dnss_);
         server.setXfrinSession(&notify_session);

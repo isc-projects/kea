@@ -101,8 +101,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
         const SocketRequestor::SocketID
             tcp(socketRequestor().requestSocket(SocketRequestor::TCP,
                                                 address.first, address.second,
-                                                SocketRequestor::DONT_SHARE,
-                                                "dummy_app"));
+                                                SocketRequestor::DONT_SHARE));
         current_sockets.push_back(tcp.second);
         if (!test_mode) {
             service.addServerTCPFromFD(tcp.first, af);
@@ -110,8 +109,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
         const SocketRequestor::SocketID
             udp(socketRequestor().requestSocket(SocketRequestor::UDP,
                                                 address.first, address.second,
-                                                SocketRequestor::DONT_SHARE,
-                                                "dummy_app"));
+                                                SocketRequestor::DONT_SHARE));
         current_sockets.push_back(udp.second);
         if (!test_mode) {
             service.addServerUDPFromFD(udp.first, af);

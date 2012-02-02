@@ -85,7 +85,7 @@ protected:
     scoped_ptr<const RequestContext> request;
     ResolverConfig() :
         dnss(ios, NULL, NULL, NULL),
-        sock_requestor_(dnss, address_store_, 53210)
+        sock_requestor_(dnss, address_store_, 53210, "")
     {
         server.setDNSService(dnss);
     }
