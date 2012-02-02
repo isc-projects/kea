@@ -92,16 +92,12 @@ setAddresses(DNSService& service, const AddressList& addresses) {
     current_sockets.clear();
     BOOST_FOREACH(const AddressPair &address, addresses) {
         const int af(IOAddress(address.first).getFamily());
-        // TODO: Support sharing somehow in future.
-
-        // As for now, we hardcode the application name as dummy_app, because:
-        // * we don't have a name available in our interface, which will change
-        //   soon anyway
-        // * we use the DONT_SHARE mode, so the name is irrelevant anyway
+        // We use the application name supplied to the socket requestor on
+        // creation. So we can freely use the SHARE_SAME
         const SocketRequestor::SocketID
             tcp(socketRequestor().requestSocket(SocketRequestor::TCP,
                                                 address.first, address.second,
-                                                SocketRequestor::DONT_SHARE));
+                                                SocketRequestor::SHARE_SAME));
         current_sockets.push_back(tcp.second);
         if (!test_mode) {
             service.addServerTCPFromFD(tcp.first, af);
@@ -109,7 +105,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
         const SocketRequestor::SocketID
             udp(socketRequestor().requestSocket(SocketRequestor::UDP,
                                                 address.first, address.second,
-                                                SocketRequestor::DONT_SHARE));
+                                                SocketRequestor::SHARE_SAME));
         current_sockets.push_back(udp.second);
         if (!test_mode) {
             service.addServerUDPFromFD(udp.first, af);
