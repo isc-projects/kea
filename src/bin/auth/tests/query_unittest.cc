@@ -360,7 +360,7 @@ private:
         if (rrset->getType() == RRType::NS() && rrset->getName() != origin_) {
             delegations_[rrset->getName()][rrset->getType()] = rrset;
         } else if (rrset->getName() == dname_name_ &&
-            rrset->getType() == RRType::DNAME()) {
+                   rrset->getType() == RRType::DNAME()) {
             dname_rrset_ = rrset;
         }
 
@@ -490,20 +490,22 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         return (FindResult(NXDOMAIN, RRsetPtr()));
     }
 
-    // Special case for names on or under a zone cut
+    // Special case for names on or under a zone cut and under DNAME
     Domains::iterator it;
     if ((options & FIND_GLUE_OK) == 0 &&
         (it = find_if(delegations_.begin(), delegations_.end(),
                       SubdomainMatch(name))) != delegations_.end()) {
         ConstRRsetPtr delegation_ns = it->second[RRType::NS()];
         assert(delegation_ns); // should be ensured by how we construct it
-        if (type != RRType::DS()) {
-            // DS query will be handled just like an in-zone case below.
+
+        // DS query for the delegated domain (i.e. an exact match) will be
+        // handled just like an in-zone case below.  Others result in
+        // DELEGATION.
+        if (type != RRType::DS() || it->first != name) {
             return (FindResult(DELEGATION, delegation_ns));
         }
     } else if (name.compare(dname_name_).getRelation() ==
                NameComparisonResult::SUBDOMAIN) {
-        // And under DNAME
         return (FindResult(DNAME, dname_rrset_));
     }
 
@@ -715,7 +717,14 @@ protected:
     QueryTest() :
         qname(Name("www.example.com")), qclass(RRClass::IN()),
         qtype(RRType::A()), response(Message::RENDER),
-        qid(response.getQid()), query_code(Opcode::QUERY().getCode())
+        qid(response.getQid()), query_code(Opcode::QUERY().getCode()),
+        ns_addrs_and_sig_txt(string(ns_addrs_txt) +
+                             "glue.delegation.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("A") + "\n" +
+                             "glue.delegation.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("AAAA") + "\n" +
+                             "noglue.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("A"))
     {
         response.setRcode(Rcode::NOERROR());
         response.setOpcode(Opcode::QUERY());
@@ -735,6 +744,7 @@ protected:
     Message response;
     const qid_t qid;
     const uint16_t query_code;
+    const string ns_addrs_and_sig_txt; // convenient shortcut
 };
 
 // A wrapper to check resulting response message commonly used in
@@ -807,10 +817,6 @@ TEST_F(QueryTest, dnssecPositive) {
     Query query(memory_client, qname, qtype, response, true);
     EXPECT_NO_THROW(query.process());
     // find match rrset
-    // We can't let responseCheck to check the additional section as well,
-    // it gets confused by the two RRs for glue.delegation.../RRSIG due
-    // to it's design and fixing it would be hard. Therefore we simply
-    // check manually this one time.
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
                   (www_a_txt + std::string("www.example.com. 3600 IN RRSIG "
                                            "A 5 3 3600 20000101000000 "
@@ -820,27 +826,8 @@ TEST_F(QueryTest, dnssecPositive) {
                                              "3 3600 20000101000000 "
                                              "20000201000000 12345 "
                                              "example.com. FAKEFAKEFAKE\n")).
-                  c_str(), NULL);
-    RRsetIterator iterator(response.beginSection(Message::SECTION_ADDITIONAL));
-    const char* additional[] = {
-        "glue.delegation.example.com. 3600 IN A 192.0.2.153\n",
-        "glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
-            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
-        "glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 "
-            "20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        "noglue.example.com. 3600 IN A 192.0.2.53\n",
-        "noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
-            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        NULL
-    };
-    for (const char** rr(additional); *rr != NULL; ++ rr) {
-        ASSERT_FALSE(iterator ==
-                     response.endSection(Message::SECTION_ADDITIONAL));
-        EXPECT_EQ(*rr, (*iterator)->toText());
-        iterator ++;
-    }
-    EXPECT_TRUE(iterator == response.endSection(Message::SECTION_ADDITIONAL));
+                  c_str(),
+                  ns_addrs_and_sig_txt.c_str());
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
@@ -1662,13 +1649,7 @@ TEST_F(QueryTest, dsAboveDelegation) {
                   (string(zone_ns_txt) + "\n" +
                    "example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NS")).c_str(),
-                  (string(ns_addrs_txt) +
-                   "glue.delegation.example.com. 3600 IN RRSIG " +
-                   getCommonRRSIGText("A") + "\n" +
-                   "glue.delegation.example.com. 3600 IN RRSIG " +
-                   getCommonRRSIGText("AAAA") + "\n" +
-                   "noglue.example.com. 3600 IN RRSIG " +
-                   getCommonRRSIGText("A")).c_str());
+                  ns_addrs_and_sig_txt.c_str());
 }
 
 // This one checks a DS record at the apex is not returned, as it is
@@ -1709,6 +1690,18 @@ TEST_F(QueryTest, dsNoZone) {
     Query(memory_client, Name("example"), RRType::DS(), response,
           true).process();
     responseCheck(response, Rcode::REFUSED(), 0, 0, 0, 0, NULL, NULL, NULL);
+}
+
+// DS query for a "grandchild" zone.  This should be result in normal
+// delegation (unless this server also has authority of grandchild zone).
+TEST_F(QueryTest, dsAtGrandParent) {
+    Query(memory_client, Name("grand.delegation.example.com"), RRType::DS(),
+          response, true).process();
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 6, 6, NULL,
+                  (string(delegation_txt) + string(delegation_ds_txt) +
+                   "delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("DS")).c_str(),
+                  ns_addrs_and_sig_txt.c_str());
 }
 
 // The following are tentative tests until we really add tests for the
