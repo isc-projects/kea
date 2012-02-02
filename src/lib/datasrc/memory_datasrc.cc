@@ -17,6 +17,7 @@
 #include <utility>
 #include <cctype>
 #include <cassert>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -169,6 +170,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // A helper predicate used in contextCheck() to check if a given domain
+    // name has a RRset of type different than NSEC.
+    static bool isNotNSEC(const DomainPair& element) {
+        return (element.second->getType() != RRType::NSEC());
+    }
+
     /*
      * Does some checks in context of the data that are already in the zone.
      * Currently checks for forbidden combinations of RRsets in the same
@@ -176,24 +183,23 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      *
      * If such condition is found, it throws AddError.
      */
-    void contextCheck(const ConstRRsetPtr& rrset,
-                      const DomainPtr& domain) const {
+    void contextCheck(const RRset& rrset, const Domain& domain) const {
         // Ensure CNAME and other type of RR don't coexist for the same
-        // owner name.
-        if (rrset->getType() == RRType::CNAME()) {
-            // TODO: this check will become incorrect when we support DNSSEC
-            // (depending on how we support DNSSEC).  We should revisit it
-            // at that point.
-            if (!domain->empty()) {
+        // owner name except with NSEC, which is the only RR that can coexist
+        // with CNAME (and also RRSIG, which is handled separately)
+        if (rrset.getType() == RRType::CNAME()) {
+            if (find_if(domain.begin(), domain.end(), isNotNSEC)
+                != domain.end()) {
                 LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
-                    arg(rrset->getName());
+                    arg(rrset.getName());
                 isc_throw(AddError, "CNAME can't be added with other data for "
-                          << rrset->getName());
+                          << rrset.getName());
             }
-        } else if (domain->find(RRType::CNAME()) != domain->end()) {
-            LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset->getName());
-            isc_throw(AddError, "CNAME and " << rrset->getType() <<
-                      " can't coexist for " << rrset->getName());
+        } else if (rrset.getType() != RRType::NSEC() &&
+                   domain.find(RRType::CNAME()) != domain.end()) {
+            LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset.getName());
+            isc_throw(AddError, "CNAME and " << rrset.getType() <<
+                      " can't coexist for " << rrset.getName());
         }
 
         /*
@@ -201,17 +207,17 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
          * non-apex domains.
          * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
          */
-        if (rrset->getName() != origin_ &&
+        if (rrset.getName() != origin_ &&
             // Adding DNAME, NS already there
-            ((rrset->getType() == RRType::DNAME() &&
-            domain->find(RRType::NS()) != domain->end()) ||
+            ((rrset.getType() == RRType::DNAME() &&
+            domain.find(RRType::NS()) != domain.end()) ||
             // Adding NS, DNAME already there
-            (rrset->getType() == RRType::NS() &&
-            domain->find(RRType::DNAME()) != domain->end())))
+            (rrset.getType() == RRType::NS() &&
+            domain.find(RRType::DNAME()) != domain.end())))
         {
-            LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset->getName());
+            LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset.getName());
             isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
-                "domain " << rrset->getName());
+                "domain " << rrset.getName());
         }
     }
 
@@ -461,7 +467,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // break strong exception guarantee.  At the moment we prefer
         // code simplicity and don't bother to introduce complicated
         // recovery code.
-        contextCheck(rrset, domain);
+        contextCheck(*rrset, *domain);
 
         // Try inserting the rrset there
         if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
