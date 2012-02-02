@@ -349,17 +349,6 @@ class MyStats(stats.Stats):
     def shutdown(self):
         self.command_shutdown()
 
-class MyModuleCCSession():
-    def __init__(self):
-        self.stopped = False
-        self.closed = False
-
-    def stop(self):
-        self.stopped = True
-
-    def close(self):
-        self.closed = True
-
 class MyStatsHttpd(stats_httpd.StatsHttpd):
     ORIG_SPECFILE_LOCATION = stats_httpd.SPECFILE_LOCATION
     def __init__(self, *server_address):
