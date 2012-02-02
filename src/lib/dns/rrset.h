@@ -426,7 +426,7 @@ public:
     /// RRset.  If one does not exist, it is created using the data given.
     ///
     /// \param rdata Pointer to RRSIG rdata to be added.
-    virtual void addRRsig(const rdata::ConstRdataPtr rdata) = 0;
+    virtual void addRRsig(const rdata::ConstRdataPtr& rdata) = 0;
 
     /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
     ///
@@ -437,7 +437,7 @@ public:
     /// conversion from shared_ptr<X> to shared_ptr<const X>.)
     ///
     /// \param rdata Pointer to RRSIG rdata to be added.
-    virtual void addRRsig(const rdata::RdataPtr rdata) = 0;
+    virtual void addRRsig(const rdata::RdataPtr& rdata) = 0;
 
     /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
     ///
@@ -457,7 +457,7 @@ public:
     ///
     /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
     ///             to the RRSIG RRset associated with this class.
-    virtual void addRRsig(ConstRRsetPtr sigs) = 0;
+    virtual void addRRsig(const ConstRRsetPtr& sigs) = 0;
 
     /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
     ///
@@ -470,7 +470,7 @@ public:
     ///
     /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
     ///             to the RRSIG RRset associated with this class.
-    virtual void addRRsig(RRsetPtr sigs) = 0;
+    virtual void addRRsig(const RRsetPtr& sigs) = 0;
 
     /// \brief Clear the RRSIGs for this RRset
     virtual void removeRRsig() = 0;
@@ -756,12 +756,12 @@ public:
         return (RRsetPtr());
     }
 
-    virtual void addRRsig(const rdata::ConstRdataPtr) {
+    virtual void addRRsig(const rdata::ConstRdataPtr&) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    virtual void addRRsig(const rdata::RdataPtr) {
+    virtual void addRRsig(const rdata::RdataPtr&) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
@@ -771,12 +771,12 @@ public:
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    virtual void addRRsig(ConstRRsetPtr) {
+    virtual void addRRsig(const ConstRRsetPtr&) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    virtual void addRRsig(RRsetPtr) {
+    virtual void addRRsig(const RRsetPtr&) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
@@ -819,7 +819,7 @@ public:
     }
 
     /// \brief Adds an RRSIG RR to this RRset's signatures
-    virtual void addRRsig(const rdata::ConstRdataPtr rdata) {
+    virtual void addRRsig(const rdata::ConstRdataPtr& rdata) {
         if (!rrsig_) {
             rrsig_ = RRsetPtr(new RRset(getName(), getClass(),
                                         RRType::RRSIG(), getTTL()));
@@ -831,8 +831,8 @@ public:
     // conversion from shared_ptr<X> to shared_ptr<const X>.  Note: we should
     // revisit the interface of managing RRset signatures, at which point this
     // problem may go away.
-    virtual void addRRsig(const rdata::RdataPtr rdata) {
-        addRRsig(static_cast<rdata::ConstRdataPtr>(rdata));
+    virtual void addRRsig(const rdata::RdataPtr& rdata) {
+        addRRsig(static_cast<const rdata::ConstRdataPtr&>(rdata));
     }
 
     /// \brief Adds an RRSIG RRset to this RRset
@@ -849,10 +849,10 @@ public:
         }
     }
 
-    virtual void addRRsig(ConstRRsetPtr sigs) { addRRsig(*sigs); }
+    virtual void addRRsig(const ConstRRsetPtr& sigs) { addRRsig(*sigs); }
 
     // Another workaround for older boost (see above)
-    virtual void addRRsig(RRsetPtr sigs) { addRRsig(*sigs); }
+    virtual void addRRsig(const RRsetPtr& sigs) { addRRsig(*sigs); }
 
     /// \brief Clear the RRSIGs for this RRset
     virtual void removeRRsig() { rrsig_ = RRsetPtr(); }
