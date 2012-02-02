@@ -1,7 +1,12 @@
+373.	[bug]		jinmei
+	libdatasrc: the in-memory data source incorrectly rejected loading
+	a zone containing a CNAME RR with RRSIG and/or NSEC.
+	(Trac #1551, git 76f823d42af55ce3f30a0d741fc9297c211d8b38)
+
 372.	[func]		vorner
 	When the allocation of a socket fails for a different reason than the
-	socket not being provided by the OS, the b10-auth and b10-resolver abort,
-	as the system might be in inconsistent state after such error.
+	socket not being provided by the OS, the b10-auth and b10-resolver
+	abort, as the system might be in inconsistent state after such error.
 	(Trac #1543, git 49ac4659f15c443e483922bf9c4f2de982bae25d)
 
 371.	[bug]		jelte
