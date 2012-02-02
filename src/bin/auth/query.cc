@@ -260,10 +260,13 @@ Query::addAuthAdditional(ZoneFinder& finder) {
 namespace {
 // A simple wrapper for DataSourceClient::findZone().  Normally we can simply
 // check the closest zone to the qname, but for type DS query we need to
-// look into the parent zone.
+// look into the parent zone.  Nevertheless, if there is no "parent" (i.e.,
+// the qname consists of a single label, which also means it's the root name),
+// we should search the deepest zone we have (which should be the root zone;
+// otherwise it's a query error).
 DataSourceClient::FindResult
 findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
-    if (qtype != RRType::DS()) {
+    if (qtype != RRType::DS() || qname.getLabelCount() == 1) {
         return (client.findZone(qname));
     }
     return (client.findZone(qname.split(1)));
@@ -283,7 +286,11 @@ Query::process() {
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
     if (result.code != result::SUCCESS &&
         result.code != result::PARTIALMATCH) {
-        if (qtype_ == RRType::DS() && processDSAtChild()) {
+        // If we tried to find a "parent zone" for a DS query and failed,
+        // we may still have authority at the child side.  If we do, the query
+        // has to be handled there.
+        if (qtype_ == RRType::DS() && qname_.getLabelCount() > 1 &&
+            processDSAtChild()) {
             return;
         }
         response_.setHeaderFlag(Message::HEADERFLAG_AA, false);

@@ -1634,24 +1634,24 @@ TEST_F(QueryTest, findNSEC3) {
 // an authoritative answer, not a delegation. This is as described in
 // RFC 4035, section 3.1.4.1.
 
-// This mock finder is used for some DS-query tests to emulate the situation
-// where the server has authority for the child side of DS.  Only limited
-// methods are expected to called on this class object in these tests, which
+// This mock finder is used for some DS-query tests to support the cases
+// where the query is expected to be handled in a different zone than our
+// main test zone, example.com.  Only limited methods are expected to called
+// (and for limited purposes) on this class object in these tests, which
 // are overridden below.
-class ChildZoneFinder : public MockZoneFinder {
+class AlternateZoneFinder : public MockZoneFinder {
 public:
-    ChildZoneFinder(const Name& origin) :
-        MockZoneFinder(), origin_(origin)
+    // This zone is expected not to have a DS by default and return NXRRSET
+    // for a DS query.  If have_ds is set to true on construction, it will
+    // return a faked DS answer.
+    AlternateZoneFinder(const Name& origin, bool have_ds = false) :
+        MockZoneFinder(), origin_(origin), have_ds_(have_ds)
     {}
     virtual isc::dns::Name getOrigin() const { return (origin_); }
-    virtual FindResult find(const isc::dns::Name& name,
+    virtual FindResult find(const isc::dns::Name&,
                             const isc::dns::RRType& type,
                             const FindOptions)
     {
-        if (name != origin_) {
-            isc_throw(isc::Unexpected, "Non origin name is asked for "
-                      "ChildZoneFinder: " << name);
-        }
         if (type == RRType::SOA()) {
             RRsetPtr soa = textToRRset(origin_.toText() + " 3600 IN SOA . . "
                                        "0 0 0 0 0\n", origin_);
@@ -1659,23 +1659,44 @@ public:
                                        getCommonRRSIGText("SOA"))));
             return (FindResult(SUCCESS, soa));
         }
-        if (type == RRType::DS()) {
-            RRsetPtr nsec = textToRRset(origin_.toText() + " 3600 IN NSEC " +
-                                        origin_.toText() + " SOA NSEC RRSIG");
-            nsec->addRRsig(RdataPtr(new generic::RRSIG(
-                                        getCommonRRSIGText("NSEC"))));
-            return (FindResult(NXRRSET, nsec, RESULT_NSEC_SIGNED));
+        if (type == RRType::NS()) {
+            RRsetPtr ns = textToRRset(origin_.toText() + " 3600 IN NS " +
+                                      Name("ns").concatenate(origin_).toText());
+            ns->addRRsig(RdataPtr(new generic::RRSIG(
+                                      getCommonRRSIGText("NS"))));
+            return (FindResult(SUCCESS, ns));
         }
-        isc_throw(isc::Unexpected, "Unexpected RR type is asked for "
-                  "ChildZoneFinder: " << type);
+        if (type == RRType::DS()) {
+            if (have_ds_) {
+                RRsetPtr ds = textToRRset(origin_.toText() +
+                                          " 3600 IN DS 57855 5 1 " +
+                                          "49FD46E6C4B45C55D4AC69CBD"
+                                          "3CD34AC1AFE51DE");
+                ds->addRRsig(RdataPtr(new generic::RRSIG(
+                                          getCommonRRSIGText("DS"))));
+                return (FindResult(SUCCESS, ds));
+            } else {
+                RRsetPtr nsec = textToRRset(origin_.toText() +
+                                            " 3600 IN NSEC " +
+                                            origin_.toText() +
+                                            " SOA NSEC RRSIG");
+                nsec->addRRsig(RdataPtr(new generic::RRSIG(
+                                            getCommonRRSIGText("NSEC"))));
+                return (FindResult(NXRRSET, nsec, RESULT_NSEC_SIGNED));
+            }
+        }
+
+        // Returning NXDOMAIN is not correct, but doesn't matter for our tests.
+        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
     }
 private:
     const Name origin_;
+    const bool have_ds_;
 };
 
 TEST_F(QueryTest, dsAboveDelegation) {
     // Pretending to have authority for the child zone, too.
-    memory_client.addZone(ZoneFinderPtr(new ChildZoneFinder(
+    memory_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
                                             Name("delegation.example.com"))));
 
     // The following will succeed only if the search goes to the parent
@@ -1752,7 +1773,7 @@ TEST_F(QueryTest, dsAtGrandParentAndChild) {
     // Pretending to have authority for the grandchild zone, too.
     const Name childname("grand.delegation.example.com");
     memory_client.addZone(ZoneFinderPtr(
-                              new ChildZoneFinder(childname)));
+                              new AlternateZoneFinder(childname)));
     Query(memory_client, childname, RRType::DS(), response, true).process();
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
                   (childname.toText() + " 3600 IN SOA . . 0 0 0 0 0\n" +
@@ -1762,6 +1783,41 @@ TEST_F(QueryTest, dsAtGrandParentAndChild) {
                    childname.toText() + " SOA NSEC RRSIG\n" +
                    childname.toText() + " 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC")).c_str(), NULL, childname);
+}
+
+// DS query for the root name (quite pathological).  Since there's no "parent",
+// the query will be handled in the root zone anyway, and should (normally)
+// result in no data.
+TEST_F(QueryTest, dsAtRoot) {
+    // Pretend to be a root server.
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(Name::ROOT_NAME())));
+    Query(memory_client, Name::ROOT_NAME(), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(". 3600 IN SOA . . 0 0 0 0 0\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("SOA") + "\n" +
+                   ". 3600 IN NSEC " + ". SOA NSEC RRSIG\n" +
+                   ". 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL);
+}
+
+// Even more pathological case: A faked root zone actually has its own DS
+// query.  How we respond wouldn't matter much in practice, but check if
+// it behaves as it's intended.  This implementation should return the DS.
+TEST_F(QueryTest, dsAtRootWithDS) {
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(Name::ROOT_NAME(),
+                                                      true)));
+    Query(memory_client, Name::ROOT_NAME(), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
+                  (string(". 3600 IN DS 57855 5 1 49FD46E6C4B45C55D4AC69CBD"
+                          "3CD34AC1AFE51DE\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("DS")).c_str(),
+                  (string(". 3600 IN NS ns.\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("NS")).c_str(),
+                  NULL);
 }
 
 // The following are tentative tests until we really add tests for the
