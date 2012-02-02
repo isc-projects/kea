@@ -526,10 +526,10 @@ as a dependency earlier -->
         </para>
         <para>
           The code can be checked out from
-          <filename>git://bind10.isc.org/bind10</filename>;
+          <filename>git://git.bind10.isc.org/bind10</filename>;
           for example:
 
-        <screen>$ <userinput>git clone git://bind10.isc.org/bind10</userinput></screen>
+        <screen>$ <userinput>git clone git://git.bind10.isc.org/bind10</userinput></screen>
         </para>
 
         <para>
