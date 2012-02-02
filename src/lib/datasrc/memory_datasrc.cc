@@ -172,11 +172,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
     // A helper predicate used in contextCheck() to check if a given domain
     // name has a RRset of type different than NSEC.
-    struct IsNotNSEC {
-        bool operator()(const DomainPair& element) const {
-            return (element.second->getType() != RRType::NSEC());
-        }
-    };
+    static bool isNotNSEC(const DomainPair& element) {
+        return (element.second->getType() != RRType::NSEC());
+    }
 
     /*
      * Does some checks in context of the data that are already in the zone.
@@ -190,7 +188,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
         if (rrset.getType() == RRType::CNAME()) {
-            if (find_if(domain.begin(), domain.end(), IsNotNSEC())
+            if (find_if(domain.begin(), domain.end(), isNotNSEC)
                 != domain.end()) {
                 LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
                     arg(rrset.getName());
