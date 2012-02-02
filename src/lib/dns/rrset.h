@@ -740,94 +740,47 @@ public:
     ///
     /// \name Associated RRSIG methods
     ///
-    /// The associated RRSIG RRset is not supported in BasicRRset, so these
-    /// methods throw a NotImplemented exception.
+    /// The associated RRSIG RRset is not supported in BasicRRset.  For
+    /// ease of use, getRRsig() returns a null pointer (indicating no RRset).
+    /// The addRRsig()/removeRRsig() methods throw a "NotImplemented"
+    /// exception - if you are using a BasicRRset, you should not be trying
+    /// to modify signatures on it.
     //@{
     /// \brief Return pointer to this RRset's RRSIG RRset
     ///
     /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
     ///            not supported in this class.
     ///
-    /// \return Never returns normally - always throws a NotImplemented
-    ///         exception.
+    /// \return Null pointer, as this class does not support RRSIG records.
     virtual RRsetPtr getRRsig() const {
-        isc_throw(NotImplemented,
-                  "BasicRRset does not implement the getRRsig() method");
+        return (RRsetPtr());
     }
 
-    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
-    ///
-    /// Not implemented in this class.
-    ///
-    /// \param rdata RRSIG rdata to be added to this RRset
-    ///
-    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
-    ///            not supported in this class.
     virtual void addRRsig(const rdata::ConstRdataPtr) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
-    ///
-    /// Not implemented in this class.
-    /// (This overload is for an older version of boost that doesn't support
-    /// conversion from shared_ptr<X> to shared_ptr<const X>.)
-    ///
-    /// \param rdata RRSIG rdata to be added to this RRset
-    ///
-    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
-    ///            not supported in this class.
     virtual void addRRsig(const rdata::RdataPtr) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
-    ///
-    /// Not implemented in this class.
-    ///
-    /// \param sigs RRSIG RRset containing signatures to be added to the
-    ///             RRSIG RRset associated with this class.
-    ///
-    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
-    ///            not supported in this class.
     virtual void addRRsig(const AbstractRRset&) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
-    ///
-    /// Not implemented in this class.
-    ///
-    /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
-    ///             to the RRSIG RRset associated with this class.
-    ///
-    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
-    ///            not supported in this class.
     virtual void addRRsig(ConstRRsetPtr) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
-    ///
-    /// Not implemented in this class.
-    /// (This overload is for an older version of boost that doesn't support
-    /// conversion from shared_ptr<X> to shared_ptr<const X>.)
-    ///
-    /// \param sigs Pointer to a RRSIG RRset containing signatures to be added
-    ///             to the RRSIG RRset associated with this class.
-    ///
-    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
-    ///            not supported in this class.
     virtual void addRRsig(RRsetPtr) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
     }
 
-    /// \brief Clear the RRSIGs for this RRset
     virtual void removeRRsig() {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the removeRRsig() method");
