@@ -14,8 +14,8 @@
 
 #include <config.h>
 
-#include <netinet/in.h>
 #include <stdlib.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
 #include <string>
