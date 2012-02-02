@@ -1613,13 +1613,36 @@ TEST_F(QueryTest, findNSEC3) {
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
 }
 
-// TODO: Check the additional/authority sections are correct. The first one
-// probably misses some of the RRSigs anyway, they need to be added.
-
 // This tests that the DS is returned above the delegation point as
 // an authoritative answer, not a delegation. This is as described in
 // RFC 4035, section 3.1.4.1.
+
+// This mock finder is used for some DS-query test(s) to check if the lookup
+// takes place at the parent zone, not at this (broken) zone.
+class BrokenChildZoneFinder : public MockZoneFinder {
+public:
+    BrokenChildZoneFinder(const Name& origin) :
+        MockZoneFinder(), origin_(origin)
+    {}
+    virtual isc::dns::Name getOrigin() const { return (origin_); }
+    virtual FindResult find(const isc::dns::Name&,
+                            const isc::dns::RRType&,
+                            const FindOptions)
+    {
+        isc_throw(isc::Unexpected,
+                  "BrokenChildZoneFinder::find shouldn't be called");
+    }
+private:
+    const Name origin_;
+};
+
 TEST_F(QueryTest, dsAboveDelegation) {
+    // Pretending to have authority for the child zone, too.
+    memory_client.addZone(ZoneFinderPtr(new BrokenChildZoneFinder(
+                                            Name("delegation.example.com"))));
+
+    // The following will succeed only if the search goes to the parent
+    // zone, not the child one we added above.
     EXPECT_NO_THROW(Query(memory_client, Name("delegation.example.com"),
                           RRType::DS(), response, true).process());
 
