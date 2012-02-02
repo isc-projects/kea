@@ -406,6 +406,14 @@ Query::process() {
             }
             break;
         case ZoneFinder::DELEGATION:
+            // If a DS query resulted in delegation, we also need to check
+            // if we are an authority of the child, too.  If so, we need to
+            // complete the process in the child as specified in Section
+            // 2.2.1.2. of RFC3658.
+            if (qtype_ == RRType::DS() && processDSAtChild()) {
+                return;
+            }
+
             response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
             response_.addRRset(Message::SECTION_AUTHORITY,
                 boost::const_pointer_cast<RRset>(db_result.rrset),
