@@ -59,11 +59,15 @@ public:
     /// \param expect_port The port which is expected to be requested. If
     ///     the application requests a different port, it is considered
     ///     a failure.
+    /// \param expeted_app The share name for which all the requests should
+    ///     be made.
     TestSocketRequestor(asiodns::DNSService& dnss,
                         server_common::portconfig::AddressList& store,
-                        uint16_t expect_port) :
+                        uint16_t expect_port,
+                        const std::string& expected_app) :
         last_token_(0), break_rollback_(false), break_release_(false),
-        dnss_(dnss), store_(store), expect_port_(expect_port)
+        dnss_(dnss), store_(store), expect_port_(expect_port),
+        expected_app_(expected_app)
     {
         // Prepare the requestor (us) for the test
         server_common::initTestSocketRequestor(this);
@@ -170,7 +174,7 @@ public:
         const size_t number = ++ last_token_;
         EXPECT_EQ(expect_port_, port);
         EXPECT_EQ(DONT_SHARE, mode);
-        EXPECT_EQ("dummy_app", name);
+        EXPECT_EQ(expected_app_, name);
         const std::string token(proto + ":" + address + ":" +
                                 boost::lexical_cast<std::string>(port) + ":" +
                                 boost::lexical_cast<std::string>(number));
@@ -207,6 +211,7 @@ private:
     asiodns::DNSService& dnss_;
     server_common::portconfig::AddressList& store_;
     const uint16_t expect_port_;
+    const std::string expected_app_;
 };
 
 }

@@ -46,7 +46,7 @@ protected:
         dnss_(ios_, NULL, NULL, NULL),
         rrclass(RRClass::IN()),
         server(true, xfrout),
-        sock_requestor_(dnss_, address_store_, 53210)
+        sock_requestor_(dnss_, address_store_, 53210, "")
     {
         server.setDNSService(dnss_);
     }
