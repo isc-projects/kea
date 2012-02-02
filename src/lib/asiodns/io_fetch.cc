@@ -14,10 +14,10 @@
 
 #include <config.h>
 
+#include <unistd.h>             // for some IPC/network system calls
 #include <netinet/in.h>
 #include <stdint.h>
 #include <sys/socket.h>
-#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
