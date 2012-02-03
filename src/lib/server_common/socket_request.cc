@@ -264,8 +264,8 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
 // be closed during the lifetime of this class
 class SocketRequestorCCSession : public SocketRequestor {
 public:
-    explicit SocketRequestorCCSession(cc::AbstractSession& session,
-                                      const std::string& app_name) :
+    SocketRequestorCCSession(cc::AbstractSession& session,
+                             const std::string& app_name) :
         session_(session),
         app_name_(app_name)
     {
