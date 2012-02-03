@@ -14,18 +14,9 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include <string>
-#include <iostream>
-
-#include <boost/foreach.hpp>
+#include <resolver/spec_config.h>
+#include <resolver/resolver.h>
+#include "resolver_log.h"
 
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
@@ -47,15 +38,25 @@
 
 #include <auth/common.h>
 
-#include <resolver/spec_config.h>
-#include <resolver/resolver.h>
-
 #include <cache/resolver_cache.h>
 #include <nsas/nameserver_address_store.h>
 
 #include <log/logger_support.h>
 #include <log/logger_level.h>
-#include "resolver_log.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+
+#include <string>
+#include <iostream>
+
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace isc::cc;
@@ -85,6 +86,17 @@ my_command_handler(const string& command, ConstElementPtr args) {
         /* let's add that message to our answer as well */
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
+        // Is the pid argument provided?
+        if (args && args->getType() ==
+            isc::data::Element::map && args->contains("pid")) {
+            // If it is, we check it is the same as our PID
+            int pid(args->get("pid")->intValue());
+            pid_t my_pid(getpid());
+            if (my_pid != pid) {
+                // It is not for us
+                return (answer);
+            }
+        }
         io_service.stop();
     }
 
