@@ -495,9 +495,14 @@ class TestConfigManager(unittest.TestCase):
     def test_run(self):
         self.fake_session.group_sendmsg({ "command": [ "get_commands_spec" ] }, "ConfigManager")
         self.fake_session.group_sendmsg({ "command": [ "get_statistics_spec" ] }, "ConfigManager")
+        self.fake_session.group_sendmsg({ "command": [ "stopping", { "module_name": "FooModule" } ] }, "ConfigManager")
         self.fake_session.group_sendmsg({ "command": [ "shutdown" ] }, "ConfigManager")
+        self.assertEqual(len(self.fake_session.message_queue), 4)
         self.cm.run()
-        pass
+        # All commands should have been read out by run()
+        # Three of the commands should have been responded to, so the queue
+        # should now contain three answers
+        self.assertEqual(len(self.fake_session.message_queue), 3)
 
 
 if __name__ == '__main__':

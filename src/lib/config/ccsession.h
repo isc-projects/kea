@@ -192,12 +192,12 @@ public:
                     bool handle_logging = true
                     );
 
-    /**
-     * Destructor
-     *
-     * The desctructor automatically calls sendStopping(), which sends
-     * a message to the ConfigManager that this module is stopping
-     */
+    ///
+    /// Destructor
+    ///
+    /// The desctructor automatically calls sendStopping(), which sends
+    /// a message to the ConfigManager that this module is stopping
+    ///
     ~ModuleCCSession();
 
     /// Start receiving new commands and configuration changes asynchronously.
