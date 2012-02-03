@@ -22,16 +22,13 @@ Feature: control with bindctl
 
     Then remove bind10 configuration Boss/components value b10-xfrout
     last bindctl output should not contain Error
+    # assuming it won't error for further modules (if it does, the final
+    # 'should not be running' tests would fail anyway)
     Then remove bind10 configuration Boss/components value b10-stats
-    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-zonemgr
-    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-xfrin
-    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-auth
-    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-stats-httpd
-    last bindctl output should not contain Error
 
     bind10 module Xfrout should not be running
     bind10 module Stats should not be running
