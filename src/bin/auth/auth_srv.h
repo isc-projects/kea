@@ -343,7 +343,7 @@ public:
     ///
     /// \param type Type of a counter to get the value of
     ///
-    /// \return the value of the counter.
+
     uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
 
     /// \brief Get the value of per Opcode counter in the Auth Counters.
