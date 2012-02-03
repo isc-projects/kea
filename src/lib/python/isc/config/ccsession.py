@@ -216,15 +216,18 @@ class ModuleCCSession(ConfigData):
            message is just an FYI, and no response is expected. Any errors
            when sending this message (for instance if the msgq session has
            previously been closed) are logged, but ignored."""
+        # create_command could raise an exception as well, but except for
+        # out of memory related errors, these should all be programming
+        # failures and are not caught
         msg = create_command(COMMAND_MODULE_STOPPING,
                              self.get_module_spec().get_full_spec())
         try:
             self._session.group_sendmsg(msg, "ConfigManager")
-        except isc.cc.session.SessionError as se:
+        except Exception as se:
             # If the session was previously closed, obvously trying to send
             # a message fails. (TODO: check if session is open so we can
             # error on real problems?)
-            logger.error(CONFIG_SESSION_STOPPING_FAILED, str(se))
+            logger.error(CONFIG_SESSION_STOPPING_FAILED, se)
 
     def get_socket(self):
         """Returns the socket from the command channel session. This
