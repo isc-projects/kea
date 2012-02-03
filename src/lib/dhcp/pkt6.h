@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,17 +41,18 @@ public:
     /// @param msg_type type of message (SOLICIT=1, ADVERTISE=2, ...)
     /// @param transid transaction-id
     /// @param proto protocol (TCP or UDP)
-    Pkt6(unsigned char msg_type,
-         unsigned int transid,
+    Pkt6(uint8_t msg_type,
+         uint32_t transid,
          DHCPv6Proto proto = UDP);
 
     /// Constructor, used in message transmission
     ///
     /// Creates new message. Transaction-id will randomized.
     ///
-    /// @param len size of buffer to be allocated for this packet.
+    /// @param buf pointer to a buffer of received packet content
+    /// @param len size of buffer of received packet content
     /// @param proto protocol (usually UDP, but TCP will be supported eventually)
-    Pkt6(unsigned int len, DHCPv6Proto proto = UDP);
+    Pkt6(const uint8_t* buf, uint32_t len, DHCPv6Proto proto = UDP);
 
     /// @brief Prepares on-wire format.
     ///
@@ -61,8 +62,7 @@ public:
     /// will be set in data_len_.
     ///
     /// @return true if packing procedure was successful
-    bool
-    pack();
+    bool pack();
 
     /// @brief Dispatch method that handles binary packet parsing.
     ///
@@ -70,59 +70,70 @@ public:
     /// unpackTCP).
     ///
     /// @return true if parsing was successful
-    bool
-    unpack();
+    bool unpack();
 
-    /// Returns protocol of this packet (UDP or TCP)
+    /// @brief Returns reference to output buffer.
+    ///
+    /// Returned buffer will contain reasonable data only for
+    /// output (TX) packet and after pack() was called. This buffer
+    /// is only valid till Pkt4 object is valid.
+    ///
+    /// RX packet or TX packet before pack() will return buffer with
+    /// zero length
+    ///
+    /// @return reference to output buffer
+    const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
+
+
+    /// @brief Returns reference to input buffer.
+    ///
+    /// @return reference to input buffer
+    const OptionBuffer& getData() const { return(data_); }
+
+    /// @brief Returns protocol of this packet (UDP or TCP).
     ///
     /// @return protocol type
-    DHCPv6Proto
-    getProto();
+    DHCPv6Proto getProto();
 
     /// Sets protocol of this packet.
     ///
     /// @param proto protocol (UDP or TCP)
-    ///
-    void
-    setProto(DHCPv6Proto proto = UDP) { proto_ = proto; }
+    void setProto(DHCPv6Proto proto = UDP) { proto_ = proto; }
 
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    std::string
-    toText();
+    std::string toText();
 
     /// @brief Returns calculated length of the packet.
     ///
-    /// This function returns size of required buffer to buld this packet.
-    /// To use that function, options_ field must be set.
+    /// This function returns size of all options including DHCPv6
+    /// header. To use that function, options_ field must be set.
     ///
     /// @return number of bytes required to build this packet
-    unsigned short
-    len();
+    uint16_t len();
 
     /// Returns message type (e.g. 1 = SOLICIT)
     ///
     /// @return message type
-    unsigned char
-    getType() { return (msg_type_); }
+    uint8_t getType() { return (msg_type_); }
 
     /// Sets message type (e.g. 1 = SOLICIT)
     ///
     /// @param type message type to be set
-    void setType(unsigned char type) { msg_type_=type; };
+    void setType(uint8_t type) { msg_type_=type; };
 
     /// Returns value of transaction-id field
     ///
     /// @return transaction-id
-    unsigned int getTransid() { return (transid_); };
+    uint32_t getTransid() { return (transid_); };
 
     /// Adds an option to this packet.
     ///
     /// @param opt option to be added.
-    void addOption(boost::shared_ptr<isc::dhcp::Option> opt);
+    void addOption(OptionPtr opt);
 
     /// @brief Returns the first option of specified type.
     ///
@@ -133,49 +144,93 @@ public:
     /// @param opt_type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
-    boost::shared_ptr<isc::dhcp::Option>
-    getOption(unsigned short type);
+    OptionPtr getOption(uint16_t type);
 
     /// Attempts to delete first suboption of requested type
     ///
     /// @param type Type of option to be deleted.
     ///
     /// @return true if option was deleted, false if no such option existed
-    bool
-    delOption(unsigned short type);
+    bool delOption(uint16_t type);
 
-    /// TODO need getter/setter wrappers
-    ///      and hide following fields as protected
-
-    /// buffer that holds memory. It is shared_array as options may
-    /// share pointer to this buffer
-    boost::shared_array<uint8_t> data_;
-
-    /// length of the data
-    unsigned int data_len_;
-
-    /// local address (dst if receiving packet, src if sending packet)
-    isc::asiolink::IOAddress local_addr_;
-
-    /// remote address (src if receiving packet, dst if sending packet)
-    isc::asiolink::IOAddress remote_addr_;
-
-    /// name of the network interface the packet was received/to be sent over
-    std::string iface_;
-
-    /// @brief interface index
+    /// @brief This method copies data from output buffer to input buffer
     ///
-    /// interface index (each network interface has assigned unique ifindex
-    /// it is functional equvalent of name, but sometimes more useful, e.g.
-    /// when using crazy systems that allow spaces in interface names
-    /// e.g. windows
-    int ifindex_;
+    /// This is useful only in testing
+    void repack();
 
-    /// local TDP or UDP port
-    int local_port_;
+    /// @brief Sets remote address.
+    ///
+    /// @params remote specifies remote address
+    void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
+        remote_addr_ = remote;
+    }
 
-    /// remote TCP or UDP port
-    int remote_port_;
+    /// @brief Returns remote address
+    ///
+    /// @return remote address
+    const isc::asiolink::IOAddress& getRemoteAddr() {
+        return (remote_addr_);
+    }
+
+    /// @brief Sets local address.
+    ///
+    /// @params local specifies local address
+    void setLocalAddr(const isc::asiolink::IOAddress& local) {
+        local_addr_ = local;
+    }
+
+    /// @brief Returns local address.
+    ///
+    /// @return local address
+    const isc::asiolink::IOAddress& getLocalAddr() {
+        return (local_addr_);
+    }
+
+    /// @brief Sets local port.
+    ///
+    /// @params local specifies local port
+    void setLocalPort(uint16_t local) { local_port_ = local; }
+
+    /// @brief Returns local port.
+    ///
+    /// @return local port
+    uint16_t getLocalPort() { return (local_port_); }
+
+    /// @brief Sets remote port.
+    ///
+    /// @params remote specifies remote port
+    void setRemotePort(uint16_t remote) { remote_port_ = remote; }
+
+    /// @brief Returns remote port.
+    ///
+    /// @return remote port
+    uint16_t getRemotePort() { return (remote_port_); }
+
+    /// @brief Sets interface index.
+    ///
+    /// @param ifindex specifies interface index.
+    void setIndex(uint32_t ifindex) { ifindex_ = ifindex; };
+
+    /// @brief Returns interface index.
+    ///
+    /// @return interface index
+    uint32_t getIndex() const { return (ifindex_); };
+
+    /// @brief Returns interface name.
+    ///
+    /// Returns interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    std::string getIface() const { return iface_; };
+
+    /// @brief Sets interface name.
+    ///
+    /// Sets interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    void setIface(const std::string& iface ) { iface_ = iface; };
 
     /// TODO Need to implement getOptions() as well
 
@@ -225,7 +280,39 @@ protected:
 
     /// DHCPv6 transaction-id
     unsigned int transid_;
+
+    /// unparsed data (in received packets)
+    OptionBuffer data_;
+
+    /// name of the network interface the packet was received/to be sent over
+    std::string iface_;
+
+    /// @brief interface index
+    ///
+    /// interface index (each network interface has assigned unique ifindex
+    /// it is functional equvalent of name, but sometimes more useful, e.g.
+    /// when using crazy systems that allow spaces in interface names
+    /// e.g. windows
+    int ifindex_;
+
+    /// local address (dst if receiving packet, src if sending packet)
+    isc::asiolink::IOAddress local_addr_;
+
+    /// remote address (src if receiving packet, dst if sending packet)
+    isc::asiolink::IOAddress remote_addr_;
+
+    /// local TDP or UDP port
+    int local_port_;
+
+    /// remote TCP or UDP port
+    int remote_port_;
+
+    /// output buffer (used during message transmission)
+    isc::util::OutputBuffer bufferOut_;
+
 }; // Pkt6 class
+
+typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
 
 } // isc::dhcp namespace
 

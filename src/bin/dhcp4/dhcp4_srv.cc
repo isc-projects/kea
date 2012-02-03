@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -59,8 +59,8 @@ Dhcpv4Srv::~Dhcpv4Srv() {
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
-        boost::shared_ptr<Pkt4> query; // client's message
-        boost::shared_ptr<Pkt4> rsp;   // server's response
+        Pkt4Ptr query; // client's message
+        Pkt4Ptr rsp;   // server's response
 
         query = IfaceMgr::instance().receive4();
 
@@ -141,14 +141,13 @@ Dhcpv4Srv::setServerID() {
 #if 0
     // uncomment this once ticket 1350 is merged.
     IOAddress srvId("127.0.0.1");
-    serverid_ = boost::shared_ptr<Option>(
+    serverid_ = OptionPtr(
       new Option4AddrLst(Option::V4, DHO_DHCP_SERVER_IDENTIFIER, srvId));
 #endif
 }
 
 
-void Dhcpv4Srv::copyDefaultFields(const boost::shared_ptr<Pkt4>& question,
-                                  boost::shared_ptr<Pkt4>& answer) {
+void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setIface(question->getIface());
     answer->setIndex(question->getIndex());
     answer->setCiaddr(question->getCiaddr());
@@ -174,17 +173,17 @@ void Dhcpv4Srv::copyDefaultFields(const boost::shared_ptr<Pkt4>& question,
 
 }
 
-void Dhcpv4Srv::appendDefaultOptions(boost::shared_ptr<Pkt4>& msg, uint8_t msg_type) {
-    boost::shared_ptr<Option> opt;
+void Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
+    OptionPtr opt;
 
     // add Message Type Option (type 53)
     std::vector<uint8_t> tmp;
     tmp.push_back(static_cast<uint8_t>(msg_type));
-    opt = boost::shared_ptr<Option>(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
+    opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
     msg->addOption(opt);
 
     // DHCP Server Identifier (type 54)
-    opt = boost::shared_ptr<Option>
+    opt = OptionPtr
         (new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER, IOAddress(HARDCODED_SERVER_ID)));
     msg->addOption(opt);
 
@@ -192,47 +191,43 @@ void Dhcpv4Srv::appendDefaultOptions(boost::shared_ptr<Pkt4>& msg, uint8_t msg_t
 }
 
 
-void Dhcpv4Srv::appendRequestedOptions(boost::shared_ptr<Pkt4>& msg) {
-    boost::shared_ptr<Option> opt;
+void Dhcpv4Srv::appendRequestedOptions(Pkt4Ptr& msg) {
+    OptionPtr opt;
 
     // Domain name (type 15)
     vector<uint8_t> domain(HARDCODED_DOMAIN_NAME.begin(), HARDCODED_DOMAIN_NAME.end());
-    opt = boost::shared_ptr<Option>(new Option(Option::V4, DHO_DOMAIN_NAME, domain));
+    opt = OptionPtr(new Option(Option::V4, DHO_DOMAIN_NAME, domain));
     msg->addOption(opt);
     // TODO: Add Option_String class
 
     // DNS servers (type 6)
-    opt = boost::shared_ptr<Option>
-        (new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, IOAddress(HARDCODED_DNS_SERVER)));
+    opt = OptionPtr(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, IOAddress(HARDCODED_DNS_SERVER)));
     msg->addOption(opt);
 }
 
-void Dhcpv4Srv::tryAssignLease(boost::shared_ptr<Pkt4>& msg) {
-    boost::shared_ptr<Option> opt;
+void Dhcpv4Srv::tryAssignLease(Pkt4Ptr& msg) {
+    OptionPtr opt;
 
     // TODO: Implement actual lease assignment here
     msg->setYiaddr(IOAddress(HARDCODED_LEASE));
 
     // IP Address Lease time (type 51)
-    opt = boost::shared_ptr<Option>(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
+    opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
     opt->setUint32(HARDCODED_LEASE_TIME);
     msg->addOption(opt);
     // TODO: create Option_IntArray that holds list of integers, similar to Option4_AddrLst
 
     // Subnet mask (type 1)
-    opt = boost::shared_ptr<Option>
-        (new Option4AddrLst(DHO_SUBNET_MASK, IOAddress(HARDCODED_NETMASK)));
+    opt = OptionPtr(new Option4AddrLst(DHO_SUBNET_MASK, IOAddress(HARDCODED_NETMASK)));
     msg->addOption(opt);
 
     // Router (type 3)
-    opt = boost::shared_ptr<Option>
-        (new Option4AddrLst(DHO_ROUTERS, IOAddress(HARDCODED_GATEWAY)));
+    opt = OptionPtr(new Option4AddrLst(DHO_ROUTERS, IOAddress(HARDCODED_GATEWAY)));
     msg->addOption(opt);
 }
 
-boost::shared_ptr<Pkt4>
-Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4>& discover) {
-    boost::shared_ptr<Pkt4> offer = boost::shared_ptr<Pkt4>
+Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
+    Pkt4Ptr offer = Pkt4Ptr
         (new Pkt4(DHCPOFFER, discover->getTransid()));
 
     copyDefaultFields(discover, offer);
@@ -244,9 +239,8 @@ Dhcpv4Srv::processDiscover(boost::shared_ptr<Pkt4>& discover) {
     return (offer);
 }
 
-boost::shared_ptr<Pkt4>
-Dhcpv4Srv::processRequest(boost::shared_ptr<Pkt4>& request) {
-    boost::shared_ptr<Pkt4> ack = boost::shared_ptr<Pkt4>
+Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
+    Pkt4Ptr ack = Pkt4Ptr
         (new Pkt4(DHCPACK, request->getTransid()));
 
     copyDefaultFields(request, ack);
@@ -258,17 +252,17 @@ Dhcpv4Srv::processRequest(boost::shared_ptr<Pkt4>& request) {
     return (ack);
 }
 
-void Dhcpv4Srv::processRelease(boost::shared_ptr<Pkt4>& release) {
+void Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
     /// TODO: Implement this.
     cout << "Received RELEASE on " << release->getIface() << " interface." << endl;
 }
 
-void Dhcpv4Srv::processDecline(boost::shared_ptr<Pkt4>& decline) {
+void Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
     /// TODO: Implement this.
     cout << "Received DECLINE on " << decline->getIface() << " interface." << endl;
 }
 
-boost::shared_ptr<Pkt4> Dhcpv4Srv::processInform(boost::shared_ptr<Pkt4>& inform) {
+Pkt4Ptr Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     /// TODO: Currently implemented echo mode. Implement this for real
     return (inform);
 }

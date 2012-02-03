@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,7 @@ static const uint8_t packed[] = {
 };
 
 TEST(LibDhcpTest, packOptions6) {
-    boost::shared_array<uint8_t> buf(new uint8_t[512]);
+    OptionBuffer buf(512);
     isc::dhcp::Option::OptionCollection opts; // list of options
 
     // generate content for options
@@ -50,24 +50,25 @@ TEST(LibDhcpTest, packOptions6) {
         buf[i]=i+100;
     }
 
-    boost::shared_ptr<Option> opt1(new Option(Option::V6, 12, buf, 0, 5));
-    boost::shared_ptr<Option> opt2(new Option(Option::V6, 13, buf, 5, 3));
-    boost::shared_ptr<Option> opt3(new Option(Option::V6, 14, buf, 8, 2));
-    boost::shared_ptr<Option> opt4(new Option(Option::V6,256, buf,10, 4));
-    boost::shared_ptr<Option> opt5(new Option(Option::V6,257, buf,14, 1));
+    OptionPtr opt1(new Option(Option::V6, 12, buf.begin() + 0, buf.begin() + 5));
+    OptionPtr opt2(new Option(Option::V6, 13, buf.begin() + 5, buf.begin() + 8));
+    OptionPtr opt3(new Option(Option::V6, 14, buf.begin() + 8, buf.begin() + 10));
+    OptionPtr opt4(new Option(Option::V6,256, buf.begin() + 10,buf.begin() + 14));
+    OptionPtr opt5(new Option(Option::V6,257, buf.begin() + 14,buf.begin() + 15));
 
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt1));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt2));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt3));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt4));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt5));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt1));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt2));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt3));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt4));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt5));
 
-    unsigned int offset;
+    OutputBuffer assembled(512);
+
     EXPECT_NO_THROW ({
-         offset = LibDHCP::packOptions6(buf, 512, 100, opts);
+            LibDHCP::packOptions6(assembled, opts);
     });
-    EXPECT_EQ(135, offset); // options should take 35 bytes
-    EXPECT_EQ(0, memcmp(&buf[100], packed, 35) );
+    EXPECT_EQ(35, assembled.getLength()); // options should take 35 bytes
+    EXPECT_EQ(0, memcmp(assembled.getData(), packed, 35) );
 }
 
 TEST(LibDhcpTest, unpackOptions6) {
@@ -78,17 +79,13 @@ TEST(LibDhcpTest, unpackOptions6) {
     // specific derived classes.
     isc::dhcp::Option::OptionCollection options; // list of options
 
-    // we can't use packed directly, as shared_array would try to
-    // free it eventually
-    boost::shared_array<uint8_t> buf(new uint8_t[512]);
+    OptionBuffer buf(512);
     memcpy(&buf[0], packed, 35);
 
-    unsigned int offset;
     EXPECT_NO_THROW ({
-        offset = LibDHCP::unpackOptions6(buf, 512, 0, 35, options);
+        LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin()+35), options);
     });
 
-    EXPECT_EQ(35, offset); // parsed first 35 bytes (offset 0..34)
     EXPECT_EQ(options.size(), 5); // there should be 5 options
 
     isc::dhcp::Option::OptionCollection::const_iterator x = options.find(12);
@@ -153,18 +150,18 @@ TEST(LibDhcpTest, packOptions4) {
         payload[i][2] = i*10+2;
     }
 
-    boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
-    boost::shared_ptr<Option> opt2(new Option(Option::V4, 13, payload[1]));
-    boost::shared_ptr<Option> opt3(new Option(Option::V4, 14, payload[2]));
-    boost::shared_ptr<Option> opt4(new Option(Option::V4,254, payload[3]));
-    boost::shared_ptr<Option> opt5(new Option(Option::V4,128, payload[4]));
+    OptionPtr opt1(new Option(Option::V4, 12, payload[0]));
+    OptionPtr opt2(new Option(Option::V4, 13, payload[1]));
+    OptionPtr opt3(new Option(Option::V4, 14, payload[2]));
+    OptionPtr opt4(new Option(Option::V4,254, payload[3]));
+    OptionPtr opt5(new Option(Option::V4,128, payload[4]));
 
     isc::dhcp::Option::OptionCollection opts; // list of options
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt1));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt2));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt3));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt4));
-    opts.insert(pair<int, boost::shared_ptr<Option> >(opt1->getType(), opt5));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt1));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt2));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt3));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt4));
+    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt5));
 
     vector<uint8_t> expVect(v4Opts, v4Opts + sizeof(v4Opts));
 

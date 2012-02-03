@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,61 +19,62 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include "dhcp/dhcp6.h"
-#include "dhcp/option.h"
-#include "dhcp/option6_iaaddr.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <dhcp/option6_iaaddr.h>
+#include <util/buffer.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 namespace {
 class Option6IAAddrTest : public ::testing::Test {
 public:
-    Option6IAAddrTest() {
+    Option6IAAddrTest() : buf_(255), outBuf_(255) {
+        for (int i = 0; i < 255; i++) {
+            buf_[i] = 255 - i;
+        }
     }
+    OptionBuffer buf_;
+    OutputBuffer outBuf_;
 };
 
-/// TODO reenable this once ticket #1313 is implemented.
 TEST_F(Option6IAAddrTest, basic) {
+    for (int i=0; i<255; i++) {
+        buf_[i]=0;
+    }
+    buf_[0] = 0x20;
+    buf_[1] = 0x01;
+    buf_[2] = 0x0d;
+    buf_[3] = 0xb8;
+    buf_[4] = 0x00;
+    buf_[5] = 0x01;
+    buf_[12] = 0xde;
+    buf_[13] = 0xad;
+    buf_[14] = 0xbe;
+    buf_[15] = 0xef; // 2001:db8:1::dead:beef
 
-    boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
-    for (int i = 0; i < 128; i++)
-        simple_buf[i] = 0;
+    buf_[16] = 0x00;
+    buf_[17] = 0x00;
+    buf_[18] = 0x03;
+    buf_[19] = 0xe8; // 1000
 
-    simple_buf[0] = 0x20;
-    simple_buf[1] = 0x01;
-    simple_buf[2] = 0x0d;
-    simple_buf[3] = 0xb8;
-    simple_buf[4] = 0x00;
-    simple_buf[5] = 0x01;
-    simple_buf[12] = 0xde;
-    simple_buf[13] = 0xad;
-    simple_buf[14] = 0xbe;
-    simple_buf[15] = 0xef; // 2001:db8:1::dead:beef
-
-    simple_buf[16] = 0x00;
-    simple_buf[17] = 0x00;
-    simple_buf[18] = 0x03;
-    simple_buf[19] = 0xe8; // 1000
-
-    simple_buf[20] = 0xb2;
-    simple_buf[21] = 0xd0;
-    simple_buf[22] = 0x5e;
-    simple_buf[23] = 0x00; // 3,000,000,000
+    buf_[20] = 0xb2;
+    buf_[21] = 0xd0;
+    buf_[22] = 0x5e;
+    buf_[23] = 0x00; // 3,000,000,000
 
     // create an option (unpack content)
     Option6IAAddr* opt = new Option6IAAddr(D6O_IAADDR,
-                                           simple_buf,
-                                           128,
-                                           0,
-                                           24);
+                                           buf_.begin(),
+                                           buf_.begin() + 24);
 
-    // pack this option again in the same buffer, but in
-    // different place
-    int offset = opt->pack(simple_buf, 128, 50);
+    // pack this option
+    opt->pack(outBuf_);
 
-    EXPECT_EQ(78, offset);
+    EXPECT_EQ(28, outBuf_.getLength());
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
 
@@ -88,14 +89,16 @@ TEST_F(Option6IAAddrTest, basic) {
               opt->len());
 
     // check if pack worked properly:
+    const uint8_t* out = (const uint8_t*)outBuf_.getData();
+
     // if option type is correct
-    EXPECT_EQ(D6O_IAADDR, simple_buf[50]*256 + simple_buf[51]);
+    EXPECT_EQ(D6O_IAADDR, out[0]*256 + out[1]);
 
     // if option length is correct
-    EXPECT_EQ(24, simple_buf[52]*256 + simple_buf[53]);
+    EXPECT_EQ(24, out[2]*256 + out[3]);
 
     // if option content is correct
-    EXPECT_EQ(0, memcmp(&simple_buf[0], &simple_buf[54],24));
+    EXPECT_EQ(0, memcmp(out + 4, &buf_[0], 24));
 
     EXPECT_NO_THROW(
         delete opt;

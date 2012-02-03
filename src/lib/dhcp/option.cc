@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,6 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <iomanip>
-#include <boost/shared_array.hpp>
 #include "exceptions/exceptions.h"
 #include "util/io_utilities.h"
 
@@ -37,26 +36,14 @@ Option::Option(Universe u, unsigned short type)
     }
 }
 
-Option::Option(Universe u, unsigned short type,
-               const boost::shared_array<uint8_t>& buf,
-               unsigned int offset, unsigned int len)
-    :universe_(u), type_(type),
-     offset_(offset)
-{
-    uint8_t* ptr = &buf[offset];
-    data_ = std::vector<uint8_t>(ptr, ptr + len);
-
-    check();
-}
-
-Option::Option(Universe u, unsigned short type, std::vector<uint8_t>& data)
+Option::Option(Universe u, unsigned short type, const OptionBuffer& data)
     :universe_(u), type_(type), data_(data) {
     check();
 }
 
-Option::Option(Universe u, uint16_t type, vector<uint8_t>::const_iterator first,
-               vector<uint8_t>::const_iterator last)
-    :universe_(u), type_(type), data_(std::vector<uint8_t>(first,last)) {
+Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
+               OptionBufferConstIter last)
+    :universe_(u), type_(type), data_(OptionBuffer(first,last)) {
     check();
 }
 
@@ -84,15 +71,16 @@ Option::check() {
     // both types and data size.
 }
 
-unsigned int
-Option::pack(boost::shared_array<uint8_t>& buf,
-             unsigned int buf_len,
-             unsigned int offset) {
-    if (universe_ != V6) {
+void Option::pack(isc::util::OutputBuffer& buf) {
+    switch (universe_) {
+    case V6:
+        return pack6(buf);
+    case V4:
+        return pack4(buf);
+    default:
         isc_throw(BadValue, "Failed to pack " << type_ << " option. Do not "
                   << "use this method for options other than DHCPv6.");
     }
-    return pack6(buf, buf_len, offset);
 }
 
 void
@@ -127,84 +115,25 @@ Option::pack4(isc::util::OutputBuffer& buf) {
     }
 }
 
-unsigned int
-Option::pack6(boost::shared_array<uint8_t>& buf,
-             unsigned int buf_len,
-             unsigned int offset) {
-    if (offset+len() > buf_len) {
-        isc_throw(OutOfRange, "Failed to pack v6 option=" <<
-                  type_ << ",len=" << len() << ": too small buffer.");
+void Option::pack6(isc::util::OutputBuffer& buf) {
+    buf.writeUint16(type_);
+    buf.writeUint16(len() - getHeaderLen());
+
+    if (! data_.empty()) {
+        buf.writeData(&data_[0], data_.size());
     }
 
-    uint8_t* ptr = &buf[offset];
-
-    ptr = writeUint16(type_, ptr);
-
-    ptr = writeUint16(len() - getHeaderLen(), ptr);
-
-    if (! data_.empty())
-        memcpy(ptr, &data_[0], data_.size());
-
-    // end of fixed part of this option
-    offset += OPTION6_HDR_LEN + data_.size();
-
-    return LibDHCP::packOptions6(buf, buf_len, offset, options_);
+    return LibDHCP::packOptions6(buf, options_);
 }
 
-unsigned int
-Option::unpack(const boost::shared_array<uint8_t>& buf,
-               unsigned int buf_len,
-               unsigned int offset,
-               unsigned int parse_len) {
-    switch (universe_) {
-    case V4:
-        return unpack4(buf, buf_len, offset, parse_len);
-    case V6:
-        return unpack6(buf, buf_len, offset, parse_len);
-    default:
-        isc_throw(BadValue, "Unknown universe defined for Option " << type_);
-    }
-
-    return 0; // should not happen
+void Option::unpack(OptionBufferConstIter begin,
+                    OptionBufferConstIter end) {
+    data_ = OptionBuffer(begin, end);
 }
 
-unsigned int
-Option::unpack4(const boost::shared_array<uint8_t>&,
-                unsigned int ,
-                unsigned int ,
-                unsigned int ) {
-    isc_throw(Unexpected, "IPv4 support not implemented yet.");
-    return 0;
-}
-
-unsigned int
-Option::unpack6(const boost::shared_array<uint8_t>& buf,
-                unsigned int buf_len,
-                unsigned int offset,
-                unsigned int parse_len) {
-
-    if (buf_len < offset+parse_len) {
-        isc_throw(OutOfRange, "Failed to unpack DHCPv6 option len="
-                  << parse_len << " offset=" << offset
-                  << " from buffer (length=" << buf_len
-                  << "): too small buffer.");
-    }
-
-    uint8_t* ptr = &buf[offset];
-    data_ = std::vector<uint8_t>(ptr, ptr + parse_len);
-
-    offset_ = offset;
-
-    return (offset+parse_len);
-
-    //return LibDHCP::unpackOptions6(buf, buf_len, offset, parse_len,
-    //                               options_);
-}
-
-/// Returns length of the complete option (data length + DHCPv4/DHCPv6
-/// option header)
-uint16_t
-Option::len() {
+uint16_t Option::len() {
+    // Returns length of the complete option (data length + DHCPv4/DHCPv6
+    // option header)
 
     // length of the whole option is header and data stored in this option...
     int length = getHeaderLen() + data_.size();
@@ -232,18 +161,16 @@ Option::valid() {
     return (true);
 }
 
-boost::shared_ptr<isc::dhcp::Option>
-Option::getOption(unsigned short opt_type) {
+OptionPtr Option::getOption(unsigned short opt_type) {
     isc::dhcp::Option::OptionCollection::const_iterator x =
         options_.find(opt_type);
     if ( x != options_.end() ) {
         return (*x).second;
     }
-    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
+    return OptionPtr(); // NULL
 }
 
-bool
-Option::delOption(unsigned short opt_type) {
+bool Option::delOption(unsigned short opt_type) {
     isc::dhcp::Option::OptionCollection::iterator x = options_.find(opt_type);
     if ( x != options_.end() ) {
         options_.erase(x);
@@ -289,8 +216,7 @@ Option::getHeaderLen() {
     return 0; // should not happen
 }
 
-void
-Option::addOption(boost::shared_ptr<Option> opt) {
+void Option::addOption(OptionPtr opt) {
     if (universe_ == V4) {
         // check for uniqueness (DHCPv4 options must be unique)
         if (getOption(opt->getType())) {
@@ -298,7 +224,7 @@ Option::addOption(boost::shared_ptr<Option> opt) {
                       << " already present in this message.");
         }
     }
-    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+    options_.insert(pair<int, OptionPtr >(opt->getType(), opt));
 }
 
 uint8_t Option::getUint8() {
