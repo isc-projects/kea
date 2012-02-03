@@ -757,7 +757,8 @@ void
 ModuleCCSession::sendStopping() {
     // Inform the configuration manager that this module is stopping
     ConstElementPtr cmd(createCommand("stopping",
-                        Element::fromJSON("{\"module_name\": \"" +
+                                      Element::fromJSON(
+                                          "{\"module_name\": \"" +
                                           module_name_ + "\"}")));
     // It's just an FYI, configmanager is not expected to respond.
     session_.group_sendmsg(cmd, "ConfigManager");
