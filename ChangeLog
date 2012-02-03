@@ -1,3 +1,9 @@
+374.	[func]*     stephen
+	Alter RRsetPtr and ConstRRsetPtr to point to AbstractRRset (instead
+	of RRset) to allow for specialised implementations of RRsets in
+	data sources.
+	(Trac #1604, git 3071211d2c537150a691120b0a5ce2b18d010239)
+
 373.	[bug]		jinmei
 	libdatasrc: the in-memory data source incorrectly rejected loading
 	a zone containing a CNAME RR with RRSIG and/or NSEC.
