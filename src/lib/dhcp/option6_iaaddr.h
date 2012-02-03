@@ -57,7 +57,6 @@ public:
     /// Parses received buffer, returns offset to the first unused byte after
     /// parsed option.
     ///
-    /// @param buf pointer to buffer
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin,

@@ -59,12 +59,8 @@ public:
 
     /// @brief Parses received data
     ///
-    /// @param buf pointer to packet buffer
-    /// @param offset offset to option data
-    /// @param parse_len specified option data length
-    ///
-    /// @return offset to the next unparsed char (just after parsed option)
-    ///
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin,
                         OptionBufferConstIter end);
 
