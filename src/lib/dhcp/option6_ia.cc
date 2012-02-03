@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,12 +15,12 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 #include <sstream>
-#include "exceptions/exceptions.h"
 
-#include "dhcp/libdhcp++.h"
-#include "dhcp/option6_ia.h"
-#include "dhcp/dhcp6.h"
-#include "util/io_utilities.h"
+#include <exceptions/exceptions.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/dhcp6.h>
+#include <util/io_utilities.h>
 
 using namespace std;
 using namespace isc;
@@ -32,65 +32,36 @@ Option6IA::Option6IA(unsigned short type, unsigned int iaid)
 }
 
 Option6IA::Option6IA(unsigned short type,
-                     const boost::shared_array<uint8_t>& buf,
-                     unsigned int buf_len,
-                     unsigned int offset,
-                     unsigned int option_len)
+                     OptionBufferConstIter begin,
+                     OptionBufferConstIter end)
     :Option(Option::V6, type) {
-    unpack(buf, buf_len, offset, option_len);
+    unpack(begin, end);
 }
 
-unsigned int
-Option6IA::pack(boost::shared_array<uint8_t>& buf,
-                unsigned int buf_len,
-                unsigned int offset) {
-    if (offset + len() > buf_len) {
-        isc_throw(OutOfRange, "Failed to pack IA option: len=" << len()
-                  << ", buffer=" << buf_len << ": too small buffer.");
-    }
+void Option6IA::pack(isc::util::OutputBuffer& buf) {
+    buf.writeUint16(type_);
+    buf.writeUint16(len() - OPTION6_HDR_LEN);
+    buf.writeUint32(iaid_);
+    buf.writeUint32(t1_);
+    buf.writeUint32(t2_);
 
-    if (len() < 16 ) {
-        isc_throw(OutOfRange, "Attempt to build malformed IA option: len="
-                  << len() << " is too small (at least 16 is required).");
-    }
-
-    uint8_t* ptr = &buf[offset];
-
-    ptr = writeUint16(type_, ptr);
-    ptr = writeUint16(len() - OPTION6_HDR_LEN, ptr);
-    offset += OPTION6_HDR_LEN;
-
-    ptr = writeUint32(iaid_, ptr);
-    ptr = writeUint32(t1_, ptr);
-    ptr = writeUint32(t2_, ptr);
-    offset += OPTION6_IA_LEN;
-
-    offset = LibDHCP::packOptions6(buf, buf_len, offset, options_);
-    return offset;
+    LibDHCP::packOptions6(buf, options_);
 }
 
-unsigned int
-Option6IA::unpack(const boost::shared_array<uint8_t>& buf,
-                  unsigned int buf_len,
-                  unsigned int offset,
-                  unsigned int parse_len) {
-    if ( parse_len < OPTION6_IA_LEN || offset + OPTION6_IA_LEN > buf_len) {
+void Option6IA::unpack(OptionBufferConstIter begin,
+                       OptionBufferConstIter end) {
+    if (distance(begin, end) < 12) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
+    iaid_ = readUint32( &(*begin) );
+    begin += sizeof(uint32_t);
+    t1_ = readUint32( &(*begin) );
+    begin += sizeof(uint32_t);
 
-    iaid_ = readUint32(&buf[offset]);
-    offset += sizeof(uint32_t);
+    t2_ = readUint32( &(*begin) );
+    begin += sizeof(uint32_t);
 
-    t1_ = readUint32(&buf[offset]);
-    offset += sizeof(uint32_t);
-
-    t2_ = readUint32(&buf[offset]);
-    offset += sizeof(uint32_t);
-
-    offset = LibDHCP::unpackOptions6(buf, buf_len, offset,
-                                     parse_len - OPTION6_IA_LEN, options_);
-
-    return (offset);
+    LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
 }
 
 std::string Option6IA::toText(int indent /* = 0*/) {

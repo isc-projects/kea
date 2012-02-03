@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -70,8 +70,8 @@ Dhcpv6Srv::~Dhcpv6Srv() {
 bool
 Dhcpv6Srv::run() {
     while (!shutdown) {
-        boost::shared_ptr<Pkt6> query; // client's message
-        boost::shared_ptr<Pkt6> rsp;   // server's response
+        Pkt6Ptr query; // client's message
+        Pkt6Ptr rsp;   // server's response
 
         query = IfaceMgr::instance().receive6();
 
@@ -110,16 +110,16 @@ Dhcpv6Srv::run() {
                      << query->getType() << endl;
             }
 
-            cout << "Received " << query->data_len_ << " bytes packet type="
+            cout << "Received " << query->getBuffer().getLength() << " bytes packet type="
                  << query->getType() << endl;
             cout << query->toText();
             if (rsp) {
-                rsp->remote_addr_ = query->remote_addr_;
-                rsp->local_addr_ = query->local_addr_;
-                rsp->remote_port_ = DHCP6_CLIENT_PORT;
-                rsp->local_port_ = DHCP6_SERVER_PORT;
-                rsp->ifindex_ = query->ifindex_;
-                rsp->iface_ = query->iface_;
+                rsp->setRemoteAddr(query->getRemoteAddr());
+                rsp->setLocalAddr(query->getLocalAddr());
+                rsp->setRemotePort(DHCP6_CLIENT_PORT);
+                rsp->setLocalPort(DHCP6_SERVER_PORT);
+                rsp->setIndex(query->getIndex());
+                rsp->setIface(query->getIface());
                 cout << "Replying with:" << rsp->getType() << endl;
                 cout << rsp->toText();
                 cout << "----" << endl;
@@ -143,7 +143,7 @@ Dhcpv6Srv::setServerID() {
     /// TODO implement this for real once interface detection is done.
     /// Use hardcoded server-id for now
 
-    boost::shared_array<uint8_t> srvid(new uint8_t[14]);
+    OptionBuffer srvid(14);
     srvid[0] = 0;
     srvid[1] = 1; // DUID type 1 = DUID-LLT (see section 9.2 of RFC3315)
     srvid[2] = 0;
@@ -154,12 +154,11 @@ Dhcpv6Srv::setServerID() {
     }
     serverid_ = boost::shared_ptr<Option>(new Option(Option::V6,
                                                      D6O_SERVERID,
-                                                     srvid,
-                                                     0, 14));
+                                                     srvid.begin(),
+                                                     srvid.end()));
 }
 
-void Dhcpv6Srv::copyDefaultOptions(const boost::shared_ptr<Pkt6>& question,
-                                   boost::shared_ptr<Pkt6>& answer) {
+void Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // add client-id
     boost::shared_ptr<Option> clientid = question->getOption(D6O_CLIENTID);
     if (clientid) {
@@ -169,8 +168,7 @@ void Dhcpv6Srv::copyDefaultOptions(const boost::shared_ptr<Pkt6>& question,
     // TODO: Should throw if there is no client-id (except anonymous INF-REQUEST)
 }
 
-void Dhcpv6Srv::appendDefaultOptions(const boost::shared_ptr<Pkt6>& /*question*/,
-                                   boost::shared_ptr<Pkt6>& answer) {
+void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& /*question*/, Pkt6Ptr& answer) {
     // TODO: question is currently unused, but we need it at least to know
     // message type we are answering
 
@@ -179,8 +177,7 @@ void Dhcpv6Srv::appendDefaultOptions(const boost::shared_ptr<Pkt6>& /*question*/
 }
 
 
-void Dhcpv6Srv::appendRequestedOptions(const boost::shared_ptr<Pkt6>& /*question*/,
-                                       boost::shared_ptr<Pkt6>& answer) {
+void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& /*question*/, Pkt6Ptr& answer) {
     // TODO: question is currently unused, but we need to extract ORO from it
     // and act on its content. Now we just send DNS-SERVERS option.
 
@@ -190,8 +187,7 @@ void Dhcpv6Srv::appendRequestedOptions(const boost::shared_ptr<Pkt6>& /*question
     answer->addOption(dnsservers);
 }
 
-void Dhcpv6Srv::assignLeases(const boost::shared_ptr<Pkt6>& question,
-                             boost::shared_ptr<Pkt6>& answer) {
+void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     /// TODO Rewrite this once LeaseManager is implemented.
 
     // answer client's IA (this is mostly a dummy,
@@ -217,11 +213,9 @@ void Dhcpv6Srv::assignLeases(const boost::shared_ptr<Pkt6>& question,
     }
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processSolicit(const boost::shared_ptr<Pkt6>& solicit) {
+Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
-    boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE,
-                                               solicit->getTransid()));
+    Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
     copyDefaultOptions(solicit, advertise);
     appendDefaultOptions(solicit, advertise);
@@ -232,11 +226,9 @@ Dhcpv6Srv::processSolicit(const boost::shared_ptr<Pkt6>& solicit) {
     return (advertise);
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRequest(const boost::shared_ptr<Pkt6>& request) {
+Pkt6Ptr Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
-                                           request->getTransid()));
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     copyDefaultOptions(request, reply);
     appendDefaultOptions(request, reply);
@@ -247,50 +239,34 @@ Dhcpv6Srv::processRequest(const boost::shared_ptr<Pkt6>& request) {
     return (reply);
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRenew(const boost::shared_ptr<Pkt6>& renew) {
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
-                                           renew->getTransid(),
-                                           Pkt6::UDP));
+Pkt6Ptr Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
     return reply;
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRebind(const boost::shared_ptr<Pkt6>& rebind) {
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
+Pkt6Ptr Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY,
                                            rebind->getTransid(),
                                            Pkt6::UDP));
     return reply;
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processConfirm(const boost::shared_ptr<Pkt6>& confirm) {
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
-                                           confirm->getTransid(),
-                                           Pkt6::UDP));
+Pkt6Ptr Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, confirm->getTransid()));
     return reply;
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processRelease(const boost::shared_ptr<Pkt6>& release) {
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
-                                           release->getTransid(),
-                                           Pkt6::UDP));
+Pkt6Ptr Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
     return reply;
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processDecline(const boost::shared_ptr<Pkt6>& decline) {
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
-                                           decline->getTransid(),
-                                           Pkt6::UDP));
+Pkt6Ptr Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
     return reply;
 }
 
-boost::shared_ptr<Pkt6>
-Dhcpv6Srv::processInfRequest(const boost::shared_ptr<Pkt6>& infRequest) {
-    boost::shared_ptr<Pkt6> reply(new Pkt6(DHCPV6_REPLY,
-                                           infRequest->getTransid(),
-                                           Pkt6::UDP));
+Pkt6Ptr Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
 }

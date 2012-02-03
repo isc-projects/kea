@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -263,8 +263,8 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     IOAddress loAddr("::1");
 
-    Pkt6 pkt6(128);
-    pkt6.iface_ = LOOPBACK;
+    Pkt6 pkt6(DHCPV6_SOLICIT, 123);
+    pkt6.setIface(LOOPBACK);
 
     // bind multicast socket to port 10547
     int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
@@ -335,19 +335,22 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_GT(socket1, 0);
     EXPECT_GT(socket2, 0);
 
-    boost::shared_ptr<Pkt6> sendPkt(new Pkt6(128) );
 
     // prepare dummy payload
+    uint8_t data[128];
     for (int i=0;i<128; i++) {
-        sendPkt->data_[i] = i;
+        data[i] = i;
     }
+    Pkt6Ptr sendPkt = Pkt6Ptr(new Pkt6(data, 128));
 
-    sendPkt->remote_port_ = 10547;
-    sendPkt->remote_addr_ = IOAddress("::1");
-    sendPkt->ifindex_ = 1;
-    sendPkt->iface_ = LOOPBACK;
+    sendPkt->repack();
 
-    boost::shared_ptr<Pkt6> rcvPkt;
+    sendPkt->setRemotePort(10547);
+    sendPkt->setRemoteAddr(IOAddress("::1"));
+    sendPkt->setIndex(1);
+    sendPkt->setIface(LOOPBACK);
+
+    Pkt6Ptr rcvPkt;
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
@@ -356,17 +359,17 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     ASSERT_TRUE( rcvPkt ); // received our own packet
 
     // let's check that we received what was sent
-    EXPECT_EQ(sendPkt->data_len_, rcvPkt->data_len_);
-    EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
-                        rcvPkt->data_len_) );
+    ASSERT_EQ(sendPkt->getData().size(), rcvPkt->getData().size());
+    EXPECT_EQ(0, memcmp(&sendPkt->getData()[0], &rcvPkt->getData()[0],
+                        rcvPkt->getData().size()));
 
-    EXPECT_EQ(sendPkt->remote_addr_.toText(), rcvPkt->remote_addr_.toText());
+    EXPECT_EQ(sendPkt->getRemoteAddr().toText(), rcvPkt->getRemoteAddr().toText());
 
     // since we opened 2 sockets on the same interface and none of them is multicast,
     // none is preferred over the other for sending data, so we really should not
     // assume the one or the other will always be choosen for sending data. Therefore
     // we should accept both values as source ports.
-    EXPECT_TRUE( (rcvPkt->remote_port_ == 10546) || (rcvPkt->remote_port_ == 10547) );
+    EXPECT_TRUE( (rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547) );
 
     delete ifacemgr;
 }
@@ -556,7 +559,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     loopback->addSocket(sock1);
     loopback->addSocket(sock2);
 
-    Pkt6 pkt6(100);
+    Pkt6 pkt6(DHCPV6_REPLY, 123456);
 
     // pkt6 dos not have interface set yet
     EXPECT_THROW(
@@ -565,14 +568,14 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     // try to send over non-existing interface
-    pkt6.iface_ = "nosuchinterface45";
+    pkt6.setIface("nosuchinterface45");
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
         BadValue
     );
 
     // this will work
-    pkt6.iface_ = LOOPBACK;
+    pkt6.setIface(LOOPBACK);
     EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
 
     bool deleted = false;

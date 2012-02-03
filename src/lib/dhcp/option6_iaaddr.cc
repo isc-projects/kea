@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,67 +36,47 @@ Option6IAAddr::Option6IAAddr(unsigned short type,
      valid_(valid) {
 }
 
-Option6IAAddr::Option6IAAddr(unsigned short type,
-                             boost::shared_array<uint8_t> buf,
-                             unsigned int buf_len, unsigned int offset,
-                             unsigned int option_len)
+Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
+                             OptionBuffer::const_iterator end)
     :Option(V6, type), addr_("::") {
-    unpack(buf, buf_len, offset, option_len);
+    unpack(begin, end);
 }
 
-unsigned int
-Option6IAAddr::pack(boost::shared_array<uint8_t>& buf,
-                    unsigned int buf_len,
-                    unsigned int offset) {
-    if (len() > buf_len) {
-        isc_throw(OutOfRange, "Failed to pack IA option: len=" << len()
-                  << ", buffer=" << buf_len << ": too small buffer.");
-    }
+void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
 
-    uint8_t* ptr = &buf[offset];
-
-    ptr = writeUint16(type_, ptr);
+    buf.writeUint16(type_);
 
     // len() returns complete option length. len field contains
     // length without 4-byte option header
-    ptr = writeUint16(len() - OPTION6_HDR_LEN, ptr);
-    offset += OPTION6_HDR_LEN;
+    buf.writeUint16(len() - getHeaderLen());
 
-    memcpy(ptr, addr_.getAddress().to_v6().to_bytes().data(), 16);
-    ptr += V6ADDRESS_LEN;
 
-    ptr = writeUint32(preferred_, ptr);
+    buf.writeData(addr_.getAddress().to_v6().to_bytes().data(),
+                  isc::asiolink::V6ADDRESS_LEN);
 
-    ptr = writeUint32(valid_, ptr);
-    offset += OPTION6_IAADDR_LEN;
+    buf.writeUint32(preferred_);
+    buf.writeUint32(valid_);
 
-    // parse suboption (there shouldn't be any)
-    offset = LibDHCP::packOptions6(buf, buf_len, offset, options_);
-    return offset;
+    // parse suboption (there shouldn't be any for IAADDR)
+    LibDHCP::packOptions6(buf, options_);
 }
 
-unsigned int
-Option6IAAddr::unpack(const boost::shared_array<uint8_t>& buf,
-                  unsigned int buf_len,
-                  unsigned int offset,
-                  unsigned int parse_len) {
-    if ( parse_len < OPTION6_IAADDR_LEN || offset + OPTION6_IAADDR_LEN > buf_len) {
+void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
+                      OptionBuffer::const_iterator end) {
+    if ( distance(begin, end) < OPTION6_IAADDR_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
 
     // 16 bytes: IPv6 address
-    addr_ = IOAddress::from_bytes(AF_INET6, &buf[offset]);
-    offset += V6ADDRESS_LEN;
+    addr_ = IOAddress::from_bytes(AF_INET6, &(*begin));
+    begin += V6ADDRESS_LEN;
 
-    preferred_ = readUint32(&buf[offset]);
-    offset += sizeof(uint32_t);
+    preferred_ = readUint32( &(*begin) );
+    begin += sizeof(uint32_t);
 
-    valid_ = readUint32(&buf[offset]);
-    offset += sizeof(uint32_t);
-    offset = LibDHCP::unpackOptions6(buf, buf_len, offset,
-                                     parse_len - 24, options_);
-
-    return offset;
+    valid_ = readUint32( &(*begin) );
+    begin += sizeof(uint32_t);
+    LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
 }
 
 std::string Option6IAAddr::toText(int indent /* =0 */) {

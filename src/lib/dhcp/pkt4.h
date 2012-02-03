@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,6 @@
 #include <iostream>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <boost/shared_array.hpp>
 #include "asiolink/io_address.h"
 #include "util/buffer.h"
 #include "dhcp/option.h"
@@ -103,8 +102,7 @@ public:
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    std::string
-    toText();
+    std::string toText();
 
     /// @brief Returns the size of the required buffer to build the packet.
     ///
@@ -112,118 +110,110 @@ public:
     /// the current set of packet options.
     ///
     /// @return number of bytes required to build this packet
-    size_t
-    len();
+    size_t len();
 
-    /// Sets hops field
+    /// @brief Sets hops field.
     ///
     /// @param hops value to be set
-    void
-    setHops(uint8_t hops) { hops_ = hops; };
+    void setHops(uint8_t hops) { hops_ = hops; };
 
-    /// Returns hops field
+    /// @brief Returns hops field.
     ///
     /// @return hops field
-    uint8_t
-    getHops() const { return (hops_); };
+    uint8_t getHops() const { return (hops_); };
 
     // Note: There's no need to manipulate OP field directly,
     // thus no setOp() method. See op_ comment.
 
-    /// Returns op field
+    /// @brief Returns op field.
     ///
     /// @return op field
-    uint8_t
-    getOp() const { return (op_); };
+    uint8_t getOp() const { return (op_); };
 
-    /// Sets secs field
+    /// @brief Sets secs field.
     ///
     /// @param secs value to be set
-    void
-    setSecs(uint16_t secs) { secs_ = secs; };
+    void setSecs(uint16_t secs) { secs_ = secs; };
 
-    /// Returns secs field
+    /// @brief Returns secs field.
     ///
     /// @return secs field
-    uint16_t
-    getSecs() const { return (secs_); };
+    uint16_t getSecs() const { return (secs_); };
 
-    /// Sets flags field
+    /// @brief Sets flags field.
     ///
     /// @param flags value to be set
-    void
-    setFlags(uint16_t flags) { flags_ = flags; };
+    void setFlags(uint16_t flags) { flags_ = flags; };
 
-    /// Returns flags field
+    /// @brief Returns flags field.
     ///
     /// @return flags field
-    uint16_t
-    getFlags() const { return (flags_); };
+    uint16_t getFlags() const { return (flags_); };
 
 
-    /// Returns ciaddr field
+    /// @brief Returns ciaddr field.
     ///
     /// @return ciaddr field
     const isc::asiolink::IOAddress&
     getCiaddr() const { return (ciaddr_); };
 
-    /// Sets ciaddr field
+    /// @brief Sets ciaddr field.
     ///
     /// @param ciaddr value to be set
     void
     setCiaddr(const isc::asiolink::IOAddress& ciaddr) { ciaddr_ = ciaddr; };
 
 
-    /// Returns siaddr field
+    /// @brief Returns siaddr field.
     ///
     /// @return siaddr field
     const isc::asiolink::IOAddress&
     getSiaddr() const { return (siaddr_); };
 
-    /// Sets siaddr field
+    /// @brief Sets siaddr field.
     ///
     /// @param siaddr value to be set
     void
     setSiaddr(const isc::asiolink::IOAddress& siaddr) { siaddr_ = siaddr; };
 
 
-    /// Returns yiaddr field
+    /// @brief Returns yiaddr field.
     ///
     /// @return yiaddr field
     const isc::asiolink::IOAddress&
     getYiaddr() const { return (yiaddr_); };
 
-    /// Sets yiaddr field
+    /// @brief Sets yiaddr field.
     ///
     /// @param yiaddr value to be set
     void
     setYiaddr(const isc::asiolink::IOAddress& yiaddr) { yiaddr_ = yiaddr; };
 
 
-    /// Returns giaddr field
+    /// @brief Returns giaddr field.
     ///
     /// @return giaddr field
     const isc::asiolink::IOAddress&
     getGiaddr() const { return (giaddr_); };
 
-    /// Sets giaddr field
+    /// @brief Sets giaddr field.
     ///
     /// @param giaddr value to be set
     void
     setGiaddr(const isc::asiolink::IOAddress& giaddr) { giaddr_ = giaddr; };
 
-    /// Returns value of transaction-id field
+    /// @brief Returns value of transaction-id field.
     ///
     /// @return transaction-id
     uint32_t getTransid() const { return (transid_); };
 
-    /// Returns message type (e.g. 1 = DHCPDISCOVER)
+    /// @brief Returns message type (e.g. 1 = DHCPDISCOVER).
     ///
     /// @return message type
     uint8_t
     getType() const { return (msg_type_); }
 
-    /// Sets message type (e.g. 1 = DHCPDISCOVER)
+    /// @brief Sets message type (e.g. 1 = DHCPDISCOVER).
     ///
     /// @param type message type to be set
     void setType(uint8_t type) { msg_type_=type; };
@@ -234,14 +224,13 @@ public:
     /// null-terminated. Do not use strlen() or similar on it.
     ///
     /// @return sname field
-    const std::vector<uint8_t>
+    const OptionBuffer
     getSname() const { return (std::vector<uint8_t>(sname_, &sname_[MAX_SNAME_LEN])); };
 
-    /// Sets sname field
+    /// @brief Sets sname field.
     ///
     /// @param sname value to be set
-    void
-    setSname(const uint8_t* sname, size_t snameLen = MAX_SNAME_LEN);
+    void setSname(const uint8_t* sname, size_t snameLen = MAX_SNAME_LEN);
 
     /// @brief Returns file field
     ///
@@ -249,7 +238,7 @@ public:
     /// null-terminated. Do not use strlen() or similar on it.
     ///
     /// @return pointer to file field
-    const std::vector<uint8_t>
+    const OptionBuffer
     getFile() const { return (std::vector<uint8_t>(file_, &file_[MAX_FILE_LEN])); };
 
     /// Sets file field
@@ -478,7 +467,7 @@ protected:
 
     // end of real DHCPv4 fields
 
-    /// output buffer (used during message
+    /// output buffer (used during message transmission)
     isc::util::OutputBuffer bufferOut_;
 
     // that's the data of input buffer used in RX packet. Note that
@@ -495,6 +484,8 @@ protected:
     /// collection of options present in this message
     isc::dhcp::Option::OptionCollection options_;
 }; // Pkt4 class
+
+typedef boost::shared_ptr<Pkt4> Pkt4Ptr;
 
 } // isc::dhcp namespace
 

@@ -101,6 +101,17 @@ public:
     /// \param len The length of the data in bytes.
     InputBuffer(const void* data, size_t len) :
         position_(0), data_(static_cast<const uint8_t*>(data)), len_(len) {}
+
+    /// @brief Constructor from vector<uint8_t>
+    ///
+    /// It is caller's responsibility to ensure that the data is valid as long
+    /// as the buffer exists.
+    ///
+    /// @param begin iterator to beginning of the vector
+    /// @param end iterator to end of the vector
+    InputBuffer(std::vector<uint8_t>::const_iterator begin,
+                std::vector<uint8_t>::const_iterator end) :
+        data_(&(*begin)), len_(distance(begin, end)) {}
     //@}
 
     ///

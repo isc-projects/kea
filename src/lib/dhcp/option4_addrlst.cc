@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,9 +38,8 @@ Option4AddrLst::Option4AddrLst(uint8_t type, const AddressContainer& addrs)
 }
 
 
-Option4AddrLst::Option4AddrLst(uint8_t type,
-                               vector<uint8_t>::const_iterator first,
-                               vector<uint8_t>::const_iterator last)
+Option4AddrLst::Option4AddrLst(uint8_t type, OptionBufferConstIter first,
+                               OptionBufferConstIter last)
     :Option(V4, type) {
     if ( (distance(first, last) % V4ADDRESS_LEN) ) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_
