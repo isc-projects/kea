@@ -201,7 +201,7 @@ TEST_F(CCSessionTest, session_close) {
         ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL,
                              true, false);
         EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
-        // The initial message is irrelevant for this test 
+        // The initial message is irrelevant for this test
         // (see session2 test), drop it
         session.getFirstMessage(group, to);
         // Queue should now be empty
