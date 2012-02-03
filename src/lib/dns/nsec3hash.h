@@ -25,6 +25,7 @@ class Name;
 
 namespace rdata {
 namespace generic {
+class NSEC3;
 class NSEC3PARAM;
 }
 }
@@ -108,6 +109,12 @@ public:
     /// \return A pointer to a concrete derived object of \c NSEC3Hash.
     static NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param);
 
+    /// \brief Factory method of NSECHash from NSEC3 RDATA.
+    ///
+    /// This is similar to the other version, but extracts the parameters
+    /// for hash calculation from an NSEC3 RDATA object.
+    static NSEC3Hash* create(const rdata::generic::NSEC3& nsec3);
+
     /// \brief The destructor.
     virtual ~NSEC3Hash() {}
 
@@ -123,6 +130,28 @@ public:
     /// calculated.
     /// \return Base32hex-encoded string of the hash value.
     virtual std::string calculate(const Name& name) const = 0;
+
+    /// \brief Match given NSEC3 parameters with that of the hash.
+    ///
+    /// This method compares NSEC3 parameters used for hash calculation
+    /// in the object with those in the given NSEC3 RDATA, and return
+    /// true iff they completely match.  In the current implementation
+    /// only the algorithm, iterations and salt are compared; the flags
+    /// are ignored (as they don't affect hash calculation per RFC5155).
+    ///
+    /// \throw None
+    ///
+    /// \param nsec3 An NSEC3 RDATA object whose hash parameters are to be
+    /// matched
+    /// \return true If the given parameters match the local ones; false
+    /// otherwise.
+    virtual bool match(const rdata::generic::NSEC3& nsec3) const = 0;
+
+    /// \brief Match given NSEC3PARAM parameters with that of the hash.
+    ///
+    /// This is similar to the other version, but extracts the parameters
+    /// to compare from an NSEC3PARAM RDATA object.
+    virtual bool match(const rdata::generic::NSEC3PARAM& nsec3param) const = 0;
 };
 
 }

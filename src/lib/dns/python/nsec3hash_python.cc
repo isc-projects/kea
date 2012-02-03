@@ -55,13 +55,24 @@ NSEC3Hash_init(PyObject* po_self, PyObject* args, PyObject*) {
         if (PyArg_ParseTuple(args, "O", &po_rdata)) {
             if (!PyRdata_Check(po_rdata)) {
                 PyErr_Format(PyExc_TypeError,
-                             "param must be an Rdata of type NSEC3HASH, "
-                             "not %.200s", po_rdata->ob_type->tp_name);
+                             "param must be an Rdata of type NSEC3/NSEC3PARAM,"
+                             " not %.200s", po_rdata->ob_type->tp_name);
                 return (-1);
             }
-            self->cppobj = NSEC3Hash::create(
-                dynamic_cast<const generic::NSEC3PARAM&>(
-                    PyRdata_ToRdata(po_rdata)));
+            const Rdata& rdata = PyRdata_ToRdata(po_rdata);
+            const generic::NSEC3PARAM* nsec3param =
+                dynamic_cast<const generic::NSEC3PARAM*>(&rdata);
+            const generic::NSEC3* nsec3 =
+                dynamic_cast<const generic::NSEC3*>(&rdata);
+            if (nsec3param != NULL) {
+                self->cppobj = NSEC3Hash::create(*nsec3param);
+            } else if (nsec3 != NULL) {
+                self->cppobj = NSEC3Hash::create(*nsec3);
+            } else {
+                PyErr_Format(PyExc_TypeError,
+                             "param must be an Rdata of type NSEC3/NSEC3HASH");
+                return (-1);
+            }
             return (0);
         }
     } catch (const UnknownNSEC3HashAlgorithm& ex) {
@@ -118,6 +129,51 @@ NSEC3Hash_calculate(PyObject* po_self, PyObject* args) {
     return (NULL);
 }
 
+PyObject*
+NSEC3Hash_match(PyObject* po_self, PyObject* args) {
+    s_NSEC3Hash* const self = static_cast<s_NSEC3Hash*>(po_self);
+
+    try {
+        PyObject* po_rdata;
+        if (PyArg_ParseTuple(args, "O", &po_rdata)) {
+            if (!PyRdata_Check(po_rdata)) {
+                PyErr_Format(PyExc_TypeError,
+                             "param must be an Rdata of type NSEC3/NSEC3PARAM,"
+                             " not %.200s", po_rdata->ob_type->tp_name);
+                return (NULL);
+            }
+            const Rdata& rdata = PyRdata_ToRdata(po_rdata);
+            const generic::NSEC3PARAM* nsec3param =
+                dynamic_cast<const generic::NSEC3PARAM*>(&rdata);
+            const generic::NSEC3* nsec3 =
+                dynamic_cast<const generic::NSEC3*>(&rdata);
+            bool matched;
+            if (nsec3param != NULL) {
+                matched = self->cppobj->match(*nsec3param);
+            } else if (nsec3 != NULL) {
+                matched = self->cppobj->match(*nsec3);
+            } else {
+                PyErr_Format(PyExc_TypeError,
+                             "param must be an Rdata of type NSEC3/NSEC3HASH");
+                return (NULL);
+            }
+            PyObject* ret = matched ? Py_True : Py_False;
+            Py_INCREF(ret);
+            return (ret);
+        }
+    } catch (const exception& ex) {
+        const string ex_what = "Unexpected failure in NSEC3Hash.match: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected C++ exception");
+        return (NULL);
+    }
+
+    return (NULL);
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -126,6 +182,7 @@ NSEC3Hash_calculate(PyObject* po_self, PyObject* args) {
 // 4. Documentation
 PyMethodDef NSEC3Hash_methods[] = {
     { "calculate", NSEC3Hash_calculate, METH_VARARGS, NSEC3Hash_calculate_doc },
+    { "match", NSEC3Hash_match, METH_VARARGS, NSEC3Hash_match_doc },
     { NULL, NULL, 0, NULL }
 };
 } // end of unnamed namespace
