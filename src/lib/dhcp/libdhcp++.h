@@ -77,7 +77,7 @@ public:
     ///            value or invalid universe is specified
     ///
     /// @param u universe of the option (V4 or V6)
-    /// @param opt_type option-type
+    /// @param type option-type
     /// @param factory function pointer
     static void OptionFactoryRegister(Option::Universe u,
                                       uint16_t type,

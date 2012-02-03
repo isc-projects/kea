@@ -25,11 +25,10 @@
 #include <exceptions/exceptions.h>
 
 using namespace std;
-using namespace isc;
 using namespace isc::asiolink;
-using namespace isc::dhcp;
 
 namespace isc {
+namespace dhcp {
 
 /// IfaceMgr is a singleton implementation
 IfaceMgr* IfaceMgr::instance_ = 0;
@@ -963,8 +962,7 @@ Pkt6Ptr IfaceMgr::receive6() {
     return (pkt);
 }
 
-uint16_t
-IfaceMgr::getSocket(isc::dhcp::Pkt6 const& pkt) {
+uint16_t IfaceMgr::getSocket(isc::dhcp::Pkt6 const& pkt) {
     Iface* iface = getIface(pkt.getIface());
     if (!iface) {
         isc_throw(BadValue, "Tried to find socket for non-existent interface "
@@ -992,8 +990,7 @@ IfaceMgr::getSocket(isc::dhcp::Pkt6 const& pkt) {
               << " does not have any suitable IPv6 sockets open.");
 }
 
-uint16_t
-IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
+uint16_t IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     Iface* iface = getIface(pkt.getIface());
     if (!iface) {
         isc_throw(BadValue, "Tried to find socket for non-existent interface "
@@ -1018,6 +1015,5 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
               << " does not have any suitable IPv4 sockets open.");
 }
 
-
-
-}
+} // end of namespace isc::dhcp
+} // end of namespace isc

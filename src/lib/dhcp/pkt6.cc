@@ -21,9 +21,9 @@
 #include <sstream>
 
 using namespace std;
-using namespace isc::dhcp;
 
 namespace isc {
+namespace dhcp {
 
 Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) :
     proto_(proto),
@@ -40,7 +40,7 @@ Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) 
     memcpy(&data_[0], buf, buf_len);
 }
 
-Pkt6::Pkt6(uint8_t msg_type, unsigned int transid, DHCPv6Proto proto /*= UDP*/) :
+Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
     proto_(proto),
     msg_type_(msg_type),
     transid_(transid),
@@ -202,5 +202,5 @@ void Pkt6::repack() {
     bufferOut_.writeData(&data_[0], data_.size());
 }
 
-
-};
+} // end of namespace isc::dhcp
+} // end of namespace isc

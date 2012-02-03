@@ -29,18 +29,18 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::util;
 
-Option6AddrLst::Option6AddrLst(unsigned short type,
-                               const AddressContainer& addrs)
+namespace isc {
+namespace dhcp {
+
+Option6AddrLst::Option6AddrLst(uint16_t type, const AddressContainer& addrs)
     :Option(V6, type), addrs_(addrs) {
 }
 
-Option6AddrLst::Option6AddrLst(unsigned short type,
-                               const isc::asiolink::IOAddress& addr)
+Option6AddrLst::Option6AddrLst(uint16_t type, const isc::asiolink::IOAddress& addr)
     :Option(V6, type), addrs_(1,addr) {
 }
 
-Option6AddrLst::Option6AddrLst(unsigned short type,
-                               OptionBufferConstIter begin,
+Option6AddrLst::Option6AddrLst(uint16_t type, OptionBufferConstIter begin,
                                OptionBufferConstIter end)
     :Option(V6, type) {
     unpack(begin, end);
@@ -108,3 +108,6 @@ uint16_t Option6AddrLst::len() {
 
     return (OPTION6_HDR_LEN + addrs_.size()*16);
 }
+
+} // end of namespace isc::dhcp
+} // end of namespace isc

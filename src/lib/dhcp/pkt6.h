@@ -141,7 +141,7 @@ public:
     /// instances of the same option are allowed (and frequently used).
     /// See getOptions().
     ///
-    /// @param opt_type option type we are looking for
+    /// @param type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(uint16_t type);
@@ -160,7 +160,7 @@ public:
 
     /// @brief Sets remote address.
     ///
-    /// @params remote specifies remote address
+    /// @param remote specifies remote address
     void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
         remote_addr_ = remote;
     }
@@ -174,7 +174,7 @@ public:
 
     /// @brief Sets local address.
     ///
-    /// @params local specifies local address
+    /// @param local specifies local address
     void setLocalAddr(const isc::asiolink::IOAddress& local) {
         local_addr_ = local;
     }
@@ -188,7 +188,7 @@ public:
 
     /// @brief Sets local port.
     ///
-    /// @params local specifies local port
+    /// @param local specifies local port
     void setLocalPort(uint16_t local) { local_port_ = local; }
 
     /// @brief Returns local port.
@@ -198,7 +198,7 @@ public:
 
     /// @brief Sets remote port.
     ///
-    /// @params remote specifies remote port
+    /// @param remote specifies remote port
     void setRemotePort(uint16_t remote) { remote_port_ = remote; }
 
     /// @brief Returns remote port.
