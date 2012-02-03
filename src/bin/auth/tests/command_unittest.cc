@@ -14,14 +14,9 @@
 
 #include <config.h>
 
-#include <cassert>
-#include <cstdlib>
-#include <string>
-#include <stdexcept>
-
-#include <boost/bind.hpp>
-
-#include <gtest/gtest.h>
+#include <auth/auth_srv.h>
+#include <auth/auth_config.h>
+#include <auth/command.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -33,13 +28,21 @@
 
 #include <datasrc/memory_datasrc.h>
 
-#include <auth/auth_srv.h>
-#include <auth/auth_config.h>
-#include <auth/command.h>
-
 #include <asiolink/asiolink.h>
 
 #include <testutils/mockups.h>
+
+#include <cassert>
+#include <cstdlib>
+#include <string>
+#include <stdexcept>
+
+#include <boost/bind.hpp>
+
+#include <gtest/gtest.h>
+
+#include <sys/types.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -50,7 +53,11 @@ using namespace isc::config;
 namespace {
 class AuthCommandTest : public ::testing::Test {
 protected:
-    AuthCommandTest() : server(false, xfrout), rcode(-1) {
+    AuthCommandTest() :
+        server(false, xfrout),
+        rcode(-1),
+        itimer_(server.getIOService())
+    {
         server.setStatisticsSession(&statistics_session);
     }
     void checkAnswer(const int expected_code) {
@@ -61,9 +68,13 @@ protected:
     MockXfroutClient xfrout;
     AuthSrv server;
     ConstElementPtr result;
+    // The shutdown command parameter
+    ConstElementPtr param;
     int rcode;
+    isc::asiolink::IntervalTimer itimer_;
 public:
     void stopServer();          // need to be public for boost::bind
+    void dontStopServer();          // need to be public for boost::bind
 };
 
 TEST_F(AuthCommandTest, unknownCommand) {
@@ -92,14 +103,52 @@ TEST_F(AuthCommandTest, sendStatistics) {
 
 void
 AuthCommandTest::stopServer() {
-    result = execAuthServerCommand(server, "shutdown", ConstElementPtr());
+    result = execAuthServerCommand(server, "shutdown", param);
     parseAnswer(rcode, result);
     assert(rcode == 0); // make sure the test stops when something is wrong
 }
 
 TEST_F(AuthCommandTest, shutdown) {
-    isc::asiolink::IntervalTimer itimer(server.getIOService());
-    itimer.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
+    // Param defaults to empty/null pointer on creation
+    itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
+    server.getIOService().run();
+    EXPECT_EQ(0, rcode);
+}
+
+TEST_F(AuthCommandTest, shutdownCorrectPID) {
+    // Put the pid parameter there
+    pid_t pid(getpid());
+    ElementPtr param(new isc::data::MapElement());
+    param->set("pid", ConstElementPtr(new isc::data::IntElement(pid)));
+    this->param = param;
+    // With the correct PID, it should act exactly the same as in case
+    // of no parameter
+    itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
+    server.getIOService().run();
+    EXPECT_EQ(0, rcode);
+}
+
+// This is like stopServer, but the server should not stop after the
+// command, it should be running
+void
+AuthCommandTest::dontStopServer() {
+    result = execAuthServerCommand(server, "shutdown", param);
+    parseAnswer(rcode, result);
+    EXPECT_EQ(0, rcode);
+    rcode = -1;
+    // We run the stopServer now, to really stop the server.
+    // If it had stopped already, it won't be run and the rcode -1 will
+    // be left here.
+    param = ConstElementPtr();
+    itimer_.cancel();
+    itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
+}
+
+TEST_F(AuthCommandTest, shutdownIncorrectPID) {
+    // The PID = 0 should be taken by init, so we are not init and the
+    // PID should be different
+    param = Element::fromJSON("{\"pid\": 0}");
+    itimer_.setup(boost::bind(&AuthCommandTest::dontStopServer, this), 1);
     server.getIOService().run();
     EXPECT_EQ(0, rcode);
 }
