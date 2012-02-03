@@ -161,10 +161,17 @@ public:
     /// \param port the port to which the socket should be bound (native endian,
     ///     not network byte order).
     /// \param share_mode how the socket can be shared with other requests.
-    /// This must be one of the defined values of ShareMode.
+    ///     This must be one of the defined values of ShareMode..
     /// \param share_name the name of sharing group, relevant for SHARE_SAME
     ///     (specified by us or someone else). If left empty (the default),
-    ///     the app_name parameter of initSocketRequestor is used.
+    ///     the app_name parameter of initSocketRequestor is used. If that one
+    ///     is empty as well, it is accepted, but not recommended, as such
+    ///     a non-descriptive name has a high chance of collisions between
+    ///     applications. nOTE THat you should provide a name (by share_name
+    ///     or app_name) even when you set it to DONT_SHARE (for logs and
+    ///     debugging) and you need to provide one with SHARE_SAME (to know
+    ///     what is same) and SHARE_ANY (someone else might want SHARE_SAME,
+    ///     so it would check against this)
     /// \return the socket, as a file descriptor and token representing it on
     ///     the socket creator side.
     ///
@@ -217,7 +224,12 @@ SocketRequestor& socketRequestor();
 /// \param session the CC session that'll be used to talk to the
 ///                socket creator.
 /// \param app_name default share name if one is not provided with
-///                 requestSocket
+///                 requestSocket. You can leave this as empty string,
+///                 but then you should provide a reasonably descriptive
+///                 name to requestSocket. Empty names work like any others,
+///                 but have a high chance of collisions, so it is recommended
+///                 to avoid them and provide the name of the application
+///                 here.
 /// \throw InvalidOperation when it is called more than once
 void initSocketRequestor(cc::AbstractSession& session,
                          const std::string& app_name);
