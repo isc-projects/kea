@@ -832,7 +832,8 @@ public:
     // revisit the interface of managing RRset signatures, at which point this
     // problem may go away.
     virtual void addRRsig(const rdata::RdataPtr& rdata) {
-        addRRsig(static_cast<const rdata::ConstRdataPtr&>(rdata));
+        // Don't try to convert as a reference here.  SunStudio will reject it.
+        addRRsig(static_cast<const rdata::ConstRdataPtr>(rdata));
     }
 
     /// \brief Adds an RRSIG RRset to this RRset
