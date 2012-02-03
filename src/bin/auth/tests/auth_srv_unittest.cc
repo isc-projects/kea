@@ -71,6 +71,9 @@ protected:
         dnss_(ios_, NULL, NULL, NULL),
         server(true, xfrout),
         rrclass(RRClass::IN()),
+        // The empty string is expected value of the parameter of
+        // requestSocket, not the app_name (there's no fallback, it checks
+        // the empty string is passed).
         sock_requestor_(dnss_, address_store_, 53210, "")
     {
         server.setDNSService(dnss_);
