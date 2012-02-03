@@ -112,8 +112,63 @@ def have_bind10_running(step, config_file, cmdctl_port, process_name):
     step.given(start_step)
     step.given(wait_step)
 
+# function to send lines to bindctl, and store the result
+def run_bindctl(commands, cmdctl_port=47805):
+    """Run bindctl.
+       Parameters:
+       commands: a sequence of strings which will be sent.
+       cmdctl_port: a port number on which cmdctl is listening, is converted
+                    to string if necessary. If not provided, or None, defaults
+                    to 47805
+
+       bindctl's stdout and stderr streams are stored (as one multiline string
+       in world.last_bindctl_stdout/stderr.
+       Fails if the return code is not 0
+    """
+    if cmdctl_port is None:
+        cmdctl_port = 47805
+    args = ['bindctl', '-p', str(cmdctl_port)]
+    bindctl = subprocess.Popen(args, 1, None, subprocess.PIPE,
+                               subprocess.PIPE, None)
+    for line in commands:
+        bindctl.stdin.write(line + "\n")
+    (stdout, stderr) = bindctl.communicate()
+    result = bindctl.returncode
+    world.last_bindctl_stdout = stdout
+    world.last_bindctl_stderr = stderr
+    assert result == 0, "bindctl exit code: " + str(result) +\
+                        "\nstdout:\n" + str(stdout) +\
+                        "stderr:\n" + str(stderr)
+
+
+@step('last bindctl( stderr)? output should( not)? contain (\S+)')
+def check_bindctl_output(step, stderr, notv, string):
+    """Checks the stdout (or stderr) stream of the last run of bindctl,
+       fails if the given string is not found in it (or fails if 'not' was
+       set and it is found
+       Parameters:
+       stderr ('stderr'): Check stderr instead of stdout output
+       notv ('not'): reverse the check (fail if string is found)
+       string ('contain <string>') string to look for
+    """
+    if stderr is None:
+        output = world.last_bindctl_stdout
+    else:
+        output = world.last_bindctl_stderr
+    found = False
+    if string in output:
+        found = True
+    if notv is None:
+        assert found == True, "'" + string +\
+                              "' was not found in bindctl output:\n" +\
+                              output
+    else:
+        assert not found, "'" + string +\
+                          "' was found in bindctl output:\n" +\
+                          output
+
 @step('set bind10 configuration (\S+) to (.*)(?: with cmdctl port (\d+))?')
-def set_config_command(step, name, value, cmdctl_port):
+def config_set_command(step, name, value, cmdctl_port):
     """
     Run bindctl, set the given configuration to the given value, and commit it.
     Parameters:
@@ -123,16 +178,30 @@ def set_config_command(step, name, value, cmdctl_port):
                 the command to. Defaults to 47805.
     Fails if cmdctl does not exit with status code 0.
     """
-    if cmdctl_port is None:
-        cmdctl_port = '47805'
-    args = ['bindctl', '-p', cmdctl_port]
-    bindctl = subprocess.Popen(args, 1, None, subprocess.PIPE,
-                               subprocess.PIPE, None)
-    bindctl.stdin.write("config set " + name + " " + value + "\n")
-    bindctl.stdin.write("config commit\n")
-    bindctl.stdin.write("quit\n")
-    result = bindctl.wait()
-    assert result == 0, "bindctl exit code: " + str(result)
+    commands = ["config set " + name + " " + value,
+                "config commit",
+                "quit"]
+    run_bindctl(commands, cmdctl_port)
+
+@step('remove bind10 configuration (\S+)(?: value (\S+))?(?: with cmdctl port (\d+))?')
+def config_remove_command(step, name, value, cmdctl_port):
+    """
+    Run bindctl, remove the given configuration item, and commit it.
+    Parameters:
+    name ('configuration <name>'): Identifier of the configuration to remove
+    value ('value <value>'): if name is a named set, use value to identify
+                             item to remove
+    cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
+                the command to. Defaults to 47805.
+    Fails if cmdctl does not exit with status code 0.
+    """
+    cmd = "config remove " + name
+    if value is not None:
+        cmd = cmd + " " + value
+    commands = [cmd,
+                "config commit",
+                "quit"]
+    run_bindctl(commands, cmdctl_port)
 
 @step('send bind10 the command (.+)(?: with cmdctl port (\d+))?')
 def send_command(step, command, cmdctl_port):
@@ -144,15 +213,21 @@ def send_command(step, command, cmdctl_port):
                 the command to. Defaults to 47805.
     Fails if cmdctl does not exit with status code 0.
     """
-    if cmdctl_port is None:
-        cmdctl_port = '47805'
-    args = ['bindctl', '-p', cmdctl_port]
-    bindctl = subprocess.Popen(args, 1, None, subprocess.PIPE,
-                               subprocess.PIPE, None)
-    bindctl.stdin.write(command + "\n")
-    bindctl.stdin.write("quit\n")
-    (stdout, stderr) = bindctl.communicate()
-    result = bindctl.returncode
-    assert result == 0, "bindctl exit code: " + str(result) +\
-                        "\nstdout:\n" + str(stdout) +\
-                        "stderr:\n" + str(stderr)
+    commands = [command,
+                "quit"]
+    run_bindctl(commands, cmdctl_port)
+
+@step('bind10 module (\S+) should( not)? be running')
+def module_is_running(step, name, not_str):
+    """
+    Convenience step to check if a module is running; can only work with
+    default cmdctl port; sends a 'help' command with bindctl, then
+    checks if the output contains the given name.
+    Parameters:
+    name ('module <name>'): The name of the module (case sensitive!)
+    not ('not'): Reverse the check (fail if it is running)
+    """
+    if not_str is None:
+        not_str = ""
+    step.given('send bind10 the command help')
+    step.given('last bindctl output should' + not_str + ' contain ' + name)
