@@ -531,4 +531,6 @@ class ConfigManager:
             # not ask
             if msg is not None and not 'result' in msg:
                 answer = self.handle_msg(msg);
-                self.cc.group_reply(env, answer)
+                # Only respond if there actually is something to respond with
+                if answer is not None:
+                    self.cc.group_reply(env, answer)
