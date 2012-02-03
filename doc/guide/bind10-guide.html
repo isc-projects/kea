@@ -1,12 +1,12 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers managed by Internet Systems Consortium (ISC). It includes DNS libraries, modular components for controlling authoritative and recursive DNS servers, and experimental DHCPv4 and DHCPv6 servers. This is the reference guide for BIND 10 version 20111129. The most up-to-date version of this document (in PDF, HTML, and plain text formats), along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
-        20111129.</p></div><div><p class="copyright">Copyright © 2010-2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers managed by Internet Systems Consortium (ISC). It includes DNS libraries, modular components for controlling authoritative and recursive DNS servers, and experimental DHCPv4 and DHCPv6 servers. This is the reference guide for BIND 10 version 20120127. The most up-to-date version of this document (in PDF, HTML, and plain text formats), along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
+        20120127.</p></div><div><p class="copyright">Copyright © 2010-2012 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
       (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
       servers managed by Internet Systems Consortium (ISC). It
       includes DNS libraries, modular components for controlling
       authoritative and recursive DNS servers, and experimental DHCPv4
       and DHCPv6 servers.
       </p><p>
-        This is the reference guide for BIND 10 version 20111129.
+        This is the reference guide for BIND 10 version 20120127.
         The most up-to-date version of this document (in PDF, HTML,
         and plain text formats), along with other documents for
         BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
@@ -22,7 +22,7 @@
       provides forwarding.
     </p><p>
       This guide covers the experimental prototype of
-      BIND 10 version 20111129.
+      BIND 10 version 20120127.
     </p><div class="section" title="1.1. Supported Platforms"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229451269"></a>1.1. Supported Platforms</h2></div></div></div><p>
   BIND 10 builds have been tested on Debian GNU/Linux 5 and unstable,
   Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, CentOS
@@ -238,10 +238,10 @@
           The leading development is done in the <span class="quote">&#8220;<span class="quote">master</span>&#8221;</span>.
         </p><p>
           The code can be checked out from
-          <code class="filename">git://bind10.isc.org/bind10</code>;
+          <code class="filename">git://git.bind10.isc.org/bind10</code>;
           for example:
 
-        </p><pre class="screen">$ <strong class="userinput"><code>git clone git://bind10.isc.org/bind10</code></strong></pre><p>
+        </p><pre class="screen">$ <strong class="userinput"><code>git clone git://git.bind10.isc.org/bind10</code></strong></pre><p>
         </p><p>
           When checking out the code from
           the code version control system, it doesn't include the
@@ -1183,6 +1183,10 @@ eth0 fe80::21e:8cff:fe9b:7349
 &gt; <strong class="userinput"><code>Stats show</code></strong>
 {
     "Auth": {
+        "opcode.iquery": 0,
+        "opcode.notify": 10,
+        "opcode.query": 869617,
+        ...
         "queries.tcp": 1749,
         "queries.udp": 867868
     },
