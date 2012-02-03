@@ -1,3 +1,9 @@
+3XX.	[func]		tomek
+	libdhcp++: Option6 and Pkt6 now follow the same design as
+	options and packet for DHCPv4. General code refactoring after
+	end of 2011 year release.
+	(Trac #1540, git TBD)
+
 359.	[bug]		kevin
 	Corrected SOA serial check in xfrout.  It now compares the SOA
 	serial of an IXFR query with that of the server based serial

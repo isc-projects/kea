@@ -84,13 +84,11 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     ASSERT_NO_THROW( srv = new NakedDhcpv6Srv(); );
 
     // a dummy content for client-id
-    boost::shared_array<uint8_t> clntDuid(new uint8_t[32]);
+    OptionBuffer clntDuid(32);
     for (int i = 0; i < 32; i++)
         clntDuid[i] = 100 + i;
 
-    boost::shared_ptr<Pkt6> sol =
-        boost::shared_ptr<Pkt6>(new Pkt6(DHCPV6_SOLICIT,
-                                         1234, Pkt6::UDP));
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234, Pkt6::UDP));
 
     boost::shared_ptr<Option6IA> ia =
         boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, 234));
@@ -113,9 +111,9 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     // - server-id
     // - IA that includes IAADDR
 
-    boost::shared_ptr<Option> clientid =
-        boost::shared_ptr<Option>(new Option(Option::V6, D6O_CLIENTID,
-                                             clntDuid, 0, 16));
+    OptionPtr clientid = OptionPtr(new Option(Option::V6, D6O_CLIENTID,
+                                              clntDuid.begin(),
+                                              clntDuid.begin()+16));
     sol->addOption(clientid);
 
     boost::shared_ptr<Pkt6> reply = srv->processSolicit(sol);
@@ -126,7 +124,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     EXPECT_EQ( DHCPV6_ADVERTISE, reply->getType() );
     EXPECT_EQ( 1234, reply->getTransid() );
 
-    boost::shared_ptr<Option> tmp = reply->getOption(D6O_IA_NA);
+    OptionPtr tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE( tmp );
 
     Option6IA* reply_ia = dynamic_cast<Option6IA*>(tmp.get());

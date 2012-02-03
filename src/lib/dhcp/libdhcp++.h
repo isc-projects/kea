@@ -29,18 +29,10 @@ public:
     ///
     /// Builds raw (on-wire) data for provided collection of options.
     ///
-    /// @param buf shared pointer to buffer. Data will be stored there.
-    /// @param buf_len buffer length. Used for buffer overflow protection.
-    /// @param offset Offset from beginning of the buffer, where store options
+    /// @param buf output buffer (assembled options will be stored here)
     /// @param options collection of options to store to
-    ///
-    /// @return offset to the first unused byte in buffer (next one after last
-    ///         used byte)
-    ///
-    static unsigned int
-    packOptions6(boost::shared_array<uint8_t> buf, unsigned int buf_len,
-                 unsigned int offset,
-                 const isc::dhcp::Option::OptionCollection& options);
+    static void packOptions6(isc::util::OutputBuffer& buf,
+                             const isc::dhcp::Option::OptionCollection& options);
 
 
     /// @brief Stores options in a buffer.
@@ -52,48 +44,49 @@ public:
     /// may be different reasons (option too large, option malformed,
     /// too many options etc.)
     ///
-    /// @param buf
-    /// @param options
-    static void
-    packOptions(isc::util::OutputBuffer& buf,
-                const isc::dhcp::Option::OptionCollection& options);
+    /// @param buf output buffer (assembled options will be stored here)
+    /// @param options collection of options to store to
+    static void packOptions(isc::util::OutputBuffer& buf,
+                            const isc::dhcp::Option::OptionCollection& options);
 
-    static void
-    unpackOptions4(const std::vector<uint8_t>& buf,
-                   isc::dhcp::Option::OptionCollection& options);
+    /// @brief Parses provided buffer as DHCPv4 options and creates Option objects.
     ///
-    /// Parses provided buffer and creates Option objects.
-    ///
-    /// Parses provided buf array and stores created Option objects
+    /// Parses provided buffer and stores created Option objects
     /// in options container.
     ///
     /// @param buf Buffer to be parsed.
-    /// @param offset Specifies offset for the first option.
     /// @param options Reference to option container. Options will be
     ///        put here.
-    ///
-    /// @return offset to first byte after last parsed option
-    ///
-    static unsigned int
-    unpackOptions6(const boost::shared_array<uint8_t> buf, unsigned int buf_len,
-                   unsigned int offset, unsigned int parse_len,
-                   isc::dhcp::Option::OptionCollection& options_);
+    static uint32_t unpackOptions4(const OptionBuffer& buf,
+                                   isc::dhcp::Option::OptionCollection& options);
 
+    /// @brief Parses provided buffer as DHCPv6 options and creates Option objects.
     ///
+    /// Parses provided buffer and stores created Option objects
+    /// in options container.
+    ///
+    /// @param buf Buffer to be parsed.
+    /// @param options Reference to option container. Options will be
+    ///        put here.
+    static uint32_t unpackOptions6(const OptionBuffer& buf,
+                                   isc::dhcp::Option::OptionCollection& options);
+
     /// Registers factory method that produces options of specific option types.
+    ///
+    /// @exception BadValue if provided type is already registered, has too large
+    ///            value or invalid universe is specified
     ///
     /// @param u universe of the option (V4 or V6)
     /// @param opt_type option-type
     /// @param factory function pointer
-    ///
-    /// @return true, if registration was successful, false otherwise
-    ///
-    static bool
-    OptionFactoryRegister(Option::Universe u,
-                          unsigned short type,
-                          Option::Factory * factory);
+    static void OptionFactoryRegister(Option::Universe u,
+                                      uint16_t type,
+                                      Option::Factory * factory);
 protected:
-    // pointers to factories that produce DHCPv6 options
+    /// pointers to factories that produce DHCPv6 options
+    static std::map<unsigned short, Option::Factory*> v4factories_;
+
+    /// pointers to factories that produce DHCPv6 options
     static std::map<unsigned short, Option::Factory*> v6factories_;
 };
 

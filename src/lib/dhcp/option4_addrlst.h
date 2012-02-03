@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -77,8 +77,8 @@ public:
     /// @param first iterator to the first element that should be copied
     /// @param last iterator to the next element after the last one
     ///        to be copied.
-    Option4AddrLst(uint8_t type, std::vector<uint8_t>::const_iterator first,
-           std::vector<uint8_t>::const_iterator last);
+    Option4AddrLst(uint8_t type, OptionBufferConstIter first,
+                   OptionBufferConstIter last);
 
     /// @brief Writes option in a wire-format to a buffer.
     ///
@@ -88,16 +88,14 @@ public:
     /// unify pack4() and pack6() and rename them to just pack().
     ///
     /// @param buf output buffer (option will be stored there)
-    virtual void
-    pack4(isc::util::OutputBuffer& buf);
+    virtual void pack4(isc::util::OutputBuffer& buf);
 
     /// Returns string representation of the option.
     ///
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string
-    toText(int indent = 0);
+    virtual std::string toText(int indent = 0);
 
     /// Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
@@ -113,8 +111,7 @@ public:
     /// a couple (1-3) addresses, the overhead is not that big.
     ///
     /// @return address container with addresses
-    AddressContainer
-    getAddresses() { return addrs_; };
+    AddressContainer getAddresses() { return addrs_; };
 
     /// @brief Sets addresses list.
     ///

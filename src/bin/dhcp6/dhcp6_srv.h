@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,6 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
-#include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
@@ -52,8 +51,7 @@ public:
     /// @brief Returns server-intentifier option
     ///
     /// @return server-id option
-    boost::shared_ptr<isc::dhcp::Option>
-    getServerID() { return serverid_; }
+    OptionPtr getServerID() { return serverid_; }
 
     /// @brief Main server processing loop.
     ///
@@ -80,8 +78,7 @@ protected:
     /// @param solicit SOLICIT message received from client
     ///
     /// @return ADVERTISE, REPLY message or NULL
-    boost::shared_ptr<Pkt6>
-    processSolicit(const boost::shared_ptr<Pkt6>& solicit);
+    Pkt6Ptr processSolicit(const Pkt6Ptr& solicit);
 
     /// @brief Processes incoming REQUEST and returns REPLY response.
     ///
@@ -94,44 +91,37 @@ protected:
     /// @param request a message received from client
     ///
     /// @return REPLY message or NULL
-    boost::shared_ptr<Pkt6>
-    processRequest(const boost::shared_ptr<Pkt6>& request);
+    Pkt6Ptr processRequest(const Pkt6Ptr& request);
 
     /// @brief Stub function that will handle incoming RENEW messages.
     ///
     /// @param renew message received from client
-    boost::shared_ptr<Pkt6>
-    processRenew(const boost::shared_ptr<Pkt6>& renew);
+    Pkt6Ptr processRenew(const Pkt6Ptr& renew);
 
     /// @brief Stub function that will handle incoming REBIND messages.
     ///
     /// @param rebind message received from client
-    boost::shared_ptr<Pkt6>
-    processRebind(const boost::shared_ptr<Pkt6>& rebind);
+    Pkt6Ptr processRebind(const Pkt6Ptr& rebind);
 
     /// @brief Stub function that will handle incoming CONFIRM messages.
     ///
     /// @param confirm message received from client
-    boost::shared_ptr<Pkt6>
-    processConfirm(const boost::shared_ptr<Pkt6>& confirm);
+    Pkt6Ptr processConfirm(const Pkt6Ptr& confirm);
 
     /// @brief Stub function that will handle incoming RELEASE messages.
     ///
     /// @param release message received from client
-    boost::shared_ptr<Pkt6>
-    processRelease(const boost::shared_ptr<Pkt6>& release);
+    Pkt6Ptr processRelease(const Pkt6Ptr& release);
 
     /// @brief Stub function that will handle incoming DECLINE messages.
     ///
     /// @param decline message received from client
-    boost::shared_ptr<Pkt6>
-    processDecline(const boost::shared_ptr<Pkt6>& decline);
+    Pkt6Ptr processDecline(const Pkt6Ptr& decline);
 
     /// @brief Stub function that will handle incoming INF-REQUEST messages.
     ///
     /// @param infRequest message received from client
-    boost::shared_ptr<Pkt6>
-    processInfRequest(const boost::shared_ptr<Pkt6>& infRequest);
+    Pkt6Ptr processInfRequest(const Pkt6Ptr& infRequest);
 
     /// @brief Copies required options from client message to server answer
     ///
@@ -141,8 +131,7 @@ protected:
     ///
     /// @param question client's message (options will be copied from here)
     /// @param answer server's message (options will be copied here)
-    void copyDefaultOptions(const boost::shared_ptr<Pkt6>& question,
-                            boost::shared_ptr<Pkt6>& answer);
+    void copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Appends default options to server's answer.
     ///
@@ -152,8 +141,7 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    void appendDefaultOptions(const boost::shared_ptr<Pkt6>& question,
-                              boost::shared_ptr<Pkt6>& answer);
+    void appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Appends requested options to server's answer.
     ///
@@ -163,8 +151,7 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    void appendRequestedOptions(const boost::shared_ptr<Pkt6>& question,
-                                boost::shared_ptr<Pkt6>& answer);
+    void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Assigns leases.
     ///
@@ -174,8 +161,7 @@ protected:
     ///
     /// @param question client's message (with requested IA_NA)
     /// @param answer server's message (IA_NA options will be added here)
-    void assignLeases(const boost::shared_ptr<Pkt6>& question,
-                      boost::shared_ptr<Pkt6>& answer);
+    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Sets server-identifier.
     ///

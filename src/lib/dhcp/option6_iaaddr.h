@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,28 +27,22 @@ public:
     /// length of the fixed part of the IAADDR option
     static const size_t OPTION6_IAADDR_LEN = 24;
 
-    /// @brief ctor, used for options constructed (during transmission)
+    /// @brief Ctor, used for options constructed (during transmission).
     ///
     /// @param type option type
     /// @param addr reference to an address
     /// @param preferred address preferred lifetime (in seconds)
     /// @param valid address valid lifetime (in seconds)
-    Option6IAAddr(unsigned short type, const isc::asiolink::IOAddress& addr,
-                  unsigned int preferred, unsigned int valid);
+    Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr,
+                  uint32_t preferred, uint32_t valid);
 
-    /// ctor, used for received options
-    /// boost::shared_array allows sharing a buffer, but it requires that
-    /// different instances share pointer to the whole array, not point
-    /// to different elements in shared array. Therefore we need to share
-    /// pointer to the whole array and remember offset where data for
-    /// this option begins
+    /// @brief ctor, used for received options.
     ///
     /// @param type option type
-    /// @param buf pointer to a buffer
-    /// @param offset offset to first data byte in that buffer
-    /// @param len data length of this option
-    Option6IAAddr(unsigned short type, boost::shared_array<uint8_t> buf,
-                  unsigned int buf_len, unsigned int offset, unsigned int len);
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
+                  OptionBuffer::const_iterator end);
 
     /// @brief Writes option in wire-format.
     ///
@@ -56,13 +50,7 @@ public:
     /// byte after stored option.
     ///
     /// @param buf pointer to a buffer
-    /// @param buf_len length of the buffer
-    /// @param offset offset to place, where option shout be stored
-    ///
-    /// @return offset to first unused byte after stored option
-    unsigned int
-    pack(boost::shared_array<uint8_t>& buf, unsigned int buf_len,
-         unsigned int offset);
+    void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Parses buffer.
     ///
@@ -70,16 +58,10 @@ public:
     /// parsed option.
     ///
     /// @param buf pointer to buffer
-    /// @param buf_len length of buf
-    /// @param offset offset, where start parsing option
-    /// @param parse_len how many bytes should be parsed
-    ///
-    /// @return offset after last parsed octet
-    virtual unsigned int
-    unpack(const boost::shared_array<uint8_t>& buf,
-           unsigned int buf_len,
-           unsigned int offset,
-           unsigned int parse_len);
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    virtual void unpack(OptionBufferConstIter begin,
+                        OptionBufferConstIter end);
 
     /// Returns string representation of the option.
     ///

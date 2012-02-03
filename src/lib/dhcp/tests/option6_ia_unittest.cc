@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,53 +19,51 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include <boost/shared_array.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include "dhcp/dhcp6.h"
-#include "dhcp/option.h"
-#include "dhcp/option6_ia.h"
-#include "dhcp/option6_iaaddr.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <util/buffer.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 class Option6IATest : public ::testing::Test {
 public:
-    Option6IATest() {
+    Option6IATest(): buf_(255), outBuf_(255) {
+        for (int i = 0; i < 255; i++) {
+            buf_[i] = 255 - i;
+        }
     }
+    OptionBuffer buf_;
+    OutputBuffer outBuf_;
 };
 
 TEST_F(Option6IATest, basic) {
+    buf_[0] = 0xa1; // iaid
+    buf_[1] = 0xa2;
+    buf_[2] = 0xa3;
+    buf_[3] = 0xa4;
 
-    boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
-    for (int i = 0; i < 128; i++)
-        simple_buf[i] = 0;
-    simple_buf[0] = 0xa1; // iaid
-    simple_buf[1] = 0xa2;
-    simple_buf[2] = 0xa3;
-    simple_buf[3] = 0xa4;
+    buf_[4] = 0x81; // T1
+    buf_[5] = 0x02;
+    buf_[6] = 0x03;
+    buf_[7] = 0x04;
 
-    simple_buf[4] = 0x81; // T1
-    simple_buf[5] = 0x02;
-    simple_buf[6] = 0x03;
-    simple_buf[7] = 0x04;
-
-    simple_buf[8] = 0x84; // T2
-    simple_buf[9] = 0x03;
-    simple_buf[10] = 0x02;
-    simple_buf[11] = 0x01;
+    buf_[8] = 0x84; // T2
+    buf_[9] = 0x03;
+    buf_[10] = 0x02;
+    buf_[11] = 0x01;
 
     // create an option
     // unpack() is called from constructor
     Option6IA* opt = new Option6IA(D6O_IA_NA,
-                                   simple_buf,
-                                   128,
-                                   0,
-                                   12);
+                                   buf_.begin(),
+                                   buf_.begin() + 12);
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_IA_NA, opt->getType());
@@ -77,36 +75,31 @@ TEST_F(Option6IATest, basic) {
     // different place
 
     // test for pack()
-    int offset = opt->pack(simple_buf, 128, 60);
+    opt->pack(outBuf_);
 
-    // 4 bytes header + 4 bytes content
-    EXPECT_EQ(12, opt->len() - 4);
+    // 12 bytes header + 4 bytes content
+    EXPECT_EQ(12, opt->len() - opt->getHeaderLen());
     EXPECT_EQ(D6O_IA_NA, opt->getType());
 
-    EXPECT_EQ(offset, 76); // 60 + lenght(IA_NA) = 76
+    EXPECT_EQ(16, outBuf_.getLength()); // lenght(IA_NA) = 16
 
     // check if pack worked properly:
+    InputBuffer out(outBuf_.getData(), outBuf_.getLength());
+
     // if option type is correct
-    EXPECT_EQ(D6O_IA_NA, simple_buf[60]*256 + simple_buf[61]);
+    EXPECT_EQ(D6O_IA_NA, out.readUint16());
 
     // if option length is correct
-    EXPECT_EQ(12, simple_buf[62]*256 + simple_buf[63]);
+    EXPECT_EQ(12, out.readUint16());
 
     // if iaid is correct
-    unsigned int iaid = htonl(*(unsigned int*)&simple_buf[64]);
-    EXPECT_EQ(0xa1a2a3a4, iaid );
+    EXPECT_EQ(0xa1a2a3a4, out.readUint32() );
 
    // if T1 is correct
-    EXPECT_EQ(0x81020304, (simple_buf[68] << 24) +
-                          (simple_buf[69] << 16) +
-                          (simple_buf[70] << 8) +
-                          (simple_buf[71]) );
+    EXPECT_EQ(0x81020304, out.readUint32() );
 
     // if T1 is correct
-    EXPECT_EQ(0x84030201, (simple_buf[72] << 24) +
-                          (simple_buf[73] << 16) +
-                          (simple_buf[74] << 8) +
-                          (simple_buf[75]) );
+    EXPECT_EQ(0x84030201, out.readUint32() );
 
     EXPECT_NO_THROW(
         delete opt;
@@ -114,10 +107,6 @@ TEST_F(Option6IATest, basic) {
 }
 
 TEST_F(Option6IATest, simple) {
-    boost::shared_array<uint8_t> simple_buf(new uint8_t[128]);
-    for (int i = 0; i < 128; i++)
-        simple_buf[i] = 0;
-
     Option6IA * ia = new Option6IA(D6O_IA_NA, 1234);
     ia->setT1(2345);
     ia->setT2(3456);
@@ -133,20 +122,18 @@ TEST_F(Option6IATest, simple) {
     );
 }
 
+
 // test if option can build suboptions
 TEST_F(Option6IATest, suboptions_pack) {
-    boost::shared_array<uint8_t> buf(new uint8_t[128]);
-    for (int i=0; i<128; i++)
-        buf[i] = 0;
-    buf[0] = 0xff;
-    buf[1] = 0xfe;
-    buf[2] = 0xfc;
+    buf_[0] = 0xff;
+    buf_[1] = 0xfe;
+    buf_[2] = 0xfc;
 
     Option6IA * ia = new Option6IA(D6O_IA_NA, 0x13579ace);
     ia->setT1(0x2345);
     ia->setT2(0x3456);
 
-    boost::shared_ptr<Option> sub1(new Option(Option::V6,
+    OptionPtr sub1(new Option(Option::V6,
                                               0xcafe));
 
     boost::shared_ptr<Option6IAAddr> addr1(
@@ -180,20 +167,20 @@ TEST_F(Option6IATest, suboptions_pack) {
         0, 0 // len
     };
 
-    int offset = ia->pack(buf, 128, 10);
-    ASSERT_EQ(offset, 10 + 48);
+    ia->pack(outBuf_);
+    ASSERT_EQ(48, outBuf_.getLength());
 
-    EXPECT_EQ(0, memcmp(&buf[10], expected, 48));
+    EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 48));
 
     EXPECT_NO_THROW(
         delete ia;
     );
 }
 
+
 // test if option can parse suboptions
 TEST_F(Option6IATest, suboptions_unpack) {
-
-
+    // 48 bytes
     uint8_t expected[] = {
         D6O_IA_NA/256, D6O_IA_NA%256, // type
         0, 28, // length
@@ -214,17 +201,11 @@ TEST_F(Option6IATest, suboptions_unpack) {
         0, 0 // len
     };
 
-    boost::shared_array<uint8_t> buf(new uint8_t[128]);
-    for (int i = 0; i < 128; i++)
-        buf[i] = 0;
-    memcpy(&buf[0], expected, 48);
+    memcpy(&buf_[0], expected, sizeof(expected));
 
     Option6IA* ia = 0;
     EXPECT_NO_THROW({
-        ia = new Option6IA(D6O_IA_NA, buf, 128, 4, 44);
-
-        // let's limit verbosity of this test
-        // cout << "Parsed option:" << endl << ia->toText() << endl;
+            ia = new Option6IA(D6O_IA_NA, buf_.begin() + 4, buf_.begin() + sizeof(expected));
     });
     ASSERT_TRUE(ia);
 
@@ -233,8 +214,8 @@ TEST_F(Option6IATest, suboptions_unpack) {
     EXPECT_EQ(0x2345, ia->getT1());
     EXPECT_EQ(0x3456, ia->getT2());
 
-    boost::shared_ptr<Option> subopt = ia->getOption(D6O_IAADDR);
-    ASSERT_NE(boost::shared_ptr<Option>(), subopt); // non-NULL
+    OptionPtr subopt = ia->getOption(D6O_IAADDR);
+    ASSERT_NE(OptionPtr(), subopt); // non-NULL
 
     // checks for address option
     Option6IAAddr * addr = dynamic_cast<Option6IAAddr*>(subopt.get());

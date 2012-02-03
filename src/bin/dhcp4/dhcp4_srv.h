@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,6 @@
 #ifndef DHCPV4_SRV_H
 #define DHCPV4_SRV_H
 
-#include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
@@ -71,8 +70,7 @@ protected:
     /// @param solicit DISCOVER message received from client
     ///
     /// @return OFFER message or NULL
-    boost::shared_ptr<Pkt4>
-    processDiscover(boost::shared_ptr<Pkt4>& discover);
+    Pkt4Ptr processDiscover(Pkt4Ptr& discover);
 
     /// @brief Processes incoming REQUEST and returns REPLY response.
     ///
@@ -86,7 +84,7 @@ protected:
     /// @param request a message received from client
     ///
     /// @return ACK or NACK message
-    boost::shared_ptr<Pkt4> processRequest(boost::shared_ptr<Pkt4>& request);
+    Pkt4Ptr processRequest(Pkt4Ptr& request);
 
     /// @brief Stub function that will handle incoming RELEASE messages.
     ///
@@ -94,17 +92,17 @@ protected:
     /// this function does not return anything.
     ///
     /// @param release message received from client
-    void processRelease(boost::shared_ptr<Pkt4>& release);
+    void processRelease(Pkt4Ptr& release);
 
     /// @brief Stub function that will handle incoming DHCPDECLINE messages.
     ///
     /// @param decline message received from client
-    void processDecline(boost::shared_ptr<Pkt4>& decline);
+    void processDecline(Pkt4Ptr& decline);
 
     /// @brief Stub function that will handle incoming INFORM messages.
     ///
     /// @param infRequest message received from client
-    boost::shared_ptr<Pkt4> processInform(boost::shared_ptr<Pkt4>& inform);
+    Pkt4Ptr processInform(Pkt4Ptr& inform);
 
     /// @brief Copies default parameters from client's to server's message
     ///
@@ -113,9 +111,7 @@ protected:
     ///
     /// @param question any message sent by client
     /// @param answer any message server is going to send as response
-    void copyDefaultFields(const boost::shared_ptr<Pkt4>& question,
-                           boost::shared_ptr<Pkt4>& answer);
-
+    void copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer);
 
     /// @brief Appends options requested by client.
     ///
@@ -123,8 +119,7 @@ protected:
     /// (sent in PRL) or are enforced by server.
     ///
     /// @param msg outgoing message (options will be added here)
-    void appendRequestedOptions(boost::shared_ptr<Pkt4>& msg);
-
+    void appendRequestedOptions(Pkt4Ptr& msg);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
@@ -136,20 +131,18 @@ protected:
     /// used fixed, hardcoded lease.
     ///
     /// @param msg OFFER or ACK message (lease options will be added here)
-    void tryAssignLease(boost::shared_ptr<Pkt4>& msg);
-
+    void tryAssignLease(Pkt4Ptr& msg);
 
     /// @brief Appends default options to a message
     ///
     /// @param msg message object (options will be added to it)
     /// @param msg_type specifies message type
-    void appendDefaultOptions(boost::shared_ptr<Pkt4>& msg, uint8_t msg_type);
+    void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
 
     /// @brief Returns server-intentifier option
     ///
     /// @return server-id option
-    boost::shared_ptr<isc::dhcp::Option>
-    getServerID() { return serverid_; }
+    OptionPtr getServerID() { return serverid_; }
 
     /// @brief Sets server-identifier.
     ///
@@ -163,7 +156,7 @@ protected:
     void setServerID();
 
     /// server DUID (to be sent in server-identifier option)
-    boost::shared_ptr<isc::dhcp::Option> serverid_;
+    OptionPtr serverid_;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.

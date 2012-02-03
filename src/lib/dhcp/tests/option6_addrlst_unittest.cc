@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,17 +21,24 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_addrlst.h>
+#include <util/buffer.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 class Option6AddrLstTest : public ::testing::Test {
 public:
-    Option6AddrLstTest() {
+    Option6AddrLstTest(): buf_(255), outBuf_(255) {
+        for (int i = 0; i < 255; i++) {
+            buf_[i] = 255 - i;
+        }
     }
+    OptionBuffer buf_;
+    OutputBuffer outBuf_;
 };
 
 TEST_F(Option6AddrLstTest, basic) {
@@ -97,16 +104,12 @@ TEST_F(Option6AddrLstTest, basic) {
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
     };
 
-    boost::shared_array<uint8_t> buf(new uint8_t[300]);
-    for (int i = 0; i < 300; i++)
-        buf[i] = 0;
-
-    memcpy(&buf[0], sampledata, 48);
+    memcpy(&buf_[0], sampledata, 48);
 
     // just a single address
     Option6AddrLst* opt1 = 0;
     EXPECT_NO_THROW(
-        opt1 = new Option6AddrLst(D6O_NAME_SERVERS, buf, 128, 0, 16);
+        opt1 = new Option6AddrLst(D6O_NAME_SERVERS, buf_.begin(), buf_.begin() + 16 );
     );
 
     EXPECT_EQ(Option::V6, opt1->getUniverse());
@@ -118,17 +121,16 @@ TEST_F(Option6AddrLstTest, basic) {
     IOAddress addr = addrs[0];
     EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
 
-    // pack this option again in the same buffer, but in
-    // different place
-    int offset = opt1->pack(buf,300, 100);
+    // pack this option
+    opt1->pack(outBuf_);
 
-    EXPECT_EQ(120, offset);
-    EXPECT_EQ( 0, memcmp(expected1, &buf[100], 20) );
+    EXPECT_EQ(20, outBuf_.getLength());
+    EXPECT_EQ( 0, memcmp(expected1, outBuf_.getData(), 20) );
 
     // two addresses
     Option6AddrLst* opt2 = 0;
     EXPECT_NO_THROW(
-        opt2 = new Option6AddrLst(D6O_SIP_SERVERS_ADDR, buf, 128, 0, 32);
+        opt2 = new Option6AddrLst(D6O_SIP_SERVERS_ADDR, buf_.begin(), buf_.begin() + 32);
     );
     EXPECT_EQ(D6O_SIP_SERVERS_ADDR, opt2->getType());
     EXPECT_EQ(36, opt2->len());
@@ -137,17 +139,17 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ("2001:db8:1::dead:beef", addrs[0].toText());
     EXPECT_EQ("ff02::face:b00c", addrs[1].toText());
 
-    // pack this option again in the same buffer, but in
-    // different place
-    offset = opt2->pack(buf,300, 150);
+    // pack this option
+    outBuf_.clear();
+    opt2->pack(outBuf_);
 
-    EXPECT_EQ(150+36, offset);
-    EXPECT_EQ( 0, memcmp(expected2, &buf[150], 36));
+    EXPECT_EQ(36, outBuf_.getLength() );
+    EXPECT_EQ( 0, memcmp(expected2, outBuf_.getData(), 36));
 
     // three addresses
     Option6AddrLst* opt3 = 0;
     EXPECT_NO_THROW(
-        opt3 = new Option6AddrLst(D6O_NIS_SERVERS, buf, 128, 0, 48);
+        opt3 = new Option6AddrLst(D6O_NIS_SERVERS, buf_.begin(), buf_.begin() + 48);
     );
 
     EXPECT_EQ(D6O_NIS_SERVERS, opt3->getType());
@@ -158,12 +160,12 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ("ff02::face:b00c", addrs[1].toText());
     EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", addrs[2].toText());
 
-    // pack this option again in the same buffer, but in
-    // different place
-    offset = opt3->pack(buf,300, 200);
+    // pack this option
+    outBuf_.clear();
+    opt3->pack(outBuf_);
 
-    EXPECT_EQ(252, offset);
-    EXPECT_EQ( 0, memcmp(expected3, &buf[200], 52) );
+    EXPECT_EQ(52, outBuf_.getLength());
+    EXPECT_EQ( 0, memcmp(expected3, outBuf_.getData(), 52) );
 
     EXPECT_NO_THROW(
         delete opt1;

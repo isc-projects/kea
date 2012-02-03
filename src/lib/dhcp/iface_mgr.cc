@@ -437,8 +437,8 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
         isc_throw(Unexpected, "Failed to create UDP6 socket.");
     }
 
-    /* Set the REUSEADDR option so that we don't fail to start if
-       we're being restarted. */
+    // Set the REUSEADDR option so that we don't fail to start if
+    // we're being restarted.
     int flag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
@@ -452,14 +452,14 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, int port) {
                   << "/port=" << port);
     }
 #ifdef IPV6_RECVPKTINFO
-    /* RFC3542 - a new way */
+    // RFC3542 - a new way
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
                    &flag, sizeof(flag)) != 0) {
         close(sock);
         isc_throw(Unexpected, "setsockopt: IPV6_RECVPKTINFO failed.");
     }
 #else
-    /* RFC2292 - an old way */
+    // RFC2292 - an old way
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO,
                    &flag, sizeof(flag)) != 0) {
         close(sock);
@@ -523,10 +523,10 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     struct in6_pktinfo *pktinfo;
     struct cmsghdr *cmsg;
 
-    Iface* iface = getIface(pkt->iface_);
+    Iface* iface = getIface(pkt->getIface());
     if (!iface) {
         isc_throw(BadValue, "Unable to send Pkt6. Invalid interface ("
-                  << pkt->iface_ << ") specified.");
+                  << pkt->getIface() << ") specified.");
     }
 
     memset(&control_buf_[0], 0, control_buf_len_);
@@ -538,11 +538,11 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     sockaddr_in6 to;
     memset(&to, 0, sizeof(to));
     to.sin6_family = AF_INET6;
-    to.sin6_port = htons(pkt->remote_port_);
+    to.sin6_port = htons(pkt->getRemotePort());
     memcpy(&to.sin6_addr,
-           pkt->remote_addr_.getAddress().to_v6().to_bytes().data(),
+           pkt->getRemoteAddr().getAddress().to_v6().to_bytes().data(),
            16);
-    to.sin6_scope_id = pkt->ifindex_;
+    to.sin6_scope_id = pkt->getIndex();
 
     m.msg_name = &to;
     m.msg_namelen = sizeof(to);
@@ -550,8 +550,8 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     // Set the data buffer we're sending. (Using this wacky
     // "scatter-gather" stuff... we only have a single chunk
     // of data to send, so we declare a single vector entry.)
-    v.iov_base = (char *) &pkt->data_[0];
-    v.iov_len = pkt->data_len_;
+    v.iov_base = (char *) pkt->getBuffer().getData();
+    v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
@@ -569,17 +569,17 @@ IfaceMgr::send(boost::shared_ptr<Pkt6>& pkt) {
     cmsg->cmsg_len = CMSG_LEN(sizeof(*pktinfo));
     pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(*pktinfo));
-    pktinfo->ipi6_ifindex = pkt->ifindex_;
+    pktinfo->ipi6_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
 
     result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
         isc_throw(Unexpected, "Pkt6 send failed: sendmsg() returned " << result);
     }
-    cout << "Sent " << pkt->data_len_ << " bytes over socket " << getSocket(*pkt)
+    cout << "Sent " << pkt->getBuffer().getLength() << " bytes over socket " << getSocket(*pkt)
          << " on " << iface->getFullName() << " interface: "
-         << " dst=[" << pkt->remote_addr_.toText() << "]:" << pkt->remote_port_
-         << ", src=" << pkt->local_addr_.toText() << "]:" << pkt->remote_port_
+         << " dst=[" << pkt->getRemoteAddr().toText() << "]:" << pkt->getRemotePort()
+         << ", src=" << pkt->getLocalAddr().toText() << "]:" << pkt->getLocalPort()
          << endl;
 
     return (result);
@@ -813,8 +813,7 @@ IfaceMgr::receive4() {
     return (pkt);
 }
 
-boost::shared_ptr<Pkt6>
-IfaceMgr::receive6() {
+Pkt6Ptr IfaceMgr::receive6() {
     struct msghdr m;
     struct iovec v;
     int result;
@@ -822,57 +821,43 @@ IfaceMgr::receive6() {
     struct in6_pktinfo* pktinfo;
     struct sockaddr_in6 from;
     struct in6_addr to_addr;
-    boost::shared_ptr<Pkt6> pkt;
-    char addr_str[INET6_ADDRSTRLEN];
+    int ifindex;
+    Pkt6Ptr pkt;
 
-    try {
-        // RFC3315 states that server responses may be
-        // fragmented if they are over MTU. There is no
-        // text whether client's packets may be larger
-        // than 1500. Nevertheless to be on the safe side
-        // we use larger buffer. This buffer limit is checked
-        // during reception (see iov_len below), so we are
-        // safe
-        pkt = boost::shared_ptr<Pkt6>(new Pkt6(65536));
-    } catch (const std::exception& ex) {
-        cout << "Failed to create new packet." << endl;
-        return (boost::shared_ptr<Pkt6>()); // NULL
-    }
+    // RFC3315 states that server responses may be
+    // fragmented if they are over MTU. There is no
+    // text whether client's packets may be larger
+    // than 1500. For now, we can assume that
+    // we don't support packets larger than 1500.
+    const uint32_t RCVBUFSIZE = 1500;
+    static uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
 
     memset(&from, 0, sizeof(from));
     memset(&to_addr, 0, sizeof(to_addr));
 
-    /*
-     * Initialize our message header structure.
-     */
+    // Initialize our message header structure.
     memset(&m, 0, sizeof(m));
 
-    /*
-     * Point so we can get the from address.
-     */
+    // Point so we can get the from address.
     m.msg_name = &from;
     m.msg_namelen = sizeof(from);
 
-    /*
-     * Set the data buffer we're receiving. (Using this wacky
-     * "scatter-gather" stuff... but we that doesn't really make
-     * sense for us, so we use a single vector entry.)
-     */
-    v.iov_base = (void*)&pkt->data_[0];
-    v.iov_len = pkt->data_len_;
+    // Set the data buffer we're receiving. (Using this wacky
+    // "scatter-gather" stuff... but we that doesn't really make
+    // sense for us, so we use a single vector entry.)
+    v.iov_base = (void*)buf;
+    v.iov_len = RCVBUFSIZE;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-    /*
-     * Getting the interface is a bit more involved.
-     *
-     * We set up some space for a "control message". We have
-     * previously asked the kernel to give us packet
-     * information (when we initialized the interface), so we
-     * should get the destination address from that.
-     */
+    // Getting the interface is a bit more involved.
+    //
+    // We set up some space for a "control message". We have
+    // previously asked the kernel to give us packet
+    // information (when we initialized the interface), so we
+    // should get the destination address from that.
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
 
@@ -917,14 +902,12 @@ IfaceMgr::receive6() {
     result = recvmsg(candidate->sockfd_, &m, 0);
 
     if (result >= 0) {
-        /*
-         * If we did read successfully, then we need to loop
-         * through the control messages we received and
-         * find the one with our destination address.
-         *
-         * We also keep a flag to see if we found it. If we
-         * didn't, then we consider this to be an error.
-         */
+        // If we did read successfully, then we need to loop
+        // through the control messages we received and
+        // find the one with our destination address.
+        //
+        // We also keep a flag to see if we found it. If we
+        // didn't, then we consider this to be an error.
         int found_pktinfo = 0;
         cmsg = CMSG_FIRSTHDR(&m);
         while (cmsg != NULL) {
@@ -932,7 +915,7 @@ IfaceMgr::receive6() {
                 (cmsg->cmsg_type == IPV6_PKTINFO)) {
                 pktinfo = (struct in6_pktinfo*)CMSG_DATA(cmsg);
                 to_addr = pktinfo->ipi6_addr;
-                pkt->ifindex_ = pktinfo->ipi6_ifindex;
+                ifindex = pktinfo->ipi6_ifindex;
                 found_pktinfo = 1;
             }
             cmsg = CMSG_NXTHDR(&m, cmsg);
@@ -946,34 +929,35 @@ IfaceMgr::receive6() {
         return (boost::shared_ptr<Pkt6>()); // NULL
     }
 
-    // That's ugly.
-    // TODO add IOAddress constructor that will take struct in6_addr*
-    // TODO: there's from_bytes() method added in IOAddress. Use it!
-    inet_ntop(AF_INET6, &to_addr, addr_str,INET6_ADDRSTRLEN);
-    pkt->local_addr_ = IOAddress(string(addr_str));
 
-    // TODO: there's from_bytes() method added in IOAddress. Use it!
-    inet_ntop(AF_INET6, &from.sin6_addr, addr_str, INET6_ADDRSTRLEN);
-    pkt->remote_addr_ = IOAddress(string(addr_str));
-
-    pkt->remote_port_ = ntohs(from.sin6_port);
-
-    Iface* received = getIface(pkt->ifindex_);
-    if (received) {
-        pkt->iface_ = received->getName();
-    } else {
-        cout << "Received packet over unknown interface (ifindex="
-             << pkt->ifindex_ << ")." << endl;
+    try {
+        pkt = Pkt6Ptr(new Pkt6(buf, result));
+    } catch (const std::exception& ex) {
+        cout << "Failed to create new packet." << endl;
         return (boost::shared_ptr<Pkt6>()); // NULL
     }
 
-    pkt->data_len_ = result;
+    pkt->setLocalAddr(IOAddress::from_bytes(AF_INET6, (const uint8_t*)&to_addr));
+    pkt->setRemoteAddr(IOAddress::from_bytes(AF_INET6, (const uint8_t*)&from.sin6_addr));
+
+    pkt->setRemotePort(ntohs(from.sin6_port));
+
+    pkt->setIndex(ifindex);
+
+    Iface* received = getIface(pkt->getIndex());
+    if (received) {
+        pkt->setIface(received->getName());
+    } else {
+        cout << "Received packet over unknown interface (ifindex="
+             << pkt->getIndex() << ")." << endl;
+        return (boost::shared_ptr<Pkt6>()); // NULL
+    }
 
     // TODO Move this to LOG_DEBUG
-    cout << "Received " << pkt->data_len_ << " bytes over "
-         << pkt->iface_ << "/" << pkt->ifindex_ << " interface: "
-         << " src=" << pkt->remote_addr_.toText()
-         << ", dst=" << pkt->local_addr_.toText()
+    cout << "Received " << pkt->getBuffer().getLength() << " bytes over "
+         << pkt->getIface() << "/" << pkt->getIndex() << " interface: "
+         << " src=" << pkt->getRemoteAddr().toText()
+         << ", dst=" << pkt->getLocalAddr().toText()
          << endl;
 
     return (pkt);
@@ -981,10 +965,10 @@ IfaceMgr::receive6() {
 
 uint16_t
 IfaceMgr::getSocket(isc::dhcp::Pkt6 const& pkt) {
-    Iface* iface = getIface(pkt.iface_);
+    Iface* iface = getIface(pkt.getIface());
     if (!iface) {
         isc_throw(BadValue, "Tried to find socket for non-existent interface "
-                  << pkt.iface_);
+                  << pkt.getIface());
     }
 
     SocketCollection::const_iterator s;
