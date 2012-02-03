@@ -12,10 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
-
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <auth/command.h>
+#include <auth/auth_log.h>
+#include <auth/auth_srv.h>
 
 #include <exceptions/exceptions.h>
 
@@ -27,9 +26,13 @@
 
 #include <config/ccsession.h>
 
-#include <auth/auth_log.h>
-#include <auth/auth_srv.h>
-#include <auth/command.h>
+#include <string>
+
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <sys/types.h>
+#include <unistd.h>
 
 using boost::scoped_ptr;
 using namespace isc::auth;
@@ -104,10 +107,22 @@ public:
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) = 0;
 };
 
-// Handle the "shutdown" command.  No argument is assumed.
+// Handle the "shutdown" command. An optional parameter "pid" is used to
+// see if it is really for our instance.
 class ShutdownCommand : public AuthCommand {
 public:
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+        // Is the pid argument provided?
+        if (args && args->getType() ==
+            isc::data::Element::map && args->contains("pid")) {
+            // If it is, we check it is the same as our PID
+            int pid(args->get("pid")->intValue());
+            pid_t my_pid(getpid());
+            if (my_pid != pid) {
+                // It is not for us
+                return;
+            }
+        }
         server.stop();
     }
 };
