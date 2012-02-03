@@ -60,7 +60,10 @@ public:
     ///     the application requests a different port, it is considered
     ///     a failure.
     /// \param expeted_app The share name for which all the requests should
-    ///     be made.
+    ///     be made. This is not the usual app_name - the requestSocket does
+    ///     not fall back to this value if its share_name is left empty, if
+    ///     you want to check the code relies on the requestor to use the
+    ///     app name, you set this to empty string.
     TestSocketRequestor(asiodns::DNSService& dnss,
                         server_common::portconfig::AddressList& store,
                         uint16_t expect_port,
@@ -147,7 +150,11 @@ public:
     /// \param port to bind to
     /// \param mode checked to be SHARE_SAME for now
     /// \param name checked to be the same as expected_app parameter of the
-    ///      constructor
+    ///      constructor. Note that this class does not provide the fallback
+    ///      to an app_name if this is empty string. To check the code relies
+    ///      on the fallback (wants to use the app_name instead of providing
+    ///      its own share name), you need to create this class with empty
+    ///      expected_app.
     /// \return The token and FD
     /// \throw SocketAllocateError as described above, to test error handling
     /// \throw ShareError as described above, to test error handling

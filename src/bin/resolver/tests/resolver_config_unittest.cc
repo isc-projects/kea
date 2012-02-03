@@ -85,6 +85,9 @@ protected:
     scoped_ptr<const RequestContext> request;
     ResolverConfig() :
         dnss(ios, NULL, NULL, NULL),
+        // The empty string is expected value of the parameter of
+        // requestSocket, not the app_name (there's no fallback, it checks
+        // the empty string is passed).
         sock_requestor_(dnss, address_store_, 53210, "")
     {
         server.setDNSService(dnss);
