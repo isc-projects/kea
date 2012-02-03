@@ -140,7 +140,7 @@ public:
 
         /// @brief Adds socket descriptor to an interface.
         ///
-        /// @param socket SocketInfo structure that describes socket.
+        /// @param sock SocketInfo structure that describes socket.
         void addSocket(const SocketInfo& sock)
             { sockets_.push_back(sock); }
 
@@ -149,7 +149,7 @@ public:
         /// Closes socket and removes corresponding SocketInfo structure
         /// from an interface.
         ///
-        /// @param socket descriptor to be closed/removed.
+        /// @param sockfd socket descriptor to be closed/removed.
         /// @return true if there was such socket, false otherwise
         bool delSocket(uint16_t sockfd);
 

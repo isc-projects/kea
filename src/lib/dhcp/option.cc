@@ -24,10 +24,12 @@
 #include "dhcp/libdhcp++.h"
 
 using namespace std;
-using namespace isc::dhcp;
 using namespace isc::util;
 
-Option::Option(Universe u, unsigned short type)
+namespace isc {
+namespace dhcp {
+
+Option::Option(Universe u, uint16_t type)
     :universe_(u), type_(type) {
 
     if ((u == V4) && (type > 255)) {
@@ -36,7 +38,7 @@ Option::Option(Universe u, unsigned short type)
     }
 }
 
-Option::Option(Universe u, unsigned short type, const OptionBuffer& data)
+Option::Option(Universe u, uint16_t type, const OptionBuffer& data)
     :universe_(u), type_(type), data_(data) {
     check();
 }
@@ -270,3 +272,6 @@ void Option::setUint32(uint32_t value) {
 Option::~Option() {
 
 }
+
+} // end of namespace isc::dhcp
+} // end of namespace isc

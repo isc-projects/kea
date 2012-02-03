@@ -23,17 +23,16 @@
 #include <util/io_utilities.h>
 
 using namespace std;
-using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::util;
 
-Option6IA::Option6IA(unsigned short type, unsigned int iaid)
+namespace isc {
+namespace dhcp {
+
+Option6IA::Option6IA(uint16_t type, uint32_t iaid)
     :Option(Option::V6, type), iaid_(iaid) {
 }
 
-Option6IA::Option6IA(unsigned short type,
-                     OptionBufferConstIter begin,
-                     OptionBufferConstIter end)
+Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin, OptionBufferConstIter end)
     :Option(Option::V6, type) {
     unpack(begin, end);
 }
@@ -105,3 +104,6 @@ uint16_t Option6IA::len() {
     }
     return (length);
 }
+
+} // end of namespace isc::dhcp
+} // end of namespace isc

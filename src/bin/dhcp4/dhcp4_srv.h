@@ -67,7 +67,7 @@ protected:
     /// should be served. In particular, a lease is selected and sent
     /// as an offer to a client if it should be served.
     ///
-    /// @param solicit DISCOVER message received from client
+    /// @param discover DISCOVER message received from client
     ///
     /// @return OFFER message or NULL
     Pkt4Ptr processDiscover(Pkt4Ptr& discover);
@@ -101,7 +101,7 @@ protected:
 
     /// @brief Stub function that will handle incoming INFORM messages.
     ///
-    /// @param infRequest message received from client
+    /// @param inform message received from client
     Pkt4Ptr processInform(Pkt4Ptr& inform);
 
     /// @brief Copies default parameters from client's to server's message

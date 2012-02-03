@@ -24,14 +24,14 @@
 #include "util/io_utilities.h"
 
 using namespace std;
-using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::util;
 
-Option6IAAddr::Option6IAAddr(unsigned short type,
-                             const isc::asiolink::IOAddress& addr,
-                             unsigned int pref, unsigned int valid)
+namespace isc {
+namespace dhcp {
+
+Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr,
+                             uint32_t pref, uint32_t valid)
     :Option(V6, type), addr_(addr), preferred_(pref),
      valid_(valid) {
 }
@@ -110,3 +110,6 @@ uint16_t Option6IAAddr::len() {
     }
     return (length);
 }
+
+} // end of namespace isc::dhcp
+} // end of namespace isc
