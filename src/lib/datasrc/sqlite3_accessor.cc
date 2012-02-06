@@ -652,7 +652,7 @@ public:
     ///
     /// \return bool true if data is returned, false if not.
     ///
-    /// \exceptions any Varied
+    /// \exception any Varied
     bool getNext(std::string (&data)[COLUMN_COUNT]) {
 
         if (last_status_ != SQLITE_DONE) {
