@@ -1792,8 +1792,8 @@ TEST_F(QueryTest, dsNoZone) {
     responseCheck(response, Rcode::REFUSED(), 0, 0, 0, 0, NULL, NULL, NULL);
 }
 
-// DS query for a "grandchild" zone.  This should be result in normal
-// delegation (unless this server also has authority of grandchild zone).
+// DS query for a "grandchild" zone.  This should result in normal
+// delegation (unless this server also has authority of the grandchild zone).
 TEST_F(QueryTest, dsAtGrandParent) {
     Query(memory_client, Name("grand.delegation.example.com"), RRType::DS(),
           response, true).process();
