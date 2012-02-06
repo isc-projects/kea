@@ -180,7 +180,7 @@ private:
 
     /// \brief Process a DS query possible at the child side of zone cut.
     ///
-    /// This private method is a subroutine of process(), and is called
+    /// This private method is a subroutine of process(), and is called if
     /// there's a possibility that this server has authority for the child
     /// side of the DS's owner name (and it's detected that the server at
     /// least doesn't have authority at the parent side).  This method
