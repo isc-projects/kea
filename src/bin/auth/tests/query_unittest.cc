@@ -1729,10 +1729,9 @@ TEST_F(QueryTest, dsAboveDelegation) {
                   ns_addrs_and_sig_txt.c_str());
 }
 
-// This one checks a DS record at the apex is not returned, as it is
-// authoritative above the delegation and does not exist below it,
-// as described in RFC 4035, section 3.1.4.1. The example is inspired by the
-// B.8. example from the RFC.
+// This one checks that type-DS query results in a "no data" response
+// when it happens to be sent to the child zone, as described in RFC 4035,
+// section 3.1.4.1. The example is inspired by the B.8. example from the RFC.
 TEST_F(QueryTest, dsBelowDelegation) {
     EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
                           RRType::DS(), response, true).process());
