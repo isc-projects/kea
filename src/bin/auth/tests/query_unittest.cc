@@ -52,7 +52,16 @@ namespace {
 // dns::masterLoad().  Some of the RRs are also used as the expected
 // data in specific tests, in which case they are referenced via specific
 // local variables (such as soa_txt).
-const char* const soa_txt = "example.com. 3600 IN SOA . . 0 0 0 0 0\n";
+//
+// For readability consistency, all strings are placed in a separate line,
+// even if they are very short and can reasonably fit in a single line with
+// the corresponding variable.  For example, we write
+// const char* const foo_txt =
+//  "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
+// instead of
+// const char* const foo_txt = "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
+const char* const soa_txt =
+    "example.com. 3600 IN SOA . . 0 0 0 0 0\n";
 const char* const zone_ns_txt =
     "example.com. 3600 IN NS glue.delegation.example.com.\n"
     "example.com. 3600 IN NS noglue.example.com.\n"
@@ -77,7 +86,8 @@ const char* const mx_txt =
     "mx.example.com. 3600 IN MX 10 www.example.com.\n"
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
     "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
-const char* const www_a_txt = "www.example.com. 3600 IN A 192.0.2.80\n";
+const char* const www_a_txt =
+    "www.example.com. 3600 IN A 192.0.2.80\n";
 const char* const cname_txt =
     "cname.example.com. 3600 IN CNAME www.example.com.\n";
 const char* const cname_nxdom_txt =
@@ -102,13 +112,15 @@ const char* const other_zone_rrs =
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
 // Wildcards
-const char* const wild_txt = "*.wild.example.com. 3600 IN A 192.0.2.7\n";
+const char* const wild_txt =
+    "*.wild.example.com. 3600 IN A 192.0.2.7\n";
 const char* const nsec_wild_txt =
     "*.wild.example.com. 3600 IN NSEC www.example.com. A NSEC RRSIG\n";
 const char* const cnamewild_txt =
     "*.cnamewild.example.com. 3600 IN CNAME www.example.org.\n";
-const char* const nsec_cnamewild_txt = "*.cnamewild.example.com. "
-    "3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG\n";
+const char* const nsec_cnamewild_txt =
+    "*.cnamewild.example.com. 3600 IN NSEC "
+    "delegation.example.com. CNAME NSEC RRSIG\n";
 // Wildcard_nxrrset
 const char* const wild_txt_nxrrset =
     "*.uwild.example.com. 3600 IN A 192.0.2.9\n";
@@ -119,10 +131,12 @@ const char* const wild_txt_next =
 const char* const nsec_wild_txt_next =
     "www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG\n";
 // Wildcard empty
-const char* const empty_txt = "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
+const char* const empty_txt =
+    "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
 const char* const nsec_empty_txt =
     "b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG\n";
-const char* const empty_prev_txt = "t.example.com. 3600 IN A 192.0.2.15\n";
+const char* const empty_prev_txt =
+    "t.example.com. 3600 IN A 192.0.2.15\n";
 const char* const nsec_empty_prev_txt =
     "t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG\n";
 // Used in NXDOMAIN proof test.  We are going to test some unusual case where
@@ -160,7 +174,8 @@ const char* const nsec_www_txt =
     "www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG\n";
 
 // Authoritative data without NSEC
-const char* const nonsec_a_txt = "nonsec.example.com. 3600 IN A 192.0.2.0\n";
+const char* const nonsec_a_txt =
+    "nonsec.example.com. 3600 IN A 192.0.2.0\n";
 
 // NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
 const char* const nsec3_apex_txt =
