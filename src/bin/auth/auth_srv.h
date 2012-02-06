@@ -275,7 +275,7 @@ public:
     /// in-memory data source.
     ///
     /// \param rrclass The RR class of the in-memory data source to be set.
-    /// \param memory_datasrc A (shared) pointer to \c InMemoryClient to be set.
+    /// \param memory_client A (shared) pointer to \c InMemoryClient to be set.
     void setInMemoryClient(const isc::dns::RRClass& rrclass,
                            InMemoryClientPtr memory_client);
 

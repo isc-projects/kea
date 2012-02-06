@@ -245,7 +245,7 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
     }
 }
 
-/// \breif Write python file
+/// \brief Write python file
 ///
 /// Writes the python file containing the symbol definitions as module level
 /// constants. These are objects which register themself at creation time,
@@ -301,8 +301,8 @@ writePythonFile(const string& file, MessageDictionary& dictionary,
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
-/// \param ns Namespace in which the definitions are to be placed.  An empty
-/// string indicates no namespace.
+/// \param ns_components Namespace in which the definitions are to be placed.
+/// An empty string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 /// \param output_directory if not null NULL, output files are written
 ///     to the given directory. If NULL, they are written to the current
@@ -404,8 +404,8 @@ replaceNonAlphaNum(char c) {
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
-/// \param ns Namespace in which the definitions are to be placed.  An empty
-/// string indicates no namespace.
+/// \param ns_components Namespace in which the definitions are to be placed.
+/// An empty string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 /// \param output_directory if not null NULL, output files are written
 ///     to the given directory. If NULL, they are written to the current
