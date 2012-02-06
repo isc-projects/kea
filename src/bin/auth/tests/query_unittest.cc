@@ -1729,6 +1729,30 @@ TEST_F(QueryTest, dsAboveDelegation) {
                   ns_addrs_and_sig_txt.c_str());
 }
 
+TEST_F(QueryTest, dsAboveDelegationNoData) {
+    // Similar to the previous case, but the query is for an unsigned zone
+    // (which doesn't have a DS at the parent).  The response should be a
+    // "no data" error.  The query should still be handled at the parent.
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(
+                                  Name("unsigned-delegation.example.com"))));
+
+    // The following will succeed only if the search goes to the parent
+    // zone, not the child one we added above.
+    EXPECT_NO_THROW(Query(memory_client,
+                          Name("unsigned-delegation.example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(unsigned_delegation_nsec_txt) +
+                   "unsigned-delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
 // This one checks that type-DS query results in a "no data" response
 // when it happens to be sent to the child zone, as described in RFC 4035,
 // section 3.1.4.1. The example is inspired by the B.8. example from the RFC.
