@@ -1749,4 +1749,57 @@ TEST_F(InMemoryZoneFinderTest, loadNSEC3Zone) {
     // This is an abnormal case, but the implementation accepts it.
     zone_finder_.load(TEST_DATA_DIR "/example.org.nsec3-signed-noparam");
 }
+
+// This test checks that the NSEC3 names don't really exist in the real
+// namespace.
+TEST_F(InMemoryZoneFinderTest, queryToNSEC3Name) {
+    // Add the NSEC3 and NSEC3PARAM there.
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                           "1 0 12 aabbccdd")));
+    const Name nsec3domain(string(apex_hash) + ".example.org.");
+    // Adding an NSEC3 that has matching parameters is okay.
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(
+                  textToRRset(string(apex_hash) + ".example.org." +
+                              string(nsec3_common))));
+    // Now, the domain should not exist
+    findTest(nsec3domain, RRType::AAAA(), ZoneFinder::NXDOMAIN, false,
+             ConstRRsetPtr(), ZoneFinder::RESULT_NSEC3_SIGNED, &zone_finder_,
+             ZoneFinder::FIND_DNSSEC);
+    // If we add an A record, the domain should exist
+    ConstRRsetPtr rrset(textToRRset(string(apex_hash) +
+                                    ".example.org. 300 IN A 192.0.2.1"));
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(rrset));
+    // Searching for a different RRType will tell us this RRset doesn't exist
+    findTest(nsec3domain, RRType::AAAA(), ZoneFinder::NXRRSET, false,
+             ConstRRsetPtr(), ZoneFinder::RESULT_NSEC3_SIGNED, &zone_finder_,
+             ZoneFinder::FIND_DNSSEC);
+    // Searching for the A record would find it
+    findTest(nsec3domain, RRType::A(), ZoneFinder::SUCCESS, true,
+             rrset, ZoneFinder::RESULT_DEFAULT, &zone_finder_,
+             ZoneFinder::FIND_DNSSEC);
+}
+
+// Continuation of the previous test (queryToNSEC3Name), we check we don't break
+// the empty nonterminal case by existence of NSEC3 record with that name.
+TEST_F(InMemoryZoneFinderTest, queryToNSEC3NameNonterminal) {
+    // Add the NSEC3 and NSEC3PARAM there.
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                           "1 0 12 aabbccdd")));
+    const Name nsec3domain(string(apex_hash) + ".example.org.");
+    // Adding an NSEC3 that has matching parameters is okay.
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(
+                  textToRRset(string(apex_hash) + ".example.org." +
+                              string(nsec3_common))));
+    // Something below the name
+    ConstRRsetPtr rrset(textToRRset("below." + string(apex_hash) +
+                                    ".example.org. 300 IN A 192.0.2.1"));
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(rrset));
+    // Now, the node is empty non-terminal.
+    findTest(nsec3domain, RRType::AAAA(), ZoneFinder::NXRRSET, false,
+             ConstRRsetPtr(), ZoneFinder::RESULT_NSEC3_SIGNED, &zone_finder_,
+             ZoneFinder::FIND_DNSSEC);
+}
+
 }
