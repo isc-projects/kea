@@ -38,6 +38,11 @@ public:
 /// The logic should be the same as in b10-xfrout, so they find each other.
 std::string getXfroutSocketPath();
 
+/// \brief The name used when identifieng the process
+///
+/// This is currently b10-auth, but it can be changed easily in one place.
+extern const char* auth_name;
+
 #endif // __COMMON_H
 
 // Local Variables:
