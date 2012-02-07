@@ -158,46 +158,46 @@ TEST_F(SocketRequestorTest, testSocketRequestMessages) {
 
     expected_request = createExpectedRequest("192.0.2.1", 12345, "UDP",
                                              "NO", "test");
-    ASSERT_THROW(socketRequestor().requestSocket(SocketRequestor::UDP,
-                                   "192.0.2.1", 12345,
-                                   SocketRequestor::DONT_SHARE,
-                                   "test"),
+    EXPECT_THROW(socketRequestor().requestSocket(SocketRequestor::UDP,
+                                                 "192.0.2.1", 12345,
+                                                 SocketRequestor::DONT_SHARE,
+                                                 "test"),
                  CCSessionError);
     ASSERT_EQ(1, session.getMsgQueue()->size());
-    ASSERT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
+    EXPECT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
 
     clearMsgQueue();
     expected_request = createExpectedRequest("192.0.2.2", 1, "TCP",
                                              "ANY", "test2");
-    ASSERT_THROW(socketRequestor().requestSocket(SocketRequestor::TCP,
-                                   "192.0.2.2", 1,
-                                   SocketRequestor::SHARE_ANY,
-                                   "test2"),
+    EXPECT_THROW(socketRequestor().requestSocket(SocketRequestor::TCP,
+                                                 "192.0.2.2", 1,
+                                                 SocketRequestor::SHARE_ANY,
+                                                 "test2"),
                  CCSessionError);
     ASSERT_EQ(1, session.getMsgQueue()->size());
-    ASSERT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
+    EXPECT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
 
     clearMsgQueue();
     expected_request = createExpectedRequest("::1", 2, "UDP",
                                              "SAMEAPP", "test3");
-    ASSERT_THROW(socketRequestor().requestSocket(SocketRequestor::UDP,
-                                   "::1", 2,
-                                   SocketRequestor::SHARE_SAME,
-                                   "test3"),
+    EXPECT_THROW(socketRequestor().requestSocket(SocketRequestor::UDP,
+                                                 "::1", 2,
+                                                 SocketRequestor::SHARE_SAME,
+                                                 "test3"),
                  CCSessionError);
     ASSERT_EQ(1, session.getMsgQueue()->size());
-    ASSERT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
+    EXPECT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
 
     // A default share name equal to the app name passed on construction
     clearMsgQueue();
     expected_request = createExpectedRequest("::1", 2, "UDP",
                                              "SAMEAPP", "tests");
-    ASSERT_THROW(socketRequestor().requestSocket(SocketRequestor::UDP,
-                                   "::1", 2,
+    EXPECT_THROW(socketRequestor().requestSocket(SocketRequestor::UDP,
+                                                 "::1", 2,
                                    SocketRequestor::SHARE_SAME),
                  CCSessionError);
     ASSERT_EQ(1, session.getMsgQueue()->size());
-    ASSERT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
+    EXPECT_EQ(*expected_request, *(session.getMsgQueue()->get(0)));
 }
 
 TEST_F(SocketRequestorTest, invalidParameterForSocketRequest) {
@@ -222,19 +222,19 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
     // Test various scenarios where the requestor gets back bad answers
 
     // Should raise CCSessionError if there is no answer
-    ASSERT_THROW(doRequest(), CCSessionError);
+    EXPECT_THROW(doRequest(), CCSessionError);
 
     // Also if the answer does not match the format
     session.getMessages()->add(createAnswer());
-    ASSERT_THROW(doRequest(), CCSessionError);
+    EXPECT_THROW(doRequest(), CCSessionError);
 
     // Now a 'real' answer, should fail on socket connect (no such file)
     addAnswer("foo", "/does/not/exist");
-    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+    EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
 
     // Another failure (domain socket path too long)
     addAnswer("foo", std::string(1000, 'x'));
-    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+    EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
 
     // Test values around path boundary
     struct sockaddr_un sock_un;
@@ -247,7 +247,7 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
         doRequest();
         FAIL() << "doRequest did not throw an exception";
     } catch (const SocketRequestor::SocketError& se) {
-        ASSERT_EQ(std::string::npos, std::string(se.what()).find("too long"));
+        EXPECT_EQ(std::string::npos, std::string(se.what()).find("too long"));
     }
 
     const std::string too_long(sizeof(sock_un.sun_path), 'x');
@@ -257,18 +257,18 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
         doRequest();
         FAIL() << "doRequest did not throw an exception";
     } catch (const SocketRequestor::SocketError& se) {
-        ASSERT_NE(std::string::npos, std::string(se.what()).find("too long"));
+        EXPECT_NE(std::string::npos, std::string(se.what()).find("too long"));
     }
 
     // Send back an error response
     // A generic one first
     session.getMessages()->add(createAnswer(1, "error"));
-    ASSERT_THROW(doRequest(), CCSessionError);
+    EXPECT_THROW(doRequest(), CCSessionError);
     // Now some with specific exceptions
     session.getMessages()->add(createAnswer(2, "error"));
-    ASSERT_THROW(doRequest(), SocketRequestor::SocketAllocateError);
+    EXPECT_THROW(doRequest(), SocketRequestor::SocketAllocateError);
     session.getMessages()->add(createAnswer(3, "error"));
-    ASSERT_THROW(doRequest(), SocketRequestor::ShareError);
+    EXPECT_THROW(doRequest(), SocketRequestor::ShareError);
 }
 
 // Helper function to create the release commands as we expect
@@ -297,24 +297,24 @@ TEST_F(SocketRequestorTest, testSocketReleaseMessages) {
     expected_release = createExpectedRelease("foo");
     socketRequestor().releaseSocket("foo");
     ASSERT_EQ(1, session.getMsgQueue()->size());
-    ASSERT_EQ(*expected_release, *(session.getMsgQueue()->get(0)));
+    EXPECT_EQ(*expected_release, *(session.getMsgQueue()->get(0)));
 
     session.getMessages()->add(createAnswer());
     clearMsgQueue();
     expected_release = createExpectedRelease("bar");
     socketRequestor().releaseSocket("bar");
     ASSERT_EQ(1, session.getMsgQueue()->size());
-    ASSERT_EQ(*expected_release, *(session.getMsgQueue()->get(0)));
+    EXPECT_EQ(*expected_release, *(session.getMsgQueue()->get(0)));
 }
 
 TEST_F(SocketRequestorTest, testBadSocketReleaseAnswers) {
     // Should fail if there is no answer at all
-    ASSERT_THROW(socketRequestor().releaseSocket("bar"),
+    EXPECT_THROW(socketRequestor().releaseSocket("bar"),
                  CCSessionError);
 
     // Should also fail if the answer is an error
     session.getMessages()->add(createAnswer(1, "error"));
-    ASSERT_THROW(socketRequestor().releaseSocket("bar"),
+    EXPECT_THROW(socketRequestor().releaseSocket("bar"),
                  SocketRequestor::SocketError);
 }
 
@@ -525,20 +525,20 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
         // 1 should be ok
         addAnswer("foo", ts.getPath());
         socket_id = doRequest();
-        ASSERT_EQ("foo", socket_id.second);
-        ASSERT_EQ(0, close(socket_id.first));
+        EXPECT_EQ("foo", socket_id.second);
+        EXPECT_EQ(0, close(socket_id.first));
 
         // 2 should be ok too
         addAnswer("bar", ts.getPath());
         socket_id = doRequest();
-        ASSERT_EQ("bar", socket_id.second);
-        ASSERT_EQ(0, close(socket_id.first));
+        EXPECT_EQ("bar", socket_id.second);
+        EXPECT_EQ(0, close(socket_id.first));
 
         // 3 should be ok too (reuse earlier token)
         addAnswer("foo", ts.getPath());
         socket_id = doRequest();
-        ASSERT_EQ("foo", socket_id.second);
-        ASSERT_EQ(0, close(socket_id.first));
+        EXPECT_EQ("foo", socket_id.second);
+        EXPECT_EQ(0, close(socket_id.first));
     }
 
     // Create a second socket server, to test that multiple different
@@ -553,35 +553,35 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
         // 1 should be ok
         addAnswer("foo", ts2.getPath());
         socket_id = doRequest();
-        ASSERT_EQ("foo", socket_id.second);
-        ASSERT_EQ(0, close(socket_id.first));
+        EXPECT_EQ("foo", socket_id.second);
+        EXPECT_EQ(0, close(socket_id.first));
     }
 
     if (timo_ok) {
         // Now use first socket again
         addAnswer("foo", ts.getPath());
         socket_id = doRequest();
-        ASSERT_EQ("foo", socket_id.second);
-        ASSERT_EQ(0, close(socket_id.first));
+        EXPECT_EQ("foo", socket_id.second);
+        EXPECT_EQ(0, close(socket_id.first));
 
         // -1 is a "normal" error
         addAnswer("foo", ts.getPath());
-        ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+        EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
 
         // -2 is an unexpected error.  After this point it's not guaranteed the
         // connection works as intended.
         addAnswer("foo", ts.getPath());
-        ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+        EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
     }
 
     // Vector is of first socket is now empty, so the socket should be gone
     addAnswer("foo", ts.getPath());
-    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+    EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
 
     // Vector is of second socket is now empty too, so the socket should be
     // gone
     addAnswer("foo", ts2.getPath());
-    ASSERT_THROW(doRequest(), SocketRequestor::SocketError);
+    EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
 }
 
 }
