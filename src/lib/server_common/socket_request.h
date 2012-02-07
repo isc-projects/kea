@@ -167,13 +167,24 @@ public:
     ///     the app_name parameter of initSocketRequestor is used. If that one
     ///     is empty as well, it is accepted, but not recommended, as such
     ///     a non-descriptive name has a high chance of collisions between
-    ///     applications. nOTE THat you should provide a name (by share_name
+    ///     applications. Note that you should provide a name (by share_name
     ///     or app_name) even when you set it to DONT_SHARE (for logs and
     ///     debugging) and you need to provide one with SHARE_SAME (to know
     ///     what is same) and SHARE_ANY (someone else might want SHARE_SAME,
     ///     so it would check against this)
     /// \return the socket, as a file descriptor and token representing it on
     ///     the socket creator side.
+    ///
+    /// To understand the modes better:
+    /// - If mode is DONT_SHARE, it succeeds if no one else has opened an FD
+    ///   for requested protocol, address and port.
+    /// - If mode is SHARE_SAME, it succeeds if all applications who opened a
+    ///   FD for the requested protocol, address and port provided the same
+    ///   share_name as this one and none of them had mode DONT_SHARE.
+    /// - If mode is SHARE_ANY, it succeeds if no applications who requested
+    ///   the same potocol, address and port provided DONT_SHARE and all the
+    ///   applications who provided SHARE_SAME also provided the same
+    ///   share_name as we.
     ///
     /// \throw InvalidParameter protocol or share_mode is invalid
     /// \throw CCSessionError when we have a problem talking over the CC
