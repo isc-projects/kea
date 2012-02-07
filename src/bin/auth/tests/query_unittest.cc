@@ -250,6 +250,8 @@ public:
         // map instead of calculating and using actual hash.
         // The used hash values are borrowed from RFC5155 examples.
         hash_map_[Name("example.com")] = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("www.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain.example.com")] =
             "v644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("nx.domain.example.com")] =
@@ -383,6 +385,8 @@ private:
     // The following two will be used for faked NSEC cases
     Name nsec_name_;
     boost::scoped_ptr<ZoneFinder::FindResult> nsec_result_;
+public:
+    // Public, to allow tests looking up the right names for something
     map<Name, string> hash_map_;
 };
 
@@ -1625,6 +1629,27 @@ TEST_F(QueryTest, findNSEC3) {
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
 }
 
+// Check the signature is present when an NXRRSET is returned
+TEST_F(QueryTest, nxrrsetWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+
+    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
+    // NXRRSET and their RRSIGs.
+    Query(memory_client, Name("www.example.com"), RRType::TXT(), response,
+          true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_www_txt) + "\n" +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+    // TODO: Does the mock finder generate signatures by itself, or one
+    // needs to be added explicitly?
+}
+
 // The following are tentative tests until we really add tests for the
 // query logic for these cases.  At that point it's probably better to
 // clean them up.
@@ -1633,16 +1658,6 @@ TEST_F(QueryTest, nxdomainWithNSEC3) {
     ZoneFinder::FindResult result = mock_finder->find(
         Name("nxdomain.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
     EXPECT_EQ(ZoneFinder::NXDOMAIN, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_FALSE(result.isWildcard());
-}
-
-TEST_F(QueryTest, nxrrsetWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("www.example.com"), RRType::TXT(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
     EXPECT_FALSE(result.rrset);
     EXPECT_TRUE(result.isNSEC3Signed());
     EXPECT_FALSE(result.isWildcard());
