@@ -56,6 +56,7 @@
 #include <log/logger_support.h>
 #include <log/logger_level.h>
 #include "resolver_log.h"
+#include "common.h"
 
 using namespace std;
 using namespace isc::cc;
@@ -121,7 +122,7 @@ main(int argc, char* argv[]) {
 
     // Until proper logging comes along, initialize the logging with the
     // temporary initLogger() code.  If verbose, we'll use maximum verbosity.
-    isc::log::initLogger("b10-resolver",
+    isc::log::initLogger(resolver_name,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
@@ -202,7 +203,7 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
-        isc::server_common::initSocketRequestor(*cc_session, "resolver");
+        isc::server_common::initSocketRequestor(*cc_session, resolver_name);
 
         // We delay starting listening to new commands/config just before we
         // go into the main loop.   See auth/main.cc for the rationale.

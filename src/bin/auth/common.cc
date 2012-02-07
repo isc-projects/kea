@@ -37,3 +37,5 @@ getXfroutSocketPath() {
         }
     }
 }
+
+const char* auth_name = "b10-auth";

@@ -116,7 +116,7 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
-    isc::log::initLogger("b10-auth",
+    isc::log::initLogger(auth_name,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
@@ -154,7 +154,7 @@ main(int argc, char* argv[]) {
         cc_session = new Session(io_service.get_io_service());
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_CREATED);
         // Initialize the Socket Requestor
-        isc::server_common::initSocketRequestor(*cc_session, "auth");
+        isc::server_common::initSocketRequestor(*cc_session, auth_name);
 
         // We delay starting listening to new commands/config just before we
         // go into the main loop to avoid confusion due to mixture of

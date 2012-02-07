@@ -51,6 +51,7 @@ b10_resolver_SOURCES += resolver_log.cc resolver_log.h
 b10_resolver_SOURCES += response_scrubber.cc response_scrubber.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/common.h
 b10_resolver_SOURCES += main.cc
+b10_resolver_SOURCES += common.cc common.h
 
 nodist_b10_resolver_SOURCES = resolver_messages.cc resolver_messages.h
 
