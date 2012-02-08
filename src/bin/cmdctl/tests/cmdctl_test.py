@@ -368,6 +368,17 @@ class TestCommandControl(unittest.TestCase):
         # Should no longer be present
         self.assertFalse("foo" in self.cmdctl.modules_spec)
 
+        # Don't store 'None' if it wasn't there in the first place!
+        answer = self.cmdctl.command_handler(
+            ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE, [ "foo", None ])
+        rcode, msg = ccsession.parse_answer(answer)
+        self.assertEqual(rcode, 1)
+        self.assertEqual(msg, "No such module: foo")
+
+        # Should still not present
+        self.assertFalse("foo" in self.cmdctl.modules_spec)
+
+
     def test_check_config_handler(self):
         answer = self.cmdctl.config_handler({'non-exist': 123})
         self._check_answer(answer, 1, 'unknown config item: non-exist')
