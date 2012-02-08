@@ -881,9 +881,48 @@ InMemoryZoneFinder::findAll(const Name& name,
 }
 
 ZoneFinder::FindNSEC3Result
-InMemoryZoneFinder::findNSEC3(const Name&, bool) {
-    isc_throw(NotImplemented, "findNSEC3 is not yet implemented for in memory "
-              "data source");
+InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    // TODO validation (no NSEC3 case, out of zone name)
+
+    const NSEC3Hash& nsec3hash = *impl_->zone_data_->nsec3_data_->hash_;
+    const NSEC3Map& map = impl_->zone_data_->nsec3_data_->map_;
+
+    ConstRRsetPtr covering_proof; // placeholder of the next closer proof
+    const unsigned int olabels = impl_->origin_.getLabelCount();
+    const unsigned int qlabels = name.getLabelCount();
+    for (unsigned int labels = qlabels; labels >= olabels; --labels) {
+        const string hlabel = nsec3hash.calculate(
+            labels == qlabels ? name : name.split(qlabels - labels, labels));
+
+        NSEC3Map::const_iterator found = map.lower_bound(hlabel);
+
+        // If the given hash is larger than the largest stored hash or
+        // the first label doesn't match the target, identify the "previous"
+        // hash value and remember it as the candidate next closer proof.
+        if (found == map.end() || found->first != hlabel) {
+            // If the given hash is larger (or smaller than everything, TBD)
+            // the covering proof is the NSEC3 that has the largest hash.
+            // Note that we know the map isn't empty (TBD), so rbegin() is
+            // safe.
+            if (found == map.end() || found == map.begin()) {
+                covering_proof = map.rbegin()->second;
+            } else {
+                // Otherwise, H(found_entry-1) < given_hash < H(found_entry).
+                // The covering proof is the first one (and it's valid
+                // because found is neither begin nor end)
+                covering_proof = (--found)->second;
+            }
+            if (!recursive) {   // in non recursive mode, we are done.
+                return (FindNSEC3Result(false, labels, covering_proof,
+                                        ConstRRsetPtr()));
+            }
+        } else {                // found an exact match.
+            return (FindNSEC3Result(true, labels, found->second,
+                                    covering_proof));
+        }
+    }
+
+    isc_throw(Unexpected, "uncovered test case");
 }
 
 ZoneFinder::FindNSEC3Result
