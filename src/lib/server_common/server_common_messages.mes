@@ -16,7 +16,7 @@ $NAMESPACE isc::server_common
 
 # \brief Messages for the server_common library
 
-% SOCKETREQUESTOR_CREATED Socket requestor created
+% SOCKETREQUESTOR_CREATED Socket requestor created for application %1
 Debug message.  A socket requesor (client of the socket creator) is created
 for the corresponding application.  Normally this should happen at most
 one time throughout the lifetime of the application.
