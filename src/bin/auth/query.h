@@ -270,6 +270,17 @@ public:
         {}
     };
 
+    /// An invalid result is given when a valid NSEC3 is expected
+    ///
+    /// This can only happen when the underlying data source implementation or
+    /// the zone is broken.  By throwing an exception we treat such cases
+    /// as SERVFAIL.
+    struct BadNSEC3 : public BadZone {
+        BadNSEC3(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
     /// An invalid result is given when a valid DS records (or NXRRSET) is
     /// expected
     ///
