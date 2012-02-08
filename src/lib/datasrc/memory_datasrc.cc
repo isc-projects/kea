@@ -882,27 +882,46 @@ InMemoryZoneFinder::findAll(const Name& name,
 
 ZoneFinder::FindNSEC3Result
 InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
-    // TODO validation (no NSEC3 case, out of zone name)
-
-    const NSEC3Hash& nsec3hash = *impl_->zone_data_->nsec3_data_->hash_;
+    if (!impl_->zone_data_->nsec3_data_) {
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt for non NSEC3 signed zone: " <<
+                  impl_->origin_ << "/" << impl_->zone_class_);
+    }
     const NSEC3Map& map = impl_->zone_data_->nsec3_data_->map_;
+    if (map.empty()) {
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt but zone has no NSEC3 RR: " <<
+                  impl_->origin_ << "/" << impl_->zone_class_);
+    }
+    const NameComparisonResult cmp_result = name.compare(impl_->origin_);
+    if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
+        cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
+        isc_throw(InvalidParameter, "findNSEC3 attempt for out-of-zone name: "
+                  << name << ", zone: " << impl_->origin_ << "/"
+                  << impl_->zone_class_);
+    }
 
-    ConstRRsetPtr covering_proof; // placeholder of the next closer proof
+    // Convenient shortcuts
+    const NSEC3Hash& nsec3hash = *impl_->zone_data_->nsec3_data_->hash_;
     const unsigned int olabels = impl_->origin_.getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
+
+    ConstRRsetPtr covering_proof; // placeholder of the next closer proof
+    // Examine all names from the query name to the origin name, stripping
+    // the deepest label one by one, until we find a name that has a matching
+    // NSEC3 hash.
     for (unsigned int labels = qlabels; labels >= olabels; --labels) {
         const string hlabel = nsec3hash.calculate(
             labels == qlabels ? name : name.split(qlabels - labels, labels));
-
         NSEC3Map::const_iterator found = map.lower_bound(hlabel);
 
         // If the given hash is larger than the largest stored hash or
         // the first label doesn't match the target, identify the "previous"
         // hash value and remember it as the candidate next closer proof.
         if (found == map.end() || found->first != hlabel) {
-            // If the given hash is larger (or smaller than everything, TBD)
+            // If the given hash is larger or smaller than everything,
             // the covering proof is the NSEC3 that has the largest hash.
-            // Note that we know the map isn't empty (TBD), so rbegin() is
+            // Note that we know the map isn't empty, so rbegin() is
             // safe.
             if (found == map.end() || found == map.begin()) {
                 covering_proof = map.rbegin()->second;
@@ -922,7 +941,9 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
         }
     }
 
-    isc_throw(Unexpected, "uncovered test case");
+    isc_throw(DataSourceError, "recursive findNSEC3 mode didn't stop, likely "
+              "a broken NSEC3 zone: " << impl_->origin_ << "/"
+              << impl_->zone_class_);
 }
 
 ZoneFinder::FindNSEC3Result
