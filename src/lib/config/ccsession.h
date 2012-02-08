@@ -195,10 +195,10 @@ public:
     ///
     /// Destructor
     ///
-    /// The desctructor automatically calls sendStopping(), which sends
+    /// The destructor automatically calls sendStopping(), which sends
     /// a message to the ConfigManager that this module is stopping
     ///
-    ~ModuleCCSession();
+    virtual ~ModuleCCSession();
 
     /// Start receiving new commands and configuration changes asynchronously.
     ///
