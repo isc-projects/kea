@@ -41,7 +41,7 @@ std::string getXfroutSocketPath();
 /// \brief The name used when identifieng the process
 ///
 /// This is currently b10-auth, but it can be changed easily in one place.
-extern const char* auth_name;
+extern const char* const AUTH_NAME;
 
 #endif // __COMMON_H
 
