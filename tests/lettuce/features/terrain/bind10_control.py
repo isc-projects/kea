@@ -113,7 +113,7 @@ def have_bind10_running(step, config_file, cmdctl_port, process_name):
     step.given(wait_step)
 
 # function to send lines to bindctl, and store the result
-def run_bindctl(commands, cmdctl_port=47805):
+def run_bindctl(commands, cmdctl_port=None):
     """Run bindctl.
        Parameters:
        commands: a sequence of strings which will be sent.

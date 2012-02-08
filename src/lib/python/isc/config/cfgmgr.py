@@ -297,7 +297,7 @@ class ConfigManager:
         """Write the current configuration to the file specificied at init()"""
         self.config.write_to_file()
 
-    def _handle_get_module_spec(self, cmd):
+    def __handle_get_module_spec(self, cmd):
         """Private function that handles the 'get_module_spec' command"""
         answer = {}
         if cmd != None:
@@ -318,7 +318,7 @@ class ConfigManager:
             answer = ccsession.create_answer(0, self.get_module_spec())
         return answer
 
-    def _handle_get_config_dict(self, cmd):
+    def __handle_get_config_dict(self, cmd):
         """Private function that handles the 'get_config' command
            where the command has been checked to be a dict"""
         if 'module_name' in cmd and cmd['module_name'] != '':
@@ -332,17 +332,17 @@ class ConfigManager:
         else:
             return ccsession.create_answer(1, "Bad module_name in get_config command")
 
-    def _handle_get_config(self, cmd):
+    def __handle_get_config(self, cmd):
         """Private function that handles the 'get_config' command"""
         if cmd != None:
             if type(cmd) == dict:
-                return self._handle_get_config_dict(cmd)
+                return self.__handle_get_config_dict(cmd)
             else:
                 return ccsession.create_answer(1, "Bad get_config command, argument not a dict")
         else:
             return ccsession.create_answer(0, self.config.data)
 
-    def _handle_set_config_module(self, module_name, cmd):
+    def __handle_set_config_module(self, module_name, cmd):
         # the answer comes (or does not come) from the relevant module
         # so we need a variable to see if we got it
         answer = None
@@ -405,7 +405,7 @@ class ConfigManager:
                 self.config.data = old_data
         return answer
 
-    def _handle_set_config_all(self, cmd):
+    def __handle_set_config_all(self, cmd):
         old_data = copy.deepcopy(self.config.data)
         got_error = False
         err_list = []
@@ -413,7 +413,7 @@ class ConfigManager:
         # sets, so we simply call set_config_module for each of those
         for module in cmd:
             if module != "version":
-                answer = self._handle_set_config_module(module, cmd[module])
+                answer = self.__handle_set_config_module(module, cmd[module])
                 if answer == None:
                     got_error = True
                     err_list.append("No answer message from " + module)
@@ -432,16 +432,16 @@ class ConfigManager:
             self.config.data = old_data
             return ccsession.create_answer(1, " ".join(err_list))
 
-    def _handle_set_config(self, cmd):
+    def __handle_set_config(self, cmd):
         """Private function that handles the 'set_config' command"""
         answer = None
 
         if cmd == None:
             return ccsession.create_answer(1, "Wrong number of arguments")
         if len(cmd) == 2:
-            answer = self._handle_set_config_module(cmd[0], cmd[1])
+            answer = self.__handle_set_config_module(cmd[0], cmd[1])
         elif len(cmd) == 1:
-            answer = self._handle_set_config_all(cmd[0])
+            answer = self.__handle_set_config_all(cmd[0])
         else:
             answer = ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:
@@ -449,7 +449,7 @@ class ConfigManager:
 
         return answer
 
-    def _handle_module_spec(self, spec):
+    def __handle_module_spec(self, spec):
         """Private function that handles the 'module_spec' command"""
         # todo: validate? (no direct access to spec as
         # todo: use ModuleSpec class
@@ -460,7 +460,7 @@ class ConfigManager:
                                          spec.get_full_spec())
         return ccsession.create_answer(0)
 
-    def _handle_module_stopping(self, arg):
+    def __handle_module_stopping(self, arg):
         """Private function that handles a 'stopping' command;
            The argument is of the form { 'module_name': <name> }.
            If the module is known, it is removed from the known list,
@@ -495,19 +495,19 @@ class ConfigManager:
             elif cmd == ccsession.COMMAND_GET_STATISTICS_SPEC:
                 answer = ccsession.create_answer(0, self.get_statistics_spec())
             elif cmd == ccsession.COMMAND_GET_MODULE_SPEC:
-                answer = self._handle_get_module_spec(arg)
+                answer = self.__handle_get_module_spec(arg)
             elif cmd == ccsession.COMMAND_GET_CONFIG:
-                answer = self._handle_get_config(arg)
+                answer = self.__handle_get_config(arg)
             elif cmd == ccsession.COMMAND_SET_CONFIG:
-                answer = self._handle_set_config(arg)
+                answer = self.__handle_set_config(arg)
             elif cmd == ccsession.COMMAND_MODULE_STOPPING:
-                answer = self._handle_module_stopping(arg)
+                answer = self.__handle_module_stopping(arg)
             elif cmd == ccsession.COMMAND_SHUTDOWN:
                 self.running = False
                 answer = ccsession.create_answer(0)
             elif cmd == ccsession.COMMAND_MODULE_SPEC:
                 try:
-                    answer = self._handle_module_spec(isc.config.ModuleSpec(arg))
+                    answer = self.__handle_module_spec(isc.config.ModuleSpec(arg))
                 except isc.config.ModuleSpecError as dde:
                     answer = ccsession.create_answer(1, "Error in data definition: " + str(dde))
             else:

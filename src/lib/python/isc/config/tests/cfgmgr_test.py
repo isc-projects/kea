@@ -463,9 +463,9 @@ class TestConfigManager(unittest.TestCase):
             self.cm.set_virtual_module(self.spec, check_test)
             # The fake session will throw now if it tries to read a response.
             # Handy, we don't need to find a complicated way to check for it.
-            result = self.cm._handle_set_config_module(self.spec.
-                                                       get_module_name(),
-                                                       {'item1': value})
+            result = self.cm.handle_msg(ccsession.create_command(
+                        ccsession.COMMAND_SET_CONFIG,
+                        [self.spec.get_module_name(), { "item1": value }]))
             # Check the correct result is passed and our function was called
             # With correct data
             self.assertEqual(self.called_with['item1'], value)
@@ -497,19 +497,22 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual({"version": 2}, self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self.cm._handle_set_config_all({"test": { "value1": 123 }})
+        self.cm.handle_msg(ccsession.create_command(
+            ccsession.COMMAND_SET_CONFIG, ["test", { "value1": 123 }]))
         self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
                           "test": { "value1": 123 }
                          }, self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self.cm._handle_set_config_all({"test": { "value1": 124 }})
+        self.cm.handle_msg(ccsession.create_command(
+            ccsession.COMMAND_SET_CONFIG, ["test", { "value1": 124 }]))
         self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
                           "test": { "value1": 124 }
                          }, self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self.cm._handle_set_config_all({"test": { "value2": True }})
+        self.cm.handle_msg(ccsession.create_command(
+            ccsession.COMMAND_SET_CONFIG, ["test", { "value2": True }]))
         self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
                           "test": { "value1": 124,
                                     "value2": True
@@ -517,7 +520,8 @@ class TestConfigManager(unittest.TestCase):
                          }, self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self.cm._handle_set_config_all({"test": { "value3": [ 1, 2, 3 ] }})
+        self.cm.handle_msg(ccsession.create_command(
+            ccsession.COMMAND_SET_CONFIG, ["test", { "value3": [ 1, 2, 3 ] }]))
         self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
                           "test": { "value1": 124,
                                     "value2": True,
@@ -526,7 +530,8 @@ class TestConfigManager(unittest.TestCase):
                          }, self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self.cm._handle_set_config_all({"test": { "value2": False }})
+        self.cm.handle_msg(ccsession.create_command(
+            ccsession.COMMAND_SET_CONFIG, ["test", { "value2": False }]))
         self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
                           "test": { "value1": 124,
                                     "value2": False,
@@ -535,7 +540,8 @@ class TestConfigManager(unittest.TestCase):
                          }, self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self.cm._handle_set_config_all({"test": { "value1": None }})
+        self.cm.handle_msg(ccsession.create_command(
+            ccsession.COMMAND_SET_CONFIG, ["test", { "value1": None }]))
         self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
                           "test": { "value2": False,
                                     "value3": [ 1, 2, 3 ]
@@ -543,7 +549,8 @@ class TestConfigManager(unittest.TestCase):
                          }, self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self.cm._handle_set_config_all({"test": { "value3": [ 1 ] }})
+        self.cm.handle_msg(ccsession.create_command(
+            ccsession.COMMAND_SET_CONFIG, ["test", { "value3": [ 1 ] }]))
         self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
                           "test": { "value2": False,
                                     "value3": [ 1 ]
