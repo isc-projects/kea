@@ -38,4 +38,4 @@ getXfroutSocketPath() {
     }
 }
 
-const char* auth_name = "b10-auth";
+const char* const AUTH_NAME = "b10-auth";

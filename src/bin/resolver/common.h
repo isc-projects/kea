@@ -18,6 +18,6 @@
 /// \brief The name used to identify the resolver between modules.
 ///
 /// It is currently set to b10-resolver.
-extern const char* resolver_name;
+extern const char* const RESOLVER_NAME;
 
 #endif

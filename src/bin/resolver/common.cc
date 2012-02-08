@@ -14,4 +14,4 @@
 
 #include "common.h"
 
-const char* resolver_name = "b10-resolver";
+const char* const RESOLVER_NAME = "b10-resolver";
