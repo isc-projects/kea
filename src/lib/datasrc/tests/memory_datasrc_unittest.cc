@@ -1862,6 +1862,12 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(zzz_nsec3_text)));
 
+    // Parameter validation: the query name must be in or below the zone
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("example.com"), false),
+                 isc::InvalidParameter);
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("org"), true),
+                 isc::InvalidParameter);
+
     // Apex name.  It should have a matching NSEC3.
     {
         SCOPED_TRACE("apex, non recursive mode");
@@ -1923,5 +1929,27 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
                        zzz_nsec3_text, "",
                        zone_finder_.findNSEC3(largest_name, false));
     }
+}
+
+TEST_F(InMemoryZoneFinderTest, findNSEC3ForWithoutNSEC3) {
+    // If the zone has nothing about NSEC3 (neither NSEC3 or NSEC3PARAM),
+    // findNSEC3() should be rejected.
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
+                 DataSourceError);
+
+    // Only having NSEC3PARAM isn't enough
+    EXPECT_EQ(result::SUCCESS,
+              zone_finder_.add(textToRRset("example.org. 300 IN NSEC3PARAM "
+                                           "1 0 12 aabbccdd")));
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
+                 DataSourceError);
+
+    // Unless NSEC3 for apex isn't added the result in the recursive mode
+    // is guaranteed.
+    const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
+        string(nsec3_common);
+    EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(ns1_nsec3_text)));
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
+                 DataSourceError);
 }
 }
