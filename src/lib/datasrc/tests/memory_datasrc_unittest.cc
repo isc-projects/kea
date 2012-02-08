@@ -1958,4 +1958,45 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
     EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
                  DataSourceError);
 }
+
+TEST_F(InMemoryZoneFinderTest, loadAndFindNSEC3) {
+    // Using more realistic example, borrowed from RFC5155, with compliant
+    // hash calculator.  We only confirm the data source can load it
+    // successfully and find correct NSEC3 RRs for some selected cases
+    // (detailed tests have been done above).
+
+    InMemoryZoneFinder finder(class_, Name("example"));
+    finder.load(TEST_DATA_DIR "/rfc5155-example.zone.signed");
+
+    // See RFC5155 B.1
+    ZoneFinder::FindNSEC3Result result1 =
+        finder.findNSEC3(Name("c.x.w.example"), true);
+    ASSERT_TRUE(result1.closest_proof);
+    EXPECT_EQ(3, result1.closest_labels);
+    EXPECT_EQ(Name("b4um86eghhds6nea196smvmlo4ors995.example"),
+              result1.closest_proof->getName());
+    ASSERT_TRUE(result1.next_proof);
+    EXPECT_EQ(Name("0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example"),
+              result1.next_proof->getName());
+
+    // See RFC5155 B.2.
+    ZoneFinder::FindNSEC3Result result2 =
+        finder.findNSEC3(Name("ns1.example"), true);
+    ASSERT_TRUE(result2.closest_proof);
+    EXPECT_EQ(3, result2.closest_labels);
+    EXPECT_EQ(Name("2t7b4g4vsa5smi47k61mv5bv1a22bojr.example"),
+              result2.closest_proof->getName());
+    ASSERT_FALSE(result2.next_proof);
+
+    // See RFC5155 B.5.
+    ZoneFinder::FindNSEC3Result result3 =
+        finder.findNSEC3(Name("a.z.w.example"), true);
+    ASSERT_TRUE(result3.closest_proof);
+    EXPECT_EQ(3, result3.closest_labels);
+    EXPECT_EQ(Name("k8udemvp1j2f7eg6jebps17vp3n8i58h.example"),
+              result3.closest_proof->getName());
+    ASSERT_TRUE(result3.next_proof);
+    EXPECT_EQ(Name("q04jkcevqvmu85r014c7dkba38o0ji5r.example"),
+              result3.next_proof->getName());
+}
 }
