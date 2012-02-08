@@ -310,27 +310,27 @@ class TestNSEC3HashCreator : public NSEC3HashCreator {
     private:
         typedef map<Name, string> NSEC3HashMap;
         typedef NSEC3HashMap::value_type NSEC3HashPair;
-        NSEC3HashMap map;
+        NSEC3HashMap map_;
     public:
         TestNSEC3Hash() {
             // Build pre-defined hash
-            map[Name("example.org")] = apex_hash;
-            map[Name("www.example.org")] = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-            map[Name("xxx.example.org")] = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-            map[Name("yyy.example.org")] = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-            map[Name("x.y.w.example.org")] =
+            map_[Name("example.org")] = apex_hash;
+            map_[Name("www.example.org")] = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+            map_[Name("xxx.example.org")] = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+            map_[Name("yyy.example.org")] = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+            map_[Name("x.y.w.example.org")] =
                 "2VPTU5TIMAMQTTGL4LUU9KG21E0AOR3S";
-            map[Name("y.w.example.org")] = "K8UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-            map[Name("w.example.org")] = w_hash;
-            map[Name("zzz.example.org")] = zzz_hash;
-            map[Name("smallest.example.org")] =
+            map_[Name("y.w.example.org")] = "K8UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
+            map_[Name("w.example.org")] = w_hash;
+            map_[Name("zzz.example.org")] = zzz_hash;
+            map_[Name("smallest.example.org")] =
                 "00000000000000000000000000000000";
-            map[Name("largest.example.org")] =
+            map_[Name("largest.example.org")] =
                 "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
         }
         virtual string calculate(const Name& name) const {
-            const NSEC3HashMap::const_iterator found = map.find(name);
-            if (found != map.end()) {
+            const NSEC3HashMap::const_iterator found = map_.find(name);
+            if (found != map_.end()) {
                 return (found->second);
             }
             isc_throw(isc::Unexpected, "unexpected name for NSEC3 test: "
@@ -1950,7 +1950,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
     EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
                  DataSourceError);
 
-    // Unless NSEC3 for apex isn't added the result in the recursive mode
+    // Unless NSEC3 for apex is added the result in the recursive mode
     // is guaranteed.
     const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
         string(nsec3_common);
