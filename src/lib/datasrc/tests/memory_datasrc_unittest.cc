@@ -1595,22 +1595,38 @@ const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
 
 void
-nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
-           const ZoneFinder::FindNSEC3Result& result,
-           bool expected_sig = false)
+findNSEC3Check(bool expected_matched, uint8_t expected_labels,
+               const string& expected_closest,
+               const string& expected_next,
+               const ZoneFinder::FindNSEC3Result& result,
+               bool expected_sig = false)
 {
-    vector<ConstRRsetPtr> actual_rrsets;
     EXPECT_EQ(expected_matched, result.matched);
+    // Convert to int so the error messages would be more readable:
+    EXPECT_EQ(static_cast<int>(expected_labels),
+              static_cast<int>(result.closest_labels));
+
+    vector<ConstRRsetPtr> actual_rrsets;
     ASSERT_TRUE(result.closest_proof);
-    if (expected_sig) {
-        ASSERT_TRUE(result.closest_proof->getRRsig());
-    }
     actual_rrsets.push_back(result.closest_proof);
     if (expected_sig) {
         actual_rrsets.push_back(result.closest_proof->getRRsig());
     }
-    rrsetsCheck(expected_rrsets_txt, actual_rrsets.begin(),
+    rrsetsCheck(expected_closest, actual_rrsets.begin(),
                 actual_rrsets.end());
+
+    actual_rrsets.clear();
+    if (expected_next.empty()) {
+        EXPECT_FALSE(result.next_proof);
+    } else {
+        ASSERT_TRUE(result.next_proof);
+        actual_rrsets.push_back(result.next_proof);
+        if (expected_sig) {
+            actual_rrsets.push_back(result.next_proof->getRRsig());
+        }
+        rrsetsCheck(expected_next, actual_rrsets.begin(),
+                    actual_rrsets.end());
+    }
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
@@ -1625,8 +1641,8 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
               zone_finder_.find(Name(string(apex_hash) + ".example.org"),
                                 RRType::NSEC3()).code);
     // Dedicated NSEC3 find should be able to find it.
-    nsec3Check(true, nsec3_text,
-               zone_finder_.findNSEC3(Name("example.org"), false));
+    findNSEC3Check(true, origin_.getLabelCount(), nsec3_text, "",
+                   zone_finder_.findNSEC3(Name("example.org"), false));
 
     // This implementation rejects duplicate/update add of the same hash name
     EXPECT_EQ(result::EXIST,
@@ -1634,8 +1650,8 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
                                    string(apex_hash) + ".example.org." +
                                    string(nsec3_common) + " AAAA")));
     // The original NSEC3 should be intact
-    nsec3Check(true, nsec3_text,
-               zone_finder_.findNSEC3(Name("example.org"), false));
+    findNSEC3Check(true, origin_.getLabelCount(), nsec3_text, "",
+                   zone_finder_.findNSEC3(Name("example.org"), false));
 
     // NSEC3-like name but of ordinary RR type should go to normal tree.
     const string nonsec3_text = string(apex_hash) + ".example.org. " +
@@ -1654,8 +1670,8 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
     const string nsec3_text = string(apex_hash_lower) + ".example.org." +
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
-    nsec3Check(true, nsec3_text,
-               zone_finder_.findNSEC3(Name("example.org"), false));
+    findNSEC3Check(true, origin_.getLabelCount(), nsec3_text, "",
+                   zone_finder_.findNSEC3(Name("example.org"), false));
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3Ordering) {
@@ -1678,15 +1694,15 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3Ordering) {
 
     // Then look for NSEC3 that covers a name whose hash is "2S.."
     // The covering NSEC3 should be "0P.."
-    nsec3Check(false, smallest,
-               zone_finder_.findNSEC3(Name("www.example.org"), false));
+    findNSEC3Check(false, 4, smallest, "",
+                   zone_finder_.findNSEC3(Name("www.example.org"), false));
 
     // Look for NSEC3 that covers names whose hash are "Q0.." and "0A.."
     // The covering NSEC3 should be "2v.." in both cases
-    nsec3Check(false, largest,
-               zone_finder_.findNSEC3(Name("xxx.example.org"), false));
-    nsec3Check(false, largest,
-               zone_finder_.findNSEC3(Name("yyy.example.org"), false));
+    findNSEC3Check(false, 4, largest, "",
+                   zone_finder_.findNSEC3(Name("xxx.example.org"), false));
+    findNSEC3Check(false, 4, largest, "",
+                   zone_finder_.findNSEC3(Name("yyy.example.org"), false));
 }
 
 TEST_F(InMemoryZoneFinderTest, badNSEC3Name) {
@@ -1726,8 +1742,9 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_rrsig_text)));
 
     // Then look for it.  The NSEC3 should have the RRSIG that was just added.
-    nsec3Check(true, nsec3_text + "\n" + nsec3_rrsig_text,
-               zone_finder_.findNSEC3(Name("example.org"), false), true);
+    findNSEC3Check(true, origin_.getLabelCount(),
+                   nsec3_text + "\n" + nsec3_rrsig_text, "",
+                   zone_finder_.findNSEC3(Name("example.org"), false), true);
 
     // Duplicate add of RRSIG for the same NSEC3 is prohibited.
     EXPECT_THROW(zone_finder_.add(textToRRset(nsec3_rrsig_text)),
@@ -1826,26 +1843,6 @@ TEST_F(InMemoryZoneFinderTest, loadNSEC3Zone) {
     zone_finder_.load(TEST_DATA_DIR "/example.org.nsec3-signed-noparam");
 }
 
-void
-findNSEC3Check(bool expected_matched, uint8_t expected_labels,
-               const string& expected_closest,
-               const string& expected_next,
-               const ZoneFinder::FindNSEC3Result& result)
-{
-    EXPECT_EQ(expected_matched, result.matched);
-    // Convert to int so the error messages would be more readable:
-    EXPECT_EQ(static_cast<int>(expected_labels),
-              static_cast<int>(result.closest_labels));
-    ASSERT_TRUE(result.closest_proof);
-    rrsetCheck(textToRRset(expected_closest), result.closest_proof);
-    if (expected_next.empty()) {
-        EXPECT_FALSE(result.next_proof);
-    } else {
-        ASSERT_TRUE(result.next_proof);
-        rrsetCheck(textToRRset(expected_next), result.next_proof);
-    }
-}
-
 TEST_F(InMemoryZoneFinderTest, findNSEC3) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&nsec3_hash_creator_);
@@ -1937,7 +1934,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
     }
 }
 
-TEST_F(InMemoryZoneFinderTest, findNSEC3ForWithoutNSEC3) {
+TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&nsec3_hash_creator_);
 
