@@ -946,54 +946,6 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
               << impl_->zone_class_);
 }
 
-ZoneFinder::FindNSEC3Result
-InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
-    if (!impl_->zone_data_->nsec3_data_) {
-        isc_throw(Unexpected, "findNSEC3 is called for non NSEC3 zone");
-    }
-    if (recursive) {
-        isc_throw(Unexpected, "recursive mode isn't expected in tests");
-    }
-
-    // A temporary workaround for testing: convert the original name to
-    // NSEC3-hashed name using hardcoded mapping.
-    string hname_text;
-    if (name == Name("example.org")) {
-        hname_text = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("www.example.org")) {
-        hname_text = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("xxx.example.org")) {
-        hname_text = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("yyy.example.org")) {
-        hname_text = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else {
-        isc_throw(Unexpected, "unexpected name for NSEC3 test: " << name);
-    }
-
-    // Below we assume the map is not empty for simplicity.
-    NSEC3Map::const_iterator found =
-        impl_->zone_data_->nsec3_data_->map_.lower_bound(hname_text);
-    if (found != impl_->zone_data_->nsec3_data_->map_.end() &&
-        found->first == hname_text) {
-        // exact match
-        return (FindNSEC3Result(true, 2, found->second, ConstRRsetPtr()));
-    } else if (found == impl_->zone_data_->nsec3_data_->map_.end() ||
-               found == impl_->zone_data_->nsec3_data_->map_.begin()) {
-        // the search key is "smaller" than the smallest or "larger" than
-        // largest.  In either case "previous" is the largest one.
-        return (FindNSEC3Result(false, 2,
-                                impl_->zone_data_->nsec3_data_->map_.
-                                rbegin()->second, ConstRRsetPtr()));
-    } else {
-        // Otherwise, H(found_domain-1) < given_hash < H(found_domain)
-        // The covering proof is the first one.
-        return (FindNSEC3Result(false, 2, (--found)->second, ConstRRsetPtr()));
-    }
-
-    // We should have covered all cases.
-    isc_throw(Unexpected, "Impossible NSEC3 search result for " << name);
-}
-
 result::Result
 InMemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
     return (impl_->add(rrset, *impl_->zone_data_));

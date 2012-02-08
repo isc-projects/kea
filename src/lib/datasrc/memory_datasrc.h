@@ -89,16 +89,6 @@ public:
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive);
 
-    // A temporary fake version of findNSEC3 for tests
-    //
-    // This method intentionally has the same interface as findNSEC3 but
-    // uses internally hardcoded hash values and offers a limited set
-    // of functionality for the convenience of tests.  This is a temporary
-    // workaround until #1577 is completed.  At that point this method
-    // should be removed.
-    FindNSEC3Result
-    findNSEC3Tmp(const isc::dns::Name& name, bool recursive);
-
     /// \brief Imelementation of the ZoneFinder::findPreviousName method
     ///
     /// This one throws NotImplemented exception, as InMemory doesn't

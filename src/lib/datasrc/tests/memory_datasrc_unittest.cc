@@ -1613,13 +1613,10 @@ nsec3Check(bool expected_matched, const string& expected_rrsets_txt,
                 actual_rrsets.end());
 }
 
-// In the following tests we use a temporary faked version of findNSEC3
-// as the real version isn't implemented yet (it's a task for #1577).
-// When #1577 is done the tests should be updated using the real version.
-// If we can use fake hash calculator (see #1575), we should be able to
-// just replace findNSEC3Tmp with findNSEC3.
-
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&nsec3_hash_creator_);
+
     const string nsec3_text = string(apex_hash) + ".example.org." +
         string(nsec3_common);
     // This name shouldn't be found in the normal domain tree.
@@ -1629,7 +1626,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
                                 RRType::NSEC3()).code);
     // Dedicated NSEC3 find should be able to find it.
     nsec3Check(true, nsec3_text,
-               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
+               zone_finder_.findNSEC3(Name("example.org"), false));
 
     // This implementation rejects duplicate/update add of the same hash name
     EXPECT_EQ(result::EXIST,
@@ -1638,7 +1635,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
                                    string(nsec3_common) + " AAAA")));
     // The original NSEC3 should be intact
     nsec3Check(true, nsec3_text,
-               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
+               zone_finder_.findNSEC3(Name("example.org"), false));
 
     // NSEC3-like name but of ordinary RR type should go to normal tree.
     const string nonsec3_text = string(apex_hash) + ".example.org. " +
@@ -1650,15 +1647,21 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&nsec3_hash_creator_);
+
     // Similar to the previous case, but NSEC3 owner name is lower-cased.
     const string nsec3_text = string(apex_hash_lower) + ".example.org." +
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
     nsec3Check(true, nsec3_text,
-               zone_finder_.findNSEC3Tmp(Name("example.org"), false));
+               zone_finder_.findNSEC3(Name("example.org"), false));
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3Ordering) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&nsec3_hash_creator_);
+
     // Check that the internal storage ensures comparison based on the NSEC3
     // semantics, regardless of the add order or the letter-case of hash.
 
@@ -1676,14 +1679,14 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3Ordering) {
     // Then look for NSEC3 that covers a name whose hash is "2S.."
     // The covering NSEC3 should be "0P.."
     nsec3Check(false, smallest,
-               zone_finder_.findNSEC3Tmp(Name("www.example.org"), false));
+               zone_finder_.findNSEC3(Name("www.example.org"), false));
 
     // Look for NSEC3 that covers names whose hash are "Q0.." and "0A.."
     // The covering NSEC3 should be "2v.." in both cases
     nsec3Check(false, largest,
-               zone_finder_.findNSEC3Tmp(Name("xxx.example.org"), false));
+               zone_finder_.findNSEC3(Name("xxx.example.org"), false));
     nsec3Check(false, largest,
-               zone_finder_.findNSEC3Tmp(Name("yyy.example.org"), false));
+               zone_finder_.findNSEC3(Name("yyy.example.org"), false));
 }
 
 TEST_F(InMemoryZoneFinderTest, badNSEC3Name) {
@@ -1711,6 +1714,9 @@ TEST_F(InMemoryZoneFinderTest, addMultiNSEC3) {
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&nsec3_hash_creator_);
+
     // Adding NSEC3 and its RRSIG
     const string nsec3_text = string(apex_hash) + ".example.org." +
         string(nsec3_common);
@@ -1721,7 +1727,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
 
     // Then look for it.  The NSEC3 should have the RRSIG that was just added.
     nsec3Check(true, nsec3_text + "\n" + nsec3_rrsig_text,
-               zone_finder_.findNSEC3Tmp(Name("example.org"), false), true);
+               zone_finder_.findNSEC3(Name("example.org"), false), true);
 
     // Duplicate add of RRSIG for the same NSEC3 is prohibited.
     EXPECT_THROW(zone_finder_.add(textToRRset(nsec3_rrsig_text)),
@@ -1932,6 +1938,9 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
 }
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3ForWithoutNSEC3) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&nsec3_hash_creator_);
+
     // If the zone has nothing about NSEC3 (neither NSEC3 or NSEC3PARAM),
     // findNSEC3() should be rejected.
     EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
