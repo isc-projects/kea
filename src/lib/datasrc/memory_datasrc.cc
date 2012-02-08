@@ -882,6 +882,9 @@ InMemoryZoneFinder::findAll(const Name& name,
 
 ZoneFinder::FindNSEC3Result
 InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3).arg(name).
+        arg(recursive ? "recursive" : "non-recursive");
+
     if (!impl_->zone_data_->nsec3_data_) {
         isc_throw(DataSourceError,
                   "findNSEC3 attempt for non NSEC3 signed zone: " <<
@@ -914,6 +917,8 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
         const string hlabel = nsec3hash.calculate(
             labels == qlabels ? name : name.split(qlabels - labels, labels));
         NSEC3Map::const_iterator found = map.lower_bound(hlabel);
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3_TRYHASH).
+            arg(name).arg(labels).arg(hlabel);
 
         // If the given hash is larger than the largest stored hash or
         // the first label doesn't match the target, identify the "previous"
@@ -932,10 +937,16 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
                 covering_proof = (--found)->second;
             }
             if (!recursive) {   // in non recursive mode, we are done.
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_MEM_FINDNSEC3_COVER).
+                    arg(name).arg(*covering_proof);
                 return (FindNSEC3Result(false, labels, covering_proof,
                                         ConstRRsetPtr()));
             }
         } else {                // found an exact match.
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_MEM_FINDNSEC3_MATCH).arg(name).arg(labels).
+                    arg(*found->second);
             return (FindNSEC3Result(true, labels, found->second,
                                     covering_proof));
         }
