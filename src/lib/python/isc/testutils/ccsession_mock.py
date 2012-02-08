@@ -14,13 +14,21 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 class MockModuleCCSession():
+    """Fake ModuleCCSession with a minimal implementation as needed by the
+       tests. Currently this module only stores whether some methods have
+       been called on it (send_stopping(), and close())"""
     def __init__(self):
-        self.started = False
+        """Will be set to True when send_stopping() is called"""
         self.stopped = False
+        """Will be set to True when close() is called"""
         self.closed = False
 
     def send_stopping(self):
+        """Fake send_stopping() call. No message is sent, but only stores
+           that this method has been called."""
         self.stopped = True
 
     def close(self):
+        """Fake close() call. Nothing is closed, but only stores
+           that this method has been called."""
         self.closed = True

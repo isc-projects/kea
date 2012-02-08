@@ -683,8 +683,7 @@ class BoB:
         # is stopping. Since everything will be stopped shortly, this is not
         # really necessary, but this is done to reflect that boss is also
         # 'just' a module.
-        if self.ccs is not None:
-            self.ccs.send_stopping()
+        self.ccs.send_stopping()
 
         # try using the BIND 10 request to stop
         try:
