@@ -178,13 +178,13 @@ public:
     /// To understand the modes better:
     /// - If mode is DONT_SHARE, it succeeds if no one else has opened an FD
     ///   for requested protocol, address and port.
-    /// - If mode is SHARE_SAME, it succeeds if all applications who opened a
+    /// - If mode is SHARE_SAME, it succeeds if all applications who opened an
     ///   FD for the requested protocol, address and port provided the same
     ///   share_name as this one and none of them had mode DONT_SHARE.
     /// - If mode is SHARE_ANY, it succeeds if no applications who requested
     ///   the same potocol, address and port provided DONT_SHARE and all the
     ///   applications who provided SHARE_SAME also provided the same
-    ///   share_name as we.
+    ///   share_name as this process did.
     ///
     /// \throw InvalidParameter protocol or share_mode is invalid
     /// \throw CCSessionError when we have a problem talking over the CC
