@@ -1804,11 +1804,13 @@ TEST_F(QueryTest, dsAtGrandParent) {
                   ns_addrs_and_sig_txt.c_str());
 }
 
-// DS query for a "grandchild" zone, and the server has authority of the
-// child zone, too.  In this case the query should be handled in the child
-// side and should result in no data with SOA.
+// DS query sent to a "grandparent" server that also has authority for the
+// child zone.  In this case the query should be handled in the child
+// side and should result in no data with SOA.  Note that the server doesn't
+// have authority for the "parent".  Unlike the dsAboveDelegation test case
+// the query should be handled in the child zone, not in the grandparent.
 TEST_F(QueryTest, dsAtGrandParentAndChild) {
-    // Pretending to have authority for the grandchild zone, too.
+    // Pretending to have authority for the child zone, too.
     const Name childname("grand.delegation.example.com");
     memory_client.addZone(ZoneFinderPtr(
                               new AlternateZoneFinder(childname)));
