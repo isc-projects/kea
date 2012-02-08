@@ -31,6 +31,7 @@ import imp
 import stats
 import isc.cc.session
 from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown
+from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestUtilties(unittest.TestCase):
     items = [
@@ -201,7 +202,10 @@ class TestStats(unittest.TestCase):
         self.assertEqual(send_command("status", "Stats"),
                 (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
         self.assertTrue(self.stats.running)
+        # Override moduleCCSession so we can check if send_stopping is called
+        self.stats.mccs = MockModuleCCSession()
         self.assertEqual(send_shutdown("Stats"), (0, None))
+        self.assertTrue(self.stats.mccs.stopped)
         self.assertFalse(self.stats.running)
         self.stats_server.shutdown()
 

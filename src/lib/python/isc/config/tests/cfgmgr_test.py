@@ -240,9 +240,6 @@ class TestConfigManager(unittest.TestCase):
 
     def test_read_config(self):
         self.assertEqual(self.cm.config.data, {'version': config_data.BIND10_CONFIG_DATA_VERSION})
-        self.cm.read_config()
-        # due to what get written, the value here is what the last set_config command in test_handle_msg does
-        self.assertEqual(self.cm.config.data, {'TestModule': {'test': 125}, 'version': config_data.BIND10_CONFIG_DATA_VERSION})
         self.cm.data_path = "/no_such_path"
         self.cm.read_config()
         self.assertEqual(self.cm.config.data, {'version': config_data.BIND10_CONFIG_DATA_VERSION})
@@ -255,115 +252,174 @@ class TestConfigManager(unittest.TestCase):
         answer = self.cm.handle_msg(msg)
         self.assertEqual(expected_answer, answer)
 
-    def test_handle_msg(self):
-        self._handle_msg_helper({}, { 'result': [ 1, 'Unknown message format: {}']})
-        self._handle_msg_helper("", { 'result': [ 1, 'Unknown message format: ']})
-        self._handle_msg_helper({ "command": [ "badcommand" ] }, { 'result': [ 1, "Unknown command: badcommand"]})
-        self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, {} ]})
-        self._handle_msg_helper({ "command": [ "get_statistics_spec" ] }, { 'result': [ 0, {} ]})
-        self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, {} ]})
-        self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "Spec2" } ] }, { 'result': [ 0, {} ]})
-        #self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "nosuchmodule" } ] },
-        #                        {'result': [1, 'No specification for module nosuchmodule']})
+    def test_handle_msg_basic_commands(self):
+        # Some basic commands, where not much interaction happens, just
+        # check the result
+        self._handle_msg_helper({},
+            { 'result': [ 1, 'Unknown message format: {}']})
+        self._handle_msg_helper("",
+            { 'result': [ 1, 'Unknown message format: ']})
+        self._handle_msg_helper({ "command": [ "badcommand" ] },
+            { 'result': [ 1, "Unknown command: badcommand"]})
+        self._handle_msg_helper({ "command": [ "get_commands_spec" ] },
+                                { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_statistics_spec" ] },
+                                { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_module_spec" ] },
+                                { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_module_spec",
+                                               { "module_name": "Spec2" } ] },
+                                { 'result': [ 0, {} ]})
         self._handle_msg_helper({ "command": [ "get_module_spec", 1 ] },
-                                {'result': [1, 'Bad get_module_spec command, argument not a dict']})
+                                {'result': [1, 'Bad get_module_spec command, '+
+                                               'argument not a dict']})
         self._handle_msg_helper({ "command": [ "get_module_spec", { } ] },
-                                {'result': [1, 'Bad module_name in get_module_spec command']})
-        self._handle_msg_helper({ "command": [ "get_config" ] }, { 'result': [ 0, { 'version': config_data.BIND10_CONFIG_DATA_VERSION } ]})
-        self._handle_msg_helper({ "command": [ "get_config", { "module_name": "nosuchmodule" } ] },
-                                {'result': [0, { 'version': config_data.BIND10_CONFIG_DATA_VERSION }]})
+                                {'result': [1, 'Bad module_name in '+
+                                               'get_module_spec command']})
+        self._handle_msg_helper({ "command": [ "get_config" ] },
+                                { 'result': [ 0, { 'version':
+                                    config_data.BIND10_CONFIG_DATA_VERSION }]})
+        self._handle_msg_helper({ "command": [ "get_config",
+                                    { "module_name": "nosuchmodule" } ] },
+                                {'result': [0, { 'version':
+                                    config_data.BIND10_CONFIG_DATA_VERSION }]})
         self._handle_msg_helper({ "command": [ "get_config", 1 ] },
-                                {'result': [1, 'Bad get_config command, argument not a dict']})
+                                {'result': [1, 'Bad get_config command, '+
+                                               'argument not a dict']})
         self._handle_msg_helper({ "command": [ "get_config", { } ] },
-                                {'result': [1, 'Bad module_name in get_config command']})
+                                {'result': [1, 'Bad module_name in '+
+                                               'get_config command']})
         self._handle_msg_helper({ "command": [ "set_config" ] },
                                 {'result': [1, 'Wrong number of arguments']})
         self._handle_msg_helper({ "command": [ "set_config", [{}]] },
                                 {'result': [0]})
+
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
-        # the targets of some of these tests expect specific answers, put
-        # those in our fake msgq first.
+    def test_handle_msg_module_and_stats_commands(self):
+        self._handle_msg_helper({ "command":
+                                  ["module_spec", self.spec.get_full_spec()]
+                                },
+                                {'result': [0]})
+        # There should be a message on the queue about the 'new' Spec2 module
+        # from ConfigManager to Cmdctl, containing its name and full
+        # specification
+        self.assertEqual(ccsession.create_command(
+                            ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
+                            [ self.spec.get_module_name(),
+                              self.spec.get_full_spec()]),
+                         self.fake_session.get_message("Cmdctl", None))
+
+        self._handle_msg_helper({ "command": [ "module_spec", { 'foo': 1 } ] },
+                                {'result': [1, 'Error in data definition: no '+
+                                               'module_name in module_spec']})
+
+        self._handle_msg_helper({ "command": [ "get_module_spec" ] },
+                                { 'result': [ 0, { self.spec.get_module_name():
+                                                 self.spec.get_full_spec() } ]})
+        self._handle_msg_helper({ "command": [ "get_module_spec",
+                                               { "module_name" : "Spec2" } ] },
+                                { 'result': [ 0, self.spec.get_full_spec() ] })
+        self._handle_msg_helper({ "command": [ "get_commands_spec" ] },
+                                { 'result': [ 0, { self.spec.get_module_name():
+                                              self.spec.get_commands_spec()}]})
+        self._handle_msg_helper({ "command": [ "get_statistics_spec" ] },
+                                { 'result': [ 0, { self.spec.get_module_name():
+                                             self.spec.get_statistics_spec()}]})
+
+
+    def __test_handle_msg_update_config_helper(self, new_config):
+        # Helper function for the common pattern in
+        # test_handle_msg_update_config; send 'set config', check for
+        # update message, check if config has indeed been updated
+
         my_ok_answer = { 'result': [ 0 ] }
-
-
         # Send the 'ok' that cfgmgr expects back to the fake queue first
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        # then send the command
-        self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 123 }] ] },
+
+        self._handle_msg_helper({ "command": [ "set_config",
+                                               [self.name, new_config] ] },
                                 my_ok_answer)
-        # The cfgmgr should have eaten the ok message, and sent out an update again
+
+        # The cfgmgr should have eaten the ok message, and sent out an update
+        # message
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'command': [ 'config_update', {'test': 123}]},
+        self.assertEqual({'command': [ 'config_update', new_config]},
                          self.fake_session.get_message(self.name, None))
+
+        # Config should have been updated
+        self.assertEqual(self.cm.config.data, {self.name: new_config,
+                            'version': config_data.BIND10_CONFIG_DATA_VERSION})
+
         # and the queue should now be empty again
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
-        # below are variations of the theme above
-        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 124 }] ] },
-                                my_ok_answer)
-        self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'command': [ 'config_update', {'test': 124}]},
-                         self.fake_session.get_message(self.name, None))
-        self.assertEqual(len(self.fake_session.message_queue), 0)
+    def test_handle_msg_update_config(self):
+        # Update the configuration and check results a few times
+        # only work the first time
+        self.__test_handle_msg_update_config_helper({ "test": 123 })
 
+        self.__test_handle_msg_update_config_helper({ "test": 124 })
 
-        # This is the last 'succes' one, the value set here is what test_read_config expects
-        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
-                                my_ok_answer )
-        self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
-                         self.fake_session.get_message(self.name, None))
-        self.assertEqual(len(self.fake_session.message_queue), 0)
+        self.__test_handle_msg_update_config_helper({ "test": 125 })
 
-        my_bad_answer = { 'result': [1, "bad_answer"] }
+        self.__test_handle_msg_update_config_helper({ "test": 126 })
+
+        # Now send an error result (i.e. config not accepted)
+        my_bad_answer = { 'result': [1, "bad config"] }
         self.fake_session.group_sendmsg(my_bad_answer, "ConfigManager")
-        self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
+        self._handle_msg_helper({ "command": [ "set_config",
+                                               [self.name, { "test": 127 }] ] },
                                 my_bad_answer )
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
+        self.assertEqual({'command': [ 'config_update', {'test': 127}]},
                          self.fake_session.get_message(self.name, None))
+        # Config should not be updated due to the error
+        self.cm.read_config()
+        self.assertEqual(self.cm.config.data, { self.name: {'test': 126},
+                            'version': config_data.BIND10_CONFIG_DATA_VERSION})
+
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
         self.fake_session.group_sendmsg(None, 'ConfigManager')
         self._handle_msg_helper({ "command": [ "set_config", [ ] ] },
                                 {'result': [1, 'Wrong number of arguments']} )
-        self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
-                                { 'result': [1, 'No answer message from TestModule']} )
+        self._handle_msg_helper({ "command": [ "set_config",
+                                               [ self.name, { "test": 128 }]]},
+                                { 'result': [1, 'No answer message '+
+                                                'from TestModule']} )
 
-        #self.assertEqual(len(self.fake_session.message_queue), 1)
-        #self.assertEqual({'config_update': {'test': 124}},
-        #                 self.fake_session.get_message(self.name, None))
-        #self.assertEqual({'version': 1, 'TestModule': {'test': 124}}, self.cm.config.data)
-        #
+        # This command should leave a message to the TestModule to update its
+        # configuration (since the TestModule did not eat it)
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual(
+            ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
+                                     { "test": 128 }),
+            self.fake_session.get_message("TestModule", None))
+
+        # Make sure queue is empty now
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        # Shutdown should result in 'ok' answer
+        self._handle_msg_helper({ "command":
+                                  ["shutdown"]
+                                },
+                                {'result': [0]})
+
+    def test_stopping_message(self):
+        # Update the system by announcing this module
         self._handle_msg_helper({ "command":
                                   ["module_spec", self.spec.get_full_spec()]
                                 },
                                 {'result': [0]})
-        self._handle_msg_helper({ "command": [ "module_spec", { 'foo': 1 } ] },
-                                {'result': [1, 'Error in data definition: no module_name in module_spec']})
-        self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_full_spec() } ]})
-        self._handle_msg_helper({ "command": [ "get_module_spec",
-                                               { "module_name" : "Spec2" } ] },
-                                { 'result': [ 0, self.spec.get_full_spec() ] })
-        self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_commands_spec() } ]})
-        self._handle_msg_helper({ "command": [ "get_statistics_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_statistics_spec() } ]})
-        # re-add this once we have new way to propagate spec changes (1 instead of the current 2 messages)
-        #self.assertEqual(len(self.fake_session.message_queue), 2)
-        # the name here is actually wrong (and hardcoded), but needed in the current version
-        # TODO: fix that
-        #self.assertEqual({'specification_update': [ self.name, self.spec ] },
-        #                 self.fake_session.get_message("Cmdctl", None))
-        #self.assertEqual({'commands_update': [ self.name, self.commands ] },
-        #                 self.fake_session.get_message("Cmdctl", None))
-        # drop the two messages for now
-        self.assertEqual(len(self.fake_session.message_queue), 2)
-        self.fake_session.get_message("Cmdctl", None)
-        self.fake_session.get_message("TestModule", None)
 
-        self.assertEqual(len(self.fake_session.message_queue), 0)
+        # This causes a update to be sent from the ConfigManager to the CmdCtl
+        # channel, containing the new module's name and full specification
+        self.assertEqual(ccsession.create_command(
+                            ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
+                            [ self.spec.get_module_name(),
+                              self.spec.get_full_spec()]),
+                         self.fake_session.get_message("Cmdctl", None))
 
         # A stopping message should get no response, but should cause another
         # message to be sent, if it is a known module
@@ -375,17 +431,20 @@ class TestConfigManager(unittest.TestCase):
                                        ['Spec2', None] ] },
                          self.fake_session.get_message("Cmdctl", None))
 
-        # but not if it is either unknown or not running
+        # but if the 'stopping' module is either unknown or not running,
+        # no followup message should be sent
         self._handle_msg_helper({ "command":
                                   [ "stopping",
                                     { "module_name": "NoSuchModule" } ] },
                                 None)
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
-        self._handle_msg_helper({ "command":
-                                  ["shutdown"]
-                                },
-                                {'result': [0]})
+        # If the module does not exist, or is not seen as 'running', the
+        # same message should not cause new messages to be sent
+        self._handle_msg_helper({ "command": [ "stopping",
+                                               { "module_name": "Foo"}] },
+                                None)
+        self.assertEqual(len(self.fake_session.message_queue), 0)
 
     def test_set_config_virtual(self):
         """Test that if the module is virtual, we don't send it over the

@@ -315,8 +315,13 @@ class CommandControl():
             # set it. If it is None, delete the module if it is
             # known (and ignore otherwise).
             with self._lock:
-                if args[1] is None and args[0] in self.modules_spec:
-                    del self.modules_spec[args[0]]
+                if args[1] is None:
+                    if args[0] in self.modules_spec:
+                        del self.modules_spec[args[0]]
+                    else:
+                        answer = ccsession.create_answer(1,
+                                                         'No such module: ' +
+                                                         args[0])
                 else:
                     self.modules_spec[args[0]] = args[1]
 

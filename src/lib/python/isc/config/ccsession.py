@@ -429,11 +429,15 @@ class UIModuleCCSession(MultiConfigData):
            passed must have send_GET and send_POST functions"""
         MultiConfigData.__init__(self)
         self._conn = conn
-        self.request_specifications()
-        self.request_current_config()
+        self.update_specs_and_config()
 
     def request_specifications(self):
-        """Request the module specifications from b10-cmdctl"""
+        """Clears the current list of specifications, and requests a new
+            list from b10-cmdctl. As other actions may have caused modules
+            to be stopped, or new modules to be added, this is expected to
+            be run after each interaction (at this moment). It is usually
+            also combined with request_current_config(). For that reason,
+            we provide update_specs_and_config() which calls both."""
         # this step should be unnecessary but is the current way cmdctl returns stuff
         # so changes are needed there to make this clean (we need a command to simply get the
         # full specs for everything, including commands etc, not separate gets for that)
@@ -442,17 +446,23 @@ class UIModuleCCSession(MultiConfigData):
         for module in specs.keys():
             self.set_specification(isc.config.ModuleSpec(specs[module]))
 
-    def update_specs_and_config(self):
-        self.request_specifications()
-        self.request_current_config()
-
     def request_current_config(self):
         """Requests the current configuration from the configuration
-           manager through b10-cmdctl, and stores those as CURRENT"""
+           manager through b10-cmdctl, and stores those as CURRENT. This
+           does not modify any local changes, it just updates to the current
+           state of the server itself."""
         config = self._conn.send_GET('/config_data')
         if 'version' not in config or config['version'] != BIND10_CONFIG_DATA_VERSION:
             raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
+
+    def update_specs_and_config(self):
+        """Convenience function to both clear and update the known list of
+           module specifications, and update the current configuration on
+           the server side. There are a few cases where the caller might only
+           want to run one of these tasks, but often they are both needed."""
+        self.request_specifications()
+        self.request_current_config()
 
     def _add_value_to_list(self, identifier, value, module_spec):
         cur_list, status = self.get_value(identifier)
@@ -602,7 +612,7 @@ class UIModuleCCSession(MultiConfigData):
             # answer is either an empty dict (on success), or one
             # containing errors
             if answer == {}:
-                self.request_current_config()
+                self.update_specs_and_config()
                 self.clear_local_changes()
             elif "error" in answer:
                 raise ModuleCCSessionError("Error: " + str(answer["error"]) + "\n" + "Configuration not committed")
