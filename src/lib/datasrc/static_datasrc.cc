@@ -76,6 +76,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors->addRdata(generic::TXT("Han Feng"));
     authors->addRdata(generic::TXT("Jelte Jansen"));
     authors->addRdata(generic::TXT("Jeremy C. Reed")); 
+    authors->addRdata(generic::TXT("Xie Jiagui")); // Kevin Tes
     authors->addRdata(generic::TXT("Jin Jian"));
     authors->addRdata(generic::TXT("JINMEI Tatuya"));
     authors->addRdata(generic::TXT("Kazunori Fujiwara"));

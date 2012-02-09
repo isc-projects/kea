@@ -36,6 +36,7 @@ import isc.bind10.socket_cache
 import errno
 
 from isc.testutils.parse_args import TestOptParser, OptsError
+from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -1171,8 +1172,12 @@ class TestBossComponents(unittest.TestCase):
         bob._component_configurator.shutdown = self.__nullary_hook
         self.__called = False
 
+        bob.ccs = MockModuleCCSession()
+        self.assertFalse(bob.ccs.stopped)
+
         bob.shutdown()
 
+        self.assertTrue(bob.ccs.stopped)
         self.assertEqual([False, True], killed)
         self.assertTrue(self.__called)
 

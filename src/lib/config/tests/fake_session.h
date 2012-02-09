@@ -87,6 +87,14 @@ public:
     isc::data::ElementPtr getMessages() { return (messages_); }
     isc::data::ElementPtr getMsgQueue() { return (msg_queue_); }
 
+    /// Throw exception on sendmsg()
+    ///
+    /// When set to true, and sendmsg() is later called, this
+    /// will throw isc::Exception
+    ///
+    /// \param value If true, enable throw. If false, disable it
+    void setThrowOnSend(bool value) { throw_on_send_ = value; }
+
 private:
     bool recvmsg(isc::data::ConstElementPtr& msg,
                  bool nonblock = true, int seq = -1);
@@ -98,6 +106,7 @@ private:
     isc::data::ElementPtr subscriptions_;
     isc::data::ElementPtr msg_queue_;
     bool started_;
+    bool throw_on_send_;
 };
 } // namespace cc
 } // namespace isc
