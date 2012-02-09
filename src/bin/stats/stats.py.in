@@ -184,8 +184,11 @@ class Stats:
             raise StatsError("stats spec file is incorrect: "
                              + ", ".join(errors))
 
-        while self.running:
-            self.mccs.check_command(False)
+        try:
+            while self.running:
+                self.mccs.check_command(False)
+        finally:
+            self.mccs.send_stopping()
 
     def config_handler(self, new_config):
         """

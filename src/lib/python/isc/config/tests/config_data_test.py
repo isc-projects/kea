@@ -312,6 +312,16 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd.remove_specification(module_spec.get_module_name())
         self.assertFalse(self.mcd.have_specification(module_spec.get_module_name()))
 
+    def test_clear_specifications(self):
+        self.assertEqual(0, len(self.mcd._specifications))
+        module_spec = isc.config.module_spec_from_file(self.data_path +
+                                                       os.sep +
+                                                       "spec1.spec")
+        self.mcd.set_specification(module_spec)
+        self.assertEqual(1, len(self.mcd._specifications))
+        self.mcd.clear_specifications()
+        self.assertEqual(0, len(self.mcd._specifications))
+
     def test_get_module_spec(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
         self.mcd.set_specification(module_spec)
