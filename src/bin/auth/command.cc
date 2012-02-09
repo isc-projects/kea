@@ -116,8 +116,8 @@ public:
         if (args && args->getType() ==
             isc::data::Element::map && args->contains("pid")) {
             // If it is, we check it is the same as our PID
-            int pid(args->get("pid")->intValue());
-            pid_t my_pid(getpid());
+            const int pid(args->get("pid")->intValue());
+            const pid_t my_pid(getpid());
             if (my_pid != pid) {
                 // It is not for us
                 return;
