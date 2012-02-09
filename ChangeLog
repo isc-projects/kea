@@ -1,3 +1,11 @@
+375.	[func]      jelte
+	Modules now inform the system when they are stopping. As a result, they
+	are removed from the 'active modules' list in bindctl, which can then
+	inform the user directly when it tries to send them a command or
+	configuration update. Previously this would result in a 'not responding'
+	error instead of 'not running'.
+	(Trac #640, git 17e78fa1bb1227340aa9815e91ed5c50d174425d)
+
 374.	[func]*     stephen
 	Alter RRsetPtr and ConstRRsetPtr to point to AbstractRRset (instead
 	of RRset) to allow for specialised implementations of RRsets in
