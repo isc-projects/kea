@@ -490,20 +490,14 @@ ModuleCCSession::ModuleCCSession(
 }
 
 ModuleCCSession::~ModuleCCSession() {
-    // Logging itself can possibly throw too
-    // TODO: add exception-free logging calls
     try {
-        try {
-            sendStopping();
-        } catch (const std::exception& exc) {
-            LOG_ERROR(config_logger,
-                      CONFIG_CCSESSION_STOPPING).arg(exc.what());
-        } catch (...) {
-            LOG_ERROR(config_logger,
-                      CONFIG_CCSESSION_STOPPING_UNKNOWN);
-        }
+        sendStopping();
+    } catch (const std::exception& exc) {
+        LOG_ERROR(config_logger,
+                  CONFIG_CCSESSION_STOPPING).arg(exc.what());
     } catch (...) {
-        // Can't really do anything at this point...
+        LOG_ERROR(config_logger,
+                  CONFIG_CCSESSION_STOPPING_UNKNOWN);
     }
 };
 
