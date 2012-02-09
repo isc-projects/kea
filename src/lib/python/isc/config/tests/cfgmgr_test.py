@@ -337,8 +337,10 @@ class TestConfigManager(unittest.TestCase):
         # Send the 'ok' that cfgmgr expects back to the fake queue first
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
 
+        config_version = config_data.BIND10_CONFIG_DATA_VERSION
         self._handle_msg_helper({ "command": [ "set_config",
-                                               [self.name, new_config] ] },
+                                               [ { "version": config_version,
+                                                 self.name: new_config } ] ] },
                                 my_ok_answer)
 
         # The cfgmgr should have eaten the ok message, and sent out an update
@@ -349,7 +351,7 @@ class TestConfigManager(unittest.TestCase):
 
         # Config should have been updated
         self.assertEqual(self.cm.config.data, {self.name: new_config,
-                            'version': config_data.BIND10_CONFIG_DATA_VERSION})
+                            'version': config_version})
 
         # and the queue should now be empty again
         self.assertEqual(len(self.fake_session.message_queue), 0)
@@ -436,13 +438,6 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command":
                                   [ "stopping",
                                     { "module_name": "NoSuchModule" } ] },
-                                None)
-        self.assertEqual(len(self.fake_session.message_queue), 0)
-
-        # If the module does not exist, or is not seen as 'running', the
-        # same message should not cause new messages to be sent
-        self._handle_msg_helper({ "command": [ "stopping",
-                                               { "module_name": "Foo"}] },
                                 None)
         self.assertEqual(len(self.fake_session.message_queue), 0)
 

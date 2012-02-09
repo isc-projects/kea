@@ -313,7 +313,7 @@ class CommandControl():
             # The 'value' of a specification update can be either
             # a specification, or None. In the first case, simply
             # set it. If it is None, delete the module if it is
-            # known (and ignore otherwise).
+            # known.
             with self._lock:
                 if args[1] is None:
                     if args[0] in self.modules_spec:
