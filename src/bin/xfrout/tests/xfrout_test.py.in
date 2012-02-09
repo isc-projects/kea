@@ -1437,6 +1437,8 @@ class MyXfroutServer(XfroutServer):
         self._shutdown_event = threading.Event()
         self._notifier = MyNotifier()
         self._unix_socket_server = None
+        # Disable the wait for threads
+        self._wait_for_threads = lambda : None
 
 class TestXfroutServer(unittest.TestCase):
     def setUp(self):
