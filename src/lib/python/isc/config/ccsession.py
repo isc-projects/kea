@@ -438,9 +438,6 @@ class UIModuleCCSession(MultiConfigData):
             be run after each interaction (at this moment). It is usually
             also combined with request_current_config(). For that reason,
             we provide update_specs_and_config() which calls both."""
-        # this step should be unnecessary but is the current way cmdctl returns stuff
-        # so changes are needed there to make this clean (we need a command to simply get the
-        # full specs for everything, including commands etc, not separate gets for that)
         specs = self._conn.send_GET('/module_spec')
         self.clear_specifications()
         for module in specs.keys():
@@ -612,7 +609,6 @@ class UIModuleCCSession(MultiConfigData):
             # answer is either an empty dict (on success), or one
             # containing errors
             if answer == {}:
-                self.update_specs_and_config()
                 self.clear_local_changes()
             elif "error" in answer:
                 raise ModuleCCSessionError("Error: " + str(answer["error"]) + "\n" + "Configuration not committed")
