@@ -20,6 +20,7 @@ import socket
 import sys
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
+from isc.testutils.ccsession_mock import MockModuleCCSession
 from isc.testutils.rrset_utils import *
 from xfrin import *
 import xfrin
@@ -105,7 +106,7 @@ class XfrinTestException(Exception):
 class XfrinTestTimeoutException(Exception):
     pass
 
-class MockCC():
+class MockCC(MockModuleCCSession):
     def get_default_value(self, identifier):
         # The returned values should be identical to the spec file
         # XXX: these should be retrieved from the spec file
@@ -2052,7 +2053,9 @@ class TestXfrin(unittest.TestCase):
         self.args['tsig_key'] = ''
 
     def tearDown(self):
+        self.assertFalse(self.xfr._module_cc.stopped);
         self.xfr.shutdown()
+        self.assertTrue(self.xfr._module_cc.stopped);
         sys.stderr= self.stderr_backup
 
     def _do_parse_zone_name_class(self):
