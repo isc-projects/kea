@@ -52,11 +52,23 @@ namespace {
 // dns::masterLoad().  Some of the RRs are also used as the expected
 // data in specific tests, in which case they are referenced via specific
 // local variables (such as soa_txt).
-const char* const soa_txt = "example.com. 3600 IN SOA . . 0 0 0 0 0\n";
+//
+// For readability consistency, all strings are placed in a separate line,
+// even if they are very short and can reasonably fit in a single line with
+// the corresponding variable.  For example, we write
+// const char* const foo_txt =
+//  "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
+// instead of
+// const char* const foo_txt = "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
+const char* const soa_txt =
+    "example.com. 3600 IN SOA . . 0 0 0 0 0\n";
 const char* const zone_ns_txt =
     "example.com. 3600 IN NS glue.delegation.example.com.\n"
     "example.com. 3600 IN NS noglue.example.com.\n"
     "example.com. 3600 IN NS example.net.\n";
+const char* const zone_ds_txt =
+    "example.com. 3600 IN DS 57855 5 1 "
+        "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
 const char* const ns_addrs_txt =
     "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
     "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n"
@@ -66,11 +78,16 @@ const char* const delegation_txt =
     "delegation.example.com. 3600 IN NS noglue.example.com.\n"
     "delegation.example.com. 3600 IN NS cname.example.com.\n"
     "delegation.example.com. 3600 IN NS example.org.\n";
+// Borrowed from the RFC4035
+const char* const delegation_ds_txt =
+    "delegation.example.com. 3600 IN DS 57855 5 1 "
+        "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
 const char* const mx_txt =
     "mx.example.com. 3600 IN MX 10 www.example.com.\n"
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
     "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
-const char* const www_a_txt = "www.example.com. 3600 IN A 192.0.2.80\n";
+const char* const www_a_txt =
+    "www.example.com. 3600 IN A 192.0.2.80\n";
 const char* const cname_txt =
     "cname.example.com. 3600 IN CNAME www.example.com.\n";
 const char* const cname_nxdom_txt =
@@ -95,13 +112,15 @@ const char* const other_zone_rrs =
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
 // Wildcards
-const char* const wild_txt = "*.wild.example.com. 3600 IN A 192.0.2.7\n";
+const char* const wild_txt =
+    "*.wild.example.com. 3600 IN A 192.0.2.7\n";
 const char* const nsec_wild_txt =
     "*.wild.example.com. 3600 IN NSEC www.example.com. A NSEC RRSIG\n";
 const char* const cnamewild_txt =
     "*.cnamewild.example.com. 3600 IN CNAME www.example.org.\n";
-const char* const nsec_cnamewild_txt = "*.cnamewild.example.com. "
-    "3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG\n";
+const char* const nsec_cnamewild_txt =
+    "*.cnamewild.example.com. 3600 IN NSEC "
+    "delegation.example.com. CNAME NSEC RRSIG\n";
 // Wildcard_nxrrset
 const char* const wild_txt_nxrrset =
     "*.uwild.example.com. 3600 IN A 192.0.2.9\n";
@@ -112,10 +131,12 @@ const char* const wild_txt_next =
 const char* const nsec_wild_txt_next =
     "www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG\n";
 // Wildcard empty
-const char* const empty_txt = "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
+const char* const empty_txt =
+    "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
 const char* const nsec_empty_txt =
     "b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG\n";
-const char* const empty_prev_txt = "t.example.com. 3600 IN A 192.0.2.15\n";
+const char* const empty_prev_txt =
+    "t.example.com. 3600 IN A 192.0.2.15\n";
 const char* const nsec_empty_prev_txt =
     "t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG\n";
 // Used in NXDOMAIN proof test.  We are going to test some unusual case where
@@ -153,7 +174,8 @@ const char* const nsec_www_txt =
     "www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG\n";
 
 // Authoritative data without NSEC
-const char* const nonsec_a_txt = "nonsec.example.com. 3600 IN A 192.0.2.0\n";
+const char* const nonsec_a_txt =
+    "nonsec.example.com. 3600 IN A 192.0.2.0\n";
 
 // NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
 const char* const nsec3_apex_txt =
@@ -195,13 +217,34 @@ getCommonRRSIGText(const string& type) {
                    "example.com. FAKEFAKEFAKE"));
 }
 
+// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
+void
+setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
+    *(*it) = rrset;
+    ++it;
+}
+
+// A helper function that converts a textual form of a single RR into a
+// RRsetPtr object.  If it's SOA, origin must be set to its owner name;
+// otherwise masterLoad() will reject it.
+RRsetPtr
+textToRRset(const string& text_rrset, const Name& origin = Name::ROOT_NAME()) {
+    stringstream ss(text_rrset);
+    RRsetPtr rrset;
+    vector<RRsetPtr*> rrsets;
+    rrsets.push_back(&rrset);
+    masterLoad(ss, origin, RRClass::IN(),
+               boost::bind(setRRset, _1, rrsets.begin()));
+    return (rrset);
+}
+
 // This is a mock Zone Finder class for testing.
 // It is a derived class of ZoneFinder for the convenient of tests.
 // Its find() method emulates the common behavior of protocol compliant
 // ZoneFinder classes, but simplifies some minor cases and also supports broken
 // behavior.
-// For simplicity, most names are assumed to be "in zone"; there's only
-// one zone cut at the point of name "delegation.example.com".
+// For simplicity, most names are assumed to be "in zone"; delegations
+// to child zones are identified by the existence of non origin NS records.
 // Another special name is "dname.example.com".  Query names under this name
 // will result in DNAME.
 // This mock zone doesn't handle empty non terminal nodes (if we need to test
@@ -210,10 +253,7 @@ class MockZoneFinder : public ZoneFinder {
 public:
     MockZoneFinder() :
         origin_(Name("example.com")),
-        delegation_name_("delegation.example.com"),
-        signed_delegation_name_("signed-delegation.example.com"),
         bad_signed_delegation_name_("bad-delegation.example.com"),
-        unsigned_delegation_name_("unsigned-delegation.example.com"),
         dname_name_("dname.example.com"),
         has_SOA_(true),
         has_apex_NS_(true),
@@ -224,8 +264,8 @@ public:
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << mx_txt << www_a_txt << cname_txt <<
-            cname_nxdom_txt << cname_out_txt << dname_txt <<
+            delegation_txt << delegation_ds_txt << mx_txt << www_a_txt <<
+            cname_txt << cname_nxdom_txt << cname_out_txt << dname_txt <<
             dname_a_txt << other_zone_rrs << no_txt << nz_txt <<
             nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
             nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt <<
@@ -297,24 +337,47 @@ public:
     // answers when DNSSEC is required.
     void setNSEC3Flag(bool on) { use_nsec3_ = on; }
 
-    Name findPreviousName(const Name&) const {
+    virtual Name findPreviousName(const Name&) const {
         isc_throw(isc::NotImplemented, "Mock doesn't support previous name");
+    }
+
+    // This method allows tests to insert new record in the middle of the test.
+    //
+    // \param record_txt textual RR representation of RR (such as soa_txt, etc)
+    void addRecord(const string& record_txt) {
+        stringstream record_stream;
+        record_stream << record_txt;
+        masterLoad(record_stream, origin_, rrclass_,
+                   boost::bind(&MockZoneFinder::loadRRset, this, _1));
     }
 
 public:
     // We allow the tests to use these for convenience
-    ConstRRsetPtr delegation_rrset_;
-    ConstRRsetPtr signed_delegation_rrset_;
-    ConstRRsetPtr signed_delegation_ds_rrset_;
-    ConstRRsetPtr bad_signed_delegation_rrset_;
-    ConstRRsetPtr unsigned_delegation_rrset_;
+    ConstRRsetPtr dname_rrset_; // could be used as an arbitrary bogus RRset
     ConstRRsetPtr empty_nsec_rrset_;
 
 private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
     typedef map<Name, RRsetStore> Domains;
     Domains domains_;
+    Domains delegations_;
     Domains nsec3_domains_;
+
+    // This is used to identify delegation to a child zone, and used to
+    // find a matching entry in delegations_.  Note that first found entry
+    // is returned, so it's not a longest match.  Test data must be set up
+    // to ensure the first match is always the longest match.
+    struct SubdomainMatch {
+        SubdomainMatch(const Name& name) : name_(name) {}
+        bool operator()(const pair<Name, RRsetStore>& domain_elem) const {
+            return (name_ == domain_elem.first ||
+                    name_.compare(domain_elem.first).getRelation() ==
+                    NameComparisonResult::SUBDOMAIN);
+        }
+    private:
+        const Name& name_;
+    };
+
     void loadRRset(RRsetPtr rrset) {
         if (rrset->getType() == RRType::NSEC3()) {
             // NSEC3 should go to the dedicated table
@@ -328,39 +391,24 @@ private:
             return;
         }
         domains_[rrset->getName()][rrset->getType()] = rrset;
-        if (rrset->getName() == delegation_name_ &&
-            rrset->getType() == RRType::NS()) {
-            delegation_rrset_ = rrset;
-        } else if (rrset->getName() == signed_delegation_name_ &&
-                   rrset->getType() == RRType::NS()) {
-            signed_delegation_rrset_ = rrset;
-        } else if (rrset->getName() == bad_signed_delegation_name_ &&
-                   rrset->getType() == RRType::NS()) {
-            bad_signed_delegation_rrset_ = rrset;
-        } else if (rrset->getName() == unsigned_delegation_name_ &&
-                   rrset->getType() == RRType::NS()) {
-            unsigned_delegation_rrset_ = rrset;
-        } else if (rrset->getName() == signed_delegation_name_ &&
-                   rrset->getType() == RRType::DS()) {
-            signed_delegation_ds_rrset_ = rrset;
-            // Like NSEC(3), by nature it should have an RRSIG.
-            rrset->addRRsig(RdataPtr(new generic::RRSIG(
-                                         getCommonRRSIGText(rrset->getType().
-                                                            toText()))));
+
+        // Remember delegation (NS/DNAME) related RRsets separately.
+        if (rrset->getType() == RRType::NS() && rrset->getName() != origin_) {
+            delegations_[rrset->getName()][rrset->getType()] = rrset;
         } else if (rrset->getName() == dname_name_ &&
-            rrset->getType() == RRType::DNAME()) {
+                   rrset->getType() == RRType::DNAME()) {
             dname_rrset_ = rrset;
-        // Add some signatures
-        } else if (rrset->getName() == Name("example.com.") &&
-                   rrset->getType() == RRType::NS()) {
-            // For NS, we only have RRSIG for the origin name.
-            rrset->addRRsig(RdataPtr(new generic::RRSIG(
-                                         getCommonRRSIGText("NS"))));
-        } else {
-            // For others generate RRSIG unconditionally.  Technically this
-            // is wrong because we shouldn't have it for names under a zone
-            // cut.  But in our tests that doesn't matter, so we add them
-            // just for simplicity.
+        }
+
+        // Add some signatures.  For NS, we only have RRSIG for the origin
+        // name. For others generate RRSIG unconditionally.  Technically this
+        // is wrong because we shouldn't have it for names under a zone
+        // cut.  But in our tests that doesn't matter, so we add them
+        // just for simplicity.
+        // Note that this includes RRSIG for DS with secure delegations.
+        // They should have RRSIGs, so that's actually expected data, not just
+        // for simplicity.
+        if (rrset->getType() != RRType::NS() || rrset->getName() == origin_) {
             rrset->addRRsig(RdataPtr(new generic::RRSIG(
                                          getCommonRRSIGText(rrset->getType().
                                                             toText()))));
@@ -369,14 +417,10 @@ private:
 
     const Name origin_;
     // Names where we delegate somewhere else
-    const Name delegation_name_;
-    const Name signed_delegation_name_;
     const Name bad_signed_delegation_name_;
-    const Name unsigned_delegation_name_;
     const Name dname_name_;
     bool has_SOA_;
     bool has_apex_NS_;
-    ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
     bool include_rrsig_anyway_;
     bool use_nsec3_;
@@ -482,40 +526,23 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         return (FindResult(NXDOMAIN, RRsetPtr()));
     }
 
-    // Special case for names on or under a zone cut
+    // Special case for names on or under a zone cut and under DNAME
+    Domains::iterator it;
     if ((options & FIND_GLUE_OK) == 0 &&
-        (name == delegation_name_ ||
-         name.compare(delegation_name_).getRelation() ==
-         NameComparisonResult::SUBDOMAIN)) {
-        return (FindResult(DELEGATION, delegation_rrset_));
-    // And under DNAME
+        (it = find_if(delegations_.begin(), delegations_.end(),
+                      SubdomainMatch(name))) != delegations_.end()) {
+        ConstRRsetPtr delegation_ns = it->second[RRType::NS()];
+        assert(delegation_ns); // should be ensured by how we construct it
+
+        // DS query for the delegated domain (i.e. an exact match) will be
+        // handled just like an in-zone case below.  Others result in
+        // DELEGATION.
+        if (type != RRType::DS() || it->first != name) {
+            return (FindResult(DELEGATION, delegation_ns));
+        }
     } else if (name.compare(dname_name_).getRelation() ==
-        NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DNAME, dname_rrset_));
-        }
-    } else if (name == signed_delegation_name_ ||
-               name.compare(signed_delegation_name_).getRelation() ==
                NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DELEGATION, signed_delegation_rrset_));
-        } else {
-            return (FindResult(SUCCESS, signed_delegation_ds_rrset_));
-        }
-    } else if (name == unsigned_delegation_name_ ||
-               name.compare(unsigned_delegation_name_).getRelation() ==
-               NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DELEGATION, unsigned_delegation_rrset_));
-        }
-    } else if (name == bad_signed_delegation_name_ ||
-               name.compare(bad_signed_delegation_name_).getRelation() ==
-               NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DELEGATION, bad_signed_delegation_rrset_));
-        } else {
-            return (FindResult(NXDOMAIN, RRsetPtr()));
-        }
+        return (FindResult(DNAME, dname_rrset_));
     }
 
     // normal cases.  names are searched for only per exact-match basis
@@ -554,7 +581,13 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             return (FindResult(CNAME, found_rrset->second));
         }
 
-        // Otherwise it's NXRRSET case.
+        // Otherwise it's NXRRSET case...
+        // ...but a special pathological case first:
+        if (found_domain->first == bad_signed_delegation_name_ &&
+            type == RRType::DS()) {
+            return (FindResult(NXDOMAIN, RRsetPtr()));
+        }
+        // normal cases follow.
         if ((options & FIND_DNSSEC) != 0) {
             if (use_nsec3_) {
                 return (FindResult(NXRRSET, RRsetPtr(), RESULT_NSEC3_SIGNED));
@@ -720,7 +753,14 @@ protected:
     QueryTest() :
         qname(Name("www.example.com")), qclass(RRClass::IN()),
         qtype(RRType::A()), response(Message::RENDER),
-        qid(response.getQid()), query_code(Opcode::QUERY().getCode())
+        qid(response.getQid()), query_code(Opcode::QUERY().getCode()),
+        ns_addrs_and_sig_txt(string(ns_addrs_txt) +
+                             "glue.delegation.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("A") + "\n" +
+                             "glue.delegation.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("AAAA") + "\n" +
+                             "noglue.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("A"))
     {
         response.setRcode(Rcode::NOERROR());
         response.setOpcode(Opcode::QUERY());
@@ -740,6 +780,7 @@ protected:
     Message response;
     const qid_t qid;
     const uint16_t query_code;
+    const string ns_addrs_and_sig_txt; // convenient shortcut
 };
 
 // A wrapper to check resulting response message commonly used in
@@ -812,10 +853,6 @@ TEST_F(QueryTest, dnssecPositive) {
     Query query(memory_client, qname, qtype, response, true);
     EXPECT_NO_THROW(query.process());
     // find match rrset
-    // We can't let responseCheck to check the additional section as well,
-    // it gets confused by the two RRs for glue.delegation.../RRSIG due
-    // to it's design and fixing it would be hard. Therefore we simply
-    // check manually this one time.
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
                   (www_a_txt + std::string("www.example.com. 3600 IN RRSIG "
                                            "A 5 3 3600 20000101000000 "
@@ -825,27 +862,8 @@ TEST_F(QueryTest, dnssecPositive) {
                                              "3 3600 20000101000000 "
                                              "20000201000000 12345 "
                                              "example.com. FAKEFAKEFAKE\n")).
-                  c_str(), NULL);
-    RRsetIterator iterator(response.beginSection(Message::SECTION_ADDITIONAL));
-    const char* additional[] = {
-        "glue.delegation.example.com. 3600 IN A 192.0.2.153\n",
-        "glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
-            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
-        "glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 "
-            "20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        "noglue.example.com. 3600 IN A 192.0.2.53\n",
-        "noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
-            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        NULL
-    };
-    for (const char** rr(additional); *rr != NULL; ++ rr) {
-        ASSERT_FALSE(iterator ==
-                     response.endSection(Message::SECTION_ADDITIONAL));
-        EXPECT_EQ(*rr, (*iterator)->toText());
-        iterator ++;
-    }
-    EXPECT_TRUE(iterator == response.endSection(Message::SECTION_ADDITIONAL));
+                  c_str(),
+                  ns_addrs_and_sig_txt.c_str());
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
@@ -1046,7 +1064,7 @@ TEST_F(QueryTest, nxdomainBadNSEC1) {
     // ZoneFinder::find() returns NXDOMAIN with non NSEC RR.
     mock_finder->setNSECResult(Name("badnsec.example.com"),
                                ZoneFinder::NXDOMAIN,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     EXPECT_THROW(Query(memory_client, Name("badnsec.example.com"), qtype,
                        response, true).process(),
                  std::bad_cast);
@@ -1066,7 +1084,7 @@ TEST_F(QueryTest, nxdomainBadNSEC3) {
     // "no-wildcard proof" returns SUCCESS.  it should be NXDOMAIN.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::SUCCESS,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
                        response, true).process(),
                  Query::BadNSEC);
@@ -1085,18 +1103,20 @@ TEST_F(QueryTest, nxdomainBadNSEC5) {
     // "no-wildcard proof" returns non NSEC.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::NXDOMAIN,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     // This is a bit odd, but we'll simply include the returned RRset.
     Query(memory_client, Name("nxdomain.example.com"), qtype,
           response, true).process();
-    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0,
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_txt) +
                          string("example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_nxdomain_txt) + "\n" +
                          string("noglue.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC") + "\n" +
-                         delegation_txt).c_str(),
+                         dname_txt + "\n" +
+                         string("dname.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("DNAME")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
 
@@ -1208,7 +1228,7 @@ TEST_F(QueryTest, badWildcardProof1) {
     // when NXDOMAIN is expected.
     mock_finder->setNSECResult(Name("www.wild.example.com"),
                                ZoneFinder::SUCCESS,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
                        RRType::A(), response, true).process(),
                  Query::BadNSEC);
@@ -1623,6 +1643,221 @@ TEST_F(QueryTest, findNSEC3) {
                mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
     nsec3Check(false, 4, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
+}
+
+// This tests that the DS is returned above the delegation point as
+// an authoritative answer, not a delegation. This is as described in
+// RFC 4035, section 3.1.4.1.
+
+// This mock finder is used for some DS-query tests to support the cases
+// where the query is expected to be handled in a different zone than our
+// main test zone, example.com.  Only limited methods are expected to called
+// (and for limited purposes) on this class object in these tests, which
+// are overridden below.
+class AlternateZoneFinder : public MockZoneFinder {
+public:
+    // This zone is expected not to have a DS by default and return NXRRSET
+    // for a DS query.  If have_ds is set to true on construction, it will
+    // return a faked DS answer.
+    AlternateZoneFinder(const Name& origin, bool have_ds = false) :
+        MockZoneFinder(), origin_(origin), have_ds_(have_ds)
+    {}
+    virtual isc::dns::Name getOrigin() const { return (origin_); }
+    virtual FindResult find(const isc::dns::Name&,
+                            const isc::dns::RRType& type,
+                            const FindOptions)
+    {
+        if (type == RRType::SOA()) {
+            RRsetPtr soa = textToRRset(origin_.toText() + " 3600 IN SOA . . "
+                                       "0 0 0 0 0\n", origin_);
+            soa->addRRsig(RdataPtr(new generic::RRSIG(
+                                       getCommonRRSIGText("SOA"))));
+            return (FindResult(SUCCESS, soa));
+        }
+        if (type == RRType::NS()) {
+            RRsetPtr ns = textToRRset(origin_.toText() + " 3600 IN NS " +
+                                      Name("ns").concatenate(origin_).toText());
+            ns->addRRsig(RdataPtr(new generic::RRSIG(
+                                      getCommonRRSIGText("NS"))));
+            return (FindResult(SUCCESS, ns));
+        }
+        if (type == RRType::DS()) {
+            if (have_ds_) {
+                RRsetPtr ds = textToRRset(origin_.toText() +
+                                          " 3600 IN DS 57855 5 1 " +
+                                          "49FD46E6C4B45C55D4AC69CBD"
+                                          "3CD34AC1AFE51DE");
+                ds->addRRsig(RdataPtr(new generic::RRSIG(
+                                          getCommonRRSIGText("DS"))));
+                return (FindResult(SUCCESS, ds));
+            } else {
+                RRsetPtr nsec = textToRRset(origin_.toText() +
+                                            " 3600 IN NSEC " +
+                                            origin_.toText() +
+                                            " SOA NSEC RRSIG");
+                nsec->addRRsig(RdataPtr(new generic::RRSIG(
+                                            getCommonRRSIGText("NSEC"))));
+                return (FindResult(NXRRSET, nsec, RESULT_NSEC_SIGNED));
+            }
+        }
+
+        // Returning NXDOMAIN is not correct, but doesn't matter for our tests.
+        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+    }
+private:
+    const Name origin_;
+    const bool have_ds_;
+};
+
+TEST_F(QueryTest, dsAboveDelegation) {
+    // Pretending to have authority for the child zone, too.
+    memory_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
+                                            Name("delegation.example.com"))));
+
+    // The following will succeed only if the search goes to the parent
+    // zone, not the child one we added above.
+    EXPECT_NO_THROW(Query(memory_client, Name("delegation.example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
+                  (string(delegation_ds_txt) + "\n" +
+                   "delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("DS")).c_str(),
+                  (string(zone_ns_txt) + "\n" +
+                   "example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NS")).c_str(),
+                  ns_addrs_and_sig_txt.c_str());
+}
+
+TEST_F(QueryTest, dsAboveDelegationNoData) {
+    // Similar to the previous case, but the query is for an unsigned zone
+    // (which doesn't have a DS at the parent).  The response should be a
+    // "no data" error.  The query should still be handled at the parent.
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(
+                                  Name("unsigned-delegation.example.com"))));
+
+    // The following will succeed only if the search goes to the parent
+    // zone, not the child one we added above.
+    EXPECT_NO_THROW(Query(memory_client,
+                          Name("unsigned-delegation.example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(unsigned_delegation_nsec_txt) +
+                   "unsigned-delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+// This one checks that type-DS query results in a "no data" response
+// when it happens to be sent to the child zone, as described in RFC 4035,
+// section 3.1.4.1. The example is inspired by the B.8. example from the RFC.
+TEST_F(QueryTest, dsBelowDelegation) {
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec_apex_txt) + "\n" +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL,
+                  mock_finder->getOrigin());
+}
+
+// Similar to the previous case, but even more pathological: the DS somehow
+// exists in the child zone.  The Query module should still return SOA.
+// In our implementation NSEC/NSEC3 isn't attached in this case.
+TEST_F(QueryTest, dsBelowDelegationWithDS) {
+    mock_finder->addRecord(zone_ds_txt); // add the DS to the child's apex
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA")).c_str(), NULL,
+                  mock_finder->getOrigin());
+}
+
+// DS query received at a completely irrelevant (neither parent nor child)
+// server.  It should just like the "noZone" test case, but DS query involves
+// special processing, so we test it explicitly.
+TEST_F(QueryTest, dsNoZone) {
+    Query(memory_client, Name("example"), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::REFUSED(), 0, 0, 0, 0, NULL, NULL, NULL);
+}
+
+// DS query for a "grandchild" zone.  This should result in normal
+// delegation (unless this server also has authority of the grandchild zone).
+TEST_F(QueryTest, dsAtGrandParent) {
+    Query(memory_client, Name("grand.delegation.example.com"), RRType::DS(),
+          response, true).process();
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 6, 6, NULL,
+                  (string(delegation_txt) + string(delegation_ds_txt) +
+                   "delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("DS")).c_str(),
+                  ns_addrs_and_sig_txt.c_str());
+}
+
+// DS query sent to a "grandparent" server that also has authority for the
+// child zone.  In this case the query should be handled in the child
+// side and should result in no data with SOA.  Note that the server doesn't
+// have authority for the "parent".  Unlike the dsAboveDelegation test case
+// the query should be handled in the child zone, not in the grandparent.
+TEST_F(QueryTest, dsAtGrandParentAndChild) {
+    // Pretending to have authority for the child zone, too.
+    const Name childname("grand.delegation.example.com");
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(childname)));
+    Query(memory_client, childname, RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (childname.toText() + " 3600 IN SOA . . 0 0 0 0 0\n" +
+                   childname.toText() + " 3600 IN RRSIG " +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   childname.toText() + " 3600 IN NSEC " +
+                   childname.toText() + " SOA NSEC RRSIG\n" +
+                   childname.toText() + " 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL, childname);
+}
+
+// DS query for the root name (quite pathological).  Since there's no "parent",
+// the query will be handled in the root zone anyway, and should (normally)
+// result in no data.
+TEST_F(QueryTest, dsAtRoot) {
+    // Pretend to be a root server.
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(Name::ROOT_NAME())));
+    Query(memory_client, Name::ROOT_NAME(), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(". 3600 IN SOA . . 0 0 0 0 0\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("SOA") + "\n" +
+                   ". 3600 IN NSEC " + ". SOA NSEC RRSIG\n" +
+                   ". 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL);
+}
+
+// Even more pathological case: A faked root zone actually has its own DS
+// query.  How we respond wouldn't matter much in practice, but check if
+// it behaves as it's intended.  This implementation should return the DS.
+TEST_F(QueryTest, dsAtRootWithDS) {
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(Name::ROOT_NAME(),
+                                                      true)));
+    Query(memory_client, Name::ROOT_NAME(), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
+                  (string(". 3600 IN DS 57855 5 1 49FD46E6C4B45C55D4AC69CBD"
+                          "3CD34AC1AFE51DE\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("DS")).c_str(),
+                  (string(". 3600 IN NS ns.\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("NS")).c_str(),
+                  NULL);
 }
 
 // The following are tentative tests until we really add tests for the
