@@ -969,12 +969,18 @@ class XfroutServer:
 
         global xfrout_server
         xfrout_server = None #Avoid shutdown is called twice
+        self._cc.send_stopping()
         self._shutdown_event.set()
         self._notifier.shutdown()
         if self._unix_socket_server:
             self._unix_socket_server.shutdown()
+        self._wait_for_threads()
 
-        # Wait for all threads to terminate
+    def _wait_for_threads(self):
+        # Wait for all threads to terminate. this is a call that is only used
+        # in shutdown(), but it has its own method, so we can test shutdown
+        # without involving thread operations (the test would override this
+        # method)
         main_thread = threading.currentThread()
         for th in threading.enumerate():
             if th is main_thread:

@@ -679,7 +679,13 @@ class BoB:
     def shutdown(self):
         """Stop the BoB instance."""
         logger.info(BIND10_SHUTDOWN)
-        # first try using the BIND 10 request to stop
+        # If ccsession is still there, inform rest of the system this module
+        # is stopping. Since everything will be stopped shortly, this is not
+        # really necessary, but this is done to reflect that boss is also
+        # 'just' a module.
+        self.ccs.send_stopping()
+
+        # try using the BIND 10 request to stop
         try:
             self._component_configurator.shutdown()
         except:

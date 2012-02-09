@@ -72,7 +72,8 @@ FakeSession::FakeSession(isc::data::ElementPtr initial_messages,
     messages_(initial_messages),
     subscriptions_(subscriptions),
     msg_queue_(msg_queue),
-    started_(false)
+    started_(false),
+    throw_on_send_(false)
 {
 }
 
@@ -181,8 +182,9 @@ int
 FakeSession::group_sendmsg(ConstElementPtr msg, std::string group,
                            std::string to, std::string)
 {
-    //cout << "[XX] client sends message: " << msg << endl;
-    //cout << "[XX] to: " << group << " . " << instance << "." << to << endl;
+    if (throw_on_send_) {
+        isc_throw(Exception, "Throw on send is set in FakeSession");
+    }
     addMessage(msg, group, to);
     return (1);
 }
@@ -261,6 +263,5 @@ FakeSession::haveSubscription(ConstElementPtr group, ConstElementPtr instance)
 {
     return (haveSubscription(group->stringValue(), instance->stringValue()));
 }
-
 }
 }
