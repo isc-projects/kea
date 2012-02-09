@@ -58,10 +58,15 @@ class MyCCSession(isc.config.ConfigData):
             ddns.SPECFILE_LOCATION)
         isc.config.ConfigData.__init__(self, module_spec)
         self._started = False
+        self._stopped = False
 
     def start(self):
         '''Called by DDNSServer initialization, but not used in tests'''
         self._started = True
+
+    def send_stopping(self):
+        '''Called by shutdown code'''
+        self._stopped = True
 
     def get_socket(self):
         """
@@ -289,6 +294,7 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_answer = ([3], [], [])
         self.ddns_server.run()
         self.assertTrue(self.ddns_server._shutdown)
+        self.assertTrue(self.__cc_session._stopped)
         self.assertIsNone(self.__select_answer)
         self.assertEqual(3, self.__hook_called)
 
