@@ -1,3 +1,12 @@
+375.	[bug]		jinmei, vorner
+	The new query handling module of b10-auth did not handle type DS
+	query correctly: It didn't look for it in the parent zone, and
+	it incorrectly returned a DS from the child zone if it
+	happened to exist there.  Both were corrected, and it now also
+	handles the case of having authority for the child and a grand
+	ancestor.
+	(Trac #1570, git 2858b2098a10a8cc2d34bf87463ace0629d3670e)
+
 374.	[func]*     stephen
 	Alter RRsetPtr and ConstRRsetPtr to point to AbstractRRset (instead
 	of RRset) to allow for specialised implementations of RRsets in
