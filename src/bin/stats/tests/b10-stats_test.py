@@ -205,9 +205,12 @@ class TestStats(unittest.TestCase):
         # Override moduleCCSession so we can check if send_stopping is called
         self.stats.mccs = MockModuleCCSession()
         self.assertEqual(send_shutdown("Stats"), (0, None))
-        self.assertTrue(self.stats.mccs.stopped)
         self.assertFalse(self.stats.running)
-        self.stats_server.shutdown()
+        # Call server.shutdown with argument True so the thread.join() call
+        # blocks and we are sure the main loop has finished (and set
+        # mccs.stopped)
+        self.stats_server.shutdown(True)
+        self.assertTrue(self.stats.mccs.stopped)
 
         # start with err
         self.stats = stats.Stats()
