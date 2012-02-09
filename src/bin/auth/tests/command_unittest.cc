@@ -117,7 +117,7 @@ TEST_F(AuthCommandTest, shutdown) {
 
 TEST_F(AuthCommandTest, shutdownCorrectPID) {
     // Put the pid parameter there
-    pid_t pid(getpid());
+    const pid_t pid(getpid());
     ElementPtr param(new isc::data::MapElement());
     param->set("pid", ConstElementPtr(new isc::data::IntElement(pid)));
     this->param = param;
