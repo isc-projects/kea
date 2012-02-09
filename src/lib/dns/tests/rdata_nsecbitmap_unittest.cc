@@ -22,9 +22,12 @@
 
 #include <dns/tests/rdata_unittest.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <string>
 
 using namespace std;
+using boost::lexical_cast;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -34,10 +37,15 @@ namespace {
 template <typename RDATA_TYPE>
 class NSECBitmapTest : public RdataTest {
 protected:
+    RDATA_TYPE fromText(const string& rdata_text) {
+        return (RDATA_TYPE(rdata_text));
+    }
+
     // These depend on the specific RR type.  We use specialized methods
     // for them.
     static RRType getType();    // return either RRType::NSEC() or NSEC3()
     static string getWireFilePrefix();
+    static string getCommonText(); // commonly used part of textual form
 };
 
 typedef ::testing::Types<generic::NSEC, generic::NSEC3> TestRdataTypes;
@@ -67,9 +75,17 @@ NSECBitmapTest<generic::NSEC3>::getType() {
     return (RRType::NSEC3());
 }
 
-class Rdata_NSECBITMAP_Test : public RdataTest {
-    // there's nothing to specialize
-};
+template <>
+string
+NSECBitmapTest<generic::NSEC>::getCommonText() {
+    return ("next. ");
+}
+
+template <>
+string
+NSECBitmapTest<generic::NSEC3>::getCommonText() {
+    return ("1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR ");
+}
 
 // Tests against various types of bogus NSEC/NSEC3 type bitmaps.
 // The syntax and semantics are common for both RR types, and our
@@ -125,5 +141,37 @@ TYPED_TEST(NSECBitmapTest, createFromWire) {
                                             (this->getWireFilePrefix() +
                                              "fromWire10.wire").c_str()),
                  DNSMessageFORMERR);
+}
+
+// This tests the result of toText() with various kinds of NSEC/NSEC3 bitmaps.
+// It also tests the "from text" constructor as a result.
+TYPED_TEST(NSECBitmapTest, toText) {
+    // A simple case (some commonly seen RR types in NSEC(3) bitmaps)
+    string rdata_text = this->getCommonText() + "NS SOA RRSIG DNSKEY";
+    EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
+
+    // Similar to above, but involves more than one bitmap window blocks.
+    rdata_text = this->getCommonText() + "NS DLV";
+    EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
+
+    // Make sure all possible bits in a one-octet bitmap field correctly.
+    // We use the range around 1024 (reasonably higher number) so it's
+    // unlikely that they have predefined mnemonic and can be safely converted
+    // to TYPEnnnn by toText().
+    for (unsigned int i = 1024; i < 1032; ++i) {
+        rdata_text = this->getCommonText() + "TYPE" + lexical_cast<string>(i);
+        EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
+    }
+
+    // Make sure all possible 32 octets in a longest possible block are
+    // handled correctly.
+    for (unsigned int i = 1024; i < 1024 + 256; i += 8) {
+        rdata_text = this->getCommonText() + "TYPE" + lexical_cast<string>(i);
+        EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
+    }
+
+    // Check for the highest window block.
+    rdata_text = this->getCommonText() + "TYPE65535";
+    EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
 }
 }
