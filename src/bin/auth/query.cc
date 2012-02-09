@@ -257,13 +257,27 @@ Query::addAuthAdditional(ZoneFinder& finder) {
     }
 }
 
+namespace {
+// A simple wrapper for DataSourceClient::findZone().  Normally we can simply
+// check the closest zone to the qname, but for type DS query we need to
+// look into the parent zone.  Nevertheless, if there is no "parent" (i.e.,
+// the qname consists of a single label, which also means it's the root name),
+// we should search the deepest zone we have (which should be the root zone;
+// otherwise it's a query error).
+DataSourceClient::FindResult
+findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
+    if (qtype != RRType::DS() || qname.getLabelCount() == 1) {
+        return (client.findZone(qname));
+    }
+    return (client.findZone(qname.split(1)));
+}
+}
+
 void
 Query::process() {
-    const bool qtype_is_any = (qtype_ == RRType::ANY());
-
-    response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-    const DataSourceClient::FindResult result =
-        datasrc_client_.findZone(qname_);
+    // Found a zone which is the nearest ancestor to QNAME
+    const DataSourceClient::FindResult result = findZone(datasrc_client_,
+                                                         qname_, qtype_);
 
     // If we have no matching authoritative zone for the query name, return
     // REFUSED.  In short, this is to be compatible with BIND 9, but the
@@ -272,16 +286,26 @@ Query::process() {
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
     if (result.code != result::SUCCESS &&
         result.code != result::PARTIALMATCH) {
+        // If we tried to find a "parent zone" for a DS query and failed,
+        // we may still have authority at the child side.  If we do, the query
+        // has to be handled there.
+        if (qtype_ == RRType::DS() && qname_.getLabelCount() > 1 &&
+            processDSAtChild()) {
+            return;
+        }
+        response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_.setRcode(Rcode::REFUSED());
         return;
     }
     ZoneFinder& zfinder = *result.zone_finder;
 
-    // Found a zone which is the nearest ancestor to QNAME, set the AA bit
+    // We have authority for a zone that contain the query name (possibly
+    // indirectly via delegation).  Look into the zone.
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     response_.setRcode(Rcode::NOERROR());
     std::vector<ConstRRsetPtr> target;
     boost::function0<ZoneFinder::FindResult> find;
+    const bool qtype_is_any = (qtype_ == RRType::ANY());
     if (qtype_is_any) {
         find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
                            boost::ref(target), dnssec_opt_);
@@ -389,6 +413,14 @@ Query::process() {
             }
             break;
         case ZoneFinder::DELEGATION:
+            // If a DS query resulted in delegation, we also need to check
+            // if we are an authority of the child, too.  If so, we need to
+            // complete the process in the child as specified in Section
+            // 2.2.1.2. of RFC3658.
+            if (qtype_ == RRType::DS() && processDSAtChild()) {
+                return;
+            }
+
             response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
             response_.addRRset(Message::SECTION_AUTHORITY,
                 boost::const_pointer_cast<AbstractRRset>(db_result.rrset),
@@ -420,6 +452,38 @@ Query::process() {
             isc_throw(isc::NotImplemented, "Unknown result code");
             break;
     }
+}
+
+bool
+Query::processDSAtChild() {
+    const DataSourceClient::FindResult zresult =
+        datasrc_client_.findZone(qname_);
+
+    if (zresult.code != result::SUCCESS) {
+        return (false);
+    }
+
+    // We are receiving a DS query at the child side of the owner name,
+    // where the DS isn't supposed to belong.  We should return a "no data"
+    // response as described in Section 3.1.4.1 of RFC4035 and Section
+    // 2.2.1.1 of RFC 3658.  find(DS) should result in NXRRSET, in which
+    // case (and if DNSSEC is required) we also add the proof for that,
+    // but even if find() returns an unexpected result, we don't bother.
+    // The important point in this case is to return SOA so that the resolver
+    // that happens to contact us can hunt for the appropriate parent zone
+    // by seeing the SOA.
+    response_.setHeaderFlag(Message::HEADERFLAG_AA);
+    response_.setRcode(Rcode::NOERROR());
+    addSOA(*zresult.zone_finder);
+    const ZoneFinder::FindResult ds_result =
+        zresult.zone_finder->find(qname_, RRType::DS(), dnssec_opt_);
+    if (ds_result.code == ZoneFinder::NXRRSET) {
+        if (dnssec_) {
+            addNXRRsetProof(*zresult.zone_finder, ds_result);
+        }
+    }
+
+    return (true);
 }
 
 }
