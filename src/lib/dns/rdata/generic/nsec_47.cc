@@ -61,6 +61,9 @@ NSEC::NSEC(const string& nsec_str) :
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC name");
     }
+    if (iss.eof()) {
+        isc_throw(InvalidRdataText, "NSEC bitmap is missing");
+    }
 
     memset(bitmap, 0, sizeof(bitmap));
     do { 
