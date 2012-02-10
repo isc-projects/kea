@@ -249,28 +249,29 @@ NSEC3::toText() const {
         " " + encodeBase32Hex(impl_->next_) + s.str());
 }
 
+template <typename OUTPUT_TYPE>
+void
+toWireHelper(const NSEC3Impl& impl, OUTPUT_TYPE& output) {
+    output.writeUint8(impl.hashalg_);
+    output.writeUint8(impl.flags_);
+    output.writeUint16(impl.iterations_);
+    output.writeUint8(impl.salt_.size());
+    output.writeData(&impl.salt_[0], impl.salt_.size());
+    output.writeUint8(impl.next_.size());
+    output.writeData(&impl.next_[0], impl.next_.size());
+    if (!impl.typebits_.empty()) {
+        output.writeData(&impl.typebits_[0], impl.typebits_.size());
+    }
+}
+
 void
 NSEC3::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(impl_->hashalg_);
-    buffer.writeUint8(impl_->flags_);
-    buffer.writeUint16(impl_->iterations_);
-    buffer.writeUint8(impl_->salt_.size());
-    buffer.writeData(&impl_->salt_[0], impl_->salt_.size());
-    buffer.writeUint8(impl_->next_.size());
-    buffer.writeData(&impl_->next_[0], impl_->next_.size());
-    buffer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
+    toWireHelper(*impl_, buffer);
 }
 
 void
 NSEC3::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(impl_->hashalg_);
-    renderer.writeUint8(impl_->flags_);
-    renderer.writeUint16(impl_->iterations_);
-    renderer.writeUint8(impl_->salt_.size());
-    renderer.writeData(&impl_->salt_[0], impl_->salt_.size());
-    renderer.writeUint8(impl_->next_.size());
-    renderer.writeData(&impl_->next_[0], impl_->next_.size());
-    renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
+    toWireHelper(*impl_, renderer);
 }
 
 int
