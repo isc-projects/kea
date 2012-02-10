@@ -573,10 +573,10 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.start()
         self.assertTrue(component.running())
         self.assertEqual('component', self.__start_simple_params)
+        component.pid = lambda: 42
         component.stop()
         self.assertFalse(component.running())
-        # The PID is None, as we don't give it one when faking the start
-        self.assertEqual(('component', 'Address', None),
+        self.assertEqual(('component', 'Address', 42),
                          self.__stop_process_params)
 
     def test_component_kill(self):
