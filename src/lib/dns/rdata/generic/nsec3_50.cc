@@ -53,12 +53,12 @@ struct NSEC3Impl {
         salt_(salt), next_(next), typebits_(typebits)
     {}
 
-    uint8_t hashalg_;
-    uint8_t flags_;
-    uint16_t iterations_;
-    vector<uint8_t> salt_;
-    vector<uint8_t> next_;
-    vector<uint8_t> typebits_;
+    const uint8_t hashalg_;
+    const uint8_t flags_;
+    const uint16_t iterations_;
+    const vector<uint8_t> salt_;
+    const vector<uint8_t> next_;
+    const vector<uint8_t> typebits_;
 };
 
 NSEC3::NSEC3(const string& nsec3_str) :
@@ -247,10 +247,10 @@ NSEC3::toText() const {
 
     using namespace boost;
     return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
-        " " + encodeHex(impl_->salt_) +
-        " " + encodeBase32Hex(impl_->next_) + s.str());
+            " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
+            " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
+            " " + (impl_->salt_.empty() ? "-" : encodeHex(impl_->salt_)) +
+            " " + encodeBase32Hex(impl_->next_) + s.str());
 }
 
 template <typename OUTPUT_TYPE>
@@ -260,7 +260,10 @@ toWireHelper(const NSEC3Impl& impl, OUTPUT_TYPE& output) {
     output.writeUint8(impl.flags_);
     output.writeUint16(impl.iterations_);
     output.writeUint8(impl.salt_.size());
-    output.writeData(&impl.salt_[0], impl.salt_.size());
+    if (!impl.salt_.empty()) {
+        output.writeData(&impl.salt_[0], impl.salt_.size());
+    }
+    assert(!impl.next_.empty());
     output.writeUint8(impl.next_.size());
     output.writeData(&impl.next_[0], impl.next_.size());
     if (!impl.typebits_.empty()) {
