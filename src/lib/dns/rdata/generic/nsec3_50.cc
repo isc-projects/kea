@@ -174,6 +174,10 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
         rdata_len -= saltlen;
     }
 
+    if (rdata_len < 1) {
+        isc_throw(DNSMessageFORMERR, "NSEC3 too short to contain hash length, "
+                  "length: " << rdata_len + saltlen + 5);
+    }
     const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
     if (nextlen == 0 || rdata_len < nextlen) {
