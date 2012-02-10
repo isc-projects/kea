@@ -192,6 +192,10 @@ reason for the failure is included in the message.
 Initialization of the authoritative server has completed successfully
 and it is entering the main loop, waiting for queries to arrive.
 
+% AUTH_SHUTDOWN asked to stop, doing so
+This is a debug message indicating the server was asked to shut down and it is
+complying to the request.
+
 % AUTH_SQLITE3 nothing to do for loading sqlite3
 This is a debug message indicating that the authoritative server has
 found that the data source it is loading is an SQLite3 data source,
