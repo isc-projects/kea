@@ -16,15 +16,11 @@
 #include <auth/auth_log.h>
 #include <auth/auth_srv.h>
 
-#include <exceptions/exceptions.h>
-
-#include <dns/rrclass.h>
-
 #include <cc/data.h>
-
 #include <datasrc/memory_datasrc.h>
-
 #include <config/ccsession.h>
+#include <exceptions/exceptions.h>
+#include <dns/rrclass.h>
 
 #include <string>
 
@@ -113,16 +109,24 @@ class ShutdownCommand : public AuthCommand {
 public:
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
         // Is the pid argument provided?
-        if (args && args->getType() ==
-            isc::data::Element::map && args->contains("pid")) {
+        if (args && args->getType() == isc::data::Element::map &&
+            args->contains("pid")) {
             // If it is, we check it is the same as our PID
-            const int pid(args->get("pid")->intValue());
-            const pid_t my_pid(getpid());
-            if (my_pid != pid) {
-                // It is not for us
-                return;
+            if (args->get("pid")->getType() == isc::data::Element::integer) {
+                const int pid(args->get("pid")->intValue());
+                const pid_t my_pid(getpid());
+                if (my_pid != pid) {
+                    // It is not for us
+                    //
+                    // Note that this is completely expected situation, if
+                    // there are multiple instances of the server running and
+                    // another instance is being shut down, we get the message
+                    // too, due to the multicast nature of our message bus.
+                    return;
+                }
             }
         }
+        LOG_DEBUG(auth_logger, DBG_AUTH_SHUT, AUTH_SHUTDOWN);
         server.stop();
     }
 };

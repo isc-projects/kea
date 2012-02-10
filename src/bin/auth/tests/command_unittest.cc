@@ -69,7 +69,7 @@ protected:
     AuthSrv server;
     ConstElementPtr result;
     // The shutdown command parameter
-    ConstElementPtr param;
+    ConstElementPtr param_;
     int rcode;
     isc::asiolink::IntervalTimer itimer_;
 public:
@@ -103,7 +103,7 @@ TEST_F(AuthCommandTest, sendStatistics) {
 
 void
 AuthCommandTest::stopServer() {
-    result = execAuthServerCommand(server, "shutdown", param);
+    result = execAuthServerCommand(server, "shutdown", param_);
     parseAnswer(rcode, result);
     assert(rcode == 0); // make sure the test stops when something is wrong
 }
@@ -120,7 +120,21 @@ TEST_F(AuthCommandTest, shutdownCorrectPID) {
     const pid_t pid(getpid());
     ElementPtr param(new isc::data::MapElement());
     param->set("pid", ConstElementPtr(new isc::data::IntElement(pid)));
-    this->param = param;
+    param_ = param;
+    // With the correct PID, it should act exactly the same as in case
+    // of no parameter
+    itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
+    server.getIOService().run();
+    EXPECT_EQ(0, rcode);
+}
+
+// If we provide something not an int, the PID is not really specified, so
+// act as if nothing came.
+TEST_F(AuthCommandTest, shutdownNotInt) {
+    // Put the pid parameter there
+    ElementPtr param(new isc::data::MapElement());
+    param->set("pid", ConstElementPtr(new isc::data::StringElement("pid")));
+    param_ = param;
     // With the correct PID, it should act exactly the same as in case
     // of no parameter
     itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
@@ -132,14 +146,14 @@ TEST_F(AuthCommandTest, shutdownCorrectPID) {
 // command, it should be running
 void
 AuthCommandTest::dontStopServer() {
-    result = execAuthServerCommand(server, "shutdown", param);
+    result = execAuthServerCommand(server, "shutdown", param_);
     parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode);
     rcode = -1;
     // We run the stopServer now, to really stop the server.
     // If it had stopped already, it won't be run and the rcode -1 will
     // be left here.
-    param = ConstElementPtr();
+    param_ = ConstElementPtr();
     itimer_.cancel();
     itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
 }
@@ -147,7 +161,7 @@ AuthCommandTest::dontStopServer() {
 TEST_F(AuthCommandTest, shutdownIncorrectPID) {
     // The PID = 0 should be taken by init, so we are not init and the
     // PID should be different
-    param = Element::fromJSON("{\"pid\": 0}");
+    param_ = Element::fromJSON("{\"pid\": 0}");
     itimer_.setup(boost::bind(&AuthCommandTest::dontStopServer, this), 1);
     server.getIOService().run();
     EXPECT_EQ(0, rcode);
