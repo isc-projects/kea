@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dns/tests/unittest_util.h>
+
 #include <dns/exceptions.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -25,9 +27,11 @@
 #include <boost/lexical_cast.hpp>
 
 #include <string>
+#include <vector>
 
 using namespace std;
 using boost::lexical_cast;
+using isc::UnitTestUtil;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -35,7 +39,7 @@ namespace {
 
 // Template for shared tests for NSEC and NSEC3 bitmaps
 template <typename RDATA_TYPE>
-class NSECBitmapTest : public RdataTest {
+class NSECLikeBitmapTest : public RdataTest {
 protected:
     RDATA_TYPE fromText(const string& rdata_text) {
         return (RDATA_TYPE(rdata_text));
@@ -48,42 +52,49 @@ protected:
     static string getCommonText(); // commonly used part of textual form
 };
 
+// Instantiate specific typed tests
 typedef ::testing::Types<generic::NSEC, generic::NSEC3> TestRdataTypes;
-TYPED_TEST_CASE(NSECBitmapTest, TestRdataTypes);
+TYPED_TEST_CASE(NSECLikeBitmapTest, TestRdataTypes);
+
+// NSEC and NSEC3 bitmaps have some subtle differences, in which case we
+// need to test them separately.  Using these typedef type names with TEST_F
+// will do the trick.
+typedef NSECLikeBitmapTest<generic::NSEC3> NSEC3BitmapTest;
+typedef NSECLikeBitmapTest<generic::NSEC> NSECBitmapTest;
 
 template <>
 string
-NSECBitmapTest<generic::NSEC>::getWireFilePrefix() {
+NSECLikeBitmapTest<generic::NSEC>::getWireFilePrefix() {
     return ("rdata_nsec_");
 }
 
 template <>
 RRType
-NSECBitmapTest<generic::NSEC>::getType() {
+NSECLikeBitmapTest<generic::NSEC>::getType() {
     return (RRType::NSEC());
 }
 
 template <>
 string
-NSECBitmapTest<generic::NSEC3>::getWireFilePrefix() {
+NSECLikeBitmapTest<generic::NSEC3>::getWireFilePrefix() {
     return ("rdata_nsec3_");
 }
 
 template <>
 RRType
-NSECBitmapTest<generic::NSEC3>::getType() {
+NSECLikeBitmapTest<generic::NSEC3>::getType() {
     return (RRType::NSEC3());
 }
 
 template <>
 string
-NSECBitmapTest<generic::NSEC>::getCommonText() {
+NSECLikeBitmapTest<generic::NSEC>::getCommonText() {
     return ("next. ");
 }
 
 template <>
 string
-NSECBitmapTest<generic::NSEC3>::getCommonText() {
+NSECLikeBitmapTest<generic::NSEC3>::getCommonText() {
     return ("1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR ");
 }
 
@@ -91,7 +102,7 @@ NSECBitmapTest<generic::NSEC3>::getCommonText() {
 // The syntax and semantics are common for both RR types, and our
 // implementation of that part is shared, so in theory it should be sufficient
 // to test for only one RR type.  But we check for both just in case.
-TYPED_TEST(NSECBitmapTest, createFromWire) {
+TYPED_TEST(NSECLikeBitmapTest, createFromWire) {
     // A malformed NSEC bitmap length field that could cause overflow.
     EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
                                             (this->getWireFilePrefix() +
@@ -145,7 +156,7 @@ TYPED_TEST(NSECBitmapTest, createFromWire) {
 
 // This tests the result of toText() with various kinds of NSEC/NSEC3 bitmaps.
 // It also tests the "from text" constructor as a result.
-TYPED_TEST(NSECBitmapTest, toText) {
+TYPED_TEST(NSECLikeBitmapTest, toText) {
     // A simple case (some commonly seen RR types in NSEC(3) bitmaps)
     string rdata_text = this->getCommonText() + "NS SOA RRSIG DNSKEY";
     EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
@@ -174,4 +185,48 @@ TYPED_TEST(NSECBitmapTest, toText) {
     rdata_text = this->getCommonText() + "TYPE65535";
     EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
 }
+
+// NSEC bitmaps must not be empty
+TEST_F(NSECBitmapTest, emptyMap) {
+    EXPECT_THROW(this->fromText("next.example").toText(), InvalidRdataText);
+
+    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
+                                            (this->getWireFilePrefix() +
+                                             "fromWire16.wire").c_str()),
+                 DNSMessageFORMERR);
+}
+
+// NSEC3 bitmaps can be empty
+TEST_F(NSEC3BitmapTest, emptyMap) {
+    // Read wire data wit an empty NSEC3 bitmap.  This should succeed.
+    vector<uint8_t> data;
+    UnitTestUtil::readWireData((this->getWireFilePrefix() +
+                                "fromWire16.wire").c_str(), data);
+    InputBuffer buffer(&data[0], data.size());
+    const uint16_t rdlen = buffer.readUint16();
+    const generic::NSEC3 empty_nsec3 =
+        dynamic_cast<const generic::NSEC3&>(*createRdata(
+                                                RRType::NSEC3(), RRClass::IN(),
+                                                buffer, rdlen));
+
+    // Check the toText() result.
+    EXPECT_EQ("1 0 1 7373737373 D1K6GQ38D1K6GQ38D1K6GQ38D1K6GQ38",
+              empty_nsec3.toText());
+
+    // Check the toWire() result.
+    OutputBuffer obuffer(0);
+    obuffer.writeUint16(rdlen);
+    empty_nsec3.toWire(obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
+                        obuffer.getLength(), &data[0], data.size());
+
+    // Same for MessageRenderer.
+    obuffer.clear();
+    MessageRenderer renderer(obuffer);
+    renderer.writeUint16(rdlen);
+    empty_nsec3.toWire(renderer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
+}
+
 }
