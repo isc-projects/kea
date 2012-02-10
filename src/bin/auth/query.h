@@ -102,6 +102,11 @@ private:
     /// This corresponds to Section 3.1.3.2 of RFC 4035.
     void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
                           isc::dns::ConstRRsetPtr nsec);
+    
+    /// Add NSEC3 RRs that prove an NXDOMAIN result.
+    ///
+    /// This corresponds to Section 7.2.2 of RFC 5155.
+    void addNSEC3NXDOMAINProof(isc::datasrc::ZoneFinder& finder);
 
     /// Add NSEC RRs that prove a wildcard answer is the best one.
     ///
@@ -266,6 +271,17 @@ public:
     /// as SERVFAIL.
     struct BadNSEC : public BadZone {
         BadNSEC(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
+    /// An invalid result is given when a valid NSEC3 is expected
+    ///
+    /// This can only happen when the underlying data source implementation or
+    /// the zone is broken.  By throwing an exception we treat such cases
+    /// as SERVFAIL.
+    struct BadNSEC3 : public BadZone {
+        BadNSEC3(const char* file, size_t line, const char* what) :
             BadZone(file, line, what)
         {}
     };
