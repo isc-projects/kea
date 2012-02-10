@@ -44,8 +44,14 @@ class Rdata_NSEC3_Test : public RdataTest {
 public:
     Rdata_NSEC3_Test() :
         nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                  "NS SOA RRSIG DNSKEY NSEC3PARAM") {}
-    string nsec3_txt;
+                  "NS SOA RRSIG DNSKEY NSEC3PARAM"),
+        nsec3_nosalt_txt("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A" ),
+        obuffer(0), renderer(obuffer)
+    {}
+    const string nsec3_txt;
+    const string nsec3_nosalt_txt;
+    OutputBuffer obuffer;
+    MessageRenderer renderer;
 };
 
 TEST_F(Rdata_NSEC3_Test, fromText) {
@@ -60,8 +66,7 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
                                    "NS SOA RRSIG DNSKEY NSEC3PARAM"));
 
     // 0-length salt
-    EXPECT_EQ(0, generic::NSEC3("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                                "A").getSalt().size());
+    EXPECT_EQ(0, generic::NSEC3(nsec3_nosalt_txt).getSalt().size());
 
     // salt that has the possible max length
     EXPECT_EQ(255, generic::NSEC3("1 1 1 " + string(255 * 2, '0') +
@@ -80,8 +85,12 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
 }
 
 TEST_F(Rdata_NSEC3_Test, toText) {
+    // normal case
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(nsec3_txt, rdata_nsec3.toText());
+
+    // empty salt case
+    EXPECT_EQ(nsec3_nosalt_txt, generic::NSEC3(nsec3_nosalt_txt).toText());
 }
 
 TEST_F(Rdata_NSEC3_Test, badText) {
@@ -184,21 +193,35 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     }
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireRenderer) {
-    renderer.skip(2);
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    rdata_nsec3.toWire(renderer);
+template <typename OUTPUT_TYPE>
+void
+toWireCheck(OUTPUT_TYPE& output, const char* const data_file) {
+    vector<uint8_t> data;
+    UnitTestUtil::readWireData(data_file, data);
+    InputBuffer buffer(&data[0], data.size());
+    const uint16_t rdlen = buffer.readUint16();
+    const generic::NSEC3 nsec3 =
+        dynamic_cast<const generic::NSEC3&>(*createRdata(
+                                                RRType::NSEC3(), RRClass::IN(),
+                                                buffer, rdlen));
 
-    vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_nsec3_fromWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+    output.clear();
+    output.writeUint16(rdlen);
+    nsec3.toWire(output);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, output.getData(),
+                        output.getLength(), &data[0], data.size());
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireBuffer) {
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    rdata_nsec3.toWire(obuffer);
+TEST_F(Rdata_NSEC3_Test, toWire) {
+    // normal case
+    toWireCheck(renderer, "rdata_nsec3_fromWire1");
+    toWireCheck(obuffer, "rdata_nsec3_fromWire1");
+
+    // empty salt
+    toWireCheck(renderer, "rdata_nsec3_fromWire13.wire");
+    toWireCheck(obuffer, "rdata_nsec3_fromWire13.wire");
+
+    // empty bitmap case is handled in the bitmpa tests
 }
 
 TEST_F(Rdata_NSEC3_Test, assign) {
