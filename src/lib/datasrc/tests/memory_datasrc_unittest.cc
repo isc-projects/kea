@@ -1972,7 +1972,9 @@ TEST_F(InMemoryZoneFinderTest, loadAndFindNSEC3) {
     ZoneFinder::FindNSEC3Result result1 =
         finder.findNSEC3(Name("c.x.w.example"), true);
     ASSERT_TRUE(result1.closest_proof);
-    EXPECT_EQ(3, result1.closest_labels);
+    // We compare closest_labels as int so the error report will be more
+    // readable in case it fails.
+    EXPECT_EQ(4, static_cast<int>(result1.closest_labels));
     EXPECT_EQ(Name("b4um86eghhds6nea196smvmlo4ors995.example"),
               result1.closest_proof->getName());
     ASSERT_TRUE(result1.next_proof);
@@ -1983,7 +1985,7 @@ TEST_F(InMemoryZoneFinderTest, loadAndFindNSEC3) {
     ZoneFinder::FindNSEC3Result result2 =
         finder.findNSEC3(Name("ns1.example"), true);
     ASSERT_TRUE(result2.closest_proof);
-    EXPECT_EQ(3, result2.closest_labels);
+    EXPECT_EQ(3, static_cast<int>(result2.closest_labels));
     EXPECT_EQ(Name("2t7b4g4vsa5smi47k61mv5bv1a22bojr.example"),
               result2.closest_proof->getName());
     ASSERT_FALSE(result2.next_proof);
@@ -1992,7 +1994,7 @@ TEST_F(InMemoryZoneFinderTest, loadAndFindNSEC3) {
     ZoneFinder::FindNSEC3Result result3 =
         finder.findNSEC3(Name("a.z.w.example"), true);
     ASSERT_TRUE(result3.closest_proof);
-    EXPECT_EQ(3, result3.closest_labels);
+    EXPECT_EQ(3, static_cast<int>(result3.closest_labels));
     EXPECT_EQ(Name("k8udemvp1j2f7eg6jebps17vp3n8i58h.example"),
               result3.closest_proof->getName());
     ASSERT_TRUE(result3.next_proof);
