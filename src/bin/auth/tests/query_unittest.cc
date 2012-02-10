@@ -260,6 +260,9 @@ public:
             "q00jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("*.example.com")] =
+            "r53bq7cc2uvmubfu5ocmm6pers9tk9en";
+
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
@@ -1623,6 +1626,26 @@ TEST_F(QueryTest, findNSEC3) {
                mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
     nsec3Check(false, 4, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
+}
+
+TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
+    mock_finder->setNSEC3Flag(true);
+    Query(memory_client, Name("nxdomain.example.com"), qtype,
+              response, true).process();
+
+    std::cout<<response.toText()<<std::endl;
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
+                  NULL, (string(soa_txt) +
+                         string("example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("SOA") + "\n" +
+                         string(nsec3_apex_txt) + "\n" +
+                         string("0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC") + "\n" +
+                         string(nsec3_www_txt) + "\n" +
+                         string("q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+
 }
 
 // The following are tentative tests until we really add tests for the
