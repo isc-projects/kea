@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 
+#include <sstream>
 #include <vector>
 
 namespace isc {
@@ -39,6 +40,10 @@ namespace nsec {
 /// is the total length of the bitmaps.
 void checkRRTypeBitmaps(const char* const rrtype_name,
                         const std::vector<uint8_t>& typebits);
+
+void buildBitmapsFromText(const char* const rrtype_name,
+                          std::istringstream& iss,
+                          std::vector<uint8_t>& typebits);
 }
 }
 }
