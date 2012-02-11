@@ -54,8 +54,6 @@ NSEC::NSEC(const string& nsec_str) :
 {
     istringstream iss(nsec_str);
     string nextname;
-    uint8_t bitmap[8 * 1024];       // 64k bits
-    vector<uint8_t> typebits;
 
     iss >> nextname;
     if (iss.bad() || iss.fail()) {
@@ -65,33 +63,8 @@ NSEC::NSEC(const string& nsec_str) :
         isc_throw(InvalidRdataText, "NSEC bitmap is missing");
     }
 
-    memset(bitmap, 0, sizeof(bitmap));
-    do { 
-        string type;
-        iss >> type;
-        try {
-            const int code = RRType(type).getCode();
-            bitmap[code / 8] |= (0x80 >> (code % 8));
-        } catch (...) {
-            isc_throw(InvalidRdataText, "Invalid RRtype in NSEC");
-        }
-    } while (!iss.eof());
-
-    for (int window = 0; window < 256; window++) {
-        int octet;
-        for (octet = 31; octet >= 0; octet--) {
-            if (bitmap[window * 32 + octet] != 0) {
-                break;
-            }
-        }
-        if (octet < 0)
-            continue;
-        typebits.push_back(window);
-        typebits.push_back(octet + 1);
-        for (int i = 0; i <= octet; i++) {
-            typebits.push_back(bitmap[window * 32 + i]);
-        }
-    }
+    vector<uint8_t> typebits;
+    buildBitmapsFromText("NSEC", iss, typebits);
 
     impl_ = new NSECImpl(Name(nextname), typebits);
 }

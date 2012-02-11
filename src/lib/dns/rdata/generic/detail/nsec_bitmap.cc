@@ -12,11 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-
-#include <vector>
+#include <exceptions/exceptions.h>
 
 #include <dns/exceptions.h>
+#include <dns/rdata.h>
+#include <dns/rrtype.h>
+
+#include <sstream>
+#include <vector>
+#include <stdint.h>
 
 using namespace std;
 
@@ -68,6 +72,47 @@ checkRRTypeBitmaps(const char* const rrtype_name,
         i += len;
         lastblock = block;
         first = false;
+    }
+}
+
+void
+buildBitmapsFromText(const char* const rrtype_name,
+                     istringstream& iss, vector<uint8_t>& typebits)
+{
+    uint8_t bitmap[8 * 1024];       // 64k bits
+    memset(bitmap, 0, sizeof(bitmap));
+
+    do {
+        string type;
+        iss >> type;
+        if (iss.bad() || iss.fail()) {
+            isc_throw(InvalidRdataText, "Unexpected input for "
+                      << rrtype_name << " bitmap");
+        }
+        try {
+            const int code = RRType(type).getCode();
+            bitmap[code / 8] |= (0x80 >> (code % 8));
+        } catch (const InvalidRRType&) {
+            isc_throw(InvalidRdataText, "Invalid RRtype in "
+                      << rrtype_name << " bitmap: " << type);
+        }
+    } while (!iss.eof());
+
+    for (int window = 0; window < 256; ++window) {
+        int octet;
+        for (octet = 31; octet >= 0; octet--) {
+            if (bitmap[window * 32 + octet] != 0) {
+                break;
+            }
+        }
+        if (octet < 0) {
+            continue;
+        }
+        typebits.push_back(window);
+        typebits.push_back(octet + 1);
+        for (int i = 0; i <= octet; ++i) {
+            typebits.push_back(bitmap[window * 32 + i]);
+        }
     }
 }
 }
