@@ -195,26 +195,7 @@ NSEC3::~NSEC3() {
 string
 NSEC3::toText() const {
     ostringstream s;
-    int len = 0;
-    for (size_t i = 0; i < impl_->typebits_.size(); i += len) {
-        assert(i + 2 <= impl_->typebits_.size());
-        int window = impl_->typebits_[i];
-        len = impl_->typebits_[i + 1];
-        assert(len > 0 && len <= 32);
-        i += 2;
-        for (int j = 0; j < len; j++) {
-            if (impl_->typebits_[i + j] == 0) {
-                continue;
-            }
-            for (int k = 0; k < 8; k++) {
-                if ((impl_->typebits_[i + j] & (0x80 >> k)) == 0) {
-                    continue;
-                }
-                int t = window * 256 + j * 8 + k;
-                s << " " << RRType(t).toText();
-            }
-        }
-    }
+    bitmapsToText(impl_->typebits_, s);
 
     using namespace boost;
     return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +

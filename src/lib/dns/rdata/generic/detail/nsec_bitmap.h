@@ -23,7 +23,8 @@ namespace rdata {
 namespace generic {
 namespace detail {
 namespace nsec {
-/// Check if a given "type bitmap" for NSEC/NSEC3 is valid.
+
+/// \brief Check if a given "type bitmap" for NSEC/NSEC3 is valid.
 ///
 /// This helper function checks given wire format data (stored in a
 /// \c std::vector) is a valid type bitmaps used for the NSEC and NSEC3 RRs
@@ -44,6 +45,9 @@ void checkRRTypeBitmaps(const char* const rrtype_name,
 void buildBitmapsFromText(const char* const rrtype_name,
                           std::istringstream& iss,
                           std::vector<uint8_t>& typebits);
+
+void bitmapsToText(const std::vector<uint8_t>& typebits,
+                   std::ostringstream& oss);
 }
 }
 }
