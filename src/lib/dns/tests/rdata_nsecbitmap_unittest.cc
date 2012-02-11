@@ -45,6 +45,20 @@ protected:
         return (RDATA_TYPE(rdata_text));
     }
 
+    vector<RDATA_TYPE> compare_set; // used in compare() tests
+
+    void compareCheck() const {
+        typename vector<RDATA_TYPE>::const_iterator it;
+        typename vector<RDATA_TYPE>::const_iterator const it_end =
+            compare_set.end();
+        for (it = compare_set.begin(); it != it_end - 1; ++it) {
+            SCOPED_TRACE("compare " + it->toText() + " to " +
+                         (it + 1)->toText());
+            EXPECT_GT(0, (*it).compare(*(it + 1)));
+            EXPECT_LT(0, (*(it + 1)).compare(*it));
+        }
+    }
+
     // These depend on the specific RR type.  We use specialized methods
     // for them.
     static RRType getType();    // return either RRType::NSEC() or NSEC3()
@@ -184,6 +198,27 @@ TYPED_TEST(NSECLikeBitmapTest, toText) {
     // Check for the highest window block.
     rdata_text = this->getCommonText() + "TYPE65535";
     EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
+}
+
+TYPED_TEST(NSECLikeBitmapTest, compare) {
+    // Bit map: [win=0][len=1] 00000010
+    this->compare_set.push_back(this->fromText(this->getCommonText() + "SOA"));
+    // Bit map: [win=0][len=1] 00000010, [win=4][len=1] 10000000
+    this->compare_set.push_back(this->fromText(this->getCommonText() +
+                                               "SOA TYPE1024"));
+    // Bit map: [win=0][len=1] 00100000,
+    this->compare_set.push_back(this->fromText(this->getCommonText() + "NS"));
+    // Bit map: [win=0][len=1] 00100010
+    this->compare_set.push_back(this->fromText(this->getCommonText() +
+                                               "NS SOA"));
+    // Bit map: [win=0][len=2] 00100000, 00000001
+    this->compare_set.push_back(this->fromText(this->getCommonText() +
+                                               "NS MX"));
+    // Bit map: [win=4][len=1] 10000000
+    this->compare_set.push_back(this->fromText(this->getCommonText() +
+                                               "TYPE1024"));
+
+    this->compareCheck();
 }
 
 // NSEC bitmaps must not be empty
