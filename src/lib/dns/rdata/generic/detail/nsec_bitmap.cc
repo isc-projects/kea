@@ -18,6 +18,7 @@
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
 
+#include <cassert>
 #include <sstream>
 #include <vector>
 #include <stdint.h>
@@ -112,6 +113,37 @@ buildBitmapsFromText(const char* const rrtype_name,
         typebits.push_back(octet + 1);
         for (int i = 0; i <= octet; ++i) {
             typebits.push_back(bitmap[window * 32 + i]);
+        }
+    }
+}
+
+void
+bitmapsToText(const vector<uint8_t>& typebits, ostringstream& oss) {
+    // In the following loop we use string::at() rather than operator[].
+    // Since the index calculation is a bit complicated, it will be safer
+    // and easier to find a bug (if any).  Note that this conversion method
+    // is generally not expected to be very efficient, so the slight overhead
+    // of at() should be acceptable.
+    const size_t typebits_len = typebits.size();
+    size_t len = 0;
+    for (size_t i = 0; i < typebits_len; i += len) {
+        assert(i + 2 <= typebits.size());
+        const unsigned int block = typebits.at(i);
+        len = typebits.at(i + 1);
+        assert(len > 0 && len <= 32);
+        i += 2;
+        for (size_t j = 0; j < len; ++j) {
+            if (typebits.at(i + j) == 0) {
+                continue;
+            }
+            for (size_t k = 0; k < 8; ++k) {
+                if ((typebits.at(i + j) & (0x80 >> k)) == 0) {
+                    continue;
+                }
+                const unsigned int t = block * 256 + j * 8 + k;
+                assert(t < 65536);
+                oss << " " << RRType(t);
+            }
         }
     }
 }
