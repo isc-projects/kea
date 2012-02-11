@@ -238,7 +238,9 @@ TEST_F(Rdata_NSEC3_Test, compare) {
     EXPECT_THROW(generic::NSEC3(nsec3_txt).compare(*rdata_nomatch),
                  bad_cast);
 
-    // test RDATAs, sorted in the ascendent order.
+    // test RDATAs, sorted in the ascendent order.  We only check comparison
+    // on NSEC3-specific fields.  Bitmap comparison is tested in the bitmap
+    // tests.
     vector<generic::NSEC3> compare_set;
     compare_set.push_back(generic::NSEC3("0 0 0 D399EAAB D1K6GQ38"));
     compare_set.push_back(generic::NSEC3("1 0 0 D399EAAB D1K6GQ38"));
@@ -249,19 +251,7 @@ TEST_F(Rdata_NSEC3_Test, compare) {
     compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ38"));
     compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ0000000000"));
     compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ00UUUUUUUU"));
-    compare_set.push_back(generic::NSEC3("1 1 2 FF99EA0000 D1K6GQ38"));
 
-    // Bit map: [win=0][len=1] 00000010
-    compare_set.push_back(generic::NSEC3("1 1 2 FF99EA0000 D1K6GQ38 SOA"));
-    // Bit map: [win=0][len=1] 00100000, [win=4][len=1] 10000000
-    compare_set.push_back(generic::NSEC3(
-                              "1 1 2 FF99EA0000 D1K6GQ38 NS TYPE1024"));
-    // Bit map: [win=0][len=1] 00100010
-    compare_set.push_back(generic::NSEC3("1 1 2 FF99EA0000 D1K6GQ38 NS SOA"));
-    // Bit map: [win=0][len=2] 00100000, 00000001
-    compare_set.push_back(generic::NSEC3("1 1 2 FF99EA0000 D1K6GQ38 NS MX"));
-    // Bit map: [win=4][len=1] 10000000
-    compare_set.push_back(generic::NSEC3("1 1 2 FF99EA0000 D1K6GQ38 TYPE1024"));
     vector<generic::NSEC3>::const_iterator it;
     const vector<generic::NSEC3>::const_iterator it_end = compare_set.end();
     for (it = compare_set.begin(); it != it_end - 1; ++it) {
