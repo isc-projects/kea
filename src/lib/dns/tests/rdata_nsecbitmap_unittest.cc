@@ -168,6 +168,13 @@ TYPED_TEST(NSECLikeBitmapTest, createFromWire) {
                  DNSMessageFORMERR);
 }
 
+TYPED_TEST(NSECLikeBitmapTest, badText) {
+    // redundant space after the sequence
+    EXPECT_THROW(this->fromText(this->getCommonText() + "A "),
+                 InvalidRdataText);
+}
+
+
 // This tests the result of toText() with various kinds of NSEC/NSEC3 bitmaps.
 // It also tests the "from text" constructor as a result.
 TYPED_TEST(NSECLikeBitmapTest, toText) {
