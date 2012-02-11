@@ -1,5 +1,5 @@
 #
-# An invalid NSEC3 RDATA: with an empty bitmap
+# NSEC3 RDATA with an empty bitmap
 #
 
 [custom]
