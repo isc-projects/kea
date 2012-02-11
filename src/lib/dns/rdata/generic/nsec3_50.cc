@@ -281,6 +281,26 @@ NSEC3::toWire(AbstractMessageRenderer& renderer) const {
     toWireHelper(*impl_, renderer);
 }
 
+namespace {
+int
+compareVectors(const vector<uint8_t>& v1, const vector<uint8_t>& v2,
+               bool check_length_first = true)
+{
+    const size_t len1 = v1.size();
+    const size_t len2 = v2.size();
+    const size_t cmplen = min(len1, len2);
+    if (check_length_first && len1 != len2) {
+        return (len1 < len2 ? -1 : 1);
+    }
+    const int cmp = cmplen == 0 ? 0 : memcmp(&v1.at(0), &v2.at(0), cmplen);
+    if (cmp != 0) {
+        return (cmp);
+    } else {
+        return (len1 - len2);
+    }
+}
+}
+
 int
 NSEC3::compare(const Rdata& other) const {
     const NSEC3& other_nsec3 = dynamic_cast<const NSEC3&>(other);
@@ -295,44 +315,18 @@ NSEC3::compare(const Rdata& other) const {
         return (impl_->iterations_ < other_nsec3.impl_->iterations_ ? -1 : 1);
     }
 
-    size_t this_len = impl_->salt_.size();
-    size_t other_len = other_nsec3.impl_->salt_.size();
-    size_t cmplen = min(this_len, other_len);
-    int cmp = memcmp(&impl_->salt_[0], &other_nsec3.impl_->salt_[0], cmplen);
+    int cmp = compareVectors(impl_->salt_, other_nsec3.impl_->salt_);
     if (cmp != 0) {
         return (cmp);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else if (this_len > other_len) {
-        return (1);
     }
-
-    this_len = impl_->salt_.size();
-    other_len = other_nsec3.impl_->salt_.size();
-    cmplen = min(this_len, other_len);
-    cmp = memcmp(&impl_->next_[0], &other_nsec3.impl_->next_[0], cmplen);
+    cmp = compareVectors(impl_->next_, other_nsec3.impl_->next_);
     if (cmp != 0) {
         return (cmp);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else if (this_len > other_len) {
-        return (1);
     }
-
-    this_len = impl_->typebits_.size();
-    other_len = other_nsec3.impl_->typebits_.size();
-    cmplen = min(this_len, other_len);
-    cmp = memcmp(&impl_->typebits_[0], &other_nsec3.impl_->typebits_[0],
-                 cmplen);
-    if (cmp != 0) {
-        return (cmp);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else if (this_len > other_len) {
-        return (1);
-    } else {
-        return (0);
-    }
+    // Note that bitmap doesn't have a dedicated length field, so we shouldn't
+    // terminate the comparison just because the lengths are different.
+    return (compareVectors(impl_->typebits_, other_nsec3.impl_->typebits_,
+                           false));
 }
 
 uint8_t
