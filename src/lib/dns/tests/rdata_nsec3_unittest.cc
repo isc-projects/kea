@@ -269,7 +269,6 @@ TEST_F(Rdata_NSEC3_Test, compare) {
         EXPECT_GT(0, (*it).compare(*(it + 1)));
         EXPECT_LT(0, (*(it + 1)).compare(*it));
     }
-
 }
 
 }
