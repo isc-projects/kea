@@ -242,7 +242,7 @@ compareVectors(const vector<uint8_t>& v1, const vector<uint8_t>& v2,
     const size_t len2 = v2.size();
     const size_t cmplen = min(len1, len2);
     if (check_length_first && len1 != len2) {
-        return (len1 < len2 ? -1 : 1);
+        return (len1 - len2);
     }
     const int cmp = cmplen == 0 ? 0 : memcmp(&v1.at(0), &v2.at(0), cmplen);
     if (cmp != 0) {
