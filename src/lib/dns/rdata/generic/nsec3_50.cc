@@ -234,6 +234,22 @@ NSEC3::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 namespace {
+// This is a helper subroutine for compare().  It compares two binary
+// data stored in vector<uint8_t> objects based on the "Canonical RR Ordering"
+// as defined in Section 6.3 of RFC4034, that is, the data are treated
+// "as a left-justified unsigned octet sequence in which the absence of an
+// octet sorts before a zero octet."
+//
+// If check_length_first is true, it treats the compared data as if they
+// began with a single-octet "length" field whose value is the size of the
+// corresponding vector.  In this case, if the sizes of the two vectors are
+// different the shorter one is always considered the "smaller"; the contents
+// of the vector don't matter.
+//
+// This function returns:
+// -1 if v1 is considered smaller than v2
+// 1 if v1 is considered larger than v2
+// 0 otherwise
 int
 compareVectors(const vector<uint8_t>& v1, const vector<uint8_t>& v2,
                bool check_length_first = true)
