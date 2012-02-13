@@ -53,12 +53,12 @@ struct NSEC3Impl {
         salt_(salt), next_(next), typebits_(typebits)
     {}
 
-    uint8_t hashalg_;
-    uint8_t flags_;
-    uint16_t iterations_;
-    vector<uint8_t> salt_;
-    vector<uint8_t> next_;
-    vector<uint8_t> typebits_;
+    const uint8_t hashalg_;
+    const uint8_t flags_;
+    const uint16_t iterations_;
+    const vector<uint8_t> salt_;
+    const vector<uint8_t> next_;
+    const vector<uint8_t> typebits_;
 };
 
 NSEC3::NSEC3(const string& nsec3_str) :
@@ -116,36 +116,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     }
 
     vector<uint8_t> typebits;
-    uint8_t bitmap[8 * 1024];       // 64k bits
-    memset(bitmap, 0, sizeof(bitmap));
-    do { 
-        string type;
-        iss >> type;
-        if (type.length() != 0) {
-            try {
-                const int code = RRType(type).getCode();
-                bitmap[code / 8] |= (0x80 >> (code % 8));
-            } catch (...) {
-                isc_throw(InvalidRdataText, "Invalid RRtype in NSEC3");
-            }
-        }
-    } while (!iss.eof());
-
-    for (int window = 0; window < 256; window++) {
-        int octet;
-        for (octet = 31; octet >= 0; octet--) {
-            if (bitmap[window * 32 + octet] != 0) {
-                break;
-            }
-        }
-        if (octet < 0)
-            continue;
-        typebits.push_back(window);
-        typebits.push_back(octet + 1);
-        for (int i = 0; i <= octet; i++) {
-            typebits.push_back(bitmap[window * 32 + i]);
-        }
-    }
+    buildBitmapsFromText("NSEC3", iss, typebits);
 
     impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
 }
@@ -174,6 +145,10 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
         rdata_len -= saltlen;
     }
 
+    if (rdata_len < 1) {
+        isc_throw(DNSMessageFORMERR, "NSEC3 too short to contain hash length, "
+                  "length: " << rdata_len + saltlen + 5);
+    }
     const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
     if (nextlen == 0 || rdata_len < nextlen) {
@@ -220,57 +195,78 @@ NSEC3::~NSEC3() {
 string
 NSEC3::toText() const {
     ostringstream s;
-    int len = 0;
-    for (size_t i = 0; i < impl_->typebits_.size(); i += len) {
-        assert(i + 2 <= impl_->typebits_.size());
-        int window = impl_->typebits_[i];
-        len = impl_->typebits_[i + 1];
-        assert(len >= 0 && len < 32);
-        i += 2;
-        for (int j = 0; j < len; j++) {
-            if (impl_->typebits_[i + j] == 0) {
-                continue;
-            }
-            for (int k = 0; k < 8; k++) {
-                if ((impl_->typebits_[i + j] & (0x80 >> k)) == 0) {
-                    continue;
-                }
-                int t = window * 256 + j * 8 + k;
-                s << " " << RRType(t).toText();
-            }
-        }
-    }
+    bitmapsToText(impl_->typebits_, s);
 
     using namespace boost;
     return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
-        " " + encodeHex(impl_->salt_) +
-        " " + encodeBase32Hex(impl_->next_) + s.str());
+            " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
+            " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
+            " " + (impl_->salt_.empty() ? "-" : encodeHex(impl_->salt_)) +
+            " " + encodeBase32Hex(impl_->next_) + s.str());
+}
+
+template <typename OUTPUT_TYPE>
+void
+toWireHelper(const NSEC3Impl& impl, OUTPUT_TYPE& output) {
+    output.writeUint8(impl.hashalg_);
+    output.writeUint8(impl.flags_);
+    output.writeUint16(impl.iterations_);
+    output.writeUint8(impl.salt_.size());
+    if (!impl.salt_.empty()) {
+        output.writeData(&impl.salt_[0], impl.salt_.size());
+    }
+    assert(!impl.next_.empty());
+    output.writeUint8(impl.next_.size());
+    output.writeData(&impl.next_[0], impl.next_.size());
+    if (!impl.typebits_.empty()) {
+        output.writeData(&impl.typebits_[0], impl.typebits_.size());
+    }
 }
 
 void
 NSEC3::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(impl_->hashalg_);
-    buffer.writeUint8(impl_->flags_);
-    buffer.writeUint16(impl_->iterations_);
-    buffer.writeUint8(impl_->salt_.size());
-    buffer.writeData(&impl_->salt_[0], impl_->salt_.size());
-    buffer.writeUint8(impl_->next_.size());
-    buffer.writeData(&impl_->next_[0], impl_->next_.size());
-    buffer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
+    toWireHelper(*impl_, buffer);
 }
 
 void
 NSEC3::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(impl_->hashalg_);
-    renderer.writeUint8(impl_->flags_);
-    renderer.writeUint16(impl_->iterations_);
-    renderer.writeUint8(impl_->salt_.size());
-    renderer.writeData(&impl_->salt_[0], impl_->salt_.size());
-    renderer.writeUint8(impl_->next_.size());
-    renderer.writeData(&impl_->next_[0], impl_->next_.size());
-    renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
+    toWireHelper(*impl_, renderer);
+}
+
+namespace {
+// This is a helper subroutine for compare().  It compares two binary
+// data stored in vector<uint8_t> objects based on the "Canonical RR Ordering"
+// as defined in Section 6.3 of RFC4034, that is, the data are treated
+// "as a left-justified unsigned octet sequence in which the absence of an
+// octet sorts before a zero octet."
+//
+// If check_length_first is true, it treats the compared data as if they
+// began with a single-octet "length" field whose value is the size of the
+// corresponding vector.  In this case, if the sizes of the two vectors are
+// different the shorter one is always considered the "smaller"; the contents
+// of the vector don't matter.
+//
+// This function returns:
+// -1 if v1 is considered smaller than v2
+// 1 if v1 is considered larger than v2
+// 0 otherwise
+int
+compareVectors(const vector<uint8_t>& v1, const vector<uint8_t>& v2,
+               bool check_length_first = true)
+{
+    const size_t len1 = v1.size();
+    const size_t len2 = v2.size();
+    const size_t cmplen = min(len1, len2);
+    if (check_length_first && len1 != len2) {
+        return (len1 - len2);
+    }
+    const int cmp = cmplen == 0 ? 0 : memcmp(&v1.at(0), &v2.at(0), cmplen);
+    if (cmp != 0) {
+        return (cmp);
+    } else {
+        return (len1 - len2);
+    }
+}
 }
 
 int
@@ -287,44 +283,18 @@ NSEC3::compare(const Rdata& other) const {
         return (impl_->iterations_ < other_nsec3.impl_->iterations_ ? -1 : 1);
     }
 
-    size_t this_len = impl_->salt_.size();
-    size_t other_len = other_nsec3.impl_->salt_.size();
-    size_t cmplen = min(this_len, other_len);
-    int cmp = memcmp(&impl_->salt_[0], &other_nsec3.impl_->salt_[0], cmplen);
+    int cmp = compareVectors(impl_->salt_, other_nsec3.impl_->salt_);
     if (cmp != 0) {
         return (cmp);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else if (this_len > other_len) {
-        return (1);
     }
-
-    this_len = impl_->salt_.size();
-    other_len = other_nsec3.impl_->salt_.size();
-    cmplen = min(this_len, other_len);
-    cmp = memcmp(&impl_->next_[0], &other_nsec3.impl_->next_[0], cmplen);
+    cmp = compareVectors(impl_->next_, other_nsec3.impl_->next_);
     if (cmp != 0) {
         return (cmp);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else if (this_len > other_len) {
-        return (1);
     }
-
-    this_len = impl_->typebits_.size();
-    other_len = other_nsec3.impl_->typebits_.size();
-    cmplen = min(this_len, other_len);
-    cmp = memcmp(&impl_->typebits_[0], &other_nsec3.impl_->typebits_[0],
-                 cmplen);
-    if (cmp != 0) {
-        return (cmp);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else if (this_len > other_len) {
-        return (1);
-    } else {
-        return (0);
-    }
+    // Note that bitmap doesn't have a dedicated length field, so we shouldn't
+    // terminate the comparison just because the lengths are different.
+    return (compareVectors(impl_->typebits_, other_nsec3.impl_->typebits_,
+                           false));
 }
 
 uint8_t
