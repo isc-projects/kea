@@ -447,7 +447,7 @@ public:
                    boost::bind(setRRset, _1, rrsets.begin()));
     }
 
-    virtual ~InMemoryZoneFinderTest() {
+    ~InMemoryZoneFinderTest() {
         // Make sure we reset the hash creator to the default
         setNSEC3HashCreator(NULL);
     }
