@@ -143,18 +143,6 @@ NSEC3HashRFC5155::match(const generic::NSEC3PARAM& nsec3param) const {
                   nsec3param.getSalt()));
 }
 
-class DefaultNSEC3HashCreator : public NSEC3HashCreator {
-public:
-    virtual NSEC3Hash* create(const generic::NSEC3PARAM& param) const {
-        return (new NSEC3HashRFC5155(param.getHashalg(), param.getIterations(),
-                                     param.getSalt()));
-    }
-    virtual NSEC3Hash* create(const generic::NSEC3& nsec3) const {
-        return (new NSEC3HashRFC5155(nsec3.getHashalg(), nsec3.getIterations(),
-                                 nsec3.getSalt()));
-    }
-};
-
 // A static pointer that refers to the currently usable creator.
 // Only get/setNSEC3HashCreator are expected to get access to this variable
 // directly.
@@ -184,6 +172,18 @@ NSEC3Hash::create(const generic::NSEC3PARAM& param) {
 NSEC3Hash*
 NSEC3Hash::create(const generic::NSEC3& nsec3) {
     return (getNSEC3HashCreator()->create(nsec3));
+}
+
+NSEC3Hash*
+DefaultNSEC3HashCreator::create(const generic::NSEC3PARAM& param) const {
+    return (new NSEC3HashRFC5155(param.getHashalg(), param.getIterations(),
+                                 param.getSalt()));
+}
+
+NSEC3Hash*
+DefaultNSEC3HashCreator::create(const generic::NSEC3& nsec3) const {
+    return (new NSEC3HashRFC5155(nsec3.getHashalg(), nsec3.getIterations(),
+                                 nsec3.getSalt()));
 }
 
 void
