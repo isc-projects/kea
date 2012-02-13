@@ -176,6 +176,17 @@ const char* const unsigned_delegation_txt =
     "unsigned-delegation.example.com. 3600 IN NS ns.example.net.\n";
 const char* const unsigned_delegation_nsec_txt =
     "unsigned-delegation.example.com. 3600 IN NSEC "
+    "unsigned-delegation-optout.example.com. NS RRSIG NSEC\n";
+
+const char* const unsigned_delegation_nsec3_txt =
+    "q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG\n";
+
+// Delegation without DS record, and no direct matching NSEC3 record
+const char* const unsigned_delegation_optout_txt =
+    "unsigned-delegation-optout.example.com. 3600 IN NS ns.example.net.\n";
+const char* const unsigned_delegation_optout_nsec_txt =
+    "unsigned-delegation-optout.example.com. 3600 IN NSEC "
     "*.uwild.example.com. NS RRSIG NSEC\n";
 
 // (Secure) delegation data; Delegation where the DS lookup will raise an
@@ -237,6 +248,8 @@ public:
             nsec3_apex_txt << nsec3_www_txt <<
             signed_delegation_txt << signed_delegation_ds_txt <<
             unsigned_delegation_txt << unsigned_delegation_nsec_txt <<
+            unsigned_delegation_nsec3_txt << unsigned_delegation_optout_txt <<
+            unsigned_delegation_optout_nsec_txt <<
             bad_delegation_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
@@ -263,6 +276,10 @@ public:
             "q00jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("unsigned-delegation.example.com")] =
+            "q81r598950igr1eqvc60aedlq66425b5";
+        hash_map_[Name("unsigned-delegation-optout.example.com")] =
+            "vld46lphhasfapj8og1pglgiasa5o5gt";
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
@@ -1627,25 +1644,25 @@ TEST_F(QueryTest, findNSEC3) {
 
     // Non existent name.  Disabling recursion, a covering NSEC3 should be
     // returned.
-    nsec3Check(false, 4, nsec3_www_txt,
+    nsec3Check(false, 4, unsigned_delegation_nsec3_txt,
                mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
 
     // Non existent name.  The closest provable encloser is the apex,
     // and next closer is the query name.
     nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(nsec3_www_txt),
+               string(nsec3_apex_txt) + string(unsigned_delegation_nsec3_txt),
                mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
 
     // Similar to the previous case, but next closer name is different
     // (is the parent) of the non existent name.
     nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(nsec3_www_txt),
+               string(nsec3_apex_txt) + string(unsigned_delegation_nsec3_txt),
                mock_finder->findNSEC3(Name("nx.domain.example.com"), true));
 
     // In the rest of test we check hash comparison for wrap around cases.
     nsec3Check(false, 4, nsec3_apex_txt,
                mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
-    nsec3Check(false, 4, nsec3_www_txt,
+    nsec3Check(false, 4, unsigned_delegation_nsec3_txt,
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
 }
 
@@ -1681,6 +1698,43 @@ TEST_F(QueryTest, nxrrsetMissingNSEC3) {
     EXPECT_THROW(Query(memory_client, Name("www.example.com"), RRType::TXT(),
                        response, true).process(), Query::BadNSEC3);
 }
+
+// Check the exact matching NSEC3 is returned for NXRRSET and qtype DS
+TEST_F(QueryTest, nxrrsetWithNSEC3_ds_exact) {
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("unsigned-delegation.example.com."),
+          RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(unsigned_delegation_nsec3_txt) + "\n" +
+                   mock_finder->hash_map_[Name("unsigned-delegation.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+// Check the signature is present when an NXRRSET is returned and qtype is DS
+TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("unsigned-delegation-optout.example.com."),
+          RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_apex_txt) + "\n" +
+                   mock_finder->hash_map_[Name("example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(unsigned_delegation_nsec3_txt) + "\n" +
+                   mock_finder->hash_map_[Name("unsigned-delegation.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
 
 // The following are tentative tests until we really add tests for the
 // query logic for these cases.  At that point it's probably better to
