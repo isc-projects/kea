@@ -236,6 +236,17 @@ Query::addNXRRsetProof(ZoneFinder& finder,
         if (db_result.isWildcard()) {
             addWildcardNXRRSETProof(finder, db_result.rrset);
         }
+    } else if (db_result.isNSEC3Signed()) {
+        ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_, false));
+        if (result.matched) {
+            response_.addRRset(Message::SECTION_AUTHORITY,
+                               boost::const_pointer_cast<AbstractRRset>(
+                                   result.closest_proof), dnssec_);
+
+        } else {
+            isc_throw(BadNSEC3, "No NSEC3 found for existing domain " <<
+                      qname_.toText());
+        }
     }
 }
 
