@@ -1,3 +1,10 @@
+377.	[bug]		jinmei
+	libdns++: miscellaneous bug fixes for the NSEC and NSEC3 RDATA
+	implementation, including a crash in NSEC3::toText() for some RR
+	types, incorrect handling of empty NSEC3 salt, and incorrect
+	comparison logic in NSEC3::compare().
+	(Trac #1641, git 28ba8bd71ae4d100cb250fd8d99d80a17a6323a2)
+
 376.	[bug]		jinmei, vorner
 	The new query handling module of b10-auth did not handle type DS
 	query correctly: It didn't look for it in the parent zone, and
