@@ -249,7 +249,9 @@ public:
 
         // (Faked) NSEC3 hash map.  For convenience we use hardcoded built-in
         // map instead of calculating and using actual hash.
-        // The used hash values are borrowed from RFC5155 examples.
+        // The used hash values are borrowed from RFC5155 examples (they are
+        // based on the query name, not that they would correspond directly
+        // to the name).
         hash_map_[Name("example.com")] = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
         hash_map_[Name("www.example.com")] =
             "q04jkcevqvmu85r014c7dkba38o0ji5r";
