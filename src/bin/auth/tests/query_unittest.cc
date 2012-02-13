@@ -682,7 +682,8 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                                             RESULT_NSEC3_SIGNED :
                                             RESULT_NSEC_SIGNED)));
                     } else {
-                        // No matched QTYPE, this case is for WILDCARD_NXRRSET
+                        // No matched QTYPE, this case is for NXRRSET with
+                        // WILDCARD
                         if (use_nsec3_) {
                             return (FindResult(NXRRSET, RRsetPtr(),
                                                RESULT_WILDCARD |
@@ -1280,8 +1281,8 @@ TEST_F(QueryTest, badWildcardProof3) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs. In this case we only need one NSEC,
+    // NXRRSET on WILDCARD with DNSSEC proof.  We should have SOA, NSEC that
+    // proves the NXRRSET and their RRSIGs. In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
     Query(memory_client, Name("www.wild.example.com"), RRType::TXT(), response,
           true).process();
@@ -1296,11 +1297,12 @@ TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
-    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
-    // one proves NXDOMAIN and the other proves non existence RRSETs of wildcard.
-    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(), response,
-          true).process();
+    // WILDCARD + NXRRSET with DNSSEC proof.  We should have SOA, NSEC that
+    // proves the NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
+    // one proves NXDOMAIN and the other proves non existence RRSETs of
+    // wildcard.
+    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(),
+          response, true).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
@@ -1315,8 +1317,8 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
 }
 
 TEST_F(QueryTest, wildcardEmptyWithNSEC) {
-    // WILDCARD_EMPTY with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXDOMAIN and their RRSIGs. In this case we need two NSEC RRs,
+    // Empty WILDCARD with DNSSEC proof.  We should have SOA, NSEC that proves
+    // the NXDOMAIN and their RRSIGs. In this case we need two NSEC RRs,
     // one proves NXDOMAIN and the other proves non existence wildcard.
     Query(memory_client, Name("a.t.example.com"), RRType::A(), response,
           true).process();
