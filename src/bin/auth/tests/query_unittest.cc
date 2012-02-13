@@ -260,7 +260,8 @@ public:
         rrclass_(RRClass::IN()),
         include_rrsig_anyway_(false),
         use_nsec3_(false),
-        nsec_name_(origin_)
+        nsec_name_(origin_),
+        nsec3_fake_(NULL)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
@@ -288,8 +289,12 @@ public:
 
         // (Faked) NSEC3 hash map.  For convenience we use hardcoded built-in
         // map instead of calculating and using actual hash.
-        // The used hash values are borrowed from RFC5155 examples.
+        // The used hash values are borrowed from RFC5155 examples (they are
+        // based on the query name, not that they would correspond directly
+        // to the name).
         hash_map_[Name("example.com")] = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("www.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain.example.com")] =
             "v644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("nx.domain.example.com")] =
@@ -331,6 +336,14 @@ public:
     {
         nsec_name_ = nsec_name;
         nsec_result_.reset(new ZoneFinder::FindResult(code, rrset));
+    }
+
+    // Once called, the findNSEC3 will return the provided result for the next
+    // query. After that, it'll return to operate normally.
+    // NULL disables. Does not take ownership of the pointer (it is generally
+    // expected to be a local variable in the test function).
+    void setNSEC3Result(const FindNSEC3Result* result) {
+        nsec3_fake_ = result;
     }
 
     // If true is passed return an empty NSEC3 RRset for some negative
@@ -427,6 +440,11 @@ private:
     // The following two will be used for faked NSEC cases
     Name nsec_name_;
     boost::scoped_ptr<ZoneFinder::FindResult> nsec_result_;
+    // The following two are for faking bad NSEC3 responses
+    // Enabled when not NULL
+    const FindNSEC3Result* nsec3_fake_;
+public:
+    // Public, to allow tests looking up the right names for something
     map<Name, string> hash_map_;
 };
 
@@ -471,6 +489,14 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
 
 ZoneFinder::FindNSEC3Result
 MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    // Do we have a fake result set? If so, use it.
+    if (nsec3_fake_ != NULL) {
+        const FindNSEC3Result* result(nsec3_fake_);
+        // Disable the fake for the next call
+        nsec3_fake_ = NULL;
+        return (*result);
+    }
+
     ConstRRsetPtr covering_proof;
     const int labels = name.getLabelCount();
 
@@ -1860,6 +1886,39 @@ TEST_F(QueryTest, dsAtRootWithDS) {
                   NULL);
 }
 
+// Check the signature is present when an NXRRSET is returned
+TEST_F(QueryTest, nxrrsetWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+
+    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC3 that proves the
+    // NXRRSET and their RRSIGs.
+    Query(memory_client, Name("www.example.com"), RRType::TXT(), response,
+          true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_www_txt) + "\n" +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+// Check the exception is correctly raised when the NSEC3 thing isn't in the
+// zone
+TEST_F(QueryTest, nxrrsetMissingNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+    // We just need it to return false for "matched". This indicates
+    // there's no exact match for NSEC3 on www.example.com.
+    ZoneFinder::FindNSEC3Result nsec3(false, 0, ConstRRsetPtr(),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    EXPECT_THROW(Query(memory_client, Name("www.example.com"), RRType::TXT(),
+                       response, true).process(), Query::BadNSEC3);
+}
+
 // The following are tentative tests until we really add tests for the
 // query logic for these cases.  At that point it's probably better to
 // clean them up.
@@ -1868,16 +1927,6 @@ TEST_F(QueryTest, nxdomainWithNSEC3) {
     ZoneFinder::FindResult result = mock_finder->find(
         Name("nxdomain.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
     EXPECT_EQ(ZoneFinder::NXDOMAIN, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_FALSE(result.isWildcard());
-}
-
-TEST_F(QueryTest, nxrrsetWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("www.example.com"), RRType::TXT(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
     EXPECT_FALSE(result.rrset);
     EXPECT_TRUE(result.isNSEC3Signed());
     EXPECT_FALSE(result.isWildcard());
