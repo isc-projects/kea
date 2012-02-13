@@ -124,3 +124,4 @@ EXTRA_DIST += testdata/test.sqlite3
 EXTRA_DIST += testdata/test.sqlite3.nodiffs
 EXTRA_DIST += testdata/rwtest.sqlite3
 EXTRA_DIST += testdata/diffs.sqlite3
+EXTRA_DIST += testdata/rfc5155-example.zone.signed
