@@ -223,16 +223,18 @@ void run_test(const char *input_data, const size_t input_size,
     ASSERT_NE(-1, input) << "Couldn't start input feeder";
     ASSERT_NE(-1, output) << "Couldn't start output checker";
     // Run the body
-    int result(run(input_fd, output_fd, get_sock_dummy, send_fd, test_close));
+    if (should_succeed) {
+        EXPECT_NO_THROW(run(input_fd, output_fd, get_sock_dummy, send_fd,
+                            test_close));
+    } else {
+        EXPECT_THROW(run(input_fd, output_fd, get_sock_dummy, send_fd,
+                         test_close), isc::socket_creator::SocketCreatorError);
+    }
+
     // Close the pipes
     close(input_fd);
     close(output_fd);
     // Did it run well?
-    if (should_succeed) {
-        EXPECT_EQ(0, result);
-    } else {
-        EXPECT_NE(0, result);
-    }
     // Check the subprocesses say everything is OK too
     EXPECT_TRUE(process_ok(input));
     EXPECT_TRUE(process_ok(output));

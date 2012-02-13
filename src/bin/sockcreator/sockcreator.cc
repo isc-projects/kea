@@ -49,40 +49,50 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
     return sock;
 }
 
-// These are macros so they can exit the function
-#define READ(WHERE, HOW_MANY) do { \
-        size_t how_many = (HOW_MANY); \
-        if (read_data(input_fd, (WHERE), how_many) < how_many) { \
-            return 1; \
-        } \
-    } while (0)
+// Simple wrappers for read_data/write_data that thr0w an exception on error.
+void
+read_message(int fd, void* where, const size_t length) {
+    if (read_data(fd, where, length) < length) {
+        isc_throw(ReadError, "Error reading from socket creator client");
+    }
+}
 
-#define WRITE(WHAT, HOW_MANY) do { \
-        if (!write_data(output_fd, (WHAT), (HOW_MANY))) { \
-            return 2; \
-        } \
-    } while (0)
+void
+write_message(int fd, const void* what, const size_t length) {
+    if (!write_data(fd, what, length)) {
+        isc_throw(WriteError, "Error writing to socket creator client");
+    }
+}
 
-#define DEFAULT \
-    default: /* Unrecognized part of protocol */ \
-        WRITE("FI", 2); \
-        return 3;
+// Exit on some protocol error after informing the client of the problem.
+void
+protocol_error(int fd, const char reason = 'I') {
+    // Tell client we have a problem
+    char message[2];
+    message[0] = 'F';
+    message[1] = reason;
+    write_message(fd, message, sizeof(message));
 
-int
+    // ... and exit
+    isc_throw(ProtocolError, "Fatal error, reason: " << reason);
+}
+
+
+void
 run(const int input_fd, const int output_fd, const get_sock_t get_sock,
     const send_fd_t send_fd_fun, const close_t close_fun)
 {
     for (;;) {
         // Read the command
         char command;
-        READ(&command, 1);
+        read_message(input_fd, &command, sizeof(command));
         switch (command) {
             case 'T': // The "terminate" command
-                return 0;
+                return;
             case 'S': { // Create a socket
                 // Read what type of socket they want
                 char type[2];
-                READ(type, 2);
+                read_message(input_fd, type, sizeof(type));
                 // Read the address they ask for
                 struct sockaddr *addr(NULL);
                 size_t addr_len(0);
@@ -99,9 +109,11 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                         addr_len = sizeof addr_in;
                         memset(&addr_in, 0, sizeof addr_in);
                         addr_in.sin_family = AF_INET;
-                        READ(static_cast<char *>(static_cast<void *>(
+                        read_message(input_fd,
+                            static_cast<char *>(static_cast<void *>(
                             &addr_in.sin_port)), 2);
-                        READ(static_cast<char *>(static_cast<void *>(
+                        read_message(input_fd,
+                            static_cast<char *>(static_cast<void *>(
                             &addr_in.sin_addr.s_addr)), 4);
                         break;
                     case '6':
@@ -110,14 +122,17 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                         addr_len = sizeof addr_in6;
                         memset(&addr_in6, 0, sizeof addr_in6);
                         addr_in6.sin6_family = AF_INET6;
-                        READ(static_cast<char *>(static_cast<void *>(
+                        read_message(input_fd,
+                            static_cast<char *>(static_cast<void *>(
                             &addr_in6.sin6_port)), 2);
-                        READ(static_cast<char *>(static_cast<void *>(
+                        read_message(input_fd,
+                            static_cast<char *>(static_cast<void *>(
                             &addr_in6.sin6_addr.s6_addr)), 16);
                         break;
-                    DEFAULT
+                    default:
+                        protocol_error(output_fd);
                 }
-                int sock_type;
+                int sock_type = 0;
                 switch (type[0]) { // Translate the type
                     case 'T':
                         sock_type = SOCK_STREAM;
@@ -125,41 +140,44 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                     case 'U':
                         sock_type = SOCK_DGRAM;
                         break;
-                    DEFAULT
+                    default:
+                        protocol_error(output_fd);
                 }
                 int result(get_sock(sock_type, addr, addr_len));
                 if (result >= 0) { // We got the socket
-                    WRITE("S", 1);
+                    write_message(output_fd, "S", 1);
                     if (send_fd_fun(output_fd, result) != 0) {
                         // We'll soon abort ourselves, but make sure we still
                         // close the socket; don't bother if it fails as the
                         // higher level result (abort) is the same.
                         close_fun(result);
-                        return 3;
+                        isc_throw(InternalError, "Error sending descriptor");
                     }
                     // Don't leak the socket
                     if (close_fun(result) == -1) {
-                        return 4;
+                        isc_throw(InternalError, "Error closing socket");
                     }
                 } else {
-                    WRITE("E", 1);
+                    write_message(output_fd, "E", 1);
                     switch (result) {
                         case -1:
-                            WRITE("S", 1);
+                            write_message(output_fd, "S", 1);
                             break;
                         case -2:
-                            WRITE("B", 1);
+                            write_message(output_fd, "B", 1);
                             break;
                         default:
-                            return 4;
+                            isc_throw(InternalError, "Error creating socket");
                     }
                     int error(errno);
-                    WRITE(static_cast<char *>(static_cast<void *>(&error)),
+                    write_message(output_fd,
+                        static_cast<char *>(static_cast<void *>(&error)),
                         sizeof error);
                 }
                 break;
             }
-            DEFAULT
+            default:
+                protocol_error(output_fd);
         }
     }
 }
