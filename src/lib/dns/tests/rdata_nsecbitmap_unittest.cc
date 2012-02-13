@@ -213,7 +213,7 @@ TYPED_TEST(NSECLikeBitmapTest, compare) {
     // Bit map: [win=0][len=1] 00000010, [win=4][len=1] 10000000
     this->compare_set.push_back(this->fromText(this->getCommonText() +
                                                "SOA TYPE1024"));
-    // Bit map: [win=0][len=1] 00100000,
+    // Bit map: [win=0][len=1] 00100000
     this->compare_set.push_back(this->fromText(this->getCommonText() + "NS"));
     // Bit map: [win=0][len=1] 00100010
     this->compare_set.push_back(this->fromText(this->getCommonText() +
