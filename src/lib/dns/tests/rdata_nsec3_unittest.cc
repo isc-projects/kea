@@ -44,8 +44,14 @@ class Rdata_NSEC3_Test : public RdataTest {
 public:
     Rdata_NSEC3_Test() :
         nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                  "NS SOA RRSIG DNSKEY NSEC3PARAM") {}
-    string nsec3_txt;
+                  "NS SOA RRSIG DNSKEY NSEC3PARAM"),
+        nsec3_nosalt_txt("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A" ),
+        obuffer(0), renderer(obuffer)
+    {}
+    const string nsec3_txt;
+    const string nsec3_nosalt_txt;
+    OutputBuffer obuffer;
+    MessageRenderer renderer;
 };
 
 TEST_F(Rdata_NSEC3_Test, fromText) {
@@ -60,8 +66,7 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
                                    "NS SOA RRSIG DNSKEY NSEC3PARAM"));
 
     // 0-length salt
-    EXPECT_EQ(0, generic::NSEC3("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                                "A").getSalt().size());
+    EXPECT_EQ(0, generic::NSEC3(nsec3_nosalt_txt).getSalt().size());
 
     // salt that has the possible max length
     EXPECT_EQ(255, generic::NSEC3("1 1 1 " + string(255 * 2, '0') +
@@ -80,8 +85,12 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
 }
 
 TEST_F(Rdata_NSEC3_Test, toText) {
+    // normal case
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(nsec3_txt, rdata_nsec3.toText());
+
+    // empty salt case
+    EXPECT_EQ(nsec3_nosalt_txt, generic::NSEC3(nsec3_nosalt_txt).toText());
 }
 
 TEST_F(Rdata_NSEC3_Test, badText) {
@@ -165,7 +174,11 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
                                       "rdata_nsec3_fromWire14.wire"),
                  DNSMessageFORMERR);
 
-    //
+    // RDLEN is too short to hold the hash length field
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                      "rdata_nsec3_fromWire17.wire"),
+                 DNSMessageFORMERR);
+
     // Short buffer cases.  The data is valid NSEC3 RDATA, but the buffer
     // is trimmed at the end.  All cases should result in an exception from
     // the buffer class.
@@ -180,27 +193,72 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     }
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireRenderer) {
-    renderer.skip(2);
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    rdata_nsec3.toWire(renderer);
+template <typename OUTPUT_TYPE>
+void
+toWireCheck(OUTPUT_TYPE& output, const char* const data_file) {
+    vector<uint8_t> data;
+    UnitTestUtil::readWireData(data_file, data);
+    InputBuffer buffer(&data[0], data.size());
+    const uint16_t rdlen = buffer.readUint16();
+    const generic::NSEC3 nsec3 =
+        dynamic_cast<const generic::NSEC3&>(*createRdata(
+                                                RRType::NSEC3(), RRClass::IN(),
+                                                buffer, rdlen));
 
-    vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_nsec3_fromWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+    output.clear();
+    output.writeUint16(rdlen);
+    nsec3.toWire(output);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, output.getData(),
+                        output.getLength(), &data[0], data.size());
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireBuffer) {
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    rdata_nsec3.toWire(obuffer);
+TEST_F(Rdata_NSEC3_Test, toWire) {
+    // normal case
+    toWireCheck(renderer, "rdata_nsec3_fromWire1");
+    toWireCheck(obuffer, "rdata_nsec3_fromWire1");
+
+    // empty salt
+    toWireCheck(renderer, "rdata_nsec3_fromWire13.wire");
+    toWireCheck(obuffer, "rdata_nsec3_fromWire13.wire");
+
+    // empty bitmap case is handled in the bitmap tests
 }
 
 TEST_F(Rdata_NSEC3_Test, assign) {
     generic::NSEC3 rdata_nsec3(nsec3_txt);
     generic::NSEC3 other_nsec3 = rdata_nsec3;
     EXPECT_EQ(0, rdata_nsec3.compare(other_nsec3));
+}
+
+TEST_F(Rdata_NSEC3_Test, compare) {
+    // trivial case: self equivalence
+    EXPECT_EQ(0, generic::NSEC3(nsec3_txt).compare(generic::NSEC3(nsec3_txt)));
+
+    // comparison attempt between incompatible RR types should be rejected
+    EXPECT_THROW(generic::NSEC3(nsec3_txt).compare(*rdata_nomatch),
+                 bad_cast);
+
+    // test RDATAs, sorted in the ascendent order.  We only check comparison
+    // on NSEC3-specific fields.  Bitmap comparison is tested in the bitmap
+    // tests.
+    vector<generic::NSEC3> compare_set;
+    compare_set.push_back(generic::NSEC3("0 0 0 D399EAAB D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 0 0 D399EAAB D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 1 0 D399EAAB D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 1 1 - D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 1 1 D399EAAB D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 1 1 FF99EAAB D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ0000000000"));
+    compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ00UUUUUUUU"));
+
+    vector<generic::NSEC3>::const_iterator it;
+    const vector<generic::NSEC3>::const_iterator it_end = compare_set.end();
+    for (it = compare_set.begin(); it != it_end - 1; ++it) {
+        SCOPED_TRACE("compare " + it->toText() + " to " + (it + 1)->toText());
+        EXPECT_GT(0, (*it).compare(*(it + 1)));
+        EXPECT_LT(0, (*(it + 1)).compare(*it));
+    }
 }
 
 }
