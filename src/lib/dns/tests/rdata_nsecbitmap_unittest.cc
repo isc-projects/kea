@@ -186,7 +186,8 @@ TYPED_TEST(NSECLikeBitmapTest, toText) {
     rdata_text = this->getCommonText() + "NS DLV";
     EXPECT_EQ(rdata_text, this->fromText(rdata_text).toText());
 
-    // Make sure all possible bits in a one-octet bitmap field correctly.
+    // Make sure all possible bits in a one-octet bitmap field are handled
+    // correctly.
     // We use the range around 1024 (reasonably higher number) so it's
     // unlikely that they have predefined mnemonic and can be safely converted
     // to TYPEnnnn by toText().
