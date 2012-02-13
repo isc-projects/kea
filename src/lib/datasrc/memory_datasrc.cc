@@ -881,57 +881,80 @@ InMemoryZoneFinder::findAll(const Name& name,
 }
 
 ZoneFinder::FindNSEC3Result
-InMemoryZoneFinder::findNSEC3(const Name&, bool) {
-    isc_throw(NotImplemented, "findNSEC3 is not yet implemented for in memory "
-              "data source");
-}
+InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3).arg(name).
+        arg(recursive ? "recursive" : "non-recursive");
 
-ZoneFinder::FindNSEC3Result
-InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
     if (!impl_->zone_data_->nsec3_data_) {
-        isc_throw(Unexpected, "findNSEC3 is called for non NSEC3 zone");
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt for non NSEC3 signed zone: " <<
+                  impl_->origin_ << "/" << impl_->zone_class_);
     }
-    if (recursive) {
-        isc_throw(Unexpected, "recursive mode isn't expected in tests");
+    const NSEC3Map& map = impl_->zone_data_->nsec3_data_->map_;
+    if (map.empty()) {
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt but zone has no NSEC3 RR: " <<
+                  impl_->origin_ << "/" << impl_->zone_class_);
     }
-
-    // A temporary workaround for testing: convert the original name to
-    // NSEC3-hashed name using hardcoded mapping.
-    string hname_text;
-    if (name == Name("example.org")) {
-        hname_text = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("www.example.org")) {
-        hname_text = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("xxx.example.org")) {
-        hname_text = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("yyy.example.org")) {
-        hname_text = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else {
-        isc_throw(Unexpected, "unexpected name for NSEC3 test: " << name);
+    const NameComparisonResult cmp_result = name.compare(impl_->origin_);
+    if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
+        cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
+        isc_throw(InvalidParameter, "findNSEC3 attempt for out-of-zone name: "
+                  << name << ", zone: " << impl_->origin_ << "/"
+                  << impl_->zone_class_);
     }
 
-    // Below we assume the map is not empty for simplicity.
-    NSEC3Map::const_iterator found =
-        impl_->zone_data_->nsec3_data_->map_.lower_bound(hname_text);
-    if (found != impl_->zone_data_->nsec3_data_->map_.end() &&
-        found->first == hname_text) {
-        // exact match
-        return (FindNSEC3Result(true, 2, found->second, ConstRRsetPtr()));
-    } else if (found == impl_->zone_data_->nsec3_data_->map_.end() ||
-               found == impl_->zone_data_->nsec3_data_->map_.begin()) {
-        // the search key is "smaller" than the smallest or "larger" than
-        // largest.  In either case "previous" is the largest one.
-        return (FindNSEC3Result(false, 2,
-                                impl_->zone_data_->nsec3_data_->map_.
-                                rbegin()->second, ConstRRsetPtr()));
-    } else {
-        // Otherwise, H(found_domain-1) < given_hash < H(found_domain)
-        // The covering proof is the first one.
-        return (FindNSEC3Result(false, 2, (--found)->second, ConstRRsetPtr()));
+    // Convenient shortcuts
+    const NSEC3Hash& nsec3hash = *impl_->zone_data_->nsec3_data_->hash_;
+    const unsigned int olabels = impl_->origin_.getLabelCount();
+    const unsigned int qlabels = name.getLabelCount();
+
+    ConstRRsetPtr covering_proof; // placeholder of the next closer proof
+    // Examine all names from the query name to the origin name, stripping
+    // the deepest label one by one, until we find a name that has a matching
+    // NSEC3 hash.
+    for (unsigned int labels = qlabels; labels >= olabels; --labels) {
+        const string hlabel = nsec3hash.calculate(
+            labels == qlabels ? name : name.split(qlabels - labels, labels));
+        NSEC3Map::const_iterator found = map.lower_bound(hlabel);
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3_TRYHASH).
+            arg(name).arg(labels).arg(hlabel);
+
+        // If the given hash is larger than the largest stored hash or
+        // the first label doesn't match the target, identify the "previous"
+        // hash value and remember it as the candidate next closer proof.
+        if (found == map.end() || found->first != hlabel) {
+            // If the given hash is larger or smaller than everything,
+            // the covering proof is the NSEC3 that has the largest hash.
+            // Note that we know the map isn't empty, so rbegin() is
+            // safe.
+            if (found == map.end() || found == map.begin()) {
+                covering_proof = map.rbegin()->second;
+            } else {
+                // Otherwise, H(found_entry-1) < given_hash < H(found_entry).
+                // The covering proof is the first one (and it's valid
+                // because found is neither begin nor end)
+                covering_proof = (--found)->second;
+            }
+            if (!recursive) {   // in non recursive mode, we are done.
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_MEM_FINDNSEC3_COVER).
+                    arg(name).arg(*covering_proof);
+                return (FindNSEC3Result(false, labels, covering_proof,
+                                        ConstRRsetPtr()));
+            }
+        } else {                // found an exact match.
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_MEM_FINDNSEC3_MATCH).arg(name).arg(labels).
+                    arg(*found->second);
+            return (FindNSEC3Result(true, labels, found->second,
+                                    covering_proof));
+        }
     }
 
-    // We should have covered all cases.
-    isc_throw(Unexpected, "Impossible NSEC3 search result for " << name);
+    isc_throw(DataSourceError, "recursive findNSEC3 mode didn't stop, likely "
+              "a broken NSEC3 zone: " << impl_->origin_ << "/"
+              << impl_->zone_class_);
 }
 
 result::Result

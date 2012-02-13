@@ -29,7 +29,7 @@ using namespace isc::dns::rdata;
 namespace {
 typedef scoped_ptr<NSEC3Hash> NSEC3HashPtr;
 
-// Commonly used NSEC3 suffix, defined to reduce amount of type
+// Commonly used NSEC3 suffix, defined to reduce the amount of typing
 const char* const nsec3_common = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
 
 class NSEC3HashTest : public ::testing::Test {
@@ -40,6 +40,11 @@ protected:
                                           ("1 0 12 aabbccdd " +
                                            string(nsec3_common))))
     {}
+
+    ~NSEC3HashTest() {
+        // Make sure we reset the hash creator to the default
+        setNSEC3HashCreator(NULL);
+    }
 
     // An NSEC3Hash object commonly used in tests.  Parameters are borrowed
     // from the RFC5155 example.  Construction of this object implicitly
@@ -140,6 +145,78 @@ TEST_F(NSEC3HashTest, matchWithNSEC3PARAM) {
         SCOPED_TRACE("match NSEC3 based hash against NSEC3 parameters");
         matchCheck<generic::NSEC3PARAM>(*test_hash_nsec3, "");
     }
+}
+
+// A simple faked hash calculator and a dedicated creator for it.
+class TestNSEC3Hash : public NSEC3Hash {
+    virtual string calculate(const Name&) const {
+        return ("00000000000000000000000000000000");
+    }
+    virtual bool match(const generic::NSEC3PARAM&) const {
+        return (true);
+    }
+    virtual bool match(const generic::NSEC3&) const {
+        return (true);
+    }
+};
+
+// This faked creator basically creates the faked calculator regardless of
+// the passed NSEC3PARAM or NSEC3.  But if the most significant bit of flags
+// is set, it will behave like the default creator.
+class TestNSEC3HashCreator : public NSEC3HashCreator {
+public:
+    virtual NSEC3Hash* create(const generic::NSEC3PARAM& param) const {
+        if ((param.getFlags() & 0x80) != 0) {
+            return (default_creator_.create(param));
+        }
+        return (new TestNSEC3Hash);
+    }
+    virtual NSEC3Hash* create(const generic::NSEC3& nsec3) const {
+        if ((nsec3.getFlags() & 0x80) != 0) {
+            return (default_creator_.create(nsec3));
+        }
+        return (new TestNSEC3Hash);
+    }
+private:
+    DefaultNSEC3HashCreator default_creator_;
+};
+
+TEST_F(NSEC3HashTest, setCreator) {
+    // Re-check an existing case using the default creator/hash implementation
+    EXPECT_EQ("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM",
+              test_hash->calculate(Name("example")));
+
+    // Replace the creator, and confirm the hash values are faked
+    TestNSEC3HashCreator test_creator;
+    setNSEC3HashCreator(&test_creator);
+    // Re-create the hash object with the new creator
+    test_hash.reset(NSEC3Hash::create(generic::NSEC3PARAM("1 0 12 aabbccdd")));
+    EXPECT_EQ("00000000000000000000000000000000",
+              test_hash->calculate(Name("example")));
+    // Same for hash from NSEC3 RDATA
+    test_hash.reset(NSEC3Hash::create(generic::NSEC3
+                                      ("1 0 12 aabbccdd " +
+                                       string(nsec3_common))));
+    EXPECT_EQ("00000000000000000000000000000000",
+              test_hash->calculate(Name("example")));
+
+    // If we set a special flag big (0x80) on creation, it will act like the
+    // default creator.
+    test_hash.reset(NSEC3Hash::create(generic::NSEC3PARAM(
+                                          "1 128 12 aabbccdd")));
+    EXPECT_EQ("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM",
+              test_hash->calculate(Name("example")));
+    test_hash.reset(NSEC3Hash::create(generic::NSEC3
+                                      ("1 128 12 aabbccdd " +
+                                       string(nsec3_common))));
+    EXPECT_EQ("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM",
+              test_hash->calculate(Name("example")));
+
+    // Reset the creator to default, and confirm that
+    setNSEC3HashCreator(NULL);
+    test_hash.reset(NSEC3Hash::create(generic::NSEC3PARAM("1 0 12 aabbccdd")));
+    EXPECT_EQ("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM",
+              test_hash->calculate(Name("example")));
 }
 
 } // end namespace
