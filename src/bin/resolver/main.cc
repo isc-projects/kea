@@ -96,7 +96,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
                 if (my_pid != pid) {
                     // It is not for us (this is expected, see auth/command.cc
                     // and the ShutdownCommand there).
-                    return answer;
+                    return (answer);
                 }
             }
             LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SHUTDOWN);
