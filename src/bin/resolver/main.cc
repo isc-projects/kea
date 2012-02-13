@@ -94,12 +94,8 @@ my_command_handler(const string& command, ConstElementPtr args) {
                 const int pid(args->get("pid")->intValue());
                 const pid_t my_pid(getpid());
                 if (my_pid != pid) {
-                    // It is not for us
-                    //
-                    // Note that this is completely expected situation, if
-                    // there are multiple instances of the server running and
-                    // another instance is being shut down, we get the message
-                    // too, due to the multicast nature of our message bus.
+                    // It is not for us (this is expected, see auth/command.cc
+                    // and the ShutdownCommand there).
                     return answer;
                 }
             }
