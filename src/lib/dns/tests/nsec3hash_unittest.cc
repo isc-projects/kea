@@ -160,14 +160,25 @@ class TestNSEC3Hash : public NSEC3Hash {
     }
 };
 
+// This faked creator basically creates the faked calculator regardless of
+// the passed NSEC3PARAM or NSEC3.  But if the most significant bit of flags
+// is set, it will behave like the default creator.
 class TestNSEC3HashCreator : public NSEC3HashCreator {
 public:
-    virtual NSEC3Hash* create(const generic::NSEC3PARAM&) const {
+    virtual NSEC3Hash* create(const generic::NSEC3PARAM& param) const {
+        if ((param.getFlags() & 0x80) != 0) {
+            return (default_creator_.create(param));
+        }
         return (new TestNSEC3Hash);
     }
-    virtual NSEC3Hash* create(const generic::NSEC3&) const {
+    virtual NSEC3Hash* create(const generic::NSEC3& nsec3) const {
+        if ((nsec3.getFlags() & 0x80) != 0) {
+            return (default_creator_.create(nsec3));
+        }
         return (new TestNSEC3Hash);
     }
+private:
+    DefaultNSEC3HashCreator default_creator_;
 };
 
 TEST_F(NSEC3HashTest, setCreator) {
@@ -187,6 +198,18 @@ TEST_F(NSEC3HashTest, setCreator) {
                                       ("1 0 12 aabbccdd " +
                                        string(nsec3_common))));
     EXPECT_EQ("00000000000000000000000000000000",
+              test_hash->calculate(Name("example")));
+
+    // If we set a special flag big (0x80) on creation, it will act like the
+    // default creator.
+    test_hash.reset(NSEC3Hash::create(generic::NSEC3PARAM(
+                                          "1 128 12 aabbccdd")));
+    EXPECT_EQ("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM",
+              test_hash->calculate(Name("example")));
+    test_hash.reset(NSEC3Hash::create(generic::NSEC3
+                                      ("1 128 12 aabbccdd " +
+                                       string(nsec3_common))));
+    EXPECT_EQ("0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM",
               test_hash->calculate(Name("example")));
 
     // Reset the creator to default, and confirm that
