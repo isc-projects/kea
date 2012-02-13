@@ -1653,7 +1653,7 @@ TEST_F(QueryTest, findNSEC3) {
 TEST_F(QueryTest, nxrrsetWithNSEC3) {
     mock_finder->setNSEC3Flag(true);
 
-    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
+    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC3 that proves the
     // NXRRSET and their RRSIGs.
     Query(memory_client, Name("www.example.com"), RRType::TXT(), response,
           true).process();
