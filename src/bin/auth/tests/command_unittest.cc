@@ -54,23 +54,23 @@ namespace {
 class AuthCommandTest : public ::testing::Test {
 protected:
     AuthCommandTest() :
-        server(false, xfrout),
-        rcode(-1),
-        itimer_(server.getIOService())
+        server_(false, xfrout_),
+        rcode_(-1),
+        itimer_(server_.getIOService())
     {
-        server.setStatisticsSession(&statistics_session);
+        server_.setStatisticsSession(&statistics_session_);
     }
     void checkAnswer(const int expected_code) {
-        parseAnswer(rcode, result);
-        EXPECT_EQ(expected_code, rcode);
+        parseAnswer(rcode_, result_);
+        EXPECT_EQ(expected_code, rcode_);
     }
-    MockSession statistics_session;
-    MockXfroutClient xfrout;
-    AuthSrv server;
-    ConstElementPtr result;
+    MockSession statistics_session_;
+    MockXfroutClient xfrout_;
+    AuthSrv server_;
+    ConstElementPtr result_;
     // The shutdown command parameter
     ConstElementPtr param_;
-    int rcode;
+    int rcode_;
     isc::asiolink::IntervalTimer itimer_;
 public:
     void stopServer();          // need to be public for boost::bind
@@ -78,41 +78,41 @@ public:
 };
 
 TEST_F(AuthCommandTest, unknownCommand) {
-    result = execAuthServerCommand(server, "no_such_command",
-                                   ConstElementPtr());
-    parseAnswer(rcode, result);
-    EXPECT_EQ(1, rcode);
+    result_ = execAuthServerCommand(server_, "no_such_command",
+                                    ConstElementPtr());
+    parseAnswer(rcode_, result_);
+    EXPECT_EQ(1, rcode_);
 }
 
 TEST_F(AuthCommandTest, DISABLED_unexpectedException) {
     // execAuthServerCommand() won't catch standard exceptions.
     // Skip this test for now: ModuleCCSession doesn't seem to validate
     // commands.
-    EXPECT_THROW(execAuthServerCommand(server, "_throw_exception",
+    EXPECT_THROW(execAuthServerCommand(server_, "_throw_exception",
                                        ConstElementPtr()),
                  runtime_error);
 }
 
 TEST_F(AuthCommandTest, sendStatistics) {
-    result = execAuthServerCommand(server, "sendstats", ConstElementPtr());
+    result_ = execAuthServerCommand(server_, "sendstats", ConstElementPtr());
     // Just check some message has been sent.  Detailed tests specific to
     // statistics are done in its own tests.
-    EXPECT_EQ("Stats", statistics_session.getMessageDest());
+    EXPECT_EQ("Stats", statistics_session_.getMessageDest());
     checkAnswer(0);
 }
 
 void
 AuthCommandTest::stopServer() {
-    result = execAuthServerCommand(server, "shutdown", param_);
-    parseAnswer(rcode, result);
-    assert(rcode == 0); // make sure the test stops when something is wrong
+    result_ = execAuthServerCommand(server_, "shutdown", param_);
+    parseAnswer(rcode_, result_);
+    assert(rcode_ == 0); // make sure the test stops when something is wrong
 }
 
 TEST_F(AuthCommandTest, shutdown) {
     // Param defaults to empty/null pointer on creation
     itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
-    server.getIOService().run();
-    EXPECT_EQ(0, rcode);
+    server_.getIOService().run();
+    EXPECT_EQ(0, rcode_);
 }
 
 TEST_F(AuthCommandTest, shutdownCorrectPID) {
@@ -124,8 +124,8 @@ TEST_F(AuthCommandTest, shutdownCorrectPID) {
     // With the correct PID, it should act exactly the same as in case
     // of no parameter
     itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
-    server.getIOService().run();
-    EXPECT_EQ(0, rcode);
+    server_.getIOService().run();
+    EXPECT_EQ(0, rcode_);
 }
 
 // If we provide something not an int, the PID is not really specified, so
@@ -138,18 +138,18 @@ TEST_F(AuthCommandTest, shutdownNotInt) {
     // With the correct PID, it should act exactly the same as in case
     // of no parameter
     itimer_.setup(boost::bind(&AuthCommandTest::stopServer, this), 1);
-    server.getIOService().run();
-    EXPECT_EQ(0, rcode);
+    server_.getIOService().run();
+    EXPECT_EQ(0, rcode_);
 }
 
 // This is like stopServer, but the server should not stop after the
 // command, it should be running
 void
 AuthCommandTest::dontStopServer() {
-    result = execAuthServerCommand(server, "shutdown", param_);
-    parseAnswer(rcode, result);
-    EXPECT_EQ(0, rcode);
-    rcode = -1;
+    result_ = execAuthServerCommand(server_, "shutdown", param_);
+    parseAnswer(rcode_, result_);
+    EXPECT_EQ(0, rcode_);
+    rcode_ = -1;
     // We run the stopServer now, to really stop the server.
     // If it had stopped already, it won't be run and the rcode -1 will
     // be left here.
@@ -163,8 +163,8 @@ TEST_F(AuthCommandTest, shutdownIncorrectPID) {
     // PID should be different
     param_ = Element::fromJSON("{\"pid\": 0}");
     itimer_.setup(boost::bind(&AuthCommandTest::dontStopServer, this), 1);
-    server.getIOService().run();
-    EXPECT_EQ(0, rcode);
+    server_.getIOService().run();
+    EXPECT_EQ(0, rcode_);
 }
 
 // A helper function commonly used for the "loadzone" command tests.
@@ -228,7 +228,7 @@ newZoneChecks(AuthSrv& server) {
 }
 
 TEST_F(AuthCommandTest, loadZone) {
-    configureZones(server);
+    configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
                         "/test1-new.zone.in "
@@ -237,118 +237,118 @@ TEST_F(AuthCommandTest, loadZone) {
                         "/test2-new.zone.in "
                         TEST_DATA_BUILDDIR "/test2.zone.copied"));
 
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\"}"));
     checkAnswer(0);
-    newZoneChecks(server);
+    newZoneChecks(server_);
 }
 
 TEST_F(AuthCommandTest, loadBrokenZone) {
-    configureZones(server);
+    configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
                         "/test1-broken.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\"}"));
     checkAnswer(1);
-    zoneChecks(server);     // zone shouldn't be replaced
+    zoneChecks(server_);     // zone shouldn't be replaced
 }
 
 TEST_F(AuthCommandTest, loadUnreadableZone) {
-    configureZones(server);
+    configureZones(server_);
 
     // install the zone file as unreadable
     ASSERT_EQ(0, system(INSTALL_PROG " -m 000 " TEST_DATA_DIR
                         "/test1.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\"}"));
     checkAnswer(1);
-    zoneChecks(server);     // zone shouldn't be replaced
+    zoneChecks(server_);     // zone shouldn't be replaced
 }
 
 TEST_F(AuthCommandTest, loadZoneWithoutDataSrc) {
     // try to execute load command without configuring the zone beforehand.
     // it should fail.
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\"}"));
     checkAnswer(1);
 }
 
 TEST_F(AuthCommandTest, loadSqlite3DataSrc) {
     // For sqlite3 data source we don't have to do anything (the data source
     // (re)loads itself automatically)
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\","
-                                       " \"datasrc\": \"sqlite3\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\","
+                                        " \"datasrc\": \"sqlite3\"}"));
     checkAnswer(0);
 }
 
 TEST_F(AuthCommandTest, loadZoneInvalidParams) {
-    configureZones(server);
+    configureZones(server_);
 
     // null arg
-    result = execAuthServerCommand(server, "loadzone", ElementPtr());
+    result_ = execAuthServerCommand(server_, "loadzone", ElementPtr());
     checkAnswer(1);
 
     // zone class is bogus
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\","
-                                       " \"class\": \"no_such_class\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\","
+                                        " \"class\": \"no_such_class\"}"));
     checkAnswer(1);
 
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\","
-                                       " \"class\": 1}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\","
+                                        " \"class\": 1}"));
     checkAnswer(1);
 
     // unsupported zone class
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\","
-                                       " \"class\": \"CH\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\","
+                                        " \"class\": \"CH\"}"));
     checkAnswer(1);
 
     // unsupported data source class
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\","
-                                       " \"datasrc\": \"not supported\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\","
+                                        " \"datasrc\": \"not supported\"}"));
     checkAnswer(1);
 
     // data source is bogus
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"test1.example\","
-                                       " \"datasrc\": 0}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"test1.example\","
+                                        " \"datasrc\": 0}"));
     checkAnswer(1);
 
     // origin is missing
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON("{}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON("{}"));
     checkAnswer(1);
 
     // zone doesn't exist in the data source
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON("{\"origin\": \"xx\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON("{\"origin\": \"xx\"}"));
     checkAnswer(1);
 
     // origin is bogus
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON(
-                                       "{\"origin\": \"...\"}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON(
+                                        "{\"origin\": \"...\"}"));
     checkAnswer(1);
 
-    result = execAuthServerCommand(server, "loadzone",
-                                   Element::fromJSON("{\"origin\": 10}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+                                    Element::fromJSON("{\"origin\": 10}"));
     checkAnswer(1);
 }
 }
