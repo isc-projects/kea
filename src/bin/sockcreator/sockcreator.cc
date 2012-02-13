@@ -49,7 +49,9 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
     return sock;
 }
 
-// Simple wrappers for read_data/write_data that thr0w an exception on error.
+namespace {
+
+// Simple wrappers for read_data/write_data that throw an exception on error.
 void
 read_message(int fd, void* where, const size_t length) {
     if (read_data(fd, where, length) < length) {
@@ -64,7 +66,7 @@ write_message(int fd, const void* what, const size_t length) {
     }
 }
 
-// Exit on some protocol error after informing the client of the problem.
+// Exit on a protocol error after informing the client of the problem.
 void
 protocol_error(int fd, const char reason = 'I') {
     // Tell client we have a problem
@@ -77,6 +79,102 @@ protocol_error(int fd, const char reason = 'I') {
     isc_throw(ProtocolError, "Fatal error, reason: " << reason);
 }
 
+// Handle the request to create a socket
+
+void
+create_socket(const int input_fd, const int output_fd,
+              const get_sock_t get_sock, const send_fd_t send_fd_fun,
+              const close_t close_fun)
+{
+    // Read what type of socket they want
+    char type[2];
+    read_message(input_fd, type, sizeof(type));
+    // Read the address they ask for
+    struct sockaddr *addr(NULL);
+    size_t addr_len(0);
+    struct sockaddr_in addr_in;
+    struct sockaddr_in6 addr_in6;
+    switch (type[1]) { // The address family
+        /*
+         * Here are some casts. They are required by C++ and
+         * the low-level interface (they are implicit in C).
+         */
+        case '4':
+            addr = static_cast<struct sockaddr *>(
+                static_cast<void *>(&addr_in));
+            addr_len = sizeof addr_in;
+            memset(&addr_in, 0, sizeof addr_in);
+            addr_in.sin_family = AF_INET;
+            read_message(input_fd,
+                static_cast<char *>(static_cast<void *>(
+                &addr_in.sin_port)), 2);
+            read_message(input_fd,
+                static_cast<char *>(static_cast<void *>(
+                &addr_in.sin_addr.s_addr)), 4);
+            break;
+        case '6':
+            addr = static_cast<struct sockaddr *>(
+                static_cast<void *>(&addr_in6));
+            addr_len = sizeof addr_in6;
+            memset(&addr_in6, 0, sizeof addr_in6);
+            addr_in6.sin6_family = AF_INET6;
+            read_message(input_fd,
+                static_cast<char *>(static_cast<void *>(
+                &addr_in6.sin6_port)), 2);
+            read_message(input_fd,
+                static_cast<char *>(static_cast<void *>(
+                &addr_in6.sin6_addr.s6_addr)), 16);
+            break;
+        default:
+            protocol_error(output_fd);
+    }
+    int sock_type = 0;
+    switch (type[0]) { // Translate the type
+        case 'T':
+            sock_type = SOCK_STREAM;
+            break;
+        case 'U':
+            sock_type = SOCK_DGRAM;
+            break;
+        default:
+            protocol_error(output_fd);
+    }
+    int result(get_sock(sock_type, addr, addr_len));
+    if (result >= 0) { // We got the socket
+        write_message(output_fd, "S", 1);
+        if (send_fd_fun(output_fd, result) != 0) {
+            // We'll soon abort ourselves, but make sure we still
+            // close the socket; don't bother if it fails as the
+            // higher level result (abort) is the same.
+            close_fun(result);
+            isc_throw(InternalError, "Error sending descriptor");
+        }
+        // Don't leak the socket
+        if (close_fun(result) == -1) {
+            isc_throw(InternalError, "Error closing socket");
+        }
+    } else {
+        write_message(output_fd, "E", 1);
+        switch (result) {
+            case -1:
+                write_message(output_fd, "S", 1);
+                break;
+            case -2:
+                write_message(output_fd, "B", 1);
+                break;
+            default:
+                isc_throw(InternalError, "Error creating socket");
+    }
+    int error(errno);
+    write_message(output_fd,
+        static_cast<char *>(static_cast<void *>(&error)),
+        sizeof error);
+    }
+}
+
+} // Anonymous namespace
+
+// 
 
 void
 run(const int input_fd, const int output_fd, const get_sock_t get_sock,
@@ -89,93 +187,12 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
         switch (command) {
             case 'T': // The "terminate" command
                 return;
-            case 'S': { // Create a socket
-                // Read what type of socket they want
-                char type[2];
-                read_message(input_fd, type, sizeof(type));
-                // Read the address they ask for
-                struct sockaddr *addr(NULL);
-                size_t addr_len(0);
-                struct sockaddr_in addr_in;
-                struct sockaddr_in6 addr_in6;
-                switch (type[1]) { // The address family
-                    /*
-                     * Here are some casts. They are required by C++ and
-                     * the low-level interface (they are implicit in C).
-                     */
-                    case '4':
-                        addr = static_cast<struct sockaddr *>(
-                            static_cast<void *>(&addr_in));
-                        addr_len = sizeof addr_in;
-                        memset(&addr_in, 0, sizeof addr_in);
-                        addr_in.sin_family = AF_INET;
-                        read_message(input_fd,
-                            static_cast<char *>(static_cast<void *>(
-                            &addr_in.sin_port)), 2);
-                        read_message(input_fd,
-                            static_cast<char *>(static_cast<void *>(
-                            &addr_in.sin_addr.s_addr)), 4);
-                        break;
-                    case '6':
-                        addr = static_cast<struct sockaddr *>(
-                            static_cast<void *>(&addr_in6));
-                        addr_len = sizeof addr_in6;
-                        memset(&addr_in6, 0, sizeof addr_in6);
-                        addr_in6.sin6_family = AF_INET6;
-                        read_message(input_fd,
-                            static_cast<char *>(static_cast<void *>(
-                            &addr_in6.sin6_port)), 2);
-                        read_message(input_fd,
-                            static_cast<char *>(static_cast<void *>(
-                            &addr_in6.sin6_addr.s6_addr)), 16);
-                        break;
-                    default:
-                        protocol_error(output_fd);
-                }
-                int sock_type = 0;
-                switch (type[0]) { // Translate the type
-                    case 'T':
-                        sock_type = SOCK_STREAM;
-                        break;
-                    case 'U':
-                        sock_type = SOCK_DGRAM;
-                        break;
-                    default:
-                        protocol_error(output_fd);
-                }
-                int result(get_sock(sock_type, addr, addr_len));
-                if (result >= 0) { // We got the socket
-                    write_message(output_fd, "S", 1);
-                    if (send_fd_fun(output_fd, result) != 0) {
-                        // We'll soon abort ourselves, but make sure we still
-                        // close the socket; don't bother if it fails as the
-                        // higher level result (abort) is the same.
-                        close_fun(result);
-                        isc_throw(InternalError, "Error sending descriptor");
-                    }
-                    // Don't leak the socket
-                    if (close_fun(result) == -1) {
-                        isc_throw(InternalError, "Error closing socket");
-                    }
-                } else {
-                    write_message(output_fd, "E", 1);
-                    switch (result) {
-                        case -1:
-                            write_message(output_fd, "S", 1);
-                            break;
-                        case -2:
-                            write_message(output_fd, "B", 1);
-                            break;
-                        default:
-                            isc_throw(InternalError, "Error creating socket");
-                    }
-                    int error(errno);
-                    write_message(output_fd,
-                        static_cast<char *>(static_cast<void *>(&error)),
-                        sizeof error);
-                }
+
+            case 'S':
+                create_socket(input_fd, output_fd, get_sock,
+                              send_fd_fun, close_fun);
                 break;
-            }
+
             default:
                 protocol_error(output_fd);
         }
