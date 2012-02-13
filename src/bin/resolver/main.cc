@@ -81,16 +81,16 @@ ConstElementPtr
 my_command_handler(const string& command, ConstElementPtr args) {
     ConstElementPtr answer = createAnswer();
 
-    if (command == "print_message") {
-        LOG_INFO(resolver_logger, RESOLVER_PRINT_COMMAND).arg(args);
-        /* let's add that message to our answer as well */
-        answer = createAnswer(0, args);
-    } else if (command == "shutdown") {
-        // Is the pid argument provided?
-        if (args && args->getType() == isc::data::Element::map &&
-            args->contains("pid")) {
-            // If it is, we check it is the same as our PID
-            if (args->get("pid")->getType() == isc::data::Element::integer) {
+    try {
+        if (command == "print_message") {
+            LOG_INFO(resolver_logger, RESOLVER_PRINT_COMMAND).arg(args);
+            /* let's add that message to our answer as well */
+            answer = createAnswer(0, args);
+        } else if (command == "shutdown") {
+            // Is the pid argument provided?
+            if (args && args->getType() == isc::data::Element::map &&
+                args->contains("pid")) {
+                // If it is, we check it is the same as our PID
                 const int pid(args->get("pid")->intValue());
                 const pid_t my_pid(getpid());
                 if (my_pid != pid) {
@@ -99,12 +99,14 @@ my_command_handler(const string& command, ConstElementPtr args) {
                     return answer;
                 }
             }
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SHUTDOWN);
+            io_service.stop();
         }
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SHUTDOWN);
-        io_service.stop();
-    }
 
-    return (answer);
+        return (answer);
+    } catch (const std::exception& e) {
+        return (createAnswer(1, e.what()));
+    }
 }
 
 void
