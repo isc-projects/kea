@@ -22,5 +22,11 @@ main() {
      * TODO Maybe use some OS-specific caps interface and drop everything
      * but ability to bind ports? It would be nice.
      */
-    return run(0, 1); // Read commands from stdin, output to stdout
+    int status = 0;
+    try {
+        run(0, 1); // Read commands from stdin, output to stdout
+    } catch (const SocketCreatorError& ec) {
+        status = ec.getExitCode();
+    }
+    return (status);
 }

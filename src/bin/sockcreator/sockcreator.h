@@ -24,6 +24,7 @@
 #define __SOCKCREATOR_H 1
 
 #include <util/io/fd_share.h>
+#include <exceptions/exceptions.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,6 +32,49 @@
 
 namespace isc {
 namespace socket_creator {
+
+// Exception classes - the base class exception SocketCreatorError is caught
+// by main(), and holds a reason code returned to the environment.  The code
+// depends on the exception raised.
+class SocketCreatorError : public Exception {
+public:
+    SocketCreatorError(const char* file, size_t line, const char* what,
+                       int exit_code) :
+        isc::Exception(file, line, what), exit_code_(exit_code) {}
+
+    int getExitCode() const {
+        return (exit_code_);
+    }
+
+private:
+    int     exit_code_;     // Code returned to exit()
+};
+
+class ReadError : public SocketCreatorError {
+public:
+    ReadError(const char* file, size_t line, const char* what) :
+        SocketCreatorError(file, line, what, 1) {}
+};
+
+class WriteError : public SocketCreatorError {
+public:
+    WriteError(const char* file, size_t line, const char* what) :
+        SocketCreatorError(file, line, what, 2) {}
+};
+
+class ProtocolError : public SocketCreatorError {
+public:
+    ProtocolError(const char* file, size_t line, const char* what) :
+        SocketCreatorError(file, line, what, 3) {}
+};
+
+class InternalError : public SocketCreatorError {
+public:
+    InternalError(const char* file, size_t line, const char* what) :
+        SocketCreatorError(file, line, what, 4) {}
+};
+
+
 
 /**
  * \short Create a socket and bind it.
@@ -75,17 +119,9 @@ int
  * file descriptor, creates sockets and writes the results (socket or
  * error) to output_fd.
  *
- * Current errors are:
- * - 1: Read error
- * - 2: Write error
- * - 3: Protocol error (unknown command, etc)
- * - 4: Some internal inconsistency detected
- *
  * It terminates either if a command asks it to or when unrecoverable
  * error happens.
  *
- * \return Like a return value of a main - 0 means everything OK, anything
- *     else is error.
  * \param input_fd Here is where it reads the commads.
  * \param output_fd Here is where it writes the results.
  * \param get_sock_fun The function that is used to create the sockets.
@@ -96,8 +132,13 @@ int
  *     here for testing purposes.
  * \param close_fun The close function used to close sockets, coming from
  *     unistd.h. It can be overriden in tests.
+ *
+ * \exception isc::socket_creator::ReadError Error reading from input
+ * \exception isc::socket_creator::WriteError Error writing to output
+ * \exception isc::socket_creator::ProtocolError Unrecognised command received
+ * \exception isc::socket_creator::InternalError Other error
  */
-int
+void
 run(const int input_fd, const int output_fd,
     const get_sock_t get_sock_fun = get_sock,
     const send_fd_t send_fd_fun = isc::util::io::send_fd,
