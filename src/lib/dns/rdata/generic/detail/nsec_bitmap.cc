@@ -21,8 +21,8 @@
 #include <cassert>
 #include <sstream>
 #include <vector>
+#include <cstring>
 #include <stdint.h>
-#include <string.h>
 
 using namespace std;
 
