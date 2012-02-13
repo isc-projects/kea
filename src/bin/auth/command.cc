@@ -112,18 +112,19 @@ public:
         if (args && args->getType() == isc::data::Element::map &&
             args->contains("pid")) {
             // If it is, we check it is the same as our PID
-            if (args->get("pid")->getType() == isc::data::Element::integer) {
-                const int pid(args->get("pid")->intValue());
-                const pid_t my_pid(getpid());
-                if (my_pid != pid) {
-                    // It is not for us
-                    //
-                    // Note that this is completely expected situation, if
-                    // there are multiple instances of the server running and
-                    // another instance is being shut down, we get the message
-                    // too, due to the multicast nature of our message bus.
-                    return;
-                }
+
+            // This might throw in case the type is not an int, but that's
+            // OK, as it'll get converted to an error on higher level.
+            const int pid(args->get("pid")->intValue());
+            const pid_t my_pid(getpid());
+            if (my_pid != pid) {
+                // It is not for us
+                //
+                // Note that this is completely expected situation, if
+                // there are multiple instances of the server running and
+                // another instance is being shut down, we get the message
+                // too, due to the multicast nature of our message bus.
+                return;
             }
         }
         LOG_DEBUG(auth_logger, DBG_AUTH_SHUT, AUTH_SHUTDOWN);
