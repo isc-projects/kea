@@ -170,9 +170,12 @@ public:
 /// The two main methods named \c create() correspond to the static factory
 /// methods of \c NSEC3Hash of the same name.
 ///
-/// By default, the library uses a builtin creator implementation.  The
-/// \c setNSEC3HashCreator() function can be used to replace it with a user
-/// defined version.
+/// By default, the library uses the \c DefaultNSEC3HashCreator creator.
+/// The \c setNSEC3HashCreator() function can be used to replace it with a
+/// user defined version.  For such customization purposes as implementing
+/// experimental new hash algorithms, the application may internally want to
+/// use the \c DefaultNSEC3HashCreator in general cases while creating a
+/// customized type of \c NSEC3Hash object for that particular hash algorithm.
 ///
 /// The creator objects are generally expected to be stateless; they will
 /// only encapsulate the factory logic.  The \c create() methods are declared
@@ -207,6 +210,21 @@ public:
     /// <code>NSEC3Hash::create(const rdata::generic::NSEC3& param)</code>
     virtual NSEC3Hash* create(const rdata::generic::NSEC3& nsec3)
         const = 0;
+};
+
+/// \brief The default NSEC3Hash creator.
+///
+/// This derived class implements the \c NSEC3HashCreator interfaces for
+/// the standard NSEC3 hash calculator as defined in RFC5155.  The library
+/// will use this creator by default, so normal applications don't have to
+/// be aware of this class at all.  This class is publicly visible for the
+/// convenience of special applications that want to customize the creator
+/// behavior for a particular type of parameters while preserving the default
+/// behavior for others.
+class DefaultNSEC3HashCreator : public NSEC3HashCreator {
+public:
+    virtual NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param) const;
+    virtual NSEC3Hash* create(const rdata::generic::NSEC3& nsec3) const;
 };
 
 /// \brief The registrar of \c NSEC3HashCreator.
