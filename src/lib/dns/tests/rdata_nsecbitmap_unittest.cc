@@ -174,7 +174,6 @@ TYPED_TEST(NSECLikeBitmapTest, badText) {
                  InvalidRdataText);
 }
 
-
 // This tests the result of toText() with various kinds of NSEC/NSEC3 bitmaps.
 // It also tests the "from text" constructor as a result.
 TYPED_TEST(NSECLikeBitmapTest, toText) {
