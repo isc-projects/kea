@@ -28,14 +28,20 @@ class ConfigDataError(Exception): pass
 
 BIND10_CONFIG_DATA_VERSION = 2
 
-# Helper functions (should really refactor this all into classes)
+# Helper functions
 def spec_part_is_list(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       list specification, and False otherwise."""
     return (type(spec_part) == dict and 'list_item_spec' in spec_part)
 
 def spec_part_is_map(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       map specification, and False otherwise."""
     return (type(spec_part) == dict and 'map_item_spec' in spec_part)
 
 def spec_part_is_named_set(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       named_set specification, and False otherwise."""
     return (type(spec_part) == dict and 'named_map_item_spec' in spec_part)
 
 def check_type(spec_part, value):
