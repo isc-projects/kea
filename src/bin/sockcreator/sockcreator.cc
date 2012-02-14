@@ -31,14 +31,14 @@ namespace {
 
 // Simple wrappers for read_data/write_data that throw an exception on error.
 void
-read_message(int fd, void* where, const size_t length) {
+read_message(const int fd, void* where, const size_t length) {
     if (read_data(fd, where, length) < length) {
         isc_throw(ReadError, "Error reading from socket creator client");
     }
 }
 
 void
-write_message(int fd, const void* what, const size_t length) {
+write_message(const int fd, const void* what, const size_t length) {
     if (!write_data(fd, what, length)) {
         isc_throw(WriteError, "Error writing to socket creator client");
     }
@@ -46,7 +46,7 @@ write_message(int fd, const void* what, const size_t length) {
 
 // Exit on a protocol error after informing the client of the problem.
 void
-protocol_error(int fd, const char reason = 'I') {
+protocol_error(const int fd, const char reason = 'I') {
 
     // Tell client we have a problem
     char message[2];
@@ -60,10 +60,11 @@ protocol_error(int fd, const char reason = 'I') {
 
 // Handle the request from the client.
 //
-// Reads the type and family of socket required, creates the socket, then
-// returns it to the client.
+// Reads the type and family of socket required, creates the socket and returns
+// it to the client.
 //
-// The arguments are the same as those passed to run().
+// The arguments passed (and the exceptions thrown) are the same as those for
+// run().
 void
 handle_request(const int input_fd, const int output_fd,
                const get_sock_t get_sock, const send_fd_t send_fd_fun,
@@ -103,22 +104,22 @@ handle_request(const int input_fd, const int output_fd,
         case '4':
             addr = reinterpret_cast<sockaddr*>(&addr_in);
             addr_len = sizeof(addr_in);
-            memset(&addr_in, 0, sizeof addr_in);
+            memset(&addr_in, 0, sizeof(addr_in));
             addr_in.sin_family = AF_INET;
-            read_message(input_fd, static_cast<void *>(&addr_in.sin_port),
+            read_message(input_fd, static_cast<void*>(&addr_in.sin_port),
                          sizeof(addr_in.sin_port));
-            read_message(input_fd, static_cast<void *>(&addr_in.sin_addr.s_addr),
+            read_message(input_fd, static_cast<void*>(&addr_in.sin_addr.s_addr),
                          sizeof(addr_in.sin_addr.s_addr));
             break;
 
         case '6':
             addr = reinterpret_cast<sockaddr*>(&addr_in6);
             addr_len = sizeof addr_in6;
-            memset(&addr_in6, 0, sizeof addr_in6);
+            memset(&addr_in6, 0, sizeof(addr_in6));
             addr_in6.sin6_family = AF_INET6;
-            read_message(input_fd, static_cast<void *>(&addr_in6.sin6_port),
+            read_message(input_fd, static_cast<void*>(&addr_in6.sin6_port),
                          sizeof(addr_in6.sin6_port));
-            read_message(input_fd, static_cast<void *>(&addr_in6.sin6_addr.s6_addr),
+            read_message(input_fd, static_cast<void*>(&addr_in6.sin6_addr.s6_addr),
                          sizeof(addr_in6.sin6_addr.s6_addr));
             break;
 
@@ -132,35 +133,34 @@ handle_request(const int input_fd, const int output_fd,
         // Got the socket, send it to the client.
         write_message(output_fd, "S", 1);
         if (send_fd_fun(output_fd, result) != 0) {
-            // We'll soon abort ourselves, but make sure we still
-            // close the socket; don't bother if it fails as the
-            // higher level result (abort) is the same.
+            // Error.  Close the socket (ignore any error from that operation)
+            // and abort.
             close_fun(result);
             isc_throw(InternalError, "Error sending descriptor");
         }
 
-        // Don't leak the socket used to send the acquired socket back to the
-        // client.
+        // Successfully sent the socket, so free up resources we still hold
+        // for it.
         if (close_fun(result) == -1) {
             isc_throw(InternalError, "Error closing socket");
         }
     } else {
         // Error.  Tell the client.
-        write_message(output_fd, "E", 1);
+        write_message(output_fd, "E", 1);           // Error occurred...
         switch (result) {
             case -1:
-                write_message(output_fd, "S", 1);
+                write_message(output_fd, "S", 1);   // ... in the socket() call
                 break;
 
             case -2:
-                write_message(output_fd, "B", 1);
+                write_message(output_fd, "B", 1);   // ... in the bind() call
                 break;
 
             default:
                 isc_throw(InternalError, "Error creating socket");
         }
 
-        // Error reason code.
+        // ...and append the reason code to the error message
         int error = errno;
         write_message(output_fd, static_cast<void *>(&error), sizeof error);
     }
