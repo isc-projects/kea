@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,13 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/**
- * \file sockcreator.h
- * \short Socket creator functionality.
- *
- * This module holds the functionality of the socket creator. It is
- * a separate module from main to ease up the tests.
- */
+/// \file sockcreator.h
+/// \short Socket creator functionality.
+///
+/// This module holds the functionality of the socket creator. It is a separate
+/// module from main to make testing easier.
 
 #ifndef __SOCKCREATOR_H
 #define __SOCKCREATOR_H 1
@@ -34,9 +32,9 @@ namespace isc {
 namespace socket_creator {
 
 // Exception classes - the base class exception SocketCreatorError is caught
-// by main(), and holds a reason code returned to the environment.  The code
-// depends on the exception raised.
-class SocketCreatorError : public Exception {
+// by main() and holds an exit code returned to the environment.  The code
+// depends on the exact exception raised.
+class SocketCreatorError : public isc::Exception {
 public:
     SocketCreatorError(const char* file, size_t line, const char* what,
                        int exit_code) :
@@ -47,7 +45,7 @@ public:
     }
 
 private:
-    int     exit_code_;     // Code returned to exit()
+    const int exit_code_;   // Code returned to exit()
 };
 
 class ReadError : public SocketCreatorError {
@@ -76,75 +74,72 @@ public:
 
 
 
-/**
- * \short Create a socket and bind it.
- *
- * This is just a bundle of socket() and bind() calls. The sa_family of
- * bind_addr is used to determine the domain of the socket.
- *
- * \return The file descriptor of the newly created socket, if everything
- *     goes well. A negative number is returned if an error occurs -
- *     -1 if the socket() call fails or -2 if bind() fails. In case of error,
- *     errno is set (or better, left intact from socket() or bind()).
- * \param type The type of socket to create (SOCK_STREAM, SOCK_DGRAM, etc).
- * \param bind_addr The address to bind.
- * \param addr_len The actual length of bind_addr.
- */
+/// \short Create a socket and bind it.
+///
+/// This is just a bundle of socket() and bind() calls. The sa_family of
+/// bind_addr is used to determine the domain of the socket.
+///
+/// \param type The type of socket to create (SOCK_STREAM, SOCK_DGRAM, etc).
+/// \param bind_addr The address to bind.
+/// \param addr_len The actual length of bind_addr.
+///
+/// \return The file descriptor of the newly created socket, if everything
+///         goes well. A negative number is returned if an error occurs -
+///         -1 if the socket() call fails or -2 if bind() fails. In case of
+///         error, errno is set (or left intact from socket() or bind()).
 int
 get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len);
 
-/**
- * Type of the get_sock function, to pass it as parameter.
- */
-typedef
-int
-(*get_sock_t)(const int, struct sockaddr *, const socklen_t);
+// Define some types for functions used to perform socket-related operations.
+// These are typedefed so that alternatives can be passed through to the
+// main functions for testing purposes.
 
-/**
- * Type of the send_fd() function, so it can be passed as a parameter.
- */
-typedef
-int
-(*send_fd_t)(const int, const int);
+// Type of the get_sock function, to pass it as parameter.  Arguments are
+// those described above for get_sock().
+typedef int (*get_sock_t)(const int, struct sockaddr *, const socklen_t);
 
-/// \brief Type of the close() function, so it can be passed as a parameter.
-typedef
-int
-(*close_t)(int);
+// Type of the send_fd() function, so it can be passed as a parameter.
+// Arguments are the same as those of the send_fd() function.
+typedef int (*send_fd_t)(const int, const int);
 
-/**
- * \short Infinite loop parsing commands and returning the sockets.
- *
- * This reads commands and socket descriptions from the input_fd
- * file descriptor, creates sockets and writes the results (socket or
- * error) to output_fd.
- *
- * It terminates either if a command asks it to or when unrecoverable
- * error happens.
- *
- * \param input_fd Here is where it reads the commads.
- * \param output_fd Here is where it writes the results.
- * \param get_sock_fun The function that is used to create the sockets.
- *     This should be left on the default value, the parameter is here
- *     for testing purposes.
- * \param send_fd_fun The function that is used to send the socket over
- *     a file descriptor. This should be left on the default value, it is
- *     here for testing purposes.
- * \param close_fun The close function used to close sockets, coming from
- *     unistd.h. It can be overriden in tests.
- *
- * \exception isc::socket_creator::ReadError Error reading from input
- * \exception isc::socket_creator::WriteError Error writing to output
- * \exception isc::socket_creator::ProtocolError Unrecognised command received
- * \exception isc::socket_creator::InternalError Other error
- */
+// Type of the close() function, so it can be passed as a parameter.
+// Argument is the same as that for close(2).
+typedef int (*close_t)(int);
+
+
+/// \brief Infinite loop parsing commands and returning the sockets.
+///
+/// This reads commands and socket descriptions from the input_fd file
+/// descriptor, creates sockets and writes the results (socket or error) to
+/// output_fd.
+///
+/// It terminates either if a command asks it to or when unrecoverable error
+/// happens.
+///
+/// \param input_fd File descriptor of the stream from which the input commands
+///        are read.
+/// \param output_fd File descriptor of the stream to which the output
+///        (message/socket or error message) is written.
+/// \param get_sock_fun The function that is used to create the sockets.
+///        This should be left on the default value, the parameter is here
+///        for testing purposes.
+/// \param send_fd_fun The function that is used to send the socket over
+///        a file descriptor. This should be left on the default value, it is
+///        here for testing purposes.
+/// \param close_fun The close function used to close sockets, coming from
+///        unistd.h. It can be overriden in tests.
+///
+/// \exception isc::socket_creator::ReadError Error reading from input
+/// \exception isc::socket_creator::WriteError Error writing to output
+/// \exception isc::socket_creator::ProtocolError Unrecognised command received
+/// \exception isc::socket_creator::InternalError Other error
 void
 run(const int input_fd, const int output_fd,
     const get_sock_t get_sock_fun = get_sock,
     const send_fd_t send_fd_fun = isc::util::io::send_fd,
     const close_t close_fun = close);
 
-} // End of the namespaces
-}
+}   // namespace socket_creator
+}   // NAMESPACE ISC
 
 #endif // __SOCKCREATOR_H
