@@ -246,3 +246,7 @@ RESOLVER_QUERY_REJECTED case, the server does not return any response.
 The log message shows the query in the form of <query name>/<query
 type>/<query class>, and the client that sends the query in the form of
 <Source IP address>#<source port>.
+
+% RESOLVER_SHUTDOWN asked to shut down, doing so
+A debug message noting that the server was asked to terminate and is
+complying to the request.
