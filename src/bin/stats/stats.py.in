@@ -304,9 +304,11 @@ class Stats:
         return isc.config.create_answer(
             0, "Stats is up. (PID " + str(os.getpid()) + ")")
 
-    def command_shutdown(self):
+    def command_shutdown(self, pid=None):
         """
         handle shutdown command
+
+        The pid argument is ignored, it is here to match the signature.
         """
         logger.info(STATS_RECEIVED_SHUTDOWN_COMMAND)
         self.running = False
