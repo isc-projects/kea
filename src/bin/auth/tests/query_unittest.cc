@@ -316,6 +316,8 @@ public:
             "q00jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("unsigned-delegation.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji8r"; // a bit larger than H(www)
         hash_map_[Name("*.uwild.example.com")] =
             "b4um86eghhds6nea196smvmlo4ors995";
 
@@ -1036,6 +1038,55 @@ TEST_F(QueryTest, secureUnsignedDelegation) {
                    string(unsigned_delegation_nsec_txt) +
                    string("unsigned-delegation.example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC")).c_str(),
+                  NULL);
+}
+
+TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3) {
+    // Similar to the previous case, but the zone is signed with NSEC3,
+    // and this delegation is NOT an optout.
+    const Name insecurechild_name("unsigned-delegation.example.com");
+    const string nsec3_insecurechild_str =
+        mock_finder->hash_map_[insecurechild_name] + ".example.com. 3600 "
+        "IN NSEC3 1 1 12 aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS\n";
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(nsec3_insecurechild_str);
+
+    Query(memory_client, Name("foo.unsigned-delegation.example.com"),
+          qtype, response, true).process();
+
+    // The response should contain the NS and matching NSEC3 with its RRSIG
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 3, 0,
+                  NULL,
+                  (string(unsigned_delegation_txt) +
+                   nsec3_insecurechild_str +
+                   mock_finder->hash_map_[insecurechild_name] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL);
+}
+
+TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
+    // Similar to the previous case, but the delegation is an optout.
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("foo.unsigned-delegation.example.com"),
+          qtype, response, true).process();
+
+    // The response should contain the NS and the closest provable encloser
+    // proof (and their RRSIGs).  The closest encloser is the apex (origin),
+    // and with our faked hash the covering NSEC3 for the next closer
+    // (= child zone name) is that for www.example.com.
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 5, 0,
+                  NULL,
+                  (string(unsigned_delegation_txt) +
+                   string(nsec3_apex_txt) +
+                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
                   NULL);
 }
 
