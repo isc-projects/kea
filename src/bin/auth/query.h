@@ -86,11 +86,11 @@ private:
     void addDS(isc::datasrc::ZoneFinder& finder,
                const isc::dns::Name& ds_name);
 
-    /// \brief Adds NSEC denial proof for the given NXRRset result
+    /// \brief Adds NSEC(3) denial proof for the given NXRRset result
     ///
     /// If available, NSEC or NSEC3 records are added to the authority
     /// section (depending on whether isNSECSigned() or isNSEC3Signed()
-    /// returns true.
+    /// returns true).
     ///
     /// \param finder The ZoneFinder that was used to search for the missing
     ///               data

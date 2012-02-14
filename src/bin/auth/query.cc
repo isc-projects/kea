@@ -220,7 +220,7 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
         addNXRRsetProof(finder, ds_result);
     } else {
         // Any other case should be an error
-        isc_throw(BadDS, "Unexpected result for DS lookup for delegation" << ds_result.code);
+        isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
     }
 }
 
