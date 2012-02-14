@@ -188,7 +188,7 @@ Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
                        boost::const_pointer_cast<AbstractRRset>(fresult1.closest_proof),
                        dnssec_);
     // Add the NSEC3 RR that covers the "next closer" name to the closest encloser
-    if (fresult1.next_proof->getRdataCount() == 0) {
+    if (fresult1.next_proof) {
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(fresult1.next_proof), 
                            dnssec_);
@@ -452,12 +452,12 @@ Query::process() {
         case ZoneFinder::NXDOMAIN:
             response_.setRcode(Rcode::NXDOMAIN());
             addSOA(*result.zone_finder);
-            if (dnssec_ && db_result.isNSECSigned()) {
-                addNXDOMAINProof(zfinder, db_result.rrset);
-                break;
-            }
             if (dnssec_ && db_result.isNSEC3Signed()) {
                 addNSEC3NXDOMAINProof(zfinder);
+                break;
+            }
+            if (dnssec_ && db_result.rrset) {
+                addNXDOMAINProof(zfinder, db_result.rrset);
             }
             break;
         case ZoneFinder::NXRRSET:
