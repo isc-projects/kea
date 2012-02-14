@@ -88,8 +88,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
             answer = createAnswer(0, args);
         } else if (command == "shutdown") {
             // Is the pid argument provided?
-            if (args && args->getType() == isc::data::Element::map &&
-                args->contains("pid")) {
+            if (args && args->contains("pid")) {
                 // If it is, we check it is the same as our PID
                 const int pid(args->get("pid")->intValue());
                 const pid_t my_pid(getpid());
