@@ -122,9 +122,9 @@ def _get_map_or_list(spec_part):
     """Returns the list or map specification if this is a list or a
        map specification part. If not, returns the given spec_part
        itself"""
-    if "map_item_spec" in spec_part:
+    if spec_part_is_map(spec_part):
         return spec_part["map_item_spec"]
-    elif "list_item_spec" in spec_part:
+    elif spec_part_is_list(spec_part):
         return spec_part["list_item_spec"]
     else:
         return spec_part
@@ -144,13 +144,13 @@ def _find_spec_part_single(cur_spec, id_part):
     # list or a map, which is internally represented by a dict with
     # an element 'map_item_spec', a dict with an element 'list_item_spec',
     # or a list (when it is the 'main' config_data element of a module).
-    if type(cur_spec) == dict and 'map_item_spec' in cur_spec.keys():
+    if type(cur_spec) == dict and spec_part_is_map(cur_spec):
         for cur_spec_item in cur_spec['map_item_spec']:
             if cur_spec_item['item_name'] == id:
                 return cur_spec_item
         # not found
         raise isc.cc.data.DataNotFoundError(id + " not found")
-    elif type(cur_spec) == dict and 'list_item_spec' in cur_spec.keys():
+    elif type(cur_spec) == dict and spec_part_is_list(cur_spec):
         if cur_spec['item_name'] == id:
             return cur_spec['list_item_spec']
         # not found
@@ -211,12 +211,12 @@ def spec_name_list(spec, prefix="", recurse=False):
     if prefix != "" and not prefix.endswith("/"):
         prefix += "/"
     if type(spec) == dict:
-        if 'map_item_spec' in spec:
+        spec_part_is_map(spec):
             for map_el in spec['map_item_spec']:
                 name = map_el['item_name']
                 if map_el['item_type'] == 'map':
                     name += "/"
-                if recurse and 'map_item_spec' in map_el:
+                if recurse and spec_part_is_map(map_el):
                     result.extend(spec_name_list(map_el['map_item_spec'], prefix + map_el['item_name'], recurse))
                 else:
                     result.append(prefix + name)
