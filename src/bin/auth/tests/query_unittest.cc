@@ -1632,35 +1632,22 @@ TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
     mock_finder->setNSEC3Flag(true);
     Query(memory_client, Name("nxdomain.example.com"), qtype,
               response, true).process();
-
-    std::cout<<response.toText()<<std::endl;
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_txt) +
                          string("example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec3_apex_txt) + "\n" +
                          string("0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG ") +
-                         getCommonRRSIGText("NSEC") + "\n" +
+                         getCommonRRSIGText("NSEC3") + "\n" +
                          string(nsec3_www_txt) + "\n" +
                          string("q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG ") +
-                         getCommonRRSIGText("NSEC")).c_str(),
+                         getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, mock_finder->getOrigin());
-
 }
 
 // The following are tentative tests until we really add tests for the
 // query logic for these cases.  At that point it's probably better to
 // clean them up.
-TEST_F(QueryTest, nxdomainWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("nxdomain.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_FALSE(result.isWildcard());
-}
-
 TEST_F(QueryTest, nxrrsetWithNSEC3) {
     mock_finder->setNSEC3Flag(true);
     ZoneFinder::FindResult result = mock_finder->find(
