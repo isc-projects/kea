@@ -217,7 +217,7 @@ def spec_name_list(spec, prefix="", recurse=False):
     if prefix != "" and not prefix.endswith("/"):
         prefix += "/"
     if type(spec) == dict:
-        spec_part_is_map(spec):
+        if spec_part_is_map(spec):
             for map_el in spec['map_item_spec']:
                 name = map_el['item_name']
                 if map_el['item_type'] == 'map':
