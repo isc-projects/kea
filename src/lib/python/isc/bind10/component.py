@@ -22,9 +22,9 @@ Dependencies between them are not yet handled. It might turn out they are
 needed, in that case they will be added sometime in future.
 
 This framework allows for a single process to be started multiple times (by
-specifying multiple components with the same configuration). However, the rest
-of the system might not handle such situation well, so until it is made so,
-it would be better to start each process at most once.
+specifying multiple components with the same configuration). We might want
+to add a more convenient support (like providing a count argument to the
+configuration). This is yet to be designed.
 """
 
 import isc.log
@@ -408,7 +408,7 @@ class Component(BaseComponent):
         self._boss.register_process(self.pid(), self)
 
     def _stop_internal(self):
-        self._boss.stop_process(self._process, self._address)
+        self._boss.stop_process(self._process, self._address, self.pid())
         # TODO Some way to wait for the process that doesn't want to
         # terminate and kill it would prove nice (or add it to boss somewhere?)
 

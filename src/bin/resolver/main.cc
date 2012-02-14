@@ -14,18 +14,10 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include <string>
-#include <iostream>
-
-#include <boost/foreach.hpp>
+#include <resolver/spec_config.h>
+#include <resolver/resolver.h>
+#include "resolver_log.h"
+#include "common.h"
 
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
@@ -47,16 +39,26 @@
 
 #include <auth/common.h>
 
-#include <resolver/spec_config.h>
-#include <resolver/resolver.h>
-
 #include <cache/resolver_cache.h>
 #include <nsas/nameserver_address_store.h>
 
 #include <log/logger_support.h>
 #include <log/logger_level.h>
 #include "resolver_log.h"
-#include "common.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+
+#include <string>
+#include <iostream>
+
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace isc::cc;
@@ -81,15 +83,31 @@ ConstElementPtr
 my_command_handler(const string& command, ConstElementPtr args) {
     ConstElementPtr answer = createAnswer();
 
-    if (command == "print_message") {
-        LOG_INFO(resolver_logger, RESOLVER_PRINT_COMMAND).arg(args);
-        /* let's add that message to our answer as well */
-        answer = createAnswer(0, args);
-    } else if (command == "shutdown") {
-        io_service.stop();
-    }
+    try {
+        if (command == "print_message") {
+            LOG_INFO(resolver_logger, RESOLVER_PRINT_COMMAND).arg(args);
+            /* let's add that message to our answer as well */
+            answer = createAnswer(0, args);
+        } else if (command == "shutdown") {
+            // Is the pid argument provided?
+            if (args && args->contains("pid")) {
+                // If it is, we check it is the same as our PID
+                const int pid(args->get("pid")->intValue());
+                const pid_t my_pid(getpid());
+                if (my_pid != pid) {
+                    // It is not for us (this is expected, see auth/command.cc
+                    // and the ShutdownCommand there).
+                    return (answer);
+                }
+            }
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SHUTDOWN);
+            io_service.stop();
+        }
 
-    return (answer);
+        return (answer);
+    } catch (const std::exception& e) {
+        return (createAnswer(1, e.what()));
+    }
 }
 
 void
