@@ -185,6 +185,16 @@ const char* const nsec3_www_txt =
     "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
 
+// NSEC3 for *.uwild.example.com (will be added on demand not to confuse
+// other tests)
+const char* const nsec3_wild_txt =
+    "b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+// NSEC3 for uwild.example.com. (will be added on demand)
+const char* const nsec3_uwild_txt =
+    "t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+
 // (Secure) delegation data; Delegation with DS record
 const char* const signed_delegation_txt =
     "signed-delegation.example.com. 3600 IN NS ns.example.net.\n";
@@ -261,7 +271,8 @@ public:
         include_rrsig_anyway_(false),
         use_nsec3_(false),
         nsec_name_(origin_),
-        nsec3_fake_(NULL)
+        nsec3_fake_(NULL),
+        nsec3_name_(NULL)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
@@ -350,8 +361,11 @@ public:
     // query. After that, it'll return to operate normally.
     // NULL disables. Does not take ownership of the pointer (it is generally
     // expected to be a local variable in the test function).
-    void setNSEC3Result(const FindNSEC3Result* result) {
+    void setNSEC3Result(const FindNSEC3Result* result,
+                        const Name* name = NULL)
+    {
         nsec3_fake_ = result;
+        nsec3_name_ = name;
     }
 
     // If true is passed return an empty NSEC3 RRset for some negative
@@ -451,6 +465,7 @@ private:
     // The following two are for faking bad NSEC3 responses
     // Enabled when not NULL
     const FindNSEC3Result* nsec3_fake_;
+    const Name* nsec3_name_;
 public:
     // Public, to allow tests looking up the right names for something
     map<Name, string> hash_map_;
@@ -498,10 +513,9 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
 ZoneFinder::FindNSEC3Result
 MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
     // Do we have a fake result set? If so, use it.
-    if (nsec3_fake_ != NULL) {
+    if (nsec3_fake_ != NULL &&
+        (nsec3_name_ == NULL || *nsec3_name_ == name)) {
         const FindNSEC3Result* result(nsec3_fake_);
-        // Disable the fake for the next call
-        nsec3_fake_ = NULL;
         return (*result);
     }
 
@@ -1332,14 +1346,6 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
     // Similar to the previous case, but providing NSEC3 proofs according to
     // RFC5155 Section 7.2.5.
 
-    // NSEC3 for *.uwild.example.com.
-    const string nsec3_wild_txt =
-        "b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 "
-        "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
-    // NSEC3 for uwild.example.com. (closest encloser)
-    const string nsec3_uwild_txt =
-        "t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 "
-        "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
     mock_finder->addRecord(nsec3_wild_txt);
     mock_finder->addRecord(nsec3_uwild_txt);
     mock_finder->setNSEC3Flag(true);
@@ -1352,7 +1358,7 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    // NSEC3 for the closest encloser + its RRSIG
-                   nsec3_uwild_txt +
+                   string(nsec3_uwild_txt) +
                    mock_finder->hash_map_[Name("uwild.example.com.")] +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
@@ -1362,7 +1368,7 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    // NSEC3 for the wildcard + its RRSIG
-                   nsec3_wild_txt +
+                   string(nsec3_wild_txt) +
                    mock_finder->hash_map_[Name("*.uwild.example.com.")] +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3")).c_str(),
@@ -1382,6 +1388,23 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
     EXPECT_THROW(Query(memory_client, Name("www1.uwild.example.com"),
                        RRType::TXT(), response, true).process(),
                  isc::InvalidParameter);
+}
+
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Broken) {
+    // Similar to wildcardNxrrsetWithNSEC3, but no matching NSEC3 for the
+    // wildcard name will be returned.  This shouldn't happen in a reasonably
+    // NSEC-signed zone, and should result in an exception.
+    mock_finder->setNSEC3Flag(true);
+    const Name wname("*.uwild.example.com.");
+    ZoneFinder::FindNSEC3Result nsec3(false, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3, &wname);
+    mock_finder->addRecord(nsec3_wild_txt);
+    mock_finder->addRecord(nsec3_uwild_txt);
+
+    EXPECT_THROW(Query(memory_client, Name("www1.uwild.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 Query::BadNSEC3);
 }
 
 TEST_F(QueryTest, wildcardEmptyWithNSEC) {
