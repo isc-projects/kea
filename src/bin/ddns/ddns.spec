@@ -34,7 +34,13 @@
       {
         "command_name": "shutdown",
         "command_description": "Shut down DDNS",
-        "command_args": []
+        "command_args": [
+          {
+            "item_name": "pid",
+            "item_type": "integer",
+            "item_optional": true
+          }
+        ]
       }
     ]
   }
