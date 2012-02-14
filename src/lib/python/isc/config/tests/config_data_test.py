@@ -602,6 +602,9 @@ class TestMultiConfigData(unittest.TestCase):
                    ]
         maps = self.mcd.get_value_maps("/Spec22/value9")
         self.assertEqual(expected, maps)
+        # A slash at the end should not produce different output
+        maps = self.mcd.get_value_maps("/Spec22/value9/")
+        self.assertEqual(expected, maps)
 
     def test_get_value_maps_named_set(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
