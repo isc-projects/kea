@@ -245,8 +245,8 @@ Query::addNXRRsetProof(ZoneFinder& finder,
                                boost::const_pointer_cast<AbstractRRset>(
                                    result.closest_proof), dnssec_);
         } else {
-            isc_throw(BadNSEC3, "No NSEC3 found for existing domain " <<
-                      qname_.toText());
+            isc_throw(BadNSEC3, "No matching NSEC3 found for existing domain "
+                      << qname_);
         }
     } else if (db_result.isNSEC3Signed() && db_result.isWildcard()) {
         // Case for RFC5155 Section 7.2.5
@@ -264,14 +264,19 @@ Query::addNXRRsetProof(ZoneFinder& finder,
                            boost::const_pointer_cast<AbstractRRset>(
                                result.next_proof), dnssec_);
 
-        // Construct the matched wildcard name.
+        // Construct the matched wildcard name and add NSEC3 for it.
         const Name wname = Name("*").concatenate(
             qname_.split(qname_.getLabelCount() - result.closest_labels));
         const ZoneFinder::FindNSEC3Result wresult(finder.findNSEC3(wname,
                                                                    false));
-        response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(
-                               wresult.closest_proof), dnssec_);
+        if (wresult.matched) {
+            response_.addRRset(Message::SECTION_AUTHORITY,
+                               boost::const_pointer_cast<AbstractRRset>(
+                                   wresult.closest_proof), dnssec_);
+        } else {
+            isc_throw(BadNSEC3, "No matching NSEC3 found for existing domain "
+                      << wname);
+        }
     }
 }
 
