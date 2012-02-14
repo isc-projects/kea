@@ -28,6 +28,16 @@ class ConfigDataError(Exception): pass
 
 BIND10_CONFIG_DATA_VERSION = 2
 
+# Helper functions (should really refactor this all into classes)
+def spec_part_is_list(spec_part):
+    return (type(spec_part) == dict and 'list_item_spec' in spec_part)
+
+def spec_part_is_map(spec_part):
+    return (type(spec_part) == dict and 'map_item_spec' in spec_part)
+
+def spec_part_is_named_set(spec_part):
+    return (type(spec_part) == dict and 'named_map_item_spec' in spec_part)
+
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
        specification part relevant for the value. Raises an
@@ -156,9 +166,22 @@ def _find_spec_part_single(cur_spec, id_part):
     else:
         raise isc.cc.data.DataNotFoundError("Not a correct config specification")
 
-def find_spec_part(element, identifier):
+def find_spec_part(element, identifier, strict_identifier = True):
     """find the data definition for the given identifier
-       returns either a map with 'item_name' etc, or a list of those"""
+       returns either a map with 'item_name' etc, or a list of those
+       Parameters:
+       element: The specification element to start the search in
+       identifier: The element to find (relative to element above)
+       strict_identifier: If True (the default), additional checking occurs,
+                          currently whether or not an index is specified
+                          for list elements in the identifier that are not
+                          the leaf node
+       Raises a DataNotFoundError if the data is not found, or if
+       strict_identifier is True and any non-final identifier parts
+       (i.e. before the last /) identify a list element and do not contain
+       an index.
+       Returns the spec element identified by the given identifier.
+    """
     if identifier == "":
         return element
     id_parts = identifier.split("/")
@@ -171,6 +194,10 @@ def find_spec_part(element, identifier):
     # always want the 'full' spec of the item
     for id_part in id_parts[:-1]:
         cur_el = _find_spec_part_single(cur_el, id_part)
+        if strict_identifier and spec_part_is_list(cur_el) and\
+           not isc.cc.data.identifier_has_list_index(id_part):
+            raise isc.cc.data.DataNotFoundError(id_part +
+                                                " is a list and needs index")
         cur_el = _get_map_or_list(cur_el)
 
     cur_el = _find_spec_part_single(cur_el, id_parts[-1])
@@ -244,7 +271,12 @@ class ConfigData:
     def get_default_value(self, identifier):
         """Returns the default from the specification, or None if there
            is no default"""
-        spec = find_spec_part(self.specification.get_config_spec(), identifier)
+        # We are searching for the default value, so we can set
+        # strict_identifier to false (in fact, we need to; we may not know
+        # some list indices, or they may not exist, we are looking for
+        # a default value for a reason here).
+        spec = find_spec_part(self.specification.get_config_spec(),
+                              identifier, False)
         if spec and 'item_default' in spec:
             return spec['item_default']
         else:
