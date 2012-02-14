@@ -178,10 +178,10 @@ def find_spec_part(element, identifier, strict_identifier = True):
        Parameters:
        element: The specification element to start the search in
        identifier: The element to find (relative to element above)
-       strict_identifier: If True (the default), additional checking occurs,
-                          currently whether or not an index is specified
-                          for list elements in the identifier that are not
-                          the leaf node
+       strict_identifier: If True (the default), additional checking occurs.
+                          Currently the only check is whether a list index is
+                          specified (except for the last part of the
+                          identifier)
        Raises a DataNotFoundError if the data is not found, or if
        strict_identifier is True and any non-final identifier parts
        (i.e. before the last /) identify a list element and do not contain
@@ -645,7 +645,7 @@ class MultiConfigData:
            Throws DataNotFoundError if the identifier is bad
         """
         result = []
-        if not identifier:
+        if not identifier or identifier == "/":
             # No identifier, so we need the list of current modules
             for module in self._specifications.keys():
                 if all:
@@ -658,9 +658,9 @@ class MultiConfigData:
                     result.append(entry)
         else:
             # Strip off start and end slashes, if they are there
-            if identifier[0] == '/':
+            if len(identifier) > 0 and identifier[0] == '/':
                 identifier = identifier[1:]
-            if identifier[-1] == '/':
+            if len(identifier) > 0 and identifier[-1] == '/':
                 identifier = identifier[:-1]
             module, sep, id = identifier.partition('/')
             spec = self.get_module_spec(module)
