@@ -2059,13 +2059,4 @@ TEST_F(QueryTest, emptyNameWithNSEC3) {
     EXPECT_TRUE(result.isNSEC3Signed());
     EXPECT_FALSE(result.isWildcard());
 }
-
-TEST_F(QueryTest, wildcardEmptyWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("a.t.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_TRUE(result.isWildcard());
-}
 }
