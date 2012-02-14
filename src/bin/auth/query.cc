@@ -214,10 +214,31 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
         finder.find(dname, RRType::DS(), dnssec_opt_);
     if (ds_result.code == ZoneFinder::SUCCESS) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(ds_result.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(
+                               ds_result.rrset),
                            dnssec_);
-    } else if (ds_result.code == ZoneFinder::NXRRSET) {
+    } else if (ds_result.code == ZoneFinder::NXRRSET &&
+               ds_result.isNSECSigned()) {
         addNXRRsetProof(finder, ds_result);
+    } else if (ds_result.code == ZoneFinder::NXRRSET &&
+               ds_result.isNSEC3Signed()) {
+        // Add no DS proof with NSEC3 as specified in RFC5155 Section 7.2.7.
+        // Depending on whether the zone is optout or not, findNSEC3() may
+        // return non-NULL or NULL next_proof (respectively).  The Opt-Out flag
+        // must be set or cleared accordingly, but we don't check that
+        // in this level (as long as the zone signed validly and findNSEC3()
+        // is valid, the condition should be met; otherwise we'd let the
+        // validator detect the error).
+        const ZoneFinder::FindNSEC3Result nsec3_result =
+            finder.findNSEC3(dname, true);
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               nsec3_result.closest_proof), dnssec_);
+        if (nsec3_result.next_proof) {
+            response_.addRRset(Message::SECTION_AUTHORITY,
+                               boost::const_pointer_cast<AbstractRRset>(
+                                   nsec3_result.next_proof), dnssec_);
+        }
     } else {
         // Any other case should be an error
         isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
