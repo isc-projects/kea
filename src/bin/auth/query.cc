@@ -248,7 +248,8 @@ Query::addNXRRsetProof(ZoneFinder& finder,
                                boost::const_pointer_cast<AbstractRRset>(
                                    result.closest_proof), dnssec_);
             // For qtype == DS, next_proof could be set
-            // (Do we want to double-check for opt-out here?)
+            // (We could check for opt-out here, but that's really the
+            // responsibility of the datasource)
             if (qtype_ds && result.next_proof != ConstRRsetPtr()) {
                 response_.addRRset(Message::SECTION_AUTHORITY,
                                    boost::const_pointer_cast<AbstractRRset>(

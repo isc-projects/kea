@@ -1699,26 +1699,32 @@ TEST_F(QueryTest, nxrrsetMissingNSEC3) {
                        response, true).process(), Query::BadNSEC3);
 }
 
-// Check the exact matching NSEC3 is returned for NXRRSET and qtype DS
 TEST_F(QueryTest, nxrrsetWithNSEC3_ds_exact) {
     mock_finder->setNSEC3Flag(true);
 
+    // This delegation has no DS, but does have a matching NSEC3 record
+    // (See RFC5155 section 7.2.4)
     Query(memory_client, Name("unsigned-delegation.example.com."),
           RRType::DS(), response, true).process();
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(unsigned_delegation_nsec3_txt) + "\n" +
-                   mock_finder->hash_map_[Name("unsigned-delegation.example.com.")] +
+                   mock_finder->
+                        hash_map_[Name("unsigned-delegation.example.com.")] +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
 }
 
-// Check the signature is present when an NXRRSET is returned and qtype is DS
 TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
     mock_finder->setNSEC3Flag(true);
 
+    // This delegation has no DS, and no directly matching NSEC3 record
+    // So the response should contain closest encloser proof (and the
+    // 'next closer' should have opt-out set, though that is not
+    // actually checked)
+    // (See RFC5155 section 7.2.4)
     Query(memory_client, Name("unsigned-delegation-optout.example.com."),
           RRType::DS(), response, true).process();
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
@@ -1729,12 +1735,12 @@ TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    string(unsigned_delegation_nsec3_txt) + "\n" +
-                   mock_finder->hash_map_[Name("unsigned-delegation.example.com.")] +
+                   mock_finder->
+                        hash_map_[Name("unsigned-delegation.example.com.")] +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
 }
-
 
 // The following are tentative tests until we really add tests for the
 // query logic for these cases.  At that point it's probably better to
