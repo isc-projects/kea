@@ -170,14 +170,13 @@ const char* const signed_delegation_ds_txt =
     "signed-delegation.example.com. 3600 IN DS 12345 8 2 "
     "764501411DE58E8618945054A3F620B36202E115D015A7773F4B78E0F952CECA\n";
 
-// (Secure) delegation data; Delegation without DS record (and NSEC denying
-// its existence.
+// (Secure) delegation data; Delegation without DS record (and both NSEC
+// and NSEC3 denying its existence)
 const char* const unsigned_delegation_txt =
     "unsigned-delegation.example.com. 3600 IN NS ns.example.net.\n";
 const char* const unsigned_delegation_nsec_txt =
     "unsigned-delegation.example.com. 3600 IN NSEC "
     "unsigned-delegation-optout.example.com. NS RRSIG NSEC\n";
-
 const char* const unsigned_delegation_nsec3_txt =
     "q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG\n";
