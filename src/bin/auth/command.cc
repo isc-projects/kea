@@ -109,8 +109,7 @@ class ShutdownCommand : public AuthCommand {
 public:
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
         // Is the pid argument provided?
-        if (args && args->getType() == isc::data::Element::map &&
-            args->contains("pid")) {
+        if (args && args->contains("pid")) {
             // If it is, we check it is the same as our PID
 
             // This might throw in case the type is not an int, but that's
