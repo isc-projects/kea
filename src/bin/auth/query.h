@@ -102,7 +102,7 @@ private:
     /// This corresponds to Section 3.1.3.2 of RFC 4035.
     void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
                           isc::dns::ConstRRsetPtr nsec);
-    
+
     /// Add NSEC3 RRs that prove an NXDOMAIN result.
     ///
     /// This corresponds to Section 7.2.2 of RFC 5155.
