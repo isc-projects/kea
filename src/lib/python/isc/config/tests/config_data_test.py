@@ -520,15 +520,25 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(MultiConfigData.DEFAULT, status)
 
 
-
     def test_get_value_maps(self):
         maps = self.mcd.get_value_maps()
         self.assertEqual([], maps)
         
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
         self.mcd.set_specification(module_spec)
+
+        expected = [{'default': False,
+                     'type': 'module',
+                     'name': 'Spec1',
+                     'value': None,
+                     'modified': False}]
+
         maps = self.mcd.get_value_maps()
-        self.assertEqual([{'default': False, 'type': 'module', 'name': 'Spec1', 'value': None, 'modified': False}], maps)
+        self.assertEqual(expected, maps)
+
+        maps = self.mcd.get_value_maps("/")
+        self.assertEqual(expected, maps)
+
         maps = self.mcd.get_value_maps('Spec2')
         self.assertEqual([], maps)
         maps = self.mcd.get_value_maps('Spec1')
@@ -602,6 +612,7 @@ class TestMultiConfigData(unittest.TestCase):
                    ]
         maps = self.mcd.get_value_maps("/Spec22/value9")
         self.assertEqual(expected, maps)
+
         # A slash at the end should not produce different output
         maps = self.mcd.get_value_maps("/Spec22/value9/")
         self.assertEqual(expected, maps)
