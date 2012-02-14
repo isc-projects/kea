@@ -553,11 +553,11 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertEqual(42, component.pid())
         self.assertEqual(component, self.__registered_processes.get(42))
 
-    def stop_process(self, process, address):
+    def stop_process(self, process, address, pid):
         """
         Part of pretending to be boss.
         """
-        self.__stop_process_params = (process, address)
+        self.__stop_process_params = (process, address, pid)
 
     def start_simple(self, process):
         """
@@ -573,9 +573,11 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.start()
         self.assertTrue(component.running())
         self.assertEqual('component', self.__start_simple_params)
+        component.pid = lambda: 42
         component.stop()
         self.assertFalse(component.running())
-        self.assertEqual(('component', 'Address'), self.__stop_process_params)
+        self.assertEqual(('component', 'Address', 42),
+                         self.__stop_process_params)
 
     def test_component_kill(self):
         """
