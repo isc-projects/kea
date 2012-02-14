@@ -651,8 +651,11 @@ class MultiConfigData:
                     entry = _create_value_map_entry(module, 'module', None)
                     result.append(entry)
         else:
+            # Strip off start and end slashes, if they are there
             if identifier[0] == '/':
                 identifier = identifier[1:]
+            if identifier[-1] == '/':
+                identifier = identifier[:-1]
             module, sep, id = identifier.partition('/')
             spec = self.get_module_spec(module)
             if spec:
