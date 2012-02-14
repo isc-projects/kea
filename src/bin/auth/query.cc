@@ -170,27 +170,31 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 // Note: unless the data source client implementation or the zone content
 // is broken, 'nsec3' should be a valid NSEC3 RR.  Likewise, the call to
 // findNSEC3() in this method should result an FindNSEC3Result that proves
-// the Closest Encloser Proof and non existent of matching wildcard.  
-// If these assumptions aren't met due to a buggy data source implementation 
+// the Closest Encloser Proof and non existent of matching wildcard.
+// If these assumptions aren't met due to a buggy data source implementation
 // or a broken zone, we'll let underlying libdns++ modules throw an exception,
-// which would result in either an SERVFAIL response or just ignoring the query.
-// We at least prevent a complete crash due to such broken behavior.
+// which would result in either an SERVFAIL response or just ignoring the
+// query.  We at least prevent a complete crash due to such broken behavior.
 void
 Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
     // Firstly get the NSEC3 proves for Closest Encloser Proof
-    const ZoneFinder::FindNSEC3Result fresult1 =  finder.findNSEC3(qname_, true);
+    const ZoneFinder::FindNSEC3Result fresult1 = finder.findNSEC3(qname_,
+                                                                  true);
     if (fresult1.closest_proof->getRdataCount() == 0) {
-        isc_throw(BadNSEC3, 
-        "NSEC3 for NXDOMAIN proving that matches the closest encloser is empty.");
+        isc_throw(BadNSEC3,  "NSEC3 for NXDOMAIN proving that matches the "
+                  "closest encloser is empty.");
     }
     // Add the NSEC3 proving that matches the closest (provable) encloser.
     response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<AbstractRRset>(fresult1.closest_proof),
+                       boost::const_pointer_cast<AbstractRRset>(
+                           fresult1.closest_proof),
                        dnssec_);
-    // Add the NSEC3 RR that covers the "next closer" name to the closest encloser
+    // Add the NSEC3 RR that covers the "next closer" name to the closest
+    // encloser
     if (fresult1.next_proof) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(fresult1.next_proof), 
+                           boost::const_pointer_cast<AbstractRRset>(
+                               fresult1.next_proof),
                            dnssec_);
     }
     // Next, identify the best possible wildcard name that would match
@@ -198,10 +202,11 @@ Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
     // between the owner or the next domain of the NSEC that proves NXDOMAIN,
     // prefixed by the wildcard label, "*".
     const Name wildname(Name("*").concatenate(qname_.split(1)));
-    const ZoneFinder::FindNSEC3Result fresult2 = finder.findNSEC3(wildname, false);
+    const ZoneFinder::FindNSEC3Result fresult2 =
+        finder.findNSEC3(wildname, false);
     if (fresult2.closest_proof->getRdataCount() == 0) {
-            isc_throw(BadNSEC3, 
-                      "NSEC3 for NXDOMAIN covering the wildcard RR at the closest encloser is empty.");
+            isc_throw(BadNSEC3, "NSEC3 for NXDOMAIN covering the wildcard "
+                      "RR at the closest encloser is empty.");
     }
     // Add the (no-) wildcard proof only when it's different from the NSEC
     // that proves NXDOMAIN; sometimes they can be the same.
@@ -210,9 +215,9 @@ Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
     // for some optimized data source implementations.
     if (fresult1.next_proof->getName() != fresult2.closest_proof->getName()) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(fresult2.closest_proof),
+                           boost::const_pointer_cast<AbstractRRset>(
+                               fresult2.closest_proof),
                            dnssec_);
-        
     }
 }
 
