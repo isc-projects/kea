@@ -252,6 +252,11 @@ Query::addNXRRsetProof(ZoneFinder& finder,
         // Case for RFC5155 Section 7.2.5
         const ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
                                                                   true));
+        // We know there's no exact match for the qname, so findNSEC3() should
+        // return both closest and next proofs.  If the latter is NULL, it
+        // means a run time collision (or the zone is broken in other way).
+        // In that case addRRset() will throw, and it will be converted to
+        // SERVFAIL.
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                result.closest_proof), dnssec_);
