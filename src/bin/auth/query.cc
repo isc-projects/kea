@@ -236,17 +236,37 @@ Query::addNXRRsetProof(ZoneFinder& finder,
         if (db_result.isWildcard()) {
             addWildcardNXRRSETProof(finder, db_result.rrset);
         }
-    } else if (db_result.isNSEC3Signed()) {
-        ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_, false));
+    } else if (db_result.isNSEC3Signed() && !db_result.isWildcard()) {
+        // Case for RFC5155 Section 7.2.3
+        const ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
+                                                                  false));
         if (result.matched) {
             response_.addRRset(Message::SECTION_AUTHORITY,
                                boost::const_pointer_cast<AbstractRRset>(
                                    result.closest_proof), dnssec_);
-
         } else {
             isc_throw(BadNSEC3, "No NSEC3 found for existing domain " <<
                       qname_.toText());
         }
+    } else if (db_result.isNSEC3Signed() && db_result.isWildcard()) {
+        // Case for RFC5155 Section 7.2.5
+        const ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
+                                                                  true));
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.closest_proof), dnssec_);
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.next_proof), dnssec_);
+
+        // Construct the matched wildcard name.
+        const Name wname = Name("*").concatenate(
+            qname_.split(qname_.getLabelCount() - result.closest_labels));
+        const ZoneFinder::FindNSEC3Result wresult(finder.findNSEC3(wname,
+                                                                   false));
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               wresult.closest_proof), dnssec_);
     }
 }
 
