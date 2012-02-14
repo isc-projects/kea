@@ -56,6 +56,7 @@ protected:
     AuthCommandTest() :
         server_(false, xfrout_),
         rcode_(-1),
+        expect_rcode_(0),
         itimer_(server_.getIOService())
     {
         server_.setStatisticsSession(&statistics_session_);
@@ -162,7 +163,6 @@ TEST_F(AuthCommandTest, shutdownIncorrectPID) {
     // The PID = 0 should be taken by init, so we are not init and the
     // PID should be different
     param_ = Element::fromJSON("{\"pid\": 0}");
-    expect_rcode_ = 0;
     itimer_.setup(boost::bind(&AuthCommandTest::dontStopServer, this), 1);
     server_.getIOService().run();
     EXPECT_EQ(0, rcode_);
