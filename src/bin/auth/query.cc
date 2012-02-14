@@ -258,13 +258,24 @@ Query::addNXRRsetProof(ZoneFinder& finder,
             addWildcardNXRRSETProof(finder, db_result.rrset);
         }
     } else if (db_result.isNSEC3Signed() && !db_result.isWildcard()) {
-        // Case for RFC5155 Section 7.2.3
-        const ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
-                                                                  false));
+        // Handling depends on whether query type is DS or not
+        // (see RFC5155, 7.2.3 and 7.2.4):  If qtype == DS, do
+        // recursive search (and add next_proof, if necessary),
+        // otherwise, do non-recursive search
+        const bool qtype_ds = (qtype_ == RRType::DS());
+        ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_, qtype_ds));
         if (result.matched) {
             response_.addRRset(Message::SECTION_AUTHORITY,
                                boost::const_pointer_cast<AbstractRRset>(
                                    result.closest_proof), dnssec_);
+            // For qtype == DS, next_proof could be set
+            // (We could check for opt-out here, but that's really the
+            // responsibility of the datasource)
+            if (qtype_ds && result.next_proof != ConstRRsetPtr()) {
+                response_.addRRset(Message::SECTION_AUTHORITY,
+                                   boost::const_pointer_cast<AbstractRRset>(
+                                       result.next_proof), dnssec_);
+            }
         } else {
             isc_throw(BadNSEC3, "No matching NSEC3 found for existing domain "
                       << qname_);

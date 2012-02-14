@@ -202,12 +202,23 @@ const char* const signed_delegation_ds_txt =
     "signed-delegation.example.com. 3600 IN DS 12345 8 2 "
     "764501411DE58E8618945054A3F620B36202E115D015A7773F4B78E0F952CECA\n";
 
-// (Secure) delegation data; Delegation without DS record (and NSEC denying
-// its existence.
+// (Secure) delegation data; Delegation without DS record (and both NSEC
+// and NSEC3 denying its existence)
 const char* const unsigned_delegation_txt =
     "unsigned-delegation.example.com. 3600 IN NS ns.example.net.\n";
 const char* const unsigned_delegation_nsec_txt =
     "unsigned-delegation.example.com. 3600 IN NSEC "
+    "unsigned-delegation-optout.example.com. NS RRSIG NSEC\n";
+// This one will be added on demand
+const char* const unsigned_delegation_nsec3_txt =
+    "q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG\n";
+
+// Delegation without DS record, and no direct matching NSEC3 record
+const char* const unsigned_delegation_optout_txt =
+    "unsigned-delegation-optout.example.com. 3600 IN NS ns.example.net.\n";
+const char* const unsigned_delegation_optout_nsec_txt =
+    "unsigned-delegation-optout.example.com. 3600 IN NSEC "
     "*.uwild.example.com. NS RRSIG NSEC\n";
 
 // (Secure) delegation data; Delegation where the DS lookup will raise an
@@ -288,6 +299,8 @@ public:
             nsec3_apex_txt << nsec3_www_txt <<
             signed_delegation_txt << signed_delegation_ds_txt <<
             unsigned_delegation_txt << unsigned_delegation_nsec_txt <<
+            unsigned_delegation_optout_txt <<
+            unsigned_delegation_optout_nsec_txt <<
             bad_delegation_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
@@ -317,9 +330,11 @@ public:
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
         hash_map_[Name("unsigned-delegation.example.com")] =
-            "q04jkcevqvmu85r014c7dkba38o0ji8r"; // a bit larger than H(www)
+            "q81r598950igr1eqvc60aedlq66425b5"; // a bit larger than H(www)
         hash_map_[Name("*.uwild.example.com")] =
             "b4um86eghhds6nea196smvmlo4ors995";
+        hash_map_[Name("unsigned-delegation-optout.example.com")] =
+            "vld46lphhasfapj8og1pglgiasa5o5gt";
 
         // For closest encloser proof for www1.uwild.example.com:
         hash_map_[Name("uwild.example.com")] =
@@ -1045,11 +1060,8 @@ TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3) {
     // Similar to the previous case, but the zone is signed with NSEC3,
     // and this delegation is NOT an optout.
     const Name insecurechild_name("unsigned-delegation.example.com");
-    const string nsec3_insecurechild_str =
-        mock_finder->hash_map_[insecurechild_name] + ".example.com. 3600 "
-        "IN NSEC3 1 1 12 aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS\n";
     mock_finder->setNSEC3Flag(true);
-    mock_finder->addRecord(nsec3_insecurechild_str);
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
 
     Query(memory_client, Name("foo.unsigned-delegation.example.com"),
           qtype, response, true).process();
@@ -1058,7 +1070,7 @@ TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3) {
     responseCheck(response, Rcode::NOERROR(), 0, 0, 3, 0,
                   NULL,
                   (string(unsigned_delegation_txt) +
-                   nsec3_insecurechild_str +
+                   string(unsigned_delegation_nsec3_txt) +
                    mock_finder->hash_map_[insecurechild_name] +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3")).c_str(),
@@ -1076,6 +1088,7 @@ TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
     // proof (and their RRSIGs).  The closest encloser is the apex (origin),
     // and with our faked hash the covering NSEC3 for the next closer
     // (= child zone name) is that for www.example.com.
+    cout << response << endl;
     responseCheck(response, Rcode::NOERROR(), 0, 0, 5, 0,
                   NULL,
                   (string(unsigned_delegation_txt) +
@@ -2086,6 +2099,51 @@ TEST_F(QueryTest, nxrrsetMissingNSEC3) {
 
     EXPECT_THROW(Query(memory_client, Name("www.example.com"), RRType::TXT(),
                        response, true).process(), Query::BadNSEC3);
+}
+
+TEST_F(QueryTest, nxrrsetWithNSEC3_ds_exact) {
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+    mock_finder->setNSEC3Flag(true);
+
+    // This delegation has no DS, but does have a matching NSEC3 record
+    // (See RFC5155 section 7.2.4)
+    Query(memory_client, Name("unsigned-delegation.example.com."),
+          RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(unsigned_delegation_nsec3_txt) + "\n" +
+                   mock_finder->
+                        hash_map_[Name("unsigned-delegation.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+    mock_finder->setNSEC3Flag(true);
+
+    // This delegation has no DS, and no directly matching NSEC3 record
+    // So the response should contain closest encloser proof (and the
+    // 'next closer' should have opt-out set, though that is not
+    // actually checked)
+    // (See RFC5155 section 7.2.4)
+    Query(memory_client, Name("unsigned-delegation-optout.example.com."),
+          RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_apex_txt) + "\n" +
+                   mock_finder->hash_map_[Name("example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(unsigned_delegation_nsec3_txt) + "\n" +
+                   mock_finder->
+                        hash_map_[Name("unsigned-delegation.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
 }
 
 // The following are tentative tests until we really add tests for the
