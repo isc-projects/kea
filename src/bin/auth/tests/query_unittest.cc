@@ -305,6 +305,14 @@ public:
             "q00jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("*.uwild.example.com")] =
+            "b4um86eghhds6nea196smvmlo4ors995";
+
+        // For closest encloser proof for www1.uwild.example.com:
+        hash_map_[Name("uwild.example.com")] =
+            "t644ebqk9bibcna874givr6joj62mlhv";
+        hash_map_[Name("www1.uwild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
@@ -504,6 +512,10 @@ MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
     // expected entry when operator[] is used; maps are not empty.
     for (int i = 0; i < labels; ++i) {
         const string hlabel = hash_map_[name.split(i, labels - i)];
+        if (hlabel.empty()) {
+            isc_throw(isc::Unexpected, "findNSEC3() hash failure for " <<
+                      name.split(i, labels - i));
+        }
         const Name hname = Name(hlabel + ".example.com");
         // We don't use const_iterator so that we can use operator[] below
         Domains::iterator found_domain = nsec3_domains_.lower_bound(hname);
@@ -1316,6 +1328,47 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
                   NULL, mock_finder->getOrigin());
 }
 
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
+    // Similar to the previous case, but providing NSEC3 proofs according to
+    // RFC5155 Section 7.2.5.
+
+    // NSEC3 for *.uwild.example.com.
+    const string nsec3_wild_txt =
+        "b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 "
+        "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+    // NSEC3 for uwild.example.com. (closest encloser)
+    const string nsec3_uwild_txt =
+        "t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 "
+        "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+    mock_finder->addRecord(nsec3_wild_txt);
+    mock_finder->addRecord(nsec3_uwild_txt);
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(),
+          response, true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 8, 0, NULL,
+                  // SOA + its RRSIG
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   // NSEC3 for the closest encloser + its RRSIG
+                   nsec3_uwild_txt +
+                   mock_finder->hash_map_[Name("uwild.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the next closer + its RRSIG
+                   string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the wildcard + its RRSIG
+                   nsec3_wild_txt +
+                   mock_finder->hash_map_[Name("*.uwild.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
 TEST_F(QueryTest, wildcardEmptyWithNSEC) {
     // Empty WILDCARD with DNSSEC proof.  We should have SOA, NSEC that proves
     // the NXDOMAIN and their RRSIGs. In this case we need two NSEC RRs,
@@ -1642,35 +1695,60 @@ TEST_F(QueryTest, findNSEC3) {
         Name("example.com").getLabelCount();
 
     // Apex name.  It should have a matching NSEC3
-    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("example.com"), false));
+    {
+        SCOPED_TRACE("apex, non recursive");
+        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("example.com"), false));
+    }
 
     // Recursive mode doesn't change the result in this case.
-    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("example.com"), true)); 
+    {
+        SCOPED_TRACE("apex, recursive");
+        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("example.com"), true));
+    }
 
     // Non existent name.  Disabling recursion, a covering NSEC3 should be
     // returned.
-    nsec3Check(false, 4, nsec3_www_txt,
-               mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
+    {
+        SCOPED_TRACE("nxdomain, non recursive");
+        nsec3Check(false, 4, nsec3_www_txt,
+                   mock_finder->findNSEC3(Name("nxdomain.example.com"),
+                                          false));
+    }
 
     // Non existent name.  The closest provable encloser is the apex,
     // and next closer is the query name.
-    nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(nsec3_www_txt),
-               mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
+    {
+        SCOPED_TRACE("nxdomain, recursive");
+        nsec3Check(true, expected_closest_labels,
+                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
+    }
 
     // Similar to the previous case, but next closer name is different
     // (is the parent) of the non existent name.
-    nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(nsec3_www_txt),
-               mock_finder->findNSEC3(Name("nx.domain.example.com"), true));
+    {
+        SCOPED_TRACE("nxdomain, next closer != qname");
+        nsec3Check(true, expected_closest_labels,
+                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   mock_finder->findNSEC3(Name("nx.domain.example.com"),
+                                          true));
+    }
 
     // In the rest of test we check hash comparison for wrap around cases.
-    nsec3Check(false, 4, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
-    nsec3Check(false, 4, nsec3_www_txt,
-               mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
+    {
+        SCOPED_TRACE("largest");
+        nsec3Check(false, 4, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("nxdomain2.example.com"),
+                                          false));
+    }
+    {
+        SCOPED_TRACE("smallest");
+        nsec3Check(false, 4, nsec3_www_txt,
+                   mock_finder->findNSEC3(Name("nxdomain3.example.com"),
+                                          false));
+    }
 }
 
 // This tests that the DS is returned above the delegation point as
@@ -1942,17 +2020,6 @@ TEST_F(QueryTest, emptyNameWithNSEC3) {
     EXPECT_FALSE(result.rrset);
     EXPECT_TRUE(result.isNSEC3Signed());
     EXPECT_FALSE(result.isWildcard());
-}
-
-TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("www1.uwild.example.com"), RRType::TXT(),
-        ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_TRUE(result.isWildcard());
 }
 
 TEST_F(QueryTest, wildcardEmptyWithNSEC3) {
