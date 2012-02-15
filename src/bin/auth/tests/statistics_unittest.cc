@@ -341,7 +341,7 @@ TEST_F(AuthCountersTest, submitStatisticsWithAllOpcodeCounters) {
 }
 
 TEST_F(AuthCountersTest, submitStatisticsWithRcodeCounters) {
-    // Increment some of the opcode counters.  Then they should appear in the
+    // Increment some of the rcode counters.  Then they should appear in the
     // submitted data; others shouldn't
     const int rcode_results[17] = { 1, 2, 3, 4, 5, 6, 7, 8, 9,
                                     10, 0, 0, 0, 0, 0, 0, 11 };
@@ -353,7 +353,7 @@ TEST_F(AuthCountersTest, submitStatisticsWithRcodeCounters) {
 }
 
 TEST_F(AuthCountersTest, submitStatisticsWithAllRcodeCounters) {
-    // Increment all opcode counters.  Then they should appear in the
+    // Increment all rcode counters.  Then they should appear in the
     // submitted data.
     const int rcode_results[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                      1, 1, 1, 1, 1, 1, 1, 1 };
