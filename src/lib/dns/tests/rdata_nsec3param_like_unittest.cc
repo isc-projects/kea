@@ -237,7 +237,7 @@ TYPED_TEST(NSEC3PARAMLikeTest, DISABLED_toWire) {
                 this->getWireFilePrefix() + "fromWire13.wire");
 }
 
-TYPED_TEST(NSEC3PARAMLikeTest, DISABLED_compare) {
+TYPED_TEST(NSEC3PARAMLikeTest, compare) {
     // test RDATAs, sorted in the ascendent order.
     this->compare_set.push_back(this->fromText("0 0 0 D399EAAB" +
                                                this->getCommonText()));

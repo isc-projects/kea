@@ -96,4 +96,16 @@ TEST_F(Rdata_NSEC3PARAM_Test, assign) {
     EXPECT_EQ(0, rdata_nsec3param.compare(other_nsec3param));
 }
 
+TEST_F(Rdata_NSEC3PARAM_Test, compare) {
+    // trivial case: self equivalence
+    EXPECT_EQ(0, generic::NSEC3PARAM(nsec3param_txt).
+              compare(generic::NSEC3PARAM(nsec3param_txt)));
+    EXPECT_EQ(0, generic::NSEC3PARAM("1 1 1 -").
+              compare(generic::NSEC3PARAM("1 1 1 -")));
+
+    // comparison attempt between incompatible RR types should be rejected
+    EXPECT_THROW(generic::NSEC3PARAM(nsec3param_txt).compare(*rdata_nomatch),
+                 bad_cast);
+}
+
 }
