@@ -158,7 +158,7 @@ public:
     /// \return the value of the counter specified by \a type.
     uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
 
-    /// \brief Get the value of a per rcode counter.
+    /// \brief Get the value of a per opcode counter.
     ///
     /// This method returns the value of the per opcode counter for the
     /// specified \c opcode.
