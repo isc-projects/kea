@@ -21,6 +21,7 @@
 #include <boost/bind.hpp>
 
 #include <dns/opcode.h>
+#include <dns/rcode.h>
 
 #include <cc/data.h>
 #include <cc/session.h>
@@ -184,6 +185,16 @@ TEST_F(AuthCountersTest, incrementOpcodeCounter) {
     }
 }
 
+TEST_F(AuthCountersTest, incrementRcodeCounter) {
+    // The counter should be initialized to 0.  If we increment it by 1
+    // the counter should be 1.
+    for (int i = 0; i < 17; ++i) {
+        EXPECT_EQ(0, counters.getCounter(Rcode(i)));
+        counters.inc(Rcode(i));
+        EXPECT_EQ(1, counters.getCounter(Rcode(i)));
+    }
+}
+
 TEST_F(AuthCountersTest, submitStatisticsWithoutSession) {
     // Set statistics_session to NULL and call submitStatistics().
     // Expect to return false.
@@ -225,6 +236,29 @@ opcodeDataCheck(ConstElementPtr data, const int expected[16]) {
     ASSERT_EQ(static_cast<const char*>(NULL), item_names[i]);
 }
 
+void
+rcodeDataCheck(ConstElementPtr data, const int expected[17]) {
+    const char* item_names[] = {
+        "noerror", "formerr", "servfail", "nxdomain", "notimp", "refused",
+        "yxdomain", "yxrrset", "nxrrset", "notauth", "notzone", "reserved11",
+        "reserved12", "reserved13", "reserved14", "reserved15", "badvers",
+        NULL
+    };
+    int i;
+    for (i = 0; i < 17; ++i) {
+        ASSERT_NE(static_cast<const char*>(NULL), item_names[i]);
+        const string item_name = "rcode." + string(item_names[i]);
+        if (expected[i] == 0) {
+            EXPECT_FALSE(data->get(item_name));
+        } else {
+            EXPECT_EQ(expected[i], data->get(item_name)->intValue());
+        }
+    }
+    // We should have examined all names
+    ASSERT_EQ(static_cast<const char*>(NULL), item_names[i]);
+}
+
+
 TEST_F(AuthCountersTest, submitStatisticsWithoutValidator) {
     // Submit statistics data.
     // Validate if it submits correct data.
@@ -258,6 +292,10 @@ TEST_F(AuthCountersTest, submitStatisticsWithoutValidator) {
     const int opcode_results[16] = { 0, 0, 0, 0, 0, 0, 0, 0,
                                      0, 0, 0, 0, 0, 0, 0, 0 };
     opcodeDataCheck(statistics_data, opcode_results);
+    // By default rcode counters are all 0 and omitted
+    const int rcode_results[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0, 0, 0 };
+    rcodeDataCheck(statistics_data, rcode_results);
 }
 
 void
@@ -265,6 +303,15 @@ updateOpcodeCounters(AuthCounters &counters, const int expected[16]) {
     for (int i = 0; i < 16; ++i) {
         for (int j = 0; j < expected[i]; ++j) {
             counters.inc(Opcode(i));
+        }
+    }
+}
+
+void
+updateRcodeCounters(AuthCounters &counters, const int expected[17]) {
+    for (int i = 0; i < 17; ++i) {
+        for (int j = 0; j < expected[i]; ++j) {
+            counters.inc(Rcode(i));
         }
     }
 }
@@ -291,6 +338,30 @@ TEST_F(AuthCountersTest, submitStatisticsWithAllOpcodeCounters) {
     ConstElementPtr statistics_data = statistics_session_.sent_msg
         ->get("command")->get(1)->get("data");
     opcodeDataCheck(statistics_data, opcode_results);
+}
+
+TEST_F(AuthCountersTest, submitStatisticsWithRcodeCounters) {
+    // Increment some of the opcode counters.  Then they should appear in the
+    // submitted data; others shouldn't
+    const int rcode_results[17] = { 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                                    10, 0, 0, 0, 0, 0, 0, 11 };
+    updateRcodeCounters(counters, rcode_results);
+    counters.submitStatistics();
+    ConstElementPtr statistics_data = statistics_session_.sent_msg
+        ->get("command")->get(1)->get("data");
+    rcodeDataCheck(statistics_data, rcode_results);
+}
+
+TEST_F(AuthCountersTest, submitStatisticsWithAllRcodeCounters) {
+    // Increment all opcode counters.  Then they should appear in the
+    // submitted data.
+    const int rcode_results[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                     1, 1, 1, 1, 1, 1, 1, 1 };
+    updateOpcodeCounters(counters, rcode_results);
+    counters.submitStatistics();
+    ConstElementPtr statistics_data = statistics_session_.sent_msg
+        ->get("command")->get(1)->get("data");
+    opcodeDataCheck(statistics_data, rcode_results);
 }
 
 TEST_F(AuthCountersTest, submitStatisticsWithValidator) {
