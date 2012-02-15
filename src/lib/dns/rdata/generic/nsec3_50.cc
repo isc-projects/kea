@@ -33,12 +33,14 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdata/generic/detail/nsec_bitmap.h>
+#include <dns/rdata/generic/detail/nsec3param_common.h>
 
 #include <stdio.h>
 #include <time.h>
 
 using namespace std;
 using namespace isc::dns::rdata::generic::detail::nsec;
+using namespace isc::dns::rdata::generic::detail::nsec3;
 using namespace isc::util::encode;
 using namespace isc::util;
 
@@ -66,43 +68,16 @@ NSEC3::NSEC3(const string& nsec3_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3_str);
-    unsigned int hashalg, flags, iterations;
-    string iterations_str, salthex, nexthash;
+    vector<uint8_t> salt;
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamText("NSEC3", nsec3_str, iss, salt);
 
-    iss >> hashalg >> flags >> iterations_str >> salthex >> nexthash;
+    // Extract Next hash.  It must not be a padded base32hex string.
+    string nexthash;
+    iss >> nexthash;
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC3 text: " << nsec3_str);
     }
-    if (hashalg > 0xff) {
-        isc_throw(InvalidRdataText,
-                  "NSEC3 hash algorithm out of range: " << hashalg);
-    }
-    if (flags > 0xff) {
-        isc_throw(InvalidRdataText, "NSEC3 flags out of range: " << flags);
-    }
-    // Convert iteration.  To reject an invalid case where there's no space
-    // between iteration and salt, we extract this field as string and convert
-    // to integer.
-    try {
-        iterations = boost::lexical_cast<unsigned int>(iterations_str);
-    } catch (const boost::bad_lexical_cast&) {
-        isc_throw(InvalidRdataText, "Bad NSEC3 iteration: " << iterations_str);
-    }
-    if (iterations > 0xffff) {
-        isc_throw(InvalidRdataText, "NSEC3 iterations out of range: " <<
-            iterations);
-    }
-
-    vector<uint8_t> salt;
-    if (salthex != "-") {       // "-" means a 0-length salt
-        decodeHex(salthex, salt);
-    }
-    if (salt.size() > 255) {
-        isc_throw(InvalidRdataText, "NSEC3 salt is too long: "
-                  << salt.size() << " bytes");
-    }
-
-    // Next hash must not be a padded base32hex string.
     assert(!nexthash.empty());
     if (*nexthash.rbegin() == '=') {
         isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nsec3_str);
@@ -116,7 +91,8 @@ NSEC3::NSEC3(const string& nsec3_str) :
 
     // For NSEC3 empty bitmap is possible and allowed.
     if (iss.eof()) {
-        impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next,
+        impl_ = new NSEC3Impl(params.algorithm, params.flags,
+                              params.iterations, salt, next,
                               vector<uint8_t>());
         return;
     }
@@ -124,36 +100,18 @@ NSEC3::NSEC3(const string& nsec3_str) :
     vector<uint8_t> typebits;
     buildBitmapsFromText("NSEC3", iss, typebits);
 
-    impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
+    impl_ = new NSEC3Impl(params.algorithm, params.flags, params.iterations,
+                          salt, next, typebits);
 }
 
 NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
-    // NSEC3 RR must have at least 5 octets:
-    // hash algorithm(1), flags(1), iteration(2), saltlen(1)
-    if (rdata_len < 5) {
-        isc_throw(DNSMessageFORMERR, "NSEC3 too short, length: " << rdata_len);
-    }
-
-    const uint8_t hashalg = buffer.readUint8();
-    const uint8_t flags = buffer.readUint8();
-    const uint16_t iterations = buffer.readUint16();
-
-    const uint8_t saltlen = buffer.readUint8();
-    rdata_len -= 5;
-    if (rdata_len < saltlen) {
-        isc_throw(DNSMessageFORMERR, "NSEC3 salt length is too large: " <<
-                  static_cast<unsigned int>(saltlen));
-    }
-
-    vector<uint8_t> salt(saltlen);
-    if (saltlen > 0) {
-        buffer.readData(&salt[0], saltlen);
-        rdata_len -= saltlen;
-    }
+    vector<uint8_t> salt;
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamWire("NSEC3", buffer, rdata_len, salt);
 
     if (rdata_len < 1) {
         isc_throw(DNSMessageFORMERR, "NSEC3 too short to contain hash length, "
-                  "length: " << rdata_len + saltlen + 5);
+                  "length: " << rdata_len + salt.size() + 5);
     }
     const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
@@ -174,7 +132,8 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
         checkRRTypeBitmaps("NSEC3", typebits);
     }
 
-    impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
+    impl_ = new NSEC3Impl(params.algorithm, params.flags, params.iterations,
+                          salt, next, typebits);
 }
 
 NSEC3::NSEC3(const NSEC3& source) :

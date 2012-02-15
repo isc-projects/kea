@@ -12,22 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <vector>
+#include <util/buffer.h>
+#include <util/encode/hex.h>
+
+#include <dns/messagerenderer.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/nsec3param_common.h>
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/buffer.h>
-#include <util/encode/hex.h>
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <stdio.h>
-#include <time.h>
+#include <string>
+#include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::util;
@@ -53,75 +50,26 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3param_str);
-    unsigned int hashalg, flags, iterations;
-    string iterations_str, salt_str;
-
-    iss >> hashalg >> flags >> iterations_str >> salt_str;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3PARAM text");
-    }
-    if (hashalg > 0xff) {
-        isc_throw(InvalidRdataText, "NSEC3PARAM hash algorithm out of range");
-    }
-    if (flags > 0xff) {
-        isc_throw(InvalidRdataText, "NSEC3PARAM flags out of range");
-    }
-    // Convert iteration.  To reject an invalid case where there's no space
-    // between iteration and salt, we extract this field as string and convert
-    // to integer.
-    try {
-        iterations = boost::lexical_cast<unsigned int>(iterations_str);
-    } catch (const boost::bad_lexical_cast&) {
-        isc_throw(InvalidRdataText, "Bad NSEC3PARAM iteration: " <<
-                  iterations_str);
-    }
-    if (iterations > 0xffff) {
-        isc_throw(InvalidRdataText, "NSEC3PARAM iterations out of range: " <<
-            iterations);
-    }
-
     vector<uint8_t> salt;
-    if (salt_str != "-") { // "-" means an empty salt, no need to touch vector
-        decodeHex(salt_str, salt);
-    }
-    if (salt.size() > 255) {
-        isc_throw(InvalidRdataText, "NSEC3PARAM salt is too long: "
-                  << salt.size() << " bytes");
-    }
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamText("NSEC3PARAM", nsec3param_str, iss, salt);
 
     if (!iss.eof()) {
         isc_throw(InvalidRdataText, "Invalid NSEC3PARAM (redundant text): "
                   << nsec3param_str);
     }
 
-    impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
+    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
+                               params.iterations, salt);
 }
 
 NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) {
-    // NSEC3 RR must have at least 5 octets:
-    // hash algorithm(1), flags(1), iteration(2), saltlen(1)
-    if (rdata_len < 5) {
-        isc_throw(DNSMessageFORMERR, "NSEC3PARAM too short, length: "
-                  << rdata_len);
-    }
+    vector<uint8_t> salt;
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamWire("NSEC3PARAM", buffer, rdata_len, salt);
 
-    const uint8_t hashalg = buffer.readUint8();
-    const uint8_t flags = buffer.readUint8();
-    const uint16_t iterations = buffer.readUint16();
-
-    const uint8_t saltlen = buffer.readUint8();
-    rdata_len -= 5;
-    if (rdata_len < saltlen) {
-        isc_throw(DNSMessageFORMERR, "NSEC3PARAM salt length is too large: "
-                  << static_cast<unsigned int>(saltlen));
-    }
-
-    vector<uint8_t> salt(saltlen);
-    if (saltlen > 0) {
-        buffer.readData(&salt[0], saltlen);
-    }
-
-    impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
+    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
+                               params.iterations, salt);
 }
 
 NSEC3PARAM::NSEC3PARAM(const NSEC3PARAM& source) :
@@ -224,7 +172,6 @@ const vector<uint8_t>&
 NSEC3PARAM::getSalt() const {
     return (impl_->salt_);
 }
-
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
