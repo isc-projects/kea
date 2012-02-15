@@ -41,14 +41,14 @@ using namespace isc::dns::rdata;
 namespace {
 class Rdata_NSEC3PARAM_Test : public RdataTest {
 public:
-    Rdata_NSEC3PARAM_Test() : nsec3param_txt("1 0 1 D399EAAB") {}
+    Rdata_NSEC3PARAM_Test() : nsec3param_txt("1 1 1 D399EAAB") {}
     const string nsec3param_txt;
 };
 
 TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
     // With a salt
     EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getHashalg());
-    EXPECT_EQ(0, generic::NSEC3PARAM(nsec3param_txt).getFlags());
+    EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getFlags());
     // (salt is checked in the toText test)
 
     // With an empty salt
