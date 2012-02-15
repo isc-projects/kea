@@ -154,22 +154,26 @@ NSEC3PARAM::toText() const {
             " " + (impl_->salt_.empty() ? "-" : encodeHex(impl_->salt_)));
 }
 
+template <typename OUTPUT_TYPE>
+void
+toWireHelper(const NSEC3PARAMImpl& impl, OUTPUT_TYPE& output) {
+    output.writeUint8(impl.hashalg_);
+    output.writeUint8(impl.flags_);
+    output.writeUint16(impl.iterations_);
+    output.writeUint8(impl.salt_.size());
+    if (!impl.salt_.empty()) {
+        output.writeData(&impl.salt_[0], impl.salt_.size());
+    }
+}
+
 void
 NSEC3PARAM::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(impl_->hashalg_);
-    buffer.writeUint8(impl_->flags_);
-    buffer.writeUint16(impl_->iterations_);
-    buffer.writeUint8(impl_->salt_.size());
-    buffer.writeData(&impl_->salt_[0], impl_->salt_.size());
+    toWireHelper(*impl_, buffer);
 }
 
 void
 NSEC3PARAM::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(impl_->hashalg_);
-    renderer.writeUint8(impl_->flags_);
-    renderer.writeUint16(impl_->iterations_);
-    renderer.writeUint8(impl_->salt_.size());
-    renderer.writeData(&impl_->salt_[0], impl_->salt_.size());
+    toWireHelper(*impl_, renderer);
 }
 
 int

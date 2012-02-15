@@ -223,7 +223,7 @@ toWireCheck(RRType rrtype, OUTPUT_TYPE& output, const string& data_file) {
                         output.getLength(), &data[0], data.size());
 }
 
-TYPED_TEST(NSEC3PARAMLikeTest, DISABLED_toWire) {
+TYPED_TEST(NSEC3PARAMLikeTest, toWire) {
     // normal case
     toWireCheck(this->getType(), this->renderer,
                 this->getWireFilePrefix() + "fromWire1");
