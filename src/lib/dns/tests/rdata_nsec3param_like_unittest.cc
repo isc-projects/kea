@@ -135,14 +135,6 @@ TYPED_TEST(NSEC3PARAMLikeTest, fromText) {
                                   this->getCommonText()).getSalt().size());
 }
 
-TYPED_TEST(NSEC3PARAMLikeTest, DISABLED_toText) {
-    // normal case
-    EXPECT_EQ(this->salt_txt, this->fromText(this->salt_txt).toText());
-
-    // empty salt case
-    EXPECT_EQ(this->nosalt_txt, this->fromText(this->nosalt_txt).toText());
-}
-
 TYPED_TEST(NSEC3PARAMLikeTest, badText) {
     // Bad salt hex
     EXPECT_THROW(this->fromText("1 1 1 SPORK0" + this->getCommonText()),
@@ -179,6 +171,14 @@ TYPED_TEST(NSEC3PARAMLikeTest, badText) {
     EXPECT_THROW(this->fromText("1 1 1 " + string(256 * 2, '0') +
                                 this->getCommonText()),
                  InvalidRdataText);
+}
+
+TYPED_TEST(NSEC3PARAMLikeTest, toText) {
+    // normal case
+    EXPECT_EQ(this->salt_txt, this->fromText(this->salt_txt).toText());
+
+    // empty salt case
+    EXPECT_EQ(this->nosalt_txt, this->fromText(this->nosalt_txt).toText());
 }
 
 TYPED_TEST(NSEC3PARAMLikeTest, DISABLED_createFromWire) {
