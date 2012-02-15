@@ -98,8 +98,7 @@ handle_request(const int input_fd, const int output_fd,
     switch (type[1]) { // The address family
 
         // The casting to apparently incompatible types by reinterpret_cast
-        // is required by the C low-level interface. Unions are not used
-        // because of the possibility of alignment issues.
+        // is required by the C low-level interface.
 
         case '4':
             addr = reinterpret_cast<sockaddr*>(&addr_in);
@@ -162,7 +161,7 @@ handle_request(const int input_fd, const int output_fd,
 
         // ...and append the reason code to the error message
         int error = errno;
-        write_message(output_fd, static_cast<void *>(&error), sizeof error);
+        write_message(output_fd, static_cast<void*>(&error), sizeof error);
     }
 }
 
@@ -175,11 +174,11 @@ namespace socket_creator {
 int
 get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
 {
-    int sock(socket(bind_addr->sa_family, type, 0));
+    int sock = socket(bind_addr->sa_family, type, 0);
     if (sock == -1) {
         return -1;
     }
-    const int on(1);
+    const int on = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
         return -2; // This is part of the binding process, so it's a bind error
     }
