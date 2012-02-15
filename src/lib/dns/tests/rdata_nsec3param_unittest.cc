@@ -61,16 +61,9 @@ TEST_F(Rdata_NSEC3PARAM_Test, toText) {
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, badText) {
-    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 SPORK"), BadValue); // bad hex
-    EXPECT_THROW(generic::NSEC3PARAM("100000 1 1 ADDAFEE"), InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM("1 100000 1 ADDAFEE"), InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM("1 1 100000 ADDAFEE"), InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM("1"), InvalidRdataText);
-}
-
-TEST_F(Rdata_NSEC3PARAM_Test, DISABLED_badText) {
-    // this currently fails
-    EXPECT_THROW(generic::NSEC3PARAM("1 0 1D399EAAB"), InvalidRdataText);
+    // garbage space at the end
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 D399EAAB "),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {

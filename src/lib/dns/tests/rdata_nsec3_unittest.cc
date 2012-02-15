@@ -75,9 +75,6 @@ TEST_F(Rdata_NSEC3_Test, badText) {
                                 "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                 "BIFF POW SPOON"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEE "
-                                "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
-                 BadValue);     // bad hex
     EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
                                 "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
                  BadValue);     // bad base32hex
