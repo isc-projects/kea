@@ -1,3 +1,9 @@
+378.	[func]		vorner
+	It possible to start authoritative server or resolver in multiple
+	instances, to use more than one core. Configuration is described in
+	the guide.
+	(Trac #1596, git 17f7af0d8a42a0a67a2aade5bc269533efeb840a)
+
 377.	[bug]		jinmei
 	libdns++: miscellaneous bug fixes for the NSEC and NSEC3 RDATA
 	implementation, including a crash in NSEC3::toText() for some RR
