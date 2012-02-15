@@ -74,12 +74,15 @@ parseNSEC3ParamText(const char* const rrtype_name,
             iterations);
     }
 
+    // Salt is up to 255 bytes, and space is not allowed in the HEX encoding,
+    // so the encoded string cannot be longer than the double of max length
+    // of the actual salt.
+    if (salthex.size() > 255 * 2) {
+        isc_throw(InvalidRdataText, rrtype_name << " salt is too long: "
+                  << salthex.size() << " (encoded) bytes");
+    }
     if (salthex != "-") {       // "-" means a 0-length salt
         decodeHex(salthex, salt);
-    }
-    if (salt.size() > 255) {
-        isc_throw(InvalidRdataText, rrtype_name << " salt is too long: "
-                  << salt.size() << " bytes");
     }
 
     return (ParseNSEC3ParamResult(hashalg, flags, iterations));
