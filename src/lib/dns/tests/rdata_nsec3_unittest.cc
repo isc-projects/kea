@@ -82,6 +82,10 @@ TEST_F(Rdata_NSEC3_Test, badText) {
                                 "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
                  InvalidRdataText);
 
+    // Next hash shouldn't be padded
+    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE CPNMU=== A NS SOA"),
+                 InvalidRdataText);
+
     // Hash is too long.  Max = 255 bytes, base32-hex converts each 5 bytes
     // of the original to 8 characters, so 260 * 8 / 5 is the smallest length
     // of the encoded string that exceeds the max and doesn't require padding.
