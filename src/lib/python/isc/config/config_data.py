@@ -150,13 +150,13 @@ def _find_spec_part_single(cur_spec, id_part):
     # list or a map, which is internally represented by a dict with
     # an element 'map_item_spec', a dict with an element 'list_item_spec',
     # or a list (when it is the 'main' config_data element of a module).
-    if type(cur_spec) == dict and spec_part_is_map(cur_spec):
+    if spec_part_is_map(cur_spec):
         for cur_spec_item in cur_spec['map_item_spec']:
             if cur_spec_item['item_name'] == id:
                 return cur_spec_item
         # not found
         raise isc.cc.data.DataNotFoundError(id + " not found")
-    elif type(cur_spec) == dict and spec_part_is_list(cur_spec):
+    elif spec_part_is_list(cur_spec):
         if cur_spec['item_name'] == id:
             return cur_spec['list_item_spec']
         # not found
@@ -203,7 +203,7 @@ def find_spec_part(element, identifier, strict_identifier = True):
         if strict_identifier and spec_part_is_list(cur_el) and\
            not isc.cc.data.identifier_has_list_index(id_part):
             raise isc.cc.data.DataNotFoundError(id_part +
-                                                " is a list and needs index")
+                                                " is a list and needs an index")
         cur_el = _get_map_or_list(cur_el)
 
     cur_el = _find_spec_part_single(cur_el, id_parts[-1])
