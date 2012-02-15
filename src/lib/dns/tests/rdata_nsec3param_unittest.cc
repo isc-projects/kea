@@ -71,6 +71,19 @@ TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
     EXPECT_EQ(0, rdata_nsec3param.compare(
                   *rdataFactoryFromFile(RRType::NSEC3PARAM(), RRClass::IN(),
                                        "rdata_nsec3param_fromWire1")));
+
+    // Short buffer cases.  The data is valid NSEC3PARAM RDATA, but the buffer
+    // is trimmed at the end.  All cases should result in an exception from
+    // the buffer class.
+    vector<uint8_t> data;
+    UnitTestUtil::readWireData("rdata_nsec3param_fromWire1", data);
+    const uint16_t rdlen = (data.at(0) << 8) + data.at(1);
+    for (int i = 0; i < rdlen; ++i) {
+        // intentionally construct a short buffer
+        InputBuffer b(&data[0] + 2, i);
+        EXPECT_THROW(createRdata(RRType::NSEC3PARAM(), RRClass::IN(), b, 9),
+                     InvalidBufferPosition);
+    }
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
