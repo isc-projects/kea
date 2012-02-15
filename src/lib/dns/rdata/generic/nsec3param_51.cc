@@ -98,24 +98,28 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
 }
 
 NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 4) {
-        isc_throw(InvalidRdataLength, "NSEC3PARAM too short");
+    // NSEC3 RR must have at least 5 octets:
+    // hash algorithm(1), flags(1), iteration(2), saltlen(1)
+    if (rdata_len < 5) {
+        isc_throw(DNSMessageFORMERR, "NSEC3PARAM too short, length: "
+                  << rdata_len);
     }
 
-    uint8_t hashalg = buffer.readUint8();
-    uint8_t flags = buffer.readUint8();
-    uint16_t iterations = buffer.readUint16();
-    rdata_len -= 4;
+    const uint8_t hashalg = buffer.readUint8();
+    const uint8_t flags = buffer.readUint8();
+    const uint16_t iterations = buffer.readUint16();
 
-    uint8_t saltlen = buffer.readUint8();
-    --rdata_len;
-
+    const uint8_t saltlen = buffer.readUint8();
+    rdata_len -= 5;
     if (rdata_len < saltlen) {
-        isc_throw(InvalidRdataLength, "NSEC3PARAM salt too short");
+        isc_throw(DNSMessageFORMERR, "NSEC3PARAM salt length is too large: "
+                  << static_cast<unsigned int>(saltlen));
     }
 
     vector<uint8_t> salt(saltlen);
-    buffer.readData(&salt[0], saltlen);
+    if (saltlen > 0) {
+        buffer.readData(&salt[0], saltlen);
+    }
 
     impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
 }
