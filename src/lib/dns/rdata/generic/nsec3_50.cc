@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cassert>
 
 #include <boost/lexical_cast.hpp>
 
@@ -101,6 +102,11 @@ NSEC3::NSEC3(const string& nsec3_str) :
                   << salt.size() << " bytes");
     }
 
+    // Next hash must not be a padded base32hex string.
+    assert(!nexthash.empty());
+    if (*nexthash.rbegin() == '=') {
+        isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nsec3_str);
+    }
     vector<uint8_t> next;
     decodeBase32Hex(nexthash, next);
     if (next.size() > 255) {
@@ -256,10 +262,10 @@ compareVectors(const vector<uint8_t>& v1, const vector<uint8_t>& v2,
 {
     const size_t len1 = v1.size();
     const size_t len2 = v2.size();
-    const size_t cmplen = min(len1, len2);
     if (check_length_first && len1 != len2) {
         return (len1 - len2);
     }
+    const size_t cmplen = min(len1, len2);
     const int cmp = cmplen == 0 ? 0 : memcmp(&v1.at(0), &v2.at(0), cmplen);
     if (cmp != 0) {
         return (cmp);
