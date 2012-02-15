@@ -145,9 +145,9 @@ string
 NSEC3PARAM::toText() const {
     using namespace boost;
     return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
-        " " + encodeHex(impl_->salt_));
+            " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
+            " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
+            " " + (impl_->salt_.empty() ? "-" : encodeHex(impl_->salt_)));
 }
 
 void
