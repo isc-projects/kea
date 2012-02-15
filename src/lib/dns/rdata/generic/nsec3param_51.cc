@@ -43,9 +43,9 @@ struct NSEC3PARAMImpl {
         hashalg_(hashalg), flags_(flags), iterations_(iterations), salt_(salt)
     {}
 
-    uint8_t hashalg_;
-    uint8_t flags_;
-    uint16_t iterations_;
+    const uint8_t hashalg_;
+    const uint8_t flags_;
+    const uint16_t iterations_;
     const vector<uint8_t> salt_;
 };
 
@@ -53,24 +53,45 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3param_str);
-    uint16_t hashalg, flags, iterations;
-    stringbuf saltbuf;
+    unsigned int hashalg, flags, iterations;
+    string iterations_str, salt_str;
 
-    iss >> hashalg >> flags >> iterations >> &saltbuf;
+    iss >> hashalg >> flags >> iterations_str >> salt_str;
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC3PARAM text");
     }
-    if (hashalg > 0xf) {
+    if (hashalg > 0xff) {
         isc_throw(InvalidRdataText, "NSEC3PARAM hash algorithm out of range");
     }
     if (flags > 0xff) {
         isc_throw(InvalidRdataText, "NSEC3PARAM flags out of range");
     }
+    // Convert iteration.  To reject an invalid case where there's no space
+    // between iteration and salt, we extract this field as string and convert
+    // to integer.
+    try {
+        iterations = boost::lexical_cast<unsigned int>(iterations_str);
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(InvalidRdataText, "Bad NSEC3PARAM iteration: " <<
+                  iterations_str);
+    }
+    if (iterations > 0xffff) {
+        isc_throw(InvalidRdataText, "NSEC3PARAM iterations out of range: " <<
+            iterations);
+    }
 
-    const string salt_str = saltbuf.str();
     vector<uint8_t> salt;
     if (salt_str != "-") { // "-" means an empty salt, no need to touch vector
-        decodeHex(saltbuf.str(), salt);
+        decodeHex(salt_str, salt);
+    }
+    if (salt.size() > 255) {
+        isc_throw(InvalidRdataText, "NSEC3PARAM salt is too long: "
+                  << salt.size() << " bytes");
+    }
+
+    if (!iss.eof()) {
+        isc_throw(InvalidRdataText, "Invalid NSEC3PARAM (redundant text): "
+                  << nsec3param_str);
     }
 
     impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
