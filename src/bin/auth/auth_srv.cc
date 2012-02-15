@@ -492,6 +492,9 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         }
     }
 
+    // update per rcode statistics counter.
+    impl_->counters_.inc(message->getRcode());
+
     server->resume(send_answer);
 }
 
