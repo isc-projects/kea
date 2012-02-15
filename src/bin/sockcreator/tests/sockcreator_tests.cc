@@ -267,12 +267,13 @@ closeIgnore(int) {
 // parses the commands correctly.
 void run_test(const char* input_data, const size_t input_size,
               const char* output_data, const size_t output_size,
-              bool should_succeed = true, const close_t test_close = closeIgnore,
+              bool should_succeed = true,
+              const close_t test_close = closeIgnore,
               const send_fd_t send_fd = send_fd_dummy)
 {
     // Prepare the input feeder and output checker processes.  The feeder
     // process sends data from the client to run() and the checker process
-    // reads the response and checks the output.
+    // reads the response and checks it against the expected response.
     int input_fd = 0;
     pid_t input = provide_input(&input_fd, input_data, input_size);
     ASSERT_NE(-1, input) << "Couldn't start input feeder";
@@ -294,7 +295,6 @@ void run_test(const char* input_data, const size_t input_size,
     close(input_fd);
     close(output_fd);
 
-    // Did it run well?
     // Check the subprocesses say everything is OK too
     EXPECT_TRUE(process_ok(input));
     EXPECT_TRUE(process_ok(output));
