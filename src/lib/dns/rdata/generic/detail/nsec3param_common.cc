@@ -40,7 +40,7 @@ namespace nsec3 {
 
 ParseNSEC3ParamResult
 parseNSEC3ParamText(const char* const rrtype_name,
-                    const string& rdata_str, istringstream& iss, 
+                    const string& rdata_str, istringstream& iss,
                     vector<uint8_t>& salt)
 {
     unsigned int hashalg, flags, iterations;
