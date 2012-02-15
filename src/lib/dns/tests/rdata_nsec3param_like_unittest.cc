@@ -181,7 +181,7 @@ TYPED_TEST(NSEC3PARAMLikeTest, toText) {
     EXPECT_EQ(this->nosalt_txt, this->fromText(this->nosalt_txt).toText());
 }
 
-TYPED_TEST(NSEC3PARAMLikeTest, DISABLED_createFromWire) {
+TYPED_TEST(NSEC3PARAMLikeTest, createFromWire) {
     // Normal case
     EXPECT_EQ(0, this->fromText(this->salt_txt).compare(
                   *this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
