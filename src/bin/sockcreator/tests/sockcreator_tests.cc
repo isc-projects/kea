@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <iostream>
 
 #include "../sockcreator.h"
 
@@ -29,96 +31,143 @@ using namespace isc::socket_creator;
 using namespace isc::util::unittests;
 using namespace isc::util::io;
 
+// The tests check both TCP and UDP sockets on IPv4 and IPv6.
+//
+// Essentially we need to check all four combinations of TCP/UDP and IPv4/IPv6.
+// The different address families (IPv4/IPv6) require different structures to
+// hold the address information, and so some common code is in the form of
+// templates (or overloads), parameterised on the structure type.
+//
+// The protocol is determined by an integer (SOCK_STREAM or SOCK_DGRAM) so
+// cannot be templated in the same way.  Relevant check functions are
+// selected manually.
+
 namespace {
 
-/*
- * Generic version of the creation of socket test. It just tries to
- * create the socket and checks the result is not negative (eg.
- * it is valid descriptor) and that it can listen.
- *
- * This is a macro so ASSERT_* does abort the TEST, not just the
- * function inside.
- */
-#define TEST_ANY_CREATE(SOCK_TYPE, ADDR_TYPE, ADDR_FAMILY, FAMILY_FIELD, \
-    ADDR_SET, CHECK_SOCK) \
-    do { \
-        /*
-         * This should create an address that binds on all interfaces
-         * and lets the OS choose a free port.
-         */ \
-        struct ADDR_TYPE addr; \
-        memset(&addr, 0, sizeof addr); \
-        ADDR_SET(addr); \
-        addr.FAMILY_FIELD = ADDR_FAMILY; \
-        struct sockaddr *addr_ptr = static_cast<struct sockaddr *>( \
-            static_cast<void *>(&addr)); \
-        \
-        int socket = get_sock(SOCK_TYPE, addr_ptr, sizeof addr); \
-        /* Provide even nice error message. */ \
-        ASSERT_GE(socket, 0) << "Couldn't create a socket of type " \
-            #SOCK_TYPE " and family " #ADDR_FAMILY ", failed with " \
-            << socket << " and error " << strerror(errno); \
-        CHECK_SOCK(ADDR_TYPE, socket); \
-        int on; \
-        socklen_t len(sizeof(on)); \
-        EXPECT_EQ(0, getsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, &len));\
-        EXPECT_NE(0, on); \
-        if (ADDR_FAMILY == AF_INET6) { \
-            EXPECT_EQ(0, getsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, &on, \
-                                    &len)); \
-            EXPECT_NE(0, on); \
-        } \
-        EXPECT_EQ(0, close(socket)); \
-    } while (0)
+// Set IP-version-specific fields.
 
-// Just helper macros
-#define INADDR_SET(WHAT) do { WHAT.sin_addr.s_addr = INADDR_ANY; } while (0)
-#define IN6ADDR_SET(WHAT) do { WHAT.sin6_addr = in6addr_loopback; } while (0)
-// If the get_sock returned something useful, listen must work
-#define TCP_CHECK(UNUSED, SOCKET) do { \
-        EXPECT_EQ(0, listen(SOCKET, 1)); \
-    } while (0)
-// More complicated with UDP, so we send a packet to ourselfs and se if it
-// arrives
-#define UDP_CHECK(ADDR_TYPE, SOCKET) do { \
-        struct ADDR_TYPE addr; \
-        memset(&addr, 0, sizeof addr); \
-        struct sockaddr *addr_ptr = static_cast<struct sockaddr *>( \
-            static_cast<void *>(&addr)); \
-        \
-        socklen_t len = sizeof addr; \
-        ASSERT_EQ(0, getsockname(SOCKET, addr_ptr, &len)); \
-        ASSERT_EQ(5, sendto(SOCKET, "test", 5, 0, addr_ptr, sizeof addr)) << \
-            "Send failed with error " << strerror(errno) << " on socket " << \
-            SOCKET; \
-        char buffer[5]; \
-        ASSERT_EQ(5, recv(SOCKET, buffer, 5, 0)) << \
-            "Recv failed with error " << strerror(errno) << " on socket " << \
-            SOCKET; \
-        EXPECT_STREQ("test", buffer); \
-    } while (0)
+void
+setAddressFamilyFields(sockaddr_in* address) {
+    address->sin_family = AF_INET;
+    address->sin_addr.s_addr = INADDR_ANY;
+}
 
-/*
- * Several tests to ensure we can create the sockets.
- */
+void
+setAddressFamilyFields(sockaddr_in6* address) {
+    address->sin6_family = AF_INET6;
+    address->sin6_addr = in6addr_loopback;
+}
+
+// Socket has been opened, peform a check on it.  The sole argument is the
+// socket descriptor.  The TCP check is the same regardless of the address
+// family.  The UDP check requires that the socket address be obtained so
+// is parameterised on the type of structure required to hold the address.
+
+void
+tcpCheck(const int socknum) {
+    // Sufficient to be able to listen on the socket.
+    EXPECT_EQ(0, listen(socknum, 1));
+}
+
+template <typename ADDRTYPE>
+void
+udpCheck(const int socknum) {
+    // UDP testing is more complicated than TCP: send a packet to ourselves and
+    // see if it arrives.
+
+    // Get details of the socket so that we can use it as the target of the
+    // sendto().
+    ADDRTYPE addr;
+    memset(&addr, 0, sizeof(addr));
+    sockaddr* addr_ptr = reinterpret_cast<sockaddr*>(&addr);
+    socklen_t len = sizeof(addr);
+    ASSERT_EQ(0, getsockname(socknum, addr_ptr, &len));
+
+    // Send the packet to ourselves and check we receive it.
+    ASSERT_EQ(5, sendto(socknum, "test", 5, 0, addr_ptr, sizeof(addr))) <<
+        "Send failed with error " << strerror(errno) << " on socket " <<
+        socknum;
+    char buffer[5];
+    ASSERT_EQ(5, recv(socknum, buffer, 5, 0)) <<
+        "Recv failed with error " << strerror(errno) << " on socket " <<
+        socknum;
+    EXPECT_STREQ("test", buffer);
+}
+
+// The check function (tcpCheck/udpCheck) is passed as a parameter to the test
+// code, so provide a conveniet typedef.
+typedef void (*socket_check_t)(const int);
+
+// Address-family-specific scoket checks.
+//
+// The first argument is used to select the overloaded check function.
+// The other argument is the socket descriptor number.
+
+// IPv4 check
+void addressFamilySpecificCheck(const sockaddr_in*, const int) {
+};
+
+// IPv6 check
+void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum) {
+    int options;
+    socklen_t len = sizeof(options);
+    EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_V6ONLY, &options, &len));
+    EXPECT_NE(0, options);
+};
+
+
+// Generic version of the socket test.  It creates the socket and checks that
+// it is a valid descriptor.  The family-specific check functions are called
+// to check that the socket is valid.  The function is parameterised according
+// to the structure used to hold the address.
+//
+// Arguments:
+// socket_type Type of socket to create (SOCK_DGRAM or SOCK_STREAM)
+// socket_check Associated check function - udpCheck() or tcpCheck()
+template <typename ADDRTYPE>
+void testAnyCreate(int socket_type, socket_check_t socket_check) {
+
+    // Create the socket.
+    ADDRTYPE addr;
+    memset(&addr, 0, sizeof(addr));
+    setAddressFamilyFields(&addr);
+    sockaddr* addr_ptr = reinterpret_cast<sockaddr*>(&addr);
+    int socket = get_sock(socket_type, addr_ptr, sizeof(addr));
+    ASSERT_GE(socket, 0) << "Couldn't create socket: failed with " <<
+        "return code " << socket << " and error " << strerror(errno);
+
+    // Perform socket-type-specific testing.
+    socket_check(socket);
+
+    // Do address-family-independent
+    int options;
+    socklen_t len = sizeof(options);
+    EXPECT_EQ(0, getsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &options, &len));
+    EXPECT_NE(0, options);
+
+    // ...and the address-family specific tests.
+    addressFamilySpecificCheck(&addr, socket);
+
+    // Tidy up and exit.
+    EXPECT_EQ(0, close(socket));
+}
+
+
+// Several tests to ensure we can create the sockets.
 TEST(get_sock, udp4_create) {
-    TEST_ANY_CREATE(SOCK_DGRAM, sockaddr_in, AF_INET, sin_family, INADDR_SET,
-        UDP_CHECK);
+    testAnyCreate<sockaddr_in>(SOCK_DGRAM, udpCheck<sockaddr_in>);
 }
 
 TEST(get_sock, tcp4_create) {
-    TEST_ANY_CREATE(SOCK_STREAM, sockaddr_in, AF_INET, sin_family, INADDR_SET,
-        TCP_CHECK);
+    testAnyCreate<sockaddr_in>(SOCK_STREAM, tcpCheck);
 }
 
 TEST(get_sock, udp6_create) {
-    TEST_ANY_CREATE(SOCK_DGRAM, sockaddr_in6, AF_INET6, sin6_family,
-        IN6ADDR_SET, UDP_CHECK);
+    testAnyCreate<sockaddr_in6>(SOCK_DGRAM, udpCheck<sockaddr_in6>);
 }
 
 TEST(get_sock, tcp6_create) {
-    TEST_ANY_CREATE(SOCK_STREAM, sockaddr_in6, AF_INET6, sin6_family,
-        IN6ADDR_SET, TCP_CHECK);
+    testAnyCreate<sockaddr_in6>(SOCK_STREAM, tcpCheck);
 }
 
 /*
