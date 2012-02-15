@@ -72,7 +72,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamText("NSEC3", nsec3_str, iss, salt);
 
-    // Extract Next hash.  It must not be a padded base32hex string.
+    // Extract Next hash.  It must be an unpadded base32hex string.
     string nexthash;
     iss >> nexthash;
     if (iss.bad() || iss.fail()) {
