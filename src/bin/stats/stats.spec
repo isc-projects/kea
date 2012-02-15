@@ -12,7 +12,13 @@
       {
         "command_name": "shutdown",
         "command_description": "Shut down the stats module",
-        "command_args": []
+        "command_args": [
+          {
+            "item_name": "pid",
+            "item_type": "integer",
+            "item_optional": true
+          }
+        ]
       },
       {
         "command_name": "show",
