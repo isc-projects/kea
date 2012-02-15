@@ -185,6 +185,16 @@ const char* const nsec3_www_txt =
     "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
 
+// NSEC3 for *.uwild.example.com (will be added on demand not to confuse
+// other tests)
+const char* const nsec3_wild_txt =
+    "b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+// NSEC3 for uwild.example.com. (will be added on demand)
+const char* const nsec3_uwild_txt =
+    "t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+
 // (Secure) delegation data; Delegation with DS record
 const char* const signed_delegation_txt =
     "signed-delegation.example.com. 3600 IN NS ns.example.net.\n";
@@ -199,6 +209,7 @@ const char* const unsigned_delegation_txt =
 const char* const unsigned_delegation_nsec_txt =
     "unsigned-delegation.example.com. 3600 IN NSEC "
     "unsigned-delegation-optout.example.com. NS RRSIG NSEC\n";
+// This one will be added on demand
 const char* const unsigned_delegation_nsec3_txt =
     "q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG\n";
@@ -271,7 +282,8 @@ public:
         include_rrsig_anyway_(false),
         use_nsec3_(false),
         nsec_name_(origin_),
-        nsec3_fake_(NULL)
+        nsec3_fake_(NULL),
+        nsec3_name_(NULL)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
@@ -287,7 +299,7 @@ public:
             nsec3_apex_txt << nsec3_www_txt <<
             signed_delegation_txt << signed_delegation_ds_txt <<
             unsigned_delegation_txt << unsigned_delegation_nsec_txt <<
-            unsigned_delegation_nsec3_txt << unsigned_delegation_optout_txt <<
+            unsigned_delegation_optout_txt <<
             unsigned_delegation_optout_nsec_txt <<
             bad_delegation_txt;
 
@@ -318,9 +330,17 @@ public:
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
         hash_map_[Name("unsigned-delegation.example.com")] =
-            "q81r598950igr1eqvc60aedlq66425b5";
+            "q81r598950igr1eqvc60aedlq66425b5"; // a bit larger than H(www)
+        hash_map_[Name("*.uwild.example.com")] =
+            "b4um86eghhds6nea196smvmlo4ors995";
         hash_map_[Name("unsigned-delegation-optout.example.com")] =
             "vld46lphhasfapj8og1pglgiasa5o5gt";
+
+        // For closest encloser proof for www1.uwild.example.com:
+        hash_map_[Name("uwild.example.com")] =
+            "t644ebqk9bibcna874givr6joj62mlhv";
+        hash_map_[Name("www1.uwild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
@@ -358,8 +378,11 @@ public:
     // query. After that, it'll return to operate normally.
     // NULL disables. Does not take ownership of the pointer (it is generally
     // expected to be a local variable in the test function).
-    void setNSEC3Result(const FindNSEC3Result* result) {
+    void setNSEC3Result(const FindNSEC3Result* result,
+                        const Name* name = NULL)
+    {
         nsec3_fake_ = result;
+        nsec3_name_ = name;
     }
 
     // If true is passed return an empty NSEC3 RRset for some negative
@@ -459,6 +482,7 @@ private:
     // The following two are for faking bad NSEC3 responses
     // Enabled when not NULL
     const FindNSEC3Result* nsec3_fake_;
+    const Name* nsec3_name_;
 public:
     // Public, to allow tests looking up the right names for something
     map<Name, string> hash_map_;
@@ -506,10 +530,9 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
 ZoneFinder::FindNSEC3Result
 MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
     // Do we have a fake result set? If so, use it.
-    if (nsec3_fake_ != NULL) {
+    if (nsec3_fake_ != NULL &&
+        (nsec3_name_ == NULL || *nsec3_name_ == name)) {
         const FindNSEC3Result* result(nsec3_fake_);
-        // Disable the fake for the next call
-        nsec3_fake_ = NULL;
         return (*result);
     }
 
@@ -520,6 +543,10 @@ MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
     // expected entry when operator[] is used; maps are not empty.
     for (int i = 0; i < labels; ++i) {
         const string hlabel = hash_map_[name.split(i, labels - i)];
+        if (hlabel.empty()) {
+            isc_throw(isc::Unexpected, "findNSEC3() hash failure for " <<
+                      name.split(i, labels - i));
+        }
         const Name hname = Name(hlabel + ".example.com");
         // We don't use const_iterator so that we can use operator[] below
         Domains::iterator found_domain = nsec3_domains_.lower_bound(hname);
@@ -698,7 +725,8 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                                             RESULT_NSEC3_SIGNED :
                                             RESULT_NSEC_SIGNED)));
                     } else {
-                        // No matched QTYPE, this case is for WILDCARD_NXRRSET
+                        // No matched QTYPE, this case is for NXRRSET with
+                        // WILDCARD
                         if (use_nsec3_) {
                             return (FindResult(NXRRSET, RRsetPtr(),
                                                RESULT_WILDCARD |
@@ -1028,6 +1056,53 @@ TEST_F(QueryTest, secureUnsignedDelegation) {
                   NULL);
 }
 
+TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3) {
+    // Similar to the previous case, but the zone is signed with NSEC3,
+    // and this delegation is NOT an optout.
+    const Name insecurechild_name("unsigned-delegation.example.com");
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
+    Query(memory_client, Name("foo.unsigned-delegation.example.com"),
+          qtype, response, true).process();
+
+    // The response should contain the NS and matching NSEC3 with its RRSIG
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 3, 0,
+                  NULL,
+                  (string(unsigned_delegation_txt) +
+                   string(unsigned_delegation_nsec3_txt) +
+                   mock_finder->hash_map_[insecurechild_name] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL);
+}
+
+TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
+    // Similar to the previous case, but the delegation is an optout.
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("foo.unsigned-delegation.example.com"),
+          qtype, response, true).process();
+
+    // The response should contain the NS and the closest provable encloser
+    // proof (and their RRSIGs).  The closest encloser is the apex (origin),
+    // and with our faked hash the covering NSEC3 for the next closer
+    // (= child zone name) is that for www.example.com.
+    cout << response << endl;
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 5, 0,
+                  NULL,
+                  (string(unsigned_delegation_txt) +
+                   string(nsec3_apex_txt) +
+                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL);
+}
+
 TEST_F(QueryTest, badSecureDelegation) {
     // Test whether exception is raised if DS query at delegation results in
     // something different than SUCCESS or NXRRSET
@@ -1296,8 +1371,8 @@ TEST_F(QueryTest, badWildcardProof3) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs. In this case we only need one NSEC,
+    // NXRRSET on WILDCARD with DNSSEC proof.  We should have SOA, NSEC that
+    // proves the NXRRSET and their RRSIGs. In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
     Query(memory_client, Name("www.wild.example.com"), RRType::TXT(), response,
           true).process();
@@ -1312,11 +1387,12 @@ TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
-    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
-    // one proves NXDOMAIN and the other proves non existence RRSETs of wildcard.
-    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(), response,
-          true).process();
+    // WILDCARD + NXRRSET with DNSSEC proof.  We should have SOA, NSEC that
+    // proves the NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
+    // one proves NXDOMAIN and the other proves non existence RRSETs of
+    // wildcard.
+    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(),
+          response, true).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
@@ -1330,9 +1406,74 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
                   NULL, mock_finder->getOrigin());
 }
 
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
+    // Similar to the previous case, but providing NSEC3 proofs according to
+    // RFC5155 Section 7.2.5.
+
+    mock_finder->addRecord(nsec3_wild_txt);
+    mock_finder->addRecord(nsec3_uwild_txt);
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(),
+          response, true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 8, 0, NULL,
+                  // SOA + its RRSIG
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   // NSEC3 for the closest encloser + its RRSIG
+                   string(nsec3_uwild_txt) +
+                   mock_finder->hash_map_[Name("uwild.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the next closer + its RRSIG
+                   string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the wildcard + its RRSIG
+                   string(nsec3_wild_txt) +
+                   mock_finder->hash_map_[Name("*.uwild.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
+    // Similar to the previous case, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    // Message::addRRset() will detect it and throw InvalidParameter.
+    EXPECT_THROW(Query(memory_client, Name("www1.uwild.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 isc::InvalidParameter);
+}
+
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Broken) {
+    // Similar to wildcardNxrrsetWithNSEC3, but no matching NSEC3 for the
+    // wildcard name will be returned.  This shouldn't happen in a reasonably
+    // NSEC-signed zone, and should result in an exception.
+    mock_finder->setNSEC3Flag(true);
+    const Name wname("*.uwild.example.com.");
+    ZoneFinder::FindNSEC3Result nsec3(false, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3, &wname);
+    mock_finder->addRecord(nsec3_wild_txt);
+    mock_finder->addRecord(nsec3_uwild_txt);
+
+    EXPECT_THROW(Query(memory_client, Name("www1.uwild.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 Query::BadNSEC3);
+}
+
 TEST_F(QueryTest, wildcardEmptyWithNSEC) {
-    // WILDCARD_EMPTY with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXDOMAIN and their RRSIGs. In this case we need two NSEC RRs,
+    // Empty WILDCARD with DNSSEC proof.  We should have SOA, NSEC that proves
+    // the NXDOMAIN and their RRSIGs. In this case we need two NSEC RRs,
     // one proves NXDOMAIN and the other proves non existence wildcard.
     Query(memory_client, Name("a.t.example.com"), RRType::A(), response,
           true).process();
@@ -1656,35 +1797,60 @@ TEST_F(QueryTest, findNSEC3) {
         Name("example.com").getLabelCount();
 
     // Apex name.  It should have a matching NSEC3
-    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("example.com"), false));
+    {
+        SCOPED_TRACE("apex, non recursive");
+        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("example.com"), false));
+    }
 
     // Recursive mode doesn't change the result in this case.
-    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("example.com"), true)); 
+    {
+        SCOPED_TRACE("apex, recursive");
+        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("example.com"), true));
+    }
 
     // Non existent name.  Disabling recursion, a covering NSEC3 should be
     // returned.
-    nsec3Check(false, 4, unsigned_delegation_nsec3_txt,
-               mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
+    {
+        SCOPED_TRACE("nxdomain, non recursive");
+        nsec3Check(false, 4, nsec3_www_txt,
+                   mock_finder->findNSEC3(Name("nxdomain.example.com"),
+                                          false));
+    }
 
     // Non existent name.  The closest provable encloser is the apex,
     // and next closer is the query name.
-    nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(unsigned_delegation_nsec3_txt),
-               mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
+    {
+        SCOPED_TRACE("nxdomain, recursive");
+        nsec3Check(true, expected_closest_labels,
+                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
+    }
 
     // Similar to the previous case, but next closer name is different
     // (is the parent) of the non existent name.
-    nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(unsigned_delegation_nsec3_txt),
-               mock_finder->findNSEC3(Name("nx.domain.example.com"), true));
+    {
+        SCOPED_TRACE("nxdomain, next closer != qname");
+        nsec3Check(true, expected_closest_labels,
+                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   mock_finder->findNSEC3(Name("nx.domain.example.com"),
+                                          true));
+    }
 
     // In the rest of test we check hash comparison for wrap around cases.
-    nsec3Check(false, 4, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
-    nsec3Check(false, 4, unsigned_delegation_nsec3_txt,
-               mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
+    {
+        SCOPED_TRACE("largest");
+        nsec3Check(false, 4, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("nxdomain2.example.com"),
+                                          false));
+    }
+    {
+        SCOPED_TRACE("smallest");
+        nsec3Check(false, 4, nsec3_www_txt,
+                   mock_finder->findNSEC3(Name("nxdomain3.example.com"),
+                                          false));
+    }
 }
 
 // This tests that the DS is returned above the delegation point as
@@ -1936,6 +2102,7 @@ TEST_F(QueryTest, nxrrsetMissingNSEC3) {
 }
 
 TEST_F(QueryTest, nxrrsetWithNSEC3_ds_exact) {
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
     mock_finder->setNSEC3Flag(true);
 
     // This delegation has no DS, but does have a matching NSEC3 record
@@ -1954,6 +2121,7 @@ TEST_F(QueryTest, nxrrsetWithNSEC3_ds_exact) {
 }
 
 TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
     mock_finder->setNSEC3Flag(true);
 
     // This delegation has no DS, and no directly matching NSEC3 record
@@ -1999,25 +2167,5 @@ TEST_F(QueryTest, emptyNameWithNSEC3) {
     EXPECT_FALSE(result.rrset);
     EXPECT_TRUE(result.isNSEC3Signed());
     EXPECT_FALSE(result.isWildcard());
-}
-
-TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("www1.uwild.example.com"), RRType::TXT(),
-        ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_TRUE(result.isWildcard());
-}
-
-TEST_F(QueryTest, wildcardEmptyWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("a.t.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_TRUE(result.isWildcard());
 }
 }

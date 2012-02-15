@@ -489,6 +489,10 @@ Message::getRRCount(const Section section) const {
 
 void
 Message::addRRset(const Section section, RRsetPtr rrset, const bool sign) {
+    if (!rrset) {
+        isc_throw(InvalidParameter,
+                  "NULL RRset is given to Message::addRRset");
+    }
     if (impl_->mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
                   "addRRset performed in non-render mode");
