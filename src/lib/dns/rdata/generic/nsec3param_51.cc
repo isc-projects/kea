@@ -182,15 +182,18 @@ NSEC3PARAM::compare(const Rdata& other) const {
         return (impl_->iterations_ < other_param.impl_->iterations_ ? -1 : 1);
     }
 
-    size_t this_len = impl_->salt_.size();
-    size_t other_len = other_param.impl_->salt_.size();
-    size_t cmplen = min(this_len, other_len);
-    int cmp = memcmp(&impl_->salt_[0], &other_param.impl_->salt_[0],
-                     cmplen);
+    const size_t this_len = impl_->salt_.size();
+    const size_t other_len = other_param.impl_->salt_.size();
+    if (this_len != other_len) {
+        return (this_len - other_len);
+    }
+    const size_t cmplen = min(this_len, other_len);
+    const int cmp = (cmplen == 0) ? 0 :
+        memcmp(&impl_->salt_.at(0), &other_param.impl_->salt_.at(0), cmplen);
     if (cmp != 0) {
         return (cmp);
     } else {
-        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
+        return (this_len - other_len);
     }
 }
 
