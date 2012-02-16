@@ -60,7 +60,8 @@ protocolError(const int fd, const char reason = 'I') {
 
 // Return appropriate socket type constant for the socket type requested.
 // The output_fd argument is required to report a protocol error.
-int getSocketType(const char type_code, const int output_fd) {
+int
+getSocketType(const char type_code, const int output_fd) {
     int socket_type = 0;
     switch (type_code) {
         case 'T':
@@ -79,7 +80,8 @@ int getSocketType(const char type_code, const int output_fd) {
 
 // Convert return status from getSock() to a character to be sent back to
 // the caller.
-char getErrorCode(const int status) {
+char
+getErrorCode(const int status) {
     char error_code = ' ';
     switch (status) {
         case -1:
