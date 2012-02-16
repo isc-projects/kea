@@ -105,15 +105,39 @@ typedef void (*socket_check_t)(const int);
 // The other argument is the socket descriptor number.
 
 // IPv4 check
-void addressFamilySpecificCheck(const sockaddr_in*, const int) {
+void addressFamilySpecificCheck(const sockaddr_in*, const int, const int) {
 }
 
 // IPv6 check
-void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum) {
+void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum,
+                                const int socket_type)
+{
     int options;
     socklen_t len = sizeof(options);
-    EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_V6ONLY, &options, &len));
+    EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_V6ONLY, &options,
+                            &len));
     EXPECT_NE(0, options);
+    if (socket_type == SOCK_DGRAM) {
+    // Some more checks for UDP - MTU
+#ifdef IPV6_USE_MIN_MTU        /* RFC 3542, not too common yet*/
+        // use minimum MTU
+        EXPECT_EQ(getsockopt(socknum, IPPROTO_IPV6, IPV6_USE_MIN_MTU, &options,
+                             &len)) << strerror(errno);
+        EXPECT_NE(0, options);
+#endif
+#ifdef IPV6_MTU
+        // Use minimum MTU on systems that don't have the IPV6_USE_MIN_MTU
+        EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_MTU, &options,
+                                &len)) << strerror(errno);
+        EXPECT_EQ(1280, options);
+#endif
+#if defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
+        // Turned off Path MTU discovery on IPv6/UDP sockets?
+        EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
+                                &options, &len)) << strerror(errno);
+        EXPECT_EQ(IPV6_PMTUDISC_DONT, options);
+#endif
+    }
 }
 
 
@@ -147,7 +171,7 @@ void testAnyCreate(int socket_type, socket_check_t socket_check) {
     EXPECT_NE(0, options);
 
     // ...and the address-family specific tests.
-    addressFamilySpecificCheck(&addr, socket);
+    addressFamilySpecificCheck(&addr, socket, socket_type);
 
     // Tidy up and exit.
     EXPECT_EQ(0, close(socket));
