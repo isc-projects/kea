@@ -105,9 +105,9 @@ handle_request(const int input_fd, const int output_fd,
             addr_len = sizeof(addr_in);
             memset(&addr_in, 0, sizeof(addr_in));
             addr_in.sin_family = AF_INET;
-            read_message(input_fd, static_cast<void*>(&addr_in.sin_port),
+            read_message(input_fd, &addr_in.sin_port,
                          sizeof(addr_in.sin_port));
-            read_message(input_fd, static_cast<void*>(&addr_in.sin_addr.s_addr),
+            read_message(input_fd, &addr_in.sin_addr.s_addr,
                          sizeof(addr_in.sin_addr.s_addr));
             break;
 
@@ -116,9 +116,9 @@ handle_request(const int input_fd, const int output_fd,
             addr_len = sizeof addr_in6;
             memset(&addr_in6, 0, sizeof(addr_in6));
             addr_in6.sin6_family = AF_INET6;
-            read_message(input_fd, static_cast<void*>(&addr_in6.sin6_port),
+            read_message(input_fd, &addr_in6.sin6_port,
                          sizeof(addr_in6.sin6_port));
-            read_message(input_fd, static_cast<void*>(&addr_in6.sin6_addr.s6_addr),
+            read_message(input_fd, &addr_in6.sin6_addr.s6_addr,
                          sizeof(addr_in6.sin6_addr.s6_addr));
             break;
 
@@ -127,7 +127,7 @@ handle_request(const int input_fd, const int output_fd,
     }
 
     // Obtain the socket
-    int result = get_sock(sock_type, addr, addr_len);
+    const int result = get_sock(sock_type, addr, addr_len);
     if (result >= 0) {
         // Got the socket, send it to the client.
         write_message(output_fd, "S", 1);
@@ -160,8 +160,8 @@ handle_request(const int input_fd, const int output_fd,
         }
 
         // ...and append the reason code to the error message
-        int error = errno;
-        write_message(output_fd, static_cast<void*>(&error), sizeof error);
+        const int error = errno;
+        write_message(output_fd, &error, sizeof(error));
     }
 }
 
@@ -172,24 +172,26 @@ namespace socket_creator {
 
 // Get the socket and bind to it.
 int
-get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
+get_sock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len)
 {
-    int sock = socket(bind_addr->sa_family, type, 0);
+    const int sock = socket(bind_addr->sa_family, type, 0);
     if (sock == -1) {
-        return -1;
+        return (-1);
     }
     const int on = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
-        return -2; // This is part of the binding process, so it's a bind error
+        // This is part of the binding process, so it's a bind error
+        return (-2);
     }
     if (bind_addr->sa_family == AF_INET6 &&
         setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) == -1) {
-        return -2; // This is part of the binding process, so it's a bind error
+        // This is part of the binding process, so it's a bind error
+        return (-2);
     }
     if (bind(sock, bind_addr, addr_len) == -1) {
-        return -2;
+        return (-2);
     }
-    return sock;
+    return (sock);
 }
 
 // Main run loop.
