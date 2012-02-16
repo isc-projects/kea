@@ -31,14 +31,14 @@ namespace {
 
 // Simple wrappers for read_data/write_data that throw an exception on error.
 void
-read_message(const int fd, void* where, const size_t length) {
+readMessage(const int fd, void* where, const size_t length) {
     if (read_data(fd, where, length) < length) {
         isc_throw(ReadError, "Error reading from socket creator client");
     }
 }
 
 void
-write_message(const int fd, const void* what, const size_t length) {
+writeMessage(const int fd, const void* what, const size_t length) {
     if (!write_data(fd, what, length)) {
         isc_throw(WriteError, "Error writing to socket creator client");
     }
@@ -46,13 +46,13 @@ write_message(const int fd, const void* what, const size_t length) {
 
 // Exit on a protocol error after informing the client of the problem.
 void
-protocol_error(const int fd, const char reason = 'I') {
+protocolError(const int fd, const char reason = 'I') {
 
     // Tell client we have a problem
     char message[2];
     message[0] = 'F';
     message[1] = reason;
-    write_message(fd, message, sizeof(message));
+    writeMessage(fd, message, sizeof(message));
 
     // ... and exit
     isc_throw(ProtocolError, "Fatal error, reason: " << reason);
@@ -66,13 +66,13 @@ protocol_error(const int fd, const char reason = 'I') {
 // The arguments passed (and the exceptions thrown) are the same as those for
 // run().
 void
-handle_request(const int input_fd, const int output_fd,
-               const get_sock_t get_sock, const send_fd_t send_fd_fun,
-               const close_t close_fun)
+handleRequest(const int input_fd, const int output_fd,
+              const get_sock_t get_sock, const send_fd_t send_fd_fun,
+              const close_t close_fun)
 {
     // Read the message from the client
     char type[2];
-    read_message(input_fd, type, sizeof(type));
+    readMessage(input_fd, type, sizeof(type));
 
     // Decide what type of socket is being asked for
     int sock_type = 0;
@@ -86,7 +86,7 @@ handle_request(const int input_fd, const int output_fd,
             break;
 
         default:
-            protocol_error(output_fd);
+            protocolError(output_fd);
     }
 
     // Read the address they ask for depending on what address family was
@@ -105,10 +105,9 @@ handle_request(const int input_fd, const int output_fd,
             addr_len = sizeof(addr_in);
             memset(&addr_in, 0, sizeof(addr_in));
             addr_in.sin_family = AF_INET;
-            read_message(input_fd, &addr_in.sin_port,
-                         sizeof(addr_in.sin_port));
-            read_message(input_fd, &addr_in.sin_addr.s_addr,
-                         sizeof(addr_in.sin_addr.s_addr));
+            readMessage(input_fd, &addr_in.sin_port, sizeof(addr_in.sin_port));
+            readMessage(input_fd, &addr_in.sin_addr.s_addr,
+                        sizeof(addr_in.sin_addr.s_addr));
             break;
 
         case '6':
@@ -116,21 +115,21 @@ handle_request(const int input_fd, const int output_fd,
             addr_len = sizeof addr_in6;
             memset(&addr_in6, 0, sizeof(addr_in6));
             addr_in6.sin6_family = AF_INET6;
-            read_message(input_fd, &addr_in6.sin6_port,
-                         sizeof(addr_in6.sin6_port));
-            read_message(input_fd, &addr_in6.sin6_addr.s6_addr,
-                         sizeof(addr_in6.sin6_addr.s6_addr));
+            readMessage(input_fd, &addr_in6.sin6_port,
+                        sizeof(addr_in6.sin6_port));
+            readMessage(input_fd, &addr_in6.sin6_addr.s6_addr,
+                        sizeof(addr_in6.sin6_addr.s6_addr));
             break;
 
         default:
-            protocol_error(output_fd);
+            protocolError(output_fd);
     }
 
     // Obtain the socket
     const int result = get_sock(sock_type, addr, addr_len);
     if (result >= 0) {
         // Got the socket, send it to the client.
-        write_message(output_fd, "S", 1);
+        writeMessage(output_fd, "S", 1);
         if (send_fd_fun(output_fd, result) != 0) {
             // Error.  Close the socket (ignore any error from that operation)
             // and abort.
@@ -145,14 +144,14 @@ handle_request(const int input_fd, const int output_fd,
         }
     } else {
         // Error.  Tell the client.
-        write_message(output_fd, "E", 1);           // Error occurred...
+        writeMessage(output_fd, "E", 1);           // Error occurred...
         switch (result) {
             case -1:
-                write_message(output_fd, "S", 1);   // ... in the socket() call
+                writeMessage(output_fd, "S", 1);   // ... in the socket() call
                 break;
 
             case -2:
-                write_message(output_fd, "B", 1);   // ... in the bind() call
+                writeMessage(output_fd, "B", 1);   // ... in the bind() call
                 break;
 
             default:
@@ -161,7 +160,7 @@ handle_request(const int input_fd, const int output_fd,
 
         // ...and append the reason code to the error message
         const int error = errno;
-        write_message(output_fd, &error, sizeof(error));
+        writeMessage(output_fd, &error, sizeof(error));
     }
 }
 
@@ -172,8 +171,7 @@ namespace socket_creator {
 
 // Get the socket and bind to it.
 int
-get_sock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len)
-{
+getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len) {
     const int sock = socket(bind_addr->sa_family, type, 0);
     if (sock == -1) {
         return (-1);
@@ -201,18 +199,18 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
 {
     for (;;) {
         char command;
-        read_message(input_fd, &command, sizeof(command));
+        readMessage(input_fd, &command, sizeof(command));
         switch (command) {
             case 'S':   // The "get socket" command
-                handle_request(input_fd, output_fd, get_sock,
-                               send_fd_fun, close_fun);
+                handleRequest(input_fd, output_fd, get_sock,
+                              send_fd_fun, close_fun);
                 break;
 
             case 'T':   // The "terminate" command
                 return;
 
             default:    // Don't recognise anything else
-                protocol_error(output_fd);
+                protocolError(output_fd);
         }
     }
 }

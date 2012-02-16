@@ -88,14 +88,14 @@ public:
 ///         -1 if the socket() call fails or -2 if bind() fails. In case of
 ///         error, errno is set (or left intact from socket() or bind()).
 int
-get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len);
+getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len);
 
 // Define some types for functions used to perform socket-related operations.
 // These are typedefed so that alternatives can be passed through to the
 // main functions for testing purposes.
 
-// Type of the get_sock function, to pass it as parameter.  Arguments are
-// those described above for get_sock().
+// Type of the function to get a socket and to pass it as parameter.
+// Arguments are those described above for getSock().
 typedef int (*get_sock_t)(const int, struct sockaddr *, const socklen_t);
 
 // Type of the send_fd() function, so it can be passed as a parameter.
@@ -135,7 +135,7 @@ typedef int (*close_t)(int);
 /// \exception isc::socket_creator::InternalError Other error
 void
 run(const int input_fd, const int output_fd,
-    const get_sock_t get_sock_fun = get_sock,
+    const get_sock_t get_sock_fun = getSock,
     const send_fd_t send_fd_fun = isc::util::io::send_fd,
     const close_t close_fun = close);
 
