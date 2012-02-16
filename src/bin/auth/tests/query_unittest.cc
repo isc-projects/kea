@@ -2148,18 +2148,8 @@ TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
                   NULL, mock_finder->getOrigin());
 }
 
-TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
-                                      ConstRRsetPtr());
-    mock_finder->setNSEC3Result(&nsec3);
-
-    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
-                       RRType::TXT(), response, true).process(),
-                 Query::BadNSEC3);
-}
-
 TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
+    // Name Error (NXDOMAIN) case with NSEC3 proof per RFC5155 Section 7.2.2.
     mock_finder->setNSEC3Flag(true);
     Query(memory_client, Name("nxdomain.example.com"), qtype,
               response, true).process();
@@ -2174,6 +2164,21 @@ TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
                          string("q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
+    // Similar to the previous case, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    // Message::addRRset() will detect it and throw InvalidParameter.
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 isc::InvalidParameter);
 }
 
 // The following are tentative tests until we really add tests for the
