@@ -1,3 +1,9 @@
+380.	[bug]		jinmei
+	libdns++: miscellaneous bug fixes for the NSECPARAM RDATA
+	implementation, including incorrect handling for empty salt and
+	incorrect comparison logic.
+	(Trac #1638, git 966c129cc3c538841421f1e554167d33ef9bdf25)
+
 379.	[bug]		jelte
 	Configuration commands in bindctl now check for list indices if
 	the 'identifier' argument points to a child element of a list
@@ -10,7 +16,7 @@
 	(Trac #1649, git 003ca8597c8d0eb558b1819dbee203fda346ba77)
 
 378.	[func]		vorner
-	It possible to start authoritative server or resolver in multiple
+	It is possible to start authoritative server or resolver in multiple
 	instances, to use more than one core. Configuration is described in
 	the guide.
 	(Trac #1596, git 17f7af0d8a42a0a67a2aade5bc269533efeb840a)
