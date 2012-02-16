@@ -327,19 +327,10 @@ class ModuleCCSession(ConfigData):
            and return an answer created with create_answer()"""
         self._command_handler = command_handler
 
-    def add_remote_config(self, spec_file_name, config_update_callback = None):
-        """Gives access to the configuration of a different module.
-           These remote module options can at this moment only be
-           accessed through get_remote_config_value(). This function
-           also subscribes to the channel of the remote module name
-           to receive the relevant updates. It is not possible to
-           specify your own handler for this right now.
-           start() must have been called on this CCSession
-           prior to the call to this method.
-           Returns the name of the module."""
-        module_spec = isc.config.module_spec_from_file(spec_file_name)
+    def _add_remote_config_internal(self, module_spec, config_update_callback=None):
         module_cfg = ConfigData(module_spec)
         module_name = module_spec.get_module_name()
+
         self._session.group_subscribe(module_name)
 
         # Get the current config for that module now
@@ -362,8 +353,22 @@ class ModuleCCSession(ConfigData):
         # all done, add it
         self._remote_module_configs[module_name] = module_cfg
         self._remote_module_callbacks[module_name] = config_update_callback
-        return module_name
-        
+
+    def add_remote_config(self, spec_file_name, config_update_callback = None):
+        """Gives access to the configuration of a different module.
+           These remote module options can at this moment only be
+           accessed through get_remote_config_value(). This function
+           also subscribes to the channel of the remote module name
+           to receive the relevant updates. It is not possible to
+           specify your own handler for this right now, but you can
+           specify a callback that is called after the change happened.
+           start() must have been called on this CCSession
+           prior to the call to this method.
+           Returns the name of the module."""
+        module_spec = isc.config.module_spec_from_file(spec_file_name)
+        self._add_remote_config_internal(module_spec, config_update_callback)
+        return module_spec.get_module_name()
+
     def remove_remote_config(self, module_name):
         """Removes the remote configuration access for this module"""
         if module_name in self._remote_module_configs:
