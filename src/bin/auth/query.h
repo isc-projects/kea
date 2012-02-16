@@ -107,7 +107,9 @@ private:
     /// Add NSEC RRs that prove a wildcard answer is the best one.
     ///
     /// This corresponds to Section 3.1.3.3 of RFC 4035.
-    void addWildcardProof(isc::datasrc::ZoneFinder& finder);
+    void addWildcardProof(
+        isc::datasrc::ZoneFinder& finder,
+        const isc::datasrc::ZoneFinder::FindResult& dbResult);
 
     /// \brief Adds one NSEC RR proved no matched QNAME,one NSEC RR proved no
     /// matched <QNAME,QTYPE> through wildcard extension.
