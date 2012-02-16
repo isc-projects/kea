@@ -1672,7 +1672,7 @@ TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
     ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
                                       ConstRRsetPtr());
     mock_finder->setNSEC3Result(&nsec3);
-    
+
     EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
                        RRType::TXT(), response, true).process(),
                  Query::BadNSEC3);
