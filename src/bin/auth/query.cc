@@ -169,7 +169,7 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 
 void
 Query::addWildcardProof(ZoneFinder& finder,
-		const ZoneFinder::FindResult& db_result) 
+                        const ZoneFinder::FindResult& db_result)
 {
 	// The query name shouldn't exist in the zone if there were no wildcard
 	// substitution.  Confirm that by specifying NO_WILDCARD.  It should result
@@ -195,7 +195,7 @@ Query::addWildcardProof(ZoneFinder& finder,
 		response_.addRRset(Message::SECTION_AUTHORITY,
 				boost::const_pointer_cast<AbstractRRset>(
 					NSEC3Result.next_proof), dnssec_);
-		const Name wname = 
+		const Name wname =
 			qname_.split(qname_.getLabelCount() - NSEC3Result.closest_labels - 1);
 		const ZoneFinder::FindNSEC3Result wresult(finder.findNSEC3(wname,
 					false));
