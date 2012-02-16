@@ -164,6 +164,40 @@ handleRequest(const int input_fd, const int output_fd,
     }
 }
 
+// Sets the MTU related flags for IPv6 UDP sockets.
+// It is borrowed from bind-9 lib/isc/unix/socket.c and modified
+// to compile here.
+//
+// The function returns -2 if it fails or the socket file descriptor
+// on success (for convenience, so the result can be just returned).
+int
+mtu(int fd) {
+#ifdef IPV6_USE_MIN_MTU        /* RFC 3542, not too common yet*/
+    const int on(1);
+    // use minimum MTU
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU, &on, sizeof(on)) < 0) {
+        return (-2);
+    }
+#endif
+#ifdef IPV6_MTU
+    // Use minimum MTU on systems that don't have the IPV6_USE_MIN_MTU
+    const int mtu = 1280;
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MTU, &mtu, sizeof(mtu)) < 0) {
+        return (-2);
+    }
+#endif
+#if defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
+    // Turn off Path MTU discovery on IPv6/UDP sockets.
+    const int action = IPV6_PMTUDISC_DONT;
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MTU_DISCOVER, &action,
+                   sizeof(action)) < 0) {
+
+        return (-2);
+    }
+#endif
+    return (fd);
+}
+
 } // Anonymous namespace
 
 namespace isc {
@@ -188,6 +222,10 @@ getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len) {
     }
     if (bind(sock, bind_addr, addr_len) == -1) {
         return (-2);
+    }
+    if (type == SOCK_DGRAM && bind_addr->sa_family == AF_INET6) {
+        // Set some MTU flags on IPv6 UDP sockets.
+        return (mtu(sock));
     }
     return (sock);
 }
