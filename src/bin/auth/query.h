@@ -86,10 +86,11 @@ private:
     void addDS(isc::datasrc::ZoneFinder& finder,
                const isc::dns::Name& ds_name);
 
-    /// \brief Adds NSEC denial proof for the given NXRRset result
+    /// \brief Adds NSEC(3) denial proof for the given NXRRset result
     ///
-    /// NSEC records, if available (signaled by isNSECSigned(), are added
-    /// to the authority section.
+    /// If available, NSEC or NSEC3 records are added to the authority
+    /// section (depending on whether isNSECSigned() or isNSEC3Signed()
+    /// returns true).
     ///
     /// \param finder The ZoneFinder that was used to search for the missing
     ///               data
@@ -182,6 +183,23 @@ private:
     /// \param finder The \c ZoneFinder through which the NS and additional
     /// data for the query are to be found.
     void addAuthAdditional(isc::datasrc::ZoneFinder& finder);
+
+    /// \brief Process a DS query possible at the child side of zone cut.
+    ///
+    /// This private method is a subroutine of process(), and is called if
+    /// there's a possibility that this server has authority for the child
+    /// side of the DS's owner name (and it's detected that the server at
+    /// least doesn't have authority at the parent side).  This method
+    /// first checks if it has authority for the child, and if does,
+    /// just build a "no data" response with SOA for the zone origin
+    /// (possibly with a proof for the no data) as specified in Section
+    /// 2.2.1.1 of RFC3658.
+    ///
+    /// It returns true if this server has authority of the child; otherwise
+    /// it returns false.  In the former case, the caller is expected to
+    /// terminate the query processing, because it should have been completed
+    /// within this method.
+    bool processDSAtChild();
 
 public:
     /// Constructor from query parameters.

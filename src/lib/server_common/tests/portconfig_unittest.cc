@@ -133,7 +133,10 @@ TEST_F(ParseAddresses, invalid) {
 struct InstallListenAddresses : public ::testing::Test {
     InstallListenAddresses() :
         dnss_(ios_, NULL, NULL, NULL),
-        sock_requestor_(dnss_, store_, 5288)
+        // The empty string is expected parameter of requestSocket,
+        // not app_name - the request does not fall back to this, it
+        // is checked to be the same.
+        sock_requestor_(dnss_, store_, 5288, "")
     {
         valid_.push_back(AddressPair("127.0.0.1", 5288));
         valid_.push_back(AddressPair("::1", 5288));

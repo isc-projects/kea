@@ -913,7 +913,24 @@ address, but the usual ones don't." mean? -->
           In short, you should think twice before disabling something here.
         </para>
       </note>
-
+      <para>
+        It is possible to start some components multiple times (currently
+        <command>b10-auth</command> and <command>b10-resolzer</command>).
+        You might want to do that to gain more performance (each one uses only
+        single core). Just put multiple entries under different names, like
+        this, with the same config:
+        <screen>&gt; <userinput>config add Boss/components b10-resolver-2</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver-2/special resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver-2/kind needed</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      <para>
+        However, this is work in progress and the support is not yet complete.
+        For example, each resolver will have its own cache, each authoritative
+        server will keep its own copy of in-memory data and there could be
+        problems with locking the sqlite database, if used. The configuration
+        might be changed to something more convenient in future.
+      </para>
     </section>
 
   </chapter>

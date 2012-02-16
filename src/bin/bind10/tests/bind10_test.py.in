@@ -36,6 +36,7 @@ import isc.bind10.socket_cache
 import errno
 
 from isc.testutils.parse_args import TestOptParser, OptsError
+from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -459,6 +460,22 @@ class TestBoB(unittest.TestCase):
         # The drop_socket is not tested here, but in TestCacheCommands.
         # It needs the cache mocks to be in place and they are there.
 
+    def test_stop_process(self):
+        """
+        Test checking the stop_process method sends the right message over
+        the message bus.
+        """
+        class DummySession():
+            def group_sendmsg(self, msg, group, instance="*"):
+                (self.msg, self.group, self.instance) = (msg, group, instance)
+        bob = BoB()
+        bob.cc_session = DummySession()
+        bob.stop_process('process', 'address', 42)
+        self.assertEqual('address', bob.cc_session.group)
+        self.assertEqual('address', bob.cc_session.instance)
+        self.assertEqual({'command': ['shutdown', {'pid': 42}]},
+                         bob.cc_session.msg)
+
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
 # the BoB commands.
@@ -597,7 +614,7 @@ class MockBob(BoB):
         procinfo.pid = 14
         return procinfo
 
-    def stop_process(self, process, recipient):
+    def stop_process(self, process, recipient, pid):
         procmap = { 'b10-auth': self.stop_auth,
                     'b10-resolver': self.stop_resolver,
                     'b10-xfrout': self.stop_xfrout,
@@ -1171,8 +1188,12 @@ class TestBossComponents(unittest.TestCase):
         bob._component_configurator.shutdown = self.__nullary_hook
         self.__called = False
 
+        bob.ccs = MockModuleCCSession()
+        self.assertFalse(bob.ccs.stopped)
+
         bob.shutdown()
 
+        self.assertTrue(bob.ccs.stopped)
         self.assertEqual([False, True], killed)
         self.assertTrue(self.__called)
 
