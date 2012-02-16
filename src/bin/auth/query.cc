@@ -172,7 +172,7 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 // findNSEC3() in this method should result an FindNSEC3Result that proves
 // the Closest Encloser Proof and non existent of matching wildcard.
 // Firstly, the call to findNSEC3() set the recursive to true in order to
-// get the an NSEC3 RR that matches the closest (provable) encloser and 
+// get the an NSEC3 RR that matches the closest (provable) encloser and
 // an NSEC3 RR that covers the "next closer" name to the closest encloser.
 // This corresponds to Section 7.2.1 of RFC 5155.
 // Then,construct the wildcard domain, call to findNSEC3() set the recursive
