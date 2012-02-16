@@ -373,7 +373,8 @@ public:
                        ConstRRsetPtr rrset)
     {
         nsec_name_ = nsec_name;
-        nsec_result_.reset(new ZoneFinder::FindResult(code, rrset));
+        nsec_result_.reset(new ZoneFinder::FindResult(code, rrset,
+                                                      RESULT_NSEC_SIGNED));
     }
 
     // Once called, the findNSEC3 will return the provided result for the next
