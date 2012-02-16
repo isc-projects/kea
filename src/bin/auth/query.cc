@@ -192,12 +192,12 @@ Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
                        boost::const_pointer_cast<AbstractRRset>(
                        fresult1.next_proof),
                        dnssec_);
-    // Next, identify the best possible wildcard name that would match
-    // the query name.  It's the longer common suffix with the qname
-    // between the owner and the 'matched' domain of the NSEC3 that
-    // proves NXDOMAIN,prefixed by the wildcard label, "*".
+
+    // Next, construct the wildcard name at the closest encloser, i.e.,
+    // '*' followed by the closest encloser.
     const Name wildname(Name("*").concatenate(
-               qname_.split(qname_.getLabelCount() - fresult1.closest_labels)));
+               qname_.split(qname_.getLabelCount() -
+                            fresult1.closest_labels)));
     const ZoneFinder::FindNSEC3Result fresult2 =
         finder.findNSEC3(wildname, false);
     if (!fresult2.closest_proof) {
