@@ -177,27 +177,6 @@ TEST_F(AuthSrvTest, builtInQuery) {
     checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
-// Callback used in createRequestMessage that mangles the
-// wiredata to something that should not be parseable (to test
-// really badly formed queries)
-// This specific one simply increments every octet in the array
-void requestMangler(uint8_t* data, size_t data_len) {
-    for (size_t i = 0; i < data_len; ++i) {
-        data[i]++;
-    }
-}
-
-// Same as buildInQuery, but completely malform the sent query
-TEST_F(AuthSrvTest, builtInMalformedQuery) {
-    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("version.bind"),
-                                       RRClass::CH(), RRType::TXT());
-    createRequestPacket(request_message, IPPROTO_UDP, NULL, &requestMangler);
-    server.processMessage(*io_message, parse_message, response_obuffer,
-                          &dnsserv);
-    checkAllRcodeCountersZeroExcept(Rcode::FORMERR(), 1);
-}
-
 // Same test emulating the UDPServer class behavior (defined in libasiolink).
 // This is not a good test in that it assumes internal implementation details
 // of UDPServer, but we've encountered a regression due to the introduction
