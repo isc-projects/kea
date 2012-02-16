@@ -195,6 +195,27 @@ getCommonRRSIGText(const string& type) {
                    "example.com. FAKEFAKEFAKE"));
 }
 
+// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
+void
+setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
+    *(*it) = rrset;
+    ++it;
+}
+
+// A helper function that converts a textual form of a single RR into a
+// RRsetPtr object.  If it's SOA, origin must be set to its owner name;
+// otherwise masterLoad() will reject it.
+RRsetPtr
+textToRRset(const string& text_rrset, const Name& origin = Name::ROOT_NAME()) {
+    stringstream ss(text_rrset);
+    RRsetPtr rrset;
+    vector<RRsetPtr*> rrsets;
+    rrsets.push_back(&rrset);
+    masterLoad(ss, origin, RRClass::IN(),
+    boost::bind(setRRset, _1, rrsets.begin()));
+    return (rrset);
+}
+
 // This is a mock Zone Finder class for testing.
 // It is a derived class of ZoneFinder for the convenient of tests.
 // Its find() method emulates the common behavior of protocol compliant
@@ -220,7 +241,8 @@ public:
         rrclass_(RRClass::IN()),
         include_rrsig_anyway_(false),
         use_nsec3_(false),
-        nsec_name_(origin_)
+        nsec_name_(origin_),
+        nsec3_fake_(NULL)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
@@ -294,6 +316,14 @@ public:
     {
         nsec_name_ = nsec_name;
         nsec_result_.reset(new ZoneFinder::FindResult(code, rrset));
+    }
+
+    // Once called, the findNSEC3 will return the provided result for the next
+    // query. After that, it'll return to operate normally.
+    // NULL disables. Does not take ownership of the pointer (it is generally
+    // expected to be a local variable in the test function).
+    void setNSEC3Result(const FindNSEC3Result* result) {
+        nsec3_fake_ = result;
     }
 
     // If true is passed return an empty NSEC3 RRset for some negative
@@ -387,6 +417,9 @@ private:
     Name nsec_name_;
     boost::scoped_ptr<ZoneFinder::FindResult> nsec_result_;
     map<Name, string> hash_map_;
+    // The following two are for faking bad NSEC3 responses
+    // Enabled when not NULL
+    const FindNSEC3Result* nsec3_fake_;
 };
 
 // A helper function that generates a new RRset based on "wild_rrset",
@@ -430,6 +463,12 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
 
 ZoneFinder::FindNSEC3Result
 MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    // Do we have a fake result set? If so, use it.
+    if (nsec3_fake_ != NULL) {
+        const FindNSEC3Result* result(nsec3_fake_);
+        return (*result);
+    }
+
     ConstRRsetPtr covering_proof;
     const int labels = name.getLabelCount();
 
@@ -1626,6 +1665,17 @@ TEST_F(QueryTest, findNSEC3) {
                mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
     nsec3Check(false, 4, nsec3_www_txt,
                mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
+}
+
+TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+    
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 Query::BadNSEC3);
 }
 
 TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
