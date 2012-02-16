@@ -185,21 +185,16 @@ Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
                        dnssec_);
 
     // Next, construct the wildcard name at the closest encloser, i.e.,
-    // '*' followed by the closest encloser.
+    // '*' followed by the closest encloser, and add NSEC3 for it.
     const Name wildname(Name("*").concatenate(
                qname_.split(qname_.getLabelCount() -
                             fresult1.closest_labels)));
     const ZoneFinder::FindNSEC3Result fresult2 =
         finder.findNSEC3(wildname, false);
-
-    // Add the wildcard proof only when it's different from the NSEC3 RR
-    // that covers the "next closer" name to the closest encloser.
-    if (fresult1.next_proof->getName() != fresult2.closest_proof->getName()) {
-        response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(
-                               fresult2.closest_proof),
-                           dnssec_);
-    }
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<AbstractRRset>(
+                           fresult2.closest_proof),
+                       dnssec_);
 }
 
 void
