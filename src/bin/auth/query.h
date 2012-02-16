@@ -104,9 +104,10 @@ private:
     void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
                           isc::dns::ConstRRsetPtr nsec);
 
-    /// Add NSEC RRs that prove a wildcard answer is the best one.
+    /// Add NSEC or NSEC3 RRs that prove a wildcard answer is the best one.
     ///
-    /// This corresponds to Section 3.1.3.3 of RFC 4035.
+    /// This corresponds to Section 3.1.3.3 of RFC 4035 and Section 7.2.6
+    /// of RFC5155.
     void addWildcardProof(
         isc::datasrc::ZoneFinder& finder,
         const isc::datasrc::ZoneFinder::FindResult& dbResult);
@@ -122,7 +123,7 @@ private:
     /// <QNAME,QTTYPE>.
     void addWildcardNXRRSETProof(isc::datasrc::ZoneFinder& finder,
                                  isc::dns::ConstRRsetPtr nsec);
-    
+
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records) and add them to the additional section.
     ///
