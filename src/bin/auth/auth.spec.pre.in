@@ -344,7 +344,7 @@
         "item_optional": true,
         "item_default": 0,
         "item_title": "Sent 'no such rrset' response",
-        "item_description": "The number of total responses with rcode 8 ()"
+        "item_description": "The number of total responses with rcode 8 (NXRRSET)"
       },
       {
         "item_name": "rcode.notauth",

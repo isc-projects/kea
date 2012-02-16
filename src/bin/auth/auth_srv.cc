@@ -409,13 +409,13 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         // Ignore all responses.
         if (message->getHeaderFlag(Message::HEADERFLAG_QR)) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_RECEIVED);
-            server->resume(false);
+            resumeServer(server, message, false);
             return;
         }
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_HEADER_PARSE_FAIL)
                   .arg(ex.what());
-        server->resume(false);
+        resumeServer(server, message, false);
         return;
     }
 
@@ -426,13 +426,13 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_ERROR)
                   .arg(error.getRcode().toText()).arg(error.what());
         makeErrorMessage(message, buffer, error.getRcode());
-        server->resume(true);
+        resumeServer(server, message, true);
         return;
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_ERROR)
                   .arg(ex.what());
         makeErrorMessage(message, buffer, Rcode::SERVFAIL());
-        server->resume(true);
+        resumeServer(server, message, true);
         return;
     } // other exceptions will be handled at a higher layer.
 
@@ -459,7 +459,7 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
 
     if (tsig_error != TSIGError::NOERROR()) {
         makeErrorMessage(message, buffer, tsig_error.toRcode(), tsig_context);
-        server->resume(true);
+        resumeServer(server, message, true);
         return;
     }
 
@@ -492,10 +492,7 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         }
     }
 
-    // update per rcode statistics counter.
-    impl_->counters_.inc(message->getRcode());
-
-    server->resume(send_answer);
+    resumeServer(server, message, send_answer);
 }
 
 bool
@@ -786,6 +783,11 @@ AuthSrv::getCounter(const Opcode opcode) const {
     return (impl_->counters_.getCounter(opcode));
 }
 
+uint64_t
+AuthSrv::getCounter(const Rcode rcode) const {
+    return (impl_->counters_.getCounter(rcode));
+}
+
 const AddressList&
 AuthSrv::getListenAddresses() const {
     return (impl_->listen_addresses_);
@@ -804,4 +806,12 @@ AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
 void
 AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
+}
+
+void
+AuthSrv::resumeServer(DNSServer* server, MessagePtr message, bool done) {
+    if (done) {
+        impl_->counters_.inc(message->getRcode());
+    }
+    server->resume(done);
 }
