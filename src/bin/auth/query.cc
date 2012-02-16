@@ -167,17 +167,6 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     }
 }
 
-// Note: unless the data source client implementation or the zone content
-// is broken, 'nsec3' should be a valid NSEC3 RR.  Likewise, the call to
-// findNSEC3() in this method should result an FindNSEC3Result that proves
-// the Closest Encloser Proof and non existent of matching wildcard.
-// Firstly, the call to findNSEC3() set the recursive to true in order to
-// get the an NSEC3 RR that matches the closest (provable) encloser and
-// an NSEC3 RR that covers the "next closer" name to the closest encloser.
-// This corresponds to Section 7.2.1 of RFC 5155.
-// Then,construct the wildcard domain, call to findNSEC3() set the recursive
-// to false to get the prove that the wildcard that could have matched QNAME
-// also does not exist.
 void
 Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
     // Firstly get the NSEC3 proves for Closest Encloser Proof
