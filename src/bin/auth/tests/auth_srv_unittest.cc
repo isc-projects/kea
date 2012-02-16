@@ -87,7 +87,7 @@ protected:
 
     // Helper for checking Rcode statistic counters;
     // Checks for one specific Rcode statistics counter value
-    void checkRcodeCounter(const Rcode& rcode, int expected_value) {
+    void checkRcodeCounter(const Rcode& rcode, int expected_value) const {
         EXPECT_EQ(expected_value, server.getCounter(rcode)) <<
                   "Expected Rcode count for " << rcode.toText() <<
                   " " << expected_value << ", was: " <<
@@ -95,7 +95,7 @@ protected:
     }
 
     // Checks whether all Rcode counters are set to zero
-    void checkAllRcodeCountersZero() {
+    void checkAllRcodeCountersZero() const {
         for (int i = 0; i < 17; i++) {
             checkRcodeCounter(Rcode(i), 0);
         }
@@ -103,7 +103,7 @@ protected:
 
     // Checks whether all Rcode counters are set to zero except the given
     // rcode (it is checked to be set to 'value')
-    void checkAllRcodeCountersZeroExcept(const Rcode& rcode, int value) {
+    void checkAllRcodeCountersZeroExcept(const Rcode& rcode, int value) const {
         for (int i = 0; i < 17; i++) {
             const Rcode rc(i);
             if (rc == rcode) {
