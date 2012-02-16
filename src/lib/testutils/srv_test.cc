@@ -72,8 +72,7 @@ SrvTestBase::createDataFromFile(const char* const datafile,
 
 void
 SrvTestBase::createRequestPacket(Message& message,
-                                    const int protocol, TSIGContext* context,
-                                    void (*callback)(uint8_t*, size_t))
+                                    const int protocol, TSIGContext* context)
 {
     if (context == NULL) {
         message.toWire(request_renderer);
@@ -88,16 +87,9 @@ SrvTestBase::createRequestPacket(Message& message,
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
 
-    const void *data = request_renderer.getData();
-    size_t data_len = request_renderer.getLength();
-
-    if (callback) {
-        // convert to non-const uint8_t for easy manipulation by the callback
-        uint8_t *mdata = const_cast<uint8_t*>(static_cast<const uint8_t*>(data));
-        callback(mdata, data_len);
-    }
-    
-    io_message = new IOMessage(data, data_len, *io_sock, *endpoint);
+    io_message = new IOMessage(request_renderer.getData(),
+                               request_renderer.getLength(),
+                               *io_sock, *endpoint);
 }
 
 // Unsupported requests.  Should result in NOTIMP.
