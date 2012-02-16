@@ -2159,8 +2159,7 @@ TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
     mock_finder->addRecord(unsigned_delegation_nsec3_txt);
 
     Query(memory_client, Name("nxdomain.example.com"), qtype,
-              response, true).process();
-    cout << response << endl;
+          response, true).process();
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0, NULL,
                   // SOA + its RRSIG
                   (string(soa_txt) +
@@ -2198,6 +2197,25 @@ TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
     EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
                        RRType::TXT(), response, true).process(),
                  isc::InvalidParameter);
+}
+
+TEST_F(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
+    // Similar to nxdomainWithNSEC3Proof, but let findNSEC3() return a matching
+    // NSEC3 for the possible wildcard name, emulating run-time collision.
+    // This should result in BadNSEC3 exception.
+
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(nsec3_uwild_txt);
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
+    const Name wname("*.example.com");
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3, &wname);
+
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
+                       response, true).process(),
+                 Query::BadNSEC3);
 }
 
 // The following are tentative tests until we really add tests for the

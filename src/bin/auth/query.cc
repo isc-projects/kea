@@ -191,6 +191,10 @@ Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
                             fresult1.closest_labels)));
     const ZoneFinder::FindNSEC3Result fresult2 =
         finder.findNSEC3(wildname, false);
+    if (fresult2.matched) {
+        isc_throw(BadNSEC3, "Matching NSEC3 found for nonexistent domain "
+                  << wildname);
+    }
     response_.addRRset(Message::SECTION_AUTHORITY,
                        boost::const_pointer_cast<AbstractRRset>(
                            fresult2.closest_proof),
