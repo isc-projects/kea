@@ -117,7 +117,7 @@ Query::addSOA(ZoneFinder& finder) {
 // either an SERVFAIL response or just ignoring the query.  We at least prevent
 // a complete crash due to such broken behavior.
 void
-Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
+Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for NXDOMAIN is empty");
     }
@@ -168,7 +168,7 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
 }
 
 void
-Query::addNSEC3NXDOMAINProof(ZoneFinder& finder) {
+Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
     // Firstly get the NSEC3 proves for Closest Encloser Proof
     // See section 7.2.1 of RFC 5155.
     // Since this is a Name Error case both closest and next proofs should
@@ -542,12 +542,12 @@ Query::process() {
         case ZoneFinder::NXDOMAIN:
             response_.setRcode(Rcode::NXDOMAIN());
             addSOA(*result.zone_finder);
-            if (dnssec_ && db_result.isNSEC3Signed()) {
-                addNSEC3NXDOMAINProof(zfinder);
-                break;
-            }
-            if (dnssec_ && db_result.rrset) {
-                addNXDOMAINProof(zfinder, db_result.rrset);
+            if (dnssec_) {
+                if (db_result.isNSECSigned() && db_result.rrset) {
+                    addNXDOMAINProofByNSEC(zfinder, db_result.rrset);
+                } else if (db_result.isNSEC3Signed()) {
+                    addNXDOMAINProofByNSEC3(zfinder);
+                }
             }
             break;
         case ZoneFinder::NXRRSET:
