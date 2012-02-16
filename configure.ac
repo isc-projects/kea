@@ -270,7 +270,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_LINK_IFELSE([int main(void){ return 0;} ],
+  AC_LINK_IFELSE([int main(void){ return 0;}],
                  [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
@@ -292,7 +292,7 @@ CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
 
-BIND10_CXX_TRY_FLAG(-Wno-missing-field-initializers,
+BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
 	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
 AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
