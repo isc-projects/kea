@@ -848,7 +848,7 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
                           &dnsserv);
     // After processing UDP query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    // The counter for SUCCESS responses should also be one
+    // The counter for opcode Query should also be one
     EXPECT_EQ(1, server.getCounter(Opcode::QUERY()));
     // The counter for REFUSED responses should also be one, the rest zero
     checkAllRcodeCountersZeroExcept(Rcode::REFUSED(), 1);
