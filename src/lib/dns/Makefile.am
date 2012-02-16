@@ -23,6 +23,8 @@ EXTRA_DIST += rdata/generic/cname_5.cc
 EXTRA_DIST += rdata/generic/cname_5.h
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.cc
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.h
+EXTRA_DIST += rdata/generic/detail/nsec3param_common.cc
+EXTRA_DIST += rdata/generic/detail/nsec3param_common.h
 EXTRA_DIST += rdata/generic/detail/txt_like.h
 EXTRA_DIST += rdata/generic/detail/ds_like.h
 EXTRA_DIST += rdata/generic/dlv_32769.cc
@@ -113,6 +115,8 @@ libdns___la_SOURCES += tsigrecord.h tsigrecord.cc
 libdns___la_SOURCES += character_string.h character_string.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
+libdns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc
+libdns___la_SOURCES += rdata/generic/detail/nsec3param_common.h
 libdns___la_SOURCES += rdata/generic/detail/txt_like.h
 libdns___la_SOURCES += rdata/generic/detail/ds_like.h
 
