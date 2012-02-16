@@ -189,6 +189,10 @@ Query::addWildcardProof(ZoneFinder& finder,
                            dnssec_);
     } else if (db_result.isNSEC3Signed() && db_result.isWildcard()) {
         // case for RFC5155 Section 7.2.6
+        // Note that the closest encloser must be the immediate ancestor
+        // of the matching wildcard, so NSEC3 for its next closer is what
+        // we are expected to provided per the RFC (if this assumption isn't
+        // met the zone is broken anyway).
         const ZoneFinder::FindNSEC3Result NSEC3Result(
             finder.findNSEC3(qname_, true));
         if (NULL == NSEC3Result.next_proof) {
@@ -198,15 +202,6 @@ Query::addWildcardProof(ZoneFinder& finder,
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                NSEC3Result.next_proof), dnssec_);
-        const Name wname =
-            qname_.split(qname_.getLabelCount() -
-                         NSEC3Result.closest_labels - 1);
-        const ZoneFinder::FindNSEC3Result wresult(
-            finder.findNSEC3(wname, false));
-        if (wresult.matched) {
-            isc_throw(BadNSEC3, "Unexpected NSEC3 "
-                      "found for existing domain " << wname);
-        }
     }
 }
 
