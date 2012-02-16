@@ -5,6 +5,7 @@ AC_PREREQ([2.59])
 AC_INIT(bind10-devel, 20120127, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
