@@ -191,6 +191,12 @@ const char* const nsec3_atwild_txt =
     "ji6neoaepv8b5o6k4ev33abha8ht9fgc.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en\n";
 
+// NSEC3 for cnamewild.example.com (used in wildcard tests, will be added on
+// demand not to confuse other tests)
+const char* const nsec3_atcnamewild_txt =
+    "k8udemvp1j2f7eg6jebps17vp3n8i58h.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en\n";
+
 // NSEC3 for *.uwild.example.com (will be added on demand not to confuse
 // other tests)
 const char* const nsec3_wild_txt =
@@ -348,6 +354,10 @@ public:
         hash_map_[Name("y.wild.example.com")] =
             "0p9mhaveqvm6t7vbl5lop2u3t2rp3ton"; // a bit larger than H(<apex>)
         hash_map_[Name("x.y.wild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+        hash_map_[Name("cnamewild.example.com")] =
+            "k8udemvp1j2f7eg6jebps17vp3n8i58h";
+        hash_map_[Name("www.cnamewild.example.com")] =
             "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
 
         // For closest encloser proof for www1.uwild.example.com:
@@ -1379,7 +1389,28 @@ TEST_F(QueryTest, wildcardNSEC3) {
                    string(nsec3_apex_txt) +
                    mock_finder->hash_map_[Name("example.com.")] +
                    string(".example.com. 3600 IN RRSIG ") +
-                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, // we are not interested in additionals in this test
+                  mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, CNAMEwildNSEC3) {
+    // Similar to CNAMEwildNSEC, but with NSEC3.
+    // The next closer is qname itself, the covering NSEC3 for it
+    // is (in our setup) the NSEC3 for the www.example.com.
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(nsec3_atcnamewild_txt);
+
+    Query(memory_client, Name("www.cnamewild.example.com"), RRType::A(),
+          response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
+                  (string(cnamewild_txt).replace(0, 1, "www") +
+                   string("www.cnamewild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("CNAME") + "\n").c_str(),
+                  (string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, // we are not interested in additionals in this test
                   mock_finder->getOrigin());
 }
