@@ -85,19 +85,22 @@ protected:
                               &dnsserv);
     }
 
-    // Helper for checking Rcode statistic counters
+    // Helper for checking Rcode statistic counters;
+    // Checks for one specific Rcode statistics counter value
     void checkRcodeCounter(const Rcode& rcode, int expected_value) {
         EXPECT_EQ(expected_value, server.getCounter(rcode)) <<
                   "Expected Rcode count for " << rcode.toText() <<
                   " " << expected_value << ", was: " <<
                   server.getCounter(rcode);
     }
+
     // Checks whether all Rcode counters are set to zero
     void checkAllRcodeCountersZero() {
         for (int i = 0; i < 17; i++) {
             checkRcodeCounter(Rcode(i), 0);
         }
     }
+
     // Checks whether all Rcode counters are set to zero except the given
     // rcode (it is checked to be set to 'value')
     void checkAllRcodeCountersZeroExcept(const Rcode& rcode, int value) {
@@ -172,6 +175,27 @@ TEST_F(AuthSrvTest, builtInQuery) {
                         response_obuffer->getLength(),
                         &response_data[0], response_data.size());
     checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
+}
+
+// Callback used in createRequestMessage that mangles the
+// wiredata to something that should not be parseable (to test
+// really badly formed queries)
+// This specific one simply increments every octet in the array
+void requestMangler(uint8_t* data, size_t data_len) {
+    for (size_t i = 0; i < data_len; ++i) {
+        data[i]++;
+    }
+}
+
+// Same as buildInQuery, but completely malform the sent query
+TEST_F(AuthSrvTest, builtInMalformedQuery) {
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("version.bind"),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP, NULL, &requestMangler);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    checkAllRcodeCountersZeroExcept(Rcode::FORMERR(), 1);
 }
 
 // Same test emulating the UDPServer class behavior (defined in libasiolink).
