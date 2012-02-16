@@ -949,12 +949,11 @@ class NSEC(NSECBASE):
                                                  int(len(name_wire) / 2)))
         f.write('%s\n' % name_wire)
 
-class NSEC3(NSECBASE):
-    '''Implements rendering NSEC3 RDATA in the test data format.
+class NSEC3PARAM(RR):
+    '''Implements rendering NSEC3PARAM RDATA in the test data format.
 
     Configurable parameters are as follows (see the description of the
     same name of attribute for the default value):
-    - Type bitmap related parameters: see class NSECBASE
     - hashalg (8-bit int): The Hash Algorithm field.  Note that
       currently the only defined algorithm is SHA-1, for which a value
       of 1 will be used, and it's the default.  So this implementation
@@ -967,9 +966,6 @@ class NSEC3(NSECBASE):
     - saltlen (int): The Salt Length field.
     - salt (string): The Salt field.  It is converted to a sequence of
       ascii codes and its hexadecimal representation will be used.
-    - hashlen (int): The Hash Length field.
-    - hash (string): The Next Hashed Owner Name field.  This parameter
-      is interpreted as "salt".
     '''
 
     hashalg = 1                 # SHA-1
@@ -978,15 +974,18 @@ class NSEC3(NSECBASE):
     iterations = 1
     saltlen = 5
     salt = 's' * saltlen
-    hashlen = 20
-    hash = 'h' * hashlen
-    def dump_fixedpart(self, f, bitmap_totallen):
+
+    def dump(self, f):
         if self.rdlen is None:
-            # if rdlen needs to be calculated, it must be based on the bitmap
-            # length, because the configured maplen can be fake.
-            self.rdlen = 4 + 1 + len(self.salt) + 1 + len(self.hash) \
-                + bitmap_totallen
+            self.rdlen = 4 + 1 + len(self.salt)
         self.dump_header(f, self.rdlen)
+        self._dump_params(f)
+
+    def _dump_params(self, f):
+        '''This method is intended to be shared with NSEC3 class.
+
+        '''
+
         optout_val = 1 if self.optout else 0
         f.write('# Hash Alg=%s, Opt-Out=%d, Other Flags=%0x, Iterations=%d\n' %
                 (code_totext(self.hashalg, rdict_nsec3_algorithm),
@@ -997,6 +996,29 @@ class NSEC3(NSECBASE):
         f.write('%02x%s%s\n' % (self.saltlen,
                                 ' ' if len(self.salt) > 0 else '',
                                 encode_string(self.salt)))
+
+class NSEC3(NSECBASE, NSEC3PARAM):
+    '''Implements rendering NSEC3 RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - Type bitmap related parameters: see class NSECBASE
+    - Hash parameter related parameters: see class NSEC3PARAM
+    - hashlen (int): The Hash Length field.
+    - hash (string): The Next Hashed Owner Name field.  This parameter
+      is interpreted as "salt".
+    '''
+
+    hashlen = 20
+    hash = 'h' * hashlen
+    def dump_fixedpart(self, f, bitmap_totallen):
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = 4 + 1 + len(self.salt) + 1 + len(self.hash) \
+                + bitmap_totallen
+        self.dump_header(f, self.rdlen)
+        self._dump_params(f)
         f.write("# Hash Len=%d, Hash='%s'\n" % (self.hashlen, self.hash))
         f.write('%02x%s%s\n' % (self.hashlen,
                                 ' ' if len(self.hash) > 0 else '',
