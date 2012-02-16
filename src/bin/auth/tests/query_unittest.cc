@@ -1415,6 +1415,20 @@ TEST_F(QueryTest, CNAMEwildNSEC3) {
                   mock_finder->getOrigin());
 }
 
+TEST_F(QueryTest, badWildcardNSEC3) {
+    // Similar to wildcardNSEC3, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
+                       RRType::A(), response, true).process(),
+                 isc::InvalidParameter);
+}
+
 TEST_F(QueryTest, badWildcardProof1) {
     // Unexpected case in wildcard proof: ZoneFinder::find() returns SUCCESS
     // when NXDOMAIN is expected.

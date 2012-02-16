@@ -195,10 +195,9 @@ Query::addWildcardProof(ZoneFinder& finder,
         // met the zone is broken anyway).
         const ZoneFinder::FindNSEC3Result NSEC3Result(
             finder.findNSEC3(qname_, true));
-        if (NULL == NSEC3Result.next_proof) {
-            isc_throw(BadNSEC3, "Unexpected NSEC3 "
-                      "result for wildcard proof");
-        }
+        // Note that at this point next_proof must not be NULL unless it's
+        // a run time collision (or zone/findNSEC3() is broken).  The
+        // unexpected case will be caught in addRRset() and result in SERVFAIL.
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                NSEC3Result.next_proof), dnssec_);
