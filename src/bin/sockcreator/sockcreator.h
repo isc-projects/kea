@@ -116,10 +116,11 @@ typedef int (*close_t)(int);
 /// It terminates either if a command asks it to or when unrecoverable error
 /// happens.
 ///
-/// \param input_fd File descriptor of the stream from which the input commands
+/// \param input_fd File number of the stream from which the input commands
 ///        are read.
-/// \param output_fd File descriptor of the stream to which the output
-///        (message/socket or error message) is written.
+/// \param output_fd File number of the stream to which the response is
+///        written.  The socket is sent as part of a control message associated
+///        with that stream.
 /// \param get_sock_fun The function that is used to create the sockets.
 ///        This should be left on the default value, the parameter is here
 ///        for testing purposes.

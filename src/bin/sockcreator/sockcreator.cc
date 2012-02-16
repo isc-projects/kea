@@ -58,6 +58,45 @@ protocolError(const int fd, const char reason = 'I') {
     isc_throw(ProtocolError, "Fatal error, reason: " << reason);
 }
 
+// Return appropriate socket type constant for the socket type requested.
+// The output_fd argument is required to report a protocol error.
+int getSocketType(const char type_code, const int output_fd) {
+    int socket_type = 0;
+    switch (type_code) {
+        case 'T':
+            socket_type = SOCK_STREAM;
+            break;
+
+        case 'U':
+            socket_type = SOCK_DGRAM;
+            break;
+
+        default:
+            protocolError(output_fd);   // Does not return
+    }
+    return (socket_type);
+}
+
+// Convert return status from getSock() to a character to be sent back to
+// the caller.
+char getErrorCode(const int status) {
+    char error_code = ' ';
+    switch (status) {
+        case -1:
+            error_code = 'S';
+            break;
+
+        case -2:
+            error_code = 'B';
+            break;
+
+        default:
+            isc_throw(InternalError, "Error creating socket");
+    }
+    return (error_code);
+}
+
+
 // Handle the request from the client.
 //
 // Reads the type and family of socket required, creates the socket and returns
@@ -75,19 +114,7 @@ handleRequest(const int input_fd, const int output_fd,
     readMessage(input_fd, type, sizeof(type));
 
     // Decide what type of socket is being asked for
-    int sock_type = 0;
-    switch (type[0]) {
-        case 'T':
-            sock_type = SOCK_STREAM;
-            break;
-
-        case 'U':
-            sock_type = SOCK_DGRAM;
-            break;
-
-        default:
-            protocolError(output_fd);
-    }
+    const int sock_type = getSocketType(type[0], output_fd);
 
     // Read the address they ask for depending on what address family was
     // specified.
@@ -144,23 +171,14 @@ handleRequest(const int input_fd, const int output_fd,
         }
     } else {
         // Error.  Tell the client.
-        writeMessage(output_fd, "E", 1);           // Error occurred...
-        switch (result) {
-            case -1:
-                writeMessage(output_fd, "S", 1);   // ... in the socket() call
-                break;
-
-            case -2:
-                writeMessage(output_fd, "B", 1);   // ... in the bind() call
-                break;
-
-            default:
-                isc_throw(InternalError, "Error creating socket");
-        }
+        char error_message[2];
+        error_message[0] = 'E';
+        error_message[1] = getErrorCode(result);
+        writeMessage(output_fd, error_message, sizeof(error_message));
 
         // ...and append the reason code to the error message
-        const int error = errno;
-        writeMessage(output_fd, &error, sizeof(error));
+        const int error_number = errno;
+        writeMessage(output_fd, &error_number, sizeof(error_number));
     }
 }
 
