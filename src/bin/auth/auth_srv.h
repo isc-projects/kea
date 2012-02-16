@@ -361,6 +361,20 @@ public:
     /// \return the value of the counter.
     uint64_t getCounter(const isc::dns::Opcode opcode) const;
 
+    /// \brief Get the value of per Rcode counter in the Auth Counters.
+    ///
+    /// This function calls AuthCounters::getCounter(isc::dns::Rcode) and
+    /// returns its return value.
+    ///
+    /// \note This is a tentative interface as an attempt of experimentally
+    /// supporting more statistics counters.  This should eventually be more
+    /// generalized.  In any case, this method is mainly for testing.
+    ///
+    /// \throw None
+    /// \param rcode The rcode of the counter to get the value of
+    /// \return the value of the counter.
+    uint64_t getCounter(const isc::dns::Rcode rcode) const;
+
     /**
      * \brief Set and get the addresses we listen on.
      */
@@ -382,6 +396,22 @@ public:
                         keyring);
 
 private:
+    /// \brief Resume the server
+    ///
+    /// This is a wrapper call for DNSServer::resume(done), if 'done' is true,
+    /// the Rcode set in the given Message is counted in the statistics
+    /// counter.
+    ///
+    /// This method is expected to be called by processMessage()
+    ///
+    /// \param server The DNSServer as passed to processMessage()
+    /// \param message The response as constructed by processMessage()
+    /// \param done If true, the Rcode from the given message is counted,
+    ///             this value is then passed to server->resume(bool)
+    void resumeServer(isc::asiodns::DNSServer* server,
+                      isc::dns::MessagePtr message,
+                      bool done);
+
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
