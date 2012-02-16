@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <iostream>
-
 #include "../sockcreator.h"
 
 #include <util/unittests/fork.h>
@@ -25,6 +23,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+
+#include <iostream>
 #include <cstring>
 #include <cerrno>
 
@@ -106,7 +106,7 @@ typedef void (*socket_check_t)(const int);
 
 // IPv4 check
 void addressFamilySpecificCheck(const sockaddr_in*, const int) {
-};
+}
 
 // IPv6 check
 void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum) {
@@ -114,7 +114,7 @@ void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum) {
     socklen_t len = sizeof(options);
     EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_V6ONLY, &options, &len));
     EXPECT_NE(0, options);
-};
+}
 
 
 // Generic version of the socket test.  It creates the socket and checks that
@@ -133,7 +133,7 @@ void testAnyCreate(int socket_type, socket_check_t socket_check) {
     memset(&addr, 0, sizeof(addr));
     setAddressFamilyFields(&addr);
     sockaddr* addr_ptr = reinterpret_cast<sockaddr*>(&addr);
-    int socket = get_sock(socket_type, addr_ptr, sizeof(addr));
+    const int socket = get_sock(socket_type, addr_ptr, sizeof(addr));
     ASSERT_GE(socket, 0) << "Couldn't create socket: failed with " <<
         "return code " << socket << " and error " << strerror(errno);
 
@@ -198,8 +198,7 @@ TEST(get_sock, fail_with_nonsense) {
 // -1: The simulated bind() call has failed
 // -2: The simulated socket() call has failed
 int
-get_sock_dummy(const int type, struct sockaddr *addr, const socklen_t)
-{
+get_sock_dummy(const int type, struct sockaddr* addr, const socklen_t) {
     int result = 0;
     int port = 0;
 
@@ -245,8 +244,7 @@ get_sock_dummy(const int type, struct sockaddr *addr, const socklen_t)
 
 // Dummy send function - return data (the result of get_sock()) to the destination.
 int
-send_fd_dummy(const int destination, const int what)
-{
+send_fd_dummy(const int destination, const int what) {
     // Make sure it is 1 byte so we know the length. We do not use more during
     // the test anyway.  And even with the LS bute, we can distinguish between
     // the different results.
@@ -275,11 +273,11 @@ void run_test(const char* input_data, const size_t input_size,
     // process sends data from the client to run() and the checker process
     // reads the response and checks it against the expected response.
     int input_fd = 0;
-    pid_t input = provide_input(&input_fd, input_data, input_size);
+    const pid_t input = provide_input(&input_fd, input_data, input_size);
     ASSERT_NE(-1, input) << "Couldn't start input feeder";
 
     int output_fd = 0;
-    pid_t output = check_output(&output_fd, output_data, output_size);
+    const pid_t output = check_output(&output_fd, output_data, output_size);
     ASSERT_NE(-1, output) << "Couldn't start output checker";
 
     // Run the body
