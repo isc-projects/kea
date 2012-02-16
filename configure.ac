@@ -517,21 +517,22 @@ else
         AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
     fi
 fi
+if test "x${BOTAN_CONFIG}" != "x"
+then
+    BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
+    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
-BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
-BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
-
-# We expect botan-config --libs to contain -L<path_to_libbotan>, but
-# this is not always the case.  As a heuristics workaround we add
-# -L`botan-config --prefix/lib` in this case (if not present already).
-# Same for BOTAN_INCLUDES (but using include instead of lib) below.
-if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
-    echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
-        BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
-    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
-        BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
+    # this is not always the case.  As a heuristics workaround we add
+    # -L`botan-config --prefix/lib` in this case (if not present already).
+    # Same for BOTAN_INCLUDES (but using include instead of lib) below.
+    if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
+        echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
+            BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
+        echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+            BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    fi
 fi
-
 # botan-config script (and the way we call pkg-config) returns -L and -l
 # as one string, but we need them in separate values
 BOTAN_LDFLAGS=
