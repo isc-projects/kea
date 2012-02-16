@@ -133,7 +133,7 @@ void testAnyCreate(int socket_type, socket_check_t socket_check) {
     memset(&addr, 0, sizeof(addr));
     setAddressFamilyFields(&addr);
     sockaddr* addr_ptr = reinterpret_cast<sockaddr*>(&addr);
-    const int socket = get_sock(socket_type, addr_ptr, sizeof(addr));
+    const int socket = getSock(socket_type, addr_ptr, sizeof(addr));
     ASSERT_GE(socket, 0) << "Couldn't create socket: failed with " <<
         "return code " << socket << " and error " << strerror(errno);
 
@@ -176,14 +176,14 @@ TEST(get_sock, tcp6_create) {
 TEST(get_sock, fail_with_nonsense) {
     sockaddr addr;
     memset(&addr, 0, sizeof(addr));
-    ASSERT_LT(get_sock(0, &addr, sizeof addr), 0);
+    ASSERT_LT(getSock(0, &addr, sizeof addr), 0);
 }
 
 // The main run() function in the socket creator takes three functions to
 // get the socket, send information to it, and close it.  These allow for
 // alternatives to the system functions to be used for testing.
 
-// Replacement get_sock() function.
+// Replacement getSock() function.
 // The return value indicates the result of checks and is encoded.  Using LSB
 // bit numbering (least-significant bit is bit 0) then:
 //
@@ -198,7 +198,7 @@ TEST(get_sock, fail_with_nonsense) {
 // -1: The simulated bind() call has failed
 // -2: The simulated socket() call has failed
 int
-get_sock_dummy(const int type, struct sockaddr* addr, const socklen_t) {
+getSockDummy(const int type, struct sockaddr* addr, const socklen_t) {
     int result = 0;
     int port = 0;
 
@@ -242,9 +242,9 @@ get_sock_dummy(const int type, struct sockaddr* addr, const socklen_t) {
     return (result);
 }
 
-// Dummy send function - return data (the result of get_sock()) to the destination.
+// Dummy send function - return data (the result of getSock()) to the destination.
 int
-send_fd_dummy(const int destination, const int what) {
+send_FdDummy(const int destination, const int what) {
     // Make sure it is 1 byte so we know the length. We do not use more during
     // the test anyway.  And even with the LS bute, we can distinguish between
     // the different results.
@@ -263,11 +263,11 @@ closeIgnore(int) {
 // It uses different functions to create the socket and send it and pass
 // data to it and check it returns correct data back, to see if the run()
 // parses the commands correctly.
-void run_test(const char* input_data, const size_t input_size,
-              const char* output_data, const size_t output_size,
-              bool should_succeed = true,
-              const close_t test_close = closeIgnore,
-              const send_fd_t send_fd = send_fd_dummy)
+void runTest(const char* input_data, const size_t input_size,
+             const char* output_data, const size_t output_size,
+             bool should_succeed = true,
+             const close_t test_close = closeIgnore,
+             const send_fd_t send_fd = send_FdDummy)
 {
     // Prepare the input feeder and output checker processes.  The feeder
     // process sends data from the client to run() and the checker process
@@ -282,10 +282,10 @@ void run_test(const char* input_data, const size_t input_size,
 
     // Run the body
     if (should_succeed) {
-        EXPECT_NO_THROW(run(input_fd, output_fd, get_sock_dummy, send_fd,
+        EXPECT_NO_THROW(run(input_fd, output_fd, getSockDummy, send_fd,
                             test_close));
     } else {
-        EXPECT_THROW(run(input_fd, output_fd, get_sock_dummy, send_fd,
+        EXPECT_THROW(run(input_fd, output_fd, getSockDummy, send_fd,
                          test_close), isc::socket_creator::SocketCreatorError);
     }
 
@@ -301,17 +301,17 @@ void run_test(const char* input_data, const size_t input_size,
 
 // Check it terminates successfully when asked to.
 TEST(run, terminate) {
-    run_test("T", 1, NULL, 0);
+    runTest("T", 1, NULL, 0);
 }
 
 // Check it rejects incorrect input.
 TEST(run, bad_input) {
-    run_test("XXX", 3, "FI", 2, false);
+    runTest("XXX", 3, "FI", 2, false);
 }
 
 // Check it correctly parses query stream to create sockets.
 TEST(run, sockets) {
-    run_test(
+    runTest(
         // Commands:
         "SU4\xff\xff\0\0\0\0"   // IPv4 UDP socket, port 0xffffff, address 0.0.0.0
         "ST4\xff\xff\0\0\0\0"   // IPv4 TCP socket, port 0xffffff, address 0.0.0.0
@@ -321,7 +321,7 @@ TEST(run, sockets) {
                                 // IPv6 TCP socket, port 0xffffff, address ::
         "T",                    // ... and terminate
         9 + 9 + 21 + 21 + 1,    // Length of command string
-        "S\x07S\x05S\x0dS\x0f", // Response ("S" + LS byte of get_sock() return)
+        "S\x07S\x05S\x0dS\x0f", // Response ("S" + LS byte of getSock() return)
         8);                     // Length of response
 }
 
@@ -340,7 +340,7 @@ TEST(run, bad_sockets) {
     strcpy(result + 2 + sizeof(int), "ES");
 
     // Run the test
-    run_test(
+    runTest(
         "SU4\xbb\xbb\0\0\0\0"   // Port number will trigger simulated bind() fail
         "SU4\xcc\xcc\0\0\0\0"   // Port number will trigger simulated socket() fail
         "T",                    // Terminate
@@ -355,9 +355,9 @@ closeFail(int) {
 }
 
 TEST(run, cant_close) {
-    run_test("SU4\xff\xff\0\0\0\0", 9,
-             "S\x07", 2,
-             false, closeFail);
+    runTest("SU4\xff\xff\0\0\0\0", 9,
+            "S\x07", 2,
+            false, closeFail);
 }
 
 // A send of the file descriptor that fails.  In this case we expect the client
@@ -369,9 +369,9 @@ sendFDFail(const int, const int) {
 }
 
 TEST(run, cant_send_fd) {
-    run_test("SU4\xff\xff\0\0\0\0", 9,
-             "S", 1,
-             false, closeIgnore, sendFDFail);
+    runTest("SU4\xff\xff\0\0\0\0", 9,
+            "S", 1,
+            false, closeIgnore, sendFDFail);
 }
 
 }   // Anonymous namespace
