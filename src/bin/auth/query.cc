@@ -272,10 +272,31 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
         finder.find(dname, RRType::DS(), dnssec_opt_);
     if (ds_result.code == ZoneFinder::SUCCESS) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(ds_result.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(
+                               ds_result.rrset),
                            dnssec_);
-    } else if (ds_result.code == ZoneFinder::NXRRSET) {
+    } else if (ds_result.code == ZoneFinder::NXRRSET &&
+               ds_result.isNSECSigned()) {
         addNXRRsetProof(finder, ds_result);
+    } else if (ds_result.code == ZoneFinder::NXRRSET &&
+               ds_result.isNSEC3Signed()) {
+        // Add no DS proof with NSEC3 as specified in RFC5155 Section 7.2.7.
+        // Depending on whether the zone is optout or not, findNSEC3() may
+        // return non-NULL or NULL next_proof (respectively).  The Opt-Out flag
+        // must be set or cleared accordingly, but we don't check that
+        // in this level (as long as the zone signed validly and findNSEC3()
+        // is valid, the condition should be met; otherwise we'd let the
+        // validator detect the error).
+        const ZoneFinder::FindNSEC3Result nsec3_result =
+            finder.findNSEC3(dname, true);
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               nsec3_result.closest_proof), dnssec_);
+        if (nsec3_result.next_proof) {
+            response_.addRRset(Message::SECTION_AUTHORITY,
+                               boost::const_pointer_cast<AbstractRRset>(
+                                   nsec3_result.next_proof), dnssec_);
+        }
     } else {
         // Any other case should be an error
         isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
@@ -293,6 +314,58 @@ Query::addNXRRsetProof(ZoneFinder& finder,
                            dnssec_);
         if (db_result.isWildcard()) {
             addWildcardNXRRSETProof(finder, db_result.rrset);
+        }
+    } else if (db_result.isNSEC3Signed() && !db_result.isWildcard()) {
+        // Handling depends on whether query type is DS or not
+        // (see RFC5155, 7.2.3 and 7.2.4):  If qtype == DS, do
+        // recursive search (and add next_proof, if necessary),
+        // otherwise, do non-recursive search
+        const bool qtype_ds = (qtype_ == RRType::DS());
+        ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_, qtype_ds));
+        if (result.matched) {
+            response_.addRRset(Message::SECTION_AUTHORITY,
+                               boost::const_pointer_cast<AbstractRRset>(
+                                   result.closest_proof), dnssec_);
+            // For qtype == DS, next_proof could be set
+            // (We could check for opt-out here, but that's really the
+            // responsibility of the datasource)
+            if (qtype_ds && result.next_proof != ConstRRsetPtr()) {
+                response_.addRRset(Message::SECTION_AUTHORITY,
+                                   boost::const_pointer_cast<AbstractRRset>(
+                                       result.next_proof), dnssec_);
+            }
+        } else {
+            isc_throw(BadNSEC3, "No matching NSEC3 found for existing domain "
+                      << qname_);
+        }
+    } else if (db_result.isNSEC3Signed() && db_result.isWildcard()) {
+        // Case for RFC5155 Section 7.2.5
+        const ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
+                                                                  true));
+        // We know there's no exact match for the qname, so findNSEC3() should
+        // return both closest and next proofs.  If the latter is NULL, it
+        // means a run time collision (or the zone is broken in other way).
+        // In that case addRRset() will throw, and it will be converted to
+        // SERVFAIL.
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.closest_proof), dnssec_);
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.next_proof), dnssec_);
+
+        // Construct the matched wildcard name and add NSEC3 for it.
+        const Name wname = Name("*").concatenate(
+            qname_.split(qname_.getLabelCount() - result.closest_labels));
+        const ZoneFinder::FindNSEC3Result wresult(finder.findNSEC3(wname,
+                                                                   false));
+        if (wresult.matched) {
+            response_.addRRset(Message::SECTION_AUTHORITY,
+                               boost::const_pointer_cast<AbstractRRset>(
+                                   wresult.closest_proof), dnssec_);
+        } else {
+            isc_throw(BadNSEC3, "No matching NSEC3 found for existing domain "
+                      << wname);
         }
     }
 }
@@ -315,13 +388,27 @@ Query::addAuthAdditional(ZoneFinder& finder) {
     }
 }
 
+namespace {
+// A simple wrapper for DataSourceClient::findZone().  Normally we can simply
+// check the closest zone to the qname, but for type DS query we need to
+// look into the parent zone.  Nevertheless, if there is no "parent" (i.e.,
+// the qname consists of a single label, which also means it's the root name),
+// we should search the deepest zone we have (which should be the root zone;
+// otherwise it's a query error).
+DataSourceClient::FindResult
+findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
+    if (qtype != RRType::DS() || qname.getLabelCount() == 1) {
+        return (client.findZone(qname));
+    }
+    return (client.findZone(qname.split(1)));
+}
+}
+
 void
 Query::process() {
-    const bool qtype_is_any = (qtype_ == RRType::ANY());
-
-    response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-    const DataSourceClient::FindResult result =
-        datasrc_client_.findZone(qname_);
+    // Found a zone which is the nearest ancestor to QNAME
+    const DataSourceClient::FindResult result = findZone(datasrc_client_,
+                                                         qname_, qtype_);
 
     // If we have no matching authoritative zone for the query name, return
     // REFUSED.  In short, this is to be compatible with BIND 9, but the
@@ -330,16 +417,26 @@ Query::process() {
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
     if (result.code != result::SUCCESS &&
         result.code != result::PARTIALMATCH) {
+        // If we tried to find a "parent zone" for a DS query and failed,
+        // we may still have authority at the child side.  If we do, the query
+        // has to be handled there.
+        if (qtype_ == RRType::DS() && qname_.getLabelCount() > 1 &&
+            processDSAtChild()) {
+            return;
+        }
+        response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_.setRcode(Rcode::REFUSED());
         return;
     }
     ZoneFinder& zfinder = *result.zone_finder;
 
-    // Found a zone which is the nearest ancestor to QNAME, set the AA bit
+    // We have authority for a zone that contain the query name (possibly
+    // indirectly via delegation).  Look into the zone.
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     response_.setRcode(Rcode::NOERROR());
     std::vector<ConstRRsetPtr> target;
     boost::function0<ZoneFinder::FindResult> find;
+    const bool qtype_is_any = (qtype_ == RRType::ANY());
     if (qtype_is_any) {
         find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
                            boost::ref(target), dnssec_opt_);
@@ -447,6 +544,14 @@ Query::process() {
             }
             break;
         case ZoneFinder::DELEGATION:
+            // If a DS query resulted in delegation, we also need to check
+            // if we are an authority of the child, too.  If so, we need to
+            // complete the process in the child as specified in Section
+            // 2.2.1.2. of RFC3658.
+            if (qtype_ == RRType::DS() && processDSAtChild()) {
+                return;
+            }
+
             response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
             response_.addRRset(Message::SECTION_AUTHORITY,
                 boost::const_pointer_cast<AbstractRRset>(db_result.rrset),
@@ -482,6 +587,38 @@ Query::process() {
             isc_throw(isc::NotImplemented, "Unknown result code");
             break;
     }
+}
+
+bool
+Query::processDSAtChild() {
+    const DataSourceClient::FindResult zresult =
+        datasrc_client_.findZone(qname_);
+
+    if (zresult.code != result::SUCCESS) {
+        return (false);
+    }
+
+    // We are receiving a DS query at the child side of the owner name,
+    // where the DS isn't supposed to belong.  We should return a "no data"
+    // response as described in Section 3.1.4.1 of RFC4035 and Section
+    // 2.2.1.1 of RFC 3658.  find(DS) should result in NXRRSET, in which
+    // case (and if DNSSEC is required) we also add the proof for that,
+    // but even if find() returns an unexpected result, we don't bother.
+    // The important point in this case is to return SOA so that the resolver
+    // that happens to contact us can hunt for the appropriate parent zone
+    // by seeing the SOA.
+    response_.setHeaderFlag(Message::HEADERFLAG_AA);
+    response_.setRcode(Rcode::NOERROR());
+    addSOA(*zresult.zone_finder);
+    const ZoneFinder::FindResult ds_result =
+        zresult.zone_finder->find(qname_, RRType::DS(), dnssec_opt_);
+    if (ds_result.code == ZoneFinder::NXRRSET) {
+        if (dnssec_) {
+            addNXRRsetProof(*zresult.zone_finder, ds_result);
+        }
+    }
+
+    return (true);
 }
 
 }

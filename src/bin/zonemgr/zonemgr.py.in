@@ -658,8 +658,11 @@ class Zonemgr:
 
     def run(self):
         self.running = True
-        while not self._shutdown_event.is_set():
-            self._module_cc.check_command(False)
+        try:
+            while not self._shutdown_event.is_set():
+                self._module_cc.check_command(False)
+        finally:
+            self._module_cc.send_stopping()
 
 zonemgrd = None
 

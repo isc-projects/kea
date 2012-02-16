@@ -72,9 +72,19 @@ class ThreadingServerManager:
         self.server._started.wait()
         self.server._started.clear()
 
-    def shutdown(self):
+    def shutdown(self, blocking=False):
+        """Shut down the server by calling its own shutdown() method.
+           Then wait for its thread to finish. If blocking is True,
+           the thread.join() blocks until the thread finishes. If not,
+           it uses a zero timeout. The latter is necessary in a number
+           of existing tests. We should redo this part (we should not
+           even need threads in most, if not all, of these threads, see
+           ticket #1668)"""
         self.server.shutdown()
-        self.server._thread.join(0) # timeout is 0
+        if blocking:
+            self.server._thread.join()
+        else:
+            self.server._thread.join(0) # timeout is 0
 
 def do_nothing(*args, **kwargs): pass
 

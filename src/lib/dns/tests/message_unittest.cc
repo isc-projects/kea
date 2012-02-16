@@ -324,6 +324,10 @@ TEST_F(MessageTest, badAddRRset) {
                                         rrset_a), InvalidMessageOperation);
     // out-of-band section ID
     EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), OutOfRange);
+
+    // NULL RRset
+    EXPECT_THROW(message_render.addRRset(Message::SECTION_ANSWER, RRsetPtr()),
+                 InvalidParameter);
 }
 
 TEST_F(MessageTest, hasRRset) {
