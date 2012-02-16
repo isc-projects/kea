@@ -1,4 +1,34 @@
-374.	[func]*     stephen
+378.	[func]		vorner
+	It possible to start authoritative server or resolver in multiple
+	instances, to use more than one core. Configuration is described in
+	the guide.
+	(Trac #1596, git 17f7af0d8a42a0a67a2aade5bc269533efeb840a)
+
+377.	[bug]		jinmei
+	libdns++: miscellaneous bug fixes for the NSEC and NSEC3 RDATA
+	implementation, including a crash in NSEC3::toText() for some RR
+	types, incorrect handling of empty NSEC3 salt, and incorrect
+	comparison logic in NSEC3::compare().
+	(Trac #1641, git 28ba8bd71ae4d100cb250fd8d99d80a17a6323a2)
+
+376.	[bug]		jinmei, vorner
+	The new query handling module of b10-auth did not handle type DS
+	query correctly: It didn't look for it in the parent zone, and
+	it incorrectly returned a DS from the child zone if it
+	happened to exist there.  Both were corrected, and it now also
+	handles the case of having authority for the child and a grand
+	ancestor.
+	(Trac #1570, git 2858b2098a10a8cc2d34bf87463ace0629d3670e)
+
+375.	[func]		jelte
+	Modules now inform the system when they are stopping. As a result, they
+	are removed from the 'active modules' list in bindctl, which can then
+	inform the user directly when it tries to send them a command or
+	configuration update. Previously this would result in a 'not
+	responding' error instead of 'not running'.
+	(Trac #640, git 17e78fa1bb1227340aa9815e91ed5c50d174425d)
+
+374.	[func]*		stephen
 	Alter RRsetPtr and ConstRRsetPtr to point to AbstractRRset (instead
 	of RRset) to allow for specialised implementations of RRsets in
 	data sources.

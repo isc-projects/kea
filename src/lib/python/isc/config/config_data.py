@@ -313,6 +313,10 @@ class MultiConfigData:
         self._current_config = {}
         self._local_changes = {}
 
+    def clear_specifications(self):
+        """Remove all known module specifications"""
+        self._specifications = {}
+
     def set_specification(self, spec):
         """Add or update a ModuleSpec. Raises a ConfigDataError is spec is not a ModuleSpec"""
         if type(spec) != isc.config.ModuleSpec:

@@ -154,6 +154,96 @@ public:
     virtual bool match(const rdata::generic::NSEC3PARAM& nsec3param) const = 0;
 };
 
+/// \brief Factory class of NSEC3Hash.
+///
+/// This class is an abstract base class that provides the creation interfaces
+/// of \c NSEC3Hash objects.  By defining a specific derived class of the
+/// creator, normally with a different specific class of \c NSEC3Hash,
+/// the application can use a customized implementation of \c NSEC3Hash
+/// without changing the library itself.  The intended primary application of
+/// such customization is tests (it would be convenient for a test to produce
+/// a faked hash value regardless of the input so it doesn't have to identify
+/// a specific input value to produce a particular hash).  Another possibility
+/// would be an experimental extension for a newer hash algorithm or
+/// implementation.
+///
+/// The two main methods named \c create() correspond to the static factory
+/// methods of \c NSEC3Hash of the same name.
+///
+/// By default, the library uses the \c DefaultNSEC3HashCreator creator.
+/// The \c setNSEC3HashCreator() function can be used to replace it with a
+/// user defined version.  For such customization purposes as implementing
+/// experimental new hash algorithms, the application may internally want to
+/// use the \c DefaultNSEC3HashCreator in general cases while creating a
+/// customized type of \c NSEC3Hash object for that particular hash algorithm.
+///
+/// The creator objects are generally expected to be stateless; they will
+/// only encapsulate the factory logic.  The \c create() methods are declared
+/// as const member functions for this reason.  But if we see the need for
+/// having a customized creator that benefits from its own state in future,
+/// this condition can be loosened.
+class NSEC3HashCreator {
+protected:
+    /// \brief The default constructor.
+    ///
+    /// Make very sure this isn't directly instantiated by making it protected
+    /// even if this class is modified to lose all pure virtual methods.
+    NSEC3HashCreator() {}
+
+public:
+    /// \brief The destructor.
+    ///
+    /// This does nothing; defined only for allowing derived classes to
+    /// specialize its behavior.
+    virtual ~NSEC3HashCreator() {}
+
+    /// \brief Factory method of NSECHash from NSEC3PARAM RDATA.
+    ///
+    /// See
+    /// <code>NSEC3Hash::create(const rdata::generic::NSEC3PARAM& param)</code>
+    virtual NSEC3Hash* create(const rdata::generic::NSEC3PARAM& nsec3param)
+        const = 0;
+
+    /// \brief Factory method of NSECHash from NSEC3 RDATA.
+    ///
+    /// See
+    /// <code>NSEC3Hash::create(const rdata::generic::NSEC3& param)</code>
+    virtual NSEC3Hash* create(const rdata::generic::NSEC3& nsec3)
+        const = 0;
+};
+
+/// \brief The default NSEC3Hash creator.
+///
+/// This derived class implements the \c NSEC3HashCreator interfaces for
+/// the standard NSEC3 hash calculator as defined in RFC5155.  The library
+/// will use this creator by default, so normal applications don't have to
+/// be aware of this class at all.  This class is publicly visible for the
+/// convenience of special applications that want to customize the creator
+/// behavior for a particular type of parameters while preserving the default
+/// behavior for others.
+class DefaultNSEC3HashCreator : public NSEC3HashCreator {
+public:
+    virtual NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param) const;
+    virtual NSEC3Hash* create(const rdata::generic::NSEC3& nsec3) const;
+};
+
+/// \brief The registrar of \c NSEC3HashCreator.
+///
+/// This function sets or resets the system-wide \c NSEC3HashCreator that
+/// is used by \c NSEC3Hash::create().
+///
+/// If \c new_creator is non NULL, the given creator object will replace
+/// any existing creator.  If it's NULL, the default builtin creator will be
+/// used again from that point.
+///
+/// When \c new_creator is non NULL, the caller is responsible for keeping
+/// the referenced object valid as long as it can be used via
+/// \c NSEC3Hash::create().
+///
+/// \exception None
+/// \param new_creator A pointer to the new creator object or NULL.
+void setNSEC3HashCreator(const NSEC3HashCreator* new_creator);
+
 }
 }
 #endif  // __NSEC3HASH_H

@@ -161,11 +161,30 @@ public:
     /// \param port the port to which the socket should be bound (native endian,
     ///     not network byte order).
     /// \param share_mode how the socket can be shared with other requests.
-    /// This must be one of the defined values of ShareMode.
+    ///     This must be one of the defined values of ShareMode..
     /// \param share_name the name of sharing group, relevant for SHARE_SAME
-    ///     (specified by us or someone else).
+    ///     (specified by us or someone else). If left empty (the default),
+    ///     the app_name parameter of initSocketRequestor is used. If that one
+    ///     is empty as well, it is accepted, but not recommended, as such
+    ///     a non-descriptive name has a high chance of collisions between
+    ///     applications. Note that you should provide a name (by share_name
+    ///     or app_name) even when you set it to DONT_SHARE (for logs and
+    ///     debugging) and you need to provide one with SHARE_SAME (to know
+    ///     what is same) and SHARE_ANY (someone else might want SHARE_SAME,
+    ///     so it would check against this)
     /// \return the socket, as a file descriptor and token representing it on
     ///     the socket creator side.
+    ///
+    /// To understand the modes better:
+    /// - If mode is DONT_SHARE, it succeeds if no one else has opened an FD
+    ///   for requested protocol, address and port.
+    /// - If mode is SHARE_SAME, it succeeds if all applications who opened an
+    ///   FD for the requested protocol, address and port provided the same
+    ///   share_name as this one and none of them had mode DONT_SHARE.
+    /// - If mode is SHARE_ANY, it succeeds if no applications who requested
+    ///   the same potocol, address and port provided DONT_SHARE and all the
+    ///   applications who provided SHARE_SAME also provided the same
+    ///   share_name as this process did.
     ///
     /// \throw InvalidParameter protocol or share_mode is invalid
     /// \throw CCSessionError when we have a problem talking over the CC
@@ -180,7 +199,7 @@ public:
     virtual SocketID requestSocket(Protocol protocol,
                                    const std::string& address,
                                    uint16_t port, ShareMode share_mode,
-                                   const std::string& share_name) = 0;
+                                   const std::string& share_name = "") = 0;
 
     /// \brief Tell the socket creator we no longer need the socket
     ///
@@ -215,8 +234,16 @@ SocketRequestor& socketRequestor();
 ///
 /// \param session the CC session that'll be used to talk to the
 ///                socket creator.
+/// \param app_name default share name if one is not provided with
+///                 requestSocket. You can leave this as empty string,
+///                 but then you should provide a reasonably descriptive
+///                 name to requestSocket. Empty names work like any others,
+///                 but have a high chance of collisions, so it is recommended
+///                 to avoid them and provide the name of the application
+///                 here.
 /// \throw InvalidOperation when it is called more than once
-void initSocketRequestor(cc::AbstractSession& session);
+void initSocketRequestor(cc::AbstractSession& session,
+                         const std::string& app_name);
 
 /// \brief Initialization for tests
 ///
