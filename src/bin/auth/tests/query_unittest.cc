@@ -2150,19 +2150,38 @@ TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
 
 TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
     // Name Error (NXDOMAIN) case with NSEC3 proof per RFC5155 Section 7.2.2.
+
+    // Enable NSEC3
     mock_finder->setNSEC3Flag(true);
+    // This will be the covering NSEC3 for the next closer
+    mock_finder->addRecord(nsec3_uwild_txt);
+    // This will be the covering NSEC3 for the possible wildcard
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
     Query(memory_client, Name("nxdomain.example.com"), qtype,
               response, true).process();
-    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
-                         getCommonRRSIGText("SOA") + "\n" +
-                         string(nsec3_apex_txt) + "\n" +
-                         string("0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG ") +
-                         getCommonRRSIGText("NSEC3") + "\n" +
-                         string(nsec3_www_txt) + "\n" +
-                         string("q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG ") +
-                         getCommonRRSIGText("NSEC3")).c_str(),
+    cout << response << endl;
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0, NULL,
+                  // SOA + its RRSIG
+                  (string(soa_txt) +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   // NSEC3 for the closest encloser + its RRSIG
+                   string(nsec3_apex_txt) + "\n" +
+                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the next closer + its RRSIG
+                   string(nsec3_uwild_txt) + "\n" +
+                   mock_finder->hash_map_[Name("uwild.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the wildcard + its RRSIG
+                   string(unsigned_delegation_nsec3_txt) +
+                   mock_finder->hash_map_[
+                       Name("unsigned-delegation.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
 
