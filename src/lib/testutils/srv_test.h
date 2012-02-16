@@ -83,16 +83,9 @@ protected:
     /// It constructs wire-format DNS packet data from \c message in the
     /// form of \c IOMessage in \c io_message.
     /// The existing content of \c io_message, if any, will be deleted.
-    ///
-    /// If callback is given, it is called after rendering the message,
-    /// but before 'sending' it; this allows the given callback to modify
-    /// the data and introduce bad requests that would otherwise be hard
-    /// to reproduce (it passes the wire-format data as non-const uint8_t,
-    /// so tread lightly when using this).
     void createRequestPacket(isc::dns::Message& message,
                              const int protocol = IPPROTO_UDP,
-                             isc::dns::TSIGContext* context = NULL,
-                             void (*callback)(uint8_t*, size_t) = NULL);
+                             isc::dns::TSIGContext* context = NULL);
 
     MockSession notify_session;
     MockServer dnsserv;
