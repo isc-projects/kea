@@ -16,6 +16,7 @@
 #define __STATISTICS_H 1
 
 #include <dns/opcode.h>
+#include <dns/rcode.h>
 
 #include <cc/session.h>
 #include <stdint.h>
@@ -98,6 +99,15 @@ public:
     /// \throw None
     void inc(const isc::dns::Opcode opcode);
 
+    /// \brief Increment the counter of a per rcode counter.
+    ///
+    /// \note This is a tentative interface.  See \c getCounter().
+    ///
+    /// \param rcode The rcode of the counter to increment.
+    ///
+    /// \throw None
+    void inc(const isc::dns::Rcode rcode);
+
     /// \brief Submit statistics counters to statistics module.
     ///
     /// This method is desinged to be called periodically
@@ -161,6 +171,21 @@ public:
     /// \param opcode The opcode of the counter to get the value of
     /// \return the value of the counter.
     uint64_t getCounter(const isc::dns::Opcode opcode) const;
+
+    /// \brief Get the value of a per rcode counter.
+    ///
+    /// This method returns the value of the per rcode counter for the
+    /// specified \c rcode.
+    ///
+    /// \note As mentioned in getCounter(const isc::dns::Opcode opcode),
+    /// This is a tentative interface as an attempt of experimentally
+    /// supporting more statistics counters.  This should eventually be more
+    /// generalized.  In any case, this method is mainly for testing.
+    ///
+    /// \throw None
+    /// \param rcode The rcode of the counter to get the value of
+    /// \return the value of the counter.
+    uint64_t getCounter(const isc::dns::Rcode rcode) const;
 
     /// \brief A type of validation function for the specification in
     /// isc::config::ModuleSpec.
