@@ -57,8 +57,8 @@ public:
     /// @param buf Buffer to be parsed.
     /// @param options Reference to option container. Options will be
     ///        put here.
-    static uint32_t unpackOptions4(const OptionBuffer& buf,
-                                   isc::dhcp::Option::OptionCollection& options);
+    static size_t unpackOptions4(const OptionBuffer& buf,
+                                 isc::dhcp::Option::OptionCollection& options);
 
     /// @brief Parses provided buffer as DHCPv6 options and creates Option objects.
     ///
@@ -68,8 +68,8 @@ public:
     /// @param buf Buffer to be parsed.
     /// @param options Reference to option container. Options will be
     ///        put here.
-    static uint32_t unpackOptions6(const OptionBuffer& buf,
-                                   isc::dhcp::Option::OptionCollection& options);
+    static size_t unpackOptions6(const OptionBuffer& buf,
+                                 isc::dhcp::Option::OptionCollection& options);
 
     /// Registers factory method that produces options of specific option types.
     ///
