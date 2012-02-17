@@ -15,6 +15,7 @@
 #include "sockcreator.h"
 
 #include <util/io/fd.h>
+#include <util/io/sockaddr_util.h>
 
 #include <cerrno>
 #include <cstring>
@@ -25,6 +26,7 @@
 #include <netinet/in.h>
 
 using namespace isc::util::io;
+using namespace isc::util::io::internal;
 using namespace isc::socket_creator;
 
 namespace {
@@ -126,11 +128,11 @@ handleRequest(const int input_fd, const int output_fd,
     sockaddr_in6 addr_in6;
     switch (type[1]) { // The address family
 
-        // The casting to apparently incompatible types by reinterpret_cast
-        // is required by the C low-level interface.
+        // The casting to apparently incompatible types is required by the
+        // C low-level interface.
 
         case '4':
-            addr = reinterpret_cast<sockaddr*>(&addr_in);
+            addr = convertSockAddr(&addr_in);
             addr_len = sizeof(addr_in);
             memset(&addr_in, 0, sizeof(addr_in));
             addr_in.sin_family = AF_INET;
@@ -140,8 +142,8 @@ handleRequest(const int input_fd, const int output_fd,
             break;
 
         case '6':
-            addr = reinterpret_cast<sockaddr*>(&addr_in6);
-            addr_len = sizeof addr_in6;
+            addr = convertSockAddr(&addr_in6);
+            addr_len = sizeof(addr_in6);
             memset(&addr_in6, 0, sizeof(addr_in6));
             addr_in6.sin6_family = AF_INET6;
             readMessage(input_fd, &addr_in6.sin6_port,
