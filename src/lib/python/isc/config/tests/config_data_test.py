@@ -185,6 +185,43 @@ class TestConfigData(unittest.TestCase):
         spec_part = find_spec_part(config_spec, "item6/value1")
         self.assertEqual({'item_name': 'value1', 'item_type': 'string', 'item_optional': True, 'item_default': 'default'}, spec_part)
 
+    def test_find_spec_part_lists(self):
+        # A few specific tests for list data
+        module_spec = isc.config.module_spec_from_file(self.data_path +
+                                                       os.sep +
+                                                       "spec31.spec")
+        config_spec = module_spec.get_config_spec()
+
+        expected_spec_part = {'item_name': 'number',
+                              'item_type': 'integer',
+                              'item_default': 1,
+                              'item_optional': False}
+
+        # First a check for a correct fetch
+        spec_part = find_spec_part(config_spec,
+                                   "/first_list_items[0]/second_list_items[1]/"
+                                   "map_element/list1[1]/list2[1]")
+        self.assertEqual(expected_spec_part, spec_part)
+
+        # Leaving out an index should fail by default
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          find_spec_part, config_spec,
+                          "/first_list_items[0]/second_list_items/"
+                          "map_element/list1[1]/list2[1]")
+
+        # But not for the last element
+        spec_part = find_spec_part(config_spec,
+                                   "/first_list_items[0]/second_list_items[1]/"
+                                   "map_element/list1[1]/list2")
+        self.assertEqual(expected_spec_part, spec_part)
+
+        # And also not if strict_identifier is false (third argument)
+        spec_part = find_spec_part(config_spec,
+                                   "/first_list_items[0]/second_list_items/"
+                                   "map_element/list1[1]/list2[1]", False)
+        self.assertEqual(expected_spec_part, spec_part)
+
+
     def test_spec_name_list(self):
         name_list = spec_name_list(self.cd.get_module_spec().get_config_spec())
         self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5', 'item6'], name_list)
@@ -483,15 +520,25 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(MultiConfigData.DEFAULT, status)
 
 
-
     def test_get_value_maps(self):
         maps = self.mcd.get_value_maps()
         self.assertEqual([], maps)
         
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
         self.mcd.set_specification(module_spec)
+
+        expected = [{'default': False,
+                     'type': 'module',
+                     'name': 'Spec1',
+                     'value': None,
+                     'modified': False}]
+
         maps = self.mcd.get_value_maps()
-        self.assertEqual([{'default': False, 'type': 'module', 'name': 'Spec1', 'value': None, 'modified': False}], maps)
+        self.assertEqual(expected, maps)
+
+        maps = self.mcd.get_value_maps("/")
+        self.assertEqual(expected, maps)
+
         maps = self.mcd.get_value_maps('Spec2')
         self.assertEqual([], maps)
         maps = self.mcd.get_value_maps('Spec1')
@@ -564,6 +611,10 @@ class TestMultiConfigData(unittest.TestCase):
                     }
                    ]
         maps = self.mcd.get_value_maps("/Spec22/value9")
+        self.assertEqual(expected, maps)
+
+        # A slash at the end should not produce different output
+        maps = self.mcd.get_value_maps("/Spec22/value9/")
         self.assertEqual(expected, maps)
 
     def test_get_value_maps_named_set(self):
