@@ -488,45 +488,6 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual({'result': [0]},
                          fake_session.get_message('Spec2', None))
  
-    def test_check_command_without_recvmsg_remote_module(self):
-        "copied from test_check_command3"
-        fake_session = FakeModuleCCSession()
-        mccs = self.create_session("spec1.spec", None, None, fake_session)
-        mccs.set_config_handler(self.my_config_handler_ok)
-        self.assertEqual(len(fake_session.message_queue), 0)
-
-        fake_session.group_sendmsg(None, 'Spec2')
-        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
-        print(fake_session.message_queue)
-        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
-                         fake_session.get_message('ConfigManager', None))
-        self.assertEqual(len(fake_session.message_queue), 0)
-
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
-        env = { 'group':'Spec2', 'from':None }
-        self.assertEqual(len(fake_session.message_queue), 0)
-        mccs.check_command_without_recvmsg(cmd, env)
-        self.assertEqual(len(fake_session.message_queue), 0)
- 
-    def test_check_command_without_recvmsg_remote_module2(self):
-        "copied from test_check_command3"
-        fake_session = FakeModuleCCSession()
-        mccs = self.create_session("spec1.spec", None, None, fake_session)
-        mccs.set_config_handler(self.my_config_handler_ok)
-        self.assertEqual(len(fake_session.message_queue), 0)
-
-        fake_session.group_sendmsg(None, 'Spec2')
-        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
-        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
-                         fake_session.get_message('ConfigManager', None))
-        self.assertEqual(len(fake_session.message_queue), 0)
-
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec3': { 'item1': 2 }})
-        env = { 'group':'Spec3', 'from':None }
-        self.assertEqual(len(fake_session.message_queue), 0)
-        mccs.check_command_without_recvmsg(cmd, env)
-        self.assertEqual(len(fake_session.message_queue), 0)
- 
     def test_check_command_block_timeout(self):
         """Check it works if session has timeout and it sets it back."""
         def cmd_check(mccs, session):
@@ -554,16 +515,19 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.set_command_handler(self.my_command_handler_ok)
         self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
 
-    def test_remote_module(self):
+    def _internal_remote_module(self, function_lambda, parameter,
+                                fill_other_messages):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
         mccs.remove_remote_config("Spec2")
+        function = function_lambda(mccs)
 
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
         self.assertFalse("Spec2" in fake_session.subscriptions)
+        fill_other_messages(fake_session)
         fake_session.group_sendmsg(None, 'Spec2')
-        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        rmodname = function(parameter)
         self.assertTrue("Spec2" in fake_session.subscriptions)
         self.assertEqual("Spec2", rmodname)
         self.assertRaises(isc.cc.data.DataNotFoundError, mccs.get_remote_config_value, rmodname, "asdf")
@@ -576,35 +540,75 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
         # test if unsubscription is alse sent when object is deleted
+        fill_other_messages(fake_session)
         fake_session.group_sendmsg({'result' : [0]}, 'Spec2')
-        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        rmodname = function(parameter)
         self.assertTrue("Spec2" in fake_session.subscriptions)
         mccs = None
+        function = None
         self.assertFalse("Spec2" in fake_session.subscriptions)
 
-    def test_remote_module_with_custom_config(self):
+    def _common_remote_module_test(self, internal_test):
+        internal_test(lambda ccs: ccs.add_remote_config,
+                      self.spec_file("spec2.spec"),
+                      lambda session: None)
+
+    def test_remote_module(self):
+        self._common_remote_module_test(self._internal_remote_module)
+
+    def _prepare_spec_message(self, session, spec_name):
+        # It could have been one command, but the line would be way too long
+        # to even split it
+        spec_file = self.spec_file(spec_name)
+        spec = isc.config.module_spec_from_file(spec_file)
+        session.group_sendmsg({'result': [0, spec.get_full_spec()]}, "Spec1")
+
+    def _common_remote_module_by_name_test(self, internal_test):
+        internal_test(lambda ccs: ccs.add_remote_config_by_name, "Spec2",
+                      lambda session: self._prepare_spec_message(session,
+                                                                 "spec2.spec"))
+
+    def test_remote_module_by_name(self):
+        self._common_remote_module_by_name_test(self._internal_remote_module)
+
+    def _internal_remote_module_with_custom_config(self, function_lambda,
+                                                   parameter,
+                                                   fill_other_messages):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
+        function = function_lambda(mccs)
         # override the default config value for "item1".  add_remote_config()
         # should incorporate the overridden value, and we should be abel to
         # get it via get_remote_config_value().
+        fill_other_messages(fake_session)
         fake_session.group_sendmsg({'result': [0, {"item1": 10}]}, 'Spec2')
-        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        rmodname = function(parameter)
         value, default = mccs.get_remote_config_value(rmodname, "item1")
         self.assertEqual(10, value)
         self.assertEqual(False, default)
 
-    def test_ignore_command_remote_module(self):
+    def test_remote_module_with_custom_config(self):
+        self._common_remote_module_test(
+            self._internal_remote_module_with_custom_config)
+
+    def test_remote_module_by_name_with_custom_config(self):
+        self._common_remote_module_by_name_test(
+            self._internal_remote_module_with_custom_config)
+
+    def _internal_ignore_command_remote_module(self, function_lambda, param,
+                                               fill_other_messages):
         # Create a Spec1 module and subscribe to remote config for Spec2
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
         mccs.set_command_handler(self.my_command_handler_ok)
+        function = function_lambda(mccs)
+        fill_other_messages(fake_session)
         fake_session.group_sendmsg(None, 'Spec2')
-        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        rmodname = function(param)
 
-        # remove the 'get config' from the queue
-        self.assertEqual(len(fake_session.message_queue), 1)
-        fake_session.get_message("ConfigManager")
+        # remove the commands from queue
+        while len(fake_session.message_queue) > 0:
+            fake_session.get_message("ConfigManager")
 
         # check if the command for the module itself is received
         cmd = isc.config.ccsession.create_command("just_some_command", { 'foo': 'a' })
@@ -621,6 +625,85 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 0)
+
+    def test_ignore_commant_remote_module(self):
+        self._common_remote_module_test(
+            self._internal_ignore_command_remote_module)
+
+    def test_ignore_commant_remote_module_by_name(self):
+        self._common_remote_module_by_name_test(
+            self._internal_ignore_command_remote_module)
+
+    def _internal_check_command_without_recvmsg_remote_module(self,
+                                                              function_lambda,
+                                                              param,
+                                                              fill_other_messages):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        function = function_lambda(mccs)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        fill_other_messages(fake_session)
+        fake_session.group_sendmsg(None, 'Spec2')
+        rmodname = function(param)
+        if (len(fake_session.message_queue) == 2):
+            self.assertEqual({'command': ['get_module_spec',
+                                          {'module_name': 'Spec2'}]},
+                             fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        env = { 'group':'Spec2', 'from':None }
+        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+    def test_check_command_without_recvmsg_remote_module(self):
+        self._common_remote_module_test(
+            self._internal_check_command_without_recvmsg_remote_module)
+
+    def test_check_command_without_recvmsg_remote_module_by_name(self):
+        self._common_remote_module_by_name_test(
+            self._internal_check_command_without_recvmsg_remote_module)
+
+    def _internal_check_command_without_recvmsg_remote_module2(self,
+                                                               function_lambda,
+                                                               param,
+                                                               fill_other_messages):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        function = function_lambda(mccs)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        fill_other_messages(fake_session)
+        fake_session.group_sendmsg(None, 'Spec2')
+        rmodname = function(param)
+        if (len(fake_session.message_queue) == 2):
+            self.assertEqual({'command': ['get_module_spec',
+                                          {'module_name': 'Spec2'}]},
+                             fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec3': { 'item1': 2 }})
+        env = { 'group':'Spec3', 'from':None }
+        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+    def test_check_command_without_recvmsg_remote_module2(self):
+        self._common_remote_module_test(
+            self._internal_check_command_without_recvmsg_remote_module2)
+
+    def test_check_command_without_recvmsg_remote_module_by_name2(self):
+        self._common_remote_module_by_name_test(
+            self._internal_check_command_without_recvmsg_remote_module2)
+
 
     def test_logconfig_handler(self):
         # test whether default_logconfig_handler reacts nicely to

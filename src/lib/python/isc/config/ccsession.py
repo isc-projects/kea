@@ -38,6 +38,7 @@
 
 from isc.cc import Session
 from isc.config.config_data import ConfigData, MultiConfigData, BIND10_CONFIG_DATA_VERSION
+import isc.config.module_spec
 import isc
 from isc.util.file import path_search
 import bind10_config
@@ -328,6 +329,7 @@ class ModuleCCSession(ConfigData):
         self._command_handler = command_handler
 
     def _add_remote_config_internal(self, module_spec, config_update_callback=None):
+        """The guts of add_remote_config and add_remote_config_by_name"""
         module_cfg = ConfigData(module_spec)
         module_name = module_spec.get_module_name()
 
@@ -354,7 +356,43 @@ class ModuleCCSession(ConfigData):
         self._remote_module_configs[module_name] = module_cfg
         self._remote_module_callbacks[module_name] = config_update_callback
 
-    def add_remote_config(self, spec_file_name, config_update_callback = None):
+    def add_remote_config_by_name(self, module_name,
+                                  config_update_callback=None):
+        """
+        This does the same as add_remote_config, but you provide the module name
+        instead of the name of the spec file.
+        """
+        seq = self._session.group_sendmsg(create_command(COMMAND_GET_MODULE_SPEC,
+                                                         { "module_name":
+                                                         module_name }),
+                                          "ConfigManager")
+        try:
+            answer, env = self._session.group_recvmsg(False, seq)
+        except isc.cc.SessionTimeout:
+            raise ModuleCCSessionError("No answer from ConfigManager when " +
+                                       "asking about for spec of Remote " +
+                                       "module " + module_name)
+        if answer:
+            rcode, value = parse_answer(answer)
+            if rcode == 0:
+                module_spec = isc.config.module_spec.ModuleSpec(value)
+                if module_spec.get_module_name() != module_name:
+                    raise ModuleCCSessionError("Module name mismatch: " +
+                                               module_name + " and " +
+                                               module_spec.get_module_name())
+                self._add_remote_config_internal(module_spec,
+                                                 config_update_callback)
+            else:
+                raise ModuleCCSessionError("Error code " + str(rcode) +
+                                           "when asking for module spec of " +
+                                           module_name)
+        else:
+            raise ModuleCCSessionError("No answer when asking for module " +
+                                       "spec of " + module_name)
+        # Just to be consistent with the add_remote_config
+        return module_name
+
+    def add_remote_config(self, spec_file_name, config_update_callback=None):
         """Gives access to the configuration of a different module.
            These remote module options can at this moment only be
            accessed through get_remote_config_value(). This function
