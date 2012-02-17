@@ -24,7 +24,9 @@
 namespace isc {
 namespace dhcp {
 
-/// buffer types used in DHCP code
+/// @brief buffer types used in DHCP code.
+///
+/// Dereferencing OptionBuffer iterator will point out to contiguous memory.
 typedef std::vector<uint8_t> OptionBuffer;
 
 /// iterator for walking over OptionBuffer
@@ -34,7 +36,7 @@ typedef OptionBuffer::iterator OptionBufferIter;
 typedef OptionBuffer::const_iterator OptionBufferConstIter;
 
 /// pointer to a DHCP buffer
-typedef boost::shared_ptr< OptionBuffer > OptionBufferPtr;
+typedef boost::shared_ptr<OptionBuffer> OptionBufferPtr;
 
 /// shared pointer to Option object
 class Option;
@@ -53,8 +55,7 @@ public:
     enum Universe { V4, V6 };
 
     /// a collection of DHCPv6 options
-    typedef std::multimap<unsigned int, OptionPtr >
-    OptionCollection;
+    typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 
     /// @brief a factory function prototype
     ///
@@ -63,9 +64,7 @@ public:
     /// @param buf pointer to a buffer
     ///
     /// @return a pointer to a created option object
-    typedef OptionPtr Factory(Option::Universe u,
-                              uint16_t type,
-                              const OptionBuffer& buf);
+    typedef OptionPtr Factory(Option::Universe u, uint16_t type, const OptionBuffer& buf);
 
     /// @brief ctor, used for options constructed, usually during transmission
     ///

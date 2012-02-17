@@ -125,7 +125,7 @@ TEST_F(Option6AddrLstTest, basic) {
     opt1->pack(outBuf_);
 
     EXPECT_EQ(20, outBuf_.getLength());
-    EXPECT_EQ( 0, memcmp(expected1, outBuf_.getData(), 20) );
+    EXPECT_EQ(0, memcmp(expected1, outBuf_.getData(), 20));
 
     // two addresses
     Option6AddrLst* opt2 = 0;
@@ -144,7 +144,7 @@ TEST_F(Option6AddrLstTest, basic) {
     opt2->pack(outBuf_);
 
     EXPECT_EQ(36, outBuf_.getLength() );
-    EXPECT_EQ( 0, memcmp(expected2, outBuf_.getData(), 36));
+    EXPECT_EQ(0, memcmp(expected2, outBuf_.getData(), 36));
 
     // three addresses
     Option6AddrLst* opt3 = 0;
@@ -165,7 +165,7 @@ TEST_F(Option6AddrLstTest, basic) {
     opt3->pack(outBuf_);
 
     EXPECT_EQ(52, outBuf_.getLength());
-    EXPECT_EQ( 0, memcmp(expected3, outBuf_.getData(), 52) );
+    EXPECT_EQ(0, memcmp(expected3, outBuf_.getData(), 52));
 
     EXPECT_NO_THROW(
         delete opt1;

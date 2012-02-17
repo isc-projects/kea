@@ -472,10 +472,10 @@ protected:
     /// output buffer (used during message transmission)
     isc::util::OutputBuffer bufferOut_;
 
-    // that's the data of input buffer used in RX packet. Note that
-    // InputBuffer does not store the data itself, but just expects that
-    // data will be valid for the whole life of InputBuffer. Therefore we
-    // need to keep the data around.
+    /// that's the data of input buffer used in RX packet. Note that
+    /// InputBuffer does not store the data itself, but just expects that
+    /// data will be valid for the whole life of InputBuffer. Therefore we
+    /// need to keep the data around.
     std::vector<uint8_t> data_;
 
     /// message type (e.g. 1=DHCPDISCOVER)

@@ -133,12 +133,10 @@ TEST_F(Option6IATest, suboptions_pack) {
     ia->setT1(0x2345);
     ia->setT2(0x3456);
 
-    OptionPtr sub1(new Option(Option::V6,
-                                              0xcafe));
+    OptionPtr sub1(new Option(Option::V6, 0xcafe));
 
     boost::shared_ptr<Option6IAAddr> addr1(
-        new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8:1234:5678::abcd"),
-                          0x5000, 0x7000));
+        new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8:1234:5678::abcd"), 0x5000, 0x7000));
 
     ia->addOption(sub1);
     ia->addOption(addr1);
@@ -180,16 +178,16 @@ TEST_F(Option6IATest, suboptions_pack) {
 
 // test if option can parse suboptions
 TEST_F(Option6IATest, suboptions_unpack) {
-    // 48 bytes
+    // sizeof (expected) = 48 bytes
     uint8_t expected[] = {
-        D6O_IA_NA/256, D6O_IA_NA%256, // type
+        D6O_IA_NA / 256, D6O_IA_NA % 256, // type
         0, 28, // length
         0x13, 0x57, 0x9a, 0xce, // iaid
         0, 0, 0x23, 0x45,  // T1
         0, 0, 0x34, 0x56,  // T2
 
         // iaaddr suboption
-        D6O_IAADDR/256, D6O_IAADDR%256, // type
+        D6O_IAADDR / 256, D6O_IAADDR % 256, // type
         0, 24, // len
         0x20, 0x01, 0xd, 0xb8, 0x12,0x34, 0x56, 0x78,
         0, 0, 0, 0, 0, 0, 0xab, 0xcd, // IP address
@@ -200,6 +198,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
         0xca, 0xfe, // type
         0, 0 // len
     };
+    ASSERT_EQ(sizeof(expected), 48);
 
     memcpy(&buf_[0], expected, sizeof(expected));
 

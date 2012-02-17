@@ -32,9 +32,10 @@ namespace dhcp {
 Option::Option(Universe u, uint16_t type)
     :universe_(u), type_(type) {
 
-    if ((u == V4) && (type > 255)) {
+    // END option (type 255 is forbidden as well)
+    if ((u == V4) && ((type == 0) || (type > 254))) {
         isc_throw(BadValue, "Can't create V4 option of type "
-                  << type << ", V4 options are in range 0..255");
+                  << type << ", V4 options are in range 1..254");
     }
 }
 
@@ -76,9 +77,9 @@ Option::check() {
 void Option::pack(isc::util::OutputBuffer& buf) {
     switch (universe_) {
     case V6:
-        return pack6(buf);
+        return (pack6(buf));
     case V4:
-        return pack4(buf);
+        return (pack4(buf));
     default:
         isc_throw(BadValue, "Failed to pack " << type_ << " option. Do not "
                   << "use this method for options other than DHCPv6.");
@@ -89,7 +90,7 @@ void
 Option::pack4(isc::util::OutputBuffer& buf) {
     switch (universe_) {
     case V4: {
-        if (data_.size() > 255) {
+        if (len() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
                       << "At most 255 bytes are supported.");
             /// TODO Larger options can be stored as separate instances
@@ -163,7 +164,7 @@ Option::valid() {
     return (true);
 }
 
-OptionPtr Option::getOption(unsigned short opt_type) {
+OptionPtr Option::getOption(uint16_t opt_type) {
     isc::dhcp::Option::OptionCollection::const_iterator x =
         options_.find(opt_type);
     if ( x != options_.end() ) {
@@ -172,7 +173,7 @@ OptionPtr Option::getOption(unsigned short opt_type) {
     return OptionPtr(); // NULL
 }
 
-bool Option::delOption(unsigned short opt_type) {
+bool Option::delOption(uint16_t opt_type) {
     isc::dhcp::Option::OptionCollection::iterator x = options_.find(opt_type);
     if ( x != options_.end() ) {
         options_.erase(x);
@@ -226,7 +227,7 @@ void Option::addOption(OptionPtr opt) {
                       << " already present in this message.");
         }
     }
-    options_.insert(pair<int, OptionPtr >(opt->getType(), opt));
+    options_.insert(make_pair(opt->getType(), opt));
 }
 
 uint8_t Option::getUint8() {
