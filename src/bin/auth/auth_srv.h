@@ -396,22 +396,6 @@ public:
                         keyring);
 
 private:
-    /// \brief Resume the server
-    ///
-    /// This is a wrapper call for DNSServer::resume(done), if 'done' is true,
-    /// the Rcode set in the given Message is counted in the statistics
-    /// counter.
-    ///
-    /// This method is expected to be called by processMessage()
-    ///
-    /// \param server The DNSServer as passed to processMessage()
-    /// \param message The response as constructed by processMessage()
-    /// \param done If true, the Rcode from the given message is counted,
-    ///             this value is then passed to server->resume(bool)
-    void resumeServer(isc::asiodns::DNSServer* server,
-                      isc::dns::MessagePtr message,
-                      bool done);
-
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
