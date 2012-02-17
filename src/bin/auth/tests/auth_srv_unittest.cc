@@ -91,6 +91,35 @@ protected:
         server.processMessage(*io_message, parse_message, response_obuffer,
                               &dnsserv);
     }
+
+    // Helper for checking Rcode statistic counters;
+    // Checks for one specific Rcode statistics counter value
+    void checkRcodeCounter(const Rcode& rcode, int expected_value) const {
+        EXPECT_EQ(expected_value, server.getCounter(rcode)) <<
+                  "Expected Rcode count for " << rcode.toText() <<
+                  " " << expected_value << ", was: " <<
+                  server.getCounter(rcode);
+    }
+
+    // Checks whether all Rcode counters are set to zero
+    void checkAllRcodeCountersZero() const {
+        for (int i = 0; i < 17; i++) {
+            checkRcodeCounter(Rcode(i), 0);
+        }
+    }
+
+    // Checks whether all Rcode counters are set to zero except the given
+    // rcode (it is checked to be set to 'value')
+    void checkAllRcodeCountersZeroExcept(const Rcode& rcode, int value) const {
+        for (int i = 0; i < 17; i++) {
+            const Rcode rc(i);
+            if (rc == rcode) {
+                checkRcodeCounter(Rcode(i), value);
+            } else {
+                checkRcodeCounter(Rcode(i), 0);
+            }
+        }
+    }
     IOService ios_;
     DNSService dnss_;
     MockSession statistics_session;
@@ -152,6 +181,7 @@ TEST_F(AuthSrvTest, builtInQuery) {
                         response_obuffer->getData(),
                         response_obuffer->getLength(),
                         &response_data[0], response_data.size());
+    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
 // Same test emulating the UDPServer class behavior (defined in libasiolink).
@@ -202,38 +232,46 @@ TEST_F(AuthSrvTest, iqueryViaDNSServer) {
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(AuthSrvTest, unsupportedRequest) {
     unsupportedRequest();
+    // unsupportedRequest tries 14 different opcodes
+    checkAllRcodeCountersZeroExcept(Rcode::NOTIMP(), 14);
 }
 
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
     multiQuestion();
+    checkAllRcodeCountersZeroExcept(Rcode::FORMERR(), 1);
 }
 
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
 TEST_F(AuthSrvTest, shortMessage) {
     shortMessage();
+    checkAllRcodeCountersZero();
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
 // or malformed or could otherwise cause a protocol error.
 TEST_F(AuthSrvTest, response) {
     response();
+    checkAllRcodeCountersZero();
 }
 
 // Query with a broken question
 TEST_F(AuthSrvTest, shortQuestion) {
     shortQuestion();
+    checkAllRcodeCountersZeroExcept(Rcode::FORMERR(), 1);
 }
 
 // Query with a broken answer section
 TEST_F(AuthSrvTest, shortAnswer) {
     shortAnswer();
+    checkAllRcodeCountersZeroExcept(Rcode::FORMERR(), 1);
 }
 
 // Query with unsupported version of EDNS.
 TEST_F(AuthSrvTest, ednsBadVers) {
     ednsBadVers();
+    checkAllRcodeCountersZeroExcept(Rcode::BADVERS(), 1);
 }
 
 TEST_F(AuthSrvTest, AXFROverUDP) {
@@ -251,6 +289,7 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
     EXPECT_TRUE(xfrout.isConnected());
+    checkAllRcodeCountersZero();
 }
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
@@ -286,6 +325,8 @@ TEST_F(AuthSrvTest, TSIGSigned) {
                                    response_obuffer->getLength()));
     EXPECT_EQ(TSIGError::NOERROR(), error) <<
         "The server signed the response, but it doesn't seem to be valid";
+
+    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
 // Give the server a signed request, but don't give it the key. It will
@@ -318,6 +359,8 @@ TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     EXPECT_EQ(TSIGError::BAD_KEY_CODE, tsig->getRdata().getError());
     EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
         "It should be unsigned with this error";
+
+    checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
 }
 
 // Give the server a signed request, but signed by a different key
@@ -351,6 +394,8 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig->getRdata().getError());
     EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
         "It should be unsigned with this error";
+
+    checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
 }
 
 // Give the server a signed unsupported request with a bad signature.
@@ -390,6 +435,8 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
     // TSIG should have failed, and so the per opcode counter shouldn't be
     // incremented.
     EXPECT_EQ(0, server.getCounter(Opcode::RESERVED14()));
+
+    checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
@@ -538,6 +585,8 @@ TEST_F(AuthSrvTest, notify) {
     EXPECT_EQ(Name("example.com"), question->getName());
     EXPECT_EQ(RRClass::IN(), question->getClass());
     EXPECT_EQ(RRType::SOA(), question->getType());
+
+    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
 TEST_F(AuthSrvTest, notifyForCHClass) {
@@ -841,6 +890,10 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
                           &dnsserv);
     // After processing UDP query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_UDP_QUERY));
+    // The counter for opcode Query should also be one
+    EXPECT_EQ(1, server.getCounter(Opcode::QUERY()));
+    // The counter for REFUSED responses should also be one, the rest zero
+    checkAllRcodeCountersZeroExcept(Rcode::REFUSED(), 1);
 }
 
 // Submit TCP normal query and check query counter
@@ -856,6 +909,10 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
                           &dnsserv);
     // After processing TCP query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    // The counter for SUCCESS responses should also be one
+    EXPECT_EQ(1, server.getCounter(Opcode::QUERY()));
+    // The counter for REFUSED responses should also be one, the rest zero
+    checkAllRcodeCountersZeroExcept(Rcode::REFUSED(), 1);
 }
 
 // Submit TCP AXFR query and check query counter
@@ -871,6 +928,8 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing TCP AXFR query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    // No rcodes should be incremented
+    checkAllRcodeCountersZero();
 }
 
 // Submit TCP IXFR query and check query counter
