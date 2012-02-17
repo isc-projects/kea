@@ -43,6 +43,7 @@ run_unittests_SOURCES += rdata_nsec_unittest.cc
 run_unittests_SOURCES += rdata_nsec3_unittest.cc
 run_unittests_SOURCES += rdata_nsecbitmap_unittest.cc
 run_unittests_SOURCES += rdata_nsec3param_unittest.cc
+run_unittests_SOURCES += rdata_nsec3param_like_unittest.cc
 run_unittests_SOURCES += rdata_rrsig_unittest.cc
 run_unittests_SOURCES += rdata_rp_unittest.cc
 run_unittests_SOURCES += rdata_srv_unittest.cc
