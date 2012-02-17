@@ -45,7 +45,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         uint16_t opt_len = buf[offset]*256 + buf[offset+1];
         offset += 2;
 
-        if (offset + opt_len > end ) {
+        if (offset + opt_len > end) {
             cout << "Option " << opt_type << " truncated." << endl;
             return (offset);
         }
@@ -73,7 +73,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             break;
         }
         // add option to options
-        options.insert(pair<int, boost::shared_ptr<Option> >(opt_type, opt));
+        options.insert(std::make_pair(opt_type, opt));
         offset += opt_len;
     }
 
@@ -103,7 +103,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         }
 
         uint8_t opt_len =  buf[offset++];
-        if (offset + opt_len > buf.size() ) {
+        if (offset + opt_len > buf.size()) {
             isc_throw(OutOfRange, "Option parse failed. Tried to parse "
                       << offset + opt_len << " bytes from " << buf.size()
                       << "-byte long buffer.");
@@ -117,7 +117,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                                        buf.begin()+offset+opt_len));
         }
 
-        options.insert(pair<int, boost::shared_ptr<Option> >(opt_type, opt));
+        options.insert(std::make_pair(opt_type, opt));
         offset += opt_len;
     }
     return (offset);
@@ -141,18 +141,17 @@ void
 LibDHCP::packOptions(isc::util::OutputBuffer& buf,
                      const Option::OptionCollection& options) {
     for (Option::OptionCollection::const_iterator it = options.begin();
-         it != options.end();
-         ++it) {
+         it != options.end(); ++it) {
         it->second->pack4(buf);
     }
 }
 
 void LibDHCP::OptionFactoryRegister(Option::Universe u,
                                     uint16_t opt_type,
-                                    Option::Factory * factory) {
+                                    Option::Factory* factory) {
     switch (u) {
     case Option::V6: {
-        if (v6factories_.find(opt_type)!=v6factories_.end()) {
+        if (v6factories_.find(opt_type) != v6factories_.end()) {
             isc_throw(BadValue, "There is already DHCPv6 factory registered "
                      << "for option type "  << opt_type);
         }
@@ -161,6 +160,14 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
     }
     case Option::V4:
     {
+        // option 0 is special (a one octet-long, equal 0) PAD option. It is never
+        // instantiated as Option object, but rather consumer during packet parsing.
+        if (opt_type == 0) {
+            isc_throw(BadValue, "Cannot redefine PAD option (code=0)");
+        }
+        // option 255 is never instantiated as an option object. It is special
+        // (a one-octet equal 255) option that is added at the end of all options
+        // during packet assembly. It is also silently consumed during packet parsing.
         if (opt_type > 254) {
             isc_throw(BadValue, "Too big option type for DHCPv4, only 0-254 allowed.");
         }

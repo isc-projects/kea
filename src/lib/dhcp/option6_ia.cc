@@ -49,7 +49,9 @@ void Option6IA::pack(isc::util::OutputBuffer& buf) {
 
 void Option6IA::unpack(OptionBufferConstIter begin,
                        OptionBufferConstIter end) {
-    if (distance(begin, end) < 12) {
+    // IA_NA and IA_PD have 12 bytes content (iaid, t1, t2 fields)
+    // followed by 0 or more sub-options.
+    if (distance(begin, end) < OPTION6_IA_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
     iaid_ = readUint32( &(*begin) );

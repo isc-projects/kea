@@ -7,7 +7,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
 // REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ // INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
@@ -127,8 +127,8 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
         cout << "    pkt->ifindex_ = " << pkt->ifindex_ << ";" << endl;
         cout << "    pkt->iface_ = \"" << pkt->iface_ << "\";" << endl;
 
-        // TODO it is better to declare an array and then memcpy it to
-        // packet.
+        // TODO it is better to declare statically initialize the array
+        // and then memcpy it to packet.
         for (int i=0; i< pkt->data_len_; i++) {
             cout << "    pkt->data_[" << i << "]="
                  << (int)(unsigned char)pkt->data_[i] << "; ";
@@ -202,16 +202,16 @@ TEST_F(IfaceMgrTest, getIface) {
     // check that interface can be retrieved by ifindex
     IfaceMgr::Iface* tmp = ifacemgr->getIface(5);
     // ASSERT_NE(NULL, tmp); is not supported. hmmmm.
-    ASSERT_TRUE( tmp != NULL );
+    ASSERT_TRUE(tmp != NULL);
 
-    EXPECT_EQ( "en3", tmp->getName() );
+    EXPECT_EQ("en3", tmp->getName());
     EXPECT_EQ(5, tmp->getIndex());
 
     // check that interface can be retrieved by name
     tmp = ifacemgr->getIface("lo1");
-    ASSERT_TRUE( tmp != NULL );
+    ASSERT_TRUE(tmp != NULL);
 
-    EXPECT_EQ( "lo1", tmp->getName() );
+    EXPECT_EQ("lo1", tmp->getName());
     EXPECT_EQ(1, tmp->getIndex());
 
     // check that non-existing interfaces are not returned
@@ -237,7 +237,7 @@ TEST_F(IfaceMgrTest, detectIfaces_stub) {
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
-    ASSERT_TRUE( ifacemgr->getIface("eth0") != NULL );
+    ASSERT_TRUE(ifacemgr->getIface("eth0") != NULL);
 
     IfaceMgr::Iface* eth0 = ifacemgr->getIface("eth0");
 
@@ -247,7 +247,7 @@ TEST_F(IfaceMgrTest, detectIfaces_stub) {
 
     IOAddress addr = *addrs.begin();
 
-    EXPECT_STREQ( "fe80::1234", addr.toText().c_str() );
+    EXPECT_STREQ("fe80::1234", addr.toText().c_str());
 
     delete ifacemgr;
 }
@@ -338,7 +338,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     // prepare dummy payload
     uint8_t data[128];
-    for (int i=0;i<128; i++) {
+    for (int i = 0; i < 128; i++) {
         data[i] = i;
     }
     Pkt6Ptr sendPkt = Pkt6Ptr(new Pkt6(data, 128));
@@ -356,7 +356,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     rcvPkt = ifacemgr->receive6();
 
-    ASSERT_TRUE( rcvPkt ); // received our own packet
+    ASSERT_TRUE(rcvPkt); // received our own packet
 
     // let's check that we received what was sent
     ASSERT_EQ(sendPkt->getData().size(), rcvPkt->getData().size());
@@ -369,7 +369,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // none is preferred over the other for sending data, so we really should not
     // assume the one or the other will always be choosen for sending data. Therefore
     // we should accept both values as source ports.
-    EXPECT_TRUE( (rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547) );
+    EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
     delete ifacemgr;
 }
@@ -430,7 +430,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     rcvPkt = ifacemgr->receive4();
 
-    ASSERT_TRUE( rcvPkt ); // received our own packet
+    ASSERT_TRUE(rcvPkt); // received our own packet
 
     ASSERT_NO_THROW(
         rcvPkt->unpack();

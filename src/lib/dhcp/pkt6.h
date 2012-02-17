@@ -76,7 +76,7 @@ public:
     ///
     /// Returned buffer will contain reasonable data only for
     /// output (TX) packet and after pack() was called. This buffer
-    /// is only valid till Pkt4 object is valid.
+    /// is only valid till Pkt6 object is valid.
     ///
     /// RX packet or TX packet before pack() will return buffer with
     /// zero length
@@ -107,12 +107,16 @@ public:
     /// @return string with text representation
     std::string toText();
 
-    /// @brief Returns calculated length of the packet.
+    /// @brief Returns length of the packet.
     ///
-    /// This function returns size of all options including DHCPv6
-    /// header. To use that function, options_ field must be set.
+    /// This function returns size required to hold this packet.
+    /// It includes DHCPv6 header and all options stored in
+    /// options_ field.
     ///
-    /// @return number of bytes required to build this packet
+    /// Note: It does not return proper length of incoming packets
+    /// before they are unpacked.
+    ///
+    /// @return number of bytes required to assemble this packet
     uint16_t len();
 
     /// Returns message type (e.g. 1 = SOLICIT)
@@ -161,30 +165,22 @@ public:
     /// @brief Sets remote address.
     ///
     /// @param remote specifies remote address
-    void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
-        remote_addr_ = remote;
-    }
+    void setRemoteAddr(const isc::asiolink::IOAddress& remote) { remote_addr_ = remote; }
 
     /// @brief Returns remote address
     ///
     /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() {
-        return (remote_addr_);
-    }
+    const isc::asiolink::IOAddress& getRemoteAddr() { return (remote_addr_); }
 
     /// @brief Sets local address.
     ///
     /// @param local specifies local address
-    void setLocalAddr(const isc::asiolink::IOAddress& local) {
-        local_addr_ = local;
-    }
+    void setLocalAddr(const isc::asiolink::IOAddress& local) { local_addr_ = local; }
 
     /// @brief Returns local address.
     ///
     /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() {
-        return (local_addr_);
-    }
+    const isc::asiolink::IOAddress& getLocalAddr() { return (local_addr_); }
 
     /// @brief Sets local port.
     ///

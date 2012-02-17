@@ -42,8 +42,8 @@ public:
 };
 
 TEST_F(Option6IAAddrTest, basic) {
-    for (int i=0; i<255; i++) {
-        buf_[i]=0;
+    for (int i = 0; i < 255; i++) {
+        buf_[i] = 0;
     }
     buf_[0] = 0x20;
     buf_[1] = 0x01;
@@ -100,9 +100,7 @@ TEST_F(Option6IAAddrTest, basic) {
     // if option content is correct
     EXPECT_EQ(0, memcmp(out + 4, &buf_[0], 24));
 
-    EXPECT_NO_THROW(
-        delete opt;
-    );
+    EXPECT_NO_THROW( delete opt );
 }
 
 }
