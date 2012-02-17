@@ -117,7 +117,7 @@ Query::addSOA(ZoneFinder& finder) {
 // either an SERVFAIL response or just ignoring the query.  We at least prevent
 // a complete crash due to such broken behavior.
 void
-Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
+Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for NXDOMAIN is empty");
     }
@@ -165,6 +165,40 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
                            boost::const_pointer_cast<AbstractRRset>(fresult.rrset),
                            dnssec_);
     }
+}
+
+void
+Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
+    // Firstly get the NSEC3 proves for Closest Encloser Proof
+    // See section 7.2.1 of RFC 5155.
+    // Since this is a Name Error case both closest and next proofs should
+    // be available (see addNXRRsetProof).
+    const ZoneFinder::FindNSEC3Result fresult1 = finder.findNSEC3(qname_,
+                                                                  true);
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<AbstractRRset>(
+                           fresult1.closest_proof),
+                       dnssec_);
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<AbstractRRset>(
+                       fresult1.next_proof),
+                       dnssec_);
+
+    // Next, construct the wildcard name at the closest encloser, i.e.,
+    // '*' followed by the closest encloser, and add NSEC3 for it.
+    const Name wildname(Name("*").concatenate(
+               qname_.split(qname_.getLabelCount() -
+                            fresult1.closest_labels)));
+    const ZoneFinder::FindNSEC3Result fresult2 =
+        finder.findNSEC3(wildname, false);
+    if (fresult2.matched) {
+        isc_throw(BadNSEC3, "Matching NSEC3 found for nonexistent domain "
+                  << wildname);
+    }
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<AbstractRRset>(
+                           fresult2.closest_proof),
+                       dnssec_);
 }
 
 void
@@ -508,8 +542,12 @@ Query::process() {
         case ZoneFinder::NXDOMAIN:
             response_.setRcode(Rcode::NXDOMAIN());
             addSOA(*result.zone_finder);
-            if (dnssec_ && db_result.rrset) {
-                addNXDOMAINProof(zfinder, db_result.rrset);
+            if (dnssec_) {
+                if (db_result.isNSECSigned() && db_result.rrset) {
+                    addNXDOMAINProofByNSEC(zfinder, db_result.rrset);
+                } else if (db_result.isNSEC3Signed()) {
+                    addNXDOMAINProofByNSEC3(zfinder);
+                }
             }
             break;
         case ZoneFinder::NXRRSET:
