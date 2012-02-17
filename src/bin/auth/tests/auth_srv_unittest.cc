@@ -65,6 +65,13 @@ const char* const CONFIG_TESTDB =
 const char* const BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
 
+// This is a configuration that uses the in-memory data source containing
+// a signed example zone.
+const char* const CONFIG_INMEMORY_EXAMPLE =
+    "{\"datasources\": [{\"type\": \"memory\","
+    "\"zones\": [{\"origin\": \"example\","
+    "\"file\": \"" TEST_DATA_DIR "/rfc5155-example.zone.signed\"}]}]}";
+
 class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
@@ -757,6 +764,41 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::REFUSED(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
+    // In this example, we do simple check that query is handled from the
+    // query handler class, and confirm it returns no error and a non empty
+    // answer section.  Detailed examination on the response content
+    // for various types of queries are tested in the query tests.
+    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
+    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+
+    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
+}
+
+TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
+    // Similar to the previous test, but the query has the DO bit on.
+    // The response should contain RRSIGs, and should have more RRs than
+    // the previous case.
+    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
+    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+
+    createDataFromFile("nsec3query_fromWire.wire");
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 2, 3, 3);
 }
 
 TEST_F(AuthSrvTest, chQueryWithInMemoryClient) {
