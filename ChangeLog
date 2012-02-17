@@ -1,3 +1,7 @@
+381.	[bug]		jinmei
+	b10-auth: the new query handler didn't honor the DNSSEC DO bit.
+	(Trac #1695, git 61f4da5053c6a79fbc162fb16f195cdf8f94df64)
+
 380.	[bug]		jinmei
 	libdns++: miscellaneous bug fixes for the NSECPARAM RDATA
 	implementation, including incorrect handling for empty salt and
