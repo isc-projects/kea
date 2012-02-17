@@ -544,8 +544,8 @@ class UIModuleCCSession(MultiConfigData):
                 self.set_value(identifier, cur_map)
             else:
                 raise isc.cc.data.DataAlreadyPresentError(value +
-                                                          " already in "
-                                                          + identifier)
+                                                          " already in " +
+                                                          identifier)
 
     def add_value(self, identifier, value_str = None, set_value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
