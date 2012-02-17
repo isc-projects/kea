@@ -128,6 +128,22 @@ public:
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
     void registerStatisticsValidator();
+
+    /// \brief Resume the server
+    ///
+    /// This is a wrapper call for DNSServer::resume(done), if 'done' is true,
+    /// the Rcode set in the given Message is counted in the statistics
+    /// counter.
+    ///
+    /// This method is expected to be called by processMessage()
+    ///
+    /// \param server The DNSServer as passed to processMessage()
+    /// \param message The response as constructed by processMessage()
+    /// \param done If true, the Rcode from the given message is counted,
+    ///             this value is then passed to server->resume(bool)
+    void resumeServer(isc::asiodns::DNSServer* server,
+                      isc::dns::MessagePtr message,
+                      bool done);
 private:
     std::string db_file_;
 
@@ -409,13 +425,13 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         // Ignore all responses.
         if (message->getHeaderFlag(Message::HEADERFLAG_QR)) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_RECEIVED);
-            server->resume(false);
+            impl_->resumeServer(server, message, false);
             return;
         }
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_HEADER_PARSE_FAIL)
                   .arg(ex.what());
-        server->resume(false);
+        impl_->resumeServer(server, message, false);
         return;
     }
 
@@ -426,13 +442,13 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_ERROR)
                   .arg(error.getRcode().toText()).arg(error.what());
         makeErrorMessage(message, buffer, error.getRcode());
-        server->resume(true);
+        impl_->resumeServer(server, message, true);
         return;
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_ERROR)
                   .arg(ex.what());
         makeErrorMessage(message, buffer, Rcode::SERVFAIL());
-        server->resume(true);
+        impl_->resumeServer(server, message, true);
         return;
     } // other exceptions will be handled at a higher layer.
 
@@ -459,7 +475,7 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
 
     if (tsig_error != TSIGError::NOERROR()) {
         makeErrorMessage(message, buffer, tsig_error.toRcode(), tsig_context);
-        server->resume(true);
+        impl_->resumeServer(server, message, true);
         return;
     }
 
@@ -492,7 +508,7 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         }
     }
 
-    server->resume(send_answer);
+    impl_->resumeServer(server, message, send_answer);
 }
 
 bool
@@ -755,6 +771,14 @@ AuthSrvImpl::setDbFile(ConstElementPtr config) {
     return (answer);
 }
 
+void
+AuthSrvImpl::resumeServer(DNSServer* server, MessagePtr message, bool done) {
+    if (done) {
+        counters_.inc(message->getRcode());
+    }
+    server->resume(done);
+}
+
 ConstElementPtr
 AuthSrv::updateConfig(ConstElementPtr new_config) {
     try {
@@ -782,6 +806,11 @@ AuthSrv::getCounter(const AuthCounters::ServerCounterType type) const {
 uint64_t
 AuthSrv::getCounter(const Opcode opcode) const {
     return (impl_->counters_.getCounter(opcode));
+}
+
+uint64_t
+AuthSrv::getCounter(const Rcode rcode) const {
+    return (impl_->counters_.getCounter(rcode));
 }
 
 const AddressList&
