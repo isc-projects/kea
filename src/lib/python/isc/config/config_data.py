@@ -28,6 +28,22 @@ class ConfigDataError(Exception): pass
 
 BIND10_CONFIG_DATA_VERSION = 2
 
+# Helper functions
+def spec_part_is_list(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       list specification, and False otherwise."""
+    return (type(spec_part) == dict and 'list_item_spec' in spec_part)
+
+def spec_part_is_map(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       map specification, and False otherwise."""
+    return (type(spec_part) == dict and 'map_item_spec' in spec_part)
+
+def spec_part_is_named_set(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       named_set specification, and False otherwise."""
+    return (type(spec_part) == dict and 'named_map_item_spec' in spec_part)
+
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
        specification part relevant for the value. Raises an
@@ -112,9 +128,9 @@ def _get_map_or_list(spec_part):
     """Returns the list or map specification if this is a list or a
        map specification part. If not, returns the given spec_part
        itself"""
-    if "map_item_spec" in spec_part:
+    if spec_part_is_map(spec_part):
         return spec_part["map_item_spec"]
-    elif "list_item_spec" in spec_part:
+    elif spec_part_is_list(spec_part):
         return spec_part["list_item_spec"]
     else:
         return spec_part
@@ -134,13 +150,13 @@ def _find_spec_part_single(cur_spec, id_part):
     # list or a map, which is internally represented by a dict with
     # an element 'map_item_spec', a dict with an element 'list_item_spec',
     # or a list (when it is the 'main' config_data element of a module).
-    if type(cur_spec) == dict and 'map_item_spec' in cur_spec.keys():
+    if spec_part_is_map(cur_spec):
         for cur_spec_item in cur_spec['map_item_spec']:
             if cur_spec_item['item_name'] == id:
                 return cur_spec_item
         # not found
         raise isc.cc.data.DataNotFoundError(id + " not found")
-    elif type(cur_spec) == dict and 'list_item_spec' in cur_spec.keys():
+    elif spec_part_is_list(cur_spec):
         if cur_spec['item_name'] == id:
             return cur_spec['list_item_spec']
         # not found
@@ -156,9 +172,22 @@ def _find_spec_part_single(cur_spec, id_part):
     else:
         raise isc.cc.data.DataNotFoundError("Not a correct config specification")
 
-def find_spec_part(element, identifier):
+def find_spec_part(element, identifier, strict_identifier = True):
     """find the data definition for the given identifier
-       returns either a map with 'item_name' etc, or a list of those"""
+       returns either a map with 'item_name' etc, or a list of those
+       Parameters:
+       element: The specification element to start the search in
+       identifier: The element to find (relative to element above)
+       strict_identifier: If True (the default), additional checking occurs.
+                          Currently the only check is whether a list index is
+                          specified (except for the last part of the
+                          identifier)
+       Raises a DataNotFoundError if the data is not found, or if
+       strict_identifier is True and any non-final identifier parts
+       (i.e. before the last /) identify a list element and do not contain
+       an index.
+       Returns the spec element identified by the given identifier.
+    """
     if identifier == "":
         return element
     id_parts = identifier.split("/")
@@ -171,6 +200,10 @@ def find_spec_part(element, identifier):
     # always want the 'full' spec of the item
     for id_part in id_parts[:-1]:
         cur_el = _find_spec_part_single(cur_el, id_part)
+        if strict_identifier and spec_part_is_list(cur_el) and\
+           not isc.cc.data.identifier_has_list_index(id_part):
+            raise isc.cc.data.DataNotFoundError(id_part +
+                                                " is a list and needs an index")
         cur_el = _get_map_or_list(cur_el)
 
     cur_el = _find_spec_part_single(cur_el, id_parts[-1])
@@ -184,12 +217,12 @@ def spec_name_list(spec, prefix="", recurse=False):
     if prefix != "" and not prefix.endswith("/"):
         prefix += "/"
     if type(spec) == dict:
-        if 'map_item_spec' in spec:
+        if spec_part_is_map(spec):
             for map_el in spec['map_item_spec']:
                 name = map_el['item_name']
                 if map_el['item_type'] == 'map':
                     name += "/"
-                if recurse and 'map_item_spec' in map_el:
+                if recurse and spec_part_is_map(map_el):
                     result.extend(spec_name_list(map_el['map_item_spec'], prefix + map_el['item_name'], recurse))
                 else:
                     result.append(prefix + name)
@@ -244,7 +277,12 @@ class ConfigData:
     def get_default_value(self, identifier):
         """Returns the default from the specification, or None if there
            is no default"""
-        spec = find_spec_part(self.specification.get_config_spec(), identifier)
+        # We are searching for the default value, so we can set
+        # strict_identifier to false (in fact, we need to; we may not know
+        # some list indices, or they may not exist, we are looking for
+        # a default value for a reason here).
+        spec = find_spec_part(self.specification.get_config_spec(),
+                              identifier, False)
         if spec and 'item_default' in spec:
             return spec['item_default']
         else:
@@ -607,7 +645,7 @@ class MultiConfigData:
            Throws DataNotFoundError if the identifier is bad
         """
         result = []
-        if not identifier:
+        if not identifier or identifier == "/":
             # No identifier, so we need the list of current modules
             for module in self._specifications.keys():
                 if all:
@@ -619,8 +657,11 @@ class MultiConfigData:
                     entry = _create_value_map_entry(module, 'module', None)
                     result.append(entry)
         else:
-            if identifier[0] == '/':
+            # Strip off start and end slashes, if they are there
+            if len(identifier) > 0 and identifier[0] == '/':
                 identifier = identifier[1:]
+            if len(identifier) > 0 and identifier[-1] == '/':
+                identifier = identifier[:-1]
             module, sep, id = identifier.partition('/')
             spec = self.get_module_spec(module)
             if spec:
