@@ -52,10 +52,7 @@ public:
     /// @param buf pointer to a buffer
     void pack(isc::util::OutputBuffer& buf);
 
-    /// @brief Parses buffer.
-    ///
-    /// Parses received buffer, returns offset to the first unused byte after
-    /// parsed option.
+    /// @brief Parses received buffer.
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)

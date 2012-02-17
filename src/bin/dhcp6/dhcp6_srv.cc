@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <time.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/iface_mgr.h>
@@ -21,11 +22,13 @@
 #include <dhcp/option6_addrlst.h>
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
 const uint32_t HARDCODED_T1 = 1500; // in seconds
@@ -67,13 +70,11 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
 }
 
-bool
-Dhcpv6Srv::run() {
+bool Dhcpv6Srv::run() {
     while (!shutdown) {
-        Pkt6Ptr query; // client's message
-        Pkt6Ptr rsp;   // server's response
 
-        query = IfaceMgr::instance().receive6();
+        Pkt6Ptr query = IfaceMgr::instance().receive6(); // client's message
+        Pkt6Ptr rsp;   // server's response
 
         if (query) {
             if (!query->unpack()) {
@@ -138,24 +139,91 @@ Dhcpv6Srv::run() {
     return (true);
 }
 
-void
-Dhcpv6Srv::setServerID() {
-    /// TODO implement this for real once interface detection is done.
-    /// Use hardcoded server-id for now
+void Dhcpv6Srv::setServerID() {
 
-    OptionBuffer srvid(14);
-    srvid[0] = 0;
-    srvid[1] = 1; // DUID type 1 = DUID-LLT (see section 9.2 of RFC3315)
-    srvid[2] = 0;
-    srvid[3] = 6; // HW type = ethernet (I think. I'm typing this from my head
-                  // in hotel, without Internet connection)
-    for (int i=4; i<14; i++) {
-        srvid[i]=i-4;
+    /// @todo: DUID should be generated once and then stored, rather
+    /// than generated each time
+
+    /// @todo: This code implements support for DUID-LLT (the recommended one).
+    /// We should eventually add support for other DUID types: DUID-LL, DUID-EN
+    /// and DUID-UUID
+
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+    // let's find suitable interface
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+        // all those conditions could be merged into one multi-condition
+        // statement, but let's keep them separated as perhaps one day
+        // we will grow knobs to selectively turn them on or off. Also,
+        // this code is used only *once* during first start on a new machine
+        // and then server-id is stored. (or at least it will be once
+        // DUID storage is implemente
+
+        // I wish there was a this_is_a_real_physical_interface flag...
+
+        // mac at least 6 bytes. All decent physical interfaces (Ethernet,
+        // WiFi, Infiniband, etc.) have 6 bytes long MAC address
+        if (iface->mac_len_ < 6) {
+            continue;
+        }
+
+        // let's don't use loopback
+        if (iface->flag_loopback_) {
+            continue;
+        }
+
+        // let's skip downed interfaces. It is better to use working ones.
+        if (!iface->flag_up_) {
+            continue;
+        }
+
+        uint8_t zeros[IfaceMgr::MAX_MAC_LEN];
+        memset(zeros, 0, IfaceMgr::MAX_MAC_LEN);
+
+        // some interfaces (like lo on Linux) report 6-bytes long
+        // MAC adress 00:00:00:00:00:00. Let's not use such weird interfaces
+        // to generate DUID.
+        if (!memcmp(iface->mac_, zeros, iface->mac_len_)) {
+            continue;
+        }
+
+        // Ok, we have useful MAC. Let's generate DUID-LLT based on
+        // it. See RFC3315, Section 9.2 for details.
+
+        // DUID uses seconds since midnight of 01-01-2000, time() returns
+        // seconds since 01-01-1970. DUID_TIME_EPOCH substution corrects that.
+        time_t seconds = time(NULL);
+        seconds -= DUID_TIME_EPOCH;
+
+        OptionBuffer srvid(8 + iface->mac_len_);
+        writeUint16(DUID_LLT, &srvid[0]);
+        writeUint16(HWTYPE_ETHERNET, &srvid[2]);
+        writeUint32(static_cast<uint32_t>(seconds), &srvid[4]);
+        memcpy(&srvid[0]+8, iface->mac_, iface->mac_len_);
+
+        serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
+                                         srvid.begin(), srvid.end()));
+        return;
     }
-    serverid_ = boost::shared_ptr<Option>(new Option(Option::V6,
-                                                     D6O_SERVERID,
-                                                     srvid.begin(),
-                                                     srvid.end()));
+
+    // if we reached here, there are no suitable interfaces found.
+    // Either interface detection is not supported on this platform or
+    // this is really weird box. Let's use DUID-EN instead.
+    // See Section 9.3 of RFC3315 for details.
+
+    OptionBuffer srvid(12);
+    srand(time(NULL));
+    writeUint16(DUID_EN, &srvid[0]);
+    writeUint32(ENTERPRISE_ID_ISC, &srvid[2]);
+
+    // length of the identifier is company specific. I hereby declare
+    // ISC standard of 6 bytes long random numbers.
+    for (int i = 6; i < 12; i++) {
+        srvid[i] = static_cast<uint8_t>(rand());
+    }
+    serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
+                                     srvid.begin(), srvid.end()));
 }
 
 void Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
@@ -214,7 +282,6 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 }
 
 Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
-
     Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
     copyDefaultOptions(solicit, advertise);
@@ -227,7 +294,6 @@ Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 }
 
 Pkt6Ptr Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
-
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     copyDefaultOptions(request, reply);
@@ -240,33 +306,37 @@ Pkt6Ptr Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 }
 
 Pkt6Ptr Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
+    /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
     return reply;
 }
 
 Pkt6Ptr Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
-    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY,
-                                           rebind->getTransid(),
-                                           Pkt6::UDP));
+    /// @todo: Implement this
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
     return reply;
 }
 
 Pkt6Ptr Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
+    /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, confirm->getTransid()));
     return reply;
 }
 
 Pkt6Ptr Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
+    /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
     return reply;
 }
 
 Pkt6Ptr Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
+    /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
     return reply;
 }
 
 Pkt6Ptr Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
+    /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
 }
