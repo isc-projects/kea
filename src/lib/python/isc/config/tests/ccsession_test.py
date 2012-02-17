@@ -515,6 +515,53 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.set_command_handler(self.my_command_handler_ok)
         self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
 
+    # Now there's a group of tests testing both add_remote_config and
+    # add_remote_config_by_name. Since they are almost the same (they differ
+    # just in the parameter and that the second one asks one more question over
+    # the bus), the actual test code is shared.
+    #
+    # These three functions are helper functions to easy up the writing of them.
+    # To write a test, there need to be 3 functions. First, the function that
+    # does the actual test. It looks like:
+    # def _internal_test(self, function_lambda, parameter, fill_other_messages):
+    #
+    # The function_lambda provides the tested function if called on the
+    # ccsession. The param is the parameter to pass to the function (either the
+    # the module name or the spec file name. The fill_other_messages fills
+    # needed messages (the answer containing the module spec in case of add by
+    # name, no messages in the case of adding by spec file) into the fake bus.
+    # So, the code would look like:
+    #
+    # * Create the fake session and tested ccsession object
+    # * function = function_lambda(ccsession object)
+    # * fill_other_messages(fake session)
+    # * Fill in answer to the get_module_config command
+    # * Test by calling function(param)
+    #
+    # Then you need two wrappers that do launch the tests. There are helpers
+    # for that, so you can just call:
+    # def test_by_spec(self)
+    #     self._common_remote_module_test(self._internal_test)
+    # def test_by_name(self)
+    #     self._common_remote_module_by_name_test(self._internal_test)
+    def _common_remote_module_test(self, internal_test):
+    def _common_remote_module_test(self, internal_test):
+        internal_test(lambda ccs: ccs.add_remote_config,
+                      self.spec_file("spec2.spec"),
+                      lambda session: None)
+
+    def _prepare_spec_message(self, session, spec_name):
+        # It could have been one command, but the line would be way too long
+        # to even split it
+        spec_file = self.spec_file(spec_name)
+        spec = isc.config.module_spec_from_file(spec_file)
+        session.group_sendmsg({'result': [0, spec.get_full_spec()]}, "Spec1")
+
+    def _common_remote_module_by_name_test(self, internal_test):
+        internal_test(lambda ccs: ccs.add_remote_config_by_name, "Spec2",
+                      lambda session: self._prepare_spec_message(session,
+                                                                 "spec2.spec"))
+
     def _internal_remote_module(self, function_lambda, parameter,
                                 fill_other_messages):
         fake_session = FakeModuleCCSession()
@@ -548,27 +595,18 @@ class TestModuleCCSession(unittest.TestCase):
         function = None
         self.assertFalse("Spec2" in fake_session.subscriptions)
 
-    def _common_remote_module_test(self, internal_test):
-        internal_test(lambda ccs: ccs.add_remote_config,
-                      self.spec_file("spec2.spec"),
-                      lambda session: None)
-
     def test_remote_module(self):
+        """
+        Test we can add a remote config and get the configuration.
+        Remote module specified by the spec file name.
+        """
         self._common_remote_module_test(self._internal_remote_module)
 
-    def _prepare_spec_message(self, session, spec_name):
-        # It could have been one command, but the line would be way too long
-        # to even split it
-        spec_file = self.spec_file(spec_name)
-        spec = isc.config.module_spec_from_file(spec_file)
-        session.group_sendmsg({'result': [0, spec.get_full_spec()]}, "Spec1")
-
-    def _common_remote_module_by_name_test(self, internal_test):
-        internal_test(lambda ccs: ccs.add_remote_config_by_name, "Spec2",
-                      lambda session: self._prepare_spec_message(session,
-                                                                 "spec2.spec"))
-
     def test_remote_module_by_name(self):
+        """
+        Test we can add a remote config and get the configuration.
+        Remote module specified its name.
+        """
         self._common_remote_module_by_name_test(self._internal_remote_module)
 
     def _internal_remote_module_with_custom_config(self, function_lambda,
@@ -588,10 +626,20 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(False, default)
 
     def test_remote_module_with_custom_config(self):
+        """
+        Test the config of module will load non-default values on
+        initialization.
+        Remote module specified by the spec file name.
+        """
         self._common_remote_module_test(
             self._internal_remote_module_with_custom_config)
 
     def test_remote_module_by_name_with_custom_config(self):
+        """
+        Test the config of module will load non-default values on
+        initialization.
+        Remote module its name.
+        """
         self._common_remote_module_by_name_test(
             self._internal_remote_module_with_custom_config)
 
@@ -627,10 +675,18 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 0)
 
     def test_ignore_commant_remote_module(self):
+        """
+        Test that commands for remote modules aren't handled.
+        Remote module specified by the spec file name.
+        """
         self._common_remote_module_test(
             self._internal_ignore_command_remote_module)
 
     def test_ignore_commant_remote_module_by_name(self):
+        """
+        Test that commands for remote modules aren't handled.
+        Remote module specified by its name.
+        """
         self._common_remote_module_by_name_test(
             self._internal_ignore_command_remote_module)
 
@@ -662,10 +718,18 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 0)
 
     def test_check_command_without_recvmsg_remote_module(self):
+        """
+        Test updates on remote module.
+        The remote module is specified by the spec file name.
+        """
         self._common_remote_module_test(
             self._internal_check_command_without_recvmsg_remote_module)
 
     def test_check_command_without_recvmsg_remote_module_by_name(self):
+        """
+        Test updates on remote module.
+        The remote module is specified by its name.
+        """
         self._common_remote_module_by_name_test(
             self._internal_check_command_without_recvmsg_remote_module)
 
@@ -697,10 +761,18 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 0)
 
     def test_check_command_without_recvmsg_remote_module2(self):
+        """
+        Test updates on remote module.
+        The remote module is specified by the spec file name.
+        """
         self._common_remote_module_test(
             self._internal_check_command_without_recvmsg_remote_module2)
 
     def test_check_command_without_recvmsg_remote_module_by_name2(self):
+        """
+        Test updates on remote module.
+        The remote module is specified by its name.
+        """
         self._common_remote_module_by_name_test(
             self._internal_check_command_without_recvmsg_remote_module2)
 
