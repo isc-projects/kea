@@ -69,7 +69,6 @@ void Option6AddrLst::pack(isc::util::OutputBuffer& buf) {
     // len field contains length without 4-byte option header
     buf.writeUint16(len() - getHeaderLen());
 
-    // this wrapping is *ugly*. I wish there was a a
     for (AddressContainer::const_iterator addr=addrs_.begin();
          addr!=addrs_.end(); ++addr) {
         buf.writeData(addr->getAddress().to_v6().to_bytes().data(), V6ADDRESS_LEN);
@@ -78,7 +77,7 @@ void Option6AddrLst::pack(isc::util::OutputBuffer& buf) {
 
 void Option6AddrLst::unpack(OptionBufferConstIter begin,
                         OptionBufferConstIter end) {
-    if (distance(begin, end) % 16) {
+    if ((distance(begin, end) % V6ADDRESS_LEN) != 0) {
         isc_throw(OutOfRange, "Option " << type_
                   << " malformed: len=" << distance(begin, end)
                   << " is not divisible by 16.");
@@ -91,14 +90,13 @@ void Option6AddrLst::unpack(OptionBufferConstIter begin,
 
 std::string Option6AddrLst::toText(int indent /* =0 */) {
     stringstream tmp;
-    for (int i=0; i<indent; i++)
+    for (int i = 0; i < indent; i++)
         tmp << " ";
 
     tmp << "type=" << type_ << " " << addrs_.size() << "addr(s): ";
 
     for (AddressContainer::const_iterator addr=addrs_.begin();
-         addr!=addrs_.end();
-         ++addr) {
+         addr!=addrs_.end(); ++addr) {
         tmp << addr->toText() << " ";
     }
     return tmp.str();
@@ -106,7 +104,7 @@ std::string Option6AddrLst::toText(int indent /* =0 */) {
 
 uint16_t Option6AddrLst::len() {
 
-    return (OPTION6_HDR_LEN + addrs_.size()*16);
+    return (OPTION6_HDR_LEN + addrs_.size()*V6ADDRESS_LEN);
 }
 
 } // end of namespace isc::dhcp

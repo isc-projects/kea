@@ -239,7 +239,7 @@ TEST_F(BufferTest, outputBufferZeroSize) {
     });
 }
 
-TEST_F(BufferTest, readVectorAll) {
+TEST_F(BufferTest, inputBufferReadVectorAll) {
     std::vector<uint8_t> vec;
 
     // check that vector can read the whole buffer
@@ -255,7 +255,7 @@ TEST_F(BufferTest, readVectorAll) {
     );
 }
 
-TEST_F(BufferTest, readVectorChunks) {
+TEST_F(BufferTest, inputBufferReadVectorChunks) {
     std::vector<uint8_t> vec;
 
     // check that vector can read the whole buffer
@@ -269,6 +269,21 @@ TEST_F(BufferTest, readVectorChunks) {
     );
 
     EXPECT_EQ(0, memcmp(&vec[0], testdata+3, 2));
+}
+
+TEST_F(BufferTest, inputBufferConstructorVector) {
+    std::vector<uint8_t> vec(17);
+    for (int i = 0; i < vec.size(); i++) {
+        vec[i] = i;
+    }
+
+    InputBuffer buf(vec.begin(), vec.end());
+
+    EXPECT_EQ(buf.getLength(), 17);
+
+    std::vector<uint8_t> vec2;
+    EXPECT_NO_THROW(buf.readVector(vec2, 17));
+    EXPECT_EQ(vec, vec2);
 }
 
 }
