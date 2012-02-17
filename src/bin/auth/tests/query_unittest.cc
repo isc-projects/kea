@@ -329,6 +329,8 @@ public:
             "q00jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("*.example.com")] =
+            "r53bq7cc2uvmubfu5ocmm6pers9tk9en";
         hash_map_[Name("unsigned-delegation.example.com")] =
             "q81r598950igr1eqvc60aedlq66425b5"; // a bit larger than H(www)
         hash_map_[Name("*.uwild.example.com")] =
@@ -371,7 +373,8 @@ public:
                        ConstRRsetPtr rrset)
     {
         nsec_name_ = nsec_name;
-        nsec_result_.reset(new ZoneFinder::FindResult(code, rrset));
+        nsec_result_.reset(new ZoneFinder::FindResult(code, rrset,
+                                                      RESULT_NSEC_SIGNED));
     }
 
     // Once called, the findNSEC3 will return the provided result for the next
@@ -2146,19 +2149,79 @@ TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
                   NULL, mock_finder->getOrigin());
 }
 
+TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
+    // Name Error (NXDOMAIN) case with NSEC3 proof per RFC5155 Section 7.2.2.
+
+    // Enable NSEC3
+    mock_finder->setNSEC3Flag(true);
+    // This will be the covering NSEC3 for the next closer
+    mock_finder->addRecord(nsec3_uwild_txt);
+    // This will be the covering NSEC3 for the possible wildcard
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
+    Query(memory_client, Name("nxdomain.example.com"), qtype,
+          response, true).process();
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0, NULL,
+                  // SOA + its RRSIG
+                  (string(soa_txt) +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   // NSEC3 for the closest encloser + its RRSIG
+                   string(nsec3_apex_txt) + "\n" +
+                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the next closer + its RRSIG
+                   string(nsec3_uwild_txt) + "\n" +
+                   mock_finder->hash_map_[Name("uwild.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the wildcard + its RRSIG
+                   string(unsigned_delegation_nsec3_txt) +
+                   mock_finder->hash_map_[
+                       Name("unsigned-delegation.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
+    // Similar to the previous case, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    // Message::addRRset() will detect it and throw InvalidParameter.
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 isc::InvalidParameter);
+}
+
+TEST_F(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
+    // Similar to nxdomainWithNSEC3Proof, but let findNSEC3() return a matching
+    // NSEC3 for the possible wildcard name, emulating run-time collision.
+    // This should result in BadNSEC3 exception.
+
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(nsec3_uwild_txt);
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
+    const Name wname("*.example.com");
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3, &wname);
+
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
+                       response, true).process(),
+                 Query::BadNSEC3);
+}
+
 // The following are tentative tests until we really add tests for the
 // query logic for these cases.  At that point it's probably better to
 // clean them up.
-TEST_F(QueryTest, nxdomainWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("nxdomain.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_FALSE(result.isWildcard());
-}
-
 TEST_F(QueryTest, emptyNameWithNSEC3) {
     mock_finder->setNSEC3Flag(true);
     ZoneFinder::FindResult result = mock_finder->find(
