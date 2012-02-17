@@ -20,13 +20,15 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include "dhcp/dhcp6.h"
-#include "dhcp6/dhcp6_srv.h"
-#include "dhcp/option6_ia.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <util/buffer.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
 // Maybe it should be isc::test?
@@ -79,16 +81,84 @@ TEST_F(Dhcpv6SrvTest, basic) {
     delete srv;
 }
 
+TEST_F(Dhcpv6SrvTest, DUID) {
+    // tests that DUID is generated properly
+
+    Dhcpv6Srv* srv = NULL;
+    ASSERT_NO_THROW( {
+        srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
+    });
+
+    OptionPtr srvid = srv->getServerID();
+    ASSERT_TRUE(srvid);
+
+    EXPECT_EQ(D6O_SERVERID, srvid->getType());
+
+    OutputBuffer buf(32);
+    srvid->pack(buf);
+
+    // length of the actual DUID
+    size_t len = buf.getLength() - srvid->getHeaderLen();
+
+    InputBuffer data(buf.getData(), buf.getLength());
+
+    // ignore first four bytes (standard DHCPv6 header)
+    data.readUint32();
+
+    uint16_t duid_type = data.readUint16();
+    cout << "Duid-type=" << duid_type << endl;
+    switch(duid_type) {
+    case DUID_LLT: {
+        // DUID must contain at least 6 bytes long MAC
+        // + 8 bytes of fixed header
+        EXPECT_GE(14, len);
+
+        uint16_t hw_type = data.readUint16();
+        // there's no real way to find out "correct"
+        // hardware type
+        EXPECT_GT(hw_type, 0);
+
+        // check that timer is counted since 1.1.2000,
+        // not from 1.1.1970.
+        uint32_t seconds = data.readUint32();
+        EXPECT_LE(seconds, DUID_TIME_EPOCH);
+        // this test will start failing after 2030.
+        // Hopefully we will be at BIND12 by then.
+
+        // MAC must not be zeros
+        vector<uint8_t> mac(len-8);
+        vector<uint8_t> zeros(len-8, 0);
+        data.readVector(mac, len-8);
+        EXPECT_NE(mac, zeros);
+        break;
+    }
+    case DUID_EN: {
+        // there's not much we can check. Just simple
+        // check if it is not all zeros
+        vector<uint8_t> content(len-2);
+        vector<uint8_t> zeros(0, len-2);
+        data.readVector(content, len-2);
+        EXPECT_NE(content, zeros);
+    }
+    case DUID_LL: // not supported yet
+    case DUID_UUID: // not supported yet
+    default:
+        cout << "Not supported duid type=" << duid_type << endl;
+        FAIL();
+    }
+}
+
 TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     NakedDhcpv6Srv* srv = NULL;
     ASSERT_NO_THROW( srv = new NakedDhcpv6Srv(); );
 
     // a dummy content for client-id
     OptionBuffer clntDuid(32);
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < 32; i++) {
         clntDuid[i] = 100 + i;
+    }
 
-    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234, Pkt6::UDP));
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
 
     boost::shared_ptr<Option6IA> ia =
         boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, 234));
@@ -113,7 +183,7 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
 
     OptionPtr clientid = OptionPtr(new Option(Option::V6, D6O_CLIENTID,
                                               clntDuid.begin(),
-                                              clntDuid.begin()+16));
+                                              clntDuid.begin() + 16));
     sol->addOption(clientid);
 
     boost::shared_ptr<Pkt6> reply = srv->processSolicit(sol);

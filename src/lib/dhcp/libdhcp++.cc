@@ -34,10 +34,10 @@ std::map<unsigned short, Option::Factory*> LibDHCP::v4factories_;
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
 
 
-uint32_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
-                                 isc::dhcp::Option::OptionCollection& options) {
-    uint32_t offset = 0;
-    unsigned int end = buf.size();
+size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
+                               isc::dhcp::Option::OptionCollection& options) {
+    size_t offset = 0;
+    size_t end = buf.size();
 
     while (offset +4 <= end) {
         uint16_t opt_type = buf[offset]*256 + buf[offset+1];
@@ -80,16 +80,22 @@ uint32_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     return (offset);
 }
 
-uint32_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
+size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                                  isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
 
-    // 2 - header of DHCPv4 option
+    // 2 byte - header of DHCPv4 option
     while (offset + 1 <= buf.size()) {
         uint8_t opt_type = buf[offset++];
 
+        // DHO_END is a special, one octet long option
         if (opt_type == DHO_END)
             return (offset); // just return. Don't need to add DHO_END option
+
+        // DHO_PAD is just a padding after DHO_END. Let's continue parsing
+        // in case we receive a message without DHO_END.
+        if (opt_type == DHO_PAD)
+            continue;
 
         if (offset + 1 >= buf.size()) {
             isc_throw(OutOfRange, "Attempt to parse truncated option "

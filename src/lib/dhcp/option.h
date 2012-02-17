@@ -122,9 +122,6 @@ public:
     /// TODO: Migrate DHCPv6 code to pack(OutputBuffer& buf) version
     ///
     /// @param buf pointer to a buffer
-    ///
-    /// @return offset to first unused byte after stored option
-    ///
     virtual void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Writes option in a wire-format to a buffer.
@@ -137,10 +134,7 @@ public:
     /// @param buf output buffer (option will be stored there)
     virtual void pack4(isc::util::OutputBuffer& buf);
 
-    /// @brief Parses buffer.
-    ///
-    /// Parses received buffer, returns offset to the first unused byte after
-    /// parsed option.
+    /// @brief Parses received buffer.
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
@@ -152,32 +146,28 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string
-    toText(int indent = 0);
+    virtual std::string toText(int indent = 0);
 
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
     /// @return option type
-    unsigned short getType() { return (type_); }
+    uint16_t getType() { return (type_); }
 
     /// Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
     ///
     /// @return length of the option
-    virtual uint16_t
-    len();
+    virtual uint16_t len();
 
     /// @brief Returns length of header (2 for v4, 4 for v6)
     ///
     /// @return length of option header
-    virtual uint16_t
-    getHeaderLen();
+    virtual uint16_t getHeaderLen();
 
     /// returns if option is valid (e.g. option may be truncated)
     ///
     /// @return true, if option is valid
-    virtual bool
-    valid();
+    virtual bool valid();
 
     /// Returns pointer to actual data.
     ///

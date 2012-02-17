@@ -230,6 +230,11 @@ public:
     Iface*
     getIface(const std::string& ifname);
 
+    /// @brief Returns container with all interfaces.
+    ///
+    /// @return container with all interfaces.
+    const IfaceCollection& getIfaces() { return ifaces_; }
+
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
     ///
     /// This method takes Pkt6 (see overloaded implementation that takes
@@ -271,7 +276,7 @@ public:
     /// @param pkt packet to be sent
     ///
     /// @return true if sending was successful
-    bool send(boost::shared_ptr<Pkt6>& pkt);
+    bool send(const Pkt6Ptr& pkt);
 
     /// @brief Sends an IPv4 packet.
     ///
@@ -282,7 +287,7 @@ public:
     /// @param pkt a packet to be sent
     ///
     /// @return true if sending was successful
-    bool send(boost::shared_ptr<Pkt4>& pkt);
+    bool send(const Pkt4Ptr& pkt);
 
     /// @brief Tries to receive IPv6 packet over open IPv6 sockets.
     ///
@@ -325,7 +330,7 @@ public:
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     int openSocket(const std::string& ifname,
-                   const isc::asiolink::IOAddress& addr, int port);
+                   const isc::asiolink::IOAddress& addr, uint16_t port);
 
     /// Opens IPv6 sockets on detected interfaces.
     ///
@@ -375,7 +380,7 @@ protected:
     /// @param port a port that created socket should be bound to
     ///
     /// @return socket descriptor
-    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
 
     /// @brief Opens IPv6 socket.
     ///
@@ -388,7 +393,7 @@ protected:
     /// @param port a port that created socket should be bound to
     ///
     /// @return socket descriptor
-    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
 
     /// @brief Adds an interface to list of known interfaces.
     ///

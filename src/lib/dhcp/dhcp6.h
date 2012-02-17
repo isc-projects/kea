@@ -108,6 +108,15 @@ extern const int dhcpv6_type_name_max;
 #define DUID_LLT        1
 #define DUID_EN         2
 #define DUID_LL         3
+#define DUID_UUID       4
+
+// Define hardware types
+// Taken from http://www.iana.org/assignments/arp-parameters/
+#define HWTYPE_ETHERNET    0x0001
+#define HWTYPE_INIFINIBAND 0x0020
+
+// Taken from http://www.iana.org/assignments/enterprise-numbers
+#define ENTERPRISE_ID_ISC 2495
 
 /* Offsets into IA_*'s where Option spaces commence.  */
 #define IA_NA_OFFSET 12 /* IAID, T1, T2, all 4 octets each */
