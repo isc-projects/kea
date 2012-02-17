@@ -545,7 +545,6 @@ class TestModuleCCSession(unittest.TestCase):
     # def test_by_name(self)
     #     self._common_remote_module_by_name_test(self._internal_test)
     def _common_remote_module_test(self, internal_test):
-    def _common_remote_module_test(self, internal_test):
         internal_test(lambda ccs: ccs.add_remote_config,
                       self.spec_file("spec2.spec"),
                       lambda session: None)
