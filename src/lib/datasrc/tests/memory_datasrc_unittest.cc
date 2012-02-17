@@ -2020,7 +2020,7 @@ TEST_F(InMemoryZoneFinderTest, loadAndFindNSEC3) {
     // (detailed tests have been done above).
 
     InMemoryZoneFinder finder(class_, Name("example"));
-    finder.load(TEST_DATA_DIR "/rfc5155-example.zone.signed");
+    finder.load(TEST_DATA_COMMONDIR "/rfc5155-example.zone.signed");
 
     // See RFC5155 B.1
     ZoneFinder::FindNSEC3Result result1 =
