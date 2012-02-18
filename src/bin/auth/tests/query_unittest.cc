@@ -185,6 +185,18 @@ const char* const nsec3_www_txt =
     "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
 
+// NSEC3 for wild.example.com (used in wildcard tests, will be added on
+// demand not to confuse other tests)
+const char* const nsec3_atwild_txt =
+    "ji6neoaepv8b5o6k4ev33abha8ht9fgc.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en\n";
+
+// NSEC3 for cnamewild.example.com (used in wildcard tests, will be added on
+// demand not to confuse other tests)
+const char* const nsec3_atcnamewild_txt =
+    "k8udemvp1j2f7eg6jebps17vp3n8i58h.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en\n";
+
 // NSEC3 for *.uwild.example.com (will be added on demand not to confuse
 // other tests)
 const char* const nsec3_wild_txt =
@@ -337,6 +349,18 @@ public:
             "b4um86eghhds6nea196smvmlo4ors995";
         hash_map_[Name("unsigned-delegation-optout.example.com")] =
             "vld46lphhasfapj8og1pglgiasa5o5gt";
+
+        // For wildcard proofs
+        hash_map_[Name("wild.example.com")] =
+            "ji6neoaepv8b5o6k4ev33abha8ht9fgc";
+        hash_map_[Name("y.wild.example.com")] =
+            "0p9mhaveqvm6t7vbl5lop2u3t2rp3ton"; // a bit larger than H(<apex>)
+        hash_map_[Name("x.y.wild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+        hash_map_[Name("cnamewild.example.com")] =
+            "k8udemvp1j2f7eg6jebps17vp3n8i58h";
+        hash_map_[Name("www.cnamewild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
 
         // For closest encloser proof for www1.uwild.example.com:
         hash_map_[Name("uwild.example.com")] =
@@ -706,11 +730,13 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // hardcoded specific cases, ignoring other details such as canceling
     // due to the existence of closer name.
     if ((options & NO_WILDCARD) == 0) {
-        const Name wild_suffix(name.split(1));
+        const Name wild_suffix(name == Name("x.y.wild.example.com") ?
+                               Name("wild.example.com") : name.split(1));
         // Unit Tests use those domains for Wildcard test.
-        if (name.equals(Name("www.wild.example.com"))||
-           name.equals(Name("www1.uwild.example.com"))||
-           name.equals(Name("a.t.example.com"))) {
+        if (name.equals(Name("www.wild.example.com")) ||
+            name.equals(Name("x.y.wild.example.com")) ||
+            name.equals(Name("www1.uwild.example.com")) ||
+            name.equals(Name("a.t.example.com"))) {
             if (name.compare(wild_suffix).getRelation() ==
                 NameComparisonResult::SUBDOMAIN) {
                 domain = domains_.find(Name("*").concatenate(wild_suffix));
@@ -1341,6 +1367,69 @@ TEST_F(QueryTest, CNAMEwildNSEC) {
                    getCommonRRSIGText("NSEC") + "\n").c_str(),
                   NULL, // we are not interested in additionals in this test
                   mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, wildcardNSEC3) {
+    // Similar to wildcardNSEC, but the zone is signed with NSEC3.
+    // The next closer is y.wild.example.com, the covering NSEC3 for it
+    // is (in our setup) the NSEC3 for the apex.
+    mock_finder->setNSEC3Flag(true);
+
+    // This is NSEC3 for wild.example.com, which will be used in the middle
+    // of identifying the next closer name.
+    mock_finder->addRecord(nsec3_atwild_txt);
+
+    Query(memory_client, Name("x.y.wild.example.com"), RRType::A(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 6, 6,
+                  (string(wild_txt).replace(0, 1, "x.y") +
+                   string("x.y.wild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("A") + "\n").c_str(),
+                  // 3 NSes and their RRSIG
+                  (zone_ns_txt + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NS") + "\n" +
+                   // NSEC3 for the wildcard proof and its RRSIG
+                   string(nsec3_apex_txt) +
+                   mock_finder->hash_map_[Name("example.com.")] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, // we are not interested in additionals in this test
+                  mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, CNAMEwildNSEC3) {
+    // Similar to CNAMEwildNSEC, but with NSEC3.
+    // The next closer is qname itself, the covering NSEC3 for it
+    // is (in our setup) the NSEC3 for the www.example.com.
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(nsec3_atcnamewild_txt);
+
+    Query(memory_client, Name("www.cnamewild.example.com"), RRType::A(),
+          response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
+                  (string(cnamewild_txt).replace(0, 1, "www") +
+                   string("www.cnamewild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("CNAME") + "\n").c_str(),
+                  (string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, // we are not interested in additionals in this test
+                  mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, badWildcardNSEC3) {
+    // Similar to wildcardNSEC3, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
+                       RRType::A(), response, true).process(),
+                 isc::InvalidParameter);
 }
 
 TEST_F(QueryTest, badWildcardProof1) {
