@@ -202,20 +202,43 @@ Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
 }
 
 void
-Query::addWildcardProof(ZoneFinder& finder) {
-    // The query name shouldn't exist in the zone if there were no wildcard
-    // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
-    // in NXDOMAIN and an NSEC RR that proves it should be returned.
-    const ZoneFinder::FindResult fresult =
-        finder.find(qname_, RRType::NSEC(),
-                    dnssec_opt_ | ZoneFinder::NO_WILDCARD);
-    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
-        fresult.rrset->getRdataCount() == 0) {
-        isc_throw(BadNSEC, "Unexpected result for wildcard proof");
+Query::addWildcardProof(ZoneFinder& finder,
+                        const ZoneFinder::FindResult& db_result)
+{
+    if (db_result.isNSECSigned()) {
+        // Case for RFC4035 Section 3.1.3.3.
+        //
+        // The query name shouldn't exist in the zone if there were no wildcard
+        // substitution.  Confirm that by specifying NO_WILDCARD.  It should
+        // result in NXDOMAIN and an NSEC RR that proves it should be returned.
+        const ZoneFinder::FindResult fresult =
+            finder.find(qname_, RRType::NSEC(),
+                        dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+        if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
+            fresult.rrset->getRdataCount() == 0) {
+            isc_throw(BadNSEC,
+                      "Unexpected NSEC result for wildcard proof");
+        }
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               fresult.rrset),
+                           dnssec_);
+    } else if (db_result.isNSEC3Signed()) {
+        // Case for RFC5155 Section 7.2.6.
+        //
+        // Note that the closest encloser must be the immediate ancestor
+        // of the matching wildcard, so NSEC3 for its next closer is what
+        // we are expected to provided per the RFC (if this assumption isn't
+        // met the zone is broken anyway).
+        const ZoneFinder::FindNSEC3Result NSEC3Result(
+            finder.findNSEC3(qname_, true));
+        // Note that at this point next_proof must not be NULL unless it's
+        // a run time collision (or zone/findNSEC3() is broken).  The
+        // unexpected case will be caught in addRRset() and result in SERVFAIL.
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               NSEC3Result.next_proof), dnssec_);
     }
-    response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<AbstractRRset>(fresult.rrset),
-                       dnssec_);
 }
 
 void
@@ -482,7 +505,7 @@ Query::process() {
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
             if (dnssec_ && db_result.isWildcard()) {
-                addWildcardProof(*result.zone_finder);
+                addWildcardProof(*result.zone_finder,db_result);
             }
             break;
         case ZoneFinder::SUCCESS:
@@ -516,7 +539,7 @@ Query::process() {
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
             if (dnssec_ && db_result.isWildcard()) {
-                addWildcardProof(*result.zone_finder);
+                addWildcardProof(*result.zone_finder,db_result);
             }
             break;
         case ZoneFinder::DELEGATION:
