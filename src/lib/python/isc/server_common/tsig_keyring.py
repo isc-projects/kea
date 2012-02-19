@@ -13,3 +13,97 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""
+This module conveniently keeps a copy of TSIG keyring loaded from the
+tsig_keys module.
+"""
+
+import isc.dns
+
+updater = None
+
+class Unexpected(Exception):
+    """
+    Raised when an unexpected operation is requested by the user of this
+    module. For example if calling keyring() before init_keyring().
+    """
+    pass
+
+class AddError(Exception):
+    """
+    Raised when an key can not be added. This usually means there's a
+    duplicity.
+    """
+    pass
+
+class Updater:
+    """
+    The updater of tsig key ring. Not to be used directly.
+    """
+    def __init__(self, session):
+        """
+        Constructor. Pass the ccsession object so the key ring can be
+        downloaded.
+        """
+        self._session = session
+        self._keyring = isc.dns.TSIGKeyRing()
+        session.add_remote_config_by_name('tsig_keys', self._update)
+        self._update()
+
+    def _update(self):
+        """
+        Update the key ring by the configuration.
+
+        Note that this function is used as a callback, but can raise
+        on bad data. The bad data is expected to be handled by the
+        configuration plugin and not be allowed as far as here.
+        """
+        data = self._session.get_remote_config_value('tsig_keys', 'keys')
+        if data is not None: # There's an update
+            keyring = isc.dns.TSIGKeyRing()
+            for key_data in data:
+                key = isc.dns.TSIGKey(key_data)
+                if keyring.add(key) != isc.dns.TSIGKeyRing.SUCCESS:
+                    raise AddError("Can't add key " + str(key))
+            self._keyring = keyring
+
+    def get_keyring(self):
+        """
+        Return the current key ring.
+        """
+        return self._keyring
+
+    def deinit(self):
+        """
+        Unregister from getting updates. The object will not be
+        usable any more after this.
+        """
+        self._session.remove_remote_config('tsig_keys')
+
+def keyring():
+    """
+    Get the current key ring. You need to call init_keyring first.
+    """
+    if updater is None:
+        raise Unexpected("You need to initialize the keyring first by " +
+                         "init_keyring()")
+    return updater.get_keyring()
+
+def init_keyring(session):
+    """
+    Initialize the key ring for future use. It does nothing if already
+    initialized.
+    """
+    global updater
+    if updater is None:
+        updater = Updater(session)
+
+def deinit_keyring():
+    """
+    Deinit key ring. Yoeu can no longer access keyring() after this.
+    Does nothing if not initialized.
+    """
+    global updater
+    if updater is not None:
+        updater.deinit()
+        updater = None
