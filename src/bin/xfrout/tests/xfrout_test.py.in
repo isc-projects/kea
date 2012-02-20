@@ -1214,25 +1214,12 @@ class TestUnixSockServer(unittest.TestCase):
 
     def test_update_config_data(self):
         self.check_default_ACL()
-        tsig_key_str = 'example.com:SFuWd/q99SzF8Yzd1QbB9g=='
-        tsig_key_list = [tsig_key_str]
-        bad_key_list = ['bad..example.com:SFuWd/q99SzF8Yzd1QbB9g==']
         self.unix.update_config_data({'transfers_out':10 })
         self.assertEqual(self.unix._max_transfers_out, 10)
-        self.assertTrue(self.unix.tsig_key_ring is not None)
         self.check_default_ACL()
 
-        self.unix.update_config_data({'transfers_out':9,
-                                      'tsig_key_ring':tsig_key_list})
+        self.unix.update_config_data({'transfers_out':9})
         self.assertEqual(self.unix._max_transfers_out, 9)
-        self.assertEqual(self.unix.tsig_key_ring.size(), 1)
-        self.unix.tsig_key_ring.remove(Name("example.com."))
-        self.assertEqual(self.unix.tsig_key_ring.size(), 0)
-
-        # bad tsig key
-        config_data = {'transfers_out':9, 'tsig_key_ring': bad_key_list}
-        self.assertRaises(None, self.unix.update_config_data(config_data))
-        self.assertEqual(self.unix.tsig_key_ring.size(), 0)
 
         # Load the ACL
         self.unix.update_config_data({'transfer_acl': [{'from': '127.0.0.1',
