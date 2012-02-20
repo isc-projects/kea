@@ -18,7 +18,7 @@
 #include <util/io/sockaddr_util.h>
 
 #include <cerrno>
-#include <cstring>
+#include <string.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -216,8 +216,8 @@ getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len) {
 
 // Main run loop.
 void
-run(const int input_fd, const int output_fd, const get_sock_t get_sock,
-    const send_fd_t send_fd_fun, const close_t close_fun)
+run(const int input_fd, const int output_fd, get_sock_t get_sock,
+    send_fd_t send_fd_fun, close_t close_fun)
 {
     for (;;) {
         char command;
