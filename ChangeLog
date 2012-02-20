@@ -1,3 +1,45 @@
+382.	[func]	jelte
+	b10-auth now also experimentally supports statistics counters of
+	the rcode reponses it sends. The counters can be shown as
+	rcode.<code name>, where code name is the lowercase textual
+	representation of the rcode (e.g. "noerror", "formerr", etc.).
+	Same note applies as for opcodes, see changelog entry 364.
+	(Trac #1613, git e98da500d7b02e11347431a74f2efce5a7d622aa)
+
+381.	[bug]		jinmei
+	b10-auth: honor the DNSSEC DO bit in the new query handler.
+	(Trac #1695, git 61f4da5053c6a79fbc162fb16f195cdf8f94df64)
+
+380.	[bug]		jinmei
+	libdns++: miscellaneous bug fixes for the NSECPARAM RDATA
+	implementation, including incorrect handling for empty salt and
+	incorrect comparison logic.
+	(Trac #1638, git 966c129cc3c538841421f1e554167d33ef9bdf25)
+
+379.	[bug]		jelte
+	Configuration commands in bindctl now check for list indices if
+	the 'identifier' argument points to a child element of a list
+	item. Previously, it was possible to 'get' non-existent values
+	by leaving out the index, e.g. "config show Auth/listen_on/port,
+	which should be config show Auth/listen_on[<index>]/port, since
+	Auth/listen_on is a list. The command without an index will now
+	show an error. It is still possible to show/set the entire list
+	("config show Auth/listen_on").
+	(Trac #1649, git 003ca8597c8d0eb558b1819dbee203fda346ba77)
+
+378.	[func]		vorner
+	It is possible to start authoritative server or resolver in multiple
+	instances, to use more than one core. Configuration is described in
+	the guide.
+	(Trac #1596, git 17f7af0d8a42a0a67a2aade5bc269533efeb840a)
+
+377.	[bug]		jinmei
+	libdns++: miscellaneous bug fixes for the NSEC and NSEC3 RDATA
+	implementation, including a crash in NSEC3::toText() for some RR
+	types, incorrect handling of empty NSEC3 salt, and incorrect
+	comparison logic in NSEC3::compare().
+	(Trac #1641, git 28ba8bd71ae4d100cb250fd8d99d80a17a6323a2)
+
 376.	[bug]		jinmei, vorner
 	The new query handling module of b10-auth did not handle type DS
 	query correctly: It didn't look for it in the parent zone, and

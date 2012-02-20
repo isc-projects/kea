@@ -54,41 +54,17 @@ NSEC::NSEC(const string& nsec_str) :
 {
     istringstream iss(nsec_str);
     string nextname;
-    uint8_t bitmap[8 * 1024];       // 64k bits
-    vector<uint8_t> typebits;
 
     iss >> nextname;
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC name");
     }
-
-    memset(bitmap, 0, sizeof(bitmap));
-    do { 
-        string type;
-        iss >> type;
-        try {
-            const int code = RRType(type).getCode();
-            bitmap[code / 8] |= (0x80 >> (code % 8));
-        } catch (...) {
-            isc_throw(InvalidRdataText, "Invalid RRtype in NSEC");
-        }
-    } while (!iss.eof());
-
-    for (int window = 0; window < 256; window++) {
-        int octet;
-        for (octet = 31; octet >= 0; octet--) {
-            if (bitmap[window * 32 + octet] != 0) {
-                break;
-            }
-        }
-        if (octet < 0)
-            continue;
-        typebits.push_back(window);
-        typebits.push_back(octet + 1);
-        for (int i = 0; i <= octet; i++) {
-            typebits.push_back(bitmap[window * 32 + i]);
-        }
+    if (iss.eof()) {
+        isc_throw(InvalidRdataText, "NSEC bitmap is missing");
     }
+
+    vector<uint8_t> typebits;
+    buildBitmapsFromText("NSEC", iss, typebits);
 
     impl_ = new NSECImpl(Name(nextname), typebits);
 }
@@ -135,34 +111,8 @@ NSEC::~NSEC() {
 string
 NSEC::toText() const {
     ostringstream s;
-    int len = 0;
     s << impl_->nextname_;
-
-    // In the following loop we use string::at() rather than operator[].
-    // Since the index calculation is a bit complicated, it will be safer
-    // and easier to find a bug (if any).  Note that this conversion method
-    // is generally not expected to be very efficient, so the slight overhead
-    // of at() should be acceptable.
-    for (size_t i = 0; i < impl_->typebits_.size(); i += len) {
-        assert(i + 2 <= impl_->typebits_.size());
-        const int block = impl_->typebits_.at(i);
-        len = impl_->typebits_.at(i + 1);
-        assert(len > 0 && len <= 32);
-        i += 2;
-        for (int j = 0; j < len; j++) {
-            if (impl_->typebits_.at(i + j) == 0) {
-                continue;
-            }
-            for (int k = 0; k < 8; k++) {
-                if ((impl_->typebits_.at(i + j) & (0x80 >> k)) == 0) {
-                    continue;
-                }
-                const int t = block * 256 + j * 8 + k;
-                s << " " << RRType(t);
-            }
-        }
-    }
-
+    bitmapsToText(impl_->typebits_, s);
     return (s.str());
 }
 

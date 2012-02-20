@@ -86,6 +86,7 @@ SrvTestBase::createRequestPacket(Message& message,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
+
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                *io_sock, *endpoint);
