@@ -298,6 +298,15 @@ public:
         }
         return (ndata_[pos]);
     }
+
+    const char* at_p(size_t pos) const
+    {
+        if (pos >= length_) {
+            isc_throw(OutOfRange, "Out of range access in Name::at()");
+        }
+        return (&ndata_[pos]);
+    }
+
     /// \brief Gets the length of the <code>Name</code> in its wire format.
     ///
     /// This method never throws an exception.
