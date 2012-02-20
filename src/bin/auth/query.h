@@ -86,10 +86,11 @@ private:
     void addDS(isc::datasrc::ZoneFinder& finder,
                const isc::dns::Name& ds_name);
 
-    /// \brief Adds NSEC denial proof for the given NXRRset result
+    /// \brief Adds NSEC(3) denial proof for the given NXRRset result
     ///
-    /// NSEC records, if available (signaled by isNSECSigned(), are added
-    /// to the authority section.
+    /// If available, NSEC or NSEC3 records are added to the authority
+    /// section (depending on whether isNSECSigned() or isNSEC3Signed()
+    /// returns true).
     ///
     /// \param finder The ZoneFinder that was used to search for the missing
     ///               data
@@ -100,13 +101,21 @@ private:
     /// Add NSEC RRs that prove an NXDOMAIN result.
     ///
     /// This corresponds to Section 3.1.3.2 of RFC 4035.
-    void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
-                          isc::dns::ConstRRsetPtr nsec);
+    void addNXDOMAINProofByNSEC(isc::datasrc::ZoneFinder& finder,
+                                isc::dns::ConstRRsetPtr nsec);
 
-    /// Add NSEC RRs that prove a wildcard answer is the best one.
+    /// Add NSEC3 RRs that prove an NXDOMAIN result.
     ///
-    /// This corresponds to Section 3.1.3.3 of RFC 4035.
-    void addWildcardProof(isc::datasrc::ZoneFinder& finder);
+    /// This corresponds to Section 7.2.2 of RFC 5155.
+    void addNXDOMAINProofByNSEC3(isc::datasrc::ZoneFinder& finder);
+
+    /// Add NSEC or NSEC3 RRs that prove a wildcard answer is the best one.
+    ///
+    /// This corresponds to Section 3.1.3.3 of RFC 4035 and Section 7.2.6
+    /// of RFC5155.
+    void addWildcardProof(
+        isc::datasrc::ZoneFinder& finder,
+        const isc::datasrc::ZoneFinder::FindResult& dbResult);
 
     /// \brief Adds one NSEC RR proved no matched QNAME,one NSEC RR proved no
     /// matched <QNAME,QTYPE> through wildcard extension.
@@ -119,7 +128,7 @@ private:
     /// <QNAME,QTTYPE>.
     void addWildcardNXRRSETProof(isc::datasrc::ZoneFinder& finder,
                                  isc::dns::ConstRRsetPtr nsec);
-    
+
     /// \brief Look up additional data (i.e., address records for the names
     /// included in NS or MX records) and add them to the additional section.
     ///
@@ -283,6 +292,17 @@ public:
     /// as SERVFAIL.
     struct BadNSEC : public BadZone {
         BadNSEC(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
+    /// An invalid result is given when a valid NSEC3 is expected
+    ///
+    /// This can only happen when the underlying data source implementation or
+    /// the zone is broken.  By throwing an exception we treat such cases
+    /// as SERVFAIL.
+    struct BadNSEC3 : public BadZone {
+        BadNSEC3(const char* file, size_t line, const char* what) :
             BadZone(file, line, what)
         {}
     };
