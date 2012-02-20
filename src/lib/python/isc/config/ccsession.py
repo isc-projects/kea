@@ -344,17 +344,19 @@ class ModuleCCSession(ConfigData):
             raise ModuleCCSessionError("No answer from ConfigManager when "
                                        "asking about Remote module " +
                                        module_name)
+        call_callback = False
         if answer:
             rcode, value = parse_answer(answer)
             if rcode == 0:
                 if value != None and module_spec.validate_config(False, value):
                     module_cfg.set_local_config(value)
-                    if config_update_callback is not None:
-                        config_update_callback(value, module_cfg)
+                    call_callback = True
 
         # all done, add it
         self._remote_module_configs[module_name] = module_cfg
         self._remote_module_callbacks[module_name] = config_update_callback
+        if call_callback and config_update_callback is not None:
+            config_update_callback(value, module_cfg)
 
     def add_remote_config_by_name(self, module_name,
                                   config_update_callback=None):
