@@ -59,7 +59,7 @@ struct HashTableSlot {
     /// \brief Copy Constructor
     ///
     /// ... which as noted in the class description does not copy.
-    HashTableSlot(const HashTableSlot<T>&)
+    HashTableSlot(const HashTableSlot<T>&) : mutex_(), list_()
     { }
 
 public:

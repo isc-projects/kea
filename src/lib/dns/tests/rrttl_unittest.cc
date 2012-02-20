@@ -138,7 +138,7 @@ TEST_F(RRTTLTest, leq) {
 
     // small <= small is true
     EXPECT_TRUE(ttl_small.leq(ttl_small));
-    EXPECT_TRUE(ttl_small <= ttl_small);
+    EXPECT_LE(ttl_small, ttl_small);
 
     // large <= small is false
     EXPECT_FALSE(ttl_large.leq(ttl_small));
@@ -150,7 +150,7 @@ TEST_F(RRTTLTest, geq) {
     EXPECT_TRUE(ttl_large >= ttl_small);
 
     EXPECT_TRUE(ttl_large.geq(ttl_large));
-    EXPECT_TRUE(ttl_large >= ttl_large);
+    EXPECT_GE(ttl_large, ttl_large);
 
     EXPECT_FALSE(ttl_small.geq(ttl_large));
     EXPECT_FALSE(ttl_small >= ttl_large);
