@@ -50,15 +50,19 @@ class Updater:
         session.add_remote_config_by_name('tsig_keys', self._update)
         self._update()
 
-    def _update(self):
+    def _update(self, value=None, module_cfg=None):
         """
         Update the key ring by the configuration.
 
         Note that this function is used as a callback, but can raise
         on bad data. The bad data is expected to be handled by the
         configuration plugin and not be allowed as far as here.
+
+        The parameters are there just to match the signature which
+        the callback should have (eg. they are ignored).
         """
-        data = self._session.get_remote_config_value('tsig_keys', 'keys')
+        (data, default) = self._session.get_remote_config_value('tsig_keys',
+                                                                'keys')
         if data is not None: # There's an update
             keyring = isc.dns.TSIGKeyRing()
             for key_data in data:
