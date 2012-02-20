@@ -135,10 +135,8 @@ typedef int (*close_t)(int);
 /// \exception isc::socket_creator::ProtocolError Unrecognised command received
 /// \exception isc::socket_creator::InternalError Other error
 void
-run(const int input_fd, const int output_fd,
-    const get_sock_t get_sock_fun = getSock,
-    const send_fd_t send_fd_fun = isc::util::io::send_fd,
-    const close_t close_fun = close);
+run(const int input_fd, const int output_fd, get_sock_t get_sock_fun,
+    send_fd_t send_fd_fun, close_t close_fun);
 
 }   // namespace socket_creator
 }   // NAMESPACE ISC
