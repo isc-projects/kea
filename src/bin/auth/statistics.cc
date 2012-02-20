@@ -50,6 +50,9 @@ public:
     void inc(const Opcode opcode) {
         opcode_counter_.inc(opcode.getCode());
     }
+    void inc(const Rcode rcode) {
+        rcode_counter_.inc(rcode.getCode());
+    }
     void inc(const std::string& zone,
              const AuthCounters::PerZoneCounterType type);
     bool submitStatistics() const;
@@ -61,10 +64,15 @@ public:
     uint64_t getCounter(const Opcode opcode) const {
         return (opcode_counter_.get(opcode.getCode()));
     }
+    uint64_t getCounter(const Rcode rcode) const {
+        return (rcode_counter_.get(rcode.getCode()));
+    }
 private:
     Counter server_counter_;
     Counter opcode_counter_;
     static const size_t NUM_OPCODES = 16;
+    Counter rcode_counter_;
+    static const size_t NUM_RCODES = 17;
     CounterDictionary per_zone_counter_;
     isc::cc::AbstractSession* statistics_session_;
     AuthCounters::validator_type validator_;
@@ -75,7 +83,7 @@ AuthCountersImpl::AuthCountersImpl() :
     // size of server_counter_: AuthCounters::SERVER_COUNTER_TYPES
     // size of per_zone_counter_: AuthCounters::PER_ZONE_COUNTER_TYPES
     server_counter_(AuthCounters::SERVER_COUNTER_TYPES),
-    opcode_counter_(NUM_OPCODES),
+    opcode_counter_(NUM_OPCODES), rcode_counter_(NUM_RCODES),
     per_zone_counter_(AuthCounters::PER_ZONE_COUNTER_TYPES),
     statistics_session_(NULL)
 {
@@ -122,6 +130,19 @@ AuthCountersImpl::submitStatistics() const {
             std::transform(opcode_txt.begin(), opcode_txt.end(),
                            opcode_txt.begin(), ::tolower);
             statistics_string << ", \"opcode." << opcode_txt << "\": "
+                              << counter;
+        }
+    }
+    // Insert non 0 Rcode counters.
+    for (int i = 0; i < NUM_RCODES; ++i) {
+        const Counter::Type counter = rcode_counter_.get(i);
+        if (counter != 0) {
+            // The counter item name should be derived lower-cased textual
+            // representation of the code.
+            std::string rcode_txt = Rcode(i).toText();
+            std::transform(rcode_txt.begin(), rcode_txt.end(),
+                           rcode_txt.begin(), ::tolower);
+            statistics_string << ", \"rcode." << rcode_txt << "\": "
                               << counter;
         }
     }
@@ -194,6 +215,11 @@ AuthCounters::inc(const Opcode opcode) {
     impl_->inc(opcode);
 }
 
+void
+AuthCounters::inc(const Rcode rcode) {
+    impl_->inc(rcode);
+}
+
 bool
 AuthCounters::submitStatistics() const {
     return (impl_->submitStatistics());
@@ -214,6 +240,11 @@ AuthCounters::getCounter(const AuthCounters::ServerCounterType type) const {
 uint64_t
 AuthCounters::getCounter(const Opcode opcode) const {
     return (impl_->getCounter(opcode));
+}
+
+uint64_t
+AuthCounters::getCounter(const Rcode rcode) const {
+    return (impl_->getCounter(rcode));
 }
 
 void

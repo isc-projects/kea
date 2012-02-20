@@ -12,22 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <vector>
+#include <util/buffer.h>
+#include <util/encode/hex.h>
+
+#include <dns/messagerenderer.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/nsec3param_common.h>
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/buffer.h>
-#include <util/encode/hex.h>
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <stdio.h>
-#include <time.h>
+#include <string>
+#include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::util;
@@ -43,9 +40,9 @@ struct NSEC3PARAMImpl {
         hashalg_(hashalg), flags_(flags), iterations_(iterations), salt_(salt)
     {}
 
-    uint8_t hashalg_;
-    uint8_t flags_;
-    uint16_t iterations_;
+    const uint8_t hashalg_;
+    const uint8_t flags_;
+    const uint16_t iterations_;
     const vector<uint8_t> salt_;
 };
 
@@ -53,50 +50,26 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3param_str);
-    uint16_t hashalg, flags, iterations;
-    stringbuf saltbuf;
-
-    iss >> hashalg >> flags >> iterations >> &saltbuf;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3PARAM text");
-    }
-    if (hashalg > 0xf) {
-        isc_throw(InvalidRdataText, "NSEC3PARAM hash algorithm out of range");
-    }
-    if (flags > 0xff) {
-        isc_throw(InvalidRdataText, "NSEC3PARAM flags out of range");
-    }
-
-    const string salt_str = saltbuf.str();
     vector<uint8_t> salt;
-    if (salt_str != "-") { // "-" means an empty salt, no need to touch vector
-        decodeHex(saltbuf.str(), salt);
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamText("NSEC3PARAM", nsec3param_str, iss, salt);
+
+    if (!iss.eof()) {
+        isc_throw(InvalidRdataText, "Invalid NSEC3PARAM (redundant text): "
+                  << nsec3param_str);
     }
 
-    impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
+    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
+                               params.iterations, salt);
 }
 
 NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 4) {
-        isc_throw(InvalidRdataLength, "NSEC3PARAM too short");
-    }
+    vector<uint8_t> salt;
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamWire("NSEC3PARAM", buffer, rdata_len, salt);
 
-    uint8_t hashalg = buffer.readUint8();
-    uint8_t flags = buffer.readUint8();
-    uint16_t iterations = buffer.readUint16();
-    rdata_len -= 4;
-
-    uint8_t saltlen = buffer.readUint8();
-    --rdata_len;
-
-    if (rdata_len < saltlen) {
-        isc_throw(InvalidRdataLength, "NSEC3PARAM salt too short");
-    }
-
-    vector<uint8_t> salt(saltlen);
-    buffer.readData(&salt[0], saltlen);
-
-    impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
+    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
+                               params.iterations, salt);
 }
 
 NSEC3PARAM::NSEC3PARAM(const NSEC3PARAM& source) :
@@ -124,27 +97,31 @@ string
 NSEC3PARAM::toText() const {
     using namespace boost;
     return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
-        " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
-        " " + encodeHex(impl_->salt_));
+            " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
+            " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
+            " " + (impl_->salt_.empty() ? "-" : encodeHex(impl_->salt_)));
+}
+
+template <typename OUTPUT_TYPE>
+void
+toWireHelper(const NSEC3PARAMImpl& impl, OUTPUT_TYPE& output) {
+    output.writeUint8(impl.hashalg_);
+    output.writeUint8(impl.flags_);
+    output.writeUint16(impl.iterations_);
+    output.writeUint8(impl.salt_.size());
+    if (!impl.salt_.empty()) {
+        output.writeData(&impl.salt_[0], impl.salt_.size());
+    }
 }
 
 void
 NSEC3PARAM::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(impl_->hashalg_);
-    buffer.writeUint8(impl_->flags_);
-    buffer.writeUint16(impl_->iterations_);
-    buffer.writeUint8(impl_->salt_.size());
-    buffer.writeData(&impl_->salt_[0], impl_->salt_.size());
+    toWireHelper(*impl_, buffer);
 }
 
 void
 NSEC3PARAM::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(impl_->hashalg_);
-    renderer.writeUint8(impl_->flags_);
-    renderer.writeUint16(impl_->iterations_);
-    renderer.writeUint8(impl_->salt_.size());
-    renderer.writeData(&impl_->salt_[0], impl_->salt_.size());
+    toWireHelper(*impl_, renderer);
 }
 
 int
@@ -161,15 +138,18 @@ NSEC3PARAM::compare(const Rdata& other) const {
         return (impl_->iterations_ < other_param.impl_->iterations_ ? -1 : 1);
     }
 
-    size_t this_len = impl_->salt_.size();
-    size_t other_len = other_param.impl_->salt_.size();
-    size_t cmplen = min(this_len, other_len);
-    int cmp = memcmp(&impl_->salt_[0], &other_param.impl_->salt_[0],
-                     cmplen);
+    const size_t this_len = impl_->salt_.size();
+    const size_t other_len = other_param.impl_->salt_.size();
+    if (this_len != other_len) {
+        return (this_len - other_len);
+    }
+    const size_t cmplen = min(this_len, other_len);
+    const int cmp = (cmplen == 0) ? 0 :
+        memcmp(&impl_->salt_.at(0), &other_param.impl_->salt_.at(0), cmplen);
     if (cmp != 0) {
         return (cmp);
     } else {
-        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
+        return (this_len - other_len);
     }
 }
 
@@ -192,7 +172,6 @@ const vector<uint8_t>&
 NSEC3PARAM::getSalt() const {
     return (impl_->salt_);
 }
-
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
