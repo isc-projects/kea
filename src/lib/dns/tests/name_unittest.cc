@@ -543,7 +543,7 @@ TEST_F(NameTest, leq) {
 
     // small <= small is true
     EXPECT_TRUE(small_name.leq(small_name));
-    EXPECT_TRUE(small_name <= small_name);
+    EXPECT_LE(small_name, small_name);
 
     // large <= small is false
     EXPECT_FALSE(large_name.leq(small_name));
@@ -555,7 +555,7 @@ TEST_F(NameTest, geq) {
     EXPECT_TRUE(large_name >= small_name);
 
     EXPECT_TRUE(large_name.geq(large_name));
-    EXPECT_TRUE(large_name >= large_name);
+    EXPECT_GE(large_name, large_name);
 
     EXPECT_FALSE(small_name.geq(large_name));
     EXPECT_FALSE(small_name >= large_name);
