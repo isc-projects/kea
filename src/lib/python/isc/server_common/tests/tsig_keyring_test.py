@@ -43,7 +43,7 @@ class Session(MockModuleCCSession):
     def get_remote_config_value(self, module, name):
         if module != 'tsig_keys' or name != 'keys':
             raise Exception("Asked for bad data element")
-        return self._data
+        return (self._data, False)
 
 class TSIGKeyRingTest(unittest.TestCase):
     """
