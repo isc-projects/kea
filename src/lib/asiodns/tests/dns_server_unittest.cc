@@ -19,6 +19,7 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_error.h>
 #include <asiodns/udp_server.h>
+#include <asiodns/sync_udp_server.h>
 #include <asiodns/tcp_server.h>
 #include <asiodns/dns_answer.h>
 #include <asiodns/dns_lookup.h>
@@ -314,10 +315,10 @@ class TCPClient : public SimpleClient {
 // two servers, UDP client will only communicate with UDP server, same for TCP
 // client
 //
-// This is only the active part of the test. We run the test case twice, once
+// This is only the active part of the test. We run the test case four times, once
 // for each type of initialization (once when giving it the address and port,
-// once when giving the file descriptor), to ensure it works both ways exactly
-// the same.
+// once when giving the file descriptor) multiplied by once for each type of UDP
+// server (UDPServer and SyncUDPServer), to ensure it works exactly the same.
 template<class UDPServerClass>
 class DNSServerTestBase : public::testing::Test {
     protected:
@@ -422,7 +423,8 @@ protected:
 };
 
 // Initialization by the file descriptor
-class FdInit : public DNSServerTestBase<UDPServer> {
+template<class UDPServerClass>
+class FdInit : public DNSServerTestBase<UDPServerClass> {
 private:
     // Opens the file descriptor for us
     // It uses the low-level C api, as it seems to be the easiest way to get
@@ -470,12 +472,14 @@ protected:
     void SetUp() {
         const int fdUDP(getFd(SOCK_DGRAM));
         ASSERT_NE(-1, fdUDP) << strerror(errno);
-        udp_server_ = new UDPServer(service, fdUDP, AF_INET6, checker_,
-                                    lookup_, answer_);
+        this->udp_server_ = new UDPServerClass(this->service, fdUDP, AF_INET6,
+                                               this->checker_, this->lookup_,
+                                               this->answer_);
         const int fdTCP(getFd(SOCK_STREAM));
         ASSERT_NE(-1, fdTCP) << strerror(errno);
-        tcp_server_ = new TCPServer(service, fdTCP, AF_INET6, checker_,
-                                    lookup_, answer_);
+        this->tcp_server_ = new TCPServer(this->service, fdTCP, AF_INET6,
+                                          this->checker_, this->lookup_,
+                                          this->answer_);
     }
 };
 
@@ -483,12 +487,12 @@ protected:
 template<class Parent>
 class DNSServerTest : public Parent { };
 
-// TODO: Add the new SyncUDPServer class here. This might need some changes,
-// as it is not as generic, though
-typedef ::testing::Types<AddrPortInit<UDPServer>, FdInit> ServerTypes;
+typedef ::testing::Types<AddrPortInit<UDPServer>, AddrPortInit<SyncUDPServer>,
+                         FdInit<UDPServer>, FdInit<SyncUDPServer> >
+    ServerTypes;
 TYPED_TEST_CASE(DNSServerTest, ServerTypes);
 
-typedef ::testing::Types<UDPServer> UDPServerTypes;
+typedef ::testing::Types<UDPServer, SyncUDPServer> UDPServerTypes;
 TYPED_TEST_CASE(DNSServerTestBase, UDPServerTypes);
 
 template<class UDPServerClass>
