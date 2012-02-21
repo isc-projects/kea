@@ -28,6 +28,14 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
+namespace {
+/// @brief holds pointers to netlink messages
+///
+/// netlink (a Linux interface for getting information about network
+/// interfaces) uses memory aliasing. There are many nlmsg structures
+/// with varying size that all have the same nlmsghdr. The only
+/// reasonable way to represent this in C++ is to use vector of
+/// pointers to nlmsghdr (the common structure).
 typedef vector<struct nlmsghdr*> NetlinkMessages;
 
 /// This is a structure that defines context for netlink connection.
@@ -42,10 +50,6 @@ struct rtnl_handle
 
 const size_t sndbuf = 32768;
 const size_t rcvbuf = 32768;
-
-namespace isc {
-
-namespace dhcp {
 
 /// @brief Opens netlink socket and initializes handle structure.
 ///
@@ -124,10 +128,10 @@ void rtnl_send_request(struct rtnl_handle& handle, int family, int type) {
 /// @param msg a netlink message to be added
 void rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg)
 {
-    // we need to make a copy of this message. As those messages are variable size
-    // it is easier to use malloc + C-style case than do new char[X] and then
-    // reinterpret_cast<>  to struct nlmsghdr.
-    struct nlmsghdr* copy = (struct nlmsghdr*)malloc(msg->nlmsg_len);
+    // we need to make a copy of this message. We really can't allocate
+    // nlmsghdr directly as it is only part of the structure. There are
+    // many message types with varying lengths and a common header.
+    struct nlmsghdr* copy = reinterpret_cast<struct nlmsghdr*>(new char[(msg->nlmsg_len)]);
     memcpy(copy, msg, msg->nlmsg_len);
     if (copy == NULL) {
         isc_throw(Unexpected, "Failed to allocate " << msg->nlmsg_len
@@ -268,16 +272,22 @@ void rtnl_process_reply(const struct rtnl_handle& rth, NetlinkMessages& info) {
     }
 }
 
-/// @brief releases nlmsg list
+/// @brief releases nlmsg structure
 ///
 /// @param messages first element of the list to be released
 void release_list(NetlinkMessages& messages) {
     // let's free our copies of stored messages
     for (NetlinkMessages::iterator msg = messages.begin(); msg != messages.end(); ++msg) {
-        free(*msg);
+        delete(*msg);
     }
     messages.clear();
 }
+
+} // end of anonymous namespace
+
+namespace isc {
+
+namespace dhcp {
 
 void IfaceMgr::detectIfaces() {
     cout << "Linux: detecting interfaces." << endl;
