@@ -62,13 +62,11 @@ public:
     void asyncLookup();
     void stop();
     void resume(const bool done);
-    bool hasAnswer() { return (done_); }
-    int value() { return (get_value()); }
-
     DNSServer* clone() {
         TCPServer* s = new TCPServer(*this);
         return (s);
     }
+
 
 private:
     enum { MAX_LENGTH = 65535 };
