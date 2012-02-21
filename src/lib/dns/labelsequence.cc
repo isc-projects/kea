@@ -24,65 +24,56 @@ namespace dns {
 
 LabelSequence::LabelSequence(const Name& name) : name_(name),
                              first_label_(0) {
-    isc::util::OutputBuffer buf(0);
-    name.toWire(buf);
-    size_t buflen = buf.getLength();
-    data_ = new char[buflen];
-    memcpy(data_, buf.getData(), buflen);
-    data_[buflen-1] = '\0';
-
     size_t label_count_ = name.getLabelCount();
     last_label_ = label_count_ - 1;
     offsets_ = new size_t[label_count_];
     offsets_[0] = 0;
     for (size_t i = 1; i < label_count_; ++i) {
-        offsets_[i] = offsets_[i - 1] + data_[offsets_[i - 1]] + 1;
+        offsets_[i] = offsets_[i - 1] + name.at(offsets_[i - 1]) + 1;
     }
 }
 
 LabelSequence::~LabelSequence() {
-    delete[] data_;
     delete[] offsets_;
 }
 
 const char*
-LabelSequence::getData() const {
-    return &data_[offsets_[first_label_]];
-}
-
-const char*
 LabelSequence::getData(size_t *len) const {
-    std::cout << "[XX]" << std::endl;
-    std::cout << "[XX] at: " << offsets_[first_label_] << std::endl;
-    std::cout << "[XX] value: " << name_.at(offsets_[first_label_]) << std::endl;
-    std::cout << "[XX] ptr: " << name_.at_p(offsets_[first_label_]) << std::endl;
     *len = offsets_[last_label_] - offsets_[first_label_];
-    return name_.at_p(offsets_[first_label_]);
+    return (name_.at_p(offsets_[first_label_]));
 }
 
 bool
 LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
+    size_t len, other_len;
+    const char* data = getData(&len);
+    const char* other_data = other.getData(&other_len);
+
+    if (len != other_len) {
+        return (false);
+    }
     if (case_sensitive) {
-        return (strcasecmp(getData(), other.getData()) == 0);
+        return (strncasecmp(data, other_data, len) == 0);
     } else {
-        return (strcmp(getData(), other.getData()) == 0);
+        return (strncmp(data, other_data, len) == 0);
     }
 }
 
 void
 LabelSequence::split(int i) {
     if (i > 0) {
-        if (first_label_ + i > last_label_) {
-            isc_throw(Exception, "split(" << i <<") but labelcount: " << getLabelCount());
+        if (i > getLabelCount()) {
+            isc_throw(OutOfRange, "Label " << i << " out of range (" <<
+                                  getLabelCount() << ")");
         } else {
             first_label_ += i;
         }
     } else if (i < 0) {
-        if (last_label_ + i < first_label_) {
-            isc_throw(Exception, "split(" << i <<") but labelcount: " << getLabelCount());
+        if (-i > getLabelCount()) {
+            isc_throw(OutOfRange, "Label " << i << " out of range (" <<
+                                  getLabelCount() << ")");
         } else {
             last_label_ += i;
-            data_[offsets_[last_label_]] = '\0';
         }
     }
 }

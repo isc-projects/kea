@@ -26,20 +26,20 @@ public:
     LabelSequence(const Name& name);
     ~LabelSequence();
 
-    const char* getData() const;
     const char* getData(size_t* len) const;
 
     bool equals(const LabelSequence& other, bool case_sensitive = false) const;
 
     void split(int i);
 
-    size_t getLabelCount() { return last_label_ - first_label_ + 1; }
+    size_t getLabelCount() { return last_label_ - first_label_; }
+
+    const Name& getName() const { return name_; }
 
 private:
     const Name& name_;
     size_t first_label_;
     size_t last_label_;
-    char* data_;
     size_t* offsets_;
 };
 
