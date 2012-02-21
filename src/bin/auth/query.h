@@ -208,6 +208,9 @@ private:
                                     const isc::dns::Name& name, bool exact_ok,
                                     bool add_closet = true);
 
+    void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
+                         const isc::dns::Name& name, bool match);
+
 public:
     /// Constructor from query parameters.
     ///

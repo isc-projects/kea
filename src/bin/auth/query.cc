@@ -192,6 +192,20 @@ Query::addClosestEncloserProof(ZoneFinder& finder, const Name& name,
 }
 
 void
+Query::addNSEC3ForName(ZoneFinder& finder, const Name& name, bool match) {
+    const ZoneFinder::FindNSEC3Result result = finder.findNSEC3(name, false);
+    if (match != result.matched) {
+        isc_throw(BadNSEC3, "Unexpected "
+                  << (result.matched ? "matching" : "covering")
+                  << " NSEC3 found for " << name);
+    }
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<AbstractRRset>(
+                           result.closest_proof),
+                       dnssec_);
+}
+
+void
 Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
     // Firstly get the NSEC3 proves for Closest Encloser Proof
     // See section 7.2.1 of RFC 5155.
@@ -202,16 +216,7 @@ Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
     // '*' followed by the closest encloser, and add NSEC3 for it.
     const Name wildname(Name("*").concatenate(
                qname_.split(qname_.getLabelCount() - closest_labels)));
-    const ZoneFinder::FindNSEC3Result fresult2 =
-        finder.findNSEC3(wildname, false);
-    if (fresult2.matched) {
-        isc_throw(BadNSEC3, "Matching NSEC3 found for nonexistent domain "
-                  << wildname);
-    }
-    response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<AbstractRRset>(
-                           fresult2.closest_proof),
-                       dnssec_);
+    addNSEC3ForName(finder, wildname, false);
 }
 
 void
@@ -306,44 +311,22 @@ Query::addNXRRsetProof(ZoneFinder& finder,
             addWildcardNXRRSETProof(finder, db_result.rrset);
         }
     } else if (db_result.isNSEC3Signed() && !db_result.isWildcard()) {
-        // Handling depends on whether query type is DS or not
-        // (see RFC5155, 7.2.3 and 7.2.4):  If qtype == DS, do
-        // recursive search (and add next_proof, if necessary),
-        // otherwise, do non-recursive search
-        const bool qtype_ds = (qtype_ == RRType::DS());
-        if (qtype_ds) {
+        if (qtype_ == RRType::DS()) {
+            // RFC5155, 7.2.4.  Add either NSEC3 for the qname or closest
+            // (provable) encloser proof in case of optout.
             addClosestEncloserProof(finder, qname_, true);
         } else {
-            ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
-                                                                false));
-            if (result.matched) {
-                response_.addRRset(Message::SECTION_AUTHORITY,
-                                   boost::const_pointer_cast<AbstractRRset>(
-                                       result.closest_proof), dnssec_);
-            } else {
-                isc_throw(BadNSEC3,
-                          "No matching NSEC3 found for existing domain "
-                          << qname_);
-            }
+            // RFC5155, 7.2.3.  Just add NSEC3 for the qname.
+            addNSEC3ForName(finder, qname_, true);
         }
     } else if (db_result.isNSEC3Signed() && db_result.isWildcard()) {
-        // Case for RFC5155 Section 7.2.5
+        // Case for RFC5155 Section 7.2.5: add closest encloser proof for the
+        // qname, construct the matched wildcard name and add NSEC3 for it.
         const uint8_t closest_labels =
             addClosestEncloserProof(finder, qname_, false);
-
-        // Construct the matched wildcard name and add NSEC3 for it.
         const Name wname = Name("*").concatenate(
             qname_.split(qname_.getLabelCount() - closest_labels));
-        const ZoneFinder::FindNSEC3Result wresult(finder.findNSEC3(wname,
-                                                                   false));
-        if (wresult.matched) {
-            response_.addRRset(Message::SECTION_AUTHORITY,
-                               boost::const_pointer_cast<AbstractRRset>(
-                                   wresult.closest_proof), dnssec_);
-        } else {
-            isc_throw(BadNSEC3, "No matching NSEC3 found for existing domain "
-                      << wname);
-        }
+        addNSEC3ForName(finder, wname, true);
     }
 }
 
