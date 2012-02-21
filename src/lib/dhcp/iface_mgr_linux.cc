@@ -28,27 +28,24 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
+typedef vector<struct nlmsghdr*> NetlinkMessages;
+
 /// This is a structure that defines context for netlink connection.
 struct rtnl_handle
 {
-    int                fd;
+    int fd; // netlink file descriptor
     struct sockaddr_nl local;
     struct sockaddr_nl peer;
-    __u32              seq;
-    __u32              dump;
+    __u32 seq;
+    __u32 dump;
 };
 
-struct nlmsg_list
-{
-    struct nlmsg_list *next;
-    struct nlmsghdr h;
-};
-
-const int sndbuf = 32768;
-const int rcvbuf = 32768;
+const size_t sndbuf = 32768;
+const size_t rcvbuf = 32768;
 
 namespace isc {
 
+namespace dhcp {
 
 /// @brief Opens netlink socket and initializes handle structure.
 ///
@@ -121,26 +118,24 @@ void rtnl_send_request(struct rtnl_handle& handle, int family, int type) {
     }
 }
 
-/// @brief Appends nlmsg to a list
+/// @brief Appends nlmsg to a storage.
 ///
-/// @param n a message to be added
-/// @param link_info a list
-void rtnl_store_reply(struct nlmsghdr *n, struct nlmsg_list** link_info)
+/// @param storage a vector that holds netlink messages
+/// @param msg a netlink message to be added
+void rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg)
 {
-    struct nlmsg_list *h;
-    struct nlmsg_list **lp;
-
-    h = (nlmsg_list*)malloc(n->nlmsg_len+sizeof(void*));
-    if (h == NULL) {
-        isc_throw(Unexpected, "Failed to allocate " << n->nlmsg_len+sizeof(void*)
+    // we need to make a copy of this message. As those messages are variable size
+    // it is easier to use malloc + C-style case than do new char[X] and then
+    // reinterpret_cast<>  to struct nlmsghdr.
+    struct nlmsghdr* copy = (struct nlmsghdr*)malloc(msg->nlmsg_len);
+    memcpy(copy, msg, msg->nlmsg_len);
+    if (copy == NULL) {
+        isc_throw(Unexpected, "Failed to allocate " << msg->nlmsg_len
                   << " bytes.");
     }
 
-    memcpy(&h->h, n, n->nlmsg_len);
-    h->next = NULL;
-
-    for (lp = link_info; *lp; lp = &(*lp)->next) /* NOTHING */;
-    *lp = h;
+    // push_back copies only pointer content, not the pointed object
+    storage.push_back(copy);
 }
 
 void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
@@ -156,13 +151,13 @@ void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
     }
 }
 
-void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
+void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
     uint8_t addr[16];
     struct rtattr * rta_tb[IFA_MAX+1];
 
-    for ( ;addr_info ;  addr_info = addr_info->next) {
-        struct nlmsghdr *n = &addr_info->h;
-        struct ifaddrmsg *ifa = (ifaddrmsg*)NLMSG_DATA(n);
+    for (NetlinkMessages::const_iterator msg = addr_info.begin();
+         msg != addr_info.end(); ++msg) {
+        struct ifaddrmsg *ifa = (ifaddrmsg*)NLMSG_DATA(*msg);
 
         // these are not the addresses you are looking for
         if ( ifa->ifa_index != iface.getIndex()) {
@@ -171,7 +166,7 @@ void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
 
         if ( ifa->ifa_family == AF_INET6 ) {
             memset(rta_tb, 0, sizeof(rta_tb));
-            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
             if (!rta_tb[IFA_LOCAL])
                 rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
             if (!rta_tb[IFA_ADDRESS])
@@ -186,7 +181,7 @@ void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
 
         if ( ifa->ifa_family == AF_INET ) {
             memset(rta_tb, 0, sizeof(rta_tb));
-            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
             if (!rta_tb[IFA_LOCAL])
                 rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
             if (!rta_tb[IFA_ADDRESS])
@@ -199,8 +194,7 @@ void ipaddrs_get(IfaceMgr::Iface& iface, struct nlmsg_list *addr_info) {
     }
 }
 
-
-void rtnl_process_reply(struct rtnl_handle &rth, struct nlmsg_list *&info) {
+void rtnl_process_reply(const struct rtnl_handle& rth, NetlinkMessages& info) {
 
     struct sockaddr_nl nladdr;
     struct iovec iov;
@@ -214,9 +208,9 @@ void rtnl_process_reply(struct rtnl_handle &rth, struct nlmsg_list *&info) {
     char buf[rcvbuf];
 
     iov.iov_base = buf;
-    while (1) {
+    while (true) {
         int status;
-        struct nlmsghdr *h;
+        struct nlmsghdr* header;
 
         iov.iov_len = sizeof(buf);
         status = recvmsg(rth.fd, &msg, 0);
@@ -231,25 +225,25 @@ void rtnl_process_reply(struct rtnl_handle &rth, struct nlmsg_list *&info) {
             isc_throw(Unexpected, "EOF while reading netlink socket.");
         }
 
-        h = (struct nlmsghdr*)buf;
-        while (NLMSG_OK(h, status)) {
+        header = (struct nlmsghdr*)buf;
+        while (NLMSG_OK(header, status)) {
 
             // why we received this anyway?
             if (nladdr.nl_pid != 0 ||
-                h->nlmsg_pid != rth.local.nl_pid ||
-                h->nlmsg_seq != rth.dump) {
-                h = NLMSG_NEXT(h, status);
+                header->nlmsg_pid != rth.local.nl_pid ||
+                header->nlmsg_seq != rth.dump) {
+                header = NLMSG_NEXT(header, status);
                 continue;
             }
 
-            if (h->nlmsg_type == NLMSG_DONE) {
+            if (header->nlmsg_type == NLMSG_DONE) {
                 // end of message
                 return;
             }
 
-            if (h->nlmsg_type == NLMSG_ERROR) {
-                struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
-                if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
+            if (header->nlmsg_type == NLMSG_ERROR) {
+                struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(header);
+                if (header->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
                     // we are really out of luck here. We can't even say what is
                     // wrong as error message is truncated. D'oh.
                     isc_throw(Unexpected, "Netlink reply read failed.");
@@ -261,9 +255,9 @@ void rtnl_process_reply(struct rtnl_handle &rth, struct nlmsg_list *&info) {
             }
 
             // store the data
-            rtnl_store_reply(h, &info);
+            rtnl_store_reply(info, header);
 
-            h = NLMSG_NEXT(h, status);
+            header = NLMSG_NEXT(header, status);
         }
         if (msg.msg_flags & MSG_TRUNC) {
             isc_throw(Unexpected, "Message received over netlink truncated.");
@@ -276,22 +270,20 @@ void rtnl_process_reply(struct rtnl_handle &rth, struct nlmsg_list *&info) {
 
 /// @brief releases nlmsg list
 ///
-/// @param head first element of the list to be released
-void release_list(struct nlmsg_list *head) {
-    struct nlmsg_list *tmp;
-    while (head) {
-        tmp = head->next;
-        free(head);
-        head = tmp;
+/// @param messages first element of the list to be released
+void release_list(NetlinkMessages& messages) {
+    // let's free our copies of stored messages
+    for (NetlinkMessages::iterator msg = messages.begin(); msg != messages.end(); ++msg) {
+        free(*msg);
     }
+    messages.clear();
 }
 
 void IfaceMgr::detectIfaces() {
     cout << "Linux: detecting interfaces." << endl;
 
-    struct nlmsg_list* link_info = NULL; // link info list
-    struct nlmsg_list* addr_info = NULL; // address info list
-    struct nlmsg_list* l = NULL;
+    NetlinkMessages link_info; // link info
+    NetlinkMessages addr_info; // address info
     struct rtnl_handle rth;
 
     // required to display information about interface
@@ -318,9 +310,10 @@ void IfaceMgr::detectIfaces() {
     rtnl_process_reply(rth, addr_info);
 
     // Now build list with interface names
-    for (l=link_info; l; l = l->next) {
-        ifi = (ifinfomsg*)NLMSG_DATA(&l->h);
-        len = (&l->h)->nlmsg_len;
+    for (NetlinkMessages::iterator msg = link_info.begin(); msg != link_info.end(); ++msg) {
+        // for (l=link_info; l; l = l->next) {
+        ifi = (ifinfomsg*)NLMSG_DATA(*msg);
+        len = (*msg)->nlmsg_len;
         len -= NLMSG_LENGTH(sizeof(*ifi));
         parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 
@@ -375,6 +368,8 @@ void IfaceMgr::Iface::setFlags(uint32_t flags) {
     flag_broadcast_ = flags & IFF_BROADCAST;
 }
 
-}
+} // end of isc::dhcp namespace
+
+} // end of isc namespace
 
 #endif // if defined(LINUX)
