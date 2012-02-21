@@ -708,6 +708,11 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             if (offset == string::npos) {
                 isc_throw(BadValue, "Malformed output of ifconfig");
             }
+
+            // ifconfig in Gentoo prints out eth0: instead of eth0
+            if (line[offset-1] == ':') {
+                offset--;
+            }
             string name = line.substr(0, offset);
 
             // sadly, ifconfig does not return ifindex
@@ -729,13 +734,33 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
 
         if (line.find("inet6") != string::npos) {
             // IPv6 address
-            string addr = line.substr(line.find("inet6")+12, string::npos);
+            string addr;
+            if (line.find("addr:", line.find("inet6")) != string::npos) {
+                // Ubuntu style format: inet6 addr: ::1/128 Scope:Host
+                addr = line.substr(line.find("addr:")+6, string::npos);
+            } else {
+                // Gentoo style format: inet6 fe80::6ef0:49ff:fe96:ba17  prefixlen 64  scopeid 0x20<link>
+                addr = line.substr(line.find("inet6")+6, string::npos);
+            }
+
+            // handle Ubuntu format: inet6 addr: fe80::f66d:4ff:fe96:58f2/64 Scope:Link
             addr = addr.substr(0, addr.find("/"));
+
+            // handle inet6 fe80::ca3a:35ff:fed4:8f1d  prefixlen 64  scopeid 0x20<link>
+            addr = addr.substr(0, addr.find(" "));
             IOAddress a(addr);
             iface->addAddress(a);
         } else if(line.find("inet") != string::npos) {
             // IPv4 address
-            string addr = line.substr(line.find("inet")+10, string::npos);
+            string addr;
+            if (line.find("addr:", line.find("inet")) != string::npos) {
+                // Ubuntu style format: inet addr:127.0.0.1  Mask:255.0.0.0
+                addr = line.substr(line.find("addr:")+5, string::npos);
+            } else {
+                // Gentoo style format: inet 10.53.0.4  netmask 255.255.255.0
+                addr = line.substr(line.find("inet")+5, string::npos);
+            }
+
             addr = addr.substr(0, addr.find_first_of(" "));
             IOAddress a(addr);
             iface->addAddress(a);
@@ -786,7 +811,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
     // list of interfaces parsed from ifconfig
     IfaceMgr::IfaceCollection parsedIfaces;
 
-    EXPECT_NO_THROW(
+    ASSERT_NO_THROW(
         parse_ifconfig(textFile, parsedIfaces);
     );
     unlink(textFile.c_str());
