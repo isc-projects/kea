@@ -1,5 +1,7 @@
 383.	[build]		jinmei
-	Fixed build failure on MacOS 10.7 (Lion).
+	Fixed build failure on MacOS 10.7 (Lion) due to the use of
+	IPV6_PKTINFO; the OS requires a special definition to make it
+	visible to the compiler.
 	(Trac #1633, git 19ba70c7cc3da462c70e8c4f74b321b8daad0100)
 
 382.	[func]		jelte
