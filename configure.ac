@@ -108,6 +108,10 @@ case "$host" in
 	LDFLAGS="$LDFLAGS -z now"
 	;;
 *-apple-darwin*)
+	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
+	# (RFC2292 or RFC3542).
+	CPPFLAGS="$CPPFLAGS -D__APPLE_USE_RFC_3542"
+
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
 	# modules always refer to that path even if it's loaded within the
