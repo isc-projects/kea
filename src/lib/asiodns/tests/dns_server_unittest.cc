@@ -318,6 +318,7 @@ class TCPClient : public SimpleClient {
 // for each type of initialization (once when giving it the address and port,
 // once when giving the file descriptor), to ensure it works both ways exactly
 // the same.
+template<class UDPServerClass>
 class DNSServerTestBase : public::testing::Test {
     protected:
         DNSServerTestBase() :
@@ -396,7 +397,7 @@ class DNSServerTestBase : public::testing::Test {
         SimpleAnswer* const answer_;
         UDPClient*    const udp_client_;
         TCPClient*    const tcp_client_;
-        UDPServer*    udp_server_;
+        UDPServerClass* udp_server_;
         TCPServer*    tcp_server_;
 
         // To access them in signal handle function, the following
@@ -406,18 +407,22 @@ class DNSServerTestBase : public::testing::Test {
 };
 
 // Initialization with name and port
-class AddrPortInit : public DNSServerTestBase {
+template<class UDPServerClass>
+class AddrPortInit : public DNSServerTestBase<UDPServerClass> {
 protected:
     AddrPortInit() {
-        udp_server_ = new UDPServer(service, server_address_, server_port,
-                                    checker_, lookup_, answer_);
-        tcp_server_ = new TCPServer(service, server_address_, server_port,
-                                    checker_, lookup_, answer_);
+        this->udp_server_ = new UDPServerClass(this->service,
+                                               this->server_address_,
+                                               server_port, this->checker_,
+                                               this->lookup_, this->answer_);
+        this->tcp_server_ = new TCPServer(this->service, this->server_address_,
+                                          server_port, this->checker_,
+                                          this->lookup_, this->answer_);
     }
 };
 
 // Initialization by the file descriptor
-class FdInit : public DNSServerTestBase {
+class FdInit : public DNSServerTestBase<UDPServer> {
 private:
     // Opens the file descriptor for us
     // It uses the low-level C api, as it seems to be the easiest way to get
@@ -478,11 +483,18 @@ protected:
 template<class Parent>
 class DNSServerTest : public Parent { };
 
-typedef ::testing::Types<AddrPortInit, FdInit> ServerTypes;
+// TODO: Add the new SyncUDPServer class here. This might need some changes,
+// as it is not as generic, though
+typedef ::testing::Types<AddrPortInit<UDPServer>, FdInit> ServerTypes;
 TYPED_TEST_CASE(DNSServerTest, ServerTypes);
 
-bool DNSServerTestBase::io_service_is_time_out = false;
-asio::io_service* DNSServerTestBase::current_service(NULL);
+typedef ::testing::Types<UDPServer> UDPServerTypes;
+TYPED_TEST_CASE(DNSServerTestBase, UDPServerTypes);
+
+template<class UDPServerClass>
+bool DNSServerTestBase<UDPServerClass>::io_service_is_time_out = false;
+template<class UDPServerClass>
+asio::io_service* DNSServerTestBase<UDPServerClass>::current_service(NULL);
 
 // Test whether server stopped successfully after client get response
 // client will send query and start to wait for response, once client
@@ -608,17 +620,21 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
 }
 
 // It raises an exception when invalid address family is passed
-TEST_F(DNSServerTestBase, invalidFamily) {
+// The parameter here doesn't mean anything
+TYPED_TEST(DNSServerTestBase, invalidFamily) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
-    EXPECT_THROW(UDPServer(service, 0, AF_UNIX, checker_, lookup_,
-                           answer_), isc::InvalidParameter);
-    EXPECT_THROW(TCPServer(service, 0, AF_UNIX, checker_, lookup_,
-                           answer_), isc::InvalidParameter);
+    EXPECT_THROW(UDPServer(this->service, 0, AF_UNIX, this->checker_,
+                           this->lookup_, this->answer_),
+                 isc::InvalidParameter);
+    // TODO The sync UDP server as well, please
+    EXPECT_THROW(TCPServer(this->service, 0, AF_UNIX, this->checker_,
+                           this->lookup_, this->answer_),
+                 isc::InvalidParameter);
 }
 
 // It raises an exception when invalid address family is passed
-TEST_F(DNSServerTestBase, invalidTCPFD) {
+TYPED_TEST(DNSServerTestBase, invalidTCPFD) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
     /*
@@ -630,11 +646,12 @@ TEST_F(DNSServerTestBase, invalidTCPFD) {
     EXPECT_THROW(UDPServer(service, -1, AF_INET, checker_, lookup_,
                            answer_), isc::asiolink::IOError);
     */
-    EXPECT_THROW(TCPServer(service, -1, AF_INET, checker_, lookup_,
-                           answer_), isc::asiolink::IOError);
+    EXPECT_THROW(TCPServer(this->service, -1, AF_INET, this->checker_,
+                           this->lookup_, this->answer_),
+                 isc::asiolink::IOError);
 }
 
-TEST_F(DNSServerTestBase, DISABLED_invalidUDPFD) {
+TYPED_TEST(DNSServerTestBase, DISABLED_invalidUDPFD) {
     /*
      FIXME: The UDP server doesn't fail reliably with an invalid FD.
      We need to find a way to trigger it reliably (it seems epoll
@@ -642,8 +659,9 @@ TEST_F(DNSServerTestBase, DISABLED_invalidUDPFD) {
      not the others, maybe we could make it run this at least on epoll-based
      systems).
     */
-    EXPECT_THROW(UDPServer(service, -1, AF_INET, checker_, lookup_,
-                           answer_), isc::asiolink::IOError);
+    EXPECT_THROW(UDPServer(this->service, -1, AF_INET, this->checker_,
+                           this->lookup_, this->answer_),
+                 isc::asiolink::IOError);
 }
 
 }
