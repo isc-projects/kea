@@ -126,6 +126,14 @@ void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum,
         EXPECT_NE(0, options);
 #endif
 #ifdef IPV6_MTU
+        struct sockaddr_in6 addr;
+        memset(&addr, 0, sizeof(addr));
+        addr.sin6_family = AF_INET6;
+        addr.sin6_port = htons(53);
+        addr.sin6_addr = in6addr_loopback;
+        EXPECT_EQ(0, connect(socknum,
+                             reinterpret_cast<struct sockaddr*>(&addr),
+                             sizeof(addr)));
         // Use minimum MTU on systems that don't have the IPV6_USE_MIN_MTU
         EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_MTU, &options,
                                 &len)) << strerror(errno);
