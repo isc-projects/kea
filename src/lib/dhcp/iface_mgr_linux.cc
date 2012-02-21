@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
 #include <config.h>
 
 #if defined(OS_LINUX)
@@ -22,6 +21,7 @@
 
 #include <net/if.h>
 #include <linux/rtnetlink.h>
+#include <boost/array.hpp>
 
 using namespace std;
 using namespace isc;
@@ -29,7 +29,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace {
-/// @brief holds pointers to netlink messages
+/// @brief Holds pointers to netlink messages.
 ///
 /// netlink (a Linux interface for getting information about network
 /// interfaces) uses memory aliasing. There are many nlmsg structures
@@ -38,9 +38,20 @@ namespace {
 /// pointers to nlmsghdr (the common structure).
 typedef vector<struct nlmsghdr*> NetlinkMessages;
 
-/// This is a structure that defines context for netlink connection.
+/// @brief Holds information about interface or address attributes.
+///
+/// Note that to get addres info, a shorter (IFA_MAX rather than IFLA_MAX)
+/// table could be used, but we will use the bigger one anyway to
+/// make any code reuse
+typedef boost::array<struct rtattr*, IFLA_MAX+1> RTattribs;
+
+/// @brief This structure defines context for netlink connection.
 struct rtnl_handle
 {
+    rtnl_handle() :fd(0), seq(0), dump(0) {
+        memset(&local, 0, sizeof(struct sockaddr_nl));
+        memset(&peer, 0, sizeof(struct sockaddr_nl));
+    }
     int fd; // netlink file descriptor
     struct sockaddr_nl local;
     struct sockaddr_nl peer;
@@ -142,12 +153,20 @@ void rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg)
     storage.push_back(copy);
 }
 
-void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
+/// @brief Parses rtattr message.
+///
+/// Netlink can return a concatenated list of rtattr structures. This function iterates
+/// over that list and stores pointers to those messages in flat array (table).
+///
+/// @param table rtattr messages will be stored here
+/// @param rta pointer to first rtattr object
+/// @param len length (in bytes) of concatenated rtattr list.
+void parse_rtattr(RTattribs& table, struct rtattr * rta, int len)
 {
-    memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+    std::fill(table.begin(), table.end(), static_cast<struct rtattr*>(NULL));
     while (RTA_OK(rta, len)) {
-        if (rta->rta_type <= max)
-            tb[rta->rta_type] = rta;
+        if (rta->rta_type <= table.size()-1)
+            table[rta->rta_type] = rta;
         rta = RTA_NEXT(rta,len);
     }
     if (len) {
@@ -155,9 +174,13 @@ void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
     }
 }
 
+/// @brief Parses addr_info and appends appropriate addresses to Iface object.
+///
+/// @param iface interface representation (addresses will be added here)
+/// @param addr_info collection of parsed netlink messages
 void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
     uint8_t addr[16];
-    struct rtattr * rta_tb[IFA_MAX+1];
+    RTattribs rta_tb;
 
     for (NetlinkMessages::const_iterator msg = addr_info.begin();
          msg != addr_info.end(); ++msg) {
@@ -169,8 +192,8 @@ void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
         }
 
         if ( ifa->ifa_family == AF_INET6 ) {
-            memset(rta_tb, 0, sizeof(rta_tb));
-            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+            std::fill(rta_tb.begin(), rta_tb.end(), static_cast<struct rtattr*>(NULL));
+            parse_rtattr(rta_tb, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
             if (!rta_tb[IFA_LOCAL])
                 rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
             if (!rta_tb[IFA_ADDRESS])
@@ -184,8 +207,8 @@ void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
         }
 
         if ( ifa->ifa_family == AF_INET ) {
-            memset(rta_tb, 0, sizeof(rta_tb));
-            parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+            std::fill(rta_tb.begin(), rta_tb.end(), static_cast<struct rtattr*>(NULL));
+            parse_rtattr(rta_tb, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
             if (!rta_tb[IFA_LOCAL])
                 rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
             if (!rta_tb[IFA_ADDRESS])
@@ -198,6 +221,10 @@ void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
     }
 }
 
+/// @brief Processes reply received over netlink socket.
+///
+/// @param rth netlink parameters
+/// @param info received netlink messages will be stored here
 void rtnl_process_reply(const struct rtnl_handle& rth, NetlinkMessages& info) {
 
     struct sockaddr_nl nladdr;
@@ -246,7 +273,7 @@ void rtnl_process_reply(const struct rtnl_handle& rth, NetlinkMessages& info) {
             }
 
             if (header->nlmsg_type == NLMSG_ERROR) {
-                struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(header);
+                struct nlmsgerr* err = (struct nlmsgerr*)NLMSG_DATA(header);
                 if (header->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
                     // we are really out of luck here. We can't even say what is
                     // wrong as error message is truncated. D'oh.
@@ -276,10 +303,12 @@ void rtnl_process_reply(const struct rtnl_handle& rth, NetlinkMessages& info) {
 ///
 /// @param messages first element of the list to be released
 void release_list(NetlinkMessages& messages) {
-    // let's free our copies of stored messages
+    // let's free local copies of stored messages
     for (NetlinkMessages::iterator msg = messages.begin(); msg != messages.end(); ++msg) {
-        delete(*msg);
+        delete (*msg);
     }
+
+    // ang get rid of the message pointers as well
     messages.clear();
 }
 
@@ -294,14 +323,13 @@ void IfaceMgr::detectIfaces() {
 
     NetlinkMessages link_info; // link info
     NetlinkMessages addr_info; // address info
-    struct rtnl_handle handle;
+    struct rtnl_handle handle; // socket descriptors other rtnl-related parameters
 
     // required to display information about interface
-    struct ifinfomsg* ifi = NULL;
-    struct rtattr* tb[IFLA_MAX+1];
+    struct ifinfomsg* interface_info = NULL;
+    RTattribs attribs_table; // table with address attributes
     int len = 0;
-    memset(tb, 0, sizeof(tb));
-    memset(&handle,0, sizeof(handle));
+    std::fill(attribs_table.begin(), attribs_table.end(), static_cast<struct rtattr*>(NULL));
 
     // open socket
     rtnl_open_socket(handle);
@@ -321,33 +349,34 @@ void IfaceMgr::detectIfaces() {
 
     // Now build list with interface names
     for (NetlinkMessages::iterator msg = link_info.begin(); msg != link_info.end(); ++msg) {
-        ifi = static_cast<ifinfomsg*>(NLMSG_DATA(*msg));
+        interface_info = static_cast<ifinfomsg*>(NLMSG_DATA(*msg));
         len = (*msg)->nlmsg_len;
-        len -= NLMSG_LENGTH(sizeof(*ifi));
-        parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
+        len -= NLMSG_LENGTH(sizeof(*interface_info));
+        parse_rtattr(attribs_table, IFLA_RTA(interface_info), len);
 
         // valgrind reports *possible* memory leak in the line below, but I do believe that this
         // report is bogus. Nevertheless, I've split the whole interface definition into
         // three separate steps for easier debugging.
-        const char* tmp = static_cast<const char*>(RTA_DATA(tb[IFLA_IFNAME]));
-        string iface_name(tmp); // <--- valgrind warning here
-        Iface iface = Iface(iface_name, ifi->ifi_index);
+        const char* tmp = static_cast<const char*>(RTA_DATA(attribs_table[IFLA_IFNAME]));
+        string iface_name(tmp); // <--- (probably bogus) valgrind warning here
+        Iface iface = Iface(iface_name, interface_info->ifi_index);
 
-        iface.hardware_type_ = ifi->ifi_type;
-        iface.setFlags(ifi->ifi_flags);
+        iface.hardware_type_ = interface_info->ifi_type;
+        iface.setFlags(interface_info->ifi_flags);
 
         iface.mac_len_ = 0;
         memset(iface.mac_, 0, IfaceMgr::MAX_MAC_LEN);
         // Does inetface has LL_ADDR?
-        if (tb[IFLA_ADDRESS]) {
-            iface.mac_len_ = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
+        if (attribs_table[IFLA_ADDRESS]) {
+            iface.mac_len_ = RTA_PAYLOAD(attribs_table[IFLA_ADDRESS]);
             if (iface.mac_len_ > IfaceMgr::MAX_MAC_LEN) {
                 iface.mac_len_ = 0;
                 isc_throw(Unexpected, "Interface " << iface.getFullName()
-                          << " was detected to have link address of length " << RTA_PAYLOAD(tb[IFLA_ADDRESS])
+                          << " was detected to have link address of length "
+                          << RTA_PAYLOAD(attribs_table[IFLA_ADDRESS])
                           << ", but maximum supported length is " << IfaceMgr::MAX_MAC_LEN);
             }
-            memcpy(iface.mac_, RTA_DATA(tb[IFLA_ADDRESS]), iface.mac_len_);
+            memcpy(iface.mac_, RTA_DATA(attribs_table[IFLA_ADDRESS]), iface.mac_len_);
         }
         else {
             // Tunnels can have no LL_ADDR. RTA_PAYLOAD doesn't check it and try to
