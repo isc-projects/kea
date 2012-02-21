@@ -94,8 +94,8 @@ void rtnl_open_socket(struct rtnl_handle& handle) {
 /// @param type request type (RTM_GETLINK or RTM_GETADDR)
 void rtnl_send_request(struct rtnl_handle& handle, int family, int type) {
     struct {
-        struct nlmsghdr nlh;
-        struct rtgenmsg g;
+        struct nlmsghdr netlink_header;
+        struct rtgenmsg generic;
     } req;
     struct sockaddr_nl nladdr;
 
@@ -103,12 +103,12 @@ void rtnl_send_request(struct rtnl_handle& handle, int family, int type) {
     nladdr.nl_family = AF_NETLINK;
 
     memset(&req, 0, sizeof(req));
-    req.nlh.nlmsg_len = sizeof(req);
-    req.nlh.nlmsg_type = type;
-    req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
-    req.nlh.nlmsg_pid = 0;
-    req.nlh.nlmsg_seq = handle.dump = ++handle.seq;
-    req.g.rtgen_family = family;
+    req.netlink_header.nlmsg_len = sizeof(req);
+    req.netlink_header.nlmsg_type = type;
+    req.netlink_header.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
+    req.netlink_header.nlmsg_pid = 0;
+    req.netlink_header.nlmsg_seq = handle.dump = ++handle.seq;
+    req.generic.rtgen_family = family;
 
     int status =  sendto(handle.fd, (void*)&req, sizeof(req), 0,
                          (struct sockaddr*)&nladdr, sizeof(nladdr));
@@ -284,72 +284,78 @@ void IfaceMgr::detectIfaces() {
 
     NetlinkMessages link_info; // link info
     NetlinkMessages addr_info; // address info
-    struct rtnl_handle rth;
+    struct rtnl_handle handle;
 
     // required to display information about interface
     struct ifinfomsg* ifi = NULL;
     struct rtattr* tb[IFLA_MAX+1];
     int len = 0;
     memset(tb, 0, sizeof(tb));
-    memset(&rth,0, sizeof(rth));
+    memset(&handle,0, sizeof(handle));
 
     // open socket
-    rtnl_open_socket(rth);
+    rtnl_open_socket(handle);
 
     // now we have open functional socket, let's use it!
     // ask for list of interface...
-    rtnl_send_request(rth, AF_PACKET, RTM_GETLINK);
+    rtnl_send_request(handle, AF_PACKET, RTM_GETLINK);
 
     // Get reply and store it in link_info list.
-    rtnl_process_reply(rth, link_info);
+    rtnl_process_reply(handle, link_info);
 
     // Now ask for list of addresses (AF_UNSPEC = of any family)
-    rtnl_send_request(rth, AF_UNSPEC, RTM_GETADDR);
+    rtnl_send_request(handle, AF_UNSPEC, RTM_GETADDR);
 
     // Get reply and store it in addr_info list.
-    rtnl_process_reply(rth, addr_info);
+    rtnl_process_reply(handle, addr_info);
 
     // Now build list with interface names
     for (NetlinkMessages::iterator msg = link_info.begin(); msg != link_info.end(); ++msg) {
-        // for (l=link_info; l; l = l->next) {
-        ifi = (ifinfomsg*)NLMSG_DATA(*msg);
+        ifi = static_cast<ifinfomsg*>(NLMSG_DATA(*msg));
         len = (*msg)->nlmsg_len;
         len -= NLMSG_LENGTH(sizeof(*ifi));
         parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 
-        Iface* iface = new Iface(string( (char*)RTA_DATA(tb[IFLA_IFNAME])), ifi->ifi_index);
+        // valgrind reports *possible* memory leak in the line below, but I do believe that this
+        // report is bogus. Nevertheless, I've split the whole interface definition into
+        // three separate steps for easier debugging.
+        const char* tmp = static_cast<const char*>(RTA_DATA(tb[IFLA_IFNAME]));
+        string iface_name(tmp); // <--- valgrind warning here
+        Iface iface = Iface(iface_name, ifi->ifi_index);
 
-        iface->hardware_type_ = ifi->ifi_type;
-        iface->setFlags(ifi->ifi_flags);
+        iface.hardware_type_ = ifi->ifi_type;
+        iface.setFlags(ifi->ifi_flags);
 
-        iface->mac_len_ = 0;
-        memset(iface->mac_, 0, IfaceMgr::MAX_MAC_LEN);
+        iface.mac_len_ = 0;
+        memset(iface.mac_, 0, IfaceMgr::MAX_MAC_LEN);
         // Does inetface has LL_ADDR?
         if (tb[IFLA_ADDRESS]) {
-            iface->mac_len_ = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
-            if (iface->mac_len_ > IfaceMgr::MAX_MAC_LEN) {
-                iface->mac_len_ = 0;
-                isc_throw(Unexpected, "Interface " << iface->getFullName()
+            iface.mac_len_ = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
+            if (iface.mac_len_ > IfaceMgr::MAX_MAC_LEN) {
+                iface.mac_len_ = 0;
+                isc_throw(Unexpected, "Interface " << iface.getFullName()
                           << " was detected to have link address of length " << RTA_PAYLOAD(tb[IFLA_ADDRESS])
                           << ", but maximum supported length is " << IfaceMgr::MAX_MAC_LEN);
             }
-            memcpy(iface->mac_, RTA_DATA(tb[IFLA_ADDRESS]), iface->mac_len_);
+            memcpy(iface.mac_, RTA_DATA(tb[IFLA_ADDRESS]), iface.mac_len_);
         }
         else {
             // Tunnels can have no LL_ADDR. RTA_PAYLOAD doesn't check it and try to
             // dereference it in this manner
             // #define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
-            iface->mac_len_ = 0;
+            iface.mac_len_ = 0;
         }
 
-        ipaddrs_get(*iface, addr_info);
-        ifaces_.push_back(*iface);
+        ipaddrs_get(iface, addr_info);
+        ifaces_.push_back(iface);
     }
 
     release_list(link_info);
     release_list(addr_info);
 
     printIfaces();
+
+    close(handle.fd);
 }
 
 /// @brief sets flag_*_ fields.
