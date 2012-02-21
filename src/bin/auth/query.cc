@@ -172,10 +172,16 @@ Query::addClosestEncloserProof(ZoneFinder& finder, const Name& name,
                                bool exact_ok, bool add_closest)
 {
     const ZoneFinder::FindNSEC3Result result = finder.findNSEC3(name, true);
+
+    // Validity check (see the method description).  Note that a completely
+    // broken findNSEC3 implementation could even return NULL RRset in
+    // closest_proof.  We don't explicitly check such case; addRRset() will
+    // throw an exception, and it will be converted to SERVFAIL at the caller.
     if (!exact_ok && !result.next_proof) {
         isc_throw(BadNSEC3, "Matching NSEC3 found for a non existent name: "
                   << qname_);
     }
+
     if (add_closest) {
         response_.addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
@@ -194,6 +200,9 @@ Query::addClosestEncloserProof(ZoneFinder& finder, const Name& name,
 void
 Query::addNSEC3ForName(ZoneFinder& finder, const Name& name, bool match) {
     const ZoneFinder::FindNSEC3Result result = finder.findNSEC3(name, false);
+
+    // See the comment for addClosestEncloserProof().  We don't check a
+    // totally bogus case where closest_proof is NULL here.
     if (match != result.matched) {
         isc_throw(BadNSEC3, "Unexpected "
                   << (result.matched ? "matching" : "covering")
