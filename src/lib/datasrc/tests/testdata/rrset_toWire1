@@ -1,0 +1,23 @@
+#
+# Rendering an IN/A RRset containing 2 RRs:
+# test.example.com. 3600 IN A 192.0.2.1
+# test.example.com. 3600 IN A 192.0.2.2
+#
+#(4) t  e  s  t (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# type/class: A = 1, IN = 1
+00 01 00 01
+# TTL: 3600
+00 00 0e 10
+#6  7
+# RDLENGTH: 4
+00 04
+# RDATA: 192.0.2.1
+c0 00 02 01
+#
+# 2nd RR: mostly the same except the RDATA
+04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+00 01 00 01
+00 00 0e 10
+00 04
+c0 00 02 02
