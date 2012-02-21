@@ -125,10 +125,7 @@ TEST_F(RBNodeRRsetTest, toText) {
 }
 
 TEST_F(RBNodeRRsetTest, toWireRenderer) {
-    rrset_ns.addRdata(generic::NS(test_nsname));
-
     rrset_a.toWire(renderer);
-    rrset_ns.toWire(renderer);
 
     UnitTestUtil::readWireData("rrset_toWire2", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),

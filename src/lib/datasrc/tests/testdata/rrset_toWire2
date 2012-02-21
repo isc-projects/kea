@@ -24,15 +24,3 @@ c0 00
 00 00 0e 10
 00 04
 c0 00 02 02
-# 3rd RR: the owner name and NS name are compressed
-# pointing to the 5th octet of the owner name of the 1st RR
-c0 05
-# type/class: NS = 2, IN = 1
-00 02 00 01
-# TTL: 1D = 86400sec = 0x15180
-00 01 51 80
-# RDLENGTH: 5 octets
-00 05
-# NSDNAME: "ns." + compression pointer
-#(2) n  s
- 02 6e 73 c0 05

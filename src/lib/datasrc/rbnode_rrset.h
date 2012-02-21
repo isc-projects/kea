@@ -67,8 +67,7 @@ public:
     /// \brief Usual Constructor
     ///
     /// Creates an RBNodeRRset from the pointer to the RRset passed to it.
-    RBNodeRRset(const isc::dns::ConstRRsetPtr& rrset) : rrset_(rrset),
-        n("a.com"), c("HS"), t("A"), ttl(0) {}
+    RBNodeRRset(const isc::dns::ConstRRsetPtr& rrset) : rrset_(rrset) {}
 
     /// \brief Destructor
     virtual ~RBNodeRRset() {}
@@ -80,55 +79,56 @@ public:
     // object does not expect the underlying RRset to be modified.
 
     virtual unsigned int getRdataCount() const {
-        return (0);
+        return (rrset_->getRdataCount());
     }
 
     virtual const isc::dns::Name& getName() const {
-        return (n);
+        return (rrset_->getName());
     }
 
     virtual const isc::dns::RRClass& getClass() const {
-        return (c);
+        return (rrset_->getClass());
     }
 
     virtual const isc::dns::RRType& getType() const {
-        return (t);
+        return (rrset_->getType());
     }
 
     virtual const isc::dns::RRTTL& getTTL() const {
-        return (ttl);
+        return (rrset_->getTTL());
     }
 
     virtual void setName(const isc::dns::Name&) {
+        isc_throw(isc::NotImplemented, "RBNodeRRset::setName() not supported");
     }
 
     virtual void setTTL(const isc::dns::RRTTL&) {
+        isc_throw(isc::NotImplemented, "RBNodeRRset::setTTL() not supported");
     }
 
     virtual std::string toText() const {
-        return (std::string());
+        return (rrset_->toText());
     }
 
-    virtual unsigned int toWire(isc::dns::AbstractMessageRenderer& /*renderer*/) const {
-        return (-1);
+    virtual unsigned int toWire(
+            isc::dns::AbstractMessageRenderer& renderer) const {
+        return (rrset_->toWire(renderer));
     }
 
-    virtual unsigned int toWire(isc::util::OutputBuffer& /*buffer*/) const {
-        return (-1);
+    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const {
+        return (rrset_->toWire(buffer));
     }
 
     virtual void addRdata(isc::dns::rdata::ConstRdataPtr) {
+        isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
     }
 
     virtual void addRdata(const isc::dns::rdata::Rdata&) {
+        isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
     }
 
     virtual isc::dns::RdataIteratorPtr getRdataIterator() const {
-        isc::dns::BasicRRset b(isc::dns::Name("example.com"),
-                               isc::dns::RRClass("IN"),
-                               isc::dns::RRType("A"),
-                               isc::dns::RRTTL(1));
-        return (b.getRdataIterator());
+        return (rrset_->getRdataIterator());
     }
 
     virtual isc::dns::RRsetPtr getRRsig() const {
@@ -160,11 +160,6 @@ public:
 
 private:
     isc::dns::ConstRRsetPtr rrset_;     ///< Underlying RRset
-
-    isc::dns::Name n;
-    isc::dns::RRClass c;
-    isc::dns::RRType t;
-    isc::dns::RRTTL ttl;
 };
 
 }   // namespace datasrc
