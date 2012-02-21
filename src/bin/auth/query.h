@@ -204,6 +204,10 @@ private:
     /// within this method.
     bool processDSAtChild();
 
+    uint8_t addClosestEncloserProof(isc::datasrc::ZoneFinder& finder,
+                                    const isc::dns::Name& name, bool exact_ok,
+                                    bool add_closet = true);
+
 public:
     /// Constructor from query parameters.
     ///

@@ -167,28 +167,41 @@ Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
     }
 }
 
+uint8_t
+Query::addClosestEncloserProof(ZoneFinder& finder, const Name& name,
+                               bool exact_ok, bool add_closest)
+{
+    const ZoneFinder::FindNSEC3Result result = finder.findNSEC3(name, true);
+    if (!exact_ok && !result.next_proof) {
+        isc_throw(BadNSEC3, "Matching NSEC3 found for a non existent name: "
+                  << qname_);
+    }
+    if (add_closest) {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.closest_proof),
+                           dnssec_);
+    }
+    if (result.next_proof) {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.next_proof),
+                           dnssec_);
+    }
+    return (result.closest_labels);
+}
+
 void
 Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
     // Firstly get the NSEC3 proves for Closest Encloser Proof
     // See section 7.2.1 of RFC 5155.
-    // Since this is a Name Error case both closest and next proofs should
-    // be available (see addNXRRsetProof).
-    const ZoneFinder::FindNSEC3Result fresult1 = finder.findNSEC3(qname_,
-                                                                  true);
-    response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<AbstractRRset>(
-                           fresult1.closest_proof),
-                       dnssec_);
-    response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<AbstractRRset>(
-                       fresult1.next_proof),
-                       dnssec_);
+    const uint8_t closest_labels =
+        addClosestEncloserProof(finder, qname_, false);
 
     // Next, construct the wildcard name at the closest encloser, i.e.,
     // '*' followed by the closest encloser, and add NSEC3 for it.
     const Name wildname(Name("*").concatenate(
-               qname_.split(qname_.getLabelCount() -
-                            fresult1.closest_labels)));
+               qname_.split(qname_.getLabelCount() - closest_labels)));
     const ZoneFinder::FindNSEC3Result fresult2 =
         finder.findNSEC3(wildname, false);
     if (fresult2.matched) {
@@ -227,17 +240,10 @@ Query::addWildcardProof(ZoneFinder& finder,
         // Case for RFC5155 Section 7.2.6.
         //
         // Note that the closest encloser must be the immediate ancestor
-        // of the matching wildcard, so NSEC3 for its next closer is what
-        // we are expected to provided per the RFC (if this assumption isn't
-        // met the zone is broken anyway).
-        const ZoneFinder::FindNSEC3Result NSEC3Result(
-            finder.findNSEC3(qname_, true));
-        // Note that at this point next_proof must not be NULL unless it's
-        // a run time collision (or zone/findNSEC3() is broken).  The
-        // unexpected case will be caught in addRRset() and result in SERVFAIL.
-        response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(
-                               NSEC3Result.next_proof), dnssec_);
+        // of the matching wildcard, so NSEC3 for its next closer (and only
+        // that NSEC3) is what we are expected to provided per the RFC (if
+        // this assumption isn't met the zone is broken anyway).
+        addClosestEncloserProof(finder, qname_, false, false);
     }
 }
 
@@ -280,22 +286,7 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
     } else if (ds_result.code == ZoneFinder::NXRRSET &&
                ds_result.isNSEC3Signed()) {
         // Add no DS proof with NSEC3 as specified in RFC5155 Section 7.2.7.
-        // Depending on whether the zone is optout or not, findNSEC3() may
-        // return non-NULL or NULL next_proof (respectively).  The Opt-Out flag
-        // must be set or cleared accordingly, but we don't check that
-        // in this level (as long as the zone signed validly and findNSEC3()
-        // is valid, the condition should be met; otherwise we'd let the
-        // validator detect the error).
-        const ZoneFinder::FindNSEC3Result nsec3_result =
-            finder.findNSEC3(dname, true);
-        response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(
-                               nsec3_result.closest_proof), dnssec_);
-        if (nsec3_result.next_proof) {
-            response_.addRRset(Message::SECTION_AUTHORITY,
-                               boost::const_pointer_cast<AbstractRRset>(
-                                   nsec3_result.next_proof), dnssec_);
-        }
+        addClosestEncloserProof(finder, dname, true);
     } else {
         // Any other case should be an error
         isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
@@ -320,42 +311,29 @@ Query::addNXRRsetProof(ZoneFinder& finder,
         // recursive search (and add next_proof, if necessary),
         // otherwise, do non-recursive search
         const bool qtype_ds = (qtype_ == RRType::DS());
-        ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_, qtype_ds));
-        if (result.matched) {
-            response_.addRRset(Message::SECTION_AUTHORITY,
-                               boost::const_pointer_cast<AbstractRRset>(
-                                   result.closest_proof), dnssec_);
-            // For qtype == DS, next_proof could be set
-            // (We could check for opt-out here, but that's really the
-            // responsibility of the datasource)
-            if (qtype_ds && result.next_proof != ConstRRsetPtr()) {
+        if (qtype_ds) {
+            addClosestEncloserProof(finder, qname_, true);
+        } else {
+            ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
+                                                                false));
+            if (result.matched) {
                 response_.addRRset(Message::SECTION_AUTHORITY,
                                    boost::const_pointer_cast<AbstractRRset>(
-                                       result.next_proof), dnssec_);
+                                       result.closest_proof), dnssec_);
+            } else {
+                isc_throw(BadNSEC3,
+                          "No matching NSEC3 found for existing domain "
+                          << qname_);
             }
-        } else {
-            isc_throw(BadNSEC3, "No matching NSEC3 found for existing domain "
-                      << qname_);
         }
     } else if (db_result.isNSEC3Signed() && db_result.isWildcard()) {
         // Case for RFC5155 Section 7.2.5
-        const ZoneFinder::FindNSEC3Result result(finder.findNSEC3(qname_,
-                                                                  true));
-        // We know there's no exact match for the qname, so findNSEC3() should
-        // return both closest and next proofs.  If the latter is NULL, it
-        // means a run time collision (or the zone is broken in other way).
-        // In that case addRRset() will throw, and it will be converted to
-        // SERVFAIL.
-        response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(
-                               result.closest_proof), dnssec_);
-        response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<AbstractRRset>(
-                               result.next_proof), dnssec_);
+        const uint8_t closest_labels =
+            addClosestEncloserProof(finder, qname_, false);
 
         // Construct the matched wildcard name and add NSEC3 for it.
         const Name wname = Name("*").concatenate(
-            qname_.split(qname_.getLabelCount() - result.closest_labels));
+            qname_.split(qname_.getLabelCount() - closest_labels));
         const ZoneFinder::FindNSEC3Result wresult(finder.findNSEC3(wname,
                                                                    false));
         if (wresult.matched) {
