@@ -1,4 +1,8 @@
-382.	[func]	jelte
+383.	[build]		jinmei
+	Fixed build failure on MacOS 10.7 (Lion).
+	(Trac #1633, git 19ba70c7cc3da462c70e8c4f74b321b8daad0100)
+
+382.	[func]		jelte
 	b10-auth now also experimentally supports statistics counters of
 	the rcode reponses it sends. The counters can be shown as
 	rcode.<code name>, where code name is the lowercase textual
