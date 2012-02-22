@@ -217,7 +217,7 @@ Query::addNSEC3ForName(ZoneFinder& finder, const Name& name, bool match) {
 void
 Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
     // Firstly get the NSEC3 proves for Closest Encloser Proof
-    // See section 7.2.1 of RFC 5155.
+    // See Section 7.2.1 of RFC 5155.
     const uint8_t closest_labels =
         addClosestEncloserProof(finder, qname_, false);
 
@@ -251,7 +251,7 @@ Query::addWildcardProof(ZoneFinder& finder,
                                fresult.rrset),
                            dnssec_);
     } else if (db_result.isNSEC3Signed()) {
-        // Case for RFC5155 Section 7.2.6.
+        // Case for RFC 5155 Section 7.2.6.
         //
         // Note that the closest encloser must be the immediate ancestor
         // of the matching wildcard, so NSEC3 for its next closer (and only
@@ -299,7 +299,7 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
         addNXRRsetProof(finder, ds_result);
     } else if (ds_result.code == ZoneFinder::NXRRSET &&
                ds_result.isNSEC3Signed()) {
-        // Add no DS proof with NSEC3 as specified in RFC5155 Section 7.2.7.
+        // Add no DS proof with NSEC3 as specified in RFC 5155 Section 7.2.7.
         addClosestEncloserProof(finder, dname, true);
     } else {
         // Any other case should be an error
@@ -321,15 +321,15 @@ Query::addNXRRsetProof(ZoneFinder& finder,
         }
     } else if (db_result.isNSEC3Signed() && !db_result.isWildcard()) {
         if (qtype_ == RRType::DS()) {
-            // RFC5155, 7.2.4.  Add either NSEC3 for the qname or closest
-            // (provable) encloser proof in case of optout.
+            // RFC 5155, Section 7.2.4.  Add either NSEC3 for the qname or
+            // closest (provable) encloser proof in case of optout.
             addClosestEncloserProof(finder, qname_, true);
         } else {
-            // RFC5155, 7.2.3.  Just add NSEC3 for the qname.
+            // RFC 5155, Section 7.2.3.  Just add NSEC3 for the qname.
             addNSEC3ForName(finder, qname_, true);
         }
     } else if (db_result.isNSEC3Signed() && db_result.isWildcard()) {
-        // Case for RFC5155 Section 7.2.5: add closest encloser proof for the
+        // Case for RFC 5155 Section 7.2.5: add closest encloser proof for the
         // qname, construct the matched wildcard name and add NSEC3 for it.
         const uint8_t closest_labels =
             addClosestEncloserProof(finder, qname_, false);
