@@ -31,17 +31,23 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::util;
 
-// These tests are very similar to those for RRset - indeed, the files was
+// These tests are very similar to those for RRset - indeed, this file was
 // created from those tests.  However, the significant difference in behaviour
 // between RRset and RBNodeRRset - that the "set" methods in the latter mostly
 // result in exceptions being thrown - preclude use of full type
 // parameterisation of the tests.
 
 namespace {
+const char* RRSIG_TXT =
+    "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+    "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+    "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+    "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+    "f49t+sXKPzbipN9g+s1ZPiIyofc=";
+
 class RBNodeRRsetTest : public ::testing::Test {
 protected:
     RBNodeRRsetTest() :
-        buffer(0), renderer(buffer),
         test_name("test.example.com"),
         test_domain("example.com"),
         test_nsname("ns.example.com"),
@@ -52,32 +58,36 @@ protected:
         rrset_ns(ConstRRsetPtr(new RRset(
                  test_domain, RRClass::IN(), RRType::NS(), RRTTL(86400)))),
         rrset_ch_txt(ConstRRsetPtr(new RRset(
-                     test_domain, RRClass::CH(), RRType::TXT(), RRTTL(0))))
+                     test_domain, RRClass::CH(), RRType::TXT(), RRTTL(0)))),
+        rrset_siga(new RRset(test_name, RRClass::IN(), RRType::RRSIG(),
+                   RRTTL(3600)))
+
     {
-        // Add a couple of Rdata elements to an RRset.  The easiest way to
+        // Add a couple of Rdata elements to the A RRset.  The easiest way to
         // do this is to override the "const" restrictions.  As this is a test,
         // we don't feel too bad about doing so.
-        AbstractRRset* rrset =
+        AbstractRRset* a_rrset =
             const_cast<AbstractRRset*>(rrset_a.getUnderlyingRRset().get());
-        rrset->addRdata(in::A("192.0.2.1"));
-        rrset->addRdata(in::A("192.0.2.2"));
+        a_rrset->addRdata(in::A("192.0.2.1"));
+        a_rrset->addRdata(in::A("192.0.2.2"));
+
+        // Create the RRSIG corresponding to the rrset_a record.  The RDATA
+        // won't match the A record it covers, although it is internally
+        // self-consistent.
+        AbstractRRset* sig_rrset = const_cast<AbstractRRset*>(rrset_siga.get());
+        sig_rrset->addRdata(generic::RRSIG(RRSIG_TXT));
     }
 
-    OutputBuffer buffer;
-    MessageRenderer renderer;
     Name test_name;
     Name test_domain;
     Name test_nsname;
+
     RBNodeRRset rrset_a;
     RBNodeRRset rrset_a_empty;
     RBNodeRRset rrset_ns;
     RBNodeRRset rrset_ch_txt;
-    std::vector<unsigned char> wiredata;
 
-    // max number of Rdata objects added to a test RRset object.
-    // this is an arbitrary chosen limit, but should be sufficiently large
-    // in practice and reasonable even as an extreme test case.
-    static const int MAX_RDATA_COUNT = 100;
+    ConstRRsetPtr rrset_siga;
 };
 
 TEST_F(RBNodeRRsetTest, getRdataCount) {
@@ -125,8 +135,11 @@ TEST_F(RBNodeRRsetTest, toText) {
 }
 
 TEST_F(RBNodeRRsetTest, toWireRenderer) {
+    OutputBuffer buffer(0);
+    MessageRenderer renderer(buffer);
     rrset_a.toWire(renderer);
 
+    std::vector<unsigned char> wiredata;
     UnitTestUtil::readWireData("rrset_toWire2", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &wiredata[0], wiredata.size());
@@ -137,8 +150,10 @@ TEST_F(RBNodeRRsetTest, toWireRenderer) {
 }
 
 TEST_F(RBNodeRRsetTest, toWireBuffer) {
+    OutputBuffer buffer(0);
     rrset_a.toWire(buffer);
 
+    std::vector<unsigned char> wiredata;
     UnitTestUtil::readWireData("rrset_toWire1", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &wiredata[0], wiredata.size());
@@ -151,7 +166,7 @@ TEST_F(RBNodeRRsetTest, toWireBuffer) {
 TEST_F(RBNodeRRsetTest, addRdata) {
     EXPECT_THROW(rrset_a.addRdata(in::A("192.0.2.3")), NotImplemented);
 
-    // Check the same goes for tryin g to add the wrong type of data
+    // Check the same goes for trying to add the wrong type of data
     EXPECT_THROW(rrset_a.addRdata(generic::NS(test_nsname)), NotImplemented);
 }
 
@@ -186,6 +201,70 @@ TEST_F(RBNodeRRsetTest, LeftShiftOperator) {
     oss << rrset_a;
     EXPECT_EQ("test.example.com. 3600 IN A 192.0.2.1\n"
               "test.example.com. 3600 IN A 192.0.2.2\n", oss.str());
+}
+
+// RRSIG-related tests.
+
+
+TEST_F(RBNodeRRsetTest, addRRsigConstantRdataPointer) {
+    FAIL();
+}
+
+// General RRSIG check function.  Get the RRSIG from the RRset and check that
+// the RDATA is what we expect.
+void
+checkSignature(const RBNodeRRset& rrset) {
+    RRsetPtr rrsig = rrset.getRRsig();
+    ASSERT_TRUE(rrsig);
+    RdataIteratorPtr it = rrsig->getRdataIterator();
+    EXPECT_EQ(RRSIG_TXT, it->getCurrent().toText());
+}
+
+// addRRSIG tests.
+TEST_F(RBNodeRRsetTest, addRRsigConstRdataPointer) {
+    EXPECT_FALSE(rrset_a.getRRsig());
+    RdataPtr data = createRdata(rrset_siga->getType(), rrset_siga->getClass(),
+                                RRSIG_TXT); 
+    ConstRdataPtr cdata(data);
+    rrset_a.addRRsig(cdata); 
+    checkSignature(rrset_a);
+}
+
+TEST_F(RBNodeRRsetTest, addRRsigRdataPointer) {
+    EXPECT_FALSE(rrset_a.getRRsig());
+    RdataPtr data = createRdata(rrset_siga->getType(), rrset_siga->getClass(),
+                                RRSIG_TXT); 
+    rrset_a.addRRsig(data); 
+    checkSignature(rrset_a);
+}
+
+TEST_F(RBNodeRRsetTest, addRRsigAbstractRRset) {
+    EXPECT_FALSE(rrset_a.getRRsig());
+    rrset_a.addRRsig(*(rrset_siga.get())); 
+    checkSignature(rrset_a);
+}
+
+TEST_F(RBNodeRRsetTest, addRRsigConstantRRsetPointer) {
+    EXPECT_FALSE(rrset_a.getRRsig());
+    rrset_a.addRRsig(rrset_siga); 
+    checkSignature(rrset_a);
+}
+
+TEST_F(RBNodeRRsetTest, addRRsigRRsetPointer) {
+    EXPECT_FALSE(rrset_a.getRRsig());
+    RRsetPtr rrsig(new RRset(test_name, RRClass::IN(), RRType::RRSIG(),
+                   RRTTL(3600)));
+    rrsig->addRdata(generic::RRSIG(RRSIG_TXT));
+    rrset_a.addRRsig(rrsig); 
+    checkSignature(rrset_a);
+}
+
+TEST_F(RBNodeRRsetTest, removeRRsig) {
+    EXPECT_FALSE(rrset_a.getRRsig());
+    rrset_a.addRRsig(*(rrset_siga.get())); 
+    EXPECT_TRUE(rrset_a.getRRsig());
+    rrset_a.removeRRsig();
+    EXPECT_FALSE(rrset_a.getRRsig());
 }
 
 }   // Anonymous namespace
