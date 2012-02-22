@@ -14,7 +14,7 @@ Feature: NSEC3 Authoritative service
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for a.c.x.w.example. should have rcode NXDOMAIN
         The last query response should have flags qr aa rd
-        # TODO: check DO bit?
+        The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 8
         The last query response should have adcount 1
@@ -34,7 +34,7 @@ Feature: NSEC3 Authoritative service
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for ns1.example. type MX should have rcode NOERROR
         The last query response should have flags qr aa rd
-        # TODO: check DO bit?
+        The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
         The last query response should have adcount 1
@@ -50,7 +50,7 @@ Feature: NSEC3 Authoritative service
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for y.w.example. should have rcode NOERROR
         The last query response should have flags qr aa rd
-        # TODO: check DO bit?
+        The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
         The last query response should have adcount 1
@@ -66,7 +66,7 @@ Feature: NSEC3 Authoritative service
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for mc.c.example. type MX should have rcode NOERROR
         The last query response should have flags qr rd
-        # TODO: check DO bit?
+        The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 6
         The last query response should have adcount 3
@@ -89,7 +89,7 @@ Feature: NSEC3 Authoritative service
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for a.z.w.example. type MX should have rcode NOERROR
         The last query response should have flags qr aa rd
-        # TODO: check DO bit?
+        The last query response should have edns_flags do
         # BUG: NO RRSIG IN WILDCARD RESPONSE!!! (see ticket #1701)
         #The last query response should have ancount 2
         The last query response should have nscount 5
@@ -126,6 +126,7 @@ Feature: NSEC3 Authoritative service
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for a.z.w.example. type AAAA should have rcode NOERROR
         The last query response should have flags qr aa rd
+        The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 8
         The last query response should have adcount 1
@@ -145,6 +146,7 @@ Feature: NSEC3 Authoritative service
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for example. type DS should have rcode NOERROR
         The last query response should have flags qr aa rd
+        The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
         The last query response should have adcount 1

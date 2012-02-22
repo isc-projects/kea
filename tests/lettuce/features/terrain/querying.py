@@ -41,9 +41,10 @@ import re
 #
 # The following attributes are 'parsed' from the response, all as strings,
 # and end up as direct attributes of the QueryResult object:
-# opcode, rcode, id, flags, qdcount, ancount, nscount, adcount
-# (flags is one string with all flags, in the order they appear in the
-# response packet.)
+# opcode, rcode, id, flags, qdcount, ancount, nscount, adcount,
+# edns_version, edns_flags, and edns_udp_size
+# (flags and edns_flags are both one string with all flags, in the order
+# in which they appear in the response packet.)
 #
 # this will set 'rcode' as the result code, we 'define' one additional
 # rcode, "NO_ANSWER", if the dig process returned an error code itself
@@ -55,6 +56,7 @@ import re
 # See server_from_sqlite3.feature for various examples to perform queries
 class QueryResult(object):
     status_re = re.compile("opcode: ([A-Z])+, status: ([A-Z]+), id: ([0-9]+)")
+    edns_re = re.compile("; EDNS: version: ([0-9]+), flags: ([a-z ]*); udp: ([0-9]+)")
     flags_re = re.compile("flags: ([a-z ]+); QUERY: ([0-9]+), ANSWER: " +
                           "([0-9]+), AUTHORITY: ([0-9]+), ADDITIONAL: ([0-9]+)")
 
@@ -106,6 +108,8 @@ class QueryResult(object):
         """
         if line == ";; ANSWER SECTION:\n":
             self.line_handler = self.parse_answer
+        elif line == ";; OPT PSEUDOSECTION:\n":
+            self.line_handler = self.parse_opt
         elif line == ";; AUTHORITY SECTION:\n":
             self.line_handler = self.parse_authority
         elif line == ";; ADDITIONAL SECTION:\n":
@@ -134,6 +138,19 @@ class QueryResult(object):
                 self.ancount = flags_match.group(3)
                 self.nscount = flags_match.group(4)
                 self.adcount = flags_match.group(5)
+
+    def parse_opt(self, line):
+        """
+        Parse the header lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
+        if not self._check_next_header(line):
+            edns_match = self.edns_re.search(line)
+            if edns_match is not None:
+                self.edns_version = edns_match.group(1)
+                self.edns_flags = edns_match.group(2)
+                self.edns_udp_size = edns_match.group(3)
 
     def parse_question(self, line):
         """
