@@ -175,10 +175,15 @@ TEST_F(InMemoryClientTest, iterator) {
     // Check it with full zone, one by one.
     // It should be in ascending order in case of InMemory data source
     // (isn't guaranteed in general)
+    // Since the in-memory data source uses objects that encapsulate the
+    // RRsets stored, the iterator does not iterate over the RRsets stored -
+    // it iterates over the encapsulating objects.  This means that we cannot
+    // directly compare pointer values: instead, we compare the actual data
+    // stored.
     iterator = memory_client.getIterator(Name("a"));
-    EXPECT_EQ(aRRsetA, iterator->getNextRRset());
-    EXPECT_EQ(aRRsetAAAA, iterator->getNextRRset());
-    EXPECT_EQ(subRRsetA, iterator->getNextRRset());
+    EXPECT_EQ(aRRsetA->toText(), iterator->getNextRRset()->toText());
+    EXPECT_EQ(aRRsetAAAA->toText(), iterator->getNextRRset()->toText());
+    EXPECT_EQ(subRRsetA->toText(), iterator->getNextRRset()->toText());
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
