@@ -9,7 +9,7 @@ Feature: NSEC3 Authoritative service
     # in the places where dig adds them too.
     # Any other changes from the specific example data are added as inline
     # comments.
-    
+
     Scenario: B.1. Name Error
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
         A dnssec query for a.c.x.w.example. should have rcode NXDOMAIN
