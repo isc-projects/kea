@@ -115,7 +115,7 @@ private:
     const asiolink::SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
-    bool resume_called_, done_;
+    bool resume_called_, done_, stopped_;
 
     void scheduleRead();
     void handleRead(const asio::error_code& ec, const size_t length);

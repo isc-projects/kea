@@ -47,7 +47,7 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service,
                              asiolink::SimpleCallback* checkin,
                              DNSLookup* lookup, DNSAnswer* answer) :
     io_(io_service), checkin_callback_(checkin), lookup_callback_(lookup),
-    answer_callback_(answer)
+    answer_callback_(answer), stopped_(false)
 {
     // We must use different instantiations for v4 and v6;
     // otherwise ASIO will bind to both
@@ -65,7 +65,7 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
                              const int af, asiolink::SimpleCallback* checkin,
                              DNSLookup* lookup, DNSAnswer* answer) :
     io_(io_service), checkin_callback_(checkin), lookup_callback_(lookup),
-    answer_callback_(answer)
+    answer_callback_(answer), stopped_(false)
 {
     if (af != AF_INET && af != AF_INET6) {
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
@@ -122,6 +122,9 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     IOMessage message(data_, length, socket, endpoint);
     if (checkin_callback_ != NULL) {
         (*checkin_callback_)(message);
+        if (stopped_) {
+            return;
+        }
     }
 
     // If we don't have a DNS Lookup provider, there's no point in
@@ -150,10 +153,18 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
                   "No resume called from the lookup callback");
     }
 
+    if (stopped_) {
+        return;
+    }
+
     if (done_) {
         // Good, there's an answer.
         // Call the answer callback to render it.
         (*answer_callback_)(message, query, answer, output);
+
+        if (stopped_) {
+            return;
+        }
 
         socket_->send_to(asio::buffer(output->getData(), output->getLength()),
                          sender_);
@@ -182,6 +193,7 @@ SyncUDPServer::stop() {
     /// submit to io serice before or after close call. And we will
     //. get bad_descriptor error
     socket_->close();
+    stopped_ = true;
 }
 
 /// Post this coroutine on the ASIO service queue so that it will
