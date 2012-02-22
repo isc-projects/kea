@@ -1,3 +1,8 @@
+3XX.	[func]	tomek
+	libdhcp++: Linux interface detection refactored. The code is
+	now cleaner. Tests better support certain versions of ifconfig.
+	(Trac #1528, git TBD)
+
 382.	[func]	jelte
 	b10-auth now also experimentally supports statistics counters of
 	the rcode reponses it sends. The counters can be shown as
