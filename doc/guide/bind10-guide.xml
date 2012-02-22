@@ -915,7 +915,7 @@ address, but the usual ones don't." mean? -->
       </note>
       <para>
         It is possible to start some components multiple times (currently
-        <command>b10-auth</command> and <command>b10-resolzer</command>).
+        <command>b10-auth</command> and <command>b10-resolver</command>).
         You might want to do that to gain more performance (each one uses only
         single core). Just put multiple entries under different names, like
         this, with the same config:
