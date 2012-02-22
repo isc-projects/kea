@@ -25,6 +25,7 @@
 
 #include <dns/masterload.h>
 #include <dns/name.h>
+#include <dns/rdata.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
 
@@ -79,6 +80,11 @@ const char* const rrsig_rr1 =
 const char* const rrsig_rr2 =
     "www.example.com. 60 IN RRSIG AAAA 5 3 3600 20000101000000 20000201000000 "
     "12345 example.com. FAKEFAKEFAKE\n";
+
+// Commonly used for some tests to check the constructed RR content.
+const char* const dnskey_rdata =
+    "256 3 7 AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
+    "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE=\n";
 
 TEST_F(MasterLoadTest, loadRRs) {
     // a simple case: loading 3 RRs, each consists of a single RRset.
@@ -159,6 +165,50 @@ TEST_F(MasterLoadTest, loadRRsigs) {
     rr_stream << rrsig_rr1 << rrsig_rr2;
     masterLoad(rr_stream, origin, zclass, callback);
     EXPECT_EQ(2, results.size());
+}
+
+TEST_F(MasterLoadTest, loadRRWithComment) {
+    // Comment at the end of line should be ignored and the RR should be
+    // accepted.
+    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+        "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
+        "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE=  ; key id = 40430\n";
+    masterLoad(rr_stream, origin, zclass, callback);
+    ASSERT_EQ(1, results.size());
+    EXPECT_EQ(0, results[0]->getRdataIterator()->getCurrent().compare(
+                  *rdata::createRdata(RRType::DNSKEY(), zclass,
+                                      dnskey_rdata)));
+}
+
+TEST_F(MasterLoadTest, loadRRWithCommentNoSpace) {
+    // Similar to the previous one, but there's no space before comments.
+    // It should still work.
+    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+        "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
+        "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE=; key id = 40430\n";
+    masterLoad(rr_stream, origin, zclass, callback);
+    ASSERT_EQ(1, results.size());
+    EXPECT_EQ(0, results[0]->getRdataIterator()->getCurrent().compare(
+                  *rdata::createRdata(RRType::DNSKEY(), zclass,
+                                      dnskey_rdata)));
+}
+
+TEST_F(MasterLoadTest, loadRRNoComment) {
+    // A semicolon in a character-string shouldn't confuse the parser.
+    rr_stream << "example.com. 3600 IN TXT \"aaa;bbb\"\n";
+    masterLoad(rr_stream, origin, zclass, callback);
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(0, results[0]->getRdataIterator()->getCurrent().compare(
+                  *rdata::createRdata(RRType::TXT(), zclass,
+                                      "\"aaa;bbb\"")));
+}
+
+TEST_F(MasterLoadTest, loadRREmptyAndComment) {
+    // There's no RDATA (invalid in this case) but a comment.  This position
+    // shouldn't cause any disruption and should be treated as a normal error.
+    rr_stream << "example.com. 3600 IN A ;\n";
+    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
+                 MasterLoadError);
 }
 
 TEST_F(MasterLoadTest, loadWithNoEOF) {
