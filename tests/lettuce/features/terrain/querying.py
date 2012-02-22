@@ -61,7 +61,7 @@ class QueryResult(object):
                           "([0-9]+), AUTHORITY: ([0-9]+), ADDITIONAL: ([0-9]+)")
 
     def __init__(self, name, qtype, qclass, address, port,
-                 additional_args = None):
+                 additional_args=None):
         """
         Constructor. This fires of a query using dig.
         Parameters:
