@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,25 +19,24 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
-#include <asiolink/simple_callback.h>
-#include <asiodns/dns_answer.h>
-#include <asiodns/dns_lookup.h>
-#include <asiodns/dns_server.h>
+#include "dns_answer.h"
+#include "dns_lookup.h"
+#include "dns_server.h"
 
-#include <coroutine.h>
+#include <asiolink/simple_callback.h>
+#include <exceptions.h>
+
+#include <boost/noncopyable.hpp>
 
 namespace isc {
 namespace asiodns {
 
-//
-// Asynchronous UDP server coroutine
-//
+/// \brief An UDP server that doesn't asynchronous lookup handlers.
 ///
-/// \brief This class implements the coroutine to handle UDP
-///        DNS query event. As such, it is both a \c DNSServer and
-///        a \c coroutine
-///
-class SyncUDPServer : public virtual DNSServer, public virtual coroutine {
+/// That means, the lookup handler must provide the answer right away.
+/// This allows for implementation with less overhead, compared with
+/// the UDPClass.
+class SyncUDPServer : public DNSServer, public boost::noncopyable {
 public:
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with
@@ -47,10 +46,10 @@ public:
     /// \param lookup the callbackprovider for DNS lookup events
     /// \param answer the callbackprovider for DNS answer events
     explicit SyncUDPServer(asio::io_service& io_service,
-                       const asio::ip::address& addr, const uint16_t port,
-                       isc::asiolink::SimpleCallback* checkin = NULL,
-                       DNSLookup* lookup = NULL,
-                       DNSAnswer* answer = NULL);
+                           const asio::ip::address& addr, const uint16_t port,
+                           isc::asiolink::SimpleCallback* checkin = NULL,
+                           DNSLookup* lookup = NULL,
+                           DNSAnswer* answer = NULL);
 
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with
@@ -62,59 +61,64 @@ public:
     /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor.
-    SyncUDPServer(asio::io_service& io_service, int fd, int af,
-              isc::asiolink::SimpleCallback* checkin = NULL,
-              DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
+    SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
+                  isc::asiolink::SimpleCallback* checkin = NULL,
+                  DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
 
-    /// \brief The function operator
-    void operator()(asio::error_code ec = asio::error_code(),
+    /// \brief Start the SyncUDPServer.
+    ///
+    /// This is the function operator to keep interface with other server
+    /// classes. They need that because they're coroutines.
+    virtual void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
 
     /// \brief Calls the lookup callback
-    void asyncLookup();
+    virtual void asyncLookup() {
+        isc_throw(Unexpected,
+                  "SyncUDPServer doesn't support asyncLookup by design, use "
+                  "UDPServer if you need it.");
+    }
 
     /// \brief Stop the running server
     /// \note once the server stopped, it can't restart
-    void stop();
+    virtual void stop();
 
     /// \brief Resume operation
     ///
+    /// Note that unlike other servers, this one expects it to be called
+    /// directly from the lookup callback. If it isn't, the server will
+    /// throw an Unexpected exception (probably to the event loop, which
+    /// would usually lead to termination of the program, but that's OK,
+    /// as it would be serious programmer error).
+    ///
     /// \param done Set this to true if the lookup action is done and
     ///        we have an answer
-    void resume(const bool done);
+    virtual void resume(const bool done);
 
     /// \brief Check if we have an answer
     ///
     /// \return true if we have an answer
-    bool hasAnswer();
-
-    /// \brief Returns the coroutine state value
-    ///
-    /// \return the coroutine state value
-    int value() { return (get_value()); }
+    virtual bool hasAnswer();
 
     /// \brief Clones the object
     ///
     /// \return a newly allocated copy of this object
-    DNSServer* clone() {
-        SyncUDPServer* s = new SyncUDPServer(*this);
-        return (s);
+    virtual DNSServer* clone() {
+        isc_throw(Unexpected, "SyncUDPServer can't be cloned.");
     }
-
 private:
-    enum { MAX_LENGTH = 4096 };
+    static const size_t MAX_LENGTH = 4096;
+    uint8_t data_[MAX_LENGTH];
+    std::auto_ptr<asio::ip::udp::socket> socket_;
+    asio::io_service& io_;
+    asio::ip::udp::endpoint sender_;
+    const asiolink::SimpleCallback* checkin_callback_;
+    const DNSLookup* lookup_callback_;
+    const DNSAnswer* answer_callback_;
+    bool resume_called_, done_;
 
-    /**
-     * \brief Internal state and data.
-     *
-     * We use the pimple design pattern, but not because we need to hide
-     * internal data. This class and whole header is for private use anyway.
-     * It turned out that SyncUDPServer is copied a lot, because it is a coroutine.
-     * This way the overhead of copying is lower, we copy only one shared
-     * pointer instead of about 10 of them.
-     */
-    struct Data;
-    boost::shared_ptr<Data> data_;
+    void scheduleRead();
+    void handleRead(const asio::error_code& ec, const size_t length);
 };
 
 } // namespace asiodns
