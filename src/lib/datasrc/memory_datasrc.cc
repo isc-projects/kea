@@ -608,23 +608,31 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * It is designed for wildcard case, where we create the rrsets
      * dynamically.
      */
-    static ConstRRsetPtr prepareRRset(const Name& name, const ConstRRsetPtr&
-        rrset, bool rename)
+    static ConstRRsetPtr prepareRRset(const Name& name,
+                                      const ConstRRsetPtr& rrset, bool rename)
     {
         if (rename) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
                 arg(rrset->getName()).arg(name);
-            /*
-             * We lose a signature here. But it would be wrong anyway, because
-             * the name changed. This might turn out to be unimportant in
-             * future, because wildcards will probably be handled somehow
-             * by DNSSEC.
-             */
             RRsetPtr result(new RRset(name, rrset->getClass(),
-                rrset->getType(), rrset->getTTL()));
+                                      rrset->getType(), rrset->getTTL()));
             for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
-                i->next()) {
+                 i->next()) {
                 result->addRdata(i->getCurrent());
+            }
+            // TBD: skip it if dnssec not required.
+            ConstRRsetPtr sig_rrset = rrset->getRRsig();
+            if (sig_rrset) {
+                RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
+                                              RRType::RRSIG(),
+                                              sig_rrset->getTTL()));
+                for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
+                     !i->isLast();
+                     i->next())
+                {
+                    result_sig->addRdata(i->getCurrent());
+                }
+                result->addRRsig(result_sig);
             }
             return (result);
         } else {
@@ -652,7 +660,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
     // Implementation of InMemoryZoneFinder::find
     FindResult find(const Name& name, RRType type,
-                    std::vector<ConstRRsetPtr> *target,
+                    std::vector<ConstRRsetPtr>* target,
                     const FindOptions options) const
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
