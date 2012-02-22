@@ -1,9 +1,14 @@
 Feature: NSEC3 Authoritative service
     This feature tests NSEC3 as defined in RFC5155, using the example
-    zone from appendix A and testing responses appendix B.
-    Additional tests can be added as well
-    # Data is taken directly from RFC5155; with 1 changes:
-    # inserted whitespace in base64 output where it is inserted by dig
+    zone from appendix A and testing the example responses from appendix B.
+    Additional tests can be added as well.
+
+    # Response section data is taken directly from RFC5155
+    # It has been modified slightly; it has been 'flattened' (i.e. converted
+    # to 1-line RRs with TTL and class data), and whitespace has been added
+    # in the places where dig adds them too.
+    # Any other changes from the specific example data are added as inline
+    # comments.
     
     Scenario: B.1. Name Error
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
@@ -24,7 +29,6 @@ Feature: NSEC3 Authoritative service
         35mthgpgcu1qg68fab165klnsnk3dpvl.example.	3600	IN	NSEC3	1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG 
         35mthgpgcu1qg68fab165klnsnk3dpvl.example.	3600	IN	RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. g6jPUUpduAJKRljUsN8gB4UagAX0NxY9shwQAynzo8EUWH+z6hEIBlUT PGj15eZll6VhQqgZXtAIR3chwgW+SA==
         """
-
 
     Scenario: B.2. No Data Error
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
@@ -86,10 +90,11 @@ Feature: NSEC3 Authoritative service
         A dnssec query for a.z.w.example. type MX should have rcode NOERROR
         The last query response should have flags qr aa rd
         # TODO: check DO bit?
-        # BUG: NO RRSIG IN WILDCARD RESPONSE!!!
+        # BUG: NO RRSIG IN WILDCARD RESPONSE!!! (see ticket #1701)
         #The last query response should have ancount 2
         The last query response should have nscount 5
         The last query response should have adcount 9
+        # BUG: NO RRSIG IN WILDCARD RESPONSE!!! (see ticket #1701)
         #The answer section of the last query response should be
         #"""
         #a.z.w.example.	3600	IN	MX	1 ai.example.
@@ -103,7 +108,8 @@ Feature: NSEC3 Authoritative service
         q04jkcevqvmu85r014c7dkba38o0ji5r.example.	3600	IN	NSEC3	1 1 12 aabbccdd  r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG 
         q04jkcevqvmu85r014c7dkba38o0ji5r.example.	3600	IN	RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. hV5I89b+4FHJDATp09g4bbN0R1F845CaXpL3ZxlMKimoPAyqletMlEWw LfFia7sdpSzn+ZlNNlkxWcLsIlMmUg==
         """
-        # This is slightly different from the example in RFC5155
+        # This is slightly different from the example in RFC5155; there are
+        # more RRs in the additional section.
         The additional section of the last query response should be
         """
         ai.example.		3600	IN	A	192.0.2.9
