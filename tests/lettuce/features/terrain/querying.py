@@ -68,7 +68,7 @@ class QueryResult(object):
         qclass: The RR class to query. Defaults to IN if it is None.
         address: The IP adress to send the query to.
         port: The port number to send the query to.
-        additional_args: List of additional arguments
+        additional_args: List of additional arguments (e.g. '+dnssec').
         All parameters must be either strings or have the correct string
         representation.
         Only one query attempt will be made.
@@ -183,8 +183,9 @@ class QueryResult(object):
         """
         pass
 
-@step('A (dnssec )?query for ([\w.-]+) (?:type ([A-Z0-9]+) )?(?:class ([A-Z]+) )?' +
-      '(?:to ([^:]+)(?::([0-9]+))? )?should have rcode ([\w.]+)')
+@step('A (dnssec )?query for ([\w.-]+) (?:type ([A-Z0-9]+) )?' +
+      '(?:class ([A-Z]+) )?(?:to ([^:]+)(?::([0-9]+))? )?' +
+      'should have rcode ([\w.]+)')
 def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
     """
     Run a query, check the rcode of the response, and store the query
@@ -210,7 +211,8 @@ def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
     additional_arguments = []
     if dnssec is not None:
         additional_arguments.append("+dnssec")
-    query_result = QueryResult(query_name, qtype, qclass, addr, port, additional_arguments)
+    query_result = QueryResult(query_name, qtype, qclass, addr, port,
+                               additional_arguments)
     assert query_result.rcode == rcode,\
         "Expected: " + rcode + ", got " + query_result.rcode
     world.last_query_result = query_result
@@ -262,9 +264,8 @@ def check_last_query_section(step, section):
     section ('<section> section'): The name of the section (QUESTION, ANSWER,
                                    AUTHORITY or ADDITIONAL).
     The expected response is taken from the multiline part of the step in the
-    scenario. Differing whitespace is ignored, but currently the order is
-    significant.
-    The comparison is case insensitive.
+    scenario. Differing whitespace is ignored, the order of the lines is
+    ignored, and the comparison is case insensitive.
     Fails if they do not match.
     """
     response_string = None
