@@ -23,7 +23,9 @@
 #include "dns_lookup.h"
 #include "dns_server.h"
 
+#include <dns/message.h>
 #include <asiolink/simple_callback.h>
+#include <util/buffer.h>
 #include <exceptions.h>
 
 #include <boost/noncopyable.hpp>
@@ -109,6 +111,8 @@ public:
 private:
     static const size_t MAX_LENGTH = 4096;
     uint8_t data_[MAX_LENGTH];
+    isc::util::OutputBufferPtr output_buffer_;
+    isc::dns::MessagePtr query_, answer_;
     std::auto_ptr<asio::ip::udp::socket> socket_;
     asio::io_service& io_;
     asio::ip::udp::endpoint sender_;
