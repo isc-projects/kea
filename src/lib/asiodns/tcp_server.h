@@ -67,7 +67,6 @@ public:
         return (s);
     }
 
-
 private:
     enum { MAX_LENGTH = 65535 };
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
