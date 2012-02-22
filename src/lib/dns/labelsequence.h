@@ -32,7 +32,7 @@ public:
 
     void split(int i);
 
-    size_t getLabelCount() { return last_label_ - first_label_; }
+    size_t getLabelCount() const { return last_label_ - first_label_; }
 
     const Name& getName() const { return name_; }
 
