@@ -203,13 +203,6 @@ TEST_F(RBNodeRRsetTest, LeftShiftOperator) {
               "test.example.com. 3600 IN A 192.0.2.2\n", oss.str());
 }
 
-// RRSIG-related tests.
-
-
-TEST_F(RBNodeRRsetTest, addRRsigConstantRdataPointer) {
-    FAIL();
-}
-
 // General RRSIG check function.  Get the RRSIG from the RRset and check that
 // the RDATA is what we expect.
 void

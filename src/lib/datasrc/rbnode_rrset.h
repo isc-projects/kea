@@ -60,6 +60,8 @@ class RBNodeRRset : public isc::dns::AbstractRRset {
 private:
     // Note: The copy constructor and the assignment operator are intentionally
     // defined as private as we would normally not duplicate a RBNodeRRset.
+    // (We use the "private" method instead of inheriting from boost::noncopyable
+    // so as to avoid multiple inheritance.)
     RBNodeRRset(const RBNodeRRset& source);
     RBNodeRRset& operator=(const RBNodeRRset& source);
 
@@ -67,6 +69,8 @@ public:
     /// \brief Usual Constructor
     ///
     /// Creates an RBNodeRRset from the pointer to the RRset passed to it.
+    ///
+    /// \param rrset Pointer to underlying RRset encapsulated by this object.
     RBNodeRRset(const isc::dns::ConstRRsetPtr& rrset) : rrset_(rrset) {}
 
     /// \brief Destructor
@@ -132,30 +136,50 @@ public:
     }
 
     virtual isc::dns::RRsetPtr getRRsig() const {
-        return (isc::dns::RRsetPtr());
+        return (rrset_->getRRsig());
     }
 
-    virtual void addRRsig(const isc::dns::rdata::ConstRdataPtr& /*rdata*/) {
+    // With all the RRsig methods, we have the problem that we store the
+    // underlying RRset using a ConstRRsetPtr - a pointer to a "const" RRset -
+    // but we need to modify it by adding or removing an RRSIG.  We overcome
+    // this by temporarily violating the "const" nature of the RRset to add the
+    // data.
+
+    virtual void addRRsig(const isc::dns::rdata::ConstRdataPtr& rdata) {
+        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
+        p->addRRsig(rdata);
     }
 
-    virtual void addRRsig(const isc::dns::rdata::RdataPtr& /*rdata*/) {
+    virtual void addRRsig(const isc::dns::rdata::RdataPtr& rdata) {
+        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
+        p->addRRsig(rdata);
     }
 
-    virtual void addRRsig(const AbstractRRset& /*sigs*/) {
+    virtual void addRRsig(const AbstractRRset& sigs) {
+        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
+        p->addRRsig(sigs);
     }
 
-    virtual void addRRsig(const isc::dns::ConstRRsetPtr& /*sigs*/) {
+    virtual void addRRsig(const isc::dns::ConstRRsetPtr& sigs) {
+        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
+        p->addRRsig(sigs);
     }
 
-    virtual void addRRsig(const isc::dns::RRsetPtr& /*sigs*/) {
+    virtual void addRRsig(const isc::dns::RRsetPtr& sigs) {
+        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
+        p->addRRsig(sigs);
     }
 
     virtual void removeRRsig() {
+        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
+        p->removeRRsig();
     }
 
     /// \brief Return underlying RRset pointer
+    ///
+    /// ... mainly for testing.
     virtual isc::dns::ConstRRsetPtr getUnderlyingRRset() const {
-        return rrset_;
+        return (rrset_);
     }
 
 private:
