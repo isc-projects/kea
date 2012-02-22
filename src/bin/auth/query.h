@@ -253,7 +253,10 @@ private:
     /// only one of matching or covering NSEC3.  If \c match is true the
     /// returned NSEC3 must be a matching one; otherwise it must be a covering
     /// one.  If this assumption isn't met this method throws a BadNSEC3
-    /// exception.
+    /// exception (if it must be a matching NSEC3 but is not, it means a broken
+    /// zone, maybe with incorrect optout NSEC3s; if it must be a covering
+    /// NSEC3 but is not, it means a run time collision; or the \c findNSEC3()
+    /// implementation is broken for both cases.)
     void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
                          const isc::dns::Name& name, bool match);
 
