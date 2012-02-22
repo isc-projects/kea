@@ -20,9 +20,6 @@
 #include "sync_udp_server.h"
 #include "logger.h"
 
-#include <dns/message.h>
-#include <util/buffer.h>
-
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
@@ -46,6 +43,9 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service,
                              const uint16_t port,
                              asiolink::SimpleCallback* checkin,
                              DNSLookup* lookup, DNSAnswer* answer) :
+    output_buffer_(new isc::util::OutputBuffer(0)),
+    query_(new isc::dns::Message(isc::dns::Message::PARSE)),
+    answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
     io_(io_service), checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer), stopped_(false)
 {
@@ -64,6 +64,9 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service,
 SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
                              const int af, asiolink::SimpleCallback* checkin,
                              DNSLookup* lookup, DNSAnswer* answer) :
+    output_buffer_(new isc::util::OutputBuffer(0)),
+    query_(new isc::dns::Message(isc::dns::Message::PARSE)),
+    answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
     io_(io_service), checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer), stopped_(false)
 {
@@ -134,19 +137,17 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
         return;
     }
 
-    // TODO: Can any of these be put to the object and reused?
-    isc::util::OutputBufferPtr output(new isc::util::OutputBuffer(0));
-    isc::dns::MessagePtr
-        query(new isc::dns::Message(isc::dns::Message::PARSE));
-    isc::dns::MessagePtr
-        answer(new isc::dns::Message(isc::dns::Message::RENDER));
+    // Make sure the buffers are fresh
+    output_buffer_->clear();
+    query_->clear(isc::dns::Message::PARSE);
+    answer_->clear(isc::dns::Message::RENDER);
 
     // Mark that we don't have an answer yet.
     done_ = false;
     resume_called_ = false;
 
     // Call the actual lookup
-    (*lookup_callback_)(message, query, answer, output, this);
+    (*lookup_callback_)(message, query_, answer_, output_buffer_, this);
 
     if (!resume_called_) {
         isc_throw(isc::Unexpected,
@@ -160,13 +161,14 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     if (done_) {
         // Good, there's an answer.
         // Call the answer callback to render it.
-        (*answer_callback_)(message, query, answer, output);
+        (*answer_callback_)(message, query_, answer_, output_buffer_);
 
         if (stopped_) {
             return;
         }
 
-        socket_->send_to(asio::buffer(output->getData(), output->getLength()),
+        socket_->send_to(asio::buffer(output_buffer_->getData(),
+                                      output_buffer_->getLength()),
                          sender_);
     }
 
