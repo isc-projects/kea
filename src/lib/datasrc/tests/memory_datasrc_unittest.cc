@@ -539,6 +539,7 @@ public:
         if (zone_finder == NULL) {
             zone_finder = &zone_finder_;
         }
+        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() : answer;
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
@@ -558,6 +559,11 @@ public:
                     } else {
                         ASSERT_TRUE(find_result.rrset);
                         rrsetCheck(answer, find_result.rrset);
+                        if (answer_sig) {
+                            ASSERT_TRUE(find_result.rrset->getRRsig());
+                            rrsetCheck(answer_sig,
+                                       find_result.rrset->getRRsig());
+                        }
                     }
                 } else if (check_wild_answer) {
                     ASSERT_NE(ConstRRsetPtr(), answer) <<
@@ -575,6 +581,22 @@ public:
                         wildanswer->addRdata(expectedIt->getCurrent());
                     }
                     rrsetCheck(wildanswer, find_result.rrset);
+
+                    // Same for the RRSIG, if any.
+                    if (answer_sig) {
+                        ASSERT_TRUE(find_result.rrset->getRRsig());
+
+                        RRsetPtr wildsig(new RRset(name,
+                                                   answer_sig->getClass(),
+                                                   RRType::RRSIG(),
+                                                   answer_sig->getTTL()));
+                        RdataIteratorPtr expectedIt(
+                            answer_sig->getRdataIterator());
+                        for (; !expectedIt->isLast(); expectedIt->next()) {
+                            wildsig->addRdata(expectedIt->getCurrent());
+                        }
+                        rrsetCheck(wildsig, find_result.rrset->getRRsig());
+                    }
                 }
             });
     }
@@ -1079,6 +1101,22 @@ InMemoryZoneFinderTest::wildcardCheck(
      *                 |
      *                 *
      */
+
+    // If the zone is "signed" (detecting it by the NSEC/NSEC3 signed flags),
+    // add RRSIGs to the records.
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 ||
+        (expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        // Convenience shortcut.  The RDATA is not really validatable, but
+        // it doesn't matter for our tests.
+        const char* const rrsig_common = "5 3 3600 "
+            "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
+
+        rr_wild_->addRRsig(textToRRset("*.wild.example.org. 300 IN RRSIG A " +
+                                       string(rrsig_common)));
+        rr_cnamewild_->addRRsig(textToRRset("*.cnamewild.example.org. 300 IN "
+                                            "RRSIG CNAME " +
+                                            string(rrsig_common)));
+    }
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cnamewild_));
     // If the zone is expected to be "signed" with NSEC3, add an NSEC3.
