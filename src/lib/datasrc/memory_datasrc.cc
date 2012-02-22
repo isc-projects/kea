@@ -605,11 +605,15 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      *
      * If rename is false, it returns the one provided. If it is true, it
      * creates a new rrset with the same data but with provided name.
+     * In addition, if DNSSEC records are required by the original caller of
+     * find(), it also creates expanded RRSIG based on the RRSIG of the
+     * wildcard RRset.
      * It is designed for wildcard case, where we create the rrsets
      * dynamically.
      */
     static ConstRRsetPtr prepareRRset(const Name& name,
-                                      const ConstRRsetPtr& rrset, bool rename)
+                                      const ConstRRsetPtr& rrset,
+                                      bool rename, FindOptions options)
     {
         if (rename) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
@@ -620,19 +624,20 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                  i->next()) {
                 result->addRdata(i->getCurrent());
             }
-            // TBD: skip it if dnssec not required.
-            ConstRRsetPtr sig_rrset = rrset->getRRsig();
-            if (sig_rrset) {
-                RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
-                                              RRType::RRSIG(),
-                                              sig_rrset->getTTL()));
-                for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
-                     !i->isLast();
-                     i->next())
-                {
-                    result_sig->addRdata(i->getCurrent());
+            if ((options & FIND_DNSSEC) != 0) {
+                ConstRRsetPtr sig_rrset = rrset->getRRsig();
+                if (sig_rrset) {
+                    RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
+                                                  RRType::RRSIG(),
+                                                  sig_rrset->getTTL()));
+                    for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
+                         !i->isLast();
+                         i->next())
+                    {
+                        result_sig->addRdata(i->getCurrent());
+                    }
+                    result->addRRsig(result_sig);
                 }
-                result->addRRsig(result_sig);
             }
             return (result);
         } else {
@@ -697,14 +702,14 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
                     return (FindResult(DNAME, prepareRRset(name, state.rrset_,
-                                                           false)));
+                                                           false, options)));
                 }
                 if (state.zonecut_node_ != NULL) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                         arg(state.rrset_->getName());
                     return (FindResult(DELEGATION,
                                        prepareRRset(name, state.rrset_,
-                                                    false)));
+                                                    false, options)));
                 }
 
                 // If the RBTree search stopped at a node for a super domain
@@ -808,7 +813,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_EXACT_DELEGATION).arg(name);
                 return (FindResult(DELEGATION,
-                                   prepareRRset(name, found->second, rename)));
+                                   prepareRRset(name, found->second, rename,
+                                                options)));
             }
         }
 
@@ -818,7 +824,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             for (found = node->getData()->begin();
                  found != node->getData()->end(); ++found)
             {
-                target->push_back(prepareRRset(name, found->second, rename));
+                target->push_back(prepareRRset(name, found->second, rename,
+                                               options));
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
@@ -832,7 +839,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 arg(type);
             return (createFindResult(SUCCESS, prepareRRset(name,
                                                            found->second,
-                                                           rename), rename));
+                                                           rename, options),
+                                     rename));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
@@ -840,7 +848,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
                 return (createFindResult(CNAME,
                                          prepareRRset(name, found->second,
-                                                      rename), rename));
+                                                      rename, options),
+                                         rename));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.

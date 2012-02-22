@@ -1104,6 +1104,7 @@ InMemoryZoneFinderTest::wildcardCheck(
 
     // If the zone is "signed" (detecting it by the NSEC/NSEC3 signed flags),
     // add RRSIGs to the records.
+    ZoneFinder::FindOptions find_options = ZoneFinder::FIND_DEFAULT;
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 ||
         (expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         // Convenience shortcut.  The RDATA is not really validatable, but
@@ -1111,6 +1112,7 @@ InMemoryZoneFinderTest::wildcardCheck(
         const char* const rrsig_common = "5 3 3600 "
             "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
 
+        find_options = find_options | ZoneFinder::FIND_DNSSEC;
         rr_wild_->addRRsig(textToRRset("*.wild.example.org. 300 IN RRSIG A " +
                                        string(rrsig_common)));
         rr_cnamewild_->addRRsig(textToRRset("*.cnamewild.example.org. 300 IN "
@@ -1130,14 +1132,15 @@ InMemoryZoneFinderTest::wildcardCheck(
     {
         SCOPED_TRACE("Search at parent");
         findTest(Name("wild.example.org"), RRType::A(), ZoneFinder::NXRRSET,
-                 true, ConstRRsetPtr(), expected_flags);
+                 true, ConstRRsetPtr(), expected_flags, NULL, find_options);
     }
 
     // Search the original name of wildcard
     {
         SCOPED_TRACE("Search directly at *");
         findTest(Name("*.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
-                 true, rr_wild_);
+                 true, rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
+                 find_options);
     }
     // Search "created" name.
     {
@@ -1145,11 +1148,12 @@ InMemoryZoneFinderTest::wildcardCheck(
         findTest(Name("a.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
                  false, rr_wild_,
                  ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 ZoneFinder::FIND_DEFAULT, true);
+                 find_options, true);
         // Wildcard match, but no data
         findTest(Name("a.wild.example.org"), RRType::AAAA(),
                  ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
-                 ZoneFinder::RESULT_WILDCARD | expected_flags);
+                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
+                 find_options);
     }
 
     // Search name that has CNAME.
@@ -1158,7 +1162,7 @@ InMemoryZoneFinderTest::wildcardCheck(
         findTest(Name("a.cnamewild.example.org"), RRType::A(),
                  ZoneFinder::CNAME, false, rr_cnamewild_,
                  ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 ZoneFinder::FIND_DEFAULT, true);
+                 find_options, true);
     }
 
     // Search another created name, this time little bit lower
@@ -1167,14 +1171,15 @@ InMemoryZoneFinderTest::wildcardCheck(
         findTest(Name("a.b.wild.example.org"), RRType::A(),
                  ZoneFinder::SUCCESS, false, rr_wild_,
                  ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 ZoneFinder::FIND_DEFAULT, true);
+                 find_options, true);
     }
 
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_under_wild_));
     {
         SCOPED_TRACE("Search under non-wildcard");
         findTest(Name("bar.foo.wild.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags,
+                 NULL, find_options);
     }
 }
 
