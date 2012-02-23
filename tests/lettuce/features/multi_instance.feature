@@ -2,7 +2,7 @@ Feature: Multiple instances
     This feature tests whether multiple instances can be run, and whether
     removing them does not affect the running of other instances
 
-    Scenario: Multiple instances
+    Scenario: Multiple instances of Auth
         # This config should have two running instances
         Given I have bind10 running with configuration multi_instance/multi_auth.config
         And bind10 module Auth should be running
