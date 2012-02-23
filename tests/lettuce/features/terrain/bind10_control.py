@@ -237,7 +237,9 @@ def check_pid(step, process_name):
                                                " was not stored"
     for process in running_processes:
         if process[1] == process_name:
-            assert world.process_pids[process_name] == process[0]
+            assert world.process_pids[process_name] == process[0],\
+                   "Expected pid: " + str(world.process_pids[process_name]) +\
+                   " Got pid: " + str(process[0])
             found = True
     assert found, "Process named " + process_name +\
                   " not found in output of Boss show_processes";
