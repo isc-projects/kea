@@ -328,7 +328,8 @@ class ModuleCCSession(ConfigData):
            and return an answer created with create_answer()"""
         self._command_handler = command_handler
 
-    def _add_remote_config_internal(self, module_spec, config_update_callback=None):
+    def _add_remote_config_internal(self, module_spec,
+                                    config_update_callback=None):
         """The guts of add_remote_config and add_remote_config_by_name"""
         module_cfg = ConfigData(module_spec)
         module_name = module_spec.get_module_name()
