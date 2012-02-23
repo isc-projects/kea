@@ -113,15 +113,22 @@ class DummyChecker : public SimpleCallback, public ServerStopper {
 
 // \brief no lookup logic at all,just provide a checkpoint to stop the server
 class DummyLookup : public DNSLookup, public ServerStopper {
-    public:
-        void operator()(const IOMessage& io_message,
-                isc::dns::MessagePtr message,
-                isc::dns::MessagePtr answer_message,
-                isc::util::OutputBufferPtr buffer,
-                DNSServer* server) const {
-            stopServer();
+public:
+    DummyLookup() :
+        allow_resume_(true)
+    { }
+    void operator()(const IOMessage& io_message,
+            isc::dns::MessagePtr message,
+            isc::dns::MessagePtr answer_message,
+            isc::util::OutputBufferPtr buffer,
+            DNSServer* server) const {
+        stopServer();
+        if (allow_resume_) {
             server->resume(true);
         }
+    }
+    // If you want it not to call resume, set this to false
+    bool allow_resume_;
 };
 
 // \brief copy the data received from user to the answer part
@@ -500,6 +507,12 @@ bool DNSServerTestBase<UDPServerClass>::io_service_is_time_out = false;
 template<class UDPServerClass>
 asio::io_service* DNSServerTestBase<UDPServerClass>::current_service(NULL);
 
+typedef ::testing::Types<AddrPortInit<SyncUDPServer>, FdInit<SyncUDPServer> >
+    SyncTypes;
+template<class Parent>
+class SyncServerTest : public Parent { };
+TYPED_TEST_CASE(SyncServerTest, SyncTypes);
+
 // Test whether server stopped successfully after client get response
 // client will send query and start to wait for response, once client
 // get response, udp server will be stopped, the io service won't quit
@@ -628,10 +641,9 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
 TYPED_TEST(DNSServerTestBase, invalidFamily) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
-    EXPECT_THROW(UDPServer(this->service, 0, AF_UNIX, this->checker_,
+    EXPECT_THROW(TypeParam(this->service, 0, AF_UNIX, this->checker_,
                            this->lookup_, this->answer_),
                  isc::InvalidParameter);
-    // TODO The sync UDP server as well, please
     EXPECT_THROW(TCPServer(this->service, 0, AF_UNIX, this->checker_,
                            this->lookup_, this->answer_),
                  isc::InvalidParameter);
@@ -663,9 +675,24 @@ TYPED_TEST(DNSServerTestBase, DISABLED_invalidUDPFD) {
      not the others, maybe we could make it run this at least on epoll-based
      systems).
     */
-    EXPECT_THROW(UDPServer(this->service, -1, AF_INET, this->checker_,
+    EXPECT_THROW(TypeParam(this->service, -1, AF_INET, this->checker_,
                            this->lookup_, this->answer_),
                  isc::asiolink::IOError);
+}
+
+// Check it rejects some of the unsupported operatirons
+TYPED_TEST(SyncServerTest, unsupportedOps) {
+    EXPECT_THROW(this->udp_server_->clone(), isc::Unexpected);
+    EXPECT_THROW(this->udp_server_->asyncLookup(), isc::Unexpected);
+}
+
+// Check it rejects forgotten resume (eg. insists that it is synchronous)
+TYPED_TEST(SyncServerTest, mustResume) {
+    this->lookup_->allow_resume_ = false;
+    ASSERT_THROW(this->testStopServerByStopper(this->udp_server_,
+                                               this->udp_client_,
+                                               this->lookup_),
+                 isc::Unexpected);
 }
 
 }
