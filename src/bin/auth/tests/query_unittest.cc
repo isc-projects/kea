@@ -1429,7 +1429,7 @@ TEST_F(QueryTest, badWildcardNSEC3) {
 
     EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
                        RRType::A(), response, true).process(),
-                 isc::InvalidParameter);
+                 Query::BadNSEC3);
 }
 
 TEST_F(QueryTest, badWildcardProof1) {
@@ -1540,10 +1540,9 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
                                       ConstRRsetPtr());
     mock_finder->setNSEC3Result(&nsec3);
 
-    // Message::addRRset() will detect it and throw InvalidParameter.
     EXPECT_THROW(Query(memory_client, Name("www1.uwild.example.com"),
                        RRType::TXT(), response, true).process(),
-                 isc::InvalidParameter);
+                 Query::BadNSEC3);
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Broken) {
@@ -2283,10 +2282,9 @@ TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
                                       ConstRRsetPtr());
     mock_finder->setNSEC3Result(&nsec3);
 
-    // Message::addRRset() will detect it and throw InvalidParameter.
     EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
                        RRType::TXT(), response, true).process(),
-                 isc::InvalidParameter);
+                 Query::BadNSEC3);
 }
 
 TEST_F(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
