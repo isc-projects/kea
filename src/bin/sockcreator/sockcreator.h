@@ -73,6 +73,9 @@ public:
 };
 
 
+// Type of the close() function, so it can be passed as a parameter.
+// Argument is the same as that for close(2).
+typedef int (*close_t)(int);
 
 /// \short Create a socket and bind it.
 ///
@@ -82,13 +85,16 @@ public:
 /// \param type The type of socket to create (SOCK_STREAM, SOCK_DGRAM, etc).
 /// \param bind_addr The address to bind.
 /// \param addr_len The actual length of bind_addr.
+/// \param close_fun The furction used to close a socket if there's an error
+///     after the creation.
 ///
 /// \return The file descriptor of the newly created socket, if everything
 ///         goes well. A negative number is returned if an error occurs -
 ///         -1 if the socket() call fails or -2 if bind() fails. In case of
 ///         error, errno is set (or left intact from socket() or bind()).
 int
-getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len);
+getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len,
+        const close_t close_fun);
 
 // Define some types for functions used to perform socket-related operations.
 // These are typedefed so that alternatives can be passed through to the
@@ -96,15 +102,12 @@ getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len);
 
 // Type of the function to get a socket and to pass it as parameter.
 // Arguments are those described above for getSock().
-typedef int (*get_sock_t)(const int, struct sockaddr *, const socklen_t);
+typedef int (*get_sock_t)(const int, struct sockaddr *, const socklen_t,
+                          const close_t close_fun);
 
 // Type of the send_fd() function, so it can be passed as a parameter.
 // Arguments are the same as those of the send_fd() function.
 typedef int (*send_fd_t)(const int, const int);
-
-// Type of the close() function, so it can be passed as a parameter.
-// Argument is the same as that for close(2).
-typedef int (*close_t)(int);
 
 
 /// \brief Infinite loop parsing commands and returning the sockets.

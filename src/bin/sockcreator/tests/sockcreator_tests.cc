@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 
 #include <iostream>
@@ -140,6 +141,11 @@ void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum,
     }
 }
 
+// Just ignore the fd and pretend success. We close invalid fds in the tests.
+int
+closeIgnore(int) {
+    return (0);
+}
 
 // Generic version of the socket test.  It creates the socket and checks that
 // it is a valid descriptor.  The family-specific check functions are called
@@ -157,7 +163,8 @@ void testAnyCreate(int socket_type, socket_check_t socket_check) {
     memset(&addr, 0, sizeof(addr));
     setAddressFamilyFields(&addr);
     sockaddr* addr_ptr = reinterpret_cast<sockaddr*>(&addr);
-    const int socket = getSock(socket_type, addr_ptr, sizeof(addr));
+    const int socket = getSock(socket_type, addr_ptr, sizeof(addr),
+                               closeIgnore);
     ASSERT_GE(socket, 0) << "Couldn't create socket: failed with " <<
         "return code " << socket << " and error " << strerror(errno);
 
@@ -195,12 +202,37 @@ TEST(get_sock, tcp6_create) {
     testAnyCreate<sockaddr_in6>(SOCK_STREAM, tcpCheck);
 }
 
+bool close_called(false);
+
+int closeCall(int socket) {
+    close(socket);
+    close_called = true;
+    return (0);
+}
+
 // Ask the get_sock function for some nonsense and test if it is able to report
 // an error.
 TEST(get_sock, fail_with_nonsense) {
     sockaddr addr;
     memset(&addr, 0, sizeof(addr));
-    ASSERT_LT(getSock(0, &addr, sizeof addr), 0);
+    close_called = false;
+    ASSERT_EQ(-1, getSock(0, &addr, sizeof addr, closeCall));
+    ASSERT_FALSE(close_called); // The "socket" call should have failed already
+}
+
+// Bind should have failed here
+TEST(get_sock, fail_with_bind) {
+    sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = 1;
+    // No host should have this address on the interface, so it should not be
+    // possible to bind it.
+    addr.sin_addr.s_addr = inet_addr("192.0.2.1");
+    close_called = false;
+    ASSERT_EQ(-2, getSock(SOCK_STREAM, reinterpret_cast<sockaddr*>(&addr),
+                          sizeof addr, closeCall));
+    ASSERT_TRUE(close_called); // The "socket" call should have failed already
 }
 
 // The main run() function in the socket creator takes three functions to
@@ -222,7 +254,8 @@ TEST(get_sock, fail_with_nonsense) {
 // -1: The simulated bind() call has failed
 // -2: The simulated socket() call has failed
 int
-getSockDummy(const int type, struct sockaddr* addr, const socklen_t) {
+getSockDummy(const int type, struct sockaddr* addr, const socklen_t,
+             const close_t) {
     int result = 0;
     int port = 0;
 
@@ -275,12 +308,6 @@ send_FdDummy(const int destination, const int what) {
     const char fd_data = what & 0xff;
     const bool status = write_data(destination, &fd_data, sizeof(fd_data));
     return (status ? 0 : -1);
-}
-
-// Just ignore the fd and pretend success. We close invalid fds in the tests.
-int
-closeIgnore(int) {
-    return (0);
 }
 
 // Generic test that it works, with various inputs and outputs.
