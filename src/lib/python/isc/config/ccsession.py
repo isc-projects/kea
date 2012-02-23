@@ -340,7 +340,7 @@ class ModuleCCSession(ConfigData):
         seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": module_name }), "ConfigManager")
 
         try:
-            answer, env = self._session.group_recvmsg(False, seq)
+            answer, _ = self._session.group_recvmsg(False, seq)
         except isc.cc.SessionTimeout:
             raise ModuleCCSessionError("No answer from ConfigManager when "
                                        "asking about Remote module " +
@@ -349,9 +349,18 @@ class ModuleCCSession(ConfigData):
         if answer:
             rcode, value = parse_answer(answer)
             if rcode == 0:
-                if value != None and module_spec.validate_config(False, value):
-                    module_cfg.set_local_config(value)
-                    call_callback = True
+                if value != None:
+                    if module_spec.validate_config(False, value):
+                        module_cfg.set_local_config(value)
+                        call_callback = True
+                    else:
+                        raise ModuleCCSessionError("Bad config data for " +
+                                                   module_name + ": " +
+                                                   str(value))
+            else:
+                raise ModuleCCSessionError("Failure requesting remote " +
+                                           "configuration data for " +
+                                           module_name)
 
         # all done, add it
         self._remote_module_configs[module_name] = module_cfg
