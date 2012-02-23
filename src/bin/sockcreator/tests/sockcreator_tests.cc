@@ -125,20 +125,12 @@ void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum,
                              &len)) << strerror(errno);
         EXPECT_NE(0, options);
 #endif
-#ifdef IPV6_MTU
-        struct sockaddr_in6 addr;
-        memset(&addr, 0, sizeof(addr));
-        addr.sin6_family = AF_INET6;
-        addr.sin6_port = htons(53);
-        addr.sin6_addr = in6addr_loopback;
-        EXPECT_EQ(0, connect(socknum,
-                             reinterpret_cast<struct sockaddr*>(&addr),
-                             sizeof(addr)));
-        // Use minimum MTU on systems that don't have the IPV6_USE_MIN_MTU
-        EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_MTU, &options,
-                                &len)) << strerror(errno);
-        EXPECT_EQ(1280, options);
-#endif
+        // We do not check for the IPV6_MTU, because while setting works (eg.
+        // the packets are fragmented correctly), the getting does not. If
+        // we try to getsockopt it, an error complaining it can't be accessed
+        // on unconnected socket is returned. If we try to connect it, the
+        // MTU of the interface is returned, not the one we set. So we live
+        // in belief it works because we examined the packet dump.
 #if defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
         // Turned off Path MTU discovery on IPv6/UDP sockets?
         EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
