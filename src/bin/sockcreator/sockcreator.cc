@@ -126,7 +126,7 @@ handleRequest(const int input_fd, const int output_fd,
     }
 
     // Obtain the socket
-    const int result = get_sock(sock_type, addr, addr_len);
+    const int result = get_sock(sock_type, addr, addr_len, close_fun);
     if (result >= 0) {
         // Got the socket, send it to the client.
         writeMessage(output_fd, "S", 1);
@@ -198,6 +198,17 @@ mtu(int fd) {
     return (fd);
 }
 
+// This one closes the socket if result is negative. Used not to leak socket
+// on error.
+int maybeClose(const int result, const int socket, const close_t close_fun) {
+    if (result < 0) {
+        if (close_fun(socket) == -1) {
+            isc_throw(InternalError, "Error closing socket");
+        }
+    }
+    return (result);
+}
+
 } // Anonymous namespace
 
 namespace isc {
@@ -205,7 +216,8 @@ namespace socket_creator {
 
 // Get the socket and bind to it.
 int
-getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len) {
+getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len,
+        const close_t close_fun) {
     const int sock = socket(bind_addr->sa_family, type, 0);
     if (sock == -1) {
         return (-1);
@@ -213,19 +225,19 @@ getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len) {
     const int on = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
         // This is part of the binding process, so it's a bind error
-        return (-2);
+        return (maybeClose(-2, sock, close_fun));
     }
     if (bind_addr->sa_family == AF_INET6 &&
         setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) == -1) {
         // This is part of the binding process, so it's a bind error
-        return (-2);
+        return (maybeClose(-2, sock, close_fun));
     }
     if (bind(sock, bind_addr, addr_len) == -1) {
-        return (-2);
+        return (maybeClose(-2, sock, close_fun));
     }
     if (type == SOCK_DGRAM && bind_addr->sa_family == AF_INET6) {
         // Set some MTU flags on IPv6 UDP sockets.
-        return (mtu(sock));
+        return (maybeClose(mtu(sock), sock, close_fun));
     }
     return (sock);
 }
