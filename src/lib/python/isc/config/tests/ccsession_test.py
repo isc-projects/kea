@@ -523,10 +523,10 @@ class TestModuleCCSession(unittest.TestCase):
     # These three functions are helper functions to easy up the writing of them.
     # To write a test, there need to be 3 functions. First, the function that
     # does the actual test. It looks like:
-    # def _internal_test(self, function_lambda, parameter, fill_other_messages):
+    # def _internal_test(self, function_lambda, param, fill_other_messages):
     #
     # The function_lambda provides the tested function if called on the
-    # ccsession. The param is the parameter to pass to the function (either the
+    # ccsession. The param is the parameter to pass to the function (either
     # the module name or the spec file name. The fill_other_messages fills
     # needed messages (the answer containing the module spec in case of add by
     # name, no messages in the case of adding by spec file) into the fake bus.
@@ -585,7 +585,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertFalse("Spec2" in fake_session.subscriptions)
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
-        # test if unsubscription is alse sent when object is deleted
+        # test if unsubscription is also sent when object is deleted
         fill_other_messages(fake_session)
         fake_session.group_sendmsg({'result' : [0]}, 'Spec2')
         rmodname = function(parameter)
