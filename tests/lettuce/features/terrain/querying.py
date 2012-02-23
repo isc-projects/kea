@@ -44,7 +44,7 @@ import re
 # opcode, rcode, id, flags, qdcount, ancount, nscount, adcount,
 # edns_version, edns_flags, and edns_udp_size
 # (flags and edns_flags are both one string with all flags, in the order
-# in which they appear in the response packet.)
+# in which they appear in the response message.)
 #
 # this will set 'rcode' as the result code, we 'define' one additional
 # rcode, "NO_ANSWER", if the dig process returned an error code itself
@@ -200,7 +200,7 @@ class QueryResult(object):
         """
         pass
 
-@step('A (dnssec )?query for ([\w.-]+) (?:type ([A-Z0-9]+) )?' +
+@step('A (dnssec )?query for ([\S]+) (?:type ([A-Z0-9]+) )?' +
       '(?:class ([A-Z]+) )?(?:to ([^:]+)(?::([0-9]+))? )?' +
       'should have rcode ([\w.]+)')
 def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
@@ -284,6 +284,10 @@ def check_last_query_section(step, section):
     scenario. Differing whitespace is ignored, the order of the lines is
     ignored, and the comparison is case insensitive.
     Fails if they do not match.
+    WARNING: Case insensitivity is not strictly correct; for instance the
+    data of TXT RRs would be case sensitive. But most other output is, so
+    currently the checks are always case insensitive. Should we checks do
+    need to be case sensitive, we can either remove it or make it optional.
     """
     response_string = None
     if section.lower() == 'question':
