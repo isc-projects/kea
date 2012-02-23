@@ -614,8 +614,8 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
         function = function_lambda(mccs)
-        # override the default config value for "item1".  add_remote_config()
-        # should incorporate the overridden value, and we should be abel to
+        # override the default config value for "item1". add_remote_config[_by_name]()
+        # should incorporate the overridden value, and we should be able to
         # get it via get_remote_config_value().
         fill_other_messages(fake_session)
         fake_session.group_sendmsg({'result': [0, {"item1": 10}]}, 'Spec2')
@@ -775,6 +775,13 @@ class TestModuleCCSession(unittest.TestCase):
         self._common_remote_module_by_name_test(
             self._internal_check_command_without_recvmsg_remote_module2)
 
+    def test_module_name_mismatch(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self._prepare_spec_message(fake_session, 'spec1.spec')
+        self.assertRaises(isc.config.ModuleCCSessionError,
+                          mccs.add_remote_config_by_name, "Spec2")
 
     def test_logconfig_handler(self):
         # test whether default_logconfig_handler reacts nicely to
