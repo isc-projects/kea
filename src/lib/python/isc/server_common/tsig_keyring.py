@@ -31,7 +31,7 @@ class Unexpected(Exception):
 
 class AddError(Exception):
     """
-    Raised when an key can not be added. This usually means there's a
+    Raised when a key can not be added. This usually means there's a
     duplicity.
     """
     pass
