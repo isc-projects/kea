@@ -109,19 +109,43 @@ public:
         isc_throw(Unexpected, "SyncUDPServer can't be cloned.");
     }
 private:
+    // Internal state & buffers. We don't use the PIMPL idiom, as this class
+    // isn't usually used directly anyway.
+
+    // Maximum size of incoming UDP packet
     static const size_t MAX_LENGTH = 4096;
+    // Buffer for incoming data
     uint8_t data_[MAX_LENGTH];
+    // The buffer to render the output to and send it.
+    // If it was OK to have just a buffer, not the wrapper class,
+    // we could reuse the data_
     isc::util::OutputBufferPtr output_buffer_;
+    // Objects to hold the query message and the answer
     isc::dns::MessagePtr query_, answer_;
+    // The socket used for the communication
     std::auto_ptr<asio::ip::udp::socket> socket_;
+    // The event loop we use
     asio::io_service& io_;
+    // Place the socket puts the sender of a packet when it is received
     asio::ip::udp::endpoint sender_;
+    // Callbacks
     const asiolink::SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
-    bool resume_called_, done_, stopped_;
+    // Answers from the lookup callback (not sent directly, but signalled
+    // through resume()
+    bool resume_called_, done_;
+    // This turns true when the server stops. Allows for not sending the
+    // answer after we closed the socket.
+    bool stopped_;
 
+    // Auxiliary functions
+
+    // Schedule next read on the socket. Just a wrapper around
+    // socket_->async_read_from with the correct parameters.
     void scheduleRead();
+    // Callback from the socket's read call (called when there's an error or
+    // when a new packet comes).
     void handleRead(const asio::error_code& ec, const size_t length);
 };
 
