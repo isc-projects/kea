@@ -226,8 +226,10 @@ IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol,
         query_msg->setEDNS(edns_query);
     }
 
-    MessageRenderer renderer; // XXX this doesn't work need to set data_->msgbuf;
+    MessageRenderer renderer;
+    renderer.setBuffer(data_->msgbuf.get());
     query_msg->toWire(renderer);
+    renderer.setBuffer(NULL);
 }
 
 // Return protocol in use.

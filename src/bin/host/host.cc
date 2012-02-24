@@ -70,8 +70,7 @@ host_lookup(const char* const name, const char* const dns_class,
                              RRClass(dns_class),
                              any ? RRType::ANY() : RRType(type)));  // if NULL then:
 
-    OutputBuffer obuffer(512);
-    MessageRenderer renderer(obuffer);
+    MessageRenderer renderer;
     msg.toWire(renderer);
 
     struct addrinfo hints, *res;
@@ -111,7 +110,7 @@ host_lookup(const char* const name, const char* const dns_class,
         gettimeofday(&before_time, NULL);
     }
 
-    sendto(s, obuffer.getData(), obuffer.getLength(), 0, res->ai_addr,
+    sendto(s, renderer.getData(), renderer.getLength(), 0, res->ai_addr,
            res->ai_addrlen);
 
     struct sockaddr_storage ss;

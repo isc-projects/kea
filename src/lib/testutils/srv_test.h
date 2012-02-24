@@ -100,7 +100,6 @@ protected:
     asiolink::IOSocket* io_sock;
     asiolink::IOMessage* io_message;
     const asiolink::IOEndpoint* endpoint;
-    isc::util::OutputBuffer request_obuffer;
     isc::dns::MessageRenderer request_renderer;
     isc::util::OutputBufferPtr response_obuffer;
     std::vector<uint8_t> data;
