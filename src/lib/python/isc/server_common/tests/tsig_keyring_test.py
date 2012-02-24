@@ -68,21 +68,21 @@ class TSIGKeyRingTest(unittest.TestCase):
         tests the interaction with the keyring() function.
         """
         # The keyring function raises until initialized
-        self.assertRaises(Unexpected, keyring)
+        self.assertRaises(Unexpected, get_keyring)
         self.__do_init()
-        current_keyring = keyring()
+        current_keyring = get_keyring()
         self.assertTrue(isinstance(current_keyring, isc.dns.TSIGKeyRing))
         # Another initialization does nothing
         self.__do_init()
-        self.assertEqual(current_keyring, keyring())
+        self.assertEqual(current_keyring, get_keyring())
         # When we deinitialize it, it no longer provides the keyring
         deinit_keyring()
         self.assertEqual('tsig_keys', self.__session._remove_name)
         self.__session._remove_name = None
-        self.assertRaises(Unexpected, keyring)
+        self.assertRaises(Unexpected, get_keyring)
         # Another deinitialization doesn't change anything
         deinit_keyring()
-        self.assertRaises(Unexpected, keyring)
+        self.assertRaises(Unexpected, get_keyring)
         self.assertIsNone(self.__session._remove_name)
 
     def test_load(self):
@@ -93,7 +93,7 @@ class TSIGKeyRingTest(unittest.TestCase):
         # Initial load
         self.__session._data = ['key:MTIzNAo=:hmac-sha1']
         self.__do_init()
-        keys = keyring()
+        keys = get_keyring()
         self.assertEqual(1, keys.size())
         (rcode, key) = keys.find(isc.dns.Name('key'), self.__sha1name)
         self.assertEqual(isc.dns.TSIGKeyRing.SUCCESS, rcode)
@@ -103,7 +103,7 @@ class TSIGKeyRingTest(unittest.TestCase):
         self.__session._data = ['key.example:MTIzNAo=:hmac-sha1']
         self.__session._callback()
         orig_keys = keys
-        keys = keyring()
+        keys = get_keyring()
         self.assertNotEqual(keys, orig_keys)
         self.assertEqual(1, keys.size())
         # The old key is not here
@@ -122,10 +122,10 @@ class TSIGKeyRingTest(unittest.TestCase):
         """
         self.__session._data = ['key:MTIzNAo=:hmac-sha1']
         self.__do_init()
-        keys = keyring()
+        keys = get_keyring()
         self.__session._data = None
         self.__session._callback()
-        self.assertEqual(keys, keyring())
+        self.assertEqual(keys, get_keyring())
 
     def test_update_bad(self):
         """
@@ -133,15 +133,15 @@ class TSIGKeyRingTest(unittest.TestCase):
         """
         self.__session._data = ['key:MTIzNAo=:hmac-sha1']
         self.__do_init()
-        keys = keyring()
+        keys = get_keyring()
         # Bad TSIG string
         self.__session._data = ['key:this makes no sense:really']
         self.assertRaises(isc.dns.InvalidParameter, self.__session._callback)
-        self.assertEqual(keys, keyring())
+        self.assertEqual(keys, get_keyring())
         # A duplicity
         self.__session._data = ['key:MTIzNAo=:hmac-sha1', 'key:MTIzNAo=:hmac-sha1']
         self.assertRaises(AddError, self.__session._callback)
-        self.assertEqual(keys, keyring())
+        self.assertEqual(keys, get_keyring())
 
 if __name__ == "__main__":
     isc.log.init("bind10") # FIXME Should this be needed?
