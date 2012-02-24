@@ -20,6 +20,7 @@
 #include <sys/uio.h>
 #include <errno.h>
 #include <stdlib.h>             // for malloc and free
+#include <unistd.h>
 #include "fd_share.h"
 
 namespace isc {
@@ -106,7 +107,12 @@ recv_fd(const int sock) {
         std::memcpy(&fd, CMSG_DATA(cmsg), sizeof(int));
     }
     free(msghdr.msg_control);
-    return (fd);
+    // It is strange, but the call can return the same file descriptor as
+    // one returned previously, even if that one is not closed yet. So,
+    // we just re-number every one we get, so they are unique.
+    int new_fd(dup(fd));
+    close(fd);
+    return (new_fd);
 }
 
 int
