@@ -178,6 +178,9 @@ public:
     /// \name Setter Methods
     ///
     //@{
+    /// TBD
+    void setBuffer(isc::util::OutputBuffer* buffer);
+
     /// \brief Mark the renderer to indicate truncation has occurred while
     /// rendering.
     ///

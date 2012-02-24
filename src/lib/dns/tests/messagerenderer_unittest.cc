@@ -12,8 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <vector>
-
+#include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
@@ -21,6 +20,8 @@
 #include <dns/tests/unittest_util.h>
 
 #include <gtest/gtest.h>
+
+#include <vector>
 
 using isc::UnitTestUtil;
 using isc::dns::Name;
@@ -167,5 +168,46 @@ TEST_F(MessageRendererTest, writeRootName) {
                         renderer.getLength(),
                         static_cast<const uint8_t*>(expected.getData()),
                         expected.getLength());
+}
+
+TEST_F(MessageRendererTest, setBuffer) {
+    OutputBuffer new_buffer(0);
+    renderer.setBuffer(&new_buffer);
+    EXPECT_EQ(0, new_buffer.getLength()); // the buffer should be still empty
+    renderer.writeUint32(42);
+    EXPECT_EQ(sizeof(uint32_t), new_buffer.getLength());
+    EXPECT_EQ(sizeof(uint32_t), renderer.getLength());
+
+    // Change some other internal state for the reset test below.
+    EXPECT_EQ(512, renderer.getLengthLimit());
+    renderer.setLengthLimit(4096);
+    EXPECT_EQ(4096, renderer.getLengthLimit());
+
+    // Reset the buffer to the default again.  Other internal states and
+    // resources should be cleared.
+    renderer.setBuffer(NULL);
+    EXPECT_EQ(0, renderer.getLength());
+    EXPECT_EQ(512, renderer.getLengthLimit());
+}
+
+TEST_F(MessageRendererTest, setBufferErrors) {
+    OutputBuffer new_buffer(0);
+
+    // Buffer cannot be rest when the renderer is in use.
+    renderer.writeUint32(10);
+    EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
+
+    renderer.clear();
+    renderer.setBuffer(&new_buffer);
+    renderer.writeUint32(10);
+    EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
+
+    // Resetting the buffer isn't allowed for the default buffer.
+    renderer.setBuffer(NULL);
+    EXPECT_THROW(renderer.setBuffer(NULL), isc::InvalidParameter);
+
+    // It's okay to reset a temporary buffer without using it.
+    renderer.setBuffer(&new_buffer);
+    EXPECT_NO_THROW(renderer.setBuffer(NULL));
 }
 }
