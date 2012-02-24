@@ -171,8 +171,8 @@ struct MessageRenderer::MessageRendererImpl {
     CompressMode compress_mode_;
 };
 
-MessageRenderer::MessageRenderer(OutputBuffer& buffer) :
-    AbstractMessageRenderer(buffer),
+MessageRenderer::MessageRenderer() :
+    AbstractMessageRenderer(),
     impl_(new MessageRendererImpl)
 {}
 
@@ -273,9 +273,14 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     }
 }
 
+AbstractMessageRenderer::AbstractMessageRenderer() :
+    local_buffer_(0), buffer_(&local_buffer_)
+{
+}
+
 void
 AbstractMessageRenderer::clear() {
-    buffer_.clear();
+    buffer_->clear();
 }
 
 }
