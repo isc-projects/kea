@@ -770,7 +770,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         zone_config = self._zone_config
         self._lock.release()
         self.RequestHandlerClass(sock_fd, request_data, self,
-                                 isc.server_common.tsig_keyring.keyring(),
+                                 isc.server_common.tsig_keyring.get_keyring(),
                                  self._guess_remote(sock_fd), acl, zone_config)
 
     def _remove_unused_sock_file(self, sock_file):

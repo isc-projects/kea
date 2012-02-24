@@ -28,6 +28,7 @@ from xfrout import *
 import xfrout
 import isc.log
 import isc.acl.dns
+import isc.server_common.tsig_keyring
 
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
@@ -1155,6 +1156,37 @@ class TestUnixSockServer(unittest.TestCase):
         self.write_sock, self.read_sock = socket.socketpair()
         self.unix = MyUnixSockServer()
 
+    def test_tsig_keyring(self):
+        """
+        Check we use the global keyring when starting a request.
+        """
+        try:
+            # These are just so the keyring can be started
+            self.unix._cc.add_remote_config_by_name = lambda name, callback: None
+            self.unix._cc.get_remote_config_value = lambda module, name: ([], True)
+            self.unix._cc.remove_remote_config = lambda name: None
+            isc.server_common.tsig_keyring.init_keyring(self.unix._cc)
+            # These are not really interesting for the test. These are just handled
+            # over, so strings are OK.
+            self.unix._guess_remote = lambda sock: "Address"
+            self.unix._zone_config = "Zone config"
+            self.unix._acl = "acl"
+            # This would be the handler class, but we just check it is passed
+            # the right parametes, so function is enough for that.
+            keys = isc.server_common.tsig_keyring.get_keyring()
+            def handler(sock, data, server, keyring, address, acl, config):
+                self.assertEqual("sock", sock)
+                self.assertEqual("data", data)
+                self.assertEqual(self.unix, server)
+                self.assertEqual(keys, keyring)
+                self.assertEqual("Address", address)
+                self.assertEqual("acl", acl)
+                self.assertEqual("Zone config", config)
+            self.unix.RequestHandlerClass = handler
+            self.unix.finish_request("sock", "data")
+        finally:
+            isc.server_common.tsig_keyring.deinit_keyring()
+
     def test_guess_remote(self):
         """Test we can guess the remote endpoint when we have only the
            file descriptor. This is needed, because we get only that one
@@ -1435,7 +1467,6 @@ class TestXfroutServer(unittest.TestCase):
         self.xfrout_server.shutdown()
         self.assertTrue(self.xfrout_server._notifier.shutdown_called)
         self.assertTrue(self.xfrout_server._cc.stopped)
-
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
