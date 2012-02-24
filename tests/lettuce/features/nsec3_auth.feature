@@ -186,7 +186,7 @@ Feature: NSEC3 Authoritative service
     # See ticket #1688
     #Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (wildcard)
     #    Given I have bind10 running with configuration nsec3/nsec3_auth.config
-    #    A dnssec query for b.x.w.example. should have rcode NXDOMAIN
+    #    A dnssec query for a.w.example. should have rcode NXDOMAIN
     #    The last query response should have flags qr aa rd
     #    The last query response should have edns_flags do
     #    The last query response should have ancount 0
@@ -267,4 +267,38 @@ Feature: NSEC3 Authoritative service
         q04jkcevqvmu85r014c7dkba38o0ji5r.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. hV5I89b+4FHJDATp09g4bbN0R1F845CaXpL3ZxlMKimoPAyqletMlEWw LfFia7sdpSzn+ZlNNlkxWcLsIlMmUg==
         gjeqe526plbf1g8mklp59enfd789njgi.example. 3600 IN NSEC3	1 1 12 AABBCCDD JI6NEOAEPV8B5O6K4EV33ABHA8HT9FGC A HINFO AAAA RRSIG
         gjeqe526plbf1g8mklp59enfd789njgi.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. IVnezTJ9iqblFF97vPSmfXZ5Zozngx3KX3byLTZC4QBH2dFWhf6scrGF ZB980AfCxoD9qbbKDy+rdGIeRSVNyw==
+        """
+
+    Scenario: No data, type DS, in-zone
+        Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        A dnssec query for ai.example. type DS should have rcode NOERROR
+        The last query response should have flags qr aa rd
+        The last query response should have edns_flags do
+        The last query response should have ancount 0
+        The last query response should have nscount 4
+        The last query response should have adcount 1
+        The authority section of the last query response should be
+        """
+        example.		3600	IN	SOA	ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
+        example.		3600	IN	RRSIG	SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
+        gjeqe526plbf1g8mklp59enfd789njgi.example. 3600 IN NSEC3	1 1 12 AABBCCDD JI6NEOAEPV8B5O6K4EV33ABHA8HT9FGC A HINFO AAAA RRSIG
+        gjeqe526plbf1g8mklp59enfd789njgi.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. IVnezTJ9iqblFF97vPSmfXZ5Zozngx3KX3byLTZC4QBH2dFWhf6scrGF ZB980AfCxoD9qbbKDy+rdGIeRSVNyw==
+        """
+
+    Scenario: No data, type DS, optout delegation
+        Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        A dnssec query for c.example. type DS should have rcode NOERROR
+        The last query response should have flags qr aa rd
+        The last query response should have edns_flags do
+        The last query response should have ancount 0
+        The last query response should have nscount 6
+        The last query response should have adcount 1
+        The authority section of the last query response should be
+        """
+        example.		3600	IN	SOA	ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
+        example.		3600	IN	RRSIG	SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
+        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example. 3600 IN NSEC3	1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA MX RRSIG DNSKEY NSEC3PARAM
+        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. OSgWSm26B+cS+dDL8b5QrWr/dEWhtCsKlwKLIBHYH6blRxK9rC0bMJPw Q4mLIuw85H2EY762BOCXJZMnpuwhpA==
+        35mthgpgcu1qg68fab165klnsnk3dpvl.example. 3600 IN NSEC3	1 1 12 AABBCCDD B4UM86EGHHDS6NEA196SMVMLO4ORS995 NS DS RRSIG
+        35mthgpgcu1qg68fab165klnsnk3dpvl.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. g6jPUUpduAJKRljUsN8gB4UagAX0NxY9shwQAynzo8EUWH+z6hEIBlUT PGj15eZll6VhQqgZXtAIR3chwgW+SA==
         """
