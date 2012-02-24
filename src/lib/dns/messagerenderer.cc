@@ -290,8 +290,10 @@ AbstractMessageRenderer::setBuffer(OutputBuffer* buffer) {
     }
 
     if (buffer == NULL) {
-        clear();
+        // Reset to the default buffer, then clear other internal resources.
+        // The order is important; we need to keep the used buffer intact.
         buffer_ = &local_buffer_;
+        clear();
     } else {
         buffer_ = buffer;
     }

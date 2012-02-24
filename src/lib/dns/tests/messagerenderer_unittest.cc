@@ -184,8 +184,9 @@ TEST_F(MessageRendererTest, setBuffer) {
     EXPECT_EQ(4096, renderer.getLengthLimit());
 
     // Reset the buffer to the default again.  Other internal states and
-    // resources should be cleared.
+    // resources should be cleared.  The used buffer should be intact.
     renderer.setBuffer(NULL);
+    EXPECT_EQ(sizeof(uint32_t), new_buffer.getLength());
     EXPECT_EQ(0, renderer.getLength());
     EXPECT_EQ(512, renderer.getLengthLimit());
 }
