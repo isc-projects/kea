@@ -28,7 +28,7 @@
 namespace isc {
 namespace datasrc {
 
-/// \brief Special RRset for optimiing memory datasource requirement
+/// \brief Special RRset for optimizing memory datasource requirement
 ///
 /// To speed up the performance of the in-memory data source, at load time
 /// associate relevant "additional section" data with each RRset in the
@@ -124,11 +124,13 @@ public:
     }
 
     virtual void addRdata(isc::dns::rdata::ConstRdataPtr) {
-        isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
+        isc_throw(isc::NotImplemented,
+                  "RBNodeRRset::addRdata() not supported");
     }
 
     virtual void addRdata(const isc::dns::rdata::Rdata&) {
-        isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
+        isc_throw(isc::NotImplemented,
+                  "RBNodeRRset::addRdata() not supported");
     }
 
     virtual isc::dns::RdataIteratorPtr getRdataIterator() const {

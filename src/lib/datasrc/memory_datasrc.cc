@@ -35,7 +35,6 @@
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
 #include <datasrc/rbnode_rrset.h>
-#include <datasrc/rbnode_rrset.h>
 #include <datasrc/logger.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
