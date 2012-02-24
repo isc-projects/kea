@@ -28,7 +28,7 @@ using namespace isc::util;
 namespace {
 class RRClassTest : public ::testing::Test {
 protected:
-    RRClassTest() : obuffer(0), renderer(obuffer) {}
+    RRClassTest() : obuffer(0) {}
 
     OutputBuffer obuffer;
     MessageRenderer renderer;
@@ -116,7 +116,7 @@ TEST_F(RRClassTest, toWireRenderer) {
     rrclass_max.toWire(renderer);
 
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata, sizeof(wiredata));
 }
 

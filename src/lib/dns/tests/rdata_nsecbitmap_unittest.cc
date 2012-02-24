@@ -264,7 +264,7 @@ TEST_F(NSEC3BitmapTest, emptyMap) {
 
     // Same for MessageRenderer.
     obuffer.clear();
-    MessageRenderer renderer(obuffer);
+    MessageRenderer renderer;
     renderer.writeUint16(rdlen);
     empty_nsec3.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),

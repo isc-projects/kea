@@ -76,7 +76,7 @@ TEST_F(Rdata_IN_AAAA_Test, toWireBuffer) {
 TEST_F(Rdata_IN_AAAA_Test, toWireRenderer) {
     rdata_in_aaaa.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_in_aaaa, sizeof(wiredata_in_aaaa));
 }
 
