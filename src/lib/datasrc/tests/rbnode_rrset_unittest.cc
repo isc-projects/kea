@@ -38,7 +38,7 @@ using namespace isc::util;
 // parameterisation of the tests.
 
 namespace {
-const char* RRSIG_TXT =
+const char* const RRSIG_TXT =
     "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
@@ -74,18 +74,19 @@ protected:
         // Create the RRSIG corresponding to the rrset_a record.  The RDATA
         // won't match the A record it covers, although it is internally
         // self-consistent.
-        AbstractRRset* sig_rrset = const_cast<AbstractRRset*>(rrset_siga.get());
+        AbstractRRset* sig_rrset =
+            const_cast<AbstractRRset*>(rrset_siga.get());
         sig_rrset->addRdata(generic::RRSIG(RRSIG_TXT));
     }
 
-    Name test_name;
-    Name test_domain;
-    Name test_nsname;
+    const Name test_name;
+    const Name test_domain;
+    const Name test_nsname;
 
     RBNodeRRset rrset_a;
     RBNodeRRset rrset_a_empty;
-    RBNodeRRset rrset_ns;
-    RBNodeRRset rrset_ch_txt;
+    const RBNodeRRset rrset_ns;
+    const RBNodeRRset rrset_ch_txt;
 
     ConstRRsetPtr rrset_siga;
 };
@@ -217,29 +218,29 @@ checkSignature(const RBNodeRRset& rrset) {
 TEST_F(RBNodeRRsetTest, addRRsigConstRdataPointer) {
     EXPECT_FALSE(rrset_a.getRRsig());
     RdataPtr data = createRdata(rrset_siga->getType(), rrset_siga->getClass(),
-                                RRSIG_TXT); 
+                                RRSIG_TXT);
     ConstRdataPtr cdata(data);
-    rrset_a.addRRsig(cdata); 
+    rrset_a.addRRsig(cdata);
     checkSignature(rrset_a);
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigRdataPointer) {
     EXPECT_FALSE(rrset_a.getRRsig());
     RdataPtr data = createRdata(rrset_siga->getType(), rrset_siga->getClass(),
-                                RRSIG_TXT); 
-    rrset_a.addRRsig(data); 
+                                RRSIG_TXT);
+    rrset_a.addRRsig(data);
     checkSignature(rrset_a);
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigAbstractRRset) {
     EXPECT_FALSE(rrset_a.getRRsig());
-    rrset_a.addRRsig(*(rrset_siga.get())); 
+    rrset_a.addRRsig(*(rrset_siga.get()));
     checkSignature(rrset_a);
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigConstantRRsetPointer) {
     EXPECT_FALSE(rrset_a.getRRsig());
-    rrset_a.addRRsig(rrset_siga); 
+    rrset_a.addRRsig(rrset_siga);
     checkSignature(rrset_a);
 }
 
@@ -248,13 +249,13 @@ TEST_F(RBNodeRRsetTest, addRRsigRRsetPointer) {
     RRsetPtr rrsig(new RRset(test_name, RRClass::IN(), RRType::RRSIG(),
                    RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG(RRSIG_TXT));
-    rrset_a.addRRsig(rrsig); 
+    rrset_a.addRRsig(rrsig);
     checkSignature(rrset_a);
 }
 
 TEST_F(RBNodeRRsetTest, removeRRsig) {
     EXPECT_FALSE(rrset_a.getRRsig());
-    rrset_a.addRRsig(*(rrset_siga.get())); 
+    rrset_a.addRRsig(*(rrset_siga.get()));
     EXPECT_TRUE(rrset_a.getRRsig());
     rrset_a.removeRRsig();
     EXPECT_FALSE(rrset_a.getRRsig());
