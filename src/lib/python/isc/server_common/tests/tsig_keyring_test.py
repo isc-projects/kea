@@ -53,6 +53,7 @@ class TSIGKeyRingTest(unittest.TestCase):
     def setUp(self):
         self.__session = Session()
         self.__sha1name = isc.dns.Name('hmac-sha1')
+        self.__md5name = isc.dns.Name('hmac-md5.sig-alg.reg.int')
 
     def tearDown(self):
         deinit_keyring()
@@ -84,6 +85,9 @@ class TSIGKeyRingTest(unittest.TestCase):
         deinit_keyring()
         self.assertRaises(Unexpected, get_keyring)
         self.assertIsNone(self.__session._remove_name)
+        # Test we can init it again (not expected, but not forbidden)
+        self.__do_init()
+        self.assertTrue(isinstance(get_keyring(), isc.dns.TSIGKeyRing))
 
     def test_load(self):
         """
@@ -126,6 +130,46 @@ class TSIGKeyRingTest(unittest.TestCase):
         self.__session._data = None
         self.__session._callback()
         self.assertEqual(keys, get_keyring())
+
+    def test_no_keys_update(self):
+        """
+        Test we can update the keyring to be empty.
+        """
+        self.__session._data = ['key:MTIzNAo=:hmac-sha1']
+        self.__do_init()
+        keys = get_keyring()
+        self.assertEqual(1, keys.size())
+        self.__session._data = []
+        self.__session._callback()
+        keys = get_keyring()
+        self.assertEqual(0, keys.size())
+
+    def test_update_multi(self):
+        """
+        Test we can handle multiple keys in startup/update.
+        """
+        # Init
+        self.__session._data = ['key:MTIzNAo=:hmac-sha1', 'key2:MTIzNAo=']
+        self.__do_init()
+        keys = get_keyring()
+        self.assertEqual(2, keys.size())
+        (rcode, key) = keys.find(isc.dns.Name('key'), self.__sha1name)
+        self.assertEqual(isc.dns.TSIGKeyRing.SUCCESS, rcode)
+        self.assertEqual(isc.dns.Name('key'), key.get_key_name())
+        (rcode, key) = keys.find(isc.dns.Name('key2'), self.__md5name)
+        self.assertEqual(isc.dns.TSIGKeyRing.SUCCESS, rcode)
+        self.assertEqual(isc.dns.Name('key2'), key.get_key_name())
+        # Update
+        self.__session._data = ['key1:MTIzNAo=:hmac-sha1', 'key3:MTIzNAo=']
+        self.__session._callback()
+        keys = get_keyring()
+        self.assertEqual(2, keys.size())
+        (rcode, key) = keys.find(isc.dns.Name('key1'), self.__sha1name)
+        self.assertEqual(isc.dns.TSIGKeyRing.SUCCESS, rcode)
+        self.assertEqual(isc.dns.Name('key1'), key.get_key_name())
+        (rcode, key) = keys.find(isc.dns.Name('key3'), self.__md5name)
+        self.assertEqual(isc.dns.TSIGKeyRing.SUCCESS, rcode)
+        self.assertEqual(isc.dns.Name('key3'), key.get_key_name())
 
     def test_update_bad(self):
         """
