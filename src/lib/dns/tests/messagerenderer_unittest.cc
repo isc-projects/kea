@@ -30,15 +30,13 @@ using isc::util::OutputBuffer;
 namespace {
 class MessageRendererTest : public ::testing::Test {
 protected:
-    MessageRendererTest() : expected_size(0), buffer(0), renderer(buffer)
-    {
+    MessageRendererTest() : expected_size(0) {
         data16 = (2 << 8) | 3;
         data32 = (4 << 24) | (5 << 16) | (6 << 8) | 7;
     }
     size_t expected_size;
     uint16_t data16;
     uint32_t data32;
-    OutputBuffer buffer;
     MessageRenderer renderer;
     std::vector<unsigned char> data;
     static const uint8_t testdata[5];
@@ -60,21 +58,22 @@ TEST_F(MessageRendererTest, writeName) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     renderer.writeName(Name("a.example.org."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNameInLargeBuffer) {
     size_t offset = 0x3fff;
-    buffer.skip(offset);
+    renderer.skip(offset);
 
     UnitTestUtil::readWireData("name_toWire2", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t*>(buffer.getData()) + offset,
-                        buffer.getLength() - offset,
+                        static_cast<const uint8_t*>(renderer.getData()) +
+                        offset,
+                        renderer.getLength() - offset,
                         &data[0], data.size());
 }
 
@@ -83,8 +82,8 @@ TEST_F(MessageRendererTest, writeNameWithUncompressed) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."), false);
     renderer.writeName(Name("b.example.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNamePointerChain) {
@@ -92,8 +91,8 @@ TEST_F(MessageRendererTest, writeNamePointerChain) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     renderer.writeName(Name("b.example.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, compressMode) {
@@ -120,8 +119,8 @@ TEST_F(MessageRendererTest, writeNameCaseCompress) {
     // this should match the first name in terms of compression:
     renderer.writeName(Name("b.exAmple.CoM."));
     renderer.writeName(Name("a.example.org."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
@@ -132,8 +131,8 @@ TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
     renderer.writeName(Name("c.eXample.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
@@ -147,8 +146,8 @@ TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
     // allowed in this API.
     renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE);
     renderer.writeName(Name("c.b.EXAMPLE.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeRootName) {
@@ -164,8 +163,8 @@ TEST_F(MessageRendererTest, writeRootName) {
     renderer.writeName(Name("."));
     renderer.writeName(example_name);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t*>(buffer.getData()),
-                        buffer.getLength(),
+                        static_cast<const uint8_t*>(renderer.getData()),
+                        renderer.getLength(),
                         static_cast<const uint8_t*>(expected.getData()),
                         expected.getLength());
 }
