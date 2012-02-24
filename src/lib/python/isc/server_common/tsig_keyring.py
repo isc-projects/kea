@@ -35,7 +35,7 @@ class Unexpected(Exception):
 class AddError(Exception):
     """
     Raised when a key can not be added. This usually means there's a
-    duplicity.
+    duplicate.
     """
     pass
 
@@ -50,12 +50,12 @@ class Updater:
         """
         logger.debug(logger.DBGLVL_TRACE_BASIC,
                      PYSERVER_COMMON_TSIG_KEYRING_INIT)
-        self._session = session
-        self._keyring = isc.dns.TSIGKeyRing()
-        session.add_remote_config_by_name('tsig_keys', self._update)
-        self._update()
+        self.__session = session
+        self.__keyring = isc.dns.TSIGKeyRing()
+        session.add_remote_config_by_name('tsig_keys', self.__update)
+        self.__update()
 
-    def _update(self, value=None, module_cfg=None):
+    def __update(self, value=None, module_cfg=None):
         """
         Update the key ring by the configuration.
 
@@ -64,25 +64,25 @@ class Updater:
         configuration plugin and not be allowed as far as here.
 
         The parameters are there just to match the signature which
-        the callback should have (eg. they are ignored).
+        the callback should have (i.e. they are ignored).
         """
         logger.debug(logger.DBGLVL_TRACE_BASIC,
                      PYSERVER_COMMON_TSIG_KEYRING_UPDATE)
-        (data, default) = self._session.get_remote_config_value('tsig_keys',
-                                                                'keys')
+        (data, default) = self.__session.get_remote_config_value('tsig_keys',
+                                                                 'keys')
         if data is not None: # There's an update
             keyring = isc.dns.TSIGKeyRing()
             for key_data in data:
                 key = isc.dns.TSIGKey(key_data)
                 if keyring.add(key) != isc.dns.TSIGKeyRing.SUCCESS:
                     raise AddError("Can't add key " + str(key))
-            self._keyring = keyring
+            self.__keyring = keyring
 
     def get_keyring(self):
         """
         Return the current key ring.
         """
-        return self._keyring
+        return self.__keyring
 
     def deinit(self):
         """
@@ -91,9 +91,9 @@ class Updater:
         """
         logger.debug(logger.DBGLVL_TRACE_BASIC,
                      PYSERVER_COMMON_TSIG_KEYRING_DEINIT)
-        self._session.remove_remote_config('tsig_keys')
+        self.__session.remove_remote_config('tsig_keys')
 
-def keyring():
+def get_keyring():
     """
     Get the current key ring. You need to call init_keyring first.
     """
