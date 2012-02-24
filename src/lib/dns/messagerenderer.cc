@@ -12,13 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cctype>
-#include <cassert>
-#include <set>
-
+#include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
+
+#include <cctype>
+#include <cassert>
+#include <set>
 
 using namespace isc::util;
 
@@ -276,6 +277,24 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
 AbstractMessageRenderer::AbstractMessageRenderer() :
     local_buffer_(0), buffer_(&local_buffer_)
 {
+}
+
+void
+AbstractMessageRenderer::setBuffer(OutputBuffer* buffer) {
+    if (buffer != NULL && buffer_->getLength() != 0) {
+        isc_throw(isc::InvalidParameter,
+                  "MessageRenderer buffer cannot be set when in use");
+    } if (buffer == NULL && buffer_ == &local_buffer_) {
+        isc_throw(isc::InvalidParameter,
+                  "Default MessageRenderer buffer cannot be reset");
+    }
+
+    if (buffer == NULL) {
+        clear();
+        buffer_ = &local_buffer_;
+    } else {
+        buffer_ = buffer;
+    }
 }
 
 void
