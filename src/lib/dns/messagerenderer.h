@@ -37,9 +37,15 @@ class Name;
 /// comprehensive \c Message class internally; normal applications won't have
 /// to care about details of this class.
 ///
-/// Once a renderer class object is constructed with a buffer, it is
-/// generally expected that all rendering operations are performed via that
-/// object.  If the application modifies the buffer in
+/// By default any (derived) renderer class object is associated with
+/// an internal buffer, and subsequent write operations will be performed
+/// on that buffer.  The rendering result can be retrieved via the
+/// \c getData() method.
+///
+/// If an application wants a separate buffer can be (normally temporarily)
+/// set for rendering operations via the \c setBuffer() method.  In that case,
+/// it is generally expected that all rendering operations are performed via
+/// that object.  If the application modifies the buffer in
 /// parallel with the renderer, the result will be undefined.
 ///
 /// Note to developers: we introduced a separate class for name compression
@@ -101,15 +107,10 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class should
     /// never be instantiated (except as part of a derived class).
-    /// \param buffer The buffer where the data should be rendered into.
     ///
-    /// We are now doing this:
-    /// \todo We might want to revisit this API at some point and remove the
-    ///     buffer parameter. In that case it would create it's own buffer and
-    ///     a function to extract the data would be available instead. It seems
-    ///     like a cleaner design, but it's left undone until we would actually
-    ///     benefit from the change.
+    /// \param buffer The buffer where the data should be rendered into.
     AbstractMessageRenderer();
+
 public:
     /// \brief The destructor.
     virtual ~AbstractMessageRenderer() {}
@@ -119,14 +120,18 @@ protected:
     const isc::util::OutputBuffer& getBuffer() const { return (*buffer_); }
     isc::util::OutputBuffer& getBuffer() { return (*buffer_); }
 private:
-    /// \short Local (default) buffer to store data.
+    /// \brief Local (default) buffer to store data.
     isc::util::OutputBuffer local_buffer_;
 
-    /// \short Buffer to store data
+    /// \brief Buffer to store data.
+    ///
+    /// Note that the class interface ensures this pointer is never NULL;
+    /// it either refers to \c local_buffer_ or to an application-supplied
+    /// buffer by \c setBuffer().
     ///
     /// It was decided that there's no need to have this in every subclass,
-    /// at least not now, and this reduces code size and gives compiler a better
-    /// chance to optimise.
+    /// at least not now, and this reduces code size and gives compiler a
+    /// better chance to optimise.
     isc::util::OutputBuffer* buffer_;
 public:
     ///
@@ -178,7 +183,33 @@ public:
     /// \name Setter Methods
     ///
     //@{
-    /// TBD
+    /// \brief Set or reset a temporary output buffer.
+    ///
+    /// This method can be used for an application that manages an output
+    /// buffer separately from the message renderer and wants to keep reusing
+    /// the renderer.  When the renderer is associated with the default buffer
+    /// and the given pointer is non NULL, the given buffer will be
+    /// (temporarily) used for subsequent message rendering; if the renderer
+    /// is associated with a temporary buffer and the given pointer is NULL,
+    /// the renderer will be reset with the default buffer.  In the latter
+    /// case any additional resources (possibly specific to a derived renderer
+    /// class) will be cleared, but the temporary buffer is kept as the latest
+    /// state (which would normally store the rendering result).
+    ///
+    /// This method imposes some restrictions to prevent accidental misuse
+    /// that could cause disruption such as dereferencing an invalid object.
+    /// First, a temporary buffer must not be set when the associated buffer
+    /// is in use, that is, any data are stored in the buffer.  Also, the
+    /// default buffer cannot be "reset"; when NULL is specified a temporary
+    /// buffer must have been set beforehand.  If these conditions aren't met
+    /// an isc::InvalidParameter exception will be thrown.  This method is
+    /// exception free otherwise.
+    ///
+    /// \throw isc::InvalidParameter A restrictions of the method usage isn't
+    /// met.
+    ///
+    /// \brief buffer A pointer to a temporary output buffer or NULL for reset
+    /// it.
     void setBuffer(isc::util::OutputBuffer* buffer);
 
     /// \brief Mark the renderer to indicate truncation has occurred while
