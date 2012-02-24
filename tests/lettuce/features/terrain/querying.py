@@ -286,8 +286,10 @@ def check_last_query_section(step, section):
     Fails if they do not match.
     WARNING: Case insensitivity is not strictly correct; for instance the
     data of TXT RRs would be case sensitive. But most other output is, so
-    currently the checks are always case insensitive. Should we checks do
-    need to be case sensitive, we can either remove it or make it optional.
+    currently the checks are always case insensitive. Should we decide
+    these checks do need to be case sensitive, we can either remove it
+    or make it optional (for the former, we'll need to update a number of
+    tests).
     """
     response_string = None
     if section.lower() == 'question':
