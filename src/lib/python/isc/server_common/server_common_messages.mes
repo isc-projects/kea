@@ -1,0 +1,36 @@
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the config_messages python module.
+
+# since these messages are for the python server_common library, care must
+# be taken that names do not conflict with the messages from the c++
+# server_common library. A checker script should verify that, but we do not
+# have that at this moment. So when adding a message, make sure that
+# the name is not already used in src/lib/config/config_messages.mes
+
+% PYSERVER_COMMON_TSIG_KEYRING_DEINIT Deinitializing global TSIG keyring
+A debug message noting that the global TSIG keyring is being removed from
+memory. Most programs don't do that, they just exit, which is OK.
+
+% PYSERVER_COMMON_TSIG_KEYRING_INIT Initializing global TSIG keyring
+A debug message noting the TSIG keyring storage is being prepared. It should
+appear at most once in the lifetime of a program. The keyring still needs
+to be loaded from configuration.
+
+% PYSERVER_COMMON_TSIG_KEYRING_UPDATE Updating global TSIG keyring
+A debug message. The TSIG keyring is being (re)loaded from configuration.
+This happens at startup or when the configuration changes. The old keyring
+is removed and new one created with all the keys.
