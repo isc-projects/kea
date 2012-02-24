@@ -18,6 +18,7 @@ Tests for isc.server_common.tsig_keyring.
 """
 
 import unittest
+import isc.log
 from isc.server_common.tsig_keyring import *
 import isc.dns
 from isc.testutils.ccsession_mock import MockModuleCCSession
@@ -143,4 +144,6 @@ class TSIGKeyRingTest(unittest.TestCase):
         self.assertEqual(keys, keyring())
 
 if __name__ == "__main__":
+    isc.log.init("bind10") # FIXME Should this be needed?
+    isc.log.resetUnitTestRootLogger()
     unittest.main()

@@ -19,8 +19,11 @@ tsig_keys module.
 """
 
 import isc.dns
+import isc.log
+from isc.log_messages.server_common_messages import *
 
 updater = None
+logger = isc.log.Logger("server_common")
 
 class Unexpected(Exception):
     """
@@ -45,6 +48,8 @@ class Updater:
         Constructor. Pass the ccsession object so the key ring can be
         downloaded.
         """
+        logger.debug(logger.DBGLVL_TRACE_BASIC,
+                     PYSERVER_COMMON_TSIG_KEYRING_INIT)
         self._session = session
         self._keyring = isc.dns.TSIGKeyRing()
         session.add_remote_config_by_name('tsig_keys', self._update)
@@ -61,6 +66,8 @@ class Updater:
         The parameters are there just to match the signature which
         the callback should have (eg. they are ignored).
         """
+        logger.debug(logger.DBGLVL_TRACE_BASIC,
+                     PYSERVER_COMMON_TSIG_KEYRING_UPDATE)
         (data, default) = self._session.get_remote_config_value('tsig_keys',
                                                                 'keys')
         if data is not None: # There's an update
@@ -82,6 +89,8 @@ class Updater:
         Unregister from getting updates. The object will not be
         usable any more after this.
         """
+        logger.debug(logger.DBGLVL_TRACE_BASIC,
+                     PYSERVER_COMMON_TSIG_KEYRING_DEINIT)
         self._session.remove_remote_config('tsig_keys')
 
 def keyring():
