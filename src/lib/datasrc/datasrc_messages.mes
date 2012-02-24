@@ -585,7 +585,7 @@ The underlying data source failed to answer the query for referral information.
 1 means some error, 2 is not implemented. The data source should have logged
 the specific error already.
 
-% DATASRC_QUERY_RRSIG unable to answer RRSIG query
+% DATASRC_QUERY_RRSIG unable to answer RRSIG query for %1
 The server is unable to answer a direct query for RRSIG type, but was asked
 to do so.
 
