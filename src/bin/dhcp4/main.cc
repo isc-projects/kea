@@ -25,12 +25,12 @@
 #include <cassert>
 #include <iostream>
 
+#include <cc/session.h>
+#include <cc/data.h>
+
 #include <exceptions/exceptions.h>
-#if 0
-// TODO cc is not used yet. It should be eventually
 #include <cc/session.h>
 #include <config/ccsession.h>
-#endif
 
 #include <util/buffer.h>
 #include <log/dummylog.h>
@@ -38,11 +38,19 @@
 #include <dhcp4/spec_config.h>
 #include <dhcp4/dhcp4_srv.h>
 
+#include <asiolink/asiolink.h>
+#include <log/logger_support.h>
+
+const char* const DHCP4_NAME = "b10-dhcp4";
+
 using namespace std;
 using namespace isc::util;
-
-using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::util;
+using namespace isc::data;
+using namespace isc::cc;
+using namespace isc::config;
+using namespace isc::asiolink;
 
 namespace {
 
@@ -56,6 +64,50 @@ usage() {
     exit(1);
 }
 } // end of anonymous namespace
+
+ConstElementPtr
+dhcp4_config_handler(ConstElementPtr new_config) {
+    cout << "#### dhcp4: Received new config:" << new_config->str() << endl;
+    ConstElementPtr answer = isc::config::createAnswer(0,
+                             "All good here. Thanks for sending config.");
+    return (answer);
+}
+
+ConstElementPtr
+dhcp4_command_handler(const string& command, ConstElementPtr args) {
+    cout << "#### dhcp4: Received new command: [" << command << "], args="
+         << args->str() << endl;
+    ConstElementPtr answer = isc::config::createAnswer(0,
+                             "All good here. Thanks for asking.");
+    return (answer);
+}
+
+
+void establish_session() {
+
+    Session* cc_session = NULL;
+    ModuleCCSession* config_session = NULL;
+
+    string specfile;
+    if (getenv("B10_FROM_BUILD")) {
+        specfile = string(getenv("B10_FROM_BUILD")) +
+            "/src/bin/auth/dhcp4.spec";
+    } else {
+        specfile = string(DHCP4_SPECFILE_LOCATION);
+    }
+
+    cout << "#### specfile=" << specfile << endl;
+
+    IOService io_service;
+
+    cc_session = new Session(io_service.get_io_service());
+
+    config_session = new ModuleCCSession(specfile, *cc_session,
+                                         dhcp4_config_handler,
+                                         dhcp4_command_handler, false);
+
+    cout << "#### hasQueuedMsgs()=" << config_session->hasQueuedMsgs() << endl;
+}
 
 int
 main(int argc, char* argv[]) {
@@ -73,6 +125,12 @@ main(int argc, char* argv[]) {
         }
     }
 
+    // Initialize logging.  If verbose, we'll use maximum verbosity.
+    isc::log::initLogger(DHCP4_NAME,
+                         (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL);
+
+
     cout << "My pid=" << getpid() << endl;
 
     if (argc - optind > 0) {
@@ -81,21 +139,9 @@ main(int argc, char* argv[]) {
 
     int ret = 0;
 
-    // TODO remainder of auth to dhcp4 code copy. We need to enable this in
-    //      dhcp4 eventually
-#if 0
-    Session* cc_session = NULL;
-    Session* statistics_session = NULL;
-    ModuleCCSession* config_session = NULL;
-#endif
     try {
-        string specfile;
-        if (getenv("B10_FROM_BUILD")) {
-            specfile = string(getenv("B10_FROM_BUILD")) +
-                "/src/bin/auth/dhcp4.spec";
-        } else {
-            specfile = string(DHCP4_SPECFILE_LOCATION);
-        }
+
+        establish_session();
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
