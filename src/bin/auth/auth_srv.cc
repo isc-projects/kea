@@ -307,12 +307,14 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
     message->setRcode(rcode);
 
-    MessageRenderer renderer(*buffer);
+    MessageRenderer renderer;
+    renderer.setBuffer(buffer.get());
     if (tsig_context.get() != NULL) {
         message->toWire(renderer, *tsig_context);
     } else {
         message->toWire(renderer);
     }
+    renderer.setBuffer(NULL);
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_ERROR_RESPONSE)
               .arg(renderer.getLength()).arg(*message);
 }
@@ -554,7 +556,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
         return (true);
     }
 
-    MessageRenderer renderer(*buffer);
+    MessageRenderer renderer;
+    renderer.setBuffer(buffer.get());
     const bool udp_buffer =
         (io_message.getSocket().getProtocol() == IPPROTO_UDP);
     renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
@@ -563,6 +566,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
     } else {
         message->toWire(renderer);
     }
+    renderer.setBuffer(NULL);
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_NORMAL_RESPONSE)
               .arg(renderer.getLength()).arg(message->toText());
 
@@ -683,12 +687,14 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     message->setHeaderFlag(Message::HEADERFLAG_AA);
     message->setRcode(Rcode::NOERROR());
 
-    MessageRenderer renderer(*buffer);
+    MessageRenderer renderer;
+    renderer.setBuffer(buffer.get());
     if (tsig_context.get() != NULL) {
         message->toWire(renderer, *tsig_context);
     } else {
         message->toWire(renderer);
     }
+    renderer.setBuffer(NULL);
     return (true);
 }
 
