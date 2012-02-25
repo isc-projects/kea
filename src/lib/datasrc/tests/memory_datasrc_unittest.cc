@@ -539,7 +539,8 @@ public:
         if (zone_finder == NULL) {
             zone_finder = &zone_finder_;
         }
-        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() : answer;
+        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() :
+            RRsetPtr(); // note we use the same type as of retval of getRRsig()
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
