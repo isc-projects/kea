@@ -243,7 +243,6 @@ def check_pid(step, process_name):
             found = True
     assert found, "Process named " + process_name +\
                   " not found in output of Boss show_processes";
-    
 
 @step('set bind10 configuration (\S+) to (.*)(?: with cmdctl port (\d+))?')
 def config_set_command(step, name, value, cmdctl_port):
