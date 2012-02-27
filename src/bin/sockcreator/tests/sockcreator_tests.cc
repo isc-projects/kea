@@ -125,7 +125,7 @@ void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum,
         EXPECT_EQ(getsockopt(socknum, IPPROTO_IPV6, IPV6_USE_MIN_MTU, &options,
                              &len)) << strerror(errno);
         EXPECT_NE(0, options);
-#endif
+#else
         // We do not check for the IPV6_MTU, because while setting works (eg.
         // the packets are fragmented correctly), the getting does not. If
         // we try to getsockopt it, an error complaining it can't be accessed
@@ -137,6 +137,7 @@ void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum,
         EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
                                 &options, &len)) << strerror(errno);
         EXPECT_EQ(IPV6_PMTUDISC_DONT, options);
+#endif
 #endif
     }
 }
@@ -204,6 +205,9 @@ TEST(get_sock, tcp6_create) {
 
 bool close_called(false);
 
+// You can use it as a close mockup. If you care about checking if it was really
+// called, you can use the close_called variable. But set it to false before the
+// test.
 int closeCall(int socket) {
     close(socket);
     close_called = true;
