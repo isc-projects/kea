@@ -5,6 +5,7 @@ AC_PREREQ([2.59])
 AC_INIT(bind10-devel, 20120127, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
@@ -274,7 +275,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_LINK_IFELSE([int main(void){ return 0;} ],
+  AC_LINK_IFELSE([int main(void){ return 0;}],
                  [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
@@ -296,7 +297,7 @@ CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
 
-BIND10_CXX_TRY_FLAG(-Wno-missing-field-initializers,
+BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
 	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
 AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
@@ -521,21 +522,22 @@ else
         AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
     fi
 fi
+if test "x${BOTAN_CONFIG}" != "x"
+then
+    BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
+    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
-BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
-BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
-
-# We expect botan-config --libs to contain -L<path_to_libbotan>, but
-# this is not always the case.  As a heuristics workaround we add
-# -L`botan-config --prefix/lib` in this case (if not present already).
-# Same for BOTAN_INCLUDES (but using include instead of lib) below.
-if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
-    echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
-        BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
-    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
-        BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
+    # this is not always the case.  As a heuristics workaround we add
+    # -L`botan-config --prefix/lib` in this case (if not present already).
+    # Same for BOTAN_INCLUDES (but using include instead of lib) below.
+    if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
+        echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
+            BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
+        echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+            BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    fi
 fi
-
 # botan-config script (and the way we call pkg-config) returns -L and -l
 # as one string, but we need them in separate values
 BOTAN_LDFLAGS=
