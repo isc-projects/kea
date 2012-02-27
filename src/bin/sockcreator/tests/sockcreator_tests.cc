@@ -122,8 +122,8 @@ void addressFamilySpecificCheck(const sockaddr_in6*, const int socknum,
     // Some more checks for UDP - MTU
 #ifdef IPV6_USE_MIN_MTU        /* RFC 3542, not too common yet*/
         // use minimum MTU
-        EXPECT_EQ(getsockopt(socknum, IPPROTO_IPV6, IPV6_USE_MIN_MTU, &options,
-                             &len)) << strerror(errno);
+        EXPECT_EQ(0, getsockopt(socknum, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
+                                &options, &len)) << strerror(errno);
         EXPECT_NE(0, options);
 #else
         // We do not check for the IPV6_MTU, because while setting works (eg.
