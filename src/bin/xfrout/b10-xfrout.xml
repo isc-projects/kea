@@ -98,13 +98,6 @@
       that can run concurrently. The default is 10.
     </para>
     <para>
-      <varname>tsig_key_ring</varname>
-      A list of TSIG keys (each of which is in the form of
-      <replaceable>name:base64-key[:algorithm]</replaceable>)
-      used for access control on transfer requests.
-      The default is an empty list.
-    </para>
-    <para>
       <varname>transfer_acl</varname>
       A list of ACL elements that apply to all transfer requests by
       default (unless overridden in <varname>zone_config</varname>).
@@ -159,13 +152,6 @@
       data storage types.
     </simpara></note>
 
-
-<!--
-
-tsig_key_ring list of
-tsig_key string
-
--->
 
 <!-- TODO: formating -->
     <para>
