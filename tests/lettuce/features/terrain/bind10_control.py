@@ -177,13 +177,13 @@ def parse_bindctl_output_as_data_structure():
        If it is valid, it is parsed and returned as whatever data
        structure it represented.
     """
-    # strip any extra output after the last valid JSON character (it
-    # would contain 'Exit from bindctl' message, and depending on
-    # environment some other control-like characters).
-    # Why is this message even there?
-    output = world.last_bindctl_stdout.replace("Exit from bindctl", "")
-    # And remove any other non-json junk at the end
-    output = output.replace("[^el\d}\"\]]*$", "")
+    # strip any extra output after a charater that commonly terminates a valid
+    # JSON expression, i.e., ']', '}' and '"'.  (The extra output would
+    # contain 'Exit from bindctl' message, and depending on environment some
+    # other control-like characters...but why is this message even there?)
+    # Note that this filter is not perfect.  For example, it cannot recognize
+    # a simple expression of true/false/null.
+    output = re.sub("(.*)([^]}\"]*$)", r"\1", world.last_bindctl_stdout)
     try:
         return json.loads(output)
     except ValueError as ve:
