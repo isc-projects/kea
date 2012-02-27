@@ -178,7 +178,7 @@ mtu(int fd) {
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU, &on, sizeof(on)) < 0) {
         return (-2);
     }
-#endif
+#else // Try the following as fallback
 #ifdef IPV6_MTU
     // Use minimum MTU on systems that don't have the IPV6_USE_MIN_MTU
     const int mtu = 1280;
@@ -194,6 +194,7 @@ mtu(int fd) {
 
         return (-2);
     }
+#endif
 #endif
     return (fd);
 }
