@@ -68,8 +68,7 @@ class Updater:
         """
         logger.debug(logger.DBGLVL_TRACE_BASIC,
                      PYSERVER_COMMON_TSIG_KEYRING_UPDATE)
-        (data, default) = self.__session.get_remote_config_value('tsig_keys',
-                                                                 'keys')
+        (data, _) = self.__session.get_remote_config_value('tsig_keys', 'keys')
         if data is not None: # There's an update
             keyring = isc.dns.TSIGKeyRing()
             for key_data in data:
