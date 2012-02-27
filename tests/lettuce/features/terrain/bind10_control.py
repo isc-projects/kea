@@ -16,6 +16,7 @@
 from lettuce import *
 import subprocess
 import re
+import json
 
 @step('start bind10(?: with configuration (\S+))?' +\
       '(?: with cmdctl port (\d+))?' +\
@@ -167,6 +168,83 @@ def check_bindctl_output(step, stderr, notv, string):
                           "' was found in bindctl output:\n" +\
                           output
 
+def parse_bindctl_output_as_data_structure():
+    """Helper function for data-related command tests: evaluates the
+       last output of bindctl as a data structure that can then be
+       inspected.
+       If the bindctl output is not valid (json) data, this call will
+       fail with an assertion failure.
+       If it is valid, it is parsed and returned as whatever data
+       structure it represented.
+    """
+    # strip any extra output after a charater that commonly terminates a valid
+    # JSON expression, i.e., ']', '}' and '"'.  (The extra output would
+    # contain 'Exit from bindctl' message, and depending on environment some
+    # other control-like characters...but why is this message even there?)
+    # Note that this filter is not perfect.  For example, it cannot recognize
+    # a simple expression of true/false/null.
+    output = re.sub("(.*)([^]}\"]*$)", r"\1", world.last_bindctl_stdout)
+    try:
+        return json.loads(output)
+    except ValueError as ve:
+        assert False, "Last bindctl output does not appear to be a " +\
+                      "parseable data structure: '" + output + "': " + str(ve)
+
+def find_process_pid(step, process_name):
+    """Helper function to request the running processes from Boss, and
+       return the pid of the process with the given process_name.
+       Fails with an assert if the response from boss is not valid JSON,
+       or if the process with the given name is not found.
+    """
+    # show_processes output is a list of lists, where the inner lists
+    # are of the form [ pid, "name" ]
+    # Not checking data form; errors will show anyway (if these turn
+    # out to be too vague, we can change this)
+    step.given('send bind10 the command Boss show_processes')
+    running_processes = parse_bindctl_output_as_data_structure()
+
+    for process in running_processes:
+        if process[1] == process_name:
+            return process[0]
+    assert False, "Process named " + process_name +\
+                  " not found in output of Boss show_processes";
+
+@step("remember the pid of process ([\S]+)")
+def remember_pid(step, process_name):
+    """Stores the PID of the process with the given name as returned by
+       Boss show_processes command.
+       Fails if the process with the given name does not appear to exist.
+       Stores the component_name->pid value in the dict world.process_pids.
+       This should only be used by the related step
+       'the pid of process <name> should (not) have changed'
+       Arguments:
+       process name ('process <name>') the name of the component to store
+                                       the pid of.
+    """
+    if world.process_pids is None:
+        world.process_pids = {}
+    world.process_pids[process_name] = find_process_pid(step, process_name)
+
+@step('pid of process ([\S]+) should not have changed')
+def check_pid(step, process_name):
+    """Checks the PID of the process with the given name as returned by
+       Boss show_processes command.
+       Fails if the process with the given name does not appear to exist.
+       Fails if the process with the given name exists, but has a different
+       pid than it had when the step 'remember the pid of process' was
+       called.
+       Fails if that step has not been called (since world.process_pids
+       does not exist).
+    """
+    assert world.process_pids is not None, "No process pids stored"
+    assert process_name in world.process_pids, "Process named " +\
+                                               process_name +\
+                                               " was not stored"
+    pid = find_process_pid(step, process_name)
+    assert world.process_pids[process_name] == pid,\
+                   "Expected pid: " + str(world.process_pids[process_name]) +\
+                   " Got pid: " + str(pid)
+
 @step('set bind10 configuration (\S+) to (.*)(?: with cmdctl port (\d+))?')
 def config_set_command(step, name, value, cmdctl_port):
     """
@@ -181,6 +259,20 @@ def config_set_command(step, name, value, cmdctl_port):
     commands = ["config set " + name + " " + value,
                 "config commit",
                 "quit"]
+    run_bindctl(commands, cmdctl_port)
+
+@step('send bind10 the following commands(?: with cmdctl port (\d+))?')
+def send_multiple_commands(step, cmdctl_port):
+    """
+    Run bindctl, and send it the given multiline set of commands.
+    A quit command is always appended.
+    cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
+                the command to. Defaults to 47805.
+    Fails if cmdctl does not exit with status code 0.
+    """
+    commands = step.multiline.split("\n")
+    # Always add quit
+    commands.append("quit")
     run_bindctl(commands, cmdctl_port)
 
 @step('remove bind10 configuration (\S+)(?: value (\S+))?(?: with cmdctl port (\d+))?')

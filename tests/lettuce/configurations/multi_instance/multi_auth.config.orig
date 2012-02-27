@@ -1,0 +1,1 @@
+{"version": 2, "Auth": {"listen_on": [{"port": 47806, "address": "0.0.0.0"}]}, "Boss": {"components": {"b10-auth-2": {"kind": "needed", "special": "auth"}, "b10-auth": {"kind": "needed", "special": "auth"}, "b10-cmdctl": {"kind": "needed", "special": "cmdctl"}}}}
