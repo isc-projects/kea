@@ -104,6 +104,11 @@ public:
 
     /// \brief Clones the object
     ///
+    /// Since cloning is for the use of coroutines, the synchronous UDP server
+    /// does not need to be cloned. Therefore supporting it would be needless
+    /// work, and trying to clone it would be a programmer error anyway, this
+    /// throws Unexpected.
+    ///
     /// \return a newly allocated copy of this object
     virtual DNSServer* clone() {
         isc_throw(Unexpected, "SyncUDPServer can't be cloned.");
