@@ -90,16 +90,14 @@ Feature: NSEC3 Authoritative service
         A dnssec query for a.z.w.example. type MX should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
-        # BUG: NO RRSIG IN WILDCARD RESPONSE!!! (see ticket #1701)
-        #The last query response should have ancount 2
+        The last query response should have ancount 2
         The last query response should have nscount 5
         The last query response should have adcount 9
-        # BUG: NO RRSIG IN WILDCARD RESPONSE!!! (see ticket #1701)
-        #The answer section of the last query response should be
-        #"""
-        #a.z.w.example.	3600	IN	MX	1 ai.example.
-        #a.z.w.example.	3600	IN	RRSIG	MX 7 2 3600 20150420235959 20051021000000 40430 example. CikebjQwGQPwijVcxgcZcSJKtfynugtlBiKb9FcBTrmOoyQ4InoWVudh CWsh/URX3lc4WRUMivEBP6+4KS3ldA==
-        #"""
+        The answer section of the last query response should be
+        """
+        a.z.w.example.	3600	IN	MX	1 ai.example.
+        a.z.w.example.	3600	IN	RRSIG	MX 7 2 3600 20150420235959 20051021000000 40430 example. CikebjQwGQPwijVcxgcZcSJKtfynugtlBiKb9FcBTrmOoyQ4InoWVudh CWsh/URX3lc4WRUMivEBP6+4KS3ldA==
+        """
         The authority section of the last query response should be
         """
         example.	3600	IN	NS	ns1.example.
