@@ -206,7 +206,6 @@ def find_process_pid(step, process_name):
     for process in running_processes:
         if process[1] == process_name:
             return process[0]
-    return None
     assert False, "Process named " + process_name +\
                   " not found in output of Boss show_processes";
 
