@@ -1,3 +1,10 @@
+386.	[bug]		jelte
+	Upon initial sqlite3 database creation, the 'diffs' table is now
+	always created. This already happened most of the time, but there
+	are a few cases where it was skipped, resulting in potential errors
+	in xfrout later.
+	(Trac #1717, git 30d7686cb6e2fa64866c983e0cfb7b8fabedc7a2)
+
 385.	[bug]		jinmei
 	libdns++: masterLoad() didn't accept comments placed at the end of
 	an RR.  Due to this the in-memory data source cannot load a master
