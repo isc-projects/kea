@@ -775,6 +775,64 @@ class TestModuleCCSession(unittest.TestCase):
         self._common_remote_module_by_name_test(
             self._internal_check_command_without_recvmsg_remote_module2)
 
+    def _internal_remote_module_bad_config(self, function_lambda, parameter,
+                                           fill_other_messages):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        function = function_lambda(mccs)
+        # Provide wrong config data. It should be rejected.
+        fill_other_messages(fake_session)
+        fake_session.group_sendmsg({'result': [0, {"bad_item": -1}]}, 'Spec2')
+        self.assertRaises(isc.config.ModuleCCSessionError,
+                          function, parameter)
+
+    def test_remote_module_bad_config(self):
+        """
+        Test the remote module rejects bad config data.
+        """
+        self._common_remote_module_test(
+            self._internal_remote_module_bad_config)
+
+    def test_remote_module_by_name_bad_config(self):
+        """
+        Test the remote module rejects bad config data.
+        """
+        self._common_remote_module_by_name_test(
+            self._internal_remote_module_bad_config)
+
+    def _internal_remote_module_error_response(self, function_lambda,
+                                               parameter, fill_other_messages):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        function = function_lambda(mccs)
+        # Provide wrong config data. It should be rejected.
+        fill_other_messages(fake_session)
+        fake_session.group_sendmsg({'result': [1, "An error, and I mean it!"]},
+                                   'Spec2')
+        self.assertRaises(isc.config.ModuleCCSessionError,
+                          function, parameter)
+
+    def test_remote_module_bad_config(self):
+        """
+        Test the remote module complains if there's an error response."
+        """
+        self._common_remote_module_test(
+            self._internal_remote_module_error_response)
+
+    def test_remote_module_by_name_bad_config(self):
+        """
+        Test the remote module complains if there's an error response."
+        """
+        self._common_remote_module_by_name_test(
+            self._internal_remote_module_error_response)
+
+    def test_remote_module_bad_config(self):
+        """
+        Test the remote module rejects bad config data.
+        """
+        self._common_remote_module_by_name_test(
+            self._internal_remote_module_bad_config)
+
     def test_module_name_mismatch(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
