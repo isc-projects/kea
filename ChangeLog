@@ -1,3 +1,21 @@
+386.	[bug]		jelte
+	Upon initial sqlite3 database creation, the 'diffs' table is now
+	always created. This already happened most of the time, but there
+	are a few cases where it was skipped, resulting in potential errors
+	in xfrout later.
+	(Trac #1717, git 30d7686cb6e2fa64866c983e0cfb7b8fabedc7a2)
+
+385.	[bug]		jinmei
+	libdns++: masterLoad() didn't accept comments placed at the end of
+	an RR.  Due to this the in-memory data source cannot load a master
+	file for a signed zone even if it's preprocessed with BIND 9's
+	named-compilezone.
+	Note: this fix is considered temporary and still only accepts some
+	limited form of such comments.  The main purpose is to allow the
+	in-memory data source to load any signed or unsigned zone files as
+	long as they are at least normalized with named-compilezone.
+	(Trac #1667, git 6f771b28eea25c693fe93a0e2379af924464a562)
+
 384.	[func]		jinmei, jelte, vorner, haikuo, kevin
 	b10-auth now supports NSEC3-signed zones in the in-memory data
 	source.
