@@ -466,7 +466,6 @@ ModuleSpec::validateSpecList(ConstElementPtr spec, ConstElementPtr data,
                                const bool full, ElementPtr errors) const
 {
     bool validated = true;
-    std::string cur_item_name;
     BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
         if (!validateSpec(cur_spec_el, data, full, errors)) {
             validated = false;

@@ -1328,7 +1328,6 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
     }
 
     return (result);
-    return true;
 }
 
 } // end anonymous namespace
