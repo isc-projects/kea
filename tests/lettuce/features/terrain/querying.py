@@ -41,9 +41,10 @@ import re
 #
 # The following attributes are 'parsed' from the response, all as strings,
 # and end up as direct attributes of the QueryResult object:
-# opcode, rcode, id, flags, qdcount, ancount, nscount, adcount
-# (flags is one string with all flags, in the order they appear in the
-# response packet.)
+# opcode, rcode, id, flags, qdcount, ancount, nscount, adcount,
+# edns_version, edns_flags, and edns_udp_size
+# (flags and edns_flags are both one string with all flags, in the order
+# in which they appear in the response message.)
 #
 # this will set 'rcode' as the result code, we 'define' one additional
 # rcode, "NO_ANSWER", if the dig process returned an error code itself
@@ -55,10 +56,12 @@ import re
 # See server_from_sqlite3.feature for various examples to perform queries
 class QueryResult(object):
     status_re = re.compile("opcode: ([A-Z])+, status: ([A-Z]+), id: ([0-9]+)")
+    edns_re = re.compile("; EDNS: version: ([0-9]+), flags: ([a-z ]*); udp: ([0-9]+)")
     flags_re = re.compile("flags: ([a-z ]+); QUERY: ([0-9]+), ANSWER: " +
                           "([0-9]+), AUTHORITY: ([0-9]+), ADDITIONAL: ([0-9]+)")
 
-    def __init__(self, name, qtype, qclass, address, port):
+    def __init__(self, name, qtype, qclass, address, port,
+                 additional_args=None):
         """
         Constructor. This fires of a query using dig.
         Parameters:
@@ -67,6 +70,7 @@ class QueryResult(object):
         qclass: The RR class to query. Defaults to IN if it is None.
         address: The IP adress to send the query to.
         port: The port number to send the query to.
+        additional_args: List of additional arguments (e.g. '+dnssec').
         All parameters must be either strings or have the correct string
         representation.
         Only one query attempt will be made.
@@ -78,6 +82,8 @@ class QueryResult(object):
         if qclass is not None:
             args.append('-c')
             args.append(str(qclass))
+        if additional_args is not None:
+            args.extend(additional_args)
         args.append(name)
         dig_process = subprocess.Popen(args, 1, None, None, subprocess.PIPE,
                                        None)
@@ -102,6 +108,8 @@ class QueryResult(object):
         """
         if line == ";; ANSWER SECTION:\n":
             self.line_handler = self.parse_answer
+        elif line == ";; OPT PSEUDOSECTION:\n":
+            self.line_handler = self.parse_opt
         elif line == ";; AUTHORITY SECTION:\n":
             self.line_handler = self.parse_authority
         elif line == ";; ADDITIONAL SECTION:\n":
@@ -130,6 +138,19 @@ class QueryResult(object):
                 self.ancount = flags_match.group(3)
                 self.nscount = flags_match.group(4)
                 self.adcount = flags_match.group(5)
+
+    def parse_opt(self, line):
+        """
+        Parse the header lines of the query response.
+        Parameters:
+        line: The current line of the response.
+        """
+        if not self._check_next_header(line):
+            edns_match = self.edns_re.search(line)
+            if edns_match is not None:
+                self.edns_version = edns_match.group(1)
+                self.edns_flags = edns_match.group(2)
+                self.edns_udp_size = edns_match.group(3)
 
     def parse_question(self, line):
         """
@@ -179,9 +200,10 @@ class QueryResult(object):
         """
         pass
 
-@step('A query for ([\w.-]+) (?:type ([A-Z0-9]+) )?(?:class ([A-Z]+) )?' +
-      '(?:to ([^:]+)(?::([0-9]+))? )?should have rcode ([\w.]+)')
-def query(step, query_name, qtype, qclass, addr, port, rcode):
+@step('A (dnssec )?query for ([\S]+) (?:type ([A-Z0-9]+) )?' +
+      '(?:class ([A-Z]+) )?(?:to ([^:]+)(?::([0-9]+))? )?' +
+      'should have rcode ([\w.]+)')
+def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
     """
     Run a query, check the rcode of the response, and store the query
     result in world.last_query_result.
@@ -203,7 +225,11 @@ def query(step, query_name, qtype, qclass, addr, port, rcode):
         addr = "127.0.0.1"
     if port is None:
         port = 47806
-    query_result = QueryResult(query_name, qtype, qclass, addr, port)
+    additional_arguments = []
+    if dnssec is not None:
+        additional_arguments.append("+dnssec")
+    query_result = QueryResult(query_name, qtype, qclass, addr, port,
+                               additional_arguments)
     assert query_result.rcode == rcode,\
         "Expected: " + rcode + ", got " + query_result.rcode
     world.last_query_result = query_result
@@ -255,9 +281,15 @@ def check_last_query_section(step, section):
     section ('<section> section'): The name of the section (QUESTION, ANSWER,
                                    AUTHORITY or ADDITIONAL).
     The expected response is taken from the multiline part of the step in the
-    scenario. Differing whitespace is ignored, but currently the order is
-    significant.
+    scenario. Differing whitespace is ignored, the order of the lines is
+    ignored, and the comparison is case insensitive.
     Fails if they do not match.
+    WARNING: Case insensitivity is not strictly correct; for instance the
+    data of TXT RRs would be case sensitive. But most other output is, so
+    currently the checks are always case insensitive. Should we decide
+    these checks do need to be case sensitive, we can either remove it
+    or make it optional (for the former, we'll need to update a number of
+    tests).
     """
     response_string = None
     if section.lower() == 'question':
@@ -265,15 +297,32 @@ def check_last_query_section(step, section):
     elif section.lower() == 'answer':
         response_string = "\n".join(world.last_query_result.answer_section)
     elif section.lower() == 'authority':
-        response_string = "\n".join(world.last_query_result.answer_section)
+        response_string = "\n".join(world.last_query_result.authority_section)
     elif section.lower() == 'additional':
-        response_string = "\n".join(world.last_query_result.answer_section)
+        response_string = "\n".join(world.last_query_result.additional_section)
     else:
         assert False, "Unknown section " + section
+
+    # Now mangle the data for 'conformance'
+    # This could be done more efficiently, but is done one
+    # by one on a copy of the original data, so it is clear
+    # what is done. Final error output is currently still the
+    # original unchanged multiline strings
+
     # replace whitespace of any length by one space
     response_string = re.sub("[ \t]+", " ", response_string)
     expect = re.sub("[ \t]+", " ", step.multiline)
+    # lowercase them
+    response_string = response_string.lower()
+    expect = expect.lower()
+    # sort them
+    response_string_parts = response_string.split("\n")
+    response_string_parts.sort()
+    response_string = "\n".join(response_string_parts)
+    expect_parts = expect.split("\n")
+    expect_parts.sort()
+    expect = "\n".join(expect_parts)
+
     assert response_string.strip() == expect.strip(),\
         "Got:\n'" + response_string + "'\nExpected:\n'" + step.multiline +"'"
-    
-    
+
