@@ -1629,31 +1629,23 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
     </simpara></note>
 
     <para>
-      If you want to require TSIG in access control, a separate TSIG
-      "key ring" must be configured specifically
-      for <command>b10-xfrout</command> as well as a system wide
-      key ring, both containing a consistent set of keys.
+      If you want to require TSIG in access control, a system wide TSIG
+      "key ring" must be configured.
       For example, to change the previous example to allowing requests
       from 192.0.2.1 signed by a TSIG with a key name of
       "key.example", you'll need to do this:
     </para>
 
     <screen>&gt; <userinput>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
-&gt; <userinput>config set Xfrout/tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
 &gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
-    <para>
-      The first line of configuration defines a system wide key ring.
-      This is necessary because the <command>b10-auth</command> server
-      also checks TSIGs and it uses the system wide configuration.
-    </para>
+    <para>Both Xfrout and Auth will use the system wide keyring to check
+    TSIGs in the incomming messages and to sign responses.</para>
 
     <note><simpara>
-        In a future version, <command>b10-xfrout</command> will also
-        use the system wide TSIG configuration.
         The way to specify zone specific configuration (ACLs, etc) is
-        likely to be changed, too.
+        likely to be changed.
     </simpara></note>
 
 <!--
