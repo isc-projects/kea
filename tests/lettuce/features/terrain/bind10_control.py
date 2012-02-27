@@ -177,13 +177,38 @@ def parse_bindctl_output_as_data_structure():
        If it is valid, it is parsed and returned as whatever data
        structure it represented.
     """
-    # strip the 'Exit from bindctl' message. Why is it even there?
+    # strip any extra output after the last valid JSON character (it
+    # would contain 'Exit from bindctl' message, and depending on
+    # environment some other control-like characters).
+    # Why is this message even there?
     output = world.last_bindctl_stdout.replace("Exit from bindctl", "")
+    # And remove any other non-json junk at the end
+    output = output.replace("[^el\d}\"\]]*$", "")
     try:
         return json.loads(output)
     except ValueError as ve:
         assert False, "Last bindctl output does not appear to be a " +\
-                      "parseable data structure: " + str(ve)
+                      "parseable data structure: '" + output + "': " + str(ve)
+
+def find_process_pid(step, process_name):
+    """Helper function to request the running processes from Boss, and
+       return the pid of the process with the given process_name.
+       Fails with an assert if the response from boss is not valid JSON,
+       or if the process with the given name is not found.
+    """
+    # show_processes output is a list of lists, where the inner lists
+    # are of the form [ pid, "name" ]
+    # Not checking data form; errors will show anyway (if these turn
+    # out to be too vague, we can change this)
+    step.given('send bind10 the command Boss show_processes')
+    running_processes = parse_bindctl_output_as_data_structure()
+
+    for process in running_processes:
+        if process[1] == process_name:
+            return process[0]
+    return None
+    assert False, "Process named " + process_name +\
+                  " not found in output of Boss show_processes";
 
 @step("remember the pid of process ([\S]+)")
 def remember_pid(step, process_name):
@@ -197,21 +222,9 @@ def remember_pid(step, process_name):
        process name ('process <name>') the name of the component to store
                                        the pid of.
     """
-    step.given('send bind10 the command Boss show_processes')
-    running_processes = parse_bindctl_output_as_data_structure()
-    # show_processes output is a list of lists, where the inner lists
-    # are of the form [ pid, "name" ]
-    # Not checking data form; errors will show anyway (if these turn
-    # out to be too vague, we can change this)
-    found = False
     if world.process_pids is None:
         world.process_pids = {}
-    for process in running_processes:
-        if process[1] == process_name:
-            world.process_pids[process_name] = process[0]
-            found = True
-    assert found, "Process named " + process_name +\
-                  " not found in output of Boss show_processes";
+    world.process_pids[process_name] = find_process_pid(step, process_name)
 
 @step('pid of process ([\S]+) should not have changed')
 def check_pid(step, process_name):
@@ -224,25 +237,14 @@ def check_pid(step, process_name):
        Fails if that step has not been called (since world.process_pids
        does not exist).
     """
-    step.given('send bind10 the command Boss show_processes')
-    running_processes = parse_bindctl_output_as_data_structure()
-    # show_processes output is a list of lists, where the inner lists
-    # are of the form [ pid, "name" ]
-    # Not checking data form; errors will show anyway (if these turn
-    # out to be too vague, we can change this)
-    found = False
     assert world.process_pids is not None, "No process pids stored"
     assert process_name in world.process_pids, "Process named " +\
                                                process_name +\
                                                " was not stored"
-    for process in running_processes:
-        if process[1] == process_name:
-            assert world.process_pids[process_name] == process[0],\
+    pid = find_process_pid(step, process_name)
+    assert world.process_pids[process_name] == pid,\
                    "Expected pid: " + str(world.process_pids[process_name]) +\
-                   " Got pid: " + str(process[0])
-            found = True
-    assert found, "Process named " + process_name +\
-                  " not found in output of Boss show_processes";
+                   " Got pid: " + str(pid)
 
 @step('set bind10 configuration (\S+) to (.*)(?: with cmdctl port (\d+))?')
 def config_set_command(step, name, value, cmdctl_port):

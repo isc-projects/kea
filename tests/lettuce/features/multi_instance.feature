@@ -15,8 +15,7 @@ Feature: Multiple instances
         When I remove bind10 configuration Boss/components value b10-auth-2
 
         Then the pid of process b10-auth should not have changed
-        # COMMENTED OUT BECAUSE OF CURRENT BUG
-        # And a query for example.com should have rcode REFUSED
+        And a query for example.com should have rcode REFUSED
 
         When I send bind10 the following commands
         """
@@ -33,5 +32,4 @@ Feature: Multiple instances
 
         When I remove bind10 configuration Boss/components value b10-auth
         Then the pid of process b10-auth-2 should not have changed
-        # COMMENTED OUT BECAUSE OF CURRENT BUG
-        #A query for example.com should have rcode REFUSED
+        A query for example.com should have rcode REFUSED
