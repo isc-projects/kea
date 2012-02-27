@@ -329,7 +329,7 @@ updateAddressSelector(std::vector<NameserverAddress>& addresses,
                 it != probabilities.end(); ++it){
             (*it) /= sum;
         }
-    } else if(probabilities.size() > 0){
+    } else if(!probabilities.empty()){
         // If all the nameservers are unreachable, the sum will be 0
         // So give each server equal opportunity to be selected.
         for(vector<double>::iterator it = probabilities.begin();
