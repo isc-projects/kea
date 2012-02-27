@@ -4,8 +4,16 @@ debug
 missingInclude
 // This is a template, and should be excluded from the check
 unreadVariable:src/lib/dns/rdata/template.cc:61
-// Intentional self assignment tests.  Suppress warning about them.
-selfAssignment:src/lib/dns/tests/name_unittest.cc:293
-selfAssignment:src/lib/dns/tests/rdata_unittest.cc:228
-selfAssignment:src/lib/dns/tests/tsigkey_unittest.cc:137
-selfAssignment:src/lib/dns/tests/rdata_txt_like_unittest.cc:222
+
+// Intentional self-comparisons
+duplicateExpression:src/lib/dns/tests/name_unittest.cc:569
+duplicateExpression:src/lib/dns/tests/name_unittest.cc:580
+duplicateExpression:src/lib/dns/tests/rrttl_unittest.cc:164
+duplicateExpression:src/lib/dns/tests/rrttl_unittest.cc:175
+
+// Intentional self-comparisons
+uselessCallsCompare:src/lib/dns/tests/rdata_dhcid_unittest.cc:96
+uselessCallsCompare:src/lib/dns/tests/rdata_in_a_unittest.cc:98
+uselessCallsCompare:src/lib/dns/tests/rdata_in_aaaa_unittest.cc:94
+uselessCallsCompare:src/lib/dns/tests/rdata_mx_unittest.cc:104
+uselessCallsCompare:src/lib/dns/tests/rdata_unittest.cc:254
