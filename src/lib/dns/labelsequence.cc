@@ -15,34 +15,9 @@
 #include <dns/labelsequence.h>
 #include <exceptions/exceptions.h>
 
-/// Light-weight Accessor to Name object
-///
-/// The purpose of this class is to easily match Names and parts of Names,
-/// without needing to copy the underlying data on each split.
-///
-/// It can only work on existing Name objects, and the Name object MUST
-/// remain in scope during the entire lifetime of its associated
-/// LabelSequence(s)
-///
-/// Upon creation of a LabelSequence, it records the offsets of the
-/// labels in the wireformat data of the Name. When split() is called on
-/// the LabelSequence, no changes in the Name's data occur, but the
-/// internal pointers of the LabelSequence are modified.
-///
-/// LabelSequences can be compared to other LabelSequences, and their
-/// data can be requested (which then points to part of the original
-/// data of the associated Name object).
-///
-
 namespace isc {
 namespace dns {
 
-/// \brief Constructs a LabelSequence for the given name
-///
-/// The associated Name MUST remain in scope during the lifetime of
-/// this LabelSequence, since getData() refers to data from the
-/// Name object (the only data the LabelSequence stores are pointers
-/// to the labels in the Name object).
 LabelSequence::LabelSequence(const Name& name) : name_(name),
                              first_label_(0) {
     size_t label_count_ = name.getLabelCount();
