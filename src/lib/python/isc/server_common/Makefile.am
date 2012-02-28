@@ -7,7 +7,7 @@ pythondir = $(pyexecdir)/isc/server_common
 BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/work/server_common_messages.py
 nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/server_common_messages.py
 
-pylogmessagedir = $(pyexecdir)/isc/logmessages/
+pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
 CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/work/server_common_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/server_common_messages.pyc
