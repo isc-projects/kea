@@ -111,7 +111,16 @@ recv_fd(const int sock) {
     // one returned previously, even if that one is not closed yet. So,
     // we just re-number every one we get, so they are unique.
     int new_fd(dup(fd));
-    close(fd);
+    int close_error(close(fd));
+    if (close_error == -1 || new_fd == -1) {
+        // We need to return an error, because something failed. But in case
+        // it was the previous close, we at least try to close the duped FD.
+        if (new_fd != -1) {
+            close(new_fd); // If this fails, nothing but returning error can't
+                           // be done and we are doing that anyway.
+        }
+        return (FD_SYSTEM_ERROR);
+    }
     return (new_fd);
 }
 
