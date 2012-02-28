@@ -315,7 +315,7 @@ esac
 
 # Don't use -Werror if configured not to
 AC_ARG_WITH(werror,
-    AC_HELP_STRING([--with-werror], [Compile using -Werror]),
+    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
     [
      case "${withval}" in
          yes) with_werror=1 ;;
