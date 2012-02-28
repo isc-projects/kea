@@ -107,8 +107,6 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class should
     /// never be instantiated (except as part of a derived class).
-    ///
-    /// \param buffer The buffer where the data should be rendered into.
     AbstractMessageRenderer();
 
 public:
@@ -208,7 +206,7 @@ public:
     /// \throw isc::InvalidParameter A restrictions of the method usage isn't
     /// met.
     ///
-    /// \brief buffer A pointer to a temporary output buffer or NULL for reset
+    /// \param buffer A pointer to a temporary output buffer or NULL for reset
     /// it.
     void setBuffer(isc::util::OutputBuffer* buffer);
 
