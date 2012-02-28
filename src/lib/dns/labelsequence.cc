@@ -22,9 +22,9 @@ namespace dns {
 LabelSequence::LabelSequence(const Name& name) : name_(name),
                              first_label_(0), offsets_(name.getLabelCount()) {
     offsets_[0] = 0;
-    last_label_ = name.getLabelCount() - 1;
+    last_label_ = name.getLabelCount();
     // Walk through the wire format data and store all offsets
-    for (size_t i = 1; i < offsets_.size(); ++i) {
+    for (size_t i = 1; i < last_label_; ++i) {
         // Each offset is the previous offset plus the length of the
         // label plus 1 (for the label length octet)
         offsets_[i] = offsets_[i - 1] + name.at(offsets_[i - 1]) + 1;
@@ -33,7 +33,16 @@ LabelSequence::LabelSequence(const Name& name) : name_(name),
 
 const char*
 LabelSequence::getData(size_t *len) const {
-    *len = offsets_[last_label_] - offsets_[first_label_];
+    // If the labelsequence is absolute, the current last_label_ falls
+    // out of the vector (since it points to the 'label' after the
+    // root label, which doesn't exist; in that case, return
+    // the length for the 'previous' label (the root label) plus
+    // one (for the root label zero octet)
+    if (isAbsolute()) {
+        *len = offsets_[last_label_ - 1] - offsets_[first_label_] + 1;
+    } else {
+        *len = offsets_[last_label_] - offsets_[first_label_];
+    }
     return (name_.at_p(offsets_[first_label_]));
 }
 
@@ -55,9 +64,9 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
 
 void
 LabelSequence::split(int i) {
-    if (abs(i) > getLabelCount()) {
-        isc_throw(OutOfRange, "Label " << i << " out of range (" <<
-                              getLabelCount() << ")");
+    if (abs(i) >= getLabelCount()) {
+        isc_throw(OutOfRange, "Cannot split to zero or less labels; " << i <<
+                              " (labelcount: " << getLabelCount() << ")");
     }
     if (i > 0) {
         first_label_ += i;
@@ -66,6 +75,10 @@ LabelSequence::split(int i) {
     }
 }
 
+bool
+LabelSequence::isAbsolute() const {
+    return last_label_ == offsets_.size();
+}
+
 } // end namespace dns
 } // end namespace isc
-
