@@ -892,7 +892,7 @@ class BoB:
         # the need to find the place ourself or bother users. Also, this
         # secures the socket on some platforms, as it creates a private
         # directory.
-        self._tmpdir = tempfile.mkdtemp()
+        self._tmpdir = tempfile.mkdtemp(prefix='sockcreator-')
         # Get the name
         self._socket_path = os.path.join(self._tmpdir, "sockcreator")
         # And bind the socket to the name
