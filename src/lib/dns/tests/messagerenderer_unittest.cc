@@ -194,7 +194,7 @@ TEST_F(MessageRendererTest, setBuffer) {
 TEST_F(MessageRendererTest, setBufferErrors) {
     OutputBuffer new_buffer(0);
 
-    // Buffer cannot be rest when the renderer is in use.
+    // Buffer cannot be reset when the renderer is in use.
     renderer.writeUint32(10);
     EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
 
