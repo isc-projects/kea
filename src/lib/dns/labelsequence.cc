@@ -77,7 +77,7 @@ LabelSequence::split(int i) {
 
 bool
 LabelSequence::isAbsolute() const {
-    return last_label_ == offsets_.size();
+    return (last_label_ == offsets_.size());
 }
 
 } // end namespace dns
