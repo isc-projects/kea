@@ -70,11 +70,6 @@ The configurable settings are:
 defines the maximum number of outgoing zone transfers that can run concurrently\&. The default is 10\&.
 .PP
 
-\fItsig_key_ring\fR
-A list of TSIG keys (each of which is in the form of
-\fIname:base64\-key[:algorithm]\fR) used for access control on transfer requests\&. The default is an empty list\&.
-.PP
-
 \fItransfer_acl\fR
 A list of ACL elements that apply to all transfer requests by default (unless overridden in
 \fIzone_config\fR)\&. See the
