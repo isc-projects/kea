@@ -26,7 +26,7 @@
 #include <dns/message.h>
 #include <asiolink/simple_callback.h>
 #include <util/buffer.h>
-#include <exceptions.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 
