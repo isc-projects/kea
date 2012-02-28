@@ -35,13 +35,6 @@ namespace dns {
 /// the LabelSequence, no changes in the Name's data occur, but the
 /// internal pointers of the LabelSequence are modified.
 ///
-/// \note For consistency reasons, when talking about labels and label
-/// counts, LabelSequence objects never include the root label in their
-/// calculations or return values. Wireformat data resulting from
-/// getData() is never absolute, and the result of a labelCount(),
-/// even if split() has never been called on the LabelSequence, is
-/// always smaller than the labelCount of the original Name object.
-///
 /// LabelSequences can be compared to other LabelSequences, and their
 /// data can be requested (which then points to part of the original
 /// data of the associated Name object).
@@ -64,16 +57,11 @@ public:
     /// data of the original Name object, and the given len value is
     /// set to the number of octets that match this labelsequence.
     ///
-    /// \note The data pointed to here is never absolute (i.e. it does
-    /// not include the root label), so if this data is used anywhere
-    /// you probably need to add an empty label (one octet with value
-    /// zero).
-    ///
     /// \note The data pointed to is only valid if the original Name
     /// object is still in scope
     ///
     /// \param len Pointer to a size_t where the length of the data
-    ///        is stored
+    ///        will be stored (in number of octets)
     /// \return Pointer to the wire-format data of this label sequence
     const char* getData(size_t* len) const;
 
@@ -95,17 +83,15 @@ public:
     /// \note No actual memory is changed, this operation merely updates the
     /// internal pointers based on the offsets at creation time.
     ///
-    /// \exeption OutOfRange if abs(i) is greater than the number of labels
-    ///           currently pointed to by this LabelSequence
+    /// \exeption OutOfRange if abs(i) is greater than or equal to the
+    ///           number of labels currently pointed to by this LabelSequence
     ///
     /// \param i When positive, removes i labels from the front of the
     ///        LabelSequence. When negative, removes i labels from the
-    ///        end of it.
+    ///        end of it. When zero, this is a no-op.
     void split(int i);
 
     /// \brief Returns the current number of labels for this LabelSequence
-    ///
-    /// \note This count does NOT include the root label
     ///
     /// \return The number of labels
     size_t getLabelCount() const { return last_label_ - first_label_; }
@@ -120,6 +106,11 @@ public:
     ///
     /// \return Reference to the original Name object
     const Name& getName() const { return name_; }
+
+    /// \brief Checks whether the label sequence is absolute
+    ///
+    /// \return true if the last label is the root label
+    bool isAbsolute() const;
 
 private:
     const Name& name_;

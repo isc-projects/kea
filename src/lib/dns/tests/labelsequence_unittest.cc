@@ -134,39 +134,45 @@ getDataCheck(const char* expected_data, size_t expected_len,
 }
 
 TEST_F(LabelSequenceTest, getData) {
-    getDataCheck("\007example\003org", 12, ls1);
-    getDataCheck("\007example\003com", 12, ls2);
-    getDataCheck("\007example\003org", 12, ls3);
-    getDataCheck("\003foo\003bar\004test\007example", 21, ls4);
-    getDataCheck("\007example\003ORG", 12, ls5);
-    getDataCheck("\007ExAmPlE\003org", 12, ls6);
-    getDataCheck("", 0, ls7);
+    getDataCheck("\007example\003org\000", 13, ls1);
+    getDataCheck("\007example\003com\000", 13, ls2);
+    getDataCheck("\007example\003org\000", 13, ls3);
+    getDataCheck("\003foo\003bar\004test\007example\000", 22, ls4);
+    getDataCheck("\007example\003ORG\000", 13, ls5);
+    getDataCheck("\007ExAmPlE\003org\000", 13, ls6);
+    getDataCheck("\000", 1, ls7);
 };
 
 TEST_F(LabelSequenceTest, split_pos) {
+    EXPECT_TRUE(ls1.equals(ls3));
     ls1.split(0);
-    getDataCheck("\007example\003org", 12, ls1);
+    getDataCheck("\007example\003org\000", 13, ls1);
+    EXPECT_TRUE(ls1.equals(ls3));
     ls1.split(1);
-    getDataCheck("\003org", 4, ls1);
+    getDataCheck("\003org\000", 5, ls1);
+    EXPECT_FALSE(ls1.equals(ls3));
     ls1.split(1);
-    getDataCheck("", 0, ls1);
+    getDataCheck("\000", 1, ls1);
     EXPECT_TRUE(ls1.equals(ls7));
 
     ls2.split(2);
-    getDataCheck("", 0, ls2);
+    getDataCheck("\000", 1, ls2);
     EXPECT_TRUE(ls2.equals(ls7));
 }
 
 TEST_F(LabelSequenceTest, split_neg) {
-    ls1.split(0);
+    EXPECT_TRUE(ls1.equals(ls3));
+    ls1.split(-1);
     getDataCheck("\007example\003org", 12, ls1);
+    EXPECT_FALSE(ls1.equals(ls3));
     ls1.split(-1);
     getDataCheck("\007example", 8, ls1);
-    ls1.split(-1);
-    EXPECT_TRUE(ls1.equals(ls7));
+    EXPECT_FALSE(ls1.equals(ls3));
 
+    ASSERT_FALSE(ls1.equals(ls2));
     ls2.split(-2);
-    EXPECT_TRUE(ls2.equals(ls7));
+    getDataCheck("\007example", 8, ls2);
+    EXPECT_TRUE(ls1.equals(ls2));
 }
 
 TEST_F(LabelSequenceTest, split_oor) {
@@ -174,44 +180,74 @@ TEST_F(LabelSequenceTest, split_oor) {
     EXPECT_THROW(ls1.split(5), isc::OutOfRange);
     EXPECT_THROW(ls1.split(4), isc::OutOfRange);
     EXPECT_THROW(ls1.split(3), isc::OutOfRange);
-    getDataCheck("\007example\003org", 12, ls1);
+    getDataCheck("\007example\003org\000", 13, ls1);
 
     EXPECT_THROW(ls1.split(-100), isc::OutOfRange);
     EXPECT_THROW(ls1.split(-5), isc::OutOfRange);
     EXPECT_THROW(ls1.split(-4), isc::OutOfRange);
     EXPECT_THROW(ls1.split(-3), isc::OutOfRange);
-    getDataCheck("\007example\003org", 12, ls1);
+    getDataCheck("\007example\003org\000", 13, ls1);
 }
 
 TEST_F(LabelSequenceTest, getLabelCount) {
-    EXPECT_EQ(2, ls1.getLabelCount());
+    EXPECT_EQ(3, ls1.getLabelCount());
     ls1.split(0);
+    EXPECT_EQ(3, ls1.getLabelCount());
+    ls1.split(1);
     EXPECT_EQ(2, ls1.getLabelCount());
     ls1.split(1);
     EXPECT_EQ(1, ls1.getLabelCount());
-    ls1.split(1);
-    EXPECT_EQ(0, ls1.getLabelCount());
 
+    EXPECT_EQ(3, ls2.getLabelCount());
+    ls2.split(-1);
     EXPECT_EQ(2, ls2.getLabelCount());
-    ls2.split(2);
-    EXPECT_EQ(0, ls2.getLabelCount());
+    ls2.split(-1);
+    EXPECT_EQ(1, ls2.getLabelCount());
 
-    EXPECT_EQ(2, ls3.getLabelCount());
-    ls3.split(-1);
+    EXPECT_EQ(3, ls3.getLabelCount());
+    ls3.split(-2);
     EXPECT_EQ(1, ls3.getLabelCount());
-    ls3.split(-1);
-    EXPECT_EQ(0, ls3.getLabelCount());
 
-    EXPECT_EQ(4, ls4.getLabelCount());
+    EXPECT_EQ(5, ls4.getLabelCount());
     ls4.split(-3);
-    EXPECT_EQ(1, ls4.getLabelCount());
+    EXPECT_EQ(2, ls4.getLabelCount());
+
+    EXPECT_EQ(3, ls5.getLabelCount());
+    ls5.split(2);
+    EXPECT_EQ(1, ls5.getLabelCount());
 }
 
 TEST_F(LabelSequenceTest, comparePart) {
+    EXPECT_FALSE(ls1.equals(ls8));
+
+    // Split root label from example.org.
+    ls1.split(-1);
+    // Split foo from foo.example.org.bar.
+    ls8.split(1);
+    // Split bar. (i.e. bar and root) too
+    ls8.split(-2);
+
+    EXPECT_TRUE(ls1.equals(ls8));
+
+    // Data comparison
     size_t len;
     const char* data = ls1.getData(&len);
-    ls8.split(1);
-    ls8.split(-1);
     getDataCheck(data, len, ls8);
 }
 
+TEST_F(LabelSequenceTest, isAbsolute) {
+    ASSERT_TRUE(ls1.isAbsolute());
+
+    ls1.split(1);
+    ASSERT_TRUE(ls1.isAbsolute());
+    ls1.split(-1);
+    ASSERT_FALSE(ls1.isAbsolute());
+
+    ASSERT_TRUE(ls2.isAbsolute());
+    ls2.split(-1);
+    ASSERT_FALSE(ls2.isAbsolute());
+
+    ASSERT_TRUE(ls3.isAbsolute());
+    ls3.split(2);
+    ASSERT_TRUE(ls3.isAbsolute());
+}
