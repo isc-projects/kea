@@ -58,9 +58,6 @@ public:
     /// \param name The Name to construct a LabelSequence for
     LabelSequence(const Name& name);
 
-    /// \brief Destructor
-    ~LabelSequence();
-
     /// \brief Return the wire-format data for this LabelSequence
     ///
     /// The data, is returned as a pointer to the original wireformat
@@ -128,7 +125,7 @@ private:
     const Name& name_;
     size_t first_label_;
     size_t last_label_;
-    size_t* offsets_;
+    std::vector<size_t> offsets_;
 };
 
 

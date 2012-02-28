@@ -15,22 +15,20 @@
 #include <dns/labelsequence.h>
 #include <exceptions/exceptions.h>
 
+#include <iostream>
 namespace isc {
 namespace dns {
 
 LabelSequence::LabelSequence(const Name& name) : name_(name),
-                             first_label_(0) {
-    size_t label_count_ = name.getLabelCount();
-    last_label_ = label_count_ - 1;
-    offsets_ = new size_t[label_count_];
+                             first_label_(0), offsets_(name.getLabelCount()) {
     offsets_[0] = 0;
-    for (size_t i = 1; i < label_count_; ++i) {
+    last_label_ = name.getLabelCount() - 1;
+    // Walk through the wire format data and store all offsets
+    for (size_t i = 1; i < offsets_.size(); ++i) {
+        // Each offset is the previous offset plus the length of the
+        // label plus 1 (for the label length octet)
         offsets_[i] = offsets_[i - 1] + name.at(offsets_[i - 1]) + 1;
     }
-}
-
-LabelSequence::~LabelSequence() {
-    delete[] offsets_;
 }
 
 const char*
@@ -57,20 +55,14 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
 
 void
 LabelSequence::split(int i) {
+    if (abs(i) > getLabelCount()) {
+        isc_throw(OutOfRange, "Label " << i << " out of range (" <<
+                              getLabelCount() << ")");
+    }
     if (i > 0) {
-        if (i > getLabelCount()) {
-            isc_throw(OutOfRange, "Label " << i << " out of range (" <<
-                                  getLabelCount() << ")");
-        } else {
-            first_label_ += i;
-        }
+        first_label_ += i;
     } else if (i < 0) {
-        if (-i > getLabelCount()) {
-            isc_throw(OutOfRange, "Label " << i << " out of range (" <<
-                                  getLabelCount() << ")");
-        } else {
-            last_label_ += i;
-        }
+        last_label_ += i;
     }
 }
 
