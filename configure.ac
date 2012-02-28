@@ -288,8 +288,6 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   AC_MSG_RESULT([$bind10_cxx_flag])
 ])
 
-werror_ok=0
-
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
@@ -315,19 +313,34 @@ case "$host" in
 	;;
 esac
 
+# Don't use -Werror if configured not to
+AC_ARG_WITH(werror,
+    AC_HELP_STRING([--with-werror], [Compile using -Werror]),
+    [
+     case "${withval}" in
+         yes) with_werror=1 ;;
+         no)  with_werror=0 ;;
+         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
+     esac],
+     [with_werror=1])
+
+werror_ok=0
+
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
 # translation unit.  For these versions we have to disable -Werror.
-CXXFLAGS_SAVED="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
-AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-AC_TRY_COMPILE([namespace { class Foo {}; }
-namespace isc {class Bar {Foo foo_;};} ],,
+if test $with_werror = 1; then
+   CXXFLAGS_SAVED="$CXXFLAGS"
+   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+   AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
+   AC_TRY_COMPILE([namespace { class Foo {}; }
+   namespace isc {class Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
 	 werror_ok=1
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
-CXXFLAGS="$CXXFLAGS_SAVED"
+   CXXFLAGS="$CXXFLAGS_SAVED"
+fi
 
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
