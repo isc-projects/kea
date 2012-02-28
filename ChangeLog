@@ -1,3 +1,8 @@
+387.	[build]		muks
+	Accept a --without-werror configure switch so that some builders can
+	disable the use of -Werror in CFLAGS when building.
+	(Trac #1671, git 8684a411d7718a71ad9fb616f56b26436c4f03e5)
+
 386.	[bug]		jelte
 	Upon initial sqlite3 database creation, the 'diffs' table is now
 	always created. This already happened most of the time, but there
