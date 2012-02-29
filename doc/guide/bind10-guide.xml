@@ -172,15 +172,6 @@
 
           <listitem>
             <simpara>
-              <command>b10-msgq</command> &mdash;
-              Message bus daemon.
-              This process coordinates communication between all of the other
-              BIND 10 processes.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
               <command>b10-auth</command> &mdash;
               Authoritative DNS server.
               This process serves DNS requests.
@@ -205,6 +196,15 @@
 
           <listitem>
             <simpara>
+              <command>b10-msgq</command> &mdash;
+              Message bus daemon.
+              This process coordinates communication between all of the other
+              BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>b10-resolver</command> &mdash;
               Recursive name server.
               This process handles incoming queries.
@@ -214,9 +214,26 @@
 
           <listitem>
             <simpara>
+              <command>b10-sockcreator</command> &mdash;
+              Socket creator daemon.
+              This process creates sockets used by
+              network-listening BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>b10-stats</command> &mdash;
               Statistics collection daemon.
               This process collects and reports statistics data.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-stats-httpd</command> &mdash;
+              HTTP server for statistics reporting.
+              This process reports statistics data in XML format over HTTP.
             </simpara>
           </listitem>
 
@@ -269,8 +286,9 @@
             <simpara>
               <command>bindctl</command> &mdash;
               interactive administration interface.
-              This is a command-line tool which allows an administrator
-              to control BIND 10.
+              This is a low-level command-line tool which allows
+              a developer or an experienced administrator to control
+              BIND 10.
             </simpara>
           </listitem>
           <listitem>
@@ -751,9 +769,11 @@ as a dependency earlier -->
     <para>
       In its default configuration, the <command>bind10</command>
       master process will also start up
-      <command>b10-cmdctl</command> for admins to communicate with the
-      system, <command>b10-auth</command> for authoritative DNS service,
+      <command>b10-cmdctl</command> for administration tools to
+      communicate with the system,
+      <command>b10-auth</command> for authoritative DNS service,
       <command>b10-stats</command> for statistics collection,
+      <command>b10-stats-httpd</command> for statistics reporting,
       <command>b10-xfrin</command> for inbound DNS zone transfers,
       <command>b10-xfrout</command> for outbound DNS zone transfers,
       and <command>b10-zonemgr</command> for secondary service.
@@ -889,7 +909,7 @@ address, but the usual ones don't." mean? -->
           This system allows you to start the same component multiple times
           (by including it in the configuration with different names, but the
           same process setting). However, the rest of the system doesn't expect
-          such situation, so it would probably not do what you want. Such
+          such a situation, so it would probably not do what you want. Such
           support is yet to be implemented.
         </para>
       </note>
@@ -901,10 +921,10 @@ address, but the usual ones don't." mean? -->
           <command>b10-cmdctl</command>, but then you couldn't
           change it back the usual way, as it would require it to
           be running (you would have to find and edit the configuration
-          directly).  Also, some modules might have dependencies
-          -- <command>b10-stats-httpd</command> need
+          directly).  Also, some modules might have dependencies:
+          <command>b10-stats-httpd</command> needs
           <command>b10-stats</command>, <command>b10-xfrout</command>
-          needs the <command>b10-auth</command> to be running, etc.
+          needs <command>b10-auth</command> to be running, etc.
 
 <!-- TODO: should we define dependencies? -->
 
