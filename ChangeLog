@@ -1,3 +1,10 @@
+391.	[func]*		jinmei
+	libdns++: revised the (Abstract)MessageRenderer class so that it
+	has a default internal buffer and the buffer can be temporarily
+	switched.  The constructor interface was modified, and a new
+	method setBuffer() was added.
+	(Trac #1697, git 9cabc799f2bf9a3579dae7f1f5d5467c8bb1aa40)
+
 bind10-devel-20120301 released on March 1, 2012
 
 390.	[bug]		vorner
