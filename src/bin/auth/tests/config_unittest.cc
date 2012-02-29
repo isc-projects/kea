@@ -191,7 +191,7 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
     // Check it actually loaded something
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(rrclass)->findZone(
         Name("ns.example.com.")).zone_finder->find(Name("ns.example.com."),
-        RRType::A()).code);
+        RRType::A())->code);
 }
 
 TEST_F(MemoryDatasrcConfigTest, addMultiZones) {

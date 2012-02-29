@@ -47,15 +47,15 @@ using namespace isc::datasrc::python;
 
 namespace  {
 ZoneFinder::FindResultFlags
-getFindResultFlags(const ZoneFinder::FindResult& result) {
+getFindResultFlags(const ZoneFinder::Context& context) {
     ZoneFinder::FindResultFlags result_flags = ZoneFinder::RESULT_DEFAULT;
-    if (result.isWildcard()) {
+    if (context.isWildcard()) {
         result_flags = result_flags | ZoneFinder::RESULT_WILDCARD;
     }
-    if (result.isNSECSigned()) {
+    if (context.isNSECSigned()) {
         result_flags = result_flags | ZoneFinder::RESULT_NSEC_SIGNED;
     }
-    if (result.isNSEC3Signed()) {
+    if (context.isNSEC3Signed()) {
         result_flags = result_flags | ZoneFinder::RESULT_NSEC3_SIGNED;
     }
     return (result_flags);
@@ -83,13 +83,13 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
         try {
             ZoneFinder::FindOptions options =
                 static_cast<ZoneFinder::FindOptions>(options_int);
-            const ZoneFinder::FindResult find_result(
+            ConstZoneFinderContextPtr find_ctx(
                 finder->find(PyName_ToName(name), PyRRType_ToRRType(rrtype),
                              options));
-            const ZoneFinder::Result r = find_result.code;
-            isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
+            const ZoneFinder::Result r = find_ctx->code;
+            isc::dns::ConstRRsetPtr rrsp = find_ctx->rrset;
             ZoneFinder::FindResultFlags result_flags =
-                getFindResultFlags(find_result);
+                getFindResultFlags(*find_ctx);
             if (rrsp) {
                 // Use N instead of O so the refcount isn't increased twice
                 return (Py_BuildValue("INI", r, createRRsetObject(*rrsp),
@@ -127,12 +127,12 @@ PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
             ZoneFinder::FindOptions options =
                 static_cast<ZoneFinder::FindOptions>(options_int);
             std::vector<isc::dns::ConstRRsetPtr> target;
-            const ZoneFinder::FindResult find_result(
+            ConstZoneFinderContextPtr find_ctx(
                 finder->findAll(PyName_ToName(name), target, options));
-            const ZoneFinder::Result r = find_result.code;
-            isc::dns::ConstRRsetPtr rrsp = find_result.rrset;
+            const ZoneFinder::Result r = find_ctx->code;
+            isc::dns::ConstRRsetPtr rrsp = find_ctx->rrset;
             ZoneFinder::FindResultFlags result_flags =
-                getFindResultFlags(find_result);
+                getFindResultFlags(*find_ctx);
             if (r == ZoneFinder::SUCCESS) {
                 // Copy all the RRsets to the result list
                 PyObjectContainer list_container(PyList_New(target.size()));
