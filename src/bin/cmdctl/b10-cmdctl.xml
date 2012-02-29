@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 9, 2010</date>
+    <date>February 28, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -37,7 +37,7 @@
 
   <docinfo>
     <copyright>
-      <year>2010</year>
+      <year>2010-2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -134,6 +134,50 @@
         </listitem>
       </varlistentry>
     </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>CONFIGURATION AND COMMANDS</title>
+    <para>
+      The configurable settings are:
+    </para>
+
+    <para>
+      <varname>accounts_file</varname> defines the path to the
+      user accounts database.
+      The default is
+      <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>.
+    </para>
+
+    <para>
+      <varname>cert_file</varname> defines the path to the
+      PEM certificate file.
+      The default is
+      <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>.
+    </para>
+
+    <para>
+      <varname>key_file</varname> defines the path to the PEM private key
+      file.
+      The default is
+      <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>.
+    </para>
+
+<!-- TODO: formating -->
+    <para>
+      The configuration command is:
+    </para>
+
+<!-- NOTE: print_settings is not documented since I think will be removed -->
+
+    <para>
+      <command>shutdown</command> exits <command>b10-cmdctl</command>.
+      This has an optional <varname>pid</varname> argument to
+      select the process ID to stop.
+      (Note that the BIND 10 boss process may restart this service
+      if configured.)
+    </para>
 
   </refsect1>
 
