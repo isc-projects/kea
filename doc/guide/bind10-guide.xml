@@ -909,7 +909,7 @@ address, but the usual ones don't." mean? -->
           This system allows you to start the same component multiple times
           (by including it in the configuration with different names, but the
           same process setting). However, the rest of the system doesn't expect
-          such situation, so it would probably not do what you want. Such
+          such a situation, so it would probably not do what you want. Such
           support is yet to be implemented.
         </para>
       </note>
@@ -921,10 +921,10 @@ address, but the usual ones don't." mean? -->
           <command>b10-cmdctl</command>, but then you couldn't
           change it back the usual way, as it would require it to
           be running (you would have to find and edit the configuration
-          directly).  Also, some modules might have dependencies
-          -- <command>b10-stats-httpd</command> need
+          directly).  Also, some modules might have dependencies:
+          <command>b10-stats-httpd</command> needs
           <command>b10-stats</command>, <command>b10-xfrout</command>
-          needs the <command>b10-auth</command> to be running, etc.
+          needs <command>b10-auth</command> to be running, etc.
 
 <!-- TODO: should we define dependencies? -->
 
