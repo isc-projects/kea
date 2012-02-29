@@ -1,3 +1,8 @@
+388.	[func]		jreed
+	Use prefix "sockcreator-" for the private temporary directory
+	used for b10-sockcreator communication.
+	(git b98523c1260637cb33436964dc18e9763622a242)
+
 387.	[build]		muks
 	Accept a --without-werror configure switch so that some builders can
 	disable the use of -Werror in CFLAGS when building.
