@@ -194,7 +194,7 @@ TEST_F(MasterLoadTest, loadRRWithCommentNoSpace) {
 }
 
 TEST_F(MasterLoadTest, loadRRWithCommentEmptyComment) {
-    // Similar to the previous one, but there's no space before comments.
+    // Similar to the previous one, but there's no data after the ;
     // It should still work.
     rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
         "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
@@ -207,7 +207,7 @@ TEST_F(MasterLoadTest, loadRRWithCommentEmptyComment) {
 }
 
 TEST_F(MasterLoadTest, loadRRWithCommentEmptyCommentNoSpace) {
-    // Similar to the previous one, but there's no space before comments.
+    // Similar to the previous one, but there's no space before or after ;
     // It should still work.
     rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
         "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
@@ -220,7 +220,7 @@ TEST_F(MasterLoadTest, loadRRWithCommentEmptyCommentNoSpace) {
 }
 
 TEST_F(MasterLoadTest, loadRRWithEOLWhitespace) {
-    // Similar to the previous one, but there's no space before comments.
+    // Test with whitespace after rdata
     // It should still work.
     rr_stream << "example.com. 3600 IN NSEC3PARAM 1 0 1 beef \n";
     masterLoad(rr_stream, origin, zclass, callback);
@@ -231,7 +231,7 @@ TEST_F(MasterLoadTest, loadRRWithEOLWhitespace) {
 }
 
 TEST_F(MasterLoadTest, loadRRWithEOLWhitespaceTab) {
-    // Similar to the previous one, but there's no space before comments.
+    // Similar to the previous one, tab instead of space.
     // It should still work.
     rr_stream << "example.com. 3600 IN NSEC3PARAM 1 0 1 beef\t\n";
     masterLoad(rr_stream, origin, zclass, callback);
