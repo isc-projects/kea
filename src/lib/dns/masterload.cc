@@ -38,26 +38,25 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace dns {
 namespace {
-// A helper function that strips off any comment placed at the end of an RR.
+// A helper function that strips off any comment or whitespace at the end of
+// an RR.
 // This is an incomplete implementation, and cannot handle all such comments;
 // it's considered a short term workaround to deal with some real world
 // cases.
 string
-stripComment(string& s, const Exception& ex) {
+stripLine(string& s, const Exception& ex) {
     // Find any ';' in the text data, and locate the position of the last
     // occurrence.  Note that unless/until we support empty RDATA it
     // shouldn't be placed at the beginning of the data.
     const size_t pos_semicolon = s.rfind(';');
-    if (pos_semicolon == string::npos || pos_semicolon == 0) {
+    if (pos_semicolon == 0) {
         throw ex;
+    } else if (pos_semicolon != string::npos) {
+        s.resize(pos_semicolon);
     }
-    // Remove any trailing space and comments and return the resulting text.
-    const size_t pos_end_data = s.find_last_not_of(" /t", pos_semicolon - 1);
-    if (pos_end_data != string::npos) {
-        s.erase(pos_end_data + 1);
-        return (s);
-    }
-    throw ex;
+    // Remove any trailing whitespace return the resulting text.
+    s.resize(s.find_last_not_of(" \t") + 1);
+    return (s);
 }
 }
 
@@ -145,10 +144,9 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
                 rdata = createRdata(*rrtype, *rrclass, rdtext);
             } catch (const Exception& ex) {
                 // If the parse for the RDATA fails, check if it has comments
-                // at the end, and if so, retry the conversion after stripping
-                // off the comment.
-                rdata = createRdata(*rrtype, *rrclass, stripComment(rdtext,
-                                                                    ex));
+                // or whitespace at the end, and if so, retry the conversion
+                // after stripping off the comment or whitespace
+                rdata = createRdata(*rrtype, *rrclass, stripLine(rdtext, ex));
             }
         } catch (const Exception& ex) {
             isc_throw(MasterLoadError, "Invalid RR text at line " << line_count
