@@ -2,12 +2,12 @@
 .\"     Title: bind10
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: November 23, 2011
+.\"      Date: February 28, 2012
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "BIND10" "8" "November 23, 2011" "BIND10" "BIND10"
+.TH "BIND10" "8" "February 28, 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -34,9 +34,8 @@ The arguments are as follows:
 .PP
 \fB\-c\fR \fIconfig\-filename\fR, \fB\-\-config\-file\fR \fIconfig\-filename\fR
 .RS 4
-The configuration filename to use\&. Can be either absolute or relative to data path\&. In case it is absolute, value of data path is not considered\&.
-.sp
-Defaults to b10\-config\&.db\&.
+The configuration filename to use\&. Can be either absolute or relative to data path\&. In case it is absolute, value of data path is not considered\&. Defaults to
+b10\-config\&.db\&.
 .RE
 .PP
 \fB\-\-cmdctl\-port\fR \fIport\fR
@@ -50,7 +49,9 @@ for the default\&.)
 .PP
 \fB\-p\fR \fIdirectory\fR, \fB\-\-data\-path\fR \fIdirectory\fR
 .RS 4
-The path where BIND 10 programs look for various data files\&. Currently only b10\-cfgmgr uses it to locate the configuration file, but the usage might be extended for other programs and other types of files\&.
+The path where BIND 10 programs look for various data files\&. Currently only
+\fBb10-cfgmgr\fR(8)
+uses it to locate the configuration file, but the usage might be extended for other programs and other types of files\&.
 .RE
 .PP
 \fB\-m\fR \fIfile\fR, \fB\-\-msgq\-socket\-file\fR \fIfile\fR
@@ -73,7 +74,6 @@ daemon\&.
 The username for
 \fBbind10\fR
 to run as\&.
-
 \fBbind10\fR
 must be initially ran as the root user to use this option\&. The default is to run as the current user\&.
 .RE
@@ -82,7 +82,7 @@ must be initially ran as the root user to use this option\&. The default is to r
 .RS 4
 If defined, the PID of the
 \fBbind10\fR
-is stored in this file\&. This is used for testing purposes\&.
+is stored in this file\&.
 .RE
 .PP
 \fB\-\-pretty\-name \fR\fB\fIname\fR\fR
@@ -103,7 +103,9 @@ and its child processes\&.
 .PP
 \fB\-w\fR \fIwait_time\fR, \fB\-\-wait\fR \fIwait_time\fR
 .RS 4
-Sets the amount of time that BIND 10 will wait for the configuration manager (a key component of BIND 10) to initialize itself before abandoning the start up and terminating with an error\&. The wait_time is specified in seconds and has a default value of 10\&.
+Sets the amount of time that BIND 10 will wait for the configuration manager (a key component of BIND 10) to initialize itself before abandoning the start up and terminating with an error\&. The
+\fIwait_time\fR
+is specified in seconds and has a default value of 10\&.
 .RE
 .SH "CONFIGURATION AND COMMANDS"
 .PP
@@ -134,18 +136,6 @@ to manage under
 .\}
 
 \fI/Boss/components/b10\-cmdctl\fR
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-
-\fI/Boss/components/setuid\fR
 .RE
 .sp
 .RS 4
@@ -212,11 +202,11 @@ to manage under
 \fBb10\-sockcreator\fR,
 \fBb10\-cfgmgr\fR, and
 \fBb10\-msgq\fR
-is not configurable\&. It is hardcoded and
+is not configurable\&. They are hardcoded and
 \fBbind10\fR
 will not run without them\&.)
 .PP
-These named sets (listed above) contain the following settings:
+The named sets for components contain the following settings:
 .PP
 \fIaddress\fR
 .RS 4
@@ -258,7 +248,7 @@ will use the component name instead\&.
 .PP
 \fIspecial\fR
 .RS 4
-This defines if the component is started a special way\&.
+This defines if the component is started a special, hardcoded way\&.
 .RE
 .PP
 The
@@ -315,6 +305,12 @@ The date and time that the
 \fBbind10\fR
 process started\&. This is represented in ISO 8601 format\&.
 .RE
+.SH "FILES"
+.PP
+sockcreator\-XXXXXX/sockcreator
+\(em the Unix Domain socket located in a temporary file directory for
+\fBb10\-sockcreator\fR
+communication\&.
 .SH "SEE ALSO"
 .PP
 
@@ -339,5 +335,5 @@ The
 daemon was initially designed by Shane Kerr of ISC\&.
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2010-2012 Internet Systems Consortium, Inc. ("ISC")
 .br
