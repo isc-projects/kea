@@ -1,3 +1,5 @@
+bind10-devel-20120301 released on March 1, 2012
+
 390.	[bug]		vorner
 	The UDP IPv6 packets are now correctly fragmented for maximum
 	guaranteed MTU, so they won't get lost because being too large
