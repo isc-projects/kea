@@ -172,15 +172,6 @@
 
           <listitem>
             <simpara>
-              <command>b10-msgq</command> &mdash;
-              Message bus daemon.
-              This process coordinates communication between all of the other
-              BIND 10 processes.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
               <command>b10-auth</command> &mdash;
               Authoritative DNS server.
               This process serves DNS requests.
@@ -205,6 +196,15 @@
 
           <listitem>
             <simpara>
+              <command>b10-msgq</command> &mdash;
+              Message bus daemon.
+              This process coordinates communication between all of the other
+              BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>b10-resolver</command> &mdash;
               Recursive name server.
               This process handles incoming queries.
@@ -214,9 +214,26 @@
 
           <listitem>
             <simpara>
+              <command>b10-sockcreator</command> &mdash;
+              Socket creator daemon.
+              This process creates sockets used by
+              network-listening BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>b10-stats</command> &mdash;
               Statistics collection daemon.
               This process collects and reports statistics data.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-stats-httpd</command> &mdash;
+              HTTP server for statistics reporting.
+              This process reports statistics data in XML format over HTTP.
             </simpara>
           </listitem>
 
@@ -269,8 +286,9 @@
             <simpara>
               <command>bindctl</command> &mdash;
               interactive administration interface.
-              This is a command-line tool which allows an administrator
-              to control BIND 10.
+              This is a low-level command-line tool which allows
+              a developer or an experienced administrator to control
+              BIND 10.
             </simpara>
           </listitem>
           <listitem>
@@ -751,9 +769,11 @@ as a dependency earlier -->
     <para>
       In its default configuration, the <command>bind10</command>
       master process will also start up
-      <command>b10-cmdctl</command> for admins to communicate with the
-      system, <command>b10-auth</command> for authoritative DNS service,
+      <command>b10-cmdctl</command> for administration tools to
+      communicate with the system,
+      <command>b10-auth</command> for authoritative DNS service,
       <command>b10-stats</command> for statistics collection,
+      <command>b10-stats-httpd</command> for statistics reporting,
       <command>b10-xfrin</command> for inbound DNS zone transfers,
       <command>b10-xfrout</command> for outbound DNS zone transfers,
       and <command>b10-zonemgr</command> for secondary service.
