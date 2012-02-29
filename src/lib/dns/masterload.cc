@@ -55,7 +55,7 @@ stripLine(string& s, const Exception& ex) {
         s.resize(pos_semicolon);
     }
     // Remove any trailing whitespace return the resulting text.
-    s.resize(s.find_last_not_of(" /t") + 1);
+    s.resize(s.find_last_not_of(" \t") + 1);
     return (s);
 }
 }
