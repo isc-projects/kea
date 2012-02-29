@@ -205,7 +205,8 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
 }
 
 void
-IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& service,
+IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol,
+                     IOService& service,
                      const isc::dns::Question& question,
                      const IOAddress& address, uint16_t port,
                      OutputBufferPtr& buff, Callback* cb, int wait, bool edns)
@@ -225,8 +226,10 @@ IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& servic
         query_msg->setEDNS(edns_query);
     }
 
-    MessageRenderer renderer(*data_->msgbuf);
+    MessageRenderer renderer;
+    renderer.setBuffer(data_->msgbuf.get());
     query_msg->toWire(renderer);
+    renderer.setBuffer(NULL);
 }
 
 // Return protocol in use.

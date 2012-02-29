@@ -28,7 +28,7 @@ using namespace isc::util;
 namespace {
 class RRTTLTest : public ::testing::Test {
 protected:
-    RRTTLTest() : obuffer(0), renderer(obuffer) {}       
+    RRTTLTest() : obuffer(0) {}
 
     OutputBuffer obuffer;
     MessageRenderer renderer;
@@ -114,7 +114,7 @@ TEST_F(RRTTLTest, toWireRenderer) {
     ttl_max.toWire(renderer);
 
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata, sizeof(wiredata));
 }
 

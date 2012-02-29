@@ -240,8 +240,10 @@ public:
 
         // Convert to wire format
         udp_send_buffer_->clear();
-        MessageRenderer renderer(*udp_send_buffer_);
+        MessageRenderer renderer;
+        renderer.setBuffer(udp_send_buffer_.get());
         message.toWire(renderer);
+        renderer.setBuffer(NULL);
 
         // Return a message back to the IOFetch object (after setting the
         // expected length of data for the check in the send handler).
@@ -353,8 +355,7 @@ public:
         // Convert to wire format
         // Use a temporary buffer for the dns wire data (we copy it
         // to the 'real' buffer below)
-        OutputBuffer msg_buf(BUFFER_SIZE);
-        MessageRenderer renderer(msg_buf);
+        MessageRenderer renderer;
         message.toWire(renderer);
 
         // Also, take this opportunity to clear the accumulated read count in
@@ -368,12 +369,14 @@ public:
         // followed by the actual data. We copy them to a new buffer
         // first
         tcp_send_buffer_->clear();
-        tcp_send_buffer_->writeUint16(msg_buf.getLength());
-        tcp_send_buffer_->writeData(msg_buf.getData(), msg_buf.getLength());
+        tcp_send_buffer_->writeUint16(renderer.getLength());
+        tcp_send_buffer_->writeData(renderer.getData(), renderer.getLength());
         tcp_socket_.async_send(asio::buffer(tcp_send_buffer_->getData(),
                                             tcp_send_buffer_->getLength()),
-                           boost::bind(&RecursiveQueryTest3::tcpSendHandler,
-                               this, tcp_send_buffer_->getLength(), _1, _2));
+                               boost::bind(
+                                   &RecursiveQueryTest3::tcpSendHandler,
+                                   this,
+                                   tcp_send_buffer_->getLength(), _1, _2));
     }
 
     /// \brief Completion Handler for Sending TCP data

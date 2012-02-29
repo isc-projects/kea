@@ -58,7 +58,7 @@ ConstElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
 
 class DataSrcTest : public ::testing::Test {
 protected:
-    DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE),
+    DataSrcTest() : msg(Message::PARSE),
                     opcodeval(Opcode::QUERY().getCode()), qid(0)
     {
         DataSrcPtr sql3_source = DataSrcPtr(new Sqlite3DataSrc); 
@@ -76,7 +76,6 @@ protected:
 
     HotCache cache;
     MetaDataSrc meta_source;
-    OutputBuffer obuffer;
     MessageRenderer renderer;
     Message msg;
     const uint16_t opcodeval;
