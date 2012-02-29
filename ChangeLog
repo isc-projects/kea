@@ -4,14 +4,14 @@ bind10-devel-20120301 released on March 1, 2012
 	The UDP IPv6 packets are now correctly fragmented for maximum
 	guaranteed MTU, so they won't get lost because being too large
 	for some hop.
-	(git ff013364643f9bfa736b2d23fec39ac35872d6ad)
+	(Trac #1534, git ff013364643f9bfa736b2d23fec39ac35872d6ad)
 
 389.	[func]*		vorner
 	Xfrout now uses the global TSIG keyring, instead of its own. This
 	means the keys need to be set only once (in tsig_keys/keys).
 	However, the old configuration of Xfrout/tsig_keys need to be
 	removed for Xfrout to work.
-	(git 5a7953933a49a0ddd4ee1feaddc908cd2285522d)
+	(Trac #1643, git 5a7953933a49a0ddd4ee1feaddc908cd2285522d)
 
 388.	[func]		jreed
 	Use prefix "sockcreator-" for the private temporary directory
