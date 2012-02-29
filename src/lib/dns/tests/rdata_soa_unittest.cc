@@ -56,8 +56,8 @@ TEST_F(Rdata_SOA_Test, toWireRenderer) {
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_soa_fromWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+                        static_cast<const uint8_t *>(renderer.getData()) + 2,
+                        renderer.getLength() - 2, &data[2], data.size() - 2);
 }
 
 TEST_F(Rdata_SOA_Test, toWireBuffer) {

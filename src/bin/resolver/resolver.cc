@@ -252,7 +252,8 @@ makeErrorMessage(MessagePtr message, MessagePtr answer_message,
     }
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
     message->setRcode(rcode);
-    MessageRenderer renderer(*buffer);
+    MessageRenderer renderer;
+    renderer.setBuffer(buffer.get());
     message->toWire(renderer);
 }
 
@@ -303,7 +304,8 @@ public:
 
         // Now we can clear the buffer and render the new message into it
         buffer->clear();
-        MessageRenderer renderer(*buffer);
+        MessageRenderer renderer;
+        renderer.setBuffer(buffer.get());
 
         ConstEDNSPtr edns(query_message->getEDNS());
         const bool dnssec_ok = edns && edns->getDNSSECAwareness();
@@ -327,6 +329,7 @@ public:
         }
 
         answer_message->toWire(renderer);
+        renderer.setBuffer(NULL);
 
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL,
                   RESOLVER_DNS_MESSAGE_SENT)

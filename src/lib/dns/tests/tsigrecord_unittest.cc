@@ -46,7 +46,7 @@ protected:
                              test_mac.size(), &test_mac[0],
                              0x2d65, 0, 0, NULL)),
         test_record(test_name, test_rdata),
-        buffer(0), renderer(buffer)
+        buffer(0)
     {}
     const Name test_name;
     vector<unsigned char> test_mac;
