@@ -906,8 +906,8 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
-AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
-  [regenerate man pages [default=no]])], enable_man=$enableval, enable_man=no)
+AC_ARG_ENABLE(man, [AC_HELP_STRING([--disable-man],
+  [don't generate documentation])], enable_man=$enableval, enable_man=yes)
 
 AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
 
