@@ -44,8 +44,8 @@ bind10-devel-20120301 released on March 1, 2012
 384.	[func]		jinmei, jelte, vorner, haikuo, kevin
 	b10-auth now supports NSEC3-signed zones in the in-memory data
 	source.
-	(Trac #1580-#1585, #1587, and other related changes to the
-	in-memory data source)
+	(Trac #1580, #1581, #1582, #1583, #1584, #1585, #1587, and
+	other related changes to the in-memory data source)
 
 383.	[build]		jinmei
 	Fixed build failure on MacOS 10.7 (Lion) due to the use of
@@ -207,7 +207,8 @@ bind10-devel-20120119 released on January 19, 2012
 	configuration.  If your b10-config.db contains "setuid" for
 	Boss.components, you'll need to remove that entry by hand before
 	starting BIND 10.
-	(Trac #1508-#1510, git edc5b3c12eb45437361484c843794416ad86bb00)
+	(Trac #1508, #1509, #1510,
+	git edc5b3c12eb45437361484c843794416ad86bb00)
 
 361.	[func]		vorner,jelte,jinmei
 	The socket creator is now used to provide sockets. It means you can
