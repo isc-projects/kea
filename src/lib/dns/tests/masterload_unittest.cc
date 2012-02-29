@@ -193,6 +193,43 @@ TEST_F(MasterLoadTest, loadRRWithCommentNoSpace) {
                                       dnskey_rdata)));
 }
 
+TEST_F(MasterLoadTest, loadRRWithCommentEmptyComment) {
+    // Similar to the previous one, but there's no space before comments.
+    // It should still work.
+    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+        "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
+        "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE= ;\n";
+    masterLoad(rr_stream, origin, zclass, callback);
+    ASSERT_EQ(1, results.size());
+    EXPECT_EQ(0, results[0]->getRdataIterator()->getCurrent().compare(
+                  *rdata::createRdata(RRType::DNSKEY(), zclass,
+                                      dnskey_rdata)));
+}
+
+TEST_F(MasterLoadTest, loadRRWithCommentEmptyCommentNoSpace) {
+    // Similar to the previous one, but there's no space before comments.
+    // It should still work.
+    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+        "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
+        "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE=;\n";
+    masterLoad(rr_stream, origin, zclass, callback);
+    ASSERT_EQ(1, results.size());
+    EXPECT_EQ(0, results[0]->getRdataIterator()->getCurrent().compare(
+                  *rdata::createRdata(RRType::DNSKEY(), zclass,
+                                      dnskey_rdata)));
+}
+
+TEST_F(MasterLoadTest, loadRRWithEOLWhitespace) {
+    // Similar to the previous one, but there's no space before comments.
+    // It should still work.
+    rr_stream << "example.com. 3600 IN NSEC3PARAM 1 0 1 beef \n";
+    masterLoad(rr_stream, origin, zclass, callback);
+    ASSERT_EQ(1, results.size());
+    EXPECT_EQ(0, results[0]->getRdataIterator()->getCurrent().compare(
+                  *rdata::createRdata(RRType::NSEC3PARAM(), zclass,
+                                      "1 0 1 beef")));
+}
+
 TEST_F(MasterLoadTest, loadRRNoComment) {
     // A semicolon in a character-string shouldn't confuse the parser.
     rr_stream << "example.com. 3600 IN TXT \"aaa;bbb\"\n";
