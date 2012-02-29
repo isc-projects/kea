@@ -96,7 +96,7 @@ private:
     ///               data
     /// \param db_result The ZoneFinder::FindResult returned by find()
     void addNXRRsetProof(isc::datasrc::ZoneFinder& finder,
-        const isc::datasrc::ZoneFinder::FindResult& db_result);
+                         const isc::datasrc::ZoneFinder::Context& db_context);
 
     /// Add NSEC RRs that prove an NXDOMAIN result.
     ///
@@ -115,7 +115,7 @@ private:
     /// of RFC5155.
     void addWildcardProof(
         isc::datasrc::ZoneFinder& finder,
-        const isc::datasrc::ZoneFinder::FindResult& dbResult);
+        const isc::datasrc::ZoneFinder::Context& db_context);
 
     /// \brief Adds one NSEC RR proved no matched QNAME,one NSEC RR proved no
     /// matched <QNAME,QTYPE> through wildcard extension.
