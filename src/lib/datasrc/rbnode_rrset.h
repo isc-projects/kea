@@ -27,6 +27,7 @@
 
 namespace isc {
 namespace datasrc {
+namespace internal {
 
 /// \brief Special RRset for optimizing memory datasource requirement
 ///
@@ -188,6 +189,7 @@ private:
     isc::dns::ConstRRsetPtr rrset_;     ///< Underlying RRset
 };
 
+}   // namespace internal
 }   // namespace datasrc
 }   // namespace isc
 
