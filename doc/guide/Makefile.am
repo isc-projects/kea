@@ -1,11 +1,15 @@
-EXTRA_DIST = bind10-guide.css
-EXTRA_DIST += bind10-guide.xml bind10-guide.html bind10-guide.txt
-EXTRA_DIST += bind10-messages.xml bind10-messages.html
+# generated documentation
+DOCS = bind10-messages.html bind10-guide.html bind10-guide.txt
+
+docdir = $(pkgdatadir)/doc/$(PACKAGE)
+doc_DATA = $(DOCS) bind10-guide.css
+
+# TODO: okay to include the generated bind10-messages.xml in dist tarfile too?
+EXTRA_DIST = bind10-guide.xml bind10-messages.xml $(doc_DATA)
+CLEANFILES = $(DOCS) bind10-messages.xml
 
 # This is not a "man" manual, but reuse this for now for docbook.
 if ENABLE_MAN
-
-.PHONY: bind10-messages.xml
 
 bind10-guide.html: bind10-guide.xml
 	xsltproc --novalid --xinclude --nonet \
@@ -20,7 +24,7 @@ bind10-guide.html: bind10-guide.xml
 HTML2TXT = elinks -dump -no-numbering -no-references
 
 bind10-guide.txt: bind10-guide.html
-	$(HTML2TXT) $(srcdir)/bind10-guide.html > $@
+	$(HTML2TXT) bind10-guide.html > $@
 
 bind10-messages.html: bind10-messages.xml
 	xsltproc --novalid --xinclude --nonet \
@@ -28,9 +32,8 @@ bind10-messages.html: bind10-messages.xml
 		-o $@ \
 		--stringparam html.stylesheet $(srcdir)/bind10-guide.css \
 		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
-		$(srcdir)/bind10-messages.xml
+		bind10-messages.xml
 
-# So many dependencies that it's easiest just to regenerate it every time
 bind10-messages.xml:
 	$(PYTHON) $(top_srcdir)/tools/system_messages.py -o $@ $(top_srcdir)
 
