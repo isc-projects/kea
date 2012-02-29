@@ -42,11 +42,11 @@ namespace internal {
 /// - Calls to methods that change attributes of the underlying RRset (such as
 ///   TTL or Name) cause an exception to be thrown.  The in-memory data source
 ///   does not allow modification of these attributes.
-/// - Calls that modify the associated RRSIGs of the RRset are allowed (even
-///   though the pointer is to a "const" object).  The reason here is because
-///   RRSIGs are added to the in-memory data source after the RBNodeRRset
-///   objects have been created.  Thus there has to be the capability of
-///   modifying this information.
+/// - Calls that add the pointer to the associated RRSIG to the RRset are
+///   allowed (even though the pointer is to a "const" RRset).  The reason here
+///   is that RRSIGs are added to the in-memory data source after the
+///   RBNodeRRset objects have been created.  Thus there has to be the
+///   capability of modifying this information.
 ///
 /// The class is not derived from RRset itself to simplify coding: part of the
 /// loading of the memory data source is handled in the BIND 10 "libdns++"
@@ -61,8 +61,8 @@ class RBNodeRRset : public isc::dns::AbstractRRset {
 private:
     // Note: The copy constructor and the assignment operator are intentionally
     // defined as private as we would normally not duplicate a RBNodeRRset.
-    // (We use the "private" method instead of inheriting from boost::noncopyable
-    // so as to avoid multiple inheritance.)
+    // (We use the "private" method instead of inheriting from
+    // boost::noncopyable so as to avoid multiple inheritance.)
     RBNodeRRset(const RBNodeRRset& source);
     RBNodeRRset& operator=(const RBNodeRRset& source);
 
@@ -72,7 +72,8 @@ public:
     /// Creates an RBNodeRRset from the pointer to the RRset passed to it.
     ///
     /// \param rrset Pointer to underlying RRset encapsulated by this object.
-    RBNodeRRset(const isc::dns::ConstRRsetPtr& rrset) : rrset_(rrset) {}
+    explicit RBNodeRRset(const isc::dns::ConstRRsetPtr& rrset) : rrset_(rrset)
+    {}
 
     /// \brief Destructor
     virtual ~RBNodeRRset() {}
@@ -181,7 +182,7 @@ public:
     /// \brief Return underlying RRset pointer
     ///
     /// ... mainly for testing.
-    virtual isc::dns::ConstRRsetPtr getUnderlyingRRset() const {
+    isc::dns::ConstRRsetPtr getUnderlyingRRset() const {
         return (rrset_);
     }
 

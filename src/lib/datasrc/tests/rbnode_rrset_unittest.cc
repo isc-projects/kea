@@ -17,6 +17,7 @@
 #include <exceptions/exceptions.h>
 #include <dns/rdataclass.h>
 #include <datasrc/rbnode_rrset.h>
+#include <testutils/dnsmessage_test.h>
 
 #include <gtest/gtest.h>
 
@@ -24,13 +25,14 @@
 
 using isc::UnitTestUtil;
 
-using namespace std;
 using namespace isc;
 using namespace isc::datasrc;
 using namespace isc::datasrc::internal;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using namespace isc::testutils;
 using namespace isc::util;
+using namespace std;
 
 // These tests are very similar to those for RRset - indeed, this file was
 // created from those tests.  However, the significant difference in behaviour
@@ -136,33 +138,36 @@ TEST_F(RBNodeRRsetTest, toText) {
     EXPECT_THROW(rrset_a_empty.toText(), EmptyRRset);
 }
 
+// Note: although the next two tests are essentially the same and used common
+// test code, they use different test data: the MessageRenderer produces
+// compressed wire data whereas the OutputBuffer does not.
+
+template <typename T>
+void
+performToWireTest(T& dataHolder, const RBNodeRRset& rrset,
+                  const RBNodeRRset& rrset_empty, const char* testdata)
+{
+    rrset.toWire(dataHolder);
+
+    std::vector<unsigned char> wiredata;
+    UnitTestUtil::readWireData(testdata, wiredata);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, dataHolder.getData(),
+                        dataHolder.getLength(), &wiredata[0], wiredata.size());
+
+    // toWire() cannot be performed for an empty RRset.
+    dataHolder.clear();
+    EXPECT_THROW(rrset_empty.toWire(dataHolder), EmptyRRset);
+}
+
 TEST_F(RBNodeRRsetTest, toWireRenderer) {
     OutputBuffer buffer(0);
     MessageRenderer renderer(buffer);
-    rrset_a.toWire(renderer);
-
-    std::vector<unsigned char> wiredata;
-    UnitTestUtil::readWireData("rrset_toWire2", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &wiredata[0], wiredata.size());
-
-    // toWire() cannot be performed for an empty RRset.
-    renderer.clear();
-    EXPECT_THROW(rrset_a_empty.toWire(renderer), EmptyRRset);
+    performToWireTest(renderer, rrset_a, rrset_a_empty, "rrset_toWire2");
 }
 
 TEST_F(RBNodeRRsetTest, toWireBuffer) {
     OutputBuffer buffer(0);
-    rrset_a.toWire(buffer);
-
-    std::vector<unsigned char> wiredata;
-    UnitTestUtil::readWireData("rrset_toWire1", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &wiredata[0], wiredata.size());
-
-    // toWire() cannot be performed for an empty RRset.
-    buffer.clear();
-    EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
+    performToWireTest(buffer, rrset_a, rrset_a_empty, "rrset_toWire1");
 }
 
 TEST_F(RBNodeRRsetTest, addRdata) {
@@ -205,24 +210,13 @@ TEST_F(RBNodeRRsetTest, LeftShiftOperator) {
               "test.example.com. 3600 IN A 192.0.2.2\n", oss.str());
 }
 
-// General RRSIG check function.  Get the RRSIG from the RRset and check that
-// the RDATA is what we expect.
-void
-checkSignature(const RBNodeRRset& rrset) {
-    RRsetPtr rrsig = rrset.getRRsig();
-    ASSERT_TRUE(rrsig);
-    RdataIteratorPtr it = rrsig->getRdataIterator();
-    EXPECT_EQ(RRSIG_TXT, it->getCurrent().toText());
-}
-
 // addRRSIG tests.
 TEST_F(RBNodeRRsetTest, addRRsigConstRdataPointer) {
     EXPECT_FALSE(rrset_a.getRRsig());
-    RdataPtr data = createRdata(rrset_siga->getType(), rrset_siga->getClass(),
-                                RRSIG_TXT);
-    ConstRdataPtr cdata(data);
-    rrset_a.addRRsig(cdata);
-    checkSignature(rrset_a);
+    ConstRdataPtr data = createRdata(rrset_siga->getType(),
+                                     rrset_siga->getClass(), RRSIG_TXT);
+    rrset_a.addRRsig(data);
+    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigRdataPointer) {
@@ -230,19 +224,19 @@ TEST_F(RBNodeRRsetTest, addRRsigRdataPointer) {
     RdataPtr data = createRdata(rrset_siga->getType(), rrset_siga->getClass(),
                                 RRSIG_TXT);
     rrset_a.addRRsig(data);
-    checkSignature(rrset_a);
+    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigAbstractRRset) {
     EXPECT_FALSE(rrset_a.getRRsig());
     rrset_a.addRRsig(*(rrset_siga.get()));
-    checkSignature(rrset_a);
+    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigConstantRRsetPointer) {
     EXPECT_FALSE(rrset_a.getRRsig());
     rrset_a.addRRsig(rrset_siga);
-    checkSignature(rrset_a);
+    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigRRsetPointer) {
@@ -251,7 +245,7 @@ TEST_F(RBNodeRRsetTest, addRRsigRRsetPointer) {
                    RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG(RRSIG_TXT));
     rrset_a.addRRsig(rrsig);
-    checkSignature(rrset_a);
+    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, removeRRsig) {
