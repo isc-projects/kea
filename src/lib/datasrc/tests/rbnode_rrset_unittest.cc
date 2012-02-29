@@ -27,6 +27,7 @@ using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::datasrc;
+using namespace isc::datasrc::internal;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::util;

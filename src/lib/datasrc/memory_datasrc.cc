@@ -432,7 +432,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // ... although instead of loading the RRset directly, we encapsulate
         // it within an RBNodeRRset.  This contains additional information that
         // speeds up queries.
-        ConstRRsetPtr rrset(new RBNodeRRset(rawrrset));
+        ConstRRsetPtr rrset(new internal::RBNodeRRset(rawrrset));
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addNSEC3(rrset, zone_data));
