@@ -172,19 +172,25 @@ TEST_F(InMemoryClientTest, iterator) {
     EXPECT_EQ(result::SUCCESS, zone->add(aRRsetA));
     EXPECT_EQ(result::SUCCESS, zone->add(aRRsetAAAA));
     EXPECT_EQ(result::SUCCESS, zone->add(subRRsetA));
-    // Check it with full zone, one by one.
-    // It should be in ascending order in case of InMemory data source
-    // (isn't guaranteed in general)
-    // Since the in-memory data source uses objects that encapsulate the
-    // RRsets stored, the iterator does not iterate over the RRsets stored -
-    // it iterates over the encapsulating objects.  This means that we cannot
-    // directly compare pointer values: instead, we compare the actual data
-    // stored.
+
+    // Check it with full zone.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(aRRsetA);
+    expected_rrsets.push_back(aRRsetAAAA);
+    expected_rrsets.push_back(subRRsetA);
+
     iterator = memory_client.getIterator(Name("a"));
-    EXPECT_EQ(aRRsetA->toText(), iterator->getNextRRset()->toText());
-    EXPECT_EQ(aRRsetAAAA->toText(), iterator->getNextRRset()->toText());
-    EXPECT_EQ(subRRsetA->toText(), iterator->getNextRRset()->toText());
+    vector<ConstRRsetPtr> actual_rrsets;
+    for (int i = 0; i < 3; ++i) {
+        ConstRRsetPtr actual = iterator->getNextRRset();
+        ASSERT_NE(ConstRRsetPtr(), actual);
+        actual_rrsets.push_back(actual);
+    }
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+
+    rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
+                actual_rrsets.begin(), actual_rrsets.end());
+
 }
 
 TEST_F(InMemoryClientTest, iterator_separate_rrs) {
