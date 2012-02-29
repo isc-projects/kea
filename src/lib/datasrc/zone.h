@@ -15,13 +15,13 @@
 #ifndef __ZONE_H
 #define __ZONE_H 1
 
-#include <utility>
-#include <vector>
-
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
 
 #include <datasrc/result.h>
+
+#include <utility>
+#include <vector>
 
 namespace isc {
 namespace datasrc {
@@ -79,7 +79,7 @@ public:
     /// proof of the result.
     ///
     /// The caller is generally expected to get access to the information
-    /// via read-only getter methods of \c FindResult so that it won't rely
+    /// via read-only getter methods of \c FindContext so that it won't rely
     /// on specific details of the representation of the flags.  So these
     /// definitions are basically only meaningful for data source
     /// implementations.
@@ -112,10 +112,11 @@ public:
     ///
     /// Note: we may also want to include the closest enclosure "node" to
     /// optimize including the NSEC for no-wildcard proof (FWIW NSD does that).
-    struct FindResult {
-        FindResult(Result param_code,
-                   const isc::dns::ConstRRsetPtr param_rrset,
-                   FindResultFlags param_flags = RESULT_DEFAULT) :
+    class Context {
+    public:
+        Context(Result param_code,
+                const isc::dns::ConstRRsetPtr param_rrset,
+                FindResultFlags param_flags = RESULT_DEFAULT) :
             code(param_code), rrset(param_rrset), flags(param_flags)
         {}
         const Result code;
@@ -217,10 +218,10 @@ public:
     ///   the code of \c DNAME and that DNAME RR.
     ///
     /// No RRset will be returned in the \c NXDOMAIN and \c NXRRSET cases
-    /// (\c rrset member of \c FindResult will be NULL), unless DNSSEC data
+    /// (\c rrset member of \c FindContext will be NULL), unless DNSSEC data
     /// are required.  See below for the cases with DNSSEC.
     ///
-    /// The returned \c FindResult object can also provide supplemental
+    /// The returned \c FindContext object can also provide supplemental
     /// information about the search result via its methods returning a
     /// boolean value.  Such information may be useful for the caller if
     /// the caller wants to collect additional DNSSEC proofs based on the
@@ -276,7 +277,7 @@ public:
     /// returned from this method.
     ///
     /// In case it's signed with NSEC, this method will possibly return
-    /// a related NSEC RRset in the \c rrset member of \c FindResult.
+    /// a related NSEC RRset in the \c rrset member of \c FindContext.
     /// What kind of NSEC is returned depends on the result code
     /// (\c NXDOMAIN or \c NXRRSET) and on whether it's a wildcard match:
     ///
@@ -333,7 +334,7 @@ public:
     /// \endcode
     /// a call to \c find() for "y.b.example.org" with FIND_DNSSEC will
     /// result in NXRRSET and this NSEC; \c isWildcard() on the returned
-    /// \c FindResult object will return true.
+    /// \c FindContext object will return true.
     ///
     /// \exception std::bad_alloc Memory allocation such as for constructing
     ///  the resulting RRset fails
@@ -348,11 +349,12 @@ public:
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
     /// \param options The search options.
-    /// \return A \c FindResult object enclosing the search result (see above).
-    virtual FindResult find(const isc::dns::Name& name,
-                            const isc::dns::RRType& type,
-                            const FindOptions options
-                            = FIND_DEFAULT) = 0;
+    /// \return A \c FindContext object enclosing the search result
+    ///         (see above).
+    virtual boost::shared_ptr<Context> find(const isc::dns::Name& name,
+                                            const isc::dns::RRType& type,
+                                            const FindOptions options
+                                            = FIND_DEFAULT) = 0;
 
     ///
     /// \brief Finds all RRsets in the given name.
@@ -370,13 +372,14 @@ public:
     /// \param target the successfull result is returned through this
     /// \param options \see find, parameter options
     /// \return \see find and it's result
-    virtual FindResult findAll(const isc::dns::Name& name,
-                               std::vector<isc::dns::ConstRRsetPtr> &target,
-                               const FindOptions options = FIND_DEFAULT) = 0;
+    virtual boost::shared_ptr<Context> findAll(
+        const isc::dns::Name& name,
+        std::vector<isc::dns::ConstRRsetPtr> &target,
+        const FindOptions options = FIND_DEFAULT) = 0;
 
     /// A helper structure to represent the search result of \c findNSEC3().
     ///
-    /// The idea is similar to that of \c FindResult, but \c findNSEC3() has
+    /// The idea is similar to that of \c FindContext, but \c findNSEC3() has
     /// special interface and semantics, we use a different structure to
     /// represent the result.
     struct FindNSEC3Result {
@@ -530,8 +533,15 @@ inline ZoneFinder::FindResultFlags operator |(
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
 typedef boost::shared_ptr<ZoneFinder> ZoneFinderPtr;
 
-/// \brief A pointer-like type pointing to a \c ZoneFinder object.
+/// \brief A pointer-like type pointing to an immutable \c ZoneFinder object.
 typedef boost::shared_ptr<const ZoneFinder> ConstZoneFinderPtr;
+
+/// \brief A pointer-like type pointing to a \c ZoneFinder::Context object.
+typedef boost::shared_ptr<ZoneFinder::Context> ZoneFinderContextPtr;
+
+/// \brief A pointer-like type pointing to an immutable
+/// \c ZoneFinder::Context object.
+typedef boost::shared_ptr<ZoneFinder::Context> ConstZoneFinderContextPtr;
 
 /// The base class to make updates to a single zone.
 ///
