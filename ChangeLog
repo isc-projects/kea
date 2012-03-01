@@ -62,7 +62,7 @@ bind10-devel-20120301 released on March 1, 2012
 
 382.	[func]		jelte
 	b10-auth now also experimentally supports statistics counters of
-	the rcode reponses it sends. The counters can be shown as
+	the rcode responses it sends. The counters can be shown as
 	rcode.<code name>, where code name is the lowercase textual
 	representation of the rcode (e.g. "noerror", "formerr", etc.).
 	Same note applies as for opcodes, see changelog entry 364.
