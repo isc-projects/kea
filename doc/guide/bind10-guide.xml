@@ -1019,7 +1019,7 @@ Unix domain sockets
 <!-- TODO -->
       <note>
         <para>
-          The development prototype release only provides the
+          The development prototype release only provides
           <command>bindctl</command> as a user interface to
           <command>b10-cmdctl</command>.
           Upcoming releases will provide another interactive command-line
@@ -1210,7 +1210,7 @@ or accounts database -->
       The port can be set by using the <option>--port</option> command line option.
       The address to listen on can be set using the <option>--address</option> command
       line argument.
-      Each HTTPS connection is stateless and timesout in 1200 seconds
+      Each HTTPS connection is stateless and times out in 1200 seconds
       by default.  This can be
       redefined by using the <option>--idle-timeout</option> command line argument.
     </para>
@@ -2371,7 +2371,7 @@ eth0 fe80::21e:8cff:fe9b:7349
 
           In the Logging module, you can specify the configuration
           for zero or more loggers; any that are not specified will
-          take appropriate default values..
+          take appropriate default values.
 
         </para>
 
