@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>February 28, 2012</date>
+    <date>March 1, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -201,20 +201,20 @@
 
     <para>
       The statistics data collected by the <command>b10-stats</command>
-      daemon include:
+      daemon for <quote>Auth</quote> include:
     </para>
 
     <variablelist>
 
       <varlistentry>
-        <term>auth.queries.tcp</term>
+        <term>queries.tcp</term>
         <listitem><simpara>Total count of queries received by the
           <command>b10-auth</command> server over TCP since startup.
         </simpara></listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>auth.queries.udp</term>
+        <term>queries.udp</term>
         <listitem><simpara>Total count of queries received by the
           <command>b10-auth</command> server over UDP since startup.
         </simpara></listitem>
