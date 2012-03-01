@@ -479,36 +479,51 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         return;
     }
 
-    // update per opcode statistics counter.  This can only be reliable after
-    // TSIG check succeeds.
-    impl_->counters_.inc(message->getOpcode());
+    try {
+        // update per opcode statistics counter.  This can only be reliable
+        // after TSIG check succeeds.
+        impl_->counters_.inc(message->getOpcode());
 
-    bool send_answer = true;
-    if (message->getOpcode() == Opcode::NOTIFY()) {
-        send_answer = impl_->processNotify(io_message, message, buffer,
-                                           tsig_context);
-    } else if (message->getOpcode() != Opcode::QUERY()) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
-                  .arg(message->getOpcode().toText());
-        makeErrorMessage(message, buffer, Rcode::NOTIMP(), tsig_context);
-    } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
-    } else {
-        ConstQuestionPtr question = *message->beginQuestion();
-        const RRType &qtype = question->getType();
-        if (qtype == RRType::AXFR()) {
-            send_answer = impl_->processXfrQuery(io_message, message, buffer,
-                                                 tsig_context);
-        } else if (qtype == RRType::IXFR()) {
-            send_answer = impl_->processXfrQuery(io_message, message, buffer,
-                                                 tsig_context);
+        bool send_answer = true;
+        if (message->getOpcode() == Opcode::NOTIFY()) {
+            send_answer = impl_->processNotify(io_message, message, buffer,
+                                               tsig_context);
+        } else if (message->getOpcode() != Opcode::QUERY()) {
+            LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
+                      .arg(message->getOpcode().toText());
+            makeErrorMessage(message, buffer, Rcode::NOTIMP(), tsig_context);
+        } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
+            makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
         } else {
-            send_answer = impl_->processNormalQuery(io_message, message,
-                                                    buffer, tsig_context);
+            ConstQuestionPtr question = *message->beginQuestion();
+            const RRType &qtype = question->getType();
+            if (qtype == RRType::AXFR()) {
+                send_answer = impl_->processXfrQuery(io_message, message,
+                                                     buffer, tsig_context);
+            } else if (qtype == RRType::IXFR()) {
+                send_answer = impl_->processXfrQuery(io_message, message,
+                                                     buffer, tsig_context);
+            } else {
+                send_answer = impl_->processNormalQuery(io_message, message,
+                                                        buffer, tsig_context);
+            }
         }
-    }
 
-    impl_->resumeServer(server, message, send_answer);
+        impl_->resumeServer(server, message, send_answer);
+    } catch (const isc::Unexpected&) {
+        // If the error was unexpected protocol, don't even bother responding
+        // (If we see other Unexpected's here, we should probably change to
+        // a specific exception for unknown protocol)
+        impl_->resumeServer(server, message, false);
+    } catch (const isc::Exception&) {
+        // For ISC Exceptions, respond with servfail
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
+        impl_->resumeServer(server, message, true);
+    } catch (...) {
+        // Drop the query on any other exceptions (do we want servfail here
+        // too?)
+        impl_->resumeServer(server, message, false);
+    }
 }
 
 bool

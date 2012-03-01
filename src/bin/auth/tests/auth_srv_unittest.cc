@@ -121,15 +121,14 @@ protected:
         }
     }
 
-    void processAndCheckSERVFAIL(bool expect_answer) {
+    // Convenience method for tests that expect to return SERVFAIL
+    // It calls processMessage, checks if there is an answer, and
+    // check the header for default SERVFAIL data
+    void processAndCheckSERVFAIL() {
         processMessage();
-        if (expect_answer) {
-            EXPECT_TRUE(dnsserv.hasAnswer());
-            headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
-                        opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
-        } else {
-            EXPECT_FALSE(dnsserv.hasAnswer());
-        }
+        EXPECT_TRUE(dnsserv.hasAnswer());
+        headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                    opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     }
 
     IOService ios_;
@@ -492,17 +491,17 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
 }
 
 TEST_F(AuthSrvTest, AXFRDisconnectFail) {
-    // In our usage disconnect() shouldn't fail.  So we'll see the exception
-    // should it be thrown.
+    // In our usage disconnect() shouldn't fail. But even if it does,
+    // it should not disrupt service (so processMessage should have caught it)
     xfrout.disableSend();
     xfrout.disableDisconnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    EXPECT_THROW(server.processMessage(*io_message, parse_message,
-                                       response_obuffer, &dnsserv),
-                 XfroutError);
+    EXPECT_NO_THROW(server.processMessage(*io_message, parse_message,
+                                          response_obuffer, &dnsserv));
+    // Since the disconnect failed, we should still be 'connected'
     EXPECT_TRUE(xfrout.isConnected());
     // XXX: we need to re-enable disconnect.  otherwise an exception would be
     // thrown via the destructor of the server.
@@ -550,17 +549,16 @@ TEST_F(AuthSrvTest, IXFRSendFail) {
 }
 
 TEST_F(AuthSrvTest, IXFRDisconnectFail) {
-    // In our usage disconnect() shouldn't fail.  So we'll see the exception
-    // should it be thrown.
+    // In our usage disconnect() shouldn't fail, but even if it does,
+    // procesMessage() should catch it.
     xfrout.disableSend();
     xfrout.disableDisconnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                                        Name("example.com"), RRClass::IN(),
                                        RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    EXPECT_THROW(server.processMessage(*io_message, parse_message,
-                                       response_obuffer, &dnsserv),
-                 XfroutError);
+    EXPECT_NO_THROW(server.processMessage(*io_message, parse_message,
+                                          response_obuffer, &dnsserv));
     EXPECT_TRUE(xfrout.isConnected());
     // XXX: we need to re-enable disconnect.  otherwise an exception would be
     // thrown via the destructor of the server.
@@ -760,7 +758,8 @@ updateConfig(AuthSrv* server, const char* const config_data,
 
     ConstElementPtr result = config_answer->get("result");
     EXPECT_EQ(Element::list, result->getType());
-    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue());
+    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue()) <<
+        "Bad result from updateConfig: " << result->str();
 }
 
 // Install a Sqlite3 data source with testing data.
@@ -1001,11 +1000,10 @@ getDummyUnknownSocket() {
     return (socket);
 }
 
-// Submit unexpected type of query and check it throws isc::Unexpected
+// Submit unexpected type of query and check it is ignored
 TEST_F(AuthSrvTest, queryCounterUnexpected) {
     // This code isn't exception safe, but we'd rather keep the code
-    // simpler and more readable as this is only for tests and if it throws
-    // the program would immediately terminate anyway.
+    // simpler and more readable as this is only for tests
 
     // Create UDP query packet.
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
@@ -1021,9 +1019,7 @@ TEST_F(AuthSrvTest, queryCounterUnexpected) {
                                request_renderer.getLength(),
                                getDummyUnknownSocket(), *endpoint);
 
-    EXPECT_THROW(server.processMessage(*io_message, parse_message,
-                                       response_obuffer, &dnsserv),
-                 isc::Unexpected);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 TEST_F(AuthSrvTest, stop) {
@@ -1056,10 +1052,12 @@ TEST_F(AuthSrvTest, listenAddresses) {
 // Tests for catching exceptions in various stages of the query processing
 //
 // These tests work by defining two proxy classes, that act as an in-memory
-// client by default, but can throw exceptions at various points
+// client by default, but can throw exceptions at various points.
 //
 namespace {
 
+/// A the possible methods to throw in, either in FakeInMemoryClient or
+/// FakeZoneFinder
 enum ThrowWhen {
     throw_never,
     throw_at_find_zone,
@@ -1067,10 +1065,10 @@ enum ThrowWhen {
     throw_at_get_class,
     throw_at_find,
     throw_at_find_all,
-    throw_at_find_nsec3,
-    throw_at_find_previous_name
+    throw_at_find_nsec3
 };
 
+/// convenience function to check whether and what to throw
 void
 checkThrow(ThrowWhen method, ThrowWhen throw_at, bool isc_exception) {
     if (method == throw_at) {
@@ -1082,6 +1080,12 @@ checkThrow(ThrowWhen method, ThrowWhen throw_at, bool isc_exception) {
     }
 }
 
+/// \brief proxy class for the ZoneFinder returned by the InMemoryClient
+///        proxied by FakeInMemoryClient
+///
+/// See the documentation for FakeInMemoryClient for more information,
+/// all methods simply check whether they should throw, and if not, call
+/// their proxied equivalent.
 class FakeZoneFinder : public isc::datasrc::ZoneFinder {
 public:
     FakeZoneFinder(isc::datasrc::ZoneFinderPtr zone_finder,
@@ -1091,38 +1095,47 @@ public:
         throw_when_(throw_when),
         isc_exception_(isc_exception)
     {}
-    virtual isc::dns::Name getOrigin() const {
-        checkThrow(throw_at_find_zone, throw_when_, isc_exception_);
-        return real_zone_finder_->getOrigin();
+
+    virtual isc::dns::Name
+    getOrigin() const {
+        checkThrow(throw_at_get_origin, throw_when_, isc_exception_);
+        return (real_zone_finder_->getOrigin());
     }
 
-    virtual isc::dns::RRClass getClass() const {
+    virtual isc::dns::RRClass
+    getClass() const {
+        assert(false);
         checkThrow(throw_at_get_class, throw_when_, isc_exception_);
-        return real_zone_finder_->getClass();
+        return (real_zone_finder_->getClass());
     }
 
-    virtual isc::datasrc::ZoneFinder::FindResult find(const isc::dns::Name& name,
-                                                      const isc::dns::RRType& type,
-                                                      isc::datasrc::ZoneFinder::FindOptions options) {
+    virtual isc::datasrc::ZoneFinder::FindResult
+    find(const isc::dns::Name& name,
+         const isc::dns::RRType& type,
+         isc::datasrc::ZoneFinder::FindOptions options)
+    {
         checkThrow(throw_at_find, throw_when_, isc_exception_);
-        return real_zone_finder_->find(name, type, options);
+        return (real_zone_finder_->find(name, type, options));
     }
 
-    virtual FindResult findAll(const isc::dns::Name& name,
+    virtual FindResult
+    findAll(const isc::dns::Name& name,
                                std::vector<isc::dns::ConstRRsetPtr> &target,
-                               const FindOptions options = FIND_DEFAULT) {
+                               const FindOptions options = FIND_DEFAULT)
+    {
         checkThrow(throw_at_find_all, throw_when_, isc_exception_);
-        return real_zone_finder_->findAll(name, target, options);
+        return (real_zone_finder_->findAll(name, target, options));
     };
 
-    virtual FindNSEC3Result findNSEC3(const isc::dns::Name& name, bool recursive) {
+    virtual FindNSEC3Result
+    findNSEC3(const isc::dns::Name& name,bool recursive) {
         checkThrow(throw_at_find_nsec3, throw_when_, isc_exception_);
-        return real_zone_finder_->findNSEC3(name, recursive);
+        return (real_zone_finder_->findNSEC3(name, recursive));
     };
 
-    virtual isc::dns::Name findPreviousName(const isc::dns::Name& query) const {
-        checkThrow(throw_at_find_previous_name, throw_when_, isc_exception_);
-        return real_zone_finder_->findPreviousName(query);
+    virtual isc::dns::Name
+    findPreviousName(const isc::dns::Name& query) const {
+        return (real_zone_finder_->findPreviousName(query));
     }
 
 private:
@@ -1131,9 +1144,20 @@ private:
     bool isc_exception_;
 };
 
-// Mock Auth Server that can throw exceptions at specified times
+/// \brief Proxy InMemoryClient that can throw exceptions at specified times
+///
+/// It is based on the memory client since that one is easy to override
+/// (with setInMemoryClient) with the current design of AuthSrv.
 class FakeInMemoryClient : public isc::datasrc::InMemoryClient {
 public:
+    /// \brief Create a proxy memory client
+    ///
+    /// \param real_client The real in-memory client to proxy
+    /// \param throw_when if set to any value other than never, that is
+    ///        the method that will throw an exception (either in this
+    ///        class or the related FakeZoneFinder)
+    /// \param isc_exception if true, throw isc::Exception, otherwise,
+    ///                      throw std::exception
     FakeInMemoryClient(AuthSrv::InMemoryClientPtr real_client,
                        ThrowWhen throw_when,
                        bool isc_exception) :
@@ -1142,10 +1166,20 @@ public:
         isc_exception_(isc_exception)
     {}
 
-    virtual FindResult findZone(const isc::dns::Name& name) const {
+    /// \brief proxy call for findZone
+    ///
+    /// if this instance was constructed with throw_shen set to find_zone,
+    /// this method will throw. Otherwise, it will return a FakeZoneFinder
+    /// instance which will throw at the method specified at the
+    /// construction of this instance.
+    virtual FindResult
+    findZone(const isc::dns::Name& name) const {
         checkThrow(throw_at_find_zone, throw_when_, isc_exception_);
         const FindResult result = real_client_->findZone(name);
-        return FindResult(result.code, isc::datasrc::ZoneFinderPtr(new FakeZoneFinder(result.zone_finder, throw_when_, isc_exception_)));
+        return (FindResult(result.code, isc::datasrc::ZoneFinderPtr(
+                                        new FakeZoneFinder(result.zone_finder,
+                                        throw_when_,
+                                        isc_exception_))));
     }
 
 private:
@@ -1154,15 +1188,16 @@ private:
     bool isc_exception_;
 };
 
-} // end namespace for throwing proxy classes
+} // end anonymous namespace for throwing proxy classes
 
+// Test for the tests
+//
+// Set the proxies to never throw, this should have the same result as
+// queryWithInMemoryClientNoDNSSEC, and serves to test the two proxy classes
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     // Set real inmem client to proxy
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
 
-    // Set it to never throw, this should have the same result as
-    // queryWithInMemoryClientNoDNSSEC, and serves to test the
-    // two proxy classes
     AuthSrv::InMemoryClientPtr fake_client(
         new FakeInMemoryClient(server.getInMemoryClient(rrclass),
                                throw_never,
@@ -1180,77 +1215,116 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-// convenience function for setup
+// Convenience function for the rest of the tests, set up a proxy
+// to throw in the given method
+// If isc_exception is true, it will throw isc::Exception, otherwise
+// it will throw std::exception
 void
-setupThrowServfail(AuthSrv* server, ThrowWhen throw_when, bool isc_exception)
+setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
+                   bool isc_exception)
 {
     // Set real inmem client to proxy
-    updateConfig(server, CONFIG_INMEMORY_EXAMPLE, true);
+    updateConfig(server, config, true);
 
     // Set it to throw on findZone(), this should result in
     // SERVFAIL on any exception
     AuthSrv::InMemoryClientPtr fake_client(
-        new FakeInMemoryClient(server->getInMemoryClient(isc::dns::RRClass::IN()),
-                               throw_when,
-                               isc_exception));
+        new FakeInMemoryClient(
+            server->getInMemoryClient(isc::dns::RRClass::IN()),
+            throw_when,
+            isc_exception));
 
     ASSERT_NE(AuthSrv::InMemoryClientPtr(),
               server->getInMemoryClient(isc::dns::RRClass::IN()));
     server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client);
 }
 
+// Throw isc::Exception at findZone(), should result in SERVFAIL
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindZone) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
 
-    setupThrowServfail(&server, throw_at_find_zone, true);
-    processAndCheckSERVFAIL(true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_zone,
+                       true);
+    processAndCheckSERVFAIL();
 }
 
-/*
+// Throw std::exception at findZone(), should result in no answer
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindZoneStdException) {
+    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
+
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_zone,
+                       false);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+}
+
+// Throw isc::Exception at getOrigin(), should result in SERVFAIL
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetOrigin) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrowServfail(&server, throw_at_get_origin, true);
-    processAndCheckSERVFAIL(true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_origin,
+                       true);
+    processAndCheckSERVFAIL();
 }
 
+// Throw std::exception at findZone(), should result in SERVFAIL
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetOriginStdException) {
+    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_origin,
+                       true);
+    processAndCheckSERVFAIL();
+}
+
+// Throw isc::Exception in getClass(). (Currently?) getClass is not called
+// in the processMessage path, so this should result in a normal answer
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrowServfail(&server, throw_at_get_class, true);
-    processAndCheckSERVFAIL(true);
-}
-*/
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_class,
+                       true);
 
+    // getClass is not called so it should just answer
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
+}
+
+// Throw isc::Exception in find(), should result in SERVFAIL
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFind) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrowServfail(&server, throw_at_find, true);
-    processAndCheckSERVFAIL(true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find,
+                       true);
+    processAndCheckSERVFAIL();
 }
 
-/*
+// Throw std::exception at find(), should result in no answer
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindStdException) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrowServfail(&server, throw_at_find, false);
-    processAndCheckSERVFAIL(true);
-}
-*/
-/*
-TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindAll) {
-    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrowServfail(&server, throw_at_find_all, true);
-    processAndCheckSERVFAIL(true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find,
+                       false);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
+// Throw isc::Exception in findNSEC3(), should result in SERVFAIL
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindNSEC3) {
-    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrowServfail(&server, throw_at_find_nsec3, true);
-    processAndCheckSERVFAIL(true);
+    UnitTestUtil::createDNSSECRequestMessage(request_message, opcode,
+                                             default_qid, Name("foo.example."),
+                                             RRClass::IN(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_nsec3,
+                       true);
+    processAndCheckSERVFAIL();
 }
 
-TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindPreviousName) {
-    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrowServfail(&server, throw_at_find_previous_name, true);
-    processAndCheckSERVFAIL(true);
+// Throw std::exception at findNSEC3(), should result in no answer
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindNSEC3StdException) {
+    UnitTestUtil::createDNSSECRequestMessage(request_message, opcode,
+                                             default_qid, Name("foo.example."),
+                                             RRClass::IN(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_nsec3,
+                       false);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
-*/
 
 }
