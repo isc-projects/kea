@@ -20,17 +20,13 @@ CLEANFILES = *.gcno *.gcda
 TESTS =
 noinst_PROGRAMS =
 if HAVE_GTEST
-TESTS += run_unittests run_unittests_sqlite3 run_unittests_memory
+TESTS += run_unittests
 
-#
-# For each specific datasource, there is a separate binary that includes
-# the code itself (we can't unittest through the public API). These need
-# to be separate because the included code, by design, contains conflicting
-# symbols.
-# We also have a 'general' run_unittests with non-datasource-specific tests
-#
+# We have two sets of tests: the general tests and factory tests (see below
+# for the latter).  They are separate binary files sharing some program files
+# and libraries.
 
-# First define the parts shared by all
+# First define the parts shared by both
 common_sources = run_unittests.cc
 common_sources += $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 common_sources += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
@@ -46,7 +42,6 @@ common_ldadd += $(top_builddir)/src/lib/cc/libcc.la
 common_ldadd += $(top_builddir)/src/lib/testutils/libtestutils.la
 common_ldadd += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 
-
 # The general tests
 run_unittests_SOURCES = $(common_sources)
 run_unittests_SOURCES += datasrc_unittest.cc
@@ -57,34 +52,20 @@ run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 run_unittests_SOURCES += rbtree_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
+run_unittests_SOURCES += database_unittest.cc
+run_unittests_SOURCES += sqlite3_unittest.cc
+run_unittests_SOURCES += sqlite3_accessor_unittest.cc
+run_unittests_SOURCES += memory_datasrc_unittest.cc
+
+# We need the actually module implementation in the tests (they are not part
+# of libdatasrc)
+run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
+run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/memory_datasrc.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_LDADD = $(common_ldadd)
-
-
-# SQlite3 datasource tests
-run_unittests_sqlite3_SOURCES = $(common_sources)
-run_unittests_sqlite3_SOURCES += database_unittest.cc
-run_unittests_sqlite3_SOURCES += sqlite3_unittest.cc
-run_unittests_sqlite3_SOURCES += sqlite3_accessor_unittest.cc
-run_unittests_sqlite3_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
-
-run_unittests_sqlite3_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_sqlite3_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
-
-run_unittests_sqlite3_LDADD = $(common_ldadd)
-
-# In-memory datasource tests
-run_unittests_memory_SOURCES = $(common_sources)
-run_unittests_memory_SOURCES += memory_datasrc_unittest.cc
-run_unittests_memory_SOURCES += $(top_srcdir)/src/lib/datasrc/memory_datasrc.cc
-
-run_unittests_memory_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_memory_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
-
-run_unittests_memory_LDADD = $(common_ldadd)
 
 noinst_PROGRAMS+= $(TESTS)
 
