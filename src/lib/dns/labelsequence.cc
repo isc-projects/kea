@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,18 +19,6 @@
 namespace isc {
 namespace dns {
 
-LabelSequence::LabelSequence(const Name& name) : name_(name),
-                             first_label_(0), offsets_(name.getLabelCount()) {
-    offsets_[0] = 0;
-    last_label_ = name.getLabelCount();
-    // Walk through the wire format data and store all offsets
-    for (size_t i = 1; i < last_label_; ++i) {
-        // Each offset is the previous offset plus the length of the
-        // label plus 1 (for the label length octet)
-        offsets_[i] = offsets_[i - 1] + name.at(offsets_[i - 1]) + 1;
-    }
-}
-
 const char*
 LabelSequence::getData(size_t *len) const {
     // If the labelsequence is absolute, the current last_label_ falls
@@ -39,11 +27,11 @@ LabelSequence::getData(size_t *len) const {
     // the length for the 'previous' label (the root label) plus
     // one (for the root label zero octet)
     if (isAbsolute()) {
-        *len = offsets_[last_label_ - 1] - offsets_[first_label_] + 1;
+        *len = name_.offsets_[last_label_ - 1] - name_.offsets_[first_label_] + 1;
     } else {
-        *len = offsets_[last_label_] - offsets_[first_label_];
+        *len = name_.offsets_[last_label_] - name_.offsets_[first_label_];
     }
-    return (name_.at_p(offsets_[first_label_]));
+    return (&name_.ndata_[name_.offsets_[first_label_]]);
 }
 
 bool
@@ -63,21 +51,26 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
 }
 
 void
-LabelSequence::split(int i) {
-    if (abs(i) >= getLabelCount()) {
+LabelSequence::leftSplit(size_t i) {
+    if (i >= getLabelCount()) {
         isc_throw(OutOfRange, "Cannot split to zero or less labels; " << i <<
                               " (labelcount: " << getLabelCount() << ")");
     }
-    if (i > 0) {
-        first_label_ += i;
-    } else if (i < 0) {
-        last_label_ += i;
+    first_label_ += i;
+}
+
+void
+LabelSequence::rightSplit(size_t i) {
+    if (i >= getLabelCount()) {
+        isc_throw(OutOfRange, "Cannot split to zero or less labels; " << i <<
+                              " (labelcount: " << getLabelCount() << ")");
     }
+    last_label_ -= i;
 }
 
 bool
 LabelSequence::isAbsolute() const {
-    return (last_label_ == offsets_.size());
+    return (last_label_ == name_.offsets_.size());
 }
 
 } // end namespace dns

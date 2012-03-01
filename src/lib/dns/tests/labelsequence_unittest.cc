@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -143,77 +143,77 @@ TEST_F(LabelSequenceTest, getData) {
     getDataCheck("\000", 1, ls7);
 };
 
-TEST_F(LabelSequenceTest, split_pos) {
+TEST_F(LabelSequenceTest, leftSplit) {
     EXPECT_TRUE(ls1.equals(ls3));
-    ls1.split(0);
+    ls1.leftSplit(0);
     getDataCheck("\007example\003org\000", 13, ls1);
     EXPECT_TRUE(ls1.equals(ls3));
-    ls1.split(1);
+    ls1.leftSplit(1);
     getDataCheck("\003org\000", 5, ls1);
     EXPECT_FALSE(ls1.equals(ls3));
-    ls1.split(1);
+    ls1.leftSplit(1);
     getDataCheck("\000", 1, ls1);
     EXPECT_TRUE(ls1.equals(ls7));
 
-    ls2.split(2);
+    ls2.leftSplit(2);
     getDataCheck("\000", 1, ls2);
     EXPECT_TRUE(ls2.equals(ls7));
 }
 
-TEST_F(LabelSequenceTest, split_neg) {
+TEST_F(LabelSequenceTest, rightSplit) {
     EXPECT_TRUE(ls1.equals(ls3));
-    ls1.split(-1);
+    ls1.rightSplit(1);
     getDataCheck("\007example\003org", 12, ls1);
     EXPECT_FALSE(ls1.equals(ls3));
-    ls1.split(-1);
+    ls1.rightSplit(1);
     getDataCheck("\007example", 8, ls1);
     EXPECT_FALSE(ls1.equals(ls3));
 
     ASSERT_FALSE(ls1.equals(ls2));
-    ls2.split(-2);
+    ls2.rightSplit(2);
     getDataCheck("\007example", 8, ls2);
     EXPECT_TRUE(ls1.equals(ls2));
 }
 
 TEST_F(LabelSequenceTest, split_oor) {
-    EXPECT_THROW(ls1.split(100), isc::OutOfRange);
-    EXPECT_THROW(ls1.split(5), isc::OutOfRange);
-    EXPECT_THROW(ls1.split(4), isc::OutOfRange);
-    EXPECT_THROW(ls1.split(3), isc::OutOfRange);
+    EXPECT_THROW(ls1.leftSplit(100), isc::OutOfRange);
+    EXPECT_THROW(ls1.leftSplit(5), isc::OutOfRange);
+    EXPECT_THROW(ls1.leftSplit(4), isc::OutOfRange);
+    EXPECT_THROW(ls1.leftSplit(3), isc::OutOfRange);
     getDataCheck("\007example\003org\000", 13, ls1);
 
-    EXPECT_THROW(ls1.split(-100), isc::OutOfRange);
-    EXPECT_THROW(ls1.split(-5), isc::OutOfRange);
-    EXPECT_THROW(ls1.split(-4), isc::OutOfRange);
-    EXPECT_THROW(ls1.split(-3), isc::OutOfRange);
+    EXPECT_THROW(ls1.rightSplit(100), isc::OutOfRange);
+    EXPECT_THROW(ls1.rightSplit(5), isc::OutOfRange);
+    EXPECT_THROW(ls1.rightSplit(4), isc::OutOfRange);
+    EXPECT_THROW(ls1.rightSplit(3), isc::OutOfRange);
     getDataCheck("\007example\003org\000", 13, ls1);
 }
 
 TEST_F(LabelSequenceTest, getLabelCount) {
     EXPECT_EQ(3, ls1.getLabelCount());
-    ls1.split(0);
+    ls1.leftSplit(0);
     EXPECT_EQ(3, ls1.getLabelCount());
-    ls1.split(1);
+    ls1.leftSplit(1);
     EXPECT_EQ(2, ls1.getLabelCount());
-    ls1.split(1);
+    ls1.leftSplit(1);
     EXPECT_EQ(1, ls1.getLabelCount());
 
     EXPECT_EQ(3, ls2.getLabelCount());
-    ls2.split(-1);
+    ls2.rightSplit(1);
     EXPECT_EQ(2, ls2.getLabelCount());
-    ls2.split(-1);
+    ls2.rightSplit(1);
     EXPECT_EQ(1, ls2.getLabelCount());
 
     EXPECT_EQ(3, ls3.getLabelCount());
-    ls3.split(-2);
+    ls3.rightSplit(2);
     EXPECT_EQ(1, ls3.getLabelCount());
 
     EXPECT_EQ(5, ls4.getLabelCount());
-    ls4.split(-3);
+    ls4.rightSplit(3);
     EXPECT_EQ(2, ls4.getLabelCount());
 
     EXPECT_EQ(3, ls5.getLabelCount());
-    ls5.split(2);
+    ls5.leftSplit(2);
     EXPECT_EQ(1, ls5.getLabelCount());
 }
 
@@ -221,11 +221,11 @@ TEST_F(LabelSequenceTest, comparePart) {
     EXPECT_FALSE(ls1.equals(ls8));
 
     // Split root label from example.org.
-    ls1.split(-1);
+    ls1.rightSplit(1);
     // Split foo from foo.example.org.bar.
-    ls8.split(1);
+    ls8.leftSplit(1);
     // Split bar. (i.e. bar and root) too
-    ls8.split(-2);
+    ls8.rightSplit(2);
 
     EXPECT_TRUE(ls1.equals(ls8));
 
@@ -238,16 +238,16 @@ TEST_F(LabelSequenceTest, comparePart) {
 TEST_F(LabelSequenceTest, isAbsolute) {
     ASSERT_TRUE(ls1.isAbsolute());
 
-    ls1.split(1);
+    ls1.leftSplit(1);
     ASSERT_TRUE(ls1.isAbsolute());
-    ls1.split(-1);
+    ls1.rightSplit(1);
     ASSERT_FALSE(ls1.isAbsolute());
 
     ASSERT_TRUE(ls2.isAbsolute());
-    ls2.split(-1);
+    ls2.rightSplit(1);
     ASSERT_FALSE(ls2.isAbsolute());
 
     ASSERT_TRUE(ls3.isAbsolute());
-    ls3.split(2);
+    ls3.leftSplit(2);
     ASSERT_TRUE(ls3.isAbsolute());
 }

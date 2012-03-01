@@ -210,6 +210,11 @@ private:
 /// names as a special case.
 ///
 class Name {
+    // LabelSequences use knowledge about the internal data structure
+    // of this class for efficiency (they use the offsets_ vector and
+    // the ndata_ string)
+    friend class LabelSequence;
+
     ///
     /// \name Constructors and Destructor
     ///
@@ -297,34 +302,6 @@ public:
             isc_throw(OutOfRange, "Out of range access in Name::at()");
         }
         return (ndata_[pos]);
-    }
-
-    ///
-    /// \brief Provides access to the memory pointer of the wire format at
-    /// the specified position
-    ///
-    /// This method is similar to Name::at(size_t pos), but instead of
-    /// the value at the given position, it returns the memory address
-    /// (as a const char*).
-    /// This is only validly usable as long as the Name object is in scope
-    /// and does not change, so care must be taken when using the value
-    /// returned by this method.
-    /// For example use of this method, see the LabelSequence class. Outside
-    /// of that class, it is advisable not to use raw data as exposed here.
-    ///
-    /// \exception OutOfRange thrown if \c pos is higher than the wire format
-    ///            length of the Name data
-    ///
-    /// \param pos The position in the wire format name %data to be returned.
-    /// \return A char* corresponding to the address of the data at the
-    /// position of \c pos.
-    const char* at_p(size_t pos) const
-    {
-        if (pos >= length_) {
-            isc_throw(OutOfRange, "Out of range access in Name::at_p(): " <<
-                                  pos << " > " << length_);
-        }
-        return (&ndata_[pos]);
     }
 
     /// \brief Gets the length of the <code>Name</code> in its wire format.
