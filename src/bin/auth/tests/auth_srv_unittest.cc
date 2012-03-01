@@ -1254,7 +1254,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindZoneStdException) {
 
     setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_zone,
                        false);
-    EXPECT_FALSE(dnsserv.hasAnswer());
+    processAndCheckSERVFAIL();
 }
 
 // Throw isc::Exception at getOrigin(), should result in SERVFAIL
@@ -1302,7 +1302,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindStdException) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find,
                        false);
-    EXPECT_FALSE(dnsserv.hasAnswer());
+    processAndCheckSERVFAIL();
 }
 
 // Throw isc::Exception in findNSEC3(), should result in SERVFAIL
@@ -1324,7 +1324,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindNSEC3StdException) {
     createRequestPacket(request_message, IPPROTO_UDP);
     setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_nsec3,
                        false);
-    EXPECT_FALSE(dnsserv.hasAnswer());
+    processAndCheckSERVFAIL();
 }
 
 }

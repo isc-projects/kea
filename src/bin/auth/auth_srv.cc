@@ -479,12 +479,12 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         return;
     }
 
+    bool send_answer = true;
     try {
         // update per opcode statistics counter.  This can only be reliable
         // after TSIG check succeeds.
         impl_->counters_.inc(message->getOpcode());
 
-        bool send_answer = true;
         if (message->getOpcode() == Opcode::NOTIFY()) {
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
@@ -508,22 +508,12 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
                                                         buffer, tsig_context);
             }
         }
-
-        impl_->resumeServer(server, message, send_answer);
-    } catch (const isc::Unexpected&) {
-        // If the error was unexpected protocol, don't even bother responding
-        // (If we see other Unexpected's here, we should probably change to
-        // a specific exception for unknown protocol)
-        impl_->resumeServer(server, message, false);
     } catch (const isc::Exception&) {
-        // For ISC Exceptions, respond with servfail
         makeErrorMessage(message, buffer, Rcode::SERVFAIL());
-        impl_->resumeServer(server, message, true);
     } catch (...) {
-        // Drop the query on any other exceptions (do we want servfail here
-        // too?)
-        impl_->resumeServer(server, message, false);
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
     }
+    impl_->resumeServer(server, message, send_answer);
 }
 
 bool
