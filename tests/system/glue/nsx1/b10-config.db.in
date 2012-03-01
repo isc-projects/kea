@@ -2,8 +2,5 @@
  "Auth": {
    "listen_on": [{"address": "10.53.0.1", "port": 53210}],
    "database_file": "@abs_builddir@/zone.sqlite3"
- },
- "Xfrout": {
-   "log_file": "@abs_builddir@/Xfrout.log"
  }
 }
