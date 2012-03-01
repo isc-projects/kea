@@ -15,8 +15,9 @@
 #ifndef __ZONE_H
 #define __ZONE_H 1
 
+#include <dns/name.h>
 #include <dns/rrset.h>
-#include <dns/rrsetlist.h>
+#include <dns/rrtype.h>
 
 #include <datasrc/result.h>
 
@@ -90,7 +91,40 @@ public:
         RESULT_NSEC3_SIGNED = 4   ///< The zone is signed with NSEC3 RRs
     };
 
-    /// A helper structure to represent the search result of \c find().
+    /// Find options.
+    ///
+    /// The option values are used as a parameter for \c find().
+    /// These are values of a bitmask type.  Bitwise operations can be
+    /// performed on these values to express compound options.
+    enum FindOptions {
+        FIND_DEFAULT = 0,       ///< The default options
+        FIND_GLUE_OK = 1,       ///< Allow search under a zone cut
+        FIND_DNSSEC = 2,        ///< Require DNSSEC data in the answer
+                                ///< (RRSIG, NSEC, etc.). The implementation
+                                ///< is allowed to include it even if it is
+                                ///< not set.
+        NO_WILDCARD = 4         ///< Do not try wildcard matching.
+    };
+
+protected:
+    /// \brief A convenient tuple representing a set of find() results.
+    ///
+    /// This helper structure is specifically expected to be used as an input
+    /// for the construct of the \c Context class object used by derived
+    /// ZoneFinder implementations.  This is therefore defined as protected.
+    struct ResultContext {
+        ResultContext(Result code_param,
+                      isc::dns::ConstRRsetPtr rrset_param,
+                      FindResultFlags flags_param = RESULT_DEFAULT) :
+            code(code_param), rrset(rrset_param), flags(flags_param)
+        {}
+        const Result code;
+        const isc::dns::ConstRRsetPtr rrset;
+        const FindResultFlags flags;
+    };
+
+public:
+    /// \brief A helper structure to represent the search result of \c find().
     ///
     /// This is a straightforward tuple of the result code and a pointer
     /// (and optionally special flags) to the found RRset to represent the
@@ -114,16 +148,16 @@ public:
     /// optimize including the NSEC for no-wildcard proof (FWIW NSD does that).
     class Context {
     public:
-        Context(Result param_code,
-                const isc::dns::ConstRRsetPtr param_rrset,
-                FindResultFlags param_flags = RESULT_DEFAULT) :
-            code(param_code), rrset(param_rrset), flags(param_flags)
+        Context(ZoneFinder& finder, FindOptions options,
+                const ResultContext& result) :
+            code(result.code), rrset(result.rrset),
+            finder_(finder), flags_(result.flags), options_(options)
         {}
         const Result code;
         const isc::dns::ConstRRsetPtr rrset;
 
         /// Return true iff find() results in a wildcard match.
-        bool isWildcard() const { return ((flags & RESULT_WILDCARD) != 0); }
+        bool isWildcard() const { return ((flags_ & RESULT_WILDCARD) != 0); }
 
         /// Return true when the underlying zone is signed with NSEC.
         ///
@@ -135,7 +169,7 @@ public:
         /// that \c rrset be a valid NSEC RRset as described in \c find()
         /// documentation.
         bool isNSECSigned() const {
-            return ((flags & RESULT_NSEC_SIGNED) != 0);
+            return ((flags_ & RESULT_NSEC_SIGNED) != 0);
         }
 
         /// Return true when the underlying zone is signed with NSEC3.
@@ -144,25 +178,17 @@ public:
         /// \c FIND_DNSSEC isn't specified regardless of whether the zone
         /// is signed or which of NSEC/NSEC3 is used.
         bool isNSEC3Signed() const {
-            return ((flags & RESULT_NSEC3_SIGNED) != 0);
+            return ((flags_ & RESULT_NSEC3_SIGNED) != 0);
         }
-    private:
-        FindResultFlags flags;
-    };
 
-    /// Find options.
-    ///
-    /// The option values are used as a parameter for \c find().
-    /// These are values of a bitmask type.  Bitwise operations can be
-    /// performed on these values to express compound options.
-    enum FindOptions {
-        FIND_DEFAULT = 0,       ///< The default options
-        FIND_GLUE_OK = 1,       ///< Allow search under a zone cut
-        FIND_DNSSEC = 2,        ///< Require DNSSEC data in the answer
-                                ///< (RRSIG, NSEC, etc.). The implementation
-                                ///< is allowed to include it even if it is
-                                ///< not set.
-        NO_WILDCARD = 4         ///< Do not try wildcard matching.
+        virtual void getAdditional(
+            const std::vector<isc::dns::RRType>& requested_types,
+            std::vector<isc::dns::ConstRRsetPtr>& result);
+
+    private:
+        ZoneFinder& finder_;
+        const FindResultFlags flags_;
+        const FindOptions options_;
     };
 
     ///

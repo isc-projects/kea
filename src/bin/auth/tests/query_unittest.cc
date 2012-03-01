@@ -399,7 +399,10 @@ public:
                        ConstRRsetPtr rrset)
     {
         nsec_name_ = nsec_name;
-        nsec_context_.reset(new Context(code, rrset, RESULT_NSEC_SIGNED));
+        nsec_context_.reset(new Context(*this,
+                                        FIND_DEFAULT, // a fake value
+                                        ResultContext(code, rrset,
+                                                      RESULT_NSEC_SIGNED)));
     }
 
     // Once called, the findNSEC3 will return the provided result for the next
@@ -435,6 +438,18 @@ public:
     // We allow the tests to use these for convenience
     ConstRRsetPtr dname_rrset_; // could be used as an arbitrary bogus RRset
     ConstRRsetPtr empty_nsec_rrset_;
+
+protected:
+    // A convenient shortcut.  Will also be used by further derived mocks.
+    ZoneFinderContextPtr createContext(FindOptions options,
+                                       Result code,
+                                       isc::dns::ConstRRsetPtr rrset,
+                                       FindResultFlags flags = RESULT_DEFAULT)
+    {
+        return (ZoneFinderContextPtr(
+                    new Context(*this, options,
+                                ResultContext(code, rrset, flags))));
+    }
 
 private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
@@ -548,7 +563,9 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
                 // Insert RRs under the domain name into target
                 target.push_back(found_rrset->second);
             }
-            return (ZoneFinderContextPtr(new Context(SUCCESS, RRsetPtr())));
+            return (ZoneFinderContextPtr(
+                        new Context(*this, options,
+                                    ResultContext(SUCCESS, RRsetPtr()))));
         }
     }
 
@@ -618,9 +635,9 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // Emulating a broken zone: mandatory apex RRs are missing if specifically
     // configured so (which are rare cases).
     if (name == origin_ && type == RRType::SOA() && !has_SOA_) {
-        return (ZoneFinderContextPtr(new Context(NXDOMAIN, RRsetPtr())));
+        return (createContext(options, NXDOMAIN, RRsetPtr()));
     } else if (name == origin_ && type == RRType::NS() && !has_apex_NS_) {
-        return (ZoneFinderContextPtr(new Context(NXDOMAIN, RRsetPtr())));
+        return (createContext(options, NXDOMAIN, RRsetPtr()));
     }
 
     // Special case for names on or under a zone cut and under DNAME
@@ -635,12 +652,11 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         // handled just like an in-zone case below.  Others result in
         // DELEGATION.
         if (type != RRType::DS() || it->first != name) {
-            return (ZoneFinderContextPtr(new Context(DELEGATION,
-                                                     delegation_ns)));
+            return (createContext(options, DELEGATION, delegation_ns));
         }
     } else if (name.compare(dname_name_).getRelation() ==
                NameComparisonResult::SUBDOMAIN) {
-        return (ZoneFinderContextPtr(new Context(DNAME, dname_rrset_)));
+        return (createContext(options, DNAME, dname_rrset_));
     }
 
     // normal cases.  names are searched for only per exact-match basis
@@ -670,37 +686,35 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                 }
                 rrset = noconst;
             }
-            return (ZoneFinderContextPtr(new Context(SUCCESS, rrset)));
+            return (createContext(options, SUCCESS, rrset));
         }
 
         // Otherwise, if this domain name has CNAME, return it.
         found_rrset = found_domain->second.find(RRType::CNAME());
         if (found_rrset != found_domain->second.end()) {
-            return (ZoneFinderContextPtr(new Context(CNAME,
-                                                     found_rrset->second)));
+            return (createContext(options, CNAME, found_rrset->second));
         }
 
         // Otherwise it's NXRRSET case...
         // ...but a special pathological case first:
         if (found_domain->first == bad_signed_delegation_name_ &&
             type == RRType::DS()) {
-            return (ZoneFinderContextPtr(new Context(NXDOMAIN, RRsetPtr())));
+            return (createContext(options, NXDOMAIN, RRsetPtr()));
         }
         // normal cases follow.
         if ((options & FIND_DNSSEC) != 0) {
             if (use_nsec3_) {
-                return (ZoneFinderContextPtr(new Context(NXRRSET, RRsetPtr(),
-                                                         RESULT_NSEC3_SIGNED)));
+                return (createContext(options, NXRRSET, RRsetPtr(),
+                                      RESULT_NSEC3_SIGNED));
             }
             found_rrset = found_domain->second.find(RRType::NSEC());
             if (found_rrset != found_domain->second.end()) {
-                return (ZoneFinderContextPtr(new Context(NXRRSET,
-                                                         found_rrset->second,
-                                                         RESULT_NSEC_SIGNED)));
+                return (createContext(options, NXRRSET, found_rrset->second,
+                                      RESULT_NSEC_SIGNED));
             }
         }
-        return (ZoneFinderContextPtr(new Context(NXRRSET, RRsetPtr(),
-                                                 RESULT_NSEC_SIGNED)));
+        return (createContext(options, NXRRSET, RRsetPtr(),
+                              RESULT_NSEC_SIGNED));
     }
 
     // query name isn't found in our domains.
@@ -720,18 +734,17 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         --domain;               // reset domain to the "previous name"
         if ((options & FIND_DNSSEC) != 0) {
             if (use_nsec3_) {
-                return (ZoneFinderContextPtr(new Context(NXRRSET, RRsetPtr(),
-                                                         RESULT_NSEC3_SIGNED)));
+                return (createContext(options, NXRRSET, RRsetPtr(),
+                                      RESULT_NSEC3_SIGNED));
             }
             RRsetStore::const_iterator found_rrset =
                 (*domain).second.find(RRType::NSEC());
             if (found_rrset != (*domain).second.end()) {
-                return (ZoneFinderContextPtr(
-                            new Context(NXRRSET, found_rrset->second,
-                                        RESULT_NSEC_SIGNED)));
+                return (createContext(options, NXRRSET, found_rrset->second,
+                                      RESULT_NSEC_SIGNED));
             }
         }
-        return (ZoneFinderContextPtr(new Context(NXRRSET, RRsetPtr())));
+        return (createContext(options, NXRRSET, RRsetPtr()));
     }
 
     // Another possibility is wildcard.  For simplicity we only check
@@ -754,44 +767,37 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                         domain->second.find(type);
                     // Matched the QTYPE
                     if(found_rrset != domain->second.end()) {
-                        return (ZoneFinderContextPtr(
-                                    new Context(SUCCESS,
-                                                substituteWild(
-                                                    *found_rrset->second,
-                                                    name),
-                                                RESULT_WILDCARD |
-                                                (use_nsec3_ ?
-                                                 RESULT_NSEC3_SIGNED :
-                                                 RESULT_NSEC_SIGNED))));
+                        return (createContext(options,SUCCESS, substituteWild(
+                                                  *found_rrset->second, name),
+                                              RESULT_WILDCARD |
+                                              (use_nsec3_ ?
+                                               RESULT_NSEC3_SIGNED :
+                                               RESULT_NSEC_SIGNED)));
                     } else {
                         // No matched QTYPE, this case is for NXRRSET with
                         // WILDCARD
                         if (use_nsec3_) {
-                            return (ZoneFinderContextPtr(
-                                        new Context(NXRRSET, RRsetPtr(),
-                                                    RESULT_WILDCARD |
-                                                    RESULT_NSEC3_SIGNED)));
+                            return (createContext(options, NXRRSET, RRsetPtr(),
+                                                  RESULT_WILDCARD |
+                                                  RESULT_NSEC3_SIGNED));
                         }
                         const Name new_name =
                             Name("*").concatenate(wild_suffix);
                         found_rrset = domain->second.find(RRType::NSEC());
                         assert(found_rrset != domain->second.end());
-                        return (ZoneFinderContextPtr(
-                                    new Context(NXRRSET,
-                                                substituteWild(
-                                                    *found_rrset->second,
-                                                    new_name),
-                                                RESULT_WILDCARD |
-                                                RESULT_NSEC_SIGNED)));
+                        return (createContext(options, NXRRSET, substituteWild(
+                                                  *found_rrset->second,
+                                                  new_name),
+                                              RESULT_WILDCARD |
+                                              RESULT_NSEC_SIGNED));
                     }
                 } else {
                     // This is empty non terminal name case on wildcard.
                     const Name empty_name = Name("*").concatenate(wild_suffix);
                     if (use_nsec3_) {
-                        return (ZoneFinderContextPtr(
-                                    new Context(NXRRSET, RRsetPtr(),
-                                                RESULT_WILDCARD |
-                                                RESULT_NSEC3_SIGNED)));
+                        return (createContext(options, NXRRSET, RRsetPtr(),
+                                              RESULT_WILDCARD |
+                                              RESULT_NSEC3_SIGNED));
                     }
                     for (Domains::reverse_iterator it = domains_.rbegin();
                          it != domains_.rend();
@@ -800,15 +806,15 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                         if ((*it).first < empty_name &&
                             (nsec_it = (*it).second.find(RRType::NSEC()))
                             != (*it).second.end()) {
-                            return (ZoneFinderContextPtr(
-                                        new Context(NXRRSET, (*nsec_it).second,
-                                                    RESULT_WILDCARD |
-                                                    RESULT_NSEC_SIGNED)));
+                            return (createContext(options, NXRRSET,
+                                                  (*nsec_it).second,
+                                                  RESULT_WILDCARD |
+                                                  RESULT_NSEC_SIGNED));
                         }
                     }
                 }
-                return (ZoneFinderContextPtr(new Context(NXRRSET, RRsetPtr(),
-                                                         RESULT_WILDCARD)));
+                return (createContext(options, NXRRSET, RRsetPtr(),
+                                      RESULT_WILDCARD));
              }
         }
         const Name cnamewild_suffix("cnamewild.example.com");
@@ -819,12 +825,11 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             RRsetStore::const_iterator found_rrset =
                 domain->second.find(RRType::CNAME());
             assert(found_rrset != domain->second.end());
-            return (ZoneFinderContextPtr(
-                        new Context(CNAME,
-                                    substituteWild(*found_rrset->second, name),
-                                    RESULT_WILDCARD |
-                                    (use_nsec3_ ? RESULT_NSEC3_SIGNED :
-                                     RESULT_NSEC_SIGNED))));
+            return (createContext(options, CNAME,
+                                  substituteWild(*found_rrset->second, name),
+                                  RESULT_WILDCARD |
+                                  (use_nsec3_ ? RESULT_NSEC3_SIGNED :
+                                   RESULT_NSEC_SIGNED)));
         }
     }
 
@@ -837,8 +842,8 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // than the origin)
     if ((options & FIND_DNSSEC) != 0) {
         if (use_nsec3_) {
-            return (ZoneFinderContextPtr(new Context(NXDOMAIN, RRsetPtr(),
-                                                     RESULT_NSEC3_SIGNED)));
+            return (createContext(options, NXDOMAIN, RRsetPtr(),
+                                  RESULT_NSEC3_SIGNED));
         }
 
         // Emulate a broken DataSourceClient for some special names.
@@ -856,13 +861,12 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             if ((*it).first < name &&
                 (nsec_it = (*it).second.find(RRType::NSEC()))
                 != (*it).second.end()) {
-                return (ZoneFinderContextPtr(new Context(NXDOMAIN,
-                                                         (*nsec_it).second,
-                                                         RESULT_NSEC_SIGNED)));
+                return (createContext(options, NXDOMAIN, (*nsec_it).second,
+                                      RESULT_NSEC_SIGNED));
             }
         }
     }
-    return (ZoneFinderContextPtr(new Context(NXDOMAIN, RRsetPtr())));
+    return (createContext(options,NXDOMAIN, RRsetPtr()));
 }
 
 class QueryTest : public ::testing::Test {
@@ -1982,21 +1986,21 @@ public:
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual ZoneFinderContextPtr find(const isc::dns::Name&,
                                       const isc::dns::RRType& type,
-                                      const FindOptions)
+                                      const FindOptions options)
     {
         if (type == RRType::SOA()) {
             RRsetPtr soa = textToRRset(origin_.toText() + " 3600 IN SOA . . "
                                        "0 0 0 0 0\n", origin_);
             soa->addRRsig(RdataPtr(new generic::RRSIG(
                                        getCommonRRSIGText("SOA"))));
-            return (ZoneFinderContextPtr(new Context(SUCCESS, soa)));
+            return (createContext(options, SUCCESS, soa));
         }
         if (type == RRType::NS()) {
             RRsetPtr ns = textToRRset(origin_.toText() + " 3600 IN NS " +
                                       Name("ns").concatenate(origin_).toText());
             ns->addRRsig(RdataPtr(new generic::RRSIG(
                                       getCommonRRSIGText("NS"))));
-            return (ZoneFinderContextPtr(new Context(SUCCESS, ns)));
+            return (createContext(options, SUCCESS, ns));
         }
         if (type == RRType::DS()) {
             if (have_ds_) {
@@ -2006,7 +2010,7 @@ public:
                                           "3CD34AC1AFE51DE");
                 ds->addRRsig(RdataPtr(new generic::RRSIG(
                                           getCommonRRSIGText("DS"))));
-                return (ZoneFinderContextPtr(new Context(SUCCESS, ds)));
+                return (createContext(options, SUCCESS, ds));
             } else {
                 RRsetPtr nsec = textToRRset(origin_.toText() +
                                             " 3600 IN NSEC " +
@@ -2014,13 +2018,13 @@ public:
                                             " SOA NSEC RRSIG");
                 nsec->addRRsig(RdataPtr(new generic::RRSIG(
                                             getCommonRRSIGText("NSEC"))));
-                return (ZoneFinderContextPtr(new Context(NXRRSET, nsec,
-                                                         RESULT_NSEC_SIGNED)));
+                return (createContext(options, NXRRSET, nsec,
+                                      RESULT_NSEC_SIGNED));
             }
         }
 
         // Returning NXDOMAIN is not correct, but doesn't matter for our tests.
-        return (ZoneFinderContextPtr(new Context(NXDOMAIN, ConstRRsetPtr())));
+        return (createContext(options, NXDOMAIN, ConstRRsetPtr()));
     }
 private:
     const Name origin_;
