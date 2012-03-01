@@ -508,9 +508,12 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
                                                         buffer, tsig_context);
             }
         }
-    } catch (const isc::Exception&) {
+    } catch (const std::exception& ex) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_FAILURE)
+                  .arg(ex.what());
         makeErrorMessage(message, buffer, Rcode::SERVFAIL());
     } catch (...) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_FAILURE_UNKNOWN);
         makeErrorMessage(message, buffer, Rcode::SERVFAIL());
     }
     impl_->resumeServer(server, message, send_answer);
