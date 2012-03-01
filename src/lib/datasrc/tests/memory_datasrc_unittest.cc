@@ -181,12 +181,10 @@ TEST_F(InMemoryClientTest, iterator) {
 
     iterator = memory_client.getIterator(Name("a"));
     vector<ConstRRsetPtr> actual_rrsets;
-    for (int i = 0; i < 3; ++i) {
-        ConstRRsetPtr actual = iterator->getNextRRset();
-        ASSERT_NE(ConstRRsetPtr(), actual);
+    ConstRRsetPtr actual;
+    while ((actual = iterator->getNextRRset()) != NULL) {
         actual_rrsets.push_back(actual);
     }
-    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 
     rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
                 actual_rrsets.begin(), actual_rrsets.end());
