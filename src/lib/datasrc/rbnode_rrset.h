@@ -41,7 +41,14 @@ namespace internal {
 ///
 /// - Calls to methods that change attributes of the underlying RRset (such as
 ///   TTL or Name) cause an exception to be thrown.  The in-memory data source
-///   does not allow modification of these attributes.
+///   does not allow modification of these attributes.  In theory, it is a bad
+///   practice in that it doesn't preserve the assumed behavior of the base
+///   class.  In practice, however, it should be acceptable because this
+///   class is effectively hidden from applications and will only be given
+///   to them as a const pointer to the base class via find() variants.
+///   So the application cannot call non const methods anyway unless it
+///   intentionally breaks the constness.
+///
 /// - Calls that add the pointer to the associated RRSIG to the RRset are
 ///   allowed (even though the pointer is to a "const" RRset).  The reason here
 ///   is that RRSIGs are added to the in-memory data source after the
@@ -51,9 +58,14 @@ namespace internal {
 /// The class is not derived from RRset itself to simplify coding: part of the
 /// loading of the memory data source is handled in the BIND 10 "libdns++"
 /// code, which creates RRsets and passes them to the data source code.  This
-/// does not have to be altered if encapsulation, rather than inheritcance, is
+/// does not have to be altered if encapsulation, rather than inheritance, is
 /// used.
-
+///
+/// \note This class is exposed in this separate header file so that test code
+/// can refer to its definition, and only for that purpose.  Otherwise this is
+/// essentially a private class of the in-memory data source implementation,
+/// and an application shouldn't directly refer to this class.
+/// 
 // Note: non-Doxygen-documented methods are documented in the base class.
 
 class RBNodeRRset : public isc::dns::AbstractRRset {

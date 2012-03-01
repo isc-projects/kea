@@ -216,7 +216,7 @@ TEST_F(RBNodeRRsetTest, addRRsigConstRdataPointer) {
     ConstRdataPtr data = createRdata(rrset_siga->getType(),
                                      rrset_siga->getClass(), RRSIG_TXT);
     rrset_a.addRRsig(data);
-    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
+    rrsetCheck(rrset_siga, rrset_a.getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigRdataPointer) {
@@ -224,19 +224,19 @@ TEST_F(RBNodeRRsetTest, addRRsigRdataPointer) {
     RdataPtr data = createRdata(rrset_siga->getType(), rrset_siga->getClass(),
                                 RRSIG_TXT);
     rrset_a.addRRsig(data);
-    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
+    rrsetCheck(rrset_siga, rrset_a.getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigAbstractRRset) {
     EXPECT_FALSE(rrset_a.getRRsig());
     rrset_a.addRRsig(*(rrset_siga.get()));
-    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
+    rrsetCheck(rrset_siga, rrset_a.getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigConstantRRsetPointer) {
     EXPECT_FALSE(rrset_a.getRRsig());
     rrset_a.addRRsig(rrset_siga);
-    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
+    rrsetCheck(rrset_siga, rrset_a.getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, addRRsigRRsetPointer) {
@@ -245,7 +245,7 @@ TEST_F(RBNodeRRsetTest, addRRsigRRsetPointer) {
                    RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG(RRSIG_TXT));
     rrset_a.addRRsig(rrsig);
-    rrsetCheck(rrset_siga, rrset_a.getUnderlyingRRset()->getRRsig());
+    rrsetCheck(rrset_siga, rrset_a.getRRsig());
 }
 
 TEST_F(RBNodeRRsetTest, removeRRsig) {
