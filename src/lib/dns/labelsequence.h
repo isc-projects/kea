@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,10 @@ public:
     /// to the labels in the Name object).
     ///
     /// \param name The Name to construct a LabelSequence for
-    LabelSequence(const Name& name);
+    LabelSequence(const Name& name): name_(name),
+                                     first_label_(0),
+                                     last_label_(name.getLabelCount())
+    {}
 
     /// \brief Return the wire-format data for this LabelSequence
     ///
@@ -76,20 +79,27 @@ public:
     ///         and contain the same data.
     bool equals(const LabelSequence& other, bool case_sensitive = false) const;
 
-    /// \brief Remove one or more labels from this LabelSequence
-    ///
-    /// Removes labels from either the front or the back of the LabelSequence
+    /// \brief Remove labels from the front of this LabelSequence
     ///
     /// \note No actual memory is changed, this operation merely updates the
-    /// internal pointers based on the offsets at creation time.
+    /// internal pointers based on the offsets in the Name object.
     ///
-    /// \exeption OutOfRange if abs(i) is greater than or equal to the
-    ///           number of labels currently pointed to by this LabelSequence
+    /// \exeption OutOfRange if i is greater than or equal to the number
+    ///           of labels currently pointed to by this LabelSequence
     ///
-    /// \param i When positive, removes i labels from the front of the
-    ///        LabelSequence. When negative, removes i labels from the
-    ///        end of it. When zero, this is a no-op.
-    void split(int i);
+    /// \param i The number of labels to remove.
+    void leftSplit(size_t i);
+
+    /// \brief Remove labels from the end of this LabelSequence
+    ///
+    /// \note No actual memory is changed, this operation merely updates the
+    /// internal pointers based on the offsets in the Name object.
+    ///
+    /// \exeption OutOfRange if i is greater than or equal to the number
+    ///           of labels currently pointed to by this LabelSequence
+    ///
+    /// \param i The number of labels to remove.
+    void rightSplit(size_t i);
 
     /// \brief Returns the current number of labels for this LabelSequence
     ///
@@ -116,7 +126,6 @@ private:
     const Name& name_;
     size_t first_label_;
     size_t last_label_;
-    std::vector<size_t> offsets_;
 };
 
 
