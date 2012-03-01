@@ -787,6 +787,7 @@ public:
             FoundRRsets;
         /// \brief Just shortcut for set of types
         typedef std::set<dns::RRType> WantedTypes;
+
         /// \brief Internal logit of find and findAll methods.
         ///
         /// Most of their handling is in the "error" cases and delegations
@@ -796,10 +797,11 @@ public:
         /// Parameters and behaviour is like of those combined together.
         /// Unexpected parameters, like type != ANY and having the target, are
         /// just that - unexpected and not checked.
-        Context findInternal(const isc::dns::Name& name,
-                             const isc::dns::RRType& type,
-                             std::vector<isc::dns::ConstRRsetPtr>* target,
-                             const FindOptions options = FIND_DEFAULT);
+        ResultContext findInternal(const isc::dns::Name& name,
+                                   const isc::dns::RRType& type,
+                                   std::vector<isc::dns::ConstRRsetPtr>*
+                                   target,
+                                   const FindOptions options = FIND_DEFAULT);
 
         /// \brief Searches database for RRsets of one domain.
         ///
@@ -945,7 +947,7 @@ public:
         ///         success due to an exact match).  Also returned if there
         ///         is no match is an indication as to whether there was an
         ///         NXDOMAIN or an NXRRSET.
-        Context findWildcardMatch(
+        ResultContext findWildcardMatch(
             const isc::dns::Name& name,
             const isc::dns::RRType& type,
             const FindOptions options,
@@ -990,13 +992,14 @@ public:
         ///         the above 4 cases).  The return value is intended to be
         ///         usable as a return value of the caller of this helper
         ///         method.
-        Context findOnNameResult(const isc::dns::Name& name,
-                                 const isc::dns::RRType& type,
-                                 const FindOptions options,
-                                 const bool is_origin,
-                                 const FoundRRsets& found,
-                                 const std::string* wildname,
-                                 std::vector<isc::dns::ConstRRsetPtr>* target);
+        ResultContext findOnNameResult(const isc::dns::Name& name,
+                                       const isc::dns::RRType& type,
+                                       const FindOptions options,
+                                       const bool is_origin,
+                                       const FoundRRsets& found,
+                                       const std::string* wildname,
+                                       std::vector<isc::dns::ConstRRsetPtr>*
+                                       target);
 
         /// \brief Handle no match for name
         ///
@@ -1027,12 +1030,12 @@ public:
         ///         indicating the match type (e.g. CNAME at the wildcard
         ///         match, no RRs of the requested type at the wildcard,
         ///         success due to an exact match).
-        Context findNoNameResult(const isc::dns::Name& name,
-                                 const isc::dns::RRType& type,
-                                 FindOptions options,
-                                 const DelegationSearchResult& dresult,
-                                 std::vector<isc::dns::ConstRRsetPtr>*
-                                 target);
+        ResultContext findNoNameResult(const isc::dns::Name& name,
+                                       const isc::dns::RRType& type,
+                                       FindOptions options,
+                                       const DelegationSearchResult& dresult,
+                                       std::vector<isc::dns::ConstRRsetPtr>*
+                                       target);
 
         /// Logs condition and creates result
         ///
@@ -1055,13 +1058,13 @@ public:
         ///
         /// \return FindResult object constructed from the code and rrset
         ///         arguments.
-        Context logAndCreateResult(const isc::dns::Name& name,
-                                   const std::string* wildname,
-                                   const isc::dns::RRType& type,
-                                   ZoneFinder::Result code,
-                                   isc::dns::ConstRRsetPtr rrset,
-                                   const isc::log::MessageID& log_id,
-                                   FindResultFlags flags) const;
+        ResultContext logAndCreateResult(const isc::dns::Name& name,
+                                         const std::string* wildname,
+                                         const isc::dns::RRType& type,
+                                         ZoneFinder::Result code,
+                                         isc::dns::ConstRRsetPtr rrset,
+                                         const isc::log::MessageID& log_id,
+                                         FindResultFlags flags) const;
 
         /// \brief Checks if something lives below this domain.
         ///
