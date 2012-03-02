@@ -1,0 +1,22 @@
+;; test zone file used for ZoneFinderContext tests.
+
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 9 3600 300 3600000 3600
+example.org.			      3600 IN NS	ns1.example.org.
+example.org.			      3600 IN NS	ns2.example.org.
+example.org.			      3600 IN MX	1 mx1.example.org.
+example.org.			      3600 IN MX	2 mx2.example.org.
+
+ns1.example.org.		      3600 IN A		192.0.2.1
+ns1.example.org.		      3600 IN AAAA	2001:db8::1
+ns2.example.org.		      3600 IN A		192.0.2.2
+
+mx1.example.org.		      3600 IN A		192.0.2.10
+mx2.example.org.		      3600 IN AAAA	2001:db8::10
+
+;; delegation
+a.example.org.			      3600 IN NS	ns1.a.example.org.
+a.example.org.			      3600 IN NS	ns2.a.example.org.
+
+ns1.a.example.org.		      3600 IN A		192.0.2.5
+ns2.a.example.org.		      3600 IN A		192.0.2.6
+ns2.a.example.org.		      3600 IN AAAA	2001:db8::6
