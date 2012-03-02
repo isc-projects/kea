@@ -17,8 +17,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/foreach.hpp>
-
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
