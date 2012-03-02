@@ -118,6 +118,10 @@ protected:
         REQUESTED_BOTH.push_back(RRType::A());
         REQUESTED_BOTH.push_back(RRType::AAAA());
     }
+    void SetUp() {
+        finder_ = client_->findZone(qzone_).zone_finder;
+        ASSERT_TRUE(finder_);
+    }
 
     const RRClass qclass_;
     const Name qzone_;
@@ -137,9 +141,6 @@ INSTANTIATE_TEST_CASE_P(, ZoneFinderContextTest,
                                           createSQLite3Client));
 
 TEST_P(ZoneFinderContextTest, getAdditionalAuthNS) {
-    finder_ = client_->findZone(qzone_).zone_finder;
-    ASSERT_TRUE(finder_);
-
     ZoneFinderContextPtr ctx = finder_->find(qzone_, RRType::NS());
     EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
 
@@ -181,11 +182,7 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegation) {
     // Basically similar to the AuthNS case, but NS names are glues.
     // It contains an out-of-zone NS name.  Its address (even if it's somehow
     // inserted to the zone data) shouldn't be returned.
-
     const Name qname("www.a.example.org");
-    finder_ = client_->findZone(qname).zone_finder;
-    ASSERT_TRUE(finder_);
-
     ZoneFinderContextPtr ctx = finder_->find(qname, RRType::AAAA());
     EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
 
@@ -210,10 +207,6 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegation) {
 TEST_P(ZoneFinderContextTest, getAdditionalMX) {
     // Similar to the previous cases, but for MX addresses.  The test zone
     // contains MX name under a zone cut.  Its address shouldn't be returned.
-
-    finder_ = client_->findZone(qzone_).zone_finder;
-    ASSERT_TRUE(finder_);
-
     ZoneFinderContextPtr ctx = finder_->find(qzone_, RRType::MX());
     EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
 
@@ -239,10 +232,6 @@ TEST_P(ZoneFinderContextTest, getAdditionalMX) {
 TEST_P(ZoneFinderContextTest, getAdditionalWithSIG) {
     // Similar to the AuthNS test, but the original find() requested DNSSEC
     // RRSIGs.  Then additional records will also have RRSIGs.
-
-    finder_ = client_->findZone(qzone_).zone_finder;
-    ASSERT_TRUE(finder_);
-    
     ZoneFinderContextPtr ctx = finder_->find(qzone_, RRType::NS(),
                                              ZoneFinder::FIND_DNSSEC);
     EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
@@ -263,7 +252,7 @@ TEST_P(ZoneFinderContextTest, getAdditionalWithSIG) {
     rrsetsCheck("ns1.example.org. 3600 IN RRSIG	A 7 3 3600 20150420235959 "
                 "20051021000000 40430 example.org. FAKEFAKE\n"
                 "ns1.example.org. 3600 IN RRSIG	AAAA 7 3 3600 20150420235959 "
-                "20051021000000 40430 example.org. FAKEFAKEFAKEFAKE\n",
+                "20051021000000 40430 example.org. FAKEFAKEFAKE\n",
                 sigresult_sets.begin(), sigresult_sets.end());
 }
 
