@@ -124,39 +124,74 @@ protected:
     };
 
 public:
-    /// \brief A helper structure to represent the search result of \c find().
+    /// \brief Context of the result of a find() call.
     ///
-    /// This is a straightforward tuple of the result code and a pointer
-    /// (and optionally special flags) to the found RRset to represent the
-    /// result of \c find() (there will be more members in the future -
-    /// see the class description).
-    /// We use this in order to avoid overloading the return value for both
-    /// the result code ("success" or "not found") and the found object,
-    /// i.e., avoid using \c NULL to mean "not found", etc.
+    /// This class encapsulates results and (possibly) associated context
+    /// of a call to the \c find() method.   The public member variables of
+    /// this class reprsent the result of the call.  They are a
+    /// straightforward tuple of the result code and a pointer (and
+    /// optionally special flags) to the found RRset.
     ///
-    /// This is a simple value class whose internal state never changes,
-    /// so for convenience we allow the applications to refer to some of the
-    /// members directly.  For others we provide read-only accessor methods
-    /// to hide specific representation.
+    /// These member variables will be initialized on construction and never
+    /// change, so for convenience we allow the applications to refer to some
+    /// of the members directly.  For some others we provide read-only accessor
+    /// methods to hide specific representation.
     ///
-    /// Note: we should eventually include a notion of "zone node", which
-    /// corresponds to a particular domain name of the zone, so that we can
-    /// find RRsets of a different RR type for that name (e.g. for type ANY
-    /// query or to include DS RRs with delegation).
+    /// Another role of this class is to provide the interface to some common
+    /// processing logic that may be necessary using the result of \c find().
+    /// Specifically, it's expected to be used in the context of DNS query
+    /// handling, where the caller would need to look into the data source
+    /// again based on the \c find() result.  For example, it would need to
+    /// get A and/or AAAA records for some of the answer or authority RRs.
     ///
-    /// Note: we may also want to include the closest enclosure "node" to
-    /// optimize including the NSEC for no-wildcard proof (FWIW NSD does that).
+    /// This class defines (a set of) method(s) that can be commonly used
+    /// for such purposes for any type of data source (as long as it conforms
+    /// to the public \c find() interface).  In some cases, a specific data
+    /// source implementation may want to (and can) optimize the processing
+    /// exploiting its internal data structure and the knowledge of the context
+    /// of the precedent \c find() call.  Such a data source implementation
+    /// can define a derived class of the base Context and override the
+    /// specific virtual method.
+    ///
+    /// This class object is generally expected to be associated with the
+    /// ZoneFinder that originally performed the \c find() call, and expects
+    /// the finder is valid throughout the lifetime of this object.  It's
+    /// caller's responsibility to ensure that assumption.
     class Context {
     public:
+        /// \brief The constructor for the normal find call.
+        ///
+        /// This constructor is expected to be called from the \c find()
+        /// method when it constructs the return value.
+        ///
+        /// \param finder The ZoneFinder on which find() is called.
+        /// \param options The find options specified for the find() call.
+        /// \param result The result of the find() call.
         Context(ZoneFinder& finder, FindOptions options,
                 const ResultContext& result) :
             code(result.code), rrset(result.rrset),
             finder_(finder), flags_(result.flags), options_(options)
         {}
 
+        /// \brief The constructor for the normal findAll call.
+        ///
+        /// This constructor is expected to be called from the \c findAll()
+        /// method when it constructs the return value.
+        ///
+        /// It copies the vector that is to be returned to the caller of
+        /// \c findAll() for possible subsequent use.  Note that it cannot
+        /// simply hold a reference to the vector because the caller may
+        /// alter it after the \c findAll() call.
+        ///
+        /// \param finder The ZoneFinder on which findAll() is called.
+        /// \param options The find options specified for the findAll() call.
+        /// \param result The result of the findAll() call (whose rrset is
+        ///        expected to be NULL).
+        /// \param all_set Reference to the vector given by the caller of
+        ///       \c findAll(), storing the RRsets to be returned.
         Context(ZoneFinder& finder, FindOptions options,
                 const ResultContext& result,
-                std::vector<isc::dns::ConstRRsetPtr> &all_set) :
+                const std::vector<isc::dns::ConstRRsetPtr> &all_set) :
             code(result.code), rrset(result.rrset),
             finder_(finder), flags_(result.flags), options_(options),
             all_set_(all_set)
@@ -190,6 +225,34 @@ public:
             return ((flags_ & RESULT_NSEC3_SIGNED) != 0);
         }
 
+        /// \brief Find and return additional RRsets corresponding to the
+        ///        result of \c find().
+        ///
+        /// If this context is based on a normal find() call that resulted
+        /// in SUCCESS or DELEGATION, it examines the returned RRset (in many
+        /// cases NS, sometimes MX or others), searches the data source for
+        /// specified type of additional RRs for each RDATA of the RRset
+        /// (e.g., A or AAAA for the name server addresses), and stores the
+        /// result in the given vector.  The vector may not be empty; this
+        /// method appends any found RRsets to it, without touching existing
+        /// elements.
+        ///
+        /// If this context is based on a findAll() call that resulted in
+        /// SUCCESS, it performs the same process for each RRset returned in
+        /// the \c findAll() call.
+        ///
+        /// The caller specifies desired RR types of the additional RRsets
+        /// in \c requested_types.  Normally it consists of A and/or AAAA
+        /// types, but other types can be specified.
+        ///
+        /// This method is meaningful only when the precedent find()/findAll()
+        /// call resulted in SUCCESS or DELEGATION.  Otherwise this method
+        /// does nothing.
+        ///
+        /// \param requested_types A vector of RR types for desired additional
+        ///  RRsets.
+        /// \param result A vector to which any found additional RRsets are
+        /// to be inserted.
         void getAdditional(
             const std::vector<isc::dns::RRType>& requested_types,
             std::vector<isc::dns::ConstRRsetPtr>& result)
@@ -204,6 +267,11 @@ public:
         }
 
     protected:
+        /// \brief Actual implementation of getAdditional().
+        ///
+        /// This base class defines a default implementation that can be
+        /// used for any type of data sources.  A data source implementation
+        /// can override it.
         virtual void getAdditionalImpl(
             const std::vector<isc::dns::RRType>& requested_types,
             std::vector<isc::dns::ConstRRsetPtr>& result);
