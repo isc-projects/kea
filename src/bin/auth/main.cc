@@ -25,8 +25,6 @@
 #include <cassert>
 #include <iostream>
 
-#include <boost/lexical_cast.hpp>
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -118,8 +116,7 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
-    isc::log::initLogger(string(AUTH_NAME) + " (" +
-                         boost::lexical_cast<string>(getpid()) + ")",
+    isc::log::initLogger(AUTH_NAME,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
