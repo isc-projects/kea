@@ -503,7 +503,9 @@ Query::process() {
             // section, insert apex NS records into the authority section
             // and AAAA/A RRS of each of the NS RDATA into the additional
             // section.
-            if (qname_ != result.zone_finder->getOrigin() ||
+            // Checking the findZone() is a lightweight check to see if
+            // qname is the zone origin.
+            if (result.code != result::SUCCESS ||
                 db_context->code != ZoneFinder::SUCCESS ||
                 (qtype_ != RRType::NS() && !qtype_is_any))
             {
