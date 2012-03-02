@@ -87,8 +87,8 @@ rrsetCheck(isc::dns::ConstRRsetPtr expected_rrset,
            isc::dns::ConstRRsetPtr actual_rrset)
 {
     SCOPED_TRACE("Comparing RRsets\n"
-                 "  Actual" + actual_rrset->toText() +
-                 "  Expected" + expected_rrset->toText());
+                 "  Actual: " + actual_rrset->toText() +
+                 "  Expected: " + expected_rrset->toText());
     EXPECT_EQ(expected_rrset->getName(), actual_rrset->getName());
     EXPECT_EQ(expected_rrset->getClass(), actual_rrset->getClass());
     EXPECT_EQ(expected_rrset->getType(), actual_rrset->getType());
