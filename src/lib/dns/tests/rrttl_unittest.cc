@@ -28,7 +28,7 @@ using namespace isc::util;
 namespace {
 class RRTTLTest : public ::testing::Test {
 protected:
-    RRTTLTest() : obuffer(0), renderer(obuffer) {}       
+    RRTTLTest() : obuffer(0) {}
 
     OutputBuffer obuffer;
     MessageRenderer renderer;
@@ -114,7 +114,7 @@ TEST_F(RRTTLTest, toWireRenderer) {
     ttl_max.toWire(renderer);
 
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata, sizeof(wiredata));
 }
 
@@ -138,7 +138,7 @@ TEST_F(RRTTLTest, leq) {
 
     // small <= small is true
     EXPECT_TRUE(ttl_small.leq(ttl_small));
-    EXPECT_TRUE(ttl_small <= ttl_small);
+    EXPECT_LE(ttl_small, ttl_small);
 
     // large <= small is false
     EXPECT_FALSE(ttl_large.leq(ttl_small));
@@ -150,7 +150,7 @@ TEST_F(RRTTLTest, geq) {
     EXPECT_TRUE(ttl_large >= ttl_small);
 
     EXPECT_TRUE(ttl_large.geq(ttl_large));
-    EXPECT_TRUE(ttl_large >= ttl_large);
+    EXPECT_GE(ttl_large, ttl_large);
 
     EXPECT_FALSE(ttl_small.geq(ttl_large));
     EXPECT_FALSE(ttl_small >= ttl_large);

@@ -2,12 +2,12 @@
 .\"     Title: b10-stats
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: August 11, 2011
+.\"      Date: March 1, 2012
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-STATS" "8" "August 11, 2011" "BIND10" "BIND10"
+.TH "B10\-STATS" "8" "March 1, 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -79,9 +79,9 @@ will send the statistics data in JSON format\&. By default, it outputs all the s
 \fBshutdown\fR
 will shutdown the
 \fBb10\-stats\fR
-process\&. (Note that the
-\fBbind10\fR
-parent may restart it\&.)
+process\&. This has an optional
+\fIpid\fR
+argument to select the process ID to stop\&. (Note that the BIND 10 boss process may restart this service if configured\&.)
 .PP
 
 \fBstatus\fR
@@ -90,25 +90,22 @@ simply indicates that the daemon is running\&.
 .PP
 The
 \fBb10\-stats\fR
-daemon contains these statistics:
+daemon contains these
+\(lqStats\(rq
+statistics:
 .PP
-report_time
-.RS 4
-The latest report date and time in ISO 8601 format\&.
-.RE
-.PP
-stats\&.boot_time
+boot_time
 .RS 4
 The date and time when this daemon was started in ISO 8601 format\&. This is a constant which can\'t be reset except by restarting
 \fBb10\-stats\fR\&.
 .RE
 .PP
-stats\&.last_update_time
+last_update_time
 .RS 4
 The date and time (in ISO 8601 format) when this daemon last received data from another component\&.
 .RE
 .PP
-stats\&.lname
+lname
 .RS 4
 This is the name used for the
 \fBb10\-msgq\fR
@@ -116,14 +113,19 @@ command\-control channel\&. (This is a constant which can\'t be reset except by 
 \fBb10\-stats\fR\&.)
 .RE
 .PP
-stats\&.start_time
+report_time
+.RS 4
+The latest report date and time in ISO 8601 format\&.
+.RE
+.PP
+start_time
 .RS 4
 This is the date and time (in ISO 8601 format) when this daemon started collecting data\&.
 .RE
 .PP
-stats\&.timestamp
+timestamp
 .RS 4
-The current date and time represented in seconds since UNIX epoch (1970\-01\-01T0 0:00:00Z) with precision (delimited with a period) up to one hundred thousandth of second\&.
+The current date and time represented in seconds since UNIX epoch (1970\-01\-01T00:00:00Z) with precision (delimited with a period) up to one hundred thousandth of second\&.
 .RE
 .PP
 See other manual pages for explanations for their statistics that are kept track by
@@ -150,5 +152,5 @@ The
 daemon was initially designed and implemented by Naoki Kambe of JPRS in October 2010\&.
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2010-2012 Internet Systems Consortium, Inc. ("ISC")
 .br

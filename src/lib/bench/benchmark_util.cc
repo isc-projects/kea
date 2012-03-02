@@ -61,8 +61,7 @@ loadQueryData(istream& input, BenchQueries& queries, const RRClass& qclass,
     string line;
     unsigned int linenum = 0;
     Message query_message(Message::RENDER);
-    OutputBuffer buffer(128); // this should be sufficiently large
-    MessageRenderer renderer(buffer);
+    MessageRenderer renderer;
     while (getline(input, line), !input.eof()) {
         ++linenum;
         if (input.bad() || input.fail()) {
@@ -99,9 +98,9 @@ loadQueryData(istream& input, BenchQueries& queries, const RRClass& qclass,
             renderer.clear();
             query_message.toWire(renderer);
             vector<unsigned char> query_data(
-                static_cast<const unsigned char*>(buffer.getData()),
-                static_cast<const unsigned char*>(buffer.getData()) +
-                buffer.getLength());
+                static_cast<const unsigned char*>(renderer.getData()),
+                static_cast<const unsigned char*>(renderer.getData()) +
+                renderer.getLength());
             queries.push_back(query_data);
         } catch (const Exception&) {
             if (strict) {
