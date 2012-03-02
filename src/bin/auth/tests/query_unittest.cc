@@ -565,7 +565,8 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
             }
             return (ZoneFinderContextPtr(
                         new Context(*this, options,
-                                    ResultContext(SUCCESS, RRsetPtr()))));
+                                    ResultContext(SUCCESS, RRsetPtr()),
+                                    target)));
         }
     }
 
@@ -1139,7 +1140,6 @@ TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
     // proof (and their RRSIGs).  The closest encloser is the apex (origin),
     // and with our faked hash the covering NSEC3 for the next closer
     // (= child zone name) is that for www.example.com.
-    cout << response << endl;
     responseCheck(response, Rcode::NOERROR(), 0, 0, 5, 0,
                   NULL,
                   (string(unsigned_delegation_txt) +
