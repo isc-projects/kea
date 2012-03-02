@@ -56,6 +56,7 @@ run_unittests_SOURCES += database_unittest.cc
 run_unittests_SOURCES += sqlite3_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
 run_unittests_SOURCES += memory_datasrc_unittest.cc
+run_unittests_SOURCES += zone_finder_context_unittest.cc
 
 # We need the actually module implementation in the tests (they are not part
 # of libdatasrc)
@@ -106,3 +107,4 @@ EXTRA_DIST += testdata/test.sqlite3
 EXTRA_DIST += testdata/test.sqlite3.nodiffs
 EXTRA_DIST += testdata/rwtest.sqlite3
 EXTRA_DIST += testdata/diffs.sqlite3
+EXTRA_DIST += testdata/contexttest.zone
