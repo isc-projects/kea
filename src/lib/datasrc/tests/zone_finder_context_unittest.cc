@@ -21,17 +21,23 @@
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
 
+#include <testutils/dnsmessage_test.h>
+
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <cstdlib>
+#include <vector>
 
 using namespace std;
+using boost::shared_ptr;
+
 using namespace isc::dns;
 using namespace isc::datasrc;
-using boost::shared_ptr;
+using namespace isc::testutils;
 
 namespace {
 
@@ -88,6 +94,12 @@ createSQLite3Client(RRClass zclass, const Name& zname) {
     ZoneUpdaterPtr updater = client->getUpdater(zname, true);
     masterLoad(TEST_ZONE_FILE, zname, zclass, boost::bind(addRRset, updater,
                                                           _1));
+    // Insert an out-of-zone name to test if it's incorrectly returned.
+    // Note that neither updater nor SQLite3 accessor checks this condition,
+    // so this should succeed.
+    stringstream ss("ns.example.com. 3600 IN A 192.0.2.7");
+    masterLoad(ss, Name::ROOT_NAME(), zclass,
+               boost::bind(addRRset, updater, _1));
     updater->commit();
 
     return (client);
@@ -101,12 +113,22 @@ class ZoneFinderContextTest :
 protected:
     ZoneFinderContextTest() : qclass_(RRClass::IN()), qzone_("example.org") {
         client_ = (*GetParam())(qclass_, qzone_);
+        REQUESTED_A.push_back(RRType::A());
+        REQUESTED_AAAA.push_back(RRType::AAAA());
+        REQUESTED_BOTH.push_back(RRType::A());
+        REQUESTED_BOTH.push_back(RRType::AAAA());
     }
 
     const RRClass qclass_;
     const Name qzone_;
     DataSourceClientPtr client_;
     ZoneFinderPtr finder_;
+
+    vector<RRType> requested_types_;
+    vector<RRType> REQUESTED_A;
+    vector<RRType> REQUESTED_AAAA;
+    vector<RRType> REQUESTED_BOTH;
+    vector<ConstRRsetPtr> result_sets_;
 };
 
 // We test the in-memory and SQLite3 data source implementations.
@@ -114,9 +136,135 @@ INSTANTIATE_TEST_CASE_P(, ZoneFinderContextTest,
                         ::testing::Values(createInMemoryClient,
                                           createSQLite3Client));
 
-TEST_P(ZoneFinderContextTest, getAdditional) {
-    finder_ = client_->findZone(Name("www.a.example.org")).zone_finder;
+TEST_P(ZoneFinderContextTest, getAdditionalAuthNS) {
+    finder_ = client_->findZone(qzone_).zone_finder;
     ASSERT_TRUE(finder_);
+
+    ZoneFinderContextPtr ctx = finder_->find(qzone_, RRType::NS());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+
+    // Getting both A and AAAA NS addresses
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("ns1.example.org. 3600 IN A 192.0.2.1\n"
+                "ns1.example.org. 3600 IN AAAA 2001:db8::1\n"
+                "ns2.example.org. 3600 IN A 192.0.2.2\n",
+                result_sets_.begin(), result_sets_.end());
+
+    // Getting only A
+    result_sets_.clear();
+    ctx->getAdditional(REQUESTED_A, result_sets_);
+    rrsetsCheck("ns1.example.org. 3600 IN A 192.0.2.1\n"
+                "ns2.example.org. 3600 IN A 192.0.2.2\n",
+                result_sets_.begin(), result_sets_.end());
+
+    // Getting only AAAA
+    result_sets_.clear();
+    ctx->getAdditional(REQUESTED_AAAA, result_sets_);
+    rrsetsCheck("ns1.example.org. 3600 IN AAAA 2001:db8::1\n",
+                result_sets_.begin(), result_sets_.end());
+
+    // Normally expected type set contain only A and/or AAAA, but others aren't
+    // excluded.
+    result_sets_.clear();
+    requested_types_.push_back(RRType::TXT());
+    ctx->getAdditional(requested_types_, result_sets_);
+    rrsetsCheck("ns2.example.org. 3600 IN TXT \"text data\"",
+                result_sets_.begin(), result_sets_.end());
+
+    // Even empty set is okay.  The result should also be empty.
+    result_sets_.clear();
+    ctx->getAdditional(vector<RRType>(), result_sets_);
+    EXPECT_TRUE(result_sets_.empty());
+}
+
+TEST_P(ZoneFinderContextTest, getAdditionalDelegation) {
+    // Basically similar to the AuthNS case, but NS names are glues.
+    // It contains an out-of-zone NS name.  Its address (even if it's somehow
+    // inserted to the zone data) shouldn't be returned.
+
+    const Name qname("www.a.example.org");
+    finder_ = client_->findZone(qname).zone_finder;
+    ASSERT_TRUE(finder_);
+
+    ZoneFinderContextPtr ctx = finder_->find(qname, RRType::AAAA());
+    EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("ns1.a.example.org. 3600 IN A 192.0.2.5\n"
+                "ns2.a.example.org. 3600 IN A 192.0.2.6\n"
+                "ns2.a.example.org. 3600 IN AAAA 2001:db8::6\n",
+                result_sets_.begin(), result_sets_.end());
+
+    result_sets_.clear();
+    ctx->getAdditional(REQUESTED_A, result_sets_);
+    rrsetsCheck("ns1.a.example.org. 3600 IN A 192.0.2.5\n"
+                "ns2.a.example.org. 3600 IN A 192.0.2.6\n",
+                result_sets_.begin(), result_sets_.end());
+
+    result_sets_.clear();
+    ctx->getAdditional(REQUESTED_AAAA, result_sets_);
+    rrsetsCheck("ns2.a.example.org. 3600 IN AAAA 2001:db8::6\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
+TEST_P(ZoneFinderContextTest, getAdditionalMX) {
+    // Similar to the previous cases, but for MX addresses.  The test zone
+    // contains MX name under a zone cut.  Its address shouldn't be returned.
+
+    finder_ = client_->findZone(qzone_).zone_finder;
+    ASSERT_TRUE(finder_);
+
+    ZoneFinderContextPtr ctx = finder_->find(qzone_, RRType::MX());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+
+    // Getting both A and AAAA NS addresses
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("mx1.example.org. 3600 IN A 192.0.2.10\n"
+                "mx2.example.org. 3600 IN AAAA 2001:db8::10\n",
+                result_sets_.begin(), result_sets_.end());
+
+    // Getting only A
+    result_sets_.clear();
+    ctx->getAdditional(REQUESTED_A, result_sets_);
+    rrsetsCheck("mx1.example.org. 3600 IN A 192.0.2.10\n",
+                result_sets_.begin(), result_sets_.end());
+
+    // Getting only AAAA
+    result_sets_.clear();
+    ctx->getAdditional(REQUESTED_AAAA, result_sets_);
+    rrsetsCheck("mx2.example.org. 3600 IN AAAA 2001:db8::10\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
+TEST_P(ZoneFinderContextTest, getAdditionalWithSIG) {
+    // Similar to the AuthNS test, but the original find() requested DNSSEC
+    // RRSIGs.  Then additional records will also have RRSIGs.
+
+    finder_ = client_->findZone(qzone_).zone_finder;
+    ASSERT_TRUE(finder_);
+    
+    ZoneFinderContextPtr ctx = finder_->find(qzone_, RRType::NS(),
+                                             ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("ns1.example.org. 3600 IN A 192.0.2.1\n"
+                "ns1.example.org. 3600 IN AAAA 2001:db8::1\n"
+                "ns2.example.org. 3600 IN A 192.0.2.2\n",
+                result_sets_.begin(), result_sets_.end());
+
+    vector<ConstRRsetPtr> sigresult_sets;
+    BOOST_FOREACH(ConstRRsetPtr rrset, result_sets_) {
+        ConstRRsetPtr sig_rrset = rrset->getRRsig();
+        if (sig_rrset) {
+            sigresult_sets.push_back(sig_rrset);
+        }
+    }
+    rrsetsCheck("ns1.example.org. 3600 IN RRSIG	A 7 3 3600 20150420235959 "
+                "20051021000000 40430 example.org. FAKEFAKE\n"
+                "ns1.example.org. 3600 IN RRSIG	AAAA 7 3 3600 20150420235959 "
+                "20051021000000 40430 example.org. FAKEFAKEFAKEFAKE\n",
+                sigresult_sets.begin(), sigresult_sets.end());
 }
 
 }

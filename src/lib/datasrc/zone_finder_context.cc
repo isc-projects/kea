@@ -15,8 +15,11 @@
 #include <dns/rdata.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
+#include <dns/rdataclass.h>
 
 #include <datasrc/zone.h>
+
+#include <boost/foreach.hpp>
 
 #include <vector>
 
@@ -27,10 +30,50 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace datasrc {
 
+namespace {
 void
-ZoneFinder::Context::getAdditional(const vector<RRType>& /*requested_types*/,
-                                   vector<ConstRRsetPtr>& /*result*/)
+getAdditionalAddrs(ZoneFinder& finder, const Name& name,
+                   const vector<RRType>& requested_types,
+                   vector<ConstRRsetPtr>& result_rrsets,
+                   ZoneFinder::FindOptions options)
 {
+    // Ignore out-of-zone names
+    const NameComparisonResult cmp = finder.getOrigin().compare(name);
+    if ((cmp.getRelation() != NameComparisonResult::SUPERDOMAIN) &&
+        (cmp.getRelation() != NameComparisonResult::EQUAL)) {
+        return;
+    }
+
+    BOOST_FOREACH(RRType rrtype, requested_types) {
+        ConstZoneFinderContextPtr ctx = finder.find(name, rrtype, options);
+        if (ctx->code == ZoneFinder::SUCCESS) {
+            result_rrsets.push_back(ctx->rrset);
+        }
+    }
+}
+}
+
+void
+ZoneFinder::Context::getAdditional(const vector<RRType>& requested_types,
+                                   vector<ConstRRsetPtr>& result)
+{
+    RdataIteratorPtr rdata_iterator(rrset->getRdataIterator());
+    ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT;
+
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        const Rdata& rdata(rdata_iterator->getCurrent());
+
+        if (rrset->getType() == RRType::NS()) {
+            // Need to perform the search in the "GLUE OK" mode.
+            const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
+            getAdditionalAddrs(finder_, ns.getNSName(), requested_types,
+                               result, options | ZoneFinder::FIND_GLUE_OK);
+        } else if (rrset->getType() == RRType::MX()) {
+            const generic::MX& mx = dynamic_cast<const generic::MX&>(rdata);
+            getAdditionalAddrs(finder_, mx.getMXName(), requested_types,
+                               result, options);
+        }
+    }
 }
 
 } // namespace datasrc
