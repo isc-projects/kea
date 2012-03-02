@@ -256,4 +256,29 @@ TEST_P(ZoneFinderContextTest, getAdditionalWithSIG) {
                 sigresult_sets.begin(), sigresult_sets.end());
 }
 
+TEST_P(ZoneFinderContextTest, getAdditionalNoOP) {
+    // getAdditional() is only meaningful after SUCCESS or DELEGATION.
+
+    ZoneFinderContextPtr ctx = finder_->find(Name("nxdomain.example.org"),
+                                             RRType::NS());
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, ctx->code);
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    EXPECT_TRUE(result_sets_.empty());
+
+    ctx = finder_->find(qzone_, RRType::TXT());
+    EXPECT_EQ(ZoneFinder::NXRRSET, ctx->code);
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    EXPECT_TRUE(result_sets_.empty());
+
+    ctx = finder_->find(Name("alias.example.org."), RRType::A());
+    EXPECT_EQ(ZoneFinder::CNAME, ctx->code);
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    EXPECT_TRUE(result_sets_.empty());
+
+    ctx = finder_->find(Name("www.dname.example.org."), RRType::A());
+    EXPECT_EQ(ZoneFinder::DNAME, ctx->code);
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    EXPECT_TRUE(result_sets_.empty());
+}
+
 }
