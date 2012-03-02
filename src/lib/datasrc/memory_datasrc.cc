@@ -34,6 +34,7 @@
 
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
+#include <datasrc/rbnode_rrset.h>
 #include <datasrc/logger.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
@@ -419,14 +420,19 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of InMemoryZoneFinder::add
-    result::Result add(const ConstRRsetPtr& rrset, ZoneData& zone_data) {
+    result::Result add(const ConstRRsetPtr& rawrrset, ZoneData& zone_data) {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
-        addValidation(rrset);
+        addValidation(rawrrset);
 
         // OK, can add the RRset.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
-            arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
+            arg(rawrrset->getName()).arg(rawrrset->getType()).arg(origin_);
+
+        // ... although instead of loading the RRset directly, we encapsulate
+        // it within an RBNodeRRset.  This contains additional information that
+        // speeds up queries.
+        ConstRRsetPtr rrset(new internal::RBNodeRRset(rawrrset));
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addNSEC3(rrset, zone_data));
