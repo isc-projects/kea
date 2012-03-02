@@ -210,6 +210,11 @@ private:
 /// names as a special case.
 ///
 class Name {
+    // LabelSequences use knowledge about the internal data structure
+    // of this class for efficiency (they use the offsets_ vector and
+    // the ndata_ string)
+    friend class LabelSequence;
+
     ///
     /// \name Constructors and Destructor
     ///
@@ -298,6 +303,7 @@ public:
         }
         return (ndata_[pos]);
     }
+
     /// \brief Gets the length of the <code>Name</code> in its wire format.
     ///
     /// This method never throws an exception.
