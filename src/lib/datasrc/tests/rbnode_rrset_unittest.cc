@@ -160,8 +160,7 @@ performToWireTest(T& dataHolder, const RBNodeRRset& rrset,
 }
 
 TEST_F(RBNodeRRsetTest, toWireRenderer) {
-    OutputBuffer buffer(0);
-    MessageRenderer renderer(buffer);
+    MessageRenderer renderer;
     performToWireTest(renderer, rrset_a, rrset_a_empty, "rrset_toWire2");
 }
 
