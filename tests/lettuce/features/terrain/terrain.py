@@ -45,7 +45,9 @@ copylist = [
     ["configurations/example.org.config.orig",
      "configurations/example.org.config"],
     ["configurations/resolver/resolver_basic.config.orig",
-     "configurations/resolver/resolver_basic.config"]
+     "configurations/resolver/resolver_basic.config"],
+    ["configurations/multi_instance/multi_auth.config.orig",
+     "configurations/multi_instance/multi_auth.config"]
 ]
 
 # This is a list of files that, if present, will be removed before a scenario
@@ -342,6 +344,10 @@ def initialize(scenario):
 
     # Convenience variable to access the last query result from querying.py
     world.last_query_result = None
+
+    # For slightly better errors, initialize a process_pids for the relevant
+    # steps
+    world.process_pids = None
 
     # Some tests can modify the settings. If the tests fail half-way, or
     # don't clean up, this can leave configurations or data in a bad state,

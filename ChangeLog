@@ -1,6 +1,69 @@
-382.	[func]	jelte
+391.	[bug]*		vorner
+	The long time unused configuration options of Xfrout "log_name",
+	"log_file", "log_severity", "log_version" and "log_max_bytes" were
+	removed, as they had no effect (Xfrout uses the global logging framework).
+	However, if you have them set, you need to remove them from the
+	configuration file or the configuration will be rejected.
+	(Trac #1090, git ef1eba02e4cf550e48e7318702cff6d67c1ec82e)
+
+bind10-devel-20120301 released on March 1, 2012
+
+390.	[bug]		vorner
+	The UDP IPv6 packets are now correctly fragmented for maximum
+	guaranteed MTU, so they won't get lost because being too large
+	for some hop.
+	(Trac #1534, git ff013364643f9bfa736b2d23fec39ac35872d6ad)
+
+389.	[func]*		vorner
+	Xfrout now uses the global TSIG keyring, instead of its own. This
+	means the keys need to be set only once (in tsig_keys/keys).
+	However, the old configuration of Xfrout/tsig_keys need to be
+	removed for Xfrout to work.
+	(Trac #1643, git 5a7953933a49a0ddd4ee1feaddc908cd2285522d)
+
+388.	[func]		jreed
+	Use prefix "sockcreator-" for the private temporary directory
+	used for b10-sockcreator communication.
+	(git b98523c1260637cb33436964dc18e9763622a242)
+
+387.	[build]		muks
+	Accept a --without-werror configure switch so that some builders can
+	disable the use of -Werror in CFLAGS when building.
+	(Trac #1671, git 8684a411d7718a71ad9fb616f56b26436c4f03e5)
+
+386.	[bug]		jelte
+	Upon initial sqlite3 database creation, the 'diffs' table is now
+	always created. This already happened most of the time, but there
+	are a few cases where it was skipped, resulting in potential errors
+	in xfrout later.
+	(Trac #1717, git 30d7686cb6e2fa64866c983e0cfb7b8fabedc7a2)
+
+385.	[bug]		jinmei
+	libdns++: masterLoad() didn't accept comments placed at the end of
+	an RR.  Due to this the in-memory data source cannot load a master
+	file for a signed zone even if it's preprocessed with BIND 9's
+	named-compilezone.
+	Note: this fix is considered temporary and still only accepts some
+	limited form of such comments.  The main purpose is to allow the
+	in-memory data source to load any signed or unsigned zone files as
+	long as they are at least normalized with named-compilezone.
+	(Trac #1667, git 6f771b28eea25c693fe93a0e2379af924464a562)
+
+384.	[func]		jinmei, jelte, vorner, haikuo, kevin
+	b10-auth now supports NSEC3-signed zones in the in-memory data
+	source.
+	(Trac #1580, #1581, #1582, #1583, #1584, #1585, #1587, and
+	other related changes to the in-memory data source)
+
+383.	[build]		jinmei
+	Fixed build failure on MacOS 10.7 (Lion) due to the use of
+	IPV6_PKTINFO; the OS requires a special definition to make it
+	visible to the compiler.
+	(Trac #1633, git 19ba70c7cc3da462c70e8c4f74b321b8daad0100)
+
+382.	[func]		jelte
 	b10-auth now also experimentally supports statistics counters of
-	the rcode reponses it sends. The counters can be shown as
+	the rcode responses it sends. The counters can be shown as
 	rcode.<code name>, where code name is the lowercase textual
 	representation of the rcode (e.g. "noerror", "formerr", etc.).
 	Same note applies as for opcodes, see changelog entry 364.
@@ -50,11 +113,11 @@
 	(Trac #1570, git 2858b2098a10a8cc2d34bf87463ace0629d3670e)
 
 375.	[func]		jelte
-	Modules now inform the system when they are stopping. As a result, they
-	are removed from the 'active modules' list in bindctl, which can then
-	inform the user directly when it tries to send them a command or
-	configuration update. Previously this would result in a 'not
-	responding' error instead of 'not running'.
+	Modules now inform the system when they are stopping. As a result,
+	they are removed from the 'active modules' list in bindctl, which
+	can then inform the user directly when it tries to send them a
+	command or configuration update.  Previously this would result
+	in a 'not responding' error instead of 'not running'.
 	(Trac #640, git 17e78fa1bb1227340aa9815e91ed5c50d174425d)
 
 374.	[func]*		stephen
@@ -90,10 +153,11 @@
 	(Trac #1575, git 2c421b58e810028b303d328e4e2f5b74ea124839)
 
 369.	[func]		vorner
-	The SocketRequestor provides more information about what error happened
-	when it throws, by using subclasses of the original exception. This way
-	a user not interested in the difference can still use the original
-	exception, while it can be recognized if necessary.
+	The SocketRequestor provides more information about what error
+	happened when it throws, by using subclasses of the original
+	exception. This way a user not interested in the difference can
+	still use the original exception, while it can be recognized if
+	necessary.
 	(Trac #1542, git 2080e0316a339fa3cadea00e10b1ec4bc322ada0)
 
 368.	[func]*		jinmei
@@ -151,7 +215,8 @@ bind10-devel-20120119 released on January 19, 2012
 	configuration.  If your b10-config.db contains "setuid" for
 	Boss.components, you'll need to remove that entry by hand before
 	starting BIND 10.
-	(Trac #1508-#1510, git edc5b3c12eb45437361484c843794416ad86bb00)
+	(Trac #1508, #1509, #1510,
+	git edc5b3c12eb45437361484c843794416ad86bb00)
 
 361.	[func]		vorner,jelte,jinmei
 	The socket creator is now used to provide sockets. It means you can

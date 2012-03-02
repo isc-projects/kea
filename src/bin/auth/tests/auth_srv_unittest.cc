@@ -154,8 +154,7 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     rrset_version_ns->addRdata(generic::NS(version_name));
     message.addRRset(Message::SECTION_AUTHORITY, rrset_version_ns);
 
-    OutputBuffer obuffer(0);
-    MessageRenderer renderer(obuffer);
+    MessageRenderer renderer;
     message.toWire(renderer);
 
     data.clear();

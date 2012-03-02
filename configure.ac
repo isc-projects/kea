@@ -5,6 +5,7 @@ AC_PREREQ([2.59])
 AC_INIT(bind10-devel, 20120127, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
@@ -108,6 +109,10 @@ case "$host" in
 	LDFLAGS="$LDFLAGS -z now"
 	;;
 *-apple-darwin*)
+	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
+	# (RFC2292 or RFC3542).
+	CPPFLAGS="$CPPFLAGS -D__APPLE_USE_RFC_3542"
+
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
 	# modules always refer to that path even if it's loaded within the
@@ -270,7 +275,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_LINK_IFELSE([int main(void){ return 0;} ],
+  AC_LINK_IFELSE([int main(void){ return 0;}],
                  [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
@@ -283,8 +288,6 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   AC_MSG_RESULT([$bind10_cxx_flag])
 ])
 
-werror_ok=0
-
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
@@ -292,7 +295,7 @@ CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
 
-BIND10_CXX_TRY_FLAG(-Wno-missing-field-initializers,
+BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
 	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
 AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
@@ -310,19 +313,34 @@ case "$host" in
 	;;
 esac
 
+# Don't use -Werror if configured not to
+AC_ARG_WITH(werror,
+    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
+    [
+     case "${withval}" in
+         yes) with_werror=1 ;;
+         no)  with_werror=0 ;;
+         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
+     esac],
+     [with_werror=1])
+
+werror_ok=0
+
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
 # translation unit.  For these versions we have to disable -Werror.
-CXXFLAGS_SAVED="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
-AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-AC_TRY_COMPILE([namespace { class Foo {}; }
-namespace isc {class Bar {Foo foo_;};} ],,
+if test $with_werror = 1; then
+   CXXFLAGS_SAVED="$CXXFLAGS"
+   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+   AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
+   AC_TRY_COMPILE([namespace { class Foo {}; }
+   namespace isc {class Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
 	 werror_ok=1
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
-CXXFLAGS="$CXXFLAGS_SAVED"
+   CXXFLAGS="$CXXFLAGS_SAVED"
+fi
 
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
@@ -517,21 +535,22 @@ else
         AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
     fi
 fi
+if test "x${BOTAN_CONFIG}" != "x"
+then
+    BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
+    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
-BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
-BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
-
-# We expect botan-config --libs to contain -L<path_to_libbotan>, but
-# this is not always the case.  As a heuristics workaround we add
-# -L`botan-config --prefix/lib` in this case (if not present already).
-# Same for BOTAN_INCLUDES (but using include instead of lib) below.
-if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
-    echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
-        BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
-    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
-        BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
+    # this is not always the case.  As a heuristics workaround we add
+    # -L`botan-config --prefix/lib` in this case (if not present already).
+    # Same for BOTAN_INCLUDES (but using include instead of lib) below.
+    if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
+        echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
+            BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
+        echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+            BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    fi
 fi
-
 # botan-config script (and the way we call pkg-config) returns -L and -l
 # as one string, but we need them in separate values
 BOTAN_LDFLAGS=
@@ -1001,6 +1020,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/bind10/tests/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
+                 src/lib/python/isc/server_common/Makefile
+                 src/lib/python/isc/server_common/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile

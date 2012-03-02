@@ -38,7 +38,7 @@ using namespace isc::dns::rdata;
 namespace {
 class RRsetTest : public ::testing::Test {
 protected:
-    RRsetTest() : buffer(0), renderer(buffer),
+    RRsetTest() : buffer(0),
                   test_name("test.example.com"),
                   test_domain("example.com"),
                   test_nsname("ns.example.com"),
@@ -201,8 +201,8 @@ TEST_F(RRsetTest, toWireRenderer) {
     rrset_ns.toWire(renderer);
 
     UnitTestUtil::readWireData("rrset_toWire2", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &wiredata[0], wiredata.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &wiredata[0], wiredata.size());
 
     // toWire() cannot be performed for an empty RRset.
     renderer.clear();

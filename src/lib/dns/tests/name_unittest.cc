@@ -357,13 +357,12 @@ TEST_F(NameTest, toWireBuffer) {
 //
 TEST_F(NameTest, toWireRenderer) {
     vector<unsigned char> data;
-    OutputBuffer buffer(0);
-    MessageRenderer renderer(buffer);
+    MessageRenderer renderer;
 
     UnitTestUtil::readWireData(string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &data[0], data.size(),
-                        buffer.getData(), buffer.getLength());
+                        renderer.getData(), renderer.getLength());
 }
 
 //
@@ -524,8 +523,8 @@ TEST_F(NameTest, at) {
 
     example_name.toWire(buffer_expected);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &data[0], data.size(),
-                        buffer_expected.getData(), buffer_expected.getLength());
+                        &data[0], data.size(), buffer_expected.getData(),
+                        buffer_expected.getLength());
 
     // Out-of-range access: should trigger an exception.
     EXPECT_THROW(example_name.at(example_name.getLength()), OutOfRange);
@@ -543,7 +542,7 @@ TEST_F(NameTest, leq) {
 
     // small <= small is true
     EXPECT_TRUE(small_name.leq(small_name));
-    EXPECT_TRUE(small_name <= small_name);
+    EXPECT_LE(small_name, small_name);
 
     // large <= small is false
     EXPECT_FALSE(large_name.leq(small_name));
@@ -555,7 +554,7 @@ TEST_F(NameTest, geq) {
     EXPECT_TRUE(large_name >= small_name);
 
     EXPECT_TRUE(large_name.geq(large_name));
-    EXPECT_TRUE(large_name >= large_name);
+    EXPECT_GE(large_name, large_name);
 
     EXPECT_FALSE(small_name.geq(large_name));
     EXPECT_FALSE(small_name >= large_name);

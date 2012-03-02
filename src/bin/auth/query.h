@@ -204,6 +204,62 @@ private:
     /// within this method.
     bool processDSAtChild();
 
+    /// \brief Add NSEC3 to the response for a closest encloser proof for a
+    /// given name.
+    ///
+    /// This method calls \c findNSEC3() of the given zone finder for the
+    /// given name in the recursive mode, and adds the returned NSEC3(s) to
+    /// the authority section of the response message associated with the
+    /// \c Query object.
+    ///
+    /// It returns the number of labels of the closest encloser (returned via
+    /// the \c findNSEC3() call) in case the caller needs to use that value
+    /// for subsequent processing, i.e, constructing the best possible wildcard
+    /// name that (would) match the query name.
+    ///
+    /// Unless \c exact_ok is true, \c name is expected to be non existent,
+    /// in which case findNSEC3() in the recursive mode must return both
+    /// closest and next proofs.  If the latter is NULL, it means a run time
+    /// collision (or the zone is broken in other way), and this method throws
+    /// a BadNSEC3 exception.
+    ///
+    /// If \c exact_ok is true, this method takes into account the case
+    /// where the name exists and may or may not be at a zone cut to an
+    /// optout zone.  In this case, depending on whether the zone is optout
+    /// or not, findNSEC3() may return non-NULL or NULL next_proof
+    /// (respectively).  This method adds the next proof if and only if
+    /// findNSEC3() returns non NULL value for it.  The Opt-Out flag
+    /// must be set or cleared accordingly, but this method doesn't check that
+    /// in this level (as long as the zone is signed validly and findNSEC3()
+    /// for the data source is implemented as documented, the condition
+    /// should be met; otherwise we'd let the validator detect the error).
+    ///
+    /// By default this method always adds the closest proof.
+    /// If \c add_closest is false, it only adds the next proof to the message.
+    /// This correspond to the case of "wildcard answer responses" as described
+    /// in Section 7.2.6 of RFC5155.
+    uint8_t addClosestEncloserProof(isc::datasrc::ZoneFinder& finder,
+                                    const isc::dns::Name& name, bool exact_ok,
+                                    bool add_closest = true);
+
+    /// \brief Add matching or covering NSEC3 to the response for a give name.
+    ///
+    /// This method calls \c findNSEC3() of the given zone finder for the
+    /// given name in the non recursive mode, and adds the returned NSEC3 to
+    /// the authority section of the response message associated with the
+    /// \c Query object.
+    ///
+    /// Depending on the caller's context, the returned NSEC3 is one and
+    /// only one of matching or covering NSEC3.  If \c match is true the
+    /// returned NSEC3 must be a matching one; otherwise it must be a covering
+    /// one.  If this assumption isn't met this method throws a BadNSEC3
+    /// exception (if it must be a matching NSEC3 but is not, it means a broken
+    /// zone, maybe with incorrect optout NSEC3s; if it must be a covering
+    /// NSEC3 but is not, it means a run time collision; or the \c findNSEC3()
+    /// implementation is broken for both cases.)
+    void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
+                         const isc::dns::Name& name, bool match);
+
 public:
     /// Constructor from query parameters.
     ///
