@@ -895,7 +895,8 @@ InMemoryZoneFinder::findAll(const Name& name,
 {
     return (ZoneFinderContextPtr(
                 new Context(*this, options, impl_->find(name, RRType::ANY(),
-                                                        &target, options))));
+                                                        &target, options),
+                            target)));
 }
 
 ZoneFinder::FindNSEC3Result

@@ -153,6 +153,15 @@ public:
             code(result.code), rrset(result.rrset),
             finder_(finder), flags_(result.flags), options_(options)
         {}
+
+        Context(ZoneFinder& finder, FindOptions options,
+                const ResultContext& result,
+                std::vector<isc::dns::ConstRRsetPtr> &all_set) :
+            code(result.code), rrset(result.rrset),
+            finder_(finder), flags_(result.flags), options_(options),
+            all_set_(all_set)
+        {}
+
         const Result code;
         const isc::dns::ConstRRsetPtr rrset;
 
@@ -203,6 +212,7 @@ public:
         ZoneFinder& finder_;
         const FindResultFlags flags_;
         const FindOptions options_;
+        std::vector<isc::dns::ConstRRsetPtr> all_set_;
     };
 
     ///
