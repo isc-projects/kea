@@ -51,18 +51,18 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
 }
 
 void
-LabelSequence::leftSplit(size_t i) {
+LabelSequence::stripLeft(size_t i) {
     if (i >= getLabelCount()) {
-        isc_throw(OutOfRange, "Cannot split to zero or less labels; " << i <<
+        isc_throw(OutOfRange, "Cannot strip to zero or less labels; " << i <<
                               " (labelcount: " << getLabelCount() << ")");
     }
     first_label_ += i;
 }
 
 void
-LabelSequence::rightSplit(size_t i) {
+LabelSequence::stripRight(size_t i) {
     if (i >= getLabelCount()) {
-        isc_throw(OutOfRange, "Cannot split to zero or less labels; " << i <<
+        isc_throw(OutOfRange, "Cannot strip to zero or less labels; " << i <<
                               " (labelcount: " << getLabelCount() << ")");
     }
     last_label_ -= i;
