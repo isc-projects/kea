@@ -24,7 +24,7 @@ main() {
      * but ability to bind ports? It would be nice.
      */
     try {
-        run(STDIN_FILENO, STDOUT_FILENO);
+        run(STDIN_FILENO, STDOUT_FILENO, getSock, isc::util::io::send_fd, close);
     } catch (const SocketCreatorError& ec) {
         return (ec.getExitCode());
     }

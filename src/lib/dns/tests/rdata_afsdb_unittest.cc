@@ -162,7 +162,7 @@ TEST_F(Rdata_AFSDB_Test, toWireRenderer) {
     renderer.clear();
 
     // construct actual data
-    Name("example.com.").toWire(obuffer);
+    renderer.writeName(Name("example.com."));
     rdata_afsdb2.toWire(renderer);
 
     // construct expected data

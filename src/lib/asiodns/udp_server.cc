@@ -343,10 +343,5 @@ UDPServer::resume(const bool done) {
     data_->io_.post(*this);
 }
 
-bool
-UDPServer::hasAnswer() {
-    return (data_->done_);
-}
-
 } // namespace asiodns
 } // namespace isc

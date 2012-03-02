@@ -100,11 +100,11 @@ TEST_F(Rdata_PTR_Test, toWireBuffer) {
 TEST_F(Rdata_PTR_Test, toWireRenderer) {
     rdata_ptr.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_ptr, sizeof(wiredata_ptr));
     rdata_ptr2.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_ptr2, sizeof(wiredata_ptr2));
 }
 

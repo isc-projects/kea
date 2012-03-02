@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010,2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>August 11, 2011</date>
+    <date>March 1, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2010</year>
+      <year>2010-2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -129,7 +129,10 @@
     <para>
       <command>shutdown</command> will shutdown the
       <command>b10-stats</command> process.
-      (Note that the <command>bind10</command> parent may restart it.)
+      This has an optional <varname>pid</varname> argument to
+      select the process ID to stop.
+      (Note that the BIND 10 boss process may restart this service
+      if configured.)
     </para>
 
     <para>
@@ -143,20 +146,15 @@
     <title>STATISTICS DATA</title>
 
     <para>
-      The <command>b10-stats</command> daemon contains these statistics:
+      The <command>b10-stats</command> daemon contains these
+      <quote>Stats</quote> statistics:
     </para>
 
     <variablelist>
 
-      <varlistentry>
-        <term>report_time</term>
-<!-- TODO: why not named stats.report_time? -->
-        <listitem><simpara>The latest report date and time in
-          ISO 8601 format.</simpara></listitem>
-      </varlistentry>
 
       <varlistentry>
-        <term>stats.boot_time</term>
+        <term>boot_time</term>
         <listitem><simpara>The date and time when this daemon was
           started in ISO 8601 format.
           This is a constant which can't be reset except by restarting
@@ -165,14 +163,14 @@
       </varlistentry>
 
       <varlistentry>
-        <term>stats.last_update_time</term>
+        <term>last_update_time</term>
         <listitem><simpara>The date and time (in ISO 8601 format)
           when this daemon last received data from another component.
         </simpara></listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>stats.lname</term>
+        <term>lname</term>
         <listitem><simpara>This is the name used for the
           <command>b10-msgq</command> command-control channel.
           (This is a constant which can't be reset except by restarting
@@ -181,16 +179,22 @@
       </varlistentry>
 
       <varlistentry>
-        <term>stats.start_time</term>
+        <term>report_time</term>
+        <listitem><simpara>The latest report date and time in
+          ISO 8601 format.</simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>start_time</term>
         <listitem><simpara>This is the date and time (in ISO 8601 format)
           when this daemon started collecting data.
         </simpara></listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>stats.timestamp</term>
+        <term>timestamp</term>
         <listitem><simpara>The current date and time represented in
-          seconds since UNIX epoch (1970-01-01T0 0:00:00Z) with
+          seconds since UNIX epoch (1970-01-01T00:00:00Z) with
           precision (delimited with a period) up to
           one hundred thousandth of second.</simpara></listitem>
       </varlistentry>
