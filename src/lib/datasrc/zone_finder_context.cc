@@ -51,28 +51,50 @@ getAdditionalAddrs(ZoneFinder& finder, const Name& name,
         }
     }
 }
+
+void
+getAdditionalForRRset(ZoneFinder& finder, const AbstractRRset& rrset,
+                      const vector<RRType>& requested_types,
+                      vector<ConstRRsetPtr>& result,
+                      ZoneFinder::FindOptions orig_options)
+{
+    RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
+    ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT;
+    if ((orig_options & ZoneFinder::FIND_DNSSEC) != 0) {
+        options = options | ZoneFinder::FIND_DNSSEC;
+    }
+
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        const Rdata& rdata(rdata_iterator->getCurrent());
+
+        if (rrset.getType() == RRType::NS()) {
+            // Need to perform the search in the "GLUE OK" mode.
+            const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
+            getAdditionalAddrs(finder, ns.getNSName(), requested_types,
+                               result, options | ZoneFinder::FIND_GLUE_OK);
+        } else if (rrset.getType() == RRType::MX()) {
+            const generic::MX& mx = dynamic_cast<const generic::MX&>(rdata);
+            getAdditionalAddrs(finder, mx.getMXName(), requested_types,
+                               result, options);
+        }
+    }
+}
 }
 
 void
 ZoneFinder::Context::getAdditionalImpl(const vector<RRType>& requested_types,
                                        vector<ConstRRsetPtr>& result)
 {
-    RdataIteratorPtr rdata_iterator(rrset->getRdataIterator());
-    ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT;
-
-    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
-        const Rdata& rdata(rdata_iterator->getCurrent());
-
-        if (rrset->getType() == RRType::NS()) {
-            // Need to perform the search in the "GLUE OK" mode.
-            const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
-            getAdditionalAddrs(finder_, ns.getNSName(), requested_types,
-                               result, options | ZoneFinder::FIND_GLUE_OK);
-        } else if (rrset->getType() == RRType::MX()) {
-            const generic::MX& mx = dynamic_cast<const generic::MX&>(rdata);
-            getAdditionalAddrs(finder_, mx.getMXName(), requested_types,
-                               result, options);
-        }
+    // If rrset is non NULL, it should have been SUCCESS/DELEGATION; otherwise
+    // we should have responded to type ANY query.
+    if (rrset) {
+        getAdditionalForRRset(finder_, *rrset, requested_types, result,
+                              options_);
+        return;
+    }
+    BOOST_FOREACH(ConstRRsetPtr rrset_in_set, all_set_) {
+        getAdditionalForRRset(finder_, *rrset_in_set, requested_types, result,
+                              options_);
     }
 }
 

@@ -403,7 +403,8 @@ DatabaseClient::Finder::findAll(const isc::dns::Name& name,
 {
     return (ZoneFinderContextPtr(new Context(*this, options,
                                              findInternal(name, RRType::ANY(),
-                                                          &target, options))));
+                                                          &target, options),
+                                             target)));
 }
 
 ZoneFinderContextPtr
