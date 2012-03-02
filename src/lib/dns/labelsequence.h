@@ -24,16 +24,17 @@ namespace dns {
 /// \brief Light-weight Accessor to Name object
 ///
 /// The purpose of this class is to easily match Names and parts of Names,
-/// without needing to copy the underlying data on each split.
+/// without needing to copy the underlying data on each label strip.
 ///
 /// It can only work on existing Name objects, and the Name object MUST
 /// remain in scope during the entire lifetime of its associated
 /// LabelSequence(s).
 ///
 /// Upon creation of a LabelSequence, it records the offsets of the
-/// labels in the wireformat data of the Name. When split() is called on
-/// the LabelSequence, no changes in the Name's data occur, but the
-/// internal pointers of the LabelSequence are modified.
+/// labels in the wireformat data of the Name. When stripLeft() or
+/// stripRight() is called on the LabelSequence, no changes in the
+/// Name's data occur, but the internal pointers of the
+/// LabelSequence are modified.
 ///
 /// LabelSequences can be compared to other LabelSequences, and their
 /// data can be requested (which then points to part of the original
@@ -88,7 +89,7 @@ public:
     ///           of labels currently pointed to by this LabelSequence
     ///
     /// \param i The number of labels to remove.
-    void leftSplit(size_t i);
+    void stripLeft(size_t i);
 
     /// \brief Remove labels from the end of this LabelSequence
     ///
@@ -99,7 +100,7 @@ public:
     ///           of labels currently pointed to by this LabelSequence
     ///
     /// \param i The number of labels to remove.
-    void rightSplit(size_t i);
+    void stripRight(size_t i);
 
     /// \brief Returns the current number of labels for this LabelSequence
     ///

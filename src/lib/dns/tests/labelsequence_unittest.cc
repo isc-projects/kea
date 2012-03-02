@@ -143,89 +143,89 @@ TEST_F(LabelSequenceTest, getData) {
     getDataCheck("\000", 1, ls7);
 };
 
-TEST_F(LabelSequenceTest, leftSplit) {
+TEST_F(LabelSequenceTest, stripLeft) {
     EXPECT_TRUE(ls1.equals(ls3));
-    ls1.leftSplit(0);
+    ls1.stripLeft(0);
     getDataCheck("\007example\003org\000", 13, ls1);
     EXPECT_TRUE(ls1.equals(ls3));
-    ls1.leftSplit(1);
+    ls1.stripLeft(1);
     getDataCheck("\003org\000", 5, ls1);
     EXPECT_FALSE(ls1.equals(ls3));
-    ls1.leftSplit(1);
+    ls1.stripLeft(1);
     getDataCheck("\000", 1, ls1);
     EXPECT_TRUE(ls1.equals(ls7));
 
-    ls2.leftSplit(2);
+    ls2.stripLeft(2);
     getDataCheck("\000", 1, ls2);
     EXPECT_TRUE(ls2.equals(ls7));
 }
 
-TEST_F(LabelSequenceTest, rightSplit) {
+TEST_F(LabelSequenceTest, stripRight) {
     EXPECT_TRUE(ls1.equals(ls3));
-    ls1.rightSplit(1);
+    ls1.stripRight(1);
     getDataCheck("\007example\003org", 12, ls1);
     EXPECT_FALSE(ls1.equals(ls3));
-    ls1.rightSplit(1);
+    ls1.stripRight(1);
     getDataCheck("\007example", 8, ls1);
     EXPECT_FALSE(ls1.equals(ls3));
 
     ASSERT_FALSE(ls1.equals(ls2));
-    ls2.rightSplit(2);
+    ls2.stripRight(2);
     getDataCheck("\007example", 8, ls2);
     EXPECT_TRUE(ls1.equals(ls2));
 }
 
-TEST_F(LabelSequenceTest, split_oor) {
-    EXPECT_THROW(ls1.leftSplit(100), isc::OutOfRange);
-    EXPECT_THROW(ls1.leftSplit(5), isc::OutOfRange);
-    EXPECT_THROW(ls1.leftSplit(4), isc::OutOfRange);
-    EXPECT_THROW(ls1.leftSplit(3), isc::OutOfRange);
+TEST_F(LabelSequenceTest, stripOutOfRange) {
+    EXPECT_THROW(ls1.stripLeft(100), isc::OutOfRange);
+    EXPECT_THROW(ls1.stripLeft(5), isc::OutOfRange);
+    EXPECT_THROW(ls1.stripLeft(4), isc::OutOfRange);
+    EXPECT_THROW(ls1.stripLeft(3), isc::OutOfRange);
     getDataCheck("\007example\003org\000", 13, ls1);
 
-    EXPECT_THROW(ls1.rightSplit(100), isc::OutOfRange);
-    EXPECT_THROW(ls1.rightSplit(5), isc::OutOfRange);
-    EXPECT_THROW(ls1.rightSplit(4), isc::OutOfRange);
-    EXPECT_THROW(ls1.rightSplit(3), isc::OutOfRange);
+    EXPECT_THROW(ls1.stripRight(100), isc::OutOfRange);
+    EXPECT_THROW(ls1.stripRight(5), isc::OutOfRange);
+    EXPECT_THROW(ls1.stripRight(4), isc::OutOfRange);
+    EXPECT_THROW(ls1.stripRight(3), isc::OutOfRange);
     getDataCheck("\007example\003org\000", 13, ls1);
 }
 
 TEST_F(LabelSequenceTest, getLabelCount) {
     EXPECT_EQ(3, ls1.getLabelCount());
-    ls1.leftSplit(0);
+    ls1.stripLeft(0);
     EXPECT_EQ(3, ls1.getLabelCount());
-    ls1.leftSplit(1);
+    ls1.stripLeft(1);
     EXPECT_EQ(2, ls1.getLabelCount());
-    ls1.leftSplit(1);
+    ls1.stripLeft(1);
     EXPECT_EQ(1, ls1.getLabelCount());
 
     EXPECT_EQ(3, ls2.getLabelCount());
-    ls2.rightSplit(1);
+    ls2.stripRight(1);
     EXPECT_EQ(2, ls2.getLabelCount());
-    ls2.rightSplit(1);
+    ls2.stripRight(1);
     EXPECT_EQ(1, ls2.getLabelCount());
 
     EXPECT_EQ(3, ls3.getLabelCount());
-    ls3.rightSplit(2);
+    ls3.stripRight(2);
     EXPECT_EQ(1, ls3.getLabelCount());
 
     EXPECT_EQ(5, ls4.getLabelCount());
-    ls4.rightSplit(3);
+    ls4.stripRight(3);
     EXPECT_EQ(2, ls4.getLabelCount());
 
     EXPECT_EQ(3, ls5.getLabelCount());
-    ls5.leftSplit(2);
+    ls5.stripLeft(2);
     EXPECT_EQ(1, ls5.getLabelCount());
 }
 
 TEST_F(LabelSequenceTest, comparePart) {
     EXPECT_FALSE(ls1.equals(ls8));
 
-    // Split root label from example.org.
-    ls1.rightSplit(1);
-    // Split foo from foo.example.org.bar.
-    ls8.leftSplit(1);
-    // Split bar. (i.e. bar and root) too
-    ls8.rightSplit(2);
+    // strip root label from example.org.
+    ls1.stripRight(1);
+    // strip foo from foo.example.org.bar.
+    ls8.stripLeft(1);
+    // strip bar. (i.e. bar and root) too
+    ls8.stripRight(2);
 
     EXPECT_TRUE(ls1.equals(ls8));
 
@@ -238,16 +238,16 @@ TEST_F(LabelSequenceTest, comparePart) {
 TEST_F(LabelSequenceTest, isAbsolute) {
     ASSERT_TRUE(ls1.isAbsolute());
 
-    ls1.leftSplit(1);
+    ls1.stripLeft(1);
     ASSERT_TRUE(ls1.isAbsolute());
-    ls1.rightSplit(1);
+    ls1.stripRight(1);
     ASSERT_FALSE(ls1.isAbsolute());
 
     ASSERT_TRUE(ls2.isAbsolute());
-    ls2.rightSplit(1);
+    ls2.stripRight(1);
     ASSERT_FALSE(ls2.isAbsolute());
 
     ASSERT_TRUE(ls3.isAbsolute());
-    ls3.leftSplit(2);
+    ls3.stripLeft(2);
     ASSERT_TRUE(ls3.isAbsolute());
 }
