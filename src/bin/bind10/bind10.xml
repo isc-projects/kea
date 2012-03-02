@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>February 28, 2012</date>
+    <date>March 1, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -433,13 +433,13 @@ xfrin
 
     <para>
       The statistics data collected by the <command>b10-stats</command>
-      daemon include:
+      daemon for <quote>Boss</quote> include:
     </para>
 
     <variablelist>
 
       <varlistentry>
-        <term>bind10.boot_time</term>
+        <term>boot_time</term>
         <listitem><para>
           The date and time that the <command>bind10</command>
           process started.

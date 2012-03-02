@@ -1,9 +1,18 @@
-391.	[func]*		jinmei
+392.	[func]*		jinmei
 	libdns++: revised the (Abstract)MessageRenderer class so that it
 	has a default internal buffer and the buffer can be temporarily
 	switched.  The constructor interface was modified, and a new
 	method setBuffer() was added.
 	(Trac #1697, git 9cabc799f2bf9a3579dae7f1f5d5467c8bb1aa40)
+
+391.	[bug]*		vorner
+	The long time unused configuration options of Xfrout "log_name",
+	"log_file", "log_severity", "log_version" and "log_max_bytes" were
+	removed, as they had no effect (Xfrout uses the global logging
+	framework).  However, if you have them set, you need to remove
+	them from the configuration file or the configuration will be
+	rejected.
+	(Trac #1090, git ef1eba02e4cf550e48e7318702cff6d67c1ec82e)
 
 bind10-devel-20120301 released on March 1, 2012
 
