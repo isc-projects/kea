@@ -54,8 +54,8 @@ getAdditionalAddrs(ZoneFinder& finder, const Name& name,
 }
 
 void
-ZoneFinder::Context::getAdditional(const vector<RRType>& requested_types,
-                                   vector<ConstRRsetPtr>& result)
+ZoneFinder::Context::getAdditionalImpl(const vector<RRType>& requested_types,
+                                       vector<ConstRRsetPtr>& result)
 {
     RdataIteratorPtr rdata_iterator(rrset->getRdataIterator());
     ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT;

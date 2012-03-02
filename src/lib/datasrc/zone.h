@@ -181,7 +181,21 @@ public:
             return ((flags_ & RESULT_NSEC3_SIGNED) != 0);
         }
 
-        virtual void getAdditional(
+        void getAdditional(
+            const std::vector<isc::dns::RRType>& requested_types,
+            std::vector<isc::dns::ConstRRsetPtr>& result)
+        {
+            // Perform common checks, and delegate the process the default
+            // or specialized implementation.
+            if (code != SUCCESS && code != DELEGATION) {
+                return;
+            }
+
+            getAdditionalImpl(requested_types, result);
+        }
+
+    protected:
+        virtual void getAdditionalImpl(
             const std::vector<isc::dns::RRType>& requested_types,
             std::vector<isc::dns::ConstRRsetPtr>& result);
 
