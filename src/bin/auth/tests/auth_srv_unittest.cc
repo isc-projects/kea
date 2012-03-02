@@ -844,7 +844,6 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-
 TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
@@ -1104,7 +1103,6 @@ public:
 
     virtual isc::dns::RRClass
     getClass() const {
-        assert(false);
         checkThrow(throw_at_get_class, throw_when_, isc_exception_);
         return (real_zone_finder_->getClass());
     }
@@ -1243,8 +1241,7 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindZone) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
 
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_zone,
-                       true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_zone, true);
     processAndCheckSERVFAIL();
 }
 
@@ -1252,24 +1249,21 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindZone) {
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindZoneStdException) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
 
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_zone,
-                       false);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_zone, false);
     processAndCheckSERVFAIL();
 }
 
 // Throw isc::Exception at getOrigin(), should result in SERVFAIL
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetOrigin) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_origin,
-                       true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_origin, true);
     processAndCheckSERVFAIL();
 }
 
 // Throw std::exception at findZone(), should result in SERVFAIL
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetOriginStdException) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_origin,
-                       true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_origin, true);
     processAndCheckSERVFAIL();
 }
 
@@ -1277,8 +1271,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetOriginStdException) {
 // in the processMessage path, so this should result in a normal answer
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_class,
-                       true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_get_class, true);
 
     // getClass is not called so it should just answer
     server.processMessage(*io_message, parse_message, response_obuffer,
@@ -1292,16 +1285,14 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
 // Throw isc::Exception in find(), should result in SERVFAIL
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFind) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find,
-                       true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find, true);
     processAndCheckSERVFAIL();
 }
 
 // Throw std::exception at find(), should result in no answer
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindStdException) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find,
-                       false);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find, false);
     processAndCheckSERVFAIL();
 }
 
@@ -1311,8 +1302,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindNSEC3) {
                                              default_qid, Name("foo.example."),
                                              RRClass::IN(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP);
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_nsec3,
-                       true);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_nsec3, true);
     processAndCheckSERVFAIL();
 }
 
@@ -1322,8 +1312,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyFindNSEC3StdException) {
                                              default_qid, Name("foo.example."),
                                              RRClass::IN(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP);
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_nsec3,
-                       false);
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, throw_at_find_nsec3, false);
     processAndCheckSERVFAIL();
 }
 
