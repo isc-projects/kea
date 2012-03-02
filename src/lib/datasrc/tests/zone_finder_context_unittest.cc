@@ -281,4 +281,32 @@ TEST_P(ZoneFinderContextTest, getAdditionalNoOP) {
     EXPECT_TRUE(result_sets_.empty());
 }
 
+TEST_P(ZoneFinderContextTest, getAdditionalForAny) {
+    // getAdditional() after successful type ANY query should return
+    // the additional records of all returned RRsets.
+    vector<ConstRRsetPtr> all_rrsets;
+    ZoneFinderContextPtr ctx = finder_->findAll(qzone_, all_rrsets);
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("ns1.example.org. 3600 IN A 192.0.2.1\n"
+                "ns1.example.org. 3600 IN AAAA 2001:db8::1\n"
+                "ns2.example.org. 3600 IN A 192.0.2.2\n"
+                "mx1.example.org. 3600 IN A 192.0.2.10\n"
+                "mx2.example.org. 3600 IN AAAA 2001:db8::10\n",
+                result_sets_.begin(), result_sets_.end());
+
+    // If the type ANY query results in DELEGATION, the result should be the
+    // same as normal query.
+    all_rrsets.clear();
+    result_sets_.clear();
+    ctx = finder_->findAll(Name("www.a.example.org"), all_rrsets);
+    EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("ns1.a.example.org. 3600 IN A 192.0.2.5\n"
+                "ns2.a.example.org. 3600 IN A 192.0.2.6\n"
+                "ns2.a.example.org. 3600 IN AAAA 2001:db8::6\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
 }
