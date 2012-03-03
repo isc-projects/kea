@@ -95,6 +95,8 @@ libdns___la_SOURCES += labelsequence.h labelsequence.cc
 libdns___la_SOURCES += masterload.h masterload.cc
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
+# keep the following two during development for performance comparison
+libdns___la_SOURCES += oldmessagerenderer.h oldmessagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
 libdns___la_SOURCES += nsec3hash.h nsec3hash.cc
 libdns___la_SOURCES += opcode.h opcode.cc
