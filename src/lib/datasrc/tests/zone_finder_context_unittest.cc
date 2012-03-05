@@ -164,6 +164,16 @@ TEST_P(ZoneFinderContextTest, getAdditionalAuthNS) {
     rrsetsCheck("ns1.example.org. 3600 IN AAAA 2001:db8::1\n",
                 result_sets_.begin(), result_sets_.end());
 
+    // Getting A again, without clearing the result sets.  This confirms
+    // getAdditional() doesn't change the existing vector content.
+    ctx->getAdditional(REQUESTED_A, result_sets_);
+    // The first element should be the existing AAAA RR, followed by the A's.
+    EXPECT_EQ(RRType::AAAA(), result_sets_[0]->getType());
+    rrsetsCheck("ns1.example.org. 3600 IN AAAA 2001:db8::1\n"
+                "ns1.example.org. 3600 IN A 192.0.2.1\n"
+                "ns2.example.org. 3600 IN A 192.0.2.2\n",
+                result_sets_.begin(), result_sets_.end());
+
     // Normally expected type set contain only A and/or AAAA, but others aren't
     // excluded.
     result_sets_.clear();
