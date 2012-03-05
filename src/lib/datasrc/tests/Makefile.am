@@ -79,6 +79,7 @@ run_unittests_sqlite3_LDADD = $(common_ldadd)
 # In-memory datasource tests
 run_unittests_memory_SOURCES = $(common_sources)
 run_unittests_memory_SOURCES += memory_datasrc_unittest.cc
+run_unittests_memory_SOURCES += rbnode_rrset_unittest.cc
 run_unittests_memory_SOURCES += $(top_srcdir)/src/lib/datasrc/memory_datasrc.cc
 
 run_unittests_memory_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
@@ -109,19 +110,21 @@ endif
 endif
 
 EXTRA_DIST =  testdata/brokendb.sqlite3
+EXTRA_DIST += testdata/diffs.sqlite3
+EXTRA_DIST += testdata/example2.com
+EXTRA_DIST += testdata/example2.com.sqlite3
 EXTRA_DIST += testdata/example.com.signed
 EXTRA_DIST += testdata/example.org
 EXTRA_DIST += testdata/example.org.nsec3-signed
 EXTRA_DIST += testdata/example.org.nsec3-signed-noparam
 EXTRA_DIST += testdata/example.org.sqlite3
-EXTRA_DIST += testdata/example2.com
-EXTRA_DIST += testdata/example2.com.sqlite3
 EXTRA_DIST += testdata/mkbrokendb.c
 EXTRA_DIST += testdata/root.zone
+EXTRA_DIST += testdata/rrset_toWire1
+EXTRA_DIST += testdata/rrset_toWire2
+EXTRA_DIST += testdata/rwtest.sqlite3
 EXTRA_DIST += testdata/sql1.example.com.signed
 EXTRA_DIST += testdata/sql2.example.com.signed
 EXTRA_DIST += testdata/test-root.sqlite3
 EXTRA_DIST += testdata/test.sqlite3
 EXTRA_DIST += testdata/test.sqlite3.nodiffs
-EXTRA_DIST += testdata/rwtest.sqlite3
-EXTRA_DIST += testdata/diffs.sqlite3
