@@ -91,6 +91,7 @@ libdns___la_LDFLAGS = -no-undefined -version-info 1:0:1
 libdns___la_SOURCES =
 libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
+libdns___la_SOURCES += labelsequence.h labelsequence.cc
 libdns___la_SOURCES += masterload.h masterload.cc
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
@@ -140,6 +141,7 @@ libdns___includedir = $(includedir)/dns
 libdns___include_HEADERS = \
 	edns.h \
 	exceptions.h \
+	labelsequence.h \
 	message.h \
 	messagerenderer.h \
 	name.h \

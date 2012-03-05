@@ -70,9 +70,9 @@ TEST(BenchMarkTest, run) {
     const int sleep_time = 50000; // will sleep for 50ms
     const struct timespec sleep_timespec = { 0, sleep_time * 1000 };
     // we cannot expect particular accuracy on the measured duration, so
-    // we'll include some conservative margin (25%) and perform range
+    // we'll include some conservative margin (50%) and perform range
     // comparison below.
-    const int duration_margin = 12500; // 12.5ms
+    const int duration_margin = 25000; // 25ms
     const int ONE_MILLION = 1000000;
 
     // Prerequisite check: since the tests in this case may depend on subtle
@@ -80,6 +80,8 @@ TEST(BenchMarkTest, run) {
     // where sleeping doesn't work as this test expects.  So we check the
     // conditions before the tests, and if it fails skip the tests at the
     // risk of overlooking possible bugs.
+    // We do this with a tighter margin than the checks themselves
+    const int duration_soft_margin = 12500; // 12.5ms
     struct timeval check_begin, check_end;
     gettimeofday(&check_begin, NULL);
     nanosleep(&sleep_timespec, 0);
@@ -93,8 +95,8 @@ TEST(BenchMarkTest, run) {
         --check_end.tv_sec;
     }
     if (check_end.tv_sec != 0 ||
-        sleep_time - duration_margin > check_end.tv_usec ||
-        sleep_time + duration_margin < check_end.tv_usec) {
+        sleep_time - duration_soft_margin > check_end.tv_usec ||
+        sleep_time + duration_soft_margin < check_end.tv_usec) {
         cerr << "Prerequisite check failed.  skipping test" << endl;
         return;
     }

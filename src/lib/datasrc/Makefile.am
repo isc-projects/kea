@@ -21,6 +21,7 @@ libdatasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
 libdatasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
 libdatasrc_la_SOURCES += query.h query.cc
 libdatasrc_la_SOURCES += cache.h cache.cc
+libdatasrc_la_SOURCES += rbnode_rrset.h
 libdatasrc_la_SOURCES += rbtree.h
 libdatasrc_la_SOURCES += zonetable.h zonetable.cc
 libdatasrc_la_SOURCES += zone.h
