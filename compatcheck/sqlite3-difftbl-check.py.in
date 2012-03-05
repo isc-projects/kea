@@ -47,9 +47,9 @@ except sqlite3.OperationalError as ex:
                         'zone_id INTEGER NOT NULL, ' +
                         'version INTEGER NOT NULL, ' +
                         'operation INTEGER NOT NULL, ' +
-                        'name STRING NOT NULL COLLATE NOCASE, ' +
-                        'rrtype STRING NOT NULL COLLATE NOCASE, ' +
-                        'ttl INTEGER NOT NULL, rdata STRING NOT NULL)')
+                        'name TEXT NOT NULL COLLATE NOCASE, ' +
+                        'rrtype TEXT NOT NULL COLLATE NOCASE, ' +
+                        'ttl INTEGER NOT NULL, rdata TEXT NOT NULL)')
         else:
             sys.stdout.write('Found an older version of SQLite3 DB file: ' +
                              db_file + '\n' + "Perform '" + os.getcwd() +
