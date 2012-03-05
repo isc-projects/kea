@@ -37,51 +37,14 @@ public:
 
 // Basic equality tests
 TEST_F(LabelSequenceTest, equals_sensitive) {
-    EXPECT_TRUE(ls1.equals(ls1));
-    EXPECT_FALSE(ls1.equals(ls2));
-    EXPECT_TRUE(ls1.equals(ls3));
-    EXPECT_FALSE(ls1.equals(ls4));
-    EXPECT_FALSE(ls1.equals(ls5));
-    EXPECT_FALSE(ls1.equals(ls6));
-    EXPECT_FALSE(ls1.equals(ls7));
-    EXPECT_FALSE(ls1.equals(ls8));
-
-    EXPECT_FALSE(ls2.equals(ls1));
-    EXPECT_TRUE(ls2.equals(ls2));
-    EXPECT_FALSE(ls2.equals(ls3));
-    EXPECT_FALSE(ls2.equals(ls4));
-    EXPECT_FALSE(ls2.equals(ls5));
-    EXPECT_FALSE(ls2.equals(ls6));
-    EXPECT_FALSE(ls2.equals(ls7));
-    EXPECT_FALSE(ls2.equals(ls8));
-
-    EXPECT_FALSE(ls4.equals(ls1));
-    EXPECT_FALSE(ls4.equals(ls2));
-    EXPECT_FALSE(ls4.equals(ls3));
-    EXPECT_TRUE(ls4.equals(ls4));
-    EXPECT_FALSE(ls4.equals(ls5));
-    EXPECT_FALSE(ls4.equals(ls6));
-    EXPECT_FALSE(ls4.equals(ls7));
-    EXPECT_FALSE(ls4.equals(ls8));
-
-    EXPECT_FALSE(ls5.equals(ls1));
-    EXPECT_FALSE(ls5.equals(ls2));
-    EXPECT_FALSE(ls5.equals(ls3));
-    EXPECT_FALSE(ls5.equals(ls4));
-    EXPECT_TRUE(ls5.equals(ls5));
-    EXPECT_FALSE(ls5.equals(ls6));
-    EXPECT_FALSE(ls5.equals(ls7));
-    EXPECT_FALSE(ls5.equals(ls8));
-}
-
-TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_TRUE(ls1.equals(ls1, true));
     EXPECT_FALSE(ls1.equals(ls2, true));
     EXPECT_TRUE(ls1.equals(ls3, true));
     EXPECT_FALSE(ls1.equals(ls4, true));
-    EXPECT_TRUE(ls1.equals(ls5, true));
-    EXPECT_TRUE(ls1.equals(ls6, true));
+    EXPECT_FALSE(ls1.equals(ls5, true));
+    EXPECT_FALSE(ls1.equals(ls6, true));
     EXPECT_FALSE(ls1.equals(ls7, true));
+    EXPECT_FALSE(ls1.equals(ls8, true));
 
     EXPECT_FALSE(ls2.equals(ls1, true));
     EXPECT_TRUE(ls2.equals(ls2, true));
@@ -90,14 +53,7 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_FALSE(ls2.equals(ls5, true));
     EXPECT_FALSE(ls2.equals(ls6, true));
     EXPECT_FALSE(ls2.equals(ls7, true));
-
-    EXPECT_TRUE(ls3.equals(ls1, true));
-    EXPECT_FALSE(ls3.equals(ls2, true));
-    EXPECT_TRUE(ls3.equals(ls3, true));
-    EXPECT_FALSE(ls3.equals(ls4, true));
-    EXPECT_TRUE(ls3.equals(ls5, true));
-    EXPECT_TRUE(ls3.equals(ls6, true));
-    EXPECT_FALSE(ls3.equals(ls7, true));
+    EXPECT_FALSE(ls2.equals(ls8, true));
 
     EXPECT_FALSE(ls4.equals(ls1, true));
     EXPECT_FALSE(ls4.equals(ls2, true));
@@ -106,14 +62,58 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_FALSE(ls4.equals(ls5, true));
     EXPECT_FALSE(ls4.equals(ls6, true));
     EXPECT_FALSE(ls4.equals(ls7, true));
+    EXPECT_FALSE(ls4.equals(ls8, true));
 
-    EXPECT_TRUE(ls5.equals(ls1, true));
+    EXPECT_FALSE(ls5.equals(ls1, true));
     EXPECT_FALSE(ls5.equals(ls2, true));
-    EXPECT_TRUE(ls5.equals(ls3, true));
+    EXPECT_FALSE(ls5.equals(ls3, true));
     EXPECT_FALSE(ls5.equals(ls4, true));
     EXPECT_TRUE(ls5.equals(ls5, true));
-    EXPECT_TRUE(ls5.equals(ls6, true));
+    EXPECT_FALSE(ls5.equals(ls6, true));
     EXPECT_FALSE(ls5.equals(ls7, true));
+    EXPECT_FALSE(ls5.equals(ls8, true));
+}
+
+TEST_F(LabelSequenceTest, equals_insensitive) {
+    EXPECT_TRUE(ls1.equals(ls1));
+    EXPECT_FALSE(ls1.equals(ls2));
+    EXPECT_TRUE(ls1.equals(ls3));
+    EXPECT_FALSE(ls1.equals(ls4));
+    EXPECT_TRUE(ls1.equals(ls5));
+    EXPECT_TRUE(ls1.equals(ls6));
+    EXPECT_FALSE(ls1.equals(ls7));
+
+    EXPECT_FALSE(ls2.equals(ls1));
+    EXPECT_TRUE(ls2.equals(ls2));
+    EXPECT_FALSE(ls2.equals(ls3));
+    EXPECT_FALSE(ls2.equals(ls4));
+    EXPECT_FALSE(ls2.equals(ls5));
+    EXPECT_FALSE(ls2.equals(ls6));
+    EXPECT_FALSE(ls2.equals(ls7));
+
+    EXPECT_TRUE(ls3.equals(ls1));
+    EXPECT_FALSE(ls3.equals(ls2));
+    EXPECT_TRUE(ls3.equals(ls3));
+    EXPECT_FALSE(ls3.equals(ls4));
+    EXPECT_TRUE(ls3.equals(ls5));
+    EXPECT_TRUE(ls3.equals(ls6));
+    EXPECT_FALSE(ls3.equals(ls7));
+
+    EXPECT_FALSE(ls4.equals(ls1));
+    EXPECT_FALSE(ls4.equals(ls2));
+    EXPECT_FALSE(ls4.equals(ls3));
+    EXPECT_TRUE(ls4.equals(ls4));
+    EXPECT_FALSE(ls4.equals(ls5));
+    EXPECT_FALSE(ls4.equals(ls6));
+    EXPECT_FALSE(ls4.equals(ls7));
+
+    EXPECT_TRUE(ls5.equals(ls1));
+    EXPECT_FALSE(ls5.equals(ls2));
+    EXPECT_TRUE(ls5.equals(ls3));
+    EXPECT_FALSE(ls5.equals(ls4));
+    EXPECT_TRUE(ls5.equals(ls5));
+    EXPECT_TRUE(ls5.equals(ls6));
+    EXPECT_FALSE(ls5.equals(ls7));
 }
 
 void

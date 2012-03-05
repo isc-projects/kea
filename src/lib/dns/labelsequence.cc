@@ -50,9 +50,9 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
         return (false);
     }
     if (case_sensitive) {
-        return (strncasecmp(data, other_data, len) == 0);
-    } else {
         return (strncmp(data, other_data, len) == 0);
+    } else {
+        return (strncasecmp(data, other_data, len) == 0);
     }
 }
 
