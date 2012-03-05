@@ -827,7 +827,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
         const ConstRRsetPtr nsec = dnssec_data ? findNSECCover(name) :
             ConstRRsetPtr();
         return (ResultContext(NXRRSET, nsec,
-                        nsec ? RESULT_NSEC_SIGNED : RESULT_DEFAULT));
+                              nsec ? RESULT_NSEC_SIGNED : RESULT_DEFAULT));
     } else if ((options & NO_WILDCARD) == 0) {
         // It's not an empty non-terminal and wildcard matching is not
         // disabled, so check for wildcards. If there is a wildcard match
