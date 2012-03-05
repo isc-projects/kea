@@ -27,6 +27,15 @@ class DNSLookup;
 class DNSAnswer;
 class DNSServiceImpl;
 
+
+/// Codes for UDPServers used in addServer()method.
+///
+/// Note: the codes only used in how to create the UDPServers.
+enum UDPVersion {
+      SYNC_=1,     ///< used synchronous UDPServer
+      ASYNC_=2     ///< used asynchronous UDPServer
+};
+
 /// \brief Handle DNS Queries
 ///
 /// DNSService is the service that handles DNS queries and answers with
@@ -57,7 +66,8 @@ public:
     /// \param answer The answer provider (see \c DNSAnswer)
     DNSService(asiolink::IOService& io_service, const char& port,
                const char& address, isc::asiolink::SimpleCallback* checkin,
-               DNSLookup* lookup, DNSAnswer* answer);
+               DNSLookup* lookup, DNSAnswer* answer,
+               const UDPVersion param_flags = SYNC_);
     /// \brief The constructor with a specific port on which the services
     /// listen on.
     ///
@@ -75,19 +85,23 @@ public:
     DNSService(asiolink::IOService& io_service, const char& port,
                const bool use_ipv4, const bool use_ipv6,
                isc::asiolink::SimpleCallback* checkin, DNSLookup* lookup,
-               DNSAnswer* answer);
+               DNSAnswer* answer,
+               const UDPVersion param_flags = SYNC_);
     /// \brief The constructor without any servers.
     ///
     /// Use addServer() to add some servers.
     DNSService(asiolink::IOService& io_service, isc::asiolink::SimpleCallback* checkin,
-               DNSLookup* lookup, DNSAnswer* answer);
+               DNSLookup* lookup, DNSAnswer* answer,
+               const UDPVersion param_flags = SYNC_);
     /// \brief The destructor.
     ~DNSService();
     //@}
 
     /// \brief Add another server to the service
-    void addServer(uint16_t port, const std::string &address);
-    void addServer(const char &port, const std::string &address);
+    void addServer(uint16_t port, const std::string &address,
+                   const UDPVersion param_flags = SYNC_);
+    void addServer(const char &port, const std::string &address,
+                   const UDPVersion param_flags = SYNC_);
 
     /// \brief Add another TCP server/listener to the service from already
     /// opened file descriptor
@@ -122,7 +136,7 @@ public:
     /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6.
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor or it can't be listened on.
-    void addServerUDPFromFD(int fd, int af);
+    void addServerUDPFromFD(int fd, int af,const UDPVersion param_flags = SYNC_);
 
     /// \brief Remove all servers from the service
     void clearServers();
