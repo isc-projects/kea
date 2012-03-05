@@ -115,33 +115,6 @@
       See the <citetitle>BIND 10 Guide</citetitle> for configuration examples.
       The default is an empty list, that is, no zone specific configuration.
     </para>
-    <para>
-      <varname>log_name</varname>
-<!-- TODO -->
-    </para>
-    <para>
-      <varname>log_file</varname>
-<!-- TODO -->
-      The location of the log file if using a file channel.
-      If undefined, then the file channel is closed.
-      The default is
-      <filename>/usr/local/var/bind10-devel/log/Xfrout.log</filename>.
-    </para>
-    <para>
-      <varname>log_severity</varname>
-<!-- TODO -->
-      The default is "debug".
-    </para>
-    <para>
-      <varname>log_versions</varname>
-<!-- TODO -->
-      The default is 5.
-    </para>
-    <para>
-      <varname>log_max_bytes</varname>
-<!-- TODO -->
-      The default is 1048576.
-    </para>
 
 <!-- TODO: log configurations not documented yet in here. jreed
      has some but waiting on decisions ... -->

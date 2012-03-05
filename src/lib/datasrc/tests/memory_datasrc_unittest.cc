@@ -172,14 +172,23 @@ TEST_F(InMemoryClientTest, iterator) {
     EXPECT_EQ(result::SUCCESS, zone->add(aRRsetA));
     EXPECT_EQ(result::SUCCESS, zone->add(aRRsetAAAA));
     EXPECT_EQ(result::SUCCESS, zone->add(subRRsetA));
-    // Check it with full zone, one by one.
-    // It should be in ascending order in case of InMemory data source
-    // (isn't guaranteed in general)
+
+    // Check it with full zone.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(aRRsetA);
+    expected_rrsets.push_back(aRRsetAAAA);
+    expected_rrsets.push_back(subRRsetA);
+
     iterator = memory_client.getIterator(Name("a"));
-    EXPECT_EQ(aRRsetA, iterator->getNextRRset());
-    EXPECT_EQ(aRRsetAAAA, iterator->getNextRRset());
-    EXPECT_EQ(subRRsetA, iterator->getNextRRset());
-    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+    vector<ConstRRsetPtr> actual_rrsets;
+    ConstRRsetPtr actual;
+    while ((actual = iterator->getNextRRset()) != NULL) {
+        actual_rrsets.push_back(actual);
+    }
+
+    rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
+                actual_rrsets.begin(), actual_rrsets.end());
+
 }
 
 TEST_F(InMemoryClientTest, iterator_separate_rrs) {
