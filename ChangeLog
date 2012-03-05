@@ -1,3 +1,10 @@
+394.	[defect]	jelte
+	b10-auth now catches any exceptions during response building; if any
+	datasource either throws an exception or causes an exception to be
+	thrown, the message processing code will now catch it, log a debug
+	message, and return a SERVFAIL response.
+	(Trac #1612, git b5740c6b3962a55e46325b3c8b14c9d64cf0d845)
+
 393.	[func]		jelte
 	Introduced a new class LabelSequence in libdns++, which provides
 	lightweight accessor functionality to the Name class, for more
