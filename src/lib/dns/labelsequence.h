@@ -105,7 +105,7 @@ public:
     /// \brief Returns the current number of labels for this LabelSequence
     ///
     /// \return The number of labels
-    size_t getLabelCount() const { return last_label_ - first_label_; }
+    size_t getLabelCount() const { return (last_label_ - first_label_); }
 
     /// \brief Returns the original Name object associated with this
     ///        LabelSequence
@@ -116,7 +116,7 @@ public:
     /// LabelSequence itself.
     ///
     /// \return Reference to the original Name object
-    const Name& getName() const { return name_; }
+    const Name& getName() const { return (name_); }
 
     /// \brief Checks whether the label sequence is absolute
     ///
