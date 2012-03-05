@@ -124,6 +124,9 @@ getDataCheck(const char* expected_data, size_t expected_len,
     const char* data = ls.getData(&len);
     ASSERT_EQ(expected_len, len) << "Expected data: " << expected_data <<
                                     " name: " << ls.getName().toText();
+    EXPECT_EQ(expected_len, ls.getDataLength()) <<
+        "Expected data: " << expected_data <<
+        " name: " << ls.getName().toText();
     for (size_t i = 0; i < len; ++i) {
         EXPECT_EQ(expected_data[i], data[i]) << "Difference at pos " << i <<
                                                 ": Expected data: " <<

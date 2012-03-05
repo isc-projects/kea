@@ -21,17 +21,23 @@ namespace dns {
 
 const char*
 LabelSequence::getData(size_t *len) const {
+    *len = getDataLength();
+    return (&name_->ndata_[name_->offsets_[first_label_]]);
+}
+
+size_t
+LabelSequence::getDataLength() const {
     // If the labelsequence is absolute, the current last_label_ falls
     // out of the vector (since it points to the 'label' after the
     // root label, which doesn't exist; in that case, return
     // the length for the 'previous' label (the root label) plus
     // one (for the root label zero octet)
     if (isAbsolute()) {
-        *len = name_.offsets_[last_label_ - 1] - name_.offsets_[first_label_] + 1;
+        return (name_->offsets_[last_label_ - 1] -
+                name_->offsets_[first_label_] + 1);
     } else {
-        *len = name_.offsets_[last_label_] - name_.offsets_[first_label_];
+        return (name_->offsets_[last_label_] - name_->offsets_[first_label_]);
     }
-    return (&name_.ndata_[name_.offsets_[first_label_]]);
 }
 
 bool
@@ -70,7 +76,7 @@ LabelSequence::stripRight(size_t i) {
 
 bool
 LabelSequence::isAbsolute() const {
-    return (last_label_ == name_.offsets_.size());
+    return (last_label_ == name_->offsets_.size());
 }
 
 } // end namespace dns
