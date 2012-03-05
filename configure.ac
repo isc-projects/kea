@@ -496,19 +496,23 @@ fi
 AC_SUBST(USE_LCOV)
 
 # Check for Botan
-botan_path="yes"
-AC_ARG_WITH([botan],
-  AC_HELP_STRING([--with-botan=PATH],
-    [specify the path to botan-config (PATH/bin/botan-config will be used)]),
-    [botan_path="$withval"])
-if test "${botan_path}" = "no" ; then
+botan_config="yes"
+AC_ARG_WITH([botan-config],
+  AC_HELP_STRING([--with-botan-config=PATH],
+    [specify the path to the botan-config script]),
+    [botan_config="$withval"])
+if test "${botan_config}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
 fi
-if test "${botan_path}" != "yes" ; then
-    if test -x "${botan_path}/bin/botan-config" ; then
-        BOTAN_CONFIG="${botan_path}/bin/botan-config"
+if test "${botan_config}" != "yes" ; then
+    if test -x "${botan_config}" ; then
+        if test -d "${botan_config}" ; then
+            AC_MSG_ERROR([${botan_config} is a directory])
+        else
+            BOTAN_CONFIG="${botan_config}"
+        fi
     else
-        AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
+        AC_MSG_ERROR([${botan_config} not found or not executable])
     fi
 else
     # First see if pkg-config knows of it.
@@ -531,8 +535,15 @@ else
         done
     fi
     # If we had no pkg-config, or it didn't know about botan, use botan-config
+    # Of course, botan-config can have several different names as well...
     if test "$BOTAN_CONFIG" = "" ; then
-        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
+        BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
+        for botan_config in $BOTAN_CONFIG_VERSIONS; do
+            AC_PATH_PROG([BOTAN_CONFIG], [${botan_config}])
+            if test -x "${BOTAN_CONFIG}" ; then
+                break
+            fi
+        done
     fi
 fi
 if test "x${BOTAN_CONFIG}" != "x"
@@ -597,7 +608,11 @@ AC_LINK_IFELSE(
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
-         AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
+         AC_MSG_ERROR([Needs Botan library 1.8 or higher. On some systems,
+         the botan package has a few missing dependencies (libbz2 and
+         libgmp), if libbotan has been installed and you see this error,
+         try upgrading to a higher version of botan or installing libbz2
+         and libgmp.])]
 )
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
