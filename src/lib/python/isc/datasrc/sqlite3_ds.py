@@ -23,6 +23,9 @@ RR_NAME_INDEX = 2
 RR_TTL_INDEX = 4
 RR_RDATA_INDEX = 7
 
+# Current version of schema (maybe we need a minor version, too)
+SCHEMA_VERSION = 2
+
 class Sqlite3DSError(Exception):
     """ Define exceptions."""
     pass
@@ -48,39 +51,43 @@ def create(cur):
         row = cur.fetchone()
     except sqlite3.OperationalError:
         cur.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
-        cur.execute("INSERT INTO schema_version VALUES (1)")
+        cur.execute("INSERT INTO schema_version VALUES (" +
+                    str(SCHEMA_VERSION) + ")")
         cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY,
-                    name STRING NOT NULL COLLATE NOCASE,
-                    rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN',
+                    name TEXT NOT NULL COLLATE NOCASE,
+                    rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN',
                     dnssec BOOLEAN NOT NULL DEFAULT 0)""")
         cur.execute("CREATE INDEX zones_byname ON zones (name)")
         cur.execute("""CREATE TABLE records (id INTEGER PRIMARY KEY,
                     zone_id INTEGER NOT NULL,
-                    name STRING NOT NULL COLLATE NOCASE,
-                    rname STRING NOT NULL COLLATE NOCASE,
+                    name TEXT NOT NULL COLLATE NOCASE,
+                    rname TEXT NOT NULL COLLATE NOCASE,
                     ttl INTEGER NOT NULL,
-                    rdtype STRING NOT NULL COLLATE NOCASE,
-                    sigtype STRING COLLATE NOCASE,
-                    rdata STRING NOT NULL)""")
+                    rdtype TEXT NOT NULL COLLATE NOCASE,
+                    sigtype TEXT COLLATE NOCASE,
+                    rdata TEXT NOT NULL)""")
         cur.execute("CREATE INDEX records_byname ON records (name)")
         cur.execute("CREATE INDEX records_byrname ON records (rname)")
+        cur.execute("""CREATE INDEX records_bytype_and_rname ON records
+                       (rdtype, rname)""")
         cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY,
                     zone_id INTEGER NOT NULL,
-                    hash STRING NOT NULL COLLATE NOCASE,
-                    owner STRING NOT NULL COLLATE NOCASE,
+                    hash TEXT NOT NULL COLLATE NOCASE,
+                    owner TEXT NOT NULL COLLATE NOCASE,
                     ttl INTEGER NOT NULL,
-                    rdtype STRING NOT NULL COLLATE NOCASE,
-                    rdata STRING NOT NULL)""")
+                    rdtype TEXT NOT NULL COLLATE NOCASE,
+                    rdata TEXT NOT NULL)""")
         cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
         cur.execute("""CREATE TABLE diffs (id INTEGER PRIMARY KEY,
                     zone_id INTEGER NOT NULL,
                     version INTEGER NOT NULL,
                     operation INTEGER NOT NULL,
-                    name STRING NOT NULL COLLATE NOCASE,
-                    rrtype STRING NOT NULL COLLATE NOCASE,
+                    name TEXT NOT NULL COLLATE NOCASE,
+                    rrtype TEXT NOT NULL COLLATE NOCASE,
                     ttl INTEGER NOT NULL,
-                    rdata STRING NOT NULL)""")
-        row = [1]
+                    rdata TEXT NOT NULL)""")
+        cur.execute("SELECT version FROM schema_version")
+        row = cur.fetchone()
     cur.execute("COMMIT TRANSACTION")
     return row
 
@@ -115,8 +122,9 @@ def open(dbfile, connect_timeout=5.0):
         row = create(cur)
         conn.isolation_level = iso_lvl
 
-    if row == None or row[0] != 1:
-        raise Sqlite3DSError("Bad database schema version")
+    if row == None or row[0] != SCHEMA_VERSION:
+        bad_version = "(unknown)" if row is None else str(row[0])
+        raise Sqlite3DSError("Bad database schema version: " + bad_version)
 
     return conn, cur
 
