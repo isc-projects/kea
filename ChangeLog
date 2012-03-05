@@ -1,3 +1,9 @@
+393.	[func]		jelte
+	Introduced a new class LabelSequence in libdns++, which provides
+	lightweight accessor functionality to the Name class, for more
+	efficient comparison of parts of names.
+	(Trac #1602, git b33929ed5df7c8f482d095e96e667d4a03180c78)
+
 392.	[func]*		jinmei
 	libdns++: revised the (Abstract)MessageRenderer class so that it
 	has a default internal buffer and the buffer can be temporarily
