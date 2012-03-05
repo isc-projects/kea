@@ -50,7 +50,7 @@ public:
     /// to the labels in the Name object).
     ///
     /// \param name The Name to construct a LabelSequence for
-    LabelSequence(const Name& name): name_(name),
+    LabelSequence(const Name& name): name_(&name),
                                      first_label_(0),
                                      last_label_(name.getLabelCount())
     {}
@@ -68,6 +68,22 @@ public:
     ///        will be stored (in number of octets)
     /// \return Pointer to the wire-format data of this label sequence
     const char* getData(size_t* len) const;
+
+    /// \brief Return the length of the wire-format data of this LabelSequence
+    ///
+    /// This method returns the number of octets for the data that would
+    /// be returned by the \c getData() method.
+    ///
+    /// Note that the return value of this method is always positive.
+    /// Note also that if the return value of this method is 1, it means the
+    /// sequence consists of the null label, i.e., a single "dot", and vice
+    /// versa.
+    ///
+    /// \note The data pointed to is only valid if the original Name
+    /// object is still in scope
+    ///
+    /// \return The length of the data of the label sequence in octets.
+    size_t getDataLength() const;
 
     /// \brief Compares two label sequences.
     ///
@@ -116,7 +132,7 @@ public:
     /// LabelSequence itself.
     ///
     /// \return Reference to the original Name object
-    const Name& getName() const { return (name_); }
+    const Name& getName() const { return (*name_); }
 
     /// \brief Checks whether the label sequence is absolute
     ///
@@ -124,7 +140,7 @@ public:
     bool isAbsolute() const;
 
 private:
-    const Name& name_;
+    const Name* name_;
     size_t first_label_;
     size_t last_label_;
 };
