@@ -32,8 +32,8 @@ class DNSServiceImpl;
 ///
 /// Note: the codes only used in how to create the UDPServers.
 enum UDPVersion {
-      SYNC_=1,     ///< used synchronous UDPServer
-      ASYNC_=2     ///< used asynchronous UDPServer
+      SYNC_  = 1,     ///< used synchronous UDPServer
+      ASYNC_ = 2     ///< used asynchronous UDPServer
 };
 
 /// \brief Handle DNS Queries
