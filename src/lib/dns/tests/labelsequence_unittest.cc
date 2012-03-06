@@ -19,6 +19,8 @@
 
 using namespace isc::dns;
 
+namespace {
+
 class LabelSequenceTest : public ::testing::Test {
 public:
     LabelSequenceTest() : n1("example.org"), n2("example.com"),
@@ -253,4 +255,6 @@ TEST_F(LabelSequenceTest, isAbsolute) {
     ASSERT_TRUE(ls3.isAbsolute());
     ls3.stripLeft(2);
     ASSERT_TRUE(ls3.isAbsolute());
+}
+
 }
