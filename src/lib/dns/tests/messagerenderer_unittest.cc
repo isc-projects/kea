@@ -142,13 +142,15 @@ TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
 
-    // Change the compression mode in the middle of rendering.  This is an
-    // unusual operation and is unlikely to happen in practice, but is still
-    // allowed in this API.
-    renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE);
-    renderer.writeName(Name("c.b.EXAMPLE.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    // Change the compression mode in the middle of rendering.  This is not
+    // allowed in this implementation.
+    EXPECT_THROW(renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE),
+                 isc::InvalidParameter);
+
+    // Once the renderer is cleared, it's okay again.
+    renderer.clear();
+    EXPECT_NO_THROW(renderer.setCompressMode(
+                        MessageRenderer::CASE_INSENSITIVE));
 }
 
 TEST_F(MessageRendererTest, writeRootName) {

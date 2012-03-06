@@ -184,6 +184,10 @@ MessageRenderer::getCompressMode() const {
 
 void
 MessageRenderer::setCompressMode(const CompressMode mode) {
+    if (!impl_->names_.empty()) {
+        isc_throw(isc::InvalidParameter,
+                  "compress mode cannot be changed during rendering");
+    }
     impl_->compress_mode_ = mode;
 }
 
