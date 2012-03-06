@@ -134,6 +134,31 @@ public:
     /// \return Reference to the original Name object
     const Name& getName() const { return (*name_); }
 
+    /// \brief Calculate a simple hash for the label sequence.
+    ///
+    /// This method calculates a hash value for the label sequence as binary
+    /// data.  If \c case_sensitive is false, it ignores the case stored in
+    /// the labels; specifically, it normalizes the labels by converting all
+    /// upper case characters to lower case ones and calculates the hash value
+    /// for the result.
+    ///
+    /// This method is intended to provide a lightweight way to store a
+    /// relatively small number of label sequences in a hash table.
+    /// For this reason it only takes into account data up to 16 octets
+    /// (16 was derived from BIND 9's implementation).  Also, the function does
+    /// not provide any unpredictability; a specific sequence will always have
+    /// the same hash value.  It should therefore not be used in the context
+    /// where an untrusted third party can mount a denial of service attack by
+    /// forcing the application to create a very large number of label
+    /// sequences that have the same hash value and expected to be stored in
+    /// a hash table.
+    ///
+    /// \exception None
+    ///
+    /// \param case_sensitive
+    /// \return A hash value for this label sequence.
+    size_t getHash(bool case_sensitive) const;
+
     /// \brief Checks whether the label sequence is absolute
     ///
     /// \return true if the last label is the root label
