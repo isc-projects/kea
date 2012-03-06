@@ -13,9 +13,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/labelsequence.h>
+#include <dns/name_internal.h>
 #include <exceptions/exceptions.h>
 
-#include <iostream>
+#include <boost/functional/hash.hpp>
+
 namespace isc {
 namespace dns {
 
@@ -77,6 +79,24 @@ LabelSequence::stripRight(size_t i) {
 bool
 LabelSequence::isAbsolute() const {
     return (last_label_ == name_->offsets_.size());
+}
+
+size_t
+LabelSequence::getHash(bool case_sensitive) const {
+    size_t length;
+    const char* s = getData(&length);
+    if (length > 16) {
+        length = 16;
+    }
+
+    size_t hash_val = 0;
+    while (length > 0) {
+        const unsigned char c = *s++;
+        boost::hash_combine(hash_val, case_sensitive ? c :
+                            isc::dns::name::internal::maptolower[c]);
+        --length;
+    }
+    return (hash_val);
 }
 
 } // end namespace dns

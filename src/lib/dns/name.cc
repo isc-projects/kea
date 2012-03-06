@@ -23,11 +23,13 @@
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
+#include <dns/name_internal.h>
 #include <dns/messagerenderer.h>
 
 using namespace std;
 using namespace isc::util;
 using isc::dns::NameComparisonResult;
+using namespace isc::dns::name::internal;
 
 namespace isc {
 namespace dns {
@@ -46,12 +48,12 @@ namespace {
 /// we chose the naive but simple hardcoding approach.
 ///
 /// These definitions are derived from BIND 9's libdns module.
-/// Note: it was not clear why the maptolower array was needed rather than
-/// using the standard tolower() function.  It was perhaps due performance
-/// concern, but we were not sure.  Even if it was performance reasons, we
-/// should carefully assess the effect via benchmarking to avoid the pitfall of 
-/// premature optimization.  We should revisit this point later.
-static const char digitvalue[256] = {
+/// Note: we could use the standard tolower() function instead of the
+/// maptolower array, but a benchmark indicated that the private array could
+/// improve the performance of message rendering (which internally uses the
+/// array heavily) about 27%.  Since we want to achieve very good performance
+/// for message rendering in some cases, we'll keep using it.
+const char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 16
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 32
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 48
@@ -69,8 +71,11 @@ static const char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 256
 };
+}
 
-static const unsigned char maptolower[] = {
+namespace name {
+namespace internal {
+const unsigned char maptolower[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -104,7 +109,8 @@ static const unsigned char maptolower[] = {
     0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
     0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 };
-}
+} // end of internal
+} // end of name
 
 namespace {
 ///

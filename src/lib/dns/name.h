@@ -166,6 +166,15 @@ private:
     NameRelation relation_;
 };
 
+// This is effectively a "private" namespace, but exposed publicly so the
+// definitions in it can be shared with the LabelSequence class.  It's not
+// expected to be used
+namespace name {
+namespace internal {
+extern const unsigned char maptolower[];
+}
+}
+
 ///
 /// The \c Name class encapsulates DNS names.
 ///
