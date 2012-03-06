@@ -42,6 +42,16 @@ namespace dns {
 ///
 class LabelSequence {
 public:
+    /// \brief The default constructor
+    ///
+    /// A LabelSequence is expected to be stored in STL containers and
+    /// has to have a default constructor.  A LabelSequence object generated
+    /// by this constructor is only usable as a placeholder; method calls
+    /// on such an object can return a bogus value or result in crash.
+    /// It's caller's responsibility to avoid such invaild usage.
+    LabelSequence() : name_(NULL), first_label_(0), last_label_(0)
+    {}
+
     /// \brief Constructs a LabelSequence for the given name
     ///
     /// \note The associated Name MUST remain in scope during the lifetime
