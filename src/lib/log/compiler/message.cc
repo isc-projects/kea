@@ -474,7 +474,7 @@ errorDuplicates(MessageReader& reader) {
     // order and remove those which occur more than once (which mean that they
     // occur more than twice in the input file).
     MessageReader::MessageIDCollection duplicates = reader.getNotAdded();
-    if (duplicates.size() > 0) {
+    if (!duplicates.empty()) {
         cout << "Error: the following duplicate IDs were found:\n";
 
         sort(duplicates.begin(), duplicates.end());
