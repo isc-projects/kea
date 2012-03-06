@@ -97,7 +97,7 @@ public:
                                  *dummy_endpoint);
             query_message_->clear(Message::PARSE);
             buffer_->clear();
-            server_->processMessage(io_message, query_message_, buffer_,
+            server_->processMessage(io_message, *query_message_, *buffer_,
                                     &server);
         }
 
