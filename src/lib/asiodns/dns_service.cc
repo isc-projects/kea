@@ -96,20 +96,26 @@ public:
             (*tcpServer)();
             servers_.push_back(tcpServer);
             dlog(std::string("Initialize UDP server at ") + address.to_string() + ":" + boost::lexical_cast<std::string>(port));
-            
-            if(1 == param_flags) {
-                SyncUDPServerPtr syncUdpServer(new SyncUDPServer(io_service_.get_io_service(),
-                                                address, port, checkin_, lookup_, answer_));
-                (*syncUdpServer)();
-                servers_.push_back(syncUdpServer);
-            } else if(2 == param_flags) {
-                UDPServerPtr udpServer(new UDPServer(io_service_.get_io_service(),
-                                       address, port, checkin_, lookup_, answer_));
-                (*udpServer)();
-                servers_.push_back(udpServer);
-            } else {
-                // If nerther asyn UDPServer nor sync UDNServer, it throws.
-                isc_throw(IOError, "Bad UDPServer Version!");
+            // Use param_flags to generate diff UDPServers.    
+            switch(param_flags) {
+                case SYNC_: {
+                    SyncUDPServerPtr syncUdpServer(new SyncUDPServer(io_service_.get_io_service(),
+                                                   address, port, checkin_, lookup_, answer_));
+                    (*syncUdpServer)();
+                    servers_.push_back(syncUdpServer);
+                    break;
+                }
+                case ASYNC_: {
+                    UDPServerPtr udpServer(new UDPServer(io_service_.get_io_service(),
+                                           address, port, checkin_, lookup_, answer_));
+                    (*udpServer)();
+                    servers_.push_back(udpServer);
+                    break;
+                }
+                default:
+                    // If nerther asyn UDPServer nor sync UDNServer, it throws.
+                    isc_throw(IOError, "Bad UDPServer Version!");
+                    break;
             }
         }
         catch (const asio::system_error& err) {
@@ -148,7 +154,7 @@ DNSServiceImpl::DNSServiceImpl(IOService& io_service,
                                SimpleCallback* checkin,
                                DNSLookup* lookup,
                                DNSAnswer* answer,
-                               const UDPVersion para_flags):
+                               const UDPVersion param_flags):
     io_service_(io_service),
     checkin_(checkin),
     lookup_(lookup),
@@ -156,10 +162,10 @@ DNSServiceImpl::DNSServiceImpl(IOService& io_service,
 {
 
     if (v4addr) {
-        addServer(port, *v4addr,para_flags);
+        addServer(port, *v4addr,param_flags);
     }
     if (v6addr) {
-        addServer(port, *v6addr,para_flags);
+        addServer(port, *v6addr,param_flags);
     }
 }
 
@@ -168,11 +174,11 @@ DNSService::DNSService(IOService& io_service,
                        SimpleCallback* checkin,
                        DNSLookup* lookup,
                        DNSAnswer* answer,
-                       const UDPVersion para_flags) :
+                       const UDPVersion param_flags) :
     impl_(new DNSServiceImpl(io_service, port, NULL, NULL, checkin, lookup,
-        answer,para_flags)), io_service_(io_service)
+        answer,param_flags)), io_service_(io_service)
 {
-    addServer(port, &address,para_flags);
+    addServer(port, &address,param_flags);
 }
 
 DNSService::DNSService(IOService& io_service,
@@ -181,7 +187,7 @@ DNSService::DNSService(IOService& io_service,
                        SimpleCallback* checkin,
                        DNSLookup* lookup,
                        DNSAnswer* answer,
-                       const UDPVersion para_flags) :
+                       const UDPVersion param_flags) :
     impl_(NULL), io_service_(io_service)
 {
     const asio::ip::address v4addr_any =
@@ -190,13 +196,13 @@ DNSService::DNSService(IOService& io_service,
     const asio::ip::address v6addr_any =
         asio::ip::address(asio::ip::address_v6::any());
     const asio::ip::address* const v6addrp = use_ipv6 ? &v6addr_any : NULL;
-    impl_ = new DNSServiceImpl(io_service, port, v4addrp, v6addrp, checkin, lookup, answer,para_flags);
+    impl_ = new DNSServiceImpl(io_service, port, v4addrp, v6addrp, checkin, lookup, answer,param_flags);
 }
 
 DNSService::DNSService(IOService& io_service, SimpleCallback* checkin,
-    DNSLookup* lookup, DNSAnswer *answer,const UDPVersion para_flags) :
+    DNSLookup* lookup, DNSAnswer *answer,const UDPVersion param_flags) :
     impl_(new DNSServiceImpl(io_service, *"0", NULL, NULL, checkin, lookup,
-        answer,para_flags)), io_service_(io_service)
+        answer,param_flags)), io_service_(io_service)
 {
 }
 
@@ -205,13 +211,13 @@ DNSService::~DNSService() {
 }
 
 void
-DNSService::addServer(const char& port, const std::string& address,UDPVersion para_flags) {
-    impl_->addServer(port, convertAddr(address),para_flags);
+DNSService::addServer(const char& port, const std::string& address,UDPVersion param_flags) {
+    impl_->addServer(port, convertAddr(address),param_flags);
 }
 
 void
-DNSService::addServer(uint16_t port, const std::string& address,UDPVersion para_flags) {
-    impl_->addServer(port, convertAddr(address),para_flags);
+DNSService::addServer(uint16_t port, const std::string& address,UDPVersion param_flags) {
+    impl_->addServer(port, convertAddr(address),param_flags);
 }
 
 void DNSService::addServerTCPFromFD(int fd, int af) {
@@ -219,9 +225,9 @@ void DNSService::addServerTCPFromFD(int fd, int af) {
 }
 
 void DNSService::addServerUDPFromFD(int fd, int af,const UDPVersion param_flags) {
-    if(1 == param_flags) { 
+    if(SYNC_ == param_flags) { 
         impl_->addServerFromFD<DNSServiceImpl::SyncUDPServerPtr, SyncUDPServer>(fd, af);
-    } else if(2 == param_flags) {
+    } else if(ASYNC_ == param_flags) {
         impl_->addServerFromFD<DNSServiceImpl::UDPServerPtr, UDPServer>(fd, af);
     }
 }
