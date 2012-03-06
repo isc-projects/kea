@@ -98,6 +98,7 @@ libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 # keep the following two during development for performance comparison
 libdns___la_SOURCES += oldmessagerenderer.h oldmessagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
+libdns___la_SOURCES += name_internal.h
 libdns___la_SOURCES += nsec3hash.h nsec3hash.cc
 libdns___la_SOURCES += opcode.h opcode.cc
 libdns___la_SOURCES += rcode.h rcode.cc
@@ -156,7 +157,7 @@ libdns___include_HEADERS = \
 	rrttl.h \
 	tsigkey.h
 # Purposely not installing these headers:
-# util/*.h: used only internally, and not actually DNS specific
+# name_internal.h: used only internally, and not actually DNS specific
 # rdata/*/detail/*.h: these are internal use only
 # rrclass-placeholder.h
 # rrtype-placeholder.h
