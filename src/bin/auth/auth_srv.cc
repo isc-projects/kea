@@ -200,11 +200,10 @@ public:
     MessageLookup(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message,
                             MessagePtr message,
-                            MessagePtr answer_message,
+                            MessagePtr, // Not used here
                             OutputBufferPtr buffer,
                             DNSServer* server) const
     {
-        (void) answer_message;
         server_->processMessage(io_message, *message, *buffer, server);
     }
 private:
