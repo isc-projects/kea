@@ -277,6 +277,9 @@ bool IfaceMgr::openSockets6(uint16_t port) {
                 return (false);
             }
 
+            // Binding socket to unicast address and then joining multicast group
+            // works well on Mac OS (and possibly other BSDs), but does not work
+            // on Linux.
             if ( !joinMulticast(sock, iface->getName(),
                                 string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
                 close(sock);
@@ -286,7 +289,8 @@ bool IfaceMgr::openSockets6(uint16_t port) {
 
             count++;
 #if defined(OS_LINUX)
-            // this doesn't work too well on NetBSD
+            // To receive multicast traffic, Linux requires binding socket to
+            // a multicast group. That in turn doesn't work on NetBSD.
             int sock2 = openSocket(iface->getName(),
                                    IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                                    port);
@@ -623,24 +627,8 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-#if defined(OS_LINUX)
-    // Setting the interface is a bit more involved.
-    //
-    // We have to create a "control message", and set that to
-    // define the IPv4 packet information. We could set the
-    // source address if we wanted, but we can safely let the
-    // kernel decide what that should be.
-    m.msg_control = &control_buf_[0];
-    m.msg_controllen = control_buf_len_;
-    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
-    cmsg->cmsg_level = IPPROTO_IP;
-    cmsg->cmsg_type = IP_PKTINFO;
-    cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
-    struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
-    memset(pktinfo, 0, sizeof(struct in_pktinfo));
-    pktinfo->ipi_ifindex = pkt->getIndex();
-    m.msg_controllen = cmsg->cmsg_len;
-#endif
+    // call OS-specific routines (like setting interface index)
+    os_send4(m, control_buf_, control_buf_len_, pkt);
 
     cout << "Trying to send " << pkt->getBuffer().getLength() << " bytes to "
          << pkt->getRemoteAddr().toText() << ":" << pkt->getRemotePort()
@@ -700,13 +688,11 @@ IfaceMgr::receive4() {
 
     // Now we have a socket, let's get some data from it!
     struct sockaddr_in from_addr;
-    struct in_addr to_addr;
     const uint32_t RCVBUFSIZE = 1500;
     static uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
     memset(&from_addr, 0, sizeof(from_addr));
-    memset(&to_addr, 0, sizeof(to_addr));
 
     // Initialize our message header structure.
     struct msghdr m;
@@ -737,60 +723,32 @@ IfaceMgr::receive4() {
         return (Pkt4Ptr()); // NULL
     }
 
+    // We have all data let's create Pkt4 object.
+    Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(buf, result));
+
     unsigned int ifindex = iface->getIndex();
 
-#if defined(OS_LINUX)
-    struct cmsghdr* cmsg;
-    struct in_pktinfo* pktinfo;
-
-    int found_pktinfo = 0;
-    cmsg = CMSG_FIRSTHDR(&m);
-    while (cmsg != NULL) {
-        if ((cmsg->cmsg_level == IPPROTO_IP) &&
-            (cmsg->cmsg_type == IP_PKTINFO)) {
-            pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
-
-            ifindex = pktinfo->ipi_ifindex;
-            to_addr = pktinfo->ipi_addr;
-
-            // This field is useful, when we are bound to unicast
-            // address e.g. 192.0.2.1 and the packet was sent to
-            // broadcast. This will return broadcast address, not
-            // the address we are bound to.
-
-            // IOAddress tmp(htonl(pktinfo->ipi_spec_dst.s_addr));
-            // cout << "The other addr is: " << tmp.toText() << endl;
-
-            // Perhaps we should uncomment this:
-            // to_addr = pktinfo->ipi_spec_dst;
-            found_pktinfo = 1;
-        }
-        cmsg = CMSG_NXTHDR(&m, cmsg);
-    }
-    if (!found_pktinfo) {
-        cout << "Unable to find pktinfo" << endl;
-        return (boost::shared_ptr<Pkt4>()); // NULL
-    }
-#endif
-
-    IOAddress to(htonl(to_addr.s_addr));
     IOAddress from(htonl(from_addr.sin_addr.s_addr));
     uint16_t from_port = htons(from_addr.sin_port);
 
-    cout << "Received " << result << " bytes from " << from.toText()
-         << "/port=" << from_port
-         << " sent to " << to.toText() << " over interface "
-         << iface->getFullName() << endl;
-
-    // we have all data let's create Pkt4 object
-    Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(buf, result));
-
-    pkt->setIface(iface->getName());
+    // Set receiving interface based on information, which socket was used to
+    // receive data. OS-specific info (see os_receive4()) may be more reliable,
+    // so this value may be overwritten.
     pkt->setIndex(ifindex);
-    pkt->setLocalAddr(to);
+    pkt->setIface(iface->getName());
     pkt->setRemoteAddr(from);
     pkt->setRemotePort(from_port);
     pkt->setLocalPort(candidate->port_);
+
+    if (!os_receive4(m, pkt)) {
+        cout << "Unable to find pktinfo" << endl;
+        return (boost::shared_ptr<Pkt4>()); // NULL
+    }
+
+    cout << "Received " << result << " bytes from " << from.toText()
+         << "/port=" << from_port
+         << " sent to " << pkt->getLocalAddr().toText() << " over interface "
+         << iface->getFullName() << endl;
 
     return (pkt);
 }
