@@ -376,6 +376,61 @@ void IfaceMgr::Iface::setFlags(uint32_t flags) {
     flag_broadcast_ = flags & IFF_BROADCAST;
 }
 
+void IfaceMgr::os_send4(struct msghdr& m, boost::scoped_array<char>& control_buf,
+                        size_t control_buf_len, const Pkt4Ptr& pkt) {
+
+    // Setting the interface is a bit more involved.
+    //
+    // We have to create a "control message", and set that to
+    // define the IPv4 packet information. We could set the
+    // source address if we wanted, but we can safely let the
+    // kernel decide what that should be.
+    m.msg_control = &control_buf[0];
+    m.msg_controllen = control_buf_len;
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
+    cmsg->cmsg_level = IPPROTO_IP;
+    cmsg->cmsg_type = IP_PKTINFO;
+    cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
+    struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
+    memset(pktinfo, 0, sizeof(struct in_pktinfo));
+    pktinfo->ipi_ifindex = pkt->getIndex();
+    m.msg_controllen = cmsg->cmsg_len;
+}
+
+bool IfaceMgr::os_receive4(struct msghdr& m, Pkt4Ptr& pkt) {
+    struct cmsghdr* cmsg;
+    struct in_pktinfo* pktinfo;
+    struct in_addr to_addr;
+
+    memset(&to_addr, 0, sizeof(to_addr));
+
+    cmsg = CMSG_FIRSTHDR(&m);
+    while (cmsg != NULL) {
+        if ((cmsg->cmsg_level == IPPROTO_IP) &&
+            (cmsg->cmsg_type == IP_PKTINFO)) {
+            pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
+
+            pkt->setIndex(pktinfo->ipi_ifindex);
+            pkt->setLocalAddr(IOAddress(htonl(pktinfo->ipi_addr.s_addr)));
+            return (true);
+
+            // This field is useful, when we are bound to unicast
+            // address e.g. 192.0.2.1 and the packet was sent to
+            // broadcast. This will return broadcast address, not
+            // the address we are bound to.
+
+            // IOAddress tmp(htonl(pktinfo->ipi_spec_dst.s_addr));
+            // cout << "The other addr is: " << tmp.toText() << endl;
+
+            // Perhaps we should uncomment this:
+            // to_addr = pktinfo->ipi_spec_dst;
+        }
+        cmsg = CMSG_NXTHDR(&m, cmsg);
+    }
+
+    return (false);
+}
+
 }
 
 #endif // if defined(LINUX)

@@ -33,6 +33,15 @@ IfaceMgr::detectIfaces() {
     stubDetectIfaces();
 }
 
+void IfaceMgr::os_send4_setup(struct msghdr& ,
+                              boost::scoped_array<char>& ,
+                              size_t , const Pkt4Ptr& ) {
+    // do nothing here. There's nothing BSD specific to do and os_send4_setup()
+    // interface is there only to not mix Linux-specific code in common
+    // IfaceMgr file.
+}
+
+
 }
 
 #endif
