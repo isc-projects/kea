@@ -1,3 +1,12 @@
+396.	[func]*		jinmei
+	libdatasrc: change the return type of ZoneFinder::find() so it can
+	contain more context of the search, which can be used for
+	optimizing post find() processing.  A new method getAdditional()
+	is added to it for finding additional RRsets based on the result
+	of find().  External behavior shouldn't change.  The query
+	handling code of b10-auth now uses the new interface.
+	(Trac #1607, git 2e940ea65d5b9f371c26352afd9e66719c38a6b9)
+
 395.	[bug]		jelte
 	The log message compiler now errors (resulting in build failures) if
 	duplicate log message identifiers are found in a single message file.
