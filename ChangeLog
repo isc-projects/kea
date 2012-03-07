@@ -1,3 +1,8 @@
+397.	[func]		muks
+	The boss process now gives more helpful description when a
+	sub-process exits due to a signal.
+	(Trac #1673, git 1cd0d0e4fc9324bbe7f8593478e2396d06337b1e)
+
 396.	[func]*		jinmei
 	libdatasrc: change the return type of ZoneFinder::find() so it can
 	contain more context of the search, which can be used for
