@@ -157,6 +157,18 @@ public:
 private:
     std::vector<isc::dns::ConstRRsetPtr>& rrsets_;
 };
+
+class RRsetDumper {
+public:
+    RRsetDumper(std::string& output) :
+        output_(output)
+    {}
+    void operator()(isc::dns::ConstRRsetPtr rrset) {
+        output_ += "  " + rrset->toText();
+    }
+private:
+    std::string& output_;
+};
 }
 
 /// Set of unit tests to check if two sets of RRsets are identical.
@@ -195,6 +207,10 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
             ACTUAL_ITERATOR actual_begin, ACTUAL_ITERATOR actual_end)
 {
     std::vector<isc::dns::ConstRRsetPtr> checked_rrsets; // for duplicate check
+    std::string expected_text, actual_text;
+    std::for_each(expected_begin, expected_end,
+                  detail::RRsetDumper(expected_text));
+    std::for_each(actual_begin, actual_end, detail::RRsetDumper(actual_text));
     unsigned int rrset_matched = 0;
     ACTUAL_ITERATOR it;
     for (it = actual_begin; it != actual_end; ++it) {
@@ -217,11 +233,16 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
         }
     }
 
-    // make sure all expected RRsets are in actual sets
-    EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
-    // make sure rrsets only contains expected RRsets
-    EXPECT_EQ(std::distance(expected_begin, expected_end),
-              std::distance(actual_begin, actual_end));
+    {
+        SCOPED_TRACE(std::string("Comparing two RRsets:\n") +
+                     "Actual:\n" + actual_text +
+                     "Expected:\n" + expected_text);
+        // make sure all expected RRsets are in actual sets
+        EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
+        // make sure rrsets only contains expected RRsets
+        EXPECT_EQ(std::distance(expected_begin, expected_end),
+                  std::distance(actual_begin, actual_end));
+    }
 }
 
 /// Set of unit tests to check if two sets of RRsets are identical using

@@ -21,7 +21,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -40,12 +39,9 @@
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
 
-#include <cc/data.h>
-
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace isc::data;
 using boost::scoped_ptr;
 
 namespace isc {
@@ -651,12 +647,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
-    // Set up FindResult object as a return value of find(), taking into
+    // Set up FindContext object as a return value of find(), taking into
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
     // simply ignore these when they didn't request DNSSEC related results.
-    FindResult createFindResult(Result code, ConstRRsetPtr rrset,
-                                bool wild) const
+    ResultContext createFindResult(Result code, ConstRRsetPtr rrset,
+                                   bool wild = false) const
     {
         FindResultFlags flags = RESULT_DEFAULT;
         if (wild) {
@@ -666,13 +662,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             zone_data_->nsec3_data_) {
             flags = flags | RESULT_NSEC3_SIGNED;
         }
-        return (FindResult(code, rrset, flags));
+        return (ZoneFinder::ResultContext(code, rrset, flags));
     }
 
     // Implementation of InMemoryZoneFinder::find
-    FindResult find(const Name& name, RRType type,
-                    std::vector<ConstRRsetPtr>* target,
-                    const FindOptions options) const
+    ZoneFinder::ResultContext find(const Name& name, RRType type,
+                                   std::vector<ConstRRsetPtr>* target,
+                                   const FindOptions options) const
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
@@ -707,15 +703,16 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                         arg(state.rrset_->getName());
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
-                    return (FindResult(DNAME, prepareRRset(name, state.rrset_,
-                                                           false, options)));
+                    return (createFindResult(DNAME,
+                                             prepareRRset(name, state.rrset_,
+                                                          false, options)));
                 }
                 if (state.zonecut_node_ != NULL) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                         arg(state.rrset_->getName());
-                    return (FindResult(DELEGATION,
-                                       prepareRRset(name, state.rrset_,
-                                                    false, options)));
+                    return (createFindResult(DELEGATION,
+                                             prepareRRset(name, state.rrset_,
+                                                          false, options)));
                 }
 
                 // If the RBTree search stopped at a node for a super domain
@@ -725,7 +722,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     NameComparisonResult::SUPERDOMAIN) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
                         arg(name);
-                    return (createFindResult(NXRRSET, ConstRRsetPtr(), false));
+                    return (createFindResult(NXRRSET, ConstRRsetPtr()));
                 }
 
                 /*
@@ -818,9 +815,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_EXACT_DELEGATION).arg(name);
-                return (FindResult(DELEGATION,
-                                   prepareRRset(name, found->second, rename,
-                                                options)));
+                return (createFindResult(DELEGATION,
+                                         prepareRRset(name, found->second,
+                                                      rename, options)));
             }
         }
 
@@ -853,9 +850,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
                 return (createFindResult(CNAME,
-                                         prepareRRset(name, found->second,
-                                                      rename, options),
-                                         rename));
+                                          prepareRRset(name, found->second,
+                                                       rename, options),
+                                          rename));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
@@ -888,19 +885,24 @@ InMemoryZoneFinder::getClass() const {
     return (impl_->zone_class_);
 }
 
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 InMemoryZoneFinder::find(const Name& name, const RRType& type,
-                 const FindOptions options)
+                         const FindOptions options)
 {
-    return (impl_->find(name, type, NULL, options));
+    return (ZoneFinderContextPtr(
+                new Context(*this, options,
+                            impl_->find(name, type, NULL, options))));
 }
 
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 InMemoryZoneFinder::findAll(const Name& name,
                             std::vector<ConstRRsetPtr>& target,
                             const FindOptions options)
 {
-    return (impl_->find(name, RRType::ANY(), &target, options));
+    return (ZoneFinderContextPtr(
+                new Context(*this, options, impl_->find(name, RRType::ANY(),
+                                                        &target, options),
+                            target)));
 }
 
 ZoneFinder::FindNSEC3Result
@@ -1220,147 +1222,6 @@ InMemoryClient::getJournalReader(const isc::dns::Name&, uint32_t,
     isc_throw(isc::NotImplemented, "Journaling isn't supported for "
               "in memory data source");
 }
-
-namespace {
-// convencience function to add an error message to a list of those
-// (TODO: move functions like these to some util lib?)
-void
-addError(ElementPtr errors, const std::string& error) {
-    if (errors != ElementPtr() && errors->getType() == Element::list) {
-        errors->add(Element::create(error));
-    }
-}
-
-/// Check if the given element exists in the map, and if it is a string
-bool
-checkConfigElementString(ConstElementPtr config, const std::string& name,
-                         ElementPtr errors)
-{
-    if (!config->contains(name)) {
-        addError(errors,
-                 "Config for memory backend does not contain a '"
-                 +name+
-                 "' value");
-        return false;
-    } else if (!config->get(name) ||
-               config->get(name)->getType() != Element::string) {
-        addError(errors, "value of " + name +
-                 " in memory backend config is not a string");
-        return false;
-    } else {
-        return true;
-    }
-}
-
-bool
-checkZoneConfig(ConstElementPtr config, ElementPtr errors) {
-    bool result = true;
-    if (!config || config->getType() != Element::map) {
-        addError(errors, "Elements in memory backend's zone list must be maps");
-        result = false;
-    } else {
-        if (!checkConfigElementString(config, "origin", errors)) {
-            result = false;
-        }
-        if (!checkConfigElementString(config, "file", errors)) {
-            result = false;
-        }
-        // we could add some existence/readabilty/parsability checks here
-        // if we want
-    }
-    return result;
-}
-
-bool
-checkConfig(ConstElementPtr config, ElementPtr errors) {
-    /* Specific configuration is under discussion, right now this accepts
-     * the 'old' configuration, see [TODO]
-     * So for memory datasource, we get a structure like this:
-     * { "type": string ("memory"),
-     *   "class": string ("IN"/"CH"/etc),
-     *   "zones": list
-     * }
-     * Zones list is a list of maps:
-     * { "origin": string,
-     *     "file": string
-     * }
-     *
-     * At this moment we cannot be completely sure of the contents of the
-     * structure, so we have to do some more extensive tests than should
-     * strictly be necessary (e.g. existence and type of elements)
-     */
-    bool result = true;
-
-    if (!config || config->getType() != Element::map) {
-        addError(errors, "Base config for memory backend must be a map");
-        result = false;
-    } else {
-        if (!checkConfigElementString(config, "type", errors)) {
-            result = false;
-        } else {
-            if (config->get("type")->stringValue() != "memory") {
-                addError(errors,
-                         "Config for memory backend is not of type \"memory\"");
-                result = false;
-            }
-        }
-        if (!checkConfigElementString(config, "class", errors)) {
-            result = false;
-        } else {
-            try {
-                RRClass rrc(config->get("class")->stringValue());
-            } catch (const isc::Exception& rrce) {
-                addError(errors,
-                         "Error parsing class config for memory backend: " +
-                         std::string(rrce.what()));
-                result = false;
-            }
-        }
-        if (!config->contains("zones")) {
-            addError(errors, "No 'zones' element in memory backend config");
-            result = false;
-        } else if (!config->get("zones") ||
-                   config->get("zones")->getType() != Element::list) {
-            addError(errors, "'zones' element in memory backend config is not a list");
-            result = false;
-        } else {
-            BOOST_FOREACH(ConstElementPtr zone_config,
-                          config->get("zones")->listValue()) {
-                if (!checkZoneConfig(zone_config, errors)) {
-                    result = false;
-                }
-            }
-        }
-    }
-
-    return (result);
-}
-
-} // end anonymous namespace
-
-DataSourceClient *
-createInstance(isc::data::ConstElementPtr config, std::string& error) {
-    ElementPtr errors(Element::createList());
-    if (!checkConfig(config, errors)) {
-        error = "Configuration error: " + errors->str();
-        return (NULL);
-    }
-    try {
-        return (new InMemoryClient());
-    } catch (const std::exception& exc) {
-        error = std::string("Error creating memory datasource: ") + exc.what();
-        return (NULL);
-    } catch (...) {
-        error = std::string("Error creating memory datasource, "
-                            "unknown exception");
-        return (NULL);
-    }
-}
-
-void destroyInstance(DataSourceClient* instance) {
-    delete instance;
-}
-
 
 } // end of namespace datasrc
 } // end of namespace isc

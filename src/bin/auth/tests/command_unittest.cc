@@ -176,16 +176,16 @@ zoneChecks(AuthSrv& server) {
     EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::A()).code);
+              find(Name("ns.test1.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::AAAA()).code);
+              find(Name("ns.test1.example"), RRType::AAAA())->code);
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::A()).code);
+              find(Name("ns.test2.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::AAAA()).code);
+              find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
 void
@@ -213,19 +213,19 @@ newZoneChecks(AuthSrv& server) {
     EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::A()).code);
+              find(Name("ns.test1.example"), RRType::A())->code);
     // now test1.example should have ns/AAAA
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::AAAA()).code);
+              find(Name("ns.test1.example"), RRType::AAAA())->code);
 
     // test2.example shouldn't change
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::A()).code);
+              find(Name("ns.test2.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::AAAA()).code);
+              find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
 TEST_F(AuthCommandTest, loadZone) {
