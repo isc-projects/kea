@@ -53,9 +53,20 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
     }
     if (case_sensitive) {
         return (strncmp(data, other_data, len) == 0);
-    } else {
-        return (strncasecmp(data, other_data, len) == 0);
     }
+
+    // As long as the data was originally validated as (part of) a name,
+    // label length must never be a capital ascii character, so we can
+    // simply compare them after converting to lower characters.
+    for (size_t i = 0; i < len; ++i) {
+        const unsigned char ch = data[i];
+        const unsigned char other_ch = other_data[i];
+        if (isc::dns::name::internal::maptolower[ch] !=
+            isc::dns::name::internal::maptolower[other_ch]) {
+            return (false);
+        }
+    }
+    return (true);
 }
 
 void
