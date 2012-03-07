@@ -95,6 +95,10 @@ void
 LoggerManager::init(const std::string& root, isc::log::Severity severity,
                     int dbglevel, const char* file)
 {
+    // Load in the messages declared in the program and registered by 
+    // statically-declared MessageInitializer objects.
+    MessageInitializer::loadDictionary();
+
     // Save name, severity and debug level for later.  No need to save the
     // file name as once the local message file is read the messages will
     // not be lost.
