@@ -1,4 +1,4 @@
-394.	[defect]	jelte
+394.	[bug]		jelte
 	b10-auth now catches any exceptions during response building; if any
 	datasource either throws an exception or causes an exception to be
 	thrown, the message processing code will now catch it, log a debug
