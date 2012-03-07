@@ -15,13 +15,16 @@
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
+#include <cassert>
 #include <cstdlib>
 #include <string>
+#include <cstring>
 
 #include <exceptions/exceptions.h>
 #include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
+
 
 namespace isc {
 namespace log {
@@ -99,6 +102,9 @@ public:
 
 class Logger {
 public:
+    enum {
+        MAX_LOGGER_NAME_SIZE = 32   ///< Maximum size of logger name
+    };
 
     /// \brief Constructor
     ///
@@ -107,8 +113,20 @@ public:
     /// \param name Name of the logger.  If the name is that of the root name,
     /// this creates an instance of the root logger; otherwise it creates a
     /// child of the root logger.
-    Logger(const std::string& name) : loggerptr_(NULL), name_(name)
-    {}
+    ///
+    /// \note The name of the logger may be no longer than MAX_LOGGER_NAME_SIZE
+    /// else the program will halt with an assertion failure.  This restriction
+    /// allows loggers to be declared statically: the name is stored in a fixed-
+    /// size array to avoid the need to allocate heap storage during program
+    /// initialization (which causes problems on some operating systems).
+    ///
+    /// \note Note also that there is no constructor taking a std::string. This
+    /// minimises the possibility of initializing a static logger with a string,
+    /// so leading to problems mentioned above.
+    Logger(const char* name) : loggerptr_(NULL) {
+        assert(std::strlen(name) < sizeof(name_));
+        std::strcpy(name_, name);
+    }
 
     /// \brief Destructor
     virtual ~Logger();
@@ -256,8 +274,8 @@ private:
     /// \brief Initialize Underlying Implementation and Set loggerptr_
     void initLoggerImpl();
 
-    LoggerImpl*     loggerptr_;     ///< Pointer to the underlying logger
-    std::string     name_;          ///< Copy of the logger name
+    LoggerImpl* loggerptr_;                  ///< Pointer to underlying logger
+    char        name_[MAX_LOGGER_NAME_SIZE]; ///< Copy of the logger name
 };
 
 } // namespace log

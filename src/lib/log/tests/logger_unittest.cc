@@ -58,8 +58,8 @@ TEST_F(LoggerTest, Name) {
 
 TEST_F(LoggerTest, GetLogger) {
 
-    const string name1 = "alpha";
-    const string name2 = "beta";
+    const char* name1 = "alpha";
+    const char* name2 = "beta";
 
     // Instantiate two loggers that should be the same
     Logger logger1(name1);
