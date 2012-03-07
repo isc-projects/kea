@@ -1,3 +1,11 @@
+395.	[bug]		jelte
+	The log message compiler now errors (resulting in build failures) if
+	duplicate log message identifiers are found in a single message file.
+	Renamed one duplicate that was found (RESOLVER_SHUTDOWN, renamed to
+	RESOLVER_SHUTDOWN_RECEIVED).
+	(Trac #1093, git f537c7e12fb7b25801408f93132ed33410edae76)
+	(Trac #1741, git b8960ab85c717fe70ad282e0052ac0858c5b57f7)
+
 394.	[bug]		jelte
 	b10-auth now catches any exceptions during response building; if any
 	datasource either throws an exception or causes an exception to be
