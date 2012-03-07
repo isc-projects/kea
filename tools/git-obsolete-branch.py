@@ -120,7 +120,7 @@ def branch_print(branches, csv, print_merged, print_notmerged, print_stats):
             print("NOT merged branches: %s" % (notmerged_str))
 
     if (print_stats):
-        print("#----------");
+        print("#----------")
         print("#Merged    : %d" % merged)
         print("#Not merged: %d" % notmerged)
 
@@ -139,20 +139,20 @@ def main():
     Lists all obsolete (fully merged into master) branches.
     """
 
-    csv = False;
-    merged = True;
-    unmerged = False;
-    stats = False;
+    csv = False
+    merged = True
+    unmerged = False
+    stats = False
 
     for x in sys.argv[1:]:
         if x == "--csv":
-            csv = True;
+            csv = True
         elif x == "--unmerged":
-            unmerged = True;
+            unmerged = True
         elif x == "--skip-merged":
-            merged = False;
+            merged = False
         elif x == "--stats":
-            stats = True;
+            stats = True
         elif x == "--help":
             show_help()
             return
