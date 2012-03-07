@@ -227,11 +227,11 @@ class BaseComponent:
                 signame = get_signame(sig)
                 exit_str = "process stopped with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
             elif os.WIFSIGNALED(exit_code):
+                sig = os.WTERMSIG(exit_code)
+                signame = get_signame(sig)
                 if os.WCOREDUMP(exit_code):
-                    exit_str = "process dumped core with exit status %d" % (exit_code)
+                    exit_str = "process dumped core with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
                 else:
-                    sig = os.WTERMSIG(exit_code)
-                    signame = get_signame(sig)
                     exit_str = "process terminated with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
             else:
                 exit_str = "unknown condition with exit status %d" % (exit_code)
