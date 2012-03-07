@@ -37,27 +37,43 @@ namespace log {
 ///             :
 ///         NULL
 ///     };
-///     MessageDictionaryHelper xyz(values);
+///     MessageInitializer xyz(values);
 ///
-/// This will automatically add the message ID/text pairs to the global
-/// dictionary during initialization - all that is required is that the module
-/// containing the definition is included into the final executable.
+/// All that needed is for the module containing the definitions to be
+/// included in the execution unit.
 ///
-/// Messages are added via the MessageDictionary::add() method, so any
-/// duplicates are stored in the the global dictionary's overflow vector whence
-/// they can be retrieved at run-time.
+/// To avoid static initialization fiasco problems, the initialization is
+/// carried out in two stages:
+/// -# The constructor a pointer to the values array to a pre-defined array
+///    of pointers.
+/// -# During the run-time initialization of the logging system, the static
+///    method loadDictionary() is called to load the message dictionary.
+/// This way, no heap storage is allocated during the static initialization,
+/// something that may give problems on some operating systems.
+///
+/// When messages are added to the dictionary, the are added via the
+/// MessageDictionary::add() method, so any duplicates are stored in the the
+/// global dictionary's overflow vector whence they can be retrieved at
+/// run-time.
 
 class MessageInitializer {
 public:
 
     /// \brief Constructor
     ///
-    /// Adds the array of values to the global dictionary, and notes any
-    /// duplicates.
+    /// Adds a pointer to the array of messages to the global array of
+    /// pointers to message arrays.
     ///
     /// \param values NULL-terminated array of alternating identifier strings
     /// and associated message text.
     MessageInitializer(const char* values[]);
+
+    /// \brief Run-Time Initialization
+    ///
+    /// Loops through the internal array of pointers to message arrays
+    /// and adds the messages to the internal dictionary.  This is called
+    /// during run-time initialization.
+    static void loadDictionary();
 
     /// \brief Return Duplicates
     ///
