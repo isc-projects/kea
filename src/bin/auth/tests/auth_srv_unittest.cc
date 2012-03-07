@@ -1135,7 +1135,7 @@ public:
         return (real_zone_finder_->getClass());
     }
 
-    virtual isc::datasrc::ZoneFinder::FindResult
+    virtual isc::datasrc::ZoneFinderContextPtr
     find(const isc::dns::Name& name,
          const isc::dns::RRType& type,
          isc::datasrc::ZoneFinder::FindOptions options)
@@ -1144,20 +1144,20 @@ public:
         return (real_zone_finder_->find(name, type, options));
     }
 
-    virtual FindResult
+    virtual isc::datasrc::ZoneFinderContextPtr
     findAll(const isc::dns::Name& name,
             std::vector<isc::dns::ConstRRsetPtr> &target,
             const FindOptions options = FIND_DEFAULT)
     {
         checkThrow(THROW_AT_FIND_ALL, throw_when_, isc_exception_);
         return (real_zone_finder_->findAll(name, target, options));
-    };
+    }
 
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive) {
         checkThrow(THROW_AT_FIND_NSEC3, throw_when_, isc_exception_);
         return (real_zone_finder_->findNSEC3(name, recursive));
-    };
+    }
 
     virtual isc::dns::Name
     findPreviousName(const isc::dns::Name& query) const {

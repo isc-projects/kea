@@ -553,33 +553,33 @@ public:
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
-                ZoneFinder::FindResult find_result(zone_finder->find(
-                                                       name, rrtype, options));
+                ZoneFinderContextPtr find_result(zone_finder->find(
+                                                     name, rrtype, options));
                 // Check it returns correct answers
-                EXPECT_EQ(result, find_result.code);
+                EXPECT_EQ(result, find_result->code);
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-                          find_result.isWildcard());
+                          find_result->isWildcard());
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                          != 0, find_result.isNSECSigned());
+                          != 0, find_result->isNSECSigned());
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                          != 0, find_result.isNSEC3Signed());
+                          != 0, find_result->isNSEC3Signed());
                 if (check_answer) {
                     if (!answer) {
-                        ASSERT_FALSE(find_result.rrset);
+                        ASSERT_FALSE(find_result->rrset);
                     } else {
-                        ASSERT_TRUE(find_result.rrset);
-                        rrsetCheck(answer, find_result.rrset);
+                        ASSERT_TRUE(find_result->rrset);
+                        rrsetCheck(answer, find_result->rrset);
                         if (answer_sig) {
-                            ASSERT_TRUE(find_result.rrset->getRRsig());
+                            ASSERT_TRUE(find_result->rrset->getRRsig());
                             rrsetCheck(answer_sig,
-                                       find_result.rrset->getRRsig());
+                                       find_result->rrset->getRRsig());
                         }
                     }
                 } else if (check_wild_answer) {
                     ASSERT_NE(ConstRRsetPtr(), answer) <<
                         "Wrong test, don't check for wild names if you expect "
                         "empty answer";
-                    ASSERT_NE(ConstRRsetPtr(), find_result.rrset) <<
+                    ASSERT_NE(ConstRRsetPtr(), find_result->rrset) <<
                         "No answer found";
                     // Build the expected answer using the given name and
                     // other parameter of the base wildcard RRset.
@@ -590,11 +590,11 @@ public:
                     for (; !expectedIt->isLast(); expectedIt->next()) {
                         wildanswer->addRdata(expectedIt->getCurrent());
                     }
-                    rrsetCheck(wildanswer, find_result.rrset);
+                    rrsetCheck(wildanswer, find_result->rrset);
 
                     // Same for the RRSIG, if any.
                     if (answer_sig) {
-                        ASSERT_TRUE(find_result.rrset->getRRsig());
+                        ASSERT_TRUE(find_result->rrset->getRRsig());
 
                         RRsetPtr wildsig(new RRset(name,
                                                    answer_sig->getClass(),
@@ -605,7 +605,7 @@ public:
                         for (; !expectedIt->isLast(); expectedIt->next()) {
                             wildsig->addRdata(expectedIt->getCurrent());
                         }
-                        rrsetCheck(wildsig, find_result.rrset->getRRsig());
+                        rrsetCheck(wildsig, find_result->rrset->getRRsig());
                     }
                 }
             });
@@ -626,21 +626,21 @@ public:
             finder = &zone_finder_;
         }
         std::vector<ConstRRsetPtr> target;
-        ZoneFinder::FindResult find_result(finder->findAll(name, target,
-                                                           options));
-        EXPECT_EQ(result, find_result.code);
+        ZoneFinderContextPtr find_result(finder->findAll(name, target,
+                                                         options));
+        EXPECT_EQ(result, find_result->code);
         if (!rrset_result) {
-            EXPECT_FALSE(find_result.rrset);
+            EXPECT_FALSE(find_result->rrset);
         } else {
-            ASSERT_TRUE(find_result.rrset);
-            rrsetCheck(rrset_result, find_result.rrset);
+            ASSERT_TRUE(find_result->rrset);
+            rrsetCheck(rrset_result, find_result->rrset);
         }
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-                  find_result.isWildcard());
+                  find_result->isWildcard());
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                  != 0, find_result.isNSECSigned());
+                  != 0, find_result->isNSECSigned());
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                  != 0, find_result.isNSEC3Signed());
+                  != 0, find_result->isNSEC3Signed());
         rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
                     target.begin(), target.end());
     }
@@ -1552,37 +1552,35 @@ TEST_F(InMemoryZoneFinderTest, addRRsig) {
     // that covers the first RRset
     zone_finder_.add(rr_a_);
     zone_finder_.add(textToRRset(rrsig_a_txt));
-    ZoneFinder::FindResult result = zone_finder_.find(origin_, RRType::A(),
-                                                      ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result.code);
-    ASSERT_TRUE(result.rrset);
-    ASSERT_TRUE(result.rrset->getRRsig());
-    actual_rrsets_.push_back(result.rrset->getRRsig());
+    ZoneFinderContextPtr result = zone_finder_.find(origin_, RRType::A(),
+                                                    ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    ASSERT_TRUE(result->rrset);
+    ASSERT_TRUE(result->rrset->getRRsig());
+    actual_rrsets_.push_back(result->rrset->getRRsig());
     rrsetsCheck(rrsig_a_txt, actual_rrsets_.begin(), actual_rrsets_.end());
 
     // Confirm a separate RRISG for a different type can be added
     actual_rrsets_.clear();
     zone_finder_.add(rr_ns_);
     zone_finder_.add(textToRRset(rrsig_ns_txt));
-    ZoneFinder::FindResult result2 =
-        zone_finder_.find(origin_, RRType::NS(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result2.code);
-    ASSERT_TRUE(result2.rrset);
-    ASSERT_TRUE(result2.rrset->getRRsig());
-    actual_rrsets_.push_back(result2.rrset->getRRsig());
+    result = zone_finder_.find(origin_, RRType::NS(), ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    ASSERT_TRUE(result->rrset);
+    ASSERT_TRUE(result->rrset->getRRsig());
+    actual_rrsets_.push_back(result->rrset->getRRsig());
     rrsetsCheck(rrsig_ns_txt, actual_rrsets_.begin(), actual_rrsets_.end());
 
     // Check a case with multiple RRSIGs
     actual_rrsets_.clear();
     zone_finder_.add(rr_ns_aaaa_);
     zone_finder_.add(textToRRset(rrsig_aaaa_txt));
-    ZoneFinder::FindResult result3 =
-        zone_finder_.find(Name("ns.example.org"), RRType::AAAA(),
-                          ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result3.code);
-    ASSERT_TRUE(result3.rrset);
-    ASSERT_TRUE(result3.rrset->getRRsig());
-    actual_rrsets_.push_back(result3.rrset->getRRsig());
+    result = zone_finder_.find(Name("ns.example.org"), RRType::AAAA(),
+                               ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    ASSERT_TRUE(result->rrset);
+    ASSERT_TRUE(result->rrset->getRRsig());
+    actual_rrsets_.push_back(result->rrset->getRRsig());
     rrsetsCheck(rrsig_aaaa_txt, actual_rrsets_.begin(), actual_rrsets_.end());
 }
 
@@ -1694,7 +1692,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               zone_finder_.find(Name(string(apex_hash) + ".example.org"),
-                                RRType::NSEC3()).code);
+                                RRType::NSEC3())->code);
     // Dedicated NSEC3 find should be able to find it.
     findNSEC3Check(true, origin_.getLabelCount(), nsec3_text, "",
                    zone_finder_.findNSEC3(Name("example.org"), false));
@@ -1714,7 +1712,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nonsec3_text)));
     EXPECT_EQ(ZoneFinder::SUCCESS,
               zone_finder_.find(Name(string(apex_hash) + ".example.org"),
-                                RRType::A()).code);
+                                RRType::A())->code);
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {

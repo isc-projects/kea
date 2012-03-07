@@ -17,8 +17,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/foreach.hpp>
-
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
@@ -30,8 +28,6 @@ using namespace std;
 using namespace isc::data;
 
 #define SQLITE_SCHEMA_VERSION 1
-
-#define CONFIG_ITEM_DATABASE_FILE "database_file"
 
 namespace isc {
 namespace datasrc {
@@ -1094,76 +1090,6 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     }
 
     return (result);
-}
-
-namespace {
-void
-addError(ElementPtr errors, const std::string& error) {
-    if (errors != ElementPtr() && errors->getType() == Element::list) {
-        errors->add(Element::create(error));
-    }
-}
-
-bool
-checkConfig(ConstElementPtr config, ElementPtr errors) {
-    /* Specific configuration is under discussion, right now this accepts
-     * the 'old' configuration, see header file
-     */
-    bool result = true;
-
-    if (!config || config->getType() != Element::map) {
-        addError(errors, "Base config for SQlite3 backend must be a map");
-        result = false;
-    } else {
-        if (!config->contains(CONFIG_ITEM_DATABASE_FILE)) {
-            addError(errors,
-                     "Config for SQlite3 backend does not contain a '"
-                     CONFIG_ITEM_DATABASE_FILE
-                     "' value");
-            result = false;
-        } else if (!config->get(CONFIG_ITEM_DATABASE_FILE) ||
-                   config->get(CONFIG_ITEM_DATABASE_FILE)->getType() !=
-                   Element::string) {
-            addError(errors, "value of " CONFIG_ITEM_DATABASE_FILE
-                     " in SQLite3 backend is not a string");
-            result = false;
-        } else if (config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue() ==
-                   "") {
-            addError(errors, "value of " CONFIG_ITEM_DATABASE_FILE
-                     " in SQLite3 backend is empty");
-            result = false;
-        }
-    }
-
-    return (result);
-}
-
-} // end anonymous namespace
-
-DataSourceClient *
-createInstance(isc::data::ConstElementPtr config, std::string& error) {
-    ElementPtr errors(Element::createList());
-    if (!checkConfig(config, errors)) {
-        error = "Configuration error: " + errors->str();
-        return (NULL);
-    }
-    std::string dbfile = config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
-    try {
-        boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
-            new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
-        return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
-    } catch (const std::exception& exc) {
-        error = std::string("Error creating sqlite3 datasource: ") + exc.what();
-        return (NULL);
-    } catch (...) {
-        error = std::string("Error creating sqlite3 datasource, "
-                            "unknown exception");
-        return (NULL);
-    }
-}
-
-void destroyInstance(DataSourceClient* instance) {
-    delete instance;
 }
 
 } // end of namespace datasrc
