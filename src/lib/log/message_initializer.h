@@ -52,7 +52,7 @@ namespace log {
 /// something that may give problems on some operating systems.
 ///
 /// When messages are added to the dictionary, the are added via the
-/// MessageDictionary::add() method, so any duplicates are stored in the the
+/// MessageDictionary::add() method, so any duplicates are stored in the
 /// global dictionary's overflow vector whence they can be retrieved at
 /// run-time.
 
